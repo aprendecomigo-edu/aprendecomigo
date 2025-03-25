@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | Aprende Comigo{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="card-title">Welcome, {{ user.name }}!</h1>
+                    {% if user.is_admin or user.is_staff or user.is_superuser %}
+                    <span class="badge bg-warning text-dark">Admin</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <h2>Dashboard</h2>
+                    <p>This is your personal dashboard.</p>
+                    
+                    <!-- User information -->
+                    <div class="user-info my-4">
+                        <p><strong>Email:</strong> {{ user.email }}</p>
+                        {% if user.phone_number %}
+                        <p><strong>Phone:</strong> {{ user.phone_number }}</p>
+                        {% endif %}
+                        
+                        <!-- User role/status -->
+                        <p><strong>Role:</strong> 
+                            {% if user.is_superuser %}
+                                Superuser
+                            {% elif user.is_admin %}
+                                Administrator
+                            {% elif user.is_staff %}
+                                Staff
+                            {% else %}
+                                Regular User
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <!-- Admin links section -->
+                    {% if user.is_admin or user.is_staff or user.is_superuser %}
+                    <div class="admin-section mb-4">
+                        <h3>Admin Actions</h3>
+                        <a href="{% url 'admin:index' %}" class="btn btn-warning mb-2">Admin Panel</a>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Logout form with POST method -->
+                    <div class="mt-4">
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Logout</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
