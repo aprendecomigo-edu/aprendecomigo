@@ -1,55 +1,70 @@
 import os
 from datetime import datetime, timedelta
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from django.conf import settings
 from django.utils.timezone import make_aware
-
+from allauth.socialaccount.models import SocialToken, SocialApp
 
 # If modifying these scopes, delete the token file.
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 
-def get_credentials():
-    """Get valid user credentials from storage or create new ones."""
-    # This is a placeholder for actual OAuth 2.0 flow
-    # In a real implementation, you'd handle token storage and refresh
-    # For now, this is just a skeleton to show the structure
-    
-    # TODO: Implement the actual OAuth flow with proper storage
-    # This would involve:
-    # 1. Check if token file exists
-    # 2. If it exists, load credentials
-    # 3. If not, or if credentials are invalid, run the OAuth flow
-    # 4. Save the credentials for future use
-    
-    # For testing purposes, you can use a service account
-    # or manually authenticate once and save the token
-    
-    return None  # Replace with actual credentials
-
-
-def get_calendar_service():
-    """Get a Google Calendar API service instance."""
+def get_credentials(user):
+    """Get valid user credentials from django-allauth."""
     try:
-        credentials = get_credentials()
+        # Get the user's Google token from django-allauth
+        social_token = SocialToken.objects.get(
+            account__user=user,
+            account__provider='google'
+        )
+        
+        # Get the Google app configuration from the database
+        social_app = SocialApp.objects.get(provider='google')
+        
+        # Create the credentials object for Google API
+        credentials = Credentials(
+            token=social_token.token,
+            refresh_token=social_token.token_secret,
+            token_uri='https://oauth2.googleapis.com/token',
+            client_id=social_app.client_id,
+            client_secret=social_app.secret,
+            scopes=SCOPES
+        )
+        
+        return credentials
+    except SocialToken.DoesNotExist:
+        # User hasn't connected their Google account
+        print(f"No Google token found for user {user.email}")
+        return None
+    except SocialApp.DoesNotExist:
+        # Google app configuration is missing
+        print("Google social app configuration not found in the database")
+        return None
+    except Exception as e:
+        # Handle other errors
+        print(f"Error getting Google credentials: {e}")
+        return None
+
+
+def get_calendar_service(user):
+    """Get a Google Calendar API service instance for a specific user."""
+    try:
+        credentials = get_credentials(user)
         if not credentials:
-            # TODO: Implement proper error handling
             return None
             
         service = build('calendar', 'v3', credentials=credentials)
         return service
     except Exception as e:
-        # TODO: Implement proper logging
         print(f"Error getting calendar service: {e}")
         return None
 
 
 def create_event(class_session):
     """Create a Google Calendar event for a class session."""
-    service = get_calendar_service()
+    service = get_calendar_service(class_session.teacher)
     if not service:
         return None
         
@@ -99,7 +114,6 @@ def create_event(class_session):
         event = service.events().insert(calendarId=calendar_id, body=event).execute()
         return event['id']
     except Exception as e:
-        # TODO: Implement proper logging
         print(f"Error creating event: {e}")
         return None
 
@@ -110,7 +124,7 @@ def update_event(class_session):
         # If no Google Calendar ID exists, create a new event
         return create_event(class_session)
         
-    service = get_calendar_service()
+    service = get_calendar_service(class_session.teacher)
     if not service:
         return None
         
@@ -164,7 +178,6 @@ def update_event(class_session):
         ).execute()
         return event['id']
     except Exception as e:
-        # TODO: Implement proper logging
         print(f"Error updating event: {e}")
         return None
 
@@ -175,7 +188,7 @@ def delete_event(class_session):
         # No Google Calendar ID to delete
         return True
         
-    service = get_calendar_service()
+    service = get_calendar_service(class_session.teacher)
     if not service:
         return False
         
@@ -190,14 +203,13 @@ def delete_event(class_session):
         ).execute()
         return True
     except Exception as e:
-        # TODO: Implement proper logging
         print(f"Error deleting event: {e}")
         return False
 
 
-def fetch_events(start_datetime=None, end_datetime=None, max_results=10):
-    """Fetch events from Google Calendar within a specified time range."""
-    service = get_calendar_service()
+def fetch_events(user, start_datetime=None, end_datetime=None, max_results=10):
+    """Fetch events from Google Calendar within a specified time range for a specific user."""
+    service = get_calendar_service(user)
     if not service:
         return []
         
@@ -227,6 +239,5 @@ def fetch_events(start_datetime=None, end_datetime=None, max_results=10):
         events = events_result.get('items', [])
         return events
     except Exception as e:
-        # TODO: Implement proper logging
         print(f"Error fetching events: {e}")
         return [] 

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load account socialaccount %}
+
+{% block title %}{% trans "Sign In" %} | Aprende Comigo{% endblock %}
+
+{% block extra_js %}
+<!-- No extra JS needed for standard OAuth flow -->
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">{% trans "Sign In" %}</h3>
+            </div>
+            <div class="card-body">
+                <!-- Standard Email/Password Login Form -->
+                <form class="login" method="POST" action="{% url 'account_login' %}">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                {{ error }}<br>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            {{ error }}<br>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="id_login" class="form-label">{% trans "Email" %}</label>
+                        <input type="email" name="login" id="id_login" class="form-control" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">{% trans "Password" %}</label>
+                        <input type="password" name="password" id="id_password" class="form-control" required>
+                    </div>
+                    
+                    {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                    {% endif %}
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="remember" id="id_remember" class="form-check-input">
+                        <label for="id_remember" class="form-check-label">{% trans "Remember Me" %}</label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">{% trans "Sign In" %}</button>
+                </form>
+                
+                <!-- Divider -->
+                <div class="my-4 position-relative">
+                    <hr>
+                    <div class="position-absolute top-50 start-50 translate-middle bg-white px-3">
+                        {% trans "OR" %}
+                    </div>
+                </div>
+                
+                <!-- Social Account Providers -->
+                {% get_providers as socialaccount_providers %}
+                {% if socialaccount_providers %}
+                    {% for provider in socialaccount_providers %}
+                        {% if provider.id == "google" %}
+                        <a href="{% provider_login_url provider.id process='login' %}" class="btn btn-danger w-100">
+                            <i class="fab fa-google me-2"></i> {% trans "Sign in with Google" %}
+                        </a>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- Links -->
+                <div class="mt-3 d-flex justify-content-between">
+                    <a href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
+                    <a href="{% url 'account_signup' %}">{% trans "Sign Up" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

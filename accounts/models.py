@@ -15,6 +15,19 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError(_('The Email must be set'))
         email = self.normalize_email(email)
+        
+        # Generate a username from email if not provided
+        if 'username' not in extra_fields or not extra_fields['username']:
+            # Use the part before @ in the email
+            username = email.split('@')[0]
+            # Ensure username is unique
+            base_username = username
+            counter = 1
+            while self.model.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            extra_fields['username'] = username
+        
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save()
@@ -38,9 +51,9 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractUser):
     """
-    Custom User model with email as username field
+    Custom User model with email as primary identifier but keeping username for compatibility
     """
-    username = None
+    username = models.CharField(_('username'), max_length=150, blank=True, null=True)
     email = models.EmailField(_('email address'), unique=True)
     name = models.CharField(_('name'), max_length=150)
     phone_number = models.CharField(_('phone number'), max_length=20, blank=True)

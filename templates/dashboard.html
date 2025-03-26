@@ -2,10 +2,32 @@
 
 {% block title %}Dashboard | Aprende Comigo{% endblock %}
 
+{% block extra_css %}
+<style>
+    .calendar-container {
+        position: relative;
+        height: 600px;
+        margin-top: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .calendar-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
     <div class="row">
-        <div class="col-md-8 offset-md-2">
+        <div class="col-md-10 offset-md-1">
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h1 class="card-title">Welcome, {{ user.name }}!</h1>
@@ -14,45 +36,31 @@
                     {% endif %}
                 </div>
                 <div class="card-body">
-                    <h2>Dashboard</h2>
-                    <p>This is your personal dashboard.</p>
+                    <h2>Your Calendar</h2>
                     
-                    <!-- User information -->
-                    <div class="user-info my-4">
-                        <p><strong>Email:</strong> {{ user.email }}</p>
-                        {% if user.phone_number %}
-                        <p><strong>Phone:</strong> {{ user.phone_number }}</p>
-                        {% endif %}
-                        
-                        <!-- User role/status -->
-                        <p><strong>Role:</strong> 
-                            {% if user.is_superuser %}
-                                Superuser
-                            {% elif user.is_admin %}
-                                Administrator
-                            {% elif user.is_staff %}
-                                Staff
-                            {% else %}
-                                Regular User
-                            {% endif %}
-                        </p>
-                    </div>
+                    {% if has_google and google_connected %}
+                        <!-- Show embedded Google Calendar -->
+                        <div class="calendar-container">
+                            <iframe src="https://calendar.google.com/calendar/embed?src={{ user.email }}&ctz=local" frameborder="0" scrolling="no"></iframe>
+                        </div>
+                    {% else %}
+                        <div class="text-center p-5 bg-light rounded">
+                            <h3 class="mb-4">Connect Your Google Calendar</h3>
+                            <p>To view your calendar here, you need to connect your Google account.</p>
+                            <p>This will allow us to display your Google Calendar events in this dashboard.</p>
+                            <a href="{% url 'google_login' %}" class="btn btn-danger mt-3">
+                                <i class="fab fa-google me-2"></i> Connect Google Calendar
+                            </a>
+                        </div>
+                    {% endif %}
                     
                     <!-- Admin links section -->
                     {% if user.is_admin or user.is_staff or user.is_superuser %}
-                    <div class="admin-section mb-4">
+                    <div class="admin-section mt-4">
                         <h3>Admin Actions</h3>
                         <a href="{% url 'admin:index' %}" class="btn btn-warning mb-2">Admin Panel</a>
                     </div>
                     {% endif %}
-                    
-                    <!-- Logout form with POST method -->
-                    <div class="mt-4">
-                        <form method="post" action="{% url 'logout' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">Logout</button>
-                        </form>
-                    </div>
                 </div>
             </div>
         </div>

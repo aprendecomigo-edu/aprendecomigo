@@ -4,6 +4,8 @@ python-dotenv
 Pillow
 google-auth
 google-api-python-client
+django-allauth==65.5.0
+django-sslserver-v2
 
 # Testing
 pytest

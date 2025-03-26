@@ -1,73 +1,70 @@
-from django.shortcuts import render
-from django.views.generic import TemplateView, FormView
+from django.shortcuts import render, redirect
+from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .forms import CalendarFilterForm
-from .models import Subject
-from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse
+from allauth.socialaccount.models import SocialAccount, SocialToken
+from . import google_calendar
 
-User = get_user_model()
-
-
-class CalendarView(LoginRequiredMixin, TemplateView):
-    """View to display embedded Google Calendar."""
-    template_name = 'scheduling/calendar.html'
+@login_required
+def google_calendar_status(request):
+    """API endpoint to check Google Calendar connection status."""
+    has_google = SocialAccount.objects.filter(
+        user=request.user,
+        provider='google'
+    ).exists()
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Add calendar settings to context
-        # In a real implementation, you'd use actual API keys and calendar IDs
-        context.update({
-            'calendar_id': 'primary',  # This would be configurable or user-specific
-            'page_title': 'Calendar',
+    if has_google:
+        # Check if we have a valid token
+        try:
+            token = SocialToken.objects.get(
+                account__user=request.user,
+                account__provider='google'
+            )
+            credentials = google_calendar.get_credentials(request.user)
+            return JsonResponse({
+                'connected': bool(credentials),
+                'message': 'Google Calendar is connected' if credentials else 'Google Calendar token needs refresh'
+            })
+        except SocialToken.DoesNotExist:
+            return JsonResponse({
+                'connected': False,
+                'message': 'Google Calendar authentication token missing'
+            })
+    else:
+        return JsonResponse({
+            'connected': False,
+            'message': 'Google account not connected'
         })
-        
-        return context
 
 
-class AdminCalendarView(LoginRequiredMixin, FormView):
-    """Admin view for calendar management with filtering options."""
-    template_name = 'scheduling/admin_calendar.html'
-    form_class = CalendarFilterForm
-    success_url = '.'  # Redirect to the same page
+@login_required
+def connect_google_calendar(request):
+    """View to guide users through connecting their Google Calendar."""
+    has_google = SocialAccount.objects.filter(
+        user=request.user,
+        provider='google'
+    ).exists()
     
-    def get_initial(self):
-        initial = super().get_initial()
-        # Set default values
-        initial['date_range'] = 'week'
-        initial['calendar_id'] = 'primary'
-        return initial
+    if request.method == 'POST' and not has_google:
+        # User wants to connect - this will just display a message to use the Google login
+        messages.info(request, 'Please sign in with your Google account to connect your calendar.')
+        return redirect('google_login')
     
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        # Add any additional form kwargs here if needed
-        return kwargs
+    context = {
+        'has_google': has_google,
+        'page_title': 'Connect Google Calendar',
+    }
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Process form data if available
-        form = context.get('form')
-        if form and form.is_valid():
-            calendar_id = form.cleaned_data.get('calendar_id', 'primary')
-        else:
-            calendar_id = 'primary'
-        
-        # Add calendar context
-        context.update({
-            'calendar_id': calendar_id,
-            'page_title': 'Admin Calendar',
-            'can_add_events': True,  # Flag to show/hide direct links to Google Calendar
-            
-            # Add example data for the template (would be dynamic in production)
-            'teachers': User.objects.filter(is_admin=False),
-            'subjects': Subject.objects.all(),
-        })
-        
-        return context
+    # If they're already connected, show calendar fetch button
+    if has_google:
+        # Check if we have a valid token
+        try:
+            events = google_calendar.fetch_events(request.user, max_results=5)
+            context['events'] = events
+            context['has_events'] = len(events) > 0
+        except Exception as e:
+            context['error'] = str(e)
     
-    def form_valid(self, form):
-        # Process the form data
-        # Since we're using client-side filtering with JavaScript,
-        # we don't need server-side processing
-        return super().form_valid(form)
+    return render(request, 'scheduling/connect_google.html', context)

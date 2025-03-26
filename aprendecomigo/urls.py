@@ -23,21 +23,21 @@ from django.contrib.auth.decorators import login_required
 from accounts.views import dashboard_view
 
 def home_view(request):
-    """Redirect to dashboard if logged in, otherwise to login page."""
+    """Redirect to dashboard if logged in, otherwise to allauth login page."""
     if request.user.is_authenticated:
         return redirect('dashboard')
-    return redirect('login')
+    return redirect('account_login')  # Use allauth's login URL
 
 urlpatterns = [
     path('', home_view, name='home'),
     path('admin/', admin.site.urls),
     path('dashboard/', login_required(dashboard_view), name='dashboard'),
     
-    # Accounts URLs
-    path('accounts/', include('accounts.urls')),
-    
-    # Django authentication URLs
-    path('', include('django.contrib.auth.urls')),
+    # Django AllAuth URLs - keep this first for proper URL resolution
+    path('accounts/', include('allauth.urls')),
+
+    # Scheduling URLs
+    path('scheduling/', include('scheduling.urls')),
 ]
 
 # Serve static and media files in development
