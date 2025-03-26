@@ -89,7 +89,7 @@ class LoginViewTests(TestCase):
     def setUp(self):
         """Set up test environment with a test user."""
         self.client = Client()
-        self.login_url = reverse('login')
+        self.login_url = reverse('account_login')
         self.dashboard_url = reverse('dashboard')
         
         # Create a test user
@@ -108,7 +108,7 @@ class LoginViewTests(TestCase):
         """
         response = self.client.get(self.login_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'registration/login.html')
+        self.assertTemplateUsed(response, 'account/login.html')
         
     def test_login_successful(self):
         """Test successful login gives access to dashboard.
@@ -119,7 +119,7 @@ class LoginViewTests(TestCase):
         3. User is properly authenticated
         """
         self.client.post(self.login_url, {
-            'username': 'testuser@example.com',  # Django auth expects 'username' parameter
+            'login': 'testuser@example.com',
             'password': 'testpass123'
         })
         # After login, user should be able to access dashboard
@@ -135,11 +135,11 @@ class LoginViewTests(TestCase):
         3. Error message is displayed
         """
         response = self.client.post(self.login_url, {
-            'username': 'testuser@example.com',  # Django auth expects 'username' parameter
+            'login': 'testuser@example.com',
             'password': 'wrongpassword'
         })
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'registration/login.html')
+        self.assertTemplateUsed(response, 'account/login.html')
         
     def test_logout(self):
         """Test logout functionality.
@@ -152,7 +152,7 @@ class LoginViewTests(TestCase):
         self.client.login(email='testuser@example.com', password='testpass123')
         
         # Then logout
-        self.client.post(reverse('logout'))
+        self.client.post(reverse('account_logout'))
         
         # Verify user is logged out by checking they can't access dashboard
         response = self.client.get(self.dashboard_url)
@@ -174,8 +174,8 @@ class PasswordResetTests(TestCase):
     def setUp(self):
         """Set up test environment with a test user."""
         self.client = Client()
-        self.password_reset_url = reverse('password_reset')
-        self.password_reset_done_url = reverse('password_reset_done')
+        self.password_reset_url = reverse('account_reset_password')
+        self.password_reset_done_url = reverse('account_reset_password_done')
         
         # Create a test user
         self.user = User.objects.create_user(
@@ -193,7 +193,7 @@ class PasswordResetTests(TestCase):
         """
         response = self.client.get(self.password_reset_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'registration/password_reset_form.html')
+        self.assertTemplateUsed(response, 'account/password_reset.html')
         
     def test_password_reset_submit(self):
         """Test password reset submission redirects to done page.
@@ -218,7 +218,7 @@ class PasswordResetTests(TestCase):
         """
         response = self.client.get(self.password_reset_done_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'registration/password_reset_done.html')
+        self.assertTemplateUsed(response, 'account/password_reset_done.html')
 
 class RootURLTests(TestCase):
     """Test cases for root URL behavior."""
@@ -226,7 +226,7 @@ class RootURLTests(TestCase):
     def setUp(self):
         """Set up test environment."""
         self.root_url = reverse('home')
-        self.login_url = reverse('login')
+        self.login_url = reverse('account_login')
         self.dashboard_url = reverse('dashboard')
         
         # Create a test user
