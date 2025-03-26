@@ -165,13 +165,15 @@ AUTHENTICATION_BACKENDS = [
 
 SITE_ID = 1
 
-# AllAuth settings
+# AllAuth settings https://docs.allauth.org/en/latest/socialaccount/configuration.html
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False  # Still keep this False as we generate usernames automatically
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # Disable email verification for now
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_UNIQUE_EMAIL = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_STORE_TOKENS = True
 
 # Store tokens for social accounts
 SOCIALACCOUNT_STORE_TOKENS = True
@@ -182,6 +184,11 @@ SOCIALACCOUNT_PROVIDERS = {
         # For each OAuth based provider, either add a ``SocialApp``
         # (``socialaccount`` app) containing the required client
         # credentials, or list them here:
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {
+            'access_type': 'offline',
+            'prompt': 'select_account',
+        },
         'APP': {
             'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
             'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
