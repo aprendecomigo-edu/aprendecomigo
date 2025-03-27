@@ -14,13 +14,22 @@ def dashboard_view(request):
         provider='google'
     ).exists()
     
-    context = {
+    # Get user account information
+    user_info = {
+        'username': request.user.username,
+        'email': request.user.email,
+        'name': request.user.name,
+        'date_joined': request.user.date_joined,
+        'is_admin': request.user.is_staff or request.user.is_superuser,
         'has_google': has_google,
     }
     
-    # If Google connected, add calendar information
+    context = {
+        'user_info': user_info,
+    }
+    
+    # If Google connected, check token status
     if has_google:
-        # Get the Google tokens
         try:
             google_token = SocialToken.objects.get(
                 account__user=request.user,
@@ -31,3 +40,5 @@ def dashboard_view(request):
             context['google_connected'] = False
     
     return render(request, 'dashboard.html', context)
+
+

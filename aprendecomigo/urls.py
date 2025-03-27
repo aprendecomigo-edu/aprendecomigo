@@ -35,9 +35,6 @@ urlpatterns = [
     
     # Django AllAuth URLs - keep this first for proper URL resolution
     path('accounts/', include('allauth.urls')),
-
-    # Scheduling URLs
-    path('scheduling/', include('scheduling.urls')),
 ]
 
 # Serve static and media files in development

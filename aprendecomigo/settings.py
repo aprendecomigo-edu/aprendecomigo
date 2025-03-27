@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     
     # Custom apps
     'accounts',
-    'scheduling',
 ]
 
 MIDDLEWARE = [
@@ -172,8 +171,14 @@ ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # Disable email verification for now
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_LOGOUT_ON_GET = True  # Skip logout confirmation page
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
-SOCIALACCOUNT_STORE_TOKENS = True
+
+# Allow login through email/password but disable signup form
+ACCOUNT_ALLOW_SIGNUPS = False  # For login but no direct registration
+
+# Auto-create accounts when social login succeeds
+SOCIALACCOUNT_AUTO_SIGNUP = True
 
 # Store tokens for social accounts
 SOCIALACCOUNT_STORE_TOKENS = True
@@ -196,9 +201,6 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
-
-# Auto-connect social accounts
-SOCIALACCOUNT_AUTO_SIGNUP = True
 
 # Login URLs - use allauth login URLs
 LOGIN_URL = 'account_login'

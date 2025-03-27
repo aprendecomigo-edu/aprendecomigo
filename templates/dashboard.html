@@ -4,22 +4,15 @@
 
 {% block extra_css %}
 <style>
-    .calendar-container {
-        position: relative;
-        height: 600px;
+    .user-info {
         margin-top: 20px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        overflow: hidden;
     }
-    
-    .calendar-container iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border: none;
+    .user-info-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .user-info-item:last-child {
+        border-bottom: none;
     }
 </style>
 {% endblock %}
@@ -36,23 +29,49 @@
                     {% endif %}
                 </div>
                 <div class="card-body">
-                    <h2>Your Calendar</h2>
+                    <h2>Your Account Information</h2>
                     
-                    {% if has_google and google_connected %}
-                        <!-- Show embedded Google Calendar -->
-                        <div class="calendar-container">
-                            <iframe src="https://calendar.google.com/calendar/embed?src={{ user.email }}&ctz=local" frameborder="0" scrolling="no"></iframe>
+                    <div class="user-info">
+                        <div class="user-info-item">
+                            <strong>Username:</strong> {{ user_info.username }}
                         </div>
-                    {% else %}
-                        <div class="text-center p-5 bg-light rounded">
-                            <h3 class="mb-4">Connect Your Google Calendar</h3>
-                            <p>To view your calendar here, you need to connect your Google account.</p>
-                            <p>This will allow us to display your Google Calendar events in this dashboard.</p>
-                            <a href="{% url 'google_login' %}" class="btn btn-danger mt-3">
-                                <i class="fab fa-google me-2"></i> Connect Google Calendar
-                            </a>
+                        <div class="user-info-item">
+                            <strong>Email:</strong> {{ user_info.email }}
                         </div>
-                    {% endif %}
+                        <div class="user-info-item">
+                            <strong>Name:</strong> {{ user_info.name }}
+                        </div>
+                        <div class="user-info-item">
+                            <strong>Member Since:</strong> {{ user_info.date_joined|date:"F j, Y" }}
+                        </div>
+                        <div class="user-info-item">
+                            <strong>Google Account:</strong> 
+                            {% if user_info.has_google %}
+                                {% if google_connected %}
+                                    <span class="text-success">Connected</span>
+                                {% else %}
+                                    <span class="text-warning">Connected but token expired</span>
+                                    <a href="{% url 'socialaccount_connections' %}" class="btn btn-sm btn-warning ms-2">
+                                        <i class="fas fa-sync me-2"></i> Refresh Connection
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-danger">Not Connected</span>
+                                <a href="{% url 'socialaccount_connections' %}" class="btn btn-sm btn-danger ms-2">
+                                    <i class="fab fa-google me-2"></i> Connect Google Account
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'account_logout' %}" class="btn btn-outline-danger">
+                            <i class="fas fa-sign-out-alt me-2"></i> Log Out
+                        </a>
+                        <a href="{% url 'socialaccount_connections' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-cog me-2"></i> Manage Social Accounts
+                        </a>
+                    </div>
                     
                     <!-- Admin links section -->
                     {% if user.is_admin or user.is_staff or user.is_superuser %}

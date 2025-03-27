@@ -212,6 +212,8 @@ A digital platform for specialized training and tutoring centers to manage teach
 
 ## 8. Deployment
 
+Building philosophy is to use as much of what already exists as possible. django-allauth functionality, google calendar functionality etc and build the minimum we need to make things work.
+
 ### 8.1 Hosting Platform
 - PythonAnywhere for initial deployment
 - MySQL database (provided by PythonAnywhere)
