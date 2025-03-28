@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | Aprende Comigo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-info {
+        margin-top: 20px;
+    }
+    .user-info-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .user-info-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% block dashboard_css %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="card-title">Welcome, {{ user.name }}!</h1>
+                    {% block user_badge %}{% endblock %}
+                </div>
+                <div class="card-body">
+                    <h2>Your Account Information</h2>
+
+                    <div class="user-info">
+                        <div class="user-info-item">
+                            <strong>Username:</strong> {{ user_info.username }}
+                        </div>
+                        <div class="user-info-item">
+                            <strong>Email:</strong> {{ user_info.email }}
+                        </div>
+                        <div class="user-info-item">
+                            <strong>Name:</strong> {{ user_info.name }}
+                        </div>
+                        <div class="user-info-item">
+                            <strong>Member Since:</strong> {{ user_info.date_joined|date:"F j, Y" }}
+                        </div>
+                        <div class="user-info-item">
+                            <strong>Account Type:</strong> {{ user_info.user_type|title }}
+                        </div>
+                        <div class="user-info-item">
+                            <strong>Google Account:</strong>
+                            {% if user_info.has_google %}
+                                {% if google_connected %}
+                                    <span class="text-success">Connected</span>
+                                {% else %}
+                                    <span class="text-warning">Connected but token expired</span>
+                                    <a href="{% url 'socialaccount_connections' %}" class="btn btn-sm btn-warning ms-2">
+                                        <i class="fas fa-sync me-2"></i> Refresh Connection
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-danger">Not Connected</span>
+                                <a href="{% url 'socialaccount_connections' %}" class="btn btn-sm btn-danger ms-2">
+                                    <i class="fab fa-google me-2"></i> Connect Google Account
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="{% url 'account_logout' %}" class="btn btn-outline-danger">
+                            <i class="fas fa-sign-out-alt me-2"></i> Log Out
+                        </a>
+                        <a href="{% url 'socialaccount_connections' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-cog me-2"></i> Manage Social Accounts
+                        </a>
+                    </div>
+
+                    {% block user_actions %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -207,7 +207,11 @@ SOCIALACCOUNT_PROVIDERS = {
         # For each OAuth based provider, either add a ``SocialApp``
         # (``socialaccount`` app) containing the required client
         # credentials, or list them here:
-        "SCOPE": ["profile", "email", "calendar.readonly", "https://www.googleapis.com/auth/calendar.readonly"],
+        "SCOPE": [
+            "profile",
+            "email",
+            "https://www.googleapis.com/auth/calendar.readonly",
+        ],
         "AUTH_PARAMS": {
             "access_type": "offline",
             "prompt": "select_account",
