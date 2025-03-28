@@ -1,10 +1,11 @@
-from django.test import TestCase, Client
-from django.urls import reverse
+from unittest.mock import MagicMock, patch
+
+from allauth.socialaccount.models import SocialAccount, SocialApp
 from django.contrib.auth import get_user_model
-from django.shortcuts import redirect
-from unittest.mock import patch, MagicMock
-from allauth.socialaccount.models import SocialApp, SocialAccount
 from django.contrib.sites.models import Site
+from django.shortcuts import redirect
+from django.test import Client, TestCase
+from django.urls import reverse
 
 User = get_user_model()
 
@@ -253,7 +254,7 @@ class PasswordResetTests(TestCase):
         )
         self.assertRedirects(response, self.password_reset_done_url)
 
-        # Check with non-existent email (should behave the same to prevent user enumeration)
+        # Check with non-existent email
         response = self.client.post(
             self.password_reset_url, {"email": "nonexistent@example.com"}
         )
@@ -378,8 +379,8 @@ class GoogleAuthTests(TestCase):
                         patch_object = sys.modules[module_path]
                         if hasattr(patch_object, "stop"):
                             patch_object.stop()
+                # During cleanup, patch stopping failures shouldn't interrupt the test
                 except Exception as e:
-                    # During cleanup, patch stopping failures shouldn't interrupt the test
                     print(f"Warning: Failed to stop patch during cleanup: {e}")
                     pass
 
@@ -520,7 +521,7 @@ class GoogleAuthTests(TestCase):
         # Mock the provider_login_url tag to return a dummy URL
         mock_provider_login_url.return_value = "/accounts/google/login/"
 
-        # Instead of testing the actual page rendering which causes the MultipleObjectsReturned,
+        # Instead of testing the page rendering which causes MultipleObjectsReturned,
         # we'll just check if our Google SocialApp exists and is properly configured
         self.assertTrue(SocialApp.objects.filter(provider="google").exists())
 

@@ -39,4 +39,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Template path issues by properly organizing templates
-- Login redirect issues by configuring proper URL patterns 
+- Login redirect issues by configuring proper URL patterns

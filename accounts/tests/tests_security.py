@@ -1,16 +1,17 @@
-from django.test import LiveServerTestCase
-from django.contrib.auth import get_user_model
-from django.urls import reverse
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 import time
+
 import requests
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.test import LiveServerTestCase
+from django.urls import reverse
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 
 User = get_user_model()
 
@@ -102,9 +103,8 @@ class SecurityTests(LiveServerTestCase):
 
             if any(sys.exc_info()) and self.driver:
                 timestamp = int(time.time())
-                self.driver.save_screenshot(
-                    f"test_failure_{self.__class__.__name__}_{self._testMethodName}_{timestamp}.png"
-                )
+                file_id = f"{self._testMethodName}_{timestamp}"
+                self.driver.save_screenshot(f"test_fail_{file_id}.png")
         except Exception as e:
             print(f"Error in tearDown: {e}")
 
@@ -365,7 +365,7 @@ class SecurityTests(LiveServerTestCase):
         # Note about the secure flag in test environment
         print(f"Cookie secure flag: {session_cookie.get('secure', False)}")
         print(
-            "Note: The 'secure' flag may not be set in test environment even though it's configured"
+            "Note: The 'secure' flag may not be set in test environment even though it's configured"  # noqa: E501
         )
         print(
             "      In a production HTTPS environment, the secure flag would be active"

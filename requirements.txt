@@ -11,4 +11,4 @@ django-sslserver-v2
 pytest
 pytest-django
 selenium
-coverage 
+coverage

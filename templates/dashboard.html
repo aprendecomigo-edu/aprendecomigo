@@ -30,7 +30,7 @@
                 </div>
                 <div class="card-body">
                     <h2>Your Account Information</h2>
-                    
+
                     <div class="user-info">
                         <div class="user-info-item">
                             <strong>Username:</strong> {{ user_info.username }}
@@ -45,7 +45,7 @@
                             <strong>Member Since:</strong> {{ user_info.date_joined|date:"F j, Y" }}
                         </div>
                         <div class="user-info-item">
-                            <strong>Google Account:</strong> 
+                            <strong>Google Account:</strong>
                             {% if user_info.has_google %}
                                 {% if google_connected %}
                                     <span class="text-success">Connected</span>
@@ -63,7 +63,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
                     <div class="mt-4">
                         <a href="{% url 'account_logout' %}" class="btn btn-outline-danger">
                             <i class="fas fa-sign-out-alt me-2"></i> Log Out
@@ -72,7 +72,7 @@
                             <i class="fas fa-cog me-2"></i> Manage Social Accounts
                         </a>
                     </div>
-                    
+
                     <!-- Admin links section -->
                     {% if user.is_admin or user.is_staff or user.is_superuser %}
                     <div class="admin-section mt-4">
@@ -85,4 +85,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

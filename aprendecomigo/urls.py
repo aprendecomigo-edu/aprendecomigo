@@ -14,27 +14,30 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path, include
+
 from django.conf import settings
 from django.conf.urls.static import static
-from django.shortcuts import redirect
+from django.contrib import admin
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+from django.urls import include, path
+
 from accounts.views import dashboard_view
+
 
 def home_view(request):
     """Redirect to dashboard if logged in, otherwise to allauth login page."""
     if request.user.is_authenticated:
-        return redirect('dashboard')
-    return redirect('account_login')  # Use allauth's login URL
+        return redirect("dashboard")
+    return redirect("account_login")  # Use allauth's login URL
+
 
 urlpatterns = [
-    path('', home_view, name='home'),
-    path('admin/', admin.site.urls),
-    path('dashboard/', login_required(dashboard_view), name='dashboard'),
-    
+    path("", home_view, name="home"),
+    path("admin/", admin.site.urls),
+    path("dashboard/", login_required(dashboard_view), name="dashboard"),
     # Django AllAuth URLs - keep this first for proper URL resolution
-    path('accounts/', include('allauth.urls')),
+    path("accounts/", include("allauth.urls")),
 ]
 
 # Serve static and media files in development

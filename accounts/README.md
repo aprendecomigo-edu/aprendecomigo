@@ -31,4 +31,4 @@ Tests for this app are split into:
 - `tests.py` - Unit tests for models, views, and forms
 - `tests_ui.py` - Selenium-based UI tests (more brittle, run separately)
 
-Note that UI tests should use the correct URLs from Django's auth system. 
+Note that UI tests should use the correct URLs from Django's auth system.

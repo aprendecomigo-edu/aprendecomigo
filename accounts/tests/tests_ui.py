@@ -1,17 +1,17 @@
-from django.test import LiveServerTestCase
+import time
+
+from allauth.socialaccount.models import SocialApp
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
+from django.test import LiveServerTestCase, TransactionTestCase
 from django.urls import reverse
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
-import time
-from allauth.socialaccount.models import SocialApp
-from django.contrib.sites.models import Site
-from django.test import TransactionTestCase
 
 User = get_user_model()
 
@@ -208,8 +208,8 @@ class AuthenticationUITests(LiveServerTestCase):
                         By.CSS_SELECTOR, "form[action*='logout']"
                     )
                     logout_form.submit()
+                # If all else fails, use JavaScript to just navigate to the logout URL
                 except Exception:
-                    # If all else fails, use JavaScript to just navigate to the logout URL
                     self.driver.execute_script(
                         "window.location.href = '/accounts/logout/';"
                     )
