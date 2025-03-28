@@ -165,6 +165,18 @@ AUTHENTICATION_BACKENDS = [
 
 SITE_ID = 1
 
+# Custom adapters for AllAuth
+ACCOUNT_ADAPTER = "accounts.adapter.CustomAccountAdapter"
+SOCIALACCOUNT_ADAPTER = "accounts.adapter.CustomSocialAccountAdapter"
+
+# Template paths for AllAuth
+ACCOUNT_LOGIN_TEMPLATE = "account/login.html"
+ACCOUNT_SIGNUP_TEMPLATE = "account/signup.html"
+ACCOUNT_LOGOUT_TEMPLATE = "account/logout.html"
+ACCOUNT_PASSWORD_RESET_TEMPLATE = "account/password_reset.html"
+ACCOUNT_PASSWORD_CHANGE_TEMPLATE = "account/password_change.html"
+ACCOUNT_PASSWORD_SET_TEMPLATE = "account/password_set.html"
+
 # AllAuth settings https://docs.allauth.org/en/latest/socialaccount/configuration.html
 # ACCOUNT_EMAIL_REQUIRED = True  # Deprecated
 # ACCOUNT_USERNAME_REQUIRED = False  # Deprecated
@@ -180,8 +192,8 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGOUT_ON_GET = True  # Skip logout confirmation page
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 
-# Allow login through email/password but disable signup form
-ACCOUNT_ALLOW_SIGNUPS = False  # For login but no direct registration
+# Allow login through email/password but enable signup form
+ACCOUNT_ALLOW_SIGNUPS = True
 
 # Auto-create accounts when social login succeeds
 SOCIALACCOUNT_AUTO_SIGNUP = True
@@ -195,7 +207,7 @@ SOCIALACCOUNT_PROVIDERS = {
         # For each OAuth based provider, either add a ``SocialApp``
         # (``socialaccount`` app) containing the required client
         # credentials, or list them here:
-        "SCOPE": ["profile", "email"],
+        "SCOPE": ["profile", "email", "calendar.readonly", "https://www.googleapis.com/auth/calendar.readonly"],
         "AUTH_PARAMS": {
             "access_type": "offline",
             "prompt": "select_account",

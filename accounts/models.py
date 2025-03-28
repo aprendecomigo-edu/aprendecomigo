@@ -50,6 +50,15 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
+# Define user type choices
+USER_TYPE_CHOICES = [
+    ('admin', _('Admin')),
+    ('teacher', _('Teacher')),
+    ('student', _('Student')),
+    ('parent', _('Parent')),
+]
+
+
 class CustomUser(AbstractUser):
     """
     Custom User model with email as primary identifier
@@ -60,6 +69,7 @@ class CustomUser(AbstractUser):
     name = models.CharField(_("name"), max_length=150)
     phone_number = models.CharField(_("phone number"), max_length=20, blank=True)
     is_admin = models.BooleanField(default=False)
+    user_type = models.CharField(_("user type"), max_length=20, choices=USER_TYPE_CHOICES, default='admin')
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
@@ -68,3 +78,27 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class Student(models.Model):
+    """
+    Student profile model with additional fields specific to students
+    """
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='student_profile')
+    school_year = models.CharField(_("school year"), max_length=50)
+    birth_date = models.DateField(_("birth date"))
+    address = models.TextField(_("address"), help_text=_("Street, number, postal code and location"))
+    cc_number = models.CharField(_("CC number"), max_length=20, blank=True)
+    cc_photo = models.ImageField(_("CC photo"), upload_to='cc_photos/', blank=True, null=True, 
+                                help_text=_("Photo of CC front and back (only for in-person students)"))
+    calendar_url = models.URLField(_("calendar URL"), max_length=255, blank=True)
+
+    def __str__(self):
+        return f"Student: {self.user.name}"
+    
+    def save(self, *args, **kwargs):
+        # Ensure the associated user has the student type
+        if self.user.user_type != 'student':
+            self.user.user_type = 'student'
+            self.user.save()
+        super().save(*args, **kwargs)

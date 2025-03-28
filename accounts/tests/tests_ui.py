@@ -13,6 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
+
 User = get_user_model()
 
 
@@ -299,12 +300,5 @@ class GoogleAuthUITests(TransactionTestCase):
     def tearDown(self):
         """Clean up any connections that might cause broken pipes."""
         # TransactionTestCase tests can also benefit from proper connection cleanup
-        try:
-            # Close any active database connections
-            from django.db import connection
-
-            connection.close()
-        except Exception as e:
-            print(f"Error in GoogleAuthUITests tearDown: {e}")
-
+        # Don't close the connection in tearDown - Django will handle this
         super().tearDown()

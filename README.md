@@ -36,6 +36,8 @@ python manage.py migrate
 ```bash
 python manage.py createsuperuser
 ```
+test@aprendecomigo.pt
+Pass12345!
 
 ## Google Calendar Integration
 
