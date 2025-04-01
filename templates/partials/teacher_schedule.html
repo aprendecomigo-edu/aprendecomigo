@@ -1,0 +1,44 @@
+{% if schedule %}
+    {% for class in schedule %}
+        <div class="card class-card mb-3">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="text-center">
+                            <h4 class="mb-0">{{ class.start_time|time:"H:i" }}</h4>
+                            <p class="mb-0">to {{ class.end_time|time:"H:i" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h5 class="card-title">{{ class.class_type.name }}</h5>
+                        <p class="card-text">
+                            {% if class.subject %}
+                                <span class="badge bg-info">{{ class.subject.name }}</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="card-text">
+                            <i class="fas fa-users me-1"></i> Students: 
+                            {% for student in class.students.all %}
+                                {{ student.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                        <p class="card-text">
+                            <i class="fas fa-map-marker-alt me-1"></i> {{ class.location|default:"Online" }}
+                        </p>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-center">
+                        <a href="{{ class.meeting_link }}" target="_blank" class="btn btn-sm btn-outline-primary {% if not class.meeting_link %}disabled{% endif %}">
+                            <i class="fas fa-video me-1"></i> Join
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i> You don't have any classes scheduled for today.
+    </div>
+{% endif %} 

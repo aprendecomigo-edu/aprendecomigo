@@ -187,7 +187,7 @@ def fetch_calendar_events(calendar_id, days=30, admin_email=None, start_date=Non
             # Parse event data
             parsed_title = parse_event_title(title)
             parsed_location = parse_event_location(location)
-            subject_name = parse_event_description(description)
+            class_type_code = parse_event_description(description)
             
             parsed_events.append({
                 "google_calendar_id": event["id"],
@@ -196,8 +196,7 @@ def fetch_calendar_events(calendar_id, days=30, admin_email=None, start_date=Non
                 "end_time": end,
                 "teacher_name": parsed_location,
                 "student_name": parsed_title["student_name"],
-                "subject_name": subject_name,
-                "price_code": subject_name,
+                "class_type_code": class_type_code,
                 "attended": parsed_title["attended"]
             })
             
@@ -233,14 +232,15 @@ def sync_calendar_events(calendar_id, days=30, admin_email=None, start_date=None
         )
         
         # Get or create the class type based on price code
-        class_type, _ = ClassType.objects.get_or_create(
-            name=event_data["price_code"],
-            defaults={
-                "group_class": event_data["price_code"] == "GROUP",
-                "default_duration": 60,  # Default duration
-                "hourly_rate": 0  # Default rate
-            }
-        )
+        class_type_code = event_data["class_type_code"]
+        try:
+            class_type = ClassType.objects.get(name=class_type_code)
+        except ClassType.DoesNotExist:
+            print(f"WARNING: Class type code '{class_type_code}' not found in database. Creating with default values.")
+            class_type = ClassType.objects.create(
+                name=class_type_code,
+                hourly_rate=0,  # Default rate that should be updated by admin
+            )
         
         # Get or create the teacher - search more thoroughly
         teacher_name = event_data["teacher_name"]

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile | Aprende Comigo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-info {
+        margin-top: 20px;
+    }
+    .user-info-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .user-info-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="card-title">Your Profile</h1>
+                </div>
+                <div class="card-body">
+                    <h2>Account Information</h2>
+                    
+                    {% include 'partials/profile_card.html' %}
+
+                    <div class="mt-4">
+                        <a href="{% url 'account_logout' %}" class="btn btn-outline-danger">
+                            <i class="fas fa-sign-out-alt me-2"></i> Log Out
+                        </a>
+                        <a href="{% url 'socialaccount_connections' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-cog me-2"></i> Manage Social Accounts
+                        </a>
+                        <button hx-get="{% url 'profile_edit' %}" hx-target="#profile-content" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i> Edit Profile
+                        </button>
+                    </div>
+                    
+                    <div id="profile-content" class="mt-4">
+                        {% block profile_content %}{% endblock %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
