@@ -17,23 +17,67 @@ A digital platform for specialized training and tutoring centers to manage teach
 - Integrated communication and homework management
 - Reduction of manual processes and errors
 
-## 2. Core Features & Requirements
+## 2. System Architecture
 
-### 2.1 Authentication & Authorization
+### 2.1 High-Level Architecture
+```mermaid
+graph TD
+    A[Admin Dashboard] --> B[Calendar Management]
+    A --> C[Financial Management]
+    A --> D[User Management]
+    
+    B --> E[Google Calendar Integration]
+    B --> F[Class Scheduling]
+    
+    C --> G[Teacher Compensation]
+    C --> H[Student Payments]
+    C --> I[Financial Reports]
+    
+    D --> J[User Profiles]
+    D --> K[Role Management]
+    
+    E --> L[Calendar Sync]
+    F --> M[Class Sessions]
+    
+    G --> N[Hours Tracking]
+    G --> O[Payment Calculation]
+    
+    H --> P[Payment Plans]
+    H --> Q[Payment Tracking]
+```
+
+### 2.2 Financial Data Flow
+```mermaid
+sequenceDiagram
+    participant GC as Google Calendar
+    participant S as Scheduling App
+    participant F as Financial App
+    
+    GC->>S: Read calendar events
+    S->>S: Parse event data (teacher, student, price code, duration)
+    S->>F: Provide structured class session data
+    F->>F: Calculate teacher hours/compensation
+    F->>F: Track student hours/payments
+    F->>F: Generate financial reports
+```
+
+## 3. Core Features & Requirements
+
+### 3.1 Authentication & Authorization
 - Google OAuth integration for login
 - Role-based access control (admin, teacher, student, parent)
 
-### 2.2 Calendar & Scheduling
-- Integration with Google Calendar
-- Embedded calendar view within the platform
-- Class scheduling with details including:
-  - Student name(s)
-  - Teacher name
-  - Class type/code (for pricing reference)
-  - Start/end times
-  - Subject information
+### 3.2 Calendar & Scheduling (READ-ONLY)
+- **Read-only** integration with Google Calendar
+- No event creation or management within the platform
+- Extraction of class data from calendar events:
+  - Student name from event title (with "FALTOU" indicating absence)
+  - Teacher name from location field
+  - Price code from description field
+  - Start/end times for duration calculation
+- Read-only calendar view for teachers and students to see their schedules
 
-### 2.3 Financial Management
+### 3.3 Financial Management (MVP Focus)
 - Track teacher hours and calculate compensation
 - Track student payments and remaining class hours
 - Support multiple payment models:
@@ -42,38 +86,38 @@ A digital platform for specialized training and tutoring centers to manage teach
   - Package deals
   - Different rates based on class types/subjects
 
-### 2.4 Learning Materials & Homework
+### 3.4 Learning Materials & Homework
 - File upload capability
 - Assignment creation with due dates
 - Teacher feedback functionality
 
-### 2.5 Internationalization
+### 3.5 Internationalization
 - Multi-language support (initially Portuguese and Spanish)
 - Translatable text strings throughout the application
 
-## 3. User Roles & Permissions
+## 4. User Roles & Permissions
 
-### 3.1 Admin Staff
+### 4.1 Admin Staff (MVP Focus)
 - Access to all teacher and student information
 - View and manage all calendars
 - Financial oversight for the entire system
 - User management capabilities
 - May also be a teacher with extended permissions
 
-### 3.2 Teachers
+### 4.2 Teachers
 - View and manage their own calendar
 - Access their list of assigned students
 - Post homework/notes to their students
 - View their own financial information (earnings)
 - Communicate with students
 
-### 3.3 Students
+### 4.3 Students
 - View their own calendar and scheduled classes
 - Access homework assignments
 - Submit questions to teachers
 - View their own learning materials
 
-### 3.4 Parents
+### 4.4 Parents
 - Extended permissions to access their children's student portals
 - View financial information related to their children
 - Payment management
@@ -99,8 +143,8 @@ A digital platform for specialized training and tutoring centers to manage teach
 ### 4.4 External Service Integrations
 - Google OAuth for authentication
 - Google Calendar API for scheduling
-- (Optional) Google Drive API for file storage
-- (Optional) Google Meet or Zoom for virtual sessions
+- Google Drive API for file storage
+- Google Meet or Zoom for virtual sessions
 
 ## 5. Data Models
 
@@ -131,7 +175,7 @@ A digital platform for specialized training and tutoring centers to manage teach
 - Default_duration (minutes)
 - Description
 
-### 5.5 ClassSession
+### 5.5 ClassSession (MVP Focus)
 - Title, start_time, end_time, status
 - Teacher (ForeignKey to User)
 - Students (ManyToMany to User)
@@ -140,13 +184,13 @@ A digital platform for specialized training and tutoring centers to manage teach
 - Google_calendar_id
 - Price_override (optional)
 
-### 5.6 PaymentPlan
+### 5.6 PaymentPlan (MVP Focus)
 - Name, description, plan_type
 - Rate (for monthly)
 - Hours_included (for package)
 - Expiration_period (for package)
 
-### 5.7 StudentPayment
+### 5.7 StudentPayment (MVP Focus)
 - Student (ForeignKey to User)
 - Payment_plan (ForeignKey to PaymentPlan)
 - Amount_paid, payment_date
@@ -154,7 +198,7 @@ A digital platform for specialized training and tutoring centers to manage teach
 - Hours_purchased, hours_used (for package)
 - Notes
 
-### 5.8 TeacherCompensation
+### 5.8 TeacherCompensation (MVP Focus)
 - Teacher (ForeignKey to User)
 - Period_start, period_end
 - Hours_taught
@@ -239,19 +283,20 @@ Building philosophy is to use as much of what already exists as possible. django
 
 ## 10. Development Phases
 
-### 10.1 Phase 1 (MVP)
+### 10.1 Phase 1 (MVP) - Financial & Operational Focus
 - Admin functionality for viewing/changing teacher calendars
 - Financial tracking system for:
   - Student payments and remaining hours
   - Teacher compensation tracking
   - Financial overview for administrators
+- Google Calendar integration for class tracking
+- Basic user management
 
 ### 10.2 Future Phases (Post-MVP)
 - Advanced reporting and analytics
-- Notification system
-- Enhanced homework management
-- Additional integration options
-- Mobile applications
+- Homework management
+- Parent portal
+- Internationalization
 
 ## 11. Future Considerations
 

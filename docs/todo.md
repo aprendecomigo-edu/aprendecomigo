@@ -1,14 +1,15 @@
 # School Management Platform - Implementation Checklist
 
-## Phase 1: Core Calendar Management
+## Phase 1: Calendar Data Extraction & Financial Foundation
 
 ### Step 1: Project Setup and Authentication
 - [x] Create Django project "aprendecomigo"
-- [ ] Configure PostgreSQL database connection
+- [x] Configure PostgreSQL database connection
 - [x] Set up timezone and language settings
 - [x] Configure static and media file paths
 - [x] Create accounts app
 - [ ] Create scheduling app
+- [ ] Create financials app
 - [x] Implement custom User model
   - [x] Use email as primary identifier
   - [x] Add name, phone_number, is_admin fields
@@ -22,90 +23,55 @@
   - [x] Password reset forms
 - [x] Set up requirements.txt
   - [x] Django
-  - [ ] PostgreSQL adapter
-  - [ ] python-dotenv
-  - [ ] Pillow
+  - [x] PostgreSQL adapter
+  - [x] python-dotenv
+  - [x] Pillow
   - [x] Google API client libraries
+  - [x] django-allauth
 - [x] Write initial migration files
 - [x] Test user creation and authentication
 
-### Step 2: Calendar Models and Google Integration
+### Step 2: Calendar Models and Google Integration (READ-ONLY)
+- [ ] Create scheduling app
+  - [ ] Set up app configuration
+  - [ ] Create models.py, views.py, urls.py structure
 - [ ] Create Subject model
   - [ ] Add name and description fields
 - [ ] Create ClassType model
   - [ ] Add name, group_class, default_duration fields
+  - [ ] Add hourly_rate field (for pricing)
 - [ ] Create ClassSession model
-  - [ ] Add title, start/end time, status fields
-  - [ ] Set up ForeignKey to teacher
-  - [ ] Set up ManyToMany to students
+  - [ ] Add title field (will store student name)
+  - [ ] Add start/end time, status fields
+  - [ ] Add attended field (False if "FALTOU")
+  - [ ] Set up ForeignKey to teacher (extracted from location)
+  - [ ] Set up ManyToMany to students (extracted from title)
   - [ ] Add ForeignKeys to Subject and ClassType
   - [ ] Add google_calendar_id field
 - [ ] Configure Django admin for models
   - [ ] Register models with admin site
   - [ ] Customize admin displays
-- [ ] Set up Google OAuth2 authentication
+- [ ] Set up Google OAuth2 authentication (READ-ONLY)
   - [ ] Create Google API credentials
-  - [ ] Implement OAuth flow
-  - [ ] Store and manage user credentials
+  - [ ] Implement OAuth flow for admin account
+  - [ ] Store and manage credentials
   - [ ] Handle token refresh
 - [ ] Implement Google Calendar reading functionality
-  - [ ] Fetch events from user's calendar
-  - [ ] Convert events to ClassSession objects
+  - [ ] Fetch events from admin's calendars (online/in-person)
+  - [ ] Parse event data:
+    - [ ] Extract student name from title
+    - [ ] Extract teacher name from location 
+    - [ ] Extract price code from description
+    - [ ] Check for "FALTOU" in title
+  - [ ] Convert parsed data to ClassSession objects
   - [ ] Handle periodic synchronization
-  - [ ] Create conflict resolution logic
-- [ ] Create management command for testing API
+- [ ] Create management command for testing the parser
 - [ ] Test Google Calendar integration
 
-### Step 3: Admin Calendar Interface
-- [ ] Create admin dashboard view
-  - [ ] Embed Google Calendar using iframe
-  - [ ] Display synced class sessions
-  - [ ] Add filter functionality for viewing classes
-  - [ ] Implement sync controls
-- [ ] Implement basic forms for filtering
-  - [ ] DateRangeFilterForm
-  - [ ] TeacherFilterForm
-  - [ ] SubjectFilterForm
-- [ ] Build templates
-  - [ ] Admin dashboard template with embedded calendar
-  - [ ] Calendar filters partial template
-  - [ ] Sync status and controls
-- [ ] Configure URL patterns
-- [ ] Add minimal JavaScript for filter functionality
-  - [ ] Date range selection
-  - [ ] Filter application
-  - [ ] Sync trigger buttons
-- [ ] Create Google Calendar integration features
-  - [ ] Proper calendar embedding with API keys
-  - [ ] Sync status indicators
-  - [ ] Loading state handling
-
-### Step 4: Enhanced Scheduling Features
-- [ ] Improve calendar sync configuration
-  - [ ] Add calendar selection options
-  - [ ] Create event matching rules
-  - [ ] Implement event pattern detection
-- [ ] Enhance data extraction from events
-  - [ ] Extract teacher/student information
-  - [ ] Identify subjects from event details
-  - [ ] Parse additional metadata
-- [ ] Add sync reporting
-  - [ ] Create sync logs
-  - [ ] Implement error handling
-  - [ ] Build sync status dashboard
-- [ ] Enhance calendar filtering
-  - [ ] Add filters for teacher, subject, class type
-  - [ ] Create settings for default views
-  - [ ] Implement filtered view methods
-- [ ] Create basic notification system
-  - [ ] Notification model
-  - [ ] UI notifications for calendar changes
-  - [ ] Email notification setup
-- [ ] Test enhanced scheduling features
-
-## Phase 2: Financial Reporting
-
-### Step 5: Financial Foundation Models
+### Step 3: Financial Foundation Models
+- [ ] Create financials app
+  - [ ] Set up app configuration
+  - [ ] Create models.py, views.py, urls.py structure
 - [ ] Create TeacherProfile model
   - [ ] Add OneToOne link to User
   - [ ] Add hourly_rate field
@@ -113,25 +79,51 @@
 - [ ] Create StudentProfile model
   - [ ] Add OneToOne link to User
   - [ ] Add payment_notes field
-- [ ] Create financials app
-- [ ] Implement PaymentPlan model
-  - [ ] Add name, rate_type, rate, hours_included fields
+- [ ] Create PaymentPlan model
+  - [ ] Add name, plan_type, rate fields
+  - [ ] Add hours_included, expiration_period fields
 - [ ] Create StudentPayment model
   - [ ] Add student ForeignKey
-  - [ ] Add amount, payment_date, notes fields
+  - [ ] Add payment_plan ForeignKey
+  - [ ] Add amount_paid, payment_date fields
+  - [ ] Add period_start, period_end fields
+  - [ ] Add hours_purchased, hours_used fields
 - [ ] Create TeacherCompensation model
   - [ ] Add teacher ForeignKey
-  - [ ] Add month, year, hours_taught fields
-  - [ ] Add amount, paid status fields
-- [ ] Implement financial calculation methods
-  - [ ] Calculate hours from ClassSessions
-  - [ ] Calculate student payments
-  - [ ] Track payment history
-- [ ] Set up Django admin for financial models
-- [ ] Create signals for ClassSession changes
+  - [ ] Add period_start, period_end fields
+  - [ ] Add hours_taught field
+  - [ ] Add amount_owed, amount_paid fields
+  - [ ] Add payment_date field
+- [ ] Implement Django admin for financial models
+- [ ] Create signals to connect scheduling and financials
+  - [ ] Update TeacherCompensation when new ClassSessions are imported
+  - [ ] Update StudentPayment hours_used when new ClassSessions are imported
+  - [ ] Handle payment plan expiration
 - [ ] Test financial models and calculations
 
-### Step 6: Financial Calculations
+### Step 4: Calendar Data Display
+- [ ] Create admin dashboard view
+  - [ ] Display synced class sessions in table format
+  - [ ] Show last sync time and status
+  - [ ] Add filter functionality for viewing classes
+  - [ ] Implement manual sync controls
+- [ ] Implement basic forms for filtering
+  - [ ] DateRangeFilterForm
+  - [ ] TeacherFilterForm
+  - [ ] SubjectFilterForm
+- [ ] Build templates
+  - [ ] Admin dashboard template with class session table
+  - [ ] Calendar filters partial template
+  - [ ] Sync status and controls
+- [ ] Configure URL patterns
+- [ ] Add minimal JavaScript for filter functionality
+  - [ ] Date range selection
+  - [ ] Filter application
+  - [ ] Sync trigger buttons
+
+## Phase 2: Financial Operations
+
+### Step 5: Financial Calculations
 - [ ] Create TeacherCompensationService
   - [ ] Implement hours calculation method
   - [ ] Implement compensation amount method
@@ -151,7 +143,7 @@
   - [ ] Logging for calculations
 - [ ] Test financial calculations
 
-### Step 7: Financial Dashboard
+### Step 6: Financial Dashboard
 - [ ] Create dashboard views
   - [ ] Financial overview view
   - [ ] Teacher compensation view
@@ -177,7 +169,7 @@
   - [ ] Data filtering options
 - [ ] Test financial dashboard
 
-### Step 8: Enhanced Financial Features
+### Step 7: Payment Management
 - [ ] Create PaymentTransaction model
   - [ ] Add detailed transaction fields
 - [ ] Build payment recording system
@@ -199,6 +191,34 @@
   - [ ] Mass email for invoices
   - [ ] Batch report generation
   - [ ] Import/export functionality
+- [ ] Test enhanced financial features
+
+### Step 8: Enhanced Financial Features
+- [ ] Create notification system
+  - [ ] Payment due notifications
+  - [ ] Overdue payment alerts
+  - [ ] Payment confirmation emails
+  - [ ] Financial report notifications
+- [ ] Implement analytics
+  - [ ] Revenue projections
+  - [ ] Teacher earnings analysis
+  - [ ] Student payment patterns
+  - [ ] Financial health indicators
+- [ ] Add batch operations
+  - [ ] Bulk payment recording
+  - [ ] Mass email for invoices
+  - [ ] Batch report generation
+  - [ ] Import/export functionality
+- [ ] Create financial reports
+  - [ ] Monthly revenue reports
+  - [ ] Teacher compensation reports
+  - [ ] Student payment reports
+  - [ ] Financial health reports
+- [ ] Implement data visualization
+  - [ ] Revenue charts
+  - [ ] Payment trend graphs
+  - [ ] Teacher earnings charts
+  - [ ] Student payment status charts
 - [ ] Test enhanced financial features
 
 ## Phase 3: User Role Expansion
@@ -248,101 +268,43 @@
   - [ ] Access controls
 - [ ] Test role-specific interfaces
 
-### Step 11: Communication System
-- [ ] Create notification models
-  - [ ] Notification model
-  - [ ] NotificationPreference model
-- [ ] Implement messaging functionality
-  - [ ] Message model
-  - [ ] Conversation model
-  - [ ] Attachment model
-- [ ] Build announcement system
-  - [ ] Announcement model
-  - [ ] AnnouncementRecipient model
-  - [ ] Templates for announcement types
-- [ ] Create communication views
-  - [ ] NotificationListView
-  - [ ] MessageComposeView
-  - [ ] MessageInboxView and DetailView
-  - [ ] AnnouncementCreateView
-- [ ] Add email integration
-  - [ ] Email sending service
-  - [ ] Email templates
-  - [ ] Preference settings
-- [ ] Test communication system
-
-### Step 12: Profile and Settings
-- [ ] Create profile management views
-  - [ ] ProfileView
-  - [ ] ProfileEditView
-  - [ ] PasswordChangeView
-  - [ ] ProfilePictureUploadView
-- [ ] Implement account settings
-  - [ ] AccountSettingsView
-  - [ ] NotificationSettingsView
-  - [ ] PrivacySettingsView
-  - [ ] CalendarSyncSettingsView
-- [ ] Add preference configuration
-  - [ ] UserPreference model
-  - [ ] Preference form
-  - [ ] Platform-wide preference application
-- [ ] Build profile templates
-  - [ ] Profile display template
-  - [ ] Profile edit template
-  - [ ] Settings templates
-  - [ ] Settings partials
-- [ ] Test profile and settings functionality
-
 ## Phase 4: Advanced Features
 
-### Step 13: Homework Management
-- [ ] Create learning app
-- [ ] Implement Assignment model
-  - [ ] Add title, description, due_date fields
-  - [ ] Link to teacher and class session
-  - [ ] Add file attachment support
-- [ ] Create Submission model
-  - [ ] Link to Assignment and student
-  - [ ] Add submission_date and file fields
-  - [ ] Add notes field
-- [ ] Implement Feedback model
-- [ ] Add file handling
-  - [ ] Secure file storage
+### Step 11: Homework Management
+- [ ] Create homework models
+  - [ ] Assignment model
+  - [ ] Submission model
+  - [ ] Feedback model
+- [ ] Implement file handling
+  - [ ] File upload functionality
   - [ ] File type validation
-  - [ ] Size limits
+  - [ ] Secure storage
 - [ ] Build assignment views
-  - [ ] AssignmentCreateView
-  - [ ] AssignmentListView
-  - [ ] AssignmentDetailView
-  - [ ] SubmissionGradeView
-- [ ] Create submission interface
-  - [ ] SubmissionCreateView
-  - [ ] SubmissionListView
-  - [ ] FeedbackCreateView
-  - [ ] SubmissionDetailView
-- [ ] Integrate with notification system
-  - [ ] New assignment notifications
+  - [ ] Assignment creation
+  - [ ] Assignment listing
+  - [ ] Submission handling
+  - [ ] Feedback system
+- [ ] Create notification system
+  - [ ] New assignment alerts
   - [ ] Due date reminders
   - [ ] Submission confirmations
   - [ ] Feedback notifications
-- [ ] Test homework management system
+- [ ] Test homework system
 
-### Step 14: Internationalization and Polish
-- [ ] Configure Django i18n
-  - [ ] Update settings.py
+### Step 12: Internationalization and Polish
+- [ ] Set up language configuration
+  - [ ] Configure i18n settings
   - [ ] Set up middleware
   - [ ] Configure URL patterns
 - [ ] Create translation files
-  - [ ] Extract strings with makemessages
-  - [ ] Add Portuguese translations
+  - [ ] Extract strings
+  - [ ] Provide Portuguese translations
   - [ ] Implement translation tags
-  - [ ] Use gettext functions
 - [ ] Build language switching
-  - [ ] Language selector component
-  - [ ] Language change view
-  - [ ] User language preference storage
-  - [ ] Profile language setting
-- [ ] Polish UI
+  - [ ] Language selector
+  - [ ] Preference storage
+  - [ ] URL handling
+- [ ] Polish the UI
   - [ ] Enhance responsive design
   - [ ] Add loading indicators
   - [ ] Implement animations
@@ -351,8 +313,7 @@
   - [ ] Configure production settings
   - [ ] Optimize static files
   - [ ] Set up error logging
-  - [ ] Create deployment documentation
-- [ ] Final testing and fixes
+  - [ ] Create documentation
 
 ## Final Validation
 - [ ] Verify all features work together
