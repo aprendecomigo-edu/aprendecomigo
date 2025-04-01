@@ -1,4 +1,4 @@
-{% extends 'dashboard_base.html' %}
+{% extends 'dashboard/base.html' %}
 
 {% block dashboard_css %}
 <style>
@@ -21,7 +21,7 @@
 <span class="badge bg-warning text-dark">Admin</span>
 {% endblock %}
 
-{% block user_actions %}
+{% block dashboard_content %}
 <div class="container mt-4">
     <h2>Class Type Management</h2>
     <p class="lead">Create and manage class types that correspond to Google Calendar event descriptions.</p>
@@ -100,6 +100,7 @@
     
     <div class="mt-4">
         <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        <a href="{% url 'school_profile' %}" class="btn btn-primary">Back to School Profile</a>
     </div>
 </div>
 {% endblock %} 

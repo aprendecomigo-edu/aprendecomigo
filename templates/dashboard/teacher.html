@@ -1,24 +1,7 @@
 {% extends 'dashboard/base.html' %}
 
 {% block dashboard_css %}
-<style>
-    .teacher-stats {
-        margin: 20px 0;
-        padding: 15px;
-        background-color: #e3f2fd;
-        border-radius: 5px;
-        border-left: 5px solid #2196f3;
-    }
-    .teacher-action-card {
-        margin-bottom: 15px;
-        background-color: #e3f2fd;
-        border-left: 3px solid #2196f3;
-    }
-    .class-card {
-        border-left: 3px solid #2196f3;
-        margin-bottom: 10px;
-    }
-</style>
+<!-- Additional dashboard-specific CSS can be added here if needed -->
 {% endblock %}
 
 {% block user_badge %}
@@ -26,10 +9,10 @@
 {% endblock %}
 
 {% block dashboard_content %}
-<div class="teacher-section mt-4">
-    <h3>Teacher Dashboard</h3>
+<div class="mt-4">
+    <h3>Dashboard</h3>
 
-    <div class="teacher-stats row mb-4">
+    <div class="row mb-4">
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
@@ -64,9 +47,9 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="row action-buttons">
         <div class="col-md-6">
-            <div class="card teacher-action-card">
+            <div class="card card-emphasis">
                 <div class="card-body">
                     <h5 class="card-title">Set Availability</h5>
                     <p class="card-text">Update your available time slots for students to book.</p>
@@ -77,7 +60,7 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card teacher-action-card">
+            <div class="card card-emphasis">
                 <div class="card-body">
                     <h5 class="card-title">Student Progress</h5>
                     <p class="card-text">Track the progress of your students.</p>

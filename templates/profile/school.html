@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+
+{% block title %}School Profile - Aprende Comigo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .color-preview {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .preview-card {
+        transition: all 0.3s ease;
+    }
+    
+    .preview-button {
+        transition: all 0.3s ease;
+    }
+    
+    .color-picker-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .color-picker-container input[type="color"] {
+        margin-right: 10px;
+        height: 40px;
+        width: 60px;
+        padding: 2px;
+        border: none;
+        border-radius: 4px;
+        background: none;
+    }
+    
+    .color-picker-container input[type="text"] {
+        width: 100px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">School Profile</h1>
+            
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Students</h5>
+                            <p class="card-text display-4">{{ stats.students|default:"0" }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Teachers</h5>
+                            <p class="card-text display-4">{{ stats.teachers|default:"0" }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Classes</h5>
+                            <p class="card-text display-4">{{ stats.classes|default:"0" }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">Class Types</h5>
+                            <p class="card-text display-4">{{ stats.class_types|default:"0" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Theme Customization Test Section -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h3 class="mb-3">Theme Customization</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Choose Your Colors</h5>
+                                    <div class="color-picker-container">
+                                        <label for="primaryColor">Primary Color:</label>
+                                        <input type="color" id="primaryColor" value="#2c5f9e" class="form-control">
+                                        <input type="text" id="primaryColorHex" value="#2c5f9e" class="form-control">
+                                    </div>
+                                    <div class="color-picker-container">
+                                        <label for="secondaryColor">Secondary Color:</label>
+                                        <input type="color" id="secondaryColor" value="#ffc107" class="form-control">
+                                        <input type="text" id="secondaryColorHex" value="#ffc107" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Preview</h5>
+                                    <div class="color-preview">
+                                        <div class="preview-card card mb-3" id="previewCard">
+                                            <div class="card-header" id="previewHeader">
+                                                <h5 class="card-title mb-0">Card Header</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <p>This is a preview of how your theme colors will look.</p>
+                                                <button class="btn preview-button" id="previewButton">Sample Button</button>
+                                            </div>
+                                        </div>
+                                        <div class="preview-alert alert" id="previewAlert">
+                                            This is a sample alert message
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">School Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>School Name:</strong> Aprende Comigo</p>
+                            <p><strong>Founded:</strong> {{ school_info.founded|default:"2023" }}</p>
+                            <p><strong>Location:</strong> {{ school_info.location|default:"" }}</p>
+                            <p><strong>Website:</strong> {{ school_info.website|default:"www.aprendecomigo.com" }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">Contact Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Email:</strong> {{ school_info.email|default:"contact@aprendecomigo.com" }}</p>
+                            <p><strong>Phone:</strong> {{ school_info.phone|default:"" }}</p>
+                            <p><strong>Address:</strong> {{ school_info.address|default:"" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="mb-3 mt-4">Management Tools</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4" style="border-left: 3px solid #ffc107;">
+                        <div class="card-body">
+                            <h5 class="card-title">Calendar Integration</h5>
+                            <p class="card-text">Sync with Google Calendar to import classes.</p>
+                            <button hx-get="{% url 'calendar_sync' %}" hx-target="#sync-status" class="btn btn-warning">
+                                <i class="fas fa-sync me-2"></i> Sync Calendar
+                                <span class="htmx-indicator spinner-border spinner-border-sm ms-1" role="status"></span>
+                            </button>
+                            <div id="sync-status" class="mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card mb-4" style="border-left: 3px solid #ffc107;">
+                        <div class="card-body">
+                            <h5 class="card-title">Class Type Management</h5>
+                            <p class="card-text">Create and manage class types with hourly rates.</p>
+                            <a href="{% url 'manage_class_types' %}" class="btn btn-warning">Manage Class Types</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get color input elements
+        const primaryColorPicker = document.getElementById('primaryColor');
+        const primaryColorHex = document.getElementById('primaryColorHex');
+        const secondaryColorPicker = document.getElementById('secondaryColor');
+        const secondaryColorHex = document.getElementById('secondaryColorHex');
+        
+        // Get preview elements
+        const previewCard = document.getElementById('previewCard');
+        const previewHeader = document.getElementById('previewHeader');
+        const previewButton = document.getElementById('previewButton');
+        const previewAlert = document.getElementById('previewAlert');
+        
+        // Function to update preview
+        function updatePreview() {
+            const primaryColor = primaryColorPicker.value;
+            const secondaryColor = secondaryColorPicker.value;
+            
+            // Update card header with primary color
+            previewHeader.style.backgroundColor = primaryColor;
+            previewHeader.style.color = '#ffffff';
+            
+            // Update button with secondary color
+            previewButton.style.backgroundColor = secondaryColor;
+            previewButton.style.color = '#000000';
+            
+            // Update card border with secondary color
+            previewCard.style.borderLeft = `4px solid ${secondaryColor}`;
+            
+            // Update alert with secondary color
+            previewAlert.style.backgroundColor = secondaryColor;
+            previewAlert.style.color = '#000000';
+            
+            // Compute lighter version of primary for hover effect
+            previewButton.onmouseover = function() {
+                this.style.backgroundColor = adjustColor(secondaryColor, 20);
+            };
+            previewButton.onmouseout = function() {
+                this.style.backgroundColor = secondaryColor;
+            };
+        }
+        
+        // Helper function to adjust color brightness
+        function adjustColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const r = (num >> 16) + percent;
+            const g = ((num >> 8) & 0x00FF) + percent;
+            const b = (num & 0x0000FF) + percent;
+            
+            const newR = r > 255 ? 255 : r < 0 ? 0 : r;
+            const newG = g > 255 ? 255 : g < 0 ? 0 : g;
+            const newB = b > 255 ? 255 : b < 0 ? 0 : b;
+            
+            return '#' + (newB | (newG << 8) | (newR << 16)).toString(16).padStart(6, '0');
+        }
+        
+        // Sync color picker with hex input
+        primaryColorPicker.addEventListener('input', function() {
+            primaryColorHex.value = this.value;
+            updatePreview();
+        });
+        
+        secondaryColorPicker.addEventListener('input', function() {
+            secondaryColorHex.value = this.value;
+            updatePreview();
+        });
+        
+        // Sync hex input with color picker
+        primaryColorHex.addEventListener('input', function() {
+            if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+                primaryColorPicker.value = this.value;
+                updatePreview();
+            }
+        });
+        
+        secondaryColorHex.addEventListener('input', function() {
+            if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+                secondaryColorPicker.value = this.value;
+                updatePreview();
+            }
+        });
+        
+        // Initial preview update
+        updatePreview();
+    });
+</script>
+{% endblock %}
+{% endblock %} 

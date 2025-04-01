@@ -3,17 +3,8 @@
 {% block title %}Dashboard | Aprende Comigo{% endblock %}
 
 {% block extra_css %}
-<style>
-    .dashboard-container {
-        margin-top: 20px;
-    }
-    .dashboard-header {
-        margin-bottom: 20px;
-    }
-    .dashboard-content {
-        min-height: 400px;
-    }
-</style>
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 {% block dashboard_css %}{% endblock %}
 {% endblock %}
 
