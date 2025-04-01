@@ -22,7 +22,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 from django.urls import include, path
 
-from accounts.views import dashboard_view, student_onboarding_view, user_type_selection_view
+from accounts.views import dashboard_view, student_onboarding_view
 
 
 def home_view(request):
@@ -37,7 +37,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("dashboard/", login_required(dashboard_view), name="dashboard"),
     path("onboarding/student/", login_required(student_onboarding_view), name="student_onboarding"),
-    path("onboarding/select-type/", login_required(user_type_selection_view), name="select_user_type"),
     # Django AllAuth URLs - keep this first for proper URL resolution
     path("accounts/", include("allauth.urls")),
 ]

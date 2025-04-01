@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .forms import CustomUserCreationForm, StudentCreationForm
-from .models import CustomUser, Student
+from .models import CustomUser, Student, Teacher
 
 
 @admin.register(CustomUser)
@@ -112,3 +112,41 @@ class StudentAdmin(admin.ModelAdmin):
             defaults["form"] = self.add_form
         defaults.update(kwargs)
         return super().get_form(request, obj, **defaults)
+
+
+@admin.register(Teacher)
+class TeacherAdmin(admin.ModelAdmin):
+    list_display = ("get_name", "get_email", "specialty", "hourly_rate")
+    search_fields = ("user__name", "user__email", "specialty")
+    fieldsets = (
+        (None, {"fields": ("user",)}),
+        (
+            "Teacher Information",
+            {
+                "fields": (
+                    "bio",
+                    "specialty",
+                    "education",
+                    "hourly_rate",
+                    "availability",
+                    "address",
+                    "phone_number",
+                    "calendar_iframe",
+                )
+            },
+        ),
+    )
+
+    @admin.display(
+        description="Name",
+        ordering="user__name",
+    )
+    def get_name(self, obj):
+        return obj.user.name
+
+    @admin.display(
+        description="Email",
+        ordering="user__email",
+    )
+    def get_email(self, obj):
+        return obj.user.email
