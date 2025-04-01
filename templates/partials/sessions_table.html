@@ -9,7 +9,6 @@
                     <th>Teacher</th>
                     <th>Class Type</th>
                     <th>Status</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -31,14 +30,6 @@
                             <span class="badge bg-danger">Absent</span>
                         {% endif %}
                     </td>
-                    <td>
-                        <button hx-get="{% url 'edit_session' session.id %}" 
-                                hx-target="#edit-session-modal" 
-                                class="btn btn-sm btn-warning">
-                            <i class="fas fa-edit"></i> Edit
-                            <span class="htmx-indicator spinner-border spinner-border-sm" role="status"></span>
-                        </button>
-                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -53,7 +44,6 @@
                     <a class="page-link" 
                        hx-get="{% url 'view_sessions' %}?page=1" 
                        hx-target="#sessions-table" 
-                       hx-push-url="true"
                        aria-label="First">
                         <span aria-hidden="true">&laquo;&laquo;</span>
                     </a>
@@ -62,7 +52,6 @@
                     <a class="page-link" 
                        hx-get="{% url 'view_sessions' %}?page={{ page_obj.previous_page_number }}" 
                        hx-target="#sessions-table" 
-                       hx-push-url="true"
                        aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
@@ -89,8 +78,7 @@
                     <li class="page-item">
                         <a class="page-link" 
                            hx-get="{% url 'view_sessions' %}?page={{ num }}" 
-                           hx-target="#sessions-table"
-                           hx-push-url="true">
+                           hx-target="#sessions-table">
                             {{ num }}
                         </a>
                     </li>
@@ -101,8 +89,7 @@
                 <li class="page-item">
                     <a class="page-link" 
                        hx-get="{% url 'view_sessions' %}?page={{ page_obj.next_page_number }}" 
-                       hx-target="#sessions-table"
-                       hx-push-url="true" 
+                       hx-target="#sessions-table" 
                        aria-label="Next">
                         <span aria-hidden="true">&raquo;</span>
                     </a>
@@ -110,8 +97,7 @@
                 <li class="page-item">
                     <a class="page-link" 
                        hx-get="{% url 'view_sessions' %}?page={{ page_obj.paginator.num_pages }}" 
-                       hx-target="#sessions-table"
-                       hx-push-url="true" 
+                       hx-target="#sessions-table" 
                        aria-label="Last">
                         <span aria-hidden="true">&raquo;&raquo;</span>
                     </a>
