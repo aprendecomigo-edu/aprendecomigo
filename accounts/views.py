@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils.translation import gettext_lazy as _
+from django.http import HttpResponse
 
 from .forms import StudentOnboardingForm
 from .models import Student
@@ -65,31 +66,35 @@ def dashboard_view(request):
 
     # Select template based on user type
     if user_is_admin:
-        template_name = "admin_dashboard.html"
-        # Example statistics for admin dashboard
+        template_name = "dashboard/admin.html"
+        # Import here to avoid circular import
+        from scheduling.models import ClassSession, ClassType
+        # Statistics for admin dashboard
         stats = {
             "students": User.objects.filter(user_type="student").count(),
             "teachers": User.objects.filter(user_type="teacher").count(),
-            "classes": 0,  # Placeholder for class count
+            "classes": ClassSession.objects.count(),
+            "class_types": ClassType.objects.count(),
         }
     elif request.user.user_type == "teacher":
-        template_name = "teacher_dashboard.html"
+        template_name = "dashboard/teacher.html"
         # Example statistics for teacher dashboard
         stats = {
-            "students": 0,  # Placeholder for student count
-            "classes": 0,  # Placeholder for class count
-            "hours": 0,  # Placeholder for hours count
+            "today_classes": 0,  # Placeholder for today's classes
+            "week_classes": 0,   # Placeholder for weekly classes
+            "student_count": 0,  # Placeholder for student count
+            "monthly_earnings": 0,  # Placeholder for monthly earnings
         }
         # Add teacher-specific context data
         context["teacher_classes"] = []  # Placeholder for teacher classes
         context["upcoming_classes"] = []  # Placeholder for upcoming classes
     elif request.user.user_type == "student":
-        template_name = "student_dashboard.html"
+        template_name = "dashboard/student.html"
         # Example statistics for student dashboard
         stats = {
-            "classes": 0,  # Placeholder for class count
-            "hours": 0,  # Placeholder for hours count
-            "assignments": 0,  # Placeholder for assignments count
+            "upcoming_classes": 0,  # Placeholder for upcoming classes
+            "completed_classes": 0,  # Placeholder for completed classes
+            "balance": "$0",  # Placeholder for balance
         }
         # Add student-specific context data
         context["learning_progress"] = []  # Placeholder for learning progress
@@ -100,7 +105,7 @@ def dashboard_view(request):
         )  # Placeholder for upcoming classes
     else:
         # Fallback to generic dashboard
-        template_name = "dashboard.html"
+        template_name = "dashboard/index.html"
 
     context["stats"] = stats
 
@@ -140,3 +145,83 @@ def student_onboarding_view(request):
     return render(
         request, "account/student_onboarding.html", {"form": form, "user": request.user}
     )
+
+@login_required
+def profile_view(request):
+    """Render the user profile page"""
+    # Check if the user has connected their Google account
+    has_google = SocialAccount.objects.filter(
+        user=request.user, provider="google"
+    ).exists()
+
+    # Get user account information
+    user_info = {
+        "username": request.user.username,
+        "email": request.user.email,
+        "name": request.user.name,
+        "date_joined": request.user.date_joined,
+        "user_type": request.user.user_type,
+        "has_google": has_google,
+    }
+
+    # Check Google token status
+    google_connected = False
+    if has_google:
+        try:
+            SocialToken.objects.get(
+                account__user=request.user, account__provider="google"
+            )
+            google_connected = True
+        except SocialToken.DoesNotExist:
+            google_connected = False
+
+    return render(request, "profile/base.html", {
+        "user_info": user_info,
+        "google_connected": google_connected
+    })
+
+@login_required
+def profile_edit(request):
+    """Render the profile edit form"""
+    user_info = {
+        "name": request.user.name,
+        "email": request.user.email,
+        "bio": getattr(request.user, 'bio', ''),
+    }
+    
+    # If this is an HTMX request, return just the form
+    if request.headers.get('HX-Request') == 'true':
+        return render(request, "profile/edit.html", {
+            "user_info": user_info
+        })
+    else:
+        # If not an HTMX request, return the full page
+        return render(request, "profile/base.html", {
+            "user_info": user_info,
+            "show_edit_form": True
+        })
+
+@login_required
+def profile_update(request):
+    """Handle profile updates"""
+    if request.method == 'POST':
+        # Update user profile
+        request.user.name = request.POST.get('name', request.user.name)
+        request.user.email = request.POST.get('email', request.user.email)
+        
+        # Update bio if the field exists in the model
+        if hasattr(request.user, 'bio'):
+            request.user.bio = request.POST.get('bio', '')
+        
+        request.user.save()
+        
+        messages.success(request, _("Your profile has been updated successfully!"))
+        
+        # If this is an HTMX request, return updated profile info
+        if request.headers.get('HX-Request') == 'true':
+            return redirect('profile')
+        else:
+            return redirect('profile')
+    
+    # If not a POST request, redirect to profile page
+    return redirect('profile')

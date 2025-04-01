@@ -1,0 +1,269 @@
+{% extends 'dashboard_base.html' %}
+
+{% block dashboard_css %}
+<style>
+    .filter-section {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .alert-custom {
+        margin-top: 15px;
+    }
+    .session-details {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block user_badge %}
+<span class="badge bg-warning text-dark">Admin</span>
+{% endblock %}
+
+{% block user_actions %}
+<div class="container mt-4">
+    <h2>Class Sessions</h2>
+    <p class="lead">View and filter all class sessions.</p>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-custom">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="filter-section">
+        <form method="get" action="{% url 'view_sessions' %}">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="teacher">Teacher:</label>
+                        <select class="form-control" id="teacher" name="teacher">
+                            <option value="">All Teachers</option>
+                            {% for teacher in teachers %}
+                                <option value="{{ teacher.id }}" {% if selected_teacher == teacher.id %}selected{% endif %}>{{ teacher.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="student">Student:</label>
+                        <select class="form-control" id="student" name="student">
+                            <option value="">All Students</option>
+                            {% for student in students %}
+                                <option value="{{ student.id }}" {% if selected_student == student.id %}selected{% endif %}>{{ student.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="class_type">Class Type:</label>
+                        <select class="form-control" id="class_type" name="class_type">
+                            <option value="">All Types</option>
+                            {% for class_type in class_types %}
+                                <option value="{{ class_type.id }}" {% if selected_class_type == class_type.id %}selected{% endif %}>{{ class_type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="attended">Attendance:</label>
+                        <select class="form-control" id="attended" name="attended">
+                            <option value="">All</option>
+                            <option value="1" {% if selected_attended == '1' %}selected{% endif %}>Attended</option>
+                            <option value="0" {% if selected_attended == '0' %}selected{% endif %}>Absent</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="date_range">Date Range:</label>
+                        <select class="form-control" id="date_range" name="date_range">
+                            <option value="all" {% if date_range == 'all' %}selected{% endif %}>All Time</option>
+                            <option value="today" {% if date_range == 'today' %}selected{% endif %}>Today</option>
+                            <option value="week" {% if date_range == 'week' %}selected{% endif %}>This Week</option>
+                            <option value="month" {% if date_range == 'month' %}selected{% endif %}>This Month</option>
+                            <option value="custom" {% if date_range == 'custom' %}selected{% endif %}>Custom Range</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-3 custom-date-range" {% if date_range != 'custom' %}style="display: none;"{% endif %}>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="start_date">Start Date:</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="end_date">End Date:</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{% url 'view_sessions' %}" class="btn btn-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    {% if sessions %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Student(s)</th>
+                        <th>Teacher</th>
+                        <th>Class Type</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in sessions %}
+                    <tr>
+                        <td>{{ session.start_time|date:"d/m/Y" }}</td>
+                        <td>{{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}</td>
+                        <td>
+                            {% for student in session.students.all %}
+                                {{ student.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>{{ session.teacher.name }}</td>
+                        <td>{{ session.class_type.name }}</td>
+                        <td>
+                            {% if session.attended %}
+                                <span class="badge bg-success">Attended</span>
+                            {% else %}
+                                <span class="badge bg-danger">Absent</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'edit_session' session.id %}" class="btn btn-sm btn-warning">Edit</a>
+                            <button type="button" class="btn btn-sm btn-info view-details" data-id="{{ session.id }}">Details</button>
+                        </td>
+                    </tr>
+                    <tr id="details-{{ session.id }}" class="session-details-row" style="display: none;">
+                        <td colspan="7">
+                            <div class="session-details">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Google Calendar ID:</strong> {{ session.google_calendar_id }}</p>
+                                        <p><strong>Title:</strong> {{ session.title }}</p>
+                                        <p><strong>Subject:</strong> {{ session.subject.name }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Teacher Email:</strong> {{ session.teacher.email }}</p>
+                                        <p><strong>Student Email(s):</strong>
+                                            {% for student in session.students.all %}
+                                                {{ student.email }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </p>
+                                        <p><strong>Hourly Rate:</strong> €{{ session.class_type.hourly_rate }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if is_paginated %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info">No sessions found matching your filter criteria.</div>
+    {% endif %}
+    
+    <div class="mt-4">
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle the custom date range inputs when the date range option changes
+        document.getElementById('date_range').addEventListener('change', function() {
+            if (this.value === 'custom') {
+                document.querySelector('.custom-date-range').style.display = 'flex';
+            } else {
+                document.querySelector('.custom-date-range').style.display = 'none';
+            }
+        });
+        
+        // Toggle session details when the "Details" button is clicked
+        const viewDetailsButtons = document.querySelectorAll('.view-details');
+        viewDetailsButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const sessionId = this.getAttribute('data-id');
+                const detailsRow = document.getElementById('details-' + sessionId);
+                if (detailsRow.style.display === 'none') {
+                    detailsRow.style.display = 'table-row';
+                    this.textContent = 'Hide';
+                } else {
+                    detailsRow.style.display = 'none';
+                    this.textContent = 'Details';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %} 

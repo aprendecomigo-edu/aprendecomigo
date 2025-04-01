@@ -1,0 +1,31 @@
+<div class="card">
+    <div class="card-header">
+        <h3>Edit Profile</h3>
+    </div>
+    <div class="card-body">
+        <form hx-post="{% url 'profile_update' %}" hx-target="#profile-content" hx-swap="outerHTML" hx-indicator="#profile-spinner">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ user_info.name }}">
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ user_info.email }}">
+            </div>
+            <div class="mb-3">
+                <label for="bio" class="form-label">Bio</label>
+                <textarea class="form-control" id="bio" name="bio" rows="3">{{ user_info.bio }}</textarea>
+            </div>
+            <div class="d-flex">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-save me-2"></i> Save Changes
+                    <span id="profile-spinner" class="htmx-indicator spinner-border spinner-border-sm ms-1" role="status"></span>
+                </button>
+                <button hx-get="{% url 'profile' %}" hx-target="#profile-content" type="button" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i> Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div> 

@@ -1,0 +1,143 @@
+{% if sessions %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Student</th>
+                    <th>Teacher</th>
+                    <th>Class Type</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in sessions %}
+                <tr>
+                    <td>{{ session.start_time|date:"d/m/Y" }}</td>
+                    <td>{{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}</td>
+                    <td>
+                        {% for student in session.students.all %}
+                            {{ student.name }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>{{ session.teacher.name }}</td>
+                    <td>{{ session.class_type.name }}</td>
+                    <td>
+                        {% if session.attended %}
+                            <span class="badge bg-success">Attended</span>
+                        {% else %}
+                            <span class="badge bg-danger">Absent</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button hx-get="{% url 'edit_session' session.id %}" 
+                                hx-target="#edit-session-modal" 
+                                class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Edit
+                            <span class="htmx-indicator spinner-border spinner-border-sm" role="status"></span>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <nav aria-label="Session pagination">
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" 
+                       hx-get="{% url 'view_sessions' %}?page=1" 
+                       hx-target="#sessions-table" 
+                       hx-push-url="true"
+                       aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" 
+                       hx-get="{% url 'view_sessions' %}?page={{ page_obj.previous_page_number }}" 
+                       hx-target="#sessions-table" 
+                       hx-push-url="true"
+                       aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <a class="page-link" href="#">{{ num }}</a>
+                    </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" 
+                           hx-get="{% url 'view_sessions' %}?page={{ num }}" 
+                           hx-target="#sessions-table"
+                           hx-push-url="true">
+                            {{ num }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" 
+                       hx-get="{% url 'view_sessions' %}?page={{ page_obj.next_page_number }}" 
+                       hx-target="#sessions-table"
+                       hx-push-url="true" 
+                       aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" 
+                       hx-get="{% url 'view_sessions' %}?page={{ page_obj.paginator.num_pages }}" 
+                       hx-target="#sessions-table"
+                       hx-push-url="true" 
+                       aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    <div class="text-center small text-muted">
+        Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </div>
+    {% endif %}
+{% else %}
+    <div class="alert alert-info">
+        No sessions found matching the criteria. Try adjusting your filters.
+    </div>
+{% endif %}
+
+<div id="edit-session-modal" class="modal fade" tabindex="-1"></div> 

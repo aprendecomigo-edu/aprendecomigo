@@ -1,0 +1,94 @@
+{% extends 'dashboard/base.html' %}
+
+{% block dashboard_css %}
+<style>
+    .student-stats {
+        margin: 20px 0;
+        padding: 15px;
+        background-color: #e8f5e9;
+        border-radius: 5px;
+        border-left: 5px solid #4caf50;
+    }
+    .student-action-card {
+        margin-bottom: 15px;
+        background-color: #e8f5e9;
+        border-left: 3px solid #4caf50;
+    }
+    .class-card {
+        border-left: 3px solid #4caf50;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block user_badge %}
+<span class="badge bg-success">Student</span>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="student-section mt-4">
+    <h3>Student Dashboard</h3>
+
+    <div class="student-stats row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Upcoming Classes</h5>
+                    <p class="card-text display-4">{{ stats.upcoming_classes|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Completed Classes</h5>
+                    <p class="card-text display-4">{{ stats.completed_classes|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Current Balance</h5>
+                    <p class="card-text display-4">{{ stats.balance|default:"$0" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card student-action-card">
+                <div class="card-body">
+                    <h5 class="card-title">Book a Class</h5>
+                    <p class="card-text">Schedule a new class with your preferred teacher.</p>
+                    <a href="{% url 'book_class' %}" class="btn btn-success">Book Now</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card student-action-card">
+                <div class="card-body">
+                    <h5 class="card-title">Payment History</h5>
+                    <p class="card-text">View your payment history and outstanding balances.</p>
+                    <button hx-get="{% url 'payment_history' %}" hx-target="#payment-history" class="btn btn-success">
+                        View History
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="payment-history" class="mt-4"></div>
+
+    <h3 class="mt-4">Upcoming Classes</h3>
+    
+    <div id="upcoming-classes" hx-get="{% url 'upcoming_classes' %}" hx-trigger="load">
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
