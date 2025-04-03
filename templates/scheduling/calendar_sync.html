@@ -1,4 +1,4 @@
-{% extends 'dashboard_base.html' %}
+{% extends 'dashboard/base.html' %}
 
 {% block dashboard_css %}
 <style>
@@ -32,7 +32,7 @@
 <div class="container mt-4">
     <h2>Google Calendar Synchronization</h2>
     <p class="lead">Sync class sessions from Google Calendar.</p>
-    
+
     {% if messages %}
         {% for message in messages %}
             <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-custom">
@@ -40,11 +40,11 @@
             </div>
         {% endfor %}
     {% endif %}
-    
+
     <div class="sync-form">
         <form method="post" id="syncForm">
             {% csrf_token %}
-            
+
             <div class="form-group mb-3">
                 <label for="admin_email">Admin Email (with Google Account):</label>
                 <select class="form-control" id="admin_email" name="admin_email" required>
@@ -55,18 +55,18 @@
                 </select>
                 <small class="form-text text-muted">The admin user must have connected their Google account.</small>
             </div>
-            
+
             <div class="form-group mb-3">
                 <label for="calendar_id">Calendar ID:</label>
                 <input type="text" class="form-control" id="calendar_id" name="calendar_id" value="{{ default_calendar_id }}" required>
                 <small class="form-text text-muted">The ID of the Google Calendar to sync with.</small>
             </div>
-            
+
             <div class="row">
                 <div class="col-md-6">
                     <div class="option-group" id="daysOption">
                         <div class="option-header">
-                            <input type="radio" name="sync_option" id="option_days" value="days" checked> 
+                            <input type="radio" name="sync_option" id="option_days" value="days" checked>
                             <label for="option_days">Sync Next X Days</label>
                         </div>
                         <div class="form-group">
@@ -75,11 +75,11 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="col-md-6">
                     <div class="option-group" id="dateRangeOption">
                         <div class="option-header">
-                            <input type="radio" name="sync_option" id="option_date_range" value="date_range"> 
+                            <input type="radio" name="sync_option" id="option_date_range" value="date_range">
                             <label for="option_date_range">Sync Date Range</label>
                         </div>
                         <div class="form-group mb-3">
@@ -93,14 +93,14 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="form-group mt-3">
                 <button type="submit" class="btn btn-primary">Sync Calendar</button>
                 <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
             </div>
         </form>
     </div>
-    
+
     <div class="card mt-4">
         <div class="card-header">
             <h5>Documentation</h5>
@@ -127,7 +127,7 @@
         const daysInput = document.getElementById('days');
         const startDateInput = document.getElementById('start_date');
         const endDateInput = document.getElementById('end_date');
-        
+
         optionDays.addEventListener('change', function() {
             if (this.checked) {
                 daysInput.disabled = false;
@@ -135,7 +135,7 @@
                 endDateInput.disabled = true;
             }
         });
-        
+
         optionDateRange.addEventListener('change', function() {
             if (this.checked) {
                 daysInput.disabled = true;
@@ -143,18 +143,18 @@
                 endDateInput.disabled = false;
             }
         });
-        
+
         // Set default dates if option is selected
         if (optionDateRange.checked) {
             startDateInput.disabled = false;
             endDateInput.disabled = false;
             daysInput.disabled = true;
         }
-        
+
         // Form submission handling
         document.getElementById('syncForm').addEventListener('submit', function(event) {
             const selectedOption = document.querySelector('input[name="sync_option"]:checked').value;
-            
+
             if (selectedOption === 'date_range') {
                 // Validate date range
                 if (!startDateInput.value || !endDateInput.value) {
@@ -162,7 +162,7 @@
                     alert('Please provide both start and end dates.');
                     return;
                 }
-                
+
                 // Ensure end date is after start date
                 const startDate = new Date(startDateInput.value);
                 const endDate = new Date(endDateInput.value);
@@ -180,4 +180,4 @@
     });
 </script>
 {% endblock %}
-{% endblock %} 
+{% endblock %}

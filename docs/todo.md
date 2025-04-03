@@ -60,7 +60,7 @@
   - [ ] Fetch events from admin's calendars (online/in-person)
   - [ ] Parse event data:
     - [ ] Extract student name from title
-    - [ ] Extract teacher name from location 
+    - [ ] Extract teacher name from location
     - [ ] Extract price code from description
     - [ ] Check for "FALTOU" in title
   - [ ] Convert parsed data to ClassSession objects
@@ -70,35 +70,37 @@
 
 ### Step 3: Financial Foundation Models
 - [ ] Create financials app
-  - [ ] Set up app configuration
-  - [ ] Create models.py, views.py, urls.py structure
-- [ ] Create TeacherProfile model
-  - [ ] Add OneToOne link to User
-  - [ ] Add hourly_rate field
-  - [ ] Add bio field
-- [ ] Create StudentProfile model
-  - [ ] Add OneToOne link to User
-  - [ ] Add payment_notes field
+  - [ ] Run startapp command
+  - [ ] Add to INSTALLED_APPS
+  - [ ] Setup models.py, admin.py, views.py structure
 - [ ] Create PaymentPlan model
-  - [ ] Add name, plan_type, rate fields
-  - [ ] Add hours_included, expiration_period fields
+  - [ ] Add name, description fields
+  - [ ] Add plan_type field with choices
+  - [ ] Add rate field for monthly plans
+  - [ ] Add hours_included, expiration_period for package plans
+  - [ ] Add class_type ForeignKey to scheduling.ClassType
 - [ ] Create StudentPayment model
-  - [ ] Add student ForeignKey
+  - [ ] Add student ForeignKey to CustomUser
   - [ ] Add payment_plan ForeignKey
   - [ ] Add amount_paid, payment_date fields
-  - [ ] Add period_start, period_end fields
-  - [ ] Add hours_purchased, hours_used fields
+  - [ ] Add period_start, period_end fields for monthly plans
+  - [ ] Add hours_purchased, hours_used for package plans
+  - [ ] Add notes and status fields
 - [ ] Create TeacherCompensation model
   - [ ] Add teacher ForeignKey
   - [ ] Add period_start, period_end fields
+  - [ ] Add class_sessions ManyToManyField to ClassSession
   - [ ] Add hours_taught field
   - [ ] Add amount_owed, amount_paid fields
-  - [ ] Add payment_date field
-- [ ] Implement Django admin for financial models
-- [ ] Create signals to connect scheduling and financials
-  - [ ] Update TeacherCompensation when new ClassSessions are imported
-  - [ ] Update StudentPayment hours_used when new ClassSessions are imported
-  - [ ] Handle payment plan expiration
+  - [ ] Add payment_date, notes, status fields
+- [ ] Implement Django admin for models
+  - [ ] Register models with admin site
+  - [ ] Create custom ModelAdmin classes
+  - [ ] Add appropriate filters and fields
+- [ ] Create financial service classes
+  - [ ] StudentPaymentService for calculations
+  - [ ] TeacherCompensationService for calculations
+  - [ ] Financial utility functions
 - [ ] Test financial models and calculations
 
 ### Step 4: Calendar Data Display
@@ -326,3 +328,14 @@
 - [ ] Final security review
 - [ ] Performance optimization review
 - [ ] Documentation completeness check
+
+## Financial Management
+
+- [x] Create payment plan models
+- [x] Implement student payment tracking
+- [x] Develop teacher compensation system
+- [x] Build financial reports
+- [x] Implement proper permissions and access control
+- [ ] Add payment gateway integration
+- [ ] Create invoicing system
+- [ ] Implement tax calculation and reporting

@@ -27,8 +27,32 @@
                             <a class="nav-link" href="{% url 'profile' %}">Profile</a>
                         </li>
                         {% if user.is_admin or user.is_staff %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="financialDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-chart-line me-1"></i> Financial Reports
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="financialDropdown">
+                                    <li><a class="dropdown-item" href="{% url 'financials:admin_dashboard' %}">Financial Dashboard</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'financials:payment_report' %}">Student Payments</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'financials:compensation_report' %}">Teacher Compensations</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'financials:financial_summary' %}">Financial Summary</a></li>
+                                </ul>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="/admin/">Admin</a>
+                            </li>
+                        {% elif user.user_type == 'student' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'financials:student_payment_list' %}">
+                                    <i class="fas fa-money-bill-wave me-1"></i> My Payments
+                                </a>
+                            </li>
+                        {% elif user.user_type == 'teacher' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'financials:teacher_compensation_list' %}">
+                                    <i class="fas fa-money-check-alt me-1"></i> My Compensation
+                                </a>
                             </li>
                         {% endif %}
                         <li class="nav-item">
@@ -68,13 +92,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
-    
+
     <!-- Initialize HTMX event listeners and extensions -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Set CSRF token for all HTMX requests
             htmx.config.headers['X-CSRFToken'] = '{{ csrf_token }}';
-            
+
             // Add loading indicators for HTMX requests
             htmx.on('htmx:beforeSend', function(evt) {
                 let target = evt.detail.target;
@@ -82,7 +106,7 @@
                     target.querySelector('.htmx-indicator').style.display = 'block';
                 }
             });
-            
+
             htmx.on('htmx:afterSettle', function(evt) {
                 let target = evt.detail.target;
                 if (target.querySelector('.htmx-indicator')) {

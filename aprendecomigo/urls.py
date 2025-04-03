@@ -36,9 +36,15 @@ urlpatterns = [
     path("", home_view, name="home"),
     path("admin/", admin.site.urls),
     path("dashboard/", login_required(dashboard_view), name="dashboard"),
-    path("onboarding/student/", login_required(student_onboarding_view), name="student_onboarding"),
+    path(
+        "onboarding/student/",
+        login_required(student_onboarding_view),
+        name="student_onboarding",
+    ),
     # Scheduling app URLs
     path("scheduling/", include("scheduling.urls")),
+    # Financials app URLs
+    path("financials/", include("financials.urls")),
     # Include custom accounts URLs
     path("", include("accounts.urls")),
     # Django AllAuth URLs - keep this last for proper URL resolution

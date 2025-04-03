@@ -25,23 +25,23 @@ graph TD
     A[Admin Dashboard] --> B[Calendar Management]
     A --> C[Financial Management]
     A --> D[User Management]
-    
+
     B --> E[Google Calendar Integration]
     B --> F[Class Scheduling]
-    
+
     C --> G[Teacher Compensation]
     C --> H[Student Payments]
     C --> I[Financial Reports]
-    
+
     D --> J[User Profiles]
     D --> K[Role Management]
-    
+
     E --> L[Calendar Sync]
     F --> M[Class Sessions]
-    
+
     G --> N[Hours Tracking]
     G --> O[Payment Calculation]
-    
+
     H --> P[Payment Plans]
     H --> Q[Payment Tracking]
 ```
@@ -52,7 +52,7 @@ sequenceDiagram
     participant GC as Google Calendar
     participant S as Scheduling App
     participant F as Financial App
-    
+
     GC->>S: Read calendar events
     S->>S: Parse event data (teacher, student, price code, duration)
     S->>F: Provide structured class session data
@@ -185,25 +185,30 @@ sequenceDiagram
 - Price_override (optional)
 
 ### 5.6 PaymentPlan (MVP Focus)
-- Name, description, plan_type
+- Name, description, plan_type (monthly/package)
 - Rate (for monthly)
 - Hours_included (for package)
 - Expiration_period (for package)
+- Class_type (ForeignKey to ClassType, optional)
 
 ### 5.7 StudentPayment (MVP Focus)
-- Student (ForeignKey to User)
+- Student (ForeignKey to User with user_type="student")
 - Payment_plan (ForeignKey to PaymentPlan)
 - Amount_paid, payment_date
 - Period_start, period_end (for monthly)
 - Hours_purchased, hours_used (for package)
+- Status (pending, completed, cancelled)
 - Notes
 
 ### 5.8 TeacherCompensation (MVP Focus)
-- Teacher (ForeignKey to User)
+- Teacher (ForeignKey to User with user_type="teacher")
 - Period_start, period_end
-- Hours_taught
-- Amount_owed, amount_paid
+- Class_sessions (ManyToMany to ClassSession)
+- Hours_taught (calculated from sessions)
+- Amount_owed (calculated based on ClassType rates)
+- Amount_paid
 - Payment_date
+- Status (pending, completed, cancelled)
 - Notes
 
 ### 5.9 HomeworkAssignment
@@ -307,3 +312,17 @@ Building philosophy is to use as much of what already exists as possible. django
 - Advanced student progress tracking
 - Parent-teacher communication portal
 - Virtual classroom integration
+
+## Authentication and Permissions
+
+The application implements a comprehensive role-based permission system:
+
+- **Superusers**: Full access to all features and administration
+- **Staff**: Access to administrative features but with limited privileges
+- **Teachers**: Access to teaching-related features and their own data
+- **Students**: Access to learning features and their own data
+- **Parents**: Access to their children's data (future)
+
+For specific implementation details, see:
+- [User Authentication Flow](/docs/user_authentication.md)
+- [Financials Permissions Documentation](/docs/financials_permissions.md)

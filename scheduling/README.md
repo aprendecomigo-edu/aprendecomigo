@@ -29,7 +29,7 @@ See the [Calendar Format Documentation](docs/calendar_format.md) for detailed fo
 ## Setup
 
 1. Ensure admin users connect their Google accounts via the social login feature
-2. Make sure the Google Calendar API is enabled in your Google Project 
+2. Make sure the Google Calendar API is enabled in your Google Project
 3. Add the Calendar API scope in settings.py (should already be configured)
 4. Run migrations:
    ```
@@ -57,4 +57,4 @@ When syncing calendar events, the system will:
 2. Set appropriate user types (teacher/student) for these placeholder users
 3. Create email addresses in the format `username@placeholder.aprendecomigo.com`
 
-These placeholder users will need profile completion later. 
+These placeholder users will need profile completion later.
