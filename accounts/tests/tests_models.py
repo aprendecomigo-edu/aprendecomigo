@@ -61,24 +61,24 @@ class CustomUserModelTests(TestCase):
         """Test username is automatically generated from email."""
         user = User.objects.create_user(**self.user_data)
         self.assertEqual(user.username, "test")
-        
+
         # Test username uniqueness
         user2_data = self.user_data.copy()
         user2_data["email"] = "test@another.com"
         user2 = User.objects.create_user(**user2_data)
         self.assertEqual(user2.username, "test1")
-        
+
     def test_user_type_default(self):
         """Test default user type."""
         user = User.objects.create_user(**self.user_data)
-        self.assertEqual(user.user_type, 'admin')
-        
+        self.assertEqual(user.user_type, "admin")
+
     def test_update_user_type(self):
         """Test updating user type."""
         user = User.objects.create_user(**self.user_data)
-        user.user_type = 'student'
+        user.user_type = "student"
         user.save()
-        self.assertEqual(user.user_type, 'student')
+        self.assertEqual(user.user_type, "student")
 
 
 class StudentModelTests(TestCase):
@@ -91,7 +91,7 @@ class StudentModelTests(TestCase):
             password="studentpass123",
             name="Student User",
         )
-        
+
         self.student_data = {
             "user": self.user,
             "school_year": "10",
@@ -115,7 +115,9 @@ class StudentModelTests(TestCase):
         self.assertEqual(student.address, self.student_data["address"])
         self.assertEqual(student.cc_number, self.student_data["cc_number"])
         self.assertEqual(student.calendar_url, "")
-        self.assertFalse(bool(student.cc_photo))  # Use assertFalse instead of assertEqual
+        self.assertFalse(
+            bool(student.cc_photo)
+        )  # Use assertFalse instead of assertEqual
 
     def test_student_string_representation(self):
         """Test the string representation of a student."""
@@ -125,16 +127,16 @@ class StudentModelTests(TestCase):
     def test_user_type_set_on_save(self):
         """Test that user type is set to 'student' on save."""
         # Initially the user is not a student
-        self.assertNotEqual(self.user.user_type, 'student')
-        
+        self.assertNotEqual(self.user.user_type, "student")
+
         # Creating a student profile should update user_type
         student = Student.objects.create(**self.student_data)
-        
+
         # Refresh the user from the database
         self.user.refresh_from_db()
-        self.assertEqual(self.user.user_type, 'student')
+        self.assertEqual(self.user.user_type, "student")
 
     def test_related_name_access(self):
         """Test accessing student profile via related name."""
         student = Student.objects.create(**self.student_data)
-        self.assertEqual(self.user.student_profile, student) 
+        self.assertEqual(self.user.student_profile, student)

@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Financial Summary" %} | {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .summary-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .date-filter {
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        padding: 1.5rem;
+        height: 100%;
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 2.25rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+    }
+    
+    .income-bg {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+    
+    .expense-bg {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+    
+    .net-bg {
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+    
+    .list-item {
+        border: none;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        background-color: #f8f9fa;
+        transition: background-color 0.2s;
+    }
+    
+    .list-item:hover {
+        background-color: #e9ecef;
+    }
+    
+    .action-button {
+        border-radius: 8px;
+        padding: 0.75rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0 fw-bold">{% trans "Financial Summary" %}</h1>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="date-filter">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="start_date" class="form-label fw-medium">{% trans "Start Date" %}</label>
+                <input type="date" class="form-control form-control-lg" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label for="end_date" class="form-label fw-medium">{% trans "End Date" %}</label>
+                <input type="date" class="form-control form-control-lg" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100 py-3">
+                    <i class="fas fa-sync-alt me-2"></i> {% trans "Generate Report" %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Financial Stats -->
+    <div class="row g-4 mb-5">
+        <!-- Income Card -->
+        <div class="col-md-4">
+            <div class="summary-card card stat-card">
+                <div class="stat-icon income-bg">
+                    <i class="fas fa-chart-line fa-lg text-success"></i>
+                </div>
+                <h3 class="stat-value text-success">${{ summary.income.total }}</h3>
+                <p class="stat-label">{% trans "Total Income" %}</p>
+                
+                <h6 class="fw-bold mb-3">{% trans "By Payment Plan" %}</h6>
+                
+                {% for plan_name, stats in summary.income.by_plan.items %}
+                    <div class="list-item p-2 d-flex justify-content-between align-items-center">
+                        <span class="fw-medium">{{ plan_name }}</span>
+                        <span class="badge bg-success rounded-pill fs-6 px-3 py-2">${{ stats.total }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Expenses Card -->
+        <div class="col-md-4">
+            <div class="summary-card card stat-card">
+                <div class="stat-icon expense-bg">
+                    <i class="fas fa-file-invoice-dollar fa-lg text-danger"></i>
+                </div>
+                <h3 class="stat-value text-danger">${{ summary.expenses.total }}</h3>
+                <p class="stat-label">{% trans "Total Expenses" %}</p>
+                
+                <p class="mb-3">{% trans "Total teacher compensations" %}: {{ summary.expenses.count }}</p>
+                
+                <div class="mt-auto pt-3">
+                    <a href="{% url 'financials:compensation_report' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-outline-danger w-100">
+                        <i class="fas fa-search me-2"></i> {% trans "View Compensation Details" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net Income Card -->
+        <div class="col-md-4">
+            <div class="summary-card card stat-card">
+                <div class="stat-icon net-bg">
+                    <i class="fas fa-balance-scale fa-lg text-primary"></i>
+                </div>
+                <h3 class="stat-value {% if summary.net_income >= 0 %}text-primary{% else %}text-warning{% endif %}">
+                    ${{ summary.net_income }}
+                </h3>
+                <p class="stat-label">{% trans "Net Income" %}</p>
+                
+                <p class="mb-3">
+                    <span class="fw-medium">{% trans "Period" %}:</span> {{ summary.period.start_date|date:'M d, Y' }} - {{ summary.period.end_date|date:'M d, Y' }}
+                </p>
+                
+                {% if summary.net_income >= 0 %}
+                    <div class="alert alert-success mt-auto">
+                        <i class="fas fa-check-circle me-2"></i> {% trans "Business is profitable in this period!" %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning mt-auto">
+                        <i class="fas fa-exclamation-triangle me-2"></i> {% trans "Expenses exceeded income in this period." %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row g-3">
+        <div class="col-md-4">
+            <a href="{% url 'financials:payment_report' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-success action-button w-100">
+                <i class="fas fa-file-invoice-dollar me-2"></i> {% trans "Detailed Payment Report" %}
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'admin:financials_paymentplan_changelist' %}" class="btn btn-outline-primary action-button w-100">
+                <i class="fas fa-cog me-2"></i> {% trans "Manage Payment Plans" %}
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'admin:financials_studentpayment_add' %}" class="btn btn-outline-secondary action-button w-100">
+                <i class="fas fa-plus-circle me-2"></i> {% trans "Add New Payment" %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

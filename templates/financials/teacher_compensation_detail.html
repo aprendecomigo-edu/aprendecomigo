@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Compensation Details" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{% trans "Compensation Details" %}</h1>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>{% trans "Period" %}: {{ compensation.period_start|date:"F Y" }}</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>{% trans "Hours Worked" %}:</strong> {{ compensation.hours }}</p>
+                    <p><strong>{% trans "Hourly Rate" %}:</strong> ${{ compensation.hourly_rate }}</p>
+                    <p><strong>{% trans "Total Owed" %}:</strong> ${{ compensation.amount_owed }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>{% trans "Amount Paid" %}:</strong> ${{ compensation.amount_paid }}</p>
+                    <p><strong>{% trans "Balance Due" %}:</strong> ${{ balance_due }}</p>
+                    <p><strong>{% trans "Status" %}:</strong>
+                        {% if is_fully_paid %}
+                            <span class="badge bg-success">{% trans "Paid" %}</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">{% trans "Pending" %}</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <h5>{% trans "Sessions Included" %}</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Date" %}</th>
+                                <th>{% trans "Student" %}</th>
+                                <th>{% trans "Hours" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in compensation.sessions.all %}
+                            <tr>
+                                <td>{{ session.start_time|date:"M d, Y" }}</td>
+                                <td>{{ session.student.user.get_full_name }}</td>
+                                <td>{{ session.duration_hours }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">{% trans "No sessions found." %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {% if compensation.notes %}
+            <div class="mt-3">
+                <h5>{% trans "Notes" %}</h5>
+                <p>{{ compensation.notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-footer text-end">
+            <a href="{% url 'financials:teacher_compensation_list' %}" class="btn btn-secondary">
+                {% trans "Back to Compensations" %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

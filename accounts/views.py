@@ -2,9 +2,9 @@ from allauth.socialaccount.models import SocialAccount, SocialToken
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.utils.translation import gettext_lazy as _
-from django.http import HttpResponse
 
 from .forms import StudentOnboardingForm
 from .models import Student
@@ -19,7 +19,7 @@ def dashboard_view(request):
     if request.user.user_type == "student":
         try:
             # Check if student profile exists
-            student = request.user.student_profile # TODO do we need this?
+            student = request.user.student_profile  # TODO do we need this?
         except Student.DoesNotExist:
             # Redirect to student onboarding
             messages.info(request, _("Please complete your student profile"))
@@ -70,7 +70,7 @@ def dashboard_view(request):
         # Example statistics for teacher dashboard
         stats = {
             "today_classes": 0,  # Placeholder for today's classes
-            "week_classes": 0,   # Placeholder for weekly classes
+            "week_classes": 0,  # Placeholder for weekly classes
             "student_count": 0,  # Placeholder for student count
             "monthly_earnings": 0,  # Placeholder for monthly earnings
         }
@@ -135,6 +135,7 @@ def student_onboarding_view(request):
         request, "account/student_onboarding.html", {"form": form, "user": request.user}
     )
 
+
 @login_required
 def profile_view(request):
     """Render the user profile page"""
@@ -175,14 +176,12 @@ def profile_edit(request):
     user_info = {
         "name": request.user.name,
         "email": request.user.email,
-        "bio": getattr(request.user, 'bio', ''),
+        "bio": getattr(request.user, "bio", ""),
     }
-    
+
     # If this is an HTMX request, return just the form
-    if request.headers.get('HX-Request') == 'true':
-        return render(request, "profile/edit.html", {
-            "user_info": user_info
-        })
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "profile/edit.html", {"user_info": user_info})
     else:
         # If not an HTMX request, return the full page
         return render(request, "profile/page.html", {
@@ -193,25 +192,25 @@ def profile_edit(request):
 @login_required
 def profile_update(request):
     """Handle profile updates"""
-    if request.method == 'POST':
+    if request.method == "POST":
         # Update user profile
-        request.user.name = request.POST.get('name', request.user.name)
-        request.user.email = request.POST.get('email', request.user.email)
-        
+        request.user.name = request.POST.get("name", request.user.name)
+        request.user.email = request.POST.get("email", request.user.email)
+
         # Update bio if the field exists in the model
-        if hasattr(request.user, 'bio'):
-            request.user.bio = request.POST.get('bio', '')
-        
+        if hasattr(request.user, "bio"):
+            request.user.bio = request.POST.get("bio", "")
+
         request.user.save()
-        
+
         messages.success(request, _("Your profile has been updated successfully!"))
-        
+
         # If this is an HTMX request, return updated profile info
-        if request.headers.get('HX-Request') == 'true':
-            return redirect('profile')
+        if request.headers.get("HX-Request") == "true":
+            return redirect("profile")
         else:
-            return redirect('profile')
-    
+            return redirect("profile")
+
     # If not a POST request, redirect to profile page
     return redirect('profile')
 

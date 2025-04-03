@@ -58,4 +58,4 @@ You can specify the number of days to fetch events for, or use a date range:
 python manage.py sync_calendar --admin-email admin@example.com --start-date 2023-06-01 --end-date 2023-06-30
 ```
 
-This will create or update class sessions in the database, and create placeholder user accounts for any students or teachers who don't already exist in the system. 
+This will create or update class sessions in the database, and create placeholder user accounts for any students or teachers who don't already exist in the system.
