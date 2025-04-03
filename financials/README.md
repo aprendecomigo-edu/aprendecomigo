@@ -54,6 +54,8 @@ The app provides service classes for financial calculations:
 - **Students**: Access to their own payment records
 - **Parents**: Access to their children's payment records
 
+For detailed information on permission implementation and testing, see [Financials Permissions Documentation](/docs/financials_permissions.md).
+
 ## How to Use
 
 ### Setup
@@ -94,4 +96,4 @@ The app includes signals to:
 
 - Update student payment hours used when classes are attended
 - Create teacher compensation records based on class sessions
-- Check for payment plan expiration 
+- Check for payment plan expiration

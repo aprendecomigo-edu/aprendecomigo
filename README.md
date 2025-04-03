@@ -53,7 +53,7 @@ The application is built with a modular structure using multiple Django apps tha
 
 ### Key Interaction Points
 
-1. **Data Flow:** 
+1. **Data Flow:**
    - Google Calendar → Scheduling App → Financial App
    - No data flows back to Google Calendar (read-only)
 

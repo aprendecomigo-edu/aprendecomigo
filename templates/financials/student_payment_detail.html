@@ -6,7 +6,7 @@
 {% block content %}
 <div class="container mt-4">
     <h1>{% trans "Payment Details" %}</h1>
-    
+
     <div class="card mb-4">
         <div class="card-header">
             <h4>{{ payment.payment_plan.name }}</h4>
@@ -20,7 +20,7 @@
                     <p><strong>{% trans "Reference" %}:</strong> {{ payment.reference|default:"--" }}</p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>{% trans "Status" %}:</strong> 
+                    <p><strong>{% trans "Status" %}:</strong>
                         {% if payment.is_expired %}
                             <span class="badge bg-danger">{% trans "Expired" %}</span>
                         {% else %}
@@ -32,7 +32,7 @@
                     <p><strong>{% trans "Expiration Date" %}:</strong> {{ payment.expiration_date|date:"F d, Y" }}</p>
                 </div>
             </div>
-            
+
             {% if payment.notes %}
             <div class="mt-3">
                 <h5>{% trans "Notes" %}</h5>
@@ -47,4 +47,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

@@ -11,7 +11,7 @@
         function addUserTypeToForm(formElement, userType) {
             // Check if the form already has a user_type field
             let userTypeInput = formElement.querySelector('input[name="user_type"]');
-            
+
             if (!userTypeInput) {
                 // If it doesn't exist, create a new hidden field
                 userTypeInput = document.createElement('input');
@@ -19,7 +19,7 @@
                 userTypeInput.name = 'user_type';
                 formElement.appendChild(userTypeInput);
             }
-            
+
             // Set the value
             userTypeInput.value = userType;
         }
@@ -28,20 +28,20 @@
         const studentTab = document.getElementById('student-tab');
         const teacherTab = document.getElementById('teacher-tab');
         const signupForms = document.querySelectorAll('form.signup, form.social-signup');
-        
+
         if (studentTab && teacherTab) {
             studentTab.addEventListener('click', function() {
                 signupForms.forEach(form => {
                     addUserTypeToForm(form, 'student');
                 });
             });
-            
+
             teacherTab.addEventListener('click', function() {
                 signupForms.forEach(form => {
                     addUserTypeToForm(form, 'teacher');
                 });
             });
-            
+
             // Set student as default
             signupForms.forEach(form => {
                 addUserTypeToForm(form, 'student');
@@ -67,7 +67,7 @@
                 </button>
             </li>
         </ul>
-        
+
         <div class="tab-content" id="userTypeTabContent">
             <div class="tab-pane fade show active" id="student-tab-pane" role="tabpanel" aria-labelledby="student-tab" tabindex="0">
                 <div class="card">
@@ -142,7 +142,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="tab-pane fade" id="teacher-tab-pane" role="tabpanel" aria-labelledby="teacher-tab" tabindex="0">
                 <div class="card">
                     <div class="card-header bg-primary text-white">

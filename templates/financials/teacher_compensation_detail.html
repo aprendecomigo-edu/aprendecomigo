@@ -6,7 +6,7 @@
 {% block content %}
 <div class="container mt-4">
     <h1>{% trans "Compensation Details" %}</h1>
-    
+
     <div class="card mb-4">
         <div class="card-header">
             <h4>{% trans "Period" %}: {{ compensation.period_start|date:"F Y" }}</h4>
@@ -21,7 +21,7 @@
                 <div class="col-md-6">
                     <p><strong>{% trans "Amount Paid" %}:</strong> ${{ compensation.amount_paid }}</p>
                     <p><strong>{% trans "Balance Due" %}:</strong> ${{ balance_due }}</p>
-                    <p><strong>{% trans "Status" %}:</strong> 
+                    <p><strong>{% trans "Status" %}:</strong>
                         {% if is_fully_paid %}
                             <span class="badge bg-success">{% trans "Paid" %}</span>
                         {% else %}
@@ -30,7 +30,7 @@
                     </p>
                 </div>
             </div>
-            
+
             <div class="mt-4">
                 <h5>{% trans "Sessions Included" %}</h5>
                 <div class="table-responsive">
@@ -58,7 +58,7 @@
                     </table>
                 </div>
             </div>
-            
+
             {% if compensation.notes %}
             <div class="mt-3">
                 <h5>{% trans "Notes" %}</h5>
@@ -73,4 +73,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

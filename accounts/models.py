@@ -124,20 +124,34 @@ class Teacher(models.Model):
     user = models.OneToOneField(
         CustomUser, on_delete=models.CASCADE, related_name="teacher_profile"
     )
-    bio = models.TextField(_("biography"), blank=True, help_text=_("Teacher's professional biography"))
+    bio = models.TextField(
+        _("biography"), blank=True, help_text=_("Teacher's professional biography")
+    )
     specialty = models.CharField(_("specialty"), max_length=100, blank=True)
-    education = models.TextField(_("education"), blank=True, help_text=_("Educational background and qualifications"))
-    hourly_rate = models.DecimalField(_("hourly rate"), max_digits=6, decimal_places=2, null=True, blank=True)
-    availability = models.TextField(_("availability"), blank=True, help_text=_("Available days and times for lessons"))
+    education = models.TextField(
+        _("education"),
+        blank=True,
+        help_text=_("Educational background and qualifications"),
+    )
+    hourly_rate = models.DecimalField(
+        _("hourly rate"), max_digits=6, decimal_places=2, null=True, blank=True
+    )
+    availability = models.TextField(
+        _("availability"),
+        blank=True,
+        help_text=_("Available days and times for lessons"),
+    )
     address = models.TextField(
-        _("address"), blank=True, help_text=_("Street, number, postal code and location")
+        _("address"),
+        blank=True,
+        help_text=_("Street, number, postal code and location"),
     )
     phone_number = models.CharField(_("teacher phone"), max_length=20, blank=True)
     calendar_iframe = models.TextField(_("calendar iframe"), blank=True)
-    
+
     def __str__(self):
         return f"Teacher: {self.user.name}"
-    
+
     def save(self, *args, **kwargs):
         # Ensure the associated user has the teacher type
         if self.user.user_type != "teacher":

@@ -22,7 +22,7 @@
 <div class="container mt-4">
     <h2>Edit Class Type</h2>
     <p class="lead">Update the information for this class type.</p>
-    
+
     {% if messages %}
         {% for message in messages %}
             <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-custom">
@@ -30,7 +30,7 @@
             </div>
         {% endfor %}
     {% endif %}
-    
+
     <div class="edit-form">
         <form method="post" action="{% url 'edit_class_type' class_type.id %}">
             {% csrf_token %}
@@ -49,14 +49,14 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="form-group mt-3">
                 <button type="submit" class="btn btn-primary">Update Class Type</button>
                 <a href="{% url 'manage_class_types' %}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>
-    
+
     <div class="card mt-4">
         <div class="card-header">
             <h5>Sessions Using This Class Type</h5>
@@ -102,10 +102,10 @@
             {% endif %}
         </div>
     </div>
-    
+
     <!-- Add back to dashboard link -->
     <div class="mt-4">
         <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

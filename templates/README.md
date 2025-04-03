@@ -60,4 +60,4 @@ path('profile/update/', views.profile_update, name='profile_update'),
 path('htmx/upcoming-classes/', views.upcoming_classes, name='upcoming_classes'),
 path('htmx/today-schedule/', views.today_schedule, name='today_schedule'),
 path('htmx/session-filter/', views.filter_sessions, name='filter_sessions'),
-``` 
+```

@@ -180,7 +180,7 @@ Building on the authentication system, implement calendar models and Google Cale
 1. Create these models in the scheduling app:
    - Subject: name, description
    - ClassType: name, group_class (boolean), default_duration, hourly_rate
-   - ClassSession: 
+   - ClassSession:
        - title (extracted from event title)
        - teacher (ForeignKey to User, extracted from event location)
        - students (ManyToMany to User, extracted from event title)
@@ -271,7 +271,7 @@ Implement the core financial models and their relationships:
 
 5. Create signals for ClassSession changes:
    - Update TeacherCompensation when classes are completed
-   - Update StudentPayment hours_used when classes are 
+   - Update StudentPayment hours_used when classes are
    completed
    - Handle payment plan expiration
 

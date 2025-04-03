@@ -60,7 +60,7 @@
   - [ ] Fetch events from admin's calendars (online/in-person)
   - [ ] Parse event data:
     - [ ] Extract student name from title
-    - [ ] Extract teacher name from location 
+    - [ ] Extract teacher name from location
     - [ ] Extract price code from description
     - [ ] Check for "FALTOU" in title
   - [ ] Convert parsed data to ClassSession objects
@@ -328,3 +328,14 @@
 - [ ] Final security review
 - [ ] Performance optimization review
 - [ ] Documentation completeness check
+
+## Financial Management
+
+- [x] Create payment plan models
+- [x] Implement student payment tracking
+- [x] Develop teacher compensation system
+- [x] Build financial reports
+- [x] Implement proper permissions and access control
+- [ ] Add payment gateway integration
+- [ ] Create invoicing system
+- [ ] Implement tax calculation and reporting

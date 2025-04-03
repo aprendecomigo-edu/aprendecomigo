@@ -41,17 +41,17 @@
         <ul class="pagination">
             {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" 
-                       hx-get="{% url 'view_sessions' %}?page=1" 
-                       hx-target="#sessions-table" 
+                    <a class="page-link"
+                       hx-get="{% url 'view_sessions' %}?page=1"
+                       hx-target="#sessions-table"
                        aria-label="First">
                         <span aria-hidden="true">&laquo;&laquo;</span>
                     </a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" 
-                       hx-get="{% url 'view_sessions' %}?page={{ page_obj.previous_page_number }}" 
-                       hx-target="#sessions-table" 
+                    <a class="page-link"
+                       hx-get="{% url 'view_sessions' %}?page={{ page_obj.previous_page_number }}"
+                       hx-target="#sessions-table"
                        aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
@@ -76,8 +76,8 @@
                     </li>
                 {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                     <li class="page-item">
-                        <a class="page-link" 
-                           hx-get="{% url 'view_sessions' %}?page={{ num }}" 
+                        <a class="page-link"
+                           hx-get="{% url 'view_sessions' %}?page={{ num }}"
                            hx-target="#sessions-table">
                             {{ num }}
                         </a>
@@ -87,17 +87,17 @@
 
             {% if page_obj.has_next %}
                 <li class="page-item">
-                    <a class="page-link" 
-                       hx-get="{% url 'view_sessions' %}?page={{ page_obj.next_page_number }}" 
-                       hx-target="#sessions-table" 
+                    <a class="page-link"
+                       hx-get="{% url 'view_sessions' %}?page={{ page_obj.next_page_number }}"
+                       hx-target="#sessions-table"
                        aria-label="Next">
                         <span aria-hidden="true">&raquo;</span>
                     </a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" 
-                       hx-get="{% url 'view_sessions' %}?page={{ page_obj.paginator.num_pages }}" 
-                       hx-target="#sessions-table" 
+                    <a class="page-link"
+                       hx-get="{% url 'view_sessions' %}?page={{ page_obj.paginator.num_pages }}"
+                       hx-target="#sessions-table"
                        aria-label="Last">
                         <span aria-hidden="true">&raquo;&raquo;</span>
                     </a>
@@ -126,4 +126,4 @@
     </div>
 {% endif %}
 
-<div id="edit-session-modal" class="modal fade" tabindex="-1"></div> 
+<div id="edit-session-modal" class="modal fade" tabindex="-1"></div>

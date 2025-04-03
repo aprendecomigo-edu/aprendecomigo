@@ -6,7 +6,7 @@
 {% block content %}
 <div class="container mt-4">
     <h1 class="mb-4">{% trans "Financial Summary" %}</h1>
-    
+
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">{% trans "Select Period" %}</h5>
@@ -27,7 +27,7 @@
             </form>
         </div>
     </div>
-    
+
     <div class="row">
         <!-- Revenue Card -->
         <div class="col-md-4 mb-4">
@@ -38,7 +38,7 @@
                 <div class="card-body">
                     <h2 class="text-success">${{ summary.income.total }}</h2>
                     <p>{% trans "Total payments received" %}: {{ summary.income.count }}</p>
-                    
+
                     <h6 class="mt-4">{% trans "By Payment Plan" %}</h6>
                     <ul class="list-group">
                         {% for plan_name, stats in summary.income.by_plan.items %}
@@ -51,7 +51,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Expenses Card -->
         <div class="col-md-4 mb-4">
             <div class="card h-100 border-danger">
@@ -61,7 +61,7 @@
                 <div class="card-body">
                     <h2 class="text-danger">${{ summary.expenses.total }}</h2>
                     <p>{% trans "Total teacher compensations" %}: {{ summary.expenses.count }}</p>
-                    
+
                     <div class="mt-4">
                         <a href="{% url 'financials:compensation_report' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-outline-danger">
                             {% trans "View Compensation Details" %}
@@ -70,7 +70,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Net Income Card -->
         <div class="col-md-4 mb-4">
             <div class="card h-100 {% if summary.net_income >= 0 %}border-primary{% else %}border-warning{% endif %}">
@@ -84,7 +84,7 @@
                     <p>
                         {% trans "Period" %}: {{ summary.period.start_date|date:'M d, Y' }} - {{ summary.period.end_date|date:'M d, Y' }}
                     </p>
-                    
+
                     {% if summary.net_income >= 0 %}
                         <div class="alert alert-success mt-3">
                             {% trans "Business is profitable during this period!" %}
@@ -98,7 +98,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Action Buttons -->
     <div class="row mt-2 mb-5">
         <div class="col-12">
@@ -120,4 +120,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}
