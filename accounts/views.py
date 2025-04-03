@@ -164,7 +164,7 @@ def profile_view(request):
         except SocialToken.DoesNotExist:
             google_connected = False
 
-    return render(request, "profile/base.html", {
+    return render(request, "profile/page.html", {
         "user_info": user_info,
         "google_connected": google_connected
     })
@@ -185,7 +185,7 @@ def profile_edit(request):
         })
     else:
         # If not an HTMX request, return the full page
-        return render(request, "profile/base.html", {
+        return render(request, "profile/page.html", {
             "user_info": user_info,
             "show_edit_form": True
         })
