@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "My Compensations" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{% trans "My Compensations" %}</h1>
+    
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>{% trans "Period" %}</th>
+                    <th>{% trans "Hours" %}</th>
+                    <th>{% trans "Rate" %}</th>
+                    <th>{% trans "Amount Owed" %}</th>
+                    <th>{% trans "Amount Paid" %}</th>
+                    <th>{% trans "Status" %}</th>
+                    <th>{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for compensation in compensations %}
+                <tr>
+                    <td>{{ compensation.period_start|date:"M Y" }}</td>
+                    <td>{{ compensation.hours }}</td>
+                    <td>${{ compensation.hourly_rate }}</td>
+                    <td>${{ compensation.amount_owed }}</td>
+                    <td>${{ compensation.amount_paid }}</td>
+                    <td>
+                        {% if compensation.is_fully_paid %}
+                        <span class="badge bg-success">{% trans "Paid" %}</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">{% trans "Pending" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'financials:teacher_compensation_detail' compensation.id %}" class="btn btn-sm btn-primary">
+                            {% trans "Details" %}
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">{% trans "No compensations found." %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %} 

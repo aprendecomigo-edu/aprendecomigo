@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Financial Management" %} | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">{% trans "Financial Management" %}</h1>
+    
+    <div class="row">
+        <!-- Reports Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{% trans "Financial Reports" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{% url 'financials:financial_summary' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{% trans "Financial Summary" %}</h5>
+                                <i class="fas fa-chart-pie fa-2x text-primary"></i>
+                            </div>
+                            <p class="mb-1">{% trans "Overview of income, expenses, and net profit." %}</p>
+                        </a>
+                        <a href="{% url 'financials:payment_report' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{% trans "Student Payments Report" %}</h5>
+                                <i class="fas fa-file-invoice-dollar fa-2x text-success"></i>
+                            </div>
+                            <p class="mb-1">{% trans "Detailed report of all student payments." %}</p>
+                        </a>
+                        <a href="{% url 'financials:compensation_report' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{% trans "Teacher Compensation Report" %}</h5>
+                                <i class="fas fa-money-check-alt fa-2x text-danger"></i>
+                            </div>
+                            <p class="mb-1">{% trans "Detailed report of all teacher compensations." %}</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Management Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">{% trans "Financial Management" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{% url 'financials:payment_plan_list' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{% trans "Payment Plans" %}</h5>
+                                <i class="fas fa-sitemap fa-2x text-primary"></i>
+                            </div>
+                            <p class="mb-1">{% trans "Manage available payment plans." %}</p>
+                        </a>
+                        <a href="{% url 'financials:student_payment_list' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{% trans "Student Payments" %}</h5>
+                                <i class="fas fa-users fa-2x text-success"></i>
+                            </div>
+                            <p class="mb-1">{% trans "View and manage student payment records." %}</p>
+                        </a>
+                        <a href="{% url 'financials:teacher_compensation_list' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{% trans "Teacher Compensations" %}</h5>
+                                <i class="fas fa-chalkboard-teacher fa-2x text-danger"></i>
+                            </div>
+                            <p class="mb-1">{% trans "View and manage teacher compensation records." %}</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mt-2 mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">{% trans "Quick Actions" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'admin:financials_paymentplan_add' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus-circle me-1"></i> {% trans "New Payment Plan" %}
+                        </a>
+                        <a href="{% url 'admin:financials_studentpayment_add' %}" class="btn btn-outline-success">
+                            <i class="fas fa-plus-circle me-1"></i> {% trans "New Student Payment" %}
+                        </a>
+                        <a href="{% url 'admin:financials_teachercompensation_add' %}" class="btn btn-outline-danger">
+                            <i class="fas fa-plus-circle me-1"></i> {% trans "New Teacher Compensation" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

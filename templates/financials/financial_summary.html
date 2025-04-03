@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Financial Summary" %} | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">{% trans "Financial Summary" %}</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">{% trans "Select Period" %}</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-5">
+                    <label for="start_date" class="form-label">{% trans "Start Date" %}</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-5">
+                    <label for="end_date" class="form-label">{% trans "End Date" %}</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">{% trans "Generate" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Revenue Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">{% trans "Income" %}</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="text-success">${{ summary.income.total }}</h2>
+                    <p>{% trans "Total payments received" %}: {{ summary.income.count }}</p>
+                    
+                    <h6 class="mt-4">{% trans "By Payment Plan" %}</h6>
+                    <ul class="list-group">
+                        {% for plan_name, stats in summary.income.by_plan.items %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ plan_name }}
+                                <span class="badge bg-success rounded-pill">${{ stats.total }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Expenses Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">{% trans "Expenses" %}</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="text-danger">${{ summary.expenses.total }}</h2>
+                    <p>{% trans "Total teacher compensations" %}: {{ summary.expenses.count }}</p>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'financials:compensation_report' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-outline-danger">
+                            {% trans "View Compensation Details" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Net Income Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 {% if summary.net_income >= 0 %}border-primary{% else %}border-warning{% endif %}">
+                <div class="card-header {% if summary.net_income >= 0 %}bg-primary{% else %}bg-warning{% endif %} text-white">
+                    <h5 class="mb-0">{% trans "Net Income" %}</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="{% if summary.net_income >= 0 %}text-primary{% else %}text-warning{% endif %}">
+                        ${{ summary.net_income }}
+                    </h2>
+                    <p>
+                        {% trans "Period" %}: {{ summary.period.start_date|date:'M d, Y' }} - {{ summary.period.end_date|date:'M d, Y' }}
+                    </p>
+                    
+                    {% if summary.net_income >= 0 %}
+                        <div class="alert alert-success mt-3">
+                            {% trans "Business is profitable during this period!" %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning mt-3">
+                            {% trans "Expenses exceeded income during this period." %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="row mt-2 mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'financials:payment_report' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-success">
+                            <i class="fas fa-file-invoice-dollar me-1"></i> {% trans "Detailed Payment Report" %}
+                        </a>
+                        <a href="{% url 'admin:financials_paymentplan_changelist' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-cog me-1"></i> {% trans "Manage Payment Plans" %}
+                        </a>
+                        <a href="{% url 'admin:financials_studentpayment_add' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-plus-circle me-1"></i> {% trans "Add New Payment" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

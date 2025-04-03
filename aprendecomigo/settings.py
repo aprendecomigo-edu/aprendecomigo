@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     # Custom apps
     "accounts",
     "scheduling",
+    "financials",
 
 ]
 

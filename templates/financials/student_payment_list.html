@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "My Payments" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{% trans "My Payments" %}</h1>
+    
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>{% trans "Payment Plan" %}</th>
+                    <th>{% trans "Date" %}</th>
+                    <th>{% trans "Amount" %}</th>
+                    <th>{% trans "Status" %}</th>
+                    <th>{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td>{{ payment.payment_plan.name }}</td>
+                    <td>{{ payment.date_paid|date:"M d, Y" }}</td>
+                    <td>${{ payment.amount_paid }}</td>
+                    <td>
+                        {% if payment.is_expired %}
+                        <span class="badge bg-danger">{% trans "Expired" %}</span>
+                        {% else %}
+                        <span class="badge bg-success">{% trans "Active" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'financials:student_payment_detail' payment.id %}" class="btn btn-sm btn-primary">
+                            {% trans "Details" %}
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">{% trans "No payments found." %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %} 

@@ -217,33 +217,70 @@ Provide the complete models, admin configurations, authentication flow, and cale
 ```
 Implement the core financial models and their relationships:
 
-1. Create these models in the financials app:
-   - TeacherProfile: OneToOne to User, hourly_rate, bio
-   - StudentProfile: OneToOne to User, payment_notes
-   - PaymentPlan: name, plan_type, rate, hours_included, expiration_period
-   - StudentPayment: student (FK), payment_plan (FK), amount_paid, payment_date,
-     period_start, period_end, hours_purchased, hours_used
-   - TeacherCompensation: teacher (FK), period_start, period_end, hours_taught,
-     amount_owed, amount_paid, payment_date
+1. Create a new financials app:
+   - Run `python manage.py startapp financials`
+   - Add 'financials' to INSTALLED_APPS in settings.py
+   - Create initial models.py, admin.py, and views.py
 
-2. Implement Django admin interfaces for these models
+2. Create these models in the financials app:
+   - PaymentPlan:
+     * name (CharField, e.g., "Monthly Package", "10-hour Package")
+     * description (TextField)
+     * plan_type (CharField with choices: "monthly", "package")
+     * rate (DecimalField, price for monthly plan)
+     * hours_included (IntegerField, for package plans)
+     * expiration_period (IntegerField, days until package expires)
+     * class_type (ForeignKey to scheduling.ClassType, optional)
 
-3. Create signals for ClassSession changes:
+   - StudentPayment:
+     * student (ForeignKey to CustomUser with user_type="student")
+     * payment_plan (ForeignKey to PaymentPlan)
+     * amount_paid (DecimalField)
+     * payment_date (DateField)
+     * period_start, period_end (DateField, for monthly plans)
+     * hours_purchased, hours_used (DecimalField, for package plans)
+     * notes (TextField)
+     * status (CharField with choices: "pending", "completed", "cancelled")
+
+   - TeacherCompensation:
+     * teacher (ForeignKey to CustomUser with user_type="teacher")
+     * period_start, period_end (DateField, compensation period)
+     * class_sessions (ManyToManyField to scheduling.ClassSession)
+     * hours_taught (DecimalField, calculated from sessions)
+     * amount_owed (DecimalField, calculated based on ClassType rates)
+     * amount_paid (DecimalField)
+     * payment_date (DateField, optional)
+     * notes (TextField)
+     * status (CharField with choices: "pending", "completed", "cancelled")
+
+3. Implement Django admin interfaces for these models:
+   - Register all models with admin site
+   - Create custom ModelAdmin classes with appropriate list_display, filters, and search fields
+   - Add inline admin classes where appropriate (e.g., StudentPaymentInline in User admin)
+
+4. Create service classes for financial calculations:
+   - StudentPaymentService:
+     * Methods to calculate remaining hours based on class sessions
+     * Methods to check payment plan expiration
+     * Methods to generate payment reports
+
+   - TeacherCompensationService:
+     * Methods to calculate hours taught from class sessions
+     * Methods to calculate compensation based on class types
+     * Methods to generate compensation reports
+
+5. Create signals for ClassSession changes:
    - Update TeacherCompensation when classes are completed
-   - Update StudentPayment hours_used when classes are completed
+   - Update StudentPayment hours_used when classes are 
+   completed
    - Handle payment plan expiration
 
-4. Add utility methods:
-   - Calculate remaining hours for students
-   - Calculate teacher compensation
-   - Validate payment plans
+6. Implement financial utilities:
+   - Function to calculate class duration from start/end times
+   - Function to validate payment plans
+   - Function to generate financial summaries
 
-5. Create basic financial reports:
-   - Student payment status
-   - Teacher compensation summary
-   - Payment plan usage
-
-Provide the complete models, admin configurations, signals, and utility methods for the financial functionality.
+Provide the complete models, admin configurations, service classes, and utility functions for the financial functionality.
 ```
 
 ### Prompt 4: Admin Calendar Interface

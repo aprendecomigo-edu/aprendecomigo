@@ -185,25 +185,30 @@ sequenceDiagram
 - Price_override (optional)
 
 ### 5.6 PaymentPlan (MVP Focus)
-- Name, description, plan_type
+- Name, description, plan_type (monthly/package)
 - Rate (for monthly)
 - Hours_included (for package)
 - Expiration_period (for package)
+- Class_type (ForeignKey to ClassType, optional)
 
 ### 5.7 StudentPayment (MVP Focus)
-- Student (ForeignKey to User)
+- Student (ForeignKey to User with user_type="student")
 - Payment_plan (ForeignKey to PaymentPlan)
 - Amount_paid, payment_date
 - Period_start, period_end (for monthly)
 - Hours_purchased, hours_used (for package)
+- Status (pending, completed, cancelled)
 - Notes
 
 ### 5.8 TeacherCompensation (MVP Focus)
-- Teacher (ForeignKey to User)
+- Teacher (ForeignKey to User with user_type="teacher")
 - Period_start, period_end
-- Hours_taught
-- Amount_owed, amount_paid
+- Class_sessions (ManyToMany to ClassSession)
+- Hours_taught (calculated from sessions)
+- Amount_owed (calculated based on ClassType rates)
+- Amount_paid
 - Payment_date
+- Status (pending, completed, cancelled)
 - Notes
 
 ### 5.9 HomeworkAssignment
