@@ -3,100 +3,158 @@
 
 {% block title %}{% trans "Financial Management" %} | {{ block.super }}{% endblock %}
 
-{% block content %}
-<div class="container mt-4">
-    <h1 class="mb-4">{% trans "Financial Management" %}</h1>
+{% block extra_css %}
+<style>
+    .dashboard-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dashboard-icon {
+        height: 54px;
+        width: 54px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+    
+    .dashboard-section {
+        margin-bottom: 2.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: #495057;
+    }
+    
+    .action-button {
+        border-radius: 8px;
+        padding: 0.75rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+</style>
+{% endblock %}
 
-    <div class="row">
-        <!-- Reports Section -->
-        <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">{% trans "Financial Reports" %}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        <a href="{% url 'financials:financial_summary' %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">{% trans "Financial Summary" %}</h5>
-                                <i class="fas fa-chart-pie fa-2x text-primary"></i>
-                            </div>
-                            <p class="mb-1">{% trans "Overview of income, expenses, and net profit." %}</p>
-                        </a>
-                        <a href="{% url 'financials:payment_report' %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">{% trans "Student Payments Report" %}</h5>
-                                <i class="fas fa-file-invoice-dollar fa-2x text-success"></i>
-                            </div>
-                            <p class="mb-1">{% trans "Detailed report of all student payments." %}</p>
-                        </a>
-                        <a href="{% url 'financials:compensation_report' %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">{% trans "Teacher Compensation Report" %}</h5>
-                                <i class="fas fa-money-check-alt fa-2x text-danger"></i>
-                            </div>
-                            <p class="mb-1">{% trans "Detailed report of all teacher compensations." %}</p>
-                        </a>
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0 fw-bold">{% trans "Financial Management" %}</h1>
+    </div>
+
+    <!-- Financial Reports Section -->
+    <div class="dashboard-section">
+        <h2 class="section-title">{% trans "Financial Reports" %}</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <a href="{% url 'financials:financial_summary' %}" class="text-decoration-none">
+                    <div class="dashboard-card card h-100 p-4">
+                        <div class="dashboard-icon bg-light-primary bg-opacity-10">
+                            <i class="fas fa-chart-pie fa-lg text-primary"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">{% trans "Financial Summary" %}</h3>
+                        <p class="text-muted mb-0">{% trans "Overview of income, expenses, and net profit." %}</p>
                     </div>
-                </div>
+                </a>
+            </div>
+            
+            <div class="col-md-4">
+                <a href="{% url 'financials:payment_report' %}" class="text-decoration-none">
+                    <div class="dashboard-card card h-100 p-4">
+                        <div class="dashboard-icon bg-light-success bg-opacity-10">
+                            <i class="fas fa-file-invoice-dollar fa-lg text-success"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">{% trans "Student Payments Report" %}</h3>
+                        <p class="text-muted mb-0">{% trans "Detailed report of all student payments." %}</p>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="col-md-4">
+                <a href="{% url 'financials:compensation_report' %}" class="text-decoration-none">
+                    <div class="dashboard-card card h-100 p-4">
+                        <div class="dashboard-icon bg-light-danger bg-opacity-10">
+                            <i class="fas fa-money-check-alt fa-lg text-danger"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">{% trans "Teacher Compensation Report" %}</h3>
+                        <p class="text-muted mb-0">{% trans "Detailed report of all teacher compensations." %}</p>
+                    </div>
+                </a>
             </div>
         </div>
+    </div>
 
-        <!-- Management Section -->
-        <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0">{% trans "Financial Management" %}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        <a href="{% url 'financials:payment_plan_list' %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">{% trans "Payment Plans" %}</h5>
-                                <i class="fas fa-sitemap fa-2x text-primary"></i>
-                            </div>
-                            <p class="mb-1">{% trans "Manage available payment plans." %}</p>
-                        </a>
-                        <a href="{% url 'financials:student_payment_list' %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">{% trans "Student Payments" %}</h5>
-                                <i class="fas fa-users fa-2x text-success"></i>
-                            </div>
-                            <p class="mb-1">{% trans "View and manage student payment records." %}</p>
-                        </a>
-                        <a href="{% url 'financials:teacher_compensation_list' %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">{% trans "Teacher Compensations" %}</h5>
-                                <i class="fas fa-chalkboard-teacher fa-2x text-danger"></i>
-                            </div>
-                            <p class="mb-1">{% trans "View and manage teacher compensation records." %}</p>
-                        </a>
+    <!-- Management Section -->
+    <div class="dashboard-section">
+        <h2 class="section-title">{% trans "Financial Management" %}</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <a href="{% url 'financials:payment_plan_list' %}" class="text-decoration-none">
+                    <div class="dashboard-card card h-100 p-4">
+                        <div class="dashboard-icon bg-light-primary bg-opacity-10">
+                            <i class="fas fa-sitemap fa-lg text-primary"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">{% trans "Payment Plans" %}</h3>
+                        <p class="text-muted mb-0">{% trans "Manage available payment plans." %}</p>
                     </div>
-                </div>
+                </a>
+            </div>
+            
+            <div class="col-md-4">
+                <a href="{% url 'financials:student_payment_list' %}" class="text-decoration-none">
+                    <div class="dashboard-card card h-100 p-4">
+                        <div class="dashboard-icon bg-light-success bg-opacity-10">
+                            <i class="fas fa-users fa-lg text-success"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">{% trans "Student Payments" %}</h3>
+                        <p class="text-muted mb-0">{% trans "View and manage student payment records." %}</p>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="col-md-4">
+                <a href="{% url 'financials:teacher_compensation_list' %}" class="text-decoration-none">
+                    <div class="dashboard-card card h-100 p-4">
+                        <div class="dashboard-icon bg-light-danger bg-opacity-10">
+                            <i class="fas fa-chalkboard-teacher fa-lg text-danger"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">{% trans "Teacher Compensations" %}</h3>
+                        <p class="text-muted mb-0">{% trans "View and manage teacher compensation records." %}</p>
+                    </div>
+                </a>
             </div>
         </div>
     </div>
 
     <!-- Quick Actions -->
-    <div class="row mt-2 mb-5">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0">{% trans "Quick Actions" %}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <a href="{% url 'admin:financials_paymentplan_add' %}" class="btn btn-outline-primary">
-                            <i class="fas fa-plus-circle me-1"></i> {% trans "New Payment Plan" %}
-                        </a>
-                        <a href="{% url 'admin:financials_studentpayment_add' %}" class="btn btn-outline-success">
-                            <i class="fas fa-plus-circle me-1"></i> {% trans "New Student Payment" %}
-                        </a>
-                        <a href="{% url 'admin:financials_teachercompensation_add' %}" class="btn btn-outline-danger">
-                            <i class="fas fa-plus-circle me-1"></i> {% trans "New Teacher Compensation" %}
-                        </a>
-                    </div>
-                </div>
+    <div class="dashboard-section">
+        <h2 class="section-title">{% trans "Quick Actions" %}</h2>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <a href="{% url 'admin:financials_paymentplan_add' %}" class="btn btn-outline-primary action-button w-100">
+                    <i class="fas fa-plus-circle me-2"></i> {% trans "New Payment Plan" %}
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'admin:financials_studentpayment_add' %}" class="btn btn-outline-success action-button w-100">
+                    <i class="fas fa-plus-circle me-2"></i> {% trans "New Student Payment" %}
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'admin:financials_teachercompensation_add' %}" class="btn btn-outline-danger action-button w-100">
+                    <i class="fas fa-plus-circle me-2"></i> {% trans "New Teacher Compensation" %}
+                </a>
             </div>
         </div>
     </div>
