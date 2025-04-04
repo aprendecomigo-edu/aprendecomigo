@@ -2,13 +2,6 @@ from django.conf import settings
 from django.db import models
 
 
-class Subject(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-
-    def __str__(self):
-        return self.name
-
 
 class ClassType(models.Model):
     """
@@ -34,9 +27,6 @@ class ClassSession(models.Model):
     )
     students = models.ManyToManyField(
         settings.AUTH_USER_MODEL, related_name="learning_sessions"
-    )
-    subject = models.ForeignKey(
-        Subject, on_delete=models.CASCADE, related_name="sessions"
     )
     class_type = models.ForeignKey(
         ClassType, on_delete=models.CASCADE, related_name="sessions"

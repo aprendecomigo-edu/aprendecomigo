@@ -6,7 +6,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from scheduling.models import ClassSession, ClassType, Subject
+from scheduling.models import ClassSession, ClassType
 
 from .models import PaymentPlan, StudentPayment, TeacherCompensation
 
@@ -103,7 +103,6 @@ class FinancialPermissionsTestCase(TestCase):
         )
 
         # Create subject for class sessions
-        self.subject = Subject.objects.create(name="Math")
 
         # Create class sessions
         start_time = timezone.now()
@@ -112,7 +111,6 @@ class FinancialPermissionsTestCase(TestCase):
         self.class_session = ClassSession.objects.create(
             title="Test Session",
             teacher=self.teacher_user,
-            subject=self.subject,
             class_type=self.class_type,
             start_time=start_time,
             end_time=end_time,
@@ -124,7 +122,6 @@ class FinancialPermissionsTestCase(TestCase):
         self.other_class_session = ClassSession.objects.create(
             title="Other Session",
             teacher=self.other_teacher,
-            subject=self.subject,
             class_type=self.class_type,
             start_time=start_time,
             end_time=end_time,
