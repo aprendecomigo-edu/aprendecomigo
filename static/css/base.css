@@ -1,0 +1,202 @@
+/* Base Styles */
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    color: var(--text-color);
+    background-color: var(--bg-color);
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* Dashboard Styles */
+.dashboard-container {
+    margin-top: var(--spacing-xl);
+}
+
+.dashboard-header {
+    margin-bottom: var(--spacing-xl);
+}
+
+.dashboard-content {
+    min-height: 400px;
+}
+
+/* Card Styles */
+.card {
+    margin-bottom: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    background-color: var(--bg-color);
+    border-color: var(--border-color);
+}
+
+.card-header, .card-footer {
+    background-color: var(--secondary-light);
+    border-color: var(--border-color);
+}
+
+.card-title {
+    color: var(--text-color);
+}
+
+.card-text {
+    color: var(--text-color);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* Accent Cards */
+.card-accent {
+    margin-bottom: var(--spacing-md);
+    border-left-width: var(--border-width-lg);
+}
+
+/* Stats Cards */
+.stats-card {
+    margin: var(--spacing-xl) 0;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    border-left-width: var(--border-width-lg);
+}
+
+/* HTMX Loading Indicators */
+.htmx-indicator {
+    opacity: 0;
+    transition: opacity 200ms ease-in;
+}
+
+.htmx-request .htmx-indicator {
+    opacity: 1;
+}
+
+.htmx-request.htmx-indicator {
+    opacity: 1;
+}
+
+/* Filter Sections */
+.filter-section {
+    background: var(--secondary-light);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-xl);
+    border: 1px solid var(--border-color);
+}
+
+.form-label {
+    color: var(--text-color);
+}
+
+.form-control {
+    background-color: var(--bg-color);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), 0.25);
+}
+
+/* Pagination */
+.pagination {
+    justify-content: center;
+    margin-top: var(--spacing-xl);
+}
+
+.pagination .page-item .page-link {
+    background-color: var(--bg-color);
+    border-color: var(--border-color);
+    color: var(--primary-color);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--white);
+}
+
+.pagination .page-item.disabled .page-link {
+    color: var(--muted-color);
+    background-color: var(--bg-color);
+    border-color: var(--border-color);
+}
+
+/* Theme Toggle */
+.theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--secondary-light);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+}
+
+.theme-toggle:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* Tables */
+.table {
+    color: var(--text-color);
+}
+
+.table thead th {
+    border-color: var(--border-color);
+    background-color: var(--secondary-light);
+}
+
+.table td {
+    border-color: var(--border-color);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0,0,0,0.02);
+}
+
+.dark-theme .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255,255,255,0.05);
+}
+
+/* Utility classes for accent colors */
+.accent-primary {
+    border-color: var(--primary-color) !important;
+    background-color: var(--primary-light);
+}
+
+.accent-success {
+    border-color: var(--success-color) !important;
+    background-color: var(--success-light);
+}
+
+.accent-warning {
+    border-color: var(--warning-color) !important;
+    background-color: var(--warning-light);
+}
+
+.accent-danger {
+    border-color: var(--danger-color) !important;
+    background-color: var(--danger-light);
+}
+
+.accent-info {
+    border-color: var(--info-color) !important;
+    background-color: var(--info-light);
+} 

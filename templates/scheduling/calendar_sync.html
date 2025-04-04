@@ -28,7 +28,7 @@
 <span class="badge bg-warning text-dark">Admin</span>
 {% endblock %}
 
-{% block user_actions %}
+{% block dashboard_content %}
 <div class="container mt-4">
     <h2>Google Calendar Synchronization</h2>
     <p class="lead">Sync class sessions from Google Calendar.</p>
@@ -97,6 +97,7 @@
             <div class="form-group mt-3">
                 <button type="submit" class="btn btn-primary">Sync Calendar</button>
                 <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+                <a href="{% url 'school_profile' %}" class="btn btn-primary">Back to School Profile</a>
             </div>
         </form>
     </div>

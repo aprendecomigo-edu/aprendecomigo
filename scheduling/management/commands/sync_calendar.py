@@ -5,10 +5,11 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 
-from scheduling.google_calendar import sync_calendar_events
+from scheduling.google_calendar import get_calendar_service, sync_calendar_events
 
 User = get_user_model()
 
+# https://developers.google.com/workspace/calendar/api/guides/overview
 # The specific calendar ID provided by the user
 DEFAULT_CALENDAR_ID = "dc309a9a476f57f957195db9973a541536145780250442dd3aa8c1ff9010f47b@group.calendar.google.com"
 
@@ -23,15 +24,6 @@ class Command(BaseCommand):
             help="ID of the calendar to sync from",
         )
         parser.add_argument(
-            "--days",
-            type=int,
-            default=30,
-            help=(
-                "Number of days to fetch events for "
-                "(ignored if both start-date and end-date are provided)"
-            ),
-        )
-        parser.add_argument(
             "--warn-placeholder",
             action="store_true",
             help="Show warnings about placeholder users created during sync",
@@ -41,20 +33,27 @@ class Command(BaseCommand):
             required=True,
             help="Email of admin user whose Google credentials should be used",
         )
-        parser.add_argument(
-            "--start-date", help="Start date for fetching events (format: YYYY-MM-DD)"
-        )
-        parser.add_argument(
-            "--end-date", help="End date for fetching events (format: YYYY-MM-DD)"
-        )
+
+    def test_handle(self, **options) -> str | None:
+        calendar_id = options["calendar_id"]
+        admin_email = options["admin_email"]
+        service = get_calendar_service(admin_email)
+        page_token = None
+        while True:
+            events = service.events().list(calendarId=calendar_id, pageToken=page_token).execute()
+            for event in events['items']:
+                print(event)
+            page_token = events.get('nextPageToken')
+            if not page_token:
+                break
+        print("LEN EVENTS", len(events['items']))
+    
+
 
     def handle(self, **options):
         calendar_id = options["calendar_id"]
-        days = options["days"]
         warn_placeholder = options["warn_placeholder"]
         admin_email = options["admin_email"]
-        start_date = options.get("start_date")
-        end_date = options.get("end_date")
 
         # Check if admin has Google account connected
         try:
@@ -89,25 +88,16 @@ class Command(BaseCommand):
             sys.stdout = PlaceholderCapturer()
 
         try:
-            # Determine message based on date parameters
-            if start_date and end_date:
-                date_message = f"from {start_date} to {end_date}"
-            elif start_date:
-                date_message = f"from {start_date} for {days} days"
-            elif end_date:
-                date_message = f"until {end_date}"
-            else:
-                date_message = f"for the next {days} days"
 
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Syncing events from calendar '{calendar_id}' {date_message} "
+                    f"Syncing events from calendar '{calendar_id}"
                     f"using {admin_email}'s Google account..."
                 )
             )
 
             created, updated, total = sync_calendar_events(
-                calendar_id, days, admin_email, start_date, end_date
+                calendar_id, admin_email
             )
 
             self.stdout.write(

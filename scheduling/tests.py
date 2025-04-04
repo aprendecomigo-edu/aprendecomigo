@@ -9,13 +9,13 @@ from django.utils import timezone
 from .google_calendar import (
     fetch_calendar_events,
     get_calendar_service,
-    get_credentials,
+    get_google_credentials,
     parse_event_description,
     parse_event_location,
     parse_event_title,
     sync_calendar_events,
 )
-from .models import ClassSession, ClassType, Subject
+from .models import ClassSession, ClassType
 
 User = get_user_model()
 
@@ -123,7 +123,7 @@ class GoogleCalendarServiceTests(TestCase):
         mock_credentials.return_value = "fake_credentials"
 
         # Call the function
-        result = get_credentials("admin@test.com")
+        result = get_google_credentials("admin@test.com")
 
         # Assert results
         self.assertEqual(result, "fake_credentials")
@@ -329,7 +329,6 @@ class SyncCalendarEventsTests(TestCase):
         mock_fetch_events.return_value = self.mock_parsed_events
 
         # Initial counts
-        initial_subject_count = Subject.objects.count()
         initial_class_type_count = ClassType.objects.count()
         initial_user_count = User.objects.count()
         initial_session_count = ClassSession.objects.count()
@@ -345,7 +344,6 @@ class SyncCalendarEventsTests(TestCase):
         self.assertEqual(total, 2)  # 2 total events processed
 
         # Verify database objects were created
-        self.assertEqual(Subject.objects.count(), initial_subject_count + 2)
         self.assertEqual(ClassType.objects.count(), initial_class_type_count + 2)
         self.assertEqual(
             User.objects.count(), initial_user_count + 2
@@ -377,7 +375,6 @@ class SyncCalendarEventsTests(TestCase):
     def test_sync_calendar_events_update_existing(self, mock_fetch_events):
         """Test updating existing calendar events"""
         # Create a pre-existing session
-        subject = Subject.objects.create(name="PORTUGUESE_ADV")
         class_type = ClassType.objects.create(
             name="PORTUGUESE_ADV", default_duration=60, hourly_rate=25.0
         )
@@ -385,7 +382,6 @@ class SyncCalendarEventsTests(TestCase):
             google_calendar_id="event1",
             title="Ana Student",
             teacher=self.teacher,
-            subject=subject,
             class_type=class_type,
             start_time=self.start_time,
             end_time=self.end_time,
@@ -408,7 +404,6 @@ class SyncCalendarEventsTests(TestCase):
         ]
 
         # Initial counts
-        initial_subject_count = Subject.objects.count()
         initial_class_type_count = ClassType.objects.count()
         initial_user_count = User.objects.count()
         initial_session_count = ClassSession.objects.count()
@@ -424,7 +419,6 @@ class SyncCalendarEventsTests(TestCase):
         self.assertEqual(total, 1)  # 1 total event processed
 
         # Verify counts remain the same
-        self.assertEqual(Subject.objects.count(), initial_subject_count)
         self.assertEqual(ClassType.objects.count(), initial_class_type_count)
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(ClassSession.objects.count(), initial_session_count)

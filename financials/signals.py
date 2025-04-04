@@ -14,7 +14,7 @@ from .services import (
 )
 
 
-@receiver(post_save, sender=ClassSession)
+# @receiver(post_save, sender=ClassSession)
 def update_financial_records_on_class_session_save(sender, instance, created, **kwargs):
     """
     Update financial records when a class session is saved or updated
@@ -58,7 +58,7 @@ def update_financial_records_on_class_session_save(sender, instance, created, **
             compensation.save(update_fields=["hours_taught", "amount_owed"])
 
 
-@receiver(m2m_changed, sender=ClassSession.students.through)
+# @receiver(m2m_changed, sender=ClassSession.students.through)
 def update_student_payments_on_student_change(
     sender, instance, action, pk_set, **kwargs
 ):

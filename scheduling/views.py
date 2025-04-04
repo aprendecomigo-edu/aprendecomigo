@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .models import ClassSession, ClassType, Subject
+from .models import ClassSession, ClassType
 
 User = get_user_model()
 
@@ -135,7 +135,7 @@ def view_sessions(request):
 
     # Base query with select_related to reduce database queries
     sessions = (
-        ClassSession.objects.select_related("teacher", "class_type", "subject")
+        ClassSession.objects.select_related("teacher", "class_type")
         .all()
         .order_by("-start_time")
     )
@@ -184,7 +184,11 @@ def view_sessions(request):
     try:
         page_obj = paginator.page(page_number)
     except (ValueError, EmptyPage, PageNotAnInteger):
-        page_obj = paginator.page(1)
+        if sessions.exists():
+            page_obj = paginator.page(1)
+        else:
+            # Handle empty queryset case
+            page_obj = Paginator([], 8).page(1)
 
     context = {
         "sessions": page_obj,
@@ -221,7 +225,6 @@ def edit_session(request, session_id):
         teacher_id = request.POST.get("teacher")
         student_ids = request.POST.getlist("students")
         class_type_id = request.POST.get("class_type")
-        subject_id = request.POST.get("subject")
         start_date = request.POST.get("start_date")
         start_time = request.POST.get("start_time")
         end_date = request.POST.get("end_date")
@@ -232,7 +235,6 @@ def edit_session(request, session_id):
             # Update session
             session.teacher_id = teacher_id
             session.class_type_id = class_type_id
-            session.subject_id = subject_id
 
             # Parse datetime
             start_datetime = f"{start_date} {start_time}"
@@ -267,14 +269,12 @@ def edit_session(request, session_id):
     teachers = User.objects.filter(user_type="teacher").order_by("name")
     students = User.objects.filter(user_type="student").order_by("name")
     class_types = ClassType.objects.all().order_by("name")
-    subjects = Subject.objects.all().order_by("name")
 
     context = {
         "session": session,
         "teachers": teachers,
         "students": students,
         "class_types": class_types,
-        "subjects": subjects,
     }
 
     return render(request, "scheduling/edit_session.html", context)
@@ -351,7 +351,7 @@ def filter_sessions(request):
 
     # Start with optimized query using select_related
     sessions = (
-        ClassSession.objects.select_related("teacher", "class_type", "subject")
+        ClassSession.objects.select_related("teacher", "class_type")
         .all()
         .order_by("-start_time")
     )
@@ -380,7 +380,11 @@ def filter_sessions(request):
     try:
         page_obj = paginator.page(page_number)
     except (ValueError, EmptyPage, PageNotAnInteger):
-        page_obj = paginator.page(1)
+        if sessions.exists():
+            page_obj = paginator.page(1)
+        else:
+            # Handle empty queryset case
+            page_obj = Paginator([], 8).page(1)
 
     return render(
         request,

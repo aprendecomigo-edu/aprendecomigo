@@ -1,0 +1,157 @@
+/* Admin Dashboard Styles */
+.admin-stats {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #fffbeb;
+    border-radius: 5px;
+    border-left: 5px solid #ffc107;
+}
+
+.admin-action-card {
+    margin-bottom: 15px;
+    background-color: #fffbeb;
+    border-left: 3px solid #ffc107;
+}
+
+/* Teacher Dashboard Styles */
+.teacher-class-card {
+    border-left: 3px solid #28a745;
+    margin-bottom: 15px;
+}
+
+.teacher-stats {
+    background-color: #f1f8e9;
+    border-left: 5px solid #28a745;
+}
+
+/* Student Dashboard Styles */
+.student-class-card {
+    border-left: 3px solid #007bff;
+    margin-bottom: 15px;
+}
+
+.student-stats {
+    background-color: #e3f2fd;
+    border-left: 5px solid #007bff;
+}
+
+/* Calendar View */
+.calendar-container {
+    margin-top: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.calendar-day {
+    min-height: 100px;
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-sm);
+    background-color: var(--bg-color);
+}
+
+.calendar-day.today {
+    background-color: var(--warning-light);
+}
+
+.calendar-event {
+    padding: 2px 5px;
+    margin-bottom: 2px;
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-sm);
+    background-color: var(--primary-light);
+    border-left: 2px solid var(--primary-color);
+}
+
+/* Class display styling */
+.class-container {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--border-radius);
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+}
+
+.class-header {
+    font-weight: var(--font-weight-bold);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.class-time {
+    font-size: var(--font-size-sm);
+    color: var(--muted-color);
+}
+
+.class-details {
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    color: var(--text-color);
+}
+
+/* Session filters */
+.session-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: var(--spacing-xl);
+}
+
+.session-filter-item {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Dashboard action buttons */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: var(--spacing-xl) 0;
+}
+
+.action-button {
+    flex: 1;
+    text-align: center;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    transition: all 0.3s ease;
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Dashboard stats section */
+.stats-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+/* Cards with emphasis */
+.card-emphasis {
+    border-left: var(--border-width-lg) solid var(--primary-color);
+    background-color: var(--primary-light);
+}
+
+.card-emphasis.secondary {
+    border-left-color: var(--secondary-color);
+    background-color: var(--secondary-light);
+}
+
+/* Dark theme overrides */
+.dark-theme .calendar-day {
+    border-color: var(--border-color);
+}
+
+.dark-theme .calendar-day.today {
+    background-color: rgba(255, 193, 7, 0.2);
+}
+
+.dark-theme .class-container {
+    border-color: var(--border-color);
+}
+
+.dark-theme .calendar-event {
+    color: var(--text-color);
+} 

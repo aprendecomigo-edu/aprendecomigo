@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design System - Aprende Comigo</title>
+    
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/phosphor-icons"></script>
+    
+    <style>
+        :root {
+            /* Color Palette */
+            --primary: #5E63B6;
+            --primary-light: #7C80C7;
+            --secondary: #F27059;
+            --accent: #27AE60;
+            --background: #F7F9FC;
+            --surface: #FFFFFF;
+            --text: #2D3748;
+            --text-light: #718096;
+            --border: #E2E8F0;
+            
+            /* Spacing Scale */
+            --space-1: 0.5rem;  /* 8px */
+            --space-2: 1rem;    /* 16px */
+            --space-3: 1.5rem;  /* 24px */
+            --space-4: 2rem;    /* 32px */
+            --space-5: 3rem;    /* 48px */
+            --space-6: 4rem;    /* 64px */
+        }
+        
+        /* Base Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            background-color: var(--background);
+            line-height: 1.5;
+        }
+        
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+            margin-top: var(--space-4);
+            margin-bottom: var(--space-3);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            line-height: 1.2;
+        }
+        
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        p {
+            margin-bottom: var(--space-3);
+        }
+        
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        a:hover {
+            color: var(--primary-light);
+        }
+        
+        /* Buttons */
+        .btn {
+            border-radius: 8px;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn:focus {
+            box-shadow: 0 0 0 3px rgba(94, 99, 182, 0.3);
+        }
+        
+        .btn:hover {
+            transform: scale(1.02);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            border-color: var(--primary-light);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        /* Content Sections (instead of cards) */
+        .content-section {
+            background-color: var(--surface);
+            border-radius: 8px;
+            padding: var(--space-3);
+            margin-bottom: var(--space-4);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+        
+        /* List Items (instead of cards) */
+        .list-item {
+            padding: var(--space-3);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* Form Controls */
+        .form-control {
+            border: none;
+            border-bottom: 2px solid var(--border);
+            border-radius: 0;
+            padding: var(--space-2);
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: none;
+        }
+        
+        .form-label {
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        
+        /* Color Swatches */
+        .color-swatch {
+            height: 100px;
+            border-radius: 8px;
+            margin-bottom: var(--space-2);
+        }
+        
+        /* Navigation */
+        .navbar {
+            background-color: var(--surface);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .navbar-brand {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .nav-link {
+            color: var(--text);
+            font-weight: 500;
+            position: relative;
+            padding: var(--space-2) var(--space-3);
+        }
+        
+        .nav-link.active {
+            color: var(--primary);
+            border-left: 3px solid var(--primary);
+            background-color: rgba(94, 99, 182, 0.1);
+        }
+        
+        /* Utilities */
+        .bg-primary-light {
+            background-color: rgba(94, 99, 182, 0.1);
+        }
+        
+        .text-primary {
+            color: var(--primary) !important;
+        }
+        
+        .text-secondary {
+            color: var(--secondary) !important;
+        }
+        
+        .text-accent {
+            color: var(--accent) !important;
+        }
+        
+        .text-light {
+            color: var(--text-light) !important;
+        }
+        
+        /* Icons */
+        .icon {
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">Aprende Comigo</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="ph-house icon"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="ph-calendar icon"></i> Schedule</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="ph-user icon"></i> Profile</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12">
+                <h1>Design System</h1>
+                <p class="lead">A modern, minimalistic design system for Aprende Comigo.</p>
+            </div>
+        </div>
+
+        <!-- Typography -->
+        <section id="typography" class="mb-5">
+            <h2>Typography</h2>
+            <div class="content-section">
+                <h1>Heading 1 (2.5rem)</h1>
+                <h2>Heading 2 (2rem)</h2>
+                <h3>Heading 3 (1.5rem)</h3>
+                <p class="lead">Lead paragraph text is slightly larger to draw attention to important information.</p>
+                <p>This is regular body text at 1rem size. We're using Inter for the body text because it's highly readable at different sizes and has excellent legibility on screens.</p>
+                <p><strong>Bold text</strong> for emphasis and <a href="#">linked text</a> for navigation.</p>
+            </div>
+        </section>
+
+        <!-- Colors -->
+        <section id="colors" class="mb-5">
+            <h2>Color Palette</h2>
+            <div class="content-section">
+                <div class="row g-3">
+                    <div class="col-md-4 col-6">
+                        <div class="color-swatch" style="background-color: var(--primary);"></div>
+                        <p><strong>Primary</strong><br>#5E63B6</p>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <div class="color-swatch" style="background-color: var(--secondary);"></div>
+                        <p><strong>Secondary</strong><br>#F27059</p>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <div class="color-swatch" style="background-color: var(--accent);"></div>
+                        <p><strong>Accent</strong><br>#27AE60</p>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <div class="color-swatch" style="background-color: var(--background);"></div>
+                        <p><strong>Background</strong><br>#F7F9FC</p>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <div class="color-swatch" style="background-color: var(--surface);"></div>
+                        <p><strong>Surface</strong><br>#FFFFFF</p>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <div class="color-swatch" style="background-color: var(--text);"></div>
+                        <p><strong>Text</strong><br>#2D3748</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Buttons -->
+        <section id="buttons" class="mb-5">
+            <h2>Buttons</h2>
+            <div class="content-section">
+                <h3>Button Styles</h3>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <button class="btn btn-primary">Primary Button</button>
+                    <button class="btn btn-secondary">Secondary Button</button>
+                    <button class="btn btn-outline-primary">Outline Button</button>
+                    <button class="btn btn-primary" disabled>Disabled Button</button>
+                </div>
+                
+                <h3>Button with Icons</h3>
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-primary"><i class="ph-plus icon"></i> Add New</button>
+                    <button class="btn btn-outline-primary"><i class="ph-calendar-plus icon"></i> Schedule</button>
+                    <button class="btn btn-secondary"><i class="ph-paper-plane-right icon"></i> Send</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Sections (instead of cards) -->
+        <section id="content-sections" class="mb-5">
+            <h2>Content Sections</h2>
+            <div class="content-section">
+                <h3>Main Content Area</h3>
+                <p>Instead of using cards, we're using subtle content sections with minimal borders and shadows. This creates a clean, modern look while still providing visual separation between different content areas.</p>
+            </div>
+            
+            <div class="content-section bg-primary-light">
+                <h3>Highlighted Section</h3>
+                <p>This content section uses a light background color to draw additional attention, useful for important notices or featured content.</p>
+            </div>
+        </section>
+
+        <!-- List Items (instead of cards) -->
+        <section id="list-items" class="mb-5">
+            <h2>List Items</h2>
+            <div class="content-section p-0">
+                <div class="list-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1">Mathematics</h3>
+                            <p class="mb-0 text-light">Monday, 3:00 PM - 4:30 PM</p>
+                        </div>
+                        <span class="badge bg-primary">Upcoming</span>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1">Physics</h3>
+                            <p class="mb-0 text-light">Tuesday, 5:00 PM - 6:30 PM</p>
+                        </div>
+                        <span class="badge bg-secondary">Confirmed</span>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1">English Literature</h3>
+                            <p class="mb-0 text-light">Wednesday, 4:00 PM - 5:30 PM</p>
+                        </div>
+                        <span class="badge bg-accent">Completed</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Forms -->
+        <section id="forms" class="mb-5">
+            <h2>Form Elements</h2>
+            <div class="content-section">
+                <form>
+                    <div class="mb-3">
+                        <label for="fullName" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="fullName" placeholder="Enter your full name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" placeholder="name@example.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <select class="form-select" id="subject">
+                            <option selected>Select a subject</option>
+                            <option value="math">Mathematics</option>
+                            <option value="science">Science</option>
+                            <option value="literature">Literature</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea class="form-control" id="message" rows="3" placeholder="Enter your message"></textarea>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="rememberMe">
+                        <label class="form-check-label" for="rememberMe">
+                            Remember me
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Spacing Example -->
+        <section id="spacing" class="mb-5">
+            <h2>Spacing</h2>
+            <div class="content-section">
+                <p>Our spacing system uses a consistent scale:</p>
+                <div style="background-color: var(--primary-light); height: 8px; margin-bottom: 8px;"></div>
+                <p><small>--space-1: 0.5rem (8px)</small></p>
+                
+                <div style="background-color: var(--primary-light); height: 16px; margin-bottom: 8px;"></div>
+                <p><small>--space-2: 1rem (16px)</small></p>
+                
+                <div style="background-color: var(--primary-light); height: 24px; margin-bottom: 8px;"></div>
+                <p><small>--space-3: 1.5rem (24px)</small></p>
+                
+                <div style="background-color: var(--primary-light); height: 32px; margin-bottom: 8px;"></div>
+                <p><small>--space-4: 2rem (32px)</small></p>
+                
+                <div style="background-color: var(--primary-light); height: 48px; margin-bottom: 8px;"></div>
+                <p><small>--space-5: 3rem (48px)</small></p>
+                
+                <div style="background-color: var(--primary-light); height: 64px;"></div>
+                <p><small>--space-6: 4rem (64px)</small></p>
+            </div>
+        </section>
+    </div>
+
+    <footer class="py-4 bg-primary text-white">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h3 class="text-white">Aprende Comigo</h3>
+                    <p>Modern education platform for specialized training and tutoring.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>© 2023 Aprende Comigo. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Initialize Phosphor Icons
+        document.addEventListener('DOMContentLoaded', function() {
+            PhosphorIcons.replace();
+        });
+    </script>
+</body>
+</html> 
