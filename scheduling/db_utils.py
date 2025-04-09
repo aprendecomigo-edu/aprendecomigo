@@ -1,14 +1,14 @@
-from django.utils import timezone
 from allauth.socialaccount.models import SocialAccount, SocialToken
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 
 from accounts.models import Student, Teacher
+
 from .models import ClassSession, ClassType
-from django.contrib.auth import get_user_model
-
-
-from django.core.exceptions import ObjectDoesNotExist
 
 User = get_user_model()
+
 
 def get_google_token(admin_email):
     """
@@ -30,10 +30,14 @@ def get_google_token(admin_email):
         )
         # Get their Google token
         social_token = SocialToken.objects.get(account=social_account)
-        return social_token.token, social_token.token_secret,
+        return (
+            social_token.token,
+            social_token.token_secret,
+        )
 
     except (ObjectDoesNotExist, KeyError) as e:
         raise ValueError(f"Could not get Google credentials for {admin_email}: {e}")
+
 
 def get_or_create_class_type(class_type_code):
     """Get or create a ClassType object based on the class type code."""
@@ -102,7 +106,7 @@ def get_or_create_teacher(teacher_name):
             print(
                 f"Created placeholder teacher: {teacher.email} (needs profile completion)"
             )
-    
+
     return teacher
 
 
@@ -155,7 +159,7 @@ def get_or_create_student(student_name):
             print(
                 f"Created placeholder student: {student.email} (needs profile completion)"
             )
-    
+
     return student
 
 
@@ -175,5 +179,5 @@ def create_or_update_class_session(event_data, teacher, class_type, student):
 
     # Add student to the session
     session.students.add(student)
-    
+
     return session, created_new

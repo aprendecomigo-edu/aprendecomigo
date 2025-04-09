@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from accounts.forms import StudentOnboardingForm
-from accounts.models import Student
 
 User = get_user_model()
 

@@ -64,8 +64,11 @@ sequenceDiagram
 ## 3. Core Features & Requirements
 
 ### 3.1 Authentication & Authorization
-- Google OAuth integration for login
+- JWT-based authentication system
+- Google OAuth integration with token exchange
 - Role-based access control (admin, teacher, student, parent)
+- Secure token storage on mobile devices
+- Token refresh mechanism for extended sessions
 
 ### 3.2 Calendar & Scheduling (READ-ONLY)
 - **Read-only** integration with Google Calendar
@@ -126,16 +129,20 @@ sequenceDiagram
 
 ### 4.1 Backend
 - Django framework
-  - Django REST framework for API endpoints
-  - Django's built-in admin panel
-  - Authentication system with Google OAuth integration
+  - Django REST Framework for API endpoints
+  - JSON Web Token (JWT) authentication
+  - Django's built-in admin panel (for direct backend administration)
   - ORM for database interactions
   - Internationalization support
 
 ### 4.2 Frontend
-- Vue.js or Django templates with HTMX
-- Mobile-responsive design
-- Minimalist UI approach for the MVP
+- React Native with React Native for Web
+  - Single codebase for web, iOS, and Android
+  - Responsive design for all screen sizes
+  - Native UI components for mobile platforms
+  - Web compatibility via react-native-web
+- State management with Redux or Context API
+- Native navigation solutions (React Navigation)
 
 ### 4.3 Database
 - PostgreSQL or MySQL (compatible with PythonAnywhere)
@@ -145,6 +152,7 @@ sequenceDiagram
 - Google Calendar API for scheduling
 - Google Drive API for file storage
 - Google Meet or Zoom for virtual sessions
+- Push notification services for mobile
 
 ## 5. Data Models
 
@@ -244,47 +252,61 @@ sequenceDiagram
 ## 7. UI/UX Requirements
 
 ### 7.1 Design Approach
-- Minimalist design for the MVP
-- Focus on functionality over aesthetics initially
-- Intuitive navigation
+- Cross-platform design system using React Native components
+- Native look and feel on each platform (iOS, Android, Web)
+- Focus on functionality and performance
+- Intuitive navigation with platform-appropriate patterns
 
 ### 7.2 Responsive Design
-- Mobile-friendly interface
-- Accessible on various devices (desktop, tablet, smartphone)
-- Responsive calendar views
+- Native UI for mobile platforms
+- Responsive layouts for web version
+- Touch-optimized interactions
+- Offline capabilities where possible
 
 ### 7.3 User Flows
-- Simplified onboarding process
-- Streamlined calendar management
-- Easy access to financial information
-- Straightforward homework submission
+- Simplified onboarding with platform-specific auth flows
+- Native calendar integration on mobile devices
+- Touch-optimized financial dashboards
+- Native file handling for homework submission
 
 ## 8. Deployment
 
-Building philosophy is to use as much of what already exists as possible. django-allauth functionality, google calendar functionality etc and build the minimum we need to make things work.
+Building philosophy is to use as much of what already exists as possible, focusing on creating a robust API layer with Django and a cross-platform UI with React Native.
 
-### 8.1 Hosting Platform
-- PythonAnywhere for initial deployment
-- MySQL database (provided by PythonAnywhere)
+### 8.1 Hosting
+- Backend: PythonAnywhere or similar cloud hosting
+- Web Frontend: Vercel, Netlify, or similar static hosting
+- Mobile Apps: Apple App Store and Google Play Store
 
 ### 8.2 Environment Setup
 - Development, staging, and production environments
 - Environment variable management
-- Database configuration
+- CI/CD pipeline for automated testing and deployment
+- App store release management
+
+### 8.3 Mobile Considerations
+- App store approval processes
+- Native performance optimization
+- Push notification configuration
+- Deep linking support
 
 ## 9. Testing Requirements
 
 ### 9.1 Unit Testing
-- Test coverage for core functionality
-- Django test framework implementation
+- Backend API test coverage with Django REST Framework test tools
+- React Native component unit tests with Jest
+- API contract validation
 
 ### 9.2 End-to-End Testing
-- Critical user flows testing
-- Integration test suite
+- Critical user flows testing across all platforms
+- API integration tests
+- Authentication flow testing
 
-### 9.3 Browser Compatibility
-- Testing across major browsers
-- Mobile device testing
+### 9.3 Platform Compatibility
+- iOS testing on multiple device sizes
+- Android testing on multiple device sizes
+- Cross-browser web testing
+- Accessibility compliance testing
 
 ## 10. Development Phases
 

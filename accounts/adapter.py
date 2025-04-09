@@ -19,15 +19,6 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             user.user_type = user_type
             user.save()
 
-        # If it's a student without a profile, redirect to onboarding
-        if hasattr(user, "user_type") and user.user_type == "student":
-            try:
-                # Check if student profile exists
-                student_profile = user.student_profile
-            except:
-                # No profile, redirect to onboarding
-                return resolve_url("student_onboarding")
-
         # Otherwise use the default redirect
         return resolve_url(settings.LOGIN_REDIRECT_URL)
 
@@ -105,10 +96,8 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
 
         # If it's a student without a profile, redirect to onboarding
         if hasattr(user, "user_type") and user.user_type == "student":
-            try:
-                # Check if student profile exists
-                student_profile = user.student_profile
-            except:
+            # Check if student profile exists using hasattr or checking the related object
+            if not hasattr(user, "student_profile") or user.student_profile is None:
                 # No profile, redirect to onboarding
                 return resolve_url("student_onboarding")
 

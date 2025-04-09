@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Design System - Aprende Comigo</title>
-    
+
     <!-- Bootstrap 5.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
+
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/phosphor-icons"></script>
-    
+
     <style>
         :root {
             /* Color Palette */
@@ -26,7 +26,7 @@
             --text: #2D3748;
             --text-light: #718096;
             --border: #E2E8F0;
-            
+
             /* Spacing Scale */
             --space-1: 0.5rem;  /* 8px */
             --space-2: 1rem;    /* 16px */
@@ -35,7 +35,7 @@
             --space-5: 3rem;    /* 48px */
             --space-6: 4rem;    /* 64px */
         }
-        
+
         /* Base Styles */
         body {
             font-family: 'Inter', sans-serif;
@@ -43,7 +43,7 @@
             background-color: var(--background);
             line-height: 1.5;
         }
-        
+
         /* Typography */
         h1, h2, h3, h4, h5, h6 {
             font-family: 'Outfit', sans-serif;
@@ -53,37 +53,37 @@
             letter-spacing: -0.5px;
             color: var(--text);
         }
-        
+
         h1 {
             font-size: 2.5rem;
             line-height: 1.2;
         }
-        
+
         h2 {
             font-size: 2rem;
             font-weight: 600;
         }
-        
+
         h3 {
             font-size: 1.5rem;
             font-weight: 600;
         }
-        
+
         p {
             margin-bottom: var(--space-3);
         }
-        
+
         /* Links */
         a {
             color: var(--primary);
             text-decoration: none;
             transition: all 0.2s ease;
         }
-        
+
         a:hover {
             color: var(--primary-light);
         }
-        
+
         /* Buttons */
         .btn {
             border-radius: 8px;
@@ -91,40 +91,40 @@
             font-weight: 500;
             transition: all 0.2s ease;
         }
-        
+
         .btn:focus {
             box-shadow: 0 0 0 3px rgba(94, 99, 182, 0.3);
         }
-        
+
         .btn:hover {
             transform: scale(1.02);
         }
-        
+
         .btn-primary {
             background-color: var(--primary);
             border-color: var(--primary);
         }
-        
+
         .btn-primary:hover {
             background-color: var(--primary-light);
             border-color: var(--primary-light);
         }
-        
+
         .btn-secondary {
             background-color: var(--secondary);
             border-color: var(--secondary);
         }
-        
+
         .btn-outline-primary {
             color: var(--primary);
             border-color: var(--primary);
         }
-        
+
         .btn-outline-primary:hover {
             background-color: var(--primary);
             color: white;
         }
-        
+
         /* Content Sections (instead of cards) */
         .content-section {
             background-color: var(--surface);
@@ -134,17 +134,17 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--border);
         }
-        
+
         /* List Items (instead of cards) */
         .list-item {
             padding: var(--space-3);
             border-bottom: 1px solid var(--border);
         }
-        
+
         .list-item:last-child {
             border-bottom: none;
         }
-        
+
         /* Form Controls */
         .form-control {
             border: none;
@@ -153,71 +153,71 @@
             padding: var(--space-2);
             transition: all 0.3s ease;
         }
-        
+
         .form-control:focus {
             border-color: var(--primary);
             box-shadow: none;
         }
-        
+
         .form-label {
             color: var(--text-light);
             font-weight: 500;
         }
-        
+
         /* Color Swatches */
         .color-swatch {
             height: 100px;
             border-radius: 8px;
             margin-bottom: var(--space-2);
         }
-        
+
         /* Navigation */
         .navbar {
             background-color: var(--surface);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
-        
+
         .navbar-brand {
             font-family: 'Outfit', sans-serif;
             font-weight: 700;
             font-size: 1.5rem;
             color: var(--primary);
         }
-        
+
         .nav-link {
             color: var(--text);
             font-weight: 500;
             position: relative;
             padding: var(--space-2) var(--space-3);
         }
-        
+
         .nav-link.active {
             color: var(--primary);
             border-left: 3px solid var(--primary);
             background-color: rgba(94, 99, 182, 0.1);
         }
-        
+
         /* Utilities */
         .bg-primary-light {
             background-color: rgba(94, 99, 182, 0.1);
         }
-        
+
         .text-primary {
             color: var(--primary) !important;
         }
-        
+
         .text-secondary {
             color: var(--secondary) !important;
         }
-        
+
         .text-accent {
             color: var(--accent) !important;
         }
-        
+
         .text-light {
             color: var(--text-light) !important;
         }
-        
+
         /* Icons */
         .icon {
             vertical-align: middle;
@@ -312,7 +312,7 @@
                     <button class="btn btn-outline-primary">Outline Button</button>
                     <button class="btn btn-primary" disabled>Disabled Button</button>
                 </div>
-                
+
                 <h3>Button with Icons</h3>
                 <div class="d-flex flex-wrap gap-2">
                     <button class="btn btn-primary"><i class="ph-plus icon"></i> Add New</button>
@@ -329,7 +329,7 @@
                 <h3>Main Content Area</h3>
                 <p>Instead of using cards, we're using subtle content sections with minimal borders and shadows. This creates a clean, modern look while still providing visual separation between different content areas.</p>
             </div>
-            
+
             <div class="content-section bg-primary-light">
                 <h3>Highlighted Section</h3>
                 <p>This content section uses a light background color to draw additional attention, useful for important notices or featured content.</p>
@@ -414,19 +414,19 @@
                 <p>Our spacing system uses a consistent scale:</p>
                 <div style="background-color: var(--primary-light); height: 8px; margin-bottom: 8px;"></div>
                 <p><small>--space-1: 0.5rem (8px)</small></p>
-                
+
                 <div style="background-color: var(--primary-light); height: 16px; margin-bottom: 8px;"></div>
                 <p><small>--space-2: 1rem (16px)</small></p>
-                
+
                 <div style="background-color: var(--primary-light); height: 24px; margin-bottom: 8px;"></div>
                 <p><small>--space-3: 1.5rem (24px)</small></p>
-                
+
                 <div style="background-color: var(--primary-light); height: 32px; margin-bottom: 8px;"></div>
                 <p><small>--space-4: 2rem (32px)</small></p>
-                
+
                 <div style="background-color: var(--primary-light); height: 48px; margin-bottom: 8px;"></div>
                 <p><small>--space-5: 3rem (48px)</small></p>
-                
+
                 <div style="background-color: var(--primary-light); height: 64px;"></div>
                 <p><small>--space-6: 4rem (64px)</small></p>
             </div>
@@ -449,7 +449,7 @@
 
     <!-- Bootstrap JS with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <script>
         // Initialize Phosphor Icons
         document.addEventListener('DOMContentLoaded', function() {
@@ -457,4 +457,4 @@
         });
     </script>
 </body>
-</html> 
+</html>

@@ -57,7 +57,11 @@ class SyncCalendarCommandTest(TestCase):
 
         # Verify sync_calendar_events was called with correct arguments
         mock_sync_events.assert_called_once_with(
-            TEST_CALENDAR_ID, 7, "admin@test.com", None, None  # Use test calendar ID
+            TEST_CALENDAR_ID,
+            7,
+            "admin@test.com",
+            None,
+            None,  # Use test calendar ID
         )
 
     @patch("scheduling.management.commands.sync_calendar.sync_calendar_events")

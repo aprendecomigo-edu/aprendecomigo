@@ -4,44 +4,44 @@
     --text-color: #333333;
     --border-color: #dee2e6;
     --muted-color: #6c757d;
-    
+
     /* Primary colors */
     --primary-color: #007bff;
     --primary-light: #e3f2fd;
     --primary-dark: #0056b3;
-    
+
     /* Secondary colors */
     --secondary-color: #6c757d;
     --secondary-light: #f8f9fa;
     --secondary-dark: #495057;
-    
+
     /* Success colors - only for status indicators */
     --success-color: #28a745;
     --success-light: #f1f8e9;
     --success-dark: #1e7e34;
-    
+
     /* Warning colors - only for alerts and warnings */
     --warning-color: #ffc107;
     --warning-light: #fffbeb;
     --warning-dark: #d39e00;
-    
+
     /* Danger colors - only for errors */
     --danger-color: #dc3545;
     --danger-light: #ffebee;
     --danger-dark: #bd2130;
-    
+
     /* Info colors - only for informational messages */
     --info-color: #17a2b8;
     --info-light: #e0f7fa;
     --info-dark: #117a8b;
-    
+
     /* Neutral colors */
     --white: #ffffff;
     --light: #f8f9fa;
     --medium: #dee2e6;
     --dark: #343a40;
     --black: #000000;
-    
+
     /* Typography */
     --font-family: 'Roboto', sans-serif;
     --font-size-base: 1rem;
@@ -49,19 +49,19 @@
     --font-size-lg: 1.25rem;
     --font-weight-normal: 400;
     --font-weight-bold: 700;
-    
+
     /* Spacing */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
     --spacing-md: 1rem;
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
-    
+
     /* Borders */
     --border-radius: 0.25rem;
     --border-width: 1px;
     --border-width-lg: 3px;
-    
+
     /* Shadows */
     --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
@@ -74,7 +74,7 @@
     --text-color: #f1f1f1;
     --border-color: #444444;
     --muted-color: #aaaaaa;
-    
+
     /* Adjust colors for dark theme */
     --primary-light: #203c5b;
     --secondary-light: #343a40;
@@ -82,11 +82,11 @@
     --warning-light: #5d4b16;
     --danger-light: #57151c;
     --info-light: #123e4a;
-    
+
     /* Neutral colors */
     --light: #343a40;
     --medium: #6c757d;
-    
+
     /* Shadows */
     --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
     --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.4);
@@ -138,4 +138,4 @@
 .accent-info {
     border-color: var(--info-color) !important;
     background-color: var(--info-light);
-} 
+}

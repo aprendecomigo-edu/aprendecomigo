@@ -370,7 +370,7 @@ class FinancialPermissionsTestCase(TestCase):
 
         # Test each report URL
         for i, url in enumerate(report_urls):
-            print(f"\nTesting URL {i+1}: {url}")
+            print(f"\nTesting URL {i + 1}: {url}")
 
             # Make sure we're logged out
             self.client.logout()

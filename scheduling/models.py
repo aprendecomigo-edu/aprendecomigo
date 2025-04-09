@@ -2,7 +2,6 @@ from django.conf import settings
 from django.db import models
 
 
-
 class ClassType(models.Model):
     """
     Represents a type of class with specific pricing and configuration.

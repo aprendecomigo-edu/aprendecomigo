@@ -1,19 +1,24 @@
 import datetime
 
+from django.conf import settings
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from scheduling.db_utils import get_google_credentials, get_google_token, get_or_create_class_type, get_or_create_student, get_or_create_teacher
-from google.oauth2.credentials import Credentials
-from django.conf import settings
-
-
+from scheduling.db_utils import (
+    get_google_credentials,
+    get_google_token,
+    get_or_create_class_type,
+    get_or_create_student,
+    get_or_create_teacher,
+)
 
 # Scope required for Calendar API
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
 
+
 def get_google_credentials(admin_email):
-        """
+    """
     Get Google API credentials from a user's django-allauth social account
 
     Args:
@@ -22,22 +27,19 @@ def get_google_credentials(admin_email):
     Returns:
         Google OAuth2 Credentials object or None if not available
     """
-        token, refresh_token = get_google_token(admin_email)
-        token_data = {
-            "token": token,
-            "refresh_token": refresh_token,
-            "token_uri": "https://oauth2.googleapis.com/token",
-            "client_id": settings.SOCIALACCOUNT_PROVIDERS["google"]["APP"]["client_id"],
-            "client_secret": settings.SOCIALACCOUNT_PROVIDERS["google"]["APP"][
-                "secret"
-            ],
-            "scopes": SCOPES,
+    token, refresh_token = get_google_token(admin_email)
+    token_data = {
+        "token": token,
+        "refresh_token": refresh_token,
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "client_id": settings.SOCIALACCOUNT_PROVIDERS["google"]["APP"]["client_id"],
+        "client_secret": settings.SOCIALACCOUNT_PROVIDERS["google"]["APP"]["secret"],
+        "scopes": SCOPES,
     }
 
-        creds = Credentials(**token_data)
-        print(f"Using Google credentials from admin account: {admin_email}")
-        return creds
-
+    creds = Credentials(**token_data)
+    print(f"Using Google credentials from admin account: {admin_email}")
+    return creds
 
 
 def get_calendar_service(admin_email):
@@ -110,24 +112,26 @@ def fetch_calendar_events(calendar_id, admin_email):
         page_token = None
         events = []
         while True:
-            events_result = service.events().list(calendarId=calendar_id, 
-                                           singleEvents=True, 
-                                           pageToken=page_token).execute()
+            events_result = (
+                service.events()
+                .list(calendarId=calendar_id, singleEvents=True, pageToken=page_token)
+                .execute()
+            )
             for event in events_result.get("items", []):
                 events.append(event)
-            page_token = events_result.get('nextPageToken')
+            page_token = events_result.get("nextPageToken")
             if not page_token:
                 break
-  
+
         parsed_events = []
 
         for event in events:
             start = event["start"].get("dateTime", event["start"].get("date"))
-            start_time = datetime.datetime.fromisoformat(start.replace('Z', '+00:00'))
+            start_time = datetime.datetime.fromisoformat(start.replace("Z", "+00:00"))
 
             end = event["end"].get("dateTime", event["end"].get("date"))
-            end_time = datetime.datetime.fromisoformat(end.replace('Z', '+00:00'))
-            
+            end_time = datetime.datetime.fromisoformat(end.replace("Z", "+00:00"))
+
             title = event.get("summary", "")
             description = event.get("description", "")
             location = event.get("location", "")  # Teacher name is in location
@@ -157,7 +161,6 @@ def fetch_calendar_events(calendar_id, admin_email):
         return []
 
 
-
 def sync_calendar_events(calendar_id, admin_email):
     """
     Sync events from Google Calendar to the database.
@@ -178,12 +181,12 @@ def sync_calendar_events(calendar_id, admin_email):
         class_type = get_or_create_class_type(event_data["class_type_code"])
         teacher = get_or_create_teacher(event_data["teacher_name"])
         student = get_or_create_student(event_data["student_name"])
-        
+
         # Create or update the class session
         session, created_new = create_or_update_class_session(
             event_data, teacher, class_type, student
         )
-        
+
         if created_new:
             created += 1
         else:

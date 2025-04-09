@@ -7,50 +7,56 @@ default_language_version:
   python: python3.13
 
 repos:
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.1.0
-    hooks:
-      - id: black
-        exclude: ^.*\/migrations\/.*\.py$
-        args: [--line-length=88]
-  - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
-    hooks:
-      - id: isort
-        name: isort (python)
-        exclude: ^.*\/migrations\/.*\.py$
-        args: [--profile=black, --line-length=88, --skip-gitignore, --split-on-trailing-comma]
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.1.2
-    hooks:
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.11.3
+  hooks:
+    - id: ruff
+      args: [ --fix ]
+    - id: ruff-format
+- repo: https://github.com/psf/black-pre-commit-mirror
+  rev: 25.1.0
+  hooks:
+    - id: black
+      exclude: ^.*\/migrations\/.*\.py$
+      args: [--line-length=88]
+- repo: https://github.com/pycqa/isort
+  rev: 6.0.1
+  hooks:
+    - id: isort
+      name: isort (python)
+      exclude: ^.*\/migrations\/.*\.py$
+      args: [--profile=black, --line-length=88, --skip-gitignore, --split-on-trailing-comma]
+- repo: https://github.com/PyCQA/flake8
+  rev: 7.1.2
+  hooks:
     - id: flake8
       exclude: ^.*\/migrations\/.*\.py$
       additional_dependencies:
-      - flake8-bugbear
-      - flake8-comprehensions
-      - flake8-logging
-      - flake8-tidy-imports
-      - flake8-unused-arguments
-      - flake8-quotes
+        - flake8-bugbear
+        - flake8-comprehensions
+        - flake8-logging
+        - flake8-tidy-imports
+        - flake8-unused-arguments
+        - flake8-quotes
       args: [--max-line-length=88, --extend-ignore=E203, --inline-quotes=double, --per-file-ignores=*/settings.py:E501]
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
-    hooks:
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.15.0
+  hooks:
     - id: mypy
       exclude: ^.*\/migrations\/.*\.py$
       additional_dependencies:
-      - pytest==7.1.2
-      - types-requests
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.1
-    hooks:
+        - pytest==7.1.2
+        - types-requests
+- repo: https://github.com/asottile/pyupgrade
+  rev: v3.19.1
+  hooks:
     - id: pyupgrade
       exclude: ^.*\/migrations\/.*\.py$
       args: [--py39-plus]
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
     - id: check-added-large-files
     - id: check-case-conflict
     - id: check-json
@@ -63,10 +69,11 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
     - id: name-tests-test
+    - id: requirements-txt-fixer
       args: [ --django]
-  - repo: https://github.com/adamchainz/django-upgrade
-    rev: "1.23.1"
-    hooks:
+- repo: https://github.com/adamchainz/django-upgrade
+  rev: "1.23.1"
+  hooks:
     - id: django-upgrade
       exclude: ^.*\/migrations\/.*\.py$
       args: [--target-version, "5.2"]

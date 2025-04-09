@@ -130,7 +130,7 @@ class StudentModelTests(TestCase):
         self.assertNotEqual(self.user.user_type, "student")
 
         # Creating a student profile should update user_type
-        student = Student.objects.create(**self.student_data)
+        Student.objects.create(**self.student_data)
 
         # Refresh the user from the database
         self.user.refresh_from_db()

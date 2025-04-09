@@ -8,4 +8,4 @@ class FinancialsConfig(AppConfig):
     verbose_name = _("Financial Management")
 
     def ready(self):
-        import financials.signals
+        pass

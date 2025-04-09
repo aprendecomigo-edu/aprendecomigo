@@ -40,15 +40,17 @@ class Command(BaseCommand):
         service = get_calendar_service(admin_email)
         page_token = None
         while True:
-            events = service.events().list(calendarId=calendar_id, pageToken=page_token).execute()
-            for event in events['items']:
+            events = (
+                service.events()
+                .list(calendarId=calendar_id, pageToken=page_token)
+                .execute()
+            )
+            for event in events["items"]:
                 print(event)
-            page_token = events.get('nextPageToken')
+            page_token = events.get("nextPageToken")
             if not page_token:
                 break
-        print("LEN EVENTS", len(events['items']))
-    
-
+        print("LEN EVENTS", len(events["items"]))
 
     def handle(self, **options):
         calendar_id = options["calendar_id"]
@@ -88,7 +90,6 @@ class Command(BaseCommand):
             sys.stdout = PlaceholderCapturer()
 
         try:
-
             self.stdout.write(
                 self.style.SUCCESS(
                     f"Syncing events from calendar '{calendar_id}"
@@ -96,9 +97,7 @@ class Command(BaseCommand):
                 )
             )
 
-            created, updated, total = sync_calendar_events(
-                calendar_id, admin_email
-            )
+            created, updated, total = sync_calendar_events(calendar_id, admin_email)
 
             self.stdout.write(
                 self.style.SUCCESS(

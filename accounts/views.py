@@ -2,10 +2,8 @@ from allauth.socialaccount.models import SocialAccount, SocialToken
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.utils.translation import gettext_lazy as _
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .forms import StudentOnboardingForm
 from .models import Student
@@ -16,14 +14,12 @@ User = get_user_model()
 @login_required
 def dashboard_view(request):
     """Render the dashboard for authenticated users."""
-    # Check if user needs onboarding based on user type
-    if request.user.user_type == "student":
-        try:
-            # Check if student profile exists
-            student = request.user.student_profile  # TODO do we need this?
-        except Student.DoesNotExist:
-            # Redirect to student onboarding
-            messages.info(request, _("Please complete your student profile"))
+    # If it's a student without a profile, redirect to onboarding
+    user = request.user
+    if hasattr(user, "user_type") and user.user_type == "student":
+        # Check if student profile exists using hasattr or checking the related object
+        if not hasattr(user, "student_profile") or user.student_profile is None:
+            # No profile, redirect to onboarding
             return redirect("student_onboarding")
 
     # Check if the user has connected their Google account
@@ -33,13 +29,13 @@ def dashboard_view(request):
 
     # Get user account information
     user_info = {
-        "username": request.user.username,
-        "email": request.user.email,
-        "name": request.user.name,
-        "date_joined": request.user.date_joined,
-        "is_admin": request.user.is_staff or request.user.is_superuser,
+        "username": user.username,
+        "email": user.email,
+        "name": user.name,
+        "date_joined": user.date_joined,
+        "is_admin": user.is_staff or user.is_superuser,
         "has_google": has_google,
-        "user_type": request.user.user_type,
+        "user_type": user.user_type,
     }
 
     context = {
@@ -166,10 +162,12 @@ def profile_view(request):
         except SocialToken.DoesNotExist:
             google_connected = False
 
-    return render(request, "profile/page.html", {
-        "user_info": user_info,
-        "google_connected": google_connected
-    })
+    return render(
+        request,
+        "profile/page.html",
+        {"user_info": user_info, "google_connected": google_connected},
+    )
+
 
 @login_required
 def profile_edit(request):
@@ -185,10 +183,12 @@ def profile_edit(request):
         return render(request, "profile/edit.html", {"user_info": user_info})
     else:
         # If not an HTMX request, return the full page
-        return render(request, "profile/page.html", {
-            "user_info": user_info,
-            "show_edit_form": True
-        })
+        return render(
+            request,
+            "profile/page.html",
+            {"user_info": user_info, "show_edit_form": True},
+        )
+
 
 @login_required
 def profile_update(request):
@@ -213,17 +213,19 @@ def profile_update(request):
             return redirect("profile")
 
     # If not a POST request, redirect to profile page
-    return redirect('profile')
+    return redirect("profile")
+
 
 @login_required
 def school_profile_view(request):
     """Render the school profile page with statistics and information"""
     # Import here to avoid circular import
     from django.contrib.auth import get_user_model
+
     from scheduling.models import ClassSession, ClassType
-    
+
     User = get_user_model()
-    
+
     # Statistics for school profile
     stats = {
         "students": User.objects.filter(user_type="student").count(),
@@ -231,7 +233,7 @@ def school_profile_view(request):
         "classes": ClassSession.objects.count(),
         "class_types": ClassType.objects.count(),
     }
-    
+
     # School information (placeholders - could be stored in a Settings model in the future)
     school_info = {
         "founded": "2023",
@@ -241,10 +243,10 @@ def school_profile_view(request):
         "phone": "+351 123 456 789",
         "address": "Lisbon, Portugal",
     }
-    
+
     context = {
         "stats": stats,
         "school_info": school_info,
     }
-    
+
     return render(request, "profile/school.html", context)

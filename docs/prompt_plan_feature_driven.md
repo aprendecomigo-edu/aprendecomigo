@@ -2,39 +2,39 @@
 
 ## Blueprint Overview
 
-This document outlines a feature-driven implementation plan for building a School Management Platform, focusing on the financial and operational aspects. The plan prioritizes delivering core functionality: reading calendar data from Google Calendar and performing financial calculations/reporting based on this data. Each phase builds incrementally on working features.
+This document outlines a feature-driven implementation plan for building a School Management Platform, focusing on the financial and operational aspects using Django REST Framework and React Native. The plan prioritizes delivering core functionality: reading calendar data from Google Calendar and performing financial calculations/reporting based on this data, while enabling cross-platform deployment for web, iOS, and Android.
 
 ## Feature-Driven Development Phases
 
-### Phase 1: Calendar Data Extraction & Financial Foundation
-- Set up project foundation and authentication
-- Implement basic user and calendar models
-- Create Google Calendar read-only integration
-- Build financial tracking models
+### Phase 1: API Foundation & Authentication
+- Set up Django REST Framework project
+- Implement JWT-based authentication
+- Create core data models
+- Build API endpoints for essential functionality
 
-### Phase 2: Financial Operations
-- Implement financial calculations based on calendar data
-- Create admin financial dashboard
+### Phase 2: React Native Foundation & Calendar Integration
+- Set up React Native project with web support
+- Implement authentication flows
+- Create Google Calendar integration
+- Build cross-platform UI components
+
+### Phase 3: Financial Operations
+- Implement financial API endpoints
+- Create mobile-friendly financial UI
 - Build reporting system
 - Enable payment tracking
 
-### Phase 3: User Role Expansion
+### Phase 4: User Role Expansion & Advanced Features
 - Expand user roles and permissions
-- Implement teacher and student views
-- Create role-specific dashboards
-- Add notification system
-
-### Phase 4: Advanced Features
+- Add mobile-specific features (notifications, offline support)
 - Implement homework management
-- Add internationalization
-- Enhance UI/UX
-- Prepare for deployment
+- Prepare for app store deployment
 
 ## Detailed Implementation Steps
 
 Let's break these phases into smaller, focused implementation steps that deliver working functionality at each stage:
 
-## Phase 1: Calendar Data Extraction & Financial Foundation - Implementation Steps
+## Phase 1: API Foundation & Authentication - Implementation Steps
 
 ### Step 1: Project Setup and Authentication
 - Initialize Django project with minimal structure
@@ -66,67 +66,97 @@ Let's break these phases into smaller, focused implementation steps that deliver
 - Build class scheduling interface
 - Add basic CRUD operations for classes
 
-## Phase 2: Financial Operations - Implementation Steps
+## Phase 2: React Native Foundation & Calendar Integration - Implementation Steps
 
-### Step 5: Financial Calculations
+### Step 5: React Native Setup
+- Set up React Native project with web support
+- Implement authentication flows
+- Create Google Calendar integration
+- Build cross-platform UI components
+
+### Step 6: Calendar Models and Google Integration
+- Implement minimal Subject and ClassType models
+- Create ClassSession model for storing calendar data
+- Set up Google Calendar API read-only integration
+- Build a parsing mechanism to extract:
+  - Student name from event title
+  - Teacher name from location field
+  - Price code from description field
+  - Duration from start/end times
+  - Absence status from "FALTOU" marking
+
+### Step 7: Financial Foundation Models
+- Create TeacherProfile with compensation rates
+- Implement StudentProfile with payment info
+- Build PaymentPlan model
+- Create StudentPayment model
+- Implement TeacherCompensation model
+
+### Step 8: Admin Calendar Interface
+- Create admin dashboard template
+- Implement calendar view component
+- Build class scheduling interface
+- Add basic CRUD operations for classes
+
+## Phase 3: Financial Operations - Implementation Steps
+
+### Step 9: Financial Calculations
 - Implement teacher hours calculation from calendar
 - Create student payment calculation logic
 - Build basic reporting functions
 - Add financial data validation
 
-### Step 6: Financial Dashboard
+### Step 10: Financial Dashboard
 - Create financial overview dashboard
 - Implement teacher compensation reports
 - Build student payment tracking interface
 - Add export functionality for reports
 
-### Step 7: Payment Management
+### Step 11: Payment Management
 - Implement payment recording system
 - Create payment history tracking
 - Build invoice generation
 - Add payment status monitoring
 
-### Step 8: Enhanced Financial Features
+### Step 12: Enhanced Financial Features
 - Implement financial notifications
 - Add detailed financial analytics
 - Build batch operations for admin
 - Create financial health indicators
 
-## Phase 3: User Role Expansion - Implementation Steps
+## Phase 4: User Role Expansion & Advanced Features - Implementation Steps
 
-### Step 9: Expanded User Roles
+### Step 13: Expanded User Roles
 - Enhance user model with additional roles
 - Implement role-based permissions system
 - Create profile management for all roles
 - Build user management interface
 
-### Step 10: Teacher and Student Interfaces
+### Step 14: Teacher and Student Interfaces
 - Create teacher dashboard
 - Implement student schedule view
 - Build parent dashboard for child monitoring
 - Add role-specific calendar views
 
-### Step 11: Communication System
+### Step 15: Communication System
 - Implement notification preferences
 - Create messaging system between users
 - Build announcement functionality
 - Add email notifications
 
-### Step 12: Profile and Settings
+### Step 16: Profile and Settings
 - Create user profile management
 - Implement account settings
 - Build preference configuration
 - Add privacy controls
 
-## Phase 4: Advanced Features - Implementation Steps
-
-### Step 13: Homework Management
+### Step 17: Homework Management
 - Implement assignment models
 - Create submission system
 - Build file upload functionality
 - Add feedback mechanism
 
-### Step 14: Internationalization and Polish
+### Step 18: Internationalization and Polish
 - Set up language configuration
 - Implement UI translations
 - Enhance mobile responsiveness
@@ -136,46 +166,87 @@ Let's break these phases into smaller, focused implementation steps that deliver
 
 Below are the implementation prompts for a code-generation LLM to build each step, focusing on incremental feature delivery:
 
-### Prompt 1: Project Setup and Authentication
+### Prompt 1: Project Setup and API Foundation
 
 ```
-Create a new Django project for a School Management Platform with a focus on calendar and financial management. Initialize the project with:
+Create a new Django project for a School Management Platform with a focus on API development:
+
 0. Setup virtualenv that uses the latest version of python3 with the latest version of Django
 1. Create a new Django project named "aprendecomigo"
 2. Configure settings.py with:
    - PostgreSQL database configuration
-   - Basic timezone and language settings
+   - DRF and JWT settings
+   - CORS configuration for React Native
    - Static file configurations
 3. Create a minimal project structure with these initial apps:
    - accounts: For user management
    - scheduling: For calendar functionality
    - financials: For financial tracking
+   - api: For API endpoints and serializers
 4. Implement a custom User model in accounts/models.py:
    - Email as the primary identifier
    - Fields: name, phone_number, is_admin (boolean)
-5. Create basic authentication views:
-   - Login page with email/password
-   - Logout functionality
-   - Password reset
-6. Create simple templates for authentication:
-   - Base template with navigation
-   - Login/logout pages
-   - Password reset pages
+5. Create JWT authentication:
+   - Token-based authentication setup
+   - Token refresh mechanism
+   - Password reset via email
+6. Set up basic API endpoints:
+   - User authentication endpoints
+   - User profile endpoints
+   - Basic health check endpoints
 7. Set up a requirements.txt with essential dependencies:
    - Django
+   - djangorestframework
+   - djangorestframework-simplejwt
+   - django-cors-headers
    - psycopg2-binary
    - python-dotenv
    - Pillow
    - google-auth, google-api-python-client (for Calendar API)
-   - django-allauth (for Google OAuth)
 
-Provide the complete project structure, models, views, templates, and configurations for this initial setup.
+Provide the complete project structure, models, serializers, views, and configurations for this initial setup.
 ```
 
-### Prompt 2: Calendar Models and Google Integration
+### Prompt 2: React Native Foundation
 
 ```
-Building on the authentication system, implement calendar models and Google Calendar read-only integration:
+Set up a React Native project with web support for the School Management Platform:
+
+1. Create a new React Native project with Expo:
+   - Initialize with TypeScript template
+   - Configure for web support
+   - Set up directory structure for cross-platform development
+
+2. Implement the basic UI components:
+   - Design system with platform-specific styling
+   - Navigation structure (bottom tabs for mobile, sidebar for web)
+   - Authentication screens (login, signup, password reset)
+   - Dashboard layout
+
+3. Create authentication services:
+   - JWT token management
+   - Secure storage for credentials
+   - Google OAuth integration
+   - API client setup
+
+4. Set up state management:
+   - User authentication state
+   - API request/response handling
+   - Error handling
+   - Loading states
+
+5. Implement responsive layouts:
+   - Mobile-first design
+   - Web adaptations
+   - Platform-specific UI adjustments
+
+Provide the complete React Native project structure, key components, authentication services, and navigation setup.
+```
+
+### Prompt 3: Calendar Models and API Endpoints
+
+```
+Implement calendar models and API endpoints for the School Management Platform:
 
 1. Create these models in the scheduling app:
    - Subject: name, description
@@ -190,294 +261,151 @@ Building on the authentication system, implement calendar models and Google Cale
        - google_calendar_id
        - attended (boolean, false if title contains "FALTOU")
 
-2. Implement Django admin interfaces for these models
+2. Create serializers for these models:
+   - SubjectSerializer
+   - ClassTypeSerializer
+   - ClassSessionSerializer with nested teacher and students
 
-3. Create Google Calendar authentication:
-   - Implement OAuth2 flow for Google Calendar API (read-only access)
+3. Create API viewsets and endpoints:
+   - Subject API endpoints (list, retrieve)
+   - ClassType API endpoints (list, retrieve)
+   - ClassSession API endpoints (list, retrieve, filter)
+   - Endpoints for calendar data synchronization
+
+4. Implement Google Calendar integration:
+   - OAuth2 flow for Google Calendar API (read-only access)
    - Store admin credentials securely
    - Handle token refresh and management
+   - Implement calendar sync API endpoint
 
-4. Implement Google Calendar reading service:
-   - Method to fetch events from admin's Google Calendars (online/in-person)
-   - Parse event data according to the specified format:
-     * Extract student name from event title
-     * Extract teacher name from location field
-     * Extract price code from description
-     * Extract attendance status from title ("FALTOU")
-   - Convert parsed data to ClassSession objects
-   - Handle periodic synchronization
+5. Create React Native calendar components:
+   - Calendar view for different platforms
+   - Class session details view
+   - Schedule view for teachers and students
 
-5. Create a simple management command to test the Calendar API integration and parsing
-
-Provide the complete models, admin configurations, authentication flow, and calendar reading service for this functionality.
+Provide the complete models, serializers, viewsets, URL patterns, and calendar integration services.
 ```
 
-### Prompt 3: Financial Foundation Models
+### Prompt 4: Financial Models and API Endpoints
 
 ```
-Implement the core financial models and their relationships:
+Implement financial models and API endpoints for the School Management Platform:
 
-1. Create a new financials app:
-   - Run `python manage.py startapp financials`
-   - Add 'financials' to INSTALLED_APPS in settings.py
-   - Create initial models.py, admin.py, and views.py
-
-2. Create these models in the financials app:
+1. Create these models in the financials app:
    - PaymentPlan:
-     * name (CharField, e.g., "Monthly Package", "10-hour Package")
-     * description (TextField)
-     * plan_type (CharField with choices: "monthly", "package")
-     * rate (DecimalField, price for monthly plan)
-     * hours_included (IntegerField, for package plans)
-     * expiration_period (IntegerField, days until package expires)
-     * class_type (ForeignKey to scheduling.ClassType, optional)
+     * name, description
+     * plan_type (monthly/package)
+     * rate, hours_included, expiration_period
+     * class_type (ForeignKey, optional)
 
    - StudentPayment:
-     * student (ForeignKey to CustomUser with user_type="student")
+     * student (ForeignKey to User)
      * payment_plan (ForeignKey to PaymentPlan)
-     * amount_paid (DecimalField)
-     * payment_date (DateField)
-     * period_start, period_end (DateField, for monthly plans)
-     * hours_purchased, hours_used (DecimalField, for package plans)
-     * notes (TextField)
-     * status (CharField with choices: "pending", "completed", "cancelled")
+     * amount_paid, payment_date
+     * period fields for monthly plans
+     * hours fields for package plans
+     * status (pending, completed, cancelled)
 
    - TeacherCompensation:
-     * teacher (ForeignKey to CustomUser with user_type="teacher")
-     * period_start, period_end (DateField, compensation period)
-     * class_sessions (ManyToManyField to scheduling.ClassSession)
-     * hours_taught (DecimalField, calculated from sessions)
-     * amount_owed (DecimalField, calculated based on ClassType rates)
-     * amount_paid (DecimalField)
-     * payment_date (DateField, optional)
-     * notes (TextField)
-     * status (CharField with choices: "pending", "completed", "cancelled")
+     * teacher (ForeignKey to User)
+     * period_start, period_end
+     * class_sessions (ManyToManyField)
+     * hours_taught, amount_owed, amount_paid
+     * payment_date, status
 
-3. Implement Django admin interfaces for these models:
-   - Register all models with admin site
-   - Create custom ModelAdmin classes with appropriate list_display, filters, and search fields
-   - Add inline admin classes where appropriate (e.g., StudentPaymentInline in User admin)
+2. Create serializers for these models:
+   - PaymentPlanSerializer
+   - StudentPaymentSerializer
+   - TeacherCompensationSerializer
+   - Financial summary serializers
 
-4. Create service classes for financial calculations:
-   - StudentPaymentService:
-     * Methods to calculate remaining hours based on class sessions
-     * Methods to check payment plan expiration
-     * Methods to generate payment reports
+3. Create API viewsets and endpoints:
+   - PaymentPlan API endpoints
+   - StudentPayment API endpoints
+   - TeacherCompensation API endpoints
+   - Financial reporting endpoints
 
-   - TeacherCompensationService:
-     * Methods to calculate hours taught from class sessions
-     * Methods to calculate compensation based on class types
-     * Methods to generate compensation reports
+4. Implement financial calculation services:
+   - Payment management
+   - Hours calculation
+   - Compensation calculation
+   - Reporting services
 
-5. Create signals for ClassSession changes:
-   - Update TeacherCompensation when classes are completed
-   - Update StudentPayment hours_used when classes are
-   completed
-   - Handle payment plan expiration
-
-6. Implement financial utilities:
-   - Function to calculate class duration from start/end times
-   - Function to validate payment plans
-   - Function to generate financial summaries
-
-Provide the complete models, admin configurations, service classes, and utility functions for the financial functionality.
-```
-
-### Prompt 4: Admin Calendar Interface
-
-```
-Create an admin calendar interface by embedding Google Calendar:
-
-1. Implement an admin dashboard view in scheduling/views.py:
-   - Embed user's Google Calendar within the platform using iframes
-   - Display read-only overview of scheduled classes from the database
-   - Add filter options for viewing different calendar data
-   - Include calendar sync status and controls
-
-2. Create filter forms in scheduling/forms.py:
-   - DateRangeFilterForm for viewing specific time periods
-   - TeacherFilterForm for filtering calendar by teacher
-   - SubjectFilterForm for filtering by subject
-
-3. Build templates for the calendar interface:
-   - admin_dashboard.html with embedded Google Calendar
-   - calendar_filters.html for filtering options
-   - sync_controls.html for manual sync triggers
-
-4. Implement URL patterns in scheduling/urls.py for all views
-
-5. Add minimal JavaScript functionality:
-   - Filter application handling
-   - Sync button functionality
-   - Calendar loading indicators
-
-6. Configure proper Google Calendar embedding with:
-   - API key configuration
-   - Proper iframe setup with customization options
-   - Security considerations for embedded calendar
-
-Provide the complete views, forms, templates, URL configurations, and JavaScript for the admin calendar interface with embedded Google Calendar.
-```
-
-### Prompt 5: Financial Calculations
-
-```
-Implement the core financial calculation logic:
-
-1. Create financial calculation services:
-   - TeacherCompensationService:
-     * Calculate hours from ClassSessions
-     * Compute compensation based on hourly rate
-     * Generate monthly reports
-   - StudentPaymentService:
-     * Track hours used from ClassSessions
-     * Calculate remaining hours
-     * Generate payment status reports
-
-2. Implement calculation methods:
-   - Class duration calculation
-   - Hours by class type calculation
-   - Payment plan validation
-   - Compensation computation
-
-3. Add data validation:
-   - Edge case handling
-   - Financial data validation
-   - Logging for calculations
-
-4. Create management commands:
-   - Calculate teacher compensation
-   - Update student payment status
-   - Generate financial reports
-
-5. Add utility functions:
-   - Date range calculations
-   - Payment plan validation
-   - Financial data formatting
-
-Provide the complete services, calculation methods, validation logic, and management commands for financial calculations.
-```
-
-### Prompt 6: Financial Dashboard
-
-```
-Create the admin financial dashboard:
-
-1. Implement dashboard views in financials/views.py:
-   - Financial overview dashboard
+5. Create React Native financial components:
+   - Financial dashboard
+   - Payment management screens
    - Teacher compensation view
-   - Student payment view
-   - Report generation view
+   - Student payment tracking
 
-2. Build dashboard templates:
-   - Financial overview template
-   - Teacher compensation template
-   - Student payment template
-   - Report generation template
-
-3. Implement financial forms:
-   - Teacher compensation form
-   - Student payment form
-   - Report filter form
-
-4. Add data visualization:
-   - Monthly revenue chart
-   - Teacher compensation summary
-   - Student payment status
-   - Attendance statistics
-
-5. Create export functionality:
-   - CSV export
-   - PDF generation
-   - Data filtering options
-
-6. Add JavaScript functionality:
-   - Chart rendering
-   - Filter application
-   - Export handling
-   - Real-time updates
-
-Provide the complete views, templates, forms, and JavaScript for the financial dashboard.
+Provide the complete models, serializers, viewsets, URL patterns, and financial services.
 ```
 
-### Prompt 7: Payment Management
+### Prompt 5: User Roles and Permissions
 
 ```
-Implement the payment management system:
+Implement user roles and permissions for the School Management Platform:
 
-1. Create payment models:
-   - PaymentTransaction
-   - PaymentReceipt
-   - PaymentHistory
+1. Enhance the User model with roles:
+   - Add role field with choices (admin, teacher, student, parent)
+   - Create profile models for each role
+   - Add permissions based on roles
 
-2. Implement payment views:
-   - Payment recording form
-   - Payment history view
-   - Receipt generation
-   - Payment status tracking
+2. Create role-based API permissions:
+   - Custom permission classes
+   - Role-based viewset mixins
+   - Object-level permissions for user data
 
-3. Build payment templates:
-   - Payment form template
-   - Payment history template
-   - Receipt template
-   - Status view template
+3. Implement API endpoints for role management:
+   - User role assignment
+   - Profile management
+   - Role-based data access
 
-4. Add payment functionality:
-   - Payment recording
-   - Receipt generation
-   - Status updates
-   - History tracking
+4. Create React Native role-specific components:
+   - Admin dashboard
+   - Teacher dashboard
+   - Student dashboard
+   - Parent dashboard
 
-5. Implement export features:
-   - Payment report generation
-   - Receipt PDF generation
-   - Transaction history export
+5. Implement role-based navigation:
+   - Different navigation options based on user role
+   - Role-specific screens and actions
+   - Permission-based UI elements
 
-6. Add validation and security:
-   - Payment validation
-   - Receipt verification
-   - Access control
-   - Audit logging
-
-Provide the complete models, views, templates, and functionality for payment management.
+Provide the complete user role models, permissions, viewsets, and role-based components.
 ```
 
-### Prompt 8: Enhanced Financial Features
+### Prompt 6: Advanced Features and Mobile-Specific Functionality
 
 ```
-Implement advanced financial features:
+Implement advanced features and mobile-specific functionality:
 
-1. Create notification system:
-   - Payment due notifications
-   - Overdue payment alerts
-   - Payment confirmation emails
-   - Financial report notifications
+1. Create homework assignment system:
+   - Homework models and serializers
+   - File upload API endpoints
+   - Submission tracking and grading
 
-2. Implement analytics:
-   - Revenue projections
-   - Teacher earnings analysis
-   - Student payment patterns
-   - Financial health indicators
+2. Implement mobile notifications:
+   - Push notification service
+   - Notification preferences
+   - Event-based notifications
 
-3. Add batch operations:
-   - Bulk payment recording
-   - Mass email for invoices
-   - Batch report generation
-   - Import/export functionality
+3. Add offline capabilities:
+   - Local data storage
+   - Synchronization on reconnection
+   - Conflict resolution
 
-4. Create financial reports:
-   - Monthly revenue reports
-   - Teacher compensation reports
-   - Student payment reports
-   - Financial health reports
+4. Implement deep linking:
+   - App URL schemes
+   - Universal links/app links
+   - Navigation from notifications
 
-5. Implement data visualization:
-   - Revenue charts
-   - Payment trend graphs
-   - Teacher earnings charts
-   - Student payment status charts
+5. Prepare for app store deployment:
+   - iOS app configuration
+   - Android app configuration
+   - App store assets
+   - Deployment scripts
 
-Provide the complete notification system, analytics, batch operations, and reporting functionality.
+Provide the complete homework system, notification service, offline capabilities, and app configuration.
 ```
 
 ## Conclusion

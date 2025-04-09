@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import ClassSession, ClassType
 
+
 @admin.register(ClassType)
 class ClassTypeAdmin(admin.ModelAdmin):
     list_display = ("name", "hourly_rate")

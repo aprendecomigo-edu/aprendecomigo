@@ -10,21 +10,21 @@
         padding: 20px;
         margin-top: 20px;
     }
-    
+
     .preview-card {
         transition: all 0.3s ease;
     }
-    
+
     .preview-button {
         transition: all 0.3s ease;
     }
-    
+
     .color-picker-container {
         display: flex;
         align-items: center;
         margin-bottom: 15px;
     }
-    
+
     .color-picker-container input[type="color"] {
         margin-right: 10px;
         height: 40px;
@@ -34,7 +34,7 @@
         border-radius: 4px;
         background: none;
     }
-    
+
     .color-picker-container input[type="text"] {
         width: 100px;
         padding: 5px;
@@ -49,7 +49,7 @@
     <div class="row">
         <div class="col-12">
             <h1 class="mb-4">School Profile</h1>
-            
+
             <div class="row mb-4">
                 <div class="col-md-3">
                     <div class="card text-center">
@@ -84,7 +84,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Theme Customization Test Section -->
             <div class="row mt-5">
                 <div class="col-12">
@@ -127,7 +127,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="row mt-4">
                 <div class="col-md-6">
                     <div class="card mb-4">
@@ -142,7 +142,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="col-md-6">
                     <div class="card mb-4">
                         <div class="card-header bg-primary text-white">
@@ -195,33 +195,33 @@
         const primaryColorHex = document.getElementById('primaryColorHex');
         const secondaryColorPicker = document.getElementById('secondaryColor');
         const secondaryColorHex = document.getElementById('secondaryColorHex');
-        
+
         // Get preview elements
         const previewCard = document.getElementById('previewCard');
         const previewHeader = document.getElementById('previewHeader');
         const previewButton = document.getElementById('previewButton');
         const previewAlert = document.getElementById('previewAlert');
-        
+
         // Function to update preview
         function updatePreview() {
             const primaryColor = primaryColorPicker.value;
             const secondaryColor = secondaryColorPicker.value;
-            
+
             // Update card header with primary color
             previewHeader.style.backgroundColor = primaryColor;
             previewHeader.style.color = '#ffffff';
-            
+
             // Update button with secondary color
             previewButton.style.backgroundColor = secondaryColor;
             previewButton.style.color = '#000000';
-            
+
             // Update card border with secondary color
             previewCard.style.borderLeft = `4px solid ${secondaryColor}`;
-            
+
             // Update alert with secondary color
             previewAlert.style.backgroundColor = secondaryColor;
             previewAlert.style.color = '#000000';
-            
+
             // Compute lighter version of primary for hover effect
             previewButton.onmouseover = function() {
                 this.style.backgroundColor = adjustColor(secondaryColor, 20);
@@ -230,32 +230,32 @@
                 this.style.backgroundColor = secondaryColor;
             };
         }
-        
+
         // Helper function to adjust color brightness
         function adjustColor(color, percent) {
             const num = parseInt(color.replace('#', ''), 16);
             const r = (num >> 16) + percent;
             const g = ((num >> 8) & 0x00FF) + percent;
             const b = (num & 0x0000FF) + percent;
-            
+
             const newR = r > 255 ? 255 : r < 0 ? 0 : r;
             const newG = g > 255 ? 255 : g < 0 ? 0 : g;
             const newB = b > 255 ? 255 : b < 0 ? 0 : b;
-            
+
             return '#' + (newB | (newG << 8) | (newR << 16)).toString(16).padStart(6, '0');
         }
-        
+
         // Sync color picker with hex input
         primaryColorPicker.addEventListener('input', function() {
             primaryColorHex.value = this.value;
             updatePreview();
         });
-        
+
         secondaryColorPicker.addEventListener('input', function() {
             secondaryColorHex.value = this.value;
             updatePreview();
         });
-        
+
         // Sync hex input with color picker
         primaryColorHex.addEventListener('input', function() {
             if (/^#[0-9A-F]{6}$/i.test(this.value)) {
@@ -263,17 +263,17 @@
                 updatePreview();
             }
         });
-        
+
         secondaryColorHex.addEventListener('input', function() {
             if (/^#[0-9A-F]{6}$/i.test(this.value)) {
                 secondaryColorPicker.value = this.value;
                 updatePreview();
             }
         });
-        
+
         // Initial preview update
         updatePreview();
     });
 </script>
 {% endblock %}
-{% endblock %} 
+{% endblock %}
