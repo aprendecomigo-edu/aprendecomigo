@@ -2,8 +2,9 @@ import datetime
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 
-from accounts.models import Student
+from accounts.models import EmailVerificationCode, Student, Teacher
 
 User = get_user_model()
 
@@ -114,7 +115,7 @@ class StudentModelTests(TestCase):
         self.assertEqual(student.birth_date, self.student_data["birth_date"])
         self.assertEqual(student.address, self.student_data["address"])
         self.assertEqual(student.cc_number, self.student_data["cc_number"])
-        self.assertEqual(student.calendar_url, "")
+        self.assertEqual(student.calendar_iframe, "")
         self.assertFalse(
             bool(student.cc_photo)
         )  # Use assertFalse instead of assertEqual
@@ -140,3 +141,134 @@ class StudentModelTests(TestCase):
         """Test accessing student profile via related name."""
         student = Student.objects.create(**self.student_data)
         self.assertEqual(self.user.student_profile, student)
+
+
+class TeacherModelTests(TestCase):
+    """Test cases for the Teacher model."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = User.objects.create_user(
+            email="teacher@example.com",
+            password="teacherpass123",
+            name="Teacher User",
+        )
+
+        self.teacher_data = {
+            "user": self.user,
+            "bio": "Test biography",
+            "specialty": "Mathematics",
+            "education": "PhD in Mathematics",
+            "hourly_rate": 50.0,
+            "availability": "Weekdays 9am-5pm",
+            "address": "456 Teaching St, Teacher City, 54321",
+            "phone_number": "555-123-4567",
+        }
+
+    def tearDown(self):
+        """Clean up database connections after each test."""
+        super().tearDown()
+
+    def test_create_teacher(self):
+        """Test creating a teacher profile."""
+        teacher = Teacher.objects.create(**self.teacher_data)
+        self.assertEqual(teacher.user, self.user)
+        self.assertEqual(teacher.bio, self.teacher_data["bio"])
+        self.assertEqual(teacher.specialty, self.teacher_data["specialty"])
+        self.assertEqual(teacher.education, self.teacher_data["education"])
+        self.assertEqual(float(teacher.hourly_rate), self.teacher_data["hourly_rate"])
+        self.assertEqual(teacher.availability, self.teacher_data["availability"])
+        self.assertEqual(teacher.address, self.teacher_data["address"])
+        self.assertEqual(teacher.phone_number, self.teacher_data["phone_number"])
+        self.assertEqual(teacher.calendar_iframe, "")
+
+    def test_teacher_string_representation(self):
+        """Test the string representation of a teacher."""
+        teacher = Teacher.objects.create(**self.teacher_data)
+        self.assertEqual(str(teacher), f"Teacher: {self.user.name}")
+
+    def test_user_type_set_on_save(self):
+        """Test that user type is set to 'teacher' on save."""
+        # Initially the user is not a teacher
+        self.assertNotEqual(self.user.user_type, "teacher")
+
+        # Creating a teacher profile should update user_type
+        Teacher.objects.create(**self.teacher_data)
+
+        # Refresh the user from the database
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.user_type, "teacher")
+
+    def test_related_name_access(self):
+        """Test accessing teacher profile via related name."""
+        teacher = Teacher.objects.create(**self.teacher_data)
+        self.assertEqual(self.user.teacher_profile, teacher)
+
+
+class EmailVerificationCodeTests(TestCase):
+    """Test cases for the EmailVerificationCode model."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.email = "verify@example.com"
+
+    def tearDown(self):
+        """Clean up database connections after each test."""
+        super().tearDown()
+
+    def test_generate_code(self):
+        """Test generating a verification code."""
+        # Clear any existing codes
+        EmailVerificationCode.objects.filter(email=self.email).delete()
+
+        # Generate a new code
+        verification = EmailVerificationCode.generate_code(self.email)
+
+        # Verify the code is created correctly
+        self.assertEqual(verification.email, self.email)
+        self.assertEqual(len(verification.code), 6)
+        self.assertTrue(verification.code.isdigit())
+        self.assertFalse(verification.is_used)
+
+        # Verify old codes are deleted
+        old_verification = EmailVerificationCode.generate_code(self.email)
+        self.assertEqual(
+            EmailVerificationCode.objects.filter(email=self.email).count(), 1
+        )
+        self.assertEqual(
+            EmailVerificationCode.objects.get(email=self.email).id, old_verification.id
+        )
+
+    def test_is_valid(self):
+        """Test verification code validity checking."""
+        # Create a code
+        verification = EmailVerificationCode.generate_code(self.email)
+
+        # New code should be valid
+        self.assertTrue(verification.is_valid())
+
+        # Used code should be invalid
+        verification.is_used = True
+        verification.save()
+        self.assertFalse(verification.is_valid())
+
+        # Reset for expired test
+        verification.is_used = False
+        verification.save()
+
+        # Expired code should be invalid
+        verification.created_at = timezone.now() - datetime.timedelta(minutes=11)
+        verification.save()
+        self.assertFalse(verification.is_valid())
+
+    def test_use(self):
+        """Test marking a code as used."""
+        verification = EmailVerificationCode.generate_code(self.email)
+        self.assertFalse(verification.is_used)
+
+        verification.use()
+        self.assertTrue(verification.is_used)
+
+        # Verify database was updated
+        refreshed = EmailVerificationCode.objects.get(id=verification.id)
+        self.assertTrue(refreshed.is_used)

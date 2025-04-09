@@ -158,3 +158,45 @@ class Teacher(models.Model):
             self.user.user_type = "teacher"
             self.user.save()
         super().save(*args, **kwargs)
+
+
+class EmailVerificationCode(models.Model):
+    """
+    Model for storing email verification codes.
+    """
+
+    email = models.EmailField()
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    @classmethod
+    def generate_code(cls, email):
+        """Generate a 6-digit verification code for the given email"""
+        import random
+        import string
+
+        # Delete any existing unused codes for this email
+        cls.objects.filter(email=email, is_used=False).delete()
+
+        # Generate a random 6-digit code
+        code = "".join(random.choices(string.digits, k=6))
+
+        # Create and return a new verification code
+        return cls.objects.create(email=email, code=code)
+
+    def is_valid(self):
+        """Check if the code is still valid (not used and not expired)"""
+        from django.utils import timezone
+
+        if self.is_used:
+            return False
+
+        # Code expires after 10 minutes
+        expiration_time = self.created_at + timezone.timedelta(minutes=10)
+        return timezone.now() <= expiration_time
+
+    def use(self):
+        """Mark the code as used"""
+        self.is_used = True
+        self.save()

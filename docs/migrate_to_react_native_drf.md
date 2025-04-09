@@ -1,20 +1,82 @@
-# Migrate to React Native and Django REST Framework
+# Feature-by-Feature Migration to React Native and Django REST Framework
 
-This document outlines a step-by-step plan to migrate the current Django template-based application to a modern architecture using React Native for the frontend (supporting web, iOS, and Android) and Django REST Framework for the backend API.
+This document outlines a detailed migration plan from the current Django template-based application to a modern architecture using React Native for the frontend (supporting web, iOS, and Android) and Django REST Framework for the backend API.
 
-## Migration Overview
+## Migration Philosophy
 
-The migration will follow these high-level steps:
-1. Transform the Django backend into a REST API
-2. Create a React Native project with web support
-3. Implement API consumers in React Native
-4. Add mobile-specific features
-5. Deploy to web, iOS, and Android platforms
+Rather than attempting a wholesale migration, we'll adopt a feature-by-feature approach that ensures we have both working API endpoints and functioning React Native screens for each feature before moving to the next. This minimizes disruption and provides value throughout the migration process.
 
-## Phase 1: Prepare Django Backend for API Transition
+## DRF Design Patterns
 
-### Step 1: Install and Configure DRF
-1. Install necessary packages:
+For all Django REST Framework development, follow these patterns:
+
+1. **ViewSets and Routers**
+   - Use ViewSets for consistent CRUD operations
+   - Configure ViewSets with appropriate permissions, pagination, and filtering
+   - Register ViewSets with DefaultRouter for automatic URL configuration
+
+2. **Serializers**
+   - Create serializers for all models
+   - Use nested serialization for related objects
+   - Implement custom validation in serializer methods
+   - Create different serializers for different use cases (list, detail, create)
+
+3. **Permissions**
+   - Implement custom permission classes for role-based access control
+   - Use IsAuthenticated as the default permission
+   - Apply object-level permissions where needed
+
+4. **API Documentation**
+   - Document all API endpoints with docstrings
+   - Use drf-yasg or similar for OpenAPI schema generation
+   - Include example requests and responses
+
+5. **Testing**
+   - Write comprehensive unit tests for all API endpoints
+   - Test all CRUD operations
+   - Test permission enforcement
+   - Test edge cases and validation errors
+
+## React Native Design Patterns
+
+For all React Native development, follow these patterns:
+
+1. **Component Structure**
+   - Create a hierarchy of reusable components
+   - Separate presentational and container components
+   - Use React hooks for state and side effects
+   - Follow atomic design principles (atoms, molecules, organisms)
+
+2. **Navigation**
+   - Use React Navigation for consistent navigation patterns
+   - Implement stack, tab, and drawer navigation as appropriate
+   - Handle deep linking for web and mobile
+
+3. **State Management**
+   - Use Context API for app-wide state
+   - Use Redux for complex state management
+   - Implement optimistic UI updates for better UX
+
+4. **Styling**
+   - Use StyleSheet API for performance
+   - Create a consistent theme for colors, spacing, and typography
+   - Use platform-specific styling when needed
+
+5. **API Integration**
+   - Create API service modules for each feature
+   - Handle authentication and token management
+   - Implement error handling and loading states
+   - Support offline capabilities with data caching
+
+6. **Testing**
+   - Write Jest tests for components and business logic
+   - Use React Native Testing Library for component testing
+   - Write end-to-end tests for critical user flows
+
+## Phase 1: Authentication and User Management
+
+### Step 1: Set Up DRF and API Infrastructure
+1. Install and configure DRF, JWT, and CORS
    ```bash
    pip install djangorestframework djangorestframework-simplejwt django-cors-headers
    ```
@@ -26,13 +88,14 @@ The migration will follow these high-level steps:
        'rest_framework',
        'rest_framework_simplejwt',
        'corsheaders',
+       'api',
    ]
-   
+
    MIDDLEWARE = [
        'corsheaders.middleware.CorsMiddleware',
        # existing middleware
    ]
-   
+
    # DRF Settings
    REST_FRAMEWORK = {
        'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -41,15 +104,17 @@ The migration will follow these high-level steps:
        'DEFAULT_PERMISSION_CLASSES': [
            'rest_framework.permissions.IsAuthenticated',
        ],
+       'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+       'PAGE_SIZE': 20,
    }
-   
+
    # JWT Settings
    SIMPLE_JWT = {
        'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
        'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
        # other JWT settings
    }
-   
+
    # CORS Settings
    CORS_ALLOW_ALL_ORIGINS = False  # Set to True during development
    CORS_ALLOWED_ORIGINS = [
@@ -58,1410 +123,1023 @@ The migration will follow these high-level steps:
    ]
    ```
 
-#### Execution Prompt for Step 1:
-```
-Transform the Django project into a REST API by installing and configuring Django REST Framework with JWT authentication:
+#### Execution Instructions for Step 1
+1. **Environment Preparation**
+   - Create a new virtual environment if not already done: `python -m venv .venv`
+   - Activate the virtual environment: `source .venv/bin/activate` (Linux/macOS) or `.venv\Scripts\activate` (Windows)
+   - Ensure you have the latest pip: `python -m pip install --upgrade pip`
 
-1. First, examine the current project structure to understand the existing setup:
-   - Identify the main Django settings file
-   - Check the current INSTALLED_APPS and MIDDLEWARE configurations
-   - Review any existing authentication mechanisms
+2. **Install Required Packages**
+   - Install the packages with exact versions to ensure compatibility:
+     ```bash
+     pip install djangorestframework djangorestframework-simplejwt django-cors-headers
+     ```
+   - Update requirements file: `pip freeze > requirements.txt`
 
-2. Install required packages by running:
-   ```bash
-   pip install djangorestframework djangorestframework-simplejwt django-cors-headers
-   ```
+3. **Configure Django Settings**
+   - Open the main `settings.py` file
+   - Add the required apps to `INSTALLED_APPS` as shown above
+   - Add CorsMiddleware to `MIDDLEWARE` (before CommonMiddleware)
+   - Add the DRF and JWT settings blocks exactly as shown above
+   - Don't forget to import `timedelta` at the top: `from datetime import timedelta`
 
-3. Update requirements.txt to include these new dependencies:
-   ```bash
-   pip freeze > requirements.txt
-   ```
+4. **Test Configuration**
+   - Run migrations: `python manage.py makemigrations` and `python manage.py migrate`
+   - Start the development server: `python manage.py runserver`
+   - Navigate to `http://localhost:8000/admin/` to verify the server is running correctly
 
-4. Modify the Django settings.py file to:
-   - Add 'rest_framework', 'rest_framework_simplejwt', and 'corsheaders' to INSTALLED_APPS
-   - Add 'corsheaders.middleware.CorsMiddleware' to MIDDLEWARE (before CommonMiddleware)
-   - Import datetime.timedelta at the top of the file
+5. **Troubleshooting Common Issues**
+   - If you see import errors, check that packages are correctly installed
+   - If middleware conflicts occur, ensure CorsMiddleware is in the correct position
+   - For JWT configuration errors, verify SECRET_KEY is properly defined
 
-5. Add the following DRF and JWT configurations to settings.py:
+### Step 2: Create Authentication API Endpoints
+1. Create model for email verification codes
    ```python
-   # DRF Settings
-   REST_FRAMEWORK = {
-       'DEFAULT_AUTHENTICATION_CLASSES': (
-           'rest_framework_simplejwt.authentication.JWTAuthentication',
-       ),
-       'DEFAULT_PERMISSION_CLASSES': [
-           'rest_framework.permissions.IsAuthenticated',
-       ],
-   }
-   
-   # JWT Settings
-   SIMPLE_JWT = {
-       'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-       'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-       'ROTATE_REFRESH_TOKENS': False,
-       'BLACKLIST_AFTER_ROTATION': True,
-       'UPDATE_LAST_LOGIN': False,
-       'ALGORITHM': 'HS256',
-       'SIGNING_KEY': SECRET_KEY,
-       'VERIFYING_KEY': None,
-       'AUDIENCE': None,
-       'ISSUER': None,
-       'AUTH_HEADER_TYPES': ('Bearer',),
-       'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-       'USER_ID_FIELD': 'id',
-       'USER_ID_CLAIM': 'user_id',
-   }
+   # api/models.py
+   class EmailVerificationCode(models.Model):
+       email = models.EmailField()
+       code = models.CharField(max_length=6) # this should be properly encrypted as a pass or onetime pass?
+       created_at = models.DateTimeField(auto_now_add=True)
+       is_used = models.BooleanField(default=False)
+
+       @classmethod
+       def generate_code(cls, email):
+           # Generate a 6-digit code and save to database
+
+       def is_valid(self):
+           # Check if code is valid (not used and not expired)
    ```
 
-6. Add CORS settings to settings.py:
+2. Create serializers for authentication
    ```python
-   # CORS Settings
-   CORS_ALLOW_ALL_ORIGINS = True  # For development; set to False in production
-   CORS_ALLOWED_ORIGINS = [
-       "http://localhost:3000",
-       "http://localhost:19006",  # Expo web port
-   ]
-   ```
-
-7. Run migrations to ensure database is up to date:
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
-
-8. Test the installation by running the development server:
-   ```bash
-   python manage.py runserver
-   ```
-
-9. Verify that DRF is properly installed by checking the Django admin interface and ensuring there are no errors in the console.
-
-10. Update documentation
-```
-
-### Step 2: Create API Endpoints for Authentication
-1. Create `api` app:
-   ```bash
-   python manage.py startapp api
-   ```
-
-2. Implement authentication endpoints:
-   - JWT token obtain/refresh/verify
-   - User registration
-   - Password reset 
-
-3. Configure URL routes in `api/urls.py`:
-   ```python
-   from django.urls import path, include
-   from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-   
-   urlpatterns = [
-       path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-       path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-       # Add other authentication endpoints
-   ]
-   ```
-
-#### Execution Prompt for Step 2:
-```
-Create API endpoints for authentication using Django REST Framework and JWT:
-
-1. Create a new Django app for the API:
-   ```bash
-   python manage.py startapp api
-   ```
-
-2. Add the new 'api' app to INSTALLED_APPS in settings.py.
-
-3. Create an authentication views file in the api app (api/auth_views.py):
-   ```python
-   from rest_framework import status, permissions
-   from rest_framework.views import APIView
-   from rest_framework.response import Response
-   from rest_framework_simplejwt.views import TokenObtainPairView
-   from django.contrib.auth import get_user_model
-   from django.contrib.auth.tokens import default_token_generator
-   from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-   from django.utils.encoding import force_bytes
-   from django.core.mail import send_mail
-   from .serializers import UserRegistrationSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer
-
-   User = get_user_model()
-
-   class CustomTokenObtainPairView(TokenObtainPairView):
-       """
-       Custom token view that returns user info along with tokens
-       """
-       def post(self, request, *args, **kwargs):
-           response = super().post(request, *args, **kwargs)
-           if response.status_code == 200:
-               user = User.objects.get(email=request.data['email'])
-               response.data['user_id'] = user.id
-               response.data['email'] = user.email
-               response.data['name'] = user.name
-               response.data['is_admin'] = user.is_admin
-               # Add any other user fields you need
-           return response
-
-   class RegisterView(APIView):
-       permission_classes = [permissions.AllowAny]
-
-       def post(self, request):
-           serializer = UserRegistrationSerializer(data=request.data)
-           if serializer.is_valid():
-               user = serializer.save()
-               return Response({
-                   "message": "User registered successfully",
-                   "user_id": user.id
-               }, status=status.HTTP_201_CREATED)
-           return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-   class PasswordResetView(APIView):
-       permission_classes = [permissions.AllowAny]
-
-       def post(self, request):
-           serializer = PasswordResetSerializer(data=request.data)
-           if serializer.is_valid():
-               email = serializer.validated_data['email']
-               try:
-                   user = User.objects.get(email=email)
-                   uid = urlsafe_base64_encode(force_bytes(user.pk))
-                   token = default_token_generator.make_token(user)
-                   reset_link = f"https://yourfrontend.com/reset-password/{uid}/{token}/"
-                   
-                   # Send email
-                   send_mail(
-                       'Password Reset',
-                       f'Click the link to reset your password: {reset_link}',
-                       'noreply@example.com',
-                       [user.email],
-                       fail_silently=False,
-                   )
-                   return Response({"message": "Password reset link sent"}, status=status.HTTP_200_OK)
-               except User.DoesNotExist:
-                   # Return success even if user doesn't exist for security
-                   return Response({"message": "Password reset link sent"}, status=status.HTTP_200_OK)
-           return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-   class PasswordResetConfirmView(APIView):
-       permission_classes = [permissions.AllowAny]
-
-       def post(self, request):
-           serializer = PasswordResetConfirmSerializer(data=request.data)
-           if serializer.is_valid():
-               uid = serializer.validated_data['uid']
-               token = serializer.validated_data['token']
-               password = serializer.validated_data['new_password']
-               
-               try:
-                   uid = urlsafe_base64_decode(uid).decode()
-                   user = User.objects.get(pk=uid)
-               except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-                   return Response({"error": "Invalid reset link"}, status=status.HTTP_400_BAD_REQUEST)
-               
-               if default_token_generator.check_token(user, token):
-                   user.set_password(password)
-                   user.save()
-                   return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
-               else:
-                   return Response({"error": "Invalid reset link"}, status=status.HTTP_400_BAD_REQUEST)
-               
-           return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-   ```
-
-4. Create serializers for authentication in api/serializers.py:
-   ```python
-   from rest_framework import serializers
-   from django.contrib.auth import get_user_model
-   
-   User = get_user_model()
-   
-   class UserRegistrationSerializer(serializers.ModelSerializer):
-       password = serializers.CharField(write_only=True)
-       password_confirm = serializers.CharField(write_only=True)
-   
-       class Meta:
-           model = User
-           fields = ('email', 'name', 'password', 'password_confirm')
-   
-       def validate(self, data):
-           if data['password'] != data['password_confirm']:
-               raise serializers.ValidationError("Passwords don't match")
-           return data
-   
-       def create(self, validated_data):
-           validated_data.pop('password_confirm')
-           user = User.objects.create_user(
-               email=validated_data['email'],
-               name=validated_data['name'],
-               password=validated_data['password']
-           )
-           return user
-           
-   class PasswordResetSerializer(serializers.Serializer):
+   # api/serializers/auth.py
+   class EmailRequestSerializer(serializers.Serializer):
        email = serializers.EmailField()
-   
-   class PasswordResetConfirmSerializer(serializers.Serializer):
-       uid = serializers.CharField()
-       token = serializers.CharField()
-       new_password = serializers.CharField(min_length=8)
-       confirm_password = serializers.CharField(min_length=8)
-   
-       def validate(self, data):
-           if data['new_password'] != data['confirm_password']:
-               raise serializers.ValidationError("Passwords don't match")
-           return data
+
+   class EmailVerifySerializer(serializers.Serializer):
+       email = serializers.EmailField()
+       code = serializers.CharField(max_length=6, min_length=6)
    ```
 
-5. Create api/urls.py for authentication endpoints:
+3. Create authentication views
    ```python
-   from django.urls import path, include
-   from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
-   from .auth_views import CustomTokenObtainPairView, RegisterView, PasswordResetView, PasswordResetConfirmView
+   # api/views/auth.py
+   class RequestEmailCodeView(APIView):
+       permission_classes = [AllowAny]
 
-   urlpatterns = [
-       # JWT Authentication
-       path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-       path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-       path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
-       
-       # User Registration
-       path('register/', RegisterView.as_view(), name='register'),
-       
-       # Password Reset
-       path('password/reset/', PasswordResetView.as_view(), name='password_reset'),
-       path('password/reset/confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
-   ]
+       def post(self, request):
+           # Generate and send verification code
+
+   class VerifyEmailCodeView(APIView):
+       permission_classes = [AllowAny]
+
+       def post(self, request):
+           # Verify code and generate JWT tokens
    ```
 
-6. Include the API URLs in the project's main urls.py:
+#### Execution Instructions for Step 2
+1. **Create API App Structure**
+   - Create the API app: `python manage.py startapp api`
+   - Create proper directory structure:
+     ```bash
+     mkdir -p api/models
+     mkdir -p api/serializers
+     mkdir -p api/views
+     mkdir -p api/tests
+     ```
+   - Create the necessary `__init__.py` files in each directory
+
+2. **Implement Email Verification Model**
+   - Create the `EmailVerificationCode` model in `api/models.py`
+   - Implement the custom methods for code generation and validation
+   - Run migrations: `python manage.py makemigrations api` and `python manage.py migrate`
+
+3. **Implement Authentication Serializers**
+   - Create `api/serializers/auth.py` with the email request and verification serializers
+   - Ensure validation methods handle edge cases (already used codes, expired codes)
+
+4. **Implement Authentication Views**
+   - Create `api/views/auth.py` with the request code and verification views
+   - Set up proper error handling and responses
+   - Integrate with Django's email sending system for code delivery
+
+5. **Testing**
+   - Test with Postman or curl:
+     ```bash
+     # Request email code
+     curl -X POST http://localhost:8000/api/auth/request-code/ \
+       -H "Content-Type: application/json" \
+       -d '{"email": "test@example.com"}'
+
+     # Verify code
+     curl -X POST http://localhost:8000/api/auth/verify-code/ \
+       -H "Content-Type: application/json" \
+       -d '{"email": "test@example.com", "code": "123456"}'
+     ```
+   - Check email delivery in console during development
+
+6. **Configuration Check**
+   - Ensure `DEFAULT_FROM_EMAIL` is set in settings.py
+   - Configure proper email backend for development/production
+
+### Step 3: Create User Profile API Endpoints
+1. Create user serializers
    ```python
-   from django.urls import path, include
-
-   urlpatterns = [
-       # Existing URLs
-       path('api/', include('api.urls')),
-   ]
-   ```
-
-7. Test the authentication endpoints using a tool like curl, Postman, or httpie:
-   - Test token generation with a POST to /api/token/
-   - Test token refresh with a POST to /api/token/refresh/
-   - Test user registration with a POST to /api/register/
-   - Test password reset flow
-
-8. Document the API endpoints and their required parameters for frontend developers to use.
-```
-
-### Step 3: Create API Serializers for Existing Models
-1. Create serializers for all models:
-   - User/Profile serializers
-   - ClassSession serializers
-   - Financial model serializers
-
-2. Example serializer:
-   ```python
-   # api/serializers.py
-   from rest_framework import serializers
-   from accounts.models import User
-   
+   # api/serializers/users.py
    class UserSerializer(serializers.ModelSerializer):
        class Meta:
            model = User
-           fields = ('id', 'email', 'name', 'phone_number', 'is_admin')
+           fields = ('id', 'email', 'name', 'phone_number', 'role')
            read_only_fields = ('id',)
-   ```
 
-#### Execution Prompt for Step 3:
-```
-Create serializers for existing models to expose them through the REST API:
-
-1. Examine the existing models in the project:
-   - Analyze the accounts app for User and Profile models
-   - Analyze the scheduling app for calendar-related models
-   - Analyze the financials app for payment and compensation models
-
-2. Update the api/serializers.py file to include serializers for all models:
-
-3. Create User and Profile serializers:
-   ```python
-   from rest_framework import serializers
-   from accounts.models import User, TeacherProfile, StudentProfile, ParentProfile
-   
-   class UserSerializer(serializers.ModelSerializer):
-       class Meta:
-           model = User
-           fields = ('id', 'email', 'name', 'phone_number', 'is_admin', 'role')
-           read_only_fields = ('id',)
-   
    class TeacherProfileSerializer(serializers.ModelSerializer):
        user = UserSerializer(read_only=True)
-       
+
        class Meta:
            model = TeacherProfile
-           fields = ('id', 'user', 'specialties', 'hourly_rate', 'bio', 'qualifications')
-           read_only_fields = ('id',)
-   
-   class StudentProfileSerializer(serializers.ModelSerializer):
-       user = UserSerializer(read_only=True)
-       
-       class Meta:
-           model = StudentProfile
-           fields = ('id', 'user', 'grade_level', 'date_of_birth', 'notes')
-           read_only_fields = ('id',)
-   
-   class ParentProfileSerializer(serializers.ModelSerializer):
-       user = UserSerializer(read_only=True)
-       children = StudentProfileSerializer(many=True, read_only=True)
-       
-       class Meta:
-           model = ParentProfile
-           fields = ('id', 'user', 'children')
-           read_only_fields = ('id',)
+           fields = ('id', 'user', 'specialties', 'hourly_rate', 'bio')
+
+   # Similar serializers for StudentProfile and ParentProfile
    ```
 
-4. Create Calendar serializers in a new file api/calendar_serializers.py:
+2. Create user ViewSets
    ```python
-   from rest_framework import serializers
-   from scheduling.models import Subject, ClassType, ClassSession
-   from accounts.models import User
-   
-   class SubjectSerializer(serializers.ModelSerializer):
-       class Meta:
-           model = Subject
-           fields = ('id', 'name', 'description', 'grade_level_range')
-           read_only_fields = ('id',)
-   
-   class ClassTypeSerializer(serializers.ModelSerializer):
-       class Meta:
-           model = ClassType
-           fields = ('id', 'name', 'group_class', 'default_duration', 'hourly_rate', 'description')
-           read_only_fields = ('id',)
-   
-   class TeacherForSessionSerializer(serializers.ModelSerializer):
-       class Meta:
-           model = User
-           fields = ('id', 'name', 'email')
-           read_only_fields = fields
-   
-   class StudentForSessionSerializer(serializers.ModelSerializer):
-       class Meta:
-           model = User
-           fields = ('id', 'name', 'email')
-           read_only_fields = fields
-   
-   class ClassSessionSerializer(serializers.ModelSerializer):
-       teacher = TeacherForSessionSerializer(read_only=True)
-       students = StudentForSessionSerializer(many=True, read_only=True)
-       subject = SubjectSerializer(read_only=True)
-       class_type = ClassTypeSerializer(read_only=True)
-       
-       subject_id = serializers.PrimaryKeyRelatedField(
-           write_only=True, 
-           queryset=Subject.objects.all(),
-           source='subject'
-       )
-       class_type_id = serializers.PrimaryKeyRelatedField(
-           write_only=True, 
-           queryset=ClassType.objects.all(),
-           source='class_type'
-       )
-       teacher_id = serializers.PrimaryKeyRelatedField(
-           write_only=True, 
-           queryset=User.objects.filter(role='teacher'),
-           source='teacher'
-       )
-       student_ids = serializers.PrimaryKeyRelatedField(
-           write_only=True, 
-           queryset=User.objects.filter(role='student'),
-           source='students',
-           many=True
-       )
-       
-       class Meta:
-           model = ClassSession
-           fields = (
-               'id', 'title', 'start_time', 'end_time', 'status', 
-               'teacher', 'students', 'subject', 'class_type', 
-               'google_calendar_id', 'price_override', 'attended',
-               'teacher_id', 'student_ids', 'subject_id', 'class_type_id'
-           )
-           read_only_fields = ('id', 'google_calendar_id')
-   ```
-
-5. Create Financial serializers in a new file api/financial_serializers.py:
-   ```python
-   from rest_framework import serializers
-   from financials.models import PaymentPlan, StudentPayment, TeacherCompensation
-   from scheduling.models import ClassType, ClassSession
-   from accounts.models import User
-   from .calendar_serializers import ClassSessionSerializer
-   
-   class PaymentPlanSerializer(serializers.ModelSerializer):
-       class_type = serializers.PrimaryKeyRelatedField(
-           queryset=ClassType.objects.all(),
-           required=False,
-           allow_null=True
-       )
-       
-       class Meta:
-           model = PaymentPlan
-           fields = (
-               'id', 'name', 'description', 'plan_type', 
-               'rate', 'hours_included', 'expiration_period', 'class_type'
-           )
-           read_only_fields = ('id',)
-   
-   class StudentPaymentSerializer(serializers.ModelSerializer):
-       student = serializers.PrimaryKeyRelatedField(
-           queryset=User.objects.filter(role='student')
-       )
-       payment_plan = serializers.PrimaryKeyRelatedField(
-           queryset=PaymentPlan.objects.all()
-       )
-       
-       class Meta:
-           model = StudentPayment
-           fields = (
-               'id', 'student', 'payment_plan', 'amount_paid', 'payment_date',
-               'period_start', 'period_end', 'hours_purchased', 'hours_used',
-               'status', 'notes'
-           )
-           read_only_fields = ('id',)
-   
-   class TeacherCompensationSerializer(serializers.ModelSerializer):
-       teacher = serializers.PrimaryKeyRelatedField(
-           queryset=User.objects.filter(role='teacher')
-       )
-       class_sessions = serializers.PrimaryKeyRelatedField(
-           queryset=ClassSession.objects.all(),
-           many=True
-       )
-       class_sessions_detail = ClassSessionSerializer(
-           source='class_sessions',
-           many=True,
-           read_only=True
-       )
-       
-       class Meta:
-           model = TeacherCompensation
-           fields = (
-               'id', 'teacher', 'period_start', 'period_end', 
-               'class_sessions', 'class_sessions_detail', 'hours_taught', 
-               'amount_owed', 'amount_paid', 'payment_date', 'status', 'notes'
-           )
-           read_only_fields = ('id', 'hours_taught', 'amount_owed')
-   ```
-
-6. Create serializers for homework management if applicable:
-   ```python
-   from rest_framework import serializers
-   from homework.models import HomeworkAssignment, HomeworkSubmission
-   
-   class HomeworkAssignmentSerializer(serializers.ModelSerializer):
-       # Implementation based on your models
-       
-       class Meta:
-           model = HomeworkAssignment
-           fields = ('id', 'title', 'description', 'due_date', 'teacher', 'students', 'file_attachments', 'date_created')
-           read_only_fields = ('id', 'date_created')
-   
-   class HomeworkSubmissionSerializer(serializers.ModelSerializer):
-       # Implementation based on your models
-       
-       class Meta:
-           model = HomeworkSubmission
-           fields = ('id', 'assignment', 'student', 'submission_date', 'file_attachments', 'feedback', 'notes')
-           read_only_fields = ('id', 'submission_date')
-   ```
-
-7. Create nested serializers for combining related data where needed:
-   ```python
-   class StudentWithPaymentsSerializer(serializers.ModelSerializer):
-       profile = StudentProfileSerializer(read_only=True)
-       payments = StudentPaymentSerializer(many=True, read_only=True)
-       
-       class Meta:
-           model = User
-           fields = ('id', 'email', 'name', 'profile', 'payments')
-           read_only_fields = fields
-   
-   class TeacherWithCompensationsSerializer(serializers.ModelSerializer):
-       profile = TeacherProfileSerializer(read_only=True)
-       compensations = TeacherCompensationSerializer(many=True, read_only=True)
-       
-       class Meta:
-           model = User
-           fields = ('id', 'email', 'name', 'profile', 'compensations')
-           read_only_fields = fields
-   ```
-
-8. Test serializer functionality:
-   - Create simple view functions to test serialization of objects
-   - Ensure proper nested serialization works
-   - Test serialization with related objects
-```
-
-### Step 4: Implement API Viewsets
-1. Create viewsets for all models:
-   ```python
-   # api/viewsets.py
-   from rest_framework import viewsets
-   from accounts.models import User
-   from .serializers import UserSerializer
-   
+   # api/views/users.py
    class UserViewSet(viewsets.ModelViewSet):
-       queryset = User.objects.all()
        serializer_class = UserSerializer
-       # Add permissions
+       permission_classes = [IsAuthenticated]
+
+       def get_queryset(self):
+           # Filter queryset based on user role
+
+   class TeacherProfileViewSet(viewsets.ModelViewSet):
+       serializer_class = TeacherProfileSerializer
+       permission_classes = [IsAuthenticated]
+
+       def get_queryset(self):
+           # Filter queryset based on user role
+
+   # Similar ViewSets for StudentProfile and ParentProfile
    ```
 
-2. Configure URL routes with routers:
+3. Register ViewSets with router
    ```python
-   # api/urls.py (continued from above)
-   from rest_framework.routers import DefaultRouter
-   from .viewsets import UserViewSet
-   
+   # api/urls.py
    router = DefaultRouter()
-   router.register(r'users', UserViewSet)
-   # Register other viewsets
-   
+   router.register(r'users', UserViewSet, basename='user')
+   router.register(r'teachers', TeacherProfileViewSet, basename='teacher-profile')
+   # Register other ViewSets
+
    urlpatterns = [
-       # Authentication URLs from above
        path('', include(router.urls)),
+       path('auth/request-code/', RequestEmailCodeView.as_view()),
+       path('auth/verify-code/', VerifyEmailCodeView.as_view()),
+       path('auth/token/refresh/', TokenRefreshView.as_view()),
    ]
    ```
 
-### Step 5: Convert Business Logic to API Services
-1. Move view logic to API-oriented services
-2. Refactor financial calculations as API endpoints
-3. Implement calendar synchronization endpoints
+#### Execution Instructions for Step 3
+1. **Create User and Profile Serializers**
+   - Create `api/serializers/users.py` with serializers for User and Profile models
+   - Implement method fields for derived data
+   - Add appropriate validation methods
+   - Consider read/write serializers for complex operations
 
-#### Execution Prompt for Step 5:
-```
-Convert business logic from Django views to API services:
+2. **Implement ViewSets**
+   - Create `api/views/users.py` with ViewSets for User and Profile models
+   - Implement custom queryset filtering based on user role
+   - Add appropriate permissions
+   - Override create/update methods for custom logic if needed
 
-1. Create service modules to contain business logic:
-   - Create api/services/ directory
-   - Create separate service files for each logical domain
+3. **Configure URLs with Router**
+   - Create `api/urls.py` and register ViewSets with DefaultRouter
+   - Include authentication endpoints
+   - Include the API URLs in main `urls.py`
 
-2. Create a calendar service in api/services/calendar_service.py:
-   ```python
-   from django.conf import settings
-   from google.oauth2.credentials import Credentials
-   from googleapiclient.discovery import build
-   from scheduling.models import Subject, ClassType, ClassSession
-   from accounts.models import User
-   import re
-   from datetime import datetime, timedelta
-   
-   class CalendarService:
-       """Service for Google Calendar integration"""
-       
-       @staticmethod
-       def get_credentials(user):
-           """Get Google API credentials for a user"""
-           # Implementation based on your current auth system
-           # This would use the stored refresh token to get valid credentials
-           pass
-       
-       @staticmethod
-       def sync_calendar_events(user, calendar_id=None, time_min=None, time_max=None):
-           """
-           Sync events from Google Calendar to ClassSession objects
-           """
-           # Get credentials
-           credentials = CalendarService.get_credentials(user)
-           if not credentials:
-               return {"error": "No valid Google credentials found"}
-               
-           # Build the calendar service
-           service = build('calendar', 'v3', credentials=credentials)
-           
-           # Set default parameters
-           if not calendar_id:
-               calendar_id = 'primary'
-               
-           if not time_min:
-               time_min = datetime.utcnow().isoformat() + 'Z'
-               
-           if not time_max:
-               # Default to 30 days in the future
-               time_max = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
-           
-           # Call the Calendar API
-           events_result = service.events().list(
-               calendarId=calendar_id,
-               timeMin=time_min,
-               timeMax=time_max,
-               maxResults=100,
-               singleEvents=True,
-               orderBy='startTime'
-           ).execute()
-           
-           events = events_result.get('items', [])
-           
-           results = {
-               'created': 0,
-               'updated': 0,
-               'ignored': 0,
-               'errors': []
-           }
-           
-           for event in events:
-               try:
-                   # Parse event data according to your rules
-                   # Example parsing logic:
-                   title = event.get('summary', '')
-                   
-                   # Check for absence marker
-                   attended = 'FALTOU' not in title
-                   
-                   # Extract student name from title
-                   # This regex would depend on your naming convention
-                   student_name_match = re.search(r'^([^:]+)', title)
-                   if not student_name_match:
-                       results['ignored'] += 1
-                       continue
-                       
-                   student_name = student_name_match.group(1).strip()
-                   
-                   # Get teacher from location field
-                   teacher_name = event.get('location', '').strip()
-                   
-                   # Get price code from description
-                   description = event.get('description', '')
-                   price_code_match = re.search(r'Price: (\w+)', description)
-                   price_code = price_code_match.group(1) if price_code_match else None
-                   
-                   # Find the teacher user
-                   try:
-                       teacher = User.objects.get(name=teacher_name, role='teacher')
-                   except User.DoesNotExist:
-                       results['errors'].append(f"Teacher not found: {teacher_name}")
-                       results['ignored'] += 1
-                       continue
-                   
-                   # Find the student user
-                   try:
-                       student = User.objects.get(name=student_name, role='student')
-                   except User.DoesNotExist:
-                       results['errors'].append(f"Student not found: {student_name}")
-                       results['ignored'] += 1
-                       continue
-                   
-                   # Find class type based on price code
-                   try:
-                       class_type = ClassType.objects.get(name=price_code)
-                   except ClassType.DoesNotExist:
-                       results['errors'].append(f"Class type not found: {price_code}")
-                       results['ignored'] += 1
-                       continue
-                   
-                   # Get start and end times
-                   start_time = event['start'].get('dateTime')
-                   end_time = event['end'].get('dateTime')
-                   
-                   if not start_time or not end_time:
-                       results['ignored'] += 1
-                       continue
-                   
-                   # Create or update session
-                   session, created = ClassSession.objects.update_or_create(
-                       google_calendar_id=event['id'],
-                       defaults={
-                           'title': title,
-                           'teacher': teacher,
-                           'class_type': class_type,
-                           'start_time': start_time,
-                           'end_time': end_time,
-                           'attended': attended,
-                       }
-                   )
-                   
-                   # Add the student to the session
-                   session.students.add(student)
-                   
-                   if created:
-                       results['created'] += 1
-                   else:
-                       results['updated'] += 1
-                       
-               except Exception as e:
-                   results['errors'].append(str(e))
-                   results['ignored'] += 1
-           
-           return results
-   ```
+4. **Testing ViewSets**
+   - Test each endpoint with Postman or curl, checking permissions
+   - Verify custom queryset filtering is working correctly
+   - Test create/update/delete operations
+   - Verify related objects are correctly serialized
 
-3. Create a financial service in api/services/financial_service.py:
-   ```python
-   from django.db.models import Sum, F, ExpressionWrapper, fields
-   from django.db.models.functions import Cast
-   from financials.models import TeacherCompensation, StudentPayment
-   from scheduling.models import ClassSession
-   from datetime import timedelta
-   
-   class FinancialService:
-       """Service for financial calculations"""
-       
-       @staticmethod
-       def calculate_teacher_compensation(teacher, period_start, period_end):
-           """
-           Calculate teacher compensation for a given period
-           """
-           # Get all classes taught by the teacher in the period
-           sessions = ClassSession.objects.filter(
-               teacher=teacher,
-               start_time__gte=period_start,
-               end_time__lte=period_end,
-               attended=True
-           )
-           
-           # Calculate total hours
-           total_hours = 0
-           total_amount = 0
-           
-           for session in sessions:
-               # Calculate duration in hours
-               duration = (session.end_time - session.start_time).total_seconds() / 3600
-               
-               # Get hourly rate from class type
-               hourly_rate = session.class_type.hourly_rate
-               
-               # Calculate amount for this session
-               session_amount = duration * hourly_rate
-               
-               total_hours += duration
-               total_amount += session_amount
-           
-           # Create or update compensation record
-           compensation, created = TeacherCompensation.objects.update_or_create(
-               teacher=teacher,
-               period_start=period_start,
-               period_end=period_end,
-               defaults={
-                   'hours_taught': total_hours,
-                   'amount_owed': total_amount,
-                   'status': 'pending'
-               }
-           )
-           
-           # Add class sessions
-           compensation.class_sessions.set(sessions)
-           
-           return compensation
-       
-       @staticmethod
-       def calculate_student_remaining_hours(student):
-           """
-           Calculate remaining hours for a student with package-based payment plans
-           """
-           # Get active package-based payments
-           payments = StudentPayment.objects.filter(
-               student=student,
-               payment_plan__plan_type='package',
-               status='completed'
-           )
-           
-           results = []
-           
-           for payment in payments:
-               # Get used hours from class sessions
-               used_hours = ClassSession.objects.filter(
-                   students=student,
-                   attended=True,
-                   class_type=payment.payment_plan.class_type,
-                   start_time__gte=payment.payment_date,
-               ).aggregate(
-                   total_hours=Sum(
-                       ExpressionWrapper(
-                           F('end_time') - F('start_time'),
-                           output_field=fields.DurationField()
-                       )
-                   )
-               )['total_hours'] or timedelta()
-               
-               # Convert to hours
-               used_hours_float = used_hours.total_seconds() / 3600
-               
-               # Update payment
-               payment.hours_used = used_hours_float
-               payment.save()
-               
-               # Calculate remaining hours
-               remaining_hours = payment.hours_purchased - payment.hours_used
-               
-               # Check if expired
-               from django.utils import timezone
-               expiry_date = payment.payment_date + timedelta(days=payment.payment_plan.expiration_period)
-               is_expired = expiry_date < timezone.now().date()
-               
-               results.append({
-                   'payment': payment,
-                   'remaining_hours': remaining_hours,
-                   'expiry_date': expiry_date,
-                   'is_expired': is_expired
-               })
-           
-           return results
-   ```
+5. **Performance Optimization**
+   - Use `select_related` and `prefetch_related` for related objects
+   - Implement pagination for list views
+   - Consider caching for frequently accessed data
 
-4. Create API endpoints to expose these services in api/views.py:
-   ```python
-   from rest_framework.views import APIView
-   from rest_framework.response import Response
-   from rest_framework import permissions, status
-   from django.utils import timezone
-   from datetime import timedelta
-   from .services.calendar_service import CalendarService
-   from .services.financial_service import FinancialService
-   from .serializers import TeacherCompensationSerializer, ClassSessionSerializer
-   
-   class SyncCalendarView(APIView):
-       permission_classes = [permissions.IsAuthenticated]
-       
-       def post(self, request):
-           # Get parameters
-           calendar_id = request.data.get('calendar_id', 'primary')
-           
-           # Default to fetching last 30 days and next 30 days
-           now = timezone.now()
-           time_min = request.data.get('time_min', (now - timedelta(days=30)).isoformat() + 'Z')
-           time_max = request.data.get('time_max', (now + timedelta(days=30)).isoformat() + 'Z')
-           
-           # Call service
-           results = CalendarService.sync_calendar_events(
-               user=request.user,
-               calendar_id=calendar_id,
-               time_min=time_min,
-               time_max=time_max
-           )
-           
-           return Response(results)
-   
-   class CalculateTeacherCompensationView(APIView):
-       permission_classes = [permissions.IsAuthenticated]
-       
-       def post(self, request):
-           # Get parameters
-           teacher_id = request.data.get('teacher_id')
-           period_start = request.data.get('period_start')
-           period_end = request.data.get('period_end')
-           
-           # Validations
-           if not teacher_id or not period_start or not period_end:
-               return Response(
-                   {"error": "teacher_id, period_start, and period_end are required"},
-                   status=status.HTTP_400_BAD_REQUEST
-               )
-           
-           # Only admins can calculate for other teachers
-           if str(teacher_id) != str(request.user.id) and not request.user.is_admin:
-               return Response(
-                   {"error": "You can only calculate your own compensation"},
-                   status=status.HTTP_403_FORBIDDEN
-               )
-           
-           try:
-               from accounts.models import User
-               teacher = User.objects.get(id=teacher_id, role='teacher')
-           except User.DoesNotExist:
-               return Response(
-                   {"error": "Teacher not found"},
-                   status=status.HTTP_404_NOT_FOUND
-               )
-           
-           # Call service
-           compensation = FinancialService.calculate_teacher_compensation(
-               teacher=teacher,
-               period_start=period_start,
-               period_end=period_end
-           )
-           
-           serializer = TeacherCompensationSerializer(compensation)
-           return Response(serializer.data)
-   
-   class StudentRemainingHoursView(APIView):
-       permission_classes = [permissions.IsAuthenticated]
-       
-       def get(self, request, student_id=None):
-           # Determine which student to calculate for
-           if student_id:
-               # Check permissions
-               if str(student_id) != str(request.user.id) and not request.user.is_admin:
-                   # Check if parent
-                   is_parent = request.user.role == 'parent' and hasattr(request.user, 'parentprofile')
-                   is_child = is_parent and request.user.parentprofile.children.filter(user_id=student_id).exists()
-                   
-                   if not is_child:
-                       return Response(
-                           {"error": "You can only view your own or your children's hours"},
-                           status=status.HTTP_403_FORBIDDEN
-                       )
-               
-               try:
-                   from accounts.models import User
-                   student = User.objects.get(id=student_id, role='student')
-               except User.DoesNotExist:
-                   return Response(
-                       {"error": "Student not found"},
-                       status=status.HTTP_404_NOT_FOUND
-                   )
-           else:
-               # Use the current user
-               if request.user.role != 'student':
-                   return Response(
-                       {"error": "User is not a student"},
-                       status=status.HTTP_400_BAD_REQUEST
-                   )
-               student = request.user
-           
-           # Call service
-           results = FinancialService.calculate_student_remaining_hours(student)
-           
-           # Format response
-           response_data = []
-           for item in results:
-               payment_data = {
-                   'payment_id': item['payment'].id,
-                   'payment_date': item['payment'].payment_date,
-                   'plan_name': item['payment'].payment_plan.name,
-                   'hours_purchased': item['payment'].hours_purchased,
-                   'hours_used': item['payment'].hours_used,
-                   'remaining_hours': item['remaining_hours'],
-                   'expiry_date': item['expiry_date'],
-                   'is_expired': item['is_expired']
-               }
-               response_data.append(payment_data)
-           
-           return Response(response_data)
-   ```
-
-5. Add these API views to api/urls.py:
-   ```python
-   # In api/urls.py
-   from .views import SyncCalendarView, CalculateTeacherCompensationView, StudentRemainingHoursView
-   
-   urlpatterns = [
-       # Existing URLs
-       
-       # Service endpoints
-       path('sync-calendar/', SyncCalendarView.as_view(), name='sync_calendar'),
-       path('calculate-compensation/', CalculateTeacherCompensationView.as_view(), name='calculate_compensation'),
-       path('student-remaining-hours/', StudentRemainingHoursView.as_view(), name='student_remaining_hours'),
-       path('student-remaining-hours/<int:student_id>/', StudentRemainingHoursView.as_view(), name='student_remaining_hours_by_id'),
-   ]
-   ```
-
-6. Test these service endpoints:
-   - Test calendar synchronization with mock Google Calendar data
-   - Test financial calculations with various scenarios
-   - Ensure permissions work correctly for different user roles
-```
-
-## Phase 2: Create React Native Application
-
-### Step 1: Set Up React Native with Expo
-1. Install Expo CLI:
+### Step 4: Set Up React Native with Expo
+1. Create a new Expo project
    ```bash
-   npm install -g expo-cli
-   ```
-
-2. Create new project:
-   ```bash
-   expo init aprendecomigo-app --template blank-typescript
-   ```
-
-3. Add web support:
-   ```bash
+   npx create-expo-app aprendecomigo-app --template blank-typescript
    cd aprendecomigo-app
-   expo install react-native-web react-dom @expo/webpack-config
+   npx expo install react-native-web react-dom @expo/webpack-config
    ```
 
-4. Install additional dependencies:
+2. Set up project structure
+   ```
+   src/
+   ├── api/              # API client and services
+   ├── components/       # Reusable UI components
+   ├── contexts/         # React contexts (auth, etc)
+   ├── hooks/            # Custom hooks
+   ├── navigation/       # Navigation configuration
+   ├── screens/          # App screens by feature
+   ├── styles/           # Theme and shared styles
+   └── utils/            # Helper functions
+   ```
+
+3. Install necessary packages
    ```bash
-   expo install @react-navigation/native @react-navigation/bottom-tabs @react-navigation/stack
-   expo install axios @react-native-async-storage/async-storage
-   expo install react-native-paper
+   npx expo install @react-navigation/native @react-navigation/stack @react-navigation/bottom-tabs
+   npx expo install react-native-screens react-native-safe-area-context
+   npx expo install axios @react-native-async-storage/async-storage
    ```
 
-#### Execution Prompt for Step 1:
-```
-Set up a React Native project with Expo that supports web, iOS, and Android platforms:
+#### Execution Instructions for Step 4
+1. **Prepare Development Environment**
+   - Install Node.js (v16+) and npm
+   - Install Expo CLI: `npm install -g expo-cli`
+   - For iOS development, install Xcode
+   - For Android development, install Android Studio and set up emulators
 
-1. Ensure the development environment is prepared:
-   - Node.js is installed (v14.x or higher recommended)
-   - You have a package manager (npm or yarn)
-   - Xcode is installed (for iOS development on Mac)
-   - Android Studio is set up (for Android development)
+2. **Create Project**
+   - Create new project: `npx create-expo-app aprendecomigo-app --template blank-typescript`
+   - Navigate to project directory: `cd aprendecomigo-app`
+   - Install web support: `npx expo install react-native-web react-dom @expo/webpack-config`
+   - Install navigation packages: `npx expo install @react-navigation/native @react-navigation/stack @react-navigation/bottom-tabs react-native-screens react-native-safe-area-context`
+   - Install other dependencies: `npx expo install axios @react-native-async-storage/async-storage`
 
-2. Install Expo CLI globally:
-   ```bash
-   npm install -g expo-cli
-   ```
+3. **Set Up Project Structure**
+   - Create the directory structure exactly as shown above
+   - Create placeholder files in each directory
+   - Set up the TypeScript configuration
+   - Create a `tsconfig.json` with path aliases
 
-3. Create a new React Native project with TypeScript:
-   ```bash
-   expo init aprendecomigo-app --template blank-typescript
-   ```
-   When prompted, select the "blank TypeScript" template.
+4. **Configure Environment**
+   - Create `.env` file with the API URL
+   - Set up `babel.config.js` to support environment variables
+   - Configure `app.json` with app details
 
-4. Navigate to the project directory:
-   ```bash
-   cd aprendecomigo-app
-   ```
+5. **Test Setup**
+   - Run the project: `npx expo start`
+   - Test on web: Press `w` in terminal
+   - Test on iOS simulator: Press `i` in terminal
+   - Test on Android emulator: Press `a` in terminal
 
-5. Add web support to the Expo project:
-   ```bash
-   expo install react-native-web react-dom @expo/webpack-config
-   ```
+6. **Troubleshooting Common Issues**
+   - For TypeScript errors, check `tsconfig.json` configuration
+   - For packages incompatibility, check versions in `package.json`
+   - For iOS/Android issues, ensure emulators are properly set up
 
-6. Install navigation packages:
-   ```bash
-   expo install @react-navigation/native
-   expo install @react-navigation/native-stack
-   expo install @react-navigation/bottom-tabs
-   expo install @react-navigation/drawer
-   expo install react-native-screens react-native-safe-area-context
-   ```
-
-7. Install libraries for API requests and storage:
-   ```bash
-   expo install axios
-   expo install @react-native-async-storage/async-storage
-   ```
-
-8. Install UI libraries:
-   ```bash
-   expo install react-native-paper
-   expo install react-native-vector-icons
-   ```
-
-9. Install additional utilities:
-   ```bash
-   npm install date-fns 
-   npm install react-native-dotenv
-   npm install react-native-calendar-events
-   npm install react-native-community/datetimepicker
-   ```
-
-10. Create a .env file for configuration:
-    ```
-    API_URL=http://localhost:8000/api
-    ```
-
-11. Configure the app.json file:
-    ```json
-    {
-      "expo": {
-        "name": "Aprende Comigo",
-        "slug": "aprendecomigo-app",
-        "version": "1.0.0",
-        "orientation": "portrait",
-        "icon": "./assets/icon.png",
-        "splash": {
-          "image": "./assets/splash.png",
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
-        },
-        "updates": {
-          "fallbackToCacheTimeout": 0
-        },
-        "assetBundlePatterns": [
-          "**/*"
-        ],
-        "ios": {
-          "supportsTablet": true,
-          "bundleIdentifier": "com.yourdomain.aprendecomigo"
-        },
-        "android": {
-          "adaptiveIcon": {
-            "foregroundImage": "./assets/adaptive-icon.png",
-            "backgroundColor": "#FFFFFF"
-          },
-          "package": "com.yourdomain.aprendecomigo"
-        },
-        "web": {
-          "favicon": "./assets/favicon.png"
-        }
-      }
-    }
-    ```
-
-12. Update the babel.config.js to support the environment variables:
-    ```javascript
-    module.exports = function(api) {
-      api.cache(true);
-      return {
-        presets: ['babel-preset-expo'],
-        plugins: [
-          ["module:react-native-dotenv", {
-            "moduleName": "@env",
-            "path": ".env",
-            "blacklist": null,
-            "whitelist": null,
-            "safe": false,
-            "allowUndefined": true
-          }]
-        ],
-      };
-    };
-    ```
-
-13. Create a tsconfig.json to handle path aliases:
-    ```json
-    {
-      "extends": "expo/tsconfig.base",
-      "compilerOptions": {
-        "allowSyntheticDefaultImports": true,
-        "jsx": "react-native",
-        "lib": ["dom", "esnext"],
-        "moduleResolution": "node",
-        "noEmit": true,
-        "skipLibCheck": true,
-        "resolveJsonModule": true,
-        "strict": true,
-        "baseUrl": ".",
-        "paths": {
-          "@/*": ["src/*"]
-        }
-      }
-    }
-    ```
-
-14. Test the installation by running:
-    ```bash
-    # For mobile development
-    expo start
-    
-    # For web development
-    expo start --web
-    ```
-
-15. Create a minimal App.tsx to verify everything is working:
-    ```tsx
-    import React from 'react';
-    import { StatusBar } from 'expo-status-bar';
-    import { SafeAreaProvider } from 'react-native-safe-area-context';
-    import { Text, View } from 'react-native';
-    
-    export default function App() {
-      return (
-        <SafeAreaProvider>
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Welcome to Aprende Comigo!</Text>
-            <StatusBar style="auto" />
-          </View>
-        </SafeAreaProvider>
-      );
-    }
-    ```
-
-16. Ensure that everything loads correctly on web and mobile platforms.
-```
-
-### Step 2: Set Up Project Structure
-```
-src/
-├── api/              # API client and services
-├── components/       # Reusable UI components
-├── contexts/         # React contexts (auth, etc)
-├── hooks/            # Custom hooks
-├── navigation/       # Navigation configuration
-├── screens/          # App screens by feature
-├── styles/           # Theme and shared styles
-└── utils/            # Helper functions
-```
-
-### Step 3: Implement Authentication Flow
-1. Create authentication context:
-   ```typescript
+### Step 5: Create Authentication Screens
+1. Create authentication context
+   ```tsx
    // src/contexts/AuthContext.tsx
-   import React, { createContext, useState } from 'react';
-   import * as authApi from '../api/auth';
-   
-   export const AuthContext = createContext({});
-   
-   export const AuthProvider = ({ children }) => {
-     const [user, setUser] = useState(null);
+   export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+
+   export const AuthProvider: React.FC = ({ children }) => {
+     const [user, setUser] = useState<User | null>(null);
      const [loading, setLoading] = useState(false);
-     
-     const login = async (email, password) => {
-       setLoading(true);
-       try {
-         const response = await authApi.login(email, password);
-         // Store tokens, fetch user data, etc.
-         setUser(response.user);
-         return true;
-       } catch (error) {
-         console.error(error);
-         return false;
-       } finally {
-         setLoading(false);
-       }
+
+     // Implement authentication methods
+     const requestEmailCode = async (email: string): Promise<boolean> => {
+       // Implementation
      };
-     
-     // Add logout, signup, etc.
-     
+
+     const verifyEmailCode = async (email: string, code: string): Promise<boolean> => {
+       // Implementation
+     };
+
+     const logout = () => {
+       // Implementation
+     };
+
      return (
-       <AuthContext.Provider value={{ user, loading, login /* etc */ }}>
+       <AuthContext.Provider value={{ user, loading, requestEmailCode, verifyEmailCode, logout }}>
          {children}
        </AuthContext.Provider>
      );
    };
    ```
 
-2. Create authentication screens:
-   - Login
-   - Signup
-   - Password reset
-   - Profile
+2. Create login screen
+   ```tsx
+   // src/screens/auth/LoginScreen.tsx
+   export const LoginScreen: React.FC = () => {
+     const [email, setEmail] = useState('');
+     const { requestEmailCode } = useAuth();
 
-### Step 4: Implement Core Features
-1. Calendar view:
-   - Class schedule component
-   - Calendar integration
-   
-2. Financial screens:
-   - Payment tracking
-   - Teacher compensation
-   
-3. User management:
-   - Role-specific dashboards
-   - Profile management
+     const handleSubmit = async () => {
+       // Implementation
+     };
 
-## Phase 3: Mobile-Specific Enhancements
+     return (
+       <View style={styles.container}>
+         <Text style={styles.title}>Login to Aprende Comigo</Text>
+         <TextInput
+           value={email}
+           onChangeText={setEmail}
+           placeholder="Email address"
+           keyboardType="email-address"
+           style={styles.input}
+         />
+         <Button title="Send Verification Code" onPress={handleSubmit} />
+       </View>
+     );
+    };
+    ```
 
-### Step 1: Add Push Notifications
-1. Install notification packages:
-   ```bash
-   expo install expo-notifications
+3. Create verification screen
+   ```tsx
+   // src/screens/auth/VerificationScreen.tsx
+   export const VerificationScreen: React.FC = () => {
+     const [code, setCode] = useState('');
+     const { verifyEmailCode } = useAuth();
+     const route = useRoute<VerificationScreenRouteProp>();
+     const { email } = route.params;
+
+     const handleSubmit = async () => {
+       // Implementation
+     };
+
+     return (
+       <View style={styles.container}>
+         <Text style={styles.title}>Enter Verification Code</Text>
+         <TextInput
+           value={code}
+           onChangeText={setCode}
+           placeholder="6-digit code"
+           keyboardType="number-pad"
+           maxLength={6}
+           style={styles.input}
+         />
+         <Button title="Verify Code" onPress={handleSubmit} />
+       </View>
+     );
+   };
    ```
-   
-2. Configure notification handling:
-   - Token registration
-   - Push handling
-   - Local notification scheduling
 
-### Step 2: Implement Offline Support
-1. Create data persistence strategy:
-   - AsyncStorage caching
-   - Synchronization mechanism
-   - Conflict resolution
-   
-2. Add offline indicators and handling
+#### Execution Instructions for Step 5
+1. **Create Authentication Context**
+   - Create `src/contexts/AuthContext.tsx` with complete implementation
+   - Implement token storage with AsyncStorage
+   - Set up authentication state and methods
+   - Create a hook for easy access: `src/hooks/useAuth.ts`
 
-### Step 3: Add Deep Linking
-1. Configure app.json:
-   ```json
-   {
-     "expo": {
-       "scheme": "aprendecomigo",
-       "ios": {
-         "associatedDomains": ["applinks:example.com"]
-       },
-       "android": {
-         "intentFilters": [
-           {
-             "action": "VIEW",
-             "data": [
-               {
-                 "scheme": "https",
-                 "host": "example.com",
-                 "pathPrefix": "/"
-               }
-             ],
-             "category": ["BROWSABLE", "DEFAULT"]
+2. **Set Up API Service**
+   - Create `src/api/auth.ts` for authentication API calls
+   - Create `src/api/axios.ts` for axios instance with interceptors for token refresh
+
+3. **Implement Login Screen**
+   - Create `src/screens/auth/LoginScreen.tsx` with email input and submission
+   - Implement form validation
+   - Add loading state and error handling
+   - Style according to design guidelines
+
+4. **Implement Verification Screen**
+   - Create `src/screens/auth/VerificationScreen.tsx` for code verification
+   - Implement code input with auto-focus
+   - Add timer for code expiration
+   - Provide option to request new code
+
+5. **Set Up Navigation**
+   - Create `src/navigation/AuthNavigator.tsx` for authentication screens
+   - Create `src/navigation/index.tsx` for conditional navigation based on auth state
+   - Implement proper typings for route params
+
+6. **Test Authentication Flow**
+   - Test each screen individually
+   - Test the complete authentication flow
+   - Verify token storage and retrieval
+   - Test error scenarios and edge cases
+
+7. **Performance Optimization**
+   - Use memoization for expensive calculations
+   - Implement proper re-rendering optimization
+   - Add loading states and indicators
+
+### Step 6: Create User Profile Screens
+1. Create profile screen
+    ```tsx
+   // src/screens/profile/ProfileScreen.tsx
+   export const ProfileScreen: React.FC = () => {
+     const { user } = useAuth();
+     const [profile, setProfile] = useState(null);
+
+     useEffect(() => {
+       // Fetch user profile
+     }, []);
+
+      return (
+       <View style={styles.container}>
+         <Text style={styles.title}>Profile</Text>
+         {/* Profile fields */}
+          </View>
+     );
+   };
+   ```
+
+2. Create profile edit screen
+   ```tsx
+   // src/screens/profile/EditProfileScreen.tsx
+   export const EditProfileScreen: React.FC = () => {
+     const { user } = useAuth();
+     const [name, setName] = useState(user?.name || '');
+     const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
+
+     const handleSubmit = async () => {
+       // Implementation
+     };
+
+     return (
+       <View style={styles.container}>
+         <Text style={styles.title}>Edit Profile</Text>
+         <TextInput
+           value={name}
+           onChangeText={setName}
+           placeholder="Name"
+           style={styles.input}
+         />
+         <TextInput
+           value={phoneNumber}
+           onChangeText={setPhoneNumber}
+           placeholder="Phone Number"
+           keyboardType="phone-pad"
+           style={styles.input}
+         />
+         <Button title="Save Changes" onPress={handleSubmit} />
+       </View>
+     );
+   };
+   ```
+
+#### Execution Instructions for Step 6
+1. **Create Profile Screen**
+   - Create `src/screens/profile/ProfileScreen.tsx` with user information display
+   - Fetch profile data from API
+   - Implement loading and error states
+   - Add edit button for profile editing
+
+2. **Create Edit Profile Screen**
+   - Create `src/screens/profile/EditProfileScreen.tsx` with form for editing
+   - Implement form validation
+   - Add image upload functionality for profile picture
+   - Handle API submission and error handling
+
+3. **Create API Services**
+   - Create `src/api/users.ts` for profile API calls
+   - Implement methods for fetching, updating profile
+
+4. **Update Navigation**
+   - Add profile screens to the appropriate navigator
+   - Configure screen options and transitions
+   - Set up proper params passing
+
+5. **Testing**
+   - Test profile display accuracy
+   - Test edit functionality including validation
+   - Test image upload and display
+   - Verify navigation between screens
+
+6. **Polish and Refinement**
+   - Implement proper loading indicators
+   - Add pull-to-refresh for profile data
+   - Implement proper error handling and messaging
+   - Ensure keyboard handling works correctly on mobile
+
+## Phase 2: Financial Management
+
+### Step 1: Create Payment Plan API Endpoints
+1. Create payment plan serializers
+   ```python
+   # api/serializers/finance.py
+   class PaymentPlanSerializer(serializers.ModelSerializer):
+       class Meta:
+           model = PaymentPlan
+           fields = ('id', 'name', 'description', 'plan_type', 'rate', 'hours_included')
+   ```
+
+2. Create payment plan ViewSet
+   ```python
+   # api/views/finance.py
+   class PaymentPlanViewSet(viewsets.ModelViewSet):
+       serializer_class = PaymentPlanSerializer
+       permission_classes = [IsAdminUser]
+       queryset = PaymentPlan.objects.all()
+   ```
+
+#### Execution Instructions for Step 1
+1. **Create Finance Models**
+   - Review existing financial models
+   - Ensure models have proper relationships and field types
+   - Add any necessary helper methods to models
+
+2. **Implement Payment Plan Serializers**
+   - Create `api/serializers/finance.py` with PaymentPlanSerializer
+   - Add validation specific to payment plans
+   - Implement nested serialization for related models
+
+3. **Create ViewSets**
+   - Create `api/views/finance.py` with PaymentPlanViewSet
+   - Implement proper permissions (admin only)
+   - Add filtering options for payment plans
+
+4. **Configure URLs**
+   - Add finance ViewSets to router
+   - Update `api/urls.py` with new endpoints
+
+5. **Testing**
+   - Create test data for payment plans
+   - Test CRUD operations with different permission levels
+   - Verify validations work correctly
+
+### Step 2: Create Student Payment API Endpoints
+1. Create student payment serializers
+   ```python
+   # api/serializers/finance.py
+   class StudentPaymentSerializer(serializers.ModelSerializer):
+       student_name = serializers.SerializerMethodField()
+
+       class Meta:
+           model = StudentPayment
+           fields = ('id', 'student', 'student_name', 'payment_plan', 'amount_paid')
+
+       def get_student_name(self, obj):
+           return obj.student.name
+   ```
+
+2. Create student payment ViewSet
+   ```python
+   # api/views/finance.py
+   class StudentPaymentViewSet(viewsets.ModelViewSet):
+       serializer_class = StudentPaymentSerializer
+
+       def get_queryset(self):
+           # Filter queryset based on user role
+   ```
+
+#### Execution Instructions for Step 2
+1. **Implement Student Payment Serializers**
+   - Create StudentPaymentSerializer in `api/serializers/finance.py`
+   - Add custom method fields for derived data
+   - Implement serialization for related objects
+
+2. **Create ViewSets**
+   - Implement StudentPaymentViewSet with proper permissions
+   - Add filtering by student, date range, status
+   - Implement custom querysets based on user role
+
+3. **Add Business Logic**
+   - Create service methods for payment calculations
+   - Implement remaining hours calculation
+   - Add payment validation rules
+
+4. **Configure URLs**
+   - Register StudentPaymentViewSet with router
+   - Add custom action endpoints if needed
+
+5. **Testing**
+   - Test payment creation, updating, and deletion
+   - Verify calculations are correct
+   - Test permissions for different user roles
+   - Test edge cases (zero payments, expired payments)
+
+### Step 3: Create React Native Financial Screens
+1. Create payment plan screens
+2. Create student payment screens
+3. Create teacher compensation screens
+4. Create financial dashboard
+
+#### Execution Instructions for Step 3
+1. **Create API Services**
+   - Create `src/api/finance.ts` for financial API endpoints
+   - Implement methods for payment plans and student payments
+   - Add proper error handling and data transformation
+
+2. **Implement Payment Plan Screens**
+   - Create screens for listing, viewing, and editing payment plans
+   - Implement form validation for payment plan creation/editing
+   - Add filtering and sorting options
+
+3. **Implement Student Payment Screens**
+   - Create screens for listing, viewing, and creating student payments
+   - Implement payment history view
+   - Add remaining hours calculation and display
+
+4. **Create Financial Dashboard**
+   - Implement overview of financial information
+   - Add charts for visualizing payment data
+   - Create summary statistics components
+
+5. **Add Navigation**
+   - Update navigation to include financial screens
+   - Configure proper access control based on user role
+
+6. **Testing**
+   - Test payment plan creation and editing
+   - Test student payment workflows
+   - Verify calculations match backend results
+   - Test all screens on different screen sizes
+
+## Phase 3: Calendar and Scheduling
+
+### Step 1: Create Calendar API Endpoints
+1. Create class type and class session serializers
+2. Create class type and class session ViewSets
+3. Implement Google Calendar synchronization service
+
+#### Execution Instructions for Step 1
+1. **Create Calendar Models**
+   - Review existing calendar models
+   - Ensure proper relationships between sessions, teachers, students
+   - Add helper methods for date calculations
+
+2. **Implement Serializers**
+   - Create serializers for class types and sessions
+   - Implement nested serialization for complex objects
+   - Add custom fields for calculated properties
+
+3. **Create ViewSets**
+   - Implement ViewSets with proper filtering
+   - Add custom endpoints for calendar-specific operations
+   - Implement Google Calendar synchronization
+
+4. **Create Service Layer**
+   - Implement calendar synchronization service
+   - Create methods for parsing Google Calendar events
+   - Add scheduling conflict detection
+
+5. **Testing**
+   - Test calendar data retrieval and manipulation
+   - Verify Google Calendar synchronization works correctly
+   - Test filtering and querying capabilities
+
+### Step 2: Create React Native Calendar Screens
+1. Create calendar view screen
+2. Create class session detail screen
+3. Create calendar synchronization screen
+
+#### Execution Instructions for Step 2
+1. **Create Calendar API Service**
+   - Implement methods for fetching calendar data
+   - Add synchronization methods
+   - Create filtering utilities
+
+2. **Implement Calendar View**
+   - Create a calendar component with day, week, month views
+   - Add event display on calendar
+   - Implement scrolling and navigation
+
+3. **Create Session Detail Screen**
+   - Implement session details display
+   - Add attendance marking
+   - Create session editing functionality
+
+4. **Implement Synchronization Screen**
+   - Create UI for initiating calendar sync
+   - Add progress indicators
+   - Implement error handling and reporting
+
+5. **Testing**
+   - Test calendar display on different screen sizes
+   - Verify correct session data display
+   - Test synchronization process
+
+## Phase 4: Learning Materials and Homework
+
+### Step 1: Create Homework API Endpoints
+1. Create homework assignment and submission serializers
+2. Create homework assignment and submission ViewSets
+3. Implement file storage and retrieval service
+
+#### Execution Instructions for Step 1
+1. **Review Homework Models**
+   - Ensure models support file attachments
+   - Add proper relationships between assignments and submissions
+   - Implement status tracking fields
+
+2. **Create Serializers**
+   - Implement serializers for assignments and submissions
+   - Add file handling capabilities
+   - Create nested serializers for related data
+
+3. **Implement ViewSets**
+   - Create ViewSets with proper permissions
+   - Add file upload endpoints
+   - Implement filtering and searching
+
+4. **Configure Storage**
+   - Set up file storage solution
+   - Implement secure access control
+   - Create utilities for file handling
+
+5. **Testing**
+   - Test assignment creation and management
+   - Verify file uploads work correctly
+   - Test submission workflow
+
+### Step 2: Create React Native Homework Screens
+1. Create homework assignment screens
+2. Create homework submission screens
+3. Implement file upload/download functionality
+
+#### Execution Instructions for Step 2
+1. **Create Homework API Service**
+   - Implement methods for assignments and submissions
+   - Add file upload capabilities
+   - Create download utilities
+
+2. **Implement Assignment Screens**
+   - Create assignment list and detail screens
+   - Implement assignment creation for teachers
+   - Add due date handling and notifications
+
+3. **Create Submission Screens**
+   - Implement submission creation and viewing
+   - Add file picker integration
+   - Create feedback display
+
+4. **Add File Handling**
+   - Implement file upload progress tracking
+   - Add file preview capabilities
+   - Create download and caching mechanisms
+
+5. **Testing**
+   - Test assignment creation and editing
+   - Verify file uploads and downloads
+   - Test submission workflow from both teacher and student perspectives
+
+## Deployment
+
+### Web Deployment
+1. Build the React Native web version
+   ```bash
+   cd aprendecomigo-app
+   npx expo build:web
+   ```
+2. Deploy to Vercel, Netlify, or similar service
+
+#### Execution Instructions for Web Deployment
+1. **Prepare the Web Build**
+   - Ensure all environment variables are set for production
+   - Update app.json for web-specific configurations
+   - Run the build command: `npx expo build:web`
+
+2. **Set Up Deployment Platform**
+   - Create an account on Vercel, Netlify, or similar service
+   - Link your GitHub repository to the deployment platform
+   - Configure build settings:
+     - Build command: `cd aprendecomigo-app && npx expo build:web`
+     - Output directory: `aprendecomigo-app/web-build`
+
+3. **Configure Environment Variables**
+   - Add production API URL
+   - Set up any required service keys
+   - Configure CORS settings on the backend
+
+4. **Set Up Custom Domain (Optional)**
+   - Purchase domain if needed
+   - Configure DNS settings
+   - Set up HTTPS certificates
+
+5. **Testing the Deployment**
+   - Test all functionality on the deployed site
+   - Verify API connections are working
+   - Test on different browsers and devices
+
+### iOS Deployment
+1. Configure app.json for iOS
+2. Build the iOS app
+   ```bash
+   npx expo build:ios
+   ```
+3. Submit to the App Store
+
+#### Execution Instructions for iOS Deployment
+1. **Set Up App Store Connect**
+   - Create an Apple Developer account if needed
+   - Set up an App Store Connect entry for your app
+   - Generate required certificates and provisioning profiles
+
+2. **Configure iOS Build**
+   - Update app.json with iOS-specific settings:
+     ```json
+     {
+       "expo": {
+         "ios": {
+           "bundleIdentifier": "com.yourcompany.aprendecomigo",
+           "buildNumber": "1.0.0",
+           "supportsTablet": true,
+           "infoPlist": {
+             "NSCameraUsageDescription": "This app uses the camera to let users upload profile pictures.",
+             "NSPhotoLibraryUsageDescription": "This app uses the photo library to let users upload profile pictures."
            }
-         ]
+         }
        }
      }
-   }
-   ```
-   
-2. Add deep link handling in navigation
+     ```
 
-## Phase 4: Deployment Preparation
+3. **Prepare Assets**
+   - Create iOS app icon in all required sizes
+   - Prepare splash screen images
+   - Create App Store screenshots
 
-### Step 1: Backend API Deployment
-1. Update production settings:
-   - CORS configuration
-   - Security settings
-   - Database optimization
-   
-2. Deploy to PythonAnywhere or similar cloud hosting:
-   - Configure static files
-   - Set up environment variables
-   - Configure database
+4. **Build the App**
+   - Run `npx expo build:ios`
+   - Choose between building with archive or simulator
+   - Wait for the build to complete on Expo's servers
 
-### Step 2: Web Deployment
-1. Build web version:
+5. **Submit to App Store**
+   - Download the built IPA file
+   - Use Application Loader or Transporter to upload to App Store Connect
+   - Complete App Store metadata and submit for review
+
+### Android Deployment
+1. Configure app.json for Android
+2. Build the Android app
    ```bash
-   expo build:web
+   npx expo build:android
    ```
-   
-2. Deploy to Vercel, Netlify, or similar service:
-   - Configure environment variables
-   - Set up build process
-   - Configure domain
+3. Submit to the Google Play Store
 
-### Step 3: iOS Deployment
-1. Prepare App Store assets:
-   - Icons
-   - Screenshots
-   - App Store listing
-   
-2. Build iOS app:
-   ```bash
-   expo build:ios
-   ```
-   
-3. Submit to App Store Connect
+#### Execution Instructions for Android Deployment
+1. **Set Up Google Play Console**
+   - Create a Google Play Developer account if needed
+   - Create a new application entry
+   - Set up required store listing information
 
-### Step 4: Android Deployment
-1. Prepare Google Play assets:
-   - Icons
-   - Screenshots
-   - Store listing
-   
-2. Build Android app:
-   ```bash
-   expo build:android
-   ```
-   
-3. Submit to Google Play Console
+2. **Configure Android Build**
+   - Update app.json with Android-specific settings:
+     ```json
+     {
+       "expo": {
+         "android": {
+           "package": "com.yourcompany.aprendecomigo",
+           "versionCode": 1,
+           "adaptiveIcon": {
+             "foregroundImage": "./assets/adaptive-icon.png",
+             "backgroundColor": "#FFFFFF"
+           },
+           "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
+         }
+       }
+     }
+     ```
 
-## Migration Timeline Estimate
+3. **Generate Keystore**
+   - Generate a keystore for signing the app
+   - Configure expo with your keystore credentials
+   - Securely store keystore information
 
-- **Phase 1: Backend API Transition** - 4-6 weeks
-- **Phase 2: React Native Implementation** - 6-8 weeks
-- **Phase 3: Mobile Enhancements** - 3-4 weeks
-- **Phase 4: Deployment** - 2-3 weeks
+4. **Prepare Assets**
+   - Create Android app icon in all required sizes
+   - Prepare feature graphic and screenshots
+   - Create promotional materials
 
-**Total Migration Time: 15-21 weeks**
+5. **Build the App**
+   - Run `npx expo build:android`
+   - Choose between APK or Android App Bundle (AAB)
+   - Wait for the build to complete on Expo's servers
 
-## Challenges and Considerations
+6. **Submit to Google Play**
+   - Download the built APK or AAB file
+   - Upload to Google Play Console
+   - Complete store listing and submit for review
 
-### Authentication
-- Current django-allauth system needs to be replaced with JWT
-- Social auth flows differ on mobile vs web
-- Secure token storage requirements vary by platform
+## Timeline Estimate
 
-### Calendar Integration
-- Mobile devices have native calendar capabilities
-- Consider using different approaches for web vs native
+- **Phase 1: Authentication and User Management** - 3-4 weeks
+- **Phase 2: Financial Management** - 5-6 weeks
+- **Phase 3: Calendar and Scheduling** - 4-5 weeks
+- **Phase 4: Learning Materials and Homework** - 4-5 weeks
 
-### Offline Support
-- Critical for mobile user experience
-- Requires careful synchronization design
-- Data conflicts must be handled gracefully
+**Total Migration Time: 16-20 weeks**
 
-### Testing Requirements
-- Cross-platform testing needed
-- Test on multiple device sizes and OS versions
-- API integration testing becomes more important
+### Execution Instructions for Timeline Management
+1. **Project Planning and Task Management**
+   - Set up a project management tool (e.g., Jira, Trello)
+   - Break down each phase into specific tasks with estimates
+   - Assign responsibilities and track progress
+
+2. **Milestone Planning**
+   - Create key milestones for each phase
+   - Plan for regular demos and stakeholder feedback
+   - Include buffer time for unexpected issues
+
+3. **Resource Allocation**
+   - Identify required skills for each phase
+   - Schedule resources appropriately
+   - Plan for knowledge sharing and documentation
+
+4. **Risk Management**
+   - Identify potential risks for each phase
+   - Create contingency plans
+   - Regularly review and update risk assessments
+
+5. **Regular Check-ins**
+   - Schedule daily standups
+   - Conduct weekly progress reviews
+   - Update timeline estimates based on actual progress
+
+## Migration Challenges and Mitigations
+
+### Challenge: Maintaining data consistency during migration
+**Mitigation:** Create data synchronization scripts to ensure data consistency between old and new systems
+
+#### Execution Instructions for Data Consistency
+1. **Data Analysis**
+   - Identify all data touchpoints between old and new systems
+   - Document data models and relationships
+   - Create a data migration strategy document
+
+2. **Create Synchronization Scripts**
+   - Develop scripts to copy data from old system to new system
+   - Include validation checks to ensure data integrity
+   - Create backup procedures before any migration
+
+3. **Testing Migration Scripts**
+   - Test migration scripts on a staging environment
+   - Verify all data is correctly transferred
+   - Measure performance and optimize if needed
+
+4. **Implement Monitoring**
+   - Add logging to track migration progress
+   - Create alerts for any inconsistencies
+   - Develop dashboards to visualize migration status
+
+### Challenge: User transition experience
+**Mitigation:** Provide clear communication and guidance for users transitioning to the new system
+
+#### Execution Instructions for User Transition
+1. **Communication Plan**
+   - Create a timeline for user communications
+   - Develop messaging for different user types
+   - Schedule announcements and reminders
+
+2. **Documentation Development**
+   - Create user guides for the new system
+   - Record tutorial videos for key features
+   - Develop FAQs and troubleshooting guides
+
+3. **Training Sessions**
+   - Schedule training sessions for different user groups
+   - Create interactive training materials
+   - Set up a support channel for questions during transition
+
+4. **Feedback Collection**
+   - Implement feedback mechanisms in the new system
+   - Schedule check-ins with key users
+   - Create a process for addressing feedback quickly
+
+### Challenge: Supporting older devices
+**Mitigation:** Implement progressive enhancement and fallback mechanisms for older devices
+
+#### Execution Instructions for Device Compatibility
+1. **Device Target Analysis**
+   - Identify minimum supported OS versions
+   - Document target device specifications
+   - Create a test matrix of devices and features
+
+2. **Feature Detection Implementation**
+   - Implement feature detection for device capabilities
+   - Create fallback UIs for devices with limited capabilities
+   - Use polyfills for missing browser features
+
+3. **Performance Optimization**
+   - Implement code splitting to reduce bundle size
+   - Optimize images and assets for different devices
+   - Add performance monitoring
+
+4. **Testing Strategy**
+   - Set up a device testing lab
+   - Use BrowserStack or similar for additional device coverage
+   - Create automated tests that run on multiple device profiles
+
+### Challenge: API versioning
+**Mitigation:** Use a consistent API versioning strategy to support both old and new clients
+
+#### Execution Instructions for API Versioning
+1. **API Version Planning**
+   - Decide on versioning strategy (URL, header, parameter)
+   - Document API versioning rules
+   - Create versioning guidelines for developers
+
+2. **Implementation**
+   - Add version routing in DRF
+   - Implement version detection in API views
+   - Create adapters for backward compatibility
+
+3. **Documentation**
+   - Create detailed API documentation for each version
+   - Document deprecation schedules
+   - Provide migration guides between versions
+
+4. **Testing**
+   - Create tests for each API version
+   - Verify backward compatibility
+   - Set up CI/CD for API version validation
 
 ## Conclusion
 
-This migration will transform the platform into a modern, cross-platform application capable of reaching users on web, iOS, and Android with a single codebase. While the transition requires significant effort, the resulting application will provide a superior user experience and position the platform for future growth.
+This feature-by-feature migration approach ensures we have working functionality throughout the migration process and allows us to prioritize the most important parts of the application first. It also minimizes the risk of breaking existing functionality during migration and provides a solid foundation for future enhancements.

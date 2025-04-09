@@ -1,13 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .forms import CustomUserCreationForm, StudentCreationForm
 from .models import CustomUser, Student, Teacher
 
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    add_form = CustomUserCreationForm
     model = CustomUser
     list_display = ("email", "name", "user_type", "is_staff", "is_admin")
     list_filter = ("user_type", "is_staff", "is_admin")
@@ -42,8 +40,6 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    form = StudentCreationForm
-    add_form = StudentCreationForm
     list_display = ("get_name", "get_email", "school_year", "birth_date")
     list_filter = ("school_year",)
     search_fields = ("user__name", "user__email", "school_year")

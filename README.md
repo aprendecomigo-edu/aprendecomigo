@@ -67,6 +67,51 @@ The application is built with a modular structure using multiple Django apps tha
    - The Financial app references ClassSession objects from the Scheduling app
    - The Scheduling app doesn't need to know about financial models
 
+## API Documentation
+
+The application uses Django REST Framework (DRF) to provide a full-featured API. The API supports authentication, serialization, and provides comprehensive documentation.
+
+### API Endpoints
+
+The API root is accessible at `/api/`, which provides links to all available resources.
+
+### Interactive Documentation
+
+Two different documentation interfaces are available:
+
+1. **Swagger UI** - Available at `/api/swagger/`
+   - Interactive documentation with request/response examples
+   - Allows testing API endpoints directly in the browser
+   - Shows all parameters, request bodies, and response formats
+   - Ideal for developers and testing
+
+2. **ReDoc** - Available at `/api/redoc/`
+   - Clean, three-panel documentation layout
+   - User-friendly navigation and design
+   - Excellent readability for complex APIs
+   - Better for non-technical users and general reference
+
+### Authentication
+
+The API uses JWT (JSON Web Token) for authentication. To authenticate:
+
+1. Request an email verification code at `/api/auth/request-code/`
+2. Verify the code at `/api/auth/verify-code/`
+3. Use the returned token in the Authorization header for subsequent requests
+
+Example:
+```
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+### Available Resources
+
+- Users: `/api/users/`
+- Teachers: `/api/teachers/`
+- Students: `/api/students/`
+- Scheduling (Classes): `/api/scheduling/`
+- Financial: `/api/financials/`
+
 ### Google Calendar Data Format
 
 - Calendars are created and managed in the admin's Google account (not through our application)

@@ -19,7 +19,7 @@ SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
 
 def get_google_credentials(admin_email):
     """
-    Get Google API credentials from a user's django-allauth social account
+    Get Google API credentials for API-based authentication
 
     Args:
         admin_email: Email of admin user whose Google credentials to use
@@ -28,12 +28,22 @@ def get_google_credentials(admin_email):
         Google OAuth2 Credentials object or None if not available
     """
     token, refresh_token = get_google_token(admin_email)
+
+    # If no tokens available, return None to indicate authentication failure
+    if not token and not refresh_token:
+        print(f"No valid Google tokens available for {admin_email}")
+        return None
+
+    # For testing purposes - you would replace this with your actual client credentials
+    client_id = getattr(settings, "GOOGLE_CLIENT_ID", "")
+    client_secret = getattr(settings, "GOOGLE_CLIENT_SECRET", "")
+
     token_data = {
         "token": token,
         "refresh_token": refresh_token,
         "token_uri": "https://oauth2.googleapis.com/token",
-        "client_id": settings.SOCIALACCOUNT_PROVIDERS["google"]["APP"]["client_id"],
-        "client_secret": settings.SOCIALACCOUNT_PROVIDERS["google"]["APP"]["secret"],
+        "client_id": client_id,
+        "client_secret": client_secret,
         "scopes": SCOPES,
     }
 

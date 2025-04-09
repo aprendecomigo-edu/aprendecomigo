@@ -18,37 +18,43 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
 from django.urls import include, path
+from drf_yasg import openapi
 
-from accounts.views import dashboard_view, student_onboarding_view
+# DRF API Documentation
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
 
-
-def home_view(request):
-    """Redirect to dashboard if logged in, otherwise to allauth login page."""
-    if request.user.is_authenticated:
-        return redirect("dashboard")
-    return redirect("account_login")  # Use allauth's login URL
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Aprende Comigo API",
+        default_version="v1",
+        description="API for Aprende Comigo platform",
+        terms_of_service="https://www.aprendecomigo.com/terms/",
+        contact=openapi.Contact(email="contact@aprendecomigo.com"),
+        license=openapi.License(name="Proprietary"),
+    ),
+    public=True,
+    permission_classes=[permissions.AllowAny],
+)
 
 
 urlpatterns = [
-    path("", home_view, name="home"),
+    # Admin route
     path("admin/", admin.site.urls),
-    path("dashboard/", login_required(dashboard_view), name="dashboard"),
+    # API root and documentation
     path(
-        "onboarding/student/",
-        login_required(student_onboarding_view),
-        name="student_onboarding",
+        "api/swagger/",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="schema-swagger-ui",
     ),
-    # Scheduling app URLs
-    path("scheduling/", include("scheduling.urls")),
-    # Financials app URLs
-    path("financials/", include("financials.urls")),
-    # Include custom accounts URLs
-    path("", include("accounts.urls")),
-    # Django AllAuth URLs - keep this last for proper URL resolution
-    path("accounts/", include("allauth.urls")),
+    path(
+        "api/redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"
+    ),
+    # App routes for API - use api/ prefix for all API endpoints
+    path("api/", include("accounts.urls")),
+    path("api/scheduling/", include("scheduling.urls", namespace="scheduling")),
+    path("api/financials/", include("financials.urls", namespace="financials")),
 ]
 
 # Serve static and media files in development

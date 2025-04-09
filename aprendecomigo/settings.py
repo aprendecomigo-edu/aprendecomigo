@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -47,14 +48,16 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django.contrib.sites",  # Required for django-allauth
+    "django.contrib.sites",  # Required for site configuration
     # SSL Server for development
     "sslserver",
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
-    "allauth.socialaccount.providers.google",
+    # REST Framework
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "corsheaders",
+    "drf_yasg",  # for API documentation
     # Custom apps
+    "common",
     "accounts",
     "scheduling",
     "financials",
@@ -63,12 +66,12 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "allauth.account.middleware.AccountMiddleware",  # Required for django-allauth
 ]
 
 ROOT_URLCONF = "aprendecomigo.urls"
@@ -157,83 +160,23 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Custom user model
 AUTH_USER_MODEL = "accounts.CustomUser"
 
-# Django AllAuth Configuration
+# Authentication Configuration
 AUTHENTICATION_BACKENDS = [
     # Django default
     "django.contrib.auth.backends.ModelBackend",
-    # Django AllAuth
-    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 SITE_ID = 1
 
-# Custom adapters for AllAuth
-ACCOUNT_ADAPTER = "accounts.adapter.CustomAccountAdapter"
-SOCIALACCOUNT_ADAPTER = "accounts.adapter.CustomSocialAccountAdapter"
-
-# Template paths for AllAuth
-ACCOUNT_LOGIN_TEMPLATE = "account/login.html"
-ACCOUNT_SIGNUP_TEMPLATE = "account/signup.html"
-ACCOUNT_LOGOUT_TEMPLATE = "account/logout.html"
-ACCOUNT_PASSWORD_RESET_TEMPLATE = "account/password_reset.html"
-ACCOUNT_PASSWORD_CHANGE_TEMPLATE = "account/password_change.html"
-ACCOUNT_PASSWORD_SET_TEMPLATE = "account/password_set.html"
-
-# AllAuth settings https://docs.allauth.org/en/latest/socialaccount/configuration.html
-# ACCOUNT_EMAIL_REQUIRED = True  # Deprecated
-# ACCOUNT_USERNAME_REQUIRED = False  # Deprecated
-# ACCOUNT_AUTHENTICATION_METHOD = "email"  # Deprecated
-
-# New settings replacing the deprecated ones
-ACCOUNT_LOGIN_METHODS = {"email"}
-ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
-
-ACCOUNT_EMAIL_VERIFICATION = "none"  # Disable email verification for now
-ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_LOGOUT_ON_GET = True  # Skip logout confirmation page
-SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
-
-# Allow login through email/password but enable signup form
-ACCOUNT_ALLOW_SIGNUPS = True
-
-# Auto-create accounts when social login succeeds
-SOCIALACCOUNT_AUTO_SIGNUP = True
-
-# Store tokens for social accounts
-SOCIALACCOUNT_STORE_TOKENS = True
-
-# Provider specific settings
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        # For each OAuth based provider, either add a ``SocialApp``
-        # (``socialaccount`` app) containing the required client
-        # credentials, or list them here:
-        "SCOPE": [
-            "profile",
-            "email",
-            "https://www.googleapis.com/auth/calendar.readonly",
-        ],
-        "AUTH_PARAMS": {
-            "access_type": "offline",
-            "prompt": "select_account",
-        },
-        "APP": {
-            "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
-            "secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
-            "key": os.getenv("GOOGLE_CLIENT_KEY", ""),
-        },
-    }
-}
-
-# Login URLs - use allauth login URLs
-LOGIN_URL = "account_login"
-LOGIN_REDIRECT_URL = "dashboard"
-LOGOUT_REDIRECT_URL = "account_login"
+# Login URLs - Using API endpoints instead of template views
+LOGIN_URL = "/api/auth/request-code/"
+LOGIN_REDIRECT_URL = "/api/"
+LOGOUT_REDIRECT_URL = "/api/"
 
 # Email backend
 # During development, use the console backend to see emails in the console
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "noreply@aprendecomigo.com"
 
 # For production, use SMTP
 if not DEBUG:
@@ -259,3 +202,56 @@ if not DEBUG:
     SECURE_REFERRER_POLICY = "same-origin"
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# DRF Settings
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "common.pagination.StandardResultsSetPagination",
+    "PAGE_SIZE": 20,
+    "EXCEPTION_HANDLER": "common.exceptions.custom_exception_handler",
+    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
+    "DEFAULT_VERSION": "v1",
+    "ALLOWED_VERSIONS": ["v1"],
+}
+
+# Swagger Settings
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
+    },
+    "USE_SESSION_AUTH": False,
+}
+
+# JWT Settings
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": False,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+}
+
+# CORS Settings
+CORS_ALLOW_ALL_ORIGINS = True  # For development; set to False in production
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:19006",  # Expo web port
+]
+
+# Google API settings
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")

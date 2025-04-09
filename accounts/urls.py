@@ -1,12 +1,27 @@
-from django.urls import path
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
 from . import views
 
+# Create a router for API viewsets
+router = DefaultRouter()
+router.register(r"users", views.UserViewSet, basename="user")
+router.register(r"teachers", views.TeacherViewSet, basename="teacher")
+router.register(r"students", views.StudentViewSet, basename="student")
+
+# URL patterns for the accounts app
 urlpatterns = [
-    # Authentication URLs are handled by django-allauth
-    # Profile URLs
-    path("profile/", views.profile_view, name="profile"),
-    path("profile/edit/", views.profile_edit, name="profile_edit"),
-    path("profile/update/", views.profile_update, name="profile_update"),
-    path("school-profile/", views.school_profile_view, name="school_profile"),
+    # ViewSet URLs - remove the 'api/' prefix, it should be added in the main urls.py
+    path("", include(router.urls)),
+    path(
+        "auth/request-code/",
+        views.RequestEmailCodeView.as_view(),
+        name="request_email_code",
+    ),
+    path(
+        "auth/verify-code/",
+        views.VerifyEmailCodeView.as_view(),
+        name="verify_email_code",
+    ),
+    path("auth/profile/", views.UserProfileView.as_view(), name="user_profile"),
 ]

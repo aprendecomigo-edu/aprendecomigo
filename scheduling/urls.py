@@ -2,6 +2,8 @@ from django.urls import path
 
 from . import views
 
+app_name = "scheduling"  # Add app_name for namespace support
+
 urlpatterns = [
     # Class Type Management
     path("class-types/", views.manage_class_types, name="manage_class_types"),
