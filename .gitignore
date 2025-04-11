@@ -43,3 +43,10 @@ ENV/
 # OS specific
 .DS_Store
 Thumbs.db
+
+
+# Frontend / Expo
+.expo/
+node_modules/
+expo-env.d.ts
+frontend-old/
