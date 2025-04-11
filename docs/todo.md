@@ -339,3 +339,36 @@
 - [ ] Add payment gateway integration
 - [ ] Create invoicing system
 - [ ] Implement tax calculation and reporting
+
+## Security Audit Tasks
+
+### High Priority (Immediate Fixes)
+
+- [ ] Replace hardcoded secret key in settings.py
+- [ ] Replace default TOTP Secret (`DEFAULTSECRETKEYTOBEREPLACED`) in EmailVerificationCode model
+- [ ] Configure PostgreSQL for production instead of SQLite
+- [ ] Implement encryption for sensitive personal data (CC numbers, personal information)
+- [ ] Add input sanitization for all user inputs, especially HTML/iframe content
+- [ ] Set DEBUG=False in production environment
+- [ ] Limit the exposure of verification URIs to users
+
+### Medium Priority (Short-term Improvements)
+
+- [ ] Implement field-level data encryption for PII
+- [ ] Tighten authorization rules in viewsets
+- [ ] Set specific CORS origins for production
+- [ ] Implement proper file upload validations and scanning
+- [ ] Audit and fix viewsets that may expose sensitive data
+- [ ] Enhance RBAC in Student/Teacher views
+- [ ] Standardize on a single authentication mechanism (Knox OR JWT)
+- [ ] Implement file upload size limits and type validation
+
+### Low Priority (Long-term Enhancements)
+
+- [ ] Implement comprehensive audit logging for security events
+- [ ] Add additional multi-factor authentication options
+- [ ] Conduct regular penetration testing
+- [ ] Implement a secure secret management solution
+- [ ] Add intrusion detection and suspicious activity monitoring
+- [ ] Develop a formal security policy document
+- [ ] Create a security incident response plan

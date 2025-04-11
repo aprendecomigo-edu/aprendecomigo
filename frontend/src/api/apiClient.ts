@@ -1,6 +1,22 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { API_URL } from '../constants/api';
+
+// Helper to get token from secure storage
+const getToken = async (): Promise<string | null> => {
+  try {
+    // Try to use SecureStore first
+    const token = await SecureStore.getItemAsync('auth_token');
+    if (token) return token;
+
+    // If not found in SecureStore, check AsyncStorage (for backward compatibility)
+    return await AsyncStorage.getItem('auth_token');
+  } catch (error) {
+    // Fall back to AsyncStorage if SecureStore fails
+    return await AsyncStorage.getItem('auth_token');
+  }
+};
 
 // Create axios instance
 const apiClient = axios.create({
@@ -14,13 +30,13 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   async (config) => {
     // Get token from storage
-    const token = await AsyncStorage.getItem('access_token');
-    
+    const token = await getToken();
+
     // If token exists, add to headers
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `Token ${token}`;
     }
-    
+
     return config;
   },
   (error) => {
@@ -28,43 +44,22 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Add response interceptor to handle token refresh
+// Add response interceptor to handle unauthorized errors
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
+
     // If error is 401 and not already retrying
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
-      try {
-        // Get refresh token
-        const refreshToken = await AsyncStorage.getItem('refresh_token');
-        
-        if (refreshToken) {
-          // Try to get new token
-          const response = await axios.post(`${API_URL}/auth/token/refresh/`, {
-            refresh: refreshToken,
-          });
-          
-          // Store new tokens
-          await AsyncStorage.setItem('access_token', response.data.access);
-          await AsyncStorage.setItem('refresh_token', response.data.refresh);
-          
-          // Retry original request with new token
-          originalRequest.headers.Authorization = `Bearer ${response.data.access}`;
-          return apiClient(originalRequest);
-        }
-      } catch (refreshError) {
-        // Handle failed token refresh (logout user)
-        await AsyncStorage.removeItem('access_token');
-        await AsyncStorage.removeItem('refresh_token');
-      }
+
+      // Handle unauthorized error
+      return Promise.reject(error);
     }
-    
+
     return Promise.reject(error);
   }
 );
 
-export default apiClient; 
+export default apiClient;
