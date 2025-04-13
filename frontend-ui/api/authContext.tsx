@@ -20,19 +20,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkAuthStatus = async (): Promise<boolean> => {
     try {
       setIsLoading(true);
+      console.log('Checking authentication status...');
       const authenticated = await isAuthenticated();
+      console.log('Is authenticated:', authenticated);
       setIsLoggedIn(authenticated);
 
       if (authenticated) {
         // Fetch user profile
         try {
+          console.log('Fetching user profile...');
           const profile = await getUserProfile();
+          console.log('User profile received:', profile);
           setUserProfile(profile);
         } catch (error) {
           console.error('Error fetching user profile:', error);
-          // If we can't get the profile but have a token, logout as safety measure
-          await handleLogout();
-          return false;
+          // Print more detailed error info
+          if (error instanceof Error) {
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+          }
+          
+          // Continue without profile - don't logout automatically
+          console.warn('Continuing without user profile');
+          return authenticated;
         }
       }
 

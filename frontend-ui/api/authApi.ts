@@ -1,6 +1,7 @@
 import apiClient from './apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
+import axios from 'axios';
 
 export interface RequestEmailCodeParams {
   email: string;
@@ -108,8 +109,20 @@ export const verifyEmailCode = async (params: VerifyEmailCodeParams) => {
  * Get current user profile
  */
 export const getUserProfile = async () => {
-  const response = await apiClient.get<UserProfile>('/auth/profile/');
-  return response.data;
+  try {
+    console.log('Fetching user profile...');
+    const response = await apiClient.get<UserProfile>('/auth/profile/');
+    console.log('User profile response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    if (axios.isAxiosError(error)) {
+      console.error('API Error Response:', error.response?.data);
+      console.error('API Error Status:', error.response?.status);
+      console.error('API Error Headers:', error.response?.headers);
+    }
+    throw error;
+  }
 };
 
 /**

@@ -61,6 +61,7 @@ function RootLayoutNav() {
             <Stack.Screen name="index" />
             <Stack.Screen name="auth/signin" />
             <Stack.Screen name="auth/signup" />
+            <Stack.Screen name="auth/verify-code" />
             <Stack.Screen name="auth/forgot-password" />
             <Stack.Screen name="auth/create-password" />
             <Stack.Screen name="dashboard" />

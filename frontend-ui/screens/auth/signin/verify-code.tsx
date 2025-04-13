@@ -27,6 +27,7 @@ import useRouter from "@unitools/router";
 import { AuthLayout } from "../layout";
 import { verifyEmailCode } from "@/api/authApi";
 import { useLocalSearchParams } from "expo-router";
+import { useAuth } from "@/api/authContext";
 
 // Define the form schema
 const verifyCodeSchema = z.object({
@@ -41,6 +42,7 @@ const VerifyCodeForm = () => {
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email: string }>();
   const [isVerifying, setIsVerifying] = useState(false);
+  const { checkAuthStatus } = useAuth();
 
   // Verify code form
   const verifyCodeForm = useForm<VerifyCodeSchemaType>({
@@ -63,6 +65,10 @@ const VerifyCodeForm = () => {
     try {
       setIsVerifying(true);
       await verifyEmailCode({ email: data.email, code: data.code });
+      
+      // Successfully verified - now explicitly update auth state
+      await checkAuthStatus();
+      
       toast.show({
         placement: "bottom right",
         render: ({ id }) => {
@@ -73,8 +79,24 @@ const VerifyCodeForm = () => {
           );
         },
       });
-      // Navigate to dashboard
-      router.replace('/dashboard');
+      
+      // Navigate to dashboard with error handling
+      try {
+        console.log('Attempting to navigate to dashboard...');
+        router.replace('/dashboard');
+      } catch (navigationError) {
+        console.error('Navigation error:', navigationError);
+        toast.show({
+          placement: "bottom right",
+          render: ({ id }) => {
+            return (
+              <Toast nativeID={id} variant="accent" action="error">
+                <ToastTitle>Error loading dashboard. The component might be missing or invalid.</ToastTitle>
+              </Toast>
+            );
+          },
+        });
+      }
     } catch (error) {
       toast.show({
         placement: "bottom right",

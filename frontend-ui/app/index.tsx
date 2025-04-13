@@ -24,7 +24,7 @@ export default function Index() {
 
   // If authenticated, redirect to dashboard
   if (isLoggedIn) {
-    return <Redirect href="/dashboard" />;
+    return <Redirect href="/dashboard/dashboard-layout" />;
   }
 
   // If not authenticated, redirect to login
