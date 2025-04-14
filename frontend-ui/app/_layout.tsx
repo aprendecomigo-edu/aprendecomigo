@@ -5,13 +5,16 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, Redirect } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { useColorScheme } from "@/components/useColorScheme";
 import "../global.css";
-import { AuthProvider } from "@/api/authContext";
+import { AuthProvider, useAuth } from "@/api/authContext";
+import { View } from "@/components/ui/view";
+import { Spinner } from "@/components/ui/spinner";
+import { Text } from "@/components/ui/text";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -50,6 +53,60 @@ export default function RootLayout() {
   return <RootLayoutNav />;
 }
 
+// Loading screen component to display while checking auth status
+function LoadingScreen() {
+  return (
+    <View className="flex-1 justify-center items-center">
+      <Spinner size="large" />
+      <Text className="mt-4">Loading...</Text>
+    </View>
+  );
+}
+
+// This component will handle protected routes
+function ProtectedRoutes() {
+  const { isLoggedIn, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+  
+  if (!isLoggedIn) {
+    return <Redirect href="/auth/signin" />;
+  }
+  
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="dashboard" />
+      <Stack.Screen name="profile" />
+    </Stack>
+  );
+}
+
+// This component will handle public routes
+function PublicRoutes() {
+  const { isLoggedIn, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+  
+  if (isLoggedIn) {
+    return <Redirect href="/dashboard/dashboard-layout" />;
+  }
+  
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="auth/signin" />
+      <Stack.Screen name="auth/signup" />
+      <Stack.Screen name="auth/verify-code" />
+      <Stack.Screen name="auth/forgot-password" />
+      <Stack.Screen name="auth/create-password" />
+    </Stack>
+  );
+}
+
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
@@ -59,11 +116,7 @@ function RootLayoutNav() {
         <AuthProvider>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
-            <Stack.Screen name="auth/signin" />
-            <Stack.Screen name="auth/signup" />
-            <Stack.Screen name="auth/verify-code" />
-            <Stack.Screen name="auth/forgot-password" />
-            <Stack.Screen name="auth/create-password" />
+            <Stack.Screen name="auth" />
             <Stack.Screen name="dashboard" />
             <Stack.Screen name="profile" />
           </Stack>

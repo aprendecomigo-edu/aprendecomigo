@@ -8,6 +8,7 @@ import { useAuth } from '@/api/authContext';
 export default function Index() {
   const { isLoggedIn, isLoading, checkAuthStatus } = useAuth();
 
+  // Force a fresh auth check when the app loads
   useEffect(() => {
     checkAuthStatus();
   }, []);
