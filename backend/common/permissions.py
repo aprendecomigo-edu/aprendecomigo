@@ -55,7 +55,10 @@ class IsManagerOrAdmin(permissions.BasePermission):
             and (
                 request.user.is_staff
                 or request.user.is_superuser
-                or (hasattr(request.user, "user_type") and request.user.user_type == "manager")
+                or (
+                    hasattr(request.user, "user_type")
+                    and request.user.user_type == "manager"
+                )
             )
         )
 
@@ -70,17 +73,25 @@ class IsOwnerOrManager(permissions.BasePermission):
         if (
             request.user.is_staff
             or request.user.is_superuser
-            or (hasattr(request.user, "user_type") and request.user.user_type == "manager")
+            or (
+                hasattr(request.user, "user_type")
+                and request.user.user_type == "manager"
+            )
         ):
             return True
-        return True  # For object-level permissions, we'll check in has_object_permission
+        return (
+            True  # For object-level permissions, we'll check in has_object_permission
+        )
 
     def has_object_permission(self, request, view, obj):
         # Managers and admins can access all objects
         if (
             request.user.is_staff
             or request.user.is_superuser
-            or (hasattr(request.user, "user_type") and request.user.user_type == "manager")
+            or (
+                hasattr(request.user, "user_type")
+                and request.user.user_type == "manager"
+            )
         ):
             return True
 

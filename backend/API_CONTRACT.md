@@ -20,7 +20,7 @@ The API uses a passwordless authentication system with time-based one-time passw
    ```
    POST /api/auth/request-code/
    Content-Type: application/json
-   
+
    {
      "email": "user@example.com"
    }
@@ -30,13 +30,13 @@ The API uses a passwordless authentication system with time-based one-time passw
    ```
    POST /api/auth/verify-code/
    Content-Type: application/json
-   
+
    {
      "email": "user@example.com",
      "code": "123456"  // 6-digit code from email
    }
    ```
-   
+
    Response includes a token:
    ```json
    {

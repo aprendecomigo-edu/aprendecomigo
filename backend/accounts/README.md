@@ -2,7 +2,7 @@
 
 ## Overview
 
-The accounts app manages users, authentication, authorization, and permissions for the Aprende Comigo platform. It serves as the foundation for the educational system, defining user roles (managers, teachers, students, parents) and implementing the security layer. 
+The accounts app manages users, authentication, authorization, and permissions for the Aprende Comigo platform. It serves as the foundation for the educational system, defining user roles (managers, teachers, students, parents) and implementing the security layer.
 
 The app currently uses a passwordless approach with Time-based One-Time Password (TOTP) verification codes and Knox token-based authentication for session management.
 
@@ -350,7 +350,7 @@ class Parent(models.Model):
         related_name="parents",
         blank=True,
     )
-    
+
     def save(self, *args, **kwargs):
         # Ensure the associated user has the parent type
         if self.user.user_type != "parent":

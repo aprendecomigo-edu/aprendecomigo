@@ -5,21 +5,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0006_fix_verification_secrets'),
+        ("accounts", "0006_fix_verification_secrets"),
     ]
 
     operations = [
         migrations.AlterModelManagers(
-            name='customuser',
+            name="customuser",
             managers=[
-                ('objects', accounts.models.CustomUserManager()),
+                ("objects", accounts.models.CustomUserManager()),
             ],
         ),
         migrations.AlterField(
-            model_name='emailverificationcode',
-            name='secret_key',
+            model_name="emailverificationcode",
+            name="secret_key",
             field=models.CharField(max_length=32),
         ),
     ]

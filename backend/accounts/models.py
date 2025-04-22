@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -67,20 +66,20 @@ USER_TYPE_CHOICES = [
 class CustomUser(AbstractUser):
     """
     Custom User model with email as primary identifier
-    
+
     This model serves as the core user entity in the system with the following roles:
-    
+
     - Manager: School administrators with system-wide access. Can create and manage
       all users, view all data, configure system settings, and generate reports.
-      
+
     - Teacher: Educational professionals who conduct classes. Can manage their
       classes, access and grade assigned students, create educational content,
       and manage their availability/schedule.
-      
+
     - Student: Learners who attend classes. Can view their schedule, access
       assigned educational materials, communicate with their teachers, and
       view their own progress/grades.
-      
+
     - Parent: Guardians who monitor student progress. Can view linked students'
       schedules, grades, and financial information, communicate with teachers,
       and make payments.

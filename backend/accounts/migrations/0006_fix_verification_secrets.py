@@ -8,13 +8,13 @@ def generate_new_secrets(apps, schema_editor):
     """
     Replace default secrets with unique ones for all existing verification records.
     """
-    EmailVerificationCode = apps.get_model('accounts', 'EmailVerificationCode')
-    
+    EmailVerificationCode = apps.get_model("accounts", "EmailVerificationCode")
+
     # Find all records with the default secret or empty secrets
     default_records = EmailVerificationCode.objects.filter(
         secret_key="DEFAULTSECRETKEYTOBEREPLACED"
     )
-    
+
     # Update each record with a new random secret
     for record in default_records:
         record.secret_key = pyotp.random_base32()
@@ -22,9 +22,8 @@ def generate_new_secrets(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0005_remove_customuser_is_admin_and_more'),
+        ("accounts", "0005_remove_customuser_is_admin_and_more"),
     ]
 
     operations = [

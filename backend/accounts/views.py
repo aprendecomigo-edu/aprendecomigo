@@ -1,6 +1,5 @@
 from common.permissions import (
     IsManagerOrAdmin,
-    IsOwner,
     IsOwnerOrManager,
     IsStudent,
     IsTeacher,
@@ -48,8 +47,6 @@ class KnoxAuthenticatedViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-
-from common.permissions import IsManagerOrAdmin, IsOwnerOrManager
 
 class UserViewSet(KnoxAuthenticatedViewSet):
     """
