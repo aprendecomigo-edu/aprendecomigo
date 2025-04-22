@@ -16,18 +16,20 @@ import {
 } from "@/components/ui/form-control";
 import { Input, InputField } from "@/components/ui/input";
 import { ArrowLeftIcon, Icon } from "@/components/ui/icon";
-import { Button, ButtonText } from "@/components/ui/button";
-import { Keyboard } from "react-native";
+import { Button, ButtonText, ButtonIcon } from "@/components/ui/button";
+import { Keyboard, Platform } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertTriangle } from "lucide-react-native";
+import { AlertTriangle, Fingerprint } from "lucide-react-native";
 import { Pressable } from "@/components/ui/pressable";
 import useRouter from "@unitools/router";
 import { AuthLayout } from "../layout";
 import { verifyEmailCode } from "@/api/authApi";
 import { useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/api/authContext";
+import { Checkbox, CheckboxIcon, CheckboxIndicator, CheckboxLabel } from "@/components/ui/checkbox";
+import { Check } from "lucide-react-native";
 
 // Define the form schema
 const verifyCodeSchema = z.object({
@@ -42,7 +44,8 @@ const VerifyCodeForm = () => {
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email: string }>();
   const [isVerifying, setIsVerifying] = useState(false);
-  const { checkAuthStatus } = useAuth();
+  const [enableBiometric, setEnableBiometric] = useState(false);
+  const { checkAuthStatus, biometricSupport, enableBiometrics } = useAuth();
 
   // Verify code form
   const verifyCodeForm = useForm<VerifyCodeSchemaType>({
@@ -65,10 +68,43 @@ const VerifyCodeForm = () => {
     try {
       setIsVerifying(true);
       await verifyEmailCode({ email: data.email, code: data.code });
-      
+
       // Successfully verified - now explicitly update auth state
       await checkAuthStatus();
-      
+
+      // If the user wants to enable biometric authentication
+      if (enableBiometric && biometricSupport.isAvailable) {
+        try {
+          const result = await enableBiometrics(data.email);
+          if (result) {
+            toast.show({
+              placement: "bottom right",
+              render: ({ id }) => {
+                return (
+                  <Toast nativeID={id} variant="accent" action="success">
+                    <ToastTitle>Biometric authentication enabled!</ToastTitle>
+                  </Toast>
+                );
+              },
+            });
+          } else {
+            toast.show({
+              placement: "bottom right",
+              render: ({ id }) => {
+                return (
+                  <Toast nativeID={id} variant="accent" action="warning">
+                    <ToastTitle>Could not enable biometric authentication.</ToastTitle>
+                  </Toast>
+                );
+              },
+            });
+          }
+        } catch (biometricError) {
+          console.error('Error enabling biometrics:', biometricError);
+          // Continue despite biometric error
+        }
+      }
+
       toast.show({
         placement: "bottom right",
         render: ({ id }) => {
@@ -79,7 +115,7 @@ const VerifyCodeForm = () => {
           );
         },
       });
-      
+
       // Navigate to dashboard with error handling
       try {
         console.log('Attempting to navigate to dashboard...');
@@ -176,9 +212,26 @@ const VerifyCodeForm = () => {
               </FormControlErrorText>
             </FormControlError>
           </FormControl>
+
+          {biometricSupport.isAvailable && (
+            <Checkbox
+              value="enable-biometric"
+              isChecked={enableBiometric}
+              onChange={setEnableBiometric}
+              aria-label="Enable biometric login"
+            >
+              <CheckboxIndicator mr="$2">
+                <CheckboxIcon as={Check} />
+              </CheckboxIndicator>
+              <CheckboxLabel>
+                Enable {Platform.OS === 'ios' ? 'Face ID / Touch ID' : 'biometric'} login
+              </CheckboxLabel>
+            </Checkbox>
+          )}
+
           <VStack className="w-full my-7" space="lg">
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               onPress={verifyCodeForm.handleSubmit(onVerifyCode)}
               isDisabled={isVerifying}
             >
@@ -222,4 +275,4 @@ export const VerifyCode = () => {
       <VerifyCodeForm />
     </AuthLayout>
   );
-}; 
+};

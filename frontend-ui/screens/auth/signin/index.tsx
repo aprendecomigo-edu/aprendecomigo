@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Toast, ToastTitle, useToast } from "@/components/ui/toast";
 import { HStack } from "@/components/ui/hstack";
 import { VStack } from "@/components/ui/vstack";
@@ -16,16 +16,18 @@ import {
 } from "@/components/ui/form-control";
 import { Input, InputField } from "@/components/ui/input";
 import { ArrowLeftIcon, Icon } from "@/components/ui/icon";
-import { Button, ButtonText } from "@/components/ui/button";
-import { Keyboard } from "react-native";
+import { Button, ButtonText, ButtonIcon } from "@/components/ui/button";
+import { Keyboard, Platform } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertTriangle } from "lucide-react-native";
+import { AlertTriangle, Fingerprint } from "lucide-react-native";
 import { Pressable } from "@/components/ui/pressable";
 import useRouter from "@unitools/router";
 import { AuthLayout } from "../layout";
 import { requestEmailCode } from "@/api/authApi";
+import { useAuth } from "@/api/authContext";
+import { Divider } from "@/components/ui/divider";
 
 // Define the form schema
 const requestCodeSchema = z.object({
@@ -37,7 +39,9 @@ type RequestCodeSchemaType = z.infer<typeof requestCodeSchema>;
 const LoginForm = () => {
   const toast = useToast();
   const router = useRouter();
+  const { biometricSupport, loginWithBiometrics } = useAuth();
   const [isRequesting, setIsRequesting] = useState(false);
+  const [isAuthenticatingBiometric, setIsAuthenticatingBiometric] = useState(false);
 
   // Request code form
   const requestCodeForm = useForm<RequestCodeSchemaType>({
@@ -49,7 +53,7 @@ const LoginForm = () => {
     try {
       setIsRequesting(true);
       await requestEmailCode({ email: data.email });
-      
+
       toast.show({
         placement: "bottom right",
         render: ({ id }) => {
@@ -60,7 +64,7 @@ const LoginForm = () => {
           );
         },
       });
-      
+
       // Navigate to verify code screen with email as parameter
       router.push({
         pathname: '/auth/verify-code',
@@ -79,6 +83,53 @@ const LoginForm = () => {
       });
     } finally {
       setIsRequesting(false);
+    }
+  };
+
+  // Handle biometric authentication
+  const handleBiometricAuth = async () => {
+    try {
+      setIsAuthenticatingBiometric(true);
+      const success = await loginWithBiometrics();
+
+      if (success) {
+        toast.show({
+          placement: "bottom right",
+          render: ({ id }) => {
+            return (
+              <Toast nativeID={id} variant="accent" action="success">
+                <ToastTitle>Logged in successfully with biometrics!</ToastTitle>
+              </Toast>
+            );
+          },
+        });
+
+        router.replace('/dashboard');
+      } else {
+        toast.show({
+          placement: "bottom right",
+          render: ({ id }) => {
+            return (
+              <Toast nativeID={id} variant="accent" action="error">
+                <ToastTitle>Biometric authentication failed. Please try again or use email code.</ToastTitle>
+              </Toast>
+            );
+          },
+        });
+      }
+    } catch (error) {
+      toast.show({
+        placement: "bottom right",
+        render: ({ id }) => {
+          return (
+            <Toast nativeID={id} variant="accent" action="error">
+              <ToastTitle>Biometric authentication error. Please try again or use email code.</ToastTitle>
+            </Toast>
+          );
+        },
+      });
+    } finally {
+      setIsAuthenticatingBiometric(false);
     }
   };
 
@@ -144,8 +195,8 @@ const LoginForm = () => {
             </FormControlError>
           </FormControl>
           <VStack className="w-full my-7" space="lg">
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               onPress={requestCodeForm.handleSubmit(onRequestCode)}
               isDisabled={isRequesting}
             >
@@ -153,6 +204,27 @@ const LoginForm = () => {
                 {isRequesting ? 'Sending Code...' : 'Request Login Code'}
               </ButtonText>
             </Button>
+
+            {biometricSupport.isAvailable && biometricSupport.isEnabled && (
+              <>
+                <Divider>
+                  <Text size="sm" className="text-background-600 px-2">OR</Text>
+                </Divider>
+
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  action="secondary"
+                  onPress={handleBiometricAuth}
+                  isDisabled={isAuthenticatingBiometric}
+                >
+                  <ButtonIcon as={Fingerprint} />
+                  <ButtonText className="font-medium">
+                    {isAuthenticatingBiometric ? 'Authenticating...' : `Log in with ${Platform.OS === 'ios' ? 'Face ID / Touch ID' : 'Biometrics'}`}
+                  </ButtonText>
+                </Button>
+              </>
+            )}
           </VStack>
         </VStack>
         <HStack className="self-center" space="sm">

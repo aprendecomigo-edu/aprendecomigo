@@ -2,6 +2,11 @@ import apiClient from './apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
+import {
+  authenticateWithBiometrics,
+  getBiometricAuthEmail,
+  isBiometricEnabled
+} from './biometricAuth';
 
 export interface RequestEmailCodeParams {
   email: string;
@@ -106,6 +111,53 @@ export const verifyEmailCode = async (params: VerifyEmailCodeParams) => {
 };
 
 /**
+ * Authenticate with biometrics and get token
+ * @returns Authentication response or null if biometric auth fails
+ */
+export const authenticateWithBiometricsAndGetToken = async (): Promise<AuthResponse | null> => {
+  try {
+    // Check if biometric auth is enabled
+    const biometricEnabled = await isBiometricEnabled();
+    if (!biometricEnabled) {
+      return null;
+    }
+
+    // Get email associated with biometric auth
+    const email = await getBiometricAuthEmail();
+    if (!email) {
+      return null;
+    }
+
+    // Authenticate with biometrics
+    const authResult = await authenticateWithBiometrics('Authenticate to log in');
+    if (!authResult.success) {
+      return null;
+    }
+
+    // Request a code for this email
+    await requestEmailCode({ email });
+
+    // Since this is biometric auth, we'll request a special biometric verification
+    // This endpoint should exist on the backend - if not, you'll need to implement it
+    try {
+      const response = await apiClient.post<AuthResponse>('/auth/biometric-verify/', { email });
+
+      // Store token in secure storage
+      await storeToken(response.data.token);
+
+      return response.data;
+    } catch (error) {
+      // If the biometric endpoint doesn't exist, we can't proceed with biometric auth
+      console.error('Error authenticating with biometrics:', error);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error in biometric authentication flow:', error);
+    return null;
+  }
+};
+
+/**
  * Get current user profile
  */
 export const getUserProfile = async () => {
@@ -147,4 +199,4 @@ export const logout = async () => {
 export const isAuthenticated = async (): Promise<boolean> => {
   const token = await getToken();
   return token !== null;
-}; 
+};
