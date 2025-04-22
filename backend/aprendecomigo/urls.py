@@ -57,7 +57,7 @@ urlpatterns = [
     path("api/financials/", include("financials.urls", namespace="financials")),
 ]
 
-# Serve static and media files in development
+# In development, serve static files for Swagger UI and media files for uploads
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

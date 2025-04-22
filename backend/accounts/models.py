@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -56,16 +57,33 @@ USER_TYPE_CHOICES = [
     (
         "manager",
         _("School Manager"),
-    ),  # School manager, school administrator can be a teacher
-    ("teacher", _("Teacher")),  # Teacher
-    ("student", _("Student")),  # Student. For adults, student have parent permissions
-    ("parent", _("Parent")),  # Parent
+    ),  # School manager, has access to all data and can manage all users
+    ("teacher", _("Teacher")),  # Can manage assigned students and classes
+    ("student", _("Student")),  # Can access own classes and resources
+    ("parent", _("Parent")),  # Can access information for linked student accounts
 ]
 
 
 class CustomUser(AbstractUser):
     """
     Custom User model with email as primary identifier
+    
+    This model serves as the core user entity in the system with the following roles:
+    
+    - Manager: School administrators with system-wide access. Can create and manage
+      all users, view all data, configure system settings, and generate reports.
+      
+    - Teacher: Educational professionals who conduct classes. Can manage their
+      classes, access and grade assigned students, create educational content,
+      and manage their availability/schedule.
+      
+    - Student: Learners who attend classes. Can view their schedule, access
+      assigned educational materials, communicate with their teachers, and
+      view their own progress/grades.
+      
+    - Parent: Guardians who monitor student progress. Can view linked students'
+      schedules, grades, and financial information, communicate with teachers,
+      and make payments.
     """
 
     username = models.CharField(_("username"), max_length=150, blank=True, null=True)
@@ -95,6 +113,7 @@ class Student(models.Model):
     )
     school_year = models.CharField(_("school year"), max_length=50)
     birth_date = models.DateField(_("birth date"))
+    # Sensitive personal data fields
     address = models.TextField(
         _("address"), help_text=_("Street, number, postal code and location")
     )
@@ -144,6 +163,7 @@ class Teacher(models.Model):
         blank=True,
         help_text=_("Available days and times for lessons"),
     )
+    # Sensitive personal data fields
     address = models.TextField(
         _("address"),
         blank=True,
@@ -173,8 +193,8 @@ class EmailVerificationCode(models.Model):
         max_length=6, blank=True
     )  # Kept for backwards compatibility
     secret_key = models.CharField(
-        max_length=32, default="DEFAULTSECRETKEYTOBEREPLACED"
-    )  # For TOTP
+        max_length=32
+    )  # For TOTP - unique for each instance, no default
     created_at = models.DateTimeField(auto_now_add=True)
     is_used = models.BooleanField(default=False)
     failed_attempts = models.PositiveSmallIntegerField(default=0)
