@@ -18,6 +18,7 @@ from rest_framework.views import APIView
 
 from .models import EmailVerificationCode, Student, Teacher
 from .serializers import (
+    BiometricVerifySerializer,
     EmailRequestSerializer,
     EmailVerifySerializer,
     StudentSerializer,
@@ -152,7 +153,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         return Response({"user_info": user_info, "stats": stats})
 
     @action(detail=False, methods=["get"])
-    def school_profile(self, request):  # noqa: U100
+    def school_profile(self, request):  # noqa: ARG001
         """
         Get school profile information
         """
@@ -269,7 +270,7 @@ class EmailBasedThrottle(AnonRateThrottle):
     rate = "10/hour"
     scope = "auth_code_verify_email"
 
-    def get_cache_key(self, request, view):
+    def get_cache_key(self, request, view):  # noqa: ARG001
         # Get the email from the request data
         email = request.data.get("email", "")
         if not email:
@@ -292,7 +293,7 @@ class RequestEmailCodeView(APIView):
     Rate limited to prevent abuse.
     """
 
-    authentication_classes = []  # No authentication required
+    authentication_classes: list = []  # No authentication required
     permission_classes = [AllowAny]
     throttle_classes = [EmailCodeRequestThrottle]
 
@@ -338,7 +339,7 @@ class VerifyEmailCodeView(APIView):
     Rate limited by both email and IP to prevent brute force attacks.
     """
 
-    authentication_classes = []  # No authentication required
+    authentication_classes: list = []  # No authentication required
     permission_classes = [AllowAny]
     throttle_classes = [EmailBasedThrottle, IPBasedThrottle]  # Apply both throttles
 
@@ -409,6 +410,65 @@ class VerifyEmailCodeView(APIView):
                 )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class BiometricVerifyView(APIView):
+    """
+    API endpoint for biometric authentication.
+    Accepts an email address and issues an authentication token without requiring a verification code.
+    Rate limited to prevent abuse.
+    """
+
+    authentication_classes: list = []  # No authentication required
+    permission_classes = [AllowAny]
+    throttle_classes = [EmailBasedThrottle, IPBasedThrottle]  # Apply both throttles
+
+    def post(self, request):
+        serializer = BiometricVerifySerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data["email"]
+
+        # Find the user by email
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Use a generic error message for security
+            return Response(
+                {"error": "User not found or biometric authentication not allowed"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        # Check if the user has completed email verification before
+        # We can check if the user has at least one used verification code
+        has_verified_email = EmailVerificationCode.objects.filter(
+            email=email, is_used=True
+        ).exists()
+
+        if not has_verified_email:
+            return Response(
+                {"error": "Email verification required before using biometric login"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        # Create an authentication token for the user
+        token_instance, token = AuthToken.objects.create(user)
+
+        # Log the successful biometric authentication
+        # You might want to create a separate function for this
+        # For now, just print to console
+        print(f"Biometric authentication successful for user {user.id}")
+
+        # Return user data and token
+        return Response(
+            {
+                "token": token,
+                "expiry": token_instance.expiry,
+                "user": UserSerializer(user).data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class UserProfileView(KnoxAuthenticatedAPIView):

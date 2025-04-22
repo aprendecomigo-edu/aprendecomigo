@@ -101,3 +101,11 @@ class EmailVerifySerializer(serializers.Serializer):
 
     email = serializers.EmailField()
     code = serializers.CharField(max_length=6, min_length=6)
+
+
+class BiometricVerifySerializer(serializers.Serializer):
+    """
+    Serializer for biometric verification.
+    """
+
+    email = serializers.EmailField()

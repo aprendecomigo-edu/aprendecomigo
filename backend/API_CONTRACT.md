@@ -60,6 +60,40 @@ The API uses a passwordless authentication system with time-based one-time passw
    Authorization: Token your-auth-token-here
    ```
 
+### Biometric Authentication
+
+For users who have previously verified their email, the application supports biometric authentication:
+
+```
+POST /api/auth/biometric-verify/
+Content-Type: application/json
+
+{
+  "email": "user@example.com"
+}
+```
+
+Response is the same as the code verification endpoint:
+```json
+{
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "name": "User Name",
+    "phone_number": "",
+    "user_type": "student",
+    "created_at": "2023-01-01T00:00:00Z",
+    "updated_at": "2023-01-01T00:00:00Z"
+  },
+  "token": "your-auth-token-here",
+  "expiry": "2023-01-01T10:00:00Z"
+}
+```
+
+**Requirements**:
+- User must have previously verified their email through the normal email code verification process
+- Rate limiting is applied to prevent abuse
+
 ### Logout
 
 To invalidate the current token:
@@ -197,5 +231,3 @@ For the most up-to-date and interactive documentation, refer to the Swagger UI a
 5. **Throttling awareness**: Implement exponential backoff for retry mechanisms
 
 ---
-
-*Last updated: April 22, 2025*

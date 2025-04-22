@@ -25,6 +25,11 @@ urlpatterns = [
         views.VerifyEmailCodeView.as_view(),
         name="verify_email_code",
     ),
+    path(
+        "auth/biometric-verify/",
+        views.BiometricVerifyView.as_view(),
+        name="biometric_verify",
+    ),
     path("auth/profile/", views.UserProfileView.as_view(), name="user_profile"),
     # Knox authentication URLs
     path("auth/login/", knox_views.LoginView.as_view(), name="knox_login"),
