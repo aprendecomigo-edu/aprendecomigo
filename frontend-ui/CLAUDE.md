@@ -1,0 +1,39 @@
+# CLAUDE.md
+
+This repository is a React Native app for web, ios and android  and this file provides some high-level guidance on how to work with it.
+This frontend will interact with a backend API, that is being handled by another developer.
+## Build Commands
+- start: `npx expo start`
+- android: `npx expo start --android`
+- ios: `npx expo start --ios`
+- web: `npx expo start --web`
+- test: `jest --watchAll`
+- test single file: `jest path/to/test.ts --watch`
+
+## Code Style Guidelines
+- **TypeScript**: Use strict mode and proper type definitions (interfaces/types)
+- **Imports**: Use absolute imports with `@/` prefix (e.g., `@/components/ui/button`)
+- **Formatting**: Follow component organization pattern (imports, interfaces, component, exports)
+- **Error Handling**: Use try/catch blocks with console.error for detailed logging
+- **Components**: Use functional components with React hooks
+- **State Management**: Use React context for global state (see authContext.tsx)
+- **Styling**: Use NativeWind/Tailwind classes (className prop)
+- **File Structure**: Keep related components in same directory, shared components in /components
+- **Naming**: PascalCase for components, camelCase for functions/variables, kebab-case for files
+- **Accessibility** Make sure to keep in mind accessibility features
+- **Internationalization** This is important to keep all strings translatable
+
+## Testing Guidelines
+- **Test Framework**: Jest with jest-expo preset
+- **Component Tests**: Use react-test-renderer for component snapshot testing
+- **Test Files**: Create `*.test.tsx` files adjacent to components being tested
+- **Test Coverage**: Write tests for critical paths and edge cases
+- **Mocking**: Mock external dependencies and API calls in tests
+- **Always create tests** when implementing new features or making significant changes
+
+## Project Management
+- Maintain and update ROADMAP.md with new features, todos, and next steps
+- Group features by priority (High/Medium/Low) and status (Planned/In Progress/Completed)
+- Format each item with clear, actionable details and acceptance criteria
+
+Follow existing patterns closely when adding new code or modifying existing features.
