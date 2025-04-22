@@ -48,3 +48,5 @@ The backend we're building is Aprende Comigo, is an educational platform that co
 - Maintain and update ROADMAP.md with new features, todos, and next steps
 - Group features by priority (High/Medium/Low) and status (Planned/In Progress/Completed)
 - Format each item with clear, actionable details and acceptance criteria
+- Keep API_CONTRACT.md up-to-date for good communication with the frontend
+- Run `python scripts/generate_api_docs.py` after significant API changes to update documentation

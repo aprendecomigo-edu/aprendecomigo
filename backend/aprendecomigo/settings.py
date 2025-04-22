@@ -57,6 +57,8 @@ INSTALLED_APPS = [
     "drf_yasg",  # for API documentation
     # Knox for token-based authentication
     "knox",
+    # Field-level encryption
+    "django_cryptography",
     # Custom apps
     "common",
     "accounts",
@@ -141,15 +143,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
+# Static files - minimal configuration for Swagger/ReDoc UI only
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
-# Media files
+# Media files for uploads (like student/teacher photos)
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
@@ -219,6 +217,8 @@ REST_FRAMEWORK = {
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
     "DEFAULT_VERSION": "v1",
     "ALLOWED_VERSIONS": ["v1"],
+    # Schema generation for API documentation
+    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
     # Throttling settings for rate limiting
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
@@ -238,6 +238,12 @@ SWAGGER_SETTINGS = {
         "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
     },
     "USE_SESSION_AUTH": False,
+    "APIS_SORTER": "alpha",  # Sort endpoints alphabetically
+    "OPERATIONS_SORTER": "method",  # Sort operations by HTTP method
+    "VALIDATOR_URL": None,  # Disable validation
+    "DEFAULT_MODEL_RENDERING": "model",  # More detailed model schema rendering
+    "DEFAULT_MODEL_DEPTH": 3,  # Depth of related fields
+    "DOC_EXPANSION": "list",  # Show operations expanded
 }
 
 # JWT Settings

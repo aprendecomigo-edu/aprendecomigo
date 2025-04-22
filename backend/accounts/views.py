@@ -1,4 +1,9 @@
-from common.permissions import IsOwner, IsStudent, IsTeacher
+from common.permissions import (
+    IsManagerOrAdmin,
+    IsOwnerOrManager,
+    IsStudent,
+    IsTeacher,
+)
 from django.conf import settings
 from django.contrib.auth import get_user_model, login
 from django.core.mail import send_mail
@@ -52,22 +57,37 @@ class UserViewSet(KnoxAuthenticatedViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_staff or user.is_superuser:
+        # Managers and superusers can see all users
+        if user.is_staff or user.is_superuser or user.user_type == "manager":
             return User.objects.all()
+        # Teachers can see their own profile and assigned students
+        elif user.user_type == "teacher" and hasattr(user, "teacher_profile"):
+            # TODO: Implement proper student-teacher relationship
+            # For now, teachers can only see themselves
+            return User.objects.filter(id=user.id)
+        # Parents can see their profile and linked students
+        elif user.user_type == "parent" and hasattr(user, "parent_profile"):
+            # TODO: Implement proper parent-student relationship
+            # For now, parents can only see themselves
+            return User.objects.filter(id=user.id)
+        # Students and others can only see themselves
         return User.objects.filter(id=user.id)
 
     def get_permissions(self):
-        if self.action in [
-            "create",
-            "list",
-            "retrieve",
-            "update",
-            "partial_update",
-            "school_profile",
-        ]:
+        if self.action == "create":
+            # Only managers and admins can create users
+            permission_classes = [IsAuthenticated, IsManagerOrAdmin]
+        elif self.action == "list":
+            # Any authenticated user can list, but queryset is filtered appropriately
+            permission_classes = [IsAuthenticated]
+        elif self.action in ["update", "partial_update", "destroy"]:
+            # Only owner or manager can modify user records
+            permission_classes = [IsAuthenticated, IsOwnerOrManager]
+        elif self.action in ["retrieve", "school_profile", "dashboard_info"]:
+            # Any authenticated user can retrieve, but queryset is filtered appropriately
             permission_classes = [IsAuthenticated]
         else:
-            permission_classes = [IsOwner]
+            permission_classes = [IsAuthenticated, IsOwnerOrManager]
         return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=["get"])

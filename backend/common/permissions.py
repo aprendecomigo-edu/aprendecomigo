@@ -43,6 +43,68 @@ class IsParent(permissions.BasePermission):
         )
 
 
+class IsManagerOrAdmin(permissions.BasePermission):
+    """
+    Custom permission to only allow managers or admins to access the view.
+    """
+
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and (
+                request.user.is_staff
+                or request.user.is_superuser
+                or (
+                    hasattr(request.user, "user_type")
+                    and request.user.user_type == "manager"
+                )
+            )
+        )
+
+
+class IsOwnerOrManager(permissions.BasePermission):
+    """
+    Object-level permission to allow both owners and managers/admins access.
+    """
+
+    def has_permission(self, request, view):
+        # Always allow managers and admins
+        if (
+            request.user.is_staff
+            or request.user.is_superuser
+            or (
+                hasattr(request.user, "user_type")
+                and request.user.user_type == "manager"
+            )
+        ):
+            return True
+        return (
+            True  # For object-level permissions, we'll check in has_object_permission
+        )
+
+    def has_object_permission(self, request, view, obj):
+        # Managers and admins can access all objects
+        if (
+            request.user.is_staff
+            or request.user.is_superuser
+            or (
+                hasattr(request.user, "user_type")
+                and request.user.user_type == "manager"
+            )
+        ):
+            return True
+
+        # Check for ownership
+        if hasattr(obj, "owner"):
+            return obj.owner == request.user
+        elif hasattr(obj, "user"):
+            return obj.user == request.user
+        elif hasattr(obj, "id") and hasattr(request.user, "id"):
+            return obj.id == request.user.id
+        return False
+
+
 class IsOwner(permissions.BasePermission):
     """
     Object-level permission to only allow owners of an object to access it.
