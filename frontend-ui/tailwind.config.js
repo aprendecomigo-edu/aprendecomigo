@@ -1,4 +1,4 @@
-const gluestackPlugin = require("@gluestack-ui/nativewind-utils/tailwind-plugin");
+const nativewind = require("nativewind/preset");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -9,6 +9,7 @@ module.exports = {
     "./components/**/*.{js,jsx,ts,tsx}",
     "./screens/**/*.{js,jsx,ts,tsx}",
   ],
+  presets: [nativewind],
   safelist: ["gap-x-2", "gap-y-6", "pl-4", "flex-wrap", "mb-12", "basis-[10%]"],
   theme: {
     screens: {
@@ -207,5 +208,5 @@ module.exports = {
       },
     },
   },
-  plugins: [gluestackPlugin],
+  plugins: [],
 };

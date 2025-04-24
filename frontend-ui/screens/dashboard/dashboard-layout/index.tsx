@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/modal";
 import { Center } from "@/components/ui/center";
 import { AlertTriangleIcon } from "lucide-react-native";
+import { CheckIcon, MinusIcon } from "lucide-react-native";
 
 type MobileHeaderProps = {
   title: string;
@@ -494,9 +495,67 @@ function MobileHeader(props: MobileHeaderProps) {
   );
 }
 
+// Define new interfaces for student dashboard
+interface ClassInfo {
+  subject: string;
+  date: string;
+  timeStart: string;
+  timeEnd: string;
+  teacher: string;
+  room: string;
+  completed?: boolean;
+  colorAccent: string;
+}
+
+interface TaskInfo {
+  title: string;
+  dueDate: string;
+  isUrgent?: boolean;
+}
+
+// Sample data for student dashboard
+const upcomingClasses: ClassInfo[] = [
+  {
+    subject: "Matemática",
+    date: "Hoje",
+    timeStart: "14:30",
+    timeEnd: "16:00",
+    teacher: "Prof. Ana Santos",
+    room: "Sala 203",
+    completed: true,
+    colorAccent: "bg-green-500"
+  },
+  {
+    subject: "Física",
+    date: "Amanhã",
+    timeStart: "09:00",
+    timeEnd: "10:30",
+    teacher: "Prof. Carlos Lima",
+    room: "Sala 105",
+    colorAccent: "bg-orange-500"
+  }
+];
+
+const pendingTasks: TaskInfo[] = [
+  {
+    title: "Relatório de Laboratório",
+    dueDate: "Hoje às 18:00",
+    isUrgent: true
+  },
+  {
+    title: "Lista de Exercícios",
+    dueDate: "Em 3 dias"
+  }
+];
+
 const MainContent = () => {
+  const { userProfile } = useAuth();
+  const userName = userProfile?.name || "Aluno";
+  const userGrade = userProfile?.grade || "9° Ano";
+  const userInitials = userName.split(' ').map(n => n[0]).join('');
+  
   return (
-    <Box className="flex-1 ">
+    <Box className="flex-1">
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
@@ -505,240 +564,76 @@ const MainContent = () => {
         }}
         className="flex-1 mb-20 md:mb-2"
       >
-        <VStack className="p-4 pb-0 md:px-10 md:pt-6  w-full" space="2xl">
-          <Heading size="2xl" className="font-roboto">
-            Welcome Alexander
-          </Heading>
+        <VStack className="p-4 pb-0 md:px-6 md:pt-6 w-full" space="xl">
+          {/* Student Profile */}
+          <HStack className="bg-blue-600 rounded-lg p-4 items-center justify-between">
+            <HStack space="md" className="items-center">
+              <Avatar className="bg-blue-700 h-14 w-14">
+                <AvatarFallbackText>{userInitials}</AvatarFallbackText>
+              </Avatar>
+              <VStack>
+                <Text className="text-white font-bold text-xl">{userName}</Text>
+                <Text className="text-white">Aluno • {userGrade}</Text>
+              </VStack>
+            </HStack>
+            <Avatar className="bg-blue-500 h-9 w-9">
+              <AvatarFallbackText>3</AvatarFallbackText>
+            </Avatar>
+          </HStack>
 
-          <Grid className="gap-5" _extra={{ className: ""}}>
-            {HeadingCards.map((item, index) => {
-              return (
-                <GridItem
-                  _extra={{
-                    className: "col-span-12 sm:col-span-6 lg:col-span-4",
-                  }}
-                  key={index}
-                >
-                  <HStack
-                    space="md"
-                    className="border border-border-300 rounded-lg p-4 items-center justify-between"
-                  >
-                    <HStack space="xl" className="items-center">
-                      <Avatar>
-                        <AvatarImage
-                          height={100}
-                          width={100}
-                          //@ts-ignore
-                          source={item.bannerUri}
-                        />
-                      </Avatar>
-                      <VStack>
-                        <Text className="font-semibold text-typography-900 line-clamp-1">
-                          {item.title}
-                        </Text>
-                        <Text className="line-clamp-1">{item.description}</Text>
-                      </VStack>
-                    </HStack>
-                    <Button size="xs">
-                      <ButtonText>Edit</ButtonText>
-                    </Button>
+          <Heading className="text-2xl font-bold">Dashboard</Heading>
+
+          {/* Upcoming Classes */}
+          <VStack space="md">
+            <Heading className="text-lg font-semibold">Próximas Aulas</Heading>
+            {upcomingClasses.map((classInfo, index) => (
+              <HStack key={index} className="border border-gray-200 rounded-lg p-4 items-start">
+                <Box className={`${classInfo.colorAccent} w-2 h-full rounded-full mr-4 self-stretch`} />
+                <VStack className="flex-1">
+                  <HStack className="justify-between w-full">
+                    <Text className="font-bold text-lg">{classInfo.subject}</Text>
+                    {classInfo.completed && (
+                      <Box className="bg-blue-50 rounded-full p-1">
+                        <Icon as={CheckIcon} size="sm" color="#3B82F6" />
+                      </Box>
+                    )}
                   </HStack>
-                </GridItem>
-              );
-            })}
-          </Grid>
+                  <Text>{classInfo.date} • {classInfo.timeStart} - {classInfo.timeEnd}</Text>
+                  <Text>{classInfo.teacher} • {classInfo.room}</Text>
+                </VStack>
+              </HStack>
+            ))}
+          </VStack>
 
-          <Box className="bg-background-50 p-4 rounded-md">
-            <Text className="text-center font-medium">
-              To view analytics you need client ID. Add it to your settings and
-              you're good to go.
-            </Text>
-          </Box>
-          <Grid className="gap-5" _extra={{ className: ""}}>
-            <GridItem
-              _extra={{
-                className: "col-span-12 sm:col-span-6 lg:col-span-4",
-              }}
-            >
-              <VStack
-                className="border border-border-300 rounded-lg px-4 py-6 items-center justify-between"
-                space="sm"
-              >
-                <Box className="self-start  w-full px-4">
-                  <Heading
-                    size="lg"
-                    className="font-roboto  text-typography-700"
-                  >
-                    Upcoming Holidays
-                  </Heading>
-                </Box>
-                <Divider />
-                {HolidaysCards.map((item, index) => {
-                  return (
-                    <HStack space="lg" key={index} className="w-full px-4 py-2">
-                      <Avatar className="bg-background-50 h-10 w-10">
-                        <Icon as={item.icon} />
-                      </Avatar>
-                      <VStack>
-                        <Text className="text-typography-900 font-roboto line-clamp-1">
-                          {item.title}
-                        </Text>
-                        <Text className="text-sm font-roboto line-clamp-1">
-                          {item.description}
-                        </Text>
-                      </VStack>
-                    </HStack>
-                  );
-                })}
-              </VStack>
-            </GridItem>
-            <GridItem
-              _extra={{
-                className: "col-span-12 sm:col-span-6 lg:col-span-4",
-              }}
-            >
-              <VStack
-                className="border border-border-300 rounded-lg px-4 py-6 items-center justify-between"
-                space="sm"
-              >
-                <Box className="self-start  w-full px-4">
-                  <Heading
-                    size="lg"
-                    className="font-roboto  text-typography-700"
-                  >
-                    Your Leaves
-                  </Heading>
-                </Box>
-                <Divider />
-                {LeavesCards.map((item, index) => {
-                  return (
-                    <HStack
-                      space="lg"
-                      key={index}
-                      className="w-full px-4 py-2 justify-between items-center"
-                    >
-                      <HStack space="xl" className="items-center">
-                        <Box
-                          className={cn(
-                            "rounded-full h-10 w-10 items-center justify-center",
-                            { "bg-success-0": item.leaves !== 0 },
-                            { "bg-error-50": item.leaves === 0 }
-                          )}
-                        >
-                          <Text
-                            className={cn(
-                              { "text-success-800": item.leaves !== 0 },
-                              { "text-error-700": item.leaves === 0 }
-                            )}
-                          >
-                            {item.leaves}
-                          </Text>
-                        </Box>
-                        <VStack>
-                          <Text className="text-typography-900 font-roboto line-clamp-1">
-                            {item.title}
-                          </Text>
-                          <Text className="text-sm font-roboto line-clamp-1">
-                            {item.description}
-                          </Text>
-                        </VStack>
-                      </HStack>
-                      <Button
-                        isDisabled={item.isDisabled}
-                        variant="outline"
-                        action="secondary"
-                        size="xs"
-                      >
-                        <ButtonText>Apply</ButtonText>
-                      </Button>
-                    </HStack>
-                  );
-                })}
-              </VStack>
-            </GridItem>
-            <GridItem
-              _extra={{
-                className: "col-span-12 sm:col-span-6 lg:col-span-4",
-              }}
-            >
-              <VStack
-                className="border border-border-300  rounded-lg px-4 py-6 items-center justify-between"
-                space="sm"
-              >
-                <Box className="self-start  w-full px-4">
-                  <Heading
-                    size="lg"
-                    className="font-roboto  text-typography-700"
-                  >
-                    New colleagues
-                  </Heading>
-                </Box>
-                <Divider />
-                {ColleaguesCards.map((item, index) => {
-                  return (
-                    <HStack space="lg" key={index} className="w-full px-4 py-2">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage
-                          height={100}
-                          width={100}
-                          source={item.image}
-                        />
-                      </Avatar>
-                      <VStack>
-                        <Text className="text-typography-900 font-roboto line-clamp-1">
-                          {item.title}
-                        </Text>
-                        <Text className="text-sm font-roboto line-clamp-1">
-                          {item.position}
-                        </Text>
-                      </VStack>
-                    </HStack>
-                  );
-                })}
-              </VStack>
-            </GridItem>
-            <GridItem
-              _extra={{
-                className: "col-span-12 sm:col-span-6 lg:col-span-4",
-              }}
-            >
-              <VStack
-                className="border border-border-300 rounded-lg px-4 py-6 items-center justify-between"
-                space="sm"
-              >
-                <Box className="self-start w-full px-4">
-                  <Heading
-                    size="lg"
-                    className="font-roboto  text-typography-700"
-                  >
-                    New colleagues
-                  </Heading>
-                </Box>
-                <Divider />
-                {ColleaguesCards.map((item, index) => {
-                  return (
-                    <HStack space="lg" key={index} className="px-4 py-2 w-full">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage
-                          height={100}
-                          width={100}
-                          source={item.image}
-                        />
-                      </Avatar>
-                      <VStack>
-                        <Text className="text-typography-900 font-roboto line-clamp-1">
-                          {item.title}
-                        </Text>
-                        <Text className="text-sm font-roboto line-clamp-1">
-                          {item.position}
-                        </Text>
-                      </VStack>
-                    </HStack>
-                  );
-                })}
-              </VStack>
-            </GridItem>
-          </Grid>
+          {/* Pending Tasks */}
+          <VStack space="md">
+            <Heading className="text-lg font-semibold">Tarefas Pendentes</Heading>
+            {pendingTasks.map((task, index) => (
+              <HStack key={index} className="border border-gray-200 rounded-lg p-4 items-center justify-between">
+                <HStack space="md">
+                  <Avatar className="bg-red-50 h-12 w-12">
+                    <Icon as={MinusIcon} color="#EF4444" />
+                  </Avatar>
+                  <VStack>
+                    <Text className="font-semibold">{task.title}</Text>
+                    <Text>Entrega: {task.dueDate}</Text>
+                  </VStack>
+                </HStack>
+                {task.isUrgent && (
+                  <Text className="text-red-500 font-semibold">URGENTE</Text>
+                )}
+              </HStack>
+            ))}
+          </VStack>
+
+          {/* Recent Messages */}
+          <VStack space="md">
+            <Heading className="text-lg font-semibold">Mensagens Recentes</Heading>
+            {/* Empty state for messages */}
+            <Box className="border border-gray-200 rounded-lg p-8 items-center">
+              <Text className="text-center text-gray-500">Nenhuma mensagem recente</Text>
+            </Box>
+          </VStack>
         </VStack>
       </ScrollView>
     </Box>
@@ -746,12 +641,11 @@ const MainContent = () => {
 };
 
 export const Dashboard = () => {
-  // Get user profile data
   const { userProfile } = useAuth();
   
   return (
     <SafeAreaView className="h-full w-full">
-      <DashboardLayout title="Dashboard" isSidebarVisible={true}>
+      <DashboardLayout title="Dashboard do Aluno" isSidebarVisible={true}>
         <MainContent />
       </DashboardLayout>
       <MobileFooter footerIcons={bottomTabsList} />

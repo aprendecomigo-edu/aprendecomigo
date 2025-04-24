@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { HStack, VStack } from "@/components/ui/stack";
+import { Platform, ActivityIndicator } from "react-native";
+import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { VStack } from "@/components/ui/vstack";
 import { Text } from "@/components/ui/text";
 import { Switch } from "@/components/ui/switch";
-import { Platform } from "react-native";
 import { useAuth } from "@/api/authContext";
 import { Toast, ToastTitle, useToast } from "@/components/ui/toast";
-import { Heading } from "@/components/ui/heading";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
 import { Button, ButtonText } from "@/components/ui/button";
 import useRouter from "@unitools/router";
@@ -16,6 +17,31 @@ export const BiometricSettings = () => {
   const router = useRouter();
   const { biometricSupport, enableBiometrics, disableBiometrics, userProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  // Check biometric status on mount
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        setIsChecking(true);
+        // The check is handled by the auth context
+      } catch (error) {
+        console.error('Error checking biometric status:', error);
+        toast.show({
+          placement: 'bottom right',
+          render: ({ id }) => (
+            <Toast nativeID={id} variant="solid" action="error">
+              <ToastTitle>Error checking biometric status</ToastTitle>
+            </Toast>
+          ),
+        });
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkStatus();
+  }, []);
 
   // Handle toggle biometric authentication
   const handleToggleBiometrics = async (enabled: boolean) => {
@@ -23,70 +49,57 @@ export const BiometricSettings = () => {
       setIsLoading(true);
 
       if (enabled) {
-        // Enable biometrics if user has a profile and email
-        if (userProfile?.email) {
-          const success = await enableBiometrics(userProfile.email);
-
-          if (success) {
-            toast.show({
-              placement: "bottom right",
-              render: ({ id }) => {
-                return (
-                  <Toast nativeID={id} variant="accent" action="success">
-                    <ToastTitle>Biometric authentication enabled!</ToastTitle>
-                  </Toast>
-                );
-              },
-            });
-          } else {
-            toast.show({
-              placement: "bottom right",
-              render: ({ id }) => {
-                return (
-                  <Toast nativeID={id} variant="accent" action="error">
-                    <ToastTitle>Could not enable biometric authentication.</ToastTitle>
-                  </Toast>
-                );
-              },
-            });
-          }
-        } else {
+        if (!userProfile?.email) {
           toast.show({
             placement: "bottom right",
-            render: ({ id }) => {
-              return (
-                <Toast nativeID={id} variant="accent" action="error">
-                  <ToastTitle>User profile not available.</ToastTitle>
-                </Toast>
-              );
-            },
+            render: ({ id }) => (
+              <Toast nativeID={id} variant="solid" action="error">
+                <ToastTitle>User profile not available</ToastTitle>
+              </Toast>
+            ),
           });
+          return;
         }
-      } else {
-        // Disable biometrics
-        const success = await disableBiometrics();
 
+        const success = await enableBiometrics(userProfile.email);
         if (success) {
           toast.show({
             placement: "bottom right",
-            render: ({ id }) => {
-              return (
-                <Toast nativeID={id} variant="accent" action="success">
-                  <ToastTitle>Biometric authentication disabled.</ToastTitle>
-                </Toast>
-              );
-            },
+            render: ({ id }) => (
+              <Toast nativeID={id} variant="solid" action="success">
+                <ToastTitle>Biometric authentication enabled!</ToastTitle>
+              </Toast>
+            ),
           });
         } else {
           toast.show({
             placement: "bottom right",
-            render: ({ id }) => {
-              return (
-                <Toast nativeID={id} variant="accent" action="error">
-                  <ToastTitle>Could not disable biometric authentication.</ToastTitle>
-                </Toast>
-              );
-            },
+            render: ({ id }) => (
+              <Toast nativeID={id} variant="solid" action="error">
+                <ToastTitle>Could not enable biometric authentication</ToastTitle>
+              </Toast>
+            ),
+          });
+        }
+      } else {
+        const success = await disableBiometrics();
+        if (success) {
+          toast.show({
+            placement: "bottom right",
+            render: ({ id }) => (
+              <Toast nativeID={id} variant="solid" action="success">
+                <ToastTitle>Biometric authentication disabled</ToastTitle>
+              </Toast>
+            ),
+          });
+        } else {
+          toast.show({
+            placement: "bottom right",
+            render: ({ id }) => (
+              <Toast nativeID={id} variant="solid" action="error">
+                <ToastTitle>Could not disable biometric authentication</ToastTitle>
+              </Toast>
+            ),
           });
         }
       }
@@ -94,18 +107,25 @@ export const BiometricSettings = () => {
       console.error('Error toggling biometric authentication:', error);
       toast.show({
         placement: "bottom right",
-        render: ({ id }) => {
-          return (
-            <Toast nativeID={id} variant="accent" action="error">
-              <ToastTitle>An error occurred. Please try again.</ToastTitle>
-            </Toast>
-          );
-        },
+        render: ({ id }) => (
+          <Toast nativeID={id} variant="solid" action="error">
+            <ToastTitle>An error occurred. Please try again</ToastTitle>
+          </Toast>
+        ),
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isChecking) {
+    return (
+      <VStack className="w-full p-4" space="lg" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" />
+        <Text>Checking biometric status...</Text>
+      </VStack>
+    );
+  }
 
   return (
     <VStack className="w-full p-4" space="lg">
@@ -116,7 +136,7 @@ export const BiometricSettings = () => {
           <Heading size="md">Biometric Authentication</Heading>
         </CardHeader>
 
-        <CardContent>
+        <CardBody>
           <VStack space="md">
             {biometricSupport.isAvailable ? (
               <VStack space="lg">
@@ -125,15 +145,19 @@ export const BiometricSettings = () => {
                   without entering your verification code.
                 </Text>
 
-                <HStack justifyContent="space-between" alignItems="center">
-                  <Text fontWeight="$medium">
+                <HStack className="justify-between items-center">
+                  <Text bold>
                     Enable {Platform.OS === 'ios' ? 'Face ID / Touch ID' : 'biometric'} login
                   </Text>
-                  <Switch
-                    isDisabled={isLoading}
-                    value={biometricSupport.isEnabled}
-                    onValueChange={handleToggleBiometrics}
-                  />
+                  {isLoading ? (
+                    <ActivityIndicator size="small" />
+                  ) : (
+                    <Switch
+                      isDisabled={isLoading}
+                      value={biometricSupport.isEnabled}
+                      onValueChange={handleToggleBiometrics}
+                    />
+                  )}
                 </HStack>
 
                 <Divider />
@@ -151,18 +175,19 @@ export const BiometricSettings = () => {
               </Text>
             )}
           </VStack>
-        </CardContent>
+        </CardBody>
 
-        <CardFooter>
+        <VStack className="px-4 py-3">
           <Button
             variant="outline"
             action="secondary"
             className="mt-4"
             onPress={() => router.back()}
+            isDisabled={isLoading}
           >
             <ButtonText>Back</ButtonText>
           </Button>
-        </CardFooter>
+        </VStack>
       </Card>
     </VStack>
   );
