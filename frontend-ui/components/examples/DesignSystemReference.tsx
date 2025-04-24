@@ -5,31 +5,27 @@ import { HStack } from '@/components/ui/hstack';
 import { VStack } from '@/components/ui/vstack';
 import { Text } from '@/components/ui/text';
 import { Heading } from '@/components/ui/heading';
-import { 
-  Avatar, 
-  AvatarFallbackText, 
-  AvatarImage 
-} from '@/components/ui/avatar';
+import { Avatar, AvatarFallbackText, AvatarImage } from '@/components/ui/avatar';
 import { Icon } from '@/components/ui/icon';
 import { Divider } from '@/components/ui/divider';
 import { Button, ButtonText } from '@/components/ui/button';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
-import { 
-  CheckIcon, 
-  MinusIcon, 
+import {
+  CheckIcon,
+  MinusIcon,
   InfoIcon,
-  AlertCircleIcon, 
+  AlertCircleIcon,
   BookOpenIcon,
   CalendarIcon,
-  ClockIcon
+  ClockIcon,
 } from 'lucide-react-native';
 
 /**
  * AprendeComigo Design System Reference
- * 
+ *
  * This component serves as a visual reference and documentation for the design system
  * used in the AprendeComigo educational platform.
- * 
+ *
  * It includes:
  * - Color palette
  * - Typography scale
@@ -39,9 +35,9 @@ import {
 export const DesignSystemReference = () => {
   return (
     <SafeAreaView className="h-full w-full bg-white">
-      <ScrollView 
-        contentContainerStyle={{ 
-          paddingBottom: Platform.OS === 'web' ? 40 : 100 
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: Platform.OS === 'web' ? 40 : 100,
         }}
         className="flex-1"
       >
@@ -50,14 +46,15 @@ export const DesignSystemReference = () => {
           <VStack space="md">
             <Heading className="text-2xl font-bold">AprendeComigo Design System</Heading>
             <Text className="text-gray-500">
-              This is a reference implementation of the AprendeComigo design system based on the student dashboard design.
+              This is a reference implementation of the AprendeComigo design system based on the
+              student dashboard design.
             </Text>
           </VStack>
 
           {/* Color Palette */}
           <VStack space="md">
             <Heading className="text-xl font-semibold">Color Palette</Heading>
-            
+
             <VStack space="xs">
               <Heading className="text-lg font-medium">Primary Colors</Heading>
               <HStack className="flex-wrap">
@@ -67,7 +64,7 @@ export const DesignSystemReference = () => {
                 <ColorSwatch color="bg-blue-50" name="Blue 50" hex="#EFF6FF" />
               </HStack>
             </VStack>
-            
+
             <VStack space="xs">
               <Heading className="text-lg font-medium">Secondary Colors</Heading>
               <HStack className="flex-wrap">
@@ -77,7 +74,7 @@ export const DesignSystemReference = () => {
                 <ColorSwatch color="bg-red-50" name="Red 50" hex="#FEF2F2" />
               </HStack>
             </VStack>
-            
+
             <VStack space="xs">
               <Heading className="text-lg font-medium">Neutral Colors</Heading>
               <HStack className="flex-wrap">
@@ -92,7 +89,7 @@ export const DesignSystemReference = () => {
           {/* Typography */}
           <VStack space="md">
             <Heading className="text-xl font-semibold">Typography</Heading>
-            
+
             <VStack space="xs" className="border border-gray-200 rounded-lg p-4">
               <Heading className="text-2xl font-bold">Large Heading (24px)</Heading>
               <Heading className="text-xl font-semibold">Section Heading (20px)</Heading>
@@ -107,7 +104,7 @@ export const DesignSystemReference = () => {
           {/* Components */}
           <VStack space="lg">
             <Heading className="text-xl font-semibold">Components</Heading>
-            
+
             {/* Student Profile Header */}
             <VStack space="xs">
               <Heading className="text-lg font-medium">Student Profile Header</Heading>
@@ -126,11 +123,11 @@ export const DesignSystemReference = () => {
                 </Avatar>
               </HStack>
             </VStack>
-            
+
             {/* Class Cards */}
             <VStack space="xs">
               <Heading className="text-lg font-medium">Class Cards</Heading>
-              
+
               {/* Completed Class */}
               <HStack className="border border-gray-200 rounded-lg p-4 items-start">
                 <Box className="bg-green-500 w-2 h-full rounded-full mr-4 self-stretch" />
@@ -145,7 +142,7 @@ export const DesignSystemReference = () => {
                   <Text>Prof. Ana Santos • Sala 203</Text>
                 </VStack>
               </HStack>
-              
+
               {/* Upcoming Class */}
               <HStack className="border border-gray-200 rounded-lg p-4 items-start">
                 <Box className="bg-orange-500 w-2 h-full rounded-full mr-4 self-stretch" />
@@ -158,11 +155,11 @@ export const DesignSystemReference = () => {
                 </VStack>
               </HStack>
             </VStack>
-            
+
             {/* Task Cards */}
             <VStack space="xs">
               <Heading className="text-lg font-medium">Task Cards</Heading>
-              
+
               {/* Urgent Task */}
               <HStack className="border border-gray-200 rounded-lg p-4 items-center justify-between">
                 <HStack space="md">
@@ -176,7 +173,7 @@ export const DesignSystemReference = () => {
                 </HStack>
                 <Text className="text-red-500 font-semibold">URGENTE</Text>
               </HStack>
-              
+
               {/* Regular Task */}
               <HStack className="border border-gray-200 rounded-lg p-4 items-center justify-between">
                 <HStack space="md">
@@ -190,7 +187,7 @@ export const DesignSystemReference = () => {
                 </HStack>
               </HStack>
             </VStack>
-            
+
             {/* Empty States */}
             <VStack space="xs">
               <Heading className="text-lg font-medium">Empty States</Heading>
@@ -198,38 +195,33 @@ export const DesignSystemReference = () => {
                 <Text className="text-center text-gray-500">Nenhuma mensagem recente</Text>
               </Box>
             </VStack>
-            
+
             {/* Status Indicators */}
             <VStack space="xs">
               <Heading className="text-lg font-medium">Status Indicators</Heading>
               <HStack className="flex-wrap" space="md">
-                <StatusIndicator 
-                  label="Completed" 
-                  icon={CheckIcon} 
-                  color="#22C55E" 
-                  bgColor="#DCFCE7" 
+                <StatusIndicator
+                  label="Completed"
+                  icon={CheckIcon}
+                  color="#22C55E"
+                  bgColor="#DCFCE7"
                 />
-                <StatusIndicator 
-                  label="In Progress" 
+                <StatusIndicator
+                  label="In Progress"
                   icon={ClockIcon}
-                  color="#F97316" 
-                  bgColor="#FFF7ED" 
+                  color="#F97316"
+                  bgColor="#FFF7ED"
                 />
-                <StatusIndicator 
-                  label="Urgent" 
-                  icon={AlertCircleIcon} 
-                  color="#EF4444" 
-                  bgColor="#FEF2F2" 
+                <StatusIndicator
+                  label="Urgent"
+                  icon={AlertCircleIcon}
+                  color="#EF4444"
+                  bgColor="#FEF2F2"
                 />
-                <StatusIndicator 
-                  label="Info" 
-                  icon={InfoIcon} 
-                  color="#3B82F6" 
-                  bgColor="#EFF6FF" 
-                />
+                <StatusIndicator label="Info" icon={InfoIcon} color="#3B82F6" bgColor="#EFF6FF" />
               </HStack>
             </VStack>
-            
+
             {/* Buttons */}
             <VStack space="xs">
               <Heading className="text-lg font-medium">Buttons</Heading>
@@ -237,22 +229,22 @@ export const DesignSystemReference = () => {
                 <Button className="bg-blue-600">
                   <ButtonText>Primary Button</ButtonText>
                 </Button>
-                
+
                 <Button variant="outline" className="border-blue-600">
                   <ButtonText className="text-blue-600">Outline Button</ButtonText>
                 </Button>
-                
+
                 <Button variant="link">
                   <ButtonText className="text-blue-600">Link Button</ButtonText>
                 </Button>
-                
+
                 <Button action="negative" className="bg-red-500">
                   <ButtonText>Negative Button</ButtonText>
                 </Button>
               </HStack>
             </VStack>
           </VStack>
-          
+
           {/* Spacing Reference */}
           <VStack space="md">
             <Heading className="text-xl font-semibold">Spacing Reference</Heading>
@@ -278,7 +270,9 @@ export const DesignSystemReference = () => {
 
 const ColorSwatch = ({ color, name, hex, borderVisible = false }) => (
   <VStack className="m-1 items-center">
-    <Box className={`${color} ${borderVisible ? 'border border-gray-300' : ''} w-16 h-16 rounded-md`} />
+    <Box
+      className={`${color} ${borderVisible ? 'border border-gray-300' : ''} w-16 h-16 rounded-md`}
+    />
     <Text className="text-xs mt-1 font-medium">{name}</Text>
     <Text className="text-xs text-gray-500">{hex}</Text>
   </VStack>
@@ -303,4 +297,4 @@ const SpacingExample = ({ label, size }) => (
   </HStack>
 );
 
-export default DesignSystemReference; 
+export default DesignSystemReference;

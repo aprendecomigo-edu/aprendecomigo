@@ -185,4 +185,4 @@ When adding new components to the application:
 
 ---
 
-For any questions or feedback about the design system, please contact the design team. 
+For any questions or feedback about the design system, please contact the design team.

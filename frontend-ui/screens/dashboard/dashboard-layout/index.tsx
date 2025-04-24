@@ -1,34 +1,30 @@
-import React, { useEffect, useState } from "react";
-import { Box } from "@/components/ui/box";
-import { HStack } from "@/components/ui/hstack";
-import { isWeb } from "@gluestack-ui/nativewind-utils/IsWeb";
-import { ChevronLeftIcon, Icon, MenuIcon } from "@/components/ui/icon";
-import { Text } from "@/components/ui/text";
-import { VStack } from "@/components/ui/vstack";
-import { Pressable } from "@/components/ui/pressable";
-import type { LucideIcon } from "lucide-react-native";
-import { LogOutIcon } from "lucide-react-native";
-import { InboxIcon } from "./assets/icons/inbox";
-import { GlobeIcon } from "./assets/icons/globe";
-import { Button, ButtonText } from "@/components/ui/button";
-import { Heading } from "@/components/ui/heading";
-import { ScrollView } from "@/components/ui/scroll-view";
-import { Divider } from "@/components/ui/divider";
-import { Grid, GridItem } from "@/components/ui/grid";
-import {
-  Avatar,
-  AvatarFallbackText,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import { router } from "expo-router";
-import { HomeIcon } from "./assets/icons/home";
-import { HeartIcon } from "./assets/icons/heart";
-import { ProfileIcon } from "./assets/icons/profile";
-import { CalendarIcon } from "./assets/icons/calendar";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
-import { cn } from "@gluestack-ui/nativewind-utils/cn";
-import { Platform, Alert } from "react-native";
-import { useAuth } from "@/api/authContext";
+import React, { useEffect, useState } from 'react';
+import { Box } from '@/components/ui/box';
+import { HStack } from '@/components/ui/hstack';
+import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
+import { ChevronLeftIcon, Icon, MenuIcon } from '@/components/ui/icon';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
+import { Pressable } from '@/components/ui/pressable';
+import type { LucideIcon } from 'lucide-react-native';
+import { LogOutIcon } from 'lucide-react-native';
+import { InboxIcon } from './assets/icons/inbox';
+import { GlobeIcon } from './assets/icons/globe';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Heading } from '@/components/ui/heading';
+import { ScrollView } from '@/components/ui/scroll-view';
+import { Divider } from '@/components/ui/divider';
+import { Grid, GridItem } from '@/components/ui/grid';
+import { Avatar, AvatarFallbackText, AvatarImage } from '@/components/ui/avatar';
+import { router } from 'expo-router';
+import { HomeIcon } from './assets/icons/home';
+import { HeartIcon } from './assets/icons/heart';
+import { ProfileIcon } from './assets/icons/profile';
+import { CalendarIcon } from './assets/icons/calendar';
+import { SafeAreaView } from '@/components/ui/safe-area-view';
+import { cn } from '@gluestack-ui/nativewind-utils/cn';
+import { Platform, Alert } from 'react-native';
+import { useAuth } from '@/api/authContext';
 import {
   Modal,
   ModalBackdrop,
@@ -37,10 +33,10 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
-} from "@/components/ui/modal";
-import { Center } from "@/components/ui/center";
-import { AlertTriangleIcon } from "lucide-react-native";
-import { CheckIcon, MinusIcon } from "lucide-react-native";
+} from '@/components/ui/modal';
+import { Center } from '@/components/ui/center';
+import { AlertTriangleIcon } from 'lucide-react-native';
+import { CheckIcon, MinusIcon } from 'lucide-react-native';
 
 type MobileHeaderProps = {
   title: string;
@@ -75,24 +71,24 @@ type BottomTabs = {
 const bottomTabsList: BottomTabs[] = [
   {
     iconName: HomeIcon,
-    iconText: "Home",
+    iconText: 'Home',
   },
 
   {
     iconName: GlobeIcon,
-    iconText: "Community",
+    iconText: 'Community',
   },
   {
     iconName: InboxIcon,
-    iconText: "Inbox",
+    iconText: 'Inbox',
   },
   {
     iconName: HeartIcon,
-    iconText: "Favourite",
+    iconText: 'Favourite',
   },
   {
     iconName: ProfileIcon,
-    iconText: "Profile",
+    iconText: 'Profile',
   },
 ];
 
@@ -120,104 +116,108 @@ interface ColleaguesCardData {
 
 const HeadingCards: CardData[] = [
   {
-    bannerUri: require("@/assets/dashboard/dashboard-layout/image.png"),
-    title: "Update your profile",
-    description: "Add your details",
+    bannerUri: require('@/assets/dashboard/dashboard-layout/image.png'),
+    title: 'Update your profile',
+    description: 'Add your details',
   },
   {
-    bannerUri: require("@/assets/dashboard/dashboard-layout/image2.png"),
-    title: "Your skills",
-    description: "Add your skills here",
+    bannerUri: require('@/assets/dashboard/dashboard-layout/image2.png'),
+    title: 'Your skills',
+    description: 'Add your skills here',
   },
   {
-    bannerUri: require("@/assets/dashboard/dashboard-layout/image3.png"),
-    title: "Your goals",
-    description: "Set a target to accomplish",
+    bannerUri: require('@/assets/dashboard/dashboard-layout/image3.png'),
+    title: 'Your goals',
+    description: 'Set a target to accomplish',
   },
   {
-    bannerUri: require("@/assets/dashboard/dashboard-layout/image3.png"),
-    title: "Your goals",
-    description: "Set a target to accomplish",
+    bannerUri: require('@/assets/dashboard/dashboard-layout/image3.png'),
+    title: 'Your goals',
+    description: 'Set a target to accomplish',
   },
   {
-    bannerUri: require("@/assets/dashboard/dashboard-layout/image3.png"),
-    title: "Your goals",
-    description: "Set a target to accomplish",
+    bannerUri: require('@/assets/dashboard/dashboard-layout/image3.png'),
+    title: 'Your goals',
+    description: 'Set a target to accomplish',
   },
 ];
 const HolidaysCards: HolidaysCardData[] = [
   {
     icon: CalendarIcon,
-    title: "Navaratri",
-    description: "12 March, Monday (Optional holiday)",
+    title: 'Navaratri',
+    description: '12 March, Monday (Optional holiday)',
   },
   {
     icon: CalendarIcon,
-    title: "Durga Puja",
-    description: "12 October, Tuesday",
+    title: 'Durga Puja',
+    description: '12 October, Tuesday',
   },
   {
     icon: CalendarIcon,
-    title: "Diwali",
-    description: "12 March, Wednesday",
+    title: 'Diwali',
+    description: '12 March, Wednesday',
   },
   {
     icon: CalendarIcon,
-    title: "Christmas",
-    description: "12 March, Thursday",
+    title: 'Christmas',
+    description: '12 March, Thursday',
   },
 ];
 const LeavesCards: LeavesCardData[] = [
   {
-    title: "Earned Leaves",
-    description: "Available 24",
+    title: 'Earned Leaves',
+    description: 'Available 24',
     leaves: 24,
     isDisabled: false,
   },
   {
-    title: "Sick Leaves",
-    description: "Available 24",
+    title: 'Sick Leaves',
+    description: 'Available 24',
     leaves: 24,
     isDisabled: false,
   },
   {
-    title: "Menstrual Leaves",
-    description: "Available 20",
+    title: 'Menstrual Leaves',
+    description: 'Available 20',
     leaves: 20,
     isDisabled: false,
   },
   {
-    title: "Optional Leaves",
-    description: "Available 0",
+    title: 'Optional Leaves',
+    description: 'Available 0',
     leaves: 0,
     isDisabled: true,
   },
 ];
 const ColleaguesCards: ColleaguesCardData[] = [
   {
-    image: require("@/assets/dashboard/dashboard-layout/image7.png"),
-    title: "Emily Zho",
-    position: "UI/UX Designer",
+    image: require('@/assets/dashboard/dashboard-layout/image7.png'),
+    title: 'Emily Zho',
+    position: 'UI/UX Designer',
   },
   {
-    image: require("@/assets/dashboard/dashboard-layout/image4.png"),
-    title: "Marilyn Monroe",
-    position: "SDE II",
+    image: require('@/assets/dashboard/dashboard-layout/image4.png'),
+    title: 'Marilyn Monroe',
+    position: 'SDE II',
   },
   {
-    image: require("@/assets/dashboard/dashboard-layout/image5.png"),
-    title: "James Kant",
-    position: "SDE III",
+    image: require('@/assets/dashboard/dashboard-layout/image5.png'),
+    title: 'James Kant',
+    position: 'SDE III',
   },
   {
-    image: require("@/assets/dashboard/dashboard-layout/image6.png"),
-    title: "Richard Faynmen",
-    position: "CEO Marketing",
+    image: require('@/assets/dashboard/dashboard-layout/image6.png'),
+    title: 'Richard Faynmen',
+    position: 'CEO Marketing',
   },
 ];
 
 // Create a reusable logout button component to follow DRY principles
-function LogoutButton({ displayStyle = "icon-only" }: { displayStyle?: "icon-only" | "icon-with-text" | "button" }) {
+function LogoutButton({
+  displayStyle = 'icon-only',
+}: {
+  displayStyle?: 'icon-only' | 'icon-with-text' | 'button';
+}) {
   const { logout } = useAuth();
   const [showModal, setShowModal] = useState(false);
 
@@ -256,13 +256,8 @@ function LogoutButton({ displayStyle = "icon-only" }: { displayStyle?: "icon-onl
           </ModalHeader>
           <ModalBody>
             <Center>
-              <Icon
-                as={AlertTriangleIcon}
-                className="w-14 h-14 mb-4 text-amber-500"
-              />
-              <Text className="text-center mb-2">
-                Are you sure you want to log out?
-              </Text>
+              <Icon as={AlertTriangleIcon} className="w-14 h-14 mb-4 text-amber-500" />
+              <Text className="text-center mb-2">Are you sure you want to log out?</Text>
               <Text className="text-center text-sm text-typography-500">
                 You will need to sign in again to access your account.
               </Text>
@@ -277,11 +272,7 @@ function LogoutButton({ displayStyle = "icon-only" }: { displayStyle?: "icon-onl
             >
               <ButtonText>Cancel</ButtonText>
             </Button>
-            <Button
-              action="negative"
-              className="flex-1 ml-2"
-              onPress={handleConfirmLogout}
-            >
+            <Button action="negative" className="flex-1 ml-2" onPress={handleConfirmLogout}>
               <ButtonText>Logout</ButtonText>
             </Button>
           </ModalFooter>
@@ -290,7 +281,7 @@ function LogoutButton({ displayStyle = "icon-only" }: { displayStyle?: "icon-onl
     );
   };
 
-  if (displayStyle === "button") {
+  if (displayStyle === 'button') {
     return (
       <>
         <Button
@@ -310,7 +301,7 @@ function LogoutButton({ displayStyle = "icon-only" }: { displayStyle?: "icon-onl
     );
   }
 
-  if (displayStyle === "icon-with-text") {
+  if (displayStyle === 'icon-with-text') {
     return (
       <>
         <Pressable
@@ -318,10 +309,7 @@ function LogoutButton({ displayStyle = "icon-only" }: { displayStyle?: "icon-onl
           onPress={handlePressLogout}
         >
           <VStack className="items-center" space="xs">
-            <Icon
-              as={LogOutIcon}
-              className="w-6 h-6 stroke-error-700"
-            />
+            <Icon as={LogOutIcon} className="w-6 h-6 stroke-error-700" />
             <Text className="text-[10px] text-error-700 font-medium">Logout</Text>
           </VStack>
         </Pressable>
@@ -333,14 +321,8 @@ function LogoutButton({ displayStyle = "icon-only" }: { displayStyle?: "icon-onl
   // Default icon-only
   return (
     <>
-      <Pressable
-        className="bg-error-50 rounded-full p-2"
-        onPress={handlePressLogout}
-      >
-        <Icon
-          as={LogOutIcon}
-          className="w-5 h-5 stroke-error-700"
-        />
+      <Pressable className="bg-error-50 rounded-full p-2" onPress={handlePressLogout}>
+        <Icon as={LogOutIcon} className="w-5 h-5 stroke-error-700" />
       </Pressable>
       {renderModal()}
     </>
@@ -349,17 +331,14 @@ function LogoutButton({ displayStyle = "icon-only" }: { displayStyle?: "icon-onl
 
 const Sidebar = () => {
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
-  
+
   const handlePress = (index: number) => {
     setSelectedIndex(index);
     // Add navigation logic based on index if needed
   };
 
   return (
-    <VStack
-      className="w-14 pt-5 h-full items-center border-r border-border-300 pb-5"
-      space="xl"
-    >
+    <VStack className="w-14 pt-5 h-full items-center border-r border-border-300 pb-5" space="xl">
       <VStack className="items-center" space="xl">
         {list.map((item, index) => {
           return (
@@ -371,7 +350,7 @@ const Sidebar = () => {
               <Icon
                 as={item.iconName}
                 className={`w-[55px] h-9 stroke-background-800
-                ${index === selectedIndex ? "fill-background-800" : "fill-none"}
+                ${index === selectedIndex ? 'fill-background-800' : 'fill-none'}
 
                 `}
               />
@@ -381,16 +360,14 @@ const Sidebar = () => {
       </VStack>
 
       <Box className="flex-1" />
-      
+
       <LogoutButton displayStyle="icon-with-text" />
     </VStack>
   );
 };
 
 const DashboardLayout = (props: any) => {
-  const [isSidebarVisible, setIsSidebarVisible] = useState(
-    props.isSidebarVisible
-  );
+  const [isSidebarVisible, setIsSidebarVisible] = useState(props.isSidebarVisible);
   function toggleSidebar() {
     setIsSidebarVisible(!isSidebarVisible);
   }
@@ -404,9 +381,7 @@ const DashboardLayout = (props: any) => {
       </Box>
       <VStack className="h-full w-full">
         <HStack className="h-full w-full">
-          <Box className="hidden md:flex h-full">
-            {isSidebarVisible && <Sidebar />}
-          </Box>
+          <Box className="hidden md:flex h-full">{isSidebarVisible && <Sidebar />}</Box>
           <VStack className="w-full">{props.children}</VStack>
         </HStack>
       </VStack>
@@ -418,30 +393,21 @@ function MobileFooter({ footerIcons }: { footerIcons: any }) {
   return (
     <HStack
       className={cn(
-        "bg-background-0 justify-between w-full absolute left-0 bottom-0 right-0 p-3 overflow-hidden items-center  border-t-border-300  md:hidden border-t",
-        { "pb-5": Platform.OS === "ios" },
-        { "pb-5": Platform.OS === "android" }
+        'bg-background-0 justify-between w-full absolute left-0 bottom-0 right-0 p-3 overflow-hidden items-center  border-t-border-300  md:hidden border-t',
+        { 'pb-5': Platform.OS === 'ios' },
+        { 'pb-5': Platform.OS === 'android' }
       )}
     >
       {footerIcons.map(
-        (
-          item: { iconText: string; iconName: any },
-          index: React.Key | null | undefined
-        ) => {
+        (item: { iconText: string; iconName: any }, index: React.Key | null | undefined) => {
           return (
             <Pressable
               className="px-0.5 flex-1 flex-col items-center"
               key={index}
-              onPress={() => router.push("/dashboard/dashboard-layout")}
+              onPress={() => router.push('/dashboard/dashboard-layout')}
             >
-              <Icon
-                as={item.iconName}
-                size="md"
-                className="h-[32px] w-[65px]"
-              />
-              <Text className="text-xs text-center text-typography-600">
-                {item.iconText}
-              </Text>
+              <Icon as={item.iconName} size="md" className="h-[32px] w-[65px]" />
+              <Text className="text-xs text-center text-typography-600">{item.iconText}</Text>
             </Pressable>
           );
         }
@@ -476,9 +442,7 @@ function WebHeader(props: HeaderProps) {
 
 function MobileHeader(props: MobileHeaderProps) {
   return (
-    <HStack
-      className="py-6 px-4 border-b border-border-50 bg-background-0 items-center justify-between"
-    >
+    <HStack className="py-6 px-4 border-b border-border-50 bg-background-0 items-center justify-between">
       <HStack space="md" className="items-center">
         <Pressable
           onPress={() => {
@@ -489,7 +453,7 @@ function MobileHeader(props: MobileHeaderProps) {
         </Pressable>
         <Text className="text-xl">{props.title}</Text>
       </HStack>
-      
+
       <LogoutButton displayStyle="icon-only" />
     </HStack>
   );
@@ -516,44 +480,47 @@ interface TaskInfo {
 // Sample data for student dashboard
 const upcomingClasses: ClassInfo[] = [
   {
-    subject: "Matemática",
-    date: "Hoje",
-    timeStart: "14:30",
-    timeEnd: "16:00",
-    teacher: "Prof. Ana Santos",
-    room: "Sala 203",
+    subject: 'Matemática',
+    date: 'Hoje',
+    timeStart: '14:30',
+    timeEnd: '16:00',
+    teacher: 'Prof. Ana Santos',
+    room: 'Sala 203',
     completed: true,
-    colorAccent: "bg-green-500"
+    colorAccent: 'bg-green-500',
   },
   {
-    subject: "Física",
-    date: "Amanhã",
-    timeStart: "09:00",
-    timeEnd: "10:30",
-    teacher: "Prof. Carlos Lima",
-    room: "Sala 105",
-    colorAccent: "bg-orange-500"
-  }
+    subject: 'Física',
+    date: 'Amanhã',
+    timeStart: '09:00',
+    timeEnd: '10:30',
+    teacher: 'Prof. Carlos Lima',
+    room: 'Sala 105',
+    colorAccent: 'bg-orange-500',
+  },
 ];
 
 const pendingTasks: TaskInfo[] = [
   {
-    title: "Relatório de Laboratório",
-    dueDate: "Hoje às 18:00",
-    isUrgent: true
+    title: 'Relatório de Laboratório',
+    dueDate: 'Hoje às 18:00',
+    isUrgent: true,
   },
   {
-    title: "Lista de Exercícios",
-    dueDate: "Em 3 dias"
-  }
+    title: 'Lista de Exercícios',
+    dueDate: 'Em 3 dias',
+  },
 ];
 
 const MainContent = () => {
   const { userProfile } = useAuth();
-  const userName = userProfile?.name || "Aluno";
-  const userGrade = userProfile?.grade || "9° Ano";
-  const userInitials = userName.split(' ').map(n => n[0]).join('');
-  
+  const userName = userProfile?.name || 'Aluno';
+  const userGrade = userProfile?.grade || '9° Ano';
+  const userInitials = userName
+    .split(' ')
+    .map(n => n[0])
+    .join('');
+
   return (
     <Box className="flex-1">
       <ScrollView
@@ -588,7 +555,9 @@ const MainContent = () => {
             <Heading className="text-lg font-semibold">Próximas Aulas</Heading>
             {upcomingClasses.map((classInfo, index) => (
               <HStack key={index} className="border border-gray-200 rounded-lg p-4 items-start">
-                <Box className={`${classInfo.colorAccent} w-2 h-full rounded-full mr-4 self-stretch`} />
+                <Box
+                  className={`${classInfo.colorAccent} w-2 h-full rounded-full mr-4 self-stretch`}
+                />
                 <VStack className="flex-1">
                   <HStack className="justify-between w-full">
                     <Text className="font-bold text-lg">{classInfo.subject}</Text>
@@ -598,8 +567,12 @@ const MainContent = () => {
                       </Box>
                     )}
                   </HStack>
-                  <Text>{classInfo.date} • {classInfo.timeStart} - {classInfo.timeEnd}</Text>
-                  <Text>{classInfo.teacher} • {classInfo.room}</Text>
+                  <Text>
+                    {classInfo.date} • {classInfo.timeStart} - {classInfo.timeEnd}
+                  </Text>
+                  <Text>
+                    {classInfo.teacher} • {classInfo.room}
+                  </Text>
                 </VStack>
               </HStack>
             ))}
@@ -609,7 +582,10 @@ const MainContent = () => {
           <VStack space="md">
             <Heading className="text-lg font-semibold">Tarefas Pendentes</Heading>
             {pendingTasks.map((task, index) => (
-              <HStack key={index} className="border border-gray-200 rounded-lg p-4 items-center justify-between">
+              <HStack
+                key={index}
+                className="border border-gray-200 rounded-lg p-4 items-center justify-between"
+              >
                 <HStack space="md">
                   <Avatar className="bg-red-50 h-12 w-12">
                     <Icon as={MinusIcon} color="#EF4444" />
@@ -619,9 +595,7 @@ const MainContent = () => {
                     <Text>Entrega: {task.dueDate}</Text>
                   </VStack>
                 </HStack>
-                {task.isUrgent && (
-                  <Text className="text-red-500 font-semibold">URGENTE</Text>
-                )}
+                {task.isUrgent && <Text className="text-red-500 font-semibold">URGENTE</Text>}
               </HStack>
             ))}
           </VStack>
@@ -642,7 +616,7 @@ const MainContent = () => {
 
 export const Dashboard = () => {
   const { userProfile } = useAuth();
-  
+
   return (
     <SafeAreaView className="h-full w-full">
       <DashboardLayout title="Dashboard do Aluno" isSidebarVisible={true}>
