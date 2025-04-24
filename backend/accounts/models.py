@@ -51,48 +51,43 @@ class CustomUserManager(UserManager):
         return self._create_user(email, password, **extra_fields)
 
 
-# Define user type choices
-USER_TYPE_CHOICES = [
-    (
-        "manager",
-        _("School Manager"),
-    ),  # School manager, has access to all data and can manage all users
-    ("teacher", _("Teacher")),  # Can manage assigned students and classes
-    ("student", _("Student")),  # Can access own classes and resources
-    ("parent", _("Parent")),  # Can access information for linked student accounts
-]
+class School(models.Model):
+    """
+    School model representing an educational organization.
+    Can be an individual tutor's "school" or an actual educational institution.
+    """
+    name = models.CharField(_("name"), max_length=150)
+    description = models.TextField(_("description"), blank=True)
+    address = models.TextField(_("address"), blank=True)
+    contact_email = models.EmailField(_("contact email"), blank=True)
+    phone_number = models.CharField(_("phone number"), max_length=20, blank=True)
+    website = models.URLField(_("website"), blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.name
 
 
 class CustomUser(AbstractUser):
     """
     Custom User model with email as primary identifier
-
-    This model serves as the core user entity in the system with the following roles:
-
-    - Manager: School administrators with system-wide access. Can create and manage
-      all users, view all data, configure system settings, and generate reports.
-
-    - Teacher: Educational professionals who conduct classes. Can manage their
-      classes, access and grade assigned students, create educational content,
-      and manage their availability/schedule.
-
-    - Student: Learners who attend classes. Can view their schedule, access
-      assigned educational materials, communicate with their teachers, and
-      view their own progress/grades.
-
-    - Parent: Guardians who monitor student progress. Can view linked students'
-      schedules, grades, and financial information, communicate with teachers,
-      and make payments.
+    
+    Django's built-in permissions:
+    - is_superuser: Can access Django admin and has all permissions
+    - is_staff: Can access Django admin with limited permissions (admin-only)
+    
+    These are used for backend system administration, not for application roles.
+    Application roles are managed through SchoolMembership model.
     """
 
     username = models.CharField(_("username"), max_length=150, blank=True, null=True)
     email = models.EmailField(_("email address"), unique=True)
     name = models.CharField(_("name"), max_length=150)
     phone_number = models.CharField(_("phone number"), max_length=20, blank=True)
-    user_type = models.CharField(
-        _("user type"), max_length=20, choices=USER_TYPE_CHOICES, default="manager"
-    )
-
+    
+    # user_type field is removed - roles are now in SchoolMembership
+    
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
 
@@ -102,14 +97,43 @@ class CustomUser(AbstractUser):
         return self.email
 
 
-class Student(models.Model):
-    """
-    Student profile model with additional fields specific to students
-    """
+# Role choices with clear naming to avoid confusion with Django permissions
+SCHOOL_ROLE_CHOICES = [
+    ("school_owner", _("School Owner")),          # Created the school, has full access
+    ("school_admin", _("School Administrator")),  # Can manage all aspects of the school
+    ("teacher", _("Teacher")),                    # Can manage classes and students
+    ("school_staff", _("School Staff")),          # Limited access for administrative tasks
+    ("student", _("Student")),                    # Access to assigned classes
+]
 
-    user = models.OneToOneField(
-        CustomUser, on_delete=models.CASCADE, related_name="student_profile"
-    )
+
+class SchoolMembership(models.Model):
+    """
+    Represents a user's membership in a school with specific role.
+    Users can have multiple memberships across different schools with different roles.
+    
+    This replaces the previous user_type field and clearly separates application
+    roles from Django's built-in permissions system.
+    """
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="school_memberships")
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="memberships")
+    role = models.CharField(_("role"), max_length=20, choices=SCHOOL_ROLE_CHOICES)
+    is_active = models.BooleanField(_("is active"), default=True)
+    joined_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ["user", "school", "role"]
+    
+    def __str__(self):
+        return f"{self.user.name} as {self.get_role_display()} at {self.school.name}"
+
+
+class StudentProfile(models.Model):
+    """
+    Student profile with additional information.
+    A user can have this profile regardless of which schools they belong to as a student.
+    """
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="student_profile")
     school_year = models.CharField(_("school year"), max_length=50)
     birth_date = models.DateField(_("birth date"))
     # Sensitive personal data fields
@@ -127,24 +151,15 @@ class Student(models.Model):
     calendar_iframe = models.TextField(_("calendar iframe"), blank=True)
 
     def __str__(self):
-        return f"Student: {self.user.name}"
-
-    def save(self, *args, **kwargs):
-        # Ensure the associated user has the student type
-        if self.user.user_type != "student":
-            self.user.user_type = "student"
-            self.user.save()
-        super().save(*args, **kwargs)
+        return f"Student Profile: {self.user.name}"
 
 
-class Teacher(models.Model):
+class TeacherProfile(models.Model):
     """
-    Teacher profile model with additional fields specific to teachers
+    Teacher profile with additional information.
+    A user can have this profile regardless of which schools they belong to as a teacher.
     """
-
-    user = models.OneToOneField(
-        CustomUser, on_delete=models.CASCADE, related_name="teacher_profile"
-    )
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="teacher_profile")
     bio = models.TextField(
         _("biography"), blank=True, help_text=_("Teacher's professional biography")
     )
@@ -172,14 +187,28 @@ class Teacher(models.Model):
     calendar_iframe = models.TextField(_("calendar iframe"), blank=True)
 
     def __str__(self):
-        return f"Teacher: {self.user.name}"
+        return f"Teacher Profile: {self.user.name}"
 
-    def save(self, *args, **kwargs):
-        # Ensure the associated user has the teacher type
-        if self.user.user_type != "teacher":
-            self.user.user_type = "teacher"
-            self.user.save()
-        super().save(*args, **kwargs)
+
+class SchoolInvitation(models.Model):
+    """
+    Invitation for a user to join a school with a specific role
+    """
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="invitations")
+    email = models.EmailField(_("email address"))
+    invited_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="sent_invitations")
+    role = models.CharField(_("role"), max_length=20, choices=SCHOOL_ROLE_CHOICES)
+    token = models.CharField(_("token"), max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_accepted = models.BooleanField(_("is accepted"), default=False)
+    
+    def __str__(self):
+        return f"Invitation to {self.email} for {self.school.name} as {self.get_role_display()}"
+    
+    def is_valid(self):
+        from django.utils import timezone
+        return not self.is_accepted and timezone.now() < self.expires_at
 
 
 class EmailVerificationCode(models.Model):

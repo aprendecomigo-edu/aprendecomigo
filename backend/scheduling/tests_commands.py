@@ -5,6 +5,7 @@ from allauth.socialaccount.models import SocialAccount
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
+from accounts.models import School, SchoolMembership
 
 User = get_user_model()
 
@@ -16,13 +17,44 @@ class SyncCalendarCommandTest(TestCase):
     """Test the sync_calendar management command"""
 
     def setUp(self):
+        """Set up test data."""
+        self.school = School.objects.create(name="Test School")
+
         # Create admin user
         self.admin_user = User.objects.create_user(
-            username="admin",
             email="admin@test.com",
-            password="adminpass",
+            password="testpass123",
             name="Admin User",
-            is_admin=True,
+            is_staff=True,
+        )
+        SchoolMembership.objects.create(
+            user=self.admin_user,
+            school=self.school,
+            role="school_admin"
+        )
+
+        # Create student user
+        self.student_user = User.objects.create_user(
+            email="student@test.com",
+            password="testpass123",
+            name="Student User",
+        )
+        SchoolMembership.objects.create(
+            user=self.student_user,
+            school=self.school,
+            role="student"
+        )
+
+        # Create teacher user
+        self.teacher_user = User.objects.create_user(
+            email="teacher@test.com",
+            password="testpass123",
+            name="Teacher User",
+        )
+        SchoolMembership.objects.create(
+            user=self.teacher_user,
+            school=self.school,
+            role="teacher"
         )
 
         # Mock SocialAccount for admin user

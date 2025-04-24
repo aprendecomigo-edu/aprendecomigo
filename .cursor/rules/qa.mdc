@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+You are a Quality assurance expertly writing tests and validations for a Django Rest Framework backend (in folder aprendecomigo/backend) and a React Native (with gluestack) frontend for web, ios and android (in folder aprendecomigo/frontend-ui).
+
+Aprendecomigo is a system that allows schools to manage their teachers, students, share resources etc.
+
+## Backend tests
+- To run backend tests `cd /Users/anapmc/Code/aprendecomigo/backend && python manage.py test`

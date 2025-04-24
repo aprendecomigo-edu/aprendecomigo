@@ -1,7 +1,11 @@
-# CLAUDE.md
+---
+description: 
+globs: 
+alwaysApply: false
+---
+You are a React Native 4 engineer building an app with gluestack ui for web, ios and android and this file provides some high-level guidance on how to work with it.
+This frontend will interact with a backend API, that is being handled by another developer. You only modify files within aprendecomigo/frontend-ui folder.
 
-This repository is a React Native app for web, ios and android  and this file provides some high-level guidance on how to work with it.
-This frontend will interact with a backend API, that is being handled by another developer.
 ## Build Commands
 - start: `npx expo start`
 - android: `npx expo start --android`

@@ -1,18 +1,17 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import CustomUser, Student, Teacher
+from .models import CustomUser, StudentProfile, TeacherProfile
 
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    list_display = ("email", "name", "user_type", "is_staff")
-    list_filter = ("user_type", "is_staff")
+    list_display = ("email", "name", "is_staff")
+    list_filter = ["is_staff", "is_superuser", "is_active"]
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Personal info", {"fields": ("name", "phone_number")}),
-        ("Type", {"fields": ("user_type",)}),
         (
             "Permissions",
             {"fields": ("is_active", "is_staff", "is_superuser", "is_admin")},
@@ -27,7 +26,6 @@ class CustomUserAdmin(UserAdmin):
                     "email",
                     "name",
                     "phone_number",
-                    "user_type",
                     "password1",
                     "password2",
                 ),
@@ -38,8 +36,8 @@ class CustomUserAdmin(UserAdmin):
     ordering = ("email",)
 
 
-@admin.register(Student)
-class StudentAdmin(admin.ModelAdmin):
+@admin.register(StudentProfile)
+class StudentProfileAdmin(admin.ModelAdmin):
     list_display = ("get_name", "get_email", "school_year", "birth_date")
     list_filter = ("school_year",)
     search_fields = ("user__name", "user__email", "school_year")
@@ -110,8 +108,8 @@ class StudentAdmin(admin.ModelAdmin):
         return super().get_form(request, obj, **defaults)
 
 
-@admin.register(Teacher)
-class TeacherAdmin(admin.ModelAdmin):
+@admin.register(TeacherProfile)
+class TeacherProfileAdmin(admin.ModelAdmin):
     list_display = ("get_name", "get_email", "specialty", "hourly_rate")
     search_fields = ("user__name", "user__email", "specialty")
     fieldsets = (

@@ -59,6 +59,10 @@ INSTALLED_APPS = [
     "knox",
     # Field-level encryption
     "django_cryptography",
+    # Django allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
     # Custom apps
     "common",
     "accounts",
@@ -75,6 +79,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "aprendecomigo.urls"
