@@ -24,6 +24,7 @@ wheels/
 *.log
 local_settings.py
 .sqlite3
+db.sqlite3
 media/
 staticfiles/
 db.sqlite3
@@ -34,6 +35,7 @@ db.sqlite3
 env/
 venv/
 ENV/
+credentials.json
 
 # IDE
 .idea/

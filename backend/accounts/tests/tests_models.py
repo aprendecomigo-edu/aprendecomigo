@@ -1,6 +1,6 @@
 import datetime
 
-from accounts.models import EmailVerificationCode, Student, Teacher
+from accounts.models import EmailVerificationCode, StudentProfile, TeacherProfile, School, SchoolMembership
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
@@ -66,21 +66,51 @@ class CustomUserModelTests(TestCase):
         user2 = User.objects.create_user(**user2_data)
         self.assertEqual(user2.username, "test1")
 
-    def test_user_type_default(self):
-        """Test default user type."""
-        user = User.objects.create_user(**self.user_data)
-        self.assertEqual(user.user_type, "manager")
 
-    def test_update_user_type(self):
-        """Test updating user type."""
-        user = User.objects.create_user(**self.user_data)
-        user.user_type = "student"
-        user.save()
-        self.assertEqual(user.user_type, "student")
+class SchoolMembershipTests(TestCase):
+    """Test cases for the SchoolMembership model."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = User.objects.create_user(
+            email="user@example.com",
+            password="userpass123",
+            name="Test User",
+        )
+        self.school = School.objects.create(
+            name="Test School",
+            description="A test school",
+            contact_email="school@example.com"
+        )
+
+    def tearDown(self):
+        """Clean up database connections after each test."""
+        super().tearDown()
+
+    def test_create_membership(self):
+        """Test creating a school membership."""
+        membership = SchoolMembership.objects.create(
+            user=self.user,
+            school=self.school,
+            role="student"
+        )
+        self.assertEqual(membership.user, self.user)
+        self.assertEqual(membership.school, self.school)
+        self.assertEqual(membership.role, "student")
+        self.assertTrue(membership.is_active)
+
+    def test_membership_string_representation(self):
+        """Test the string representation of a membership."""
+        membership = SchoolMembership.objects.create(
+            user=self.user,
+            school=self.school,
+            role="teacher"
+        )
+        self.assertEqual(str(membership), f"{self.user.name} as Teacher at {self.school.name}")
 
 
-class StudentModelTests(TestCase):
-    """Test cases for the Student model."""
+class StudentProfileTests(TestCase):
+    """Test cases for the StudentProfile model."""
 
     def setUp(self):
         """Set up test data."""
@@ -89,6 +119,7 @@ class StudentModelTests(TestCase):
             password="studentpass123",
             name="Student User",
         )
+        self.school = School.objects.create(name="Test School")
 
         self.student_data = {
             "user": self.user,
@@ -100,13 +131,11 @@ class StudentModelTests(TestCase):
 
     def tearDown(self):
         """Clean up database connections after each test."""
-        # Don't close the connection in tearDown - Django will handle this
-        # Simply pass to clean up other resources
         super().tearDown()
 
     def test_create_student(self):
         """Test creating a student profile."""
-        student = Student.objects.create(**self.student_data)
+        student = StudentProfile.objects.create(**self.student_data)
         self.assertEqual(student.user, self.user)
         self.assertEqual(student.school_year, self.student_data["school_year"])
         self.assertEqual(student.birth_date, self.student_data["birth_date"])
@@ -119,29 +148,31 @@ class StudentModelTests(TestCase):
 
     def test_student_string_representation(self):
         """Test the string representation of a student."""
-        student = Student.objects.create(**self.student_data)
-        self.assertEqual(str(student), f"Student: {self.user.name}")
+        student = StudentProfile.objects.create(**self.student_data)
+        self.assertEqual(str(student), f"Student Profile: {self.user.name}")
 
-    def test_user_type_set_on_save(self):
-        """Test that user type is set to 'student' on save."""
-        # Initially the user is not a student
-        self.assertNotEqual(self.user.user_type, "student")
-
-        # Creating a student profile should update user_type
-        Student.objects.create(**self.student_data)
-
-        # Refresh the user from the database
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.user_type, "student")
-
+    def test_student_role_assignment(self):
+        """Test assigning student role through SchoolMembership."""
+        # Create student profile
+        StudentProfile.objects.create(**self.student_data)
+        
+        # Create school membership with student role
+        membership = SchoolMembership.objects.create(
+            user=self.user,
+            school=self.school,
+            role="student"
+        )
+        
+        self.assertEqual(membership.role, "student")
+        
     def test_related_name_access(self):
         """Test accessing student profile via related name."""
-        student = Student.objects.create(**self.student_data)
+        student = StudentProfile.objects.create(**self.student_data)
         self.assertEqual(self.user.student_profile, student)
 
 
-class TeacherModelTests(TestCase):
-    """Test cases for the Teacher model."""
+class TeacherProfileTests(TestCase):
+    """Test cases for the TeacherProfile model."""
 
     def setUp(self):
         """Set up test data."""
@@ -150,6 +181,7 @@ class TeacherModelTests(TestCase):
             password="teacherpass123",
             name="Teacher User",
         )
+        self.school = School.objects.create(name="Test School")
 
         self.teacher_data = {
             "user": self.user,
@@ -168,7 +200,7 @@ class TeacherModelTests(TestCase):
 
     def test_create_teacher(self):
         """Test creating a teacher profile."""
-        teacher = Teacher.objects.create(**self.teacher_data)
+        teacher = TeacherProfile.objects.create(**self.teacher_data)
         self.assertEqual(teacher.user, self.user)
         self.assertEqual(teacher.bio, self.teacher_data["bio"])
         self.assertEqual(teacher.specialty, self.teacher_data["specialty"])
@@ -181,24 +213,26 @@ class TeacherModelTests(TestCase):
 
     def test_teacher_string_representation(self):
         """Test the string representation of a teacher."""
-        teacher = Teacher.objects.create(**self.teacher_data)
-        self.assertEqual(str(teacher), f"Teacher: {self.user.name}")
+        teacher = TeacherProfile.objects.create(**self.teacher_data)
+        self.assertEqual(str(teacher), f"Teacher Profile: {self.user.name}")
 
-    def test_user_type_set_on_save(self):
-        """Test that user type is set to 'teacher' on save."""
-        # Initially the user is not a teacher
-        self.assertNotEqual(self.user.user_type, "teacher")
-
-        # Creating a teacher profile should update user_type
-        Teacher.objects.create(**self.teacher_data)
-
-        # Refresh the user from the database
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.user_type, "teacher")
+    def test_teacher_role_assignment(self):
+        """Test assigning teacher role through SchoolMembership."""
+        # Create teacher profile
+        TeacherProfile.objects.create(**self.teacher_data)
+        
+        # Create school membership with teacher role
+        membership = SchoolMembership.objects.create(
+            user=self.user,
+            school=self.school,
+            role="teacher"
+        )
+        
+        self.assertEqual(membership.role, "teacher")
 
     def test_related_name_access(self):
         """Test accessing teacher profile via related name."""
-        teacher = Teacher.objects.create(**self.teacher_data)
+        teacher = TeacherProfile.objects.create(**self.teacher_data)
         self.assertEqual(self.user.teacher_profile, teacher)
 
 
