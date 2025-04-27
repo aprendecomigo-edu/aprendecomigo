@@ -1,6 +1,37 @@
 # Aprende Conmigo Frontend
 
-This is the frontend application for Aprende Conmigo, a multi-platform (web, iOS, Android) educational platform built with React Native and Expo.
+React Native app with Gluestack UI components for web, iOS, and Android.
+
+## Dependency Notes
+
+### Patched Dependencies
+
+- **@gluestack-ui/checkbox**: Patched to support React 18 compatibility. The patch modifies the peer dependency requirements in the nested `@react-aria/checkbox` package to accept React 18.
+
+### Installation
+
+Always install dependencies with:
+
+```bash
+npm install --legacy-peer-deps
+```
+
+### Security Vulnerabilities
+
+There are some known vulnerabilities in development packages that don't affect production code. These include:
+
+- cross-spawn in pre-commit package
+- got in npm-check package
+- send in expo package
+
+To update these packages would require breaking changes to the development workflow. Since they're only used during development, they pose minimal risk.
+
+## Build Commands
+- start: `npx expo start`
+- android: `npx expo start --android`
+- ios: `npx expo start --ios`
+- web: `npx expo start --web`
+- test: `jest --watchAll`
 
 ## Getting Started
 
