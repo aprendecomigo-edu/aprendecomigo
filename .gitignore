@@ -171,3 +171,4 @@ temp/
 # Projects
 credentials.json
 backend/DOCS_BRAINSTORM
+bin/*

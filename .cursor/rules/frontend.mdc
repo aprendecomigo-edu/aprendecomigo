@@ -1,6 +1,6 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: false
 ---
 You are a React Native 4 engineer building an app with gluestack ui for web, ios and android and this file provides some high-level guidance on how to work with it.
@@ -34,6 +34,13 @@ This frontend will interact with a backend API, that is being handled by another
 - **Test Coverage**: Write tests for critical paths and edge cases
 - **Mocking**: Mock external dependencies and API calls in tests
 - **Always create tests** when implementing new features or making significant changes
+
+## Troubleshoot Resources
+- Gluestack UI compoenents https://gluestack.io/ui/docs/components/all-components
+- https://github.com/facebook/metro/issues/1047
+- https://dev.to/shahbaazx786/setting-up-react-native-expo-tailwind-gluestack-ui-v2-430e
+- https://docs.expo.dev/versions/latest/config/metro/
+- Starter app example https://github.com/gluestack/gluestack-ui-starter-kits/tree/main/expo-app
 
 ## Project Management
 - Maintain and update ROADMAP.md with new features, todos, and next steps

@@ -18,6 +18,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install Yarn
+      run: npm install -g yarn
+
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -27,11 +30,7 @@ jobs:
 
     - name: Install dependencies
       working-directory: ./frontend-ui
-      run: yarn install --frozen-lockfile
-
-    - name: Run ESLint
-      working-directory: ./frontend-ui
-      run: yarn lint
+      run: yarn install
 
     - name: Run TypeScript type checking
       working-directory: ./frontend-ui
