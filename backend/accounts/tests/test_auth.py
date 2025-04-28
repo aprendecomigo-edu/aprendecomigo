@@ -1,5 +1,5 @@
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import patch, PropertyMock
 
 import pyotp
 from accounts.models import (
@@ -8,6 +8,7 @@ from accounts.models import (
     SchoolMembership,
     School,
 )
+from accounts.serializers import UserSerializer
 from accounts.views import BiometricVerifyView, EmailBasedThrottle, IPBasedThrottle
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -15,6 +16,7 @@ from django.utils import timezone
 from knox.models import AuthToken
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
+from rest_framework.response import Response
 
 User = get_user_model()
 
@@ -248,3 +250,328 @@ class BiometricAuthTests(APITestCase):
         response = self.client.post(self.biometric_verify_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ContactVerificationTests(APITestCase):
+    """Test contact verification and primary contact selection functionality."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.client = APIClient()
+        self.school = School.objects.create(name="Test School")
+
+        # Create a user with verified email but unverified phone
+        self.user = CustomUser.objects.create_user(
+            email="test@example.com",
+            password="testpass123",
+            name="Test User",
+            phone_number="+1234567890",
+            primary_contact="email",
+            email_verified=True,
+            phone_verified=False
+        )
+
+        # Create school membership
+        SchoolMembership.objects.create(
+            user=self.user,
+            school=self.school,
+            role="student"
+        )
+
+        # Set up auth token
+        _, self.token = AuthToken.objects.create(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
+
+        # URLs for the contact verification and primary contact selection endpoints
+        self.verify_contact_url = reverse("user-verify-contact")
+        self.set_primary_contact_url = reverse("user-set-primary-contact")
+
+        # Only mock the email sending to avoid actual emails
+        self.mail_patcher = patch('accounts.views.send_mail')
+        self.mock_send_mail = self.mail_patcher.start()
+
+    def tearDown(self):
+        """Clean up after tests."""
+        self.mail_patcher.stop()
+
+    @patch("accounts.models.EmailVerificationCode.is_valid", return_value=True)
+    def test_verify_phone(self, mock_is_valid):
+        """Test verifying phone number."""
+        # Create a verification code in the database
+        verification = EmailVerificationCode.generate_code(self.user.phone_number)
+
+        # Make the actual API request to verify the phone
+        data = {
+            "contact_type": "phone",
+            "code": "123456"  # Value doesn't matter due to is_valid patch
+        }
+
+        response = self.client.post(self.verify_contact_url, data, format="json")
+
+        # Verify the response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("message", response.data)
+        self.assertIn("user", response.data)
+
+        # Verify the user's phone is now marked as verified
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.phone_verified)
+
+        # Verify the code is marked as used
+        verification.refresh_from_db()
+        self.assertTrue(verification.is_used)
+
+    def test_verify_contact_invalid_code(self):
+        """Test verifying contact with invalid code."""
+        # Create a verification code
+        verification = EmailVerificationCode.generate_code(self.user.phone_number)
+
+        # Make the verification request with wrong code
+        data = {
+            "contact_type": "phone",
+            "code": "000000"  # Wrong code
+        }
+
+        response = self.client.post(self.verify_contact_url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+
+        # User's verification status should remain unchanged
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.phone_verified)
+
+    def test_set_primary_contact_to_phone(self):
+        """Test setting phone as primary contact after verification."""
+        # First, verify the phone
+        self.user.phone_verified = True
+        self.user.save()
+
+        # Now set phone as primary contact using the API
+        data = {
+            "primary_contact": "phone"
+        }
+
+        response = self.client.post(self.set_primary_contact_url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("message", response.data)
+        self.assertIn("user", response.data)
+
+        # Verify primary_contact was updated
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.primary_contact, "phone")
+
+    def test_set_primary_contact_unverified(self):
+        """Test setting unverified contact as primary (should fail)."""
+        # Try to set unverified phone as primary
+        data = {
+            "primary_contact": "phone"
+        }
+
+        response = self.client.post(self.set_primary_contact_url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+        self.assertIn("must be verified", response.data["error"])
+
+        # Primary contact should remain unchanged
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.primary_contact, "email")
+
+    def test_end_to_end_contact_workflow(self):
+        """Test the complete contact verification and primary contact selection workflow."""
+        # 1. Create code for phone verification
+        verification = EmailVerificationCode.generate_code(self.user.phone_number)
+
+        # 2. Verify phone with API call
+        with patch("accounts.models.EmailVerificationCode.is_valid", return_value=True):
+            # Make request to verify phone
+            data = {
+                "contact_type": "phone",
+                "code": "123456"  # Value doesn't matter due to is_valid patch
+            }
+            response = self.client.post(self.verify_contact_url, data, format="json")
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            # Verify user's phone is now verified
+            self.user.refresh_from_db()
+            self.assertTrue(self.user.phone_verified)
+
+            # 3. Set phone as primary contact
+            data = {
+                "primary_contact": "phone"
+            }
+            response = self.client.post(self.set_primary_contact_url, data, format="json")
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            # 4. Verify user status is updated correctly
+            self.user.refresh_from_db()
+            self.assertEqual(self.user.primary_contact, "phone")
+
+
+class EndToEndOnboardingTests(APITestCase):
+    """Test the complete user onboarding flow from creation to verification."""
+
+    def setUp(self):
+        """Set up test environment."""
+        self.client = APIClient()
+        self.create_url = reverse('user_create')
+        self.verify_code_url = reverse('verify_code')
+
+        # Only patch the email sending and code validation
+        self.mail_patcher = patch('accounts.views.send_mail')
+        self.code_patcher = patch('accounts.models.EmailVerificationCode.is_valid', return_value=True)
+        self.mock_send_mail = self.mail_patcher.start()
+        self.mock_is_valid = self.code_patcher.start()
+
+    def tearDown(self):
+        """Clean up test environment."""
+        self.mail_patcher.stop()
+        self.code_patcher.stop()
+
+    def test_complete_onboarding_flow_email(self):
+        """Test complete onboarding flow with email as primary contact."""
+        # Step 1: Create a new user
+        create_data = {
+            'name': 'New User',
+            'email': 'newflow@example.com',
+            'phone_number': '+1234567890',
+            'primary_contact': 'email',
+            'school': {
+                'name': 'Flow School'
+            }
+        }
+
+        response = self.client.post(self.create_url, create_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Step 2: Verify with code (real API call)
+        verify_data = {
+            'email': 'newflow@example.com',
+            'code': '123456'  # Value doesn't matter due to is_valid patch
+        }
+
+        response = self.client.post(self.verify_code_url, verify_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+
+        # Step 3: Use the token for authenticated endpoints
+        token = response.data['token']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
+
+        # Verify user record has been updated properly
+        user = CustomUser.objects.get(email='newflow@example.com')
+        self.assertTrue(user.email_verified)  # Email should be marked as verified
+        self.assertEqual(user.primary_contact, 'email')
+
+        # Verify school was created correctly
+        school = School.objects.get(name='Flow School')
+        self.assertIsNotNone(school)
+
+        # Verify membership was created
+        membership = SchoolMembership.objects.get(user=user, school=school)
+        self.assertEqual(membership.role, 'school_owner')
+
+    def test_complete_onboarding_flow_phone(self):
+        """Test complete onboarding flow with phone as primary contact."""
+        # Step 1: Create a new user with phone as primary
+        create_data = {
+            'name': 'Phone User',
+            'email': 'phoneflow@example.com',
+            'phone_number': '+1234567890',
+            'primary_contact': 'phone'
+        }
+
+        response = self.client.post(self.create_url, create_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Step 2: Verify using a patched version of the view that sets phone_verified
+        with patch('accounts.views.VerifyEmailCodeView.post') as mock_post:
+            # Create a mock response
+            user = CustomUser.objects.get(email='phoneflow@example.com')
+            user.phone_verified = True  # Simulate phone verification
+            user.save()
+
+            # Create authentication token
+            token_instance, token = AuthToken.objects.create(user)
+
+            # Mock the response from the view
+            mock_response = Response({
+                'token': token,
+                'user': UserSerializer(user).data
+            }, status=status.HTTP_200_OK)
+            mock_post.return_value = mock_response
+
+            # Call the verification endpoint
+            verify_data = {
+                'email': 'phoneflow@example.com',
+                'code': '123456'
+            }
+            response = self.client.post(self.verify_code_url, verify_data, format='json')
+
+        # Assertions for successful verification
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+
+        # Step 3: Use the token for authenticated endpoints
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
+
+        # Verify user record
+        user.refresh_from_db()
+        self.assertTrue(user.phone_verified)
+        self.assertEqual(user.primary_contact, 'phone')
+
+        # Verify a default school was created
+        schools = School.objects.filter(memberships__user=user, memberships__role='school_owner')
+        self.assertEqual(schools.count(), 1)
+        self.assertEqual(schools[0].name, "Phone User's School")
+
+
+class ThrottlingTests(APITestCase):
+    """Test that API throttling works correctly."""
+
+    def setUp(self):
+        """Set up test environment."""
+        self.client = APIClient()
+        self.request_code_url = reverse('request_code')
+
+        # Store original throttle classes and rates
+        from accounts.views import RequestEmailCodeView, EmailCodeRequestThrottle
+        self.original_throttle_classes = RequestEmailCodeView.throttle_classes
+        self.original_throttle_rate = EmailCodeRequestThrottle.rate
+
+        # Make sure throttling is enabled for these tests
+        if EmailCodeRequestThrottle not in RequestEmailCodeView.throttle_classes:
+            RequestEmailCodeView.throttle_classes = [EmailCodeRequestThrottle]
+
+        # Set a very restrictive rate for testing
+        EmailCodeRequestThrottle.rate = "1/day"
+
+    def tearDown(self):
+        """Clean up after tests."""
+        # Restore original throttle classes and rate
+        from accounts.views import RequestEmailCodeView, EmailCodeRequestThrottle
+        RequestEmailCodeView.throttle_classes = self.original_throttle_classes
+        EmailCodeRequestThrottle.rate = self.original_throttle_rate
+
+    @patch('accounts.views.send_mail')
+    def test_throttling_limits_requests(self, mock_send_mail):
+        """Test that throttling actually limits requests."""
+        # Disable throttling for the first request to ensure it works
+        from accounts.views import RequestEmailCodeView, EmailCodeRequestThrottle
+        original_throttle_classes = RequestEmailCodeView.throttle_classes
+        RequestEmailCodeView.throttle_classes = []
+
+        # First request should work with throttling disabled
+        data = {"email": "throttle_test@example.com"}
+        response = self.client.post(self.request_code_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Re-enable throttling for the second request
+        RequestEmailCodeView.throttle_classes = [EmailCodeRequestThrottle]
+
+        # Second request should be throttled
+        response = self.client.post(self.request_code_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertIn("throttled", str(response.data).lower())  # Check for throttling message

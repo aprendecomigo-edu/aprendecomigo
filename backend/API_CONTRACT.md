@@ -16,19 +16,48 @@ The API is accessible at the following URLs:
 
 The API uses a passwordless authentication system with time-based one-time passwords (TOTP):
 
-1. **Request a verification code**:
+1. **Create a new user account**:
    ```
-   POST /api/auth/request-code/
+   POST /api/accounts/create/
    Content-Type: application/json
 
    {
-     "email": "user@example.com"
+     "name": "Full Name",
+     "email": "user@example.com",
+     "phone_number": "+351987654321",
+     "primary_contact": "email",
+     "school": {
+       "name": "My School Name",
+       "description": "Description of my school",
+       "address": "School Address",
+       "contact_email": "school@example.com",
+       "phone_number": "+351123456789",
+       "website": "https://school-website.com"
+     }
    }
    ```
 
-2. **Verify the code** (sent to the user's email):
+   Response:
+   ```json
+   {
+     "message": "User created successfully. Verification code sent to your email.",
+     "user": {
+       "id": 1,
+       "email": "user@example.com",
+       "name": "Full Name",
+       "phone_number": "+351987654321",
+       "primary_contact": "email"
+     },
+     "school": {
+       "id": 1,
+       "name": "My School Name"
+     }
+   }
    ```
-   POST /api/auth/verify-code/
+
+2. **Verify the code** (sent to the primary contact):
+   ```
+   POST /api/accounts/auth/verify-code/
    Content-Type: application/json
 
    {
@@ -44,17 +73,82 @@ The API uses a passwordless authentication system with time-based one-time passw
        "id": 1,
        "email": "user@example.com",
        "name": "User Name",
-       "phone_number": "",
-       "user_type": "student",
+       "phone_number": "+351987654321",
+       "primary_contact": "email",
+       "email_verified": true,
+       "phone_verified": false,
        "created_at": "2023-01-01T00:00:00Z",
        "updated_at": "2023-01-01T00:00:00Z"
      },
      "token": "your-auth-token-here",
-     "expiry": "2023-01-01T10:00:00Z"
+     "is_new_user": true,
+     "school": {
+       "id": 1,
+       "name": "My School Name"
+     }
    }
    ```
 
-3. **Use the token for all subsequent requests**:
+3. **Verify additional contact methods** (optional, after authentication):
+   ```
+   POST /api/accounts/users/verify_contact/
+   Authorization: Token your-auth-token-here
+   Content-Type: application/json
+
+   {
+     "contact_type": "phone",
+     "code": "123456"
+   }
+   ```
+
+   Response:
+   ```json
+   {
+     "message": "Your phone has been verified successfully.",
+     "user": {
+       "id": 1,
+       "email": "user@example.com",
+       "name": "User Name",
+       "phone_number": "+351987654321",
+       "primary_contact": "email",
+       "email_verified": true,
+       "phone_verified": true,
+       "created_at": "2023-01-01T00:00:00Z",
+       "updated_at": "2023-01-01T00:00:00Z"
+     }
+   }
+   ```
+
+4. **Set primary contact method** (after verifying both methods):
+   ```
+   POST /api/accounts/users/set_primary_contact/
+   Authorization: Token your-auth-token-here
+   Content-Type: application/json
+
+   {
+     "primary_contact": "phone"
+   }
+   ```
+
+   Response:
+   ```json
+   {
+     "message": "Your primary contact has been updated to phone.",
+     "user": {
+       "id": 1,
+       "email": "user@example.com",
+       "name": "User Name",
+       "phone_number": "+351987654321",
+       "primary_contact": "phone",
+       "email_verified": true,
+       "phone_verified": true,
+       "created_at": "2023-01-01T00:00:00Z",
+       "updated_at": "2023-01-01T00:00:00Z"
+     }
+   }
+   ```
+
+5. **Use the token for all subsequent requests**:
    ```
    GET /api/users/
    Authorization: Token your-auth-token-here

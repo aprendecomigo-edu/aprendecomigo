@@ -64,7 +64,7 @@ class School(models.Model):
     website = models.URLField(_("website"), blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
         return self.name
 
@@ -72,11 +72,11 @@ class School(models.Model):
 class CustomUser(AbstractUser):
     """
     Custom User model with email as primary identifier
-    
+
     Django's built-in permissions:
     - is_superuser: Can access Django admin and has all permissions
     - is_staff: Can access Django admin with limited permissions (admin-only)
-    
+
     These are used for backend system administration, not for application roles.
     Application roles are managed through SchoolMembership model.
     """
@@ -85,9 +85,19 @@ class CustomUser(AbstractUser):
     email = models.EmailField(_("email address"), unique=True)
     name = models.CharField(_("name"), max_length=150)
     phone_number = models.CharField(_("phone number"), max_length=20, blank=True)
-    
+
+    # Contact verification fields
+    primary_contact = models.CharField(
+        _("primary contact"),
+        max_length=10,
+        choices=[("email", _("Email")), ("phone", _("Phone"))],
+        default="email"
+    )
+    email_verified = models.BooleanField(_("email verified"), default=False)
+    phone_verified = models.BooleanField(_("phone verified"), default=False)
+
     # user_type field is removed - roles are now in SchoolMembership
-    
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
 
@@ -111,7 +121,7 @@ class SchoolMembership(models.Model):
     """
     Represents a user's membership in a school with specific role.
     Users can have multiple memberships across different schools with different roles.
-    
+
     This replaces the previous user_type field and clearly separates application
     roles from Django's built-in permissions system.
     """
@@ -120,10 +130,10 @@ class SchoolMembership(models.Model):
     role = models.CharField(_("role"), max_length=20, choices=SCHOOL_ROLE_CHOICES)
     is_active = models.BooleanField(_("is active"), default=True)
     joined_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         unique_together = ["user", "school", "role"]
-    
+
     def __str__(self):
         return f"{self.user.name} as {self.get_role_display()} at {self.school.name}"
 
@@ -202,10 +212,10 @@ class SchoolInvitation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_accepted = models.BooleanField(_("is accepted"), default=False)
-    
+
     def __str__(self):
         return f"Invitation to {self.email} for {self.school.name} as {self.get_role_display()}"
-    
+
     def is_valid(self):
         from django.utils import timezone
         return not self.is_accepted and timezone.now() < self.expires_at

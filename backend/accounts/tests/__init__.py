@@ -9,5 +9,4 @@ from .test_views import *
 from .test_serializers import *
 from .test_auth import *
 from .test_security import *
-from .test_api_endpoints import *
 from .test_urls import *

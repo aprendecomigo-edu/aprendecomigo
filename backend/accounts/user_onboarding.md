@@ -7,34 +7,31 @@ This document outlines the user onboarding flow for Aprende Comigo and provides 
 The onboarding flow consists of the following steps:
 
 1. User fills out form with info and selects primary contact (email or phone number)
-2. (backend) - verification code is sent to primary contact
-3. User verifies primary contact and is redirect to dashboard
+2. Backend sends verification code to the selected primary contact
+3. User verifies primary contact by submitting the verification code
+4. User is redirected to dashboard after successful verification
 
 ## API Endpoints
 
-### 1. Fill out form and create user
+### 1. Create User
 
 **Endpoint:** `POST /api/accounts/create/`
 
-**Headers:**
-```
-Authorization: Token <auth-token-value>
-```
+**Authentication:** No authentication required
 
 **Request Body:**
 ```json
 {
-  "user": {
-    "name": "Full Name",
-    "phone_number": "+351987654321"
-  },
+  "name": "Full Name",
+  "email": "user@example.com",
+  "phone_number": "+351987654321",
+  "primary_contact": "email",
   "school": {
     "name": "My School Name",
     "description": "Description of my school",
     "address": "School Address",
     "contact_email": "school@example.com",
     "phone_number": "+351123456789",
-    "primary_contact": "email"
     "website": "https://school-website.com"
   }
 }
@@ -43,45 +40,26 @@ Authorization: Token <auth-token-value>
 **Response:**
 ```json
 {
-  "message": "Onboarding completed successfully",
+  "message": "User created successfully. Verification code sent to your email.",
   "user": {
     "id": 1,
     "email": "user@example.com",
     "name": "Full Name",
     "phone_number": "+351987654321",
-    "created_at": "2023-06-15T10:00:00Z",
-    "updated_at": "2023-06-15T10:30:00Z",
-    "roles": [
-      {
-        "school": {
-          "id": 1,
-          "name": "My School Name"
-        },
-        "role": "school_owner",
-        "role_display": "School Owner"
-      }
-    ]
+    "primary_contact": "email"
   },
-  "schools": [
-    {
-      "id": 1,
-      "name": "My School Name",
-      "description": "Description of my school",
-      "address": "School Address",
-      "contact_email": "school@example.com",
-      "phone_number": "+351123456789",
-      "website": "https://school-website.com",
-      "created_at": "2023-06-15T10:00:00Z",
-      "updated_at": "2023-06-15T10:30:00Z"
-    }
-  ]
+  "school": {
+    "id": 1,
+    "name": "My School Name"
+  }
 }
 ```
 
-
-### 2. Verify primary contact
+### 2. Verify Contact
 
 **Endpoint:** `POST /api/accounts/auth/verify-code/`
+
+**Authentication:** No authentication required
 
 **Request Body:**
 ```json
@@ -98,47 +76,123 @@ Authorization: Token <auth-token-value>
   "user": {
     "id": 1,
     "email": "user@example.com",
-    "name": "user",
-    "phone_number": "",
+    "name": "Full Name",
+    "phone_number": "+351987654321",
+    "primary_contact": "email",
+    "email_verified": true,
+    "phone_verified": false,
     "created_at": "2023-06-15T10:00:00Z",
-    "updated_at": "2023-06-15T10:00:00Z"
+    "updated_at": "2023-06-15T10:30:00Z"
   },
   "is_new_user": true,
   "school": {
     "id": 1,
-    "name": "user's School"
+    "name": "My School Name"
   }
 }
 ```
 
-Notes:
-- The `is_new_user` field will be `true` for users signing up for the first time
-- A default school is automatically created for new users, with the user as the school owner
+### 3. Verify Additional Contact (Authenticated)
+
+**Endpoint:** `POST /api/accounts/users/verify_contact/`
+
+**Headers:**
+```
+Authorization: Token <auth-token-value>
+```
+
+**Request Body:**
+```json
+{
+  "contact_type": "phone",
+  "code": "123456"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Your phone has been verified successfully.",
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "name": "Full Name",
+    "phone_number": "+351987654321",
+    "primary_contact": "email",
+    "email_verified": true,
+    "phone_verified": true,
+    "created_at": "2023-06-15T10:00:00Z",
+    "updated_at": "2023-06-15T10:30:00Z"
+  }
+}
+```
+
+### 4. Set Primary Contact (Authenticated)
+
+**Endpoint:** `POST /api/accounts/users/set_primary_contact/`
+
+**Headers:**
+```
+Authorization: Token <auth-token-value>
+```
+
+**Request Body:**
+```json
+{
+  "primary_contact": "phone"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Your primary contact has been updated to phone.",
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "name": "Full Name",
+    "phone_number": "+351987654321",
+    "primary_contact": "phone",
+    "email_verified": true,
+    "phone_verified": true,
+    "created_at": "2023-06-15T10:00:00Z",
+    "updated_at": "2023-06-15T10:30:00Z"
+  }
+}
+```
+
+## Notes:
+
+- Both email and phone number are required fields during user creation
+- Users must select a primary contact method (email or phone) during registration
+- Verification code is sent to the selected primary contact during registration
+- Users can verify additional contact methods after registration
+- Users can change their primary contact method after verifying both contact methods
 - The auth token should be stored and included in all subsequent requests in the `Authorization` header as `Token <token-value>`
-- Both `user` and `school` objects are optional, allowing the frontend to update them separately if needed
-- The onboarding endpoint returns the updated user with their roles and the updated school information
+- A default school is automatically created for new users, with the user as the school owner
 
 ## Frontend Implementation Guidelines
+
 ### Error Handling
 
-- **Request Code Errors:**
-  - Invalid email/phone format
-  - Rate limiting (too many attempts)
+- **Create User Errors:**
+  - Email already exists
+  - Invalid phone number format
+  - Required fields missing
+  - Invalid school data
 
 - **Verify Code Errors:**
   - Invalid code
   - Expired code
   - Too many failed attempts
 
-- **Onboarding Errors:**
-  - Validation errors for user or school data
-  - Authentication errors
-
 ### Validation Requirements
 
 - **User Name:** Required, max 150 characters
-- **Phone Number:** Optional, max 20 characters, should be validated as a phone number
-- **School Name:** Required, max 150 characters
+- **Email:** Required, valid email format
+- **Phone Number:** Required, valid phone number format, max 20 characters
+- **Primary Contact:** Required, must be either "email" or "phone"
+- **School Name:** Required if school data is provided, max 150 characters
 - **School Description:** Optional
 - **School Address:** Optional
 - **Contact Email:** Optional, but should be validated as an email if provided

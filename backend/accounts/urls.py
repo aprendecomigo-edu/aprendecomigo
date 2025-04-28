@@ -10,7 +10,7 @@ from .views import (
     SchoolViewSet,
     StudentViewSet,
     TeacherViewSet,
-    UserOnboardingView,
+    UserCreateView,
     UserProfileView,
     UserViewSet,
     VerifyEmailCodeView,
@@ -29,6 +29,10 @@ router.register(r"school-invitations", SchoolInvitationViewSet, basename="school
 urlpatterns = [
     # ViewSet URLs - remove the 'api/' prefix, it should be added in the main urls.py
     path("", include(router.urls)),
+
+    # User creation endpoint (no authentication required)
+    path("create/", UserCreateView.as_view(), name="user_create"),
+
     # Auth endpoints
     path(
         "auth/request-code/",
@@ -45,9 +49,10 @@ urlpatterns = [
         BiometricVerifyView.as_view(),
         name="biometric_auth",
     ),
-    # User profile and onboarding
+
+    # User profile
     path("profile/", UserProfileView.as_view(), name="user_profile"),
-    path("onboarding/", UserOnboardingView.as_view(), name="user_onboarding"),
+
     # Knox authentication URLs
     path("auth/logout/", knox_views.LogoutView.as_view(), name="knox_logout"),
     path("auth/logoutall/", knox_views.LogoutAllView.as_view(), name="knox_logoutall"),
