@@ -1,5 +1,12 @@
 import '@testing-library/jest-native/extend-expect';
 
+// Configure React Native Testing Library
+import { configure } from '@testing-library/react-native';
+configure({
+  // Ensure we wait for component updates
+  asyncUtilTimeout: 2000,
+});
+
 // Mock the expo-router hooks
 jest.mock('expo-router', () => ({
   useRouter: () => ({
@@ -13,6 +20,10 @@ jest.mock('expo-router', () => ({
     replace: jest.fn(),
   },
   Link: 'Link',
+  Stack: {
+    Screen: props => props.children || null,
+  },
+  Redirect: props => props.children || null,
 }));
 
 // Mock Secure Store
@@ -40,4 +51,24 @@ jest.mock('expo-local-authentication', () => ({
 jest.mock('react-native/Libraries/Utilities/Platform', () => ({
   OS: 'ios',
   select: obj => obj.ios,
+}));
+
+// Mock GluestackUI Provider
+jest.mock('@/components/ui/gluestack-ui-provider', () => ({
+  GluestackUIProvider: ({ children }) => children,
+}));
+
+// Mock View
+jest.mock('@/components/ui/view', () => ({
+  View: ({ children }) => children,
+}));
+
+// Mock Text
+jest.mock('@/components/ui/text', () => ({
+  Text: ({ children }) => children,
+}));
+
+// Mock Spinner
+jest.mock('@/components/ui/spinner', () => ({
+  Spinner: () => 'Spinner',
 }));

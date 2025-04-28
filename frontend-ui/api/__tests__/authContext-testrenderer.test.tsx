@@ -1,10 +1,9 @@
 import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
-import { router } from 'expo-router';
-
+import { AuthProvider, useAuth } from '../authContext';
 import * as authApi from '../authApi';
 import * as biometricAuth from '../biometricAuth';
-import { AuthProvider, useAuth } from '../authContext';
+import { router } from 'expo-router';
 
 // Mock the modules
 jest.mock('../authApi');
@@ -17,11 +16,11 @@ jest.mock('expo-router', () => ({
 
 // Test component to access context
 const TestComponent = () => {
-  useAuth(); // Using useAuth but not storing the result
+  const auth = useAuth();
   return null;
 };
 
-describe('AuthContext', () => {
+describe('AuthContext with TestRenderer', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -149,7 +148,7 @@ describe('AuthContext', () => {
     // Create a component that triggers biometric login
     const BiometricLoginComponent = () => {
       const auth = useAuth();
-      const [, setResult] = React.useState<boolean | null>(null); // Only using setResult
+      const [result, setResult] = React.useState<boolean | null>(null);
 
       React.useEffect(() => {
         const login = async () => {
@@ -183,7 +182,7 @@ describe('AuthContext', () => {
     // Create a component that enables biometrics
     const EnableBiometricsComponent = () => {
       const auth = useAuth();
-      const [, setResult] = React.useState<boolean | null>(null); // Only using setResult
+      const [result, setResult] = React.useState<boolean | null>(null);
 
       React.useEffect(() => {
         const enable = async () => {
@@ -217,7 +216,7 @@ describe('AuthContext', () => {
     // Create a component that disables biometrics
     const DisableBiometricsComponent = () => {
       const auth = useAuth();
-      const [, setResult] = React.useState<boolean | null>(null); // Only using setResult
+      const [result, setResult] = React.useState<boolean | null>(null);
 
       React.useEffect(() => {
         const disable = async () => {
