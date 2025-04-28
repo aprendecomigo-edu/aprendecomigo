@@ -9,7 +9,12 @@ Aprendecomigo is a system that allows schools to manage their teachers, students
 
 ## Backend tests
 - To run backend tests `cd /Users/anapmc/Code/aprendecomigo/backend && python manage.py test`
+- Reference on DRF tests https://www.django-rest-framework.org/api-guide/testing/
 
+## Frontend tests
+- Reference on testing in react native https://reactnative.dev/docs/testing-overview
+- Detox E2E framework for react native https://wix.github.io/Detox/docs/introduction/getting-started
 
 ## Run github workflows
 - `cd /Users/anapmc/Code/aprendecomigo/ && ./bin/act -j test -W .github/workflows/frontend-ui-tests.yml`
+-
