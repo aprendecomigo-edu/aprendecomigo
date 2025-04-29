@@ -72,3 +72,17 @@ jest.mock('@/components/ui/text', () => ({
 jest.mock('@/components/ui/spinner', () => ({
   Spinner: () => 'Spinner',
 }));
+
+// Mock @legendapp/motion
+jest.mock('@legendapp/motion', () => ({
+  Motion: ({ children }) => children,
+  AnimatePresence: ({ children }) => children,
+  createMotionAnimatedComponent: component => component,
+}));
+
+// Mock problematic components from react-native
+jest.mock('react-native/Libraries/Components/ScrollView/ScrollView', () => 'ScrollView');
+jest.mock(
+  'react-native/Libraries/Animated/components/AnimatedScrollView',
+  () => 'AnimatedScrollView'
+);

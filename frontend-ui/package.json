@@ -16,15 +16,6 @@
     "postinstall": "patch-package"
   },
   "description": "React Native app with patched @gluestack-ui/checkbox component for React 18 compatibility",
-  "jest": {
-    "preset": "jest-expo",
-    "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
-    ],
-    "setupFilesAfterEnv": [
-      "<rootDir>/jest-setup.js"
-    ]
-  },
   "dependencies": {
     "@babel/runtime": "^7.27.0",
     "@expo/html-elements": "^0.10.1",

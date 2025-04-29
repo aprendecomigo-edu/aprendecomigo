@@ -5,15 +5,20 @@ import axios from 'axios';
 import {
   authenticateWithBiometrics,
   getBiometricAuthEmail,
-  isBiometricEnabled
+  isBiometricEnabled,
 } from './biometricAuth';
 
 export interface RequestEmailCodeParams {
   email: string;
 }
 
+export interface RequestPhoneCodeParams {
+  phone: string;
+}
+
 export interface VerifyEmailCodeParams {
-  email: string;
+  email?: string;
+  phone?: string;
   code: string;
 }
 
@@ -26,6 +31,8 @@ export interface AuthResponse {
   token: string;
   expiry: string;
   user: UserProfile;
+  is_new_user?: boolean;
+  school?: SchoolInfo;
 }
 
 export interface UserProfile {
@@ -37,6 +44,49 @@ export interface UserProfile {
   is_admin: boolean;
   created_at: string;
   updated_at: string;
+  roles?: UserRole[];
+}
+
+export interface SchoolInfo {
+  id: number;
+  name: string;
+  description?: string;
+  address?: string;
+  contact_email?: string;
+  phone_number?: string;
+  website?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface UserRole {
+  school: {
+    id: number;
+    name: string;
+  };
+  role: string;
+  role_display: string;
+}
+
+export interface OnboardingData {
+  name: string;
+  email: string;
+  phone_number: string;
+  primary_contact: 'email' | 'phone';
+  school: {
+    name: string;
+    description?: string;
+    address?: string;
+    contact_email?: string;
+    phone_number?: string;
+    website?: string;
+  };
+}
+
+export interface OnboardingResponse {
+  message: string;
+  user: UserProfile;
+  schools: SchoolInfo[];
 }
 
 // Use Secure Store for token storage if available
@@ -91,18 +141,23 @@ const removeToken = async () => {
 };
 
 /**
- * Request TOTP verification code
+ * Request verification code (TOTP)
  */
-export const requestEmailCode = async (params: RequestEmailCodeParams): Promise<TOTPEmailCodeResponse> => {
-  const response = await apiClient.post<TOTPEmailCodeResponse>('/auth/request-code/', params);
+export const requestEmailCode = async (
+  params: RequestEmailCodeParams | RequestPhoneCodeParams
+): Promise<TOTPEmailCodeResponse> => {
+  const response = await apiClient.post<TOTPEmailCodeResponse>(
+    '/accounts/auth/request-code/',
+    params
+  );
   return response.data;
 };
 
 /**
- * Verify TOTP code and get authentication token
+ * Verify code and get authentication token
  */
 export const verifyEmailCode = async (params: VerifyEmailCodeParams) => {
-  const response = await apiClient.post<AuthResponse>('/auth/verify-code/', params);
+  const response = await apiClient.post<AuthResponse>('/accounts/auth/verify-code/', params);
 
   // Store token in secure storage
   await storeToken(response.data.token);
@@ -163,7 +218,7 @@ export const authenticateWithBiometricsAndGetToken = async (): Promise<AuthRespo
 export const getUserProfile = async () => {
   try {
     console.log('Fetching user profile...');
-    const response = await apiClient.get<UserProfile>('/auth/profile/');
+    const response = await apiClient.get<UserProfile>('/accounts/users/profile/');
     console.log('User profile response:', response.data);
     return response.data;
   } catch (error) {
@@ -199,4 +254,21 @@ export const logout = async () => {
 export const isAuthenticated = async (): Promise<boolean> => {
   const token = await getToken();
   return token !== null;
+};
+
+/**
+ * Fill out form and create user
+ */
+export const createUser = async (data: OnboardingData): Promise<OnboardingResponse> => {
+  try {
+    const response = await apiClient.post<OnboardingResponse>('/accounts/users/signup/', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating user:', error);
+    if (axios.isAxiosError(error)) {
+      console.error('API Error Response:', error.response?.data);
+      console.error('API Error Status:', error.response?.status);
+    }
+    throw error;
+  }
 };

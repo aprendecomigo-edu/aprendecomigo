@@ -1,25 +1,34 @@
-const imageBabel = require("@unitools/babel-plugin-universal-image");
-const path = require("path");
+const imageBabel = require('@unitools/babel-plugin-universal-image');
+const path = require('path');
 
 module.exports = function (api) {
   api.cache(true);
   return {
     presets: [
-      ["babel-preset-expo", { jsxImportSource: "nativewind" }],
-      "nativewind/babel",
+      ['babel-preset-expo', { jsxImportSource: 'nativewind' }],
+      'nativewind/babel',
+      '@babel/preset-typescript',
     ],
     plugins: [
       [
-        "module-resolver",
+        'module-resolver',
         {
           alias: {
-            "@unitools/image": "@unitools/image-expo",
-            "@unitools/router": "@unitools/router-expo",
-            "@unitools/link": "@unitools/link-expo",
+            '@unitools/image': '@unitools/image-expo',
+            '@unitools/router': '@unitools/router-expo',
+            '@unitools/link': '@unitools/link-expo',
+            '@': './',
           },
+          root: ['./'],
+          extensions: ['.js', '.jsx', '.ts', '.tsx'],
         },
       ],
-      "react-native-reanimated/plugin",
+      'react-native-reanimated/plugin',
     ],
+    env: {
+      test: {
+        plugins: ['@babel/plugin-transform-modules-commonjs'],
+      },
+    },
   };
 };

@@ -1,8 +1,9 @@
+import { router } from 'expo-router';
 import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
-import { AuthProvider, useAuth } from '../authContext';
+
 import * as authApi from '../authApi';
-import { router } from 'expo-router';
+import { AuthProvider, useAuth } from '../authContext';
 
 // Mock dependencies, not components
 jest.mock('../authApi');
@@ -53,6 +54,15 @@ const LogoutTrigger: React.FC = () => {
   return null;
 };
 
+// Component that simulates navigation to signup page
+const SignupNavigator: React.FC = () => {
+  React.useEffect(() => {
+    router.push('/auth/signup');
+  }, []);
+
+  return null;
+};
+
 describe('Authentication Flow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -70,7 +80,7 @@ describe('Authentication Flow', () => {
       // Create observer for auth state
       const authStateSpy = jest.fn();
 
-      let testRenderer: TestRenderer.ReactTestRenderer;
+      let testRenderer: TestRenderer.ReactTestRenderer | undefined;
 
       await act(async () => {
         testRenderer = TestRenderer.create(
@@ -82,7 +92,7 @@ describe('Authentication Flow', () => {
       });
 
       // Ensure unmount after test
-      testRenderer.unmount();
+      testRenderer?.unmount();
 
       // Auth state should be set to not logged in
       expect(authStateSpy).toHaveBeenCalledWith(false);
@@ -92,6 +102,25 @@ describe('Authentication Flow', () => {
 
       // When redirecting in app code, we'd redirect to login
       expect(router.replace).not.toHaveBeenCalledWith('/dashboard/dashboard-layout');
+    });
+
+    it('should navigate to signup page when requested', async () => {
+      // Create test renderer with signup navigator
+      let testRenderer: TestRenderer.ReactTestRenderer | undefined;
+
+      await act(async () => {
+        testRenderer = TestRenderer.create(
+          <AuthProvider>
+            <SignupNavigator />
+          </AuthProvider>
+        );
+      });
+
+      // Ensure unmount after test
+      testRenderer?.unmount();
+
+      // Router should navigate to signup
+      expect(router.push).toHaveBeenCalledWith('/auth/signup');
     });
   });
 
@@ -112,7 +141,7 @@ describe('Authentication Flow', () => {
       // Create observer for auth state
       const authStateSpy = jest.fn();
 
-      let testRenderer: TestRenderer.ReactTestRenderer;
+      let testRenderer: TestRenderer.ReactTestRenderer | undefined;
 
       await act(async () => {
         testRenderer = TestRenderer.create(
@@ -124,7 +153,7 @@ describe('Authentication Flow', () => {
       });
 
       // Ensure unmount after test
-      testRenderer.unmount();
+      testRenderer?.unmount();
 
       // Auth state should be set to logged in
       expect(authStateSpy).toHaveBeenCalledWith(true);
@@ -143,7 +172,7 @@ describe('Authentication Flow', () => {
       // Create observer for auth state
       const authStateSpy = jest.fn();
 
-      let testRenderer: TestRenderer.ReactTestRenderer;
+      let testRenderer: TestRenderer.ReactTestRenderer | undefined;
 
       await act(async () => {
         testRenderer = TestRenderer.create(
@@ -155,7 +184,7 @@ describe('Authentication Flow', () => {
       });
 
       // Ensure unmount after test
-      testRenderer.unmount();
+      testRenderer?.unmount();
 
       // Logout API should be called
       expect(authApi.logout).toHaveBeenCalled();
