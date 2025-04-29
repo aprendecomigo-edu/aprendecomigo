@@ -172,3 +172,5 @@ temp/
 credentials.json
 backend/DOCS_BRAINSTORM
 bin/*
+testing/test-results/*
+testing/playwright-report/*
