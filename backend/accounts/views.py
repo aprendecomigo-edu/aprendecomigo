@@ -41,7 +41,7 @@ from .serializers import (
     UserSerializer,
     UserWithRolesSerializer,
 )
-from common.throttles import EmailCodeRequestThrottle, EmailBasedThrottle, IPBasedThrottle
+from common.throttles import EmailCodeRequestThrottle, EmailBasedThrottle, IPBasedThrottle, IPSignupThrottle
 User = get_user_model()
 
 
@@ -398,7 +398,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             "user": UserSerializer(user).data
         })
 
-    @action(detail=False, methods=["post"], throttle_classes=[EmailCodeRequestThrottle])
+    @action(detail=False, methods=["post"], throttle_classes=[EmailCodeRequestThrottle, IPSignupThrottle])
     def signup(self, request):
         """
         Sign up as a new user without requiring authentication.

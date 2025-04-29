@@ -6,6 +6,7 @@ from django.utils import timezone
 from knox.models import AuthToken
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
+from unittest.mock import patch
 
 User = get_user_model()
 
@@ -25,6 +26,31 @@ class KnoxAuthenticationTests(APITestCase):
 
         # Create a token for this user
         _, self.token = AuthToken.objects.create(self.user)
+
+        # Patch throttling
+        self.throttle_patcher = patch('rest_framework.throttling.AnonRateThrottle.allow_request', return_value=True)
+        self.throttle_patcher.start()
+
+        # Store and override throttle rates
+        from common.throttles import EmailCodeRequestThrottle, EmailBasedThrottle, IPBasedThrottle
+        self.original_email_code_rate = EmailCodeRequestThrottle.rate
+        self.original_email_based_rate = EmailBasedThrottle.rate
+        self.original_ip_based_rate = IPBasedThrottle.rate
+
+        # Set to valid values
+        EmailCodeRequestThrottle.rate = "10/day"
+        EmailBasedThrottle.rate = "10/day"
+        IPBasedThrottle.rate = "10/day"
+
+    def tearDown(self):
+        """Clean up test environment."""
+        self.throttle_patcher.stop()
+
+        # Restore original rates
+        from common.throttles import EmailCodeRequestThrottle, EmailBasedThrottle, IPBasedThrottle
+        EmailCodeRequestThrottle.rate = self.original_email_code_rate
+        EmailBasedThrottle.rate = self.original_email_based_rate
+        IPBasedThrottle.rate = self.original_ip_based_rate
 
     def test_valid_token_allowed(self):
         """Test that a valid token grants access to protected resources."""
@@ -110,8 +136,9 @@ class KnoxAuthenticationTests(APITestCase):
         url = reverse("accounts:request_code")
         response = self.client.post(url, {"email": "new@example.com"})
 
-        # Should not return 401 (it might return 200 or 429 depending on rate limiting)
+        # Should not return 401 (it should return 200 with throttling disabled)
         self.assertNotEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class AuthenticationProtectionTests(APITestCase):
