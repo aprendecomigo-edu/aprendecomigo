@@ -65,7 +65,7 @@ class UserAPITests(APITestCase):
     def test_user_detail(self):
         """Test retrieving user details."""
         self.authenticate_user(self.admin)
-        url = reverse("user-detail", kwargs={"pk": self.user.pk})
+        url = reverse("accounts:user-detail", kwargs={"pk": self.user.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["email"], self.user.email)
@@ -73,7 +73,7 @@ class UserAPITests(APITestCase):
     def test_user_update(self):
         """Test updating user details."""
         self.authenticate_user(self.user)
-        url = reverse("user-detail", kwargs={"pk": self.user.pk})
+        url = reverse("accounts:user-detail", kwargs={"pk": self.user.pk})
         data = {"name": "Updated Name", "phone_number": "1234567890"}
         response = self.client.patch(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -84,7 +84,7 @@ class UserAPITests(APITestCase):
     def test_user_delete(self):
         """Test deleting a user."""
         self.authenticate_user(self.admin)
-        url = reverse("user-detail", kwargs={"pk": self.user.pk})
+        url = reverse("accounts:user-detail", kwargs={"pk": self.user.pk})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(User.objects.filter(pk=self.user.pk).count(), 0)
@@ -92,14 +92,14 @@ class UserAPITests(APITestCase):
     def test_unauthorized_user_access(self):
         """Test user cannot access another user's details."""
         self.authenticate_user(self.user)
-        url = reverse("user-detail", kwargs={"pk": self.admin.pk})
+        url = reverse("accounts:user-detail", kwargs={"pk": self.admin.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_user_list(self):
         """Test listing users."""
         self.authenticate_user(self.admin)
-        url = reverse("user-list")
+        url = reverse("accounts:user-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -122,7 +122,7 @@ class UserAPITests(APITestCase):
     def test_create_user(self):
         """Test creating a new user."""
         self.authenticate_user(self.admin)
-        url = reverse("user-list")
+        url = reverse("accounts:user-list")
         data = {
             "email": "newuser@test.com",
             "name": "New User",
@@ -215,7 +215,7 @@ class StudentAPITests(APITestCase):
     def test_list_students_as_admin(self):
         """Test listing students as an admin."""
         self.authenticate_user(self.admin)
-        url = reverse("student-list")
+        url = reverse("accounts:student-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -233,7 +233,7 @@ class StudentAPITests(APITestCase):
     def test_list_students_as_student(self):
         """Test student can only see their own profile in list."""
         self.authenticate_user(self.student)
-        url = reverse("student-list")
+        url = reverse("accounts:student-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -263,7 +263,7 @@ class StudentAPITests(APITestCase):
     def test_retrieve_own_student_profile(self):
         """Test student can retrieve their own profile."""
         self.authenticate_user(self.student)
-        url = reverse("student-detail", kwargs={"pk": self.student_profile.pk})
+        url = reverse("accounts:student-detail", kwargs={"pk": self.student_profile.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["user"]["email"], self.student.email)
@@ -342,7 +342,7 @@ class TeacherAPITests(APITestCase):
     def test_list_teachers_as_admin(self):
         """Test listing teachers as an admin."""
         self.authenticate_user(self.admin)
-        url = reverse("teacher-list")
+        url = reverse("accounts:teacher-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -360,7 +360,7 @@ class TeacherAPITests(APITestCase):
     def test_list_teachers_as_teacher(self):
         """Test teacher can only see their own profile in list."""
         self.authenticate_user(self.teacher)
-        url = reverse("teacher-list")
+        url = reverse("accounts:teacher-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -453,7 +453,7 @@ class SchoolAPITests(APITestCase):
     def test_school_membership(self):
         """Test school membership creation and retrieval."""
         self.authenticate_user(self.owner)
-        url = reverse("school_membership-list")
+        url = reverse("accounts:school_membership-list")
         try:
             data = {
                 "user_id": self.no_school_user.id,
@@ -477,7 +477,7 @@ class SchoolAPITests(APITestCase):
     def test_school_list(self):
         """Test listing schools."""
         self.authenticate_user(self.student)
-        url = reverse("school-list")
+        url = reverse("accounts:school-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -504,22 +504,22 @@ class URLNameTests(TestCase):
         """Test that the school membership URL names resolve correctly."""
         # This should work - correct URL name with underscore
         try:
-            url = reverse("school_membership-list")
+            url = reverse("accounts:school_membership-list")
             self.assertTrue(url)
-            self.assertEqual(url, "/api/school-memberships/")
+            self.assertEqual(url, "/api/accounts/school-memberships/")
         except NoReverseMatch:
             self.fail("URL name 'school_membership-list' could not be resolved")
 
         # This should fail - incorrect URL name without underscore
         with self.assertRaises(NoReverseMatch):
-            reverse("schoolmembership-list")
+            reverse("accounts:schoolmembership-list")
 
     def test_school_membership_detail_url(self):
         """Test that the school membership detail URL name resolves correctly."""
         # Test detail URL with ID parameter
         try:
-            url = reverse("school_membership-detail", kwargs={"pk": 1})
+            url = reverse("accounts:school_membership-detail", kwargs={"pk": 1})
             self.assertTrue(url)
-            self.assertEqual(url, "/api/school-memberships/1/")
+            self.assertEqual(url, "/api/accounts/school-memberships/1/")
         except NoReverseMatch:
             self.fail("URL name 'school_membership-detail' could not be resolved")

@@ -16,7 +16,6 @@ from accounts.views import (
     RequestEmailCodeView,
     StudentViewSet,
     TeacherViewSet,
-    UserProfileView,
     UserViewSet,
     VerifyEmailCodeView,
 )
@@ -31,8 +30,7 @@ views = [
     StudentViewSet,
     RequestEmailCodeView,
     VerifyEmailCodeView,
-    UserProfileView,
-]
+ß]
 
 for view in views:
     auth_classes = getattr(view, "authentication_classes", None)

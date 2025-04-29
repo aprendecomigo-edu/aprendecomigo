@@ -1,5 +1,5 @@
 from datetime import timedelta
-from unittest.mock import patch, PropertyMock
+from unittest.mock import patch
 
 import pyotp
 from accounts.models import (
@@ -9,7 +9,7 @@ from accounts.models import (
     School,
 )
 from accounts.serializers import UserSerializer
-from accounts.views import BiometricVerifyView, EmailBasedThrottle, IPBasedThrottle
+from accounts.views import BiometricVerifyView
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
@@ -41,8 +41,8 @@ class EmailAuthTests(APITestCase):
             role="student"
         )
 
-        self.request_code_url = reverse("request_code")
-        self.verify_code_url = reverse("verify_code")
+        self.request_code_url = reverse("accounts:request_code")
+        self.verify_code_url = reverse("accounts:verify_code")
         self.email = "test@example.com"
 
     def test_request_email_code(self):
@@ -128,7 +128,7 @@ class EmailAuthTests(APITestCase):
 
     def test_email_verification_flow(self):
         """Test the complete email verification flow with Knox token."""
-        url = reverse("request_code")
+        url = reverse("accounts:request_code")
         data = {"email": "new@example.com"}
 
         # Test requesting a code
@@ -141,7 +141,7 @@ class EmailAuthTests(APITestCase):
         valid_code = totp.now()
 
         # Test verifying the code
-        url = reverse("verify_code")
+        url = reverse("accounts:verify_code")
         data = {"email": "new@example.com", "code": valid_code}
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -155,10 +155,10 @@ class BiometricAuthTests(APITestCase):
         """Set up test data."""
         self.client = APIClient()
         self.school = School.objects.create(name="Test School")
-        self.biometric_verify_url = reverse("biometric_auth")
+        self.biometric_verify_url = reverse("accounts:biometric_auth")
 
         # Disable throttling for tests
-        self.patcher = patch("accounts.views.IPBasedThrottle.allow_request", return_value=True)
+        self.patcher = patch("common.throttles.IPBasedThrottle.allow_request", return_value=True)
         self.patcher.start()
 
         # Store original throttle classes
@@ -283,8 +283,8 @@ class ContactVerificationTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
 
         # URLs for the contact verification and primary contact selection endpoints
-        self.verify_contact_url = reverse("user-verify-contact")
-        self.set_primary_contact_url = reverse("user-set-primary-contact")
+        self.verify_contact_url = reverse("accounts:user-verify-contact")
+        self.set_primary_contact_url = reverse("accounts:user-set-primary-contact")
 
         # Only mock the email sending to avoid actual emails
         self.mail_patcher = patch('accounts.views.send_mail')
@@ -416,8 +416,8 @@ class EndToEndOnboardingTests(APITestCase):
     def setUp(self):
         """Set up test environment."""
         self.client = APIClient()
-        self.create_url = reverse('user_create')
-        self.verify_code_url = reverse('verify_code')
+        self.create_url = reverse('accounts:user-signup')
+        self.verify_code_url = reverse('accounts:verify_code')
 
         # Only patch the email sending and code validation
         self.mail_patcher = patch('accounts.views.send_mail')
@@ -534,7 +534,7 @@ class ThrottlingTests(APITestCase):
     def setUp(self):
         """Set up test environment."""
         self.client = APIClient()
-        self.request_code_url = reverse('request_code')
+        self.request_code_url = reverse('accounts:request_code')
 
         # Store original throttle classes and rates
         from accounts.views import RequestEmailCodeView, EmailCodeRequestThrottle

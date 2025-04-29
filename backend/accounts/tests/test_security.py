@@ -1,7 +1,5 @@
 from datetime import timedelta
-from unittest.mock import patch
 
-from accounts.models import SchoolMembership, School
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
@@ -34,7 +32,7 @@ class KnoxAuthenticationTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token}")
 
         # Try to access a protected endpoint
-        url = reverse("user_profile")
+        url = reverse("accounts:user-detail", kwargs={"pk": self.user.pk})
         response = self.client.get(url)
 
         # Should return 200 OK
@@ -53,7 +51,7 @@ class KnoxAuthenticationTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
 
         # Try to access a protected endpoint
-        url = reverse("user_profile")
+        url = reverse("accounts:user-detail", kwargs={"pk": self.user.pk})
         response = self.client.get(url)
 
         # Should return 401 Unauthorized
@@ -75,7 +73,7 @@ class KnoxAuthenticationTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {other_token}")
 
         # Try to access the first user's profile using the second user's token
-        url = reverse("user-detail", kwargs={"pk": self.user.pk})
+        url = reverse("accounts:user-detail", kwargs={"pk": self.user.pk})
         response = self.client.get(url)
 
         # Should return 404 Not Found (as if the resource doesn't exist)
@@ -87,7 +85,7 @@ class KnoxAuthenticationTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Token malformed-token")
 
         # Try to access a protected endpoint
-        url = reverse("user_profile")
+        url = reverse("accounts:user-detail", kwargs={"pk": self.user.pk})
         response = self.client.get(url)
 
         # Should return 401 Unauthorized
@@ -109,7 +107,7 @@ class KnoxAuthenticationTests(APITestCase):
         self.client.credentials()
 
         # Try to access the token login endpoint
-        url = reverse("request_code")
+        url = reverse("accounts:request_code")
         response = self.client.post(url, {"email": "new@example.com"})
 
         # Should not return 401 (it might return 200 or 429 depending on rate limiting)
@@ -124,16 +122,22 @@ class AuthenticationProtectionTests(APITestCase):
     def setUp(self):
         """Set up test data."""
         self.client = APIClient()
+        # Create a test user
+        self.user = User.objects.create_user(
+            email="security@example.com",
+            password="securepass123",
+            name="Security Test User",
+        )
 
     def test_unauthenticated_requests_blocked(self):
         """Test that unauthenticated requests are blocked for protected endpoints."""
         # List of protected URLs to test
         protected_urls = [
-            reverse("user-list"),
-            reverse("school-list"),
-            reverse("student-list"),
-            reverse("teacher-list"),
-            reverse("user_profile"),
+            reverse("accounts:user-list"),
+            reverse("accounts:school-list"),
+            reverse("accounts:student-list"),
+            reverse("accounts:teacher-list"),
+            reverse("accounts:user-detail", kwargs={"pk": self.user.pk}),
             # Add more protected endpoints here
         ]
 
@@ -147,7 +151,7 @@ class AuthenticationProtectionTests(APITestCase):
             )
 
         # Also test a POST request to a protected endpoint
-        url = reverse("school-list")
+        url = reverse("accounts:school-list")
         data = {"name": "Test School"}
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

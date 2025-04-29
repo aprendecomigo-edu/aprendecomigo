@@ -13,9 +13,9 @@ The onboarding flow consists of the following steps:
 
 ## API Endpoints
 
-### 1. Create User
+### 1. Sign Up User
 
-**Endpoint:** `POST /api/accounts/create/`
+**Endpoint:** `POST /api/accounts/users/signup/`
 
 **Authentication:** No authentication required
 
@@ -54,6 +54,8 @@ The onboarding flow consists of the following steps:
   }
 }
 ```
+
+**Rate Limiting:** This endpoint is rate limited to 5 requests per hour per IP address to prevent abuse.
 
 ### 2. Verify Contact
 
@@ -175,11 +177,12 @@ Authorization: Token <auth-token-value>
 
 ### Error Handling
 
-- **Create User Errors:**
+- **Sign Up Errors:**
   - Email already exists
   - Invalid phone number format
   - Required fields missing
   - Invalid school data
+  - Rate limiting (too many signup attempts)
 
 - **Verify Code Errors:**
   - Invalid code

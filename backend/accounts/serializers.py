@@ -8,7 +8,7 @@ from .models import (
     SchoolMembership,
     StudentProfile,
     TeacherProfile,
-    SCHOOL_ROLE_CHOICES
+    SchoolRole
 )
 
 User = get_user_model()
@@ -267,7 +267,7 @@ class InvitationRequestSerializer(serializers.Serializer):
     """
 
     email = serializers.EmailField()
-    role = serializers.ChoiceField(choices=SCHOOL_ROLE_CHOICES)
+    role = serializers.ChoiceField(choices=SchoolRole.choices)
     school_id = serializers.IntegerField()
     message = serializers.CharField(required=False, allow_blank=True)
 
@@ -278,113 +278,6 @@ class InvitationAcceptSerializer(serializers.Serializer):
     """
 
     token = serializers.CharField()
-
-
-class OnboardingSerializer(serializers.Serializer):
-    """
-    Serializer for the onboarding process.
-
-    This serializer handles the data for updating both user and school information
-    during the onboarding process after signup.
-    """
-
-    user = serializers.DictField(
-        child=serializers.CharField(),
-        required=False,
-        help_text="User profile information"
-    )
-
-    school = serializers.DictField(
-        child=serializers.CharField(),
-        required=False,
-        help_text="School information"
-    )
-
-    def validate_user(self, value):
-        """Validate user data"""
-        # Extract only fields that are allowed to be updated
-        allowed_fields = ['name', 'phone_number']
-        user_data = {k: v for k, v in value.items() if k in allowed_fields}
-
-        # Validate name field (required)
-        if 'name' in user_data and not user_data['name']:
-            raise serializers.ValidationError({"name": "Name is required"})
-        elif 'name' in user_data and len(user_data['name']) > 150:
-            raise serializers.ValidationError({"name": "Name must be less than 150 characters"})
-
-        # Validate phone number format (optional)
-        if 'phone_number' in user_data and user_data['phone_number']:
-            import re
-            if not re.match(r'^\+?[0-9\s\-\(\)]{5,20}$', user_data['phone_number']):
-                raise serializers.ValidationError({"phone_number": "Invalid phone number format"})
-
-            if len(user_data['phone_number']) > 20:
-                raise serializers.ValidationError({"phone_number": "Phone number must be less than 20 characters"})
-
-        # Validate using UserSerializer for additional validation
-        serializer = UserSerializer(data=user_data, partial=True)
-        if not serializer.is_valid():
-            raise serializers.ValidationError(serializer.errors)
-
-        return user_data
-
-    def validate_school(self, value):
-        """Validate school data"""
-        # Extract only fields that are allowed to be updated
-        allowed_fields = [
-            'name', 'description', 'address',
-            'contact_email', 'phone_number', 'website'
-        ]
-        school_data = {k: v for k, v in value.items() if k in allowed_fields}
-
-        # Validate name field (required)
-        if 'name' in school_data and not school_data['name']:
-            raise serializers.ValidationError({"name": "School name is required"})
-        elif 'name' in school_data and len(school_data['name']) > 150:
-            raise serializers.ValidationError({"name": "School name must be less than 150 characters"})
-
-        # Validate contact email format (optional)
-        if 'contact_email' in school_data and school_data['contact_email']:
-            from django.core.validators import validate_email
-            from django.core.exceptions import ValidationError
-            try:
-                validate_email(school_data['contact_email'])
-            except ValidationError:
-                raise serializers.ValidationError({"contact_email": "Invalid email format"})
-
-        # Validate phone number format (optional)
-        if 'phone_number' in school_data and school_data['phone_number']:
-            import re
-            if not re.match(r'^\+?[0-9\s\-\(\)]{5,20}$', school_data['phone_number']):
-                raise serializers.ValidationError({"phone_number": "Invalid phone number format"})
-
-            if len(school_data['phone_number']) > 20:
-                raise serializers.ValidationError({"phone_number": "Phone number must be less than 20 characters"})
-
-        # Validate website URL format (optional)
-        if 'website' in school_data and school_data['website']:
-            from django.core.validators import URLValidator
-            from django.core.exceptions import ValidationError
-            validate_url = URLValidator()
-            try:
-                validate_url(school_data['website'])
-            except ValidationError:
-                raise serializers.ValidationError({"website": "Invalid URL format"})
-
-        # Validate using SchoolSerializer for additional validation
-        serializer = SchoolSerializer(data=school_data, partial=True)
-        if not serializer.is_valid():
-            raise serializers.ValidationError(serializer.errors)
-
-        return school_data
-
-    def validate(self, data):
-        """
-        Ensure that at least one of user or school is provided
-        """
-        if not data.get('user') and not data.get('school'):
-            raise serializers.ValidationError("At least one of 'user' or 'school' information must be provided")
-        return data
 
 
 class CreateUserSerializer(serializers.Serializer):

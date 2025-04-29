@@ -3,36 +3,34 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 from unittest.mock import patch
+import inspect
+import re
 
 from accounts.models import CustomUser, School, SchoolMembership, EmailVerificationCode
-from accounts.views import UserCreateView
+from accounts.views import UserViewSet
+import common.throttles
 
 
-
-
-class TestUserCreateView(TestCase):
-    """Test suite for the UserCreateView (signup without authentication)."""
+class TestUserSignup(TestCase):
+    """Test suite for the UserViewSet signup action (signup without authentication)."""
 
     def setUp(self):
         """Set up test environment."""
         self.client = APIClient()
-        self.url = reverse('user_create')
+        self.url = reverse('accounts:user-signup')
 
         # Store original throttle classes and disable throttling for tests
-        self.patcher = patch('accounts.views.EmailCodeRequestThrottle.allow_request', return_value=True)
+        self.patcher = patch('common.throttles.EmailCodeRequestThrottle.allow_request', return_value=True)
         self.patcher.start()
-        self.original_throttle_classes = UserCreateView.throttle_classes
-        UserCreateView.throttle_classes = []
 
     def tearDown(self):
         """Clean up test environment."""
-        # Restore original throttle classes
-        UserCreateView.throttle_classes = self.original_throttle_classes
+        # Stop patching throttle
         self.patcher.stop()
 
     @patch('accounts.views.send_mail')
-    def test_create_user_success(self, mock_send_mail):
-        """Test successful user creation with all required fields."""
+    def test_signup_success(self, mock_send_mail):
+        """Test successful user signup with all required fields."""
         data = {
             'name': 'New User',
             'email': 'newuser@example.com',
@@ -74,8 +72,8 @@ class TestUserCreateView(TestCase):
         # Verify email would have been sent
         mock_send_mail.assert_called_once()
 
-    def test_create_user_existing_email(self):
-        """Test user creation with an email that already exists."""
+    def test_signup_existing_email(self):
+        """Test user signup with an email that already exists."""
         # Create a user first
         CustomUser.objects.create_user(
             email='existing@example.com',
@@ -95,8 +93,8 @@ class TestUserCreateView(TestCase):
         self.assertIn('error', response.data)
         self.assertIn('already exists', response.data['error'])
 
-    def test_create_user_invalid_phone(self):
-        """Test user creation with invalid phone number format."""
+    def test_signup_invalid_phone(self):
+        """Test user signup with invalid phone number format."""
         data = {
             'name': 'New User',
             'email': 'newuser@example.com',
@@ -109,8 +107,8 @@ class TestUserCreateView(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('phone_number', str(response.data))
 
-    def test_create_user_phone_as_primary(self):
-        """Test user creation with phone as the primary contact."""
+    def test_signup_phone_as_primary(self):
+        """Test user signup with phone as the primary contact."""
         with patch('accounts.views.send_mail') as mock_send_mail:
             data = {
                 'name': 'Phone User',
@@ -130,8 +128,8 @@ class TestUserCreateView(TestCase):
             # Verify code was sent
             mock_send_mail.assert_called_once()
 
-    def test_create_user_invalid_school_data(self):
-        """Test user creation with invalid school data."""
+    def test_signup_invalid_school_data(self):
+        """Test user signup with invalid school data."""
         data = {
             'name': 'New User',
             'email': 'newuser@example.com',
@@ -148,8 +146,8 @@ class TestUserCreateView(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('school', str(response.data))
 
-    def test_create_user_no_school_data(self):
-        """Test user creation without providing school data (default school should be created)."""
+    def test_signup_no_school_data(self):
+        """Test user signup without providing school data (default school should be created)."""
         with patch('accounts.views.send_mail') as mock_send_mail:
             data = {
                 'name': 'No School User',
@@ -168,3 +166,52 @@ class TestUserCreateView(TestCase):
 
             self.assertEqual(schools.count(), 1)
             self.assertEqual(schools[0].name, "No School User's School")
+
+    def test_regular_create_requires_authentication(self):
+        """Test that regular user creation endpoint requires authentication."""
+        # No authentication set up
+        self.client.credentials()  # Clear any credentials
+
+        data = {
+            'name': 'New User',
+            'email': 'newuser@example.com',
+            'phone_number': '+1234567890',
+        }
+
+        # Try to use the regular create endpoint
+        create_url = reverse('accounts:user-list')
+        response = self.client.post(create_url, data, format='json')
+
+        # Should fail with authentication error
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_throttling_enabled(self):
+        """Test that throttling is enabled for the signup endpoint."""
+        # Simply check that the signup action in views.py has throttle_classes in its decorator
+        # Get the source code of the UserViewSet class
+        source = inspect.getsource(UserViewSet)
+
+        # Check for the signup method with throttle_classes in the decorator
+        signup_pattern = r'@action\([^)]*throttle_classes=\[[^]]*EmailCodeRequestThrottle[^]]*\][^)]*\)\s+def\s+signup'
+        match = re.search(signup_pattern, source, re.DOTALL)
+
+        self.assertIsNotNone(match,
+            "signup action should have EmailCodeRequestThrottle in its throttle_classes")
+
+    def test_signup_allows_unauthenticated_access(self):
+        """Test that signup endpoint allows unauthenticated access."""
+        # No authentication set up
+        self.client.credentials()  # Clear any credentials
+
+        data = {
+            'name': 'Anonymous User',
+            'email': 'anon@example.com',
+            'phone_number': '+1234567890',
+            'primary_contact': 'email'
+        }
+
+        with patch('accounts.views.send_mail'):
+            response = self.client.post(self.url, data, format='json')
+
+        # Should succeed without authentication
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)

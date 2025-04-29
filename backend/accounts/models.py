@@ -106,16 +106,12 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.email
 
-
-# Role choices with clear naming to avoid confusion with Django permissions
-SCHOOL_ROLE_CHOICES = [
-    ("school_owner", _("School Owner")),          # Created the school, has full access
-    ("school_admin", _("School Administrator")),  # Can manage all aspects of the school
-    ("teacher", _("Teacher")),                    # Can manage classes and students
-    ("school_staff", _("School Staff")),          # Limited access for administrative tasks
-    ("student", _("Student")),                    # Access to assigned classes
-]
-
+class SchoolRole(models.TextChoices):
+    SCHOOL_OWNER = 'school_owner', _('School Owner') # Created the school, has full access
+    SCHOOL_ADMIN = 'school_admin', _('School Administrator') # Can manage all aspects of the school
+    TEACHER = 'teacher', _('Teacher') # Can manage classes and students
+    SCHOOL_STAFF = 'school_staff', _('School Staff') # Limited access for administrative tasks
+    STUDENT = 'student', _('Student') # Access to assigned classes
 
 class SchoolMembership(models.Model):
     """
@@ -127,7 +123,7 @@ class SchoolMembership(models.Model):
     """
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="school_memberships")
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="memberships")
-    role = models.CharField(_("role"), max_length=20, choices=SCHOOL_ROLE_CHOICES)
+    role = models.CharField(_("role"), max_length=20, choices=SchoolRole.choices)
     is_active = models.BooleanField(_("is active"), default=True)
     joined_at = models.DateTimeField(auto_now_add=True)
 
@@ -207,7 +203,7 @@ class SchoolInvitation(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="invitations")
     email = models.EmailField(_("email address"))
     invited_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="sent_invitations")
-    role = models.CharField(_("role"), max_length=20, choices=SCHOOL_ROLE_CHOICES)
+    role = models.CharField(_("role"), max_length=20, choices=SchoolRole.choices)
     token = models.CharField(_("token"), max_length=64, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
