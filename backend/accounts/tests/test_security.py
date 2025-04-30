@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -6,7 +7,6 @@ from django.utils import timezone
 from knox.models import AuthToken
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
-from unittest.mock import patch
 
 User = get_user_model()
 
@@ -28,11 +28,19 @@ class KnoxAuthenticationTests(APITestCase):
         _, self.token = AuthToken.objects.create(self.user)
 
         # Patch throttling
-        self.throttle_patcher = patch('rest_framework.throttling.AnonRateThrottle.allow_request', return_value=True)
+        self.throttle_patcher = patch(
+            "rest_framework.throttling.AnonRateThrottle.allow_request",
+            return_value=True,
+        )
         self.throttle_patcher.start()
 
         # Store and override throttle rates
-        from common.throttles import EmailCodeRequestThrottle, EmailBasedThrottle, IPBasedThrottle
+        from common.throttles import (
+            EmailBasedThrottle,
+            EmailCodeRequestThrottle,
+            IPBasedThrottle,
+        )
+
         self.original_email_code_rate = EmailCodeRequestThrottle.rate
         self.original_email_based_rate = EmailBasedThrottle.rate
         self.original_ip_based_rate = IPBasedThrottle.rate
@@ -47,7 +55,12 @@ class KnoxAuthenticationTests(APITestCase):
         self.throttle_patcher.stop()
 
         # Restore original rates
-        from common.throttles import EmailCodeRequestThrottle, EmailBasedThrottle, IPBasedThrottle
+        from common.throttles import (
+            EmailBasedThrottle,
+            EmailCodeRequestThrottle,
+            IPBasedThrottle,
+        )
+
         EmailCodeRequestThrottle.rate = self.original_email_code_rate
         EmailBasedThrottle.rate = self.original_email_based_rate
         IPBasedThrottle.rate = self.original_ip_based_rate
@@ -108,7 +121,7 @@ class KnoxAuthenticationTests(APITestCase):
     def test_malformed_auth_header_blocked(self):
         """Test that malformed authorization headers are rejected."""
         # Set a malformed authorization header
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token malformed-token")
+        self.client.credentials(HTTP_AUTHORIZATION="Token malformed-token")
 
         # Try to access a protected endpoint
         url = reverse("accounts:user-detail", kwargs={"pk": self.user.pk})
@@ -118,12 +131,12 @@ class KnoxAuthenticationTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         # Try with a completely wrong format
-        self.client.credentials(HTTP_AUTHORIZATION=f"Basic some-basic-auth")
+        self.client.credentials(HTTP_AUTHORIZATION="Basic some-basic-auth")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         # Try with empty token
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token ")
+        self.client.credentials(HTTP_AUTHORIZATION="Token ")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -174,7 +187,7 @@ class AuthenticationProtectionTests(APITestCase):
             self.assertEqual(
                 response.status_code,
                 status.HTTP_401_UNAUTHORIZED,
-                f"URL {url} should require authentication but returned {response.status_code}"
+                f"URL {url} should require authentication but returned {response.status_code}",
             )
 
         # Also test a POST request to a protected endpoint

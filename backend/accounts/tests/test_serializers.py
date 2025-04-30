@@ -1,7 +1,16 @@
-from django.test import TestCase
-from accounts.serializers import UserSerializer, StudentSerializer, TeacherSerializer, EmailRequestSerializer, EmailVerifySerializer
-from accounts.models import CustomUser, StudentProfile, TeacherProfile
 import datetime
+
+from django.test import TestCase
+
+from accounts.models import CustomUser, StudentProfile, TeacherProfile
+from accounts.serializers import (
+    EmailRequestSerializer,
+    EmailVerifySerializer,
+    StudentSerializer,
+    TeacherSerializer,
+    UserSerializer,
+)
+
 
 class TestUserSerializer(TestCase):
     """Test suite for the UserSerializer."""
@@ -11,16 +20,16 @@ class TestUserSerializer(TestCase):
             email="test@example.com",
             password="password123",
             name="Test User",
-            phone_number="1234567890"
+            phone_number="1234567890",
         )
 
     def test_user_serializer(self):
         """Test serializing a user."""
         serializer = UserSerializer(self.user)
         data = serializer.data
-        self.assertEqual(data['email'], self.user.email)
-        self.assertEqual(data['name'], self.user.name)
-        self.assertEqual(data['phone_number'], self.user.phone_number)
+        self.assertEqual(data["email"], self.user.email)
+        self.assertEqual(data["name"], self.user.name)
+        self.assertEqual(data["phone_number"], self.user.phone_number)
 
 
 class TestProfileSerializers(TestCase):
@@ -28,40 +37,35 @@ class TestProfileSerializers(TestCase):
 
     def setUp(self):
         self.user = CustomUser.objects.create_user(
-            email="test@example.com",
-            password="password123",
-            name="Test User"
+            email="test@example.com", password="password123", name="Test User"
         )
 
         self.student = StudentProfile.objects.create(
             user=self.user,
             school_year="2024",
             birth_date=datetime.date(2000, 1, 1),
-            address="Test Address"
+            address="Test Address",
         )
 
         self.teacher = TeacherProfile.objects.create(
-            user=self.user,
-            bio="Test Bio",
-            specialty="Math",
-            education="PhD"
+            user=self.user, bio="Test Bio", specialty="Math", education="PhD"
         )
 
     def test_student_serializer(self):
         """Test serializing a student profile."""
         serializer = StudentSerializer(self.student)
         data = serializer.data
-        self.assertEqual(data['user']['email'], self.user.email)
-        self.assertEqual(data['school_year'], self.student.school_year)
-        self.assertEqual(data['address'], self.student.address)
+        self.assertEqual(data["user"]["email"], self.user.email)
+        self.assertEqual(data["school_year"], self.student.school_year)
+        self.assertEqual(data["address"], self.student.address)
 
     def test_teacher_serializer(self):
         """Test serializing a teacher profile."""
         serializer = TeacherSerializer(self.teacher)
         data = serializer.data
-        self.assertEqual(data['user']['email'], self.user.email)
-        self.assertEqual(data['bio'], self.teacher.bio)
-        self.assertEqual(data['specialty'], self.teacher.specialty)
+        self.assertEqual(data["user"]["email"], self.user.email)
+        self.assertEqual(data["bio"], self.teacher.bio)
+        self.assertEqual(data["specialty"], self.teacher.specialty)
 
 
 class TestAuthSerializers(TestCase):

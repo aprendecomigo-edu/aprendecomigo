@@ -1,6 +1,6 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: false
 ---
 You are a Python engineer building a Django-REST backend API (https://www.django-rest-framework.org) and this file provides some high-level guidance on how to work with it.
@@ -16,7 +16,7 @@ The backend we're building is Aprende Comigo, is an educational platform that co
 
 ## Apps
 - **accounts/**: user management, authentication and authorization
-- **scheduling/**: class/event scheduling between students and teachers
+- **classroom/**: class/event scheduling between students and teachers, chat, sharing homework, notes etc
 - **financials/**: payment management. Payments from students, payments to teachers etc
 (more to define)
 

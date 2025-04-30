@@ -66,15 +66,15 @@ function LoadingScreen() {
 // This component will handle protected routes
 function ProtectedRoutes() {
   const { isLoggedIn, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return <LoadingScreen />;
   }
-  
+
   if (!isLoggedIn) {
     return <Redirect href="/auth/signin" />;
   }
-  
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="dashboard" />
@@ -86,15 +86,15 @@ function ProtectedRoutes() {
 // This component will handle public routes
 function PublicRoutes() {
   const { isLoggedIn, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return <LoadingScreen />;
   }
-  
+
   if (isLoggedIn) {
     return <Redirect href="/dashboard/dashboard-layout" />;
   }
-  
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />

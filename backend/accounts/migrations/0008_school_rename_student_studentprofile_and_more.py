@@ -6,64 +6,162 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0007_alter_customuser_managers_and_more'),
+        ("accounts", "0007_alter_customuser_managers_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='School',
+            name="School",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=150, verbose_name='name')),
-                ('description', models.TextField(blank=True, verbose_name='description')),
-                ('address', models.TextField(blank=True, verbose_name='address')),
-                ('contact_email', models.EmailField(blank=True, max_length=254, verbose_name='contact email')),
-                ('phone_number', models.CharField(blank=True, max_length=20, verbose_name='phone number')),
-                ('website', models.URLField(blank=True, verbose_name='website')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=150, verbose_name="name")),
+                (
+                    "description",
+                    models.TextField(blank=True, verbose_name="description"),
+                ),
+                ("address", models.TextField(blank=True, verbose_name="address")),
+                (
+                    "contact_email",
+                    models.EmailField(blank=True, max_length=254, verbose_name="contact email"),
+                ),
+                (
+                    "phone_number",
+                    models.CharField(blank=True, max_length=20, verbose_name="phone number"),
+                ),
+                ("website", models.URLField(blank=True, verbose_name="website")),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
         ),
         migrations.RenameModel(
-            old_name='Student',
-            new_name='StudentProfile',
+            old_name="Student",
+            new_name="StudentProfile",
         ),
         migrations.RenameModel(
-            old_name='Teacher',
-            new_name='TeacherProfile',
+            old_name="Teacher",
+            new_name="TeacherProfile",
         ),
         migrations.RemoveField(
-            model_name='customuser',
-            name='user_type',
+            model_name="customuser",
+            name="user_type",
         ),
         migrations.CreateModel(
-            name='SchoolInvitation',
+            name="SchoolInvitation",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('email', models.EmailField(max_length=254, verbose_name='email address')),
-                ('role', models.CharField(choices=[('school_owner', 'School Owner'), ('school_admin', 'School Administrator'), ('teacher', 'Teacher'), ('school_staff', 'School Staff'), ('student', 'Student')], max_length=20, verbose_name='role')),
-                ('token', models.CharField(max_length=64, unique=True, verbose_name='token')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('expires_at', models.DateTimeField()),
-                ('is_accepted', models.BooleanField(default=False, verbose_name='is accepted')),
-                ('invited_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sent_invitations', to=settings.AUTH_USER_MODEL)),
-                ('school', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='invitations', to='accounts.school')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "email",
+                    models.EmailField(max_length=254, verbose_name="email address"),
+                ),
+                (
+                    "role",
+                    models.CharField(
+                        choices=[
+                            ("school_owner", "School Owner"),
+                            ("school_admin", "School Administrator"),
+                            ("teacher", "Teacher"),
+                            ("school_staff", "School Staff"),
+                            ("student", "Student"),
+                        ],
+                        max_length=20,
+                        verbose_name="role",
+                    ),
+                ),
+                (
+                    "token",
+                    models.CharField(max_length=64, unique=True, verbose_name="token"),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("expires_at", models.DateTimeField()),
+                (
+                    "is_accepted",
+                    models.BooleanField(default=False, verbose_name="is accepted"),
+                ),
+                (
+                    "invited_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="sent_invitations",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "school",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="invitations",
+                        to="accounts.school",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='SchoolMembership',
+            name="SchoolMembership",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('role', models.CharField(choices=[('school_owner', 'School Owner'), ('school_admin', 'School Administrator'), ('teacher', 'Teacher'), ('school_staff', 'School Staff'), ('student', 'Student')], max_length=20, verbose_name='role')),
-                ('is_active', models.BooleanField(default=True, verbose_name='is active')),
-                ('joined_at', models.DateTimeField(auto_now_add=True)),
-                ('school', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='memberships', to='accounts.school')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='school_memberships', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "role",
+                    models.CharField(
+                        choices=[
+                            ("school_owner", "School Owner"),
+                            ("school_admin", "School Administrator"),
+                            ("teacher", "Teacher"),
+                            ("school_staff", "School Staff"),
+                            ("student", "Student"),
+                        ],
+                        max_length=20,
+                        verbose_name="role",
+                    ),
+                ),
+                (
+                    "is_active",
+                    models.BooleanField(default=True, verbose_name="is active"),
+                ),
+                ("joined_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "school",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="memberships",
+                        to="accounts.school",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="school_memberships",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'unique_together': {('user', 'school', 'role')},
+                "unique_together": {("user", "school", "role")},
             },
         ),
     ]

@@ -1,9 +1,16 @@
 import datetime
 
-from accounts.models import EmailVerificationCode, StudentProfile, TeacherProfile, School, SchoolMembership
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
+
+from accounts.models import (
+    EmailVerificationCode,
+    School,
+    SchoolMembership,
+    StudentProfile,
+    TeacherProfile,
+)
 
 User = get_user_model()
 
@@ -80,7 +87,7 @@ class SchoolMembershipTests(TestCase):
         self.school = School.objects.create(
             name="Test School",
             description="A test school",
-            contact_email="school@example.com"
+            contact_email="school@example.com",
         )
 
     def tearDown(self):
@@ -90,9 +97,7 @@ class SchoolMembershipTests(TestCase):
     def test_create_membership(self):
         """Test creating a school membership."""
         membership = SchoolMembership.objects.create(
-            user=self.user,
-            school=self.school,
-            role="student"
+            user=self.user, school=self.school, role="student"
         )
         self.assertEqual(membership.user, self.user)
         self.assertEqual(membership.school, self.school)
@@ -102,9 +107,7 @@ class SchoolMembershipTests(TestCase):
     def test_membership_string_representation(self):
         """Test the string representation of a membership."""
         membership = SchoolMembership.objects.create(
-            user=self.user,
-            school=self.school,
-            role="teacher"
+            user=self.user, school=self.school, role="teacher"
         )
         self.assertEqual(str(membership), f"{self.user.name} as Teacher at {self.school.name}")
 
@@ -142,9 +145,7 @@ class StudentProfileTests(TestCase):
         self.assertEqual(student.address, self.student_data["address"])
         self.assertEqual(student.cc_number, self.student_data["cc_number"])
         self.assertEqual(student.calendar_iframe, "")
-        self.assertFalse(
-            bool(student.cc_photo)
-        )  # Use assertFalse instead of assertEqual
+        self.assertFalse(bool(student.cc_photo))  # Use assertFalse instead of assertEqual
 
     def test_student_string_representation(self):
         """Test the string representation of a student."""
@@ -158,9 +159,7 @@ class StudentProfileTests(TestCase):
 
         # Create school membership with student role
         membership = SchoolMembership.objects.create(
-            user=self.user,
-            school=self.school,
-            role="student"
+            user=self.user, school=self.school, role="student"
         )
 
         self.assertEqual(membership.role, "student")
@@ -222,9 +221,7 @@ class TeacherProfileTests(TestCase):
 
         # Create school membership with teacher role
         membership = SchoolMembership.objects.create(
-            user=self.user,
-            school=self.school,
-            role="teacher"
+            user=self.user, school=self.school, role="teacher"
         )
 
         self.assertEqual(membership.role, "teacher")

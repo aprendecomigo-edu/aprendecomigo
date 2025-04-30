@@ -252,7 +252,7 @@ const Sidebar = () => {
                   ? "stroke-background-0"
                   : "stroke-background-800"
               }
-              
+
               h-10 w-10
               `}
                 />

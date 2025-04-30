@@ -238,16 +238,8 @@ Authorization: Token your-auth-token-here
 - `DELETE /api/teachers/{id}/` - Delete a teacher
 
 
+
 ## Available Endpoints
-
-### Api
-
-- `api/scheduling/api/sessions/filter/`: filter_sessions
-  - View: filter_sessions
-- `api/scheduling/api/student/upcoming-classes/`: upcoming_classes
-  - View: upcoming_classes
-- `api/scheduling/api/teacher/today-schedule/`: today_schedule
-  - View: today_schedule
 
 ## Response Format
 
@@ -325,3 +317,8 @@ For the most up-to-date and interactive documentation, refer to the Swagger UI a
 5. **Throttling awareness**: Implement exponential backoff for retry mechanisms
 
 ---
+
+
+---
+
+*Last updated: April 30, 2025*
