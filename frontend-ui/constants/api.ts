@@ -1,9 +1,6 @@
 // API URL configuration for different environments
-import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-
-// Default environment is development
-const ENV = Constants.expoConfig?.extra?.env || 'development';
+import { ENVIRONMENT } from './env';
 
 // Configuration for different environments
 const config = {
@@ -16,10 +13,10 @@ const config = {
     }),
   },
   staging: {
-    API_URL: 'https://staging-api.aprendecomigo.com/api',
+    API_URL: 'https://aprendecomigo.eu.pythonanywhere.com/api',
   },
   production: {
-    API_URL: 'https://api.aprendecomigo.com/api',
+    API_URL: 'https://api.aprendecomigo.com/api', // TODO: Add other production-specific endpoints here if needed
   },
 };
 
@@ -28,13 +25,12 @@ const config = {
 // config.development.API_URL = 'http://192.168.1.X:8000/api'; // Replace X with your IP
 
 // Select the appropriate configuration
-const activeConfig = config[ENV as keyof typeof config] || config.development;
+const activeConfig = config[ENVIRONMENT] || config.development;
 
 // Export the API URL
 export const API_URL = activeConfig.API_URL;
 
 // Debug information
 if (__DEV__) {
-  console.log(`Environment: ${ENV}`);
   console.log(`API URL: ${API_URL}`);
 }

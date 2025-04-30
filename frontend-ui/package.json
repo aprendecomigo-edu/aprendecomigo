@@ -14,7 +14,16 @@
     "typecheck": "tsc --noEmit",
     "prepare": "node -e \"try{require('./node_modules/husky/lib/bin').install()}catch(e){}\"",
     "postinstall": "patch-package",
-    "export-web": "mkdir -p node_modules/.cache/nativewind && npx tailwindcss -i ./global.css -o node_modules/.cache/nativewind/global.css && npx expo prebuild --platform web && npx expo export -p web"
+    "export-web": "mkdir -p node_modules/.cache/nativewind && npx tailwindcss -i ./global.css -o node_modules/.cache/nativewind/global.css && npx expo prebuild --platform web && npx expo export -p web",
+    "start:dev": "EXPO_PUBLIC_ENV=development npx expo start",
+    "start:staging": "EXPO_PUBLIC_ENV=staging npx expo start",
+    "start:prod": "EXPO_PUBLIC_ENV=production npx expo start",
+    "build:web:dev": "EXPO_PUBLIC_ENV=development npx expo export -p web",
+    "build:web:staging": "EXPO_PUBLIC_ENV=staging npx expo export -p web",
+    "build:web:prod": "EXPO_PUBLIC_ENV=production npx expo export -p web",
+    "web:dev": "EXPO_PUBLIC_ENV=development npx expo start --web",
+    "web:staging": "EXPO_PUBLIC_ENV=staging npx expo start --web",
+    "web:prod": "EXPO_PUBLIC_ENV=production npx expo start --web"
   },
   "description": "React Native app with patched @gluestack-ui/checkbox component for React 18 compatibility",
   "dependencies": {
