@@ -36,4 +36,4 @@ export default function DashboardLayout() {
       {/* Add other dashboard screens here if needed */}
     </Stack>
   );
-} 
+}

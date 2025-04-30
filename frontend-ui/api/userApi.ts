@@ -95,4 +95,4 @@ export const updateStudentProfile = async (id: number, data: Partial<StudentProf
 export const completeStudentOnboarding = async (data: Partial<StudentProfile>) => {
   const response = await apiClient.post<StudentProfile>('/students/onboarding/', data);
   return response.data;
-}; 
+};

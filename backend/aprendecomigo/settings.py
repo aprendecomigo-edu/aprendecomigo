@@ -34,9 +34,7 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = (
-    os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
-)
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
 
 
 # Application definition
@@ -66,8 +64,6 @@ INSTALLED_APPS = [
     # Custom apps
     "common",
     "accounts",
-    "scheduling",
-    "financials",
 ]
 
 MIDDLEWARE = [
@@ -186,7 +182,7 @@ DEFAULT_FROM_EMAIL = "noreply@aprendecomigo.com"
 if not DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_HOST = os.getenv("EMAIL_HOST", "")
-    EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+    EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
     EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
     EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
     EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
@@ -239,9 +235,7 @@ REST_FRAMEWORK = {
 
 # Swagger Settings
 SWAGGER_SETTINGS = {
-    "SECURITY_DEFINITIONS": {
-        "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
-    },
+    "SECURITY_DEFINITIONS": {"Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}},
     "USE_SESSION_AUTH": False,
     "APIS_SORTER": "alpha",  # Sort endpoints alphabetically
     "OPERATIONS_SORTER": "method",  # Sort operations by HTTP method

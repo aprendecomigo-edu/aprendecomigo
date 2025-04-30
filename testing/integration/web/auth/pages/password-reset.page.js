@@ -35,12 +35,12 @@ class PasswordResetPage {
     // When using mocks, we just need to navigate to a blank page
     // The actual URL doesn't matter since we're not testing real navigation
     await this.page.goto('about:blank');
-    
+
     // Set the URL to simulate the expected URL
     await this.page.evaluate(() => {
       window.history.pushState({}, '', '/reset-password');
     });
-    
+
     // Add basic structure needed for tests
     await this.page.evaluate(() => {
       document.body.innerHTML = `
@@ -53,7 +53,7 @@ class PasswordResetPage {
             Check your email for a verification code
           </div>
           <div data-testid="error-message" style="display: none;"></div>
-          
+
           <div id="reset-code-container" style="display: none;">
             <div>
               <input data-testid="reset-code-0" maxlength="1" />
@@ -65,7 +65,7 @@ class PasswordResetPage {
             </div>
             <button data-testid="verify-code-button">Verify Code</button>
           </div>
-          
+
           <div id="new-password-container" style="display: none;">
             <form>
               <input name="newPassword" type="password" placeholder="New Password" />
@@ -76,7 +76,7 @@ class PasswordResetPage {
               <button data-testid="submit-new-password">Reset Password</button>
             </form>
           </div>
-          
+
           <div data-testid="reset-success-message" style="display: none;">
             Your password has been reset successfully
           </div>
@@ -84,23 +84,23 @@ class PasswordResetPage {
         </div>
       `;
     });
-    
+
     await expect(this.page).toHaveURL(/.*reset-password/);
   }
 
   /**
    * Request a password reset for the specified email
-   * @param {string} email 
+   * @param {string} email
    */
   async requestReset(email) {
     await this.page.fill(this.emailInput, email);
     await this.page.click(this.resetButton);
-    
+
     // Since we're mocking, handle the form submission event manually
     await this.page.evaluate((email) => {
       // Show/hide elements based on the email value
       const isValidEmail = email !== 'nonexistent@example.com';
-      
+
       if (isValidEmail) {
         document.querySelector('[data-testid="reset-confirmation"]').style.display = 'block';
         document.querySelector('[data-testid="error-message"]').style.display = 'none';
@@ -128,19 +128,19 @@ class PasswordResetPage {
     await this.page.evaluate(() => {
       document.getElementById('reset-code-container').style.display = 'block';
     });
-    
+
     const codeInputs = await this.page.$$(this.resetCodeInputs);
-    
+
     for (let i = 0; i < code.length && i < codeInputs.length; i++) {
       await codeInputs[i].fill(code.charAt(i));
     }
-    
+
     await this.page.click(this.verifyCodeButton);
-    
+
     // Simulate API response based on code
     await this.page.evaluate((code) => {
       const isValidCode = code === '123456';
-      
+
       if (isValidCode) {
         document.getElementById('reset-code-container').style.display = 'none';
         document.getElementById('new-password-container').style.display = 'block';
@@ -161,17 +161,17 @@ class PasswordResetPage {
     await this.page.fill(this.newPasswordInput, password);
     await this.page.fill(this.confirmPasswordInput, confirmPassword);
     await this.page.click(this.submitNewPasswordButton);
-    
+
     // Simulate password validation and API response
     await this.page.evaluate((password, confirmPassword) => {
       let errorMessage = '';
-      
+
       if (password.length < 8) {
         errorMessage = 'Password must be at least 8 characters long';
       } else if (password !== confirmPassword) {
         errorMessage = 'Passwords do not match';
       }
-      
+
       if (errorMessage) {
         document.querySelector('[data-testid="error-message"]').textContent = errorMessage;
         document.querySelector('[data-testid="error-message"]').style.display = 'block';

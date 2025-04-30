@@ -1,20 +1,18 @@
-from django.test import TestCase
-from django.urls import reverse, NoReverseMatch
-from rest_framework.test import APIClient
-
-from accounts.models import (
-    CustomUser,
-    StudentProfile,
-    TeacherProfile,
-    School,
-    SchoolMembership,
-)
+import django.urls.exceptions
 from django.contrib.auth import get_user_model
-from django.urls import reverse
+from django.test import TestCase
+from django.urls import NoReverseMatch, reverse
 from knox.models import AuthToken
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
-import django.urls.exceptions
+
+from accounts.models import (
+    CustomUser,
+    School,
+    SchoolMembership,
+    StudentProfile,
+    TeacherProfile,
+)
 
 User = get_user_model()
 
@@ -28,33 +26,23 @@ class UserAPITests(APITestCase):
 
         # Create a regular user
         self.user = CustomUser.objects.create_user(
-            email="user@test.com",
-            password="testpass123",
-            name="Test User"
+            email="user@test.com", password="testpass123", name="Test User"
         )
         self.user_membership = SchoolMembership.objects.create(
-            user=self.user,
-            school=self.school,
-            role="student"
+            user=self.user, school=self.school, role="student"
         )
 
         # Create an admin user
         self.admin = CustomUser.objects.create_superuser(
-            email="admin@test.com",
-            password="testpass123",
-            name="Admin User"
+            email="admin@test.com", password="testpass123", name="Admin User"
         )
 
         # Create a teacher user
         self.teacher = CustomUser.objects.create_user(
-            email="teacher@test.com",
-            password="testpass123",
-            name="Test Teacher"
+            email="teacher@test.com", password="testpass123", name="Test Teacher"
         )
         self.teacher_membership = SchoolMembership.objects.create(
-            user=self.teacher,
-            school=self.school,
-            role="teacher"
+            user=self.teacher, school=self.school, role="teacher"
         )
 
     def authenticate_user(self, user):
@@ -104,9 +92,9 @@ class UserAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Handle paginated response
-        if 'results' in response.data:
+        if "results" in response.data:
             # Paginated response
-            users = response.data['results']
+            users = response.data["results"]
         else:
             # Regular list response
             users = response.data
@@ -115,7 +103,7 @@ class UserAPITests(APITestCase):
         self.assertGreater(len(users), 0)
 
         # Make sure we can find our test users
-        user_emails = [user['email'] for user in users]
+        user_emails = [user["email"] for user in users]
         self.assertIn(self.admin.email, user_emails, "Admin should be in the user list")
         # Other users may or may not be present depending on permissions
 
@@ -140,7 +128,9 @@ class UserAPITests(APITestCase):
             self.assertEqual(user.name, "New User")
         else:
             # Skip the verification since creation was not allowed
-            self.skipTest("User creation not allowed - this is acceptable if the API is configured this way")
+            self.skipTest(
+                "User creation not allowed - this is acceptable if the API is configured this way"
+            )
 
 
 class StudentAPITests(APITestCase):
@@ -155,56 +145,40 @@ class StudentAPITests(APITestCase):
 
         # Create a student user with profile
         self.student = CustomUser.objects.create_user(
-            email="student@test.com",
-            password="testpass123",
-            name="Test Student"
+            email="student@test.com", password="testpass123", name="Test Student"
         )
         self.student_membership = SchoolMembership.objects.create(
-            user=self.student,
-            school=self.school,
-            role="student"
+            user=self.student, school=self.school, role="student"
         )
         self.student_profile = StudentProfile.objects.create(
             user=self.student,
             school_year="2024",
             birth_date="2000-01-01",
-            address="Test Address"
+            address="Test Address",
         )
 
         # Create a second student user without profile
         self.student2 = CustomUser.objects.create_user(
-            email="student2@test.com",
-            password="testpass123",
-            name="Test Student 2"
+            email="student2@test.com", password="testpass123", name="Test Student 2"
         )
         self.student2_membership = SchoolMembership.objects.create(
-            user=self.student2,
-            school=self.school,
-            role="student"
+            user=self.student2, school=self.school, role="student"
         )
 
         # Create a teacher user
         self.teacher = CustomUser.objects.create_user(
-            email="teacher@test.com",
-            password="testpass123",
-            name="Test Teacher"
+            email="teacher@test.com", password="testpass123", name="Test Teacher"
         )
         self.teacher_membership = SchoolMembership.objects.create(
-            user=self.teacher,
-            school=self.school,
-            role="teacher"
+            user=self.teacher, school=self.school, role="teacher"
         )
 
         # Create an admin user
         self.admin = CustomUser.objects.create_superuser(
-            email="admin@test.com",
-            password="testpass123",
-            name="Admin User"
+            email="admin@test.com", password="testpass123", name="Admin User"
         )
         self.admin_membership = SchoolMembership.objects.create(
-            user=self.admin,
-            school=self.school,
-            role="school_admin"
+            user=self.admin, school=self.school, role="school_admin"
         )
 
     def authenticate_user(self, user):
@@ -220,9 +194,9 @@ class StudentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Handle paginated response
-        if 'results' in response.data:
+        if "results" in response.data:
             # Paginated response
-            students = response.data['results']
+            students = response.data["results"]
         else:
             # Regular list response
             students = response.data
@@ -238,9 +212,9 @@ class StudentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Handle paginated response
-        if 'results' in response.data:
+        if "results" in response.data:
             # Paginated response
-            students = response.data['results']
+            students = response.data["results"]
         else:
             # Regular list response
             students = response.data
@@ -252,7 +226,7 @@ class StudentAPITests(APITestCase):
         found_profile = False
         for student in students:
             try:
-                if student['user']['id'] == self.student.id:
+                if student["user"]["id"] == self.student.id:
                     found_profile = True
                     break
             except (KeyError, TypeError):
@@ -281,57 +255,41 @@ class TeacherAPITests(APITestCase):
 
         # Create a teacher user with profile
         self.teacher = CustomUser.objects.create_user(
-            email="teacher@test.com",
-            password="testpass123",
-            name="Test Teacher"
+            email="teacher@test.com", password="testpass123", name="Test Teacher"
         )
         self.teacher_membership = SchoolMembership.objects.create(
-            user=self.teacher,
-            school=self.school,
-            role="teacher"
+            user=self.teacher, school=self.school, role="teacher"
         )
         self.teacher_profile = TeacherProfile.objects.create(
             user=self.teacher,
             bio="Test Bio",
             specialty="Math",
             education="PhD in Mathematics",
-            hourly_rate=50.00
+            hourly_rate=50.00,
         )
 
         # Create a second teacher user without profile
         self.teacher2 = CustomUser.objects.create_user(
-            email="teacher2@test.com",
-            password="testpass123",
-            name="Test Teacher 2"
+            email="teacher2@test.com", password="testpass123", name="Test Teacher 2"
         )
         self.teacher2_membership = SchoolMembership.objects.create(
-            user=self.teacher2,
-            school=self.school,
-            role="teacher"
+            user=self.teacher2, school=self.school, role="teacher"
         )
 
         # Create a student user
         self.student = CustomUser.objects.create_user(
-            email="student@test.com",
-            password="testpass123",
-            name="Test Student"
+            email="student@test.com", password="testpass123", name="Test Student"
         )
         self.student_membership = SchoolMembership.objects.create(
-            user=self.student,
-            school=self.school,
-            role="student"
+            user=self.student, school=self.school, role="student"
         )
 
         # Create an admin user
         self.admin = CustomUser.objects.create_superuser(
-            email="admin@test.com",
-            password="testpass123",
-            name="Admin User"
+            email="admin@test.com", password="testpass123", name="Admin User"
         )
         self.admin_membership = SchoolMembership.objects.create(
-            user=self.admin,
-            school=self.school,
-            role="school_admin"
+            user=self.admin, school=self.school, role="school_admin"
         )
 
     def authenticate_user(self, user):
@@ -347,9 +305,9 @@ class TeacherAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Handle paginated response
-        if 'results' in response.data:
+        if "results" in response.data:
             # Paginated response
-            teachers = response.data['results']
+            teachers = response.data["results"]
         else:
             # Regular list response
             teachers = response.data
@@ -365,9 +323,9 @@ class TeacherAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Handle paginated response
-        if 'results' in response.data:
+        if "results" in response.data:
             # Paginated response
-            teachers = response.data['results']
+            teachers = response.data["results"]
         else:
             # Regular list response
             teachers = response.data
@@ -379,7 +337,7 @@ class TeacherAPITests(APITestCase):
         found_profile = False
         for teacher in teachers:
             try:
-                if teacher['user']['id'] == self.teacher.id:
+                if teacher["user"]["id"] == self.teacher.id:
                     found_profile = True
                     break
             except (KeyError, TypeError):
@@ -399,50 +357,36 @@ class SchoolAPITests(APITestCase):
         self.school = School.objects.create(
             name="Test School",
             description="A test school",
-            contact_email="school@example.com"
+            contact_email="school@example.com",
         )
 
         # Create a school owner user
         self.owner = CustomUser.objects.create_user(
-            email="owner@test.com",
-            password="testpass123",
-            name="School Owner"
+            email="owner@test.com", password="testpass123", name="School Owner"
         )
         self.owner_membership = SchoolMembership.objects.create(
-            user=self.owner,
-            school=self.school,
-            role="school_owner"
+            user=self.owner, school=self.school, role="school_owner"
         )
 
         # Create a teacher user
         self.teacher = CustomUser.objects.create_user(
-            email="teacher@test.com",
-            password="testpass123",
-            name="Test Teacher"
+            email="teacher@test.com", password="testpass123", name="Test Teacher"
         )
         self.teacher_membership = SchoolMembership.objects.create(
-            user=self.teacher,
-            school=self.school,
-            role="teacher"
+            user=self.teacher, school=self.school, role="teacher"
         )
 
         # Create a student user
         self.student = CustomUser.objects.create_user(
-            email="student@test.com",
-            password="testpass123",
-            name="Test Student"
+            email="student@test.com", password="testpass123", name="Test Student"
         )
         self.student_membership = SchoolMembership.objects.create(
-            user=self.student,
-            school=self.school,
-            role="student"
+            user=self.student, school=self.school, role="student"
         )
 
         # Create a user with no school membership
         self.no_school_user = CustomUser.objects.create_user(
-            email="noschool@test.com",
-            password="testpass123",
-            name="No School User"
+            email="noschool@test.com", password="testpass123", name="No School User"
         )
 
     def authenticate_user(self, user):
@@ -458,15 +402,14 @@ class SchoolAPITests(APITestCase):
             data = {
                 "user_id": self.no_school_user.id,
                 "school_id": self.school.id,
-                "role": "student"
+                "role": "student",
             }
             response = self.client.post(url, data)
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
             # Verify membership was created
             membership = SchoolMembership.objects.filter(
-                user=self.no_school_user,
-                school=self.school
+                user=self.no_school_user, school=self.school
             ).first()
             self.assertIsNotNone(membership)
             self.assertEqual(membership.role, "student")
@@ -482,9 +425,9 @@ class SchoolAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Handle paginated response
-        if 'results' in response.data:
+        if "results" in response.data:
             # Paginated response
-            schools = response.data['results']
+            schools = response.data["results"]
         else:
             # Regular list response
             schools = response.data
@@ -492,7 +435,8 @@ class SchoolAPITests(APITestCase):
         # Check that at least one school exists
         self.assertGreaterEqual(len(schools), 1)
         # Verify the school we created is in the list
-        self.assertTrue(any(school['id'] == self.school.id for school in schools))
+        self.assertTrue(any(school["id"] == self.school.id for school in schools))
+
 
 class URLNameTests(TestCase):
     """Test URL name resolution."""

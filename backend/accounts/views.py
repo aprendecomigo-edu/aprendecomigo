@@ -1,8 +1,17 @@
+import uuid
+from typing import ClassVar
+
 from common.permissions import (
     IsOwnerOrSchoolAdmin,
     IsSchoolOwnerOrAdmin,
     IsStudentInAnySchool,
     IsTeacherInAnySchool,
+)
+from common.throttles import (
+    EmailBasedThrottle,
+    EmailCodeRequestThrottle,
+    IPBasedThrottle,
+    IPSignupThrottle,
 )
 from django.conf import settings
 from django.contrib.auth import get_user_model, login
@@ -23,7 +32,7 @@ from .models import (
     SchoolMembership,
     SchoolRole,
     StudentProfile,
-    TeacherProfile
+    TeacherProfile,
 )
 from .serializers import (
     BiometricVerifySerializer,
@@ -41,7 +50,7 @@ from .serializers import (
     UserSerializer,
     UserWithRolesSerializer,
 )
-from common.throttles import EmailCodeRequestThrottle, EmailBasedThrottle, IPBasedThrottle
+
 User = get_user_model()
 
 
@@ -51,8 +60,10 @@ class KnoxAuthenticatedAPIView(APIView):
     Base class for views that require Knox token authentication.
     """
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.authentication_classes = [TokenAuthentication]
+        self.permission_classes = [IsAuthenticated]
 
 
 # Base class for authenticated viewsets
@@ -61,8 +72,10 @@ class KnoxAuthenticatedViewSet(viewsets.ModelViewSet):
     Base class for viewsets that require Knox token authentication.
     """
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.authentication_classes = [TokenAuthentication]
+        self.permission_classes = [IsAuthenticated]
 
 
 class UserViewSet(KnoxAuthenticatedViewSet):
@@ -82,20 +95,19 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         if SchoolMembership.objects.filter(
             user=user,
             role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True
+            is_active=True,
         ).exists():
             # Get all schools where this user is an owner or admin
             admin_school_ids = SchoolMembership.objects.filter(
                 user=user,
                 role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-                is_active=True
-            ).values_list('school_id', flat=True)
+                is_active=True,
+            ).values_list("school_id", flat=True)
 
             # Get all users in these schools
             school_user_ids = SchoolMembership.objects.filter(
-                school_id__in=admin_school_ids,
-                is_active=True
-            ).values_list('user_id', flat=True)
+                school_id__in=admin_school_ids, is_active=True
+            ).values_list("user_id", flat=True)
 
             return User.objects.filter(id__in=school_user_ids)
 
@@ -146,19 +158,16 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         }
 
         # Get user's roles in schools
-        memberships = SchoolMembership.objects.filter(
-            user=user,
-            is_active=True
-        )
+        memberships = SchoolMembership.objects.filter(user=user, is_active=True)
 
-        user_info["roles"] = [{
-            "school": {
-                "id": m.school.id,
-                "name": m.school.name
-            },
-            "role": m.role,
-            "role_display": m.get_role_display()
-        } for m in memberships]
+        user_info["roles"] = [
+            {
+                "school": {"id": m.school.id, "name": m.school.name},
+                "role": m.role,
+                "role_display": m.get_role_display(),
+            }
+            for m in memberships
+        ]
 
         # Stats based on primary role
         stats = {}
@@ -167,14 +176,14 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         if SchoolMembership.objects.filter(
             user=user,
             role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True
+            is_active=True,
         ).exists():
             # Get schools where user is admin
             admin_school_ids = SchoolMembership.objects.filter(
                 user=user,
                 role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-                is_active=True
-            ).values_list('school_id', flat=True)
+                is_active=True,
+            ).values_list("school_id", flat=True)
 
             # Admin stats
             stats = {
@@ -182,20 +191,18 @@ class UserViewSet(KnoxAuthenticatedViewSet):
                 "student_count": SchoolMembership.objects.filter(
                     school_id__in=admin_school_ids,
                     role=SchoolRole.STUDENT,
-                    is_active=True
+                    is_active=True,
                 ).count(),
                 "teacher_count": SchoolMembership.objects.filter(
                     school_id__in=admin_school_ids,
                     role=SchoolRole.TEACHER,
-                    is_active=True
+                    is_active=True,
                 ).count(),
             }
 
         # If user is a teacher in any school
         elif SchoolMembership.objects.filter(
-            user=user,
-            role=SchoolRole.TEACHER,
-            is_active=True
+            user=user, role=SchoolRole.TEACHER, is_active=True
         ).exists():
             # Teacher stats
             stats = {
@@ -215,9 +222,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
 
         # If user is a student in any school
         elif SchoolMembership.objects.filter(
-            user=user,
-            role=SchoolRole.STUDENT,
-            is_active=True
+            user=user, role=SchoolRole.STUDENT, is_active=True
         ).exists():
             # Student stats
             stats = {
@@ -241,48 +246,36 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         """
         Get school profile information for a specific school
         """
-        school_id = request.query_params.get('school_id')
+        school_id = request.query_params.get("school_id")
 
         if not school_id:
-            return Response(
-                {"error": "School ID is required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "School ID is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             school = School.objects.get(id=school_id)
         except School.DoesNotExist:
-            return Response(
-                {"error": "School not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "School not found"}, status=status.HTTP_404_NOT_FOUND)
 
         # Check if user has access to this school
         if not (
             request.user.is_superuser
             or request.user.is_staff
             or SchoolMembership.objects.filter(
-                user=request.user,
-                school=school,
-                is_active=True
+                user=request.user, school=school, is_active=True
             ).exists()
         ):
             return Response(
                 {"error": "You don't have access to this school"},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # School statistics
         stats = {
             "students": SchoolMembership.objects.filter(
-                school=school,
-                role=SchoolRole.STUDENT,
-                is_active=True
+                school=school, role=SchoolRole.STUDENT, is_active=True
             ).count(),
             "teachers": SchoolMembership.objects.filter(
-                school=school,
-                role=SchoolRole.TEACHER,
-                is_active=True
+                school=school, role=SchoolRole.TEACHER, is_active=True
             ).count(),
             "classes": 0,  # Would need to calculate from scheduling models
             "class_types": 0,
@@ -307,19 +300,19 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         """
         Verify a contact method (email or phone) using a verification code
         """
-        contact_type = request.data.get('contact_type')
-        code = request.data.get('code')
+        contact_type = request.data.get("contact_type")
+        code = request.data.get("code")
 
-        if not contact_type or contact_type not in ['email', 'phone']:
+        if not contact_type or contact_type not in ["email", "phone"]:
             return Response(
                 {"error": "Invalid contact type. Must be 'email' or 'phone'."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if not code:
             return Response(
                 {"error": "Verification code is required."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         user = request.user
@@ -327,7 +320,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
 
         # Check for verification code
         try:
-            if contact_type == 'email':
+            if contact_type == "email":
                 verification = EmailVerificationCode.objects.filter(
                     email=contact_value, is_used=False
                 ).latest("created_at")
@@ -357,48 +350,56 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         setattr(user, f"{contact_type}_verified", True)
         user.save()
 
-        return Response({
-            "message": f"Your {contact_type} has been verified successfully.",
-            "user": UserSerializer(user).data
-        })
+        return Response(
+            {
+                "message": f"Your {contact_type} has been verified successfully.",
+                "user": UserSerializer(user).data,
+            }
+        )
 
     @action(detail=False, methods=["post"])
     def set_primary_contact(self, request):
         """
         Update the user's primary contact method
         """
-        primary_contact = request.data.get('primary_contact')
+        primary_contact = request.data.get("primary_contact")
 
-        if not primary_contact or primary_contact not in ['email', 'phone']:
+        if not primary_contact or primary_contact not in ["email", "phone"]:
             return Response(
                 {"error": "Invalid contact type. Must be 'email' or 'phone'."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         user = request.user
 
         # Ensure the selected contact is verified
-        if primary_contact == 'email' and not user.email_verified:
+        if primary_contact == "email" and not user.email_verified:
             return Response(
                 {"error": "Email must be verified before setting it as primary contact."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        elif primary_contact == 'phone' and not user.phone_verified:
+        elif primary_contact == "phone" and not user.phone_verified:
             return Response(
                 {"error": "Phone number must be verified before setting it as primary contact."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Update primary contact
         user.primary_contact = primary_contact
         user.save()
 
-        return Response({
-            "message": f"Your primary contact has been updated to {primary_contact}.",
-            "user": UserSerializer(user).data
-        })
+        return Response(
+            {
+                "message": f"Your primary contact has been updated to {primary_contact}.",
+                "user": UserSerializer(user).data,
+            }
+        )
 
-    @action(detail=False, methods=["post"], throttle_classes=[EmailCodeRequestThrottle])
+    @action(
+        detail=False,
+        methods=["post"],
+        throttle_classes=[EmailCodeRequestThrottle, IPSignupThrottle],
+    )
     def signup(self, request):
         """
         Sign up as a new user without requiring authentication.
@@ -411,17 +412,17 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         validated_data = serializer.validated_data
-        email = validated_data.get('email')
-        phone_number = validated_data.get('phone_number')
-        name = validated_data.get('name')
-        primary_contact = validated_data.get('primary_contact')
-        school_data = validated_data.get('school', {})
+        email = validated_data.get("email")
+        phone_number = validated_data.get("phone_number")
+        name = validated_data.get("name")
+        primary_contact = validated_data.get("primary_contact")
+        school_data = validated_data.get("school", {})
 
         # Check if user already exists
         if User.objects.filter(email=email).exists():
             return Response(
                 {"error": "A user with this email already exists."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Create the user (without password initially)
@@ -430,26 +431,23 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             password=None,  # Will be set after verification
             name=name,
             phone_number=phone_number,
-            primary_contact=primary_contact
+            primary_contact=primary_contact,
         )
 
         # Create school if school data provided
         if school_data:
             school = School.objects.create(
-                name=school_data.get('name'),
-                description=school_data.get('description', ''),
-                address=school_data.get('address', ''),
-                contact_email=school_data.get('contact_email', email),
-                phone_number=school_data.get('phone_number', phone_number),
-                website=school_data.get('website', '')
+                name=school_data.get("name"),
+                description=school_data.get("description", ""),
+                address=school_data.get("address", ""),
+                contact_email=school_data.get("contact_email", email),
+                phone_number=school_data.get("phone_number", phone_number),
+                website=school_data.get("website", ""),
             )
 
             # Create school membership
             SchoolMembership.objects.create(
-                user=user,
-                school=school,
-                role=SchoolRole.SCHOOL_OWNER,
-                is_active=True
+                user=user, school=school, role=SchoolRole.SCHOOL_OWNER, is_active=True
             )
         else:
             # Create default school
@@ -457,26 +455,23 @@ class UserViewSet(KnoxAuthenticatedViewSet):
                 name=f"{user.name}'s School",
                 description="Default school created on sign up",
                 contact_email=user.email,
-                phone_number=user.phone_number
+                phone_number=user.phone_number,
             )
 
             # Create school membership
             SchoolMembership.objects.create(
-                user=user,
-                school=school,
-                role=SchoolRole.SCHOOL_OWNER,
-                is_active=True
+                user=user, school=school, role=SchoolRole.SCHOOL_OWNER, is_active=True
             )
 
         # Generate verification code for primary contact
-        if primary_contact == 'email':
+        if primary_contact == "email":
             verification = EmailVerificationCode.generate_code(email)
-            contact_value = email
+            # For email use the email value
         else:
             # For phone verification, in a real system we'd use a different
             # mechanism like SMS, but for this example we'll use email
             verification = EmailVerificationCode.generate_code(phone_number)
-            contact_value = phone_number
+            # For phone use the phone value
 
         code = verification.get_current_code()
 
@@ -494,24 +489,24 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             # Rollback user creation if email fails
             user.delete()
             return Response(
-                {"error": f"Failed to send verification code: {str(e)}"},
+                {"error": f"Failed to send verification code: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        return Response({
-            "message": f"User created successfully. Verification code sent to your {contact_type_display}.",
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "name": user.name,
-                "phone_number": user.phone_number,
-                "primary_contact": user.primary_contact
+        return Response(
+            {
+                "message": f"User created successfully. Verification code sent to your {contact_type_display}.",
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name,
+                    "phone_number": user.phone_number,
+                    "primary_contact": user.primary_contact,
+                },
+                "school": {"id": school.id, "name": school.name},
             },
-            "school": {
-                "id": school.id,
-                "name": school.name
-            }
-        }, status=status.HTTP_201_CREATED)
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class SchoolViewSet(KnoxAuthenticatedViewSet):
@@ -528,10 +523,9 @@ class SchoolViewSet(KnoxAuthenticatedViewSet):
             return School.objects.all()
 
         # Users can see schools they're members of
-        school_ids = SchoolMembership.objects.filter(
-            user=user,
-            is_active=True
-        ).values_list('school_id', flat=True)
+        school_ids = SchoolMembership.objects.filter(user=user, is_active=True).values_list(
+            "school_id", flat=True
+        )
 
         return School.objects.filter(id__in=school_ids)
 
@@ -556,7 +550,7 @@ class SchoolViewSet(KnoxAuthenticatedViewSet):
             user=self.request.user,
             school=school,
             role=SchoolRole.SCHOOL_OWNER,
-            is_active=True
+            is_active=True,
         )
 
     @action(detail=True, methods=["get"])
@@ -586,8 +580,8 @@ class SchoolMembershipViewSet(KnoxAuthenticatedViewSet):
         admin_school_ids = SchoolMembership.objects.filter(
             user=user,
             role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True
-        ).values_list('school_id', flat=True)
+            is_active=True,
+        ).values_list("school_id", flat=True)
 
         if admin_school_ids:
             return SchoolMembership.objects.filter(school_id__in=admin_school_ids)
@@ -622,13 +616,10 @@ class SchoolInvitationViewSet(KnoxAuthenticatedViewSet):
         admin_school_ids = SchoolMembership.objects.filter(
             user=user,
             role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True
-        ).values_list('school_id', flat=True)
+            is_active=True,
+        ).values_list("school_id", flat=True)
 
-        return SchoolInvitation.objects.filter(
-            school_id__in=admin_school_ids,
-            invited_by=user
-        )
+        return SchoolInvitation.objects.filter(school_id__in=admin_school_ids, invited_by=user)
 
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
@@ -648,14 +639,9 @@ class SchoolInvitationViewSet(KnoxAuthenticatedViewSet):
         expires_at = timezone.now() + timezone.timedelta(days=7)
 
         # Generate a unique token
-        import uuid
         token = uuid.uuid4().hex
 
-        serializer.save(
-            invited_by=self.request.user,
-            expires_at=expires_at,
-            token=token
-        )
+        serializer.save(invited_by=self.request.user, expires_at=expires_at, token=token)
 
     @action(detail=False, methods=["post"])
     def accept(self, request):
@@ -666,21 +652,18 @@ class SchoolInvitationViewSet(KnoxAuthenticatedViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        token = serializer.validated_data['token']
+        token = serializer.validated_data["token"]
 
         try:
             invitation = SchoolInvitation.objects.get(token=token)
         except SchoolInvitation.DoesNotExist:
-            return Response(
-                {"error": "Invalid invitation token"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Invalid invitation token"}, status=status.HTTP_404_NOT_FOUND)
 
         # Check if invitation is valid
         if not invitation.is_valid():
             return Response(
                 {"error": "Invitation has expired or already been used"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         email = invitation.email
@@ -696,16 +679,13 @@ class SchoolInvitationViewSet(KnoxAuthenticatedViewSet):
                 # Create a new user if this is a new email
                 user = User.objects.create_user(
                     email=email,
-                    name=email.split('@')[0],  # Default name from email
-                    password=None  # Will need to set password via reset
+                    name=email.split("@")[0],  # Default name from email
+                    password=None,  # Will need to set password via reset
                 )
 
         # Create the membership
         SchoolMembership.objects.create(
-            user=user,
-            school=invitation.school,
-            role=invitation.role,
-            is_active=True
+            user=user, school=invitation.school, role=invitation.role, is_active=True
         )
 
         # Mark invitation as accepted
@@ -717,15 +697,15 @@ class SchoolInvitationViewSet(KnoxAuthenticatedViewSet):
             # Create token for the user
             token_instance, token = AuthToken.objects.create(user)
 
-            return Response({
-                "message": "Invitation accepted successfully",
-                "token": token,
-                "user": UserWithRolesSerializer(user).data
-            })
+            return Response(
+                {
+                    "message": "Invitation accepted successfully",
+                    "token": token,
+                    "user": UserWithRolesSerializer(user).data,
+                }
+            )
 
-        return Response({
-            "message": "Invitation accepted successfully"
-        })
+        return Response({"message": "Invitation accepted successfully"})
 
     @action(detail=False, methods=["post"])
     def invite(self, request):
@@ -736,32 +716,29 @@ class SchoolInvitationViewSet(KnoxAuthenticatedViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        email = serializer.validated_data['email']
-        role = serializer.validated_data['role']
-        school_id = serializer.validated_data['school_id']
-        message = serializer.validated_data.get('message', '')
+        email = serializer.validated_data["email"]
+        role = serializer.validated_data["role"]
+        school_id = serializer.validated_data["school_id"]
+        message = serializer.validated_data.get("message", "")
 
         # Check if the school exists
         try:
             school = School.objects.get(id=school_id)
         except School.DoesNotExist:
-            return Response(
-                {"error": "School not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "School not found"}, status=status.HTTP_404_NOT_FOUND)
 
         # Check if the user has permission to invite to this school
         has_permission = SchoolMembership.objects.filter(
             user=request.user,
             school=school,
             role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True
+            is_active=True,
         ).exists()
 
         if not has_permission and not (request.user.is_staff or request.user.is_superuser):
             return Response(
                 {"error": "You don't have permission to invite users to this school"},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # Create the invitation
@@ -774,7 +751,7 @@ class SchoolInvitationViewSet(KnoxAuthenticatedViewSet):
             invited_by=request.user,
             role=role,
             token=token,
-            expires_at=expires_at
+            expires_at=expires_at,
         )
 
         # Send invitation email
@@ -790,7 +767,7 @@ class SchoolInvitationViewSet(KnoxAuthenticatedViewSet):
                 Please click the link below to accept the invitation:
                 {invite_url}
 
-                This invitation will expire on {expires_at.strftime('%Y-%m-%d')}.
+                This invitation will expire on {expires_at.strftime("%Y-%m-%d")}.
                 """,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
@@ -800,14 +777,16 @@ class SchoolInvitationViewSet(KnoxAuthenticatedViewSet):
             # Delete the invitation if email fails
             invitation.delete()
             return Response(
-                {"error": f"Failed to send invitation email: {str(e)}"},
+                {"error": f"Failed to send invitation email: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        return Response({
-            "message": f"Invitation sent to {email}",
-            "invitation": SchoolInvitationSerializer(invitation).data
-        })
+        return Response(
+            {
+                "message": f"Invitation sent to {email}",
+                "invitation": SchoolInvitationSerializer(invitation).data,
+            }
+        )
 
 
 class TeacherViewSet(KnoxAuthenticatedViewSet):
@@ -826,21 +805,19 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
         if SchoolMembership.objects.filter(
             user=user,
             role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True
+            is_active=True,
         ).exists():
             # Get the schools where user is an admin
             admin_school_ids = SchoolMembership.objects.filter(
                 user=user,
                 role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-                is_active=True
-            ).values_list('school_id', flat=True)
+                is_active=True,
+            ).values_list("school_id", flat=True)
 
             # Get all teacher users in these schools
             teacher_user_ids = SchoolMembership.objects.filter(
-                school_id__in=admin_school_ids,
-                role=SchoolRole.TEACHER,
-                is_active=True
-            ).values_list('user_id', flat=True)
+                school_id__in=admin_school_ids, role=SchoolRole.TEACHER, is_active=True
+            ).values_list("user_id", flat=True)
 
             return TeacherProfile.objects.filter(user_id__in=teacher_user_ids)
 
@@ -876,43 +853,37 @@ class StudentViewSet(KnoxAuthenticatedViewSet):
         if SchoolMembership.objects.filter(
             user=user,
             role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True
+            is_active=True,
         ).exists():
             # Get the schools where user is an admin
             admin_school_ids = SchoolMembership.objects.filter(
                 user=user,
                 role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-                is_active=True
-            ).values_list('school_id', flat=True)
+                is_active=True,
+            ).values_list("school_id", flat=True)
 
             # Get all student users in these schools
             student_user_ids = SchoolMembership.objects.filter(
-                school_id__in=admin_school_ids,
-                role=SchoolRole.STUDENT,
-                is_active=True
-            ).values_list('user_id', flat=True)
+                school_id__in=admin_school_ids, role=SchoolRole.STUDENT, is_active=True
+            ).values_list("user_id", flat=True)
 
             return StudentProfile.objects.filter(user_id__in=student_user_ids)
 
         # Teachers can see students in schools where they teach
         if SchoolMembership.objects.filter(
-            user=user,
-            role=SchoolRole.TEACHER,
-            is_active=True
+            user=user, role=SchoolRole.TEACHER, is_active=True
         ).exists():
             # Get the schools where user is a teacher
             teacher_school_ids = SchoolMembership.objects.filter(
-                user=user,
-                role=SchoolRole.TEACHER,
-                is_active=True
-            ).values_list('school_id', flat=True)
+                user=user, role=SchoolRole.TEACHER, is_active=True
+            ).values_list("school_id", flat=True)
 
             # Get all student users in these schools
             student_user_ids = SchoolMembership.objects.filter(
                 school_id__in=teacher_school_ids,
                 role=SchoolRole.STUDENT,
-                is_active=True
-            ).values_list('user_id', flat=True)
+                is_active=True,
+            ).values_list("user_id", flat=True)
 
             return StudentProfile.objects.filter(user_id__in=student_user_ids)
 
@@ -940,7 +911,8 @@ class StudentViewSet(KnoxAuthenticatedViewSet):
 
         # Check if student profile already exists
         try:
-            student = StudentProfile.objects.get(user=user)
+            # Just check if profile exists, no need to store in variable
+            StudentProfile.objects.get(user=user)
             return Response(
                 {"message": "Your profile is already complete."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -958,18 +930,17 @@ class StudentViewSet(KnoxAuthenticatedViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
-
 class RequestEmailCodeView(APIView):
     """
     API endpoint for requesting a TOTP verification code.
     Rate limited to prevent abuse.
     """
 
-    authentication_classes: list = []  # No authentication required
-    permission_classes = [AllowAny]
-    throttle_classes = [EmailCodeRequestThrottle]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.authentication_classes = []  # No authentication required
+        self.permission_classes = [AllowAny]
+        self.throttle_classes = [EmailCodeRequestThrottle]
 
     def post(self, request):
         serializer = EmailRequestSerializer(data=request.data)
@@ -993,7 +964,7 @@ class RequestEmailCodeView(APIView):
             )
         except Exception as e:
             return Response(
-                {"error": f"Failed to send email: {str(e)}"},
+                {"error": f"Failed to send email: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -1010,9 +981,11 @@ class VerifyEmailCodeView(APIView):
     Rate limited by both email and IP to prevent brute force attacks.
     """
 
-    authentication_classes: list = []  # No authentication required
-    permission_classes = [AllowAny]
-    throttle_classes = [EmailBasedThrottle, IPBasedThrottle]  # Apply both throttles
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.authentication_classes = []  # No authentication required
+        self.permission_classes = [AllowAny]
+        self.throttle_classes = [EmailBasedThrottle, IPBasedThrottle]  # Apply both throttles
 
     def post(self, request):
         serializer = EmailVerifySerializer(data=request.data)
@@ -1024,9 +997,9 @@ class VerifyEmailCodeView(APIView):
 
         # Try to get the latest verification code for this email
         try:
-            verification = EmailVerificationCode.objects.filter(
-                email=email, is_used=False
-            ).latest("created_at")
+            verification = EmailVerificationCode.objects.filter(email=email, is_used=False).latest(
+                "created_at"
+            )
         except EmailVerificationCode.DoesNotExist:
             return Response(
                 {"error": "No verification code found for this email."},
@@ -1039,9 +1012,7 @@ class VerifyEmailCodeView(APIView):
             locked_out = verification.record_failed_attempt()
             if locked_out:
                 return Response(
-                    {
-                        "error": "Too many failed attempts. Please request a new verification code."
-                    },
+                    {"error": "Too many failed attempts. Please request a new verification code."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             return Response(
@@ -1086,24 +1057,19 @@ class VerifyEmailCodeView(APIView):
             school = School.objects.create(
                 name=f"{user.name}'s School",
                 description="Default school created on sign up",
-                contact_email=user.email
+                contact_email=user.email,
             )
 
             # Create a school membership for this user as owner
             SchoolMembership.objects.create(
-                user=user,
-                school=school,
-                role=SchoolRole.SCHOOL_OWNER,
-                is_active=True
+                user=user, school=school, role=SchoolRole.SCHOOL_OWNER, is_active=True
             )
 
             response_data["is_new_user"] = True
-            response_data["school"] = {
-                "id": school.id,
-                "name": school.name
-            }
+            response_data["school"] = {"id": school.id, "name": school.name}
 
         return Response(response_data, status=status.HTTP_200_OK)
+
 
 class BiometricVerifyView(APIView):
     """
@@ -1112,9 +1078,11 @@ class BiometricVerifyView(APIView):
     Rate limited to prevent abuse.
     """
 
-    authentication_classes: list = []  # No authentication required
-    permission_classes = [AllowAny]
-    throttle_classes = [EmailBasedThrottle, IPBasedThrottle]  # Apply both throttles
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.authentication_classes = []  # No authentication required
+        self.permission_classes = [AllowAny]
+        self.throttle_classes = [EmailBasedThrottle, IPBasedThrottle]  # Apply both throttles
 
     def post(self, request):
         serializer = BiometricVerifySerializer(data=request.data)
@@ -1147,7 +1115,6 @@ class BiometricVerifyView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-
 
     """API endpoint for user profile operations."""
 
