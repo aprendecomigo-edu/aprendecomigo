@@ -27,7 +27,7 @@ ALLOWED_HOSTS = allowed_hosts.split(",")
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 # Use PostgreSQL in production
 if os.getenv("DATABASE_URL"):
-    import dj_database_url
+    import dj_database_url  # type: ignore
 
     DATABASES = {"default": dj_database_url.config(default=os.getenv("DATABASE_URL"))}
 else:
