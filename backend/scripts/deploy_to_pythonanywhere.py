@@ -56,6 +56,8 @@ DEFAULT_EXCLUDE_DIRS = [
     ".pytest_cache",
     ".mypy_cache",
     "*.md",
+    "**/tests/*",
+    "**/test_*.py",
 ]
 
 # Load .gitignore patterns
