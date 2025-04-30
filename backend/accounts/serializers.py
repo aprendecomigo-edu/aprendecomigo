@@ -1,4 +1,5 @@
 import re
+from typing import ClassVar
 
 from common.serializers import BaseNestedModelSerializer, BaseSerializer
 from django.contrib.auth import get_user_model
@@ -19,31 +20,23 @@ MAX_PHONE_LENGTH = 20
 MAX_SCHOOL_NAME_LENGTH = 150
 
 
-class UserSerializer(BaseSerializer):
+class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for the User model.
     """
 
     class Meta:
         model = User
-        fields = (
+        fields: ClassVar[list[str]] = [
             "id",
+            "username",
             "email",
-            "name",
-            "phone_number",
-            "primary_contact",
-            "email_verified",
-            "phone_verified",
-            "created_at",
-            "updated_at",
-        )
-        read_only_fields = (
-            "id",
-            "email_verified",
-            "phone_verified",
-            "created_at",
-            "updated_at",
-        )
+            "first_name",
+            "last_name",
+            "is_student",
+            "is_teacher",
+        ]
+        read_only_fields: ClassVar[list[str]] = ["id", "is_student", "is_teacher"]
 
 
 class SchoolSerializer(BaseSerializer):
@@ -53,7 +46,7 @@ class SchoolSerializer(BaseSerializer):
 
     class Meta:
         model = School
-        fields = (
+        fields: ClassVar[list[str]] = [
             "id",
             "name",
             "description",
@@ -63,8 +56,8 @@ class SchoolSerializer(BaseSerializer):
             "website",
             "created_at",
             "updated_at",
-        )
-        read_only_fields = ("id", "created_at", "updated_at")
+        ]
+        read_only_fields: ClassVar[list[str]] = ["id", "created_at", "updated_at"]
 
 
 class SchoolMembershipSerializer(BaseNestedModelSerializer):
@@ -86,7 +79,7 @@ class SchoolMembershipSerializer(BaseNestedModelSerializer):
 
     class Meta:
         model = SchoolMembership
-        fields = (
+        fields: ClassVar[list[str]] = [
             "id",
             "user",
             "user_id",
@@ -96,8 +89,8 @@ class SchoolMembershipSerializer(BaseNestedModelSerializer):
             "role_display",
             "is_active",
             "joined_at",
-        )
-        read_only_fields = ("id", "joined_at")
+        ]
+        read_only_fields: ClassVar[list[str]] = ["id", "joined_at"]
 
 
 class SchoolInvitationSerializer(BaseNestedModelSerializer):
@@ -116,7 +109,7 @@ class SchoolInvitationSerializer(BaseNestedModelSerializer):
 
     class Meta:
         model = SchoolInvitation
-        fields = (
+        fields: ClassVar[list[str]] = [
             "id",
             "school",
             "school_id",
@@ -128,15 +121,15 @@ class SchoolInvitationSerializer(BaseNestedModelSerializer):
             "created_at",
             "expires_at",
             "is_accepted",
-        )
-        read_only_fields = (
+        ]
+        read_only_fields: ClassVar[list[str]] = [
             "id",
             "invited_by",
             "token",
             "created_at",
             "expires_at",
             "is_accepted",
-        )
+        ]
 
 
 class SchoolWithMembersSerializer(SchoolSerializer):
@@ -147,71 +140,37 @@ class SchoolWithMembersSerializer(SchoolSerializer):
     members = serializers.SerializerMethodField()
 
     class Meta(SchoolSerializer.Meta):
-        fields = (*SchoolSerializer.Meta.fields, "members")
+        fields: ClassVar[list[str]] = [*list(SchoolSerializer.Meta.fields), "members"]
 
     def get_members(self, obj):
         memberships = obj.memberships.filter(is_active=True)
         return SchoolMembershipSerializer(memberships, many=True).data
 
 
-class StudentSerializer(BaseNestedModelSerializer):
+class StudentSerializer(serializers.ModelSerializer):
     """
     Serializer for the StudentProfile model.
     """
 
     user = UserSerializer(read_only=True)
-    user_id = serializers.PrimaryKeyRelatedField(
-        write_only=True,
-        queryset=User.objects.all(),
-        source="user",
-        required=False,
-    )
 
     class Meta:
         model = StudentProfile
-        fields = (
-            "id",
-            "user",
-            "user_id",
-            "school_year",
-            "birth_date",
-            "address",
-            "cc_number",
-            "cc_photo",
-            "calendar_iframe",
-        )
-        read_only_fields = ("id",)
+        fields: ClassVar[list[str]] = ["id", "user", "school_year", "birth_date", "address"]
+        read_only_fields: ClassVar[list[str]] = ["id"]
 
 
-class TeacherSerializer(BaseNestedModelSerializer):
+class TeacherSerializer(serializers.ModelSerializer):
     """
     Serializer for the TeacherProfile model.
     """
 
     user = UserSerializer(read_only=True)
-    user_id = serializers.PrimaryKeyRelatedField(
-        write_only=True,
-        queryset=User.objects.all(),
-        source="user",
-        required=False,
-    )
 
     class Meta:
         model = TeacherProfile
-        fields = (
-            "id",
-            "user",
-            "user_id",
-            "bio",
-            "specialty",
-            "education",
-            "hourly_rate",
-            "availability",
-            "address",
-            "phone_number",
-            "calendar_iframe",
-        )
-        read_only_fields = ("id",)
+        fields: ClassVar[list[str]] = ["id", "user", "bio", "specialty", "education"]
+        read_only_fields: ClassVar[list[str]] = ["id"]
 
 
 class UserWithRolesSerializer(UserSerializer):
@@ -222,7 +181,7 @@ class UserWithRolesSerializer(UserSerializer):
     roles = serializers.SerializerMethodField()
 
     class Meta(UserSerializer.Meta):
-        fields = (*UserSerializer.Meta.fields, "roles")
+        fields: ClassVar[list[str]] = [*list(UserSerializer.Meta.fields), "roles"]
 
     def get_roles(self, obj):
         memberships = obj.school_memberships.filter(is_active=True)

@@ -8,27 +8,22 @@ from .models import CustomUser, StudentProfile, TeacherProfile
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
     list_display = ("email", "name", "is_staff")
-    list_filter = ["is_staff", "is_superuser", "is_active"]
+    list_filter = ("is_staff", "is_superuser", "is_active")
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Personal info", {"fields": ("name", "phone_number")}),
         (
             "Permissions",
-            {"fields": ("is_active", "is_staff", "is_superuser", "is_admin")},
+            {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")},
         ),
+        ("Important dates", {"fields": ("last_login", "date_joined")}),
     )
     add_fieldsets = (
         (
             None,
             {
                 "classes": ("wide",),
-                "fields": (
-                    "email",
-                    "name",
-                    "phone_number",
-                    "password1",
-                    "password2",
-                ),
+                "fields": ("email", "name", "password1", "password2"),
             },
         ),
     )

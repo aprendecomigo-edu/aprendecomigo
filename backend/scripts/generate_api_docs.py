@@ -63,7 +63,7 @@ def generate_endpoint_docs():
     for url in api_urls:
         # Try to determine the app from the URL pattern
         path_parts = url["path"].split("/")
-        if len(path_parts) > 2:
+        if len(path_parts) > 2:  # noqa: PLR2004
             app = path_parts[2].capitalize()  # Use the part after /api/
         else:
             app = "API"
@@ -113,19 +113,14 @@ def update_api_contract(endpoints):
             # Next section not found, replace until the end
             new_content = contract_content[:start] + endpoints_section
         else:
-            new_content = (
-                contract_content[:start] + endpoints_section + contract_content[end:]
-            )
+            new_content = contract_content[:start] + endpoints_section + contract_content[end:]
+    # Add the section before the response format section
+    elif next_marker in contract_content:
+        pos = contract_content.find(next_marker)
+        new_content = contract_content[:pos] + endpoints_section + contract_content[pos:]
     else:
-        # Add the section before the response format section
-        if next_marker in contract_content:
-            pos = contract_content.find(next_marker)
-            new_content = (
-                contract_content[:pos] + endpoints_section + contract_content[pos:]
-            )
-        else:
-            # Append to the end
-            new_content = contract_content + endpoints_section
+        # Append to the end
+        new_content = contract_content + endpoints_section
 
     # Update the last updated date
     today = datetime.now().strftime("%B %d, %Y")

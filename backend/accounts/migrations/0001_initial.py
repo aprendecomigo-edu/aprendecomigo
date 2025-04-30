@@ -29,9 +29,7 @@ class Migration(migrations.Migration):
                 ("password", models.CharField(max_length=128, verbose_name="password")),
                 (
                     "last_login",
-                    models.DateTimeField(
-                        blank=True, null=True, verbose_name="last login"
-                    ),
+                    models.DateTimeField(blank=True, null=True, verbose_name="last login"),
                 ),
                 (
                     "is_superuser",
@@ -43,15 +41,11 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "first_name",
-                    models.CharField(
-                        blank=True, max_length=150, verbose_name="first name"
-                    ),
+                    models.CharField(blank=True, max_length=150, verbose_name="first name"),
                 ),
                 (
                     "last_name",
-                    models.CharField(
-                        blank=True, max_length=150, verbose_name="last name"
-                    ),
+                    models.CharField(blank=True, max_length=150, verbose_name="last name"),
                 ),
                 (
                     "is_staff",
@@ -83,16 +77,12 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "email",
-                    models.EmailField(
-                        max_length=254, unique=True, verbose_name="email address"
-                    ),
+                    models.EmailField(max_length=254, unique=True, verbose_name="email address"),
                 ),
                 ("name", models.CharField(max_length=150, verbose_name="name")),
                 (
                     "phone_number",
-                    models.CharField(
-                        blank=True, max_length=20, verbose_name="phone number"
-                    ),
+                    models.CharField(blank=True, max_length=20, verbose_name="phone number"),
                 ),
                 ("is_admin", models.BooleanField(default=False)),
                 (
@@ -164,9 +154,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "cc_number",
-                    models.CharField(
-                        blank=True, max_length=20, verbose_name="CC number"
-                    ),
+                    models.CharField(blank=True, max_length=20, verbose_name="CC number"),
                 ),
                 (
                     "cc_photo",
@@ -214,9 +202,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "specialty",
-                    models.CharField(
-                        blank=True, max_length=100, verbose_name="specialty"
-                    ),
+                    models.CharField(blank=True, max_length=100, verbose_name="specialty"),
                 ),
                 (
                     "education",
@@ -254,9 +240,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "phone_number",
-                    models.CharField(
-                        blank=True, max_length=20, verbose_name="teacher phone"
-                    ),
+                    models.CharField(blank=True, max_length=20, verbose_name="teacher phone"),
                 ),
                 (
                     "calendar_iframe",

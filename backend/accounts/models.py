@@ -8,7 +8,6 @@ from django.utils.translation import gettext_lazy as _
 
 # Define type variables
 T = TypeVar("T", bound="CustomUser")
-_ST = TypeVar("_ST", bound="SchoolMembership")
 
 
 class CustomUserManager(UserManager[T]):
@@ -195,7 +194,8 @@ class SchoolMembership(models.Model):
 
     def get_role_display(self) -> str:
         """Get the display value for the role."""
-        return dict(SchoolRole.choices).get(self.role, self.role)
+        role_display = dict(SchoolRole.choices).get(self.role, self.role)
+        return str(role_display)  # Convert _StrPromise to str
 
 
 class StudentProfile(models.Model):
@@ -295,7 +295,8 @@ class SchoolInvitation(models.Model):
 
     def get_role_display(self) -> str:
         """Get the display value for the role."""
-        return dict(SchoolRole.choices).get(self.role, self.role)
+        role_display = dict(SchoolRole.choices).get(self.role, self.role)
+        return str(role_display)  # Convert _StrPromise to str
 
 
 class EmailVerificationCode(models.Model):

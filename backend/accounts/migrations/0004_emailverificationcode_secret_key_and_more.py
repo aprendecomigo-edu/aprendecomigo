@@ -12,9 +12,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="emailverificationcode",
             name="secret_key",
-            field=models.CharField(
-                default="DEFAULTSECRETKEYTOBEREPLACED", max_length=32
-            ),
+            field=models.CharField(default="DEFAULTSECRETKEYTOBEREPLACED", max_length=32),
         ),
         migrations.AlterField(
             model_name="emailverificationcode",

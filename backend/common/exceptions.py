@@ -19,13 +19,9 @@ def custom_exception_handler(exc, context):
         if response.status_code == status.HTTP_404_NOT_FOUND:
             response.data["message"] = "Resource not found"
         elif response.status_code == status.HTTP_403_FORBIDDEN:
-            response.data["message"] = (
-                "You don't have permission to perform this action"
-            )
+            response.data["message"] = "You don't have permission to perform this action"
         elif response.status_code == status.HTTP_401_UNAUTHORIZED:
-            response.data["message"] = (
-                "Authentication credentials were not provided or are invalid"
-            )
+            response.data["message"] = "Authentication credentials were not provided or are invalid"
         elif response.status_code == status.HTTP_400_BAD_REQUEST:
             response.data["message"] = "Bad request"
 

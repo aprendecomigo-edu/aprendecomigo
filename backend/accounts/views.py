@@ -1,5 +1,4 @@
 import uuid
-from typing import ClassVar
 
 from common.permissions import (
     IsOwnerOrSchoolAdmin,

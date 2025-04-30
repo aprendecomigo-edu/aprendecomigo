@@ -16,8 +16,8 @@ repos:
         "--extend-select=B,C4,ERA,I,ICN,ISC,N,PL,Q,RUF,S,T10,T20,UP,YTT",
         "--line-length=100",
         "--target-version=py311",
-        "--per-file-ignores=**/settings.py:E501,**/tests/*:S101,**/scripts/*:T201,**/migrations/*:RUF012",
-        "--exclude=testing/*",
+        "--per-file-ignores=**/settings.py:E501,**/tests/*:S101,**/tests/*:S106,**/scripts/*:T201,**/migrations/*:RUF012",
+        "--exclude=testing/*,**/migrations/*",
       ]
     - id: ruff-format
       args: ["--line-length=100"]
