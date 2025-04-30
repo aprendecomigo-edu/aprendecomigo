@@ -67,7 +67,7 @@ sortedcontainers==2.4.0
 sqlparse==0.5.3
 trio==0.29.0
 trio-websocket==0.12.0
-types-requests==2.31.0.20240601
+types-requests==2.31
 typing_extensions==4.13.0
 uritemplate==4.1.1
 urllib3==2.3.0
