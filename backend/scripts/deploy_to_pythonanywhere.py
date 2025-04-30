@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import fnmatch
 import os
 import sys
 import time
@@ -231,10 +232,42 @@ def should_exclude(path):
     """Check if a path should be excluded from upload."""
     path_str = str(path)
 
+    # Get the filename and extension
+    filename = path.name
+
     # First check hardcoded exclusions for common directories
-    for exclude_dir in DEFAULT_EXCLUDE_DIRS:
-        if exclude_dir in path_str.split(os.sep):
+    for exclude_pattern in DEFAULT_EXCLUDE_DIRS:
+        # Handle directory name exact matches (no wildcards)
+        if (
+            "*" not in exclude_pattern
+            and "?" not in exclude_pattern
+            and exclude_pattern in path_str.split(os.sep)
+        ):
+            print(f"Excluding (directory match): {path_str}")
             return True
+
+        # Handle wildcard patterns using fnmatch
+        if "*" in exclude_pattern or "?" in exclude_pattern:
+            # Check against the full path (with forward slashes for consistency)
+            norm_path = path_str.replace("\\", "/")
+            # Handle patterns that start with ** (match anywhere in path)
+            if exclude_pattern.startswith("**/"):
+                pattern = exclude_pattern[3:]  # Remove **/ prefix
+                # Check if pattern matches any part of the path
+                for part in norm_path.split("/"):
+                    if fnmatch.fnmatch(part, pattern):
+                        print(f"Excluding (wildcard match '{exclude_pattern}'): {path_str}")
+                        return True
+                # Also check against the full path for patterns like **/tests/*
+                if fnmatch.fnmatch(norm_path, f"*/{pattern}") or fnmatch.fnmatch(
+                    norm_path, pattern
+                ):
+                    print(f"Excluding (path wildcard match '{exclude_pattern}'): {path_str}")
+                    return True
+            # Direct file pattern match (like *.md)
+            elif fnmatch.fnmatch(filename, exclude_pattern):
+                print(f"Excluding (filename pattern '{exclude_pattern}'): {path_str}")
+                return True
 
     # Then check against gitignore patterns if available
     if gitignore_spec:
@@ -548,9 +581,71 @@ def collect_static(console_id):
     return success
 
 
+def test_exclusions():
+    """Test the exclusion logic with a set of example paths to verify it works correctly."""
+    print("\n=== Testing exclusion patterns ===")
+
+    # Create a list of test paths that should be excluded
+    test_exclude_paths = [
+        LOCAL_BASE_DIR / "README.md",  # *.md pattern
+        LOCAL_BASE_DIR / "backend" / "docs" / "api.md",  # *.md pattern in subdirectory
+        LOCAL_BASE_DIR / "backend" / "tests" / "test_api.py",  # **/tests/* pattern
+        LOCAL_BASE_DIR / "backend" / "app" / "tests" / "config.py",  # **/tests/* pattern
+        LOCAL_BASE_DIR / "backend" / "test_utils.py",  # **/test_*.py pattern
+        LOCAL_BASE_DIR / ".git" / "config",  # directory match
+        LOCAL_BASE_DIR / "node_modules" / "package.json",  # directory match
+    ]
+
+    # Create a list of test paths that should be included
+    test_include_paths = [
+        LOCAL_BASE_DIR / "backend" / "app.py",  # Regular Python file
+        LOCAL_BASE_DIR / "backend" / "api" / "models.py",  # Regular Python file in subdirectory
+        LOCAL_BASE_DIR / "backend" / "testing_utils.py",  # Has "test" in name but not at start
+        LOCAL_BASE_DIR / "backend" / "markdown_parser.py",  # Has "md" in name but not as extension
+    ]
+
+    # Test the paths that should be excluded
+    print("\nPaths that should be excluded:")
+    excluded_count = 0
+    for path in test_exclude_paths:
+        result = should_exclude(path)
+        status = "✓ Excluded" if result else "✗ NOT excluded"
+        print(f"{status}: {path}")
+        if result:
+            excluded_count += 1
+
+    # Test the paths that should be included
+    print("\nPaths that should be included:")
+    included_count = 0
+    for path in test_include_paths:
+        result = not should_exclude(path)
+        status = "✓ Included" if result else "✗ NOT included"
+        print(f"{status}: {path}")
+        if result:
+            included_count += 1
+
+    # Print the summary
+    print(f"\nCorrectly excluded: {excluded_count}/{len(test_exclude_paths)}")
+    print(f"Correctly included: {included_count}/{len(test_include_paths)}")
+
+    # Return whether all tests passed
+    return excluded_count == len(test_exclude_paths) and included_count == len(test_include_paths)
+
+
 def main():
     """Main deployment function."""
     validate_environment()
+
+    # Run the exclusion tests first
+    if len(sys.argv) > 1 and sys.argv[1] == "--test-only":
+        test_exclusions()
+        return
+
+    # Optionally run the exclusion tests
+    if len(sys.argv) > 1 and sys.argv[1] == "--test":
+        if not test_exclusions():
+            print("Exclusion tests failed! Deployment aborted.")
+            sys.exit(1)
 
     print(f"Deploying to PythonAnywhere for user {PA_USERNAME}")
     print(f"Domain: {PA_DOMAIN}")
