@@ -4,8 +4,8 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "npx expo start",
-    "android": "npx expo start --android",
-    "ios": "npx expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "npx expo start --web",
     "test": "jest --watchAll",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
@@ -13,7 +13,8 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css}\"",
     "typecheck": "tsc --noEmit",
     "prepare": "node -e \"try{require('./node_modules/husky/lib/bin').install()}catch(e){}\"",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "export-web": "mkdir -p node_modules/.cache/nativewind && npx tailwindcss -i ./global.css -o node_modules/.cache/nativewind/global.css && npx expo prebuild --platform web && npx expo export -p web"
   },
   "description": "React Native app with patched @gluestack-ui/checkbox component for React 18 compatibility",
   "dependencies": {

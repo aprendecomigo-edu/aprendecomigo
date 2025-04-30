@@ -51,13 +51,24 @@ This app is configured to use static rendering (`"output": "static"` in app.json
 
 If you change the output type to `"single"` in the future, you would need to add a `_redirects` file to handle client-side routing.
 
+### NativeWind CSS Processing
+
+This app uses NativeWind for styling, which requires a CSS cache to be generated before the export process. The GitHub Actions workflow has been configured to handle this by using our custom export-web script, which:
+
+1. Creates the NativeWind cache directory
+2. Uses TailwindCSS to process the global.css file
+3. Runs the Expo prebuild process for web
+4. Exports the app for web deployment
+
+This combination of steps ensures that all required asset files are generated correctly in the CI/CD environment.
+
 ### How the GitHub Actions Workflow Works
 
 The workflow:
 
 1. Triggers when code is pushed to the main branch
 2. Sets up Node.js and installs dependencies
-3. Builds the website with `npx expo export -p web`
+3. Builds the website with `npm run export-web`
 4. Deploys the built files to Netlify
 
 ## Alternative: Using Netlify's Built-in CI/CD
@@ -67,7 +78,7 @@ Instead of GitHub Actions, you can use Netlify's built-in continuous deployment:
 1. Start a new Netlify project
 2. Pick GitHub as your Git hosting service and select your repository
 3. Configure the build settings:
-   - Build command: `cd frontend-ui && npx expo export -p web`
+   - Build command: `cd frontend-ui && npm run export-web`
    - Publish directory: `frontend-ui/dist`
 4. Click "Deploy site"
 
@@ -76,7 +87,7 @@ Instead of GitHub Actions, you can use Netlify's built-in continuous deployment:
 If you need to deploy manually:
 
 1. Install the Netlify CLI: `npm install -g netlify-cli`
-2. Build the website: `cd frontend-ui && npx expo export -p web`
+2. Build the website: `cd frontend-ui && npm run export-web`
 3. Deploy to Netlify: `netlify deploy --dir dist`
 
 For production deployment: `netlify deploy --dir dist --prod`
