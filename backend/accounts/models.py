@@ -322,7 +322,7 @@ class EmailVerificationCode(models.Model):
         totp = pyotp.TOTP(self.secret_key)
         return totp.provisioning_uri(name=email, issuer_name="Aprende Comigo")
 
-    def is_valid(self, code: str | None = None) -> bool:
+    def is_valid(self, code: str | None = None, digits=6, interval=300) -> bool:
         """
         Check if the code is still valid (not used, not expired, and not too many failed attempts)
 
@@ -337,7 +337,7 @@ class EmailVerificationCode(models.Model):
             return False
         # If code is provided, verify it
         if code:
-            totp = pyotp.TOTP(self.secret_key)
+            totp = pyotp.TOTP(self.secret_key, digits=digits, interval=interval)
             result = totp.verify(code)
             return bool(result)
 
