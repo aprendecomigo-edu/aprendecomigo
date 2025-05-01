@@ -25,7 +25,7 @@ import { AlertTriangle, Fingerprint } from 'lucide-react-native';
 import { Pressable } from '@/components/ui/pressable';
 import useRouter from '@unitools/router';
 import { AuthLayout } from '../layout';
-import { verifyEmailCode } from '@/api/authApi';
+import { verifyEmailCode, requestEmailCode } from '@/api/authApi';
 import { useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/api/authContext';
 import { Checkbox, CheckboxIcon, CheckboxIndicator, CheckboxLabel } from '@/components/ui/checkbox';
@@ -48,6 +48,7 @@ const VerifyCodeForm = () => {
     contactType: 'email' | 'phone';
   }>();
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [enableBiometric, setEnableBiometric] = useState(false);
   const { checkAuthStatus, biometricSupport, enableBiometrics } = useAuth();
 
@@ -151,6 +152,53 @@ const VerifyCodeForm = () => {
     }
   };
 
+  // Handle resending verification code
+  const handleResendCode = async () => {
+    try {
+      setIsResending(true);
+
+      // Call the API to request a new verification code
+      const params =
+        contactType === 'email'
+          ? { email: contact }
+          : { phone: contact };
+
+      await requestEmailCode(params);
+
+      toast.show({
+        placement: 'bottom right',
+        render: ({ id }) => {
+          return (
+            <Toast nativeID={id} variant="solid" action="success">
+              <ToastTitle>
+                New verification code sent to your {contactType}!
+              </ToastTitle>
+            </Toast>
+          );
+        },
+      });
+
+      // Reset the code field
+      verifyCodeForm.setValue('code', '');
+    } catch (error) {
+      console.error('Error resending verification code:', error);
+      toast.show({
+        placement: 'bottom right',
+        render: ({ id }) => {
+          return (
+            <Toast nativeID={id} variant="solid" action="error">
+              <ToastTitle>
+                Failed to send new verification code. Please try again.
+              </ToastTitle>
+            </Toast>
+          );
+        },
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleVerifyKeyPress = () => {
     Keyboard.dismiss();
     verifyCodeForm.handleSubmit(onVerifyCode)();
@@ -242,11 +290,13 @@ const VerifyCodeForm = () => {
               variant="outline"
               action="secondary"
               className="w-full"
-              onPress={() => {
-                router.back();
-              }}
+              onPress={handleResendCode}
+              isDisabled={isResending}
+              testID="resend-code-button"
             >
-              <ButtonText className="font-medium">Try Again</ButtonText>
+              <ButtonText className="font-medium">
+                {isResending ? 'Sending...' : 'Try Again'}
+              </ButtonText>
             </Button>
           </VStack>
         </VStack>

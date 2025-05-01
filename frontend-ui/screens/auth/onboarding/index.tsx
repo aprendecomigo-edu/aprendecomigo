@@ -41,8 +41,13 @@ const onboardingSchema = z.object({
     .max(150, 'Email must be 150 characters or less'),
   userPhone: z
     .string()
-    .min(1, 'Phone number is required')
-    .max(20, 'Phone number must be 20 characters or less'),
+    .min(4, 'Phone number is required')
+    .max(20, 'Phone number must be 20 characters or less')
+    .regex(/^[+\d\s]+$/, 'Phone number can only contain digits, spaces, and + sign')
+    .refine(val => /\d/.test(val), 'Phone number must contain at least one digit')
+    .refine(val => !val.startsWith(' '), 'Phone number cannot start with a space')
+    .refine(val => !/\s{2,}/.test(val), 'No consecutive spaces allowed')
+    .refine(val => !/.*\+.*/.test(val.substring(1)), 'Plus sign (+) can only appear at the beginning'),
 
   // School information
   schoolName: z
@@ -258,7 +263,11 @@ const OnboardingForm = () => {
                       <InputField
                         placeholder="Enter your phone number"
                         value={value}
-                        onChangeText={onChange}
+                        onChangeText={(text) => {
+                          // Allow only digits, spaces, and + sign
+                          const sanitizedValue = text.replace(/[^\d\s+]/g, '');
+                          onChange(sanitizedValue);
+                        }}
                         onBlur={onBlur}
                         keyboardType="phone-pad"
                         returnKeyType="next"
