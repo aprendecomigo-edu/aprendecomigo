@@ -34,8 +34,8 @@ class UserSerializer(serializers.ModelSerializer):
             "id",
             "username",
             "email",
-            "first_name",
-            "last_name",
+            "name",
+            "phone_number",
             "is_student",
             "is_teacher",
         ]
