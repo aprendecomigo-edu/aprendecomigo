@@ -25,6 +25,9 @@ class UserSerializer(serializers.ModelSerializer):
     Serializer for the User model.
     """
 
+    is_student = serializers.SerializerMethodField()
+    is_teacher = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields: ClassVar[list[str]] = [
@@ -37,6 +40,14 @@ class UserSerializer(serializers.ModelSerializer):
             "is_teacher",
         ]
         read_only_fields: ClassVar[list[str]] = ["id", "is_student", "is_teacher"]
+
+    def get_is_student(self, obj):
+        """Check if user has any active school membership as a student."""
+        return obj.school_memberships.filter(role=SchoolRole.STUDENT, is_active=True).exists()
+
+    def get_is_teacher(self, obj):
+        """Check if user has any active school membership as a teacher."""
+        return obj.school_memberships.filter(role=SchoolRole.TEACHER, is_active=True).exists()
 
 
 class SchoolSerializer(BaseSerializer):
