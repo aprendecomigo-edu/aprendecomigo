@@ -29,19 +29,26 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
       - name: Build website (staging)
         run: npm run build:web:staging
         env:
           EXPO_PUBLIC_ENV: staging
 
-      - name: Deploy to Netlify (staging)
-        uses: nwtgck/actions-netlify@v2
-        with:
-          publish-dir: './frontend-ui/dist'
-          production-branch: develop
-          deploy-message: "Deploy from GitHub Actions (Staging)"
-          alias: staging
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        timeout-minutes: 1
+      # Ensure _redirects is in the dist directory
+      - name: Create _redirects file
+        run: |
+          echo "/* /index.html 200" > dist/_redirects
+          cat dist/_redirects
+
+      # Copy netlify configuration files
+      - name: Copy netlify configuration files
+        run: |
+          cp netlify.toml dist/
+          cp netlify.json dist/ || echo "netlify.json not found, skipping"
+
+      # Deploy using the Netlify CLI
+      - name: Deploy to Netlify
+        run: netlify deploy --dir=dist --site=${{ secrets.NETLIFY_SITE_ID }} --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} --message="Deploy from GitHub Actions (Staging)" --alias=staging
