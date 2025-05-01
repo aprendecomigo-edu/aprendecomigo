@@ -238,7 +238,7 @@ export const getUserProfile = async () => {
 export const logout = async () => {
   // Call the server logout endpoint to invalidate the token
   try {
-    await apiClient.post('/auth/logout/');
+    await apiClient.post('accounts/auth/logout/');
   } catch (error) {
     // Continue with local logout even if server call fails
     console.error('Error logging out on server:', error);

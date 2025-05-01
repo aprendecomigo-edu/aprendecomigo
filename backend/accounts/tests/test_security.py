@@ -145,9 +145,13 @@ class KnoxAuthenticationTests(APITestCase):
         # Clear any authorization headers
         self.client.credentials()
 
+        # Create a test user
+        test_email = "new@example.com"
+        User.objects.create_user(email=test_email, password="testpass123", name="New Test User")
+
         # Try to access the token login endpoint
         url = reverse("accounts:request_code")
-        response = self.client.post(url, {"email": "new@example.com"})
+        response = self.client.post(url, {"email": test_email})
 
         # Should not return 401 (it should return 200 with throttling disabled)
         self.assertNotEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

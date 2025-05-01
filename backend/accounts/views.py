@@ -947,6 +947,13 @@ class RequestEmailCodeView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data["email"]
+        # Check if a user with this email exists
+        if not User.objects.filter(email=email).exists():
+            return Response(
+                {"error": "No registered user found with this email."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
         verification = EmailVerificationCode.generate_code(email)
 
         # Get the current TOTP code
@@ -993,6 +1000,13 @@ class VerifyEmailCodeView(APIView):
 
         email = serializer.validated_data["email"]
         code = serializer.validated_data["code"]
+        # Check if a user with this email exists
+
+        if not User.objects.filter(email=email).exists():
+            return Response(
+                {"error": "No registered user found with this email."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         # Try to get the latest verification code for this email
         try:
@@ -1019,23 +1033,11 @@ class VerifyEmailCodeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Get or create user
-        user, created = User.objects.get_or_create(
-            email=email,
-            defaults={
-                "name": email.split("@")[0],  # Default name from email
-            },
-        )
+        # Get user
+        user = User.objects.get(email=email)
 
         # Mark verification as used
         verification.use()
-
-        # Set the appropriate verification flag based on primary_contact
-        if user.primary_contact == "email":
-            user.email_verified = True
-        elif user.primary_contact == "phone":
-            user.phone_verified = True
-        user.save()
 
         # Create a session token for the user
         token_instance, token = AuthToken.objects.create(user)
@@ -1049,23 +1051,6 @@ class VerifyEmailCodeView(APIView):
             "token": token,
             "user": UserSerializer(user).data,
         }
-
-        # If this is a new user, create a school and set as owner
-        if created:
-            # Create a default school for this user
-            school = School.objects.create(
-                name=f"{user.name}'s School",
-                description="Default school created on sign up",
-                contact_email=user.email,
-            )
-
-            # Create a school membership for this user as owner
-            SchoolMembership.objects.create(
-                user=user, school=school, role=SchoolRole.SCHOOL_OWNER, is_active=True
-            )
-
-            response_data["is_new_user"] = True
-            response_data["school"] = {"id": school.id, "name": school.name}
 
         return Response(response_data, status=status.HTTP_200_OK)
 
