@@ -149,8 +149,8 @@ class EmailAuthTests(APITestCase):
         totp = pyotp.TOTP(verification.secret_key)
         valid_code = totp.now()
 
-        # Set the creation time to 25 hours ago (codes expire after 24 hours)
-        verification.created_at = timezone.now() - timedelta(hours=25)
+        # Set the creation time to 6 minutes ago (codes expire after 5 minutes)
+        verification.created_at = timezone.now() - timedelta(minutes=6)
         verification.save()
 
         data = {"email": self.email, "code": valid_code}

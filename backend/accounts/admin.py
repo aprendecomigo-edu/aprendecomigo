@@ -1,7 +1,14 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import CustomUser, StudentProfile, TeacherProfile
+from .models import (
+    CustomUser,
+    EmailVerificationCode,
+    School,
+    SchoolMembership,
+    StudentProfile,
+    TeacherProfile,
+)
 
 
 @admin.register(CustomUser)
@@ -139,3 +146,40 @@ class TeacherProfileAdmin(admin.ModelAdmin):
     )
     def get_email(self, obj):
         return obj.user.email
+
+
+@admin.register(School)
+class SchoolAdmin(admin.ModelAdmin):
+    list_display = ("name", "description", "address", "contact_email", "phone_number", "website")
+    search_fields = ("name", "description", "address", "contact_email", "phone_number", "website")
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "name",
+                    "description",
+                    "address",
+                    "contact_email",
+                    "phone_number",
+                    "website",
+                )
+            },
+        ),
+    )
+
+
+@admin.register(SchoolMembership)
+class SchoolMembershipAdmin(admin.ModelAdmin):
+    list_display = ("user", "school", "role", "is_active")
+    search_fields = ("user__name", "user__email", "school__name", "role")
+    fieldsets = ((None, {"fields": ("user", "school", "role", "is_active")}),)
+
+
+@admin.register(EmailVerificationCode)
+class EmailVerificationCodeAdmin(admin.ModelAdmin):
+    list_display = ("email", "secret_key", "created_at", "is_used", "failed_attempts")
+    search_fields = ("email", "secret_key")
+    fieldsets = (
+        (None, {"fields": ("email", "secret_key", "created_at", "is_used", "failed_attempts")}),
+    )

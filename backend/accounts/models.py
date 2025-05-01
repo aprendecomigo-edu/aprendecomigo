@@ -1,4 +1,3 @@
-from datetime import timedelta
 from typing import Any, ClassVar, TypeVar
 
 from django.contrib.auth.models import AbstractUser, UserManager
@@ -284,13 +283,11 @@ class EmailVerificationCode(models.Model):
     """
 
     email: models.EmailField = models.EmailField()
-    code: models.CharField = models.CharField(
-        max_length=6, blank=True
-    )  # Kept for backwards compatibility
     secret_key: models.CharField = models.CharField(
         max_length=32
     )  # For TOTP - unique for each instance, no default
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    last_code_generated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
     is_used: models.BooleanField = models.BooleanField(default=False)
     failed_attempts: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(default=0)
     max_attempts: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(default=5)
@@ -313,8 +310,9 @@ class EmailVerificationCode(models.Model):
         """Get the current TOTP code"""
         import pyotp  # type: ignore
 
-        totp = pyotp.TOTP(self.secret_key)
-        return totp.now()
+        totp = pyotp.TOTP(self.secret_key, digits=6, interval=300)
+        code = totp.now()
+        return code
 
     def get_provisioning_uri(self, email: str | None = None) -> str:
         """Get the TOTP provisioning URI for QR codes"""
@@ -337,12 +335,6 @@ class EmailVerificationCode(models.Model):
 
         if self.failed_attempts >= self.max_attempts:
             return False
-
-        # Code expires after 24 hours (extended from 10 minutes since TOTP is more secure)
-        expiration_time = self.created_at + timedelta(hours=24)
-        if timezone.now() > expiration_time:
-            return False
-
         # If code is provided, verify it
         if code:
             totp = pyotp.TOTP(self.secret_key)

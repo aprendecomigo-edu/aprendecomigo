@@ -472,14 +472,14 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             verification = EmailVerificationCode.generate_code(phone_number)
             # For phone use the phone value
 
-        code = verification.get_current_code()
+        code, created_at = verification.get_current_code()
 
         # Send verification code (email for this example)
         try:
             contact_type_display = "email" if primary_contact == "email" else "phone number"
             send_mail(
                 subject="Aprende Comigo - Verification Code",
-                message=f"Your verification code is: {code}\n\nThis code will expire in 2 minutes.",
+                message=f"Your verification code is: {code}\n\nThis code will expire in 5 minutes.",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],  # Always send to email for this example
                 fail_silently=False,
@@ -956,7 +956,7 @@ class RequestEmailCodeView(APIView):
         try:
             send_mail(
                 subject="Aprende Comigo - Verification Code",
-                message=f"Your verification code is: {code}\n\nThis code will expire in 2 minutes.",
+                message=f"Your verification code is: {code}\n\nThis code will expire in 5 minutes.",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
                 fail_silently=False,
