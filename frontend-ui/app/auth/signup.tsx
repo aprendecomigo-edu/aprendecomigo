@@ -1,3 +1,3 @@
-import { Onboarding } from '@/screens/auth/onboarding';
+import { SignUp } from '@/screens/auth/signup';
 
-export default Onboarding;
+export default SignUp;

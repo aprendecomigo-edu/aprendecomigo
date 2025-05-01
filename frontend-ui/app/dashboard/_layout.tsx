@@ -1,18 +1,19 @@
-import React, { useEffect } from 'react';
 import { Redirect, Stack } from 'expo-router';
+import React from 'react';
+
 import { useAuth } from '@/api/authContext';
-import { View } from '@/components/ui/view';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
+import { View } from '@/components/ui/view';
 
 // Wrap all dashboard routes with authentication check
 export default function DashboardLayout() {
-  const { isLoggedIn, isLoading, checkAuthStatus } = useAuth();
+  const { isLoggedIn, isLoading } = useAuth();
 
-  // Force fresh auth check when entering dashboard routes
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
+  // We don't need to call checkAuthStatus() again here since it's already called in the main _layout
+  // useEffect(() => {
+  //   checkAuthStatus();
+  // }, []);
 
   // Show loading indicator while checking authentication
   if (isLoading) {
