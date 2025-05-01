@@ -1,0 +1,12 @@
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Content-Security-Policy = "default-src 'self'; connect-src 'self' https://aprendecomigo.eu.pythonanywhere.com https://api.aprendecomigo.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
