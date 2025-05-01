@@ -4,7 +4,7 @@ from rest_framework.throttling import AnonRateThrottle
 class EmailCodeRequestThrottle(AnonRateThrottle):
     """Rate limit for email verification code requests - based on email address"""
 
-    rate = "3/5m"  # 3 requests per 5 minutes
+    rate = "5/h"  # 5 requests per hour
     scope = "auth_code_request"
 
     def get_cache_key(self, request, _view):
@@ -15,7 +15,7 @@ class EmailCodeRequestThrottle(AnonRateThrottle):
 class IPSignupThrottle(AnonRateThrottle):
     """Rate limit for signups based on IP address"""
 
-    rate = "3/5m"  # 3 requests per 5 minutes
+    rate = "3/h"  # 3 requests per hour
     scope = "auth_signup_ip"
 
 
