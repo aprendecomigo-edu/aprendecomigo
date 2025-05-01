@@ -426,7 +426,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
 
         # Create the user (without password initially)
         user = User.objects.create_user(
-            email=email,
+            email,
             password=None,  # Will be set after verification
             name=name,
             phone_number=phone_number,

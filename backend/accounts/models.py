@@ -16,7 +16,7 @@ class CustomUserManager(UserManager[T]):
     for authentication instead of username.
     """
 
-    def _create_user(self, email: str, password: str | None, **extra_fields: Any) -> T:
+    def _create_user(self, email: str, password: str | None = None, **extra_fields: Any) -> T:
         """
         Create and save a user with the given email and password.
         """
@@ -44,47 +44,26 @@ class CustomUserManager(UserManager[T]):
     # We simplify to a single signature to avoid mypy issues with overloading
     def create_user(  # type: ignore[override]
         self,
-        username_or_email: str,
-        email: str | None = None,
-        password: str | None = None,
+        email: str,
         **extra_fields: Any,
     ) -> T:
         """Create and save a regular user with the given credentials."""
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
-
-        if email is None:
-            # First form: create_user(email, password, **extra_fields)
-            return self._create_user(username_or_email, password, **extra_fields)
-        else:
-            # Second form: create_user(username, email, password, **extra_fields)
-            extra_fields["username"] = username_or_email
-            return self._create_user(email, password, **extra_fields)
+        return self._create_user(email, **extra_fields)
 
     # We simplify to a single signature to avoid mypy issues with overloading
     def create_superuser(  # type: ignore[override]
         self,
-        username_or_email: str,
-        email: str | None = None,
-        password: str | None = None,
+        email: str,
+        password: str,
         **extra_fields: Any,
     ) -> T:
         """Create and save a superuser with the given credentials."""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
 
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser must have is_staff=True.")
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_superuser=True.")
-
-        if email is None:
-            # First form: create_superuser(email, password, **extra_fields)
-            return self._create_user(username_or_email, password, **extra_fields)
-        else:
-            # Second form: create_superuser(username, email, password, **extra_fields)
-            extra_fields["username"] = username_or_email
-            return self._create_user(email, password, **extra_fields)
+        return self._create_user(email, password=password, **extra_fields)
 
 
 class School(models.Model):
