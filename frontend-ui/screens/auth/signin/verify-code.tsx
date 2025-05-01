@@ -43,9 +43,10 @@ type VerifyCodeSchemaType = z.infer<typeof verifyCodeSchema>;
 const VerifyCodeForm = () => {
   const toast = useToast();
   const router = useRouter();
-  const { contact, contactType } = useLocalSearchParams<{
+  const { contact, contactType, email } = useLocalSearchParams<{
     contact: string;
     contactType: 'email' | 'phone';
+    email: string;
   }>();
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -56,7 +57,7 @@ const VerifyCodeForm = () => {
   const verifyCodeForm = useForm<VerifyCodeSchemaType>({
     resolver: zodResolver(verifyCodeSchema),
     defaultValues: {
-      contact: contact || '',
+      contact: contact || email || '',
       contactType: (contactType as 'email' | 'phone') || 'email',
       code: '',
     },
@@ -64,13 +65,15 @@ const VerifyCodeForm = () => {
 
   // Update form when params change
   useEffect(() => {
-    if (contact) {
-      verifyCodeForm.setValue('contact', contact);
+    // Handle both 'contact' and 'email' parameters for backward compatibility
+    const contactValue = contact || email || '';
+    if (contactValue) {
+      verifyCodeForm.setValue('contact', contactValue);
     }
     if (contactType) {
       verifyCodeForm.setValue('contactType', contactType as 'email' | 'phone');
     }
-  }, [contact, contactType]);
+  }, [contact, contactType, email]);
 
   // Handle verify code submit
   const onVerifyCode = async (data: VerifyCodeSchemaType) => {
@@ -157,11 +160,15 @@ const VerifyCodeForm = () => {
     try {
       setIsResending(true);
 
+      // Get current values from form
+      const currentContact = verifyCodeForm.getValues('contact');
+      const currentContactType = verifyCodeForm.getValues('contactType');
+
       // Call the API to request a new verification code
       const params =
-        contactType === 'email'
-          ? { email: contact }
-          : { phone: contact };
+        currentContactType === 'email'
+          ? { email: currentContact }
+          : { phone: currentContact };
 
       await requestEmailCode(params);
 
@@ -171,7 +178,7 @@ const VerifyCodeForm = () => {
           return (
             <Toast nativeID={id} variant="solid" action="success">
               <ToastTitle>
-                New verification code sent to your {contactType}!
+                New verification code sent to your {currentContactType}!
               </ToastTitle>
             </Toast>
           );
@@ -224,7 +231,11 @@ const VerifyCodeForm = () => {
           </Heading>
           <Text className="md:text-center">
             Enter the verification code sent to{' '}
-            {watchedContact ? watchedContact : `your ${watchedContactType}`}
+            {watchedContact ? (
+              <Text className="font-medium">{watchedContact}</Text>
+            ) : (
+              `your ${watchedContactType}`
+            )}
           </Text>
         </VStack>
       </VStack>
