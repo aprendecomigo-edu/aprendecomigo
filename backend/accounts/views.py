@@ -472,7 +472,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             verification = EmailVerificationCode.generate_code(phone_number)
             # For phone use the phone value
 
-        code, created_at = verification.get_current_code()
+        code = verification.get_current_code()
 
         # Send verification code (email for this example)
         try:
