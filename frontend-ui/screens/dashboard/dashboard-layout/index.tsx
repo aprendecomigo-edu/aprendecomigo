@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
-import { ChevronLeftIcon, Icon, MenuIcon } from '@/components/ui/icon';
+import { ChevronLeftIcon, ChevronDownIcon, Icon, MenuIcon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { Pressable } from '@/components/ui/pressable';
 import type { LucideIcon } from 'lucide-react-native';
-import { LogOutIcon } from 'lucide-react-native';
+import { LogOutIcon, PlusIcon, CheckIcon, MinusIcon, AlertTriangleIcon } from 'lucide-react-native';
 import { InboxIcon } from './assets/icons/inbox';
 import { GlobeIcon } from './assets/icons/globe';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -35,8 +35,7 @@ import {
   ModalHeader,
 } from '@/components/ui/modal';
 import { Center } from '@/components/ui/center';
-import { AlertTriangleIcon } from 'lucide-react-native';
-import { CheckIcon, MinusIcon } from 'lucide-react-native';
+import type { Href } from 'expo-router';
 
 type MobileHeaderProps = {
   title: string;
@@ -404,7 +403,7 @@ function MobileFooter({ footerIcons }: { footerIcons: any }) {
             <Pressable
               className="px-0.5 flex-1 flex-col items-center"
               key={index}
-              onPress={() => router.push('/dashboard/dashboard-layout')}
+              onPress={() => router.push('/dashboard/dashboard-layout' as Href<string>)}
             >
               <Icon as={item.iconName} size="md" className="h-[32px] w-[65px]" />
               <Text className="text-xs text-center text-typography-600">{item.iconText}</Text>
@@ -413,6 +412,105 @@ function MobileFooter({ footerIcons }: { footerIcons: any }) {
         }
       )}
     </HStack>
+  );
+}
+
+// Define interface for school data
+interface School {
+  id: string;
+  name: string;
+}
+
+// Mock school data
+const schools: School[] = [
+  {
+    id: '1',
+    name: 'Escola São Paulo',
+  },
+  {
+    id: '2',
+    name: 'Colégio Rio de Janeiro',
+  },
+];
+
+// SchoolSelector component
+function SchoolSelector({ onSchoolChange }: { onSchoolChange?: (school: School) => void }) {
+  const [selectedSchool, setSelectedSchool] = useState<School>(schools[0]);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const handleSelectSchool = (school: School) => {
+    setSelectedSchool(school);
+    setShowMenu(false);
+    if (onSchoolChange) {
+      onSchoolChange(school);
+    }
+  };
+
+  const handleAddNewSchool = () => {
+    // This would open a form to add a new school
+    setShowMenu(false);
+    // For now just show an alert
+    Alert.alert('Add School', 'This would open a form to add a new school');
+  };
+
+  // Position differently based on platform
+  const modalPosition = Platform.OS === 'web'
+    ? { top: 60, left: 50 }
+    : { top: 70, left: 10 };
+
+  return (
+    <Box className="relative">
+      <Pressable
+        onPress={() => setShowMenu(!showMenu)}
+        className="flex-row items-center"
+      >
+        <Text className="text-2xl">{selectedSchool.name}</Text>
+        <Icon
+          as={ChevronDownIcon}
+          size="sm"
+          className="ml-2 mt-1"
+        />
+      </Pressable>
+
+      <Modal isOpen={showMenu} onClose={() => setShowMenu(false)}>
+        <ModalBackdrop />
+        <ModalContent
+          style={{
+            position: 'absolute',
+            top: modalPosition.top,
+            left: modalPosition.left,
+            margin: 0,
+            width: 250,
+            backgroundColor: 'transparent',
+            borderWidth: 0,
+            zIndex: 9999
+          }}
+        >
+          <Box className="bg-background-0 border border-border-200 rounded-md shadow-md w-full">
+            <VStack>
+              {schools.map((school) => (
+                <Pressable
+                  key={school.id}
+                  className={`p-3 hover:bg-background-50 ${
+                    selectedSchool.id === school.id ? 'bg-background-50' : ''
+                  }`}
+                  onPress={() => handleSelectSchool(school)}
+                >
+                  <Text>{school.name}</Text>
+                </Pressable>
+              ))}
+              <Pressable
+                className="p-3 flex-row items-center border-t border-border-200 hover:bg-background-50"
+                onPress={handleAddNewSchool}
+              >
+                <Icon as={PlusIcon} size="sm" className="mr-2" />
+                <Text className="text-primary-600">Add new school</Text>
+              </Pressable>
+            </VStack>
+          </Box>
+        </ModalContent>
+      </Modal>
+    </Box>
   );
 }
 
@@ -427,7 +525,7 @@ function WebHeader(props: HeaderProps) {
         >
           <Icon as={MenuIcon} size="lg" className="mx-5" />
         </Pressable>
-        <Text className="text-2xl">{props.title}</Text>
+        <SchoolSelector />
       </HStack>
 
       <HStack space="md" className="items-center">
@@ -451,7 +549,7 @@ function MobileHeader(props: MobileHeaderProps) {
         >
           <Icon as={ChevronLeftIcon} />
         </Pressable>
-        <Text className="text-xl">{props.title}</Text>
+        <SchoolSelector />
       </HStack>
 
       <LogoutButton displayStyle="icon-only" />
@@ -515,7 +613,7 @@ const pendingTasks: TaskInfo[] = [
 const MainContent = () => {
   const { userProfile } = useAuth();
   const userName = userProfile?.name || 'Aluno';
-  const userGrade = userProfile?.grade || '9° Ano';
+  const userGrade = '9° Ano';
   const userInitials = userName
     .split(' ')
     .map(n => n[0])
@@ -616,10 +714,16 @@ const MainContent = () => {
 
 export const Dashboard = () => {
   const { userProfile } = useAuth();
+  const [selectedSchool, setSelectedSchool] = useState<School>(schools[0]);
+
+  const handleSchoolChange = (school: School) => {
+    setSelectedSchool(school);
+    // Here you would typically fetch data for the selected school
+  };
 
   return (
     <SafeAreaView className="h-full w-full">
-      <DashboardLayout title="Dashboard do Aluno" isSidebarVisible={true}>
+      <DashboardLayout title={selectedSchool.name} isSidebarVisible={true}>
         <MainContent />
       </DashboardLayout>
       <MobileFooter footerIcons={bottomTabsList} />
