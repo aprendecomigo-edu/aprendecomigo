@@ -1,6 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 // Secure key names for storing biometric preferences
@@ -28,14 +28,14 @@ export const isBiometricAvailable = async (): Promise<boolean> => {
  * @returns Promise resolving to authentication result
  */
 export const authenticateWithBiometrics = async (
-  promptMessage: string = 'Authenticate to log in'
+  promptMessage = 'Authenticate to log in'
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     const available = await isBiometricAvailable();
     if (!available) {
       return {
         success: false,
-        error: 'Biometric authentication is not available on this device'
+        error: 'Biometric authentication is not available on this device',
       };
     }
 
@@ -43,9 +43,11 @@ export const authenticateWithBiometrics = async (
       promptMessage,
       fallbackLabel: 'Use passcode',
       // On Android we can specify what types of authentication to use
-      ...(Platform.OS === 'android' ? {
-        requireConfirmation: false,
-      } : {})
+      ...(Platform.OS === 'android'
+        ? {
+            requireConfirmation: false,
+          }
+        : {}),
     });
 
     return { success: result.success };
@@ -53,7 +55,7 @@ export const authenticateWithBiometrics = async (
     console.error('Biometric authentication error:', error);
     return {
       success: false,
-      error: 'Authentication failed. Please try again.'
+      error: 'Authentication failed. Please try again.',
     };
   }
 };
@@ -72,9 +74,7 @@ export const enableBiometricAuth = async (email: string): Promise<boolean> => {
     }
 
     // Authenticate before enabling to ensure it's really the user
-    const authResult = await authenticateWithBiometrics(
-      'Authenticate to enable biometric login'
-    );
+    const authResult = await authenticateWithBiometrics('Authenticate to enable biometric login');
 
     if (!authResult.success) {
       return false;

@@ -16,14 +16,7 @@ module.exports = {
     ecmaVersion: 2021,
     sourceType: 'module',
   },
-  plugins: [
-    '@typescript-eslint',
-    'react',
-    'react-hooks',
-    'react-native',
-    'prettier',
-    'import',
-  ],
+  plugins: ['@typescript-eslint', 'react', 'react-hooks', 'react-native', 'prettier', 'import'],
   settings: {
     react: {
       version: 'detect',
@@ -68,14 +61,7 @@ module.exports = {
     'import/order': [
       'error',
       {
-        groups: [
-          'builtin',
-          'external',
-          'internal',
-          'parent',
-          'sibling',
-          'index',
-        ],
+        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
         'newlines-between': 'always',
         alphabetize: { order: 'asc', caseInsensitive: true },
       },

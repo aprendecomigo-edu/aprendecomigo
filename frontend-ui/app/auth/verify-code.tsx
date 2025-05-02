@@ -1,2 +1,2 @@
-import { VerifyCode } from "@/screens/auth/signin/verify-code";
+import { VerifyCode } from '@/screens/auth/signin/verify-code';
 export default VerifyCode;

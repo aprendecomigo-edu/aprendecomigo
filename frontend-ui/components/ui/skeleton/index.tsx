@@ -1,6 +1,7 @@
-import React, { forwardRef } from 'react';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import React, { forwardRef } from 'react';
 import { Animated, Easing, Platform, View } from 'react-native';
+
 import { skeletonStyle, skeletonTextStyle } from './styles';
 
 type ISkeletonProps = React.ComponentProps<typeof View> &
@@ -16,10 +17,7 @@ type ISkeletonTextProps = React.ComponentProps<typeof View> &
     startColor?: string;
   };
 
-const Skeleton = forwardRef<
-  React.ElementRef<typeof Animated.View>,
-  ISkeletonProps
->(
+const Skeleton = forwardRef<React.ElementRef<typeof Animated.View>, ISkeletonProps>(
   (
     {
       className,
@@ -79,10 +77,7 @@ const Skeleton = forwardRef<
   }
 );
 
-const SkeletonText = forwardRef<
-  React.ElementRef<typeof View>,
-  ISkeletonTextProps
->(
+const SkeletonText = forwardRef<React.ElementRef<typeof View>, ISkeletonTextProps>(
   (
     {
       className,

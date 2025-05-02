@@ -1,24 +1,19 @@
 'use client';
-import React from 'react';
-import { createToast, createToastHook } from '@gluestack-ui/toast';
-import { Text, View, Platform } from 'react-native';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
-import { cssInterop } from 'nativewind';
-import { Motion, AnimatePresence } from '@legendapp/motion';
-import {
-  withStyleContext,
-  useStyleContext,
-} from '@gluestack-ui/nativewind-utils/withStyleContext';
-import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
+import { withStyleContext, useStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
+import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
+import { createToast, createToastHook } from '@gluestack-ui/toast';
+import { Motion, AnimatePresence } from '@legendapp/motion';
+import { cssInterop } from 'nativewind';
+import React from 'react';
+import { Text, View, Platform } from 'react-native';
 
 export const useToast = createToastHook(Motion.View, AnimatePresence);
 const SCOPE = 'TOAST';
 export const UIToast = createToast({
   Root:
-    Platform.OS === 'web'
-      ? withStyleContext(View, SCOPE)
-      : withStyleContextAndStates(View, SCOPE),
+    Platform.OS === 'web' ? withStyleContext(View, SCOPE) : withStyleContextAndStates(View, SCOPE),
   Title: Text,
   Description: Text,
 });
@@ -63,11 +58,11 @@ const toastTitleStyle = tva({
     },
     size: {
       '2xs': 'text-2xs',
-      'xs': 'text-xs',
-      'sm': 'text-sm',
-      'md': 'text-base',
-      'lg': 'text-lg',
-      'xl': 'text-xl',
+      xs: 'text-xs',
+      sm: 'text-sm',
+      md: 'text-base',
+      lg: 'text-lg',
+      xl: 'text-xl',
       '2xl': 'text-2xl',
       '3xl': 'text-3xl',
       '4xl': 'text-4xl',
@@ -134,11 +129,11 @@ const toastDescriptionStyle = tva({
     },
     size: {
       '2xs': 'text-2xs',
-      'xs': 'text-xs',
-      'sm': 'text-sm',
-      'md': 'text-base',
-      'lg': 'text-lg',
-      'xl': 'text-xl',
+      xs: 'text-xs',
+      sm: 'text-sm',
+      md: 'text-base',
+      lg: 'text-lg',
+      xl: 'text-xl',
       '2xl': 'text-2xl',
       '3xl': 'text-3xl',
       '4xl': 'text-4xl',
@@ -158,19 +153,18 @@ type IToastProps = React.ComponentProps<typeof UIToast> & {
   className?: string;
 } & VariantProps<typeof toastStyle>;
 
-export const Toast = React.forwardRef<
-  React.ElementRef<typeof UIToast>,
-  IToastProps
->(({ className, variant = 'solid', action = 'muted', ...props }, ref) => {
-  return (
-    <UIToast
-      ref={ref}
-      className={toastStyle({ variant, action, class: className })}
-      context={{ variant, action }}
-      {...props}
-    />
-  );
-});
+export const Toast = React.forwardRef<React.ElementRef<typeof UIToast>, IToastProps>(
+  ({ className, variant = 'solid', action = 'muted', ...props }, ref) => {
+    return (
+      <UIToast
+        ref={ref}
+        className={toastStyle({ variant, action, class: className })}
+        context={{ variant, action }}
+        {...props}
+      />
+    );
+  }
+);
 
 type IToastTitleProps = React.ComponentProps<typeof UIToast.Title> & {
   className?: string;
@@ -180,8 +174,7 @@ export const ToastTitle = React.forwardRef<
   React.ElementRef<typeof UIToast.Title>,
   IToastTitleProps
 >(({ className, size = 'md', ...props }, ref) => {
-  const { variant: parentVariant, action: parentAction } =
-    useStyleContext(SCOPE);
+  const { variant: parentVariant, action: parentAction } = useStyleContext(SCOPE);
   return (
     <UIToast.Title
       ref={ref}
@@ -198,9 +191,7 @@ export const ToastTitle = React.forwardRef<
   );
 });
 
-type IToastDescriptionProps = React.ComponentProps<
-  typeof UIToast.Description
-> & {
+type IToastDescriptionProps = React.ComponentProps<typeof UIToast.Description> & {
   className?: string;
 } & VariantProps<typeof toastDescriptionStyle>;
 

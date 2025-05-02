@@ -1,7 +1,8 @@
-import apiClient from './apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+
+import apiClient from './apiClient';
 import {
   authenticateWithBiometrics,
   getBiometricAuthEmail,
@@ -195,7 +196,9 @@ export const authenticateWithBiometricsAndGetToken = async (): Promise<AuthRespo
     // Since this is biometric auth, we'll request a special biometric verification
     // This endpoint should exist on the backend - if not, you'll need to implement it
     try {
-      const response = await apiClient.post<AuthResponse>('accounts/auth/biometric-verify/', { email });
+      const response = await apiClient.post<AuthResponse>('accounts/auth/biometric-verify/', {
+        email,
+      });
 
       // Store token in secure storage
       await storeToken(response.data.token);

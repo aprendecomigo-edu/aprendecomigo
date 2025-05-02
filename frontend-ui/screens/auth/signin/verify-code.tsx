@@ -1,11 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Toast, ToastTitle, useToast } from '@/components/ui/toast';
-import { HStack } from '@/components/ui/hstack';
-import { VStack } from '@/components/ui/vstack';
-import { Heading } from '@/components/ui/heading';
-import { Text } from '@/components/ui/text';
-import { LinkText } from '@/components/ui/link';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Link from '@unitools/link';
+import useRouter from '@unitools/router';
+import { useLocalSearchParams } from 'expo-router';
+import { AlertTriangle, Fingerprint, Check } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { Keyboard, Platform } from 'react-native';
+import { z } from 'zod';
+
+import { AuthLayout } from '../layout';
+
+import { verifyEmailCode, requestEmailCode } from '@/api/authApi';
+import { useAuth } from '@/api/authContext';
+import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
+import { Checkbox, CheckboxIcon, CheckboxIndicator, CheckboxLabel } from '@/components/ui/checkbox';
 import {
   FormControl,
   FormControlError,
@@ -14,22 +22,15 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from '@/components/ui/form-control';
-import { Input, InputField } from '@/components/ui/input';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
 import { ArrowLeftIcon, Icon } from '@/components/ui/icon';
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
-import { Keyboard, Platform } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertTriangle, Fingerprint } from 'lucide-react-native';
+import { Input, InputField } from '@/components/ui/input';
+import { LinkText } from '@/components/ui/link';
 import { Pressable } from '@/components/ui/pressable';
-import useRouter from '@unitools/router';
-import { AuthLayout } from '../layout';
-import { verifyEmailCode, requestEmailCode } from '@/api/authApi';
-import { useLocalSearchParams } from 'expo-router';
-import { useAuth } from '@/api/authContext';
-import { Checkbox, CheckboxIcon, CheckboxIndicator, CheckboxLabel } from '@/components/ui/checkbox';
-import { Check } from 'lucide-react-native';
+import { Text } from '@/components/ui/text';
+import { Toast, ToastTitle, useToast } from '@/components/ui/toast';
+import { VStack } from '@/components/ui/vstack';
 
 // Define the form schema
 const verifyCodeSchema = z.object({
@@ -166,9 +167,7 @@ const VerifyCodeForm = () => {
 
       // Call the API to request a new verification code
       const params =
-        currentContactType === 'email'
-          ? { email: currentContact }
-          : { phone: currentContact };
+        currentContactType === 'email' ? { email: currentContact } : { phone: currentContact };
 
       await requestEmailCode(params);
 
@@ -177,9 +176,7 @@ const VerifyCodeForm = () => {
         render: ({ id }) => {
           return (
             <Toast nativeID={id} variant="solid" action="success">
-              <ToastTitle>
-                New verification code sent to your {currentContactType}!
-              </ToastTitle>
+              <ToastTitle>New verification code sent to your {currentContactType}!</ToastTitle>
             </Toast>
           );
         },
@@ -194,9 +191,7 @@ const VerifyCodeForm = () => {
         render: ({ id }) => {
           return (
             <Toast nativeID={id} variant="solid" action="error">
-              <ToastTitle>
-                Failed to send new verification code. Please try again.
-              </ToastTitle>
+              <ToastTitle>Failed to send new verification code. Please try again.</ToastTitle>
             </Toast>
           );
         },

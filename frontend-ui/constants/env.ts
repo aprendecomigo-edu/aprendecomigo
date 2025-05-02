@@ -5,9 +5,7 @@ export type Environment = 'development' | 'staging' | 'production';
 
 // Get current environment from process.env or Constants
 export const getEnvironment = (): Environment => {
-  const env = process.env.EXPO_PUBLIC_ENV ||
-              Constants.expoConfig?.extra?.env ||
-              'development';
+  const env = process.env.EXPO_PUBLIC_ENV || Constants.expoConfig?.extra?.env || 'development';
   return env as Environment;
 };
 

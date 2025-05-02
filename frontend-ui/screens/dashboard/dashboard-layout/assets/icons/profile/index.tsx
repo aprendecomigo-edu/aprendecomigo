@@ -1,8 +1,8 @@
-import { createIcon } from "@gluestack-ui/icon";
-import { Path, G, Svg } from "react-native-svg";
+import { createIcon } from '@gluestack-ui/icon';
+import { Path, G, Svg } from 'react-native-svg';
 export const ProfileIcon: any = createIcon({
   Root: Svg,
-  viewBox: "0 0 65 32",
+  viewBox: '0 0 65 32',
   path: (
     <G>
       <Path

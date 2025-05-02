@@ -1,16 +1,17 @@
+import useRouter from '@unitools/router';
 import React, { useState, useEffect } from 'react';
 import { Platform, ActivityIndicator } from 'react-native';
-import { Heading } from '@/components/ui/heading';
-import { HStack } from '@/components/ui/hstack';
-import { VStack } from '@/components/ui/vstack';
-import { Text } from '@/components/ui/text';
-import { Switch } from '@/components/ui/switch';
+
 import { useAuth } from '@/api/authContext';
-import { Toast, ToastTitle, useToast } from '@/components/ui/toast';
+import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardHeader, CardBody } from '@/components/ui/card';
 import { Divider } from '@/components/ui/divider';
-import { Button, ButtonText } from '@/components/ui/button';
-import useRouter from '@unitools/router';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
+import { Toast, ToastTitle, useToast } from '@/components/ui/toast';
+import { VStack } from '@/components/ui/vstack';
 
 export const BiometricSettings = () => {
   const toast = useToast();

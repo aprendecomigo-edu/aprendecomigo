@@ -1,8 +1,9 @@
-import React from 'react';
-import { config } from './config';
-import { View } from 'react-native';
 import { OverlayProvider } from '@gluestack-ui/overlay';
 import { ToastProvider } from '@gluestack-ui/toast';
+import React from 'react';
+import { View } from 'react-native';
+
+import { config } from './config';
 
 export function GluestackUIProvider({
   mode = 'light',
@@ -16,7 +17,7 @@ export function GluestackUIProvider({
       style={[
         config[mode],
         { flex: 1, height: '100%', width: '100%' },
-        // @ts-ignore
+        // @ts-expect-error - Legacy code
         props.style,
       ]}
     >

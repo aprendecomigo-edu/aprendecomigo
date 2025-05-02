@@ -1,14 +1,13 @@
-import React, { useMemo } from 'react';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
-import { Svg } from 'react-native-svg';
-import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
-import {
-  withStyleContext,
-  useStyleContext,
-} from '@gluestack-ui/nativewind-utils/withStyleContext';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
+import { withStyleContext, useStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
+import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
 import { createSelect } from '@gluestack-ui/select';
 import { cssInterop } from 'nativewind';
+import React, { useMemo } from 'react';
+import { Pressable, View, TextInput, Platform } from 'react-native';
+import { Svg } from 'react-native-svg';
+
 import {
   Actionsheet,
   ActionsheetContent,
@@ -23,7 +22,6 @@ import {
   ActionsheetSectionList,
   ActionsheetSectionHeaderText,
 } from './select-actionsheet';
-import { Pressable, View, TextInput, Platform } from 'react-native';
 
 const SelectTriggerWrapper = React.forwardRef<
   React.ElementRef<typeof Pressable>,
@@ -37,11 +35,11 @@ const selectIconStyle = tva({
   parentVariants: {
     size: {
       '2xs': 'h-3 w-3',
-      'xs': 'h-3.5 w-3.5',
-      'sm': 'h-4 w-4',
-      'md': 'h-[18px] w-[18px]',
-      'lg': 'h-5 w-5',
-      'xl': 'h-6 w-6',
+      xs: 'h-3.5 w-3.5',
+      sm: 'h-4 w-4',
+      md: 'h-[18px] w-[18px]',
+      lg: 'h-5 w-5',
+      xl: 'h-6 w-6',
     },
   },
 });
@@ -99,24 +97,8 @@ type IPrimitiveIcon = {
   classNameColor?: string;
 };
 
-const PrimitiveIcon = React.forwardRef<
-  React.ElementRef<typeof Svg>,
-  IPrimitiveIcon
->(
-  (
-    {
-      height,
-      width,
-      fill,
-      color,
-      classNameColor,
-      size,
-      stroke,
-      as: AsComp,
-      ...props
-    },
-    ref
-  ) => {
+const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveIcon>(
+  ({ height, width, fill, color, classNameColor, size, stroke, as: AsComp, ...props }, ref) => {
     color = color ?? classNameColor;
     const sizeProps = useMemo(() => {
       if (size) return { size };
@@ -139,9 +121,7 @@ const PrimitiveIcon = React.forwardRef<
     if (AsComp) {
       return <AsComp ref={ref} {...props} {...sizeProps} {...colorProps} />;
     }
-    return (
-      <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />
-    );
+    return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
   }
 );
 
@@ -176,7 +156,7 @@ cssInterop(UISelect.Input, {
   className: { target: 'style', nativeStyleToProp: { textAlign: true } },
 });
 cssInterop(SelectTriggerWrapper, { className: 'style' });
-//@ts-ignore
+//@ts-expect-error - Legacy code
 cssInterop(UISelect.Icon, {
   className: {
     target: 'style',
@@ -193,20 +173,19 @@ cssInterop(UISelect.Icon, {
 type ISelectProps = VariantProps<typeof selectStyle> &
   React.ComponentProps<typeof UISelect> & { className?: string };
 
-const Select = React.forwardRef<
-  React.ElementRef<typeof UISelect>,
-  ISelectProps
->(({ className, ...props }, ref) => {
-  return (
-    <UISelect
-      className={selectStyle({
-        class: className,
-      })}
-      ref={ref}
-      {...props}
-    />
-  );
-});
+const Select = React.forwardRef<React.ElementRef<typeof UISelect>, ISelectProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <UISelect
+        className={selectStyle({
+          class: className,
+        })}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
 
 type ISelectTriggerProps = VariantProps<typeof selectTriggerStyle> &
   React.ComponentProps<typeof UISelect.Trigger> & { className?: string };
@@ -232,69 +211,60 @@ const SelectTrigger = React.forwardRef<
 type ISelectInputProps = VariantProps<typeof selectInputStyle> &
   React.ComponentProps<typeof UISelect.Input> & { className?: string };
 
-const SelectInput = React.forwardRef<
-  React.ElementRef<typeof UISelect.Input>,
-  ISelectInputProps
->(({ className, ...props }, ref) => {
-  const { size: parentSize, variant: parentVariant } = useStyleContext();
-  return (
-    <UISelect.Input
-      className={selectInputStyle({
-        class: className,
-        parentVariants: {
-          size: parentSize,
-          variant: parentVariant,
-        },
-      })}
-      ref={ref}
-      {...props}
-    />
-  );
-});
+const SelectInput = React.forwardRef<React.ElementRef<typeof UISelect.Input>, ISelectInputProps>(
+  ({ className, ...props }, ref) => {
+    const { size: parentSize, variant: parentVariant } = useStyleContext();
+    return (
+      <UISelect.Input
+        className={selectInputStyle({
+          class: className,
+          parentVariants: {
+            size: parentSize,
+            variant: parentVariant,
+          },
+        })}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
 
 type ISelectIcon = VariantProps<typeof selectIconStyle> &
   React.ComponentProps<typeof UISelect.Icon> & { className?: string };
 
-const SelectIcon = React.forwardRef<
-  React.ElementRef<typeof UISelect.Icon>,
-  ISelectIcon
->(({ className, size, ...props }, ref) => {
-  const { size: parentSize } = useStyleContext();
-  if (typeof size === 'number') {
+const SelectIcon = React.forwardRef<React.ElementRef<typeof UISelect.Icon>, ISelectIcon>(
+  ({ className, size, ...props }, ref) => {
+    const { size: parentSize } = useStyleContext();
+    if (typeof size === 'number') {
+      return (
+        <UISelect.Icon
+          ref={ref}
+          {...props}
+          className={selectIconStyle({ class: className })}
+          size={size}
+        />
+      );
+    } else if ((props?.height !== undefined || props?.width !== undefined) && size === undefined) {
+      return (
+        <UISelect.Icon ref={ref} {...props} className={selectIconStyle({ class: className })} />
+      );
+    }
     return (
       <UISelect.Icon
+        className={selectIconStyle({
+          class: className,
+          size,
+          parentVariants: {
+            size: parentSize,
+          },
+        })}
         ref={ref}
         {...props}
-        className={selectIconStyle({ class: className })}
-        size={size}
-      />
-    );
-  } else if (
-    (props?.height !== undefined || props?.width !== undefined) &&
-    size === undefined
-  ) {
-    return (
-      <UISelect.Icon
-        ref={ref}
-        {...props}
-        className={selectIconStyle({ class: className })}
       />
     );
   }
-  return (
-    <UISelect.Icon
-      className={selectIconStyle({
-        class: className,
-        size,
-        parentVariants: {
-          size: parentSize,
-        },
-      })}
-      ref={ref}
-      {...props}
-    />
-  );
-});
+);
 
 Select.displayName = 'Select';
 SelectTrigger.displayName = 'SelectTrigger';

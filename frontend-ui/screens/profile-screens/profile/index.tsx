@@ -1,6 +1,41 @@
-import React, { useRef, useState } from "react";
-import { Box } from "@/components/ui/box";
-import { HStack } from "@/components/ui/hstack";
+import { cn } from '@gluestack-ui/nativewind-utils/cn';
+import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
+import { zodResolver } from '@hookform/resolvers/zod';
+import Image from '@unitools/image';
+import useRouter from '@unitools/router';
+import { AlertCircle, type LucideIcon } from 'lucide-react-native';
+import React, { useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Keyboard, Platform } from 'react-native';
+import { z } from 'zod';
+
+import { CameraSparklesIcon } from './assets/icons/camera-sparkles';
+import { DownloadIcon } from './assets/icons/download';
+import { EditPhotoIcon } from './assets/icons/edit-photo';
+import { FaqIcon } from './assets/icons/faq';
+import { GlobeIcon } from './assets/icons/globe';
+import { HeartIcon } from './assets/icons/heart';
+import { HomeIcon } from './assets/icons/home';
+import { InboxIcon } from './assets/icons/inbox';
+import { NewsBlogIcon } from './assets/icons/news-blog';
+import { ProfileIcon } from './assets/icons/profile';
+import { SubscriptionIcon } from './assets/icons/subscription';
+
+import { Avatar, AvatarBadge, AvatarFallbackText, AvatarImage } from '@/components/ui/avatar';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
+import { Center } from '@/components/ui/center';
+import { Divider } from '@/components/ui/divider';
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorIcon,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
 import {
   AlertCircleIcon,
   ChevronDownIcon,
@@ -12,15 +47,8 @@ import {
   MenuIcon,
   PhoneIcon,
   SettingsIcon,
-} from "@/components/ui/icon";
-import { Text } from "@/components/ui/text";
-import { VStack } from "@/components/ui/vstack";
-import { Pressable } from "@/components/ui/pressable";
-import { AlertCircle, type LucideIcon } from "lucide-react-native";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { Heading } from "@/components/ui/heading";
-import Image from "@unitools/image";
-import { ScrollView } from "@/components/ui/scroll-view";
+} from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
 import {
   Modal,
   ModalBackdrop,
@@ -28,40 +56,10 @@ import {
   ModalCloseButton,
   ModalContent,
   ModalHeader,
-} from "@/components/ui/modal";
-import { Input, InputField } from "@/components/ui/input";
-import {
-  Avatar,
-  AvatarBadge,
-  AvatarFallbackText,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import useRouter from "@unitools/router";
-import { ProfileIcon } from "./assets/icons/profile";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
-import { Center } from "@/components/ui/center";
-import { cn } from "@gluestack-ui/nativewind-utils/cn";
-import { Keyboard, Platform } from "react-native";
-import { SubscriptionIcon } from "./assets/icons/subscription";
-import { DownloadIcon } from "./assets/icons/download";
-import { FaqIcon } from "./assets/icons/faq";
-import { NewsBlogIcon } from "./assets/icons/news-blog";
-import { HomeIcon } from "./assets/icons/home";
-import { GlobeIcon } from "./assets/icons/globe";
-import { InboxIcon } from "./assets/icons/inbox";
-import { HeartIcon } from "./assets/icons/heart";
-import { Divider } from "@/components/ui/divider";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-  FormControlLabel,
-  FormControlLabelText,
-} from "@/components/ui/form-control";
+} from '@/components/ui/modal';
+import { Pressable } from '@/components/ui/pressable';
+import { SafeAreaView } from '@/components/ui/safe-area-view';
+import { ScrollView } from '@/components/ui/scroll-view';
 import {
   Select,
   SelectBackdrop,
@@ -73,10 +71,9 @@ import {
   SelectItem,
   SelectPortal,
   SelectTrigger,
-} from "@/components/ui/select";
-import { CameraSparklesIcon } from "./assets/icons/camera-sparkles";
-import { EditPhotoIcon } from "./assets/icons/edit-photo";
-import { isWeb } from "@gluestack-ui/nativewind-utils/IsWeb";
+} from '@/components/ui/select';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 type MobileHeaderProps = {
   title: string;
@@ -94,29 +91,29 @@ type Icons = {
 const SettingsList: Icons[] = [
   {
     iconName: ProfileIcon,
-    iconText: "Profile",
+    iconText: 'Profile',
   },
   {
     iconName: SettingsIcon,
-    iconText: "Preferences",
+    iconText: 'Preferences',
   },
   {
     iconName: SubscriptionIcon,
-    iconText: "Subscription",
+    iconText: 'Subscription',
   },
 ];
 const ResourcesList: Icons[] = [
   {
     iconName: DownloadIcon,
-    iconText: "Downloads",
+    iconText: 'Downloads',
   },
   {
     iconName: FaqIcon,
-    iconText: "FAQs",
+    iconText: 'FAQs',
   },
   {
     iconName: NewsBlogIcon,
-    iconText: "News & Blogs",
+    iconText: 'News & Blogs',
   },
 ];
 type BottomTabs = {
@@ -126,24 +123,24 @@ type BottomTabs = {
 const bottomTabsList: BottomTabs[] = [
   {
     iconName: HomeIcon,
-    iconText: "Home",
+    iconText: 'Home',
   },
 
   {
     iconName: GlobeIcon,
-    iconText: "Community",
+    iconText: 'Community',
   },
   {
     iconName: InboxIcon,
-    iconText: "Inbox",
+    iconText: 'Inbox',
   },
   {
     iconName: HeartIcon,
-    iconText: "Favourite",
+    iconText: 'Favourite',
   },
   {
     iconName: ProfileIcon,
-    iconText: "Profile",
+    iconText: 'Profile',
   },
 ];
 interface UserStats {
@@ -158,22 +155,21 @@ interface UserStats {
 }
 const userData: UserStats[] = [
   {
-    friends: "45K",
-    friendsText: "Friends",
-    followers: "500M",
-    followersText: "Followers",
-    rewards: "40",
-    rewardsText: "Rewards",
-    posts: "346",
-    postsText: "Posts",
+    friends: '45K',
+    friendsText: 'Friends',
+    followers: '500M',
+    followersText: 'Followers',
+    rewards: '40',
+    rewardsText: 'Rewards',
+    posts: '346',
+    postsText: 'Posts',
   },
 ];
 
 const Sidebar = () => {
   const router = useRouter();
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
-  const [selectedIndexResources, setSelectedIndexResources] =
-    useState<number>(0);
+  const [selectedIndexResources, setSelectedIndexResources] = useState<number>(0);
   const handlePress = (index: number) => {
     setSelectedIndex(index);
     // router.push("/profile/profile");
@@ -196,11 +192,7 @@ const Sidebar = () => {
                 onPress={() => handlePress(index)}
                 key={index}
                 className={`flex-row px-4 py-3 items-center gap-2 rounded
-              ${
-                index === selectedIndex
-                  ? "bg-background-950 "
-                  : "bg-background-0"
-              }
+              ${index === selectedIndex ? 'bg-background-950 ' : 'bg-background-0'}
               `}
               >
                 <Icon
@@ -208,18 +200,14 @@ const Sidebar = () => {
                   className={`
               ${
                 index === selectedIndex
-                  ? "stroke-background-0 fill-background-800"
-                  : "stroke-background-800 fill-none"
+                  ? 'stroke-background-0 fill-background-800'
+                  : 'stroke-background-800 fill-none'
               }
               `}
                 />
                 <Text
                   className={`
-              ${
-                index === selectedIndex
-                  ? "text-typography-0"
-                  : "text-typography-700"
-              }
+              ${index === selectedIndex ? 'text-typography-0' : 'text-typography-700'}
 
               `}
                 >
@@ -237,32 +225,20 @@ const Sidebar = () => {
                 onPress={() => handlePressResources(index)}
                 key={index}
                 className={`flex-row px-4 py-3 items-center gap-2 rounded
-              ${
-                index === selectedIndexResources
-                  ? "bg-background-950 "
-                  : "bg-background-0"
-              }
+              ${index === selectedIndexResources ? 'bg-background-950 ' : 'bg-background-0'}
               `}
               >
                 <Icon
                   as={item.iconName}
                   className={`
-              ${
-                index === selectedIndexResources
-                  ? "stroke-background-0"
-                  : "stroke-background-800"
-              }
+              ${index === selectedIndexResources ? 'stroke-background-0' : 'stroke-background-800'}
 
               h-10 w-10
               `}
                 />
                 <Text
                   className={`
-              ${
-                index === selectedIndexResources
-                  ? "text-typography-0"
-                  : "text-typography-700"
-              }
+              ${index === selectedIndexResources ? 'text-typography-0' : 'text-typography-700'}
 
               `}
                 >
@@ -278,9 +254,7 @@ const Sidebar = () => {
 };
 
 const DashboardLayout = (props: any) => {
-  const [isSidebarVisible, setIsSidebarVisible] = useState(
-    props.isSidebarVisible
-  );
+  const [isSidebarVisible, setIsSidebarVisible] = useState(props.isSidebarVisible);
   function toggleSidebar() {
     setIsSidebarVisible(!isSidebarVisible);
   }
@@ -295,9 +269,7 @@ const DashboardLayout = (props: any) => {
       </Box>
       <VStack className="h-full w-full">
         <HStack className="h-full w-full">
-          <Box className="hidden md:flex h-full">
-            {isSidebarVisible && <Sidebar />}
-          </Box>
+          <Box className="hidden md:flex h-full">{isSidebarVisible && <Sidebar />}</Box>
           <VStack className="w-full flex-1">{props.children}</VStack>
         </HStack>
       </VStack>
@@ -310,30 +282,21 @@ function MobileFooter({ footerIcons }: { footerIcons: any }) {
   return (
     <HStack
       className={cn(
-        "bg-background-0 justify-between w-full absolute left-0 bottom-0 right-0 p-3 overflow-hidden items-center  border-t-border-300  md:hidden border-t",
-        { "pb-5": Platform.OS === "ios" },
-        { "pb-5": Platform.OS === "android" }
+        'bg-background-0 justify-between w-full absolute left-0 bottom-0 right-0 p-3 overflow-hidden items-center  border-t-border-300  md:hidden border-t',
+        { 'pb-5': Platform.OS === 'ios' },
+        { 'pb-5': Platform.OS === 'android' }
       )}
     >
       {footerIcons.map(
-        (
-          item: { iconText: string; iconName: any },
-          index: React.Key | null | undefined
-        ) => {
+        (item: { iconText: string; iconName: any }, index: React.Key | null | undefined) => {
           return (
             <Pressable
               className="px-0.5 flex-1 flex-col items-center"
               key={index}
-              onPress={() => router.push("/news-feed/news-and-feed")}
+              onPress={() => router.push('/news-feed/news-and-feed')}
             >
-              <Icon
-                as={item.iconName}
-                size="md"
-                className="h-[32px] w-[65px]"
-              />
-              <Text className="text-xs text-center text-typography-600">
-                {item.iconText}
-              </Text>
+              <Icon as={item.iconName} size="md" className="h-[32px] w-[65px]" />
+              <Text className="text-xs text-center text-typography-600">{item.iconText}</Text>
             </Pressable>
           );
         }
@@ -390,35 +353,26 @@ type userSchemaDetails = z.infer<typeof userSchema>;
 const userSchema = z.object({
   firstName: z
     .string()
-    .min(1, "First name is required")
-    .max(50, "First name must be less than 50 characters"),
+    .min(1, 'First name is required')
+    .max(50, 'First name must be less than 50 characters'),
   lastName: z
     .string()
-    .min(1, "Last name is required")
-    .max(50, "Last name must be less than 50 characters"),
-  gender: z.enum(["male", "female", "other"]),
+    .min(1, 'Last name is required')
+    .max(50, 'Last name must be less than 50 characters'),
+  gender: z.enum(['male', 'female', 'other']),
   phoneNumber: z
     .string()
-    .regex(
-      /^\+?[1-9]\d{1,14}$/,
-      "Phone number must be a valid international phone number"
-    ),
-  city: z
-    .string()
-    .min(1, "City is required")
-    .max(100, "City must be less than 100 characters"),
-  state: z
-    .string()
-    .min(1, "State is required")
-    .max(100, "State must be less than 100 characters"),
+    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be a valid international phone number'),
+  city: z.string().min(1, 'City is required').max(100, 'City must be less than 100 characters'),
+  state: z.string().min(1, 'State is required').max(100, 'State must be less than 100 characters'),
   country: z
     .string()
-    .min(1, "Country is required")
-    .max(100, "Country must be less than 100 characters"),
+    .min(1, 'Country is required')
+    .max(100, 'Country must be less than 100 characters'),
   zipcode: z
     .string()
-    .min(1, "Zipcode is required")
-    .max(20, "Zipcode must be less than 20 characters"),
+    .min(1, 'Zipcode is required')
+    .max(20, 'Zipcode must be less than 20 characters'),
 });
 
 interface AccountCardType {
@@ -429,17 +383,17 @@ interface AccountCardType {
 const accountData: AccountCardType[] = [
   {
     iconName: InboxIcon,
-    subText: "Settings",
+    subText: 'Settings',
     endIcon: ChevronRightIcon,
   },
   {
     iconName: GlobeIcon,
-    subText: "Notifications",
+    subText: 'Notifications',
     endIcon: ChevronRightIcon,
   },
   {
     iconName: PhoneIcon,
-    subText: "Rewards",
+    subText: 'Rewards',
     endIcon: ChevronRightIcon,
   },
 ];
@@ -459,17 +413,15 @@ const MainContent = () => {
         <VStack className="h-full w-full pb-8" space="2xl">
           <Box className="relative w-full md:h-[478px] h-[380px]">
             <Image
-              source={require("@/assets/profile-screens/profile/image2.png")}
-              height={"100%"}
-              width={"100%"}
+              source={require('@/assets/profile-screens/profile/image2.png')}
+              height={'100%'}
+              width={'100%'}
               alt="Banner Image"
               contentFit="cover"
             />
           </Box>
           <HStack className="absolute pt-6 px-10 hidden md:flex">
-            <Text className="text-typography-900 font-roboto">
-              home &gt; {` `}
-            </Text>
+            <Text className="text-typography-900 font-roboto">home &gt; {` `}</Text>
             <Text className="font-semibold text-typography-900 ">profile</Text>
           </HStack>
           <Center className="absolute md:mt-14 mt-6 w-full md:px-10 md:pt-6 pb-4">
@@ -477,9 +429,9 @@ const MainContent = () => {
               <Avatar size="2xl" className="bg-primary-600">
                 <AvatarImage
                   alt="Profile Image"
-                  height={"100%"}
-                  width={"100%"}
-                  source={require("@/assets/profile-screens/profile/image.png")}
+                  height={'100%'}
+                  width={'100%'}
+                  source={require('@/assets/profile-screens/profile/image.png')}
                 />
                 <AvatarBadge />
               </Avatar>
@@ -487,9 +439,7 @@ const MainContent = () => {
                 <Text size="2xl" className="font-roboto text-dark">
                   Alexander Leslie
                 </Text>
-                <Text className="font-roboto text-sm text-typograpphy-700">
-                  United States
-                </Text>
+                <Text className="font-roboto text-sm text-typograpphy-700">United States</Text>
               </VStack>
               <>
                 {userData.map((item, index) => {
@@ -499,36 +449,24 @@ const MainContent = () => {
                         <Text className="text-dark font-roboto font-semibold justify-center items-center">
                           {item.friends}
                         </Text>
-                        <Text className="text-dark text-xs font-roboto">
-                          {item.friendsText}
-                        </Text>
+                        <Text className="text-dark text-xs font-roboto">{item.friendsText}</Text>
                       </VStack>
                       <Divider orientation="vertical" className="h-10" />
                       <VStack className="py-3 px-4 items-center" space="xs">
                         <Text className="text-dark font-roboto font-semibold">
                           {item.followers}
                         </Text>
-                        <Text className="text-dark text-xs font-roboto">
-                          {item.followersText}
-                        </Text>
+                        <Text className="text-dark text-xs font-roboto">{item.followersText}</Text>
                       </VStack>
                       <Divider orientation="vertical" className="h-10" />
                       <VStack className="py-3 px-4 items-center" space="xs">
-                        <Text className="text-dark font-roboto font-semibold">
-                          {item.rewards}
-                        </Text>
-                        <Text className="text-dark text-xs font-roboto">
-                          {item.rewardsText}
-                        </Text>
+                        <Text className="text-dark font-roboto font-semibold">{item.rewards}</Text>
+                        <Text className="text-dark text-xs font-roboto">{item.rewardsText}</Text>
                       </VStack>
                       <Divider orientation="vertical" className="h-10" />
                       <VStack className="py-3 px-4 items-center" space="xs">
-                        <Text className="text-dark font-roboto font-semibold">
-                          {item.posts}
-                        </Text>
-                        <Text className="text-dark text-xs font-roboto">
-                          {item.postsText}
-                        </Text>
+                        <Text className="text-dark font-roboto font-semibold">{item.posts}</Text>
+                        <Text className="text-dark text-xs font-roboto">{item.postsText}</Text>
                       </VStack>
                     </HStack>
                   );
@@ -553,9 +491,9 @@ const MainContent = () => {
               <HStack space="2xl" className="items-center">
                 <Box className="md:h-20 md:w-20 h-10 w-10">
                   <Image
-                    source={require("@/assets/profile-screens/profile/image1.png")}
-                    height={"100%"}
-                    width={"100%"}
+                    source={require('@/assets/profile-screens/profile/image1.png')}
+                    height={'100%'}
+                    width={'100%'}
                     alt="Promo Image"
                   />
                 </Box>
@@ -563,9 +501,7 @@ const MainContent = () => {
                   <Text className="text-typography-900 text-lg" size="lg">
                     Invite & get rewards
                   </Text>
-                  <Text className="font-roboto text-sm md:text-[16px]">
-                    Your code r45dAsdeK8
-                  </Text>
+                  <Text className="font-roboto text-sm md:text-[16px]">Your code r45dAsdeK8</Text>
                 </VStack>
               </HStack>
               <Button className="p-0 md:py-2 md:px-4 bg-background-0 active:bg-background-0 md:bg-background-900 ">
@@ -591,9 +527,7 @@ const MainContent = () => {
                       </HStack>
                       <Icon as={item.endIcon} />
                     </HStack>
-                    {accountData.length - 1 !== index && (
-                      <Divider className="my-1" />
-                    )}
+                    {accountData.length - 1 !== index && <Divider className="my-1" />}
                   </React.Fragment>
                 );
               })}
@@ -616,9 +550,7 @@ const MainContent = () => {
                       </HStack>
                       <Icon as={item.endIcon} />
                     </HStack>
-                    {accountData.length - 1 !== index && (
-                      <Divider className="my-1" />
-                    )}
+                    {accountData.length - 1 !== index && <Divider className="my-1" />}
                   </React.Fragment>
                 );
               })}
@@ -652,9 +584,9 @@ const MobileScreen = () => {
     <VStack className="md:hidden mb-5">
       <Box className="w-full h-[188px]">
         <Image
-          source={require("@/assets/profile-screens/profile/image2.png")}
-          height={"100%"}
-          width={"100%"}
+          source={require('@/assets/profile-screens/profile/image2.png')}
+          height={'100%'}
+          width={'100%'}
           alt="Banner Image"
         />
       </Box>
@@ -663,9 +595,7 @@ const MobileScreen = () => {
       </Pressable>
       <Center className="w-full absolute top-10">
         <Avatar size="2xl">
-          <AvatarImage
-            source={require("@/assets/profile-screens/profile/image.png")}
-          />
+          <AvatarImage source={require('@/assets/profile-screens/profile/image.png')} />
           <AvatarBadge className="justify-center items-center bg-background-950">
             <Icon as={EditPhotoIcon} />
           </AvatarBadge>
@@ -684,7 +614,7 @@ const MobileScreen = () => {
               name="firstName"
               control={control}
               rules={{
-                validate: async (value) => {
+                validate: async value => {
                   try {
                     await userSchema.parseAsync({
                       firstName: value,
@@ -695,14 +625,13 @@ const MobileScreen = () => {
                   }
                 },
               }}
-              render={({ field: { onChange, onBlur, value } }) => (
+              render={({ field: { onChange, value } }) => (
                 <Input>
                   <InputField
                     placeholder="First Name"
                     type="text"
                     value={value}
                     onChangeText={onChange}
-                    onBlur={onBlur}
                     onSubmitEditing={handleKeyPress}
                     returnKeyType="done"
                   />
@@ -711,9 +640,7 @@ const MobileScreen = () => {
             />
             <FormControlError>
               <FormControlErrorIcon as={AlertCircleIcon} size="md" />
-              <FormControlErrorText>
-                {errors?.firstName?.message}
-              </FormControlErrorText>
+              <FormControlErrorText>{errors?.firstName?.message}</FormControlErrorText>
             </FormControlError>
           </FormControl>
           <FormControl isInvalid={!!errors.lastName || isNameFocused}>
@@ -724,7 +651,7 @@ const MobileScreen = () => {
               name="lastName"
               control={control}
               rules={{
-                validate: async (value) => {
+                validate: async value => {
                   try {
                     await userSchema.parseAsync({
                       lastName: value,
@@ -735,14 +662,13 @@ const MobileScreen = () => {
                   }
                 },
               }}
-              render={({ field: { onChange, onBlur, value } }) => (
+              render={({ field: { onChange, value } }) => (
                 <Input>
                   <InputField
                     placeholder="Last Name"
                     type="text"
                     value={value}
                     onChangeText={onChange}
-                    onBlur={onBlur}
                     onSubmitEditing={handleKeyPress}
                     returnKeyType="done"
                   />
@@ -751,9 +677,7 @@ const MobileScreen = () => {
             />
             <FormControlError>
               <FormControlErrorIcon as={AlertCircleIcon} size="md" />
-              <FormControlErrorText>
-                {errors?.lastName?.message}
-              </FormControlErrorText>
+              <FormControlErrorText>{errors?.lastName?.message}</FormControlErrorText>
             </FormControlError>
           </FormControl>
           <FormControl isInvalid={!!errors.gender}>
@@ -764,7 +688,7 @@ const MobileScreen = () => {
               name="gender"
               control={control}
               rules={{
-                validate: async (value) => {
+                validate: async value => {
                   try {
                     await userSchema.parseAsync({ city: value });
                     return true;
@@ -795,9 +719,7 @@ const MobileScreen = () => {
             />
             <FormControlError>
               <FormControlErrorIcon as={AlertCircle} size="md" />
-              <FormControlErrorText>
-                {errors?.gender?.message}
-              </FormControlErrorText>
+              <FormControlErrorText>{errors?.gender?.message}</FormControlErrorText>
             </FormControlError>
           </FormControl>
           <FormControl isInvalid={!!errors.phoneNumber}>
@@ -808,7 +730,7 @@ const MobileScreen = () => {
               name="phoneNumber"
               control={control}
               rules={{
-                validate: async (value) => {
+                validate: async value => {
                   try {
                     await userSchema.parseAsync({ phoneNumber: value });
                     return true;
@@ -817,7 +739,7 @@ const MobileScreen = () => {
                   }
                 },
               }}
-              render={({ field: { onChange, onBlur, value } }) => (
+              render={({ field: { onChange, value } }) => (
                 <HStack className="gap-1">
                   <Select className="w-[28%]">
                     <SelectTrigger variant="outline" size="md">
@@ -843,7 +765,6 @@ const MobileScreen = () => {
                       value={value}
                       onChangeText={onChange}
                       keyboardType="number-pad"
-                      onBlur={onBlur}
                       onSubmitEditing={handleKeyPress}
                       returnKeyType="done"
                     />
@@ -853,9 +774,7 @@ const MobileScreen = () => {
             />
             <FormControlError>
               <FormControlErrorIcon as={AlertCircle} size="md" />
-              <FormControlErrorText>
-                {errors?.phoneNumber?.message}
-              </FormControlErrorText>
+              <FormControlErrorText>{errors?.phoneNumber?.message}</FormControlErrorText>
             </FormControlError>
           </FormControl>
         </VStack>
@@ -863,9 +782,7 @@ const MobileScreen = () => {
           Address
         </Heading>
         <VStack space="md">
-          <FormControl
-            isInvalid={(!!errors.city || isEmailFocused) && !!errors.city}
-          >
+          <FormControl isInvalid={(!!errors.city || isEmailFocused) && !!errors.city}>
             <FormControlLabel className="mb-2">
               <FormControlLabelText>City</FormControlLabelText>
             </FormControlLabel>
@@ -873,7 +790,7 @@ const MobileScreen = () => {
               name="city"
               control={control}
               rules={{
-                validate: async (value) => {
+                validate: async value => {
                   try {
                     await userSchema.parseAsync({ city: value });
                     return true;
@@ -882,7 +799,7 @@ const MobileScreen = () => {
                   }
                 },
               }}
-              render={({ field: { onChange, onBlur, value } }) => (
+              render={({ field: { onChange, value } }) => (
                 <Select onValueChange={onChange} selectedValue={value}>
                   <SelectTrigger variant="outline" size="md">
                     <SelectInput placeholder="Select" />
@@ -904,15 +821,11 @@ const MobileScreen = () => {
             />
             <FormControlError>
               <FormControlErrorIcon as={AlertCircle} size="md" />
-              <FormControlErrorText>
-                {errors?.city?.message}
-              </FormControlErrorText>
+              <FormControlErrorText>{errors?.city?.message}</FormControlErrorText>
             </FormControlError>
           </FormControl>
 
-          <FormControl
-            isInvalid={(!!errors.state || isEmailFocused) && !!errors.state}
-          >
+          <FormControl isInvalid={(!!errors.state || isEmailFocused) && !!errors.state}>
             <FormControlLabel className="mb-2">
               <FormControlLabelText>State</FormControlLabelText>
             </FormControlLabel>
@@ -920,7 +833,7 @@ const MobileScreen = () => {
               name="state"
               control={control}
               rules={{
-                validate: async (value) => {
+                validate: async value => {
                   try {
                     await userSchema.parseAsync({ state: value });
                     return true;
@@ -929,7 +842,7 @@ const MobileScreen = () => {
                   }
                 },
               }}
-              render={({ field: { onChange, onBlur, value } }) => (
+              render={({ field: { onChange, value } }) => (
                 <Select onValueChange={onChange} selectedValue={value}>
                   <SelectTrigger variant="outline" size="md">
                     <SelectInput placeholder="Select" />
@@ -951,15 +864,11 @@ const MobileScreen = () => {
             />
             <FormControlError>
               <FormControlErrorIcon as={AlertCircle} size="md" />
-              <FormControlErrorText>
-                {errors?.state?.message}
-              </FormControlErrorText>
+              <FormControlErrorText>{errors?.state?.message}</FormControlErrorText>
             </FormControlError>
           </FormControl>
 
-          <FormControl
-            isInvalid={(!!errors.country || isEmailFocused) && !!errors.country}
-          >
+          <FormControl isInvalid={(!!errors.country || isEmailFocused) && !!errors.country}>
             <FormControlLabel className="mb-2">
               <FormControlLabelText>Country</FormControlLabelText>
             </FormControlLabel>
@@ -967,7 +876,7 @@ const MobileScreen = () => {
               name="country"
               control={control}
               rules={{
-                validate: async (value) => {
+                validate: async value => {
                   try {
                     await userSchema.parseAsync({ country: value });
                     return true;
@@ -976,7 +885,7 @@ const MobileScreen = () => {
                   }
                 },
               }}
-              render={({ field: { onChange, onBlur, value } }) => (
+              render={({ field: { onChange, value } }) => (
                 <Select onValueChange={onChange} selectedValue={value}>
                   <SelectTrigger variant="outline" size="md">
                     <SelectInput placeholder="Select" />
@@ -998,9 +907,7 @@ const MobileScreen = () => {
             />
             <FormControlError>
               <FormControlErrorIcon as={AlertCircle} size="md" />
-              <FormControlErrorText>
-                {errors?.country?.message}
-              </FormControlErrorText>
+              <FormControlErrorText>{errors?.country?.message}</FormControlErrorText>
             </FormControlError>
           </FormControl>
           <FormControl isInvalid={!!errors.zipcode || isEmailFocused}>
@@ -1011,7 +918,7 @@ const MobileScreen = () => {
               name="zipcode"
               control={control}
               rules={{
-                validate: async (value) => {
+                validate: async value => {
                   try {
                     await userSchema.parseAsync({
                       zipCode: value,
@@ -1022,14 +929,13 @@ const MobileScreen = () => {
                   }
                 },
               }}
-              render={({ field: { onChange, onBlur, value } }) => (
+              render={({ field: { onChange, value } }) => (
                 <Input>
                   <InputField
                     placeholder="Enter 6 - digit zip code"
                     type="text"
                     value={value}
                     onChangeText={onChange}
-                    onBlur={onBlur}
                     onSubmitEditing={handleKeyPress}
                     returnKeyType="done"
                   />
@@ -1038,9 +944,7 @@ const MobileScreen = () => {
             />
             <FormControlError>
               <FormControlErrorIcon as={AlertCircle} size="md" />
-              <FormControlErrorText>
-                {errors?.zipcode?.message}
-              </FormControlErrorText>
+              <FormControlErrorText>{errors?.zipcode?.message}</FormControlErrorText>
             </FormControlError>
           </FormControl>
         </VStack>
@@ -1056,13 +960,7 @@ const MobileScreen = () => {
     </VStack>
   );
 };
-const ModalComponent = ({
-  showModal,
-  setShowModal,
-}: {
-  showModal: boolean;
-  setShowModal: any;
-}) => {
+const ModalComponent = ({ showModal, setShowModal }: { showModal: boolean; setShowModal: any }) => {
   const ref = useRef(null);
   const {
     control,
@@ -1094,11 +992,11 @@ const ModalComponent = ({
     >
       <ModalBackdrop />
       <ModalContent>
-        <Box className={"w-full h-[215px] "}>
+        <Box className={'w-full h-[215px] '}>
           <Image
-            source={require("@/assets/profile-screens/profile/image2.png")}
-            height={"100%"}
-            width={"100%"}
+            source={require('@/assets/profile-screens/profile/image2.png')}
+            height={'100%'}
+            width={'100%'}
             alt="Banner Image"
           />
         </Box>
@@ -1119,9 +1017,7 @@ const ModalComponent = ({
         </ModalHeader>
         <Center className="w-full absolute top-16">
           <Avatar size="2xl">
-            <AvatarImage
-              source={require("@/assets/profile-screens/profile/image.png")}
-            />
+            <AvatarImage source={require('@/assets/profile-screens/profile/image.png')} />
             <AvatarBadge className="justify-center items-center bg-background-500">
               <Icon as={EditPhotoIcon} />
             </AvatarBadge>
@@ -1130,10 +1026,7 @@ const ModalComponent = ({
         <ModalBody className="px-10 py-6">
           <VStack space="2xl">
             <HStack className="items-center justify-between">
-              <FormControl
-                isInvalid={!!errors.firstName || isNameFocused}
-                className="w-[47%]"
-              >
+              <FormControl isInvalid={!!errors.firstName || isNameFocused} className="w-[47%]">
                 <FormControlLabel className="mb-2">
                   <FormControlLabelText>First Name</FormControlLabelText>
                 </FormControlLabel>
@@ -1141,7 +1034,7 @@ const ModalComponent = ({
                   name="firstName"
                   control={control}
                   rules={{
-                    validate: async (value) => {
+                    validate: async value => {
                       try {
                         await userSchema.parseAsync({
                           firstName: value,
@@ -1152,14 +1045,13 @@ const ModalComponent = ({
                       }
                     },
                   }}
-                  render={({ field: { onChange, onBlur, value } }) => (
+                  render={({ field: { onChange, value } }) => (
                     <Input>
                       <InputField
                         placeholder="First Name"
                         type="text"
                         value={value}
                         onChangeText={onChange}
-                        onBlur={onBlur}
                         onSubmitEditing={handleKeyPress}
                         returnKeyType="done"
                       />
@@ -1168,15 +1060,10 @@ const ModalComponent = ({
                 />
                 <FormControlError>
                   <FormControlErrorIcon as={AlertCircleIcon} size="md" />
-                  <FormControlErrorText>
-                    {errors?.firstName?.message}
-                  </FormControlErrorText>
+                  <FormControlErrorText>{errors?.firstName?.message}</FormControlErrorText>
                 </FormControlError>
               </FormControl>
-              <FormControl
-                isInvalid={!!errors.lastName || isNameFocused}
-                className="w-[47%]"
-              >
+              <FormControl isInvalid={!!errors.lastName || isNameFocused} className="w-[47%]">
                 <FormControlLabel className="mb-2">
                   <FormControlLabelText>Last Name</FormControlLabelText>
                 </FormControlLabel>
@@ -1184,7 +1071,7 @@ const ModalComponent = ({
                   name="lastName"
                   control={control}
                   rules={{
-                    validate: async (value) => {
+                    validate: async value => {
                       try {
                         await userSchema.parseAsync({
                           lastName: value,
@@ -1195,14 +1082,13 @@ const ModalComponent = ({
                       }
                     },
                   }}
-                  render={({ field: { onChange, onBlur, value } }) => (
+                  render={({ field: { onChange, value } }) => (
                     <Input>
                       <InputField
                         placeholder="Last Name"
                         type="text"
                         value={value}
                         onChangeText={onChange}
-                        onBlur={onBlur}
                         onSubmitEditing={handleKeyPress}
                         returnKeyType="done"
                       />
@@ -1211,9 +1097,7 @@ const ModalComponent = ({
                 />
                 <FormControlError>
                   <FormControlErrorIcon as={AlertCircleIcon} size="md" />
-                  <FormControlErrorText>
-                    {errors?.lastName?.message}
-                  </FormControlErrorText>
+                  <FormControlErrorText>{errors?.lastName?.message}</FormControlErrorText>
                 </FormControlError>
               </FormControl>
             </HStack>
@@ -1226,7 +1110,7 @@ const ModalComponent = ({
                   name="gender"
                   control={control}
                   rules={{
-                    validate: async (value) => {
+                    validate: async value => {
                       try {
                         await userSchema.parseAsync({ city: value });
                         return true;
@@ -1257,9 +1141,7 @@ const ModalComponent = ({
                 />
                 <FormControlError>
                   <FormControlErrorIcon as={AlertCircle} size="md" />
-                  <FormControlErrorText>
-                    {errors?.gender?.message}
-                  </FormControlErrorText>
+                  <FormControlErrorText>{errors?.gender?.message}</FormControlErrorText>
                 </FormControlError>
               </FormControl>
 
@@ -1271,7 +1153,7 @@ const ModalComponent = ({
                   name="phoneNumber"
                   control={control}
                   rules={{
-                    validate: async (value) => {
+                    validate: async value => {
                       try {
                         await userSchema.parseAsync({ phoneNumber: value });
                         return true;
@@ -1280,7 +1162,7 @@ const ModalComponent = ({
                       }
                     },
                   }}
-                  render={({ field: { onChange, onBlur, value } }) => (
+                  render={({ field: { onChange, value } }) => (
                     <HStack className="gap-1">
                       <Select className="w-[28%]">
                         <SelectTrigger variant="outline" size="md">
@@ -1306,7 +1188,6 @@ const ModalComponent = ({
                           value={value}
                           onChangeText={onChange}
                           keyboardType="number-pad"
-                          onBlur={onBlur}
                           onSubmitEditing={handleKeyPress}
                           returnKeyType="done"
                         />
@@ -1316,9 +1197,7 @@ const ModalComponent = ({
                 />
                 <FormControlError>
                   <FormControlErrorIcon as={AlertCircle} size="md" />
-                  <FormControlErrorText>
-                    {errors?.phoneNumber?.message}
-                  </FormControlErrorText>
+                  <FormControlErrorText>{errors?.phoneNumber?.message}</FormControlErrorText>
                 </FormControlError>
               </FormControl>
             </HStack>
@@ -1334,7 +1213,7 @@ const ModalComponent = ({
                   name="city"
                   control={control}
                   rules={{
-                    validate: async (value) => {
+                    validate: async value => {
                       try {
                         await userSchema.parseAsync({ city: value });
                         return true;
@@ -1343,7 +1222,7 @@ const ModalComponent = ({
                       }
                     },
                   }}
-                  render={({ field: { onChange, onBlur, value } }) => (
+                  render={({ field: { onChange, value } }) => (
                     <Select onValueChange={onChange} selectedValue={value}>
                       <SelectTrigger variant="outline" size="md">
                         <SelectInput placeholder="Select" />
@@ -1365,9 +1244,7 @@ const ModalComponent = ({
                 />
                 <FormControlError>
                   <FormControlErrorIcon as={AlertCircle} size="md" />
-                  <FormControlErrorText>
-                    {errors?.city?.message}
-                  </FormControlErrorText>
+                  <FormControlErrorText>{errors?.city?.message}</FormControlErrorText>
                 </FormControlError>
               </FormControl>
 
@@ -1382,7 +1259,7 @@ const ModalComponent = ({
                   name="state"
                   control={control}
                   rules={{
-                    validate: async (value) => {
+                    validate: async value => {
                       try {
                         await userSchema.parseAsync({ state: value });
                         return true;
@@ -1391,7 +1268,7 @@ const ModalComponent = ({
                       }
                     },
                   }}
-                  render={({ field: { onChange, onBlur, value } }) => (
+                  render={({ field: { onChange, value } }) => (
                     <Select onValueChange={onChange} selectedValue={value}>
                       <SelectTrigger variant="outline" size="md">
                         <SelectInput placeholder="Select" />
@@ -1413,18 +1290,14 @@ const ModalComponent = ({
                 />
                 <FormControlError>
                   <FormControlErrorIcon as={AlertCircle} size="md" />
-                  <FormControlErrorText>
-                    {errors?.state?.message}
-                  </FormControlErrorText>
+                  <FormControlErrorText>{errors?.state?.message}</FormControlErrorText>
                 </FormControlError>
               </FormControl>
             </HStack>
             <HStack className="items-center justify-between">
               <FormControl
                 className="w-[47%]"
-                isInvalid={
-                  (!!errors.country || isEmailFocused) && !!errors.country
-                }
+                isInvalid={(!!errors.country || isEmailFocused) && !!errors.country}
               >
                 <FormControlLabel className="mb-2">
                   <FormControlLabelText>Country</FormControlLabelText>
@@ -1433,7 +1306,7 @@ const ModalComponent = ({
                   name="country"
                   control={control}
                   rules={{
-                    validate: async (value) => {
+                    validate: async value => {
                       try {
                         await userSchema.parseAsync({ country: value });
                         return true;
@@ -1442,7 +1315,7 @@ const ModalComponent = ({
                       }
                     },
                   }}
-                  render={({ field: { onChange, onBlur, value } }) => (
+                  render={({ field: { onChange, value } }) => (
                     <Select onValueChange={onChange} selectedValue={value}>
                       <SelectTrigger variant="outline" size="md">
                         <SelectInput placeholder="Select" />
@@ -1464,15 +1337,10 @@ const ModalComponent = ({
                 />
                 <FormControlError>
                   <FormControlErrorIcon as={AlertCircle} size="md" />
-                  <FormControlErrorText>
-                    {errors?.country?.message}
-                  </FormControlErrorText>
+                  <FormControlErrorText>{errors?.country?.message}</FormControlErrorText>
                 </FormControlError>
               </FormControl>
-              <FormControl
-                className="w-[47%]"
-                isInvalid={!!errors.zipcode || isEmailFocused}
-              >
+              <FormControl className="w-[47%]" isInvalid={!!errors.zipcode || isEmailFocused}>
                 <FormControlLabel className="mb-2">
                   <FormControlLabelText>Zipcode</FormControlLabelText>
                 </FormControlLabel>
@@ -1480,7 +1348,7 @@ const ModalComponent = ({
                   name="zipcode"
                   control={control}
                   rules={{
-                    validate: async (value) => {
+                    validate: async value => {
                       try {
                         await userSchema.parseAsync({
                           zipCode: value,
@@ -1491,14 +1359,13 @@ const ModalComponent = ({
                       }
                     },
                   }}
-                  render={({ field: { onChange, onBlur, value } }) => (
+                  render={({ field: { onChange, value } }) => (
                     <Input>
                       <InputField
                         placeholder="Enter 6 - digit zip code"
                         type="text"
                         value={value}
                         onChangeText={onChange}
-                        onBlur={onBlur}
                         onSubmitEditing={handleKeyPress}
                         returnKeyType="done"
                       />
@@ -1507,9 +1374,7 @@ const ModalComponent = ({
                 />
                 <FormControlError>
                   <FormControlErrorIcon as={AlertCircle} size="md" />
-                  <FormControlErrorText>
-                    {errors?.zipcode?.message}
-                  </FormControlErrorText>
+                  <FormControlErrorText>{errors?.zipcode?.message}</FormControlErrorText>
                 </FormControlError>
               </FormControl>
             </HStack>

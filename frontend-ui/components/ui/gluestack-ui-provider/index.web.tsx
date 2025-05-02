@@ -1,9 +1,10 @@
 'use client';
-import React from 'react';
-import { config } from './config';
+import { setFlushStyles } from '@gluestack-ui/nativewind-utils/flush';
 import { OverlayProvider } from '@gluestack-ui/overlay';
 import { ToastProvider } from '@gluestack-ui/toast';
-import { setFlushStyles } from '@gluestack-ui/nativewind-utils/flush';
+import React from 'react';
+
+import { config } from './config';
 
 export function GluestackUIProvider({
   mode = 'light',

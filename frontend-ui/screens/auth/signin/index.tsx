@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { Toast, ToastTitle, useToast } from "@/components/ui/toast";
-import { HStack } from "@/components/ui/hstack";
-import { VStack } from "@/components/ui/vstack";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
-import { LinkText } from "@/components/ui/link";
-import Link from "@unitools/link";
+import { zodResolver } from '@hookform/resolvers/zod';
+import Link from '@unitools/link';
+import useRouter from '@unitools/router';
+import { AlertTriangle, Fingerprint } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { Keyboard, Platform } from 'react-native';
+import { z } from 'zod';
+
+import { AuthLayout } from '../layout';
+
+import { requestEmailCode } from '@/api/authApi';
+import { useAuth } from '@/api/authContext';
+import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
+import { Divider } from '@/components/ui/divider';
 import {
   FormControl,
   FormControlError,
@@ -13,25 +20,20 @@ import {
   FormControlErrorText,
   FormControlLabel,
   FormControlLabelText,
-} from "@/components/ui/form-control";
-import { Input, InputField } from "@/components/ui/input";
-import { ArrowLeftIcon, Icon } from "@/components/ui/icon";
-import { Button, ButtonText, ButtonIcon } from "@/components/ui/button";
-import { Keyboard, Platform } from "react-native";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertTriangle, Fingerprint } from "lucide-react-native";
-import { Pressable } from "@/components/ui/pressable";
-import useRouter from "@unitools/router";
-import { AuthLayout } from "../layout";
-import { requestEmailCode } from "@/api/authApi";
-import { useAuth } from "@/api/authContext";
-import { Divider } from "@/components/ui/divider";
+} from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { ArrowLeftIcon, Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
+import { LinkText } from '@/components/ui/link';
+import { Pressable } from '@/components/ui/pressable';
+import { Text } from '@/components/ui/text';
+import { Toast, ToastTitle, useToast } from '@/components/ui/toast';
+import { VStack } from '@/components/ui/vstack';
 
 // Define the form schema
 const requestCodeSchema = z.object({
-  email: z.string().min(1, "Email is required").email(),
+  email: z.string().min(1, 'Email is required').email(),
 });
 
 type RequestCodeSchemaType = z.infer<typeof requestCodeSchema>;
@@ -55,7 +57,7 @@ const LoginForm = () => {
       await requestEmailCode({ email: data.email });
 
       toast.show({
-        placement: "bottom right",
+        placement: 'bottom right',
         render: ({ id }) => {
           return (
             <Toast nativeID={id} variant="accent" action="success">
@@ -68,11 +70,11 @@ const LoginForm = () => {
       // Navigate to verify code screen with email as parameter
       router.push({
         pathname: '/auth/verify-code',
-        params: { email: data.email }
+        params: { email: data.email },
       });
     } catch (error) {
       toast.show({
-        placement: "bottom right",
+        placement: 'bottom right',
         render: ({ id }) => {
           return (
             <Toast nativeID={id} variant="accent" action="error">
@@ -94,7 +96,7 @@ const LoginForm = () => {
 
       if (success) {
         toast.show({
-          placement: "bottom right",
+          placement: 'bottom right',
           render: ({ id }) => {
             return (
               <Toast nativeID={id} variant="accent" action="success">
@@ -107,11 +109,13 @@ const LoginForm = () => {
         router.replace('/dashboard');
       } else {
         toast.show({
-          placement: "bottom right",
+          placement: 'bottom right',
           render: ({ id }) => {
             return (
               <Toast nativeID={id} variant="accent" action="error">
-                <ToastTitle>Biometric authentication failed. Please try again or use email code.</ToastTitle>
+                <ToastTitle>
+                  Biometric authentication failed. Please try again or use email code.
+                </ToastTitle>
               </Toast>
             );
           },
@@ -119,11 +123,13 @@ const LoginForm = () => {
       }
     } catch (error) {
       toast.show({
-        placement: "bottom right",
+        placement: 'bottom right',
         render: ({ id }) => {
           return (
             <Toast nativeID={id} variant="accent" action="error">
-              <ToastTitle>Biometric authentication error. Please try again or use email code.</ToastTitle>
+              <ToastTitle>
+                Biometric authentication error. Please try again or use email code.
+              </ToastTitle>
             </Toast>
           );
         },
@@ -146,27 +152,18 @@ const LoginForm = () => {
             router.back();
           }}
         >
-          <Icon
-            as={ArrowLeftIcon}
-            className="md:hidden text-background-800"
-            size="xl"
-          />
+          <Icon as={ArrowLeftIcon} className="md:hidden text-background-800" size="xl" />
         </Pressable>
         <VStack>
           <Heading className="md:text-center" size="3xl">
             Log in
           </Heading>
-          <Text>
-            Enter your email to receive a login code
-          </Text>
+          <Text>Enter your email to receive a login code</Text>
         </VStack>
       </VStack>
       <VStack className="w-full">
         <VStack space="xl" className="w-full">
-          <FormControl
-            isInvalid={!!requestCodeForm.formState.errors?.email}
-            className="w-full"
-          >
+          <FormControl isInvalid={!!requestCodeForm.formState.errors?.email} className="w-full">
             <FormControlLabel>
               <FormControlLabelText>Email</FormControlLabelText>
             </FormControlLabel>
@@ -208,7 +205,9 @@ const LoginForm = () => {
             {biometricSupport.isAvailable && biometricSupport.isEnabled && (
               <>
                 <Divider>
-                  <Text size="sm" className="text-background-600 px-2">OR</Text>
+                  <Text size="sm" className="text-background-600 px-2">
+                    OR
+                  </Text>
                 </Divider>
 
                 <Button
@@ -220,7 +219,11 @@ const LoginForm = () => {
                 >
                   <ButtonIcon as={Fingerprint} />
                   <ButtonText className="font-medium">
-                    {isAuthenticatingBiometric ? 'Authenticating...' : `Log in with ${Platform.OS === 'ios' ? 'Face ID / Touch ID' : 'Biometrics'}`}
+                    {isAuthenticatingBiometric
+                      ? 'Authenticating...'
+                      : `Log in with ${
+                          Platform.OS === 'ios' ? 'Face ID / Touch ID' : 'Biometrics'
+                        }`}
                   </ButtonText>
                 </Button>
               </>

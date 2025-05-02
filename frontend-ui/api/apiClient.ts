@@ -1,6 +1,7 @@
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+
 import { API_URL } from '@/constants/api';
 
 // Helper to get token from secure storage
@@ -28,7 +29,7 @@ const apiClient = axios.create({
 
 // Add request interceptor to add auth token
 apiClient.interceptors.request.use(
-  async (config) => {
+  async config => {
     // Get token from storage
     const token = await getToken();
 
@@ -39,15 +40,15 @@ apiClient.interceptors.request.use(
 
     return config;
   },
-  (error) => {
+  error => {
     return Promise.reject(error);
   }
 );
 
 // Add response interceptor to handle unauthorized errors
 apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  response => response,
+  async error => {
     const originalRequest = error.config;
 
     // If error is 401 and not already retrying

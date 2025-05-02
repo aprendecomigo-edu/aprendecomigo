@@ -1,8 +1,18 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import useRouter from '@unitools/router';
+import { AlertTriangle } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
-import { Toast, ToastTitle, useToast } from '@/components/ui/toast';
-import { VStack } from '@/components/ui/vstack';
-import { Heading } from '@/components/ui/heading';
-import { Text } from '@/components/ui/text';
+import { useForm, Controller } from 'react-hook-form';
+import { Keyboard, ScrollView } from 'react-native';
+import { z } from 'zod';
+
+import { AuthLayout } from '../layout';
+
+import { createUser, OnboardingData } from '@/api/authApi';
+import { useAuth } from '@/api/authContext';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Divider } from '@/components/ui/divider';
 import {
   FormControl,
   FormControlError,
@@ -13,22 +23,14 @@ import {
   FormControlHelper,
   FormControlHelperText,
 } from '@/components/ui/form-control';
-import { Input, InputField } from '@/components/ui/input';
+import { Heading } from '@/components/ui/heading';
 import { ArrowLeftIcon, Icon } from '@/components/ui/icon';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Keyboard, ScrollView } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertTriangle } from 'lucide-react-native';
+import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
-import useRouter from '@unitools/router';
-import { AuthLayout } from '../layout';
-import { createUser, OnboardingData } from '@/api/authApi';
-import { useAuth } from '@/api/authContext';
-import { Box } from '@/components/ui/box';
-import { Divider } from '@/components/ui/divider';
 import { Radio, RadioGroup, RadioIcon, RadioIndicator, RadioLabel } from '@/components/ui/radio';
+import { Text } from '@/components/ui/text';
+import { Toast, ToastTitle, useToast } from '@/components/ui/toast';
+import { VStack } from '@/components/ui/vstack';
 
 // Define the form schema
 const onboardingSchema = z.object({
@@ -47,7 +49,10 @@ const onboardingSchema = z.object({
     .refine(val => /\d/.test(val), 'Phone number must contain at least one digit')
     .refine(val => !val.startsWith(' '), 'Phone number cannot start with a space')
     .refine(val => !/\s{2,}/.test(val), 'No consecutive spaces allowed')
-    .refine(val => !/.*\+.*/.test(val.substring(1)), 'Plus sign (+) can only appear at the beginning'),
+    .refine(
+      val => !/.*\+.*/.test(val.substring(1)),
+      'Plus sign (+) can only appear at the beginning'
+    ),
 
   // School information
   schoolName: z
@@ -263,7 +268,7 @@ const OnboardingForm = () => {
                       <InputField
                         placeholder="Enter your phone number"
                         value={value}
-                        onChangeText={(text) => {
+                        onChangeText={text => {
                           // Allow only digits, spaces, and + sign
                           const sanitizedValue = text.replace(/[^\d\s+]/g, '');
                           onChange(sanitizedValue);

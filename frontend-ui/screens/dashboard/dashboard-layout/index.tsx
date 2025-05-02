@@ -1,30 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { Box } from '@/components/ui/box';
-import { HStack } from '@/components/ui/hstack';
+import { cn } from '@gluestack-ui/nativewind-utils/cn';
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
-import { ChevronLeftIcon, ChevronDownIcon, Icon, MenuIcon } from '@/components/ui/icon';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Pressable } from '@/components/ui/pressable';
+import { router } from 'expo-router';
+import type { Href } from 'expo-router';
 import type { LucideIcon } from 'lucide-react-native';
 import { LogOutIcon, PlusIcon, CheckIcon, MinusIcon, AlertTriangleIcon } from 'lucide-react-native';
-import { InboxIcon } from './assets/icons/inbox';
+import React, { useEffect, useState } from 'react';
+import { Platform, Alert } from 'react-native';
+
+import { CalendarIcon } from './assets/icons/calendar';
 import { GlobeIcon } from './assets/icons/globe';
+import { HeartIcon } from './assets/icons/heart';
+import { HomeIcon } from './assets/icons/home';
+import { InboxIcon } from './assets/icons/inbox';
+import { ProfileIcon } from './assets/icons/profile';
+
+import { useAuth } from '@/api/authContext';
+import { Avatar, AvatarFallbackText, AvatarImage } from '@/components/ui/avatar';
+import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
-import { Heading } from '@/components/ui/heading';
-import { ScrollView } from '@/components/ui/scroll-view';
+import { Center } from '@/components/ui/center';
 import { Divider } from '@/components/ui/divider';
 import { Grid, GridItem } from '@/components/ui/grid';
-import { Avatar, AvatarFallbackText, AvatarImage } from '@/components/ui/avatar';
-import { router } from 'expo-router';
-import { HomeIcon } from './assets/icons/home';
-import { HeartIcon } from './assets/icons/heart';
-import { ProfileIcon } from './assets/icons/profile';
-import { CalendarIcon } from './assets/icons/calendar';
-import { SafeAreaView } from '@/components/ui/safe-area-view';
-import { cn } from '@gluestack-ui/nativewind-utils/cn';
-import { Platform, Alert } from 'react-native';
-import { useAuth } from '@/api/authContext';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { ChevronLeftIcon, ChevronDownIcon, Icon, MenuIcon } from '@/components/ui/icon';
 import {
   Modal,
   ModalBackdrop,
@@ -34,8 +33,11 @@ import {
   ModalFooter,
   ModalHeader,
 } from '@/components/ui/modal';
-import { Center } from '@/components/ui/center';
-import type { Href } from 'expo-router';
+import { Pressable } from '@/components/ui/pressable';
+import { SafeAreaView } from '@/components/ui/safe-area-view';
+import { ScrollView } from '@/components/ui/scroll-view';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 type MobileHeaderProps = {
   title: string;
@@ -454,22 +456,13 @@ function SchoolSelector({ onSchoolChange }: { onSchoolChange?: (school: School) 
   };
 
   // Position differently based on platform
-  const modalPosition = Platform.OS === 'web'
-    ? { top: 60, left: 50 }
-    : { top: 70, left: 10 };
+  const modalPosition = Platform.OS === 'web' ? { top: 60, left: 50 } : { top: 70, left: 10 };
 
   return (
     <Box className="relative">
-      <Pressable
-        onPress={() => setShowMenu(!showMenu)}
-        className="flex-row items-center"
-      >
+      <Pressable onPress={() => setShowMenu(!showMenu)} className="flex-row items-center">
         <Text className="text-2xl">{selectedSchool.name}</Text>
-        <Icon
-          as={ChevronDownIcon}
-          size="sm"
-          className="ml-2 mt-1"
-        />
+        <Icon as={ChevronDownIcon} size="sm" className="ml-2 mt-1" />
       </Pressable>
 
       <Modal isOpen={showMenu} onClose={() => setShowMenu(false)}>
@@ -483,12 +476,12 @@ function SchoolSelector({ onSchoolChange }: { onSchoolChange?: (school: School) 
             width: 250,
             backgroundColor: 'transparent',
             borderWidth: 0,
-            zIndex: 9999
+            zIndex: 9999,
           }}
         >
           <Box className="bg-background-0 border border-border-200 rounded-md shadow-md w-full">
             <VStack>
-              {schools.map((school) => (
+              {schools.map(school => (
                 <Pressable
                   key={school.id}
                   className={`p-3 hover:bg-background-50 ${

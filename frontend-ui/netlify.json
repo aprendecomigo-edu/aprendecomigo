@@ -8,8 +8,6 @@
   },
   "plugins": [],
   "cache": {
-    "directories": [
-      "node_modules/.cache"
-    ]
+    "directories": ["node_modules/.cache"]
   }
 }

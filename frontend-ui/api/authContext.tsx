@@ -1,17 +1,18 @@
+import { router } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+
 import {
   isAuthenticated,
   logout,
   getUserProfile,
   UserProfile,
-  authenticateWithBiometricsAndGetToken
+  authenticateWithBiometricsAndGetToken,
 } from './authApi';
-import { router } from 'expo-router';
 import {
   enableBiometricAuth,
   disableBiometricAuth,
   isBiometricAvailable,
-  isBiometricEnabled
+  isBiometricEnabled,
 } from './biometricAuth';
 
 interface AuthContextType {

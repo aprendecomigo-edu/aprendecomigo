@@ -1,17 +1,14 @@
 'use client';
-import React, { useMemo } from 'react';
-import { createAccordion } from '@gluestack-ui/accordion';
-import { Svg } from 'react-native-svg';
-import { View, Pressable, Text, Platform, TextProps } from 'react-native';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import {
-  withStyleContext,
-  useStyleContext,
-} from '@gluestack-ui/nativewind-utils/withStyleContext';
-import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
 import { H3 } from '@expo/html-elements';
+import { createAccordion } from '@gluestack-ui/accordion';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
+import { withStyleContext, useStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
+import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
 import { cssInterop } from 'nativewind';
+import React, { useMemo } from 'react';
+import { View, Pressable, Text, Platform, TextProps } from 'react-native';
+import { Svg } from 'react-native-svg';
 
 const SCOPE = 'ACCORDION';
 /** Styles */
@@ -53,11 +50,11 @@ const accordionIconStyle = tva({
   parentVariants: {
     size: {
       '2xs': 'h-3 w-3',
-      'xs': 'h-3.5 w-3.5',
-      'sm': 'h-4 w-4',
-      'md': 'h-[18px] w-[18px]',
-      'lg': 'h-5 w-5',
-      'xl': 'h-6 w-6',
+      xs: 'h-3.5 w-3.5',
+      sm: 'h-4 w-4',
+      md: 'h-[18px] w-[18px]',
+      lg: 'h-5 w-5',
+      xl: 'h-6 w-6',
     },
   },
 });
@@ -95,63 +92,27 @@ type IPrimitiveIcon = {
 const PrimitiveIcon = React.forwardRef<
   React.ElementRef<typeof Svg>,
   IPrimitiveIcon & React.ComponentPropsWithoutRef<typeof Svg>
->(
-  (
-    {
-      height,
-      width,
-      fill,
-      color,
-      size,
-      stroke = 'currentColor',
-      as: AsComp,
-      ...props
-    },
-    ref
-  ) => {
-    const sizeProps = useMemo(() => {
-      if (size) return { size };
-      if (height && width) return { height, width };
-      if (height) return { height };
-      if (width) return { width };
-      return {};
-    }, [size, height, width]);
+>(({ height, width, fill, color, size, stroke = 'currentColor', as: AsComp, ...props }, ref) => {
+  const sizeProps = useMemo(() => {
+    if (size) return { size };
+    if (height && width) return { height, width };
+    if (height) return { height };
+    if (width) return { width };
+    return {};
+  }, [size, height, width]);
 
-    const colorProps =
-      stroke === 'currentColor' && color !== undefined ? color : stroke;
+  const colorProps = stroke === 'currentColor' && color !== undefined ? color : stroke;
 
-    if (AsComp) {
-      return (
-        <AsComp
-          ref={ref}
-          fill={fill}
-          {...props}
-          {...sizeProps}
-          stroke={colorProps}
-        />
-      );
-    }
-    return (
-      <Svg
-        ref={ref}
-        height={height}
-        width={width}
-        fill={fill}
-        stroke={colorProps}
-        {...props}
-      />
-    );
+  if (AsComp) {
+    return <AsComp ref={ref} fill={fill} {...props} {...sizeProps} stroke={colorProps} />;
   }
-);
+  return <Svg ref={ref} height={height} width={width} fill={fill} stroke={colorProps} {...props} />;
+});
 
 const Root =
-  Platform.OS === 'web'
-    ? withStyleContext(View, SCOPE)
-    : withStyleContextAndStates(View, SCOPE);
+  Platform.OS === 'web' ? withStyleContext(View, SCOPE) : withStyleContextAndStates(View, SCOPE);
 
-const Header = (
-  Platform.OS === 'web' ? H3 : View
-) as React.ComponentType<TextProps>;
+const Header = (Platform.OS === 'web' ? H3 : View) as React.ComponentType<TextProps>;
 
 /** Creator */
 const UIAccordion = createAccordion({
@@ -173,14 +134,14 @@ cssInterop(UIAccordion.Icon, { className: 'style' });
 cssInterop(UIAccordion.TitleText, { className: 'style' });
 cssInterop(UIAccordion.Content, { className: 'style' });
 cssInterop(UIAccordion.ContentText, { className: 'style' });
-// @ts-ignore
+// @ts-expect-error - Legacy code
 cssInterop(UIAccordion.Icon, {
   className: {
     target: 'style',
     nativeStyleToProp: {
       height: true,
       width: true,
-      // @ts-ignore
+      // @ts-expect-error - Legacy code
       fill: true,
       color: true,
       stroke: true,
@@ -191,19 +152,13 @@ cssInterop(UIAccordion.Icon, {
 type IAccordionProps = React.ComponentPropsWithoutRef<typeof UIAccordion> &
   VariantProps<typeof accordionStyle>;
 
-type IAccordionItemProps = React.ComponentPropsWithoutRef<
-  typeof UIAccordion.Item
-> &
+type IAccordionItemProps = React.ComponentPropsWithoutRef<typeof UIAccordion.Item> &
   VariantProps<typeof accordionItemStyle>;
 
-type IAccordionContentProps = React.ComponentPropsWithoutRef<
-  typeof UIAccordion.Content
-> &
+type IAccordionContentProps = React.ComponentPropsWithoutRef<typeof UIAccordion.Content> &
   VariantProps<typeof accordionContentStyle>;
 
-type IAccordionContentTextProps = React.ComponentPropsWithoutRef<
-  typeof UIAccordion.ContentText
-> &
+type IAccordionContentTextProps = React.ComponentPropsWithoutRef<typeof UIAccordion.ContentText> &
   VariantProps<typeof accordionContentTextStyle>;
 
 type IAccordionIconProps = VariantProps<typeof accordionIconStyle> &
@@ -211,36 +166,29 @@ type IAccordionIconProps = VariantProps<typeof accordionIconStyle> &
     as?: React.ElementType;
   };
 
-type IAccordionHeaderProps = React.ComponentPropsWithoutRef<
-  typeof UIAccordion.Header
-> &
+type IAccordionHeaderProps = React.ComponentPropsWithoutRef<typeof UIAccordion.Header> &
   VariantProps<typeof accordionHeaderStyle>;
 
-type IAccordionTriggerProps = React.ComponentPropsWithoutRef<
-  typeof UIAccordion.Trigger
-> &
+type IAccordionTriggerProps = React.ComponentPropsWithoutRef<typeof UIAccordion.Trigger> &
   VariantProps<typeof accordionTriggerStyle>;
 
-type IAccordionTitleTextProps = React.ComponentPropsWithoutRef<
-  typeof UIAccordion.TitleText
-> &
+type IAccordionTitleTextProps = React.ComponentPropsWithoutRef<typeof UIAccordion.TitleText> &
   VariantProps<typeof accordionTitleTextStyle>;
 
 /** Components */
 
-const Accordion = React.forwardRef<
-  React.ElementRef<typeof UIAccordion>,
-  IAccordionProps
->(({ className, variant = 'filled', size = 'md', ...props }, ref) => {
-  return (
-    <UIAccordion
-      ref={ref}
-      {...props}
-      className={accordionStyle({ variant, class: className })}
-      context={{ variant, size }}
-    />
-  );
-});
+const Accordion = React.forwardRef<React.ElementRef<typeof UIAccordion>, IAccordionProps>(
+  ({ className, variant = 'filled', size = 'md', ...props }, ref) => {
+    return (
+      <UIAccordion
+        ref={ref}
+        {...props}
+        className={accordionStyle({ variant, class: className })}
+        context={{ variant, size }}
+      />
+    );
+  }
+);
 
 const AccordionItem = React.forwardRef<
   React.ElementRef<typeof UIAccordion.Item>,
@@ -306,16 +254,9 @@ const AccordionIcon = React.forwardRef<
         size={size}
       />
     );
-  } else if (
-    (props.height !== undefined || props.width !== undefined) &&
-    size === undefined
-  ) {
+  } else if ((props.height !== undefined || props.width !== undefined) && size === undefined) {
     return (
-      <UIAccordion.Icon
-        ref={ref}
-        {...props}
-        className={accordionIconStyle({ class: className })}
-      />
+      <UIAccordion.Icon ref={ref} {...props} className={accordionIconStyle({ class: className })} />
     );
   }
   return (
