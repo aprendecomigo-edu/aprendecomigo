@@ -5,7 +5,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack, Redirect } from "expo-router";
+import { Stack, Redirect, type Href } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
@@ -77,7 +77,7 @@ function ProtectedRoutes() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="dashboard" />
+      <Stack.Screen name="home" />
       <Stack.Screen name="profile" />
     </Stack>
   );
@@ -92,7 +92,7 @@ function PublicRoutes() {
   }
 
   if (isLoggedIn) {
-    return <Redirect href="/dashboard/dashboard-layout" />;
+    return <Redirect href={'home' as Href} />;
   }
 
   return (
@@ -115,7 +115,7 @@ function RootLayoutNav() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="auth" />
-            <Stack.Screen name="dashboard" />
+            <Stack.Screen name="home" />
             <Stack.Screen name="profile" />
           </Stack>
         </AuthProvider>

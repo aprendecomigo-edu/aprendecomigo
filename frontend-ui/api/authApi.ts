@@ -195,7 +195,7 @@ export const authenticateWithBiometricsAndGetToken = async (): Promise<AuthRespo
     // Since this is biometric auth, we'll request a special biometric verification
     // This endpoint should exist on the backend - if not, you'll need to implement it
     try {
-      const response = await apiClient.post<AuthResponse>('/auth/biometric-verify/', { email });
+      const response = await apiClient.post<AuthResponse>('accounts/auth/biometric-verify/', { email });
 
       // Store token in secure storage
       await storeToken(response.data.token);

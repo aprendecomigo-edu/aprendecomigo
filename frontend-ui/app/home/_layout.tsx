@@ -1,4 +1,4 @@
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Stack, type Href } from 'expo-router';
 import React from 'react';
 
 import { useAuth } from '@/api/authContext';
@@ -27,7 +27,7 @@ export default function DashboardLayout() {
 
   // Redirect to login if not authenticated
   if (!isLoggedIn) {
-    return <Redirect href="/auth/signin" />;
+    return <Redirect href={'/auth/signin' as Href} />;
   }
 
   // User is authenticated, show dashboard routes

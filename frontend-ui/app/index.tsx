@@ -1,9 +1,10 @@
+import { Redirect, type Href } from 'expo-router';
 import React, { useEffect } from 'react';
-import { Redirect } from 'expo-router';
-import { VStack } from '@/components/ui/vstack';
+
+import { useAuth } from '@/api/authContext';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
-import { useAuth } from '@/api/authContext';
+import { VStack } from '@/components/ui/vstack';
 
 export default function Index() {
   const { isLoggedIn, isLoading, checkAuthStatus } = useAuth();
@@ -25,7 +26,7 @@ export default function Index() {
 
   // If authenticated, redirect to dashboard
   if (isLoggedIn) {
-    return <Redirect href="/dashboard/dashboard-layout" />;
+    return <Redirect href={'home' as Href} />;
   }
 
   // If not authenticated, redirect to login
