@@ -4,11 +4,11 @@ from django.test import TestCase
 
 from accounts.models import CustomUser, StudentProfile, TeacherProfile
 from accounts.serializers import (
-    EmailRequestSerializer,
-    EmailVerifySerializer,
+    RequestCodeSerializer,
     StudentSerializer,
     TeacherSerializer,
     UserSerializer,
+    VerifyCodeSerializer,
 )
 
 
@@ -74,23 +74,23 @@ class TestAuthSerializers(TestCase):
     def test_email_request_serializer_valid(self):
         """Test EmailRequestSerializer with valid data."""
         data = {"email": "test@example.com"}
-        serializer = EmailRequestSerializer(data=data)
+        serializer = RequestCodeSerializer(data=data)
         self.assertTrue(serializer.is_valid())
 
     def test_email_request_serializer_invalid(self):
         """Test EmailRequestSerializer with invalid data."""
         data = {"email": "invalid-email"}
-        serializer = EmailRequestSerializer(data=data)
+        serializer = RequestCodeSerializer(data=data)
         self.assertFalse(serializer.is_valid())
 
     def test_email_verify_serializer_valid(self):
         """Test EmailVerifySerializer with valid data."""
         data = {"email": "test@example.com", "code": "123456"}
-        serializer = EmailVerifySerializer(data=data)
+        serializer = VerifyCodeSerializer(data=data)
         self.assertTrue(serializer.is_valid())
 
     def test_email_verify_serializer_invalid_code(self):
         """Test EmailVerifySerializer with invalid code."""
         data = {"email": "test@example.com", "code": "12345"}  # Code too short
-        serializer = EmailVerifySerializer(data=data)
+        serializer = VerifyCodeSerializer(data=data)
         self.assertFalse(serializer.is_valid())

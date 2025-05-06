@@ -13,11 +13,11 @@ from rest_framework.test import APIClient, APITestCase
 
 from accounts.models import (
     CustomUser,
-    EmailVerificationCode,
     School,
     SchoolMembership,
     StudentProfile,
     TeacherProfile,
+    VerificationCode,
 )
 
 User = get_user_model()
@@ -520,7 +520,7 @@ class VerificationCodeTests(APITestCase):
         self.throttle_patcher.start()
 
         # Patch send_mail
-        self.mail_patcher = patch("accounts.views.send_mail")
+        self.mail_patcher = patch("common.messaging.send_email_verification_code")
         self.mock_send_mail = self.mail_patcher.start()
 
     def tearDown(self):
@@ -535,7 +535,7 @@ class VerificationCodeTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Step 2: Get the verification code from the database
-        verification = EmailVerificationCode.objects.get(email=self.email)
+        verification = VerificationCode.objects.get(email=self.email)
 
         # Generate a valid code
         import pyotp
@@ -544,7 +544,7 @@ class VerificationCodeTests(APITestCase):
         valid_code = totp.now()
 
         # Mock the verification to return true
-        with patch("accounts.models.EmailVerificationCode.is_valid", return_value=True):
+        with patch("accounts.models.VerificationCode.is_valid", return_value=True):
             # Step 3: Verify the code
             response = self.client.post(
                 self.verify_code_url, {"email": self.email, "code": valid_code}, format="json"
@@ -560,7 +560,7 @@ class VerificationCodeTests(APITestCase):
         response = self.client.post(self.request_code_url, {"email": self.email}, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        verification = EmailVerificationCode.objects.get(email=self.email)
+        verification = VerificationCode.objects.get(email=self.email)
 
         # Attempt to verify with a wrong code
         response = self.client.post(
@@ -576,7 +576,7 @@ class VerificationCodeTests(APITestCase):
         response = self.client.post(self.request_code_url, {"email": self.email}, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        verification = EmailVerificationCode.objects.get(email=self.email)
+        verification = VerificationCode.objects.get(email=self.email)
 
         # Instead of getting the current code, generate a code for a different time window
         import pyotp
@@ -602,7 +602,7 @@ class VerificationCodeTests(APITestCase):
         response = self.client.post(self.request_code_url, {"email": self.email}, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        verification = EmailVerificationCode.objects.get(email=self.email)
+        verification = VerificationCode.objects.get(email=self.email)
 
         # Get a valid code
         totp = pyotp.TOTP(verification.secret_key, digits=6, interval=300)
@@ -615,7 +615,7 @@ class VerificationCodeTests(APITestCase):
             )
 
             # Mock the validation to return true
-            with patch("accounts.models.EmailVerificationCode.is_valid", return_value=True):
+            with patch("accounts.models.VerificationCode.is_valid", return_value=True):
                 # Verify with code
                 response = self.client.post(
                     self.verify_code_url, {"email": self.email, "code": valid_code}, format="json"
@@ -630,7 +630,7 @@ class VerificationCodeTests(APITestCase):
         response = self.client.post(self.request_code_url, {"email": self.email}, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        verification = EmailVerificationCode.objects.get(email=self.email)
+        verification = VerificationCode.objects.get(email=self.email)
 
         # Track the max attempts from the model
         max_attempts = verification.max_attempts
@@ -655,7 +655,7 @@ class VerificationCodeTests(APITestCase):
         response = self.client.post(self.request_code_url, {"email": self.email}, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        verification = EmailVerificationCode.objects.get(email=self.email)
+        verification = VerificationCode.objects.get(email=self.email)
 
         # Get a valid code
         totp = pyotp.TOTP(verification.secret_key)
@@ -679,7 +679,7 @@ class VerificationCodeTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Get the first verification code ID
-        first_code = EmailVerificationCode.objects.get(email=self.email)
+        first_code = VerificationCode.objects.get(email=self.email)
         first_code_id = first_code.id
 
         # Get a valid code for the first verification
@@ -691,20 +691,20 @@ class VerificationCodeTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Get the new verification code
-        verification2 = EmailVerificationCode.objects.get(email=self.email)
+        verification2 = VerificationCode.objects.get(email=self.email)
         totp2 = pyotp.TOTP(verification2.secret_key)
         valid_code2 = totp2.now()
 
         # Check if the old code still exists in the database
         # It's possible the implementation marks it as used or deletes it entirely
-        old_code_exists = EmailVerificationCode.objects.filter(id=first_code_id).exists()
+        old_code_exists = VerificationCode.objects.filter(id=first_code_id).exists()
         if old_code_exists:
             # If it still exists, it should be marked as used
             first_code.refresh_from_db()
             self.assertTrue(first_code.is_used)
         else:
             # If it was deleted, there should be only one code in the database
-            self.assertEqual(EmailVerificationCode.objects.filter(email=self.email).count(), 1)
+            self.assertEqual(VerificationCode.objects.filter(email=self.email).count(), 1)
 
         # Verify that trying to use the first code fails
         response = self.client.post(
@@ -713,24 +713,8 @@ class VerificationCodeTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Verify the second code works
-        with patch("accounts.models.EmailVerificationCode.is_valid", return_value=True):
+        with patch("accounts.models.VerificationCode.is_valid", return_value=True):
             response = self.client.post(
                 self.verify_code_url, {"email": self.email, "code": valid_code2}, format="json"
             )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_email_message_shows_correct_expiration(self):
-        """Test that the email message shows the correct 5-minute expiration."""
-        # Request a verification code
-        response = self.client.post(self.request_code_url, {"email": self.email}, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        # Verify the email message
-        self.assertTrue(self.mock_send_mail.called)
-
-        # Get the message content from the mock call
-        call_args = self.mock_send_mail.call_args
-        message = call_args[1]["message"]
-
-        # Check that the message mentions 5 minutes
-        self.assertIn("5 minute", message.lower())

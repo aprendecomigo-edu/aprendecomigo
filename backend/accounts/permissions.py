@@ -1,5 +1,6 @@
-from accounts.models import SchoolMembership
 from rest_framework import permissions
+
+from .models import SchoolMembership
 
 
 class IsTeacher(permissions.BasePermission):

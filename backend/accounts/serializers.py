@@ -213,29 +213,21 @@ class UserWithRolesSerializer(UserSerializer):
         return roles_data
 
 
-class EmailRequestSerializer(serializers.Serializer):
+class RequestCodeSerializer(serializers.Serializer):
     """
-    Serializer for requesting an email verification code.
+    Serializer for requesting a verification code.
     """
 
     email = serializers.EmailField()
 
 
-class EmailVerifySerializer(serializers.Serializer):
+class VerifyCodeSerializer(serializers.Serializer):
     """
-    Serializer for verifying an email code.
+    Serializer for verifying a verification code.
     """
 
     email = serializers.EmailField()
     code = serializers.CharField(max_length=6, min_length=6)
-
-
-class BiometricVerifySerializer(serializers.Serializer):
-    """
-    Serializer for biometric verification.
-    """
-
-    email = serializers.EmailField()
 
 
 class InvitationRequestSerializer(serializers.Serializer):
@@ -272,9 +264,9 @@ class CreateUserSerializer(serializers.Serializer):
         choices=[("email", "Email"), ("phone", "Phone")], default="email"
     )
 
-    # School information is optional
+    # School information is required
     school = serializers.DictField(
-        child=serializers.CharField(), required=False, help_text="School information"
+        child=serializers.CharField(), required=True, help_text="School information"
     )
 
     def validate_phone_number(self, value):

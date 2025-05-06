@@ -8,11 +8,11 @@ from django.test import TestCase
 from django.utils import timezone
 
 from accounts.models import (
-    EmailVerificationCode,
     School,
     SchoolMembership,
     StudentProfile,
     TeacherProfile,
+    VerificationCode,
 )
 
 User = get_user_model()
@@ -273,8 +273,8 @@ class TeacherProfileTests(TestCase):
         self.assertEqual(self.user.teacher_profile, teacher)
 
 
-class EmailVerificationCodeTests(TestCase):
-    """Test cases for the EmailVerificationCode model."""
+class VerificationCodeTests(TestCase):
+    """Test cases for the VerificationCode model."""
 
     def setUp(self):
         """Set up test data."""
@@ -286,7 +286,7 @@ class EmailVerificationCodeTests(TestCase):
 
     def test_generate_code(self):
         """Test generating a verification code."""
-        verification = EmailVerificationCode.generate_code(self.email)
+        verification = VerificationCode.generate_code(self.email)
 
         # Check that the verification code was created with the right properties
         self.assertEqual(verification.email, self.email)
@@ -305,8 +305,8 @@ class EmailVerificationCodeTests(TestCase):
         self.assertTrue(verification.is_valid(code))
 
         # Generate a second code for the same email - should replace the first one
-        verification2 = EmailVerificationCode.generate_code(self.email)
-        self.assertEqual(EmailVerificationCode.objects.filter(email=self.email).count(), 1)
+        verification2 = VerificationCode.generate_code(self.email)
+        self.assertEqual(VerificationCode.objects.filter(email=self.email).count(), 1)
 
         # Codes shouldn't match after regeneration
         self.assertNotEqual(verification.secret_key, verification2.secret_key)
@@ -315,7 +315,7 @@ class EmailVerificationCodeTests(TestCase):
         """Test validating a verification code."""
         import pyotp
 
-        verification = EmailVerificationCode.generate_code(self.email)
+        verification = VerificationCode.generate_code(self.email)
 
         # Get a valid code
         totp = pyotp.TOTP(verification.secret_key, digits=6, interval=30)
@@ -356,7 +356,7 @@ class EmailVerificationCodeTests(TestCase):
 
     def test_use(self):
         """Test marking a code as used."""
-        verification = EmailVerificationCode.generate_code(self.email)
+        verification = VerificationCode.generate_code(self.email)
         self.assertFalse(verification.is_used)
 
         # Mark as used

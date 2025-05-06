@@ -3,11 +3,11 @@ from django.contrib.auth.admin import UserAdmin
 
 from .models import (
     CustomUser,
-    EmailVerificationCode,
     School,
     SchoolMembership,
     StudentProfile,
     TeacherProfile,
+    VerificationCode,
 )
 
 
@@ -176,8 +176,8 @@ class SchoolMembershipAdmin(admin.ModelAdmin):
     fieldsets = ((None, {"fields": ("user", "school", "role", "is_active")}),)
 
 
-@admin.register(EmailVerificationCode)
-class EmailVerificationCodeAdmin(admin.ModelAdmin):
+@admin.register(VerificationCode)
+class VerificationCodeAdmin(admin.ModelAdmin):
     list_display = ("email", "secret_key", "created_at", "is_used", "failed_attempts")
     search_fields = ("email", "secret_key")
     fieldsets = (
