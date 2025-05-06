@@ -1,3 +1,5 @@
+import logging
+
 from common.messaging import send_email_verification_code
 from common.throttles import (
     EmailBasedThrottle,
@@ -46,6 +48,8 @@ from .serializers import (
     UserSerializer,
     VerifyCodeSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # Base class for authenticated views
@@ -446,17 +450,20 @@ class RequestCodeView(APIView):
         email = serializer.validated_data["email"]
         # Check if a user with this email exists
         if not user_exists(email):
+            # Log the event internally
+            logger.info(f"Code requested for non-existent email: {email}")
+            # Perform a dummy code generation for non-existent users to ensure constant time
+            dummy_code = VerificationCode.generate_code("dummy@example.com")
+            _ = dummy_code.get_current_code()
             return Response(
-                {"error": "No registered user found with this email."},
-                status=status.HTTP_404_NOT_FOUND,
+                {
+                    "message": "If an account exists with this email, a verification code has been sent."
+                },
+                status=status.HTTP_200_OK,
             )
 
         verification = VerificationCode.generate_code(email)
-
-        # Get the current TOTP code
         code = verification.get_current_code()
-
-        # Send email with verification code
         try:
             send_email_verification_code(email, code)
         except Exception as e:
@@ -464,7 +471,6 @@ class RequestCodeView(APIView):
                 {"error": f"Failed to send email: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
         return Response(
             {"message": f"Verification code sent to {email}."},
             status=status.HTTP_200_OK,
@@ -492,11 +498,16 @@ class VerifyCodeView(APIView):
         email = serializer.validated_data["email"]
         code = serializer.validated_data["code"]
         # Check if a user with this email exists
-
         if not user_exists(email):
+            logger.info(f"Verification attempted for non-existent email: {email}")
+            # Perform a dummy code generation for non-existent users to ensure constant time
+            dummy_code = VerificationCode.generate_code("dummy@example.com")
+            _ = dummy_code.get_current_code()
             return Response(
-                {"error": "No registered user found with this email."},
-                status=status.HTTP_404_NOT_FOUND,
+                {
+                    "message": "If an account exists with this email, a verification code has been sent."
+                },
+                status=status.HTTP_200_OK,
             )
 
         # Try to get the latest verification code for this email

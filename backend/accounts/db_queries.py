@@ -1,15 +1,19 @@
 from django.contrib.auth import get_user_model
+from django.db.models.query import QuerySet
 
-from .models import School, SchoolMembership, SchoolRole
+from .models import CustomUser, School, SchoolMembership, SchoolRole
 
 User = get_user_model()
 
 
-def create_school_owner(email, name, phone_number, primary_contact, school_data):
-    # Create the user (without password initially)
-    user = User.objects.create_user(
-        email,
-        password=None,  # Will be set after verification
+def create_school_owner(
+    email: str, name: str, phone_number: str, primary_contact: str, school_data: dict
+) -> tuple[CustomUser, School]:
+    # Use CustomUser.objects.create_user for type safety
+    # Create the user
+    user = CustomUser.objects.create_user(
+        email=email,
+        password=None,
         name=name,
         phone_number=phone_number,
         primary_contact=primary_contact,
@@ -31,7 +35,7 @@ def create_school_owner(email, name, phone_number, primary_contact, school_data)
     return user, school
 
 
-def list_users_by_request_permissions(user) -> list[User]:
+def list_users_by_request_permissions(user) -> QuerySet:
     """
     Get list of Users based on request permissions
     """
@@ -65,18 +69,18 @@ def list_school_ids_owned_or_managed(user) -> list[int]:
         is_active=True,
     ).values_list("school_id", flat=True)
 
-    return admin_school_ids
+    return list(admin_school_ids)
 
 
-def user_exists(email) -> bool:
+def user_exists(email: str) -> bool:
     """
     Check if a user exists in the database
     """
     return User.objects.filter(email=email).exists()
 
 
-def get_user_by_email(email) -> User:
+def get_user_by_email(email: str) -> CustomUser:
     """
     Get a user by email
     """
-    return User.objects.get(email=email)
+    return CustomUser.objects.get(email=email)

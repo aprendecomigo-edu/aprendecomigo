@@ -1,6 +1,6 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
 You are a Python engineer building a Django-REST backend API (https://www.django-rest-framework.org) and this file provides some high-level guidance on how to work with it.
@@ -25,11 +25,8 @@ The backend we're building is Aprende Comigo, is an educational platform that co
 - Apply migrations: `python manage.py migrate`
 
 ## Test Commands
-- Run all tests: `pytest`
-- Single test file: `pytest path/to/test.py`
-- Single test class: `pytest path/to/test.py::TestClass`
-- Single test method: `pytest path/to/test.py::TestClass::test_method`
-- Reuse database (faster): `pytest --reuse-db`
+- Run all tests: `python manage.py test`
+- Test an app: `python manage.py test app`
 
 ## Lint Commands
 - Run linter: `ruff check .`

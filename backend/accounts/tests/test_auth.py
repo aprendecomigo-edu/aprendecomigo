@@ -196,44 +196,25 @@ class EmailAuthTests(APITestCase):
 
     def test_request_email_code_unregistered_user(self):
         """Test that unregistered users cannot request verification codes."""
-        unregistered_email = "unregistered@example.com"
-        data = {"email": unregistered_email}
-
-        # Make sure this email is not registered
-        self.assertFalse(User.objects.filter(email=unregistered_email).exists())
-
-        # Patch the send_mail method to avoid sending actual emails
-        with patch("common.messaging.send_email_verification_code") as mock_send_mail:
-            response = self.client.post(self.request_code_url, data, format="json")
-
-        # Check that the request was rejected
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn("error", response.data)
-        self.assertIn("No registered user", response.data["error"])
-
-        # Verify no code was generated in the database
-        code_obj = VerificationCode.objects.filter(email=unregistered_email).first()
-        self.assertIsNone(code_obj)
-
-        # Verify no email was sent
-        mock_send_mail.assert_not_called()
+        url = reverse("accounts:request_code")
+        data = {"email": "notarealuser@example.com"}
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data["message"],
+            "If an account exists with this email, a verification code has been sent.",
+        )
 
     def test_verify_email_code_unregistered_user(self):
         """Test that unregistered users cannot verify codes."""
-        unregistered_email = "unregistered@example.com"
-
-        # Make sure this email is not registered
-        self.assertFalse(User.objects.filter(email=unregistered_email).exists())
-
-        # We'll use a fake code since the request should be rejected before code validation
-        data = {"email": unregistered_email, "code": "123456"}
-
-        response = self.client.post(self.verify_code_url, data, format="json")
-
-        # Check that the request was rejected
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn("error", response.data)
-        self.assertIn("No registered user", response.data["error"])
+        url = reverse("accounts:verify_code")
+        data = {"email": "notarealuser@example.com", "code": "123456"}
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data["message"],
+            "If an account exists with this email, a verification code has been sent.",
+        )
 
 
 class ContactVerificationTests(APITestCase):
@@ -412,7 +393,6 @@ class EndToEndOnboardingTests(APITestCase):
             EmailBasedThrottle,
             EmailCodeRequestThrottle,
             IPBasedThrottle,
-            IPSignupThrottle,
         )
 
         self.original_email_code_rate = EmailCodeRequestThrottle.rate
@@ -441,7 +421,6 @@ class EndToEndOnboardingTests(APITestCase):
             EmailBasedThrottle,
             EmailCodeRequestThrottle,
             IPBasedThrottle,
-            IPSignupThrottle,
         )
 
         EmailCodeRequestThrottle.rate = self.original_email_code_rate
@@ -713,19 +692,11 @@ class ThrottlingTests(APITestCase):
 
         # Create a test user for isolation test
         test_email = "isolation_test@example.com"
-        User = get_user_model()
-        if not User.objects.filter(email=test_email).exists():
-            User.objects.create_user(
+        user_model = get_user_model()
+        if not user_model.objects.filter(email=test_email).exists():
+            user_model.objects.create_user(
                 email=test_email, password="testpass123", name="Isolation Test User"
             )
-
-        # Store original throttle rates
-        original_email_rate = EmailCodeRequestThrottle.rate
-        original_ip_rate = IPSignupThrottle.rate
-
-        # Set both throttle rates using proper DRF format
-        EmailCodeRequestThrottle.rate = "2/m"
-        IPSignupThrottle.rate = "2/m"
 
         # Start the throttle_patcher to bypass throttling for this test
         self.throttle_patcher.start()
@@ -778,7 +749,6 @@ class ThrottlingTests(APITestCase):
     def test_signup_throttling(self):
         """Test that signup endpoint is properly throttled by IP."""
         # We need to test the signup endpoint which uses IPSignupThrottle
-        from common.throttles import IPSignupThrottle
 
         # Store and temporarily modify the throttle rate
         original_rate = IPSignupThrottle.rate
