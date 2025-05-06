@@ -3,15 +3,13 @@ from knox import views as knox_views
 from rest_framework.routers import DefaultRouter
 
 from .views import (
-    BiometricVerifyView,
-    RequestEmailCodeView,
-    SchoolInvitationViewSet,
+    RequestCodeView,
     SchoolMembershipViewSet,
     SchoolViewSet,
     StudentViewSet,
     TeacherViewSet,
     UserViewSet,
-    VerifyEmailCodeView,
+    VerifyCodeView,
 )
 
 app_name = "accounts"
@@ -22,7 +20,6 @@ router.register(r"teachers", TeacherViewSet, basename="teacher")
 router.register(r"students", StudentViewSet, basename="student")
 router.register(r"schools", SchoolViewSet, basename="school")
 router.register(r"school-memberships", SchoolMembershipViewSet, basename="school_membership")
-router.register(r"school-invitations", SchoolInvitationViewSet, basename="school_invitation")
 
 # URL patterns for the accounts app
 urlpatterns = [
@@ -31,18 +28,13 @@ urlpatterns = [
     # Auth endpoints
     path(
         "auth/request-code/",
-        RequestEmailCodeView.as_view(),
+        RequestCodeView.as_view(),
         name="request_code",
     ),
     path(
         "auth/verify-code/",
-        VerifyEmailCodeView.as_view(),
+        VerifyCodeView.as_view(),
         name="verify_code",
-    ),
-    path(
-        "auth/biometric/",
-        BiometricVerifyView.as_view(),
-        name="biometric_auth",
     ),
     # Knox authentication URLs
     path("auth/logout/", knox_views.LogoutView.as_view(), name="knox_logout"),

@@ -277,9 +277,9 @@ class SchoolInvitation(models.Model):
         return str(role_display)  # Convert _StrPromise to str
 
 
-class EmailVerificationCode(models.Model):
+class VerificationCode(models.Model):
     """
-    Model for storing email verification codes.
+    Model for storing verification codes.
     """
 
     email: models.EmailField = models.EmailField()
@@ -293,7 +293,7 @@ class EmailVerificationCode(models.Model):
     max_attempts: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(default=5)
 
     @classmethod
-    def generate_code(cls, email: str) -> "EmailVerificationCode":
+    def generate_code(cls, email: str) -> "VerificationCode":
         """Generate a TOTP secret for the given email"""
         import pyotp  # type: ignore
 

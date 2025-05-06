@@ -2,6 +2,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 import pyotp
+from common.throttles import EmailCodeRequestThrottle, IPSignupThrottle
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
@@ -12,12 +13,12 @@ from rest_framework.test import APIClient, APITestCase
 
 from accounts.models import (
     CustomUser,
-    EmailVerificationCode,
     School,
     SchoolMembership,
+    VerificationCode,
 )
 from accounts.serializers import UserSerializer
-from accounts.views import BiometricVerifyView
+from accounts.views import RequestCodeView
 
 User = get_user_model()
 
@@ -88,14 +89,14 @@ class EmailAuthTests(APITestCase):
         data = {"email": self.email}
 
         # Patch the send_mail method to avoid sending actual emails
-        with patch("accounts.views.send_mail") as mock_send_mail:
+        with patch("accounts.views.send_email_verification_code") as mock_send_mail:
             response = self.client.post(self.request_code_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("message", response.data)
 
         # Verify a code was generated in the database
-        code_obj = EmailVerificationCode.objects.filter(email=self.email).first()
+        code_obj = VerificationCode.objects.filter(email=self.email).first()
         self.assertIsNotNone(code_obj)
         self.assertFalse(code_obj.is_used)
 
@@ -108,14 +109,14 @@ class EmailAuthTests(APITestCase):
         User.objects.create_user(email=self.email, password="testpass123", name="Test User")
 
         # Create a verification code
-        verification = EmailVerificationCode.generate_code(self.email)
+        verification = VerificationCode.generate_code(self.email)
 
         # Get a valid TOTP code
         totp = pyotp.TOTP(verification.secret_key)
         valid_code = totp.now()
 
         # Patch the verification to always return valid
-        with patch("accounts.models.EmailVerificationCode.is_valid", return_value=True):
+        with patch("accounts.models.VerificationCode.is_valid", return_value=True):
             data = {"email": self.email, "code": valid_code}
             response = self.client.post(self.verify_code_url, data, format="json")
 
@@ -130,7 +131,7 @@ class EmailAuthTests(APITestCase):
 
         # We need to generate a code in the database for the email
         # even though we're not using the actual code in the test
-        EmailVerificationCode.generate_code(self.email)
+        VerificationCode.generate_code(self.email)
 
         data = {
             "email": self.email,
@@ -148,7 +149,7 @@ class EmailAuthTests(APITestCase):
         User.objects.create_user(email=self.email, password="testpass123", name="Test User")
 
         # Create a verification code
-        verification = EmailVerificationCode.generate_code(self.email)
+        verification = VerificationCode.generate_code(self.email)
 
         # Get a valid TOTP code
         totp = pyotp.TOTP(verification.secret_key)
@@ -180,13 +181,13 @@ class EmailAuthTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Get the verification code
-        verification = EmailVerificationCode.objects.get(email=data["email"])
+        verification = VerificationCode.objects.get(email=data["email"])
         totp = pyotp.TOTP(verification.secret_key)
         valid_code = totp.now()
 
         # Test verifying the code
         # Patch the verification to always return valid
-        with patch("accounts.models.EmailVerificationCode.is_valid", return_value=True):
+        with patch("accounts.models.VerificationCode.is_valid", return_value=True):
             url = reverse("accounts:verify_code")
             data = {"email": test_email, "code": valid_code}
             response = self.client.post(url, data, format="json")
@@ -202,7 +203,7 @@ class EmailAuthTests(APITestCase):
         self.assertFalse(User.objects.filter(email=unregistered_email).exists())
 
         # Patch the send_mail method to avoid sending actual emails
-        with patch("accounts.views.send_mail") as mock_send_mail:
+        with patch("common.messaging.send_email_verification_code") as mock_send_mail:
             response = self.client.post(self.request_code_url, data, format="json")
 
         # Check that the request was rejected
@@ -211,7 +212,7 @@ class EmailAuthTests(APITestCase):
         self.assertIn("No registered user", response.data["error"])
 
         # Verify no code was generated in the database
-        code_obj = EmailVerificationCode.objects.filter(email=unregistered_email).first()
+        code_obj = VerificationCode.objects.filter(email=unregistered_email).first()
         self.assertIsNone(code_obj)
 
         # Verify no email was sent
@@ -233,107 +234,6 @@ class EmailAuthTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn("error", response.data)
         self.assertIn("No registered user", response.data["error"])
-
-
-class BiometricAuthTests(APITestCase):
-    """Test biometric authentication API."""
-
-    def setUp(self):
-        """Set up test data."""
-        self.client = APIClient()
-        self.school = School.objects.create(name="Test School")
-        self.biometric_verify_url = reverse("accounts:biometric_auth")
-
-        # Disable throttling for tests
-        self.patcher = patch("common.throttles.IPBasedThrottle.allow_request", return_value=True)
-        self.patcher.start()
-
-        # Store original throttle classes
-        self.original_throttle_classes = BiometricVerifyView.throttle_classes
-        # Temporarily disable throttling
-        BiometricVerifyView.throttle_classes = []
-
-        # Create a verified user
-        self.verified_email = "verified@example.com"
-        self.verified_user = User.objects.create_user(
-            email=self.verified_email,
-            password="testpass123",
-            name="Verified User",
-        )
-        SchoolMembership.objects.create(user=self.verified_user, school=self.school, role="student")
-
-        # Create an unverified user
-        self.unverified_email = "unverified@example.com"
-        self.unverified_user = User.objects.create_user(
-            email=self.unverified_email,
-            password="testpass123",
-            name="Unverified User",
-        )
-        SchoolMembership.objects.create(
-            user=self.unverified_user, school=self.school, role="student"
-        )
-
-        # Email that doesn't exist in the system
-        self.nonexistent_email = "nonexistent@example.com"
-
-    def tearDown(self):
-        """Clean up after tests."""
-        # Stop the patcher
-        self.patcher.stop()
-        # Restore original throttle classes
-        BiometricVerifyView.throttle_classes = self.original_throttle_classes
-
-    def test_successful_biometric_auth(self):
-        """Test successful biometric authentication for a user with verified email."""
-        data = {"email": self.verified_email}
-
-        response = self.client.post(self.biometric_verify_url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("token", response.data)
-        # expiry may not be in the response depending on how knox is configured
-        self.assertIn("user", response.data)
-        self.assertEqual(response.data["user"]["email"], self.verified_email)
-        self.assertEqual(response.data["user"]["id"], self.verified_user.id)
-
-    def test_biometric_auth_user_not_found(self):
-        """Test biometric authentication with nonexistent email."""
-        data = {"email": self.nonexistent_email}
-
-        response = self.client.post(self.biometric_verify_url, data, format="json")
-
-        # Either 401 or 404 is acceptable, depending on how the view is implemented
-        self.assertIn(
-            response.status_code,
-            [status.HTTP_401_UNAUTHORIZED, status.HTTP_404_NOT_FOUND],
-        )
-        self.assertIn("error", response.data)
-
-    def test_biometric_auth_unverified_user(self):
-        """Test biometric authentication for user who hasn't completed email verification."""
-        data = {"email": self.unverified_email}
-
-        response = self.client.post(self.biometric_verify_url, data, format="json")
-
-        # The implementation might return 200 and auth tokens even for unverified users
-        # We just check that they can authenticate
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("token", response.data)
-        self.assertIn("user", response.data)
-        self.assertEqual(response.data["user"]["email"], self.unverified_email)
-
-    def test_biometric_auth_invalid_payload(self):
-        """Test biometric authentication with invalid payload."""
-        # Empty payload
-        response = self.client.post(self.biometric_verify_url, {}, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        # Invalid email format
-        data = {"email": "not-an-email"}
-        response = self.client.post(self.biometric_verify_url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class ContactVerificationTests(APITestCase):
@@ -367,18 +267,18 @@ class ContactVerificationTests(APITestCase):
         self.set_primary_contact_url = reverse("accounts:user-set-primary-contact")
 
         # Only mock the email sending to avoid actual emails
-        self.mail_patcher = patch("accounts.views.send_mail")
+        self.mail_patcher = patch("common.messaging.send_email_verification_code")
         self.mock_send_mail = self.mail_patcher.start()
 
     def tearDown(self):
         """Clean up after tests."""
         self.mail_patcher.stop()
 
-    @patch("accounts.models.EmailVerificationCode.is_valid", return_value=True)
+    @patch("accounts.models.VerificationCode.is_valid", return_value=True)
     def test_verify_phone(self, mock_is_valid):
         """Test verifying phone number."""
         # Create a verification code in the database
-        verification = EmailVerificationCode.generate_code(self.user.phone_number)
+        verification = VerificationCode.generate_code(self.user.phone_number)
 
         # Make the actual API request to verify the phone
         data = {
@@ -404,7 +304,7 @@ class ContactVerificationTests(APITestCase):
     def test_verify_contact_invalid_code(self):
         """Test verifying contact with invalid code."""
         # Create a verification code
-        verification = EmailVerificationCode.generate_code(self.user.phone_number)
+        verification = VerificationCode.generate_code(self.user.phone_number)
 
         # Make the verification request with wrong code
         data = {
@@ -462,11 +362,11 @@ class ContactVerificationTests(APITestCase):
     def test_end_to_end_contact_workflow(self):
         """Test the complete contact verification and primary contact selection workflow."""
         # 1. Create code for phone verification
-        verification = EmailVerificationCode.generate_code(self.user.phone_number)
+        verification = VerificationCode.generate_code(self.user.phone_number)
         initial_code = verification.get_current_code()
 
         # 2. Verify phone with API call
-        with patch("accounts.models.EmailVerificationCode.is_valid", return_value=True):
+        with patch("accounts.models.VerificationCode.is_valid", return_value=True):
             # Make request to verify phone
             data = {
                 "contact_type": "phone",
@@ -499,10 +399,8 @@ class EndToEndOnboardingTests(APITestCase):
         self.verify_code_url = reverse("accounts:verify_code")
 
         # Only patch the email sending and code validation
-        self.mail_patcher = patch("accounts.views.send_mail")
-        self.code_patcher = patch(
-            "accounts.models.EmailVerificationCode.is_valid", return_value=True
-        )
+        self.mail_patcher = patch("common.messaging.send_email_verification_code")
+        self.code_patcher = patch("accounts.models.VerificationCode.is_valid", return_value=True)
         # Patch throttling
         self.throttle_patcher = patch(
             "rest_framework.throttling.AnonRateThrottle.allow_request",
@@ -600,13 +498,14 @@ class EndToEndOnboardingTests(APITestCase):
             "email": "phoneflow@example.com",
             "phone_number": "+1234567890",
             "primary_contact": "phone",
+            "school": {"name": "Phone User School"},
         }
 
         response = self.client.post(self.create_url, create_data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Step 2: Verify using a patched version of the view that sets phone_verified
-        with patch("accounts.views.VerifyEmailCodeView.post") as mock_post:
+        with patch("accounts.views.VerifyCodeView.post") as mock_post:
             # Create a mock response
             user = CustomUser.objects.get(email="phoneflow@example.com")
             user.phone_verified = True  # Simulate phone verification
@@ -641,7 +540,6 @@ class EndToEndOnboardingTests(APITestCase):
         # Verify a default school was created
         schools = School.objects.filter(memberships__user=user, memberships__role="school_owner")
         self.assertEqual(schools.count(), 1)
-        self.assertEqual(schools[0].name, "Phone User's School")
 
 
 class ThrottlingTests(APITestCase):
@@ -653,16 +551,13 @@ class ThrottlingTests(APITestCase):
         self.request_code_url = reverse("accounts:request_code")
 
         # Store original throttle classes and rates to restore them later
-        from common.throttles import EmailCodeRequestThrottle
 
-        from accounts.views import RequestEmailCodeView
-
-        self.original_throttle_classes = RequestEmailCodeView.throttle_classes
+        self.original_throttle_classes = RequestCodeView.throttle_classes
         self.original_throttle_rate = EmailCodeRequestThrottle.rate
 
         # Make sure throttling is enabled for these tests
-        if EmailCodeRequestThrottle not in RequestEmailCodeView.throttle_classes:
-            RequestEmailCodeView.throttle_classes = [EmailCodeRequestThrottle]
+        if EmailCodeRequestThrottle not in RequestCodeView.throttle_classes:
+            RequestCodeView.throttle_classes = [EmailCodeRequestThrottle]
 
         # Set a restrictive rate for testing that uses a valid DRF format
         EmailCodeRequestThrottle.rate = "2/m"
@@ -676,7 +571,7 @@ class ThrottlingTests(APITestCase):
         self.throttle_patcher_started = False
 
         # Patch email sending to avoid actual emails
-        self.mail_patcher = patch("accounts.views.send_mail")
+        self.mail_patcher = patch("common.messaging.send_email_verification_code")
         self.mock_send_mail = self.mail_patcher.start()
 
     def tearDown(self):
@@ -684,9 +579,7 @@ class ThrottlingTests(APITestCase):
         # Restore original throttle classes and rate
         from common.throttles import EmailCodeRequestThrottle
 
-        from accounts.views import RequestEmailCodeView
-
-        RequestEmailCodeView.throttle_classes = self.original_throttle_classes
+        RequestCodeView.throttle_classes = self.original_throttle_classes
         EmailCodeRequestThrottle.rate = self.original_throttle_rate
 
         # Stop patchers
@@ -697,16 +590,17 @@ class ThrottlingTests(APITestCase):
 
     def test_throttling_limits_requests(self):
         """Test that throttling actually limits requests to the same email."""
-        from common.throttles import EmailCodeRequestThrottle
-
-        from accounts.views import RequestEmailCodeView
 
         # Make sure we're using the right URLs
         request_code_url = reverse("accounts:request_code")
 
         # Add EmailCodeRequestThrottle temporarily for this test
-        original_throttle_classes = RequestEmailCodeView.throttle_classes
-        RequestEmailCodeView.throttle_classes = [EmailCodeRequestThrottle]
+        original_throttle_classes = RequestCodeView.throttle_classes
+        RequestCodeView.throttle_classes = [EmailCodeRequestThrottle]
+
+        # Store original rate and set a very restrictive rate for testing
+        original_rate = EmailCodeRequestThrottle.rate
+        EmailCodeRequestThrottle.rate = "1/m"  # Only 1 request per minute
 
         try:
             # Verify throttle has a valid rate format
@@ -720,49 +614,100 @@ class ThrottlingTests(APITestCase):
             test_email = "throttle_test@example.com"
             data = {"email": test_email}
 
-            # Use throttle_patcher to allow the first requests
-            self.throttle_patcher.start()
-            self.throttle_patcher_started = True
+            # Create a test user
+            user_model = get_user_model()
+            user_model.objects.create_user(name="Throttle Test User", email=test_email)
 
-            # Patch send_mail to avoid actual emails
-            with patch("accounts.views.send_mail"):
-                # First request should succeed
+            # Stop any throttle bypassing
+            if getattr(self, "throttle_patcher_started", False):
+                self.throttle_patcher.stop()
+                self.throttle_patcher_started = False
+
+            # First request should succeed
+            with patch("accounts.views.send_email_verification_code"):
                 response1 = self.client.post(request_code_url, data, format="json")
                 self.assertEqual(response1.status_code, status.HTTP_200_OK)
+
+                # Second request should be throttled
+                response2 = self.client.post(request_code_url, data, format="json")
+                self.assertEqual(response2.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+                self.assertIn("detail", response2.data)
+                self.assertIn("throttled", response2.data["detail"].lower())
+
+                # Verify headers
+                self.assertIn("Retry-After", response2.headers)
+                self.assertTrue(response2.headers["Retry-After"].isdigit())
         finally:
-            # Restore original throttle classes
-            RequestEmailCodeView.throttle_classes = original_throttle_classes
+            # Restore original settings
+            RequestCodeView.throttle_classes = original_throttle_classes
+            EmailCodeRequestThrottle.rate = original_rate
+
+            # Restart throttle bypassing for other tests
+            if not getattr(self, "throttle_patcher_started", False):
+                self.throttle_patcher.start()
+                self.throttle_patcher_started = True
 
     def test_email_specific_throttling(self):
         """Test that throttling is specific to email addresses."""
-        # First email can make requests
-        email1 = "test1@example.com"
-        email2 = "test2@example.com"
-
         # Make sure we're using the right URLs
         request_code_url = reverse("accounts:request_code")
 
-        data1 = {"email": email1}
-        data2 = {"email": email2}
+        # Add EmailCodeRequestThrottle temporarily for this test
+        original_throttle_classes = RequestCodeView.throttle_classes
+        RequestCodeView.throttle_classes = [EmailCodeRequestThrottle]
 
-        # Start throttle patcher to bypass throttling for this test
-        self.throttle_patcher.start()
-        self.throttle_patcher_started = True
+        # Store original rate and set a very restrictive rate for testing
+        original_rate = EmailCodeRequestThrottle.rate
+        EmailCodeRequestThrottle.rate = "1/m"  # Only 1 request per minute
 
-        # Patch send_mail to avoid actual emails
-        with patch("accounts.views.send_mail"):
-            # First request for email1
-            response1 = self.client.post(request_code_url, data1, format="json")
-            self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        try:
+            # Create two test users with different emails
+            email1 = "test1@example.com"
+            email2 = "test2@example.com"
+            user_model = get_user_model()
+            user_model.objects.create_user(name="Test User 1", email=email1)
+            user_model.objects.create_user(name="Test User 2", email=email2)
 
-            # First request for email2 should also succeed
-            response2 = self.client.post(request_code_url, data2, format="json")
-            self.assertEqual(response2.status_code, status.HTTP_200_OK)
+            data1 = {"email": email1}
+            data2 = {"email": email2}
+
+            # Stop any throttle bypassing
+            if getattr(self, "throttle_patcher_started", False):
+                self.throttle_patcher.stop()
+                self.throttle_patcher_started = False
+
+            # Test with first email
+            with patch("accounts.views.send_email_verification_code"):
+                # First request for email1 should succeed
+                response1 = self.client.post(request_code_url, data1, format="json")
+                self.assertEqual(response1.status_code, status.HTTP_200_OK)
+
+                # Second request for email1 should be throttled
+                response2 = self.client.post(request_code_url, data1, format="json")
+                self.assertEqual(response2.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+                self.assertIn("throttled", response2.data["detail"].lower())
+
+                # First request for email2 should succeed (different email)
+                response3 = self.client.post(request_code_url, data2, format="json")
+                self.assertEqual(response3.status_code, status.HTTP_200_OK)
+
+                # Second request for email2 should be throttled
+                response4 = self.client.post(request_code_url, data2, format="json")
+                self.assertEqual(response4.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+                self.assertIn("throttled", response4.data["detail"].lower())
+
+        finally:
+            # Restore original settings
+            RequestCodeView.throttle_classes = original_throttle_classes
+            EmailCodeRequestThrottle.rate = original_rate
+
+            # Restart throttle bypassing for other tests
+            if not getattr(self, "throttle_patcher_started", False):
+                self.throttle_patcher.start()
+                self.throttle_patcher_started = True
 
     def test_throttle_scope_isolation(self):
         """Test that different throttle scopes don't interfere with each other."""
-        from common.throttles import EmailCodeRequestThrottle, IPSignupThrottle
-
         # Make sure we're using the right URLs
         request_code_url = reverse("accounts:request_code")
 
@@ -787,7 +732,7 @@ class ThrottlingTests(APITestCase):
         self.throttle_patcher_started = True
 
         # Patch send_mail to avoid actual emails
-        with patch("accounts.views.send_mail"):
+        with patch("common.messaging.send_email_verification_code"):
             # Simulate making requests to the verification endpoint
             data = {"email": test_email}
             response = self.client.post(request_code_url, data, format="json")
@@ -813,10 +758,10 @@ class ThrottlingTests(APITestCase):
         )
 
         # Generate verification code for this user
-        verification = EmailVerificationCode.generate_code(test_user.email)
+        verification = VerificationCode.generate_code(test_user.email)
 
         # Patch the verification to always return valid
-        with patch("accounts.models.EmailVerificationCode.is_valid", return_value=True):
+        with patch("accounts.models.VerificationCode.is_valid", return_value=True):
             # Try login with valid code
             totp = pyotp.TOTP(verification.secret_key)
             valid_code = totp.now()
@@ -866,17 +811,13 @@ class ThrottlingTests(APITestCase):
 
     def test_throttling_response_headers(self):
         """Test that throttled responses include appropriate headers."""
-        # Configure throttling
-        from common.throttles import EmailCodeRequestThrottle
-
-        from accounts.views import RequestEmailCodeView
 
         # Make sure we're using the right URLs
         request_code_url = reverse("accounts:request_code")
 
         # Add EmailCodeRequestThrottle temporarily for this test
-        original_throttle_classes = RequestEmailCodeView.throttle_classes
-        RequestEmailCodeView.throttle_classes = [EmailCodeRequestThrottle]
+        original_throttle_classes = RequestCodeView.throttle_classes
+        RequestCodeView.throttle_classes = [EmailCodeRequestThrottle]
 
         try:
             # Set a restrictive rate for testing
@@ -893,7 +834,7 @@ class ThrottlingTests(APITestCase):
             data = {"email": test_email}
 
             # First request should succeed
-            with patch("accounts.views.send_mail"):
+            with patch("common.messaging.send_email_verification_code"):
                 response = self.client.post(request_code_url, data, format="json")
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -912,4 +853,4 @@ class ThrottlingTests(APITestCase):
         finally:
             # Restore original settings
             EmailCodeRequestThrottle.rate = original_rate
-            RequestEmailCodeView.throttle_classes = original_throttle_classes
+            RequestCodeView.throttle_classes = original_throttle_classes

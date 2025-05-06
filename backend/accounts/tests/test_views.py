@@ -8,7 +8,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from accounts.models import CustomUser, EmailVerificationCode, School, SchoolMembership
+from accounts.models import CustomUser, School, SchoolMembership, VerificationCode
 from accounts.views import UserViewSet
 
 
@@ -43,7 +43,7 @@ class TestUserSignup(TestCase):
         common.throttles.EmailCodeRequestThrottle.rate = self.original_email_rate
         common.throttles.IPSignupThrottle.rate = self.original_ip_rate
 
-    @patch("accounts.views.send_mail")
+    @patch("accounts.views.send_email_verification_code")
     def test_signup_success(self, mock_send_mail):
         """Test successful user signup with all required fields."""
         data = {
@@ -79,7 +79,7 @@ class TestUserSignup(TestCase):
         self.assertTrue(membership.is_active)
 
         # Verify verification code was created
-        verification = EmailVerificationCode.objects.filter(email="newuser@example.com").first()
+        verification = VerificationCode.objects.filter(email="newuser@example.com").first()
         self.assertIsNotNone(verification)
 
         # Verify email would have been sent
@@ -98,6 +98,7 @@ class TestUserSignup(TestCase):
             "email": "existing@example.com",  # Already exists
             "phone_number": "+1234567890",
             "primary_contact": "email",
+            "school": {"name": "Phone User School"},
         }
 
         response = self.client.post(self.url, data, format="json")
@@ -113,6 +114,7 @@ class TestUserSignup(TestCase):
             "email": "newuser@example.com",
             "phone_number": "not-a-phone-number",  # Invalid format
             "primary_contact": "email",
+            "school": {"name": "Phone User School"},
         }
 
         response = self.client.post(self.url, data, format="json")
@@ -122,12 +124,13 @@ class TestUserSignup(TestCase):
 
     def test_signup_phone_as_primary(self):
         """Test user signup with phone as the primary contact."""
-        with patch("accounts.views.send_mail") as mock_send_mail:
+        with patch("accounts.views.send_email_verification_code") as mock_send_mail:
             data = {
                 "name": "Phone User",
                 "email": "phoneuser@example.com",
                 "phone_number": "+1234567890",
                 "primary_contact": "phone",
+                "school": {"name": "Phone User School"},
             }
 
             response = self.client.post(self.url, data, format="json")
@@ -161,29 +164,33 @@ class TestUserSignup(TestCase):
 
     def test_signup_no_school_data(self):
         """Test user signup without providing school data (default school should be created)."""
-        with patch("accounts.views.send_mail") as mock_send_mail:
-            data = {
-                "name": "No School User",
-                "email": "noschool@example.com",
-                "phone_number": "+1234567890",
-                "primary_contact": "email",
-            }
+        data = {
+            "name": "No School User",
+            "email": "noschool@example.com",
+            "phone_number": "+1234567890",
+            "primary_contact": "email",
+        }
 
-            response = self.client.post(self.url, data, format="json")
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("school", str(response.data))
 
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    def test_signup_empty_school_name(self):
+        """Test user signup with empty school name should return a validation error, not a 500 error."""
+        data = {
+            "name": "Empty School Name User",
+            "email": "emptyschool@example.com",
+            "phone_number": "+1234567890",
+            "primary_contact": "email",
+            "school": {
+                "name": "",  # Empty school name
+            },
+        }
 
-            # Verify default school was created
-            user = CustomUser.objects.get(email="noschool@example.com")
-            schools = School.objects.filter(
-                memberships__user=user, memberships__role="school_owner"
-            )
-
-            self.assertEqual(schools.count(), 1)
-            self.assertEqual(schools[0].name, "No School User's School")
-
-            # Verify email verification code was sent
-            mock_send_mail.assert_called_once()
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("school", str(response.data))
+        self.assertIn("name", str(response.data))
 
     def test_regular_create_requires_authentication(self):
         """Test that regular user creation endpoint requires authentication."""
@@ -224,9 +231,10 @@ class TestUserSignup(TestCase):
             "email": "anon@example.com",
             "phone_number": "+1234567890",
             "primary_contact": "email",
+            "school": {"name": "Anonymous School"},
         }
 
-        with patch("accounts.views.send_mail"):
+        with patch("common.messaging.send_email_verification_code"):
             response = self.client.post(self.url, data, format="json")
 
         # Should succeed without authentication

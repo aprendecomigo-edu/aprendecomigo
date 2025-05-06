@@ -1,21 +1,11 @@
-import uuid
-
-from common.permissions import (
-    IsOwnerOrSchoolAdmin,
-    IsSchoolOwnerOrAdmin,
-    IsStudentInAnySchool,
-    IsTeacherInAnySchool,
-)
+from common.messaging import send_email_verification_code
 from common.throttles import (
     EmailBasedThrottle,
     EmailCodeRequestThrottle,
     IPBasedThrottle,
     IPSignupThrottle,
 )
-from django.conf import settings
-from django.contrib.auth import get_user_model, login
-from django.core.mail import send_mail
-from django.utils import timezone
+from django.contrib.auth import login
 from knox.auth import TokenAuthentication
 from knox.models import AuthToken
 from rest_framework import status, viewsets
@@ -24,33 +14,38 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .db_queries import (
+    create_school_owner,
+    get_user_by_email,
+    list_school_ids_owned_or_managed,
+    list_users_by_request_permissions,
+    user_exists,
+)
 from .models import (
-    EmailVerificationCode,
     School,
-    SchoolInvitation,
     SchoolMembership,
     SchoolRole,
     StudentProfile,
     TeacherProfile,
+    VerificationCode,
+)
+from .permissions import (
+    IsOwnerOrSchoolAdmin,
+    IsSchoolOwnerOrAdmin,
+    IsStudentInAnySchool,
+    IsTeacherInAnySchool,
 )
 from .serializers import (
-    BiometricVerifySerializer,
     CreateUserSerializer,
-    EmailRequestSerializer,
-    EmailVerifySerializer,
-    InvitationAcceptSerializer,
-    InvitationRequestSerializer,
-    SchoolInvitationSerializer,
+    RequestCodeSerializer,
     SchoolMembershipSerializer,
     SchoolSerializer,
     SchoolWithMembersSerializer,
     StudentSerializer,
     TeacherSerializer,
     UserSerializer,
-    UserWithRolesSerializer,
+    VerifyCodeSerializer,
 )
-
-User = get_user_model()
 
 
 # Base class for authenticated views
@@ -86,32 +81,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        # System admins can see all users
-        if user.is_staff or user.is_superuser:
-            return User.objects.all()
-
-        # School owners and admins can see users in their schools
-        if SchoolMembership.objects.filter(
-            user=user,
-            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True,
-        ).exists():
-            # Get all schools where this user is an owner or admin
-            admin_school_ids = SchoolMembership.objects.filter(
-                user=user,
-                role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-                is_active=True,
-            ).values_list("school_id", flat=True)
-
-            # Get all users in these schools
-            school_user_ids = SchoolMembership.objects.filter(
-                school_id__in=admin_school_ids, is_active=True
-            ).values_list("user_id", flat=True)
-
-            return User.objects.filter(id__in=school_user_ids)
-
-        # Other users can only see themselves
-        return User.objects.filter(id=user.id)
+        return list_users_by_request_permissions(user)
 
     def get_permissions(self):
         if self.action == "create":
@@ -172,18 +142,8 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         stats = {}
 
         # If user is a school owner or admin in any school
-        if SchoolMembership.objects.filter(
-            user=user,
-            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True,
-        ).exists():
-            # Get schools where user is admin
-            admin_school_ids = SchoolMembership.objects.filter(
-                user=user,
-                role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-                is_active=True,
-            ).values_list("school_id", flat=True)
-
+        admin_school_ids = list_school_ids_owned_or_managed(user)
+        if len(admin_school_ids) > 0:
             # Admin stats
             stats = {
                 "schools_count": len(admin_school_ids),
@@ -320,16 +280,16 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         # Check for verification code
         try:
             if contact_type == "email":
-                verification = EmailVerificationCode.objects.filter(
+                verification = VerificationCode.objects.filter(
                     email=contact_value, is_used=False
                 ).latest("created_at")
             else:
                 # For phone verification, we would need a similar model for phone codes
                 # This example assumes we're using the same model for simplicity
-                verification = EmailVerificationCode.objects.filter(
+                verification = VerificationCode.objects.filter(
                     email=contact_value, is_used=False
                 ).latest("created_at")
-        except EmailVerificationCode.DoesNotExist:
+        except VerificationCode.DoesNotExist:
             return Response(
                 {"error": f"No verification code found for this {contact_type}."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -418,72 +378,30 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         school_data = validated_data.get("school", {})
 
         # Check if user already exists
-        if User.objects.filter(email=email).exists():
+        if user_exists(email):
             return Response(
                 {"error": "A user with this email already exists."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Create the user (without password initially)
-        user = User.objects.create_user(
-            email,
-            password=None,  # Will be set after verification
-            name=name,
-            phone_number=phone_number,
-            primary_contact=primary_contact,
-        )
-
-        # Create school if school data provided
-        if school_data:
-            school = School.objects.create(
-                name=school_data.get("name"),
-                description=school_data.get("description", ""),
-                address=school_data.get("address", ""),
-                contact_email=school_data.get("contact_email", email),
-                phone_number=school_data.get("phone_number", phone_number),
-                website=school_data.get("website", ""),
-            )
-
-            # Create school membership
-            SchoolMembership.objects.create(
-                user=user, school=school, role=SchoolRole.SCHOOL_OWNER, is_active=True
-            )
-        else:
-            # Create default school
-            school = School.objects.create(
-                name=f"{user.name}'s School",
-                description="Default school created on sign up",
-                contact_email=user.email,
-                phone_number=user.phone_number,
-            )
-
-            # Create school membership
-            SchoolMembership.objects.create(
-                user=user, school=school, role=SchoolRole.SCHOOL_OWNER, is_active=True
-            )
+        user, school = create_school_owner(email, name, phone_number, primary_contact, school_data)
 
         # Generate verification code for primary contact
         if primary_contact == "email":
-            verification = EmailVerificationCode.generate_code(email)
-            # For email use the email value
+            verification = VerificationCode.generate_code(email)
+            contact_value = email
         else:
             # For phone verification, in a real system we'd use a different
             # mechanism like SMS, but for this example we'll use email
-            verification = EmailVerificationCode.generate_code(phone_number)
-            # For phone use the phone value
+            verification = VerificationCode.generate_code(phone_number)
+            contact_value = phone_number
 
         code = verification.get_current_code()
 
-        # Send verification code (email for this example)
+        # Send verification code
         try:
             contact_type_display = "email" if primary_contact == "email" else "phone number"
-            send_mail(
-                subject="Aprende Comigo - Verification Code",
-                message=f"Your verification code is: {code}\n\nThis code will expire in 5 minutes.",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],  # Always send to email for this example
-                fail_silently=False,
-            )
+            send_email_verification_code(contact_value, code)
         except Exception as e:
             # Rollback user creation if email fails
             user.delete()
@@ -506,6 +424,134 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class RequestCodeView(APIView):
+    """
+    API endpoint for requesting a TOTP verification code.
+    Rate limited to prevent abuse.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.authentication_classes = []  # No authentication required
+        self.permission_classes = [AllowAny]
+        self.throttle_classes = [EmailCodeRequestThrottle]
+
+    def post(self, request):
+        serializer = RequestCodeSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data["email"]
+        # Check if a user with this email exists
+        if not user_exists(email):
+            return Response(
+                {"error": "No registered user found with this email."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        verification = VerificationCode.generate_code(email)
+
+        # Get the current TOTP code
+        code = verification.get_current_code()
+
+        # Send email with verification code
+        try:
+            send_email_verification_code(email, code)
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to send email: {e!s}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return Response(
+            {"message": f"Verification code sent to {email}."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class VerifyCodeView(APIView):
+    """
+    API endpoint for verifying a TOTP code and authenticating the user.
+    Uses Knox tokens for authentication.
+    Rate limited by both email and IP to prevent brute force attacks.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.authentication_classes = []  # No authentication required
+        self.permission_classes = [AllowAny]
+        self.throttle_classes = [EmailBasedThrottle, IPBasedThrottle]  # Apply both throttles
+
+    def post(self, request):
+        serializer = VerifyCodeSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data["email"]
+        code = serializer.validated_data["code"]
+        # Check if a user with this email exists
+
+        if not user_exists(email):
+            return Response(
+                {"error": "No registered user found with this email."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Try to get the latest verification code for this email
+        try:
+            verification = VerificationCode.objects.filter(email=email, is_used=False).latest(
+                "created_at"
+            )
+        except VerificationCode.DoesNotExist:
+            return Response(
+                {"error": "No verification code found for this email."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Verify the code
+        if not verification.is_valid(code):
+            # Record the failed attempt
+            locked_out = verification.record_failed_attempt()
+            if locked_out:
+                return Response(
+                    {"error": "Too many failed attempts. Please request a new verification code."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            return Response(
+                {"error": "Invalid or expired verification code."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Get user
+        user = get_user_by_email(email)
+
+        # Mark verification as used
+        verification.use()
+
+        # Update user's email verification status
+        if email == user.email:
+            user.email_verified = True
+            user.save()
+        elif email == user.phone_number:
+            user.phone_verified = True
+            user.save()
+
+        # Create a session token for the user
+        _, token = AuthToken.objects.create(user)
+
+        # If using Django sessions, also login the user
+        if hasattr(request, "_request") and hasattr(request._request, "session"):
+            login(request._request, user)
+
+        # Return the token and user info
+        response_data = {
+            "token": token,
+            "user": UserSerializer(user).data,
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class SchoolViewSet(KnoxAuthenticatedViewSet):
@@ -576,11 +622,7 @@ class SchoolMembershipViewSet(KnoxAuthenticatedViewSet):
             return SchoolMembership.objects.all()
 
         # School owners and admins can see memberships in their schools
-        admin_school_ids = SchoolMembership.objects.filter(
-            user=user,
-            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True,
-        ).values_list("school_id", flat=True)
+        admin_school_ids = list_school_ids_owned_or_managed(user)
 
         if admin_school_ids:
             return SchoolMembership.objects.filter(school_id__in=admin_school_ids)
@@ -598,196 +640,6 @@ class SchoolMembershipViewSet(KnoxAuthenticatedViewSet):
         return [permission() for permission in permission_classes]
 
 
-class SchoolInvitationViewSet(KnoxAuthenticatedViewSet):
-    """
-    API endpoint for school invitations.
-    """
-
-    serializer_class = SchoolInvitationSerializer
-
-    def get_queryset(self):
-        user = self.request.user
-        # System admins can see all invitations
-        if user.is_staff or user.is_superuser:
-            return SchoolInvitation.objects.all()
-
-        # School owners and admins can see invitations for their schools
-        admin_school_ids = SchoolMembership.objects.filter(
-            user=user,
-            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True,
-        ).values_list("school_id", flat=True)
-
-        return SchoolInvitation.objects.filter(school_id__in=admin_school_ids, invited_by=user)
-
-    def get_permissions(self):
-        if self.action in ["create", "update", "partial_update", "destroy"]:
-            # Only school owner/admin can manage invitations
-            permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
-        elif self.action == "accept":
-            # Anyone can accept an invitation with the correct token
-            permission_classes = [AllowAny]
-        else:
-            # For list, retrieve, etc.
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
-
-    def perform_create(self, serializer):
-        # Set the invited_by field to the current user
-        # Set expiration date (e.g., 7 days from now)
-        expires_at = timezone.now() + timezone.timedelta(days=7)
-
-        # Generate a unique token
-        token = uuid.uuid4().hex
-
-        serializer.save(invited_by=self.request.user, expires_at=expires_at, token=token)
-
-    @action(detail=False, methods=["post"])
-    def accept(self, request):
-        """
-        Accept an invitation and create a school membership
-        """
-        serializer = InvitationAcceptSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        token = serializer.validated_data["token"]
-
-        try:
-            invitation = SchoolInvitation.objects.get(token=token)
-        except SchoolInvitation.DoesNotExist:
-            return Response({"error": "Invalid invitation token"}, status=status.HTTP_404_NOT_FOUND)
-
-        # Check if invitation is valid
-        if not invitation.is_valid():
-            return Response(
-                {"error": "Invitation has expired or already been used"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        email = invitation.email
-
-        # If user is authenticated and their email matches the invitation
-        if request.user.is_authenticated and request.user.email == email:
-            user = request.user
-        else:
-            # Look for existing user with this email
-            try:
-                user = User.objects.get(email=email)
-            except User.DoesNotExist:
-                # Create a new user if this is a new email
-                user = User.objects.create_user(
-                    email=email,
-                    name=email.split("@")[0],  # Default name from email
-                    password=None,  # Will need to set password via reset
-                )
-
-        # Create the membership
-        SchoolMembership.objects.create(
-            user=user, school=invitation.school, role=invitation.role, is_active=True
-        )
-
-        # Mark invitation as accepted
-        invitation.is_accepted = True
-        invitation.save()
-
-        # If the user is new or not authenticated, generate an auth token
-        if not request.user.is_authenticated:
-            # Create token for the user
-            token_instance, token = AuthToken.objects.create(user)
-
-            return Response(
-                {
-                    "message": "Invitation accepted successfully",
-                    "token": token,
-                    "user": UserWithRolesSerializer(user).data,
-                }
-            )
-
-        return Response({"message": "Invitation accepted successfully"})
-
-    @action(detail=False, methods=["post"])
-    def invite(self, request):
-        """
-        Invite a user to join a school with a specific role
-        """
-        serializer = InvitationRequestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        email = serializer.validated_data["email"]
-        role = serializer.validated_data["role"]
-        school_id = serializer.validated_data["school_id"]
-        message = serializer.validated_data.get("message", "")
-
-        # Check if the school exists
-        try:
-            school = School.objects.get(id=school_id)
-        except School.DoesNotExist:
-            return Response({"error": "School not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        # Check if the user has permission to invite to this school
-        has_permission = SchoolMembership.objects.filter(
-            user=request.user,
-            school=school,
-            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True,
-        ).exists()
-
-        if not has_permission and not (request.user.is_staff or request.user.is_superuser):
-            return Response(
-                {"error": "You don't have permission to invite users to this school"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        # Create the invitation
-        expires_at = timezone.now() + timezone.timedelta(days=7)
-        token = uuid.uuid4().hex
-
-        invitation = SchoolInvitation.objects.create(
-            school=school,
-            email=email,
-            invited_by=request.user,
-            role=role,
-            token=token,
-            expires_at=expires_at,
-        )
-
-        # Send invitation email
-        try:
-            invite_url = f"{settings.FRONTEND_URL}/invitation/accept/{token}"
-            send_mail(
-                subject=f"Invitation to join {school.name}",
-                message=f"""
-                You have been invited to join {school.name} as a {invitation.get_role_display()}.
-
-                {message}
-
-                Please click the link below to accept the invitation:
-                {invite_url}
-
-                This invitation will expire on {expires_at.strftime("%Y-%m-%d")}.
-                """,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False,
-            )
-        except Exception as e:
-            # Delete the invitation if email fails
-            invitation.delete()
-            return Response(
-                {"error": f"Failed to send invitation email: {e!s}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        return Response(
-            {
-                "message": f"Invitation sent to {email}",
-                "invitation": SchoolInvitationSerializer(invitation).data,
-            }
-        )
-
-
 class TeacherViewSet(KnoxAuthenticatedViewSet):
     """
     API endpoint for teacher profiles.
@@ -801,18 +653,9 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
             return TeacherProfile.objects.all()
 
         # School owners and admins can see teachers in their schools
-        if SchoolMembership.objects.filter(
-            user=user,
-            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True,
-        ).exists():
-            # Get the schools where user is an admin
-            admin_school_ids = SchoolMembership.objects.filter(
-                user=user,
-                role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-                is_active=True,
-            ).values_list("school_id", flat=True)
-
+        # Get the schools where user is an admin
+        admin_school_ids = list_school_ids_owned_or_managed(user)
+        if len(admin_school_ids) > 0:
             # Get all teacher users in these schools
             teacher_user_ids = SchoolMembership.objects.filter(
                 school_id__in=admin_school_ids, role=SchoolRole.TEACHER, is_active=True
@@ -849,17 +692,9 @@ class StudentViewSet(KnoxAuthenticatedViewSet):
             return StudentProfile.objects.all()
 
         # School owners and admins can see students in their schools
-        if SchoolMembership.objects.filter(
-            user=user,
-            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True,
-        ).exists():
+        admin_school_ids = list_school_ids_owned_or_managed(user)
+        if len(admin_school_ids) > 0:
             # Get the schools where user is an admin
-            admin_school_ids = SchoolMembership.objects.filter(
-                user=user,
-                role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-                is_active=True,
-            ).values_list("school_id", flat=True)
 
             # Get all student users in these schools
             student_user_ids = SchoolMembership.objects.filter(
@@ -927,187 +762,3 @@ class StudentViewSet(KnoxAuthenticatedViewSet):
                     status=status.HTTP_201_CREATED,
                 )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class RequestEmailCodeView(APIView):
-    """
-    API endpoint for requesting a TOTP verification code.
-    Rate limited to prevent abuse.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.authentication_classes = []  # No authentication required
-        self.permission_classes = [AllowAny]
-        self.throttle_classes = [EmailCodeRequestThrottle]
-
-    def post(self, request):
-        serializer = EmailRequestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        email = serializer.validated_data["email"]
-        # Check if a user with this email exists
-        if not User.objects.filter(email=email).exists():
-            return Response(
-                {"error": "No registered user found with this email."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        verification = EmailVerificationCode.generate_code(email)
-
-        # Get the current TOTP code
-        code = verification.get_current_code()
-
-        # Send email with verification code
-        try:
-            send_mail(
-                subject="Aprende Comigo - Verification Code",
-                message=f"Your verification code is: {code}\n\nThis code will expire in 5 minutes.",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False,
-            )
-        except Exception as e:
-            return Response(
-                {"error": f"Failed to send email: {e!s}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        return Response(
-            {"message": f"Verification code sent to {email}."},
-            status=status.HTTP_200_OK,
-        )
-
-
-class VerifyEmailCodeView(APIView):
-    """
-    API endpoint for verifying a TOTP code and authenticating the user.
-    Uses Knox tokens for authentication.
-    Rate limited by both email and IP to prevent brute force attacks.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.authentication_classes = []  # No authentication required
-        self.permission_classes = [AllowAny]
-        self.throttle_classes = [EmailBasedThrottle, IPBasedThrottle]  # Apply both throttles
-
-    def post(self, request):
-        serializer = EmailVerifySerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        email = serializer.validated_data["email"]
-        code = serializer.validated_data["code"]
-        # Check if a user with this email exists
-
-        if not User.objects.filter(email=email).exists():
-            return Response(
-                {"error": "No registered user found with this email."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        # Try to get the latest verification code for this email
-        try:
-            verification = EmailVerificationCode.objects.filter(email=email, is_used=False).latest(
-                "created_at"
-            )
-        except EmailVerificationCode.DoesNotExist:
-            return Response(
-                {"error": "No verification code found for this email."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Verify the code
-        if not verification.is_valid(code):
-            # Record the failed attempt
-            locked_out = verification.record_failed_attempt()
-            if locked_out:
-                return Response(
-                    {"error": "Too many failed attempts. Please request a new verification code."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            return Response(
-                {"error": "Invalid or expired verification code."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Get user
-        user = User.objects.get(email=email)
-
-        # Mark verification as used
-        verification.use()
-
-        # Create a session token for the user
-        token_instance, token = AuthToken.objects.create(user)
-
-        # If using Django sessions, also login the user
-        if hasattr(request, "_request") and hasattr(request._request, "session"):
-            login(request._request, user)
-
-        # Return the token and user info
-        response_data = {
-            "token": token,
-            "user": UserSerializer(user).data,
-        }
-
-        return Response(response_data, status=status.HTTP_200_OK)
-
-
-class BiometricVerifyView(APIView):
-    """
-    API endpoint for biometric authentication.
-    Accepts an email address and issues an authentication token without requiring a verification code.
-    Rate limited to prevent abuse.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.authentication_classes = []  # No authentication required
-        self.permission_classes = [AllowAny]
-        self.throttle_classes = [EmailBasedThrottle, IPBasedThrottle]  # Apply both throttles
-
-    def post(self, request):
-        serializer = BiometricVerifySerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        email = serializer.validated_data["email"]
-
-        # Check if user exists
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response(
-                {"error": "No user found with this email."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        # Create a session token for the user
-        token_instance, token = AuthToken.objects.create(user)
-
-        # If using Django sessions, also login the user
-        if hasattr(request, "_request") and hasattr(request._request, "session"):
-            login(request._request, user)
-
-        # Return the token and user info
-        return Response(
-            {
-                "token": token,
-                "user": UserSerializer(user).data,
-            },
-            status=status.HTTP_200_OK,
-        )
-
-    """API endpoint for user profile operations."""
-
-    def get(self, request):
-        return Response(UserSerializer(request.user).data)
-
-    def put(self, request):
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

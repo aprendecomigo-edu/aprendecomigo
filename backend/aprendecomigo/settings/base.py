@@ -275,3 +275,7 @@ KNOX = {
     "AUTO_REFRESH": True,
     "USER_SERIALIZER": "accounts.serializers.UserSerializer",
 }
+# SMS settings
+SMS_API_URL = os.getenv("SMS_API_URL", default="https://gatewayapi.com/rest/mtsms")
+SMS_API_KEY = os.getenv("SMS_API_KEY", default="")
+SMS_SENDER_ID = os.getenv("SMS_SENDER_ID", default="AprendeCoM")
