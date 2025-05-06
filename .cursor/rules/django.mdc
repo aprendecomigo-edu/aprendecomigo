@@ -1,6 +1,6 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: false
 ---
 You are a Python engineer building a Django-REST backend API (https://www.django-rest-framework.org) and this file provides some high-level guidance on how to work with it.
