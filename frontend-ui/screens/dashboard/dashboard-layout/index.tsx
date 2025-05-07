@@ -699,6 +699,16 @@ const MainContent = () => {
               <Text className="text-center text-gray-500">Nenhuma mensagem recente</Text>
             </Box>
           </VStack>
+
+          {/* Admin Dashboard Link - For demo purposes */}
+          <VStack space="md" className="mt-4">
+            <Pressable
+              className="bg-indigo-600 rounded-lg p-4 items-center"
+              onPress={() => router.push('/admin')}
+            >
+              <Text className="text-white font-bold">Acessar Dashboard Admin</Text>
+            </Pressable>
+          </VStack>
         </VStack>
       </ScrollView>
     </Box>
@@ -723,3 +733,6 @@ export const Dashboard = () => {
     </SafeAreaView>
   );
 };
+
+// Export components for reuse in other dashboards
+export { DashboardLayout, MobileFooter, bottomTabsList, School, schools };

@@ -76,6 +76,8 @@ function ProtectedRoutes() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="home" />
       <Stack.Screen name="profile" />
+      <Stack.Screen name="admin" />
+      <Stack.Screen name="student" />
     </Stack>
   );
 }
@@ -114,6 +116,8 @@ function RootLayoutNav() {
             <Stack.Screen name="auth" />
             <Stack.Screen name="home" />
             <Stack.Screen name="profile" />
+            <Stack.Screen name="admin" />
+            <Stack.Screen name="student" />
           </Stack>
         </AuthProvider>
       </ThemeProvider>

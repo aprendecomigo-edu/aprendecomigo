@@ -33,7 +33,7 @@ export default function DashboardLayout() {
   // User is authenticated, show dashboard routes
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="dashboard-layout" options={{ headerShown: false }} />
+      <Stack.Screen name="home" options={{ headerShown: false }} />
       {/* Add other dashboard screens here if needed */}
     </Stack>
   );
