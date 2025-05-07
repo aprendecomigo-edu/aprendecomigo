@@ -3,7 +3,7 @@ import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router } from 'expo-router';
 import type { Href } from 'expo-router';
 import type { LucideIcon } from 'lucide-react-native';
-import { LogOutIcon, PlusIcon, CheckIcon, MinusIcon, AlertTriangleIcon } from 'lucide-react-native';
+import { LogOutIcon, PlusIcon, CheckIcon, MinusIcon, AlertTriangleIcon, MessageCircle } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Platform, Alert } from 'react-native';
 
@@ -50,10 +50,16 @@ type HeaderProps = {
 
 type Icons = {
   iconName: LucideIcon | typeof Icon;
+  route?: string;
 };
 const list: Icons[] = [
   {
     iconName: HomeIcon,
+    route: '/home',
+  },
+  {
+    iconName: MessageCircle,
+    route: '/chat',
   },
   {
     iconName: InboxIcon,
@@ -68,13 +74,19 @@ const list: Icons[] = [
 type BottomTabs = {
   iconName: LucideIcon | typeof Icon;
   iconText: string;
+  route?: string;
 };
 const bottomTabsList: BottomTabs[] = [
   {
     iconName: HomeIcon,
     iconText: 'Home',
+    route: '/home',
   },
-
+  {
+    iconName: MessageCircle,
+    iconText: 'Chats',
+    route: '/chat',
+  },
   {
     iconName: GlobeIcon,
     iconText: 'Community',
@@ -90,6 +102,7 @@ const bottomTabsList: BottomTabs[] = [
   {
     iconName: ProfileIcon,
     iconText: 'Profile',
+    route: '/profile',
   },
 ];
 
@@ -335,7 +348,11 @@ const Sidebar = () => {
 
   const handlePress = (index: number) => {
     setSelectedIndex(index);
-    // Add navigation logic based on index if needed
+    // Navigate based on route if available
+    const selectedItem = list[index];
+    if (selectedItem && selectedItem.route) {
+      router.push(selectedItem.route as Href<string>);
+    }
   };
 
   return (
@@ -400,12 +417,18 @@ function MobileFooter({ footerIcons }: { footerIcons: any }) {
       )}
     >
       {footerIcons.map(
-        (item: { iconText: string; iconName: any }, index: React.Key | null | undefined) => {
+        (item: { iconText: string; iconName: any; route?: string }, index: React.Key | null | undefined) => {
           return (
             <Pressable
               className="px-0.5 flex-1 flex-col items-center"
               key={index}
-              onPress={() => router.push('/dashboard/dashboard-layout' as Href<string>)}
+              onPress={() => {
+                if (item.route) {
+                  router.push(item.route as Href<string>);
+                } else {
+                  router.push('/home' as Href<string>);
+                }
+              }}
             >
               <Icon as={item.iconName} size="md" className="h-[32px] w-[65px]" />
               <Text className="text-xs text-center text-typography-600">{item.iconText}</Text>

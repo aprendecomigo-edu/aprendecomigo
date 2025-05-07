@@ -78,6 +78,7 @@ function ProtectedRoutes() {
       <Stack.Screen name="profile" />
       <Stack.Screen name="admin" />
       <Stack.Screen name="student" />
+      <Stack.Screen name="chat" />
     </Stack>
   );
 }
@@ -118,6 +119,7 @@ function RootLayoutNav() {
             <Stack.Screen name="profile" />
             <Stack.Screen name="admin" />
             <Stack.Screen name="student" />
+            <Stack.Screen name="chat" />
           </Stack>
         </AuthProvider>
       </ThemeProvider>
