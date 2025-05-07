@@ -51,6 +51,7 @@ urlpatterns = [
     path("api/redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
     # App routes for API - use api/ prefix for all API endpoints
     path("api/accounts/", include("accounts.urls", namespace="accounts")),
+    path("api/", include("classroom.urls")),  # Add classroom URLs
 ]
 
 # In development, serve static files for Swagger UI and media files for uploads

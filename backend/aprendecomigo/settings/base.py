@@ -57,9 +57,12 @@ INSTALLED_APPS = [
     "knox",
     # Field-level encryption
     "django_cryptography",
+    # Channels for WebSocket support
+    "channels",
     # Custom apps
     "common",
     "accounts",
+    "classroom",
 ]
 
 MIDDLEWARE = [
@@ -92,6 +95,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "aprendecomigo.wsgi.application"
+ASGI_APPLICATION = "aprendecomigo.asgi.application"
 
 
 # Database
@@ -279,3 +283,13 @@ KNOX = {
 SMS_API_URL = os.getenv("SMS_API_URL", default="https://gatewayapi.com/rest/mtsms")
 SMS_API_KEY = os.getenv("SMS_API_KEY", default="")
 SMS_SENDER_ID = os.getenv("SMS_SENDER_ID", default="AprendeCoM")
+
+# Channel Layers Configuration
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
