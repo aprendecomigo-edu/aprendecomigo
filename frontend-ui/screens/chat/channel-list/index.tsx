@@ -1,145 +1,103 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { useRouter, type Href } from 'expo-router';
 import { useAuth } from '@/api/authContext';
-import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Heading } from '@/components/ui/heading';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
-import { Pressable } from '@/components/ui/pressable';
-import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
-import { SearchIcon, PlusCircleIcon } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
 import MainLayout from '@/components/layouts/main-layout';
-
-// Sample mock data for channels/chats
-interface Channel {
-  id: string;
-  name: string;
-  lastMessage: string;
-  time: string;
-  unreadCount: number;
-  avatarText: string;
-}
-
-const sampleChannels: Channel[] = [
-  {
-    id: '1',
-    name: '9° Ano A',
-    lastMessage: 'Dúvida sobre a lição de casa',
-    time: '10:30',
-    unreadCount: 3,
-    avatarText: '9A',
-  },
-  {
-    id: '2',
-    name: 'Professores de Matemática',
-    lastMessage: 'Reunião amanhã às 14h',
-    time: '09:15',
-    unreadCount: 0,
-    avatarText: 'PM',
-  },
-  {
-    id: '3',
-    name: 'Coordenação Pedagógica',
-    lastMessage: 'Relatórios do bimestre',
-    time: 'Ontem',
-    unreadCount: 5,
-    avatarText: 'CP',
-  },
-  {
-    id: '4',
-    name: 'Prof. Maria Silva',
-    lastMessage: 'Pode me enviar o planejamento?',
-    time: 'Ontem',
-    unreadCount: 0,
-    avatarText: 'MS',
-  },
-  {
-    id: '5',
-    name: 'Pais 10° Ano B',
-    lastMessage: 'Informações sobre a feira de ciências',
-    time: '23/05',
-    unreadCount: 1,
-    avatarText: 'PB',
-  },
-];
+import { Channel, fetchChannels } from '@/api/channelApi';
+import { ChannelListItem } from '../components/ChannelListItem';
+import { ChannelHeader } from '../components/ChannelHeader';
+import { ChannelDrawer } from '../components/ChannelDrawer';
+import ChannelContent from '../components/ChannelContent';
 
 const ChannelListContent = () => {
-  const { userProfile } = useAuth();
-  const userName = userProfile?.name || 'Usuário';
   const router = useRouter();
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [filteredChannels, setFilteredChannels] = useState<Channel[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true); // Start with drawer open
+  const [selectedChannelId, setSelectedChannelId] = useState<string | undefined>(undefined);
+
+  // Fetch channels on component mount
+  useEffect(() => {
+    const loadChannels = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchChannels();
+        setChannels(data);
+        setFilteredChannels(data);
+
+        // Set the first channel as selected by default
+        if (data.length > 0 && !selectedChannelId) {
+          setSelectedChannelId(data[0].id);
+        }
+      } catch (error) {
+        console.error('Error loading channels:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadChannels();
+  }, []);
+
+  // Filter channels based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredChannels(channels);
+    } else {
+      const searchTermLower = searchTerm.toLowerCase();
+      const filtered = channels.filter(
+        channel =>
+          channel.name.toLowerCase().includes(searchTermLower) ||
+          channel.lastMessage.toLowerCase().includes(searchTermLower)
+      );
+      setFilteredChannels(filtered);
+    }
+  }, [searchTerm, channels]);
+
+  // Handle channel selection
+  const handleChannelSelect = (channelId: string) => {
+    setSelectedChannelId(channelId);
+  };
+
+  // Toggle drawer
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
+  };
+
+  // Get the selected channel
+  const selectedChannel = channels.find(channel => channel.id === selectedChannelId);
 
   return (
     <Box className="flex-1 bg-gray-50">
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom: isWeb ? 0 : 100,
-          flexGrow: 1,
-        }}
-        className="flex-1 mb-20 md:mb-2"
-      >
-        <VStack className="p-4 pb-0 md:px-6 md:pt-6 w-full" space="xl">
-          {/* Header */}
-          <HStack className="bg-blue-600 rounded-lg p-4 items-center justify-between">
-            <VStack>
-              <Text className="text-white font-bold text-xl">Mensagens</Text>
-              <Text className="text-white">Suas conversas</Text>
+      <View style={styles.container}>
+        {/* Channel Drawer */}
+        <ChannelDrawer
+          isOpen={isDrawerOpen}
+          onToggle={toggleDrawer}
+          channels={channels}
+          onChannelSelect={handleChannelSelect}
+          selectedChannelId={selectedChannelId}
+        />
+
+        {/* Main Content */}
+        <View style={[styles.contentContainer, { marginLeft: isDrawerOpen ? 240 : 0 }]}>
+          {isLoading ? (
+            <VStack className="flex-1 justify-center items-center">
+              <Text>Carregando conversas...</Text>
             </VStack>
-            <Pressable>
-              <Box className="bg-blue-500 h-9 w-9 rounded-full items-center justify-center">
-                <Icon as={PlusCircleIcon} size="sm" color="white" />
-              </Box>
-            </Pressable>
-          </HStack>
-
-          {/* Search */}
-          <HStack className="bg-white rounded-lg border border-gray-200 p-2 mb-2 items-center">
-            <Icon as={SearchIcon} size="sm" className="text-gray-500 mr-2" />
-            <Text className="text-gray-400">Buscar conversas...</Text>
-          </HStack>
-
-          {/* Channel List */}
-          <VStack space="sm" className="mb-4">
-            <Heading className="text-lg font-bold mb-2">Conversas Recentes</Heading>
-
-            {sampleChannels.map((channel) => (
-              <Pressable key={channel.id} onPress={() => {}}>
-                <HStack className="bg-white p-4 rounded-lg border border-gray-100 items-center mb-2">
-                  <Avatar className="bg-blue-100 h-12 w-12 mr-3">
-                    <AvatarFallbackText>{channel.avatarText}</AvatarFallbackText>
-                  </Avatar>
-                  <VStack className="flex-1">
-                    <HStack className="justify-between items-center">
-                      <Text className="font-bold">{channel.name}</Text>
-                      <Text className="text-xs text-gray-500">{channel.time}</Text>
-                    </HStack>
-                    <HStack className="justify-between items-center">
-                      <Text className="text-sm text-gray-600 flex-1" numberOfLines={1}>
-                        {channel.lastMessage}
-                      </Text>
-                      {channel.unreadCount > 0 && (
-                        <Box className="bg-blue-500 rounded-full h-5 w-5 items-center justify-center ml-2">
-                          <Text className="text-xs text-white">{channel.unreadCount}</Text>
-                        </Box>
-                      )}
-                    </HStack>
-                  </VStack>
-                </HStack>
-              </Pressable>
-            ))}
-          </VStack>
-
-          {/* Create New Chat Button */}
-          <Button className="bg-blue-600 mb-4">
-            <ButtonText>Nova Conversa</ButtonText>
-          </Button>
-        </VStack>
-      </ScrollView>
+          ) : (
+            <ChannelContent
+              channel={selectedChannel || channels[0]}
+              isLoading={isLoading}
+            />
+          )}
+        </View>
+      </View>
     </Box>
   );
 };
@@ -147,7 +105,7 @@ const ChannelListContent = () => {
 // Wrap the ChannelListContent with MainLayout for consistent navigation
 const ChannelListScreen = () => {
   return (
-    <MainLayout title="Mensagens">
+    <MainLayout title="Mensagens" showSidebar={true}>
       <ChannelListContent />
     </MainLayout>
   );
@@ -156,5 +114,16 @@ const ChannelListScreen = () => {
 export const ChannelListScreenPage = () => {
   return <ChannelListScreen />;
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: 'row',
+    position: 'relative',
+  },
+  contentContainer: {
+    flex: 1,
+  }
+});
 
 export default ChannelListScreenPage;

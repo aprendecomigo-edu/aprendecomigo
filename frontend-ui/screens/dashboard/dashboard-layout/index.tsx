@@ -3,15 +3,11 @@ import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router } from 'expo-router';
 import type { Href } from 'expo-router';
 import type { LucideIcon } from 'lucide-react-native';
-import { LogOutIcon, PlusIcon, CheckIcon, MinusIcon, AlertTriangleIcon, MessageCircle } from 'lucide-react-native';
+import { LogOutIcon, PlusIcon, CheckIcon, MinusIcon, AlertTriangleIcon, MessagesSquare, HomeIcon, Home } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Platform, Alert } from 'react-native';
 
 import { CalendarIcon } from './assets/icons/calendar';
-import { GlobeIcon } from './assets/icons/globe';
-import { HeartIcon } from './assets/icons/heart';
-import { HomeIcon } from './assets/icons/home';
-import { InboxIcon } from './assets/icons/inbox';
 import { ProfileIcon } from './assets/icons/profile';
 
 import { useAuth } from '@/api/authContext';
@@ -58,17 +54,8 @@ const list: Icons[] = [
     route: '/home',
   },
   {
-    iconName: MessageCircle,
+    iconName: MessagesSquare,
     route: '/chat',
-  },
-  {
-    iconName: InboxIcon,
-  },
-  {
-    iconName: GlobeIcon,
-  },
-  {
-    iconName: HeartIcon,
   },
 ];
 type BottomTabs = {
@@ -83,21 +70,9 @@ const bottomTabsList: BottomTabs[] = [
     route: '/home',
   },
   {
-    iconName: MessageCircle,
+    iconName: MessagesSquare,
     iconText: 'Chats',
     route: '/chat',
-  },
-  {
-    iconName: GlobeIcon,
-    iconText: 'Community',
-  },
-  {
-    iconName: InboxIcon,
-    iconText: 'Inbox',
-  },
-  {
-    iconName: HeartIcon,
-    iconText: 'Favourite',
   },
   {
     iconName: ProfileIcon,
