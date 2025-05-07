@@ -16,7 +16,7 @@ This frontend will interact with a backend API, that is being handled by another
 
 ## Code Style Guidelines
 - **TypeScript**: Use strict mode and proper type definitions (interfaces/types)
-- **Imports**: Use absolute imports with `@/` prefix (e.g., `@/components/ui/button`)
+- **Imports**: Use absolute imports with `@/` prefix
 - **Formatting**: Follow component organization pattern (imports, interfaces, component, exports)
 - **Error Handling**: Use try/catch blocks with console.error for detailed logging
 - **Components**: Use functional components with React hooks
@@ -26,6 +26,7 @@ This frontend will interact with a backend API, that is being handled by another
 - **Naming**: PascalCase for components, camelCase for functions/variables, kebab-case for files
 - **Accessibility** Make sure to keep in mind accessibility features
 - **Internationalization** This is important to keep all strings translatable
+- **Icons** Use  'lucide-react-native' icons
 
 ## Testing Guidelines
 - **Test Framework**: Jest with jest-expo preset
