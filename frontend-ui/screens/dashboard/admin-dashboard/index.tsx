@@ -28,6 +28,9 @@ import { useRouter } from 'expo-router';
 // Import the DashboardLayout from the dashboard-layout directory
 import { bottomTabsList, DashboardLayout, MobileFooter, School, schools } from '../dashboard-layout';
 
+// Import MainLayout
+import MainLayout from '@/components/layouts/main-layout';
+
 // Define interfaces for admin dashboard
 interface ScheduleClass {
   subject: string;
@@ -403,22 +406,12 @@ const AdminDashboard = () => {
   );
 };
 
-// Export the AdminDashboard wrapped with the Dashboard layout
+// Export the AdminDashboard wrapped with the MainLayout
 export const AdminDashboardPage = () => {
-  const [selectedSchool, setSelectedSchool] = useState<School>(schools[0]);
-
-  const handleSchoolChange = (school: School) => {
-    setSelectedSchool(school);
-    // Here you would typically fetch data for the selected school
-  };
-
   return (
-    <SafeAreaView className="h-full w-full">
-      <DashboardLayout title={selectedSchool.name} isSidebarVisible={true}>
-        <AdminDashboard />
-      </DashboardLayout>
-      <MobileFooter footerIcons={bottomTabsList} />
-    </SafeAreaView>
+    <MainLayout title="Admin Dashboard">
+      <AdminDashboard />
+    </MainLayout>
   );
 };
 

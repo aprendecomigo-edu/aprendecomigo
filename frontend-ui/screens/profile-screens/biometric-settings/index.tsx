@@ -12,8 +12,10 @@ import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { Toast, ToastTitle, useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
+import MainLayout from '@/components/layouts/main-layout';
 
-export const BiometricSettings = () => {
+// Main BiometricSettings content component
+const BiometricSettingsContent = () => {
   const toast = useToast();
   const router = useRouter();
   const { biometricSupport, enableBiometrics, disableBiometrics, userProfile } = useAuth();
@@ -195,5 +197,14 @@ export const BiometricSettings = () => {
         </VStack>
       </Card>
     </VStack>
+  );
+};
+
+// Wrap with MainLayout
+export const BiometricSettings = () => {
+  return (
+    <MainLayout title="Security Settings">
+      <BiometricSettingsContent />
+    </MainLayout>
   );
 };

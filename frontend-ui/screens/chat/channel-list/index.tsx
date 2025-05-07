@@ -7,13 +7,13 @@ import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
-import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { SearchIcon, PlusCircleIcon } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import MainLayout from '@/components/layouts/main-layout';
 
 // Sample mock data for channels/chats
 interface Channel {
@@ -68,7 +68,7 @@ const sampleChannels: Channel[] = [
   },
 ];
 
-const ChannelListScreen = () => {
+const ChannelListContent = () => {
   const { userProfile } = useAuth();
   const userName = userProfile?.name || 'Usuário';
   const router = useRouter();
@@ -141,6 +141,15 @@ const ChannelListScreen = () => {
         </VStack>
       </ScrollView>
     </Box>
+  );
+};
+
+// Wrap the ChannelListContent with MainLayout for consistent navigation
+const ChannelListScreen = () => {
+  return (
+    <MainLayout title="Mensagens">
+      <ChannelListContent />
+    </MainLayout>
   );
 };
 
