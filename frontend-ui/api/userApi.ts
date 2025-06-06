@@ -65,6 +65,29 @@ export const getTeacherProfile = async (id?: number) => {
 };
 
 /**
+ * Get list of teachers
+ */
+export const getTeachers = async (): Promise<TeacherProfile[]> => {
+  try {
+    const response = await apiClient.get('/accounts/teachers/');
+
+    // Handle paginated response - extract results
+    if (response.data && Array.isArray(response.data.results)) {
+      return response.data.results;
+    } else if (Array.isArray(response.data)) {
+      // Fallback for non-paginated response
+      return response.data;
+    } else {
+      console.warn('API did not return expected format:', response.data);
+      return [];
+    }
+  } catch (error) {
+    console.error('Error loading teachers:', error);
+    return []; // Return empty array on error
+  }
+};
+
+/**
  * Update teacher profile
  */
 export const updateTeacherProfile = async (id: number, data: Partial<TeacherProfile>) => {

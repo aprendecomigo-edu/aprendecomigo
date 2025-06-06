@@ -172,7 +172,7 @@ const TasksTable = ({ tasks }: { tasks: OnboardingTask[] }) => {
 
 // Main Admin Dashboard Component
 const AdminDashboard = () => {
-  const { userProfile } = useAuth();
+  const { userProfile, ensureUserProfile } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedView, setSelectedView] = useState<'list' | 'calendar'>('list');
@@ -191,11 +191,16 @@ const AdminDashboard = () => {
     .slice(0, 2)
     .toUpperCase();
 
-  // Load dashboard data
+  // Load dashboard data and ensure user profile
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
         setIsLoading(true);
+
+        // Ensure user profile is loaded (this will call getDashboardInfo if needed)
+        await ensureUserProfile();
+
+        // Load dashboard-specific data
         const data = await getDashboardInfo();
         setDashboardData(data);
       } catch (error) {
@@ -206,7 +211,7 @@ const AdminDashboard = () => {
     };
 
     loadDashboardData();
-  }, []);
+  }, [ensureUserProfile]);
 
   // Determine onboarding status
   const hasTeachers = (dashboardData?.stats?.teacher_count ?? 0) > 0;

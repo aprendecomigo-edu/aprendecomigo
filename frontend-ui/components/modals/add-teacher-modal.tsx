@@ -1,6 +1,7 @@
 import { X, Check, Search } from 'lucide-react-native';
 import React, { useState } from 'react';
 
+import apiClient from '@/api/apiClient';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
@@ -41,38 +42,49 @@ const COLORS = {
 } as const;
 
 interface Course {
-  id: string;
+  id: number;
   name: string;
+  code: string;
+  educational_system: string;
+  education_level: string;
   description: string;
+  created_at: string;
+  updated_at: string;
 }
 
-// Mock API calls - replace with real API when backend is ready
-const mockCourses: Course[] = [
-  { id: '1', name: 'Matemática', description: 'Ensino fundamental e médio' },
-  { id: '2', name: 'Português', description: 'Língua portuguesa e literatura' },
-  { id: '3', name: 'História', description: 'História geral e do Brasil' },
-  { id: '4', name: 'Geografia', description: 'Geografia física e humana' },
-  { id: '5', name: 'Ciências', description: 'Ciências naturais' },
-  { id: '6', name: 'Inglês', description: 'Língua inglesa' },
-  { id: '7', name: 'Educação Física', description: 'Atividades físicas e esportes' },
-  { id: '8', name: 'Artes', description: 'Artes visuais e música' },
-  { id: '9', name: 'Química', description: 'Química geral e orgânica' },
-  { id: '10', name: 'Física', description: 'Mecânica, termodinâmica e eletromagnetismo' },
-  { id: '11', name: 'Biologia', description: 'Ciências da vida' },
-  { id: '12', name: 'Filosofia', description: 'Pensamento crítico e ética' },
-];
-
+// Real API calls using apiClient
 const loadCourses = async (): Promise<Course[]> => {
-  // Mock API call - simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return mockCourses;
+  try {
+    const response = await apiClient.get('/accounts/courses');
+    console.log('API Response:', response.data); // Debug log
+
+    // Handle paginated response - extract results
+    if (response.data && Array.isArray(response.data.results)) {
+      return response.data.results;
+    } else if (Array.isArray(response.data)) {
+      // Fallback for non-paginated response
+      return response.data;
+    } else {
+      console.warn('API did not return expected format:', response.data);
+      return [];
+    }
+  } catch (error) {
+    console.error('Error loading courses:', error);
+    return []; // Return empty array on error
+  }
 };
 
-const saveTeacherProfile = async (selectedCourseIds: string[]): Promise<void> => {
-  // Mock API call - simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  console.log('Saving teacher profile with courses:', selectedCourseIds);
-  // TODO: Replace with actual API call when backend is ready
+const saveTeacherProfile = async (selectedCourseIds: number[]): Promise<void> => {
+  try {
+    const response = await apiClient.post('/accounts/teachers/onboarding/', {
+      course_ids: selectedCourseIds,
+    });
+    console.log('Teacher profile created successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating teacher profile:', error);
+    throw error;
+  }
 };
 
 interface AddTeacherModalProps {
@@ -83,7 +95,7 @@ interface AddTeacherModalProps {
 
 export const AddTeacherModal = ({ isOpen, onClose, onSuccess }: AddTeacherModalProps) => {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
+  const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -101,18 +113,21 @@ export const AddTeacherModal = ({ isOpen, onClose, onSuccess }: AddTeacherModalP
       setCourses(coursesData);
     } catch (error) {
       console.error('Error loading courses:', error);
+      setCourses([]); // Ensure courses is always an array
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredCourses = courses.filter(
-    course =>
-      course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCourses = Array.isArray(courses)
+    ? courses.filter(
+        course =>
+          course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          course.description.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
-  const toggleCourseSelection = (courseId: string) => {
+  const toggleCourseSelection = (courseId: number) => {
     setSelectedCourseIds(prev =>
       prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]
     );
@@ -219,13 +234,24 @@ export const AddTeacherModal = ({ isOpen, onClose, onSuccess }: AddTeacherModalP
                           >
                             <HStack className="items-center justify-between">
                               <VStack className="flex-1">
-                                <Text
-                                  className={`font-medium ${
-                                    isSelected ? 'text-white' : 'text-gray-900'
-                                  }`}
-                                >
-                                  {course.name}
-                                </Text>
+                                <HStack className="items-center mb-1" space="xs">
+                                  <Text
+                                    className={`font-medium ${
+                                      isSelected ? 'text-white' : 'text-gray-900'
+                                    }`}
+                                  >
+                                    {course.name}
+                                  </Text>
+                                  <Text
+                                    className={`text-xs px-2 py-1 rounded ${
+                                      isSelected
+                                        ? 'text-white bg-white bg-opacity-20'
+                                        : 'text-gray-500 bg-gray-100'
+                                    }`}
+                                  >
+                                    {course.code}
+                                  </Text>
+                                </HStack>
                                 <Text
                                   className={`text-sm ${
                                     isSelected ? 'text-white' : 'text-gray-600'

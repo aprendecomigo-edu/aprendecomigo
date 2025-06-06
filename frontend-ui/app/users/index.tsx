@@ -1,6 +1,7 @@
 import { UserPlus, Mail, Plus } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
+import { getTeachers, TeacherProfile } from '@/api/userApi';
 import { MainLayout } from '@/components/layouts/main-layout';
 import { AddTeacherModal } from '@/components/modals/add-teacher-modal';
 import { Box } from '@/components/ui/box';
@@ -10,6 +11,7 @@ import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
+import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 
@@ -124,6 +126,8 @@ const UserTypeCard = ({
 
 export default function UsersPage() {
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
+  const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const handleAddMeAsTeacher = () => {
     setIsAddTeacherModalOpen(true);
@@ -141,8 +145,25 @@ export default function UsersPage() {
 
   const handleTeacherProfileSuccess = () => {
     console.log('Teacher profile created successfully!');
-    // TODO: Show success message and refresh user list
+    // Refresh teachers list
+    fetchTeachers();
   };
+
+  const fetchTeachers = async () => {
+    try {
+      setLoading(true);
+      const teachersData = await getTeachers();
+      setTeachers(teachersData);
+    } catch (error) {
+      console.error('Error fetching teachers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTeachers();
+  }, []);
 
   return (
     <MainLayout>
@@ -154,7 +175,7 @@ export default function UsersPage() {
         <VStack className="p-6" space="xl">
           {/* User Type Cards */}
           <HStack className="w-full" style={{ paddingHorizontal: 8 }}>
-            <UserTypeCard title="Professores" count={0} variant="primary" />
+            <UserTypeCard title="Professores" count={teachers.length} variant="primary" />
             <UserTypeCard title="Alunos" count={0} variant="secondary" />
             <UserTypeCard title="Colaboradores" count={0} variant="tertiary" />
           </HStack>
@@ -192,7 +213,6 @@ export default function UsersPage() {
               Lista de Professores
             </Heading>
 
-            {/* Future: Table headers for when users exist */}
             <Box
               className="rounded-lg border border-gray-200"
               style={{ backgroundColor: COLORS.white }}
@@ -202,22 +222,51 @@ export default function UsersPage() {
                 <HStack className="p-4 border-b border-gray-200">
                   <Text className="flex-1 font-medium text-gray-700">Nome</Text>
                   <Text className="flex-1 font-medium text-gray-700">Email</Text>
-                  <Text className="flex-1 font-medium text-gray-700">Tipo</Text>
-                  <Text className="w-20 font-medium text-gray-700">Ações</Text>
+                  <Text className="flex-1 font-medium text-gray-700">Especialidade</Text>
+                  <Text className="w-20 font-medium text-gray-700">Status</Text>
                 </HStack>
 
-                {/* Empty state inside table */}
-                <Box className="p-8">
-                  <Center>
-                    <VStack className="items-center" space="xs">
-                      <Icon as={UserPlus} size="lg" className="text-gray-400" />
-                      <Text className="text-gray-500">Nenhum usuário cadastrado</Text>
-                      <Text className="text-gray-400 text-sm text-center">
-                        Use os botões acima para adicionar professores e colaboradores
+                {/* Loading state */}
+                {loading ? (
+                  <Box className="p-8">
+                    <Center>
+                      <VStack className="items-center" space="md">
+                        <Spinner size="large" />
+                        <Text className="text-gray-500">Carregando professores...</Text>
+                      </VStack>
+                    </Center>
+                  </Box>
+                ) : teachers.length === 0 ? (
+                  /* Empty state */
+                  <Box className="p-8">
+                    <Center>
+                      <VStack className="items-center" space="xs">
+                        <Icon as={UserPlus} size="lg" className="text-gray-400" />
+                        <Text className="text-gray-500">Nenhum professor cadastrado</Text>
+                        <Text className="text-gray-400 text-sm text-center">
+                          Use os botões acima para adicionar professores
+                        </Text>
+                      </VStack>
+                    </Center>
+                  </Box>
+                ) : (
+                  /* Teachers list */
+                  teachers.map((teacher, index) => (
+                    <HStack
+                      key={teacher.id}
+                      className={`p-4 ${
+                        index < teachers.length - 1 ? 'border-b border-gray-200' : ''
+                      }`}
+                    >
+                      <Text className="flex-1 text-gray-900">{teacher.user.name}</Text>
+                      <Text className="flex-1 text-gray-600">{teacher.user.email}</Text>
+                      <Text className="flex-1 text-gray-600">
+                        {teacher.specialty || 'Não especificado'}
                       </Text>
-                    </VStack>
-                  </Center>
-                </Box>
+                      <Text className="w-20 text-green-600 text-sm">Ativo</Text>
+                    </HStack>
+                  ))
+                )}
               </VStack>
             </Box>
           </VStack>
