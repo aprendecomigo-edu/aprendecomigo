@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { getTeachers, TeacherProfile } from '@/api/userApi';
 import { MainLayout } from '@/components/layouts/main-layout';
 import { AddTeacherModal } from '@/components/modals/add-teacher-modal';
+import { InviteTeacherModal } from '@/components/modals/invite-teacher-modal';
 import { Box } from '@/components/ui/box';
 import { Center } from '@/components/ui/center';
 import { Heading } from '@/components/ui/heading';
@@ -126,6 +127,7 @@ const UserTypeCard = ({
 
 export default function UsersPage() {
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
+  const [isInviteTeacherModalOpen, setIsInviteTeacherModalOpen] = useState(false);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -134,8 +136,7 @@ export default function UsersPage() {
   };
 
   const handleInviteTeacher = () => {
-    console.log('Invite teacher');
-    // TODO: Implement invite teacher functionality
+    setIsInviteTeacherModalOpen(true);
   };
 
   const handleAddManually = () => {
@@ -147,6 +148,11 @@ export default function UsersPage() {
     console.log('Teacher profile created successfully!');
     // Refresh teachers list
     fetchTeachers();
+  };
+
+  const handleInviteSuccess = () => {
+    console.log('Teacher invitation sent successfully!');
+    // Optionally refresh teachers list or show success message
   };
 
   const fetchTeachers = async () => {
@@ -278,6 +284,13 @@ export default function UsersPage() {
         isOpen={isAddTeacherModalOpen}
         onClose={() => setIsAddTeacherModalOpen(false)}
         onSuccess={handleTeacherProfileSuccess}
+      />
+
+      {/* Invite Teacher Modal */}
+      <InviteTeacherModal
+        isOpen={isInviteTeacherModalOpen}
+        onClose={() => setIsInviteTeacherModalOpen(false)}
+        onSuccess={handleInviteSuccess}
       />
     </MainLayout>
   );
