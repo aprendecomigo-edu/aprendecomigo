@@ -1,5 +1,7 @@
+import logging
 from typing import Any, ClassVar, TypeVar
 
+import pyotp
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from django.utils import timezone
@@ -7,6 +9,8 @@ from django.utils.translation import gettext_lazy as _
 
 # Define type variables
 T = TypeVar("T", bound="CustomUser")
+
+logger = logging.getLogger(__name__)
 
 
 class CustomUserManager(UserManager[T]):
@@ -292,11 +296,15 @@ class VerificationCode(models.Model):
     failed_attempts: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(default=0)
     max_attempts: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(default=5)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["email", "is_used"]),
+            models.Index(fields=["email", "created_at"]),
+        ]
+
     @classmethod
     def generate_code(cls, email: str) -> "VerificationCode":
         """Generate a TOTP secret for the given email"""
-        import pyotp  # type: ignore
-
         # Delete any existing unused codes for this email
         cls.objects.filter(email=email, is_used=False).delete()
 
@@ -308,16 +316,12 @@ class VerificationCode(models.Model):
 
     def get_current_code(self) -> str:
         """Get the current TOTP code"""
-        import pyotp  # type: ignore
-
         totp = pyotp.TOTP(self.secret_key, digits=6, interval=300)
         code = totp.now()
         return code
 
     def get_provisioning_uri(self, email: str | None = None) -> str:
         """Get the TOTP provisioning URI for QR codes"""
-        import pyotp  # type: ignore
-
         email = email or self.email
         totp = pyotp.TOTP(self.secret_key)
         return totp.provisioning_uri(name=email, issuer_name="Aprende Comigo")
@@ -328,8 +332,6 @@ class VerificationCode(models.Model):
 
         If code is provided, also verify the TOTP code.
         """
-        import pyotp  # type: ignore
-
         if self.is_used:
             return False
 

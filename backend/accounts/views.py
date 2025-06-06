@@ -448,11 +448,17 @@ class RequestCodeView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data["email"]
+
         # Check if a user with this email exists
         if not user_exists(email):
-            # Log the event internally
-            logger.info(f"Code requested for non-existent email: {email}")
+            # Log the event internally for security monitoring
+            logger.warning(
+                f"Authentication attempt with unregistered email: {email} from IP: {request.META.get('REMOTE_ADDR', 'unknown')}"
+            )
+            print(f"[SECURITY] Login attempt with unregistered email: {email}")
+
             # Perform a dummy code generation for non-existent users to ensure constant time
+            # This prevents email enumeration attacks
             dummy_code = VerificationCode.generate_code("dummy@example.com")
             _ = dummy_code.get_current_code()
             return Response(
@@ -462,15 +468,24 @@ class RequestCodeView(APIView):
                 status=status.HTTP_200_OK,
             )
 
+        # User exists - generate real verification code
+        logger.info(f"Verification code requested for registered email: {email}")
+        print(f"[INFO] Generating verification code for registered user: {email}")
+
         verification = VerificationCode.generate_code(email)
         code = verification.get_current_code()
+
         try:
             send_email_verification_code(email, code)
+            logger.info(f"Verification code sent successfully to: {email}")
+            print(f"[INFO] Verification code sent to: {email}")
         except Exception as e:
+            logger.error(f"Failed to send verification code to {email}: {e}")
             return Response(
                 {"error": f"Failed to send email: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
         return Response(
             {"message": f"Verification code sent to {email}."},
             status=status.HTTP_200_OK,
