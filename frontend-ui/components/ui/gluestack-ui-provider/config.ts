@@ -147,6 +147,7 @@ export const config = {
     '--color-background-success': '#EDFCF2',
     '--color-background-muted': '#F6F6F7',
     '--color-background-info': '#EBF8FE',
+    '--color-background-primary': '#1E40AF',
 
     /* Border */
     '--color-border-0': '#FDFEFE',
@@ -308,6 +309,7 @@ export const config = {
     '--color-background-success': '#1C2B21',
     '--color-background-muted': '#252526',
     '--color-background-info': '#1A282E',
+    '--color-background-primary': '#2563EB',
 
     /* Border */
     '--color-border-0': '#1A1717',

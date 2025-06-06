@@ -81,126 +81,6 @@ const bottomTabsList: BottomTabs[] = [
   },
 ];
 
-interface CardData {
-  bannerUri: string;
-  title: string;
-  description: string;
-}
-interface HolidaysCardData {
-  icon: any;
-  title: string;
-  description: string;
-}
-interface LeavesCardData {
-  title: string;
-  description: string;
-  leaves: number;
-  isDisabled: boolean;
-}
-interface ColleaguesCardData {
-  image: any;
-  title: string;
-  position: string;
-}
-
-const HeadingCards: CardData[] = [
-  {
-    bannerUri: require('@/assets/dashboard/dashboard-layout/image.png'),
-    title: 'Update your profile',
-    description: 'Add your details',
-  },
-  {
-    bannerUri: require('@/assets/dashboard/dashboard-layout/image2.png'),
-    title: 'Your skills',
-    description: 'Add your skills here',
-  },
-  {
-    bannerUri: require('@/assets/dashboard/dashboard-layout/image3.png'),
-    title: 'Your goals',
-    description: 'Set a target to accomplish',
-  },
-  {
-    bannerUri: require('@/assets/dashboard/dashboard-layout/image3.png'),
-    title: 'Your goals',
-    description: 'Set a target to accomplish',
-  },
-  {
-    bannerUri: require('@/assets/dashboard/dashboard-layout/image3.png'),
-    title: 'Your goals',
-    description: 'Set a target to accomplish',
-  },
-];
-const HolidaysCards: HolidaysCardData[] = [
-  {
-    icon: CalendarIcon,
-    title: 'Navaratri',
-    description: '12 March, Monday (Optional holiday)',
-  },
-  {
-    icon: CalendarIcon,
-    title: 'Durga Puja',
-    description: '12 October, Tuesday',
-  },
-  {
-    icon: CalendarIcon,
-    title: 'Diwali',
-    description: '12 March, Wednesday',
-  },
-  {
-    icon: CalendarIcon,
-    title: 'Christmas',
-    description: '12 March, Thursday',
-  },
-];
-const LeavesCards: LeavesCardData[] = [
-  {
-    title: 'Earned Leaves',
-    description: 'Available 24',
-    leaves: 24,
-    isDisabled: false,
-  },
-  {
-    title: 'Sick Leaves',
-    description: 'Available 24',
-    leaves: 24,
-    isDisabled: false,
-  },
-  {
-    title: 'Menstrual Leaves',
-    description: 'Available 20',
-    leaves: 20,
-    isDisabled: false,
-  },
-  {
-    title: 'Optional Leaves',
-    description: 'Available 0',
-    leaves: 0,
-    isDisabled: true,
-  },
-];
-const ColleaguesCards: ColleaguesCardData[] = [
-  {
-    image: require('@/assets/dashboard/dashboard-layout/image7.png'),
-    title: 'Emily Zho',
-    position: 'UI/UX Designer',
-  },
-  {
-    image: require('@/assets/dashboard/dashboard-layout/image4.png'),
-    title: 'Marilyn Monroe',
-    position: 'SDE II',
-  },
-  {
-    image: require('@/assets/dashboard/dashboard-layout/image5.png'),
-    title: 'James Kant',
-    position: 'SDE III',
-  },
-  {
-    image: require('@/assets/dashboard/dashboard-layout/image6.png'),
-    title: 'Richard Faynmen',
-    position: 'CEO Marketing',
-  },
-];
-
 // Create a reusable logout button component to follow DRY principles
 function LogoutButton({
   displayStyle = 'icon-only',
@@ -331,20 +211,19 @@ const Sidebar = () => {
   };
 
   return (
-    <VStack className="w-14 pt-5 h-full items-center border-r border-border-300 pb-5" space="xl">
+    <VStack className="w-14 pt-5 h-full items-center border-r border-border-300 pb-5 bg-background-primary" space="xl">
       <VStack className="items-center" space="xl">
         {list.map((item, index) => {
           return (
             <Pressable
               key={index}
-              className="hover:bg-background-50"
+              className="hover:bg-primary-600"
               onPress={() => handlePress(index)}
             >
               <Icon
                 as={item.iconName}
-                className={`w-[55px] h-9 stroke-background-800
-                ${index === selectedIndex ? 'fill-background-800' : 'fill-none'}
-
+                className={`w-[55px] h-9 stroke-background-0
+                ${index === selectedIndex ? 'fill-background-0' : 'fill-none'}
                 `}
               />
             </Pressable>
@@ -386,7 +265,7 @@ function MobileFooter({ footerIcons }: { footerIcons: any }) {
   return (
     <HStack
       className={cn(
-        'bg-background-0 justify-between w-full absolute left-0 bottom-0 right-0 p-3 overflow-hidden items-center  border-t-border-300  md:hidden border-t',
+        'bg-background-primary justify-between w-full absolute left-0 bottom-0 right-0 p-3 overflow-hidden items-center border-t-border-300 md:hidden border-t',
         { 'pb-5': Platform.OS === 'ios' },
         { 'pb-5': Platform.OS === 'android' }
       )}
@@ -405,8 +284,8 @@ function MobileFooter({ footerIcons }: { footerIcons: any }) {
                 }
               }}
             >
-              <Icon as={item.iconName} size="md" className="h-[32px] w-[65px]" />
-              <Text className="text-xs text-center text-typography-600">{item.iconText}</Text>
+              <Icon as={item.iconName} size="md" className="h-[32px] w-[65px] text-background-0" />
+              <Text className="text-xs text-center text-background-50">{item.iconText}</Text>
             </Pressable>
           );
         }
@@ -459,8 +338,8 @@ function SchoolSelector({ onSchoolChange }: { onSchoolChange?: (school: School) 
   return (
     <Box className="relative">
       <Pressable onPress={() => setShowMenu(!showMenu)} className="flex-row items-center">
-        <Text className="text-2xl">{selectedSchool.name}</Text>
-        <Icon as={ChevronDownIcon} size="sm" className="ml-2 mt-1" />
+        <Text className="text-2xl text-background-0">{selectedSchool.name}</Text>
+        <Icon as={ChevronDownIcon} size="sm" className="ml-2 mt-1 text-background-0" />
       </Pressable>
 
       <Modal isOpen={showMenu} onClose={() => setShowMenu(false)}>
@@ -507,14 +386,14 @@ function SchoolSelector({ onSchoolChange }: { onSchoolChange?: (school: School) 
 
 function WebHeader(props: HeaderProps) {
   return (
-    <HStack className="pt-4 pr-10 pb-3 bg-background-0 items-center justify-between border-b border-border-300">
+    <HStack className="pt-4 pr-10 pb-3 bg-background-primary items-center justify-between border-b border-border-300">
       <HStack className="items-center">
         <Pressable
           onPress={() => {
             props.toggleSidebar();
           }}
         >
-          <Icon as={MenuIcon} size="lg" className="mx-5" />
+          <Icon as={MenuIcon} size="lg" className="mx-5 text-background-0" />
         </Pressable>
         <SchoolSelector />
       </HStack>
@@ -531,14 +410,14 @@ function WebHeader(props: HeaderProps) {
 
 function MobileHeader(props: MobileHeaderProps) {
   return (
-    <HStack className="py-6 px-4 border-b border-border-50 bg-background-0 items-center justify-between">
+    <HStack className="py-6 px-4 border-b border-border-50 bg-background-primary items-center justify-between">
       <HStack space="md" className="items-center">
         <Pressable
           onPress={() => {
             router.back();
           }}
         >
-          <Icon as={ChevronLeftIcon} />
+          <Icon as={ChevronLeftIcon} className="text-background-0" />
         </Pressable>
         <SchoolSelector />
       </HStack>
