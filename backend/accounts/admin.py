@@ -2,10 +2,12 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .models import (
+    Course,
     CustomUser,
     School,
     SchoolMembership,
     StudentProfile,
+    TeacherCourse,
     TeacherProfile,
     VerificationCode,
 )
@@ -183,3 +185,55 @@ class VerificationCodeAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {"fields": ("email", "secret_key", "created_at", "is_used", "failed_attempts")}),
     )
+
+
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = ("name", "code", "educational_system", "education_level", "created_at")
+    list_filter = ("educational_system", "education_level", "created_at", "updated_at")
+    search_fields = ("name", "code", "educational_system", "education_level", "description")
+    fieldsets = (
+        (
+            None,
+            {"fields": ("name", "code", "educational_system", "education_level", "description")},
+        ),
+        ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+    )
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(TeacherCourse)
+class TeacherCourseAdmin(admin.ModelAdmin):
+    list_display = (
+        "get_teacher_name",
+        "get_course_name",
+        "hourly_rate",
+        "is_active",
+        "started_teaching",
+    )
+    list_filter = (
+        "is_active",
+        "started_teaching",
+        "course__educational_system",
+        "course__education_level",
+    )
+    search_fields = ("teacher__user__name", "teacher__user__email", "course__name", "course__code")
+    fieldsets = (
+        (None, {"fields": ("teacher", "course", "hourly_rate", "is_active")}),
+        ("Timestamps", {"fields": ("started_teaching",), "classes": ("collapse",)}),
+    )
+    readonly_fields = ("started_teaching",)
+
+    @admin.display(
+        description="Teacher",
+        ordering="teacher__user__name",
+    )
+    def get_teacher_name(self, obj):
+        return obj.teacher.user.name
+
+    @admin.display(
+        description="Course",
+        ordering="course__name",
+    )
+    def get_course_name(self, obj):
+        return f"{obj.course.name} ({obj.course.code})"

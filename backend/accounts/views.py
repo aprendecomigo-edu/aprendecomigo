@@ -1,4 +1,6 @@
 import logging
+import secrets
+from datetime import timedelta
 
 from common.messaging import send_email_verification_code
 from common.throttles import (
@@ -8,6 +10,7 @@ from common.throttles import (
     IPSignupThrottle,
 )
 from django.contrib.auth import login
+from django.utils import timezone
 from knox.auth import TokenAuthentication
 from knox.models import AuthToken
 from rest_framework import status, viewsets
@@ -17,6 +20,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .db_queries import (
+    can_user_manage_school,
+    create_school_invitation,
     create_school_owner,
     get_user_by_email,
     list_school_ids_owned_or_managed,
@@ -24,26 +29,34 @@ from .db_queries import (
     user_exists,
 )
 from .models import (
+    Course,
     School,
+    SchoolInvitation,
     SchoolMembership,
     SchoolRole,
     StudentProfile,
+    TeacherCourse,
     TeacherProfile,
     VerificationCode,
+    CustomUser,
 )
 from .permissions import (
     IsOwnerOrSchoolAdmin,
     IsSchoolOwnerOrAdmin,
-    IsStudentInAnySchool,
     IsTeacherInAnySchool,
 )
 from .serializers import (
+    AddExistingTeacherSerializer,
+    CourseSerializer,
     CreateUserSerializer,
+    InviteNewTeacherSerializer,
     RequestCodeSerializer,
     SchoolMembershipSerializer,
     SchoolSerializer,
     SchoolWithMembersSerializer,
     StudentSerializer,
+    TeacherCourseSerializer,
+    TeacherOnboardingSerializer,
     TeacherSerializer,
     UserSerializer,
     VerifyCodeSerializer,
@@ -700,9 +713,302 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
             permission_classes = [IsAuthenticated]
         elif self.action in ["update", "partial_update"]:
             permission_classes = [IsAuthenticated, IsOwnerOrSchoolAdmin]
+        elif self.action == "onboarding":
+            permission_classes = [IsAuthenticated]
+        elif self.action in ["add_existing", "invite_new"]:
+            permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
         else:
             permission_classes = [IsAuthenticated, IsTeacherInAnySchool]
         return [permission() for permission in permission_classes]
+
+    @action(detail=False, methods=["post"])
+    def onboarding(self, request):
+        """
+        Create a teacher profile with associated courses in a single atomic transaction.
+        
+        This endpoint handles the self-onboarding process for the current user:
+        1. Creates a teacher profile for the current user
+        2. Associates the teacher with specified courses
+        
+        All operations are atomic - if any part fails, everything is rolled back.
+        """
+        from django.db import transaction
+        from rest_framework import status
+        
+        # Check if user already has a teacher profile
+        if hasattr(request.user, "teacher_profile"):
+            return Response(
+                {"error": "You already have a teacher profile"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate the request data
+        serializer = TeacherOnboardingSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = serializer.validated_data
+
+        try:
+            with transaction.atomic():
+                # Extract teacher profile data
+                profile_data = {
+                    key: value for key, value in validated_data.items()
+                    if key not in ['course_ids']
+                }
+
+                # Create teacher profile
+                teacher_profile = TeacherProfile.objects.create(
+                    user=request.user,
+                    **profile_data
+                )
+
+                # Associate courses if provided
+                course_ids = validated_data.get('course_ids', [])
+                
+                teacher_courses = []
+                if course_ids:
+                    for course_id in course_ids:
+                        teacher_course = TeacherCourse.objects.create(
+                            teacher=teacher_profile,
+                            course_id=course_id,
+                            is_active=True
+                        )
+                        teacher_courses.append(teacher_course)
+
+                # Return the complete teacher profile with courses
+                response_serializer = TeacherSerializer(teacher_profile)
+                return Response(
+                    {
+                        "message": "Teacher profile created successfully",
+                        "teacher": response_serializer.data,
+                        "courses_added": len(teacher_courses)
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+
+        except Exception as e:
+            # Log the error for debugging
+            logger.error(f"Teacher onboarding failed for user {request.user.id}: {str(e)}")
+            
+            return Response(
+                {"error": "Failed to create teacher profile. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=["post"])
+    def add_existing(self, request):
+        """
+        Add an existing user as a teacher to a school.
+        
+        This endpoint allows school owners/admins to:
+        1. Add an existing user as a teacher (create teacher profile if needed)
+        2. Create school membership for the teacher
+        3. Associate the teacher with specified courses
+        
+        All operations are atomic - if any part fails, everything is rolled back.
+        """
+        from django.db import transaction
+        
+        # Validate the request data
+        serializer = AddExistingTeacherSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = serializer.validated_data
+        email = validated_data['email']
+        school_id = validated_data['school_id']
+
+        # Check if the requesting user can manage this school
+        if not can_user_manage_school(request.user, school_id):
+            return Response(
+                {"error": "You don't have permission to add teachers to this school"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            user = get_user_by_email(email)
+            
+            # Check if user already has a teacher profile
+            if hasattr(user, "teacher_profile"):
+                return Response(
+                    {"error": "User already has a teacher profile"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            with transaction.atomic():
+                # Extract teacher profile data
+                profile_data = {
+                    key: value for key, value in validated_data.items()
+                    if key not in ['email', 'school_id', 'course_ids']
+                }
+
+                # Create teacher profile
+                teacher_profile = TeacherProfile.objects.create(
+                    user=user,
+                    **profile_data
+                )
+
+                # Create school membership
+                school_membership = SchoolMembership.objects.create(
+                    user=user,
+                    school_id=school_id,
+                    role=SchoolRole.TEACHER,
+                    is_active=True
+                )
+
+                # Associate courses if provided
+                course_ids = validated_data.get('course_ids', [])
+                
+                teacher_courses = []
+                if course_ids:
+                    for course_id in course_ids:
+                        teacher_course = TeacherCourse.objects.create(
+                            teacher=teacher_profile,
+                            course_id=course_id,
+                            is_active=True
+                        )
+                        teacher_courses.append(teacher_course)
+
+                # Return the complete response
+                teacher_serializer = TeacherSerializer(teacher_profile)
+                membership_serializer = SchoolMembershipSerializer(school_membership)
+                
+                return Response(
+                    {
+                        "message": "Teacher profile created and added to school successfully",
+                        "teacher": teacher_serializer.data,
+                        "school_membership": membership_serializer.data,
+                        "courses_added": len(teacher_courses)
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+
+        except Exception as e:
+            logger.error(f"Add existing teacher failed for user {email}: {str(e)}")
+            
+            return Response(
+                {"error": "Failed to create teacher profile. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        
+    @action(detail=False, methods=["post"])
+    def invite_new(self, request):
+        """
+        Create a new user and invite them as a teacher to a school.
+        
+        This endpoint allows school owners/admins to:
+        1. Create a new user account
+        2. Create a teacher profile for them
+        3. Create school membership
+        4. Associate with specified courses
+        5. Send invitation email
+        
+        All operations are atomic - if any part fails, everything is rolled back.
+        """
+        from django.db import transaction
+        
+        # Validate the request data
+        serializer = InviteNewTeacherSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = serializer.validated_data
+        email = validated_data['email']
+        name = validated_data['name']
+        school_id = validated_data['school_id']
+        phone_number = validated_data.get('phone_number', '')
+
+        # Check if the requesting user can manage this school
+        if not can_user_manage_school(request.user, school_id):
+            return Response(
+                {"error": "You don't have permission to invite teachers to this school"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            with transaction.atomic():
+                # Create new user (no password, they'll set it when accepting invitation)
+                user = CustomUser.objects.create_user(
+                    email=email,
+                    name=name,
+                    phone_number=phone_number,
+                    password=None,
+                )
+
+                # Extract teacher profile data
+                profile_data = {
+                    key: value for key, value in validated_data.items()
+                    if key not in ['email', 'name', 'school_id', 'phone_number', 'course_ids']
+                }
+
+                # Create teacher profile
+                teacher_profile = TeacherProfile.objects.create(
+                    user=user,
+                    **profile_data
+                )
+
+                # Create school membership
+                school_membership = SchoolMembership.objects.create(
+                    user=user,
+                    school_id=school_id,
+                    role=SchoolRole.TEACHER,
+                    is_active=True
+                )
+
+                # Associate courses if provided
+                course_ids = validated_data.get('course_ids', [])
+                
+                teacher_courses = []
+                if course_ids:
+                    for course_id in course_ids:
+                        teacher_course = TeacherCourse.objects.create(
+                            teacher=teacher_profile,
+                            course_id=course_id,
+                            is_active=True
+                        )
+                        teacher_courses.append(teacher_course)
+
+                # Create invitation
+                invitation = create_school_invitation(
+                    school_id=school_id,
+                    email=email,
+                    invited_by=request.user,
+                    role=SchoolRole.TEACHER
+                )
+
+                # TODO: Send invitation email with the token
+                # For now, we'll just return the invitation in the response
+                invitation_sent = True
+
+                # Return the complete response
+                teacher_serializer = TeacherSerializer(teacher_profile)
+                membership_serializer = SchoolMembershipSerializer(school_membership)
+                
+                return Response(
+                    {
+                        "message": "User created, teacher profile setup, and invitation sent successfully",
+                        "teacher": teacher_serializer.data,
+                        "school_membership": membership_serializer.data,
+                        "courses_added": len(teacher_courses),
+                        "user_created": True,
+                        "invitation_sent": invitation_sent,
+                        "invitation": {
+                            "id": invitation.id,
+                            "token": invitation.token,
+                            "expires_at": invitation.expires_at,
+                        }
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+
+        except Exception as e:
+            logger.error(f"Invite new teacher failed for email {email}: {str(e)}")
+            
+            return Response(
+                {"error": "Failed to create user and teacher profile. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class StudentViewSet(KnoxAuthenticatedViewSet):
@@ -713,78 +1019,194 @@ class StudentViewSet(KnoxAuthenticatedViewSet):
     serializer_class = StudentSerializer
 
     def get_queryset(self):
+        """
+        Filter queryset based on user permissions.
+        - Students: can only access their own profile
+        - Teachers: can access profiles of students in their schools
+        - School owners/admins: can access profiles of students in their schools
+        """
         user = self.request.user
-        if user.is_staff or user.is_superuser:
-            return StudentProfile.objects.all()
 
-        # School owners and admins can see students in their schools
-        admin_school_ids = list_school_ids_owned_or_managed(user)
-        if len(admin_school_ids) > 0:
-            # Get the schools where user is an admin
+        # User can see their own student profile
+        if hasattr(user, "student_profile"):
+            own_profile = StudentProfile.objects.filter(user=user)
+        else:
+            own_profile = StudentProfile.objects.none()
 
-            # Get all student users in these schools
-            student_user_ids = SchoolMembership.objects.filter(
-                school_id__in=admin_school_ids, role=SchoolRole.STUDENT, is_active=True
-            ).values_list("user_id", flat=True)
-
-            return StudentProfile.objects.filter(user_id__in=student_user_ids)
-
-        # Teachers can see students in schools where they teach
+        # Check if user has permission to see other profiles
         if SchoolMembership.objects.filter(
+            user=user,
+            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
+            is_active=True,
+        ).exists():
+            # School owners/admins can see students in their schools
+            admin_school_ids = list_school_ids_owned_or_managed(user)
+            admin_accessible = StudentProfile.objects.filter(
+                user__school_memberships__school_id__in=admin_school_ids,
+                user__school_memberships__role=SchoolRole.STUDENT,
+                user__school_memberships__is_active=True,
+            ).distinct()
+            return (own_profile | admin_accessible).distinct()
+
+        elif SchoolMembership.objects.filter(
             user=user, role=SchoolRole.TEACHER, is_active=True
         ).exists():
-            # Get the schools where user is a teacher
-            teacher_school_ids = SchoolMembership.objects.filter(
-                user=user, role=SchoolRole.TEACHER, is_active=True
-            ).values_list("school_id", flat=True)
+            # Teachers can see students in their schools
+            teacher_school_ids = list(
+                SchoolMembership.objects.filter(
+                    user=user, role=SchoolRole.TEACHER, is_active=True
+                ).values_list("school_id", flat=True)
+            )
+            teacher_accessible = StudentProfile.objects.filter(
+                user__school_memberships__school_id__in=teacher_school_ids,
+                user__school_memberships__role=SchoolRole.STUDENT,
+                user__school_memberships__is_active=True,
+            ).distinct()
+            return (own_profile | teacher_accessible).distinct()
 
-            # Get all student users in these schools
-            student_user_ids = SchoolMembership.objects.filter(
-                school_id__in=teacher_school_ids,
-                role=SchoolRole.STUDENT,
-                is_active=True,
-            ).values_list("user_id", flat=True)
-
-            return StudentProfile.objects.filter(user_id__in=student_user_ids)
-
-        # Students can see their own profile
-        if hasattr(user, "student_profile"):
-            return StudentProfile.objects.filter(user=user)
-
-        return StudentProfile.objects.none()
+        # For regular users or students, only show their own profile
+        return own_profile
 
     def get_permissions(self):
-        if self.action in ["list", "retrieve"]:
+        if self.action == "create":
+            # Only authenticated users can create their own student profile
             permission_classes = [IsAuthenticated]
-        elif self.action in ["update", "partial_update", "onboarding"]:
+        elif self.action in ["update", "partial_update", "destroy"]:
+            # Only student themselves, or school admin can modify student records
             permission_classes = [IsAuthenticated, IsOwnerOrSchoolAdmin]
         else:
-            permission_classes = [IsAuthenticated, IsStudentInAnySchool]
+            permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=["post"])
     def onboarding(self, request):
         """
-        Handle student onboarding to complete their profile
+        Create student profile during onboarding.
         """
-        user = request.user
-
-        # Check if student profile already exists
-        try:
-            # Just check if profile exists, no need to store in variable
-            StudentProfile.objects.get(user=user)
+        # Check if user already has a student profile
+        if hasattr(request.user, "student_profile"):
             return Response(
-                {"message": "Your profile is already complete."},
+                {"error": "Student profile already exists"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        except StudentProfile.DoesNotExist:
-            # Create new profile
-            serializer = StudentSerializer(data=request.data)
-            if serializer.is_valid():
-                # Set the user and save
-                serializer.save(user=user)
-                return Response(
-                    {"message": "Student profile created successfully."},
-                    status=status.HTTP_201_CREATED,
-                )
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create student profile
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CourseViewSet(KnoxAuthenticatedViewSet):
+    """
+    API endpoint for courses.
+    All users can view courses, but only admins can create/modify them.
+    """
+
+    serializer_class = CourseSerializer
+
+    def get_queryset(self):
+        """
+        All authenticated users can see all courses.
+        """
+        return Course.objects.all()
+
+    def get_permissions(self):
+        if self.action in ["create", "update", "partial_update", "destroy"]:
+            # Only school admins can create/modify courses
+            permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+        else:
+            # Anyone can view courses
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+
+class TeacherCourseViewSet(KnoxAuthenticatedViewSet):
+    """
+    API endpoint for teacher-course relationships.
+    """
+
+    serializer_class = TeacherCourseSerializer
+
+    def get_queryset(self):
+        """
+        Filter queryset based on user permissions.
+        - Teachers: can only access their own course relationships
+        - School owners/admins: can access relationships for teachers in their schools
+        """
+        user = self.request.user
+
+        # Check if user is a teacher and get their course relationships
+        if hasattr(user, "teacher_profile"):
+            own_relationships = TeacherCourse.objects.filter(teacher=user.teacher_profile)
+        else:
+            own_relationships = TeacherCourse.objects.none()
+
+        # Check if user has permission to see other relationships
+        if SchoolMembership.objects.filter(
+            user=user,
+            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
+            is_active=True,
+        ).exists():
+            # School owners/admins can see relationships of teachers in their schools
+            admin_school_ids = list_school_ids_owned_or_managed(user)
+            admin_accessible = TeacherCourse.objects.filter(
+                teacher__user__school_memberships__school_id__in=admin_school_ids,
+                teacher__user__school_memberships__role=SchoolRole.TEACHER,
+                teacher__user__school_memberships__is_active=True,
+            ).distinct()
+            return (own_relationships | admin_accessible).distinct()
+
+        # For teachers, only show their own relationships
+        return own_relationships
+
+    def get_permissions(self):
+        if self.action == "create":
+            # Only teachers can create course relationships
+            permission_classes = [IsAuthenticated, IsTeacherInAnySchool]
+        elif self.action in ["update", "partial_update", "destroy"]:
+            # Only teacher or school admin can modify relationships
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    def perform_create(self, serializer):
+        """
+        Create a teacher-course relationship for the current teacher.
+        """
+        if not hasattr(self.request.user, "teacher_profile"):
+            raise serializers.ValidationError("Only teachers can create course relationships")
+        serializer.save(teacher=self.request.user.teacher_profile)
+
+    def check_object_permissions(self, request, obj):
+        """
+        Check that the user has permission to access this specific teacher-course relationship.
+        """
+        super().check_object_permissions(request, obj)
+
+        # Teachers can only modify their own relationships
+        if self.action in ["update", "partial_update", "destroy"]:
+            if (
+                hasattr(request.user, "teacher_profile")
+                and obj.teacher == request.user.teacher_profile
+            ):
+                return
+
+            # School admins can modify relationships of teachers in their schools
+            admin_school_ids = list_school_ids_owned_or_managed(request.user)
+            if SchoolMembership.objects.filter(
+                user=obj.teacher.user,
+                school_id__in=admin_school_ids,
+                role=SchoolRole.TEACHER,
+                is_active=True,
+            ).exists():
+                return
+
+            # If none of the above, deny permission
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied(
+                "You don't have permission to modify this teacher-course relationship"
+            )

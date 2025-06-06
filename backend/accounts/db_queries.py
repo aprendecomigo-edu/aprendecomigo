@@ -1,7 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.db.models.query import QuerySet
+import secrets
+from datetime import timedelta
+from django.utils import timezone
 
-from .models import CustomUser, School, SchoolMembership, SchoolRole
+from .models import CustomUser, School, SchoolMembership, SchoolRole, SchoolInvitation
 
 User = get_user_model()
 
@@ -84,3 +87,50 @@ def get_user_by_email(email: str) -> CustomUser:
     Get a user by email
     """
     return CustomUser.objects.get(email=email)
+
+
+def can_user_manage_school(user: CustomUser, school_id: int) -> bool:
+    """
+    Check if a user can manage a specific school (is owner or admin).
+    """
+    return SchoolMembership.objects.filter(
+        user=user,
+        school_id=school_id,
+        role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
+        is_active=True,
+    ).exists()
+
+
+def create_school_invitation(
+    school_id: int, 
+    email: str, 
+    invited_by: CustomUser, 
+    role: str = SchoolRole.TEACHER
+) -> SchoolInvitation:
+    """
+    Create a school invitation with a secure token.
+    """
+    # Generate a secure token
+    token = secrets.token_urlsafe(32)
+    
+    # Set expiration to 7 days from now
+    expires_at = timezone.now() + timedelta(days=7)
+    
+    invitation = SchoolInvitation.objects.create(
+        school_id=school_id,
+        email=email,
+        invited_by=invited_by,
+        role=role,
+        token=token,
+        expires_at=expires_at,
+    )
+    
+    return invitation
+
+
+def get_schools_user_can_manage(user: CustomUser) -> QuerySet:
+    """
+    Get schools that the user can manage (is owner or admin).
+    """
+    school_ids = list_school_ids_owned_or_managed(user)
+    return School.objects.filter(id__in=school_ids)

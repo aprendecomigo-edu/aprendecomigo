@@ -3,10 +3,12 @@ from knox import views as knox_views
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    CourseViewSet,
     RequestCodeView,
     SchoolMembershipViewSet,
     SchoolViewSet,
     StudentViewSet,
+    TeacherCourseViewSet,
     TeacherViewSet,
     UserViewSet,
     VerifyCodeView,
@@ -20,6 +22,8 @@ router.register(r"teachers", TeacherViewSet, basename="teacher")
 router.register(r"students", StudentViewSet, basename="student")
 router.register(r"schools", SchoolViewSet, basename="school")
 router.register(r"school-memberships", SchoolMembershipViewSet, basename="school_membership")
+router.register(r"courses", CourseViewSet, basename="course")
+router.register(r"teacher-courses", TeacherCourseViewSet, basename="teacher_course")
 
 # URL patterns for the accounts app
 urlpatterns = [

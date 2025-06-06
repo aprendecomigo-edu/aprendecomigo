@@ -250,6 +250,82 @@ class TeacherProfile(models.Model):
         return f"Teacher Profile: {user_name}"
 
 
+class Course(models.Model):
+    """
+    Course model representing a subject or course that can be taught.
+    Independent of teachers - teachers can be associated through TeacherCourse.
+    """
+
+    name: models.CharField = models.CharField(_("course name"), max_length=150)
+    code: models.CharField = models.CharField(
+        _("course code"),
+        max_length=20,
+        unique=True,
+        help_text=_("Alphanumeric code for the course (e.g., educational system codes)"),
+    )
+    educational_system: models.CharField = models.CharField(
+        _("educational system"),
+        max_length=50,
+        default="custom",
+        help_text=_("Educational system this course belongs to (e.g., 'portugal', 'custom')"),
+    )
+    education_level: models.CharField = models.CharField(
+        _("education level"),
+        max_length=50,
+        default="other",
+        help_text=_("Education level (e.g., 'ensino_secundario', 'ensino_basico', 'other')"),
+    )
+    description: models.TextField = models.TextField(
+        _("course description"),
+        blank=True,
+        help_text=_("Detailed description of the course content and objectives"),
+    )
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["code", "educational_system"]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.code})"
+
+
+class TeacherCourse(models.Model):
+    """
+    Many-to-Many relationship between Teacher and Course.
+    Allows teachers to teach multiple courses and courses to be taught by multiple teachers.
+    """
+
+    teacher: models.ForeignKey = models.ForeignKey(
+        TeacherProfile, on_delete=models.CASCADE, related_name="teacher_courses"
+    )
+    course: models.ForeignKey = models.ForeignKey(
+        Course, on_delete=models.CASCADE, related_name="course_teachers"
+    )
+    # Optional fields for teacher-specific course information
+    hourly_rate: models.DecimalField = models.DecimalField(
+        _("hourly rate for this course"),
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Specific hourly rate for this course (overrides teacher's default rate)"),
+    )
+    is_active: models.BooleanField = models.BooleanField(_("is actively teaching"), default=True)
+    started_teaching: models.DateField = models.DateField(
+        _("started teaching date"), auto_now_add=True
+    )
+
+    class Meta:
+        unique_together = ["teacher", "course"]
+
+    def __str__(self) -> str:
+        teacher_name = (
+            self.teacher.user.name if hasattr(self.teacher.user, "name") else str(self.teacher.user)
+        )
+        return f"{teacher_name} teaches {self.course.name}"
+
+
 class SchoolInvitation(models.Model):
     """
     Invitation for a user to join a school with a specific role
