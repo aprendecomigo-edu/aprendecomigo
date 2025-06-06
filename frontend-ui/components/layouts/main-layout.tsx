@@ -1,13 +1,20 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
-import { useAuth } from '@/api/authContext';
+import {
+  MobileNavigation,
+  SideNavigation,
+  TopNavigation,
+  schools,
+  type School,
+} from '@/components/navigation';
+import { Box } from '@/components/ui/box';
+import { HStack } from '@/components/ui/hstack';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
-import { DashboardLayout, MobileFooter, bottomTabsList, School, schools } from '@/screens/dashboard/dashboard-layout';
+import { VStack } from '@/components/ui/vstack';
 
 interface MainLayoutProps {
   children: React.ReactNode;
-  title?: string;
+  _title?: string;
   showSidebar?: boolean;
 }
 
@@ -16,16 +23,16 @@ interface MainLayoutProps {
  * The school name will be displayed in the header via SchoolSelector component
  *
  * @param children Content to display in the main area
- * @param title Optional page title (used for internal tracking, school name shown in header)
+ * @param _title Optional page title (used for internal tracking, school name shown in header)
  * @param showSidebar Whether to show the sidebar (defaults to true)
  */
 export const MainLayout = ({
   children,
-  title = "Dashboard",
-  showSidebar = true
+  _title = 'Dashboard',
+  showSidebar = true,
 }: MainLayoutProps) => {
-  const { userProfile } = useAuth();
   const [selectedSchool, setSelectedSchool] = useState<School>(schools[0]);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(showSidebar);
 
   const handleSchoolChange = (school: School) => {
     setSelectedSchool(school);
@@ -33,16 +40,46 @@ export const MainLayout = ({
     console.log('School changed to:', school.name);
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarVisible(!isSidebarVisible);
+  };
+
   return (
     <SafeAreaView className="h-full w-full">
-      <DashboardLayout
-        title={selectedSchool.name}
-        isSidebarVisible={showSidebar}
-        onSchoolChange={handleSchoolChange}
-      >
-        {children}
-      </DashboardLayout>
-      <MobileFooter footerIcons={bottomTabsList} />
+      <VStack className="h-full w-full bg-background-0">
+        {/* Mobile Header */}
+        <Box className="md:hidden">
+          <TopNavigation
+            variant="mobile"
+            onSchoolChange={handleSchoolChange}
+          />
+        </Box>
+
+        {/* Web Header */}
+        <Box className="hidden md:flex">
+          <TopNavigation
+            variant="web"
+            onToggleSidebar={toggleSidebar}
+            onSchoolChange={handleSchoolChange}
+          />
+        </Box>
+
+        {/* Main Content Area */}
+        <VStack className="h-full w-full">
+          <HStack className="h-full w-full">
+            {/* Desktop Sidebar */}
+            <Box className="hidden md:flex h-full">
+              {isSidebarVisible && <SideNavigation />}
+            </Box>
+
+            {/* Main Content with bottom padding for mobile navigation */}
+            <VStack className="w-full pb-20 md:pb-0">{children}</VStack>
+          </HStack>
+        </VStack>
+      </VStack>
+
+      {/* Mobile Footer Navigation */}
+      <MobileNavigation />
     </SafeAreaView>
   );
 };
