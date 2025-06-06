@@ -22,8 +22,14 @@ export interface Channel {
  */
 export const fetchChannels = async (): Promise<Channel[]> => {
   try {
-    const response = await apiClient.get('/api/channels/');
-    return response.data;
+    // TODO: The backend Channel model doesn't match the frontend interface yet
+    // For now, return sample data until the backend implements the required fields:
+    // lastMessage, time, unreadCount, avatarText, type, onlineCount
+    const response = await apiClient.get('/channels/');
+    console.log('Backend channels response:', response.data);
+
+    // Return sample data for now since backend structure doesn't match frontend expectations
+    return getSampleChannels();
   } catch (error) {
     console.error('Error fetching channels:', error);
     // Return sample data if API call fails
@@ -44,7 +50,7 @@ const getSampleChannels = (): Channel[] => {
       unreadCount: 3,
       avatarText: '9A',
       type: 'channel',
-      onlineCount: 5
+      onlineCount: 5,
     },
     {
       id: '2',
@@ -54,7 +60,7 @@ const getSampleChannels = (): Channel[] => {
       unreadCount: 0,
       avatarText: 'PM',
       type: 'channel',
-      onlineCount: 3
+      onlineCount: 3,
     },
     {
       id: '3',
@@ -64,7 +70,7 @@ const getSampleChannels = (): Channel[] => {
       unreadCount: 5,
       avatarText: 'CP',
       type: 'channel',
-      onlineCount: 2
+      onlineCount: 2,
     },
     {
       id: '4',
@@ -79,9 +85,9 @@ const getSampleChannels = (): Channel[] => {
           id: '123',
           name: 'Maria Silva',
           avatar: 'MS',
-          isOnline: true
-        }
-      ]
+          isOnline: true,
+        },
+      ],
     },
     {
       id: '5',
@@ -96,9 +102,9 @@ const getSampleChannels = (): Channel[] => {
           id: '456',
           name: 'João Santos',
           avatar: 'JS',
-          isOnline: false
-        }
-      ]
+          isOnline: false,
+        },
+      ],
     },
     {
       id: '6',
@@ -113,9 +119,9 @@ const getSampleChannels = (): Channel[] => {
           id: '789',
           name: 'Ana Oliveira',
           avatar: 'AO',
-          isOnline: true
-        }
-      ]
-    }
+          isOnline: true,
+        },
+      ],
+    },
   ];
 };

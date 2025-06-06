@@ -4,7 +4,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   isAuthenticated,
   logout,
-  getUserProfile,
   UserProfile,
   authenticateWithBiometricsAndGetToken,
 } from './authApi';
@@ -14,6 +13,7 @@ import {
   isBiometricAvailable,
   isBiometricEnabled,
 } from './biometricAuth';
+import { getDashboardInfo } from './userApi';
 
 interface AuthContextType {
   isLoggedIn: boolean;
@@ -120,9 +120,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Fetch user profile
         try {
           console.log('Fetching user profile...');
-          const profile = await getUserProfile();
-          console.log('User profile received:', profile);
-          setUserProfile(profile);
+          const dashboardData = await getDashboardInfo();
+          console.log('Dashboard data received:', dashboardData);
+
+          // Extract user_info and convert to UserProfile format
+          const userProfile: UserProfile = {
+            id: dashboardData.user_info.id,
+            email: dashboardData.user_info.email,
+            name: dashboardData.user_info.name,
+            phone_number: undefined, // This field is not in dashboard_info
+            user_type: dashboardData.user_info.user_type as
+              | 'admin'
+              | 'teacher'
+              | 'student'
+              | 'parent',
+            is_admin: dashboardData.user_info.is_admin,
+            created_at: dashboardData.user_info.date_joined,
+            updated_at: dashboardData.user_info.date_joined, // Using date_joined as fallback
+            roles: [], // Would need to map from dashboard roles if needed
+          };
+
+          setUserProfile(userProfile);
         } catch (error) {
           console.error('Error fetching user profile:', error);
           // Print more detailed error info
