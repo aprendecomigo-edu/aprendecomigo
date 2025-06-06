@@ -5,6 +5,9 @@ import { useAuth } from '@/api/authContext';
 import { Box } from '@/components/ui/box';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { Center } from '@/components/ui/center';
+import { Icon } from '@/components/ui/icon';
+import { MessageCircle } from 'lucide-react-native';
 import MainLayout from '@/components/layouts/main-layout';
 import { Channel, fetchChannels } from '@/api/channelApi';
 import { ChannelListItem } from '../components/ChannelListItem';
@@ -90,6 +93,14 @@ const ChannelListContent = () => {
             <VStack className="flex-1 justify-center items-center">
               <Text>Carregando conversas...</Text>
             </VStack>
+          ) : channels.length === 0 ? (
+            <Center className="flex-1 p-8">
+              <Icon as={MessageCircle} size="xl" className="text-gray-300 mb-4" />
+              <Text className="text-xl font-bold text-gray-600 mb-2">Nenhuma conversa ainda</Text>
+              <Text className="text-gray-500 text-center">
+                As conversas aparecerão aqui quando você tiver professores e alunos cadastrados na escola.
+              </Text>
+            </Center>
           ) : (
             <ChannelContent
               channel={selectedChannel || channels[0]}

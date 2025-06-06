@@ -23,105 +23,16 @@ export interface Channel {
 export const fetchChannels = async (): Promise<Channel[]> => {
   try {
     // TODO: The backend Channel model doesn't match the frontend interface yet
-    // For now, return sample data until the backend implements the required fields:
+    // For now, return empty array until the backend implements the required fields:
     // lastMessage, time, unreadCount, avatarText, type, onlineCount
     const response = await apiClient.get('/channels/');
     console.log('Backend channels response:', response.data);
 
-    // Return sample data for now since backend structure doesn't match frontend expectations
-    return getSampleChannels();
+    // Return empty array since we don't have real data yet and no longer want placeholder data
+    return [];
   } catch (error) {
     console.error('Error fetching channels:', error);
-    // Return sample data if API call fails
-    return getSampleChannels();
+    // Return empty array if API call fails - no more sample data
+    return [];
   }
-};
-
-/**
- * Get sample channels data for fallback
- */
-const getSampleChannels = (): Channel[] => {
-  return [
-    {
-      id: '1',
-      name: '9° Ano A',
-      lastMessage: 'Dúvida sobre a lição de casa',
-      time: '10:30',
-      unreadCount: 3,
-      avatarText: '9A',
-      type: 'channel',
-      onlineCount: 5,
-    },
-    {
-      id: '2',
-      name: 'Professores de Matemática',
-      lastMessage: 'Reunião amanhã às 14h',
-      time: '09:15',
-      unreadCount: 0,
-      avatarText: 'PM',
-      type: 'channel',
-      onlineCount: 3,
-    },
-    {
-      id: '3',
-      name: 'Coordenação Pedagógica',
-      lastMessage: 'Relatórios do bimestre',
-      time: 'Ontem',
-      unreadCount: 5,
-      avatarText: 'CP',
-      type: 'channel',
-      onlineCount: 2,
-    },
-    {
-      id: '4',
-      name: 'Prof. Maria Silva',
-      lastMessage: 'Pode me enviar o planejamento?',
-      time: 'Ontem',
-      unreadCount: 0,
-      avatarText: 'MS',
-      type: 'dm',
-      participants: [
-        {
-          id: '123',
-          name: 'Maria Silva',
-          avatar: 'MS',
-          isOnline: true,
-        },
-      ],
-    },
-    {
-      id: '5',
-      name: 'João Santos',
-      lastMessage: 'Olá, como vai?',
-      time: '23/05',
-      unreadCount: 1,
-      avatarText: 'JS',
-      type: 'dm',
-      participants: [
-        {
-          id: '456',
-          name: 'João Santos',
-          avatar: 'JS',
-          isOnline: false,
-        },
-      ],
-    },
-    {
-      id: '6',
-      name: 'Ana Oliveira',
-      lastMessage: 'Conseguiu verificar aqueles documentos?',
-      time: '22/05',
-      unreadCount: 0,
-      avatarText: 'AO',
-      type: 'dm',
-      participants: [
-        {
-          id: '789',
-          name: 'Ana Oliveira',
-          avatar: 'AO',
-          isOnline: true,
-        },
-      ],
-    },
-  ];
 };

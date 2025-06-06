@@ -37,11 +37,13 @@ import { VStack } from '@/components/ui/vstack';
 
 type MobileHeaderProps = {
   title: string;
+  onSchoolChange?: (school: School) => void;
 };
 
 type HeaderProps = {
   title: string;
   toggleSidebar: () => void;
+  onSchoolChange?: (school: School) => void;
 };
 
 type Icons = {
@@ -232,13 +234,18 @@ const Sidebar = () => {
       </VStack>
 
       <Box className="flex-1" />
-
-      <LogoutButton displayStyle="icon-with-text" />
     </VStack>
   );
 };
 
-const DashboardLayout = (props: any) => {
+type DashboardLayoutProps = {
+  title: string;
+  isSidebarVisible: boolean;
+  onSchoolChange?: (school: School) => void;
+  children: React.ReactNode;
+};
+
+const DashboardLayout = (props: DashboardLayoutProps) => {
   const [isSidebarVisible, setIsSidebarVisible] = useState(props.isSidebarVisible);
   function toggleSidebar() {
     setIsSidebarVisible(!isSidebarVisible);
@@ -246,10 +253,10 @@ const DashboardLayout = (props: any) => {
   return (
     <VStack className="h-full w-full bg-background-0">
       <Box className="md:hidden">
-        <MobileHeader title={props.title} />
+        <MobileHeader title={props.title} onSchoolChange={props.onSchoolChange} />
       </Box>
       <Box className="hidden md:flex">
-        <WebHeader toggleSidebar={toggleSidebar} title={props.title} />
+        <WebHeader toggleSidebar={toggleSidebar} title={props.title} onSchoolChange={props.onSchoolChange} />
       </Box>
       <VStack className="h-full w-full">
         <HStack className="h-full w-full">
@@ -395,7 +402,7 @@ function WebHeader(props: HeaderProps) {
         >
           <Icon as={MenuIcon} size="lg" className="mx-5 text-background-0" />
         </Pressable>
-        <SchoolSelector />
+        <SchoolSelector onSchoolChange={props.onSchoolChange} />
       </HStack>
 
       <HStack space="md" className="items-center">
@@ -419,7 +426,7 @@ function MobileHeader(props: MobileHeaderProps) {
         >
           <Icon as={ChevronLeftIcon} className="text-background-0" />
         </Pressable>
-        <SchoolSelector />
+        <SchoolSelector onSchoolChange={props.onSchoolChange} />
       </HStack>
 
       <LogoutButton displayStyle="icon-only" />
@@ -603,7 +610,7 @@ export const Dashboard = () => {
 
   return (
     <SafeAreaView className="h-full w-full">
-      <DashboardLayout title={selectedSchool.name} isSidebarVisible={true}>
+      <DashboardLayout title={selectedSchool.name} isSidebarVisible={true} onSchoolChange={handleSchoolChange}>
         <MainContent />
       </DashboardLayout>
       <MobileFooter footerIcons={bottomTabsList} />
