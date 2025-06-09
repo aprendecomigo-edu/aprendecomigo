@@ -456,7 +456,12 @@ class TeacherOnboardingSerializer(serializers.Serializer):
 
 class AddExistingTeacherSerializer(serializers.Serializer):
     """
-    Serializer for adding an existing user as a teacher to a school.
+    ⚠️ DEPRECATED: This serializer is deprecated as of [DATE].
+
+    Use InviteExistingTeacherSerializer instead to ensure proper user consent.
+    This serializer was for adding teachers without their explicit acceptance.
+
+    MIGRATION: Replace with InviteExistingTeacherSerializer
     """
 
     email = serializers.EmailField()

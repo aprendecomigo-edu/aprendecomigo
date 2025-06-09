@@ -397,348 +397,6 @@ class SelfOnboardingTest(TeacherOnboardingBaseTest):
         self.assertEqual(memberships.count(), 2)
 
 
-class AddExistingTeacherTest(TeacherOnboardingBaseTest):
-    """Tests for add existing user endpoint (POST /api/accounts/teachers/add-existing/)."""
-
-    def test_school_owner_adds_existing_user(self):
-        """Test that school owner can add existing user as teacher."""
-        self.authenticate_user(self.owner_token)
-
-        data = {
-            "email": self.existing_user.email,
-            "school_id": self.school1.id,
-            "bio": "Added by school owner",
-            "specialty": "Mathematics",
-            "course_ids": [self.course1.id],
-        }
-
-        url = reverse("accounts:teacher-add-existing")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Check response structure
-        response_data = response.json()
-        self.assertIn("message", response_data)
-        self.assertIn("teacher", response_data)
-        self.assertIn("school_membership", response_data)
-        self.assertIn("courses_added", response_data)
-
-        # Check teacher profile was created
-        self.assertTrue(hasattr(self.existing_user, "teacher_profile"))
-        teacher_profile = self.existing_user.teacher_profile
-        self.assertEqual(teacher_profile.bio, data["bio"])
-
-        # Check school membership was created
-        membership = SchoolMembership.objects.get(
-            user=self.existing_user, school=self.school1, role=SchoolRole.TEACHER
-        )
-        self.assertTrue(membership.is_active)
-
-        # Check course association
-        teacher_courses = TeacherCourse.objects.filter(teacher=teacher_profile)
-        self.assertEqual(teacher_courses.count(), 1)
-        self.assertEqual(teacher_courses.first().course.id, self.course1.id)
-
-    def test_school_admin_adds_existing_user(self):
-        """Test that school admin can add existing user as teacher."""
-        self.authenticate_user(self.admin_token)
-
-        data = {
-            "email": self.existing_user.email,
-            "school_id": self.school1.id,
-            "bio": "Added by school admin",
-            "specialty": "Physics",
-        }
-
-        url = reverse("accounts:teacher-add-existing")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Check teacher profile and membership were created
-        self.assertTrue(hasattr(self.existing_user, "teacher_profile"))
-        membership = SchoolMembership.objects.get(
-            user=self.existing_user, school=self.school1, role=SchoolRole.TEACHER
-        )
-        self.assertTrue(membership.is_active)
-
-    def test_add_existing_user_to_different_school(self):
-        """Test adding existing user as teacher to a different school."""
-        # First, make school_owner an owner of school2 as well
-        SchoolMembership.objects.create(
-            user=self.school_owner,
-            school=self.school2,
-            role=SchoolRole.SCHOOL_OWNER,
-            is_active=True,
-        )
-
-        # Add existing_user as teacher to school1
-        self.authenticate_user(self.owner_token)
-
-        data1 = {
-            "email": self.existing_user.email,
-            "school_id": self.school1.id,
-            "bio": "Teacher at school 1",
-            "specialty": "Mathematics",
-        }
-
-        url = reverse("accounts:teacher-add-existing")
-        response1 = self.client.post(url, data1, format="json")
-        self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
-
-        # Now add the same user as teacher to school2
-        # This should fail because user already has teacher profile
-        data2 = {
-            "email": self.existing_user.email,
-            "school_id": self.school2.id,
-            "bio": "Teacher at school 2",
-            "specialty": "Physics",
-        }
-
-        response2 = self.client.post(url, data2, format="json")
-        self.assertEqual(response2.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("already has a teacher profile", response2.json()["error"])
-
-        # But we can manually create membership for existing teacher
-        SchoolMembership.objects.create(
-            user=self.existing_user, school=self.school2, role=SchoolRole.TEACHER, is_active=True
-        )
-
-        # Verify user is now teacher in both schools
-        memberships = SchoolMembership.objects.filter(
-            user=self.existing_user, role=SchoolRole.TEACHER, is_active=True
-        )
-        self.assertEqual(memberships.count(), 2)
-        school_ids = [m.school.id for m in memberships]
-        self.assertIn(self.school1.id, school_ids)
-        self.assertIn(self.school2.id, school_ids)
-
-    def test_add_nonexistent_user(self):
-        """Test adding non-existent user fails with proper error."""
-        self.authenticate_user(self.owner_token)
-
-        data = {
-            "email": "nonexistent@example.com",
-            "school_id": self.school1.id,
-            "bio": "This should fail",
-        }
-
-        url = reverse("accounts:teacher-add-existing")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("does not exist", response.json()["email"][0])
-
-    def test_add_user_to_nonexistent_school(self):
-        """Test adding user to non-existent school fails."""
-        self.authenticate_user(self.owner_token)
-
-        data = {
-            "email": self.existing_user.email,
-            "school_id": 999,  # Non-existent school
-            "bio": "This should fail",
-        }
-
-        url = reverse("accounts:teacher-add-existing")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("does not exist", response.json()["school_id"][0])
-
-    def test_add_user_without_permission(self):
-        """Test that regular users cannot add teachers to schools."""
-        self.authenticate_user(self.regular_user_token)
-
-        data = {
-            "email": self.existing_user.email,
-            "school_id": self.school1.id,
-            "bio": "This should fail",
-        }
-
-        url = reverse("accounts:teacher-add-existing")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        # DRF 403 responses typically have 'detail' field
-        response_data = response.json()
-        self.assertTrue(
-            "detail" in response_data or "error" in response_data,
-            f"Expected 'detail' or 'error' in response: {response_data}",
-        )
-
-    def test_add_user_already_teacher(self):
-        """Test adding user who already has teacher profile."""
-        self.authenticate_user(self.owner_token)
-
-        data = {
-            "email": self.teacher_user.email,  # Already has teacher profile
-            "school_id": self.school1.id,
-            "bio": "This should fail",
-        }
-
-        url = reverse("accounts:teacher-add-existing")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("already has a teacher profile", response.json()["error"])
-
-    def test_school_owner_can_add_themselves_as_teacher(self):
-        """Test that school owner can add themselves as teacher to their own school."""
-        self.authenticate_user(self.owner_token)
-
-        # School owner adds themselves as teacher to their school
-        data = {
-            "email": self.school_owner.email,
-            "school_id": self.school1.id,
-            "bio": "I'm the owner but also want to teach",
-            "specialty": "Leadership and Management",
-            "course_ids": [self.course1.id],
-        }
-
-        url = reverse("accounts:teacher-add-existing")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Check response structure
-        response_data = response.json()
-        self.assertIn("message", response_data)
-        self.assertIn("teacher", response_data)
-        self.assertIn("school_membership", response_data)
-        self.assertIn("courses_added", response_data)
-
-        # Check teacher profile was created
-        self.assertTrue(hasattr(self.school_owner, "teacher_profile"))
-        teacher_profile = self.school_owner.teacher_profile
-        self.assertEqual(teacher_profile.bio, data["bio"])
-        self.assertEqual(teacher_profile.specialty, data["specialty"])
-
-        # Check school membership was created
-        teacher_membership = SchoolMembership.objects.get(
-            user=self.school_owner, school=self.school1, role=SchoolRole.TEACHER
-        )
-        self.assertTrue(teacher_membership.is_active)
-
-        # Verify owner now has both OWNER and TEACHER roles in school1
-        owner_memberships = SchoolMembership.objects.filter(
-            user=self.school_owner, school=self.school1, is_active=True
-        )
-
-        roles = [m.role for m in owner_memberships]
-        self.assertIn(SchoolRole.SCHOOL_OWNER, roles)
-        self.assertIn(SchoolRole.TEACHER, roles)
-        self.assertEqual(len(roles), 2)
-
-        # Check course association
-        teacher_courses = TeacherCourse.objects.filter(teacher=teacher_profile)
-        self.assertEqual(teacher_courses.count(), 1)
-        self.assertEqual(teacher_courses.first().course.id, self.course1.id)
-
-    def test_school_admin_can_add_themselves_as_teacher(self):
-        """Test that school admin can add themselves as teacher to their own school."""
-        self.authenticate_user(self.admin_token)
-
-        # School admin adds themselves as teacher to their school
-        data = {
-            "email": self.school_admin.email,
-            "school_id": self.school1.id,
-            "bio": "I'm an admin but also want to teach",
-            "specialty": "Educational Administration",
-            "course_ids": [self.course2.id],
-        }
-
-        url = reverse("accounts:teacher-add-existing")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Check teacher profile was created
-        self.assertTrue(hasattr(self.school_admin, "teacher_profile"))
-
-        # Check school membership was created
-        teacher_membership = SchoolMembership.objects.get(
-            user=self.school_admin, school=self.school1, role=SchoolRole.TEACHER
-        )
-        self.assertTrue(teacher_membership.is_active)
-
-        # Verify admin now has both ADMIN and TEACHER roles in school1
-        admin_memberships = SchoolMembership.objects.filter(
-            user=self.school_admin, school=self.school1, is_active=True
-        )
-
-        roles = [m.role for m in admin_memberships]
-        self.assertIn(SchoolRole.SCHOOL_ADMIN, roles)
-        self.assertIn(SchoolRole.TEACHER, roles)
-        self.assertEqual(len(roles), 2)
-
-    def test_cannot_add_existing_teacher_to_additional_school_via_api(self):
-        """
-        Test that demonstrates the current API limitation:
-        existing teachers cannot be added to additional schools via /add-existing/ endpoint.
-        This test documents the current behavior and suggests need for a different endpoint.
-        """
-        # First, make school_owner an owner of school2 as well
-        SchoolMembership.objects.create(
-            user=self.school_owner,
-            school=self.school2,
-            role=SchoolRole.SCHOOL_OWNER,
-            is_active=True,
-        )
-
-        # Add existing_user as teacher to school1 using API
-        self.authenticate_user(self.owner_token)
-
-        data1 = {
-            "email": self.existing_user.email,
-            "school_id": self.school1.id,
-            "bio": "Teacher at school 1",
-            "specialty": "Mathematics",
-        }
-
-        url = reverse("accounts:teacher-add-existing")
-        response1 = self.client.post(url, data1, format="json")
-        self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
-
-        # Verify user is now a teacher in school1
-        membership1 = SchoolMembership.objects.get(
-            user=self.existing_user, school=self.school1, role=SchoolRole.TEACHER
-        )
-        self.assertTrue(membership1.is_active)
-
-        # Now try to add the same user as teacher to school2 via API
-        # This should fail because user already has teacher profile
-        data2 = {
-            "email": self.existing_user.email,
-            "school_id": self.school2.id,
-            "bio": "Teacher at school 2",  # This would be ignored since profile exists
-            "specialty": "Physics",  # This would be ignored since profile exists
-        }
-
-        response2 = self.client.post(url, data2, format="json")
-        self.assertEqual(response2.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("already has a teacher profile", response2.json()["error"])
-
-        # The workaround is to manually create the membership
-        # (This would ideally be done through a different API endpoint)
-        SchoolMembership.objects.create(
-            user=self.existing_user, school=self.school2, role=SchoolRole.TEACHER, is_active=True
-        )
-
-        # Verify user is now teacher in both schools
-        memberships = SchoolMembership.objects.filter(
-            user=self.existing_user, role=SchoolRole.TEACHER, is_active=True
-        )
-        self.assertEqual(memberships.count(), 2)
-        school_ids = [m.school.id for m in memberships]
-        self.assertIn(self.school1.id, school_ids)
-        self.assertIn(self.school2.id, school_ids)
-
-        # NOTE: This test demonstrates that we need a separate endpoint like:
-        # POST /api/accounts/schools/{school_id}/add-teacher/
-        # that only creates SchoolMembership for existing teachers
-
-
 class InviteNewTeacherTest(TeacherOnboardingBaseTest):
     """Tests for invite new user endpoint (POST /api/accounts/teachers/invite-new/)."""
 
@@ -1169,6 +827,11 @@ class MultiSchoolScenarioTest(TeacherOnboardingBaseTest):
         self.assertIn(SchoolRole.TEACHER, roles)
         self.assertEqual(len(roles), 2)
 
+        # Check course association
+        teacher_courses = TeacherCourse.objects.filter(teacher=teacher_profile)
+        self.assertEqual(teacher_courses.count(), 1)
+        self.assertEqual(teacher_courses.first().course.id, self.course1.id)
+
 
 class TeacherOnboardingEdgeCasesTest(TeacherOnboardingBaseTest):
     """Tests for edge cases and error conditions."""
@@ -1251,3 +914,456 @@ class TeacherOnboardingEdgeCasesTest(TeacherOnboardingBaseTest):
         # Should fail validation for specialty (max_length=100)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("specialty", response.json())
+
+
+class InviteExistingTeacherTest(TeacherOnboardingBaseTest):
+    """Tests for invite existing user endpoint (POST /api/accounts/teachers/invite-existing/)."""
+
+    def test_school_owner_invites_existing_user(self):
+        """Test that school owner can invite existing user as teacher."""
+        self.authenticate_user(self.owner_token)
+
+        data = {
+            "email": self.existing_user.email,
+            "school_id": self.school1.id,
+            "send_email": False,
+            "send_sms": False,
+        }
+
+        url = reverse("accounts:teacher-invite-existing")
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Check response structure
+        response_data = response.json()
+        self.assertIn("message", response_data)
+        self.assertIn("invitation", response_data)
+        self.assertIn("notifications_sent", response_data)
+
+        invitation_data = response_data["invitation"]
+        self.assertIn("token", invitation_data)
+        self.assertIn("link", invitation_data)
+        self.assertIn("expires_at", invitation_data)
+        self.assertEqual(invitation_data["school"]["id"], self.school1.id)
+        self.assertEqual(invitation_data["invited_user"]["email"], self.existing_user.email)
+
+        # Check invitation was created in database
+        invitation = SchoolInvitation.objects.get(
+            email=self.existing_user.email,
+            school=self.school1,
+            role=SchoolRole.TEACHER,
+        )
+        self.assertFalse(invitation.is_accepted)
+        self.assertTrue(invitation.is_valid())
+
+        # Check no teacher profile or membership created yet
+        self.assertFalse(hasattr(self.existing_user, "teacher_profile"))
+        teacher_memberships = SchoolMembership.objects.filter(
+            user=self.existing_user, school=self.school1, role=SchoolRole.TEACHER
+        )
+        self.assertEqual(teacher_memberships.count(), 0)
+
+    def test_invite_user_already_teacher_in_school(self):
+        """Test that inviting user who is already teacher fails."""
+        # First make existing_user a teacher in school1
+        TeacherProfile.objects.create(
+            user=self.existing_user, bio="Already a teacher", specialty="Math"
+        )
+        SchoolMembership.objects.create(
+            user=self.existing_user, school=self.school1, role=SchoolRole.TEACHER, is_active=True
+        )
+
+        self.authenticate_user(self.owner_token)
+
+        data = {
+            "email": self.existing_user.email,
+            "school_id": self.school1.id,
+        }
+
+        url = reverse("accounts:teacher-invite-existing")
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("already a teacher", response.json()["non_field_errors"][0])
+
+    def test_invite_nonexistent_user(self):
+        """Test inviting non-existent user fails."""
+        self.authenticate_user(self.owner_token)
+
+        data = {
+            "email": "nonexistent@example.com",
+            "school_id": self.school1.id,
+        }
+
+        url = reverse("accounts:teacher-invite-existing")
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("does not exist", response.json()["email"][0])
+
+    def test_invite_duplicate_pending_invitation(self):
+        """Test that duplicate pending invitations are not allowed."""
+        # Create an existing invitation
+        from accounts.db_queries import create_school_invitation
+
+        create_school_invitation(
+            school_id=self.school1.id,
+            email=self.existing_user.email,
+            invited_by=self.school_owner,
+            role=SchoolRole.TEACHER,
+        )
+
+        self.authenticate_user(self.owner_token)
+
+        data = {
+            "email": self.existing_user.email,
+            "school_id": self.school1.id,
+        }
+
+        url = reverse("accounts:teacher-invite-existing")
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("pending invitation", response.json()["non_field_errors"][0])
+
+    def test_invite_without_permission(self):
+        """Test that regular users cannot invite others."""
+        self.authenticate_user(self.regular_user_token)
+
+        data = {
+            "email": self.existing_user.email,
+            "school_id": self.school1.id,
+        }
+
+        url = reverse("accounts:teacher-invite-existing")
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class InvitationAcceptanceTest(TeacherOnboardingBaseTest):
+    """Tests for invitation acceptance endpoints."""
+
+    def setUp(self):
+        super().setUp()
+        # Create a test invitation
+        from accounts.db_queries import create_school_invitation
+
+        self.invitation = create_school_invitation(
+            school_id=self.school1.id,
+            email=self.existing_user.email,
+            invited_by=self.school_owner,
+            role=SchoolRole.TEACHER,
+        )
+
+    def test_get_invitation_details(self):
+        """Test getting invitation details before acceptance."""
+        self.authenticate_user(self.existing_user_token)
+
+        url = reverse("accounts:invitation-details", kwargs={"token": self.invitation.token})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response_data = response.json()
+        self.assertIn("invitation", response_data)
+        self.assertIn("target_email", response_data)
+        self.assertEqual(response_data["target_email"], self.existing_user.email)
+        self.assertTrue(response_data["is_correct_user"])
+
+        invitation_data = response_data["invitation"]
+        self.assertEqual(invitation_data["school"]["id"], self.school1.id)
+        self.assertEqual(invitation_data["role"], SchoolRole.TEACHER)
+
+    def test_accept_invitation_success(self):
+        """Test successful invitation acceptance."""
+        self.authenticate_user(self.existing_user_token)
+
+        data = {
+            "bio": "Accepted invitation, excited to teach!",
+            "specialty": "Mathematics",
+            "course_ids": [self.course1.id, self.course2.id],
+        }
+
+        url = reverse("accounts:invitation-accept", kwargs={"token": self.invitation.token})
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Check response structure
+        response_data = response.json()
+        self.assertIn("message", response_data)
+        self.assertIn("teacher", response_data)
+        self.assertIn("school_membership", response_data)
+        self.assertIn("courses_added", response_data)
+        self.assertEqual(response_data["courses_added"], 2)
+
+        # Check teacher profile was created
+        self.assertTrue(hasattr(self.existing_user, "teacher_profile"))
+        teacher_profile = self.existing_user.teacher_profile
+        self.assertEqual(teacher_profile.bio, data["bio"])
+        self.assertEqual(teacher_profile.specialty, data["specialty"])
+
+        # Check school membership was created
+        membership = SchoolMembership.objects.get(
+            user=self.existing_user, school=self.school1, role=SchoolRole.TEACHER
+        )
+        self.assertTrue(membership.is_active)
+
+        # Check course associations
+        teacher_courses = TeacherCourse.objects.filter(teacher=teacher_profile)
+        self.assertEqual(teacher_courses.count(), 2)
+
+        # Check invitation was marked as accepted
+        self.invitation.refresh_from_db()
+        self.assertTrue(self.invitation.is_accepted)
+
+    def test_accept_invitation_minimal_data(self):
+        """Test accepting invitation with minimal data."""
+        self.authenticate_user(self.existing_user_token)
+
+        url = reverse("accounts:invitation-accept", kwargs={"token": self.invitation.token})
+        response = self.client.post(url, {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Check teacher profile was created with defaults
+        teacher_profile = self.existing_user.teacher_profile
+        self.assertEqual(teacher_profile.bio, "")
+        self.assertEqual(teacher_profile.specialty, "")
+
+        # Check no courses were associated
+        teacher_courses = TeacherCourse.objects.filter(teacher=teacher_profile)
+        self.assertEqual(teacher_courses.count(), 0)
+
+    def test_accept_invitation_wrong_user(self):
+        """Test that wrong user cannot accept invitation."""
+        self.authenticate_user(self.regular_user_token)
+
+        url = reverse("accounts:invitation-accept", kwargs={"token": self.invitation.token})
+        response = self.client.post(url, {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn("not for your account", response.json()["error"])
+
+    def test_accept_invalid_token(self):
+        """Test accepting invitation with invalid token."""
+        self.authenticate_user(self.existing_user_token)
+
+        url = reverse("accounts:invitation-accept", kwargs={"token": "invalid-token"})
+        response = self.client.post(url, {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("Invalid invitation token", response.json()["error"])
+
+    def test_accept_already_accepted_invitation(self):
+        """Test accepting already accepted invitation."""
+        # Mark invitation as accepted
+        self.invitation.is_accepted = True
+        self.invitation.save()
+
+        self.authenticate_user(self.existing_user_token)
+
+        url = reverse("accounts:invitation-accept", kwargs={"token": self.invitation.token})
+        response = self.client.post(url, {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("already been accepted", response.json()["error"])
+
+    def test_accept_expired_invitation(self):
+        """Test accepting expired invitation."""
+        # Make invitation expired
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        self.invitation.expires_at = timezone.now() - timedelta(days=1)
+        self.invitation.save()
+
+        self.authenticate_user(self.existing_user_token)
+
+        url = reverse("accounts:invitation-accept", kwargs={"token": self.invitation.token})
+        response = self.client.post(url, {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("expired", response.json()["error"])
+
+    def test_accept_invitation_existing_teacher_profile(self):
+        """Test accepting invitation when user already has teacher profile."""
+        # Create teacher profile first
+        TeacherProfile.objects.create(
+            user=self.existing_user, bio="Existing bio", specialty="Existing specialty"
+        )
+
+        self.authenticate_user(self.existing_user_token)
+
+        data = {
+            "bio": "New bio from invitation",  # This should be ignored
+            "specialty": "New specialty",  # This should be ignored
+            "course_ids": [self.course1.id],
+        }
+
+        url = reverse("accounts:invitation-accept", kwargs={"token": self.invitation.token})
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Check existing teacher profile was used (bio/specialty not updated)
+        teacher_profile = self.existing_user.teacher_profile
+        self.assertEqual(teacher_profile.bio, "Existing bio")
+        self.assertEqual(teacher_profile.specialty, "Existing specialty")
+
+        # But courses should still be added
+        teacher_courses = TeacherCourse.objects.filter(teacher=teacher_profile)
+        self.assertEqual(teacher_courses.count(), 1)
+
+    def test_unauthenticated_access_invitation_details(self):
+        """Test that unauthenticated users can view invitation details."""
+        self.clear_authentication()
+
+        url = reverse("accounts:invitation-details", kwargs={"token": self.invitation.token})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response_data = response.json()
+        self.assertTrue(response_data["requires_authentication"])
+        self.assertFalse(response_data["is_correct_user"])
+
+
+class TeacherListWithPendingInvitationsTest(TeacherOnboardingBaseTest):
+    """Tests for teacher list including pending invitations."""
+
+    def setUp(self):
+        super().setUp()
+        # Create a pending invitation
+        from accounts.db_queries import create_school_invitation
+
+        self.pending_invitation = create_school_invitation(
+            school_id=self.school1.id,
+            email=self.existing_user.email,
+            invited_by=self.school_owner,
+            role=SchoolRole.TEACHER,
+        )
+
+    def test_teacher_list_without_pending_flag(self):
+        """Test that teacher list doesn't include pending invitations by default."""
+        self.authenticate_user(self.owner_token)
+
+        url = reverse("accounts:teacher-list")
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+
+        # Should only include active teachers (teacher_user), not pending invitations
+        if "results" in response_data:
+            teachers = response_data["results"]
+        else:
+            teachers = response_data
+
+        teacher_emails = [t["user"]["email"] for t in teachers]
+        self.assertIn(self.teacher_user.email, teacher_emails)  # Active teacher
+        self.assertNotIn(self.existing_user.email, teacher_emails)  # Pending invitation
+
+    def test_teacher_list_with_pending_flag(self):
+        """Test that teacher list includes pending invitations when requested."""
+        self.authenticate_user(self.owner_token)
+
+        url = reverse("accounts:teacher-list") + "?include_pending=true"
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        teachers = response.json()
+
+        # Should include both active teachers and pending invitations
+        active_teachers = [t for t in teachers if t["status"] == "active"]
+        pending_teachers = [t for t in teachers if t["status"] == "pending"]
+
+        self.assertEqual(len(active_teachers), 1)  # teacher_user
+        self.assertEqual(len(pending_teachers), 1)  # existing_user invitation
+
+        # Check active teacher
+        active_teacher = active_teachers[0]
+        self.assertEqual(active_teacher["user"]["email"], self.teacher_user.email)
+        self.assertIsNotNone(active_teacher["id"])  # Has teacher profile
+
+        # Check pending teacher
+        pending_teacher = pending_teachers[0]
+        self.assertEqual(pending_teacher["user"]["email"], self.existing_user.email)
+        self.assertIsNone(pending_teacher["id"])  # No teacher profile yet
+        self.assertIn("invitation", pending_teacher)
+        self.assertEqual(pending_teacher["invitation"]["token"], self.pending_invitation.token)
+
+    def test_pending_invitation_includes_invitation_details(self):
+        """Test that pending invitations include all necessary invitation details."""
+        self.authenticate_user(self.owner_token)
+
+        url = reverse("accounts:teacher-list") + "?include_pending=true"
+        response = self.client.get(url)
+
+        teachers = response.json()
+        pending_teachers = [t for t in teachers if t["status"] == "pending"]
+
+        self.assertEqual(len(pending_teachers), 1)
+
+        pending_teacher = pending_teachers[0]
+        invitation = pending_teacher["invitation"]
+
+        # Check invitation details
+        self.assertEqual(invitation["id"], self.pending_invitation.id)
+        self.assertEqual(invitation["token"], self.pending_invitation.token)
+        self.assertIn("link", invitation)
+        self.assertIn("expires_at", invitation)
+        self.assertEqual(invitation["invited_by"], self.school_owner.name)
+
+    def test_expired_invitations_not_included(self):
+        """Test that expired invitations are not included in the list."""
+        # Make the invitation expired
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        self.pending_invitation.expires_at = timezone.now() - timedelta(days=1)
+        self.pending_invitation.save()
+
+        self.authenticate_user(self.owner_token)
+
+        url = reverse("accounts:teacher-list") + "?include_pending=true"
+        response = self.client.get(url)
+
+        teachers = response.json()
+        pending_teachers = [t for t in teachers if t["status"] == "pending"]
+
+        # Expired invitation should not be included
+        self.assertEqual(len(pending_teachers), 0)
+
+    def test_accepted_invitations_not_included_as_pending(self):
+        """Test that accepted invitations are not included as pending."""
+        # Mark invitation as accepted
+        self.pending_invitation.is_accepted = True
+        self.pending_invitation.save()
+
+        self.authenticate_user(self.owner_token)
+
+        url = reverse("accounts:teacher-list") + "?include_pending=true"
+        response = self.client.get(url)
+
+        teachers = response.json()
+        pending_teachers = [t for t in teachers if t["status"] == "pending"]
+
+        # Accepted invitation should not be included as pending
+        self.assertEqual(len(pending_teachers), 0)
+
+    def test_regular_user_cannot_see_pending_invitations(self):
+        """Test that regular users can't see pending invitations."""
+        self.authenticate_user(self.regular_user_token)
+
+        url = reverse("accounts:teacher-list") + "?include_pending=true"
+        response = self.client.get(url)
+
+        teachers = response.json()
+
+        # Regular user should see empty list (no teachers, no pending invitations)
+        self.assertEqual(len(teachers), 0)

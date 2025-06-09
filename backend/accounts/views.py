@@ -50,11 +50,9 @@ from .permissions import (
 )
 from .serializers import (
     AcceptInvitationSerializer,
-    AddExistingTeacherSerializer,
     CourseSerializer,
     CreateUserSerializer,
     InviteExistingTeacherSerializer,
-    InviteNewTeacherSerializer,
     RequestCodeSerializer,
     SchoolInvitationSerializer,
     SchoolMembershipSerializer,
@@ -908,8 +906,11 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
             permission_classes = [IsAuthenticated, IsOwnerOrSchoolAdmin]
         elif self.action == "onboarding":
             permission_classes = [IsAuthenticated]
-        elif self.action in ["add_existing", "invite_new", "invite_existing"]:
+        elif self.action in ["invite_new", "invite_existing"]:
             permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+        elif self.action == "add_existing":
+            # Deprecated endpoint - still needs auth but will return 410 Gone
+            permission_classes = [IsAuthenticated]
         else:
             permission_classes = [IsAuthenticated, IsTeacherInAnySchool]
         return [permission() for permission in permission_classes]
@@ -1006,206 +1007,6 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
 
             return Response(
                 {"error": "Failed to create teacher profile. Please try again."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-    @action(detail=False, methods=["post"])
-    def add_existing(self, request):
-        """
-        Add an existing user as a teacher to a school.
-
-        This endpoint allows school owners/admins to:
-        1. Add an existing user as a teacher (create teacher profile if needed)
-        2. Create school membership for the teacher
-        3. Associate the teacher with specified courses
-
-        All operations are atomic - if any part fails, everything is rolled back.
-        """
-        from django.db import transaction
-
-        # Validate the request data
-        serializer = AddExistingTeacherSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        validated_data = serializer.validated_data
-        email = validated_data["email"]
-        school_id = validated_data["school_id"]
-
-        # Check if the requesting user can manage this school
-        if not can_user_manage_school(request.user, school_id):
-            return Response(
-                {"error": "You don't have permission to add teachers to this school"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        try:
-            user = get_user_by_email(email)
-
-            # Check if user already has a teacher profile
-            if hasattr(user, "teacher_profile"):
-                return Response(
-                    {"error": "User already has a teacher profile"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            with transaction.atomic():
-                # Extract teacher profile data
-                profile_data = {
-                    key: value
-                    for key, value in validated_data.items()
-                    if key not in ["email", "school_id", "course_ids"]
-                }
-
-                # Create teacher profile
-                teacher_profile = TeacherProfile.objects.create(user=user, **profile_data)
-
-                # Create school membership
-                school_membership = SchoolMembership.objects.create(
-                    user=user, school_id=school_id, role=SchoolRole.TEACHER, is_active=True
-                )
-
-                # Associate courses if provided
-                course_ids = validated_data.get("course_ids", [])
-
-                teacher_courses = []
-                if course_ids:
-                    for course_id in course_ids:
-                        teacher_course = TeacherCourse.objects.create(
-                            teacher=teacher_profile, course_id=course_id, is_active=True
-                        )
-                        teacher_courses.append(teacher_course)
-
-                # Return the complete response
-                teacher_serializer = TeacherSerializer(teacher_profile)
-                membership_serializer = SchoolMembershipSerializer(school_membership)
-
-                return Response(
-                    {
-                        "message": "Teacher profile created and added to school successfully",
-                        "teacher": teacher_serializer.data,
-                        "school_membership": membership_serializer.data,
-                        "courses_added": len(teacher_courses),
-                    },
-                    status=status.HTTP_201_CREATED,
-                )
-
-        except Exception as e:
-            logger.error(f"Add existing teacher failed for user {email}: {e!s}")
-
-            return Response(
-                {"error": "Failed to create teacher profile. Please try again."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-    @action(detail=False, methods=["post"])
-    def invite_new(self, request):
-        """
-        Create a new user and invite them as a teacher to a school.
-
-        This endpoint allows school owners/admins to:
-        1. Create a new user account
-        2. Create a teacher profile for them
-        3. Create school membership
-        4. Associate with specified courses
-        5. Send invitation email
-
-        All operations are atomic - if any part fails, everything is rolled back.
-        """
-        from django.db import transaction
-
-        # Validate the request data
-        serializer = InviteNewTeacherSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        validated_data = serializer.validated_data
-        email = validated_data["email"]
-        name = validated_data["name"]
-        school_id = validated_data["school_id"]
-        phone_number = validated_data.get("phone_number", "")
-
-        # Check if the requesting user can manage this school
-        if not can_user_manage_school(request.user, school_id):
-            return Response(
-                {"error": "You don't have permission to invite teachers to this school"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        try:
-            with transaction.atomic():
-                # Create new user (no password, they'll set it when accepting invitation)
-                user = CustomUser.objects.create_user(
-                    email=email,
-                    name=name,
-                    phone_number=phone_number,
-                    password=None,
-                )
-
-                # Extract teacher profile data
-                profile_data = {
-                    key: value
-                    for key, value in validated_data.items()
-                    if key not in ["email", "name", "school_id", "phone_number", "course_ids"]
-                }
-
-                # Create teacher profile
-                teacher_profile = TeacherProfile.objects.create(user=user, **profile_data)
-
-                # Create school membership
-                school_membership = SchoolMembership.objects.create(
-                    user=user, school_id=school_id, role=SchoolRole.TEACHER, is_active=True
-                )
-
-                # Associate courses if provided
-                course_ids = validated_data.get("course_ids", [])
-
-                teacher_courses = []
-                if course_ids:
-                    for course_id in course_ids:
-                        teacher_course = TeacherCourse.objects.create(
-                            teacher=teacher_profile, course_id=course_id, is_active=True
-                        )
-                        teacher_courses.append(teacher_course)
-
-                # Create invitation
-                invitation = create_school_invitation(
-                    school_id=school_id,
-                    email=email,
-                    invited_by=request.user,
-                    role=SchoolRole.TEACHER,
-                )
-
-                # TODO: Send invitation email with the token
-                # For now, we'll just return the invitation in the response
-                invitation_sent = True
-
-                # Return the complete response
-                teacher_serializer = TeacherSerializer(teacher_profile)
-                membership_serializer = SchoolMembershipSerializer(school_membership)
-
-                return Response(
-                    {
-                        "message": "User created, teacher profile setup, and invitation sent successfully",
-                        "teacher": teacher_serializer.data,
-                        "school_membership": membership_serializer.data,
-                        "courses_added": len(teacher_courses),
-                        "user_created": True,
-                        "invitation_sent": invitation_sent,
-                        "invitation": {
-                            "id": invitation.id,
-                            "token": invitation.token,
-                            "expires_at": invitation.expires_at,
-                        },
-                    },
-                    status=status.HTTP_201_CREATED,
-                )
-
-        except Exception as e:
-            logger.error(f"Invite new teacher failed for email {email}: {e!s}")
-
-            return Response(
-                {"error": "Failed to create user and teacher profile. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
