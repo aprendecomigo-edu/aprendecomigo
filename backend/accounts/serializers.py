@@ -165,7 +165,11 @@ class SchoolWithMembersSerializer(SchoolSerializer):
 class EducationalSystemSerializer(serializers.ModelSerializer):
     """
     Serializer for the EducationalSystem model.
+    Now uses Django enumeration types for better type safety.
     """
+    
+    school_years = serializers.SerializerMethodField()
+    education_levels = serializers.SerializerMethodField()
 
     class Meta:
         model = EducationalSystem
@@ -181,6 +185,14 @@ class EducationalSystemSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields: ClassVar[list[str]] = ["id", "created_at", "updated_at"]
+
+    def get_school_years(self, obj):
+        """Get school year choices as key-value pairs"""
+        return obj.school_year_choices
+
+    def get_education_levels(self, obj):
+        """Get education level choices as key-value pairs"""
+        return obj.education_level_choices
 
 
 class StudentSerializer(serializers.ModelSerializer):
@@ -744,12 +756,11 @@ class CreateStudentSerializer(serializers.Serializer):
         if educational_system_id:
             try:
                 educational_system = EducationalSystem.objects.get(id=educational_system_id)
-                # Extract valid keys from the school_years tuples/lists
-                valid_keys = [year[0] for year in educational_system.school_years]
-                if value not in valid_keys:
+                # Use the enumeration-based validation
+                if not educational_system.validate_school_year(value):
                     # Format error message with key: display pairs
                     valid_options = [
-                        f"'{year[0]}': '{year[1]}'" for year in educational_system.school_years
+                        f"'{year[0]}': '{year[1]}'" for year in educational_system.school_year_choices
                     ]
                     raise serializers.ValidationError(
                         f"School year '{value}' is not valid for educational system '{educational_system.name}'. "

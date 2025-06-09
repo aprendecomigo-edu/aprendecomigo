@@ -180,9 +180,91 @@ class SchoolMembership(models.Model):
         return str(role_display)  # Convert _StrPromise to str
 
 
+# Educational System Enumerations
+class PortugueseSchoolYear(models.TextChoices):
+    """School years for Portuguese education system"""
+    FIRST = "1", _("1º ano")
+    SECOND = "2", _("2º ano")
+    THIRD = "3", _("3º ano")
+    FOURTH = "4", _("4º ano")
+    FIFTH = "5", _("5º ano")
+    SIXTH = "6", _("6º ano")
+    SEVENTH = "7", _("7º ano")
+    EIGHTH = "8", _("8º ano")
+    NINTH = "9", _("9º ano")
+    TENTH = "10", _("10º ano")
+    ELEVENTH = "11", _("11º ano")
+    TWELFTH = "12", _("12º ano")
+
+
+class PortugueseEducationLevel(models.TextChoices):
+    """Education levels for Portuguese system"""
+    BASIC_1ST_CYCLE = "ensino_basico_1_ciclo", _("Ensino Básico 1º Ciclo")
+    BASIC_2ND_CYCLE = "ensino_basico_2_ciclo", _("Ensino Básico 2º Ciclo")
+    BASIC_3RD_CYCLE = "ensino_basico_3_ciclo", _("Ensino Básico 3º Ciclo")
+    SECONDARY = "ensino_secundario", _("Ensino Secundário")
+
+
+class CustomSchoolYear(models.TextChoices):
+    """School years for custom/generic education system"""
+    GRADE_1 = "1", _("Grade 1")
+    GRADE_2 = "2", _("Grade 2")
+    GRADE_3 = "3", _("Grade 3")
+    GRADE_4 = "4", _("Grade 4")
+    GRADE_5 = "5", _("Grade 5")
+    GRADE_6 = "6", _("Grade 6")
+    GRADE_7 = "7", _("Grade 7")
+    GRADE_8 = "8", _("Grade 8")
+    GRADE_9 = "9", _("Grade 9")
+    GRADE_10 = "10", _("Grade 10")
+    GRADE_11 = "11", _("Grade 11")
+    GRADE_12 = "12", _("Grade 12")
+
+
+class CustomEducationLevel(models.TextChoices):
+    """Education levels for custom/generic system"""
+    ELEMENTARY = "elementary", _("Elementary")
+    MIDDLE_SCHOOL = "middle_school", _("Middle School")
+    HIGH_SCHOOL = "high_school", _("High School")
+
+
+class BrazilianSchoolYear(models.TextChoices):
+    """School years for Brazilian education system"""
+    # Elementary I (Ensino Fundamental I)
+    FIRST_EF = "1ef", _("1º ano EF")
+    SECOND_EF = "2ef", _("2º ano EF")
+    THIRD_EF = "3ef", _("3º ano EF")
+    FOURTH_EF = "4ef", _("4º ano EF")
+    FIFTH_EF = "5ef", _("5º ano EF")
+    # Elementary II (Ensino Fundamental II)
+    SIXTH_EF = "6ef", _("6º ano EF")
+    SEVENTH_EF = "7ef", _("7º ano EF")
+    EIGHTH_EF = "8ef", _("8º ano EF")
+    NINTH_EF = "9ef", _("9º ano EF")
+    # High School (Ensino Médio)
+    FIRST_EM = "1em", _("1º ano EM")
+    SECOND_EM = "2em", _("2º ano EM")
+    THIRD_EM = "3em", _("3º ano EM")
+
+
+class BrazilianEducationLevel(models.TextChoices):
+    """Education levels for Brazilian system"""
+    FUNDAMENTAL_INITIAL = "ensino_fundamental_anos_iniciais", _("Ensino Fundamental Anos Iniciais")
+    FUNDAMENTAL_FINAL = "ensino_fundamental_anos_finais", _("Ensino Fundamental Anos Finais")
+    MEDIO = "ensino_medio", _("Ensino Médio")
+
+
+class EducationalSystemType(models.TextChoices):
+    """Types of educational systems"""
+    PORTUGAL = "pt", _("Portugal")
+    CUSTOM = "custom", _("Custom")
+    BRAZIL = "br", _("Brazil")
+
+
 class EducationalSystem(models.Model):
     """
     Educational system model representing different education systems and their school years.
+    Now uses Django enumeration types for better type safety and validation.
     """
 
     name: models.CharField = models.CharField(
@@ -194,22 +276,11 @@ class EducationalSystem(models.Model):
         _("system code"),
         max_length=20,
         unique=True,
+        choices=EducationalSystemType.choices,
         help_text=_("Unique code for the system (e.g., 'pt', 'br')"),
     )
     description: models.TextField = models.TextField(
         _("description"), blank=True, help_text=_("Description of the educational system")
-    )
-    school_years: models.JSONField = models.JSONField(
-        _("school years"),
-        default=list,
-        help_text=_(
-            "List of available school years in this system (e.g., ['1º ano', '2º ano', ...])"
-        ),
-    )
-    education_levels: models.JSONField = models.JSONField(
-        _("education levels"),
-        default=list,
-        help_text=_("List of education levels (e.g., ['ensino_basico', 'ensino_secundario'])"),
     )
     is_active: models.BooleanField = models.BooleanField(_("is active"), default=True)
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
@@ -221,6 +292,46 @@ class EducationalSystem(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} ({self.code})"
+
+    @property
+    def school_year_choices(self):
+        """Get the appropriate school year choices for this educational system"""
+        if self.code == EducationalSystemType.PORTUGAL:
+            return PortugueseSchoolYear.choices
+        elif self.code == EducationalSystemType.BRAZIL:
+            return BrazilianSchoolYear.choices
+        else:  # custom or any other system
+            return CustomSchoolYear.choices
+
+    @property
+    def education_level_choices(self):
+        """Get the appropriate education level choices for this educational system"""
+        if self.code == EducationalSystemType.PORTUGAL:
+            return PortugueseEducationLevel.choices
+        elif self.code == EducationalSystemType.BRAZIL:
+            return BrazilianEducationLevel.choices
+        else:  # custom or any other system
+            return CustomEducationLevel.choices
+
+    def validate_school_year(self, school_year_value):
+        """Validate that a school year is valid for this educational system"""
+        valid_choices = dict(self.school_year_choices)
+        return school_year_value in valid_choices
+
+    def validate_education_level(self, education_level_value):
+        """Validate that an education level is valid for this educational system"""
+        valid_choices = dict(self.education_level_choices)
+        return education_level_value in valid_choices
+
+    def get_school_year_display(self, school_year_value):
+        """Get the display name for a school year value"""
+        choices_dict = dict(self.school_year_choices)
+        return choices_dict.get(school_year_value, school_year_value)
+
+    def get_education_level_display(self, education_level_value):
+        """Get the display name for an education level value"""
+        choices_dict = dict(self.education_level_choices)
+        return choices_dict.get(education_level_value, education_level_value)
 
 
 class StudentProfile(models.Model):
@@ -260,6 +371,19 @@ class StudentProfile(models.Model):
     def __str__(self) -> str:
         user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
         return f"Student Profile: {user_name}"
+
+    def clean(self):
+        """Validate that school_year is valid for the selected educational system"""
+        super().clean()
+        if self.educational_system and self.school_year:
+            if not self.educational_system.validate_school_year(self.school_year):
+                from django.core.exceptions import ValidationError
+                valid_years = dict(self.educational_system.school_year_choices)
+                raise ValidationError({
+                    'school_year': f"School year '{self.school_year}' is not valid for "
+                                  f"educational system '{self.educational_system.name}'. "
+                                  f"Valid options: {list(valid_years.keys())}"
+                })
 
 
 class TeacherProfile(models.Model):
@@ -324,7 +448,7 @@ class Course(models.Model):
         _("education level"),
         max_length=50,
         default="other",
-        help_text=_("Education level (e.g., 'ensino_secundario', 'ensino_basico', 'other')"),
+        help_text=_("Education level within the educational system"),
     )
     description: models.TextField = models.TextField(
         _("course description"),
@@ -339,6 +463,19 @@ class Course(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} ({self.code})"
+
+    def clean(self):
+        """Validate that education_level is valid for the selected educational system"""
+        super().clean()
+        if self.educational_system and self.education_level:
+            if not self.educational_system.validate_education_level(self.education_level):
+                from django.core.exceptions import ValidationError
+                valid_levels = dict(self.educational_system.education_level_choices)
+                raise ValidationError({
+                    'education_level': f"Education level '{self.education_level}' is not valid for "
+                                      f"educational system '{self.educational_system.name}'. "
+                                      f"Valid options: {list(valid_levels.keys())}"
+                })
 
 
 class TeacherCourse(models.Model):

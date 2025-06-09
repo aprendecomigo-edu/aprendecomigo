@@ -109,36 +109,46 @@ interface TabHeaderProps {
 }
 
 const TabHeader = ({ tabs, activeTab, onTabChange }: TabHeaderProps) => {
+  const [hoveredTab, setHoveredTab] = React.useState<TabType | null>(null);
+
   return (
     <HStack className="w-full border-b border-gray-200">
-      {tabs.map(tab => {
+      {tabs.map((tab, index) => {
         const isActive = activeTab === tab.key;
+        const isHovered = hoveredTab === tab.key;
+        const isLastTab = index === tabs.length - 1;
 
         return (
           <Pressable
             key={tab.key}
             className="flex-1 py-4 px-2"
+            style={{
+              backgroundColor: isActive
+                ? `${COLORS.primary}10`
+                : isHovered
+                ? `${COLORS.gray[100]}80`
+                : 'transparent',
+              borderRightWidth: isLastTab ? 0 : 1,
+              borderRightColor: COLORS.gray[200],
+            }}
             onPress={() => onTabChange(tab.key)}
+            onPressIn={() => setHoveredTab(tab.key)}
+            onPressOut={() => setHoveredTab(null)}
+            // Web hover states
+            {...(typeof window !== 'undefined' && {
+              onMouseEnter: () => setHoveredTab(tab.key),
+              onMouseLeave: () => setHoveredTab(null),
+            })}
           >
-            <VStack className="items-center" space="xs">
+            <VStack className="items-center">
               <Text
-                className={`text-base font-medium ${
-                  isActive ? 'text-primary-600' : 'text-gray-500'
-                }`}
+                className={`text-base ${isActive ? 'font-bold' : 'font-medium'}`}
                 style={{
                   color: isActive ? COLORS.primary : COLORS.gray[500],
                 }}
               >
                 {tab.title}
               </Text>
-              {isActive && (
-                <Box
-                  className="w-full h-0.5 rounded-full"
-                  style={{
-                    backgroundColor: COLORS.primary,
-                  }}
-                />
-              )}
             </VStack>
           </Pressable>
         );
