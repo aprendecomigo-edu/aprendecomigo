@@ -48,8 +48,6 @@ type TabType = 'teachers' | 'students' | 'staff';
 interface TabInfo {
   key: TabType;
   title: string;
-  icon: any;
-  count: number;
 }
 
 interface ActionButtonProps {
@@ -112,36 +110,35 @@ interface TabHeaderProps {
 
 const TabHeader = ({ tabs, activeTab, onTabChange }: TabHeaderProps) => {
   return (
-    <HStack className="w-full bg-white rounded-lg border border-gray-200" style={{ padding: 4 }}>
-      {tabs.map((tab, index) => {
+    <HStack className="w-full border-b border-gray-200">
+      {tabs.map(tab => {
         const isActive = activeTab === tab.key;
-        const isLast = index === tabs.length - 1;
 
         return (
           <Pressable
             key={tab.key}
-            className={`flex-1 py-3 px-4 rounded-md ${!isLast ? 'mr-1' : ''}`}
-            style={{
-              backgroundColor: isActive ? COLORS.primary : 'transparent',
-            }}
+            className="flex-1 py-4 px-2"
             onPress={() => onTabChange(tab.key)}
           >
             <VStack className="items-center" space="xs">
-              <HStack className="items-center" space="xs">
-                <Icon
-                  as={tab.icon}
-                  size="sm"
-                  className={isActive ? 'text-white' : 'text-gray-600'}
-                />
-                <Text
-                  className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-600'}`}
-                >
-                  {tab.title}
-                </Text>
-              </HStack>
-              <Text className={`text-xs ${isActive ? 'text-blue-100' : 'text-gray-500'}`}>
-                {tab.count} ativos
+              <Text
+                className={`text-base font-medium ${
+                  isActive ? 'text-primary-600' : 'text-gray-500'
+                }`}
+                style={{
+                  color: isActive ? COLORS.primary : COLORS.gray[500],
+                }}
+              >
+                {tab.title}
               </Text>
+              {isActive && (
+                <Box
+                  className="w-full h-0.5 rounded-full"
+                  style={{
+                    backgroundColor: COLORS.primary,
+                  }}
+                />
+              )}
             </VStack>
           </Pressable>
         );
@@ -405,20 +402,14 @@ export default function UsersPage() {
     {
       key: 'teachers',
       title: 'Professores',
-      icon: GraduationCap,
-      count: teachers.length,
     },
     {
       key: 'students',
       title: 'Alunos',
-      icon: Users,
-      count: 0, // TODO: Replace with actual student count
     },
     {
       key: 'staff',
       title: 'Colaboradores',
-      icon: Building,
-      count: 0, // TODO: Replace with actual staff count
     },
   ];
 
