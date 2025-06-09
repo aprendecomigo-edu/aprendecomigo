@@ -3,6 +3,7 @@ from typing import ClassVar
 
 from common.serializers import BaseNestedModelSerializer, BaseSerializer
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import (
@@ -426,32 +427,30 @@ class TeacherOnboardingSerializer(serializers.Serializer):
     """
     Serializer for creating a teacher profile with associated courses in one request.
     """
-    
+
     # Teacher profile fields (all optional)
     bio = serializers.CharField(required=False, allow_blank=True)
     specialty = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    
+
     # Course associations
     course_ids = serializers.ListField(
         child=serializers.IntegerField(),
         required=False,
         allow_empty=True,
-        help_text="List of course IDs the teacher wants to teach"
+        help_text="List of course IDs the teacher wants to teach",
     )
-    
+
     def validate_course_ids(self, value):
         """Validate that all course IDs exist."""
         if not value:
             return value
-            
-        existing_ids = set(Course.objects.filter(id__in=value).values_list('id', flat=True))
+
+        existing_ids = set(Course.objects.filter(id__in=value).values_list("id", flat=True))
         invalid_ids = set(value) - existing_ids
-        
+
         if invalid_ids:
-            raise serializers.ValidationError(
-                f"Invalid course IDs: {list(invalid_ids)}"
-            )
-        
+            raise serializers.ValidationError(f"Invalid course IDs: {list(invalid_ids)}")
+
         return value
 
 
@@ -459,47 +458,45 @@ class AddExistingTeacherSerializer(serializers.Serializer):
     """
     Serializer for adding an existing user as a teacher to a school.
     """
-    
+
     email = serializers.EmailField()
     school_id = serializers.IntegerField()
-    
+
     # Teacher profile fields (all optional)
     bio = serializers.CharField(required=False, allow_blank=True)
     specialty = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    
+
     # Course associations
     course_ids = serializers.ListField(
         child=serializers.IntegerField(),
         required=False,
         allow_empty=True,
-        help_text="List of course IDs the teacher wants to teach"
+        help_text="List of course IDs the teacher wants to teach",
     )
-    
+
     def validate_email(self, value):
         """Validate that the user exists."""
         if not User.objects.filter(email=value).exists():
             raise serializers.ValidationError(f"User with email '{value}' does not exist")
         return value
-    
+
     def validate_school_id(self, value):
         """Validate that the school exists."""
         if not School.objects.filter(id=value).exists():
             raise serializers.ValidationError(f"School with ID {value} does not exist")
         return value
-    
+
     def validate_course_ids(self, value):
         """Validate that all course IDs exist."""
         if not value:
             return value
-            
-        existing_ids = set(Course.objects.filter(id__in=value).values_list('id', flat=True))
+
+        existing_ids = set(Course.objects.filter(id__in=value).values_list("id", flat=True))
         invalid_ids = set(value) - existing_ids
-        
+
         if invalid_ids:
-            raise serializers.ValidationError(
-                f"Invalid course IDs: {list(invalid_ids)}"
-            )
-        
+            raise serializers.ValidationError(f"Invalid course IDs: {list(invalid_ids)}")
+
         return value
 
 
@@ -507,62 +504,60 @@ class InviteNewTeacherSerializer(serializers.Serializer):
     """
     Serializer for creating a new user and inviting them as a teacher to a school.
     """
-    
+
     email = serializers.EmailField()
     name = serializers.CharField(max_length=150)
     school_id = serializers.IntegerField()
     phone_number = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    
+
     # Teacher profile fields (all optional)
     bio = serializers.CharField(required=False, allow_blank=True)
     specialty = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    
+
     # Course associations
     course_ids = serializers.ListField(
         child=serializers.IntegerField(),
         required=False,
         allow_empty=True,
-        help_text="List of course IDs the teacher wants to teach"
+        help_text="List of course IDs the teacher wants to teach",
     )
-    
+
     def validate_email(self, value):
         """Validate that the user doesn't already exist."""
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError(f"User with email '{value}' already exists")
         return value
-    
+
     def validate_school_id(self, value):
         """Validate that the school exists."""
         if not School.objects.filter(id=value).exists():
             raise serializers.ValidationError(f"School with ID {value} does not exist")
         return value
-    
+
     def validate_phone_number(self, value):
         """Validate phone number format if provided."""
         if not value:
             return value
-            
+
         if not re.match(r"^\+?[0-9\s\-\(\)]{5,20}$", value):
             raise serializers.ValidationError("Invalid phone number format")
-            
+
         if len(value) > 20:
             raise serializers.ValidationError("Phone number must be less than 20 characters")
-            
+
         return value
-    
+
     def validate_course_ids(self, value):
         """Validate that all course IDs exist."""
         if not value:
             return value
-            
-        existing_ids = set(Course.objects.filter(id__in=value).values_list('id', flat=True))
+
+        existing_ids = set(Course.objects.filter(id__in=value).values_list("id", flat=True))
         invalid_ids = set(value) - existing_ids
-        
+
         if invalid_ids:
-            raise serializers.ValidationError(
-                f"Invalid course IDs: {list(invalid_ids)}"
-            )
-        
+            raise serializers.ValidationError(f"Invalid course IDs: {list(invalid_ids)}")
+
         return value
 
 
@@ -570,7 +565,7 @@ class TeacherOnboardingResponseSerializer(serializers.Serializer):
     """
     Serializer for teacher onboarding response data.
     """
-    
+
     message = serializers.CharField()
     courses_added = serializers.IntegerField()
     teacher = TeacherSerializer()
@@ -578,3 +573,83 @@ class TeacherOnboardingResponseSerializer(serializers.Serializer):
     user_created = serializers.BooleanField(required=False)
     invitation_sent = serializers.BooleanField(required=False)
     invitation = SchoolInvitationSerializer(required=False)
+
+
+class InviteExistingTeacherSerializer(serializers.Serializer):
+    """
+    Serializer for inviting an existing user to become a teacher at a school.
+    Creates an invitation that the user can accept later.
+    """
+
+    email = serializers.EmailField()
+    school_id = serializers.IntegerField()
+    send_email = serializers.BooleanField(default=False)
+    send_sms = serializers.BooleanField(default=False)
+
+    def validate_email(self, value):
+        """Validate that the user exists."""
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(f"User with email '{value}' does not exist")
+        return value
+
+    def validate_school_id(self, value):
+        """Validate that the school exists."""
+        if not School.objects.filter(id=value).exists():
+            raise serializers.ValidationError(f"School with ID {value} does not exist")
+        return value
+
+    def validate(self, data):
+        """Cross-field validation."""
+        user = User.objects.get(email=data["email"])
+        school_id = data["school_id"]
+
+        # Check if user is already a teacher at this school
+        if SchoolMembership.objects.filter(
+            user=user, school_id=school_id, role=SchoolRole.TEACHER, is_active=True
+        ).exists():
+            raise serializers.ValidationError("User is already a teacher at this school")
+
+        # Check if there's already a pending invitation
+        if SchoolInvitation.objects.filter(
+            email=data["email"],
+            school_id=school_id,
+            role=SchoolRole.TEACHER,
+            is_accepted=False,
+            expires_at__gt=timezone.now(),
+        ).exists():
+            raise serializers.ValidationError(
+                "There is already a pending invitation for this user to this school"
+            )
+
+        return data
+
+
+class AcceptInvitationSerializer(serializers.Serializer):
+    """
+    Serializer for accepting a school invitation.
+    """
+
+    # Teacher profile fields (optional - user can customize when accepting)
+    bio = serializers.CharField(required=False, allow_blank=True)
+    specialty = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+    # Course associations
+    course_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        allow_empty=True,
+        help_text="List of course IDs the teacher wants to teach",
+    )
+
+    def validate_course_ids(self, value):
+        """Validate that all course IDs exist."""
+        if not value:
+            return value
+
+        existing_ids = set(Course.objects.filter(id__in=value).values_list("id", flat=True))
+        invalid_ids = set(value) - existing_ids
+
+        if invalid_ids:
+            raise serializers.ValidationError(f"Invalid course IDs: {list(invalid_ids)}")
+
+        return value

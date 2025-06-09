@@ -1,10 +1,19 @@
-from django.contrib.auth import get_user_model
-from django.db.models.query import QuerySet
 import secrets
 from datetime import timedelta
+
+from django.contrib.auth import get_user_model
+from django.db.models.query import QuerySet
 from django.utils import timezone
 
-from .models import CustomUser, School, SchoolMembership, SchoolRole, SchoolInvitation
+from .models import (
+    CustomUser,
+    School,
+    SchoolInvitation,
+    SchoolInvitationLink,
+    SchoolMembership,
+    SchoolRole,
+    TeacherProfile,
+)
 
 User = get_user_model()
 
@@ -102,20 +111,17 @@ def can_user_manage_school(user: CustomUser, school_id: int) -> bool:
 
 
 def create_school_invitation(
-    school_id: int, 
-    email: str, 
-    invited_by: CustomUser, 
-    role: str = SchoolRole.TEACHER
+    school_id: int, email: str, invited_by: CustomUser, role: str = SchoolRole.TEACHER
 ) -> SchoolInvitation:
     """
     Create a school invitation with a secure token.
     """
     # Generate a secure token
     token = secrets.token_urlsafe(32)
-    
+
     # Set expiration to 7 days from now
     expires_at = timezone.now() + timedelta(days=7)
-    
+
     invitation = SchoolInvitation.objects.create(
         school_id=school_id,
         email=email,
@@ -124,7 +130,7 @@ def create_school_invitation(
         token=token,
         expires_at=expires_at,
     )
-    
+
     return invitation
 
 
@@ -134,3 +140,118 @@ def get_schools_user_can_manage(user: CustomUser) -> QuerySet:
     """
     school_ids = list_school_ids_owned_or_managed(user)
     return School.objects.filter(id__in=school_ids)
+
+
+def get_or_create_school_invitation_link(
+    school_id: int, role: str, created_by: CustomUser, expires_days: int = 365
+) -> "SchoolInvitationLink":
+    """
+    Get or create a generic invitation link for a school.
+    Returns existing valid link or creates a new one.
+    """
+    # Try to get existing valid link
+    try:
+        invitation_link = SchoolInvitationLink.objects.get(
+            school_id=school_id, role=role, is_active=True
+        )
+
+        # Check if it's still valid (not expired)
+        if invitation_link.is_valid():
+            return invitation_link
+        else:
+            # Deactivate expired link
+            invitation_link.is_active = False
+            invitation_link.save()
+    except SchoolInvitationLink.DoesNotExist:
+        pass
+
+    # Create new invitation link
+    token = secrets.token_urlsafe(32)
+    expires_at = timezone.now() + timedelta(days=expires_days)
+
+    invitation_link = SchoolInvitationLink.objects.create(
+        school_id=school_id,
+        role=role,
+        token=token,
+        created_by=created_by,
+        expires_at=expires_at,
+        is_active=True,
+    )
+
+    return invitation_link
+
+
+def join_school_via_invitation_link(
+    token: str, user: CustomUser, teacher_data: dict = None
+) -> tuple["TeacherProfile", "SchoolMembership"]:
+    """
+    Join a school using a generic invitation link.
+    Creates teacher profile and school membership.
+    """
+    from django.db import transaction
+
+    from .models import (
+        Course,
+        SchoolInvitationLink,
+        SchoolMembership,
+        TeacherCourse,
+        TeacherProfile,
+    )
+
+    # Get the invitation link
+    try:
+        invitation_link = SchoolInvitationLink.objects.get(token=token)
+    except SchoolInvitationLink.DoesNotExist:
+        raise ValueError("Invalid invitation link")
+
+    # Validate invitation link
+    if not invitation_link.is_valid():
+        raise ValueError("Invitation link has expired or is no longer valid")
+
+    # Check if user is already a teacher at this school
+    existing_membership = SchoolMembership.objects.filter(
+        user=user, school=invitation_link.school, role=invitation_link.role, is_active=True
+    ).first()
+
+    if existing_membership:
+        raise ValueError("User is already a member of this school with this role")
+
+    with transaction.atomic():
+        # Create or get teacher profile
+        teacher_profile, created = TeacherProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                "bio": teacher_data.get("bio", "") if teacher_data else "",
+                "specialty": teacher_data.get("specialty", "") if teacher_data else "",
+            },
+        )
+
+        # Update teacher profile if data provided and profile already existed
+        if not created and teacher_data:
+            if teacher_data.get("bio"):
+                teacher_profile.bio = teacher_data["bio"]
+            if teacher_data.get("specialty"):
+                teacher_profile.specialty = teacher_data["specialty"]
+            teacher_profile.save()
+
+        # Create school membership
+        membership = SchoolMembership.objects.create(
+            user=user, school=invitation_link.school, role=invitation_link.role, is_active=True
+        )
+
+        # Associate courses if provided
+        teacher_courses = []
+        if teacher_data and teacher_data.get("course_ids"):
+            course_ids = teacher_data["course_ids"]
+            courses = Course.objects.filter(id__in=course_ids)
+
+            for course in courses:
+                teacher_course, _ = TeacherCourse.objects.get_or_create(
+                    teacher=teacher_profile, course=course, defaults={"is_active": True}
+                )
+                teacher_courses.append(teacher_course)
+
+        # Increment usage count
+        invitation_link.increment_usage()
+
+        return teacher_profile, membership

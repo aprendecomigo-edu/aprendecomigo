@@ -357,6 +357,58 @@ class SchoolInvitation(models.Model):
         return str(role_display)  # Convert _StrPromise to str
 
 
+class SchoolInvitationLink(models.Model):
+    """
+    Generic invitation link for a school - not tied to specific users.
+    Anyone with the link can join the school in the specified role.
+    """
+
+    school: models.ForeignKey = models.ForeignKey(
+        School, on_delete=models.CASCADE, related_name="invitation_links"
+    )
+    role: models.CharField = models.CharField(_("role"), max_length=20, choices=SchoolRole.choices)
+    token: models.CharField = models.CharField(_("token"), max_length=64, unique=True)
+    created_by: models.ForeignKey = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name="created_invitation_links"
+    )
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    expires_at: models.DateTimeField = models.DateTimeField()
+    is_active: models.BooleanField = models.BooleanField(_("is active"), default=True)
+    usage_count: models.PositiveIntegerField = models.PositiveIntegerField(
+        _("usage count"), default=0
+    )
+    max_uses: models.PositiveIntegerField = models.PositiveIntegerField(
+        _("max uses"), null=True, blank=True, help_text=_("Leave blank for unlimited uses")
+    )
+
+    class Meta:
+        unique_together = ["school", "role"]  # One active link per school per role
+
+    def __str__(self) -> str:
+        school_name = self.school.name if hasattr(self.school, "name") else str(self.school)
+        return f"Invitation link for {school_name} as {self.get_role_display()}"
+
+    def is_valid(self) -> bool:
+        """Check if the invitation link is still valid."""
+        if not self.is_active:
+            return False
+        if timezone.now() > self.expires_at:
+            return False
+        if self.max_uses and self.usage_count >= self.max_uses:
+            return False
+        return True
+
+    def increment_usage(self) -> None:
+        """Increment the usage count."""
+        self.usage_count += 1
+        self.save(update_fields=["usage_count"])
+
+    def get_role_display(self) -> str:
+        """Get the display value for the role."""
+        role_display = dict(SchoolRole.choices).get(self.role, self.role)
+        return str(role_display)  # Convert _StrPromise to str
+
+
 class VerificationCode(models.Model):
     """
     Model for storing verification codes.

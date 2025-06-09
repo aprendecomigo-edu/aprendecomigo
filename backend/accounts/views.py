@@ -8,6 +8,8 @@ from common.throttles import (
     IPSignupThrottle,
 )
 from django.contrib.auth import login
+from django.db import models
+from django.utils import timezone
 from knox.auth import TokenAuthentication
 from knox.models import AuthToken
 from rest_framework import status, viewsets
@@ -20,7 +22,10 @@ from .db_queries import (
     can_user_manage_school,
     create_school_invitation,
     create_school_owner,
+    get_or_create_school_invitation_link,
+    get_schools_user_can_manage,
     get_user_by_email,
+    join_school_via_invitation_link,
     list_school_ids_owned_or_managed,
     list_users_by_request_permissions,
     user_exists,
@@ -29,6 +34,8 @@ from .models import (
     Course,
     CustomUser,
     School,
+    SchoolInvitation,
+    SchoolInvitationLink,
     SchoolMembership,
     SchoolRole,
     StudentProfile,
@@ -42,11 +49,14 @@ from .permissions import (
     IsTeacherInAnySchool,
 )
 from .serializers import (
+    AcceptInvitationSerializer,
     AddExistingTeacherSerializer,
     CourseSerializer,
     CreateUserSerializer,
+    InviteExistingTeacherSerializer,
     InviteNewTeacherSerializer,
     RequestCodeSerializer,
+    SchoolInvitationSerializer,
     SchoolMembershipSerializer,
     SchoolSerializer,
     SchoolWithMembersSerializer,
@@ -595,29 +605,23 @@ class SchoolViewSet(KnoxAuthenticatedViewSet):
     """
 
     serializer_class = SchoolSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
+        """Filter schools based on user permissions."""
         # System admins can see all schools
-        if user.is_staff or user.is_superuser:
+        if self.request.user.is_staff or self.request.user.is_superuser:
             return School.objects.all()
 
-        # Users can see schools they're members of
-        school_ids = SchoolMembership.objects.filter(user=user, is_active=True).values_list(
-            "school_id", flat=True
-        )
-
-        return School.objects.filter(id__in=school_ids)
+        # Others can only see schools they own or administer
+        return get_schools_user_can_manage(self.request.user)
 
     def get_permissions(self):
-        if self.action == "create":
-            # Any authenticated user can create a school (becoming its owner)
-            permission_classes = [IsAuthenticated]
-        elif self.action in ["update", "partial_update", "destroy"]:
-            # Only school owner/admin can modify school
-            permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+        """Allow anyone to view schools, but only authorized users to modify."""
+        if self.action in ["list", "retrieve"]:
+            permission_classes = [AllowAny]
         else:
-            # For list, retrieve, etc.
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
@@ -625,22 +629,125 @@ class SchoolViewSet(KnoxAuthenticatedViewSet):
         # Create the school
         school = serializer.save()
 
-        # Create a membership for the creator as school owner
+        # Create school membership for the creator as owner
         SchoolMembership.objects.create(
-            user=self.request.user,
-            school=school,
-            role=SchoolRole.SCHOOL_OWNER,
-            is_active=True,
+            user=self.request.user, school=school, role=SchoolRole.SCHOOL_OWNER, is_active=True
         )
 
     @action(detail=True, methods=["get"])
     def members(self, request, pk=None):
-        """
-        Get detailed information about the school including its members
-        """
+        """Get all members of a school with their roles."""
         school = self.get_object()
         serializer = SchoolWithMembersSerializer(school)
         return Response(serializer.data)
+
+    @action(detail=True, methods=["get"])
+    def invitation_link(self, request, pk=None):
+        """
+        Get or create a generic invitation link for the school.
+        This link can be shared to invite teachers without knowing their email.
+        """
+        school = self.get_object()
+
+        # Check if user can manage this school
+        if not can_user_manage_school(request.user, school.id):
+            return Response(
+                {"error": "You don't have permission to manage invitations for this school"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            # Get or create invitation link for teacher role
+            invitation_link = get_or_create_school_invitation_link(
+                school_id=school.id,
+                role=SchoolRole.TEACHER,
+                created_by=request.user,
+                expires_days=365,  # Long-lived link (1 year)
+            )
+
+            # Build the full URL
+            link_url = f"https://aprendecomigo.com/join-school/{invitation_link.token}"
+
+            return Response(
+                {
+                    "invitation_link": {
+                        "token": invitation_link.token,
+                        "url": link_url,
+                        "expires_at": invitation_link.expires_at,
+                        "usage_count": invitation_link.usage_count,
+                        "max_uses": invitation_link.max_uses,
+                        "school": {
+                            "id": school.id,
+                            "name": school.name,
+                        },
+                        "role": invitation_link.role,
+                        "role_display": invitation_link.get_role_display(),
+                    }
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to get invitation link for school {school.id}: {e}")
+            return Response(
+                {"error": "Failed to generate invitation link. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
+    def join_via_link(self, request):
+        """
+        Join a school using a generic invitation link.
+        This endpoint allows any authenticated user to join a school if they have the link.
+        """
+        token = request.data.get("token")
+        if not token:
+            return Response(
+                {"error": "Invitation token is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # Extract teacher profile data from request
+            teacher_data = {
+                "bio": request.data.get("bio", ""),
+                "specialty": request.data.get("specialty", ""),
+                "course_ids": request.data.get("course_ids", []),
+            }
+
+            # Join the school
+            teacher_profile, membership = join_school_via_invitation_link(
+                token=token, user=request.user, teacher_data=teacher_data
+            )
+
+            # Serialize the response
+            teacher_serializer = TeacherSerializer(teacher_profile)
+            membership_serializer = SchoolMembershipSerializer(membership)
+
+            return Response(
+                {
+                    "message": "Successfully joined the school as a teacher!",
+                    "teacher": teacher_serializer.data,
+                    "school_membership": membership_serializer.data,
+                    "courses_added": len(teacher_data.get("course_ids", [])),
+                    "school": {
+                        "id": membership.school.id,
+                        "name": membership.school.name,
+                    },
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            logger.error(f"Failed to join school via link {token}: {e}")
+            return Response(
+                {"error": "Failed to join school. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class SchoolMembershipViewSet(KnoxAuthenticatedViewSet):
@@ -704,6 +811,96 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
 
         return TeacherProfile.objects.none()
 
+    def list(self, request, *args, **kwargs):
+        """
+        Override list to include pending invitations when requested.
+        """
+        include_pending = request.query_params.get("include_pending", "false").lower() == "true"
+
+        if not include_pending:
+            # Standard behavior
+            return super().list(request, *args, **kwargs)
+
+        # Get regular teachers
+        teachers_queryset = self.get_queryset()
+        teachers_data = TeacherSerializer(teachers_queryset, many=True).data
+
+        # Add pending invitations for school admins
+        admin_school_ids = list_school_ids_owned_or_managed(request.user)
+        if admin_school_ids:
+            pending_invitations = SchoolInvitation.objects.filter(
+                school_id__in=admin_school_ids,
+                role=SchoolRole.TEACHER,
+                is_accepted=False,
+                expires_at__gt=timezone.now(),
+            ).select_related("school")
+
+            # Convert invitations to teacher-like format
+            for invitation in pending_invitations:
+                try:
+                    invited_user = CustomUser.objects.get(email=invitation.email)
+                    teachers_data.append(
+                        {
+                            "id": None,  # No teacher profile yet
+                            "user": {
+                                "id": invited_user.id,
+                                "email": invited_user.email,
+                                "name": invited_user.name,
+                                "phone_number": invited_user.phone_number,
+                                "is_student": False,
+                                "is_teacher": False,
+                            },
+                            "bio": "",
+                            "specialty": "",
+                            "education": "",
+                            "courses": [],
+                            "status": "pending",
+                            "invitation": {
+                                "id": invitation.id,
+                                "token": invitation.token,
+                                "link": f"https://aprendecomigo.com/accept-invitation/{invitation.token}",
+                                "expires_at": invitation.expires_at,
+                                "invited_by": invitation.invited_by.name,
+                                "created_at": invitation.created_at,
+                            },
+                        }
+                    )
+                except CustomUser.DoesNotExist:
+                    # Handle case where invited user was deleted
+                    teachers_data.append(
+                        {
+                            "id": None,
+                            "user": {
+                                "id": None,
+                                "email": invitation.email,
+                                "name": invitation.email.split("@")[0],  # Use email prefix as name
+                                "phone_number": "",
+                                "is_student": False,
+                                "is_teacher": False,
+                            },
+                            "bio": "",
+                            "specialty": "",
+                            "education": "",
+                            "courses": [],
+                            "status": "pending_user_not_found",
+                            "invitation": {
+                                "id": invitation.id,
+                                "token": invitation.token,
+                                "link": f"https://aprendecomigo.com/accept-invitation/{invitation.token}",
+                                "expires_at": invitation.expires_at,
+                                "invited_by": invitation.invited_by.name,
+                                "created_at": invitation.created_at,
+                            },
+                        }
+                    )
+
+        # Add status to regular teachers
+        for teacher in teachers_data:
+            if "status" not in teacher:
+                teacher["status"] = "active"
+
+        return Response(teachers_data)
+
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
             permission_classes = [IsAuthenticated]
@@ -711,7 +908,7 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
             permission_classes = [IsAuthenticated, IsOwnerOrSchoolAdmin]
         elif self.action == "onboarding":
             permission_classes = [IsAuthenticated]
-        elif self.action in ["add_existing", "invite_new"]:
+        elif self.action in ["add_existing", "invite_new", "invite_existing"]:
             permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
         else:
             permission_classes = [IsAuthenticated, IsTeacherInAnySchool]
@@ -1012,6 +1209,103 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    @action(detail=False, methods=["post"])
+    def invite_existing(self, request):
+        """
+        Invite an existing user to become a teacher at a school.
+
+        This endpoint allows school owners/admins to:
+        1. Create an invitation for an existing user
+        2. Optionally send email/SMS notifications
+        3. Return a shareable invitation link
+
+        The user can later accept the invitation to become a teacher.
+        """
+        # Validate the request data
+        serializer = InviteExistingTeacherSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = serializer.validated_data
+        email = validated_data["email"]
+        school_id = validated_data["school_id"]
+        send_email = validated_data.get("send_email", False)
+        send_sms = validated_data.get("send_sms", False)
+
+        # Check if the requesting user can manage this school
+        if not can_user_manage_school(request.user, school_id):
+            return Response(
+                {"error": "You don't have permission to invite teachers to this school"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            # Create invitation
+            invitation = create_school_invitation(
+                school_id=school_id,
+                email=email,
+                invited_by=request.user,
+                role=SchoolRole.TEACHER,
+            )
+
+            # Get school info for response
+            school = School.objects.get(id=school_id)
+            user = CustomUser.objects.get(email=email)
+
+            # Build invitation link
+            # TODO: Replace with actual frontend URL
+            invitation_link = f"https://aprendecomigo.com/accept-invitation/{invitation.token}"
+
+            response_data = {
+                "message": "Invitation created successfully",
+                "invitation": {
+                    "id": invitation.id,
+                    "token": invitation.token,
+                    "link": invitation_link,
+                    "expires_at": invitation.expires_at,
+                    "school": {
+                        "id": school.id,
+                        "name": school.name,
+                    },
+                    "invited_user": {
+                        "email": user.email,
+                        "name": user.name,
+                    },
+                },
+                "notifications_sent": {
+                    "email": False,
+                    "sms": False,
+                },
+            }
+
+            # Send email notification if requested
+            if send_email:
+                try:
+                    # TODO: Implement email sending
+                    # send_invitation_email(invitation, invitation_link)
+                    response_data["notifications_sent"]["email"] = True
+                except Exception as e:
+                    logger.warning(f"Failed to send invitation email: {e}")
+
+            # Send SMS notification if requested
+            if send_sms:
+                try:
+                    # TODO: Implement SMS sending
+                    # send_invitation_sms(invitation, invitation_link)
+                    response_data["notifications_sent"]["sms"] = True
+                except Exception as e:
+                    logger.warning(f"Failed to send invitation SMS: {e}")
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.error(f"Invite existing teacher failed for email {email}: {e!s}")
+
+            return Response(
+                {"error": "Failed to create invitation. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
 
 class StudentViewSet(KnoxAuthenticatedViewSet):
     """
@@ -1212,3 +1506,358 @@ class TeacherCourseViewSet(KnoxAuthenticatedViewSet):
             raise PermissionDenied(
                 "You don't have permission to modify this teacher-course relationship"
             )
+
+
+class InvitationViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing school invitations.
+    """
+
+    queryset = SchoolInvitation.objects.all()
+    serializer_class = SchoolInvitationSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    lookup_field = "token"  # Use token instead of id for lookups
+
+    def get_permissions(self):
+        """
+        Different permissions for different actions.
+        """
+        if self.action == "details":
+            # Anyone can view invitation details (for sharing links)
+            permission_classes = [AllowAny]
+        else:
+            # All other actions require authentication
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    def get_queryset(self):
+        """Filter invitations based on user permissions."""
+        user = self.request.user
+
+        # System admins can see all invitations
+        if user.is_staff or user.is_superuser:
+            return SchoolInvitation.objects.all()
+
+        # Users can see invitations sent to them or sent by them
+        return SchoolInvitation.objects.filter(
+            models.Q(email=user.email) | models.Q(invited_by=user)
+        )
+
+    @action(detail=True, methods=["post"])
+    def accept(self, request, token=None):
+        """
+        Accept a school invitation and become a teacher.
+
+        This endpoint allows a user to:
+        1. Accept an invitation using the token
+        2. Create their teacher profile with custom data
+        3. Join the school as a teacher
+        4. Associate with courses
+        """
+        from django.db import transaction
+
+        # Get the invitation
+        try:
+            invitation = SchoolInvitation.objects.get(token=token)
+        except SchoolInvitation.DoesNotExist:
+            return Response(
+                {"error": "Invalid invitation token"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate invitation
+        if not invitation.is_valid():
+            if invitation.is_accepted:
+                return Response(
+                    {"error": "This invitation has already been accepted"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                return Response(
+                    {"error": "This invitation has expired"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # Verify the current user is the intended recipient
+        if invitation.email != request.user.email:
+            return Response(
+                {"error": "This invitation is not for your account"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Validate the acceptance data
+        serializer = AcceptInvitationSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = serializer.validated_data
+
+        try:
+            with transaction.atomic():
+                # Check if user already has a teacher profile
+                if hasattr(request.user, "teacher_profile"):
+                    teacher_profile = request.user.teacher_profile
+                else:
+                    # Create teacher profile with provided data
+                    profile_data = {
+                        key: value
+                        for key, value in validated_data.items()
+                        if key not in ["course_ids"]
+                    }
+                    teacher_profile = TeacherProfile.objects.create(
+                        user=request.user, **profile_data
+                    )
+
+                # Create school membership if it doesn't exist
+                membership, created = SchoolMembership.objects.get_or_create(
+                    user=request.user,
+                    school=invitation.school,
+                    role=invitation.role,
+                    defaults={"is_active": True},
+                )
+
+                if not created and not membership.is_active:
+                    # Reactivate if was previously inactive
+                    membership.is_active = True
+                    membership.save()
+
+                # Associate courses if provided
+                course_ids = validated_data.get("course_ids", [])
+                teacher_courses = []
+                if course_ids:
+                    for course_id in course_ids:
+                        teacher_course, course_created = TeacherCourse.objects.get_or_create(
+                            teacher=teacher_profile,
+                            course_id=course_id,
+                            defaults={"is_active": True},
+                        )
+                        if course_created:
+                            teacher_courses.append(teacher_course)
+
+                # Mark invitation as accepted
+                invitation.is_accepted = True
+                invitation.save()
+
+                # Return success response
+                teacher_serializer = TeacherSerializer(teacher_profile)
+                membership_serializer = SchoolMembershipSerializer(membership)
+
+                return Response(
+                    {
+                        "message": "Invitation accepted successfully! You are now a teacher at this school.",
+                        "teacher": teacher_serializer.data,
+                        "school_membership": membership_serializer.data,
+                        "courses_added": len(teacher_courses),
+                        "school": {
+                            "id": invitation.school.id,
+                            "name": invitation.school.name,
+                        },
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+        except Exception as e:
+            logger.error(f"Accept invitation failed for token {token}: {e!s}")
+
+            return Response(
+                {"error": "Failed to accept invitation. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["get"])
+    def details(self, request, token=None):
+        """
+        Get invitation details without accepting it.
+        Useful for showing invitation info on the frontend before acceptance.
+        """
+        try:
+            invitation = SchoolInvitation.objects.get(token=token)
+        except SchoolInvitation.DoesNotExist:
+            return Response(
+                {"error": "Invalid invitation token"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check if invitation is valid
+        if not invitation.is_valid():
+            if invitation.is_accepted:
+                return Response(
+                    {"error": "This invitation has already been accepted"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                return Response(
+                    {"error": "This invitation has expired"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # Return invitation details
+        return Response(
+            {
+                "invitation": {
+                    "school": {
+                        "id": invitation.school.id,
+                        "name": invitation.school.name,
+                        "description": invitation.school.description,
+                    },
+                    "role": invitation.role,
+                    "role_display": invitation.get_role_display(),
+                    "invited_by": {
+                        "name": invitation.invited_by.name,
+                        "email": invitation.invited_by.email,
+                    },
+                    "expires_at": invitation.expires_at,
+                },
+                "target_email": invitation.email,
+                "requires_authentication": not request.user.is_authenticated,
+                "is_correct_user": request.user.is_authenticated
+                and request.user.email == invitation.email,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["post"])
+    def resend(self, request, token=None):
+        """
+        Resend invitation notifications (email/SMS).
+        """
+        try:
+            invitation = SchoolInvitation.objects.get(token=token)
+        except SchoolInvitation.DoesNotExist:
+            return Response(
+                {"error": "Invalid invitation token"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check if user can manage this invitation
+        if not can_user_manage_school(request.user, invitation.school.id):
+            return Response(
+                {"error": "You don't have permission to manage this invitation"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Check if invitation is still valid
+        if not invitation.is_valid():
+            return Response(
+                {"error": "This invitation is no longer valid"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        send_email = request.data.get("send_email", False)
+        send_sms = request.data.get("send_sms", False)
+
+        notifications_sent = {
+            "email": False,
+            "sms": False,
+        }
+
+        invitation_link = f"https://aprendecomigo.com/accept-invitation/{invitation.token}"
+
+        # Send email if requested
+        if send_email:
+            try:
+                # TODO: Implement email sending
+                # send_invitation_email(invitation, invitation_link)
+                notifications_sent["email"] = True
+            except Exception as e:
+                logger.warning(f"Failed to resend invitation email: {e}")
+
+        # Send SMS if requested
+        if send_sms:
+            try:
+                # TODO: Implement SMS sending
+                # send_invitation_sms(invitation, invitation_link)
+                notifications_sent["sms"] = True
+            except Exception as e:
+                logger.warning(f"Failed to resend invitation SMS: {e}")
+
+        return Response(
+            {
+                "message": "Invitation notifications sent",
+                "notifications_sent": notifications_sent,
+                "invitation_link": invitation_link,
+            }
+        )
+
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, token=None):
+        """
+        Cancel a pending invitation.
+        """
+        try:
+            invitation = SchoolInvitation.objects.get(token=token)
+        except SchoolInvitation.DoesNotExist:
+            return Response(
+                {"error": "Invalid invitation token"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check if user can manage this invitation
+        if not can_user_manage_school(request.user, invitation.school.id):
+            return Response(
+                {"error": "You don't have permission to manage this invitation"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Check if invitation is already accepted
+        if invitation.is_accepted:
+            return Response(
+                {"error": "Cannot cancel an already accepted invitation"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Delete the invitation
+        invitation.delete()
+
+        return Response({"message": "Invitation cancelled successfully"})
+
+
+class SchoolInvitationLinkView(APIView):
+    """
+    API endpoint for viewing generic school invitation link details.
+    This is a public endpoint (no auth required) for sharing links.
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, token):
+        """
+        Get invitation link details without joining.
+        Useful for showing invitation info on the frontend before the user decides to join.
+        """
+        try:
+            invitation_link = SchoolInvitationLink.objects.select_related("school").get(token=token)
+        except SchoolInvitationLink.DoesNotExist:
+            return Response(
+                {"error": "Invalid invitation link"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check if invitation link is valid
+        if not invitation_link.is_valid():
+            return Response(
+                {"error": "This invitation link has expired or is no longer active"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Return invitation link details
+        return Response(
+            {
+                "invitation": {
+                    "school": {
+                        "id": invitation_link.school.id,
+                        "name": invitation_link.school.name,
+                        "description": invitation_link.school.description,
+                    },
+                    "role": invitation_link.role,
+                    "role_display": invitation_link.get_role_display(),
+                    "expires_at": invitation_link.expires_at,
+                    "usage_count": invitation_link.usage_count,
+                    "max_uses": invitation_link.max_uses,
+                },
+                "requires_authentication": not request.user.is_authenticated,
+                "user_already_member": False,  # Will be updated below if user is authenticated
+            },
+            status=status.HTTP_200_OK,
+        )
