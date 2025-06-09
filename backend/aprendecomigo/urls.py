@@ -52,6 +52,7 @@ urlpatterns = [
     # App routes for API - use api/ prefix for all API endpoints
     path("api/accounts/", include("accounts.urls", namespace="accounts")),
     path("api/", include("classroom.urls")),  # Add classroom URLs
+    path("api/finances/", include("finances.urls")),  # Add finances URLs
 ]
 
 # In development, serve static files for Swagger UI and media files for uploads

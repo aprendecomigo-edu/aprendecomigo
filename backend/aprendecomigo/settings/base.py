@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "common",
     "accounts",
     "classroom",
+    "finances",
 ]
 
 MIDDLEWARE = [

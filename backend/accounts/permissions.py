@@ -1,6 +1,6 @@
 from rest_framework import permissions
 
-from .models import SchoolMembership
+from .models import School, SchoolMembership
 
 
 class IsTeacher(permissions.BasePermission):
@@ -291,3 +291,89 @@ class IsSuperUserOrSystemAdmin(permissions.BasePermission):
             and request.user.is_authenticated
             and (request.user.is_superuser or request.user.is_staff)
         )
+
+
+class SchoolPermissionMixin:
+    """
+    Mixin to provide school-related permission methods for ViewSets.
+
+    This mixin provides helper methods to get schools that a user has access to
+    based on their memberships and roles.
+    """
+
+    def get_user_schools(self):
+        """
+        Get all schools that the current user has access to.
+
+        Returns:
+            QuerySet of School objects the user can access
+        """
+        if not self.request.user.is_authenticated:
+            return School.objects.none()
+
+        # Superusers can access all schools
+        if self.request.user.is_superuser:
+            return School.objects.all()
+
+        # Get schools where user has any active membership
+        user_memberships = SchoolMembership.objects.filter(
+            user=self.request.user, is_active=True
+        ).values_list("school_id", flat=True)
+
+        return School.objects.filter(id__in=user_memberships)
+
+    def get_user_schools_by_role(self, role=None):
+        """
+        Get schools where the user has a specific role.
+
+        Args:
+            role: The role to filter by (e.g., 'school_owner', 'school_admin', 'teacher')
+
+        Returns:
+            QuerySet of School objects where user has the specified role
+        """
+        if not self.request.user.is_authenticated:
+            return School.objects.none()
+
+        # Superusers can access all schools regardless of role
+        if self.request.user.is_superuser:
+            return School.objects.all()
+
+        query_filter = {"user": self.request.user, "is_active": True}
+
+        if role:
+            query_filter["role"] = role
+
+        user_memberships = SchoolMembership.objects.filter(**query_filter).values_list(
+            "school_id", flat=True
+        )
+
+        return School.objects.filter(id__in=user_memberships)
+
+    def has_school_permission(self, school, required_roles=None):
+        """
+        Check if user has permission for a specific school.
+
+        Args:
+            school: School instance or school ID
+            required_roles: List of required roles (optional)
+
+        Returns:
+            Boolean indicating if user has permission
+        """
+        if not self.request.user.is_authenticated:
+            return False
+
+        # Superusers have permission for all schools
+        if self.request.user.is_superuser:
+            return True
+
+        # Get school ID if school object is passed
+        school_id = school.id if hasattr(school, "id") else school
+
+        query_filter = {"user": self.request.user, "school_id": school_id, "is_active": True}
+
+        if required_roles:
+            query_filter["role__in"] = required_roles
+
+        return SchoolMembership.objects.filter(**query_filter).exists()
