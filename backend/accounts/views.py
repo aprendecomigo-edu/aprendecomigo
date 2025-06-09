@@ -33,6 +33,7 @@ from .db_queries import (
 from .models import (
     Course,
     CustomUser,
+    EducationalSystem,
     School,
     SchoolInvitation,
     SchoolInvitationLink,
@@ -51,7 +52,9 @@ from .permissions import (
 from .serializers import (
     AcceptInvitationSerializer,
     CourseSerializer,
+    CreateStudentSerializer,
     CreateUserSerializer,
+    EducationalSystemSerializer,
     InviteExistingTeacherSerializer,
     RequestCodeSerializer,
     SchoolInvitationSerializer,
@@ -1194,6 +1197,72 @@ class StudentViewSet(KnoxAuthenticatedViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=["post"])
+    def create_student(self, request):
+        """
+        Create a complete student record (user + profile + school membership) in one request.
+        This action is only available to school administrators.
+        """
+        from django.db import transaction
+
+        # Validate the request data
+        serializer = CreateStudentSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = serializer.validated_data
+
+        # Check if user has permission to add students to the specified school
+        school = validated_data["school_id"]
+        if not can_user_manage_school(request.user, school):
+            return Response(
+                {"error": "You don't have permission to add students to this school"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            with transaction.atomic():
+                # Create the user
+                user_data = {
+                    "name": validated_data["name"],
+                    "email": validated_data["email"],
+                    "phone_number": validated_data.get("phone_number", ""),
+                    "primary_contact": validated_data.get("primary_contact", "email"),
+                }
+                user = CustomUser.objects.create_user(**user_data)
+
+                # Create the student profile
+                student_data = {
+                    "educational_system": validated_data["educational_system_id"],
+                    "school_year": validated_data["school_year"],
+                    "birth_date": validated_data["birth_date"],
+                    "address": validated_data.get("address", ""),
+                }
+                student_profile = StudentProfile.objects.create(user=user, **student_data)
+
+                # Create school membership
+                school_membership = SchoolMembership.objects.create(
+                    user=user, school=school, role=SchoolRole.STUDENT, is_active=True
+                )
+
+                # Prepare response data
+                response_data = {
+                    "message": "Student created successfully",
+                    "user": UserSerializer(user).data,
+                    "student": StudentSerializer(student_profile).data,
+                    "school_membership": SchoolMembershipSerializer(school_membership).data,
+                    "user_created": True,
+                }
+
+                return Response(response_data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.error(f"Error creating student: {e!s}")
+            return Response(
+                {"error": "Failed to create student. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
 
 class CourseViewSet(KnoxAuthenticatedViewSet):
     """
@@ -1215,6 +1284,30 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
             permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
         else:
             # Anyone can view courses
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+
+class EducationalSystemViewSet(KnoxAuthenticatedViewSet):
+    """
+    API endpoint for educational systems.
+    All users can view educational systems, but only admins can create/modify them.
+    """
+
+    serializer_class = EducationalSystemSerializer
+
+    def get_queryset(self):
+        """
+        All authenticated users can see active educational systems.
+        """
+        return EducationalSystem.objects.filter(is_active=True)
+
+    def get_permissions(self):
+        if self.action in ["create", "update", "partial_update", "destroy"]:
+            # Only school admins can create/modify educational systems
+            permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+        else:
+            # Anyone can view educational systems
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 

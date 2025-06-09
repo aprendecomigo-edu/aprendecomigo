@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     CourseViewSet,
+    EducationalSystemViewSet,
     InvitationViewSet,
     RequestCodeView,
     SchoolInvitationLinkView,
@@ -25,6 +26,7 @@ router.register(r"students", StudentViewSet, basename="student")
 router.register(r"schools", SchoolViewSet, basename="school")
 router.register(r"school-memberships", SchoolMembershipViewSet, basename="school_membership")
 router.register(r"courses", CourseViewSet, basename="course")
+router.register(r"educational-systems", EducationalSystemViewSet, basename="educational_system")
 router.register(r"teacher-courses", TeacherCourseViewSet, basename="teacher_course")
 router.register(r"invitations", InvitationViewSet, basename="invitation")
 

@@ -180,6 +180,49 @@ class SchoolMembership(models.Model):
         return str(role_display)  # Convert _StrPromise to str
 
 
+class EducationalSystem(models.Model):
+    """
+    Educational system model representing different education systems and their school years.
+    """
+
+    name: models.CharField = models.CharField(
+        _("system name"),
+        max_length=100,
+        help_text=_("Name of the educational system (e.g., 'Portugal', 'Brazil')"),
+    )
+    code: models.CharField = models.CharField(
+        _("system code"),
+        max_length=20,
+        unique=True,
+        help_text=_("Unique code for the system (e.g., 'pt', 'br')"),
+    )
+    description: models.TextField = models.TextField(
+        _("description"), blank=True, help_text=_("Description of the educational system")
+    )
+    school_years: models.JSONField = models.JSONField(
+        _("school years"),
+        default=list,
+        help_text=_(
+            "List of available school years in this system (e.g., ['1º ano', '2º ano', ...])"
+        ),
+    )
+    education_levels: models.JSONField = models.JSONField(
+        _("education levels"),
+        default=list,
+        help_text=_("List of education levels (e.g., ['ensino_basico', 'ensino_secundario'])"),
+    )
+    is_active: models.BooleanField = models.BooleanField(_("is active"), default=True)
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Educational System")
+        verbose_name_plural = _("Educational Systems")
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.code})"
+
+
 class StudentProfile(models.Model):
     """
     Student profile with additional information.
@@ -189,11 +232,20 @@ class StudentProfile(models.Model):
     user: models.OneToOneField = models.OneToOneField(
         CustomUser, on_delete=models.CASCADE, related_name="student_profile"
     )
-    school_year: models.CharField = models.CharField(_("school year"), max_length=50)
+    educational_system: models.ForeignKey = models.ForeignKey(
+        EducationalSystem,
+        on_delete=models.CASCADE,
+        related_name="students",
+        help_text=_("Educational system this student belongs to"),
+        default=1,  # Portugal system as default
+    )
+    school_year: models.CharField = models.CharField(
+        _("school year"), max_length=50, help_text=_("School year within the educational system")
+    )
     birth_date: models.DateField = models.DateField(_("birth date"))
     # Sensitive personal data fields
     address: models.TextField = models.TextField(
-        _("address"), help_text=_("Street, number, postal code and location")
+        _("address"), blank=True, help_text=_("Street, number, postal code and location")
     )
     cc_number: models.CharField = models.CharField(_("CC number"), max_length=20, blank=True)
     cc_photo: models.ImageField = models.ImageField(
@@ -260,14 +312,13 @@ class Course(models.Model):
     code: models.CharField = models.CharField(
         _("course code"),
         max_length=20,
-        unique=True,
         help_text=_("Alphanumeric code for the course (e.g., educational system codes)"),
     )
-    educational_system: models.CharField = models.CharField(
-        _("educational system"),
-        max_length=50,
-        default="custom",
-        help_text=_("Educational system this course belongs to (e.g., 'portugal', 'custom')"),
+    educational_system: models.ForeignKey = models.ForeignKey(
+        EducationalSystem,
+        on_delete=models.CASCADE,
+        related_name="courses",
+        help_text=_("Educational system this course belongs to"),
     )
     education_level: models.CharField = models.CharField(
         _("education level"),

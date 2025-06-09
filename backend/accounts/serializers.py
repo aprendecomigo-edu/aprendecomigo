@@ -8,6 +8,7 @@ from rest_framework import serializers
 
 from .models import (
     Course,
+    EducationalSystem,
     School,
     SchoolInvitation,
     SchoolMembership,
@@ -161,16 +162,51 @@ class SchoolWithMembersSerializer(SchoolSerializer):
         return SchoolMembershipSerializer(memberships, many=True).data
 
 
+class EducationalSystemSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the EducationalSystem model.
+    """
+
+    class Meta:
+        model = EducationalSystem
+        fields: ClassVar[list[str]] = [
+            "id",
+            "name",
+            "code",
+            "description",
+            "school_years",
+            "education_levels",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields: ClassVar[list[str]] = ["id", "created_at", "updated_at"]
+
+
 class StudentSerializer(serializers.ModelSerializer):
     """
     Serializer for the StudentProfile model.
     """
 
     user = UserSerializer(read_only=True)
+    educational_system = EducationalSystemSerializer(read_only=True)
+    educational_system_id = serializers.PrimaryKeyRelatedField(
+        write_only=True,
+        queryset=EducationalSystem.objects.filter(is_active=True),
+        source="educational_system",
+    )
 
     class Meta:
         model = StudentProfile
-        fields: ClassVar[list[str]] = ["id", "user", "school_year", "birth_date", "address"]
+        fields: ClassVar[list[str]] = [
+            "id",
+            "user",
+            "educational_system",
+            "educational_system_id",
+            "school_year",
+            "birth_date",
+            "address",
+        ]
         read_only_fields: ClassVar[list[str]] = ["id"]
 
 
@@ -658,3 +694,93 @@ class AcceptInvitationSerializer(serializers.Serializer):
             raise serializers.ValidationError(f"Invalid course IDs: {list(invalid_ids)}")
 
         return value
+
+
+class CreateStudentSerializer(serializers.Serializer):
+    """
+    Serializer for creating a complete student record (user + profile + school membership) in one request.
+    """
+
+    # User fields
+    name = serializers.CharField(max_length=150)
+    email = serializers.EmailField()
+    phone_number = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    primary_contact = serializers.ChoiceField(
+        choices=[("email", "Email"), ("phone", "Phone")], default="email"
+    )
+
+    # Student profile fields
+    educational_system_id = serializers.PrimaryKeyRelatedField(
+        queryset=EducationalSystem.objects.filter(is_active=True), help_text="Educational system ID"
+    )
+    school_year = serializers.CharField(
+        max_length=50, help_text="School year within the educational system"
+    )
+    birth_date = serializers.DateField(help_text="Student's birth date (YYYY-MM-DD)")
+    address = serializers.CharField(
+        required=False, allow_blank=True, help_text="Student's address (optional)"
+    )
+
+    # School membership
+    school_id = serializers.PrimaryKeyRelatedField(
+        queryset=School.objects.all(), help_text="School ID to add the student to"
+    )
+
+    def validate_email(self, value):
+        """Validate that email doesn't already exist"""
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists")
+        return value
+
+    def validate_phone_number(self, value):
+        """Validate phone number format if provided"""
+        if value and not re.match(r"^\+?[0-9\s\-\(\)]{5,20}$", value):
+            raise serializers.ValidationError("Invalid phone number format")
+        return value
+
+    def validate_school_year(self, value):
+        """Validate that school year exists in the educational system"""
+        educational_system_id = self.initial_data.get("educational_system_id")
+        if educational_system_id:
+            try:
+                educational_system = EducationalSystem.objects.get(id=educational_system_id)
+                # Extract valid keys from the school_years tuples/lists
+                valid_keys = [year[0] for year in educational_system.school_years]
+                if value not in valid_keys:
+                    # Format error message with key: display pairs
+                    valid_options = [
+                        f"'{year[0]}': '{year[1]}'" for year in educational_system.school_years
+                    ]
+                    raise serializers.ValidationError(
+                        f"School year '{value}' is not valid for educational system '{educational_system.name}'. "
+                        f"Valid options: {{{', '.join(valid_options)}}}"
+                    )
+            except EducationalSystem.DoesNotExist:
+                pass  # Will be caught by educational_system_id validation
+        return value
+
+    def validate(self, data):
+        """Cross-field validation"""
+        primary_contact = data.get("primary_contact")
+        phone_number = data.get("phone_number")
+
+        if primary_contact == "phone" and not phone_number:
+            raise serializers.ValidationError(
+                {
+                    "primary_contact": "Phone number is required when phone is selected as primary contact"
+                }
+            )
+
+        return data
+
+
+class CreateStudentResponseSerializer(serializers.Serializer):
+    """
+    Serializer for create student response data.
+    """
+
+    message = serializers.CharField()
+    user = UserSerializer()
+    student = StudentSerializer()
+    school_membership = SchoolMembershipSerializer()
+    user_created = serializers.BooleanField(default=True)

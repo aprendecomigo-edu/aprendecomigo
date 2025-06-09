@@ -11,6 +11,7 @@ import React, { useState, useEffect } from 'react';
 
 import { getTeachers, TeacherProfile } from '@/api/userApi';
 import { MainLayout } from '@/components/layouts/main-layout';
+import { AddStudentModal } from '@/components/modals/add-student-modal';
 import { AddTeacherModal } from '@/components/modals/add-teacher-modal';
 import { InviteTeacherModal } from '@/components/modals/invite-teacher-modal';
 import { Box } from '@/components/ui/box';
@@ -246,12 +247,11 @@ const TeachersTab = ({
   );
 };
 
-const StudentsTab = () => {
-  const handleAddStudent = () => {
-    console.log('Add student');
-    // TODO: Implement add student functionality
-  };
+interface StudentsTabProps {
+  onAddStudent: () => void;
+}
 
+const StudentsTab = ({ onAddStudent }: StudentsTabProps) => {
   return (
     <VStack space="xl">
       {/* Action Buttons */}
@@ -263,19 +263,19 @@ const StudentsTab = () => {
           <ActionButton
             icon={UserPlus}
             title="Adicionar aluno"
-            onPress={handleAddStudent}
+            onPress={onAddStudent}
             variant="secondary"
           />
           <ActionButton
             icon={Mail}
             title="Convidar aluno"
-            onPress={handleAddStudent}
+            onPress={onAddStudent}
             variant="primary"
           />
           <ActionButton
             icon={Plus}
             title="Importar lista"
-            onPress={handleAddStudent}
+            onPress={onAddStudent}
             variant="tertiary"
           />
         </HStack>
@@ -396,6 +396,7 @@ export default function UsersPage() {
   const [activeTab, setActiveTab] = useState<TabType>('teachers');
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [isInviteTeacherModalOpen, setIsInviteTeacherModalOpen] = useState(false);
+  const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -445,6 +446,15 @@ export default function UsersPage() {
     // Optionally refresh teachers list or show success message
   };
 
+  const handleAddStudent = () => {
+    setIsAddStudentModalOpen(true);
+  };
+
+  const handleStudentSuccess = () => {
+    console.log('Student created successfully!');
+    // TODO: Refresh students list when implemented
+  };
+
   const fetchTeachers = async () => {
     try {
       setLoading(true);
@@ -477,7 +487,7 @@ export default function UsersPage() {
           />
         );
       case 'students':
-        return <StudentsTab />;
+        return <StudentsTab onAddStudent={handleAddStudent} />;
       case 'staff':
         return <StaffTab />;
       default:
@@ -560,6 +570,13 @@ export default function UsersPage() {
         isOpen={isInviteTeacherModalOpen}
         onClose={() => setIsInviteTeacherModalOpen(false)}
         onSuccess={handleInviteSuccess}
+      />
+
+      {/* Add Student Modal */}
+      <AddStudentModal
+        isOpen={isAddStudentModalOpen}
+        onClose={() => setIsAddStudentModalOpen(false)}
+        onSuccess={handleStudentSuccess}
       />
     </MainLayout>
   );
