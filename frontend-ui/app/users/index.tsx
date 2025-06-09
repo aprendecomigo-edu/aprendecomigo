@@ -1,4 +1,12 @@
-import { UserPlus, Mail, Plus, AlertCircle } from 'lucide-react-native';
+import {
+  UserPlus,
+  Mail,
+  Plus,
+  AlertCircle,
+  Users,
+  GraduationCap,
+  Building,
+} from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 
 import { getTeachers, TeacherProfile } from '@/api/userApi';
@@ -33,6 +41,15 @@ const COLORS = {
     900: '#111827',
   },
 } as const;
+
+type TabType = 'teachers' | 'students' | 'staff';
+
+interface TabInfo {
+  key: TabType;
+  title: string;
+  icon: any;
+  count: number;
+}
 
 interface ActionButtonProps {
   icon: any;
@@ -86,52 +103,323 @@ const ActionButton = ({ icon, title, onPress, variant = 'secondary' }: ActionBut
   );
 };
 
-const UserTypeCard = ({
-  title,
-  count,
-  variant,
-}: {
-  title: string;
-  count: number;
-  variant: 'primary' | 'secondary' | 'tertiary';
-}) => {
-  const getCardStyles = () => {
-    switch (variant) {
-      case 'primary':
-        return {
-          backgroundColor: COLORS.primary,
-        };
-      case 'secondary':
-        return {
-          backgroundColor: COLORS.secondary,
-        };
-      case 'tertiary':
-        return {
-          backgroundColor: COLORS.secondary,
-        };
-      default:
-        return {
-          backgroundColor: COLORS.primary,
-        };
-    }
+interface TabHeaderProps {
+  tabs: TabInfo[];
+  activeTab: TabType;
+  onTabChange: (tab: TabType) => void;
+}
+
+const TabHeader = ({ tabs, activeTab, onTabChange }: TabHeaderProps) => {
+  return (
+    <HStack className="w-full bg-white rounded-lg border border-gray-200" style={{ padding: 4 }}>
+      {tabs.map((tab, index) => {
+        const isActive = activeTab === tab.key;
+        const isLast = index === tabs.length - 1;
+
+        return (
+          <Pressable
+            key={tab.key}
+            className={`flex-1 py-3 px-4 rounded-md ${!isLast ? 'mr-1' : ''}`}
+            style={{
+              backgroundColor: isActive ? COLORS.primary : 'transparent',
+            }}
+            onPress={() => onTabChange(tab.key)}
+          >
+            <VStack className="items-center" space="xs">
+              <HStack className="items-center" space="xs">
+                <Icon
+                  as={tab.icon}
+                  size="sm"
+                  className={isActive ? 'text-white' : 'text-gray-600'}
+                />
+                <Text
+                  className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-600'}`}
+                >
+                  {tab.title}
+                </Text>
+              </HStack>
+              <Text className={`text-xs ${isActive ? 'text-blue-100' : 'text-gray-500'}`}>
+                {tab.count} ativos
+              </Text>
+            </VStack>
+          </Pressable>
+        );
+      })}
+    </HStack>
+  );
+};
+
+interface TeachersTabProps {
+  teachers: TeacherProfile[];
+  onAddTeacher: () => void;
+  onInviteTeacher: () => void;
+  onAddManually: () => void;
+}
+
+const TeachersTab = ({
+  teachers,
+  onAddTeacher,
+  onInviteTeacher,
+  onAddManually,
+}: TeachersTabProps) => {
+  return (
+    <VStack space="xl">
+      {/* Action Buttons */}
+      <VStack space="md">
+        <Heading size="md" className="text-gray-900">
+          Ações Rápidas
+        </Heading>
+        <HStack className="w-full" style={{ paddingHorizontal: 4 }}>
+          <ActionButton
+            icon={UserPlus}
+            title="Adicionar-me como professor"
+            onPress={onAddTeacher}
+            variant="primary"
+          />
+          <ActionButton
+            icon={Mail}
+            title="Convidar professor"
+            onPress={onInviteTeacher}
+            variant="secondary"
+          />
+          <ActionButton
+            icon={Plus}
+            title="Adicionar manualmente"
+            onPress={onAddManually}
+            variant="tertiary"
+          />
+        </HStack>
+      </VStack>
+
+      {/* Teachers List */}
+      <VStack space="md">
+        <Heading size="lg" className="text-gray-900">
+          Lista de Professores
+        </Heading>
+
+        <Box
+          className="rounded-lg border border-gray-200"
+          style={{ backgroundColor: COLORS.white }}
+        >
+          <VStack>
+            {/* Table header */}
+            <HStack className="p-4 border-b border-gray-200">
+              <Text className="flex-1 font-medium text-gray-700">Nome</Text>
+              <Text className="flex-1 font-medium text-gray-700">Email</Text>
+              <Text className="flex-1 font-medium text-gray-700">Especialidade</Text>
+              <Text className="w-20 font-medium text-gray-700">Status</Text>
+            </HStack>
+
+            {teachers.length === 0 ? (
+              /* Empty state */
+              <Box className="p-8">
+                <Center>
+                  <VStack className="items-center" space="xs">
+                    <Icon as={GraduationCap} size="lg" className="text-gray-400" />
+                    <Text className="text-gray-500">Nenhum professor cadastrado</Text>
+                    <Text className="text-gray-400 text-sm text-center">
+                      Use os botões acima para adicionar professores
+                    </Text>
+                  </VStack>
+                </Center>
+              </Box>
+            ) : (
+              /* Teachers list */
+              teachers.map((teacher, index) => (
+                <HStack
+                  key={teacher.id}
+                  className={`p-4 ${index < teachers.length - 1 ? 'border-b border-gray-200' : ''}`}
+                >
+                  <Text className="flex-1 text-gray-900">{teacher.user.name}</Text>
+                  <Text className="flex-1 text-gray-600">{teacher.user.email}</Text>
+                  <Text className="flex-1 text-gray-600">
+                    {teacher.specialty || 'Não especificado'}
+                  </Text>
+                  <Text className="w-20 text-green-600 text-sm">Ativo</Text>
+                </HStack>
+              ))
+            )}
+          </VStack>
+        </Box>
+      </VStack>
+    </VStack>
+  );
+};
+
+const StudentsTab = () => {
+  const handleAddStudent = () => {
+    console.log('Add student');
+    // TODO: Implement add student functionality
   };
 
   return (
-    <Box className="flex-1 rounded-lg p-4" style={{ ...getCardStyles(), marginHorizontal: 8 }}>
-      <VStack className="items-center" space="xs">
-        <Text className="text-white text-lg font-bold">{title}</Text>
-        <Text className="text-white text-sm">{count} ativos</Text>
+    <VStack space="xl">
+      {/* Action Buttons */}
+      <VStack space="md">
+        <Heading size="md" className="text-gray-900">
+          Ações Rápidas
+        </Heading>
+        <HStack className="w-full" style={{ paddingHorizontal: 4 }}>
+          <ActionButton
+            icon={UserPlus}
+            title="Adicionar aluno"
+            onPress={handleAddStudent}
+            variant="secondary"
+          />
+          <ActionButton
+            icon={Mail}
+            title="Convidar aluno"
+            onPress={handleAddStudent}
+            variant="primary"
+          />
+          <ActionButton
+            icon={Plus}
+            title="Importar lista"
+            onPress={handleAddStudent}
+            variant="tertiary"
+          />
+        </HStack>
       </VStack>
-    </Box>
+
+      {/* Students List */}
+      <VStack space="md">
+        <Heading size="lg" className="text-gray-900">
+          Lista de Alunos
+        </Heading>
+
+        <Box
+          className="rounded-lg border border-gray-200"
+          style={{ backgroundColor: COLORS.white }}
+        >
+          <VStack>
+            {/* Table header */}
+            <HStack className="p-4 border-b border-gray-200">
+              <Text className="flex-1 font-medium text-gray-700">Nome</Text>
+              <Text className="flex-1 font-medium text-gray-700">Email</Text>
+              <Text className="flex-1 font-medium text-gray-700">Turma</Text>
+              <Text className="w-20 font-medium text-gray-700">Status</Text>
+            </HStack>
+
+            {/* Empty state */}
+            <Box className="p-8">
+              <Center>
+                <VStack className="items-center" space="xs">
+                  <Icon as={Users} size="lg" className="text-gray-400" />
+                  <Text className="text-gray-500">Nenhum aluno cadastrado</Text>
+                  <Text className="text-gray-400 text-sm text-center">
+                    Use os botões acima para adicionar alunos
+                  </Text>
+                </VStack>
+              </Center>
+            </Box>
+          </VStack>
+        </Box>
+      </VStack>
+    </VStack>
+  );
+};
+
+const StaffTab = () => {
+  const handleAddStaff = () => {
+    console.log('Add staff');
+    // TODO: Implement add staff functionality
+  };
+
+  return (
+    <VStack space="xl">
+      {/* Action Buttons */}
+      <VStack space="md">
+        <Heading size="md" className="text-gray-900">
+          Ações Rápidas
+        </Heading>
+        <HStack className="w-full" style={{ paddingHorizontal: 4 }}>
+          <ActionButton
+            icon={UserPlus}
+            title="Adicionar colaborador"
+            onPress={handleAddStaff}
+            variant="primary"
+          />
+          <ActionButton
+            icon={Mail}
+            title="Convidar colaborador"
+            onPress={handleAddStaff}
+            variant="secondary"
+          />
+          <ActionButton
+            icon={Plus}
+            title="Definir permissões"
+            onPress={handleAddStaff}
+            variant="tertiary"
+          />
+        </HStack>
+      </VStack>
+
+      {/* Staff List */}
+      <VStack space="md">
+        <Heading size="lg" className="text-gray-900">
+          Lista de Colaboradores
+        </Heading>
+
+        <Box
+          className="rounded-lg border border-gray-200"
+          style={{ backgroundColor: COLORS.white }}
+        >
+          <VStack>
+            {/* Table header */}
+            <HStack className="p-4 border-b border-gray-200">
+              <Text className="flex-1 font-medium text-gray-700">Nome</Text>
+              <Text className="flex-1 font-medium text-gray-700">Email</Text>
+              <Text className="flex-1 font-medium text-gray-700">Cargo</Text>
+              <Text className="w-20 font-medium text-gray-700">Status</Text>
+            </HStack>
+
+            {/* Empty state */}
+            <Box className="p-8">
+              <Center>
+                <VStack className="items-center" space="xs">
+                  <Icon as={Building} size="lg" className="text-gray-400" />
+                  <Text className="text-gray-500">Nenhum colaborador cadastrado</Text>
+                  <Text className="text-gray-400 text-sm text-center">
+                    Use os botões acima para adicionar colaboradores
+                  </Text>
+                </VStack>
+              </Center>
+            </Box>
+          </VStack>
+        </Box>
+      </VStack>
+    </VStack>
   );
 };
 
 export default function UsersPage() {
+  const [activeTab, setActiveTab] = useState<TabType>('teachers');
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [isInviteTeacherModalOpen, setIsInviteTeacherModalOpen] = useState(false);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const tabs: TabInfo[] = [
+    {
+      key: 'teachers',
+      title: 'Professores',
+      icon: GraduationCap,
+      count: teachers.length,
+    },
+    {
+      key: 'students',
+      title: 'Alunos',
+      icon: Users,
+      count: 0, // TODO: Replace with actual student count
+    },
+    {
+      key: 'staff',
+      title: 'Colaboradores',
+      icon: Building,
+      count: 0, // TODO: Replace with actual staff count
+    },
+  ];
 
   const handleAddMeAsTeacher = () => {
     setIsAddTeacherModalOpen(true);
@@ -177,6 +465,33 @@ export default function UsersPage() {
     fetchTeachers();
   }, []);
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'teachers':
+        return (
+          <TeachersTab
+            teachers={teachers}
+            onAddTeacher={handleAddMeAsTeacher}
+            onInviteTeacher={handleInviteTeacher}
+            onAddManually={handleAddManually}
+          />
+        );
+      case 'students':
+        return <StudentsTab />;
+      case 'staff':
+        return <StaffTab />;
+      default:
+        return (
+          <TeachersTab
+            teachers={teachers}
+            onAddTeacher={handleAddMeAsTeacher}
+            onInviteTeacher={handleInviteTeacher}
+            onAddManually={handleAddManually}
+          />
+        );
+    }
+  };
+
   // Show loading if checking auth status
   if (loading && !error) {
     return (
@@ -185,7 +500,7 @@ export default function UsersPage() {
           <Center className="flex-1">
             <VStack className="items-center" space="md">
               <Spinner size="large" />
-              <Text className="text-gray-500">Carregando professores...</Text>
+              <Text className="text-gray-500">Carregando...</Text>
             </VStack>
           </Center>
         </Box>
@@ -205,14 +520,9 @@ export default function UsersPage() {
                 <Heading size="lg" className="text-gray-900 text-center">
                   Error Loading Data
                 </Heading>
-                <Text className="text-gray-600 text-center">
-                  {error}
-                </Text>
+                <Text className="text-gray-600 text-center">{error}</Text>
               </VStack>
-              <Button
-                onPress={fetchTeachers}
-                className="w-full bg-primary-600"
-              >
+              <Button onPress={fetchTeachers} className="w-full bg-primary-600">
                 <ButtonText>Try Again</ButtonText>
               </Button>
             </VStack>
@@ -230,93 +540,11 @@ export default function UsersPage() {
         showsVerticalScrollIndicator={false}
       >
         <VStack className="p-6" space="xl">
-          {/* User Type Cards */}
-          <HStack className="w-full" style={{ paddingHorizontal: 8 }}>
-            <UserTypeCard title="Professores" count={teachers.length} variant="primary" />
-            <UserTypeCard title="Alunos" count={0} variant="secondary" />
-            <UserTypeCard title="Colaboradores" count={0} variant="tertiary" />
-          </HStack>
+          {/* Tab Header */}
+          <TabHeader tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-          {/* Action Buttons */}
-          <VStack space="md">
-            <Heading size="md" className="text-gray-900">
-              Ações Rápidas
-            </Heading>
-            <HStack className="w-full" style={{ paddingHorizontal: 4 }}>
-              <ActionButton
-                icon={UserPlus}
-                title="Adicionar-me como professor"
-                onPress={handleAddMeAsTeacher}
-                variant="primary"
-              />
-              <ActionButton
-                icon={Mail}
-                title="Convidar professor"
-                onPress={handleInviteTeacher}
-                variant="secondary"
-              />
-              <ActionButton
-                icon={Plus}
-                title="Adicionar manualmente"
-                onPress={handleAddManually}
-                variant="tertiary"
-              />
-            </HStack>
-          </VStack>
-
-          {/* Users List Section */}
-          <VStack space="md">
-            <Heading size="lg" className="text-gray-900">
-              Lista de Professores
-            </Heading>
-
-            <Box
-              className="rounded-lg border border-gray-200"
-              style={{ backgroundColor: COLORS.white }}
-            >
-              <VStack>
-                {/* Table header */}
-                <HStack className="p-4 border-b border-gray-200">
-                  <Text className="flex-1 font-medium text-gray-700">Nome</Text>
-                  <Text className="flex-1 font-medium text-gray-700">Email</Text>
-                  <Text className="flex-1 font-medium text-gray-700">Especialidade</Text>
-                  <Text className="w-20 font-medium text-gray-700">Status</Text>
-                </HStack>
-
-                {teachers.length === 0 ? (
-                  /* Empty state */
-                  <Box className="p-8">
-                    <Center>
-                      <VStack className="items-center" space="xs">
-                        <Icon as={UserPlus} size="lg" className="text-gray-400" />
-                        <Text className="text-gray-500">Nenhum professor cadastrado</Text>
-                        <Text className="text-gray-400 text-sm text-center">
-                          Use os botões acima para adicionar professores
-                        </Text>
-                      </VStack>
-                    </Center>
-                  </Box>
-                ) : (
-                  /* Teachers list */
-                  teachers.map((teacher, index) => (
-                    <HStack
-                      key={teacher.id}
-                      className={`p-4 ${
-                        index < teachers.length - 1 ? 'border-b border-gray-200' : ''
-                      }`}
-                    >
-                      <Text className="flex-1 text-gray-900">{teacher.user.name}</Text>
-                      <Text className="flex-1 text-gray-600">{teacher.user.email}</Text>
-                      <Text className="flex-1 text-gray-600">
-                        {teacher.specialty || 'Não especificado'}
-                      </Text>
-                      <Text className="w-20 text-green-600 text-sm">Ativo</Text>
-                    </HStack>
-                  ))
-                )}
-              </VStack>
-            </Box>
-          </VStack>
+          {/* Tab Content */}
+          {renderTabContent()}
         </VStack>
       </ScrollView>
 
