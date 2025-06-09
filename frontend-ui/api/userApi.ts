@@ -43,7 +43,7 @@ export interface DashboardInfo {
  * Get dashboard information for the current user
  */
 export const getDashboardInfo = async () => {
-  const response = await apiClient.get<DashboardInfo>('/users/dashboard_info/');
+  const response = await apiClient.get<DashboardInfo>('/accounts/users/dashboard_info/');
   return response.data;
 };
 
@@ -68,22 +68,17 @@ export const getTeacherProfile = async (id?: number) => {
  * Get list of teachers
  */
 export const getTeachers = async (): Promise<TeacherProfile[]> => {
-  try {
-    const response = await apiClient.get('/accounts/teachers/');
+  const response = await apiClient.get('/accounts/teachers/');
 
-    // Handle paginated response - extract results
-    if (response.data && Array.isArray(response.data.results)) {
-      return response.data.results;
-    } else if (Array.isArray(response.data)) {
-      // Fallback for non-paginated response
-      return response.data;
-    } else {
-      console.warn('API did not return expected format:', response.data);
-      return [];
-    }
-  } catch (error) {
-    console.error('Error loading teachers:', error);
-    return []; // Return empty array on error
+  // Handle paginated response - extract results
+  if (response.data && Array.isArray(response.data.results)) {
+    return response.data.results;
+  } else if (Array.isArray(response.data)) {
+    // Fallback for non-paginated response
+    return response.data;
+  } else {
+    console.warn('API did not return expected format:', response.data);
+    return [];
   }
 };
 

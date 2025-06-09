@@ -1,4 +1,7 @@
+import { Hash, MessageCircle, Lock } from 'lucide-react-native';
 import React from 'react';
+
+import { Channel } from '@/api/channelApi';
 import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
@@ -6,8 +9,6 @@ import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Hash, MessageCircle, Lock } from 'lucide-react-native';
-import { Channel } from '@/api/channelApi';
 
 interface ChannelListItemProps {
   channel: Channel;
@@ -63,15 +64,15 @@ export const ChannelListItem = ({ channel, onPress }: ChannelListItemProps) => {
 
         <VStack className="flex-1">
           <HStack className="justify-between items-center">
-            <Text className={`${isUnread ? 'font-bold' : 'font-medium'}`}>
-              {channel.name}
-            </Text>
+            <Text className={`${isUnread ? 'font-bold' : 'font-medium'}`}>{channel.name}</Text>
             <Text className="text-xs text-gray-500">{channel.time}</Text>
           </HStack>
 
           <HStack className="justify-between items-center">
             <Text
-              className={`text-sm ${isUnread ? 'text-gray-800 font-medium' : 'text-gray-600'} flex-1`}
+              className={`text-sm ${
+                isUnread ? 'text-gray-800 font-medium' : 'text-gray-600'
+              } flex-1`}
               numberOfLines={1}
             >
               {channel.lastMessage}

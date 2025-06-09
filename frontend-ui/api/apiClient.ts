@@ -4,6 +4,14 @@ import * as SecureStore from 'expo-secure-store';
 
 import { API_URL } from '@/constants/api';
 
+// Authentication error callback - will be set by auth context
+let authErrorCallback: (() => void) | null = null;
+
+// Function to set the auth error callback (called by auth context)
+export const setAuthErrorCallback = (callback: (() => void) | null) => {
+  authErrorCallback = callback;
+};
+
 // Helper to get token from secure storage
 const getToken = async (): Promise<string | null> => {
   try {
@@ -13,9 +21,22 @@ const getToken = async (): Promise<string | null> => {
 
     // If not found in SecureStore, check AsyncStorage (for backward compatibility)
     return await AsyncStorage.getItem('auth_token');
-  } catch (error) {
+  } catch {
     // Fall back to AsyncStorage if SecureStore fails
     return await AsyncStorage.getItem('auth_token');
+  }
+};
+
+// Helper to remove token from secure storage
+const removeToken = async () => {
+  try {
+    // Try to use SecureStore first
+    await SecureStore.deleteItemAsync('auth_token');
+    // Also clear from AsyncStorage (for backward compatibility)
+    await AsyncStorage.removeItem('auth_token');
+  } catch {
+    // Fall back to AsyncStorage if SecureStore fails
+    await AsyncStorage.removeItem('auth_token');
   }
 };
 
@@ -55,7 +76,19 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // Handle unauthorized error
+      // Clear the invalid token
+      await removeToken();
+
+      // Notify auth context of the error
+      if (authErrorCallback) {
+        authErrorCallback();
+      }
+
+      // Create a custom error that components can detect
+      const authError = new Error('Authentication failed - token expired or invalid');
+      authError.name = 'AuthenticationError';
+      error.isAuthenticationError = true;
+
       return Promise.reject(error);
     }
 

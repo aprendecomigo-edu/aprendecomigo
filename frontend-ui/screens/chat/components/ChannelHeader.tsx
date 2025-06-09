@@ -1,14 +1,15 @@
+import { MenuIcon, SearchIcon, PlusCircleIcon } from 'lucide-react-native';
 import React from 'react';
+
+import { useAuth } from '@/api/authContext';
+import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Input, InputField } from '@/components/ui/input';
-import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
-import { MenuIcon, SearchIcon, PlusCircleIcon } from 'lucide-react-native';
-import { useAuth } from '@/api/authContext';
 
 interface ChannelHeaderProps {
   toggleDrawer: () => void;
@@ -19,7 +20,12 @@ interface ChannelHeaderProps {
 export const ChannelHeader = ({ toggleDrawer, searchTerm, onSearchChange }: ChannelHeaderProps) => {
   const { userProfile } = useAuth();
   const userName = userProfile?.name;
-  const userInitials = userName?.split(' ').map(name => name[0]).join('').slice(0, 2).toUpperCase();
+  const userInitials = userName
+    ?.split(' ')
+    .map(name => name[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <VStack space="md" className="bg-white border-b border-gray-200 p-4">

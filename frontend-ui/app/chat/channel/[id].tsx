@@ -1,13 +1,14 @@
+import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+
+import { Channel, fetchChannels } from '@/api/channelApi';
+import MainLayout from '@/components/layouts/main-layout';
 import { Box } from '@/components/ui/box';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import MainLayout from '@/components/layouts/main-layout';
-import { Channel, fetchChannels } from '@/api/channelApi';
-import { ChannelDrawer } from '@/screens/chat/components/ChannelDrawer';
 import ChannelContent from '@/screens/chat/components/ChannelContent';
+import { ChannelDrawer } from '@/screens/chat/components/ChannelDrawer';
 
 export default function ChatRoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -62,10 +63,7 @@ export default function ChatRoomScreen() {
 
           {/* Main Content */}
           <View style={[styles.contentContainer, { marginLeft: isDrawerOpen ? 240 : 0 }]}>
-            <ChannelContent
-              channel={selectedChannel}
-              isLoading={isLoading}
-            />
+            <ChannelContent channel={selectedChannel} isLoading={isLoading} />
           </View>
         </View>
       </Box>
@@ -81,5 +79,5 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-  }
+  },
 });

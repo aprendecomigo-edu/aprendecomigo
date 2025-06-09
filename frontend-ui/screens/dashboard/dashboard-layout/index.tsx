@@ -3,7 +3,16 @@ import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router } from 'expo-router';
 import type { Href } from 'expo-router';
 import type { LucideIcon } from 'lucide-react-native';
-import { LogOutIcon, PlusIcon, CheckIcon, MinusIcon, AlertTriangleIcon, MessagesSquare, HomeIcon, Home } from 'lucide-react-native';
+import {
+  LogOutIcon,
+  PlusIcon,
+  CheckIcon,
+  MinusIcon,
+  AlertTriangleIcon,
+  MessagesSquare,
+  HomeIcon,
+  Home,
+} from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Platform, Alert } from 'react-native';
 
@@ -213,7 +222,10 @@ const Sidebar = () => {
   };
 
   return (
-    <VStack className="w-14 pt-5 h-full items-center border-r border-border-300 pb-5 bg-background-primary" space="xl">
+    <VStack
+      className="w-14 pt-5 h-full items-center border-r border-border-300 pb-5 bg-background-primary"
+      space="xl"
+    >
       <VStack className="items-center" space="xl">
         {list.map((item, index) => {
           return (
@@ -256,7 +268,11 @@ const DashboardLayout = (props: DashboardLayoutProps) => {
         <MobileHeader title={props.title} onSchoolChange={props.onSchoolChange} />
       </Box>
       <Box className="hidden md:flex">
-        <WebHeader toggleSidebar={toggleSidebar} title={props.title} onSchoolChange={props.onSchoolChange} />
+        <WebHeader
+          toggleSidebar={toggleSidebar}
+          title={props.title}
+          onSchoolChange={props.onSchoolChange}
+        />
       </Box>
       <VStack className="h-full w-full">
         <HStack className="h-full w-full">
@@ -278,7 +294,10 @@ function MobileFooter({ footerIcons }: { footerIcons: any }) {
       )}
     >
       {footerIcons.map(
-        (item: { iconText: string; iconName: any; route?: string }, index: React.Key | null | undefined) => {
+        (
+          item: { iconText: string; iconName: any; route?: string },
+          index: React.Key | null | undefined
+        ) => {
           return (
             <Pressable
               className="px-0.5 flex-1 flex-col items-center"
@@ -610,7 +629,11 @@ export const Dashboard = () => {
 
   return (
     <SafeAreaView className="h-full w-full">
-      <DashboardLayout title={selectedSchool.name} isSidebarVisible={true} onSchoolChange={handleSchoolChange}>
+      <DashboardLayout
+        title={selectedSchool.name}
+        isSidebarVisible={true}
+        onSchoolChange={handleSchoolChange}
+      >
         <MainContent />
       </DashboardLayout>
       <MobileFooter footerIcons={bottomTabsList} />

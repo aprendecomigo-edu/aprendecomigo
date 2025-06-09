@@ -104,9 +104,7 @@ export const TopNavigation = ({
           onPress={() => setShowSchoolMenu(!showSchoolMenu)}
           className="flex-row items-center"
         >
-          <Text className="text-2xl font-medium text-white">
-            {selectedSchool.name}
-          </Text>
+          <Text className="text-2xl font-medium text-white">{selectedSchool.name}</Text>
           <Icon as={ChevronDownIcon} size="sm" className="ml-2 mt-1 text-white" />
         </Pressable>
 

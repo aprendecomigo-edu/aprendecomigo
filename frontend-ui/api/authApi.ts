@@ -236,7 +236,31 @@ export const logout = async () => {
  */
 export const isAuthenticated = async (): Promise<boolean> => {
   const token = await getToken();
-  return token !== null;
+  if (!token) {
+    return false;
+  }
+
+  // Validate token with server
+  try {
+    await apiClient.get('/accounts/users/dashboard_info/');
+    return true;
+  } catch (error: any) {
+    // If server is unreachable, we can't verify auth - logout user
+    if (!error.response || error.code === 'ERR_NETWORK' || error.code === 'ERR_CONNECTION_REFUSED') {
+      await removeToken();
+      return false;
+    }
+
+    // If 401, token is invalid
+    if (error.response?.status === 401) {
+      await removeToken();
+      return false;
+    }
+
+    // For other HTTP errors (500, 503, etc.), assume token is still valid
+    // but server is having issues
+    return true;
+  }
 };
 
 /**

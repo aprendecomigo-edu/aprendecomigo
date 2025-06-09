@@ -1,12 +1,3 @@
-import React, { useState } from 'react';
-import { FlatList, Keyboard } from 'react-native';
-import { Box } from '@/components/ui/box';
-import { Heading } from '@/components/ui/heading';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
-import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import {
   Hash,
   FileText,
@@ -19,15 +10,25 @@ import {
   Paperclip,
   Image,
   Send,
-  AtSign
+  AtSign,
 } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { FlatList, Keyboard } from 'react-native';
+
 import { Channel } from '@/api/channelApi';
-import { Input, InputField, InputIcon } from '@/components/ui/input';
+import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Divider } from '@/components/ui/divider';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Pressable } from '@/components/ui/pressable';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Input, InputField, InputIcon } from '@/components/ui/input';
 import { KeyboardAvoidingView } from '@/components/ui/keyboard-avoiding-view';
+import { Pressable } from '@/components/ui/pressable';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 interface ChannelContentProps {
   channel?: Channel;
@@ -112,7 +113,12 @@ const MessageItem = ({ message }: { message: Message }) => {
 };
 
 // Define a simple IconButton since it's missing
-const IconButton = ({ icon, onPress, className, variant }: {
+const IconButton = ({
+  icon,
+  onPress,
+  className,
+  variant,
+}: {
   icon: React.ReactNode;
   onPress?: () => void;
   className?: string;
@@ -144,7 +150,9 @@ const MessageInput = ({ channel }: { channel: Channel }) => {
           <Input className="bg-gray-100 rounded-lg w-full">
             <HStack className="w-full items-center px-3">
               <InputField
-                placeholder={`Enviar mensagem para ${channel.type === 'channel' ? '#' + channel.name : channel.name}`}
+                placeholder={`Enviar mensagem para ${
+                  channel.type === 'channel' ? '#' + channel.name : channel.name
+                }`}
                 className="flex-1 py-2"
                 value={message}
                 onChangeText={setMessage}
@@ -172,12 +180,12 @@ const MessageInput = ({ channel }: { channel: Channel }) => {
 
           <Button
             size="sm"
-            variant={message.trim() ? "solid" : "outline"}
-            className={message.trim() ? "bg-blue-500" : "border-gray-300"}
+            variant={message.trim() ? 'solid' : 'outline'}
+            className={message.trim() ? 'bg-blue-500' : 'border-gray-300'}
             onPress={handleSend}
             isDisabled={!message.trim()}
           >
-            <ButtonText className={message.trim() ? "text-white" : "text-gray-400"}>
+            <ButtonText className={message.trim() ? 'text-white' : 'text-gray-400'}>
               Enviar
             </ButtonText>
           </Button>
@@ -207,8 +215,8 @@ const ChannelContent = ({ channel, isLoading }: ChannelContentProps) => {
       content: 'Olá, pessoal! Alguém pode me ajudar com a tarefa de matemática?',
       reactions: [
         { emoji: <Icon as={ThumbsUp} size="xs" className="text-blue-500" />, count: 3 },
-        { emoji: <Icon as={Heart} size="xs" className="text-red-500" />, count: 1 }
-      ]
+        { emoji: <Icon as={Heart} size="xs" className="text-red-500" />, count: 1 },
+      ],
     },
     {
       id: '2',
@@ -217,9 +225,7 @@ const ChannelContent = ({ channel, isLoading }: ChannelContentProps) => {
       date: 'Hoje',
       time: '10:35',
       content: 'Claro, João! Em qual exercício você está com dificuldade?',
-      reactions: [
-        { emoji: <Icon as={Smile} size="xs" className="text-yellow-500" />, count: 2 }
-      ]
+      reactions: [{ emoji: <Icon as={Smile} size="xs" className="text-yellow-500" />, count: 2 }],
     },
     {
       id: '3',
@@ -232,9 +238,9 @@ const ChannelContent = ({ channel, isLoading }: ChannelContentProps) => {
       linkPreview: {
         title: 'Exercícios de Matemática - PDF',
         description: 'Material de estudo para o exame final de matemática',
-        url: 'https://escola.edu/matematica/exercicios.pdf'
-      }
-    }
+        url: 'https://escola.edu/matematica/exercicios.pdf',
+      },
+    },
   ];
 
   // Group messages by date
@@ -250,7 +256,7 @@ const ChannelContent = ({ channel, isLoading }: ChannelContentProps) => {
   const messagesWithSeparators = Object.entries(groupedMessages).flatMap(([date, msgs], index) => {
     return [
       { id: `date-${index}`, type: 'date', date },
-      ...msgs.map(msg => ({ ...msg, type: 'message' }))
+      ...msgs.map(msg => ({ ...msg, type: 'message' })),
     ];
   });
 

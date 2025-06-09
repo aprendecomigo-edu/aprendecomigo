@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Platform, ActivityIndicator } from 'react-native';
 
 import { useAuth } from '@/api/authContext';
+import MainLayout from '@/components/layouts/main-layout';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardHeader, CardBody } from '@/components/ui/card';
 import { Divider } from '@/components/ui/divider';
@@ -12,7 +13,6 @@ import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { Toast, ToastTitle, useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
-import MainLayout from '@/components/layouts/main-layout';
 
 // Main BiometricSettings content component
 const BiometricSettingsContent = () => {

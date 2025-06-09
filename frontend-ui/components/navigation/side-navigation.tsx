@@ -46,11 +46,7 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
               }`}
               onPress={() => handlePress(index)}
             >
-              <Icon
-                as={item.icon}
-                size="lg"
-                className="text-white"
-              />
+              <Icon as={item.icon} size="lg" className="text-white" />
             </Pressable>
           );
         })}

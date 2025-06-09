@@ -1,6 +1,6 @@
-import { X, Mail, Phone, Share, Copy, Check } from 'lucide-react-native';
+import { X, Mail, Copy, Check, MessageCircle, QrCode } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Platform, Alert } from 'react-native';
+import { Platform, Alert, Linking } from 'react-native';
 
 import apiClient from '@/api/apiClient';
 import { Box } from '@/components/ui/box';
@@ -19,7 +19,6 @@ import {
   ModalBody,
   ModalFooter,
 } from '@/components/ui/modal';
-import { Pressable } from '@/components/ui/pressable';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
@@ -41,27 +40,24 @@ const COLORS = {
   },
 } as const;
 
-interface InviteLink {
+interface InvitationLink {
   url: string;
-  token: string;
   expires_at: string;
+  usage_count: number;
 }
 
-// Mock API calls - replace with real API when backend is ready
-const generateInviteLink = async (schoolId: number): Promise<InviteLink> => {
+// API calls
+const getSchoolInvitationLink = async (schoolId: number): Promise<InvitationLink> => {
   try {
-    const response = await apiClient.post('/accounts/invitations/generate-link/', {
-      school_id: schoolId,
-      role: 'teacher',
-    });
-    return response.data;
+    const response = await apiClient.get(`/accounts/schools/${schoolId}/invitation-link/`);
+    return response.data.invitation_link;
   } catch (error) {
-    console.error('Error generating invite link:', error);
+    console.error('Error getting school invitation link:', error);
     // Mock response for now
     return {
-      url: 'https://aprendecomigo.com/invite/abc123',
-      token: 'abc123',
+      url: 'https://aprendecomigo.com/join-school/xyz789abc123',
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      usage_count: 5,
     };
   }
 };
@@ -80,22 +76,6 @@ const sendEmailInvite = async (email: string, schoolId: number): Promise<void> =
   }
 };
 
-const sendPhoneInvite = async (phone: string, schoolId: number): Promise<void> => {
-  try {
-    const response = await apiClient.post('/accounts/teachers/invite-phone/', {
-      phone_number: phone,
-      school_id: schoolId,
-      role: 'teacher',
-    });
-    console.log('Phone invite sent successfully:', response.data);
-  } catch (error) {
-    console.error('Error sending phone invite:', error);
-    throw error;
-  }
-};
-
-type InviteMethod = 'link' | 'email' | 'phone';
-
 interface InviteTeacherModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -109,46 +89,43 @@ export const InviteTeacherModal = ({
   onSuccess,
   schoolId = 1,
 }: InviteTeacherModalProps) => {
-  const [selectedMethod, setSelectedMethod] = useState<InviteMethod>('link');
+  const [invitationLink, setInvitationLink] = useState<InvitationLink | null>(null);
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [inviteLink, setInviteLink] = useState<InviteLink | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSending, setIsSending] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
   React.useEffect(() => {
-    if (isOpen && selectedMethod === 'link' && !inviteLink) {
-      loadInviteLink();
+    if (isOpen) {
+      loadInvitationLink();
     }
-  }, [isOpen, selectedMethod]);
+  }, [isOpen]);
 
-  const loadInviteLink = async () => {
+  const loadInvitationLink = async () => {
     try {
       setIsLoading(true);
-      const link = await generateInviteLink(schoolId);
-      setInviteLink(link);
+      const link = await getSchoolInvitationLink(schoolId);
+      setInvitationLink(link);
     } catch (error) {
-      console.error('Error loading invite link:', error);
+      console.error('Error loading invitation link:', error);
+      Alert.alert('Erro', 'Não foi possível carregar o link de convite.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCopyLink = async () => {
-    if (!inviteLink) return;
+    if (!invitationLink) return;
 
     try {
       if (Platform.OS === 'web') {
-        await navigator.clipboard.writeText(inviteLink.url);
+        await navigator.clipboard.writeText(invitationLink.url);
       } else {
         // For mobile, we'll need to install @react-native-clipboard/clipboard
         // For now, just show an alert
-        Alert.alert(
-          'Link copiado',
-          'O link de convite foi copiado para a área de transferência.',
-          [{ text: 'OK' }]
-        );
+        Alert.alert('Link copiado', 'O link de convite foi copiado para a área de transferência.', [
+          { text: 'OK' },
+        ]);
       }
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
@@ -158,242 +135,62 @@ export const InviteTeacherModal = ({
     }
   };
 
-  const handleShareLink = async () => {
-    if (!inviteLink) return;
+  const handleWhatsAppShare = async () => {
+    if (!invitationLink) return;
+
+    const message = `Olá! Você foi convidado para se juntar como professor. Use este link: ${invitationLink.url}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
 
     try {
       if (Platform.OS === 'web') {
-        // Web sharing
-        if (navigator.share) {
-          await navigator.share({
-            title: 'Convite para Professor',
-            text: 'Você foi convidado para se juntar como professor.',
-            url: inviteLink.url,
-          });
-        } else {
-          // Fallback to copy
-          await handleCopyLink();
-        }
+        window.open(whatsappUrl, '_blank');
       } else {
-        // Mobile sharing - would need react-native-share
-        Alert.alert(
-          'Compartilhar',
-          'Link de convite copiado. Cole em seu app de mensagens favorito.',
-          [{ text: 'OK' }]
-        );
-        await handleCopyLink();
+        const supported = await Linking.canOpenURL(whatsappUrl);
+        if (supported) {
+          await Linking.openURL(whatsappUrl);
+        } else {
+          Alert.alert(
+            'WhatsApp não encontrado',
+            'Por favor, instale o WhatsApp para usar esta funcionalidade.'
+          );
+        }
       }
     } catch (error) {
-      console.error('Error sharing link:', error);
+      console.error('Error opening WhatsApp:', error);
+      Alert.alert('Erro', 'Não foi possível abrir o WhatsApp.');
     }
   };
 
+  const handleShowQRCode = () => {
+    // TODO: Implement QR code display
+    Alert.alert('QR Code', 'Funcionalidade de QR Code será implementada em breve.');
+  };
+
   const handleSendEmailInvite = async () => {
-    if (!email.trim()) return;
+    if (!email.trim()) {
+      Alert.alert('Erro', 'Por favor, insira um email válido.');
+      return;
+    }
 
     try {
-      setIsSending(true);
+      setIsSendingEmail(true);
       await sendEmailInvite(email, schoolId);
+      Alert.alert('Sucesso', 'Convite enviado por email com sucesso!');
+      setEmail('');
       onSuccess();
-      onClose();
-      handleClose();
     } catch (error) {
       console.error('Error sending email invite:', error);
       Alert.alert('Erro', 'Não foi possível enviar o convite por email.');
     } finally {
-      setIsSending(false);
-    }
-  };
-
-  const handleSendPhoneInvite = async () => {
-    if (!phone.trim()) return;
-
-    try {
-      setIsSending(true);
-      await sendPhoneInvite(phone, schoolId);
-      onSuccess();
-      onClose();
-      handleClose();
-    } catch (error) {
-      console.error('Error sending phone invite:', error);
-      Alert.alert('Erro', 'Não foi possível enviar o convite por telefone.');
-    } finally {
-      setIsSending(false);
+      setIsSendingEmail(false);
     }
   };
 
   const handleClose = () => {
     setEmail('');
-    setPhone('');
-    setInviteLink(null);
+    setInvitationLink(null);
     setLinkCopied(false);
-    setSelectedMethod('link');
     onClose();
-  };
-
-  const renderMethodSelector = () => (
-    <HStack space="xs" className="bg-gray-100 rounded-lg p-1">
-      {[
-        { method: 'link' as InviteMethod, label: 'Link', icon: Share },
-        { method: 'email' as InviteMethod, label: 'Email', icon: Mail },
-        { method: 'phone' as InviteMethod, label: 'Telefone', icon: Phone },
-      ].map(({ method, label, icon }) => (
-        <Pressable
-          key={method}
-          onPress={() => setSelectedMethod(method)}
-          className={`flex-1 py-2 px-3 rounded-md ${
-            selectedMethod === method ? 'bg-white shadow-sm' : 'bg-transparent'
-          }`}
-        >
-          <HStack className="items-center justify-center" space="xs">
-            <Icon
-              as={icon}
-              size="sm"
-              className={selectedMethod === method ? 'text-primary-600' : 'text-gray-600'}
-            />
-            <Text
-              className={`text-sm font-medium ${
-                selectedMethod === method ? 'text-primary-600' : 'text-gray-600'
-              }`}
-            >
-              {label}
-            </Text>
-          </HStack>
-        </Pressable>
-      ))}
-    </HStack>
-  );
-
-  const renderLinkMethod = () => (
-    <VStack space="md">
-      <Text className="text-gray-600">
-        Gere um link de convite que pode ser compartilhado com qualquer pessoa.
-      </Text>
-
-      {isLoading ? (
-        <Center className="py-8">
-          <VStack className="items-center" space="md">
-            <Spinner size="large" />
-            <Text className="text-gray-500">Gerando link de convite...</Text>
-          </VStack>
-        </Center>
-      ) : inviteLink ? (
-        <VStack space="md">
-          <Box className="p-4 bg-gray-50 rounded-lg border">
-            <VStack space="sm">
-              <Text className="font-medium text-gray-900">Link de Convite</Text>
-              <Text className="text-sm text-gray-600 font-mono break-all">
-                {inviteLink.url}
-              </Text>
-              <Text className="text-xs text-gray-500">
-                Expira em: {new Date(inviteLink.expires_at).toLocaleDateString('pt-BR')}
-              </Text>
-            </VStack>
-          </Box>
-
-          <HStack space="sm">
-            <Button variant="outline" className="flex-1" onPress={handleCopyLink}>
-              <HStack space="xs" className="items-center">
-                <Icon as={linkCopied ? Check : Copy} size="sm" className="text-gray-600" />
-                <ButtonText>{linkCopied ? 'Copiado!' : 'Copiar'}</ButtonText>
-              </HStack>
-            </Button>
-            <Button
-              className="flex-1"
-              style={{ backgroundColor: COLORS.primary }}
-              onPress={handleShareLink}
-            >
-              <HStack space="xs" className="items-center">
-                <Icon as={Share} size="sm" className="text-white" />
-                <ButtonText className="text-white">Compartilhar</ButtonText>
-              </HStack>
-            </Button>
-          </HStack>
-        </VStack>
-      ) : (
-        <Button onPress={loadInviteLink} style={{ backgroundColor: COLORS.primary }}>
-          <ButtonText className="text-white">Gerar Link</ButtonText>
-        </Button>
-      )}
-    </VStack>
-  );
-
-  const renderEmailMethod = () => (
-    <VStack space="md">
-      <Text className="text-gray-600">
-        Envie um convite diretamente para o email do professor.
-      </Text>
-
-      <Input>
-        <InputField
-          placeholder="email@exemplo.com"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-      </Input>
-
-      <Button
-        onPress={handleSendEmailInvite}
-        disabled={!email.trim() || isSending}
-        style={{ backgroundColor: COLORS.primary }}
-      >
-        {isSending ? (
-          <HStack space="xs" className="items-center">
-            <Spinner size="small" />
-            <ButtonText className="text-white">Enviando...</ButtonText>
-          </HStack>
-        ) : (
-          <ButtonText className="text-white">Enviar Convite</ButtonText>
-        )}
-      </Button>
-    </VStack>
-  );
-
-  const renderPhoneMethod = () => (
-    <VStack space="md">
-      <Text className="text-gray-600">
-        Envie um convite via SMS para o telefone do professor.
-      </Text>
-
-      <Input>
-        <InputField
-          placeholder="+351 912 345 678"
-          value={phone}
-          onChangeText={setPhone}
-          keyboardType="phone-pad"
-        />
-      </Input>
-
-      <Button
-        onPress={handleSendPhoneInvite}
-        disabled={!phone.trim() || isSending}
-        style={{ backgroundColor: COLORS.primary }}
-      >
-        {isSending ? (
-          <HStack space="xs" className="items-center">
-            <Spinner size="small" />
-            <ButtonText className="text-white">Enviando...</ButtonText>
-          </HStack>
-        ) : (
-          <ButtonText className="text-white">Enviar Convite</ButtonText>
-        )}
-      </Button>
-    </VStack>
-  );
-
-  const renderContent = () => {
-    switch (selectedMethod) {
-      case 'link':
-        return renderLinkMethod();
-      case 'email':
-        return renderEmailMethod();
-      case 'phone':
-        return renderPhoneMethod();
-      default:
-        return renderLinkMethod();
-    }
   };
 
   return (
@@ -408,15 +205,107 @@ export const InviteTeacherModal = ({
         </ModalHeader>
 
         <ModalBody>
-          <VStack space="lg">
-            {renderMethodSelector()}
-            {renderContent()}
-          </VStack>
+          {isLoading ? (
+            <Center className="py-8">
+              <VStack className="items-center" space="md">
+                <Spinner size="large" />
+                <Text className="text-gray-500">Carregando link de convite...</Text>
+              </VStack>
+            </Center>
+          ) : invitationLink ? (
+            <VStack space="lg">
+              {/* Invitation Link Info */}
+              <Box className="p-4 bg-gray-50 rounded-lg border">
+                <VStack space="sm">
+                  <Text className="font-medium text-gray-900">Link de Convite da Escola</Text>
+                  <Text className="text-sm text-gray-600 font-mono break-all">
+                    {invitationLink.url}
+                  </Text>
+                  <HStack className="justify-between">
+                    <Text className="text-xs text-gray-500">
+                      Expira em: {new Date(invitationLink.expires_at).toLocaleDateString('pt-BR')}
+                    </Text>
+                    <Text className="text-xs text-gray-500">
+                      Usado: {invitationLink.usage_count} vezes
+                    </Text>
+                  </HStack>
+                </VStack>
+              </Box>
+
+              {/* Sharing Options */}
+              <VStack space="md">
+                <Text className="font-medium text-gray-900">Opções de Compartilhamento</Text>
+
+                <VStack space="sm">
+                  {/* Copy Link */}
+                  <Button variant="outline" onPress={handleCopyLink}>
+                    <HStack space="xs" className="items-center">
+                      <Icon as={linkCopied ? Check : Copy} size="sm" className="text-gray-600" />
+                      <ButtonText>{linkCopied ? 'Link Copiado!' : 'Copiar Link'}</ButtonText>
+                    </HStack>
+                  </Button>
+
+                  {/* WhatsApp Share */}
+                  <Button style={{ backgroundColor: '#25D366' }} onPress={handleWhatsAppShare}>
+                    <HStack space="xs" className="items-center">
+                      <Icon as={MessageCircle} size="sm" className="text-white" />
+                      <ButtonText className="text-white">Compartilhar no WhatsApp</ButtonText>
+                    </HStack>
+                  </Button>
+
+                  {/* QR Code */}
+                  <Button variant="outline" onPress={handleShowQRCode}>
+                    <HStack space="xs" className="items-center">
+                      <Icon as={QrCode} size="sm" className="text-gray-600" />
+                      <ButtonText>Mostrar QR Code</ButtonText>
+                    </HStack>
+                  </Button>
+                </VStack>
+              </VStack>
+
+              {/* Email Invite Section */}
+              <VStack space="md">
+                <Text className="font-medium text-gray-900">Ou envie por email</Text>
+
+                <Input>
+                  <InputField
+                    placeholder="email@exemplo.com"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </Input>
+
+                <Button
+                  onPress={handleSendEmailInvite}
+                  disabled={!email.trim() || isSendingEmail}
+                  style={{ backgroundColor: COLORS.primary }}
+                >
+                  {isSendingEmail ? (
+                    <HStack space="xs" className="items-center">
+                      <Spinner size="small" />
+                      <ButtonText className="text-white">Enviando...</ButtonText>
+                    </HStack>
+                  ) : (
+                    <HStack space="xs" className="items-center">
+                      <Icon as={Mail} size="sm" className="text-white" />
+                      <ButtonText className="text-white">Enviar por Email</ButtonText>
+                    </HStack>
+                  )}
+                </Button>
+              </VStack>
+            </VStack>
+          ) : (
+            <Center className="py-8">
+              <Text className="text-red-500">Erro ao carregar o link de convite</Text>
+            </Center>
+          )}
         </ModalBody>
 
         <ModalFooter>
           <Button variant="outline" onPress={handleClose}>
-            <ButtonText>Cancelar</ButtonText>
+            <ButtonText>Fechar</ButtonText>
           </Button>
         </ModalFooter>
       </ModalContent>

@@ -1,3 +1,11 @@
+import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
+import {
+  AlertTriangleIcon,
+  UserPlusIcon,
+  GraduationCapIcon,
+  CalendarIcon,
+  CheckCircle,
+} from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 
 import { useAuth } from '@/api/authContext';
@@ -15,14 +23,6 @@ import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
-import {
-  AlertTriangleIcon,
-  UserPlusIcon,
-  GraduationCapIcon,
-  CalendarIcon,
-  CheckCircle,
-} from 'lucide-react-native';
 
 // Interfaces for the onboarding dashboard
 interface OnboardingTask {
@@ -80,8 +80,8 @@ const TasksTable = ({ tasks }: { tasks: OnboardingTask[] }) => {
             task.completed
               ? 'bg-green-50 border-l-green-500 border-green-200'
               : task.priority === 'high'
-                ? 'bg-orange-50 border-l-orange-500 border-orange-200'
-                : 'bg-gray-50 border-l-gray-300 border-gray-200'
+              ? 'bg-orange-50 border-l-orange-500 border-orange-200'
+              : 'bg-gray-50 border-l-gray-300 border-gray-200'
           }`}
           style={{
             shadowColor: '#000',
@@ -98,8 +98,8 @@ const TasksTable = ({ tasks }: { tasks: OnboardingTask[] }) => {
                 task.completed
                   ? 'bg-green-100'
                   : task.priority === 'high'
-                    ? 'bg-orange-100'
-                    : 'bg-gray-100'
+                  ? 'bg-orange-100'
+                  : 'bg-gray-100'
               }`}
             >
               <Icon
@@ -109,8 +109,8 @@ const TasksTable = ({ tasks }: { tasks: OnboardingTask[] }) => {
                   task.completed
                     ? 'text-green-600'
                     : task.priority === 'high'
-                      ? 'text-orange-600'
-                      : 'text-gray-600'
+                    ? 'text-orange-600'
+                    : 'text-gray-600'
                 }
               />
             </Box>
@@ -125,8 +125,8 @@ const TasksTable = ({ tasks }: { tasks: OnboardingTask[] }) => {
                     task.completed
                       ? 'bg-green-100'
                       : task.priority === 'high'
-                        ? 'bg-orange-100'
-                        : 'bg-gray-100'
+                      ? 'bg-orange-100'
+                      : 'bg-gray-100'
                   } px-2 py-1`}
                 >
                   <BadgeText
@@ -134,8 +134,8 @@ const TasksTable = ({ tasks }: { tasks: OnboardingTask[] }) => {
                       task.completed
                         ? 'text-green-700'
                         : task.priority === 'high'
-                          ? 'text-orange-700'
-                          : 'text-gray-700'
+                        ? 'text-orange-700'
+                        : 'text-gray-700'
                     }`}
                   >
                     {task.type}
@@ -337,22 +337,15 @@ const AdminDashboard = () => {
           <HStack space="sm" className="flex-wrap items-center justify-between">
             <HStack space="xs">
               {activityFilters.map(filter => (
-                <Pressable
-                  key={filter.value}
-                  onPress={() => toggleFilter(filter.value)}
-                >
+                <Pressable key={filter.value} onPress={() => toggleFilter(filter.value)}>
                   <Badge
                     variant={filter.active ? 'solid' : 'outline'}
                     className={`px-3 py-2 ${
-                      filter.active
-                        ? 'bg-blue-600 border-blue-600'
-                        : 'border-gray-300 bg-white'
+                      filter.active ? 'bg-blue-600 border-blue-600' : 'border-gray-300 bg-white'
                     }`}
                   >
                     <BadgeText
-                      className={`font-medium ${
-                        filter.active ? 'text-white' : 'text-gray-600'
-                      }`}
+                      className={`font-medium ${filter.active ? 'text-white' : 'text-gray-600'}`}
                     >
                       {filter.label}
                     </BadgeText>

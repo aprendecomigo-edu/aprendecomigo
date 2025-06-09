@@ -1,4 +1,4 @@
-import { UserPlus, Mail, Plus } from 'lucide-react-native';
+import { UserPlus, Mail, Plus, AlertCircle } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 
 import { getTeachers, TeacherProfile } from '@/api/userApi';
@@ -6,6 +6,7 @@ import { MainLayout } from '@/components/layouts/main-layout';
 import { AddTeacherModal } from '@/components/modals/add-teacher-modal';
 import { InviteTeacherModal } from '@/components/modals/invite-teacher-modal';
 import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
@@ -130,6 +131,7 @@ export default function UsersPage() {
   const [isInviteTeacherModalOpen, setIsInviteTeacherModalOpen] = useState(false);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAddMeAsTeacher = () => {
     setIsAddTeacherModalOpen(true);
@@ -158,10 +160,14 @@ export default function UsersPage() {
   const fetchTeachers = async () => {
     try {
       setLoading(true);
+      setError(null);
+
       const teachersData = await getTeachers();
       setTeachers(teachersData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching teachers:', error);
+
+      setError('Failed to load teachers. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -170,6 +176,51 @@ export default function UsersPage() {
   useEffect(() => {
     fetchTeachers();
   }, []);
+
+  // Show loading if checking auth status
+  if (loading && !error) {
+    return (
+      <MainLayout>
+        <Box className="flex-1" style={{ backgroundColor: COLORS.gray[50] }}>
+          <Center className="flex-1">
+            <VStack className="items-center" space="md">
+              <Spinner size="large" />
+              <Text className="text-gray-500">Carregando professores...</Text>
+            </VStack>
+          </Center>
+        </Box>
+      </MainLayout>
+    );
+  }
+
+  // Show general error
+  if (error && !loading) {
+    return (
+      <MainLayout>
+        <Box className="flex-1" style={{ backgroundColor: COLORS.gray[50] }}>
+          <Center className="flex-1">
+            <VStack className="items-center max-w-sm mx-auto" space="lg">
+              <Icon as={AlertCircle} size="xl" className="text-red-500" />
+              <VStack className="items-center" space="sm">
+                <Heading size="lg" className="text-gray-900 text-center">
+                  Error Loading Data
+                </Heading>
+                <Text className="text-gray-600 text-center">
+                  {error}
+                </Text>
+              </VStack>
+              <Button
+                onPress={fetchTeachers}
+                className="w-full bg-primary-600"
+              >
+                <ButtonText>Try Again</ButtonText>
+              </Button>
+            </VStack>
+          </Center>
+        </Box>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -232,17 +283,7 @@ export default function UsersPage() {
                   <Text className="w-20 font-medium text-gray-700">Status</Text>
                 </HStack>
 
-                {/* Loading state */}
-                {loading ? (
-                  <Box className="p-8">
-                    <Center>
-                      <VStack className="items-center" space="md">
-                        <Spinner size="large" />
-                        <Text className="text-gray-500">Carregando professores...</Text>
-                      </VStack>
-                    </Center>
-                  </Box>
-                ) : teachers.length === 0 ? (
+                {teachers.length === 0 ? (
                   /* Empty state */
                   <Box className="p-8">
                     <Center>

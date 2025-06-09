@@ -1,5 +1,5 @@
 import { Redirect, type Href } from 'expo-router';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { useAuth } from '@/api/authContext';
 import { Spinner } from '@/components/ui/spinner';
@@ -7,12 +7,10 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 
 export default function Index() {
-  const { isLoggedIn, isLoading, checkAuthStatus } = useAuth();
+  const { isLoggedIn, isLoading } = useAuth();
 
-  // Force a fresh auth check when the app loads
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
+  // AuthContext already handles auth check on initialization
+  // No need to call checkAuthStatus() again here
 
   // While checking auth status, show a loading spinner
   if (isLoading) {

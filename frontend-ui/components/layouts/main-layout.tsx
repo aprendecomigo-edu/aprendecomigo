@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { AuthGuard } from '@/components/auth/auth-guard';
 import {
   MobileNavigation,
   SideNavigation,
@@ -16,6 +17,7 @@ interface MainLayoutProps {
   children: React.ReactNode;
   _title?: string;
   showSidebar?: boolean;
+  requireAuth?: boolean;
 }
 
 /**
@@ -25,11 +27,13 @@ interface MainLayoutProps {
  * @param children Content to display in the main area
  * @param _title Optional page title (used for internal tracking, school name shown in header)
  * @param showSidebar Whether to show the sidebar (defaults to true)
+ * @param requireAuth Whether to require authentication (defaults to true)
  */
 export const MainLayout = ({
   children,
   _title = 'Dashboard',
   showSidebar = true,
+  requireAuth = true,
 }: MainLayoutProps) => {
   const [selectedSchool, setSelectedSchool] = useState<School>(schools[0]);
   const [isSidebarVisible, setIsSidebarVisible] = useState(showSidebar);
@@ -44,15 +48,12 @@ export const MainLayout = ({
     setIsSidebarVisible(!isSidebarVisible);
   };
 
-  return (
+  const layoutContent = (
     <SafeAreaView className="h-full w-full">
       <VStack className="h-full w-full bg-background-0">
         {/* Mobile Header */}
         <Box className="md:hidden">
-          <TopNavigation
-            variant="mobile"
-            onSchoolChange={handleSchoolChange}
-          />
+          <TopNavigation variant="mobile" onSchoolChange={handleSchoolChange} />
         </Box>
 
         {/* Web Header */}
@@ -68,9 +69,7 @@ export const MainLayout = ({
         <VStack className="h-full w-full">
           <HStack className="h-full w-full">
             {/* Desktop Sidebar */}
-            <Box className="hidden md:flex h-full">
-              {isSidebarVisible && <SideNavigation />}
-            </Box>
+            <Box className="hidden md:flex h-full">{isSidebarVisible && <SideNavigation />}</Box>
 
             {/* Main Content with bottom padding for mobile navigation */}
             <VStack className="w-full pb-20 md:pb-0">{children}</VStack>
@@ -82,6 +81,13 @@ export const MainLayout = ({
       <MobileNavigation />
     </SafeAreaView>
   );
+
+  // Wrap with AuthGuard if authentication is required
+  if (requireAuth) {
+    return <AuthGuard>{layoutContent}</AuthGuard>;
+  }
+
+  return layoutContent;
 };
 
 export default MainLayout;
