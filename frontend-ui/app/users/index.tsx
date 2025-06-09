@@ -88,13 +88,13 @@ const ActionButton = ({ icon, title, onPress, variant = 'secondary' }: ActionBut
 
   return (
     <Pressable
-      className="flex-1 rounded-lg border px-6 py-4"
-      style={{ ...buttonStyles, marginHorizontal: 4 }}
+      className="rounded-md border px-3 py-2"
+      style={{ ...buttonStyles, marginHorizontal: 2 }}
       onPress={onPress}
     >
-      <HStack className="items-center justify-center" space="sm">
-        <Icon as={icon} size="sm" className={isLight ? 'text-gray-700' : 'text-white'} />
-        <Text className={`text-sm font-medium ${isLight ? 'text-gray-700' : 'text-white'}`}>
+      <HStack className="items-center" space="xs">
+        <Icon as={icon} size="xs" className={isLight ? 'text-gray-700' : 'text-white'} />
+        <Text className={`text-xs font-medium ${isLight ? 'text-gray-700' : 'text-white'}`}>
           {title}
         </Text>
       </HStack>
@@ -171,13 +171,13 @@ const TeachersTab = ({
   onAddManually,
 }: TeachersTabProps) => {
   return (
-    <VStack space="xl">
-      {/* Action Buttons */}
-      <VStack space="md">
-        <Heading size="md" className="text-gray-900">
-          Ações Rápidas
+    <VStack space="md">
+      {/* Teachers List with inline action buttons */}
+      <HStack className="w-full items-center" space="lg">
+        <Heading size="lg" className="text-gray-900">
+          Lista de Professores
         </Heading>
-        <HStack className="w-full" style={{ paddingHorizontal: 4 }}>
+        <HStack style={{ paddingHorizontal: 4 }}>
           <ActionButton
             icon={UserPlus}
             title="Adicionar-me como professor"
@@ -190,66 +190,51 @@ const TeachersTab = ({
             onPress={onInviteTeacher}
             variant="secondary"
           />
-          <ActionButton
-            icon={Plus}
-            title="Adicionar manualmente"
-            onPress={onAddManually}
-            variant="tertiary"
-          />
+
         </HStack>
-      </VStack>
+      </HStack>
 
-      {/* Teachers List */}
-      <VStack space="md">
-        <Heading size="lg" className="text-gray-900">
-          Lista de Professores
-        </Heading>
+      <Box className="rounded-lg border border-gray-200" style={{ backgroundColor: COLORS.white }}>
+        <VStack>
+          {/* Table header */}
+          <HStack className="p-4 border-b border-gray-200">
+            <Text className="flex-1 font-medium text-gray-700">Nome</Text>
+            <Text className="flex-1 font-medium text-gray-700">Email</Text>
+            <Text className="flex-1 font-medium text-gray-700">Especialidade</Text>
+            <Text className="w-20 font-medium text-gray-700">Status</Text>
+          </HStack>
 
-        <Box
-          className="rounded-lg border border-gray-200"
-          style={{ backgroundColor: COLORS.white }}
-        >
-          <VStack>
-            {/* Table header */}
-            <HStack className="p-4 border-b border-gray-200">
-              <Text className="flex-1 font-medium text-gray-700">Nome</Text>
-              <Text className="flex-1 font-medium text-gray-700">Email</Text>
-              <Text className="flex-1 font-medium text-gray-700">Especialidade</Text>
-              <Text className="w-20 font-medium text-gray-700">Status</Text>
-            </HStack>
-
-            {teachers.length === 0 ? (
-              /* Empty state */
-              <Box className="p-8">
-                <Center>
-                  <VStack className="items-center" space="xs">
-                    <Icon as={GraduationCap} size="lg" className="text-gray-400" />
-                    <Text className="text-gray-500">Nenhum professor cadastrado</Text>
-                    <Text className="text-gray-400 text-sm text-center">
-                      Use os botões acima para adicionar professores
-                    </Text>
-                  </VStack>
-                </Center>
-              </Box>
-            ) : (
-              /* Teachers list */
-              teachers.map((teacher, index) => (
-                <HStack
-                  key={teacher.id}
-                  className={`p-4 ${index < teachers.length - 1 ? 'border-b border-gray-200' : ''}`}
-                >
-                  <Text className="flex-1 text-gray-900">{teacher.user.name}</Text>
-                  <Text className="flex-1 text-gray-600">{teacher.user.email}</Text>
-                  <Text className="flex-1 text-gray-600">
-                    {teacher.specialty || 'Não especificado'}
+          {teachers.length === 0 ? (
+            /* Empty state */
+            <Box className="p-8">
+              <Center>
+                <VStack className="items-center" space="xs">
+                  <Icon as={GraduationCap} size="lg" className="text-gray-400" />
+                  <Text className="text-gray-500">Nenhum professor cadastrado</Text>
+                  <Text className="text-gray-400 text-sm text-center">
+                    Use os botões acima para adicionar professores
                   </Text>
-                  <Text className="w-20 text-green-600 text-sm">Ativo</Text>
-                </HStack>
-              ))
-            )}
-          </VStack>
-        </Box>
-      </VStack>
+                </VStack>
+              </Center>
+            </Box>
+          ) : (
+            /* Teachers list */
+            teachers.map((teacher, index) => (
+              <HStack
+                key={teacher.id}
+                className={`p-4 ${index < teachers.length - 1 ? 'border-b border-gray-200' : ''}`}
+              >
+                <Text className="flex-1 text-gray-900">{teacher.user.name}</Text>
+                <Text className="flex-1 text-gray-600">{teacher.user.email}</Text>
+                <Text className="flex-1 text-gray-600">
+                  {teacher.specialty || 'Não especificado'}
+                </Text>
+                <Text className="w-20 text-green-600 text-sm">Ativo</Text>
+              </HStack>
+            ))
+          )}
+        </VStack>
+      </Box>
     </VStack>
   );
 };
@@ -260,13 +245,13 @@ interface StudentsTabProps {
 
 const StudentsTab = ({ onAddStudent }: StudentsTabProps) => {
   return (
-    <VStack space="xl">
-      {/* Action Buttons */}
-      <VStack space="md">
-        <Heading size="md" className="text-gray-900">
-          Ações Rápidas
+    <VStack space="md">
+      {/* Students List with inline action buttons */}
+      <HStack className="w-full items-center" space="lg">
+        <Heading size="lg" className="text-gray-900">
+          Lista de Alunos
         </Heading>
-        <HStack className="w-full" style={{ paddingHorizontal: 4 }}>
+        <HStack style={{ paddingHorizontal: 4 }}>
           <ActionButton
             icon={UserPlus}
             title="Adicionar aluno"
@@ -274,54 +259,38 @@ const StudentsTab = ({ onAddStudent }: StudentsTabProps) => {
             variant="secondary"
           />
           <ActionButton
-            icon={Mail}
-            title="Convidar aluno"
-            onPress={onAddStudent}
-            variant="primary"
-          />
-          <ActionButton
             icon={Plus}
             title="Importar lista"
             onPress={onAddStudent}
-            variant="tertiary"
+            variant="primary"
           />
         </HStack>
-      </VStack>
+      </HStack>
 
-      {/* Students List */}
-      <VStack space="md">
-        <Heading size="lg" className="text-gray-900">
-          Lista de Alunos
-        </Heading>
+      <Box className="rounded-lg border border-gray-200" style={{ backgroundColor: COLORS.white }}>
+        <VStack>
+          {/* Table header */}
+          <HStack className="p-4 border-b border-gray-200">
+            <Text className="flex-1 font-medium text-gray-700">Nome</Text>
+            <Text className="flex-1 font-medium text-gray-700">Email</Text>
+            <Text className="flex-1 font-medium text-gray-700">Turma</Text>
+            <Text className="w-20 font-medium text-gray-700">Status</Text>
+          </HStack>
 
-        <Box
-          className="rounded-lg border border-gray-200"
-          style={{ backgroundColor: COLORS.white }}
-        >
-          <VStack>
-            {/* Table header */}
-            <HStack className="p-4 border-b border-gray-200">
-              <Text className="flex-1 font-medium text-gray-700">Nome</Text>
-              <Text className="flex-1 font-medium text-gray-700">Email</Text>
-              <Text className="flex-1 font-medium text-gray-700">Turma</Text>
-              <Text className="w-20 font-medium text-gray-700">Status</Text>
-            </HStack>
-
-            {/* Empty state */}
-            <Box className="p-8">
-              <Center>
-                <VStack className="items-center" space="xs">
-                  <Icon as={Users} size="lg" className="text-gray-400" />
-                  <Text className="text-gray-500">Nenhum aluno cadastrado</Text>
-                  <Text className="text-gray-400 text-sm text-center">
-                    Use os botões acima para adicionar alunos
-                  </Text>
-                </VStack>
-              </Center>
-            </Box>
-          </VStack>
-        </Box>
-      </VStack>
+          {/* Empty state */}
+          <Box className="p-8">
+            <Center>
+              <VStack className="items-center" space="xs">
+                <Icon as={Users} size="lg" className="text-gray-400" />
+                <Text className="text-gray-500">Nenhum aluno cadastrado</Text>
+                <Text className="text-gray-400 text-sm text-center">
+                  Use os botões acima para adicionar alunos
+                </Text>
+              </VStack>
+            </Center>
+          </Box>
+        </VStack>
+      </Box>
     </VStack>
   );
 };
@@ -333,68 +302,46 @@ const StaffTab = () => {
   };
 
   return (
-    <VStack space="xl">
-      {/* Action Buttons */}
-      <VStack space="md">
-        <Heading size="md" className="text-gray-900">
-          Ações Rápidas
+    <VStack space="md">
+      {/* Staff List with inline action buttons */}
+      <HStack className="w-full items-center" space="lg">
+        <Heading size="lg" className="text-gray-900">
+          Lista de Colaboradores
         </Heading>
-        <HStack className="w-full" style={{ paddingHorizontal: 4 }}>
-          <ActionButton
-            icon={UserPlus}
-            title="Adicionar colaborador"
-            onPress={handleAddStaff}
-            variant="primary"
-          />
+        <HStack style={{ paddingHorizontal: 4 }}>
           <ActionButton
             icon={Mail}
             title="Convidar colaborador"
             onPress={handleAddStaff}
             variant="secondary"
           />
-          <ActionButton
-            icon={Plus}
-            title="Definir permissões"
-            onPress={handleAddStaff}
-            variant="tertiary"
-          />
         </HStack>
-      </VStack>
+      </HStack>
 
-      {/* Staff List */}
-      <VStack space="md">
-        <Heading size="lg" className="text-gray-900">
-          Lista de Colaboradores
-        </Heading>
+      <Box className="rounded-lg border border-gray-200" style={{ backgroundColor: COLORS.white }}>
+        <VStack>
+          {/* Table header */}
+          <HStack className="p-4 border-b border-gray-200">
+            <Text className="flex-1 font-medium text-gray-700">Nome</Text>
+            <Text className="flex-1 font-medium text-gray-700">Email</Text>
+            <Text className="flex-1 font-medium text-gray-700">Cargo</Text>
+            <Text className="w-20 font-medium text-gray-700">Status</Text>
+          </HStack>
 
-        <Box
-          className="rounded-lg border border-gray-200"
-          style={{ backgroundColor: COLORS.white }}
-        >
-          <VStack>
-            {/* Table header */}
-            <HStack className="p-4 border-b border-gray-200">
-              <Text className="flex-1 font-medium text-gray-700">Nome</Text>
-              <Text className="flex-1 font-medium text-gray-700">Email</Text>
-              <Text className="flex-1 font-medium text-gray-700">Cargo</Text>
-              <Text className="w-20 font-medium text-gray-700">Status</Text>
-            </HStack>
-
-            {/* Empty state */}
-            <Box className="p-8">
-              <Center>
-                <VStack className="items-center" space="xs">
-                  <Icon as={Building} size="lg" className="text-gray-400" />
-                  <Text className="text-gray-500">Nenhum colaborador cadastrado</Text>
-                  <Text className="text-gray-400 text-sm text-center">
-                    Use os botões acima para adicionar colaboradores
-                  </Text>
-                </VStack>
-              </Center>
-            </Box>
-          </VStack>
-        </Box>
-      </VStack>
+          {/* Empty state */}
+          <Box className="p-8">
+            <Center>
+              <VStack className="items-center" space="xs">
+                <Icon as={Building} size="lg" className="text-gray-400" />
+                <Text className="text-gray-500">Nenhum colaborador cadastrado</Text>
+                <Text className="text-gray-400 text-sm text-center">
+                  Use os botões acima para adicionar colaboradores
+                </Text>
+              </VStack>
+            </Center>
+          </Box>
+        </VStack>
+      </Box>
     </VStack>
   );
 };

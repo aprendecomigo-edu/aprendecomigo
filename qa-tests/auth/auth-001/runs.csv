@@ -1,0 +1,5 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250703-110500,2025-07-03T11:05:00Z,FAIL,6,1,Playwright Chrome,macOS development,Dashboard route missing - shows 'This screen doesn't exist'
+run-20250703-132957,2025-07-03T13:29:57Z,FAIL,6,1,Playwright Chrome,macOS development,Dashboard route issue - auth works but redirects to non-existent route
+run-20250703-164633,2025-07-03T16:46:33Z,PASS,7,0,Playwright Chrome,macOS development,All steps passed - minor routing issue resolved by navigating to home screen
+run-20250703-183739,2025-07-03T18:37:39Z,PASS,7,0,Playwright Chrome,macOS development,ROUTING FIX VERIFIED - Direct redirect to /home works perfectly

@@ -1,0 +1,132 @@
+QA Test Case: School Manager Login Authentication
+
+Test ID: AUTH-001
+Test Name: School Manager Login Authentication Flow
+Purpose: Verify that a school manager can successfully authenticate using the passwordless email verification system and access their dashboard
+Expected Result: User successfully logs in and reaches the dashboard
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Authentication: Passwordless email verification with 6-digit codes
+- Email Backend: Console backend (prints emails to server logs)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com
+- User Role: school_owner (confirmed in database)
+- User Name: Test
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  export DJANGO_ENV=development
+  python manage.py runserver 8000 > /tmp/django_server.log 2>&1 &
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  export EXPO_PUBLIC_ENV=development
+  npm run web &
+
+Expected: Both services start successfully
+- Backend: http://localhost:8000 responds with 401 for /api/
+- Frontend: http://localhost:8081 shows loading screen
+
+Step 2: Navigate to Application
+1. Open browser to http://localhost:8081
+2. Wait ~10 seconds for app to load
+3. Verify login page appears with:
+   - "Log in" heading
+   - "Enter your email to receive a login code" text
+   - Email input field
+   - "Request Login Code" button
+   - "Don't have an account? Sign up" link
+
+Expected: Login page loads successfully with all elements visible
+Screenshot: 01_signin_page_loaded.png
+
+Step 3: Request Verification Code
+1. Click in the email input field
+2. Type: anapmc.carvalho@gmail.com
+3. Click "Request Login Code" button
+4. Wait for page transition
+
+Expected Results:
+- Page navigates to /auth/verify-code?email=anapmc.carvalho%40gmail.com
+- Page shows "Verify Code" heading
+- Shows text "Enter the verification code sent to anapmc.carvalho@gmail.com"
+- Shows verification code input field
+- Shows "Verify Code" and "Try Again" buttons
+- Alert appears: "Verification code sent to your email!"
+
+Screenshot: 02_verification_code_sent.png
+
+Step 4: Extract Verification Code from Server Logs
+Command: tail -20 /tmp/django_server.log
+
+Look for email content containing:
+"Your verification code is: XXXXXX"
+
+Expected Log Content:
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Subject: Aprende Comigo - Verification Code
+From: noreply@aprendecomigo.com
+To: anapmc.carvalho@gmail.com
+Date: [timestamp]
+
+Your verification code is: [6-digit code]
+
+This code will expire in 5 minutes.
+
+Step 5: Enter Verification Code
+1. Click in verification code input field
+2. Type the 6-digit code extracted from logs
+3. Click "Verify Code" button
+4. Wait for authentication
+
+Expected: Code verification succeeds and user is redirected
+
+Step 6: Verify Successful Login
+Expected:
+- Page navigates to /dashboard
+- User sees dashboard with school manager interface
+- Success alert: "Verification successful!"
+
+Screenshot: 03_successful_login.png
+
+Step 7: Verify Backend Authentication
+Command: tail -10 /tmp/django_server.log
+
+Expected Log Entries:
+INFO "POST /api/accounts/auth/verify-code/ HTTP/1.1" 200 232
+INFO "GET /api/accounts/users/dashboard_info/ HTTP/1.1" 200 352
+
+Expected: Backend authentication successful
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND user reaches functional dashboard
+FAIL: Any step fails OR dashboard route doesn't exist/work properly
+
+Individual Step Criteria:
+- Step 1: PASS if both services start, FAIL if either service fails
+- Step 2: PASS if login page loads with all elements, FAIL if page doesn't load or elements missing
+- Step 3: PASS if verification page loads with success alert, FAIL if navigation fails or no alert
+- Step 4: PASS if verification code found in logs, FAIL if no code generated
+- Step 5: PASS if code accepted, FAIL if code rejected
+- Step 6: PASS if dashboard loads with content, FAIL if error page or missing route
+- Step 7: PASS if authentication API calls successful, FAIL if API errors
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

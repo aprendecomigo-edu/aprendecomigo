@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from '@unitools/link';
 import useRouter from '@unitools/router';
 import { useLocalSearchParams } from 'expo-router';
-import { AlertTriangle, Fingerprint, Check } from 'lucide-react-native';
+import { AlertTriangle, Check } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Keyboard, Platform } from 'react-native';
@@ -51,8 +51,7 @@ const VerifyCodeForm = () => {
   }>();
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [enableBiometric, setEnableBiometric] = useState(false);
-  const { checkAuthStatus, biometricSupport, enableBiometrics } = useAuth();
+  const { checkAuthStatus } = useAuth();
 
   // Verify code form
   const verifyCodeForm = useForm<VerifyCodeSchemaType>({
@@ -93,39 +92,6 @@ const VerifyCodeForm = () => {
       // Successfully verified - now explicitly update auth state
       await checkAuthStatus();
 
-      // If the user wants to enable biometric authentication
-      if (enableBiometric && biometricSupport.isAvailable) {
-        try {
-          // Using contact as the identifier for biometrics
-          const result = await enableBiometrics(data.contact);
-          if (result) {
-            toast.show({
-              placement: 'bottom right',
-              render: ({ id }) => {
-                return (
-                  <Toast nativeID={id} variant="solid" action="success">
-                    <ToastTitle>Biometric authentication enabled!</ToastTitle>
-                  </Toast>
-                );
-              },
-            });
-          } else {
-            toast.show({
-              placement: 'bottom right',
-              render: ({ id }) => {
-                return (
-                  <Toast nativeID={id} variant="solid" action="warning">
-                    <ToastTitle>Could not enable biometric authentication.</ToastTitle>
-                  </Toast>
-                );
-              },
-            });
-          }
-        } catch (biometricError) {
-          console.error('Error enabling biometrics:', biometricError);
-          // Continue despite biometric error
-        }
-      }
 
       toast.show({
         placement: 'bottom right',
@@ -138,8 +104,8 @@ const VerifyCodeForm = () => {
         },
       });
 
-      // Navigate to dashboard after verification
-      router.replace('/dashboard');
+      // Navigate to home after verification
+      router.replace('/home');
     } catch (error) {
       toast.show({
         placement: 'bottom right',
@@ -266,21 +232,6 @@ const VerifyCodeForm = () => {
             </FormControlError>
           </FormControl>
 
-          {biometricSupport.isAvailable && (
-            <Checkbox
-              value="enable-biometric"
-              isChecked={enableBiometric}
-              onChange={setEnableBiometric}
-              aria-label="Enable biometric login"
-            >
-              <CheckboxIndicator className="mr-2">
-                <CheckboxIcon as={Check} />
-              </CheckboxIndicator>
-              <CheckboxLabel>
-                Enable {Platform.OS === 'ios' ? 'Face ID / Touch ID' : 'biometric'} login
-              </CheckboxLabel>
-            </Checkbox>
-          )}
 
           <VStack className="w-full my-7" space="lg">
             <Button
