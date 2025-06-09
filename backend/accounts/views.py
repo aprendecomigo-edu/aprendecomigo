@@ -911,9 +911,6 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
             permission_classes = [IsAuthenticated]
         elif self.action in ["invite_new", "invite_existing"]:
             permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
-        elif self.action == "add_existing":
-            # Deprecated endpoint - still needs auth but will return 410 Gone
-            permission_classes = [IsAuthenticated]
         else:
             permission_classes = [IsAuthenticated, IsTeacherInAnySchool]
         return [permission() for permission in permission_classes]

@@ -167,7 +167,7 @@ class EducationalSystemSerializer(serializers.ModelSerializer):
     Serializer for the EducationalSystem model.
     Now uses Django enumeration types for better type safety.
     """
-    
+
     school_years = serializers.SerializerMethodField()
     education_levels = serializers.SerializerMethodField()
 
@@ -502,57 +502,6 @@ class TeacherOnboardingSerializer(serializers.Serializer):
         return value
 
 
-class AddExistingTeacherSerializer(serializers.Serializer):
-    """
-    ⚠️ DEPRECATED: This serializer is deprecated as of [DATE].
-
-    Use InviteExistingTeacherSerializer instead to ensure proper user consent.
-    This serializer was for adding teachers without their explicit acceptance.
-
-    MIGRATION: Replace with InviteExistingTeacherSerializer
-    """
-
-    email = serializers.EmailField()
-    school_id = serializers.IntegerField()
-
-    # Teacher profile fields (all optional)
-    bio = serializers.CharField(required=False, allow_blank=True)
-    specialty = serializers.CharField(max_length=100, required=False, allow_blank=True)
-
-    # Course associations
-    course_ids = serializers.ListField(
-        child=serializers.IntegerField(),
-        required=False,
-        allow_empty=True,
-        help_text="List of course IDs the teacher wants to teach",
-    )
-
-    def validate_email(self, value):
-        """Validate that the user exists."""
-        if not User.objects.filter(email=value).exists():
-            raise serializers.ValidationError(f"User with email '{value}' does not exist")
-        return value
-
-    def validate_school_id(self, value):
-        """Validate that the school exists."""
-        if not School.objects.filter(id=value).exists():
-            raise serializers.ValidationError(f"School with ID {value} does not exist")
-        return value
-
-    def validate_course_ids(self, value):
-        """Validate that all course IDs exist."""
-        if not value:
-            return value
-
-        existing_ids = set(Course.objects.filter(id__in=value).values_list("id", flat=True))
-        invalid_ids = set(value) - existing_ids
-
-        if invalid_ids:
-            raise serializers.ValidationError(f"Invalid course IDs: {list(invalid_ids)}")
-
-        return value
-
-
 class InviteNewTeacherSerializer(serializers.Serializer):
     """
     Serializer for creating a new user and inviting them as a teacher to a school.
@@ -760,7 +709,8 @@ class CreateStudentSerializer(serializers.Serializer):
                 if not educational_system.validate_school_year(value):
                     # Format error message with key: display pairs
                     valid_options = [
-                        f"'{year[0]}': '{year[1]}'" for year in educational_system.school_year_choices
+                        f"'{year[0]}': '{year[1]}'"
+                        for year in educational_system.school_year_choices
                     ]
                     raise serializers.ValidationError(
                         f"School year '{value}' is not valid for educational system '{educational_system.name}'. "
