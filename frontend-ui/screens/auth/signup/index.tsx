@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 import { AuthLayout } from '../layout';
 
-import { createUser, OnboardingData } from '@/api/authApi';
+import { createUser } from '@/api/authApi';
 import { useAuth } from '@/api/authContext';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -29,7 +29,7 @@ import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
 import { Radio, RadioGroup, RadioIcon, RadioIndicator, RadioLabel } from '@/components/ui/radio';
 import { Text } from '@/components/ui/text';
-import { Toast, ToastTitle, useToast } from '@/components/ui/toast';
+import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
 
 // Define the form schema
@@ -98,7 +98,7 @@ const OnboardingForm = () => {
     },
   });
 
-  // Watch primary contact selection
+  // Watch primary contact selection for dynamic UI updates
   const primaryContact = watch('primaryContact');
 
   // Update form with user profile data when available
@@ -133,19 +133,10 @@ const OnboardingForm = () => {
       // Update auth state
       await checkAuthStatus();
 
-      toast.show({
-        placement: 'bottom right',
-        render: ({ id }) => {
-          return (
-            <Toast nativeID={id} variant="solid" action="success">
-              <ToastTitle>
-                Registration successful! Please verify your{' '}
-                {data.primaryContact === 'email' ? 'email' : 'phone'}.
-              </ToastTitle>
-            </Toast>
-          );
-        },
-      });
+      toast.showToast(
+        'success',
+        `Registration successful! Please verify your ${data.primaryContact === 'email' ? 'email' : 'phone'}.`
+      );
 
       // Navigate to verification screen - fix type issue by using proper navigation
       router.replace(
@@ -155,16 +146,7 @@ const OnboardingForm = () => {
       );
     } catch (error) {
       console.error('Error during registration:', error);
-      toast.show({
-        placement: 'bottom right',
-        render: ({ id }) => {
-          return (
-            <Toast nativeID={id} variant="solid" action="error">
-              <ToastTitle>Failed to complete registration. Please try again.</ToastTitle>
-            </Toast>
-          );
-        },
-      });
+      toast.showToast('error', 'Failed to complete registration. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -327,7 +309,7 @@ const OnboardingForm = () => {
               </FormControlError>
               <FormControlHelper>
                 <FormControlHelperText>
-                  A verification code will be sent to your primary contact method
+                  A verification code will be sent to your {primaryContact === 'email' ? 'email address' : 'phone number'}
                 </FormControlHelperText>
               </FormControlHelper>
             </FormControl>
