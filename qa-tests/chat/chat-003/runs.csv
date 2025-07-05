@@ -1,0 +1,2 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250705-084600,2025-07-05 08:46:00,PASS,12,0,Playwright,development,"All steps passed. Critical duplicate DM prevention bug discovered and fixed during execution. Clean test completion."

@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
+import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
 
 // Color constants
@@ -94,6 +95,7 @@ interface AddStudentModalProps {
 }
 
 export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalProps) => {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState<StudentFormData>({
     name: '',
     email: '',
@@ -159,8 +161,14 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
     try {
       setIsSaving(true);
       await createStudent(formData);
+
+      // Show success feedback
+      showToast('success', 'Aluno criado com sucesso!');
+
+      // Call success callback and close modal
       onSuccess();
       onClose();
+
       // Reset form
       setFormData({
         name: '',
@@ -172,8 +180,15 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
         birth_date: '',
       });
       setErrors({});
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving student:', error);
+
+      // Show error feedback
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.detail ||
+        'Erro ao criar aluno. Tente novamente.';
+      showToast('error', errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -220,7 +235,7 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
                     <InputField
                       placeholder="João Silva"
                       value={formData.name}
-                                             onChangeText={text => updateFormData('name', text)}
+                      onChangeText={text => updateFormData('name', text)}
                       className="flex-1 ml-2"
                     />
                   </HStack>
@@ -237,7 +252,7 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
                     <InputField
                       placeholder="joao.silva@example.com"
                       value={formData.email}
-                      onChangeText={(text) => updateFormData('email', text)}
+                      onChangeText={text => updateFormData('email', text)}
                       keyboardType="email-address"
                       autoCapitalize="none"
                       className="flex-1 ml-2"
@@ -256,13 +271,15 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
                     <InputField
                       placeholder="+351912345678"
                       value={formData.phone_number}
-                      onChangeText={(text) => updateFormData('phone_number', text)}
+                      onChangeText={text => updateFormData('phone_number', text)}
                       keyboardType="phone-pad"
                       className="flex-1 ml-2"
                     />
                   </HStack>
                 </Input>
-                {errors.phone_number && <Text className="text-xs text-red-500">{errors.phone_number}</Text>}
+                {errors.phone_number && (
+                  <Text className="text-xs text-red-500">{errors.phone_number}</Text>
+                )}
               </VStack>
 
               {/* School Year Field */}
@@ -270,15 +287,12 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
                 <Text className="text-sm font-medium text-gray-700">Ano Escolar *</Text>
                 <Select
                   selectedValue={formData.school_year}
-                  onValueChange={(value) => updateFormData('school_year', value)}
+                  onValueChange={value => updateFormData('school_year', value)}
                 >
                   <SelectTrigger>
                     <HStack className="items-center px-3">
                       <Icon as={GraduationCap} size="sm" className="text-gray-400" />
-                      <SelectInput
-                        placeholder="Selecione o ano escolar"
-                        className="flex-1 ml-2"
-                      />
+                      <SelectInput placeholder="Selecione o ano escolar" className="flex-1 ml-2" />
                     </HStack>
                   </SelectTrigger>
                   <SelectPortal>
@@ -287,13 +301,15 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
                       <SelectDragIndicatorWrapper>
                         <SelectDragIndicator />
                       </SelectDragIndicatorWrapper>
-                      {SCHOOL_YEARS.map((year) => (
+                      {SCHOOL_YEARS.map(year => (
                         <SelectItem key={year} label={year} value={year} />
                       ))}
                     </SelectContent>
                   </SelectPortal>
                 </Select>
-                {errors.school_year && <Text className="text-xs text-red-500">{errors.school_year}</Text>}
+                {errors.school_year && (
+                  <Text className="text-xs text-red-500">{errors.school_year}</Text>
+                )}
               </VStack>
 
               {/* Birth Date Field */}
@@ -305,13 +321,15 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
                     <InputField
                       placeholder="2005-06-15"
                       value={formData.birth_date}
-                      onChangeText={(text) => updateFormData('birth_date', text)}
+                      onChangeText={text => updateFormData('birth_date', text)}
                       className="flex-1 ml-2"
                     />
                   </HStack>
                 </Input>
                 <Text className="text-xs text-gray-500">Formato: AAAA-MM-DD</Text>
-                {errors.birth_date && <Text className="text-xs text-red-500">{errors.birth_date}</Text>}
+                {errors.birth_date && (
+                  <Text className="text-xs text-red-500">{errors.birth_date}</Text>
+                )}
               </VStack>
 
               {/* Info Box */}

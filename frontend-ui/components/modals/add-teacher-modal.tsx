@@ -22,6 +22,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
+import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
 
 // Color constants
@@ -94,6 +95,7 @@ interface AddTeacherModalProps {
 }
 
 export const AddTeacherModal = ({ isOpen, onClose, onSuccess }: AddTeacherModalProps) => {
+  const { showToast } = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -135,19 +137,33 @@ export const AddTeacherModal = ({ isOpen, onClose, onSuccess }: AddTeacherModalP
 
   const handleSave = async () => {
     if (selectedCourseIds.length === 0) {
+      showToast('error', 'Selecione pelo menos uma disciplina');
       return; // Don't save if no courses selected
     }
 
     try {
       setIsSaving(true);
       await saveTeacherProfile(selectedCourseIds);
+
+      // Show success feedback
+      showToast('success', 'Perfil de professor criado com sucesso!');
+
+      // Call success callback and close modal
       onSuccess();
       onClose();
+
       // Reset form
       setSelectedCourseIds([]);
       setSearchQuery('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving teacher profile:', error);
+
+      // Show error feedback
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.detail ||
+        'Erro ao criar perfil de professor. Tente novamente.';
+      showToast('error', errorMessage);
     } finally {
       setIsSaving(false);
     }

@@ -6,8 +6,10 @@ import {
   ChevronRight,
   ChevronLeft,
 } from 'lucide-react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, Animated, StyleSheet, View } from 'react-native';
+
+import CreateChannelModal from './CreateChannelModal';
 
 import { useAuth } from '@/api/authContext';
 import { Channel } from '@/api/channelApi';
@@ -23,8 +25,9 @@ interface ChannelDrawerProps {
   isOpen: boolean;
   onToggle: () => void;
   channels: Channel[];
-  onChannelSelect: (channelId: string) => void;
-  selectedChannelId?: string;
+  onChannelSelect: (channelId: number) => void;
+  selectedChannelId?: number;
+  onChannelCreated?: () => void;
 }
 
 export const ChannelDrawer = ({
@@ -33,9 +36,11 @@ export const ChannelDrawer = ({
   channels,
   onChannelSelect,
   selectedChannelId,
+  onChannelCreated,
 }: ChannelDrawerProps) => {
   const { userProfile } = useAuth();
   const userName = userProfile?.name;
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Animation value for drawer
   const [slideAnim] = React.useState(new Animated.Value(isOpen ? 0 : -240));
@@ -49,14 +54,41 @@ export const ChannelDrawer = ({
     }).start();
   }, [isOpen, slideAnim]);
 
-  // Group channels by type and unread status
-  const unreadChannels = channels.filter(channel => channel.unreadCount > 0);
-  const groupChannels = channels.filter(
-    channel => channel.type === 'channel' && channel.unreadCount === 0
-  );
-  const directMessages = channels.filter(
-    channel => channel.type === 'dm' && channel.unreadCount === 0
-  );
+  // Group channels by type
+  const groupChannels = channels.filter(channel => !channel.is_direct);
+  const directMessages = channels.filter(channel => channel.is_direct);
+
+  // Helper to get display name for channel
+  const getChannelDisplayName = (channel: Channel) => {
+    if (channel.is_direct) {
+      // For direct messages, show the other participant's name
+      const otherParticipant = channel.participants.find(p => p.id !== userProfile?.id);
+      return otherParticipant
+        ? `${otherParticipant.first_name} ${otherParticipant.last_name}`
+        : 'Direct Message';
+    }
+    return channel.name;
+  };
+
+  // Helper to get avatar text
+  const getAvatarText = (channel: Channel) => {
+    if (channel.is_direct) {
+      const otherParticipant = channel.participants.find(p => p.id !== userProfile?.id);
+      return otherParticipant
+        ? `${otherParticipant.first_name[0]}${otherParticipant.last_name[0]}`
+        : 'DM';
+    }
+    return channel.name.substring(0, 2).toUpperCase();
+  };
+
+  // Helper to check if user is online
+  const isUserOnline = (channel: Channel) => {
+    if (channel.is_direct) {
+      const otherParticipant = channel.participants.find(p => p.id !== userProfile?.id);
+      return otherParticipant && channel.online.some(u => u.id === otherParticipant.id);
+    }
+    return false;
+  };
 
   return (
     <View style={styles.container}>
@@ -65,51 +97,11 @@ export const ChannelDrawer = ({
       >
         <VStack className="h-full pt-4 bg-white border-r border-gray-200">
           <ScrollView className="flex-1 mt-2 px-2">
-            {/* Unread Section */}
-            {unreadChannels.length > 0 && (
-              <VStack className="mb-4">
-                <HStack className="justify-between items-center mb-2">
-                  <Text className="text-xs font-bold text-gray-500 uppercase">Não lidas</Text>
-                </HStack>
-
-                {unreadChannels.map(channel => (
-                  <Pressable
-                    key={channel.id}
-                    onPress={() => onChannelSelect(channel.id)}
-                    className={`py-2 px-2 rounded-md ${
-                      selectedChannelId === channel.id ? 'bg-blue-100' : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    <HStack space="sm" className="items-center">
-                      {channel.type === 'channel' ? (
-                        <Icon as={Hash} size="sm" className="text-gray-600" />
-                      ) : (
-                        <Box className="relative">
-                          <Avatar className="bg-purple-100 h-6 w-6">
-                            <AvatarFallbackText>{channel.avatarText}</AvatarFallbackText>
-                          </Avatar>
-                          {channel.type === 'dm' &&
-                            channel.participants &&
-                            channel.participants[0]?.isOnline && (
-                              <Box className="absolute bottom-0 right-0 rounded-full h-2 w-2 bg-green-500 border border-white" />
-                            )}
-                        </Box>
-                      )}
-                      <Text className="font-bold">{channel.name}</Text>
-                      <Box className="bg-blue-500 ml-auto rounded-full h-5 w-5 items-center justify-center">
-                        <Text className="text-xs text-white">{channel.unreadCount}</Text>
-                      </Box>
-                    </HStack>
-                  </Pressable>
-                ))}
-              </VStack>
-            )}
-
             {/* Channels Section */}
             <VStack className="mb-4">
               <HStack className="justify-between items-center mb-2">
                 <Text className="text-xs font-bold text-gray-500 uppercase">Canais</Text>
-                <Pressable className="p-1">
+                <Pressable className="p-1" onPress={() => setShowCreateModal(true)}>
                   <Icon as={PlusCircle} size="sm" className="text-gray-600" />
                 </Pressable>
               </HStack>
@@ -124,7 +116,7 @@ export const ChannelDrawer = ({
                 >
                   <HStack space="sm" className="items-center">
                     <Icon as={Hash} size="sm" className="text-gray-600" />
-                    <Text className="text-gray-800">{channel.name}</Text>
+                    <Text className="text-gray-800">{getChannelDisplayName(channel)}</Text>
                   </HStack>
                 </Pressable>
               ))}
@@ -134,7 +126,7 @@ export const ChannelDrawer = ({
             <VStack className="mb-4">
               <HStack className="justify-between items-center mb-2">
                 <Text className="text-xs font-bold text-gray-500 uppercase">Mensagens Diretas</Text>
-                <Pressable className="p-1">
+                <Pressable className="p-1" onPress={() => setShowCreateModal(true)}>
                   <Icon as={PlusCircle} size="sm" className="text-gray-600" />
                 </Pressable>
               </HStack>
@@ -150,13 +142,13 @@ export const ChannelDrawer = ({
                   <HStack space="sm" className="items-center">
                     <Box className="relative">
                       <Avatar className="bg-purple-100 h-6 w-6">
-                        <AvatarFallbackText>{channel.avatarText}</AvatarFallbackText>
+                        <AvatarFallbackText>{getAvatarText(channel)}</AvatarFallbackText>
                       </Avatar>
-                      {channel.participants && channel.participants[0]?.isOnline && (
+                      {isUserOnline(channel) && (
                         <Box className="absolute bottom-0 right-0 rounded-full h-2 w-2 bg-green-500 border border-white" />
                       )}
                     </Box>
-                    <Text className="text-gray-800">{channel.name}</Text>
+                    <Text className="text-gray-800">{getChannelDisplayName(channel)}</Text>
                   </HStack>
                 </Pressable>
               ))}
@@ -173,6 +165,16 @@ export const ChannelDrawer = ({
       >
         <Icon as={isOpen ? ChevronLeft : ChevronRight} size="sm" className="text-gray-600" />
       </Pressable>
+
+      {/* Create Channel Modal */}
+      <CreateChannelModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onChannelCreated={() => {
+          setShowCreateModal(false);
+          onChannelCreated?.();
+        }}
+      />
     </View>
   );
 };

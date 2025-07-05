@@ -9,6 +9,7 @@ import {
 } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 
+import { useAuth } from '@/api/authContext';
 import { getTeachers, TeacherProfile } from '@/api/userApi';
 import { MainLayout } from '@/components/layouts/main-layout';
 import { AddStudentModal } from '@/components/modals/add-student-modal';
@@ -162,6 +163,7 @@ interface TeachersTabProps {
   onAddTeacher: () => void;
   onInviteTeacher: () => void;
   onAddManually: () => void;
+  userHasTeacherProfile: boolean;
 }
 
 const TeachersTab = ({
@@ -169,6 +171,7 @@ const TeachersTab = ({
   onAddTeacher,
   onInviteTeacher,
   onAddManually,
+  userHasTeacherProfile,
 }: TeachersTabProps) => {
   return (
     <VStack space="md">
@@ -178,19 +181,20 @@ const TeachersTab = ({
           Lista de Professores
         </Heading>
         <HStack style={{ paddingHorizontal: 4 }}>
-          <ActionButton
-            icon={UserPlus}
-            title="Adicionar-me como professor"
-            onPress={onAddTeacher}
-            variant="primary"
-          />
+          {!userHasTeacherProfile && (
+            <ActionButton
+              icon={UserPlus}
+              title="Adicionar-me como professor"
+              onPress={onAddTeacher}
+              variant="primary"
+            />
+          )}
           <ActionButton
             icon={Mail}
             title="Convidar professor"
             onPress={onInviteTeacher}
             variant="secondary"
           />
-
         </HStack>
       </HStack>
 
@@ -347,6 +351,7 @@ const StaffTab = () => {
 };
 
 export default function UsersPage() {
+  const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('teachers');
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [isInviteTeacherModalOpen, setIsInviteTeacherModalOpen] = useState(false);
@@ -355,20 +360,31 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const tabs: TabInfo[] = [
-    {
-      key: 'teachers',
-      title: 'Professores',
-    },
-    {
-      key: 'students',
-      title: 'Alunos',
-    },
-    {
-      key: 'staff',
-      title: 'Colaboradores',
-    },
-  ];
+  // Filter tabs based on user role
+  const tabs: TabInfo[] = React.useMemo(() => {
+    const allTabs: TabInfo[] = [
+      {
+        key: 'teachers',
+        title: 'Professores',
+      },
+      {
+        key: 'students',
+        title: 'Alunos',
+      },
+      {
+        key: 'staff',
+        title: 'Colaboradores',
+      },
+    ];
+
+    // Students should not see the student tab
+    if (userProfile?.user_type === 'student') {
+      return allTabs.filter(tab => tab.key !== 'students');
+    }
+
+    // Teachers and admins can see all tabs
+    return allTabs;
+  }, [userProfile?.user_type]);
 
   const handleAddMeAsTeacher = () => {
     setIsAddTeacherModalOpen(true);
@@ -423,6 +439,12 @@ export default function UsersPage() {
     fetchTeachers();
   }, []);
 
+  // Check if current user has a teacher profile
+  const userHasTeacherProfile = React.useMemo(() => {
+    if (!userProfile || !teachers.length) return false;
+    return teachers.some(teacher => teacher.user.id === userProfile.id);
+  }, [userProfile, teachers]);
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'teachers':
@@ -432,6 +454,7 @@ export default function UsersPage() {
             onAddTeacher={handleAddMeAsTeacher}
             onInviteTeacher={handleInviteTeacher}
             onAddManually={handleAddManually}
+            userHasTeacherProfile={userHasTeacherProfile}
           />
         );
       case 'students':
@@ -445,6 +468,7 @@ export default function UsersPage() {
             onAddTeacher={handleAddMeAsTeacher}
             onInviteTeacher={handleInviteTeacher}
             onAddManually={handleAddManually}
+            userHasTeacherProfile={userHasTeacherProfile}
           />
         );
     }

@@ -1,0 +1,194 @@
+QA Test Case: Add Teacher Profile (Self-Registration)
+
+Test ID: FORM-002
+Test Name: Add Teacher Profile Self-Registration Modal
+Purpose: Verify that school managers can add themselves as teachers through the "Add me as teacher" functionality, completing the teacher profile setup form
+Expected Result: Modal opens with teacher onboarding form, allows course selection, validates input, and successfully creates teacher profile
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend with web support
+- Authentication: Passwordless email verification with Knox tokens
+- User Role: School Manager/Owner who wants to also be a teacher
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com
+- User Role: school_owner (converting to teacher)
+- Expected: User should not already have a teacher profile
+- Courses: System should have available courses for selection
+
+Prerequisites:
+- User must be authenticated and on the /users page
+- Teachers tab must be accessible
+- "Adicionar-me como professor" (Add me as teacher) button must be visible
+- User should NOT already have a teacher profile
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Preparation
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py runserver --settings=aprendecomigo.settings.development
+  # In new terminal:
+  cd frontend-ui
+  npm start
+
+Expected: Both servers running, user authenticated and on /users page
+Screenshot: 01_environment_ready.png
+
+Step 2: Navigate to Teachers Tab and Verify State
+1. Ensure you are on http://localhost:8081/users
+2. Click on "Professores" (Teachers) tab if not already selected
+3. Verify teachers list (should be empty or not include current user)
+4. Locate "Adicionar-me como professor" (Add me as teacher) button
+5. Verify button is enabled and clickable
+
+Expected: Teachers tab shows empty/partial list with add-me button available
+Screenshot: 02_teachers_tab_ready.png
+
+Step 3: Open Add Teacher Modal
+1. Click on "Adicionar-me como professor" (Add me as teacher) button
+2. Wait for modal to open and load completely
+3. Verify modal appears with teacher onboarding form
+4. Check modal title and structure
+
+Expected: Add teacher modal opens with onboarding form
+Screenshot: 03_add_teacher_modal_opened.png
+
+Step 4: Verify Form Structure and Fields
+1. Check for required form fields:
+   - Name/display name field
+   - Specialty or subject area field
+   - Course selection area
+   - Any bio/description fields
+2. Verify form validation indicators
+3. Check for submit/save button
+4. Verify modal close functionality
+
+Expected: Complete teacher profile form with all necessary fields
+Screenshot: 04_form_structure_complete.png
+
+Step 5: Test Course Selection Interface
+1. Locate course selection section
+2. Verify available courses are loaded
+3. Test course search functionality (if available)
+4. Try selecting/deselecting courses
+5. Check for course categories or filtering options
+
+Expected: Course selection works with available courses displayed
+Screenshot: 05_course_selection_working.png
+
+Step 6: Fill Teacher Profile Form
+1. Enter teacher name/display name
+2. Fill specialty field (e.g., "Matemática", "Português")
+3. Select at least one course from available options
+4. Fill any additional bio or description fields
+5. Verify form accepts all inputs correctly
+
+Expected: All form fields accept input without errors
+Screenshot: 06_form_filled_correctly.png
+
+Step 7: Test Form Validation
+1. Try submitting form with empty required fields
+2. Verify appropriate validation messages appear
+3. Test invalid input formats (if applicable)
+4. Check that submit button is disabled when form invalid
+5. Verify validation clears when fields are corrected
+
+Expected: Form validation works properly with clear error messages
+Screenshot: 07_form_validation_working.png
+
+Step 8: Submit Teacher Profile
+1. Ensure all required fields are completed correctly
+2. Click submit/save button
+3. Verify loading state appears during submission
+4. Wait for submission to complete
+5. Check for success message or modal closure
+
+Expected: Form submits successfully with loading feedback
+Screenshot: 08_form_submission_success.png
+
+Step 9: Verify Teacher Profile Creation
+1. Check that modal closes after successful submission
+2. Verify teachers list now includes the new teacher profile
+3. Check that teacher information is displayed correctly
+4. Verify "Add me as teacher" button is no longer available
+5. Look for success notification or feedback
+
+Expected: Teacher profile appears in list, button state updated
+Screenshot: 09_teacher_profile_created.png
+
+Step 10: Test Teacher Profile Data
+1. Verify teacher name appears correctly in list
+2. Check specialty is displayed properly
+3. Verify selected courses are associated correctly
+4. Check teacher status shows as active
+5. Verify all profile data matches form input
+
+Expected: All teacher profile data displays accurately
+Screenshot: 10_teacher_data_accurate.png
+
+Step 11: Test Modal Error Handling
+1. Try creating duplicate teacher profile (if possible)
+2. Test network disconnection during submission
+3. Verify appropriate error messages appear
+4. Check that form allows retry after errors
+5. Verify modal doesn't close on submission errors
+
+Expected: Graceful error handling with recovery options
+Screenshot: 11_error_handling_graceful.png
+
+Step 12: Backend Validation
+1. Check Django backend logs for teacher creation
+2. Verify API calls to teacher endpoints
+3. Check database for new teacher profile record
+4. Verify no errors during teacher profile creation
+5. Check that permissions are updated correctly
+
+Expected: Backend processes teacher creation without errors
+Screenshot: 12_backend_validation_clean.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Modal opens successfully AND form validates properly AND teacher profile creates successfully AND appears in teachers list AND button state manages correctly based on existing teacher status
+FAIL: Modal fails to open OR form validation broken OR profile creation fails OR data doesn't appear correctly OR button shows inappropriately
+
+UX/BEHAVIORAL REQUIREMENTS:
+- "Add me as teacher" button should NOT be visible if user already has a teacher profile
+- If button is visible but user already exists, should show clear message instead of allowing form submission
+- Modal should close automatically after successful profile creation
+- Success feedback should be provided (notification, updated list, etc.)
+- Form should prevent duplicate submissions with appropriate user feedback
+
+Individual Step Criteria:
+- Step 1-2: PASS if environment ready and tab accessible, FAIL if setup issues
+- Step 3: PASS if modal opens, FAIL if button doesn't work or modal broken
+- Step 4: PASS if form structure complete, FAIL if missing fields or broken layout
+- Step 5: PASS if course selection works, FAIL if courses don't load or selection broken
+- Step 6: PASS if form accepts input, FAIL if input fields not working
+- Step 7: PASS if validation works properly, FAIL if validation missing or incorrect
+- Step 8: PASS if submission succeeds, FAIL if form doesn't submit or errors
+- Step 9: PASS if profile appears in list, FAIL if creation not reflected in UI
+- Step 10: PASS if data accurate, FAIL if profile data incorrect or missing
+- Step 11: PASS if errors handled well, FAIL if poor error handling or crashes
+- Step 12: PASS if backend clean, FAIL if backend errors or API failures
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+Notes:
+- This test covers the self-registration flow for school managers becoming teachers
+- Focus on complete workflow from modal opening to profile appearance
+- Verify both frontend form functionality and backend data persistence
+- Ensure proper state management and UI updates after profile creation
+- Test edge cases like validation, errors, and duplicate attempts

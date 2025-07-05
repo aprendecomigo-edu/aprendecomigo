@@ -24,7 +24,7 @@ const ChannelListContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true); // Start with drawer open
-  const [selectedChannelId, setSelectedChannelId] = useState<string | undefined>(undefined);
+  const [selectedChannelId, setSelectedChannelId] = useState<number | undefined>(undefined);
 
   // Fetch channels on component mount
   useEffect(() => {
@@ -32,15 +32,18 @@ const ChannelListContent = () => {
       setIsLoading(true);
       try {
         const data = await fetchChannels();
-        setChannels(data);
-        setFilteredChannels(data);
+        const channelsArray = Array.isArray(data) ? data : [];
+        setChannels(channelsArray);
+        setFilteredChannels(channelsArray);
 
         // Set the first channel as selected by default
-        if (data.length > 0 && !selectedChannelId) {
-          setSelectedChannelId(data[0].id);
+        if (channelsArray.length > 0 && !selectedChannelId) {
+          setSelectedChannelId(channelsArray[0].id);
         }
       } catch (error) {
         console.error('Error loading channels:', error);
+        setChannels([]);
+        setFilteredChannels([]);
       } finally {
         setIsLoading(false);
       }
@@ -51,21 +54,22 @@ const ChannelListContent = () => {
 
   // Filter channels based on search term
   useEffect(() => {
+    const channelsArray = Array.isArray(channels) ? channels : [];
     if (searchTerm.trim() === '') {
-      setFilteredChannels(channels);
+      setFilteredChannels(channelsArray);
     } else {
       const searchTermLower = searchTerm.toLowerCase();
-      const filtered = channels.filter(
+      const filtered = channelsArray.filter(
         channel =>
           channel.name.toLowerCase().includes(searchTermLower) ||
-          channel.lastMessage.toLowerCase().includes(searchTermLower)
+          (channel.last_message?.content || '').toLowerCase().includes(searchTermLower)
       );
       setFilteredChannels(filtered);
     }
   }, [searchTerm, channels]);
 
   // Handle channel selection
-  const handleChannelSelect = (channelId: string) => {
+  const handleChannelSelect = (channelId: number) => {
     setSelectedChannelId(channelId);
   };
 
@@ -74,8 +78,10 @@ const ChannelListContent = () => {
     setIsDrawerOpen(!isDrawerOpen);
   };
 
-  // Get the selected channel
-  const selectedChannel = channels.find(channel => channel.id === selectedChannelId);
+  // Get the selected channel - ensure channels is an array
+  const selectedChannel = Array.isArray(channels)
+    ? channels.find(channel => channel.id === selectedChannelId)
+    : undefined;
 
   return (
     <Box className="flex-1 bg-gray-50">
@@ -87,6 +93,22 @@ const ChannelListContent = () => {
           channels={channels}
           onChannelSelect={handleChannelSelect}
           selectedChannelId={selectedChannelId}
+          onChannelCreated={() => {
+            // Reload channels when a new one is created
+            const loadChannels = async () => {
+              try {
+                const data = await fetchChannels();
+                const channelsArray = Array.isArray(data) ? data : [];
+                setChannels(channelsArray);
+                setFilteredChannels(channelsArray);
+              } catch (error) {
+                console.error('Error loading channels:', error);
+                setChannels([]);
+                setFilteredChannels([]);
+              }
+            };
+            loadChannels();
+          }}
         />
 
         {/* Main Content */}
@@ -95,7 +117,7 @@ const ChannelListContent = () => {
             <VStack className="flex-1 justify-center items-center">
               <Text>Carregando conversas...</Text>
             </VStack>
-          ) : channels.length === 0 ? (
+          ) : !Array.isArray(channels) || channels.length === 0 ? (
             <Center className="flex-1 p-8">
               <Icon as={MessageCircle} size="xl" className="text-gray-300 mb-4" />
               <Text className="text-xl font-bold text-gray-600 mb-2">Nenhuma conversa ainda</Text>
@@ -105,7 +127,13 @@ const ChannelListContent = () => {
               </Text>
             </Center>
           ) : (
-            <ChannelContent channel={selectedChannel || channels[0]} isLoading={isLoading} />
+            <ChannelContent
+              channel={
+                selectedChannel ||
+                (Array.isArray(channels) && channels.length > 0 ? channels[0] : undefined)
+              }
+              isLoading={isLoading}
+            />
           )}
         </View>
       </View>

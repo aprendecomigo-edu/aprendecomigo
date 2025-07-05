@@ -29,7 +29,7 @@ import { Input, InputField } from '@/components/ui/input';
 import { LinkText } from '@/components/ui/link';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
-import { Toast, ToastTitle, useToast } from '@/components/ui/toast';
+import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
 
 // Define the form schema
@@ -92,31 +92,12 @@ const VerifyCodeForm = () => {
       // Successfully verified - now explicitly update auth state
       await checkAuthStatus();
 
-
-      toast.show({
-        placement: 'bottom right',
-        render: ({ id }) => {
-          return (
-            <Toast nativeID={id} variant="solid" action="success">
-              <ToastTitle>Verification successful!</ToastTitle>
-            </Toast>
-          );
-        },
-      });
+      toast.showToast('success', 'Verification successful!');
 
       // Navigate to home after verification
       router.replace('/home');
     } catch (error) {
-      toast.show({
-        placement: 'bottom right',
-        render: ({ id }) => {
-          return (
-            <Toast nativeID={id} variant="solid" action="error">
-              <ToastTitle>Invalid verification code. Please try again.</ToastTitle>
-            </Toast>
-          );
-        },
-      });
+      toast.showToast('error', 'Invalid verification code. Please try again.');
     } finally {
       setIsVerifying(false);
     }
@@ -137,31 +118,13 @@ const VerifyCodeForm = () => {
 
       await requestEmailCode(params);
 
-      toast.show({
-        placement: 'bottom right',
-        render: ({ id }) => {
-          return (
-            <Toast nativeID={id} variant="solid" action="success">
-              <ToastTitle>New verification code sent to your {currentContactType}!</ToastTitle>
-            </Toast>
-          );
-        },
-      });
+      toast.showToast('success', `New verification code sent to your ${currentContactType}!`);
 
       // Reset the code field
       verifyCodeForm.setValue('code', '');
     } catch (error) {
       console.error('Error resending verification code:', error);
-      toast.show({
-        placement: 'bottom right',
-        render: ({ id }) => {
-          return (
-            <Toast nativeID={id} variant="solid" action="error">
-              <ToastTitle>Failed to send new verification code. Please try again.</ToastTitle>
-            </Toast>
-          );
-        },
-      });
+      toast.showToast('error', 'Failed to send new verification code. Please try again.');
     } finally {
       setIsResending(false);
     }
@@ -231,7 +194,6 @@ const VerifyCodeForm = () => {
               </FormControlErrorText>
             </FormControlError>
           </FormControl>
-
 
           <VStack className="w-full my-7" space="lg">
             <Button

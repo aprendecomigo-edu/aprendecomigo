@@ -1,13 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
 
 import apiClient from './apiClient';
-import {
-  authenticateWithBiometrics,
-  getBiometricAuthEmail,
-  isBiometricEnabled,
-} from './biometricAuth';
 
 export interface RequestEmailCodeParams {
   email: string;
@@ -90,52 +84,16 @@ export interface OnboardingResponse {
   schools: SchoolInfo[];
 }
 
-// Use Secure Store for token storage if available
 const storeToken = async (token: string) => {
-  try {
-    // Try to use SecureStore first
-    await SecureStore.setItemAsync('auth_token', token);
-  } catch (error) {
-    // Fall back to AsyncStorage if SecureStore fails
-    await AsyncStorage.setItem('auth_token', token);
-    console.warn('Using AsyncStorage for token storage as SecureStore failed');
-  }
+  await AsyncStorage.setItem('auth_token', token);
 };
 
 const getToken = async (): Promise<string | null> => {
-  try {
-    // Try to use SecureStore first
-    const token = await SecureStore.getItemAsync('auth_token');
-    if (token) return token;
-
-    // If not found in SecureStore, check AsyncStorage (for backward compatibility)
-    const asyncToken = await AsyncStorage.getItem('auth_token');
-    if (asyncToken) {
-      // Migrate token to SecureStore
-      await storeToken(asyncToken);
-      await AsyncStorage.removeItem('auth_token');
-      return asyncToken;
-    }
-
-    return null;
-  } catch (error) {
-    // Fall back to AsyncStorage if SecureStore fails
-    return await AsyncStorage.getItem('auth_token');
-  }
+  return await AsyncStorage.getItem('auth_token');
 };
 
 const removeToken = async () => {
-  try {
-    // Try to use SecureStore first
-    await SecureStore.deleteItemAsync('auth_token');
-
-    // Also clear from AsyncStorage (for backward compatibility)
-    await AsyncStorage.removeItem('auth_token');
-  } catch (error) {
-    // Fall back to AsyncStorage if SecureStore fails
-    await AsyncStorage.removeItem('auth_token');
-  }
-
+  await AsyncStorage.removeItem('auth_token');
   // Clean up old tokens (if any)
   await AsyncStorage.removeItem('access_token');
   await AsyncStorage.removeItem('refresh_token');
@@ -164,55 +122,6 @@ export const verifyEmailCode = async (params: VerifyEmailCodeParams) => {
   await storeToken(response.data.token);
 
   return response.data;
-};
-
-/**
- * Authenticate with biometrics and get token
- * @returns Authentication response or null if biometric auth fails
- */
-export const authenticateWithBiometricsAndGetToken = async (): Promise<AuthResponse | null> => {
-  try {
-    // Check if biometric auth is enabled
-    const biometricEnabled = await isBiometricEnabled();
-    if (!biometricEnabled) {
-      return null;
-    }
-
-    // Get email associated with biometric auth
-    const email = await getBiometricAuthEmail();
-    if (!email) {
-      return null;
-    }
-
-    // Authenticate with biometrics
-    const authResult = await authenticateWithBiometrics('Authenticate to log in');
-    if (!authResult.success) {
-      return null;
-    }
-
-    // Request a code for this email
-    await requestEmailCode({ email });
-
-    // Since this is biometric auth, we'll request a special biometric verification
-    // This endpoint should exist on the backend - if not, you'll need to implement it
-    try {
-      const response = await apiClient.post<AuthResponse>('accounts/auth/biometric-verify/', {
-        email,
-      });
-
-      // Store token in secure storage
-      await storeToken(response.data.token);
-
-      return response.data;
-    } catch (error) {
-      // If the biometric endpoint doesn't exist, we can't proceed with biometric auth
-      console.error('Error authenticating with biometrics:', error);
-      return null;
-    }
-  } catch (error) {
-    console.error('Error in biometric authentication flow:', error);
-    return null;
-  }
 };
 
 /**
@@ -246,7 +155,11 @@ export const isAuthenticated = async (): Promise<boolean> => {
     return true;
   } catch (error: any) {
     // If server is unreachable, we can't verify auth - logout user
-    if (!error.response || error.code === 'ERR_NETWORK' || error.code === 'ERR_CONNECTION_REFUSED') {
+    if (
+      !error.response ||
+      error.code === 'ERR_NETWORK' ||
+      error.code === 'ERR_CONNECTION_REFUSED'
+    ) {
       await removeToken();
       return false;
     }

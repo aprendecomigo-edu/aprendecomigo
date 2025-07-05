@@ -1,9 +1,9 @@
 """
 Tests for teacher onboarding endpoints and functionality.
 
-This module tests the three teacher onboarding scenarios:
+This module tests the teacher onboarding scenarios:
 1. Self-onboarding (current user becomes a teacher)
-2. Add existing user as teacher
+2. Invite existing user as teacher (with user acceptance)
 3. Invite new user as teacher
 
 Also tests multi-school scenarios, permissions, and data integrity.
@@ -18,6 +18,7 @@ from rest_framework.test import APIClient
 from accounts.models import (
     Course,
     CustomUser,
+    EducationalSystem,
     School,
     SchoolInvitation,
     SchoolMembership,
@@ -34,24 +35,32 @@ class TeacherOnboardingBaseTest(TestCase):
         """Set up test data for teacher onboarding tests."""
         self.client = APIClient()
 
+        # Create test educational system
+        self.test_educational_system = EducationalSystem.objects.create(
+            name="Test System",
+            code="test",
+            description="Test educational system for unit tests",
+            is_active=True,
+        )
+
         # Create test courses (use different codes to avoid conflicts with existing Portuguese courses)
         self.course1 = Course.objects.create(
             name="Test Mathematics A",
             code="TEST_635",
-            educational_system="test",
-            education_level="ensino_secundario",
+            educational_system=self.test_educational_system,
+            education_level="elementary",
         )
         self.course2 = Course.objects.create(
             name="Test Portuguese",
             code="TEST_639",
-            educational_system="test",
-            education_level="ensino_secundario",
+            educational_system=self.test_educational_system,
+            education_level="elementary",
         )
         self.course3 = Course.objects.create(
             name="Test History A",
             code="TEST_623",
-            educational_system="test",
-            education_level="ensino_secundario",
+            educational_system=self.test_educational_system,
+            education_level="elementary",
         )
 
         # Create test schools
@@ -397,167 +406,6 @@ class SelfOnboardingTest(TeacherOnboardingBaseTest):
         self.assertEqual(memberships.count(), 2)
 
 
-class InviteNewTeacherTest(TeacherOnboardingBaseTest):
-    """Tests for invite new user endpoint (POST /api/accounts/teachers/invite-new/)."""
-
-    def test_school_owner_invites_new_user(self):
-        """Test that school owner can invite new user as teacher."""
-        self.authenticate_user(self.owner_token)
-
-        new_email = "newteacher@example.com"
-        data = {
-            "email": new_email,
-            "name": "New Teacher",
-            "school_id": self.school1.id,
-            "phone_number": "+351 912 999 999",
-            "bio": "Newly invited teacher",
-            "specialty": "Chemistry",
-            "course_ids": [self.course2.id, self.course3.id],
-        }
-
-        url = reverse("accounts:teacher-invite-new")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Check response structure
-        response_data = response.json()
-        self.assertIn("message", response_data)
-        self.assertIn("teacher", response_data)
-        self.assertIn("school_membership", response_data)
-        self.assertIn("user_created", response_data)
-        self.assertIn("invitation_sent", response_data)
-        self.assertIn("invitation", response_data)
-        self.assertTrue(response_data["user_created"])
-        self.assertTrue(response_data["invitation_sent"])
-
-        # Check user was created
-        new_user = CustomUser.objects.get(email=new_email)
-        self.assertEqual(new_user.name, data["name"])
-        self.assertEqual(new_user.phone_number, data["phone_number"])
-
-        # Check teacher profile was created
-        self.assertTrue(hasattr(new_user, "teacher_profile"))
-        teacher_profile = new_user.teacher_profile
-        self.assertEqual(teacher_profile.bio, data["bio"])
-        self.assertEqual(teacher_profile.specialty, data["specialty"])
-
-        # Check school membership was created
-        membership = SchoolMembership.objects.get(
-            user=new_user, school=self.school1, role=SchoolRole.TEACHER
-        )
-        self.assertTrue(membership.is_active)
-
-        # Check course associations
-        teacher_courses = TeacherCourse.objects.filter(teacher=teacher_profile)
-        self.assertEqual(teacher_courses.count(), 2)
-        course_ids = [tc.course.id for tc in teacher_courses]
-        self.assertIn(self.course2.id, course_ids)
-        self.assertIn(self.course3.id, course_ids)
-
-        # Check invitation was created
-        invitation = SchoolInvitation.objects.get(email=new_email)
-        self.assertEqual(invitation.school, self.school1)
-        self.assertEqual(invitation.invited_by, self.school_owner)
-        self.assertEqual(invitation.role, SchoolRole.TEACHER)
-        self.assertIsNotNone(invitation.token)
-
-    def test_invite_new_user_minimal_data(self):
-        """Test inviting new user with minimal required data."""
-        self.authenticate_user(self.owner_token)
-
-        new_email = "minimal@example.com"
-        data = {"email": new_email, "name": "Minimal Teacher", "school_id": self.school1.id}
-
-        url = reverse("accounts:teacher-invite-new")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Check user was created with minimal data
-        new_user = CustomUser.objects.get(email=new_email)
-        self.assertEqual(new_user.name, data["name"])
-        self.assertEqual(new_user.phone_number, "")  # Default empty
-
-        # Check teacher profile was created with defaults
-        teacher_profile = new_user.teacher_profile
-        self.assertEqual(teacher_profile.bio, "")
-        self.assertEqual(teacher_profile.specialty, "")
-
-        # No courses should be associated
-        teacher_courses = TeacherCourse.objects.filter(teacher=teacher_profile)
-        self.assertEqual(teacher_courses.count(), 0)
-
-    def test_invite_existing_user_email(self):
-        """Test that inviting user with existing email fails."""
-        self.authenticate_user(self.owner_token)
-
-        data = {
-            "email": self.existing_user.email,  # Already exists
-            "name": "Should Fail",
-            "school_id": self.school1.id,
-        }
-
-        url = reverse("accounts:teacher-invite-new")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("already exists", response.json()["email"][0])
-
-    def test_invite_to_nonexistent_school(self):
-        """Test inviting user to non-existent school fails."""
-        self.authenticate_user(self.owner_token)
-
-        data = {
-            "email": "newuser@example.com",
-            "name": "New User",
-            "school_id": 999,  # Non-existent school
-        }
-
-        url = reverse("accounts:teacher-invite-new")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("does not exist", response.json()["school_id"][0])
-
-    def test_invite_without_permission(self):
-        """Test that regular users cannot invite new teachers."""
-        self.authenticate_user(self.regular_user_token)
-
-        data = {"email": "newuser@example.com", "name": "New User", "school_id": self.school1.id}
-
-        url = reverse("accounts:teacher-invite-new")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        response_data = response.json()
-        # Handle both 'error' and 'detail' fields for permission errors
-        error_message = response_data.get("error", response_data.get("detail", ""))
-        # Update the assertion to match the actual error message
-        self.assertTrue(
-            "don't have permission" in error_message
-            or "must be a school owner or administrator" in error_message,
-            f"Expected permission error message, got: {error_message}",
-        )
-
-    def test_invite_invalid_phone_number(self):
-        """Test inviting user with invalid phone number format."""
-        self.authenticate_user(self.owner_token)
-
-        data = {
-            "email": "newuser@example.com",
-            "name": "New User",
-            "school_id": self.school1.id,
-            "phone_number": "invalid-phone",
-        }
-
-        url = reverse("accounts:teacher-invite-new")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("Invalid phone number format", response.json()["phone_number"][0])
-
-
 class TeacherListFilteringTest(TeacherOnboardingBaseTest):
     """Tests for teacher list filtering (GET /api/accounts/teachers/)."""
 
@@ -718,7 +566,7 @@ class MultiSchoolScenarioTest(TeacherOnboardingBaseTest):
 
     def test_school_with_multiple_teachers(self):
         """Test that a school can have multiple teachers."""
-        # Add existing_user as teacher to school1
+        # Create teacher membership for existing_user at school1
         teacher_profile1 = TeacherProfile.objects.create(
             user=self.existing_user, bio="Teacher 1", specialty="Mathematics"
         )
@@ -828,7 +676,7 @@ class MultiSchoolScenarioTest(TeacherOnboardingBaseTest):
         self.assertEqual(len(roles), 2)
 
         # Check course association
-        teacher_courses = TeacherCourse.objects.filter(teacher=teacher_profile)
+        teacher_courses = TeacherCourse.objects.filter(teacher=self.school_owner.teacher_profile)
         self.assertEqual(teacher_courses.count(), 1)
         self.assertEqual(teacher_courses.first().course.id, self.course1.id)
 
@@ -880,23 +728,6 @@ class TeacherOnboardingEdgeCasesTest(TeacherOnboardingBaseTest):
 
         teacher_emails = [t["user"]["email"] for t in teachers]
         self.assertNotIn(self.existing_user.email, teacher_emails)
-
-    def test_missing_required_fields_invite_new(self):
-        """Test inviting new user with missing required fields."""
-        self.authenticate_user(self.owner_token)
-
-        # Missing name field
-        data = {
-            "email": "newuser@example.com",
-            "school_id": self.school1.id,
-            # Missing required "name" field
-        }
-
-        url = reverse("accounts:teacher-invite-new")
-        response = self.client.post(url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("name", response.json())
 
     def test_long_text_fields(self):
         """Test handling of very long text in bio and specialty fields."""

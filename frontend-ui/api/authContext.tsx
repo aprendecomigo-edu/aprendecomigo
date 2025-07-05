@@ -2,18 +2,7 @@ import { router } from 'expo-router';
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 import { setAuthErrorCallback } from './apiClient';
-import {
-  isAuthenticated,
-  logout,
-  authenticateWithBiometricsAndGetToken,
-  UserProfile,
-} from './authApi';
-import {
-  enableBiometricAuth,
-  disableBiometricAuth,
-  isBiometricAvailable,
-  isBiometricEnabled,
-} from './biometricAuth';
+import { isAuthenticated, logout, UserProfile } from './authApi';
 import { getDashboardInfo } from './userApi';
 
 // Global flag to prevent multiple simultaneous auth checks
@@ -30,13 +19,6 @@ interface AuthContextType {
   checkAuthStatus: () => Promise<boolean>;
   refreshUserProfile: () => Promise<void>;
   ensureUserProfile: () => Promise<void>;
-  biometricSupport: {
-    isAvailable: boolean;
-    isEnabled: boolean;
-  };
-  enableBiometrics: (email: string) => Promise<boolean>;
-  disableBiometrics: () => Promise<boolean>;
-  loginWithBiometrics: () => Promise<boolean>;
   notifyAuthError: () => void;
 }
 
@@ -48,34 +30,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userProfileCached, setUserProfileCached] = useState<boolean>(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [serverAlert, setServerAlert] = useState<{ type: 'error' | 'warning'; message: string } | null>(null);
+  const [serverAlert, setServerAlert] = useState<{
+    type: 'error' | 'warning';
+    message: string;
+  } | null>(null);
   const hasInitializedRef = useRef(false);
-  const [biometricSupport, setBiometricSupport] = useState<{
-    isAvailable: boolean;
-    isEnabled: boolean;
-  }>({
-    isAvailable: false,
-    isEnabled: false,
-  });
-
-  // Check biometric availability and status
-  const checkBiometricStatus = async () => {
-    try {
-      const available = await isBiometricAvailable();
-      const enabled = await isBiometricEnabled();
-
-      setBiometricSupport({
-        isAvailable: available,
-        isEnabled: enabled,
-      });
-    } catch (error) {
-      console.error('Error checking biometric status:', error);
-      setBiometricSupport({
-        isAvailable: false,
-        isEnabled: false,
-      });
-    }
-  };
 
   // Fetch user profile (separate from auth check)
   const fetchUserProfile = async (): Promise<void> => {
@@ -116,52 +75,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchUserProfile();
   };
 
-  // Enable biometric authentication
-  const handleEnableBiometrics = async (email: string): Promise<boolean> => {
-    const result = await enableBiometricAuth(email);
-    if (result) {
-      setBiometricSupport({
-        ...biometricSupport,
-        isEnabled: true,
-      });
-    }
-    return result;
-  };
-
-  // Disable biometric authentication
-  const handleDisableBiometrics = async (): Promise<boolean> => {
-    const result = await disableBiometricAuth();
-    if (result) {
-      setBiometricSupport({
-        ...biometricSupport,
-        isEnabled: false,
-      });
-    }
-    return result;
-  };
-
-  // Login with biometrics
-  const handleLoginWithBiometrics = async (): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      const authResponse = await authenticateWithBiometricsAndGetToken();
-
-      if (authResponse) {
-        setIsLoggedIn(true);
-        setUserProfile(authResponse.user);
-        setUserProfileCached(true);
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Error during biometric login:', error);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Optimized auth status check - LIGHT operation ONLY
   const checkAuthStatus = async (): Promise<boolean> => {
     // Prevent multiple simultaneous auth checks globally
@@ -189,11 +102,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return authenticated;
     } catch (error: any) {
       // Check if this is a server connection error (server completely down)
-      if (!error.response || error.code === 'ERR_NETWORK' || error.code === 'ERR_CONNECTION_REFUSED') {
-        setServerError('Unable to connect to server. Please check your internet connection or contact your administrator if this error persists.');
+      if (
+        !error.response ||
+        error.code === 'ERR_NETWORK' ||
+        error.code === 'ERR_CONNECTION_REFUSED'
+      ) {
+        setServerError(
+          'Unable to connect to server. Please check your internet connection or contact your administrator if this error persists.'
+        );
         setServerAlert({
           type: 'error',
-          message: 'Server is currently unavailable. You have been logged out for security reasons.'
+          message:
+            'Server is currently unavailable. You have been logged out for security reasons.',
         });
         setIsLoggedIn(false);
         setUserProfile(null);
@@ -205,7 +125,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error.response?.status >= 500) {
         setServerAlert({
           type: 'warning',
-          message: 'Server is experiencing issues. Some features may not work properly. Please try again later.'
+          message:
+            'Server is experiencing issues. Some features may not work properly. Please try again later.',
         });
         // Don't logout for server errors - assume token is still valid
         return isLoggedIn; // Return current auth state
@@ -268,7 +189,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initializeAuth = async () => {
       console.log('🔑 AuthContext: Initializing auth...');
       await checkAuthStatus();
-      await checkBiometricStatus();
       console.log('🔑 AuthContext: Auth initialization complete');
     };
 
@@ -294,10 +214,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuthStatus,
     refreshUserProfile,
     ensureUserProfile,
-    biometricSupport,
-    enableBiometrics: handleEnableBiometrics,
-    disableBiometrics: handleDisableBiometrics,
-    loginWithBiometrics: handleLoginWithBiometrics,
     notifyAuthError: handleNotifyAuthError,
   };
 

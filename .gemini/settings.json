@@ -1,0 +1,61 @@
+{
+  "contextFileName": "GEMINI.md",
+  "fileFiltering": {
+    "respectGitIgnore": true,
+    "enableRecursiveFileSearch": true
+  },
+  "autoAccept": true,
+  "coreTools": [
+    "ReadFileTool",
+    "GlobTool",
+    "EditFileTool",
+    "CreateFileTool",
+    "ListDirectoryTool",
+    "ShellTool(python manage.py)",
+    "ShellTool(npm)",
+    "ShellTool(pip)",
+    "ShellTool(git)",
+    "ShellTool(cd)",
+    "ShellTool(ls)",
+    "ShellTool(cat)",
+    "ShellTool(grep)",
+    "ShellTool(find)",
+    "ShellTool(which)",
+    "ShellTool(ps)",
+    "ShellTool(kill)",
+    "ShellTool(source)",
+    "ShellTool(export)",
+    "ShellTool(echo)",
+    "ShellTool(mkdir)",
+    "ShellTool(cp)",
+    "ShellTool(mv)",
+    "ShellTool(touch)",
+    "ShellTool(chmod)",
+    "ShellTool(curl)",
+    "ShellTool(wget)",
+    "ShellTool(node)",
+    "ShellTool(npx)",
+    "ShellTool(yarn)",
+    "ShellTool(expo)"
+  ],
+  "excludeTools": [
+    "ShellTool(rm -rf)",
+    "ShellTool(sudo rm)",
+    "ShellTool(chmod 777)",
+    "ShellTool(dd)",
+    "ShellTool(mkfs)",
+    "ShellTool(fdisk)",
+    "ShellTool(mount)",
+    "ShellTool(umount)"
+  ],
+  "sandbox": false,
+  "usageStatisticsEnabled": true,
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ]
+    }
+  }
+}

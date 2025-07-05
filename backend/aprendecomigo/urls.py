@@ -53,6 +53,7 @@ urlpatterns = [
     path("api/accounts/", include("accounts.urls", namespace="accounts")),
     path("api/", include("classroom.urls")),  # Add classroom URLs
     path("api/finances/", include("finances.urls")),  # Add finances URLs
+    path("api/scheduler/", include("scheduler.urls")),  # Add scheduler URLs
 ]
 
 # In development, serve static files for Swagger UI and media files for uploads

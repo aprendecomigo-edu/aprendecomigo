@@ -1,0 +1,214 @@
+QA Test Case: Role-Based Permissions Verification
+
+Test ID: PERM-003
+Test Name: Role-Based Permissions Verification
+Purpose: Verify that different roles (school_owner, teacher, student) have appropriate permissions and access levels within their assigned schools
+Expected Result: Each role has correct access levels - owners can manage everything, teachers have limited admin access, students have minimal access
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Testing Focus: Role-based access control within authorized schools
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data Requirements:
+- Test data from setup_permissions_test_data command
+- Users with different roles in Test School:
+  - test.manager@example.com: school_owner role
+  - additional.teacher@example.com: teacher role
+  - additional.student@example.com: student role
+- All users must have active memberships and email verification
+
+Database State:
+- Test data must be set up using setup_permissions_test_data management command
+- Focus school: "Test School" with multiple users in different roles
+- All memberships must be active
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment and Data Setup
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py setup_permissions_test_data --clean
+
+Expected: Test data created with users in different roles at Test School
+Screenshot: 01_test_data_setup.png
+
+Step 2: Start Backend and Frontend Servers
+Commands:
+  python manage.py runserver 8000 > /tmp/django_server.log 2>&1 &
+  cd ../frontend-ui
+  npm run web:dev > /tmp/expo_output.log 2>&1 &
+  sleep 10
+
+Expected: Both servers start successfully
+Verify: Backend at http://localhost:8000/api/, Frontend at http://localhost:8081
+
+Step 3: Test School Owner Permissions (Full Access)
+1. Navigate to http://localhost:8081
+2. Log in as: test.manager@example.com
+3. Navigate to Test School context/dashboard
+4. Test the following owner capabilities:
+   - View all school members
+   - Access school settings/management
+   - Invite new users to school
+   - Manage other users' roles (if feature exists)
+   - Access financial/billing information (if available)
+
+Expected: School owner has full access to all school management features
+Screenshot: 02_school_owner_full_access.png
+
+Step 4: Test Teacher Permissions (Limited Admin Access)
+1. Log out and log in as: additional.teacher@example.com
+2. Navigate to Test School dashboard/features
+3. Test teacher capabilities:
+   - View only students they teach (via ClassSession relationships)
+   - View other teachers in the same school
+   - Access teaching materials/classes
+   - Limited user management (only for students they teach)
+   - Cannot access school settings or billing
+   - Cannot invite new teachers or admins
+   - Cannot see all students in the school (only those they teach)
+
+Expected: Teacher has appropriate limited access - can only manage students they teach, not all school students
+Screenshot: 03_teacher_limited_access.png
+
+Step 5: Test Student Permissions (Minimal Access)
+1. Log out and log in as: additional.student@example.com
+2. Navigate to Test School student area
+3. Test student capabilities:
+   - View own profile/information
+   - Access learning materials/classes assigned to them
+   - View teachers (but limited info about those teaching them)
+   - Cannot view other students at all (no student tab should be visible)
+   - Cannot view any lists of users/members
+   - Cannot access any administrative functions
+
+Expected: Student has minimal access - only to their own learning environment, no student tab visible
+Screenshot: 04_student_minimal_access.png
+
+Step 6: Test API Permissions - School Owner
+Commands:
+  # Login and get token for school owner (test.manager@example.com)
+  # Test school management endpoints
+  curl -H "Authorization: Token [OWNER_TOKEN]" http://localhost:8000/api/schools/1/members/ | grep -c "email" || echo "Should see all members"
+  curl -H "Authorization: Token [OWNER_TOKEN]" -X POST -H "Content-Type: application/json" -d '{"school":1,"email":"test@invite.com","role":"student"}' http://localhost:8000/api/invitations/ -w "%{http_code}" | tail -1
+
+Expected: Owner can access all members and create invitations (200/201 status codes)
+Note: Replace [OWNER_TOKEN] with actual auth token
+
+Step 7: Test API Permissions - Teacher
+Commands:
+  # Login and get token for teacher (additional.teacher@example.com)
+  # Test limited access endpoints
+  curl -H "Authorization: Token [TEACHER_TOKEN]" http://localhost:8000/api/users/ | grep -c "student" || echo "Should only see students they teach"
+  curl -H "Authorization: Token [TEACHER_TOKEN]" -X POST -H "Content-Type: application/json" -d '{"school":1,"email":"test2@invite.com","role":"teacher"}' http://localhost:8000/api/invitations/ -w "%{http_code}" | tail -1
+
+Expected: Teacher can only see students they teach via ClassSession relationships, cannot create teacher invitations (403/404 for invitation)
+Note: Replace [TEACHER_TOKEN] with actual auth token
+
+Step 8: Test API Permissions - Student
+Commands:
+  # Login and get token for student (additional.student@example.com)
+  # Test minimal access endpoints
+  curl -H "Authorization: Token [STUDENT_TOKEN]" http://localhost:8000/api/schools/1/members/ -w "%{http_code}" | tail -1
+  curl -H "Authorization: Token [STUDENT_TOKEN]" -X POST -H "Content-Type: application/json" -d '{"school":1,"email":"test3@invite.com","role":"student"}' http://localhost:8000/api/invitations/ -w "%{http_code}" | tail -1
+
+Expected: Student has very limited API access (403/404 for most admin endpoints)
+Note: Replace [STUDENT_TOKEN] with actual auth token
+
+Step 9: Test User Management Permissions
+1. Login as school owner (test.manager@example.com)
+2. Navigate to users/members section
+3. Try to modify roles of other users:
+   - Change teacher to student role (should work)
+   - Change student to teacher role (should work)
+   - Deactivate/remove users (should work)
+
+Expected: School owner can manage all user roles and memberships
+Screenshot: 05_owner_user_management.png
+
+Step 10: Test Boundary Conditions - Teacher Attempting Owner Actions
+1. Login as teacher (additional.teacher@example.com)
+2. Try to access school owner functions:
+   - School settings/configuration
+   - Financial/billing areas
+   - Creating teacher or admin invitations
+   - Modifying other teachers' permissions
+
+Expected: All owner-level actions are blocked for teacher role
+Screenshot: 06_teacher_boundary_testing.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Each role has appropriate access levels AND role boundaries are properly enforced AND no unauthorized actions possible
+FAIL: Role permissions incorrect OR unauthorized access allowed OR missing expected functionality for any role
+
+Individual Step Criteria:
+- Step 1: PASS if test data setup completes, FAIL if errors or missing users
+- Step 2: PASS if servers start successfully, FAIL if startup issues
+- Step 3: PASS if owner has full access to all management features, FAIL if any restrictions or missing features
+- Step 4: PASS if teacher has appropriate limited access, FAIL if too much or too little access
+- Step 5: PASS if student has minimal appropriate access, FAIL if any admin access or excessive restrictions
+- Step 6: PASS if owner API access works fully, FAIL if API restrictions on owner
+- Step 7: PASS if teacher API has appropriate limits, FAIL if too much or insufficient access
+- Step 8: PASS if student API is properly restricted, FAIL if admin API access allowed
+- Step 9: PASS if owner can manage all users, FAIL if user management restrictions
+- Step 10: PASS if teacher cannot access owner functions, FAIL if role boundaries not enforced
+
+Overall Result: PASS only if ALL roles have correct permissions AND boundaries are enforced
+Critical Failure Conditions:
+- Students accessing admin functions = FAIL
+- Teachers accessing owner-only functions = FAIL
+- Role boundaries not enforced in API = FAIL
+- Missing expected functionality for any role = FAIL
+
+=== ROLE PERMISSION MATRIX (Expected Behavior) ===
+
+School Owner (school_owner):
+- ✓ View all school data
+- ✓ Manage all users and roles
+- ✓ School settings and configuration
+- ✓ Financial/billing access
+- ✓ Create any type of invitation
+- ✓ Full API access for their school
+
+Teacher (teacher):
+- ✓ View only students they teach (via ClassSession relationships)
+- ✓ View other teachers in the same school
+- ✓ Manage only students they teach (not all school students)
+- ✓ Access teaching materials
+- ✓ Limited user API access (only for students they teach)
+- ✗ Cannot access school settings
+- ✗ Cannot create teacher/admin invitations
+- ✗ Cannot access financial information
+- ✗ Cannot see all students in the school
+
+Student (student):
+- ✓ View own profile and data
+- ✓ Access assigned learning materials
+- ✓ View teachers who teach them (limited info)
+- ✗ Cannot view other students at all (no student tab)
+- ✗ Cannot view any user/member lists
+- ✗ Cannot access any admin functions
+- ✗ Very limited API access
+- ✗ Cannot create any invitations
+
+=== POST-TEST CLEANUP ===
+
+Commands to stop servers:
+  pkill -f "python manage.py runserver"
+  pkill -f "npm run web:dev"
+
+Verify cleanup:
+  ps aux | grep -E "(runserver|npm.*web:dev)" | grep -v grep

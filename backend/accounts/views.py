@@ -1119,7 +1119,7 @@ class StudentViewSet(KnoxAuthenticatedViewSet):
         """
         Filter queryset based on user permissions.
         - Students: can only access their own profile
-        - Teachers: can access profiles of students in their schools
+        - Teachers: can access profiles of students they teach (via ClassSession)
         - School owners/admins: can access profiles of students in their schools
         """
         user = self.request.user
@@ -1147,21 +1147,20 @@ class StudentViewSet(KnoxAuthenticatedViewSet):
 
         elif SchoolMembership.objects.filter(
             user=user, role=SchoolRole.TEACHER, is_active=True
-        ).exists():
-            # Teachers can see students in their schools
-            teacher_school_ids = list(
-                SchoolMembership.objects.filter(
-                    user=user, role=SchoolRole.TEACHER, is_active=True
-                ).values_list("school_id", flat=True)
-            )
+        ).exists() and hasattr(user, "teacher_profile"):
+            # Teachers can only see students they actually teach (via ClassSession)
+            from finances.models import ClassSession
+
+            taught_student_ids = ClassSession.objects.filter(
+                teacher=user.teacher_profile
+            ).values_list("students", flat=True)
+
             teacher_accessible = StudentProfile.objects.filter(
-                user__school_memberships__school_id__in=teacher_school_ids,
-                user__school_memberships__role=SchoolRole.STUDENT,
-                user__school_memberships__is_active=True,
+                user_id__in=taught_student_ids
             ).distinct()
             return (own_profile | teacher_accessible).distinct()
 
-        # For regular users or students, only show their own profile
+        # For students and other users, only show their own profile
         return own_profile
 
     def get_permissions(self):

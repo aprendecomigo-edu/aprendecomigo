@@ -1,0 +1,162 @@
+QA Test Case: Channel List Display
+
+Test ID: CHAT-001
+Test Name: Channel List Display and Navigation
+Purpose: Verify that the chat interface loads correctly and displays existing channels with proper Slack-style layout
+Expected Result: Chat interface displays with sidebar navigation, channel list, and proper UI elements
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Chat Feature: Slack-style messaging system
+- Backend WebSocket support via Django Channels
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- Test User: anapmc.carvalho@gmail.com (school_owner role)
+- Should have access to existing channels/conversations
+- Database should contain some sample channels or conversations
+
+Prerequisites:
+- User must be authenticated (run AUTH-001 if needed)
+- Backend server running on localhost:8000
+- Frontend server running on localhost:8081
+- Redis server running for WebSocket support
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup
+Start required services:
+
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+
+  # Start Redis for WebSocket support
+  redis-server
+
+  # In new terminal - Start Django backend
+  cd backend
+  python manage.py runserver --settings=aprendecomigo.settings.development
+
+  # In another terminal - Start React Native frontend
+  cd frontend-ui
+  npm start
+
+Expected: All services start without errors
+Screenshot: 01_services_running.png
+
+Step 2: Navigate to Chat Interface
+1. Open browser to http://localhost:8081
+2. If not logged in, complete authentication flow (AUTH-001)
+3. Navigate to chat section (look for Messages or Chat menu item)
+4. Verify chat page loads
+
+Expected: Chat interface loads with Slack-style layout
+Screenshot: 02_chat_interface_loaded.png
+
+Step 3: Verify Sidebar Navigation
+1. Confirm sidebar/drawer is visible on the left
+2. Check for channel sections:
+   - "Canais" (Channels) section with group channels
+   - "Mensagens Diretas" (Direct Messages) section
+3. Verify + buttons are present for creating new channels/DMs
+4. Test sidebar toggle button functionality
+
+Expected: Sidebar shows properly organized channel sections with create buttons
+Screenshot: 03_sidebar_navigation.png
+
+Step 4: Verify Channel List Display
+1. Check if existing channels are displayed in appropriate sections
+2. For each channel, verify display shows:
+   - Channel/user name
+   - Avatar or # icon
+   - Last message preview (if any)
+   - Timestamp of last activity
+3. Check for online status indicators on direct messages
+
+Expected: Channels display with proper names, icons, and metadata
+Screenshot: 04_channel_list_display.png
+
+Step 5: Test Channel Selection
+1. Click on different channels in the list
+2. Verify channel content area updates
+3. Check that selected channel is highlighted in sidebar
+4. Verify channel header shows correct information:
+   - Channel name or user name for DMs
+   - Participant count for group channels
+   - Proper icon (# for channels, avatar for DMs)
+
+Expected: Channel selection works and updates main content area
+Screenshot: 05_channel_selection.png
+
+Step 6: Verify Empty State Handling
+1. If no channels exist, verify empty state message
+2. Message should encourage creating conversations
+3. Should mention that conversations will appear when users are added
+
+Expected: Appropriate empty state with helpful messaging
+Screenshot: 06_empty_state.png (if applicable)
+
+Step 7: Test Responsive Behavior
+1. Try toggling sidebar open/closed using toggle button
+2. Verify content adjusts properly when sidebar is hidden
+3. Test on different screen sizes if possible
+
+Expected: Interface responds properly to sidebar toggle
+Screenshot: 07_sidebar_toggle.png
+
+Step 8: Verify Error Handling
+1. Check browser console for any JavaScript errors
+2. Verify no broken UI elements or missing styles
+3. Check that API calls to /api/channels/ are successful
+
+Expected: No console errors, all API calls successful
+Screenshot: 08_console_clean.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All conditions met:
+- Chat interface loads without errors
+- Sidebar navigation is functional and properly organized
+- Channels display with correct information and formatting
+- Channel selection works and updates content area
+- No console errors or broken UI elements
+- Toggle functionality works properly
+- Interface follows Slack-style design patterns
+
+FAIL: Any condition not met:
+- Interface fails to load or has broken layout
+- Sidebar navigation is missing or non-functional
+- Channels don't display properly or are missing information
+- Channel selection doesn't work
+- Console shows errors related to chat functionality
+- UI elements are broken or misaligned
+
+Individual Step Criteria:
+- Step 1: PASS if all services start successfully, FAIL if any service fails
+- Step 2: PASS if chat interface loads, FAIL if page fails to load or shows errors
+- Step 3: PASS if sidebar shows properly with organized sections, FAIL if missing or broken
+- Step 4: PASS if channels display with correct metadata, FAIL if missing info or broken layout
+- Step 5: PASS if channel selection updates content area, FAIL if selection doesn't work
+- Step 6: PASS if empty state is handled gracefully, FAIL if broken when no channels
+- Step 7: PASS if sidebar toggle works smoothly, FAIL if responsive behavior is broken
+- Step 8: PASS if no errors and API calls succeed, FAIL if errors or API failures
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== NOTES FOR TESTER ===
+
+- This test focuses on UI/UX verification, not message sending functionality
+- Pay attention to the Slack-style design elements (sidebar, channel organization)
+- Document any visual inconsistencies or UI/UX issues
+- If channels don't exist, that's expected behavior - focus on empty state handling
+- Take screenshots at each verification point for documentation

@@ -27,8 +27,13 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create a channel and add the current user as a participant."""
-        channel = serializer.save()
-        channel.participants.add(self.request.user)
+        # Pass the current user to the serializer for duplicate DM checking
+        channel = serializer.save(current_user=self.request.user)
+
+        # Only add current user if they're not already a participant
+        # (DMs add the current user automatically, group channels need it added)
+        if not channel.participants.filter(id=self.request.user.id).exists():
+            channel.participants.add(self.request.user)
 
     @action(detail=True, methods=["get"])
     def messages(self, request, pk=None):
@@ -45,9 +50,17 @@ class ChannelViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=["post"])
-    def messages(self, request, pk=None):
+    def send_message(self, request, pk=None):
         """Create a new message in the channel."""
         channel = self.get_object()
+
+        # Check if user is a participant
+        if not channel.participants.filter(id=request.user.id).exists():
+            return Response(
+                {"error": "You must be a participant to send messages"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         serializer = MessageSerializer(data=request.data)
 
         if serializer.is_valid():

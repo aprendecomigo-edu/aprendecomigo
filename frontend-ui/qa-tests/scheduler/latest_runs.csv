@@ -1,0 +1,2 @@
+test_id,test_name,last_run,last_status,last_browser,last_duration_ms,priority,category
+scheduler-001,"Scheduler Role-Based Permissions","2024-01-01T00:00:00Z","not_run","chrome",0,"high","scheduler"

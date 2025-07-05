@@ -1,0 +1,178 @@
+QA Test Case: Invite Teacher Functionality
+
+Test ID: FORM-001
+Test Name: Invite Teacher Modal and Invitation Link Generation
+Purpose: Verify that school managers can successfully invite teachers using the invitation modal, generate invitation links, and share them appropriately
+Expected Result: Invitation modal opens, generates invitation link, allows copying/sharing, and handles the invitation process correctly
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend with web support
+- Authentication: Passwordless email verification with Knox tokens
+- User Role: School Manager/Owner with permissions to invite teachers
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com
+- User Role: school_owner
+- Test School: Should have an associated school for invitations
+- Database State: User authenticated and has school management permissions
+
+Prerequisites:
+- User must be authenticated and on the /users page
+- Teachers tab must be accessible
+- "Convidar professor" (Invite teacher) button must be visible
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Authentication
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py runserver --settings=aprendecomigo.settings.development
+  # In new terminal:
+  cd frontend-ui
+  npm start
+
+Expected: Both servers running, user authenticated and on /users page
+Screenshot: 01_environment_ready.png
+
+Step 2: Navigate to Teachers Tab
+1. Ensure you are on http://localhost:8081/users
+2. Click on "Professores" (Teachers) tab if not already selected
+3. Verify teachers list is visible (may be empty)
+4. Locate "Convidar professor" (Invite teacher) button
+
+Expected: Teachers tab active with invite button visible
+Screenshot: 02_teachers_tab_with_invite_button.png
+
+Step 3: Open Invite Teacher Modal
+1. Click on "Convidar professor" (Invite teacher) button
+2. Wait for modal to open and load
+3. Verify modal appears with proper title and content
+4. Check that modal has close button (X) in header
+
+Expected: Invite teacher modal opens successfully
+Screenshot: 03_invite_modal_opened.png
+
+Step 4: Verify Modal Content and Structure
+1. Check modal title: Should indicate invitation functionality
+2. Verify presence of invitation link section
+3. Look for copy/share functionality buttons
+4. Check for any loading states or error messages
+5. Verify modal backdrop and positioning
+
+Expected: Modal shows proper structure with invitation options
+Screenshot: 04_modal_content_structure.png
+
+Step 5: Test Invitation Link Generation
+1. Wait for invitation link to generate automatically
+2. Verify link appears in the modal
+3. Check that link is properly formatted (contains invitation token)
+4. Note any expiration information displayed
+5. Verify link is clickable/selectable
+
+Expected: Valid invitation link generated and displayed
+Screenshot: 05_invitation_link_generated.png
+
+Step 6: Test Copy Link Functionality
+1. Click on "Copy" or copy icon next to invitation link
+2. Check for success feedback (checkmark, color change, toast)
+3. Test pasting the copied link in a new browser tab/window
+4. Verify copied link includes full URL with protocol
+
+Expected: Link copied successfully with visual feedback
+Screenshot: 06_link_copied_successfully.png
+
+Step 7: Test Invitation Link Validity
+1. Open new incognito/private browser window
+2. Paste the copied invitation link
+3. Verify invitation page loads correctly
+4. Check that page shows school information and join options
+5. Do NOT complete the invitation (just verify it loads)
+
+Expected: Invitation link opens valid invitation page
+Screenshot: 07_invitation_page_loaded.png
+
+Step 8: Test Share Functionality (if available)
+1. Look for share buttons (WhatsApp, email, etc.)
+2. Click on available share options
+3. Verify sharing integrations work (don't actually send)
+4. Check that shared content includes proper link and message
+5. Test platform-specific sharing (mobile vs web)
+
+Expected: Share functionality works without errors
+Screenshot: 08_share_functionality_tested.png
+
+Step 9: Test Modal Close Functionality
+1. Test closing modal with X button in header
+2. Test closing modal by clicking outside (backdrop)
+3. Test pressing Escape key (web only)
+4. Verify modal closes cleanly without errors
+5. Confirm you return to teachers list
+
+Expected: Modal closes properly with all methods
+Screenshot: 09_modal_closed_properly.png
+
+Step 10: Test Multiple Invitation Link Generation
+1. Open invite modal again
+2. Verify same link is shown (should be reused if not expired)
+3. Check for any refresh/regenerate options
+4. Test that multiple opens don't create multiple links unnecessarily
+
+Expected: Efficient link management without duplication
+Screenshot: 10_link_reuse_verified.png
+
+Step 11: Test Error Handling
+1. Temporarily disconnect from internet (if possible)
+2. Try to open invite modal
+3. Verify appropriate error messages appear
+4. Reconnect and verify recovery
+5. Check console for any JavaScript errors
+
+Expected: Graceful error handling with user-friendly messages
+Screenshot: 11_error_handling_tested.png
+
+Step 12: Backend Validation
+1. Check Django backend logs for invitation link creation
+2. Verify API calls for invitation endpoints
+3. Check that invitation links are stored in database
+4. Verify no errors in backend during invitation process
+
+Expected: Backend processes invitations correctly without errors
+Screenshot: 12_backend_validation_clean.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Modal opens successfully AND invitation link generates AND copy functionality works AND invitation link is valid when accessed
+FAIL: Modal fails to open OR link generation fails OR copy doesn't work OR invitation link is invalid
+
+Individual Step Criteria:
+- Step 1-2: PASS if environment ready and teachers tab accessible, FAIL if setup fails
+- Step 3: PASS if modal opens, FAIL if button doesn't work or modal doesn't appear
+- Step 4: PASS if modal structure correct, FAIL if missing elements or broken layout
+- Step 5: PASS if link generates, FAIL if no link appears or generation errors
+- Step 6: PASS if copy works with feedback, FAIL if copy fails or no confirmation
+- Step 7: PASS if link opens valid page, FAIL if 404 or broken invitation page
+- Step 8: PASS if share options work, FAIL if share functionality broken
+- Step 9: PASS if modal closes properly, FAIL if modal stuck open or errors
+- Step 10: PASS if link reuse works efficiently, FAIL if unnecessary duplication
+- Step 11: PASS if errors handled gracefully, FAIL if app crashes or unhelpful errors
+- Step 12: PASS if backend logs clean, FAIL if backend errors or API failures
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+Notes:
+- Focus on the complete invitation workflow from modal opening to link sharing
+- Verify both frontend usability and backend integration
+- Test edge cases like network failures and multiple modal opens
+- Ensure invitation links are actually functional when accessed

@@ -2,6 +2,7 @@ import secrets
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.db import models
 from django.db.models.query import QuerySet
 from django.utils import timezone
 
@@ -55,19 +56,31 @@ def list_users_by_request_permissions(user) -> QuerySet:
     if user.is_staff or user.is_superuser:
         return User.objects.all()
 
-    # School owners and admins can see users in their schools
-    # Get all schools where this user is an owner or admin
+    # School owners and admins can see all users in their schools
     admin_school_ids = list_school_ids_owned_or_managed(user)
-
     if len(admin_school_ids) > 0:
-        # Get all users in these schools
         school_user_ids = SchoolMembership.objects.filter(
             school_id__in=admin_school_ids, is_active=True
         ).values_list("user_id", flat=True)
-
         return User.objects.filter(id__in=school_user_ids)
 
-    # Other users can only see themselves
+    # Teachers can see themselves + students they teach (via ClassSession)
+    if SchoolMembership.objects.filter(
+        user=user, role=SchoolRole.TEACHER, is_active=True
+    ).exists() and hasattr(user, "teacher_profile"):
+        # Get students from class sessions this teacher taught
+        from finances.models import ClassSession
+
+        taught_student_ids = ClassSession.objects.filter(teacher=user.teacher_profile).values_list(
+            "students", flat=True
+        )
+
+        # Include the teacher themselves + students they teach
+        return User.objects.filter(
+            models.Q(id=user.id) | models.Q(id__in=taught_student_ids)
+        ).distinct()
+
+    # All other users (including students) can only see themselves
     return User.objects.filter(id=user.id)
 
 

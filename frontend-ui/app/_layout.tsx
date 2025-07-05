@@ -10,6 +10,7 @@ import '../global.css';
 import { AuthProvider, useAuth } from '@/api/authContext';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
+import { ToastProvider } from '@/components/ui/toast';
 import { View } from '@/components/ui/view';
 import { useColorScheme } from '@/components/useColorScheme';
 
@@ -111,17 +112,22 @@ function RootLayoutNav() {
   return (
     <GluestackUIProvider mode={(colorScheme ?? 'light') as 'light' | 'dark'}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AuthProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="auth" />
-            <Stack.Screen name="home" />
-            <Stack.Screen name="profile" />
-            <Stack.Screen name="admin" />
-            <Stack.Screen name="student" />
-            <Stack.Screen name="chat" />
-          </Stack>
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="auth" />
+              <Stack.Screen name="home" />
+              <Stack.Screen name="profile" />
+              <Stack.Screen name="admin" />
+              <Stack.Screen name="student" />
+              <Stack.Screen name="chat" />
+              <Stack.Screen name="calendar" />
+              <Stack.Screen name="users" />
+              <Stack.Screen name="settings" />
+            </Stack>
+          </AuthProvider>
+        </ToastProvider>
       </ThemeProvider>
     </GluestackUIProvider>
   );

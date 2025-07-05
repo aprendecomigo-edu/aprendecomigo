@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from '@unitools/link';
 import useRouter from '@unitools/router';
-import { AlertTriangle, Fingerprint } from 'lucide-react-native';
+import { AlertTriangle } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Keyboard, Platform } from 'react-native';
@@ -28,7 +28,7 @@ import { Input, InputField } from '@/components/ui/input';
 import { LinkText } from '@/components/ui/link';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
-import { Toast, ToastTitle, useToast } from '@/components/ui/toast';
+import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
 
 // Define the form schema
@@ -41,9 +41,8 @@ type RequestCodeSchemaType = z.infer<typeof requestCodeSchema>;
 const LoginForm = () => {
   const toast = useToast();
   const router = useRouter();
-  const { biometricSupport, loginWithBiometrics } = useAuth();
+  const {} = useAuth();
   const [isRequesting, setIsRequesting] = useState(false);
-  const [isAuthenticatingBiometric, setIsAuthenticatingBiometric] = useState(false);
 
   // Request code form
   const requestCodeForm = useForm<RequestCodeSchemaType>({
@@ -56,86 +55,14 @@ const LoginForm = () => {
       setIsRequesting(true);
       await requestEmailCode({ email: data.email });
 
-      toast.show({
-        placement: 'bottom right',
-        render: ({ id }) => {
-          return (
-            <Toast nativeID={id} variant="accent" action="success">
-              <ToastTitle>Verification code sent to your email!</ToastTitle>
-            </Toast>
-          );
-        },
-      });
+      toast.showToast('success', 'Verification code sent to your email!');
 
       // Navigate to verify code screen with email as parameter
-      router.push({
-        pathname: '/auth/verify-code',
-        params: { email: data.email },
-      });
+      router.push(`/auth/verify-code?email=${encodeURIComponent(data.email)}`);
     } catch (error) {
-      toast.show({
-        placement: 'bottom right',
-        render: ({ id }) => {
-          return (
-            <Toast nativeID={id} variant="accent" action="error">
-              <ToastTitle>Failed to send verification code. Please try again.</ToastTitle>
-            </Toast>
-          );
-        },
-      });
+      toast.showToast('error', 'Failed to send verification code. Please try again.');
     } finally {
       setIsRequesting(false);
-    }
-  };
-
-  // Handle biometric authentication
-  const handleBiometricAuth = async () => {
-    try {
-      setIsAuthenticatingBiometric(true);
-      const success = await loginWithBiometrics();
-
-      if (success) {
-        toast.show({
-          placement: 'bottom right',
-          render: ({ id }) => {
-            return (
-              <Toast nativeID={id} variant="accent" action="success">
-                <ToastTitle>Logged in successfully with biometrics!</ToastTitle>
-              </Toast>
-            );
-          },
-        });
-
-        router.replace('/dashboard');
-      } else {
-        toast.show({
-          placement: 'bottom right',
-          render: ({ id }) => {
-            return (
-              <Toast nativeID={id} variant="accent" action="error">
-                <ToastTitle>
-                  Biometric authentication failed. Please try again or use email code.
-                </ToastTitle>
-              </Toast>
-            );
-          },
-        });
-      }
-    } catch (error) {
-      toast.show({
-        placement: 'bottom right',
-        render: ({ id }) => {
-          return (
-            <Toast nativeID={id} variant="accent" action="error">
-              <ToastTitle>
-                Biometric authentication error. Please try again or use email code.
-              </ToastTitle>
-            </Toast>
-          );
-        },
-      });
-    } finally {
-      setIsAuthenticatingBiometric(false);
     }
   };
 
@@ -201,33 +128,6 @@ const LoginForm = () => {
                 {isRequesting ? 'Sending Code...' : 'Request Login Code'}
               </ButtonText>
             </Button>
-
-            {biometricSupport.isAvailable && biometricSupport.isEnabled && (
-              <>
-                <Divider>
-                  <Text size="sm" className="text-background-600 px-2">
-                    OR
-                  </Text>
-                </Divider>
-
-                <Button
-                  className="w-full"
-                  variant="outline"
-                  action="secondary"
-                  onPress={handleBiometricAuth}
-                  isDisabled={isAuthenticatingBiometric}
-                >
-                  <ButtonIcon as={Fingerprint} />
-                  <ButtonText className="font-medium">
-                    {isAuthenticatingBiometric
-                      ? 'Authenticating...'
-                      : `Log in with ${
-                          Platform.OS === 'ios' ? 'Face ID / Touch ID' : 'Biometrics'
-                        }`}
-                  </ButtonText>
-                </Button>
-              </>
-            )}
           </VStack>
         </VStack>
         <HStack className="self-center" space="sm">

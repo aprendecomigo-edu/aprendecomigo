@@ -135,7 +135,9 @@ const OnboardingForm = () => {
 
       toast.showToast(
         'success',
-        `Registration successful! Please verify your ${data.primaryContact === 'email' ? 'email' : 'phone'}.`
+        `Registration successful! Please verify your ${
+          data.primaryContact === 'email' ? 'email' : 'phone'
+        }.`
       );
 
       // Navigate to verification screen - fix type issue by using proper navigation
@@ -309,7 +311,8 @@ const OnboardingForm = () => {
               </FormControlError>
               <FormControlHelper>
                 <FormControlHelperText>
-                  A verification code will be sent to your {primaryContact === 'email' ? 'email address' : 'phone number'}
+                  A verification code will be sent to your{' '}
+                  {primaryContact === 'email' ? 'email address' : 'phone number'}
                 </FormControlHelperText>
               </FormControlHelper>
             </FormControl>

@@ -98,6 +98,33 @@ python manage.py createsuperuser
 test@aprendecomigo.pt
 Pass12345!
 
+## AI Assistant Configurations
+
+This project includes configurations for AI-powered development assistants to help with code understanding and development tasks.
+
+### Claude Code (claude.ai/code)
+- **Configuration**: `CLAUDE.md` - Contains comprehensive project context and development guidelines
+- **Usage**: The file is automatically detected when using Claude Code in this repository
+
+### Gemini CLI
+- **Configuration**: `.gemini/settings.json` and `GEMINI.md`
+- **Installation**: Follow [Gemini CLI installation guide](https://github.com/google-gemini/gemini-cli)
+- **Usage**: Run `gemini` from the project root to start an AI-powered coding session
+- **Features**:
+  - Project-aware context loading
+  - Safe tool restrictions for Django + React Native development
+  - Auto-approval for read-only operations
+  - Browser automation via Playwright MCP for web testing
+
+Both configurations provide the AI assistants with essential project context including:
+- Architecture overview (Django backend + React Native frontend)
+- Development environment setup (virtual env in project root)
+- Key business logic (teacher payment system, authentication flow)
+- Known issues and technical debt priorities
+- Development patterns and best practices
+
+See the respective configuration files for detailed project context and usage instructions.
+
 ## Google Calendar Integration (FUTURE)
 
 ### Development Environment Setup

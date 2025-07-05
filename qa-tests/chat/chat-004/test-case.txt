@@ -1,0 +1,215 @@
+QA Test Case: Send Message Basic
+
+Test ID: CHAT-004
+Test Name: Basic Message Sending in Group Channels
+Purpose: Verify that users can send and receive text messages in group channels with proper formatting and display
+Expected Result: Messages are sent successfully, display correctly, and persist in conversation history
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Chat Feature: Slack-style messaging with text message support
+- API Endpoint: POST /api/channels/{id}/send_message/
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- Test User: anapmc.carvalho@gmail.com
+- Test Channel: Existing group channel (create with CHAT-002 if needed)
+- Test Messages: Various message content for testing
+
+Prerequisites:
+- Chat interface functional (CHAT-001 passed)
+- At least one group channel exists (CHAT-002 passed)
+- User authenticated and is participant in test channel
+- Backend/frontend services running
+- Redis server running for WebSocket support
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Navigate to Test Channel
+1. Open chat interface (http://localhost:8081/chat)
+2. Locate existing group channel in "Canais" section
+3. Click on the channel to open it
+4. Verify channel opens with header showing channel name and # icon
+5. Confirm message input area is visible at bottom
+
+Expected: Channel opens with proper header and message input visible
+Screenshot: 01_channel_opened_with_input.png
+
+Step 2: Verify Message Input Interface
+1. Check message input components:
+   - Text input field with proper placeholder text
+   - Send button (should be disabled when empty)
+   - Attachment buttons (paperclip, image icons)
+   - Plus icon for additional options
+2. Verify placeholder text mentions channel name
+3. Test clicking in input field to focus
+
+Expected: Message input interface complete with all expected elements
+Screenshot: 02_message_input_interface.png
+
+Step 3: Send First Text Message
+1. Click in message input field
+2. Type test message: "Olá pessoal! Este é um teste de mensagem."
+3. Verify Send button becomes enabled with message entered
+4. Click "Enviar" (Send) button
+5. Verify message input clears after sending
+
+Expected: Message sends successfully and input field clears
+Screenshot: 03_first_message_sent.png
+
+Step 4: Verify Message Display
+1. Check that sent message appears in chat area
+2. Verify message shows:
+   - User's avatar with initials
+   - User's full name
+   - Timestamp (current time)
+   - Message content exactly as typed
+3. Confirm message appears at bottom of conversation
+4. Check proper spacing and formatting
+
+Expected: Message displays with correct user info, timestamp, and content
+Screenshot: 04_message_display_format.png
+
+Step 5: Send Multiple Messages
+1. Send 3-4 additional messages with different content:
+   - "Esta é a segunda mensagem de teste"
+   - "Testando números e caracteres: 123 !@#"
+   - "Mensagem com emoji: 😊 👍"
+2. Verify each message appears in order
+3. Check that timestamps are sequential
+4. Confirm proper message ordering (newest at bottom)
+
+Expected: Multiple messages display in correct order with proper formatting
+Screenshot: 05_multiple_messages_sent.png
+
+Step 6: Test Enter Key Functionality
+1. Click in message input
+2. Type message: "Testando envio com Enter"
+3. Press Enter key (instead of clicking Send button)
+4. Verify message sends successfully
+5. Confirm input clears after Enter
+
+Expected: Enter key sends message same as clicking Send button
+Screenshot: 06_enter_key_send.png
+
+Step 7: Test Message Input Validation
+1. Try sending empty message (should not send)
+2. Try sending message with only spaces (should not send)
+3. Test very long message (should send or show character limit)
+4. Test special characters and accented letters: "Testando acentos: ção, ã, é, ü"
+
+Expected: Appropriate validation - empty messages rejected, others sent properly
+Screenshot: 07_message_validation_test.png
+
+Step 8: Verify Message Persistence
+1. Scroll up to see earlier messages in conversation
+2. Refresh browser page
+3. Navigate back to same channel
+4. Verify all sent messages are still visible
+5. Check that message order and content remain correct
+
+Expected: All messages persist after page refresh in correct order
+Screenshot: 08_messages_persist_refresh.png
+
+Step 9: Test Send Button States
+1. Verify Send button is disabled when input is empty
+2. Type characters and confirm button becomes enabled
+3. Clear input and confirm button becomes disabled again
+4. During sending, verify button shows "Enviando..." (Sending...)
+5. After send, confirm button returns to normal state
+
+Expected: Send button states change appropriately based on input and sending status
+Screenshot: 09_send_button_states.png
+
+Step 10: Verify API Integration
+1. Open browser Developer Tools Network tab
+2. Send a test message
+3. Verify API call made to /api/channels/{id}/send_message/
+4. Check request contains correct message content
+5. Verify successful response (201 Created)
+6. Confirm response contains message data
+
+Expected: API integration works properly with correct endpoints and data
+Screenshot: 10_api_calls_successful.png
+
+Step 11: Test Long Message Handling
+1. Type a very long message (500+ characters)
+2. Send the message
+3. Verify message displays properly without breaking layout
+4. Check that text wraps correctly in message bubble
+5. Confirm scrolling works if message is very long
+
+Expected: Long messages handled gracefully with proper text wrapping
+Screenshot: 11_long_message_handling.png
+
+Step 12: Test Error Handling
+1. Temporarily stop backend server
+2. Try sending a message
+3. Verify appropriate error handling (retry or error message)
+4. Restart backend server
+5. Test that messaging resumes working
+
+Expected: Graceful error handling when backend unavailable
+Screenshot: 12_error_handling_test.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All conditions met:
+- Message input interface complete and functional
+- Text messages send successfully via button and Enter key
+- Messages display with correct user info, timestamp, and content
+- Multiple messages appear in correct chronological order
+- Input validation works (rejects empty, accepts valid content)
+- Messages persist after page refresh
+- Send button states work properly (disabled/enabled/sending)
+- API integration successful with correct endpoints
+- Long messages handled gracefully
+- Error handling works when backend unavailable
+
+FAIL: Any condition not met:
+- Message input missing components or non-functional
+- Messages fail to send or send incorrectly
+- Message display missing info or formatted incorrectly
+- Messages appear in wrong order or with wrong timestamps
+- Input validation missing or broken
+- Messages lost after page refresh
+- Send button states incorrect or broken
+- API calls fail or use wrong endpoints
+- Long messages break layout or functionality
+- No error handling or poor user experience during failures
+
+Individual Step Criteria:
+- Step 1: PASS if channel opens with input visible, FAIL if broken or missing input
+- Step 2: PASS if input interface complete, FAIL if missing elements
+- Step 3: PASS if message sends and input clears, FAIL if send fails
+- Step 4: PASS if message displays properly, FAIL if missing info or wrong format
+- Step 5: PASS if multiple messages work, FAIL if ordering or display issues
+- Step 6: PASS if Enter key works, FAIL if only button works
+- Step 7: PASS if validation appropriate, FAIL if accepts empty or rejects valid
+- Step 8: PASS if messages persist, FAIL if lost after refresh
+- Step 9: PASS if button states correct, FAIL if states wrong or broken
+- Step 10: PASS if API integration works, FAIL if calls fail or wrong endpoints
+- Step 11: PASS if long messages handled well, FAIL if breaks layout
+- Step 12: PASS if error handling graceful, FAIL if poor error experience
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== NOTES FOR TESTER ===
+
+- Focus on the complete user experience of sending messages
+- Pay attention to visual feedback (button states, loading indicators)
+- Test both mouse clicks and keyboard interactions
+- Document any performance issues or delays in message sending
+- Note any differences in behavior between different message types
+- Verify that the Slack-style message formatting is maintained
+- Check that user avatars and names display consistently
+- Test with different message lengths and content types

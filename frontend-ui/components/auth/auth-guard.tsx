@@ -69,7 +69,11 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children, fallback }) => {
     const iconColor = serverAlert.type === 'error' ? 'text-red-500' : 'text-yellow-500';
 
     return (
-      <Box className={`${bgColor} border-l-4 ${serverAlert.type === 'error' ? 'border-red-400' : 'border-yellow-400'} p-4 mb-4`}>
+      <Box
+        className={`${bgColor} border-l-4 ${
+          serverAlert.type === 'error' ? 'border-red-400' : 'border-yellow-400'
+        } p-4 mb-4`}
+      >
         <HStack className="items-start" space="sm">
           <Icon
             as={serverAlert.type === 'error' ? Wifi : AlertTriangle}
@@ -80,9 +84,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children, fallback }) => {
             <Text className={`font-medium ${textColor}`}>
               {serverAlert.type === 'error' ? 'Connection Error' : 'Server Warning'}
             </Text>
-            <Text className={`text-sm ${textColor}`}>
-              {serverAlert.message}
-            </Text>
+            <Text className={`text-sm ${textColor}`}>{serverAlert.message}</Text>
           </VStack>
           <Pressable onPress={clearServerAlert} className="p-1">
             <Icon as={X} size="sm" className={iconColor} />
@@ -103,9 +105,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children, fallback }) => {
               <Heading size="lg" className="text-gray-900 text-center">
                 Server Unavailable
               </Heading>
-              <Text className="text-gray-600 text-center">
-                {serverError}
-              </Text>
+              <Text className="text-gray-600 text-center">{serverError}</Text>
             </VStack>
             <Button
               onPress={() => {

@@ -1,0 +1,7 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+chat-001,Channel List Display,Verify chat interface loads and displays existing channels,20250704-182121,PASS,1,1,0
+chat-002,Group Channel Creation,Test creating new group channels as teacher/admin,20250704-190926,PASS,2,2,0
+chat-003,Direct Message Creation,Test creating direct message conversations,,,0,0,0
+chat-004,Send Message Basic,Test sending text messages in group channels,,,0,0,0
+chat-005,Real-time Message Sync,Test real-time message synchronization via WebSocket,,,0,0,0
+chat-006,Student Participation,Test that students can participate but not create channels,,,0,0,0

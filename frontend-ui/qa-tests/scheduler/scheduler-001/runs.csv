@@ -1,0 +1,9 @@
+run_id,timestamp,test_name,status,browser,duration_ms,errors,notes
+scheduler-001-001,2024-01-01T00:00:00Z,"Teacher cannot schedule classes",not_run,chrome,0,"","Test created but not yet executed"
+scheduler-001-002,2024-01-01T00:00:00Z,"Student can schedule classes for themselves",not_run,chrome,0,"","Test created but not yet executed"
+scheduler-001-003,2024-01-01T00:00:00Z,"Admin can schedule classes for any student",not_run,chrome,0,"","Test created but not yet executed"
+scheduler-001-004,2024-01-01T00:00:00Z,"Calendar view modes work correctly",not_run,chrome,0,"","Test created but not yet executed"
+scheduler-001-005,2024-01-01T00:00:00Z,"Class detail view shows correct actions based on role",not_run,chrome,0,"","Test created but not yet executed"
+scheduler-001-006,2024-01-01T00:00:00Z,"Class management actions work correctly",not_run,chrome,0,"","Test created but not yet executed"
+scheduler-001-007,2024-01-01T00:00:00Z,"Error handling works correctly",not_run,chrome,0,"","Test created but not yet executed"
+scheduler-001-008,2024-01-01T00:00:00Z,"Responsive design works on mobile",not_run,chrome,0,"","Test created but not yet executed"

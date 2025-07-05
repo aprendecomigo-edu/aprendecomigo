@@ -12,10 +12,11 @@ import {
   Send,
   AtSign,
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FlatList, Keyboard } from 'react-native';
 
-import { Channel } from '@/api/channelApi';
+import { useAuth } from '@/api/authContext';
+import { Channel, Message, fetchMessages, sendMessage } from '@/api/channelApi';
 import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -29,15 +30,17 @@ import { KeyboardAvoidingView } from '@/components/ui/keyboard-avoiding-view';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { API_URL } from '@/constants/api';
+import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface ChannelContentProps {
   channel?: Channel;
   isLoading: boolean;
 }
 
-// Message type definition
-interface Message {
-  id: string;
+// Legacy message interface for displaying messages
+interface DisplayMessage {
+  id: number;
   user: string;
   avatar: string;
   time: string;
@@ -70,7 +73,7 @@ const DateSeparator = ({ date }: { date: string }) => (
 );
 
 // Message component
-const MessageItem = ({ message }: { message: Message }) => {
+const MessageItem = ({ message }: { message: DisplayMessage }) => {
   return (
     <HStack space="sm" className="mb-4 pt-1">
       <Avatar className="bg-blue-100 h-10 w-10 rounded-md">
@@ -132,13 +135,28 @@ const IconButton = ({
 };
 
 // MessageInput component
-const MessageInput = ({ channel }: { channel: Channel }) => {
+const MessageInput = ({
+  channel,
+  onMessageSent,
+}: {
+  channel: Channel;
+  onMessageSent?: () => void;
+}) => {
   const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
 
-  const handleSend = () => {
-    if (message.trim()) {
-      console.log('Sending message:', message);
-      setMessage('');
+  const handleSend = async () => {
+    if (message.trim() && !sending) {
+      setSending(true);
+      try {
+        await sendMessage(channel.id, message.trim());
+        setMessage('');
+        onMessageSent?.();
+      } catch (error) {
+        console.error('Error sending message:', error);
+      } finally {
+        setSending(false);
+      }
     }
   };
 
@@ -151,11 +169,12 @@ const MessageInput = ({ channel }: { channel: Channel }) => {
             <HStack className="w-full items-center px-3">
               <InputField
                 placeholder={`Enviar mensagem para ${
-                  channel.type === 'channel' ? '#' + channel.name : channel.name
+                  channel.is_direct ? 'conversa direta' : '#' + channel.name
                 }`}
                 className="flex-1 py-2"
                 value={message}
                 onChangeText={setMessage}
+                onSubmitEditing={handleSend}
               />
               <Box>
                 <Icon as={PlusIcon} size="sm" className="text-gray-600" />
@@ -183,10 +202,10 @@ const MessageInput = ({ channel }: { channel: Channel }) => {
             variant={message.trim() ? 'solid' : 'outline'}
             className={message.trim() ? 'bg-blue-500' : 'border-gray-300'}
             onPress={handleSend}
-            isDisabled={!message.trim()}
+            isDisabled={!message.trim() || sending}
           >
             <ButtonText className={message.trim() ? 'text-white' : 'text-gray-400'}>
-              Enviar
+              {sending ? 'Enviando...' : 'Enviar'}
             </ButtonText>
           </Button>
         </HStack>
@@ -196,6 +215,94 @@ const MessageInput = ({ channel }: { channel: Channel }) => {
 };
 
 const ChannelContent = ({ channel, isLoading }: ChannelContentProps) => {
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(true);
+  const { userProfile } = useAuth();
+
+  // WebSocket connection for real-time messaging
+  const wsUrl = API_URL.replace('http', 'ws').replace('/api', `/ws/chat/${channel?.name || ''}/`);
+  const { isConnected, sendMessage: sendWsMessage } = useWebSocket({
+    url: wsUrl,
+    channelName: channel?.name || '',
+    shouldConnect: !!channel,
+    onMessage: message => {
+      console.log('WebSocket message received:', message);
+      if (message.type === 'chat_message') {
+        // Add new message to the list
+        const apiMessage = message.message as Message;
+        const newDisplayMessage = convertToDisplayMessage(apiMessage);
+        setMessages(prev => [...prev, newDisplayMessage]);
+      }
+    },
+    onOpen: () => {
+      console.log('WebSocket connected for channel:', channel?.name);
+    },
+    onClose: () => {
+      console.log('WebSocket disconnected for channel:', channel?.name);
+    },
+    onError: error => {
+      console.error('WebSocket error for channel:', channel?.name, error);
+    },
+  });
+
+  // Load messages when channel changes
+  useEffect(() => {
+    if (channel) {
+      loadMessages();
+    }
+  }, [channel]);
+
+  // Helper function to convert API message to display format
+  const convertToDisplayMessage = (msg: Message): DisplayMessage => {
+    const messageDate = new Date(msg.timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    let dateLabel = 'Hoje';
+    if (messageDate.toDateString() === yesterday.toDateString()) {
+      dateLabel = 'Ontem';
+    } else if (messageDate.toDateString() !== today.toDateString()) {
+      dateLabel = messageDate.toLocaleDateString('pt-BR');
+    }
+
+    return {
+      id: msg.id,
+      user: `${msg.sender.first_name} ${msg.sender.last_name}`,
+      avatar: `${msg.sender.first_name[0]}${msg.sender.last_name[0]}`,
+      date: dateLabel,
+      time: messageDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      content: msg.content,
+      reactions: msg.reactions || [],
+    };
+  };
+
+  const loadMessages = async () => {
+    if (!channel) return;
+
+    setLoadingMessages(true);
+    try {
+      const apiMessages = await fetchMessages(channel.id);
+
+      // Convert API messages to display format
+      const displayMessages: DisplayMessage[] = apiMessages.map(convertToDisplayMessage);
+
+      setMessages(displayMessages);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  const handleMessageSent = () => {
+    // Messages will be updated via WebSocket, no need to reload
+    // But we can add a fallback in case WebSocket fails
+    if (!isConnected) {
+      loadMessages();
+    }
+  };
+
   if (isLoading || !channel) {
     return (
       <VStack className="flex-1 justify-center items-center">
@@ -204,47 +311,16 @@ const ChannelContent = ({ channel, isLoading }: ChannelContentProps) => {
     );
   }
 
-  // Sample messages for demo with dates and reactions
-  const messages = [
-    {
-      id: '1',
-      user: 'João Silva',
-      avatar: 'JS',
-      date: 'Hoje',
-      time: '10:30',
-      content: 'Olá, pessoal! Alguém pode me ajudar com a tarefa de matemática?',
-      reactions: [
-        { emoji: <Icon as={ThumbsUp} size="xs" className="text-blue-500" />, count: 3 },
-        { emoji: <Icon as={Heart} size="xs" className="text-red-500" />, count: 1 },
-      ],
-    },
-    {
-      id: '2',
-      user: 'Maria Oliveira',
-      avatar: 'MO',
-      date: 'Hoje',
-      time: '10:35',
-      content: 'Claro, João! Em qual exercício você está com dificuldade?',
-      reactions: [{ emoji: <Icon as={Smile} size="xs" className="text-yellow-500" />, count: 2 }],
-    },
-    {
-      id: '3',
-      user: 'Pedro Santos',
-      avatar: 'PS',
-      date: 'Ontem',
-      time: '10:40',
-      content: 'Eu também estou com dúvidas na página 42. Vamos estudar juntos.',
-      hasLink: true,
-      linkPreview: {
-        title: 'Exercícios de Matemática - PDF',
-        description: 'Material de estudo para o exame final de matemática',
-        url: 'https://escola.edu/matematica/exercicios.pdf',
-      },
-    },
-  ];
+  if (loadingMessages) {
+    return (
+      <VStack className="flex-1 justify-center items-center">
+        <Text>Carregando mensagens...</Text>
+      </VStack>
+    );
+  }
 
   // Group messages by date
-  const groupedMessages = messages.reduce((groups: Record<string, Message[]>, message) => {
+  const groupedMessages = messages.reduce((groups: Record<string, DisplayMessage[]>, message) => {
     if (!groups[message.date]) {
       groups[message.date] = [];
     }
@@ -272,13 +348,29 @@ const ChannelContent = ({ channel, isLoading }: ChannelContentProps) => {
       {/* Channel Header */}
       <HStack className="px-4 py-3 border-b border-gray-200 items-center justify-between">
         <HStack space="md" className="items-center">
-          <Icon as={Hash} size="md" className="text-gray-600" />
-          <Heading className="text-lg font-bold">{channel.name}</Heading>
+          {channel.is_direct ? (
+            <Box className="relative">
+              <Avatar className="bg-purple-100 h-6 w-6">
+                <AvatarFallbackText>
+                  {channel.participants.find(p => p.id !== userProfile?.id)?.first_name[0]}
+                  {channel.participants.find(p => p.id !== userProfile?.id)?.last_name[0]}
+                </AvatarFallbackText>
+              </Avatar>
+            </Box>
+          ) : (
+            <Icon as={Hash} size="md" className="text-gray-600" />
+          )}
+          <Heading className="text-lg font-bold">
+            {channel.is_direct
+              ? channel.participants.find(p => p.id !== userProfile?.id)?.first_name +
+                ' ' +
+                channel.participants.find(p => p.id !== userProfile?.id)?.last_name
+              : channel.name}
+          </Heading>
         </HStack>
         <HStack space="sm">
           <Icon as={Users} size="sm" className="text-gray-600" />
-          <Icon as={Pin} size="sm" className="text-gray-600" />
-          <Icon as={FileText} size="sm" className="text-gray-600" />
+          <Text className="text-sm text-gray-500">{channel.participants.length}</Text>
         </HStack>
       </HStack>
 
@@ -286,13 +378,13 @@ const ChannelContent = ({ channel, isLoading }: ChannelContentProps) => {
       <FlatList
         data={messagesWithSeparators}
         renderItem={renderItem}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.id.toString()}
         contentContainerStyle={{ padding: 16 }}
         className="flex-1"
       />
 
       {/* Message Input */}
-      <MessageInput channel={channel} />
+      <MessageInput channel={channel} onMessageSent={handleMessageSent} />
     </Box>
   );
 };

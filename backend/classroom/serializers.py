@@ -83,18 +83,52 @@ class ChannelSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data.get("is_direct", False):
             participant_ids = data.get("participant_ids", [])
-            if len(participant_ids) != 2:
+            if len(participant_ids) != 1:
                 raise serializers.ValidationError(
-                    "Direct messages must have exactly two participants"
+                    "Direct messages must have exactly one other participant"
                 )
         return data
 
     def create(self, validated_data):
         participant_ids = validated_data.pop("participant_ids", [])
+        current_user = validated_data.pop("current_user", None)
+        is_direct = validated_data.get("is_direct", False)
+
+        # Check for duplicate DM before creating
+        if is_direct and participant_ids and current_user:
+            from django.contrib.auth import get_user_model
+
+            User = get_user_model()
+
+            target_user_id = participant_ids[0]
+            target_user = User.objects.get(id=target_user_id)
+
+            # Check if a DM already exists between current user and target user
+            # Simple approach: get all DMs and check participants manually
+            existing_dms = Channel.objects.filter(is_direct=True)
+            existing_dm = None
+
+            for dm in existing_dms:
+                participants = set(dm.participants.all())
+                expected_participants = {current_user, target_user}
+                if participants == expected_participants:
+                    existing_dm = dm
+                    break
+
+            if existing_dm:
+                # Return the existing DM instead of creating a new one
+                return existing_dm
+
+        # Create new channel if not a duplicate DM
         channel = Channel.objects.create(**validated_data)
 
-        # Add participants
+        # Add participants including the current user for DMs
         if participant_ids:
-            channel.participants.set(participant_ids)
+            if is_direct and current_user:
+                # For DMs, add both current user and target user
+                channel.participants.set([current_user.id] + participant_ids)
+            else:
+                # For group channels, just add the specified participants
+                channel.participants.set(participant_ids)
 
         return channel

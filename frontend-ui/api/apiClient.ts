@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
 
 import { API_URL } from '@/constants/api';
 
@@ -12,32 +11,14 @@ export const setAuthErrorCallback = (callback: (() => void) | null) => {
   authErrorCallback = callback;
 };
 
-// Helper to get token from secure storage
+// Helper to get token from storage
 const getToken = async (): Promise<string | null> => {
-  try {
-    // Try to use SecureStore first
-    const token = await SecureStore.getItemAsync('auth_token');
-    if (token) return token;
-
-    // If not found in SecureStore, check AsyncStorage (for backward compatibility)
-    return await AsyncStorage.getItem('auth_token');
-  } catch {
-    // Fall back to AsyncStorage if SecureStore fails
-    return await AsyncStorage.getItem('auth_token');
-  }
+  return await AsyncStorage.getItem('auth_token');
 };
 
-// Helper to remove token from secure storage
+// Helper to remove token from storage
 const removeToken = async () => {
-  try {
-    // Try to use SecureStore first
-    await SecureStore.deleteItemAsync('auth_token');
-    // Also clear from AsyncStorage (for backward compatibility)
-    await AsyncStorage.removeItem('auth_token');
-  } catch {
-    // Fall back to AsyncStorage if SecureStore fails
-    await AsyncStorage.removeItem('auth_token');
-  }
+  await AsyncStorage.removeItem('auth_token');
 };
 
 // Create axios instance

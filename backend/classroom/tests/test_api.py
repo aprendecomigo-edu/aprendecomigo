@@ -60,10 +60,17 @@ class ChannelAPITest(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)  # Only channels with user1 should be returned
+
+        # Handle paginated response
+        if "results" in response.data:
+            channels = response.data["results"]
+        else:
+            channels = response.data
+
+        self.assertEqual(len(channels), 2)  # Only channels with user1 should be returned
 
         # Validate channel names
-        channel_names = [channel["name"] for channel in response.data]
+        channel_names = [channel["name"] for channel in channels]
         self.assertIn("Test Channel 1", channel_names)
 
     def test_channel_detail(self):
@@ -124,6 +131,38 @@ class ChannelAPITest(APITestCase):
 
         # Should fail validation
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_duplicate_dm_prevention(self):
+        """Test that duplicate DMs return the existing channel instead of creating a new one."""
+        url = reverse("channel-list")
+        data = {"name": "", "is_direct": True, "participant_ids": [self.user2.id]}
+
+        # Create first DM
+        response1 = self.client.post(url, data, format="json")
+        self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(response1.data["is_direct"])
+        dm1_id = response1.data["id"]
+
+        # Try to create duplicate DM with same user
+        response2 = self.client.post(url, data, format="json")
+        self.assertEqual(response2.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(response2.data["is_direct"])
+        dm2_id = response2.data["id"]
+
+        # Should return the same channel ID (duplicate prevention)
+        self.assertEqual(
+            dm1_id,
+            dm2_id,
+            "Duplicate DM should return existing channel instead of creating new one",
+        )
+
+        # Verify only one DM exists between these users
+        dm_count = (
+            Channel.objects.filter(is_direct=True, participants=self.user1)
+            .filter(participants=self.user2)
+            .count()
+        )
+        self.assertEqual(dm_count, 1, "Only one DM should exist between the same users")
 
     def test_unauthorized_channel_access(self):
         """Test that users cannot access channels they don't belong to."""
