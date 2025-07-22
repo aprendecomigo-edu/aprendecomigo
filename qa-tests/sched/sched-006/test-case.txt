@@ -1,0 +1,168 @@
+QA Test Case: Multi-Platform Testing (Web vs Mobile)
+
+Test ID: SCHED-006
+Test Name: Multi-Platform Testing (Web vs Mobile)
+Purpose: Verify that scheduler functionality works consistently across web and mobile platforms
+Expected Result: All scheduler features work correctly on both web and mobile with responsive design
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Multi-Platform: Web (Expo Web) and Mobile (React Native)
+- Responsive Design: Interface adapts to different screen sizes
+- Feature Parity: Same functionality across platforms
+
+Test Data:
+- Student Email: student.test@example.com
+- Teacher Email: teacher.test@example.com
+- Admin Email: admin.test@example.com
+- Test Classes: Cross-platform scheduling tests
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py runserver > /tmp/django_server.log 2>&1 &
+  sleep 5
+  cd ../frontend-ui
+  npm run web:dev > /tmp/expo_output.log 2>&1 &
+  sleep 15
+
+Expected: Both servers start successfully
+Screenshot: 01_servers_started.png
+
+Step 2: Test Web Platform - Desktop View
+1. Open browser to http://localhost:8081
+2. Login as student: student.test@example.com
+3. Navigate to calendar
+4. Verify full desktop layout
+5. Test all calendar features:
+   - View calendar
+   - Book class
+   - View class details
+   - Navigate between dates
+
+Expected: All features work correctly in desktop web view
+Screenshot: 02_desktop_web_view.png
+
+Step 3: Test Web Platform - Mobile Responsive
+1. Resize browser window to mobile size (375x667px)
+2. Verify interface adapts to mobile layout
+3. Test mobile-specific features:
+   - Touch-friendly buttons
+   - Responsive navigation
+   - Mobile-optimized forms
+4. Test all calendar functionality on mobile web
+
+Expected: Mobile web view is fully functional and responsive
+Screenshot: 03_mobile_web_view.png
+
+Step 4: Test Mobile Platform (if available)
+1. If mobile simulator available, test native mobile app
+2. Verify native mobile features:
+   - Native navigation
+   - Touch gestures
+   - Mobile-specific UI elements
+3. Test all calendar functionality on native mobile
+
+Expected: Native mobile app works correctly
+Screenshot: 04_native_mobile_view.png
+
+Step 5: Test Cross-Platform Data Sync
+1. Book class on desktop web
+2. Switch to mobile web view
+3. Verify class appears on mobile
+4. Update class on mobile
+5. Switch back to desktop
+6. Verify updates appear on desktop
+
+Expected: Data synchronizes across platforms
+Screenshot: 05_cross_platform_sync.png
+
+Step 6: Test Touch vs Mouse Interactions
+1. Test mouse interactions on desktop:
+   - Click, hover, right-click
+   - Keyboard shortcuts
+   - Desktop-specific features
+2. Test touch interactions on mobile:
+   - Tap, swipe, pinch
+   - Touch gestures
+   - Mobile-specific features
+
+Expected: Both interaction types work correctly
+Screenshot: 06_interaction_types.png
+
+Step 7: Test Calendar Views Across Platforms
+1. Test different calendar views on desktop:
+   - List view
+   - Week view
+   - Month view (if available)
+2. Test same views on mobile
+3. Verify all views work consistently
+
+Expected: Calendar views work consistently across platforms
+Screenshot: 07_calendar_views_comparison.png
+
+Step 8: Test Form Interactions
+1. Test booking form on desktop:
+   - Dropdown selections
+   - Date picker
+   - Text inputs
+2. Test same form on mobile:
+   - Mobile-optimized inputs
+   - Touch-friendly dropdowns
+   - Mobile date picker
+
+Expected: Forms work optimally on both platforms
+Screenshot: 08_form_interactions.png
+
+Step 9: Test Performance and Loading
+1. Measure load times on desktop
+2. Measure load times on mobile
+3. Test with slow network connections
+4. Verify performance is acceptable
+
+Expected: Performance is acceptable on both platforms
+Screenshot: 09_performance_comparison.png
+
+Step 10: Test Error Handling Across Platforms
+1. Test error scenarios on desktop
+2. Test same error scenarios on mobile
+3. Verify error messages are appropriate
+4. Test recovery from errors
+
+Expected: Error handling works consistently
+Screenshot: 10_error_handling_comparison.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All scheduler features work on both web and mobile AND responsive design works correctly AND data synchronizes across platforms AND performance is acceptable
+
+FAIL: Any feature doesn't work on either platform OR responsive design broken OR data sync issues OR poor performance
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== SPECIAL CONSIDERATIONS ===
+
+Multi-Platform Consistency:
+- Same functionality across platforms
+- Consistent user experience
+- Platform-appropriate interactions
+- Data synchronization
+
+Responsive Design:
+- Interface adapts to screen sizes
+- Touch-friendly on mobile
+- Keyboard/mouse friendly on desktop
+- Optimal layouts for each platform
+
+Performance:
+- Fast loading times
+- Smooth interactions
+- Efficient data usage
+- Battery optimization on mobile

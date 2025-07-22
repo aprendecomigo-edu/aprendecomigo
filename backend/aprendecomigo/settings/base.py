@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "classroom",
     "finances",
     "scheduler",
+    "tasks",
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,442 @@
+QA Test Case: Teacher Calendar Permissions and Restrictions
+
+Test ID: SCHED-002
+Test Name: Teacher Calendar Permissions and Restrictions
+Purpose: Verify that teachers can view their calendar with booked classes but CANNOT schedule classes for themselves or others
+Expected Result: Teacher accesses calendar, sees booked classes, but Book Class button is hidden and direct scheduling access is blocked
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Teacher Role Restrictions: Teachers can view calendar but cannot schedule classes
+- Permission Logic: Only students and admins can schedule classes
+- Teacher Visibility: Teachers see classes scheduled with them
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- Teacher Email: teacher.test@example.com
+- Student Email: student.test@example.com
+- Admin Email: admin.test@example.com
+- School Name: "Test School"
+- Existing Class: Pre-scheduled class with teacher
+
+Database Setup Commands:
+```bash
+cd /Users/anapmc/Code/aprendecomigo/backend
+python manage.py shell -c "
+from accounts.models import CustomUser, TeacherProfile, School, SchoolMembership
+from scheduler.models import TeacherAvailability, ClassSchedule, ClassStatus
+from django.utils import timezone
+from datetime import datetime, timedelta
+
+# Create test school
+school, _ = School.objects.get_or_create(
+    name='Test School',
+    defaults={'description': 'Test school for QA'}
+)
+
+# Create student user
+student, _ = CustomUser.objects.get_or_create(
+    email='student.test@example.com',
+    defaults={
+        'name': 'Test Student',
+        'user_type': 'student',
+        'is_admin': False,
+        'is_active': True
+    }
+)
+
+# Create teacher user
+teacher_user, _ = CustomUser.objects.get_or_create(
+    email='teacher.test@example.com',
+    defaults={
+        'name': 'Test Teacher',
+        'user_type': 'teacher',
+        'is_admin': False,
+        'is_active': True
+    }
+)
+
+# Create admin user
+admin_user, _ = CustomUser.objects.get_or_create(
+    email='admin.test@example.com',
+    defaults={
+        'name': 'Test Admin',
+        'user_type': 'school_owner',
+        'is_admin': True,
+        'is_active': True
+    }
+)
+
+# Create teacher profile
+teacher_profile, _ = TeacherProfile.objects.get_or_create(
+    user=teacher_user,
+    defaults={
+        'bio': 'Experienced math teacher',
+        'specialty': 'Mathematics',
+        'education': 'Masters in Mathematics',
+        'hourly_rate': 25.00,
+        'availability': 'Weekdays 9-17',
+        'phone_number': '+351912345678'
+    }
+)
+
+# Create school memberships
+SchoolMembership.objects.get_or_create(
+    user=student,
+    school=school,
+    defaults={'role': 'student', 'is_active': True}
+)
+
+SchoolMembership.objects.get_or_create(
+    user=teacher_user,
+    school=school,
+    defaults={'role': 'teacher', 'is_active': True}
+)
+
+SchoolMembership.objects.get_or_create(
+    user=admin_user,
+    school=school,
+    defaults={'role': 'school_owner', 'is_active': True}
+)
+
+# Create teacher availability
+TeacherAvailability.objects.get_or_create(
+    teacher=teacher_profile,
+    school=school,
+    day_of_week='monday',
+    defaults={
+        'start_time': '09:00',
+        'end_time': '17:00',
+        'is_active': True
+    }
+)
+
+# Create a pre-scheduled class
+tomorrow = (timezone.now() + timedelta(days=1)).date()
+ClassSchedule.objects.get_or_create(
+    teacher=teacher_profile,
+    student=student,
+    school=school,
+    scheduled_date=tomorrow,
+    start_time='10:00',
+    end_time='11:00',
+    defaults={
+        'title': 'Pre-scheduled Mathematics Class',
+        'description': 'Student booked this class',
+        'class_type': 'individual',
+        'duration_minutes': 60,
+        'status': ClassStatus.SCHEDULED,
+        'booked_by': student
+    }
+)
+
+print('Test data created successfully')
+print(f'Student: {student.email}')
+print(f'Teacher: {teacher_user.email}')
+print(f'Admin: {admin_user.email}')
+print(f'School: {school.name}')
+print(f'Pre-scheduled class date: {tomorrow}')
+"
+```
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py runserver > /tmp/django_server.log 2>&1 &
+  sleep 5
+  cd ../frontend-ui
+  npm run web:dev > /tmp/expo_output.log 2>&1 &
+  sleep 15
+
+Expected: Both servers start successfully
+Screenshot: 01_servers_started.png
+
+Step 2: Teacher Login
+1. Open browser to http://localhost:8081
+2. Navigate to sign-in page
+3. Enter teacher email: teacher.test@example.com
+4. Click "Send Code" button
+5. Check backend logs for verification code
+6. Enter verification code and complete login
+
+Expected: Teacher successfully logs in and reaches dashboard
+Screenshot: 02_teacher_login_success.png
+
+Step 3: Navigate to Calendar
+1. Look for calendar/schedule navigation option
+2. Click on "Calendar" or "Schedule" menu item
+3. Wait for calendar interface to load
+4. Verify calendar view displays
+
+Expected: Calendar interface loads showing teacher's calendar view
+Screenshot: 03_calendar_interface_loaded.png
+
+Step 4: Verify Book Class Button is Hidden
+1. Look for "Book Class" or "Schedule Class" button
+2. Verify button is NOT visible for teacher
+3. Check that only view-related controls are available
+4. Verify no scheduling actions are available
+
+Expected: Book Class button is hidden, only view options available
+Screenshot: 04_book_class_button_hidden.png
+
+Step 5: Verify Existing Classes Display
+1. Check that pre-scheduled class is visible
+2. Verify class shows:
+   - Class title: "Pre-scheduled Mathematics Class"
+   - Student name: "Test Student"
+   - Date and time: tomorrow 10:00-11:00
+   - Duration: 60 minutes
+   - Status: "Scheduled"
+3. Verify class card is clickable for details
+
+Expected: Teacher sees classes scheduled with them
+Screenshot: 05_existing_classes_display.png
+
+Step 6: Verify Teacher Can View Class Details
+1. Click on the pre-scheduled class
+2. Verify class detail view shows:
+   - Complete class information
+   - Student details
+   - Teacher can see their role in the class
+   - Appropriate actions available to teacher
+
+Expected: Class details display correctly with teacher-appropriate actions
+Screenshot: 06_class_details_view.png
+
+Step 7: Test Direct Access to Booking URL
+1. Manually navigate to booking URL: http://localhost:8081/calendar/book
+2. Verify access is denied or redirected
+3. Check for appropriate error message
+4. Verify teacher cannot access booking form
+
+Expected: Direct booking access is blocked with appropriate message
+Screenshot: 07_booking_access_denied.png
+
+Step 8: Test Calendar View Options
+1. Check for view mode options (List, Week, Month if available)
+2. Test switching between different views
+3. Verify navigation controls (Previous, Next, Today)
+4. Confirm all view options work for teacher
+
+Expected: Calendar view options work correctly for teacher
+Screenshot: 08_calendar_view_options.png
+
+Step 9: Test Calendar Navigation
+1. Navigate to previous/next week or month
+2. Verify navigation works correctly
+3. Navigate back to current period
+4. Verify scheduled classes remain visible
+
+Expected: Calendar navigation works without scheduling access
+Screenshot: 09_calendar_navigation.png
+
+Step 10: Verify Teacher Cannot See Other Teachers' Classes
+1. Check calendar view for other teachers' classes
+2. Verify teacher only sees:
+   - Classes they are teaching
+   - Not classes with other teachers
+3. Confirm filtering is working correctly
+
+Expected: Teacher sees only their own classes
+Screenshot: 10_teacher_class_filtering.png
+
+Step 11: Test My Classes View
+1. Look for "My Classes" or similar view option
+2. Click to view teacher's specific classes
+3. Verify this shows only classes with this teacher
+4. Check that upcoming classes are highlighted
+
+Expected: My Classes view shows teacher's classes only
+Screenshot: 11_my_classes_view.png
+
+Step 12: Test Class Management Actions (if available)
+1. On a scheduled class, check for teacher actions:
+   - Confirm class (if status is scheduled)
+   - Complete class (if status is confirmed)
+   - Cancel class (if allowed)
+2. Verify only appropriate actions are available
+3. Test one action to confirm it works
+
+Expected: Teacher has appropriate class management actions
+Screenshot: 12_class_management_actions.png
+
+Step 13: Test API Endpoints Security
+1. Open browser developer tools
+2. Navigate to Network tab
+3. Try to access booking-related API endpoints manually
+4. Check for appropriate 403/401 responses
+
+Expected: API endpoints are properly secured for teacher role
+Screenshot: 13_api_security_check.png
+
+Step 14: Test Mobile/Responsive View (if applicable)
+1. Resize browser window to mobile size
+2. Verify calendar interface adapts properly
+3. Check that Book Class button remains hidden
+4. Verify all functionality works on mobile
+
+Expected: Mobile view maintains teacher restrictions
+Screenshot: 14_mobile_view_restrictions.png
+
+Step 15: Test Permission Consistency
+1. Refresh page multiple times
+2. Navigate away and back to calendar
+3. Verify teacher restrictions persist
+4. Check that permissions are consistently enforced
+
+Expected: Teacher permissions are consistently enforced
+Screenshot: 15_permission_consistency.png
+
+Step 16: Test Error Handling
+1. Try to access restricted functionality
+2. Check for appropriate error messages
+3. Verify error messages are user-friendly
+4. Test that errors don't break the interface
+
+Expected: Error handling works properly with clear messages
+Screenshot: 16_error_handling.png
+
+Step 17: Backend Verification
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/backend
+  python manage.py shell -c "
+  from scheduler.models import ClassSchedule
+  from accounts.models import CustomUser
+  teacher_user = CustomUser.objects.get(email='teacher.test@example.com')
+  teacher_profile = teacher_user.teacher_profile
+  classes = ClassSchedule.objects.filter(teacher=teacher_profile)
+  print(f'Teacher: {teacher_user.email}')
+  print(f'Teacher can see {classes.count()} classes')
+  for cls in classes:
+      print(f'Class: {cls.title}')
+      print(f'Student: {cls.student.name}')
+      print(f'Date: {cls.scheduled_date}')
+      print(f'Status: {cls.status}')
+      print('---')
+  "
+
+Expected: Backend confirms teacher can see their classes
+Screenshot: 17_backend_verification.png
+
+Step 18: Test Cross-User Visibility
+1. Note details of the pre-scheduled class
+2. Verify teacher sees student's name correctly
+3. Check that booking information is accurate
+4. Confirm teacher role in the class relationship
+
+Expected: Cross-user visibility works correctly
+Screenshot: 18_cross_user_visibility.png
+
+Step 19: Test UI/UX Clarity
+1. Verify interface clearly shows teacher role
+2. Check that lack of booking options is clear
+3. Verify teacher understands their permissions
+4. Check for any confusing UI elements
+
+Expected: UI clearly communicates teacher permissions
+Screenshot: 19_ui_clarity.png
+
+Step 20: Test Logout and Re-login
+1. Log out of teacher account
+2. Log back in as teacher
+3. Navigate to calendar
+4. Verify all restrictions remain in place
+
+Expected: Teacher restrictions persist across sessions
+Screenshot: 20_session_persistence.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Teacher successfully logs in AND accesses calendar interface AND sees their scheduled classes AND Book Class button is hidden AND direct booking access is blocked AND class details display correctly AND teacher permissions are consistently enforced AND error handling works properly
+
+FAIL: Teacher can access booking functionality OR Book Class button is visible OR direct booking access allowed OR teacher sees other teachers' classes OR permissions not enforced OR poor error handling
+
+Individual Step Criteria:
+- Step 1: PASS if both servers start without errors, FAIL if either server fails
+- Step 2: PASS if teacher login succeeds, FAIL if authentication fails
+- Step 3: PASS if calendar interface loads, FAIL if navigation or loading fails
+- Step 4: PASS if Book Class button is hidden, FAIL if button is visible
+- Step 5: PASS if teacher sees their classes, FAIL if classes missing or incorrect
+- Step 6: PASS if class details display correctly, FAIL if details wrong or missing
+- Step 7: PASS if booking access is denied, FAIL if access allowed
+- Step 8: PASS if calendar view options work, FAIL if views broken
+- Step 9: PASS if calendar navigation works, FAIL if navigation broken
+- Step 10: PASS if teacher sees only their classes, FAIL if sees other teachers' classes
+- Step 11: PASS if My Classes view works, FAIL if view broken or shows wrong classes
+- Step 12: PASS if appropriate teacher actions available, FAIL if wrong actions
+- Step 13: PASS if API endpoints secured, FAIL if security bypass possible
+- Step 14: PASS if mobile view maintains restrictions, FAIL if mobile allows booking
+- Step 15: PASS if permissions consistent, FAIL if permissions inconsistent
+- Step 16: PASS if error handling works, FAIL if poor error handling
+- Step 17: PASS if backend confirms teacher permissions, FAIL if backend inconsistent
+- Step 18: PASS if cross-user visibility works, FAIL if visibility broken
+- Step 19: PASS if UI clarity is good, FAIL if confusing interface
+- Step 20: PASS if restrictions persist across sessions, FAIL if permissions reset
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== SPECIAL CONSIDERATIONS ===
+
+Teacher Role Restrictions:
+- Teachers CANNOT schedule classes for themselves
+- Teachers CANNOT schedule classes for others
+- Teachers can only view their own classes
+- Teachers cannot access booking functionality
+- Teachers can manage classes (confirm, complete, cancel)
+
+Permission Enforcement:
+- UI level: Book Class button hidden
+- URL level: Direct booking access blocked
+- API level: Booking endpoints return 403/401
+- Consistent across all access methods
+
+Cross-User Visibility:
+- Teachers see classes students book with them
+- Teachers see accurate student information
+- Teachers see their role in class relationships
+- Teachers cannot see other teachers' classes
+
+Error Handling:
+- Clear messages when access denied
+- User-friendly error explanations
+- No confusing permission errors
+- Graceful degradation of functionality
+
+UX/Behavioral Requirements:
+- Interface clearly shows teacher role
+- No confusing booking options
+- Teacher understands their permissions
+- Calendar functionality works smoothly
+- Class management actions appropriate
+
+Data Security:
+- Teachers cannot access other teachers' data
+- Teachers cannot modify classes they don't teach
+- Proper filtering of class information
+- Secure API endpoints
+
+Multi-Platform Consistency:
+- Restrictions work on web and mobile
+- Responsive design maintains security
+- Touch-friendly interface on mobile
+- Consistent behavior across platforms
+
+Session Management:
+- Permissions persist across sessions
+- No permission escalation possible
+- Proper logout/login handling
+- Secure session state management

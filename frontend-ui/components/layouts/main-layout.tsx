@@ -8,6 +8,7 @@ import {
   schools,
   type School,
 } from '@/components/navigation';
+import { useTutorial, TutorialHighlight } from '@/components/tutorial';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
@@ -37,6 +38,7 @@ export const MainLayout = ({
 }: MainLayoutProps) => {
   const [selectedSchool, setSelectedSchool] = useState<School>(schools[0]);
   const [isSidebarVisible, setIsSidebarVisible] = useState(showSidebar);
+  const { state } = useTutorial();
 
   const handleSchoolChange = (school: School) => {
     setSelectedSchool(school);
@@ -49,8 +51,8 @@ export const MainLayout = ({
   };
 
   const layoutContent = (
-    <SafeAreaView className="h-full w-full">
-      <VStack className="h-full w-full bg-background-0">
+    <SafeAreaView className="min-h-screen w-full">
+      <VStack className="min-h-screen w-full bg-background-0">
         {/* Mobile Header */}
         <Box className="md:hidden">
           <TopNavigation variant="mobile" onSchoolChange={handleSchoolChange} />
@@ -66,19 +68,34 @@ export const MainLayout = ({
         </Box>
 
         {/* Main Content Area */}
-        <VStack className="h-full w-full">
-          <HStack className="h-full w-full">
+        <VStack className="flex-1 w-full">
+          <HStack className="flex-1 w-full">
             {/* Desktop Sidebar */}
-            <Box className="hidden md:flex h-full">{isSidebarVisible && <SideNavigation />}</Box>
+            <Box className="hidden md:flex flex-shrink-0">
+              {isSidebarVisible && (
+                <TutorialHighlight
+                  id="navigation"
+                  isActive={state.isActive && state.config?.steps[state.currentStep]?.id === 'navigation'}
+                >
+                  <SideNavigation />
+                </TutorialHighlight>
+              )}
+            </Box>
 
             {/* Main Content with bottom padding for mobile navigation */}
-            <VStack className="w-full pb-20 md:pb-0">{children}</VStack>
+            <VStack className="flex-1 w-full pb-20 md:pb-0">{children}</VStack>
           </HStack>
         </VStack>
       </VStack>
 
       {/* Mobile Footer Navigation */}
-      <MobileNavigation />
+      <TutorialHighlight
+        id="navigation"
+        isActive={state.isActive && state.config?.steps[state.currentStep]?.id === 'navigation'}
+        className="md:hidden"
+      >
+        <MobileNavigation />
+      </TutorialHighlight>
     </SafeAreaView>
   );
 

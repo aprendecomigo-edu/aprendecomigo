@@ -102,5 +102,15 @@ LOGGING = {
     },
 }
 
+
 # Import all settings from base.py
 from .base import *  # noqa: F403, E402
+
+# Development-specific overrides
+# Disable throttling for development/testing to avoid rate limiting during QA tests
+REST_FRAMEWORK.update(
+    {
+        "DEFAULT_THROTTLE_CLASSES": [],  # Disable all throttling in development
+        "DEFAULT_THROTTLE_RATES": {},  # Clear all throttle rates
+    }
+)

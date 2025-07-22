@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import ClassVar
 
-from accounts.models import SchoolMembership, TeacherProfile
+from accounts.models import SchoolMembership, SchoolRole, TeacherProfile
 from accounts.permissions import SchoolPermissionMixin
 from django.db.models import Q
 from django.utils import timezone
@@ -112,10 +112,18 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
         if hasattr(user, "teacher_profile"):
             # Teachers can only see their own classes
             queryset = queryset.filter(teacher=user.teacher_profile)
-        elif not user.is_admin:
-            # Students can only see classes they're participating in
-            queryset = queryset.filter(Q(student=user) | Q(additional_students=user))
-        # Admins can see all classes in their schools
+        else:
+            # Check if user is admin
+            is_admin = SchoolMembership.objects.filter(
+                user=user,
+                role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
+                is_active=True,
+            ).exists()
+
+            if not is_admin:
+                # Students can only see classes they're participating in
+                queryset = queryset.filter(Q(student=user) | Q(additional_students=user))
+            # Admins can see all classes in their schools
 
         # Filter by date range
         start_date = self.request.query_params.get("start_date")
@@ -144,7 +152,7 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
         return queryset.order_by("scheduled_date", "start_time")
 
     def perform_create(self, serializer):
-        """Create class schedule with permission checks"""
+        """Create a new class schedule"""
         user = self.request.user
 
         # Permission checks
@@ -154,8 +162,12 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
 
         student = serializer.validated_data.get("student")
 
-        # Students can only book classes for themselves
-        if not user.is_admin and student != user:
+        # Students can only book classes for themselves, unless user is a school admin
+        is_admin = SchoolMembership.objects.filter(
+            user=user, role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN], is_active=True
+        ).exists()
+
+        if not is_admin and student != user:
             raise PermissionError("Students can only book classes for themselves")
 
         # Ensure user has permission to book in this school

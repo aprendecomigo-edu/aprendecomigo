@@ -4,7 +4,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 
 import { useAuth } from '@/api/authContext';
+import apiClient from '@/api/apiClient';
 import schedulerApi, { ClassSchedule } from '@/api/schedulerApi';
+import { tasksApi, Task } from '@/api/tasksApi';
 import MainLayout from '@/components/layouts/main-layout';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
@@ -63,6 +65,84 @@ const getStatusColor = (status: string): string => {
     default:
       return 'bg-gray-100 text-gray-800';
   }
+};
+
+// Task card component for calendar view
+const TaskCard: React.FC<{
+  task: Task;
+  showDate?: boolean;
+}> = ({ task, showDate = false }) => {
+  const getPriorityColor = (priority: string): string => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatDueDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-PT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
+
+  return (
+    <Box className="bg-white rounded-lg border border-l-4 border-l-orange-500 border-gray-200 p-4 mb-3 shadow-sm">
+      <VStack space="sm">
+        {/* Header */}
+        <HStack className="justify-between items-start">
+          <VStack className="flex-1">
+            <Text className="font-bold text-lg">{task.title}</Text>
+            <Text className="text-gray-600">{task.task_type}</Text>
+          </VStack>
+          <HStack space="xs">
+            <Badge className={getPriorityColor(task.priority)}>
+              <BadgeText>{task.priority.toUpperCase()}</BadgeText>
+            </Badge>
+            {task.is_urgent && (
+              <Badge className="bg-red-100 text-red-800">
+                <BadgeText>URGENT</BadgeText>
+              </Badge>
+            )}
+          </HStack>
+        </HStack>
+
+        {/* Date and Time */}
+        <HStack space="md" className="flex-wrap">
+          {showDate && task.due_date && (
+            <HStack space="xs" className="items-center">
+              <Icon as={CalendarDays} size="sm" className="text-gray-500" />
+              <Text className="text-sm text-gray-600">{formatDueDate(task.due_date)}</Text>
+            </HStack>
+          )}
+          {task.due_date && (
+            <HStack space="xs" className="items-center">
+              <Icon as={Clock} size="sm" className="text-gray-500" />
+              <Text className="text-sm text-gray-600">
+                Due: {new Date(task.due_date).toLocaleTimeString('pt-PT', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Text>
+            </HStack>
+          )}
+        </HStack>
+
+        {/* Description */}
+        {task.description && (
+          <Text className="text-sm text-gray-600">{task.description}</Text>
+        )}
+      </VStack>
+    </Box>
+  );
 };
 
 // Class card component
@@ -137,32 +217,27 @@ const ClassCard: React.FC<{
 const WeekView: React.FC<{
   currentDate: Date;
   classes: ClassSchedule[];
+  tasks: Task[];
   onClassPress: (classSchedule: ClassSchedule) => void;
-}> = ({ currentDate, classes, onClassPress }) => {
+}> = ({ currentDate, classes, tasks, onClassPress }) => {
+  // Add null check and default to empty array
+  const safeClasses = classes || [];
+  const safeTasks = tasks || [];
+
   const weekDates = getWeekDates(currentDate);
 
   return (
-    <VStack space="md">
-      {/* Week header */}
-      <HStack className="justify-between items-center px-2">
-        {weekDates.map((date, index) => (
-          <VStack key={index} className="items-center flex-1">
-            <Text className="text-xs text-gray-500 uppercase">
-              {date.toLocaleDateString('pt-PT', { weekday: 'short' })}
-            </Text>
-            <Text className="text-lg font-medium">{date.getDate()}</Text>
-          </VStack>
-        ))}
-      </HStack>
-
-      <Divider />
-
-      {/* Week content */}
+    <VStack className="flex-1" space="md">
       <ScrollView>
-        <VStack space="md">
+        <VStack space="lg">
           {weekDates.map((date, index) => {
             const dateStr = date.toISOString().split('T')[0];
-            const dayClasses = classes.filter(c => c.scheduled_date === dateStr);
+            const dayClasses = safeClasses.filter(c => c.scheduled_date === dateStr);
+            const dayTasks = safeTasks.filter(t =>
+              t.due_date && t.due_date.split('T')[0] === dateStr
+            );
+
+            const hasContent = dayClasses.length > 0 || dayTasks.length > 0;
 
             return (
               <VStack key={index} space="sm">
@@ -173,17 +248,25 @@ const WeekView: React.FC<{
                     month: 'long',
                   })}
                 </Text>
-                {dayClasses.length > 0 ? (
-                  dayClasses.map(classSchedule => (
-                    <ClassCard
-                      key={classSchedule.id}
-                      classSchedule={classSchedule}
-                      onPress={() => onClassPress(classSchedule)}
-                    />
-                  ))
+                {hasContent ? (
+                  <VStack space="xs">
+                    {dayClasses.map(classSchedule => (
+                      <ClassCard
+                        key={`class-${classSchedule.id}`}
+                        classSchedule={classSchedule}
+                        onPress={() => onClassPress(classSchedule)}
+                      />
+                    ))}
+                    {dayTasks.map(task => (
+                      <TaskCard
+                        key={`task-${task.id}`}
+                        task={task}
+                      />
+                    ))}
+                  </VStack>
                 ) : (
                   <Box className="bg-gray-50 rounded-lg p-4">
-                    <Text className="text-gray-500 text-center">No classes scheduled</Text>
+                    <Text className="text-gray-500 text-center">No classes or tasks scheduled</Text>
                   </Box>
                 )}
               </VStack>
@@ -198,15 +281,22 @@ const WeekView: React.FC<{
 // List view component
 const ListView: React.FC<{
   classes: ClassSchedule[];
+  tasks: Task[];
   onClassPress: (classSchedule: ClassSchedule) => void;
-}> = ({ classes, onClassPress }) => {
-  if (classes.length === 0) {
+}> = ({ classes, tasks, onClassPress }) => {
+  // Add null check and default to empty array
+  const safeClasses = classes || [];
+  const safeTasks = tasks || [];
+
+  const hasContent = safeClasses.length > 0 || safeTasks.length > 0;
+
+  if (!hasContent) {
     return (
       <Center className="flex-1 py-12">
         <Icon as={CalendarDays} size="xl" className="text-gray-300 mb-4" />
-        <Text className="text-lg font-medium text-gray-600 mb-2">No classes scheduled</Text>
+        <Text className="text-lg font-medium text-gray-600 mb-2">No classes or tasks scheduled</Text>
         <Text className="text-gray-500 text-center max-w-sm">
-          Your upcoming classes will appear here
+          Your upcoming classes and tasks will appear here
         </Text>
       </Center>
     );
@@ -215,11 +305,18 @@ const ListView: React.FC<{
   return (
     <ScrollView>
       <VStack space="md">
-        {classes.map(classSchedule => (
+        {safeClasses.map(classSchedule => (
           <ClassCard
-            key={classSchedule.id}
+            key={`class-${classSchedule.id}`}
             classSchedule={classSchedule}
             onPress={() => onClassPress(classSchedule)}
+            showDate={true}
+          />
+        ))}
+        {safeTasks.map(task => (
+          <TaskCard
+            key={`task-${task.id}`}
+            task={task}
             showDate={true}
           />
         ))}
@@ -230,30 +327,80 @@ const ListView: React.FC<{
 
 // Main calendar component
 const CalendarScreen: React.FC = () => {
-  const { userProfile } = useAuth();
+  const { userProfile, ensureUserProfile } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>('list');
   const [classes, setClasses] = useState<ClassSchedule[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Check if user can schedule classes based on their role
+  // Teachers should not be able to schedule classes
   const canSchedule = userProfile?.user_type !== 'teacher';
 
   const loadClasses = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await schedulerApi.getClassSchedules();
-      setClasses(response.results);
+      const classes = await schedulerApi.getClassSchedules();
+      // API now returns the array directly
+      setClasses(Array.isArray(classes) ? classes : []);
     } catch (error) {
       console.error('Error loading classes:', error);
+      // Set empty array on error to prevent crashes
+      setClasses([]);
       Alert.alert('Error', 'Failed to load classes');
     } finally {
       setLoading(false);
     }
   }, []);
 
+  const loadTasks = useCallback(async () => {
+    try {
+      // Calculate start and end dates for the current view
+      let startDate: string, endDate: string;
+      const start = new Date(currentDate);
+      const end = new Date(currentDate);
+
+      if (view === 'week') {
+        const weekDates = getWeekDates(currentDate);
+        start.setTime(weekDates[0].getTime());
+        end.setTime(weekDates[6].getTime());
+      } else {
+        // For list view, show tasks for the next 30 days
+        end.setDate(start.getDate() + 30);
+      }
+
+      startDate = start.toISOString();
+      endDate = end.toISOString();
+
+      // Use direct API call instead of tasksApi (which has issues)
+      const params = new URLSearchParams();
+      if (startDate) params.append('start_date', startDate);
+      if (endDate) params.append('end_date', endDate);
+
+      const response = await apiClient.get(`/tasks/calendar/${params.toString() ? '?' + params.toString() : ''}`);
+      const calendarTasks = response.data;
+
+      setTasks(calendarTasks || []);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      setTasks([]);
+    }
+  }, [currentDate, view]);
+
   useEffect(() => {
-    loadClasses();
-  }, [loadClasses]);
+    // Ensure user profile is loaded before checking permissions
+    const initializeData = async () => {
+      try {
+        await ensureUserProfile();
+        await loadClasses();
+        await loadTasks();
+      } catch (error) {
+        console.error('Error in initializeData:', error);
+      }
+    };
+    initializeData();
+  }, [loadClasses, loadTasks, ensureUserProfile]);
 
   const handleClassPress = (classSchedule: ClassSchedule) => {
     router.push(`/calendar/${classSchedule.id}`);
@@ -343,11 +490,12 @@ const CalendarScreen: React.FC = () => {
         ) : (
           <>
             {view === 'list' ? (
-              <ListView classes={classes} onClassPress={handleClassPress} />
+              <ListView classes={classes} tasks={tasks} onClassPress={handleClassPress} />
             ) : (
               <WeekView
                 currentDate={currentDate}
                 classes={classes}
+                tasks={tasks}
                 onClassPress={handleClassPress}
               />
             )}

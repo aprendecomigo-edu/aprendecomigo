@@ -5,7 +5,7 @@ import { Alert } from 'react-native';
 
 import { useAuth } from '@/api/authContext';
 import schedulerApi, { CreateClassScheduleData, AvailableTimeSlot } from '@/api/schedulerApi';
-import { getTeachers, TeacherProfile } from '@/api/userApi';
+import { getTeachers, getStudents, TeacherProfile, StudentProfile } from '@/api/userApi';
 import MainLayout from '@/components/layouts/main-layout';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
@@ -99,6 +99,7 @@ const BookClassScreen: React.FC = () => {
   const { userProfile } = useAuth();
   const [formData, setFormData] = useState<BookingFormData>(initialFormData);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
+  const [students, setStudents] = useState<StudentProfile[]>([]);
   const [availableSlots, setAvailableSlots] = useState<AvailableTimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -113,6 +114,16 @@ const BookClassScreen: React.FC = () => {
     } catch (error) {
       console.error('Error loading teachers:', error);
       Alert.alert('Error', 'Failed to load teachers');
+    }
+  }, []);
+
+  const loadStudents = useCallback(async () => {
+    try {
+      const data = await getStudents();
+      setStudents(data);
+    } catch (error) {
+      console.error('Error loading students:', error);
+      Alert.alert('Error', 'Failed to load students');
     }
   }, []);
 
@@ -146,6 +157,11 @@ const BookClassScreen: React.FC = () => {
       }));
     }
   }, [loadTeachers, isAdmin, userProfile]);
+
+  // Load students on component mount
+  useEffect(() => {
+    loadStudents();
+  }, [loadStudents]);
 
   // Load available slots when teacher and date change
   useEffect(() => {
@@ -295,14 +311,30 @@ const BookClassScreen: React.FC = () => {
                     <Text>Student *</Text>
                   </FormControlLabelText>
                 </FormControlLabel>
-                <Input>
-                  <InputField
-                    placeholder="Student ID"
-                    value={formData.student_id}
-                    onChangeText={value => updateFormData('student_id', value)}
-                    keyboardType="numeric"
-                  />
-                </Input>
+                <Select
+                  selectedValue={formData.student_id}
+                  onValueChange={value => updateFormData('student_id', value)}
+                >
+                  <SelectTrigger variant="outline" size="md">
+                    <SelectInput placeholder="Select a student" />
+                    <SelectIcon className="mr-3" as={ChevronDown} />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent>
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      {students.map(student => (
+                        <SelectItem
+                          key={student.id}
+                          label={`${student.user.name} - ${student.school_year}`}
+                          value={student.id.toString()}
+                        />
+                      ))}
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
                 {errors.student_id && (
                   <FormControlError>
                     <FormControlErrorText>{errors.student_id}</FormControlErrorText>
@@ -408,7 +440,7 @@ const BookClassScreen: React.FC = () => {
                       Loading available times...
                     </Text>
                   </Box>
-                ) : availableSlots.length > 0 ? (
+                ) : availableSlots && availableSlots.length > 0 ? (
                   <VStack space="xs">
                     {availableSlots.map((slot, index) => (
                       <Pressable key={index} onPress={() => selectTimeSlot(slot)}>

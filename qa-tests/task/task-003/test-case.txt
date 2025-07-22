@@ -1,0 +1,242 @@
+QA Test Case: New User Onboarding Tasks
+
+Test ID: TASK-003
+Test Name: New User Onboarding Tasks Auto-Creation
+Purpose: Verify that new users automatically receive default onboarding tasks when they first sign up
+Expected Result: New users get two default pending tasks to help them get started with the platform
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Onboarding: New users should receive default tasks automatically
+- Backend: Task model has create_onboarding_tasks() method for creating default tasks
+- Default Tasks: "Complete Your Profile" and "Explore the Dashboard"
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- New Test User Email: test.onboarding@example.com (must be unique/not exist)
+- Existing User Email: anapmc.carvalho@gmail.com (for comparison)
+
+Database Prerequisites:
+- Ability to create new user accounts
+- Clean state for new user testing
+- Access to Django admin or ability to verify database state
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py runserver --settings=aprendecomigo.settings.development
+
+Open new terminal:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  npm start
+
+Expected: Both servers start successfully
+Screenshot: 01_servers_started.png
+
+Step 2: Verify Current User Task State
+1. Open browser to http://localhost:8081
+2. Login with existing user: anapmc.carvalho@gmail.com
+3. Navigate to tasks section
+4. Count and note existing tasks for comparison
+5. Logout from the application
+
+Expected: Existing user has established task list
+Screenshot: 02_existing_user_tasks.png
+
+Step 3: Begin New User Registration
+1. Navigate to registration/signup page
+2. Verify signup form is available
+3. Enter new user details:
+   - Email: test.onboarding@example.com
+   - Required fields (name, role, etc.)
+
+Expected: Registration form loads and accepts new user data
+Screenshot: 03_registration_form.png
+
+Step 4: Complete New User Registration
+1. Submit registration form
+2. Verify email verification code is sent
+3. Enter verification code to complete registration
+4. Verify successful registration message
+
+Expected: New user account created successfully
+Screenshot: 04_registration_completed.png
+
+Step 5: First Login - Check for Onboarding Tasks
+1. Complete login process with new user
+2. Navigate to dashboard
+3. Look for tasks section ("Tarefas Pendentes")
+4. Verify onboarding tasks are present
+
+Expected: New user dashboard shows onboarding tasks
+Screenshot: 05_onboarding_tasks_present.png
+
+Step 6: Verify Default Onboarding Tasks
+1. Check that exactly 2 tasks are present
+2. Verify task titles:
+   - "Complete Your Profile"
+   - "Explore the Dashboard"
+3. Check task properties:
+   - Status: "Pending"
+   - Task Type: "Onboarding"
+   - System Generated: true
+   - Priority: should be set appropriately
+
+Expected: Both default onboarding tasks present with correct properties
+Screenshot: 06_default_tasks_details.png
+
+Step 7: Verify Task System Properties
+1. Check that onboarding tasks cannot be deleted
+2. Verify tasks are marked as system-generated
+3. Check that tasks have appropriate due dates (if set)
+4. Verify task descriptions are helpful for new users
+
+Expected: Onboarding tasks have proper system protection
+Screenshot: 07_system_task_properties.png
+
+Step 8: Test Onboarding Task Completion
+1. Mark "Explore the Dashboard" as completed
+2. Verify task status changes to completed
+3. Check that completed task still appears (not deleted)
+4. Verify completion timestamp is recorded
+
+Expected: Onboarding tasks can be completed normally
+Screenshot: 08_onboarding_task_completed.png
+
+Step 9: Test Profile Completion Task
+1. Navigate to profile/settings page
+2. Complete profile information
+3. Return to tasks section
+4. Check if "Complete Your Profile" task status changed automatically
+
+Expected: Profile completion task updates based on profile state
+Screenshot: 09_profile_completion_task.png
+
+Step 10: Verify Backend Task Creation
+1. Open browser developer tools
+2. Check network requests during registration
+3. Verify API calls related to task creation
+4. Check if create_onboarding_tasks() method is called
+
+Expected: Backend creates tasks during registration process
+Screenshot: 10_backend_task_creation.png
+
+Step 11: Test Multiple New Users
+1. Create second new user: test.onboarding2@example.com
+2. Complete registration process
+3. Verify this user also receives onboarding tasks
+4. Check that tasks are unique to each user
+
+Expected: Each new user gets their own onboarding tasks
+Screenshot: 11_multiple_users_onboarding.png
+
+Step 12: Test Edge Case - User Without Onboarding Tasks
+1. If possible, create a user account through different means (admin, API)
+2. Login with this user
+3. Manually trigger onboarding task creation if available
+4. Verify tasks are created retroactively
+
+Expected: System can handle users without initial onboarding tasks
+Screenshot: 12_retroactive_onboarding.png
+
+Step 13: Test Onboarding Task Persistence
+1. With new user logged in, refresh page
+2. Verify onboarding tasks persist across page refreshes
+3. Logout and login again
+4. Verify tasks still present
+
+Expected: Onboarding tasks persist across sessions
+Screenshot: 13_task_persistence.png
+
+Step 14: Test Onboarding Task Integration
+1. Verify onboarding tasks appear in calendar view (if applicable)
+2. Check that tasks count toward overall task statistics
+3. Verify tasks appear in any task filtering/sorting
+
+Expected: Onboarding tasks integrate with all task features
+Screenshot: 14_onboarding_integration.png
+
+Step 15: Test User Role Variations
+1. If different user roles available (teacher, student, admin)
+2. Create new users with different roles
+3. Verify all roles receive appropriate onboarding tasks
+4. Check if task content varies by role
+
+Expected: All user roles receive relevant onboarding tasks
+Screenshot: 15_role_based_onboarding.png
+
+Step 16: Test Onboarding Task Deletion Protection
+1. Attempt to delete onboarding tasks
+2. Verify deletion is prevented
+3. Check appropriate error message is shown
+4. Confirm tasks remain after deletion attempt
+
+Expected: Onboarding tasks protected from deletion
+Screenshot: 16_deletion_protection.png
+
+Step 17: Test Database Consistency
+1. Check database directly (if possible) or through Django admin
+2. Verify onboarding tasks are properly stored
+3. Check task properties in database match frontend display
+4. Verify user association is correct
+
+Expected: Database contains correct onboarding task data
+Screenshot: 17_database_verification.png
+
+Step 18: Test Performance with Multiple New Users
+1. Create multiple new users in succession
+2. Verify each gets onboarding tasks without delay
+3. Check system performance during bulk user creation
+4. Verify no duplicate tasks created
+
+Expected: System handles multiple new users efficiently
+Screenshot: 18_performance_testing.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: New users automatically receive two default onboarding tasks that help them get started
+
+FAIL: Any of the following conditions occur:
+- New users don't receive onboarding tasks
+- Wrong number of onboarding tasks created (not exactly 2)
+- Onboarding tasks have wrong titles or content
+- Tasks not properly marked as system-generated
+- Onboarding tasks can be deleted by users
+- Tasks don't persist across sessions
+- Backend doesn't call create_onboarding_tasks() during registration
+- Different user roles don't receive appropriate onboarding tasks
+- System performance issues during user creation
+- Database inconsistency with onboarding task data
+
+Individual Step Criteria:
+- Step 1-2: PASS if servers start and existing user state verified
+- Step 3-4: PASS if new user registration completes successfully
+- Step 5: PASS if onboarding tasks appear in new user dashboard
+- Step 6: PASS if exactly 2 default tasks with correct titles present
+- Step 7: PASS if tasks properly marked as system-generated
+- Step 8: PASS if onboarding tasks can be completed
+- Step 9: PASS if profile completion task responds to profile changes
+- Step 10: PASS if backend creates tasks during registration
+- Step 11: PASS if multiple new users each get their own tasks
+- Step 12: PASS if system handles edge cases appropriately
+- Step 13: PASS if tasks persist across sessions
+- Step 14: PASS if onboarding tasks integrate with all features
+- Step 15: PASS if different user roles get appropriate tasks
+- Step 16: PASS if onboarding tasks protected from deletion
+- Step 17: PASS if database contains correct task data
+- Step 18: PASS if system performs well with multiple users
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

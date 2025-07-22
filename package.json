@@ -3,7 +3,9 @@
     "@gluestack-ui/utils": "^0.1.15",
     "@react-native-aria/overlays": "^0.3.15",
     "@react-native-async-storage/async-storage": "^2.1.2",
-    "playwright": "^1.53.2",
     "typescript": "~5.3.3"
+  },
+  "devDependencies": {
+    "playwright": "^1.53.2"
   }
 }

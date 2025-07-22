@@ -1,5 +1,5 @@
 import { cn } from '@gluestack-ui/nativewind-utils/cn';
-import { router } from 'expo-router';
+import { router, useSegments } from 'expo-router';
 import type { Href } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
@@ -21,9 +21,20 @@ interface MobileNavigationProps {
  * Only visible on mobile devices (hidden on md and larger screens)
  */
 export const MobileNavigation = ({ className = '' }: MobileNavigationProps) => {
+  const segments = useSegments();
+
+  // Get current route based on segments
+  const getCurrentRoute = () => {
+    if (segments.length === 0) return '/home';
+    const firstSegment = segments[0];
+    return `/${firstSegment}`;
+  };
+
   const handleNavigation = (route: string) => {
     router.push(route as Href<string>);
   };
+
+  const currentRoute = getCurrentRoute();
 
   return (
     <HStack
@@ -34,16 +45,24 @@ export const MobileNavigation = ({ className = '' }: MobileNavigationProps) => {
         className
       )}
       style={{ backgroundColor: NAVIGATION_COLORS.primary }}
+      data-testid="bottom-navigation"
     >
       {bottomTabNavItems.map(item => {
+        const isSelected = item.route === currentRoute;
         return (
           <Pressable
             className="px-0.5 flex-1 flex-col items-center"
             key={item.id}
             onPress={() => handleNavigation(item.route)}
           >
-            <Icon as={item.icon} size="md" className="h-[32px] w-[65px] text-white" />
-            <Text className="text-xs text-center text-white">{item.label}</Text>
+            <Icon
+              as={item.icon}
+              size="md"
+              className={`h-[32px] w-[65px] ${isSelected ? 'text-orange-400' : 'text-white'}`}
+            />
+            <Text className={`text-xs text-center ${isSelected ? 'text-orange-400' : 'text-white'}`}>
+              {item.label}
+            </Text>
           </Pressable>
         );
       })}

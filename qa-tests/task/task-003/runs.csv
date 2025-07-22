@@ -1,0 +1,2 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250709-091746,2025-07-09T09:17:46,PASS,6,0,Playwright Chrome,macOS development,Fixed tasksApi import and pagination handling - onboarding tasks now display correctly

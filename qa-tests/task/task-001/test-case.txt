@@ -1,0 +1,255 @@
+QA Test Case: Task CRUD Operations
+
+Test ID: TASK-001
+Test Name: Task CRUD Operations with Due Dates
+Purpose: Verify that users can create, read, update, and delete tasks with proper due date handling and validation
+Expected Result: All CRUD operations work correctly with proper date validation and user feedback
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Task Management: Full CRUD operations with due dates, priorities, and status tracking
+- Backend: Django app at backend/tasks/ with comprehensive API endpoints
+- Frontend: React Native components at frontend-ui/components/tasks/TasksTable.tsx
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- Test User: anapmc.carvalho@gmail.com (school_owner role)
+- Test Tasks: Various priority levels, due dates, and types
+- Current Date: 2025-07-06 (for date validation testing)
+
+Database Prerequisites:
+- Clean task list or ability to delete test tasks
+- User account with proper authentication
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py runserver --settings=aprendecomigo.settings.development
+
+Open new terminal:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  npm start
+
+Expected: Both servers start successfully
+Screenshot: 01_servers_started.png
+
+Step 2: Navigate to Application and Login
+1. Open browser to http://localhost:8081
+2. Complete login process with test email
+3. Navigate to dashboard where tasks are displayed
+
+Expected: User successfully authenticated and can see dashboard
+Screenshot: 02_dashboard_with_tasks.png
+
+Step 3: Access Task Management Interface
+1. Locate "Tarefas Pendentes" (Pending Tasks) section in dashboard
+2. Verify existing tasks are displayed in table format
+3. Check for "Add Task" or "+" button to create new tasks
+
+Expected: Task management interface is visible and functional
+Screenshot: 03_task_interface_loaded.png
+
+Step 4: Create New Task - Basic Information
+1. Click "Add Task" or "+" button
+2. Verify modal/form opens for task creation
+3. Fill in task details:
+   - Title: "Test Task - CRUD Operations"
+   - Description: "Testing task creation functionality"
+   - Priority: "Medium"
+   - Task Type: "Personal"
+
+Expected: Task creation form accepts all input fields
+Screenshot: 04_task_creation_form.png
+
+Step 5: Create New Task - Due Date Validation
+1. Set due date to yesterday (2025-07-05)
+2. Attempt to save task
+3. Verify validation error appears
+4. Change due date to tomorrow (2025-07-07)
+5. Save task
+
+Expected: Past due date rejected, future due date accepted
+Screenshot: 05_due_date_validation.png
+
+Step 6: Verify Task Creation
+1. Check that new task appears in task table
+2. Verify all fields are correctly displayed:
+   - Title matches input
+   - Due date shows as "2025-07-07"
+   - Priority shows as "Medium" with appropriate badge
+   - Status shows as "Pending"
+3. Verify task is marked as "Created by user" (not system-generated)
+
+Expected: Task appears correctly in list with all details
+Screenshot: 06_task_created_successfully.png
+
+Step 7: Read/View Task Details
+1. Click on the created task or task details button
+2. Verify all task information is displayed correctly
+3. Check that computed fields work:
+   - "Days until due" shows "1 day" (due tomorrow)
+   - "Is overdue" shows false
+   - Timestamps are properly formatted
+
+Expected: All task details visible and computed fields accurate
+Screenshot: 07_task_details_view.png
+
+Step 8: Update Task - Edit Basic Information
+1. Click "Edit" button on the test task
+2. Modify task details:
+   - Title: "Test Task - CRUD Operations (Updated)"
+   - Description: "Updated description for testing"
+   - Priority: "High"
+   - Status: "In Progress"
+3. Save changes
+
+Expected: Changes saved successfully with confirmation
+Screenshot: 08_task_edit_form.png
+
+Step 9: Update Task - Change Due Date
+1. Edit the same task again
+2. Change due date to 2025-07-10 (3 days from now)
+3. Save changes
+4. Verify "Days until due" updates to "4 days"
+
+Expected: Due date changes reflected in computed fields
+Screenshot: 09_due_date_updated.png
+
+Step 10: Complete Task
+1. Find toggle or button to mark task as completed
+2. Click to complete the task
+3. Verify:
+   - Status changes to "Completed"
+   - "Completed at" timestamp is set
+   - Task appearance changes (grayed out, strikethrough, etc.)
+   - Task moves to completed section if applicable
+
+Expected: Task completion properly tracked with timestamp
+Screenshot: 10_task_completed.png
+
+Step 11: Reopen Completed Task
+1. Find option to reopen the completed task
+2. Click reopen/uncomplete button
+3. Verify:
+   - Status changes back to "In Progress"
+   - "Completed at" timestamp is cleared
+   - Task returns to active appearance
+
+Expected: Task can be reopened and completion timestamp cleared
+Screenshot: 11_task_reopened.png
+
+Step 12: Create Multiple Tasks for Bulk Testing
+1. Create 3 additional tasks with different priorities and due dates:
+   - Task 2: "High Priority Task", Priority: High, Due: 2025-07-08
+   - Task 3: "Low Priority Task", Priority: Low, Due: 2025-07-12
+   - Task 4: "Urgent Task", Priority: Medium, Urgent: true, Due: 2025-07-07
+2. Verify all tasks appear in the list
+
+Expected: Multiple tasks created with different properties
+Screenshot: 12_multiple_tasks_created.png
+
+Step 13: Test Task Filtering and Sorting
+1. If available, test filtering by:
+   - Priority levels
+   - Due dates
+   - Status (pending, in progress, completed)
+2. Test sorting by:
+   - Due date (ascending/descending)
+   - Priority
+   - Creation date
+
+Expected: Filtering and sorting work correctly
+Screenshot: 13_task_filtering.png
+
+Step 14: Delete Task - Protected System Tasks
+1. If any system-generated tasks exist, attempt to delete them
+2. Verify deletion is prevented with appropriate error message
+3. Confirm system tasks cannot be deleted
+
+Expected: System tasks protected from deletion
+Screenshot: 14_system_task_protection.png
+
+Step 15: Delete Task - User Created Tasks
+1. Select one of the test tasks created earlier
+2. Click delete button
+3. Confirm deletion in confirmation dialog
+4. Verify task is removed from list
+
+Expected: User-created tasks can be deleted successfully
+Screenshot: 15_task_deleted.png
+
+Step 16: API Validation Check
+1. Open browser developer tools
+2. Monitor network requests during task operations
+3. Verify API calls are made to correct endpoints:
+   - POST /api/tasks/ for creation
+   - PUT/PATCH /api/tasks/{id}/ for updates
+   - DELETE /api/tasks/{id}/ for deletion
+   - GET /api/tasks/ for listing
+
+Expected: All API calls successful with proper HTTP status codes
+Screenshot: 16_api_calls_successful.png
+
+Step 17: Error Handling Test
+1. Turn off backend server
+2. Attempt to create a new task
+3. Verify appropriate error message is displayed
+4. Turn backend server back on
+5. Verify functionality restored
+
+Expected: Graceful error handling when backend unavailable
+Screenshot: 17_error_handling.png
+
+Step 18: Data Persistence Test
+1. Refresh the browser page
+2. Verify all remaining tasks are still displayed
+3. Check that task data persists correctly
+
+Expected: Tasks persist across page refreshes
+Screenshot: 18_data_persistence.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All CRUD operations work correctly with proper validation and user feedback
+
+FAIL: Any of the following conditions occur:
+- Task creation fails or doesn't save properly
+- Due date validation doesn't work (accepts past dates)
+- Task updates don't save or display correctly
+- Task completion/reopening doesn't work
+- Task deletion fails or affects wrong tasks
+- System tasks can be deleted
+- API calls fail or return incorrect data
+- Error handling is missing or inadequate
+- Data doesn't persist across page refreshes
+
+Individual Step Criteria:
+- Step 1-2: PASS if servers start and user can login
+- Step 3: PASS if task interface loads and displays correctly
+- Step 4-5: PASS if task creation works with proper due date validation
+- Step 6: PASS if created task appears correctly in list
+- Step 7: PASS if task details are displayed accurately
+- Step 8-9: PASS if task updates save and display correctly
+- Step 10-11: PASS if task completion/reopening works properly
+- Step 12: PASS if multiple tasks can be created
+- Step 13: PASS if filtering/sorting works (if available)
+- Step 14: PASS if system tasks are protected from deletion
+- Step 15: PASS if user tasks can be deleted
+- Step 16: PASS if API calls are successful
+- Step 17: PASS if error handling works gracefully
+- Step 18: PASS if data persists across refreshes
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

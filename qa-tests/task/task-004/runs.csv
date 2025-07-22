@@ -1,0 +1,2 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250709-095250,2025-07-09T09:52:50,PASS,4,0,Playwright Chrome,macOS development,Core functionality verified after fixing FormControl context and toast errors

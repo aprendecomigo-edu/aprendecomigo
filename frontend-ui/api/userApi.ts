@@ -35,6 +35,7 @@ export interface DashboardInfo {
     user_type: string;
     needs_onboarding?: boolean;
     calendar_iframe?: string;
+    first_login_completed?: boolean;
   };
   stats: any;
 }
@@ -69,6 +70,24 @@ export const getTeacherProfile = async (id?: number) => {
  */
 export const getTeachers = async (): Promise<TeacherProfile[]> => {
   const response = await apiClient.get('/accounts/teachers/');
+
+  // Handle paginated response - extract results
+  if (response.data && Array.isArray(response.data.results)) {
+    return response.data.results;
+  } else if (Array.isArray(response.data)) {
+    // Fallback for non-paginated response
+    return response.data;
+  } else {
+    console.warn('API did not return expected format:', response.data);
+    return [];
+  }
+};
+
+/**
+ * Get list of students
+ */
+export const getStudents = async (): Promise<StudentProfile[]> => {
+  const response = await apiClient.get('/accounts/students/');
 
   // Handle paginated response - extract results
   if (response.data && Array.isArray(response.data.results)) {

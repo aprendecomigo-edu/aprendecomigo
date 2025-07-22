@@ -1,6 +1,6 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import { Calendar, Clock, User, MapPin, BookOpen } from 'lucide-react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 
 import { useAuth } from '@/api/authContext';
@@ -45,13 +45,7 @@ const ClassDetailScreen: React.FC = () => {
   const isTeacher = userProfile?.user_type === 'teacher';
   const isAdmin = userProfile?.is_admin;
 
-  useEffect(() => {
-    if (id) {
-      loadClassDetails();
-    }
-  }, [id, loadClassDetails]);
-
-  const loadClassDetails = async () => {
+  const loadClassDetails = useCallback(async () => {
     try {
       setLoading(true);
       const data = await schedulerApi.getClassSchedule(parseInt(id!));
@@ -63,7 +57,13 @@ const ClassDetailScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      loadClassDetails();
+    }
+  }, [id, loadClassDetails]);
 
   const handleCancel = async () => {
     if (!classSchedule) return;

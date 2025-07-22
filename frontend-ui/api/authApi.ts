@@ -40,6 +40,7 @@ export interface UserProfile {
   created_at: string;
   updated_at: string;
   roles?: UserRole[];
+  first_login_completed?: boolean;
 }
 
 export interface SchoolInfo {
@@ -189,6 +190,18 @@ export const createUser = async (data: OnboardingData): Promise<OnboardingRespon
       console.error('API Error Response:', error.response?.data);
       console.error('API Error Status:', error.response?.status);
     }
+    throw error;
+  }
+};
+
+/**
+ * Mark first login as completed
+ */
+export const markFirstLoginCompleted = async (): Promise<void> => {
+  try {
+    await apiClient.post('/accounts/users/complete_first_login/');
+  } catch (error) {
+    console.error('Error marking first login as completed:', error);
     throw error;
   }
 };

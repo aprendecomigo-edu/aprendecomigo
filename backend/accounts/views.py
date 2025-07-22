@@ -148,6 +148,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             "email": user.email,
             "name": user.name,
             "date_joined": user.date_joined,
+            "first_login_completed": user.first_login_completed,
         }
 
         # Get user's roles in schools
@@ -162,11 +163,35 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             for m in memberships
         ]
 
+        # Determine primary user_type based on roles
+        user_type = None
+        is_admin = False
+
+        # Check if user is a school owner or admin in any school
+        admin_school_ids = list_school_ids_owned_or_managed(user)
+        if len(admin_school_ids) > 0:
+            user_type = "admin"
+            is_admin = True
+        # Check if user is a teacher in any school
+        elif SchoolMembership.objects.filter(
+            user=user, role=SchoolRole.TEACHER, is_active=True
+        ).exists():
+            user_type = "teacher"
+        # Check if user is a student in any school
+        elif SchoolMembership.objects.filter(
+            user=user, role=SchoolRole.STUDENT, is_active=True
+        ).exists():
+            user_type = "student"
+        else:
+            user_type = "student"  # Default fallback
+
+        user_info["user_type"] = user_type
+        user_info["is_admin"] = is_admin
+
         # Stats based on primary role
         stats = {}
 
         # If user is a school owner or admin in any school
-        admin_school_ids = list_school_ids_owned_or_managed(user)
         if len(admin_school_ids) > 0:
             # Admin stats
             stats = {
@@ -223,6 +248,24 @@ class UserViewSet(KnoxAuthenticatedViewSet):
                 user_info["calendar_iframe"] = user.student_profile.calendar_iframe
 
         return Response({"user_info": user_info, "stats": stats})
+
+    @action(detail=False, methods=["post"])
+    def complete_first_login(self, request):
+        """
+        Mark the user's first login as completed
+        """
+        user = request.user
+
+        if not user.is_authenticated:
+            return Response(
+                {"error": "Authentication required"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        user.first_login_completed = True
+        user.save()
+
+        return Response({"message": "First login marked as completed"})
 
     @action(detail=False, methods=["get"])
     def school_profile(self, request):
@@ -584,6 +627,17 @@ class VerifyCodeView(APIView):
             user.phone_verified = True
             user.save()
 
+        # Create default onboarding tasks for new users
+        try:
+            from tasks.models import Task
+
+            # Check if user already has tasks (to avoid duplicates)
+            if not Task.objects.filter(user=user).exists():
+                Task.create_onboarding_tasks(user)
+        except Exception as e:
+            # Log error but don't fail the verification process
+            logger.error(f"Failed to create onboarding tasks for user {user.email}: {e}")
+
         # Create a session token for the user
         _, token = AuthToken.objects.create(user)
 
@@ -802,6 +856,19 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
             # Get all teacher users in these schools
             teacher_user_ids = SchoolMembership.objects.filter(
                 school_id__in=admin_school_ids, role=SchoolRole.TEACHER, is_active=True
+            ).values_list("user_id", flat=True)
+
+            return TeacherProfile.objects.filter(user_id__in=teacher_user_ids)
+
+        # Students can see teachers in their schools (for booking classes)
+        student_school_ids = SchoolMembership.objects.filter(
+            user=user, role=SchoolRole.STUDENT, is_active=True
+        ).values_list("school_id", flat=True)
+
+        if len(student_school_ids) > 0:
+            # Get all teacher users in the student's schools
+            teacher_user_ids = SchoolMembership.objects.filter(
+                school_id__in=student_school_ids, role=SchoolRole.TEACHER, is_active=True
             ).values_list("user_id", flat=True)
 
             return TeacherProfile.objects.filter(user_id__in=teacher_user_ids)

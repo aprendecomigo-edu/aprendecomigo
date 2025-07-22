@@ -1,0 +1,218 @@
+QA Test Case: Responsive Navigation (Web vs Mobile)
+
+Test ID: NAV-004
+Test Name: Responsive Navigation (Web vs Mobile)
+Purpose: Verify that navigation switches correctly between desktop side navigation and mobile bottom navigation, and that both work properly at different screen sizes
+Expected Result: Navigation adapts responsively to screen size changes, showing side navigation on desktop and bottom navigation on mobile
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend with web support
+- Navigation: Side navigation (desktop ≥768px) and bottom tabs (mobile <768px)
+- Responsive Breakpoint: md (768px) as defined in Tailwind CSS
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com
+- User Role: school_owner
+- Desktop Width: ≥768px (shows side navigation)
+- Mobile Width: <768px (shows bottom navigation)
+- Test Screen Sizes: 1200px, 1024px, 768px, 425px, 375px, 320px
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py runserver --settings=aprendecomigo.settings.development
+
+Expected: Django development server starts successfully on port 8000
+Screenshot: 01_backend_server_started.png
+
+Step 2: Start Frontend Development Server
+Commands:
+  # In new terminal
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  npm start
+
+Expected: Expo development server starts and shows QR code/options
+Screenshot: 02_frontend_server_started.png
+
+Step 3: Navigate to Web Application (Large Desktop View)
+1. Open browser to http://localhost:8081
+2. Resize browser window to large desktop size (1200px width)
+3. Verify login page loads correctly
+4. If already logged in, proceed to Step 5
+
+Expected: Login page displays with email input field in desktop layout
+Screenshot: 03_login_page_large_desktop.png
+
+Step 4: Authenticate User (if needed)
+1. Enter test email: anapmc.carvalho@gmail.com
+2. Click "Enviar código" button
+3. Check backend logs for verification code
+4. Enter 6-digit verification code
+5. Click verify button
+
+Expected: User successfully authenticates and reaches dashboard
+Screenshot: 04_authentication_successful.png
+
+Step 5: Verify Large Desktop Navigation (1200px)
+1. Check that side navigation is visible on the left
+2. Verify bottom navigation is hidden (should not be visible)
+3. Check that all navigation icons are displayed properly
+4. Verify navigation takes up appropriate space (~80px width)
+5. Confirm main content area adjusts properly
+
+Expected: Side navigation visible, bottom navigation hidden, proper layout
+Screenshot: 05_large_desktop_navigation_1200px.png
+
+Step 6: Test Medium Desktop Navigation (1024px)
+1. Resize browser window to 1024px width
+2. Verify side navigation remains visible
+3. Check that bottom navigation is still hidden
+4. Verify layout adjusts properly to smaller width
+5. Confirm navigation functionality remains intact
+
+Expected: Side navigation still visible, layout responsive to width change
+Screenshot: 06_medium_desktop_navigation_1024px.png
+
+Step 7: Test Tablet Navigation (768px - Breakpoint)
+1. Resize browser window to exactly 768px width
+2. Verify side navigation is still visible (should be visible at 768px)
+3. Check that bottom navigation is hidden
+4. Test navigation functionality at this breakpoint
+5. Verify layout doesn't break at the breakpoint
+
+Expected: Side navigation visible at 768px breakpoint, proper layout
+Screenshot: 07_tablet_navigation_768px.png
+
+Step 8: Test Mobile Navigation (767px - Just Below Breakpoint)
+1. Resize browser window to 767px width (1px below breakpoint)
+2. Verify side navigation is hidden
+3. Check that bottom navigation appears at the bottom
+4. Verify all navigation items are present in bottom navigation
+5. Confirm labels are visible on mobile navigation
+
+Expected: Side navigation hidden, bottom navigation visible with labels
+Screenshot: 08_mobile_navigation_767px.png
+
+Step 9: Test Small Mobile Navigation (425px)
+1. Resize browser window to 425px width
+2. Verify bottom navigation remains visible and functional
+3. Check that navigation items are properly spaced
+4. Test navigation functionality on smaller screen
+5. Verify text labels are still readable
+
+Expected: Bottom navigation works properly at 425px width
+Screenshot: 09_small_mobile_navigation_425px.png
+
+Step 10: Test Very Small Mobile Navigation (375px)
+1. Resize browser window to 375px width (iPhone SE size)
+2. Verify bottom navigation adapts to smaller width
+3. Check that all navigation items are still accessible
+4. Test navigation functionality at iPhone SE size
+5. Verify no navigation items are cut off
+
+Expected: Bottom navigation fully functional at 375px width
+Screenshot: 10_very_small_mobile_navigation_375px.png
+
+Step 11: Test Minimum Mobile Navigation (320px)
+1. Resize browser window to 320px width (minimum mobile size)
+2. Verify bottom navigation still works at minimum size
+3. Check that all navigation items are visible
+4. Test navigation functionality at smallest supported size
+5. Verify no layout breaking or overflow issues
+
+Expected: Bottom navigation works at 320px minimum width
+Screenshot: 11_minimum_mobile_navigation_320px.png
+
+Step 12: Test Navigation Transition (Responsive Switch)
+1. Start with desktop view (1200px)
+2. Slowly resize browser window from 1200px down to 320px
+3. Observe navigation transition at 768px breakpoint
+4. Verify smooth transition between navigation types
+5. Check that navigation state is preserved during transition
+
+Expected: Smooth transition between side and bottom navigation
+Screenshot: 12_navigation_transition.png
+
+Step 13: Test Navigation Functionality Across Screen Sizes
+1. Test navigation functionality at 1200px (desktop)
+2. Test navigation functionality at 767px (mobile)
+3. Test navigation functionality at 375px (small mobile)
+4. Verify all navigation items work at all screen sizes
+5. Check that highlighting works correctly at all sizes
+
+Expected: Navigation fully functional across all screen sizes
+Screenshot: 13_navigation_functionality_all_sizes.png
+
+Step 14: Test Content Layout Adaptation
+1. Navigate to different pages at various screen sizes
+2. Verify content adapts properly to navigation changes
+3. Check that content doesn't get hidden behind navigation
+4. Verify proper spacing and margins at all sizes
+5. Confirm main content area adjusts for navigation
+
+Expected: Content layout properly adapts to navigation changes
+Screenshot: 14_content_layout_adaptation.png
+
+Step 15: Test Navigation Persistence Across Breakpoints
+1. Navigate to a specific page (e.g., Calendar) at desktop size
+2. Resize to mobile size
+3. Verify the same page remains active
+4. Check that navigation highlighting is preserved
+5. Confirm page functionality continues to work
+
+Expected: Navigation state and highlighting persist across breakpoints
+Screenshot: 15_navigation_persistence.png
+
+Step 16: Test Mobile Navigation Interaction
+1. Set browser to mobile size (375px)
+2. Test tapping each bottom navigation item
+3. Verify touch targets are appropriately sized
+4. Check that navigation responds to touch/click
+5. Verify no accidental navigation triggers
+
+Expected: Mobile navigation has proper touch targets and responsiveness
+Screenshot: 16_mobile_navigation_interaction.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Navigation switches correctly between desktop and mobile layouts AND both navigation types work properly AND responsive transitions are smooth
+FAIL: Navigation doesn't switch OR layout breaks OR navigation functionality fails at any screen size
+
+Individual Step Criteria:
+- Step 1-2: PASS if servers start without errors, FAIL if startup fails
+- Step 3-4: PASS if authentication works, FAIL if login fails
+- Step 5: PASS if side navigation visible at 1200px, FAIL if wrong navigation type or layout broken
+- Step 6: PASS if side navigation remains at 1024px, FAIL if navigation changes incorrectly
+- Step 7: PASS if side navigation visible at 768px, FAIL if navigation switches too early
+- Step 8: PASS if bottom navigation appears at 767px, FAIL if navigation doesn't switch
+- Step 9: PASS if bottom navigation works at 425px, FAIL if navigation breaks or items cut off
+- Step 10: PASS if bottom navigation adapts at 375px, FAIL if layout issues occur
+- Step 11: PASS if bottom navigation works at 320px, FAIL if navigation breaks at minimum size
+- Step 12: PASS if transition is smooth, FAIL if transition is jarring or broken
+- Step 13: PASS if navigation works at all sizes, FAIL if navigation fails at any size
+- Step 14: PASS if content adapts properly, FAIL if content layout breaks
+- Step 15: PASS if navigation state persists, FAIL if navigation state is lost
+- Step 16: PASS if mobile interaction works properly, FAIL if touch targets don't work
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+Notes:
+- This test validates the responsive navigation system
+- The breakpoint at 768px is critical for proper navigation switching
+- Both desktop and mobile navigation should be fully functional
+- Navigation state should persist across responsive changes
+- Touch targets on mobile should be appropriately sized for usability

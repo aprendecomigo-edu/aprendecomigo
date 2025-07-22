@@ -1,0 +1,6 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+task-001,Task CRUD Operations,Create read update delete operations for tasks with due dates,2025-07-08T11:19:24Z,PASS,5,4,1
+task-002,Task Calendar Integration,Verify tasks appear in calendar view with proper date filtering,2025-07-08T14:18:48Z,PASS,1,1,0
+task-003,New User Onboarding Tasks,Verify new users receive default onboarding tasks automatically,2025-07-09T09:17:46,PASS,1,1,0
+task-004,Task Completion and Status Management,Test task status transitions and completion tracking,2025-07-09T09:52:50,PASS,1,1,0
+task-005,Task Deadline and Overdue Functionality,Test due date validation and overdue task handling,,,0,0,0

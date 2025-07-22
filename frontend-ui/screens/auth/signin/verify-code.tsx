@@ -67,18 +67,25 @@ const VerifyCodeForm = () => {
   useEffect(() => {
     // Handle both 'contact' and 'email' parameters for backward compatibility
     const contactValue = contact || email || '';
+    const contactTypeValue = contactType || 'email'; // Default to email
+
+    console.log('URL params:', { contact, email, contactType });
+    console.log('Using contact value:', contactValue);
+
     if (contactValue) {
       verifyCodeForm.setValue('contact', contactValue);
     }
-    if (contactType) {
-      verifyCodeForm.setValue('contactType', contactType as 'email' | 'phone');
-    }
-  }, [contact, contactType, email]);
+    verifyCodeForm.setValue('contactType', contactTypeValue as 'email' | 'phone');
+
+    // Force form validation
+    verifyCodeForm.trigger();
+  }, [contact, contactType, email, verifyCodeForm]);
 
   // Handle verify code submit
   const onVerifyCode = async (data: VerifyCodeSchemaType) => {
     try {
       setIsVerifying(true);
+      console.log('Verifying code with data:', data);
 
       // Call the API to verify the code
       // Adapt this to handle both email and phone verification
@@ -87,16 +94,19 @@ const VerifyCodeForm = () => {
           ? { email: data.contact, code: data.code }
           : { phone: data.contact, code: data.code };
 
+      console.log('Verification API params:', params);
       const response = await verifyEmailCode(params);
+      console.log('Verification response:', response);
 
       // Successfully verified - now explicitly update auth state
       await checkAuthStatus();
 
       toast.showToast('success', 'Verification successful!');
 
-      // Navigate to home after verification
-      router.replace('/home');
+      // Navigate to root after verification - auth context will handle redirect
+      router.replace('/');
     } catch (error) {
+      console.error('Verification error:', error);
       toast.showToast('error', 'Invalid verification code. Please try again.');
     } finally {
       setIsVerifying(false);
@@ -198,7 +208,12 @@ const VerifyCodeForm = () => {
           <VStack className="w-full my-7" space="lg">
             <Button
               className="w-full"
-              onPress={verifyCodeForm.handleSubmit(onVerifyCode)}
+              onPress={() => {
+                console.log('Verify button clicked');
+                console.log('Form values:', verifyCodeForm.getValues());
+                console.log('Form errors:', verifyCodeForm.formState.errors);
+                verifyCodeForm.handleSubmit(onVerifyCode)();
+              }}
               isDisabled={isVerifying}
             >
               <ButtonText className="font-medium">

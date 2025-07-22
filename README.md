@@ -43,6 +43,8 @@ Example:
 Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 ```
 
+
+
 ### Available Resources
 
 - Users: `/api/users/`

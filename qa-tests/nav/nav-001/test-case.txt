@@ -69,8 +69,10 @@ Step 5: Navigate to Users Page
 1. Click on "Users" or "Usuários" in the main navigation menu
 2. Verify URL changes to /users
 3. Wait for page to load completely
+4. **CRITICAL**: Verify that the Users navigation icon is highlighted (orange background)
+5. **CRITICAL**: Verify that the Home navigation icon is no longer highlighted
 
-Expected: Users page loads with tab interface visible
+Expected: Users page loads with tab interface visible AND Users nav icon highlighted
 Screenshot: 05_users_page_loaded.png
 
 Step 6: Verify Tab Presence and Layout
@@ -148,13 +150,13 @@ Screenshot: 12_no_permission_errors.png
 
 === PASS/FAIL CRITERIA ===
 
-PASS: All steps complete successfully AND all three tabs are accessible with appropriate content AND action buttons are visible for school manager role
-FAIL: Any step fails OR tabs are missing OR permission errors occur OR action buttons are not visible
+PASS: All steps complete successfully AND all three tabs are accessible with appropriate content AND action buttons are visible for school manager role AND navigation highlighting works correctly
+FAIL: Any step fails OR tabs are missing OR permission errors occur OR action buttons are not visible OR navigation highlighting is broken
 
 Individual Step Criteria:
 - Step 1-2: PASS if servers start without errors, FAIL if startup fails
 - Step 3-4: PASS if authentication works, FAIL if login fails
-- Step 5: PASS if /users page loads, FAIL if navigation fails or 404 error
+- Step 5: PASS if /users page loads AND Users nav icon highlighted, FAIL if navigation fails, 404 error, OR highlighting broken
 - Step 6: PASS if all 3 tabs visible, FAIL if any tab missing or layout broken
 - Step 7: PASS if Teachers tab shows content and buttons, FAIL if tab empty/broken
 - Step 8: PASS if Students tab accessible and functional, FAIL if tab inaccessible
@@ -170,3 +172,5 @@ Notes:
 - Focus on role-based access - school managers should see all tabs for their school
 - Empty states are acceptable as long as the interface structure is correct
 - Action buttons should be present even if functionality is not fully implemented
+- **CRITICAL**: Navigation highlighting MUST work correctly - active page icon should be highlighted, others should not be
+- This test now includes verification of navigation UX which was previously missing

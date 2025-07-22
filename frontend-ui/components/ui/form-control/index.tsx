@@ -252,7 +252,7 @@ const FormControlLabelAstrick = React.forwardRef<
   React.ElementRef<typeof Text>,
   IFormControlLabelAstrickProps
 >(({ className, ...props }, ref) => {
-  const { size: parentSize } = useStyleContext(SCOPE);
+  const { size: parentSize } = useStyleContext(SCOPE) || {};
 
   return (
     <Text
@@ -338,7 +338,7 @@ const FormControlErrorText = React.forwardRef<
   React.ElementRef<typeof UIFormControl.Error.Text>,
   IFormControlErrorTextProps
 >(({ className, size, ...props }, ref) => {
-  const { size: parentSize } = useStyleContext(SCOPE);
+  const { size: parentSize } = useStyleContext(SCOPE) || {};
   return (
     <UIFormControl.Error.Text
       className={formControlErrorTextStyle({
@@ -358,7 +358,7 @@ const FormControlErrorIcon = React.forwardRef<
   React.ElementRef<typeof UIFormControl.Error.Icon>,
   IFormControlErrorIconProps
 >(({ className, size, ...props }, ref) => {
-  const { size: parentSize } = useStyleContext(SCOPE);
+  const { size: parentSize } = useStyleContext(SCOPE) || {};
 
   if (typeof size === 'number') {
     return (
@@ -413,7 +413,7 @@ const FormControlLabelText = React.forwardRef<
   React.ElementRef<typeof UIFormControl.Label.Text>,
   IFormControlLabelTextProps
 >(({ className, size, ...props }, ref) => {
-  const { size: parentSize } = useStyleContext(SCOPE);
+  const { size: parentSize } = useStyleContext(SCOPE) || {};
 
   return (
     <UIFormControl.Label.Text
@@ -453,7 +453,7 @@ const FormControlHelperText = React.forwardRef<
   React.ElementRef<typeof UIFormControl.Helper.Text>,
   IFormControlHelperTextProps
 >(({ className, size, ...props }, ref) => {
-  const { size: parentSize } = useStyleContext(SCOPE);
+  const { size: parentSize } = useStyleContext(SCOPE) || {};
 
   return (
     <UIFormControl.Helper.Text

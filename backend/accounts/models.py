@@ -117,6 +117,11 @@ class CustomUser(AbstractUser):
     email_verified: models.BooleanField = models.BooleanField(_("email verified"), default=False)
     phone_verified: models.BooleanField = models.BooleanField(_("phone verified"), default=False)
 
+    # Tutorial and onboarding fields
+    first_login_completed: models.BooleanField = models.BooleanField(
+        _("first login completed"), default=False
+    )
+
     # user_type field is removed - roles are now in SchoolMembership
 
     USERNAME_FIELD: str = "email"  # type: ignore[assignment]
@@ -183,6 +188,7 @@ class SchoolMembership(models.Model):
 # Educational System Enumerations
 class PortugueseSchoolYear(models.TextChoices):
     """School years for Portuguese education system"""
+
     FIRST = "1", _("1º ano")
     SECOND = "2", _("2º ano")
     THIRD = "3", _("3º ano")
@@ -199,6 +205,7 @@ class PortugueseSchoolYear(models.TextChoices):
 
 class PortugueseEducationLevel(models.TextChoices):
     """Education levels for Portuguese system"""
+
     BASIC_1ST_CYCLE = "ensino_basico_1_ciclo", _("Ensino Básico 1º Ciclo")
     BASIC_2ND_CYCLE = "ensino_basico_2_ciclo", _("Ensino Básico 2º Ciclo")
     BASIC_3RD_CYCLE = "ensino_basico_3_ciclo", _("Ensino Básico 3º Ciclo")
@@ -207,6 +214,7 @@ class PortugueseEducationLevel(models.TextChoices):
 
 class CustomSchoolYear(models.TextChoices):
     """School years for custom/generic education system"""
+
     GRADE_1 = "1", _("Grade 1")
     GRADE_2 = "2", _("Grade 2")
     GRADE_3 = "3", _("Grade 3")
@@ -223,6 +231,7 @@ class CustomSchoolYear(models.TextChoices):
 
 class CustomEducationLevel(models.TextChoices):
     """Education levels for custom/generic system"""
+
     ELEMENTARY = "elementary", _("Elementary")
     MIDDLE_SCHOOL = "middle_school", _("Middle School")
     HIGH_SCHOOL = "high_school", _("High School")
@@ -230,6 +239,7 @@ class CustomEducationLevel(models.TextChoices):
 
 class BrazilianSchoolYear(models.TextChoices):
     """School years for Brazilian education system"""
+
     # Elementary I (Ensino Fundamental I)
     FIRST_EF = "1ef", _("1º ano EF")
     SECOND_EF = "2ef", _("2º ano EF")
@@ -249,6 +259,7 @@ class BrazilianSchoolYear(models.TextChoices):
 
 class BrazilianEducationLevel(models.TextChoices):
     """Education levels for Brazilian system"""
+
     FUNDAMENTAL_INITIAL = "ensino_fundamental_anos_iniciais", _("Ensino Fundamental Anos Iniciais")
     FUNDAMENTAL_FINAL = "ensino_fundamental_anos_finais", _("Ensino Fundamental Anos Finais")
     MEDIO = "ensino_medio", _("Ensino Médio")
@@ -256,6 +267,7 @@ class BrazilianEducationLevel(models.TextChoices):
 
 class EducationalSystemType(models.TextChoices):
     """Types of educational systems"""
+
     PORTUGAL = "pt", _("Portugal")
     CUSTOM = "custom", _("Custom")
     BRAZIL = "br", _("Brazil")
@@ -378,12 +390,15 @@ class StudentProfile(models.Model):
         if self.educational_system and self.school_year:
             if not self.educational_system.validate_school_year(self.school_year):
                 from django.core.exceptions import ValidationError
+
                 valid_years = dict(self.educational_system.school_year_choices)
-                raise ValidationError({
-                    'school_year': f"School year '{self.school_year}' is not valid for "
-                                  f"educational system '{self.educational_system.name}'. "
-                                  f"Valid options: {list(valid_years.keys())}"
-                })
+                raise ValidationError(
+                    {
+                        "school_year": f"School year '{self.school_year}' is not valid for "
+                        f"educational system '{self.educational_system.name}'. "
+                        f"Valid options: {list(valid_years.keys())}"
+                    }
+                )
 
 
 class TeacherProfile(models.Model):
@@ -470,12 +485,15 @@ class Course(models.Model):
         if self.educational_system and self.education_level:
             if not self.educational_system.validate_education_level(self.education_level):
                 from django.core.exceptions import ValidationError
+
                 valid_levels = dict(self.educational_system.education_level_choices)
-                raise ValidationError({
-                    'education_level': f"Education level '{self.education_level}' is not valid for "
-                                      f"educational system '{self.educational_system.name}'. "
-                                      f"Valid options: {list(valid_levels.keys())}"
-                })
+                raise ValidationError(
+                    {
+                        "education_level": f"Education level '{self.education_level}' is not valid for "
+                        f"educational system '{self.educational_system.name}'. "
+                        f"Valid options: {list(valid_levels.keys())}"
+                    }
+                )
 
 
 class TeacherCourse(models.Model):

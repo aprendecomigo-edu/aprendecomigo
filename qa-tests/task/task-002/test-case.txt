@@ -1,0 +1,231 @@
+QA Test Case: Task Calendar Integration
+
+Test ID: TASK-002
+Test Name: Task Calendar Integration and Date Filtering
+Purpose: Verify that tasks with due dates appear in the calendar view and that calendar filtering works correctly
+Expected Result: Tasks are properly integrated with calendar functionality and can be filtered by date ranges
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Calendar Integration: Tasks should appear in calendar view alongside scheduled activities
+- Backend: Calendar endpoint at /api/tasks/calendar/  with date range filtering
+- Frontend: Calendar component that should display both scheduled activities and tasks
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- Test User: anapmc.carvalho@gmail.com (school_owner role)
+- Test Tasks: Multiple tasks with different due dates across current month
+- Current Date: 2025-07-06
+
+Database Prerequisites:
+- User account with proper authentication
+- Existing tasks with various due dates for testing
+- Clean calendar state or ability to distinguish test data
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py runserver --settings=aprendecomigo.settings.development
+
+Open new terminal:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  npm start
+
+Expected: Both servers start successfully
+Screenshot: 01_servers_started.png
+
+Step 2: Navigate to Application and Login
+1. Open browser to http://localhost:8081
+2. Complete login process with test email
+3. Navigate to dashboard
+
+Expected: User successfully authenticated and can access dashboard
+Screenshot: 02_dashboard_loaded.png
+
+Step 3: Create Test Tasks with Different Due Dates
+1. Go to task management section
+2. Create the following test tasks:
+   - Task 1: "Calendar Test - Today", Due: 2025-07-06
+   - Task 2: "Calendar Test - Tomorrow", Due: 2025-07-07
+   - Task 3: "Calendar Test - Next Week", Due: 2025-07-13
+   - Task 4: "Calendar Test - This Month", Due: 2025-07-25
+   - Task 5: "Calendar Test - Next Month", Due: 2025-08-05
+
+Expected: All test tasks created successfully with different due dates
+Screenshot: 03_test_tasks_created.png
+
+Step 4: Navigate to Calendar View
+1. Look for calendar navigation option in main menu
+2. Click on calendar/schedule link
+3. Verify calendar interface loads
+
+Expected: Calendar view loads successfully
+Screenshot: 04_calendar_view_loaded.png
+
+Step 5: Verify Tasks Appear in Calendar
+1. Check current date (2025-07-06) for "Calendar Test - Today" task
+2. Look for task indicators, events, or entries in calendar
+3. Verify task appears alongside any scheduled activities
+
+Expected: Task due today appears in calendar view
+Screenshot: 05_tasks_in_calendar.png
+
+Step 6: Check Daily Calendar View
+1. If multiple calendar views available, switch to daily view
+2. Navigate to today's date
+3. Verify task appears in daily schedule
+4. Check if task shows due date, priority, or other details
+
+Expected: Tasks properly integrated into daily calendar view
+Screenshot: 06_daily_calendar_view.png
+
+Step 7: Check Weekly Calendar View
+1. Switch to weekly calendar view
+2. Verify tasks appear on correct days of the week
+3. Check that "Calendar Test - Tomorrow" appears on 2025-07-07
+4. Verify "Calendar Test - Next Week" appears on 2025-07-13
+
+Expected: Tasks appear on correct days in weekly view
+Screenshot: 07_weekly_calendar_view.png
+
+Step 8: Check Monthly Calendar View
+1. Switch to monthly calendar view
+2. Verify all tasks within current month are visible
+3. Check that "Calendar Test - This Month" appears on 2025-07-25
+4. Verify visual indicators for tasks (dots, colors, etc.)
+
+Expected: All current month tasks visible in monthly view
+Screenshot: 08_monthly_calendar_view.png
+
+Step 9: Navigate to Next Month
+1. Navigate to August 2025 in calendar
+2. Verify "Calendar Test - Next Month" appears on 2025-08-05
+3. Check that current month tasks are not visible
+
+Expected: Next month tasks appear correctly, current month tasks hidden
+Screenshot: 09_next_month_calendar.png
+
+Step 10: Test Calendar Date Range Filtering
+1. Open browser developer tools to monitor API calls
+2. Navigate between different months in calendar
+3. Verify API calls are made to /api/tasks/calendar/ endpoint
+4. Check that date range parameters are passed correctly
+
+Expected: Calendar makes proper API calls with date range filters
+Screenshot: 10_calendar_api_calls.png
+
+Step 11: Task Details from Calendar
+1. Click on a task in calendar view
+2. Verify task details are displayed (title, description, priority, due date)
+3. Check if task can be edited or completed from calendar view
+
+Expected: Task details accessible from calendar, with possible edit functionality
+Screenshot: 11_task_details_from_calendar.png
+
+Step 12: Test Task Completion from Calendar
+1. If possible, mark a task as completed from calendar view
+2. Verify task status changes
+3. Check if completed task disappears from calendar or changes appearance
+
+Expected: Task completion works from calendar interface
+Screenshot: 12_task_completion_from_calendar.png
+
+Step 13: Test Calendar with Mixed Content
+1. Create a scheduled appointment/class if possible
+2. Verify calendar shows both scheduled activities and tasks
+3. Check visual distinction between different types of events
+
+Expected: Calendar properly displays both tasks and scheduled activities
+Screenshot: 13_mixed_calendar_content.png
+
+Step 14: Test Overdue Tasks in Calendar
+1. Create a task with due date in the past (2025-07-05)
+2. Navigate to that date in calendar
+3. Verify overdue task appears with special styling or indicator
+
+Expected: Overdue tasks visible in calendar with appropriate styling
+Screenshot: 14_overdue_tasks_calendar.png
+
+Step 15: Test Calendar Performance
+1. Create multiple tasks on same day (5+ tasks)
+2. Navigate to that day in calendar
+3. Verify all tasks are displayed
+4. Check calendar performance with multiple tasks
+
+Expected: Calendar handles multiple tasks per day efficiently
+Screenshot: 15_multiple_tasks_same_day.png
+
+Step 16: Test Calendar Refresh and Sync
+1. With calendar open, create a new task in another tab/window
+2. Refresh calendar or wait for auto-refresh
+3. Verify new task appears in calendar without full page reload
+
+Expected: Calendar updates when new tasks are created
+Screenshot: 16_calendar_sync.png
+
+Step 17: Test Calendar Date Navigation
+1. Use calendar navigation (prev/next month buttons)
+2. Jump to specific dates
+3. Verify tasks appear correctly after navigation
+4. Test edge cases like month boundaries
+
+Expected: Calendar navigation works correctly with tasks
+Screenshot: 17_calendar_navigation.png
+
+Step 18: Test Calendar on Different Screen Sizes
+1. Test calendar on desktop view
+2. Test calendar on tablet/medium screen
+3. Test calendar on mobile view
+4. Verify tasks remain visible and accessible
+
+Expected: Calendar with tasks works on all screen sizes
+Screenshot: 18_responsive_calendar.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Tasks properly integrate with calendar functionality and appear on correct dates
+
+FAIL: Any of the following conditions occur:
+- Tasks don't appear in calendar view
+- Tasks appear on wrong dates
+- Calendar API calls fail or don't include date range parameters
+- Calendar doesn't display tasks alongside scheduled activities
+- Task details not accessible from calendar
+- Calendar performance issues with multiple tasks
+- Calendar doesn't update when tasks are created/modified
+- Calendar navigation breaks task display
+- Calendar not responsive on different screen sizes
+
+Individual Step Criteria:
+- Step 1-2: PASS if servers start and user can login
+- Step 3: PASS if test tasks created successfully
+- Step 4: PASS if calendar view loads
+- Step 5: PASS if tasks appear in calendar
+- Step 6: PASS if daily view shows tasks
+- Step 7: PASS if weekly view shows tasks correctly
+- Step 8: PASS if monthly view shows all month tasks
+- Step 9: PASS if next month navigation works
+- Step 10: PASS if API calls include proper date filtering
+- Step 11: PASS if task details accessible from calendar
+- Step 12: PASS if task completion works from calendar
+- Step 13: PASS if calendar shows both tasks and scheduled activities
+- Step 14: PASS if overdue tasks appear with special styling
+- Step 15: PASS if calendar handles multiple tasks per day
+- Step 16: PASS if calendar updates when tasks change
+- Step 17: PASS if calendar navigation works correctly
+- Step 18: PASS if calendar works on all screen sizes
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

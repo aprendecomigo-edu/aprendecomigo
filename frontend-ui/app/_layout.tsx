@@ -4,6 +4,7 @@ import { useFonts } from 'expo-font';
 import { Stack, Redirect, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import '../global.css';
@@ -13,6 +14,7 @@ import { Text } from '@/components/ui/text';
 import { ToastProvider } from '@/components/ui/toast';
 import { View } from '@/components/ui/view';
 import { useColorScheme } from '@/components/useColorScheme';
+import { TutorialProvider, TutorialOverlay } from '@/components/tutorial';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -109,23 +111,65 @@ function PublicRoutes() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
+  // CSS Fix for NativeWind v4 + React Native Web compatibility
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      console.log('🔧 Applying CSS compatibility patch for NativeWind v4 + React Native Web...');
+
+      // Global error handler for CSS-related errors
+      const handleError = (event: ErrorEvent) => {
+        if (event.error && event.error.message &&
+            event.error.message.includes('CSSStyleDeclaration') &&
+            event.error.message.includes('Indexed property setter')) {
+          console.warn('Prevented CSS StyleDeclaration error:', event.error.message);
+          event.preventDefault();
+          event.stopPropagation();
+          return false;
+        }
+      };
+
+      window.addEventListener('error', handleError);
+
+      // Prevent React error boundary triggers from CSS errors
+      const originalConsoleError = console.error;
+      console.error = function(...args) {
+        const message = args.join(' ');
+        if (message.includes('CSSStyleDeclaration') && message.includes('Indexed property setter')) {
+          console.warn('Suppressed CSS error:', message);
+          return;
+        }
+        return originalConsoleError.apply(console, args);
+      };
+
+      console.log('✅ CSS compatibility patch applied successfully');
+
+      return () => {
+        window.removeEventListener('error', handleError);
+        console.error = originalConsoleError;
+      };
+    }
+  }, []);
+
   return (
     <GluestackUIProvider mode={(colorScheme ?? 'light') as 'light' | 'dark'}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <ToastProvider>
           <AuthProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="auth" />
-              <Stack.Screen name="home" />
-              <Stack.Screen name="profile" />
-              <Stack.Screen name="admin" />
-              <Stack.Screen name="student" />
-              <Stack.Screen name="chat" />
-              <Stack.Screen name="calendar" />
-              <Stack.Screen name="users" />
-              <Stack.Screen name="settings" />
-            </Stack>
+            <TutorialProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="auth" />
+                <Stack.Screen name="home" />
+                <Stack.Screen name="profile" />
+                <Stack.Screen name="admin" />
+                <Stack.Screen name="student" />
+                <Stack.Screen name="chat" />
+                <Stack.Screen name="calendar" />
+                <Stack.Screen name="users" />
+                <Stack.Screen name="settings" />
+              </Stack>
+              <TutorialOverlay />
+            </TutorialProvider>
           </AuthProvider>
         </ToastProvider>
       </ThemeProvider>

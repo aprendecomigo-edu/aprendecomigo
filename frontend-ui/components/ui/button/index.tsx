@@ -349,7 +349,7 @@ const ButtonText = React.forwardRef<React.ElementRef<typeof UIButton.Text>, IBut
       variant: parentVariant,
       size: parentSize,
       action: parentAction,
-    } = useStyleContext(SCOPE);
+    } = useStyleContext(SCOPE) || {};
 
     return (
       <UIButton.Text
@@ -385,7 +385,7 @@ const ButtonIcon = React.forwardRef<React.ElementRef<typeof UIButton.Icon>, IBut
       variant: parentVariant,
       size: parentSize,
       action: parentAction,
-    } = useStyleContext(SCOPE);
+    } = useStyleContext(SCOPE) || {};
 
     if (typeof size === 'number') {
       return (
