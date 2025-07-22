@@ -528,7 +528,9 @@ class TeacherCourse(models.Model):
 
     def __str__(self) -> str:
         teacher_name = (
-            self.teacher.user.name if hasattr(self.teacher, "user") and hasattr(self.teacher.user, "name") else str(self.teacher.user)
+            self.teacher.user.name
+            if hasattr(self.teacher, "user") and hasattr(self.teacher.user, "name")
+            else str(self.teacher.user)
         )
         return f"{teacher_name} teaches {self.course.name}"
 
