@@ -653,6 +653,9 @@ class VerificationCode(models.Model):
 
         if self.failed_attempts >= self.max_attempts:
             return False
+        # Expire codes after 24 hours regardless of TOTP validity
+        if timezone.now() - self.created_at > timezone.timedelta(hours=24):
+            return False
         # If code is provided, verify it
         if code:
             totp = pyotp.TOTP(self.secret_key, digits=digits, interval=interval)
