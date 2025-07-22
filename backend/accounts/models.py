@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from typing import Any, ClassVar, TypeVar
 
 import pyotp
@@ -474,7 +475,7 @@ class Course(models.Model):
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ["code", "educational_system"]
+        unique_together: ClassVar = ["code", "educational_system"]
 
     def __str__(self) -> str:
         return f"{self.name} ({self.code})"
@@ -523,11 +524,11 @@ class TeacherCourse(models.Model):
     )
 
     class Meta:
-        unique_together = ["teacher", "course"]
+        unique_together: ClassVar = ["teacher", "course"]
 
     def __str__(self) -> str:
         teacher_name = (
-            self.teacher.user.name if hasattr(self.teacher.user, "name") else str(self.teacher.user)
+            self.teacher.user.name if hasattr(self.teacher, "user") and hasattr(self.teacher.user, "name") else str(self.teacher.user)
         )
         return f"{teacher_name} teaches {self.course.name}"
 
@@ -588,7 +589,7 @@ class SchoolInvitationLink(models.Model):
     )
 
     class Meta:
-        unique_together = ["school", "role"]  # One active link per school per role
+        unique_together: ClassVar = ["school", "role"]  # One active link per school per role
 
     def __str__(self) -> str:
         school_name = self.school.name if hasattr(self.school, "name") else str(self.school)
@@ -631,7 +632,7 @@ class VerificationCode(models.Model):
     max_attempts: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(default=5)
 
     class Meta:
-        indexes = [
+        indexes: ClassVar = [
             models.Index(fields=["email", "is_used"]),
             models.Index(fields=["email", "created_at"]),
         ]
@@ -670,6 +671,9 @@ class VerificationCode(models.Model):
             return False
 
         if self.failed_attempts >= self.max_attempts:
+            return False
+        # Expire codes after 24 hours regardless of TOTP validity
+        if timezone.now() - self.created_at > timedelta(hours=24):
             return False
         # If code is provided, verify it
         if code:
