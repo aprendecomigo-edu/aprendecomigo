@@ -194,6 +194,17 @@ Pass12345!
 
 The site will be available at http://127.0.0.1:8000/
 
+## Development server
+
+Run both the backend and frontend together with:
+
+```bash
+make dev
+```
+
+This starts `python manage.py runserver` inside `backend/` and
+`npm run start:dev` inside `frontend-ui/`.
+
 ## Running Tests
 
 ### Unit Tests

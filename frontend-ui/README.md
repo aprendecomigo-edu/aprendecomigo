@@ -120,15 +120,8 @@ The application communicates with the following backend endpoints:
 
 ## Testing
 
-Tests are implemented using Jest and React Native Testing Library:
-
-```bash
-# Run all tests
-yarn test
-
-# Run tests for a specific file
-yarn test path/to/test.ts
-```
+There are currently no automated tests for the frontend.
+When tests are added, they will use Jest and React Native Testing Library.
 
 ## Contributing
 
