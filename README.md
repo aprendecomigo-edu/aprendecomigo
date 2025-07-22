@@ -6,6 +6,10 @@ A School Management Platform for specialized training and tutoring centers.
 
 The application is built with a modular structure using multiple Django apps that work together to provide the full functionality.
 
+### Frontend Directory
+
+The React Native frontend lives in `frontend-ui/`. It has its own `package.json`, lock file, and build scripts for web and mobile.
+
 ## API Documentation
 
 The application uses Django REST Framework (DRF) to provide a full-featured API. The API supports authentication, serialization, and provides comprehensive documentation.
