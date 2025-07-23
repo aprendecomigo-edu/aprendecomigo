@@ -43,6 +43,8 @@ The backend we're building is Aprende Comigo, is an educational platform that co
 - Authentication: All non-auth endpoints should use KnoxAuthenticatedAPIView or KnoxAuthenticatedViewSet
 - Testing: Always test new code following Python best practices or DRF best practices (https://www.django-rest-framework.org/api-guide/testing/)
 - Maintain a clear API contract for good communication with the frontend.
+- DO NOT USE EMOJIS
+- DO NOT CREATE Markdown documents unless explicitly asked.
 
 ## Project Management
 - Maintain and update ROADMAP.md with new features, todos, and next steps

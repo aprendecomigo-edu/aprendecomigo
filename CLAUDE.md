@@ -201,6 +201,8 @@ production: 'https://api.aprendecomigo.com/api'
 - **Missing dependencies**: Install `@gorhom/bottom-sheet` to fix bottomsheet component
 - **Legacy peer deps**: Always use `npm install --legacy-peer-deps`
 - **Removed dependencies**: `expo-local-authentication` and `expo-secure-store` removed (no longer needed)
+- DO NOT USE EMOJIS
+- DO NOT CREATE Markdown documents unless explicitly asked.
 
 ### Backend Virtual Environment
 - Virtual environment is in **project root** (`.venv/`), not in `backend/` folder
