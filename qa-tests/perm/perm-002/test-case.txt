@@ -39,6 +39,7 @@ Step 1: Environment and Data Setup
 Commands:
   cd /Users/anapmc/Code/aprendecomigo
   source .venv/bin/activate
+  make dev
   cd backend
   python manage.py setup_permissions_test_data --clean
 
@@ -47,10 +48,6 @@ Screenshot: 01_test_data_setup.png
 
 Step 2: Start Backend and Frontend Servers
 Commands:
-  python manage.py runserver 8000 > /tmp/django_server.log 2>&1 &
-  cd ../frontend-ui
-  npm run web:dev > /tmp/expo_output.log 2>&1 &
-  sleep 10
 
 Expected: Both servers start successfully
 Verify: Backend at http://localhost:8000/api/, Frontend at http://localhost:8081
@@ -165,8 +162,6 @@ Critical Failure Conditions:
 === POST-TEST CLEANUP ===
 
 Commands to stop servers:
-  pkill -f "python manage.py runserver"
-  pkill -f "npm run web:dev"
 
 Verify cleanup:
   ps aux | grep -E "(runserver|npm.*web:dev)" | grep -v grep

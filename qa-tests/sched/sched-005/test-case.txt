@@ -26,12 +26,7 @@ Step 1: Environment Setup and Test Data Creation
 Commands:
   cd /Users/anapmc/Code/aprendecomigo
   source .venv/bin/activate
-  cd backend
-  python manage.py runserver > /tmp/django_server.log 2>&1 &
-  sleep 5
-  cd ../frontend-ui
-  npm run web:dev > /tmp/expo_output.log 2>&1 &
-  sleep 15
+  make dev
 
 Expected: Both servers start successfully
 Screenshot: 01_servers_started.png
