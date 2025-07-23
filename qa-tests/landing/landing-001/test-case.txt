@@ -1,16 +1,16 @@
-QA Test Case: Landing Page User Type Selection
+QA Test Case: Modern Landing Page Layout and Content Verification
 
 Test ID: LANDING-001
-Test Name: Landing Page User Type Selection and Navigation
-Purpose: Verify that the new landing page loads correctly, displays user type options clearly, and navigation to signup flows works properly
-Expected Result: Users can access landing page, see clear tutor vs school options, and navigate to appropriate signup flows
+Test Name: Modern Landing Page Layout and Content Verification
+Purpose: Verify that the redesigned modern landing page loads correctly with all new sections (hero, pricing, testimonials, contact form, footer) and displays proper content and styling
+Expected Result: All landing page sections display correctly with modern indigo design theme and all content is properly formatted
 
 === CONTEXT (Pre-test Requirements) ===
 
 System Information:
 - Project: Aprende Comigo - Educational platform
 - Architecture: Django REST backend + React Native frontend
-- New Feature: Landing page with user type selection (Issue #15 implementation)
+- New Feature: Modern landing page redesign (PR #22) with hero section, pricing plans, testimonials, contact form
 
 Required Environment Setup:
 1. Project Location: /Users/anapmc/Code/aprendecomigo/
@@ -20,12 +20,13 @@ Required Environment Setup:
    - EXPO_PUBLIC_ENV=development
 
 Test Data:
-- No specific user accounts required (testing landing page access)
-- Test URLs: http://localhost:8081/ and http://localhost:8081/landing
+- No specific user accounts required (testing public landing page)
+- Test URL: http://localhost:8081/ and http://localhost:8081/landing
 
 Prerequisites:
 - Both backend and frontend servers must be running
-- Feature branch: feature/improved-tutor-onboarding-issue-15 deployed
+- Feature branch: landing-page-redesign-modern deployed
+- Modern browser with JavaScript enabled
 
 === DETAILED STEP-BY-STEP INSTRUCTIONS ===
 
@@ -41,166 +42,196 @@ Step 1: Environment Setup and Server Start
 Expected: Both servers start successfully and respond to requests
 Screenshot: 01-servers-started.png
 
-Step 2: Default Route Redirect Test
+Step 2: Landing Page Initial Load Test
 1. Open browser to http://localhost:8081/
-2. Verify automatic redirect to landing page occurs
-3. Check URL changes to http://localhost:8081/landing
-4. Verify page loads without errors
+2. Verify page loads without JavaScript errors (check console)
+3. Verify modern design loads completely
+4. Check that page uses indigo color scheme (not the old blue)
+5. Verify no loading spinners remain visible
+6. Check overall page structure appears modern and clean
 
-Expected: Root URL automatically redirects to /landing page
-Screenshot: 02-default-redirect-to-landing.png
+Expected: Landing page loads successfully with modern design and no errors
+Screenshot: 02-landing-page-loads.png
 
-Step 3: Landing Page Content Verification
-1. Verify page title shows "Aprende Comigo"
-2. Verify main heading "Aprende Comigo" is visible
-3. Verify subtitle mentions "Professional tutoring platform"
-4. Check for "Get Started" section heading
-5. Verify "Choose the option that best describes you" text is present
+Step 3: Sticky Header Verification
+1. Verify header is present at top of page
+2. Check "Aprende Comigo" logo/title is prominent in header
+3. Verify header has backdrop blur/transparency effect
+4. Verify "Sign In" button is visible in header
+5. Verify "Sign Up" button is visible with indigo background
+6. Check header positioning (should be sticky)
+7. Scroll down slightly and verify header remains at top
 
-Expected: All main content elements are visible and properly formatted
-Screenshot: 03-landing-page-content.png
+Expected: Sticky header displays with proper branding and navigation buttons
+Screenshot: 03-sticky-header.png
 
-Step 4: Individual Tutor Section Verification
-1. Locate "Individual Tutor" card/section
-2. Verify graduation cap icon is displayed
-3. Verify "Individual Tutor" title is prominent
-4. Verify "Set up your tutoring practice" subtitle
-5. Check for feature list including:
-   - "Professional scheduling system"
-   - "Automated billing and invoicing"
-   - "Student progress tracking"
-   - "Cross-platform accessibility"
-   - "Secure payment processing"
-6. Verify "Start Your Tutoring Practice" button is visible
-7. Check that this section has visual prominence (highlighted/primary styling)
+Step 4: Hero Section Content Verification
+1. Verify large hero heading "Unlock Your Potential with Expert Tutoring"
+2. Check hero subtitle text mentions "Connect with top-rated tutors"
+3. Verify "Get Started" button is prominent with indigo styling
+4. Check hero image placeholder is present (gradient background)
+5. Verify hero image placeholder shows "Hero Image" and "Study scene illustration would go here"
+6. Check overall hero section layout is visually impactful
+7. Verify responsive text sizing (should be large on desktop)
 
-Expected: Individual Tutor section is clearly marked as primary option with complete feature list
-Screenshot: 04-individual-tutor-section.png
+Expected: Hero section displays large, impactful content with proper call-to-action
+Screenshot: 04-hero-section.png
 
-Step 5: School/Institution Section Verification
-1. Locate "School or Institution" card/section
-2. Verify school building icon is displayed
-3. Verify "School or Institution" title
-4. Verify "Manage your educational organization" subtitle
-5. Check for feature list including:
-   - "Multi-teacher management"
-   - "Advanced role-based permissions" 
-   - "Institutional billing settings"
-   - "Bulk student management"
-   - "Enterprise-grade features"
-6. Verify "Register Your Institution" button is visible
+Step 5: Pricing Section Verification
+1. Scroll to pricing section
+2. Verify "Our Pricing Plans" heading is present
+3. Check subtitle "Choose the plan that's right for you"
+4. Verify two pricing cards are displayed side by side
+5. Monthly plan verification:
+   - Title: "Monthly Subscription"
+   - Price: "€49" with "/month"
+   - Description mentions "5 tutoring hours per month"
+   - Features: "5 tutoring hours per month", "Access to all subjects", "Cancel anytime"
+   - Button: "Choose Plan"
+6. One-time plan verification:
+   - Title: "One-Time Purchase"
+   - Price: "€79" with "/ 10 hours"
+   - "Most Popular" badge displayed
+   - Description mentions "10 tutoring hours" and "3 months"
+   - Features: "10 tutoring hours", "Access to all subjects", "Valid for 3 months"
+   - Button: "Buy Now"
+   - Indigo ring/highlight styling
+7. Verify checkmark icons next to each feature
 
-Expected: School section displays all institutional features clearly
-Screenshot: 05-school-institution-section.png
+Expected: Pricing section displays two clear pricing options with proper formatting and styling
+Screenshot: 05-pricing-section.png
 
-Step 6: Platform Features Section
-1. Scroll down to "Why Choose Aprende Comigo?" section
-2. Verify section heading is visible
-3. Verify "Built specifically for the Portuguese education market" subtitle
-4. Check for feature cards:
-   - "Smart Scheduling" with calendar icon
-   - "Professional Billing" with credit card icon
-   - "Student Management" with users icon
-   - "Cross-Platform Access" with globe icon
-5. Verify each card has descriptive text
+Step 6: Testimonials Section Verification
+1. Scroll to testimonials section
+2. Verify "What Our Students Say" heading
+3. Check subtitle "Real stories from students who achieved their goals with us"
+4. Verify two testimonial cards are displayed
+5. First testimonial verification:
+   - Avatar: "SJ" in indigo circle
+   - Name: "Sarah J."
+   - Role: "University Student"
+   - Quote starts with "Aprende Comigo has been a game-changer"
+6. Second testimonial verification:
+   - Avatar: "MB" in indigo circle
+   - Name: "Michael B."
+   - Role: "High School Student"
+   - Quote mentions "struggling with calculus"
+7. Check card styling (rounded corners, proper spacing)
 
-Expected: All platform feature cards are displayed with icons and descriptions
-Screenshot: 06-platform-features-section.png
+Expected: Testimonials section displays two customer reviews with avatars and proper formatting
+Screenshot: 06-testimonials-section.png
 
-Step 7: Navigation Elements Test
-1. Locate "Sign In" button in header area
-2. Verify "Already have an account?" text in footer
-3. Verify "Sign in here" link in footer
-4. Check that all navigation elements are clickable (hover states work)
+Step 7: Call-to-Action Section Verification
+1. Scroll to CTA section
+2. Verify "Ready to Start Learning?" heading
+3. Check subtitle mentions "Join thousands of students"
+4. Verify "Find Your Tutor Now" button is present
+5. Check button has indigo styling and hover effects
+6. Verify section has proper background color (gray-50)
 
-Expected: Navigation elements are visible and interactive
-Screenshot: 07-navigation-elements.png
+Expected: CTA section displays clear call to action with prominent button
+Screenshot: 07-cta-section.png
 
-Step 8: Tutor Signup Navigation Test
-1. Click "Start Your Tutoring Practice" button
-2. Verify navigation to signup page occurs
-3. Check URL becomes http://localhost:8081/auth/signup?type=tutor
-4. Verify page shows tutor-specific content:
-   - "Individual Tutor" indicator/badge
-   - "Set Up Your Tutoring Practice" heading
-   - Tutor-specific messaging
-5. Use browser back button to return to landing page
+Step 8: Contact Form Section Verification
+1. Scroll to contact form section
+2. Verify "Contact Us" heading
+3. Check subtitle "Have questions? We'd love to hear from you"
+4. Verify contact form has three fields:
+   - "Full Name" input field
+   - "Email Address" input field
+   - "Message" textarea field
+5. Check all fields have proper placeholders
+6. Verify "Send Message" button at bottom of form
+7. Check form styling is consistent with overall design
 
-Expected: Tutor signup button navigates to signup page with tutor type parameter
-Screenshot: 08-tutor-signup-navigation.png
+Expected: Contact form displays with all required fields and proper styling
+Screenshot: 08-contact-form.png
 
-Step 9: School Signup Navigation Test
-1. From landing page, click "Register Your Institution" button
-2. Verify navigation to signup page occurs
-3. Check URL becomes http://localhost:8081/auth/signup?type=school
-4. Verify page shows school-specific content:
-   - "School/Institution" indicator/badge
-   - "Register Your School" heading
-   - School-specific messaging
-5. Use browser back button to return to landing page
+Step 9: Footer Section Verification
+1. Scroll to footer at bottom of page
+2. Verify dark background (gray-900) with white text
+3. Check "Aprende Comigo" heading in footer
+4. Verify "Unlock your potential" tagline
+5. Check footer navigation links:
+   - "About"
+   - "Pricing"
+   - "Contact"
+   - "Terms"
+6. Verify copyright text "© 2024 Aprende Comigo. All rights reserved."
+7. Check social media icons/emojis (🐦📘💼)
 
-Expected: School signup button navigates to signup page with school type parameter
-Screenshot: 09-school-signup-navigation.png
+Expected: Footer displays with proper branding, links, and styling
+Screenshot: 09-footer-section.png
 
-Step 10: Sign In Navigation Test
-1. From landing page, click "Sign In" button in header
-2. Verify navigation to signin page occurs
-3. Check URL becomes http://localhost:8081/auth/signin
-4. Verify signin page loads with login form
-5. Use browser back button to return to landing page
+Step 10: Color Scheme and Styling Verification
+1. Verify overall color scheme uses indigo (not blue)
+2. Check buttons use indigo-600 background color
+3. Verify hover effects work on buttons (indigo-700)
+4. Check card shadows and modern styling
+5. Verify rounded corners on buttons and cards
+6. Check typography hierarchy and font weights
+7. Verify consistent spacing between sections
 
-Expected: Sign in button navigates to signin page correctly
-Screenshot: 10-signin-navigation.png
+Expected: Modern indigo color scheme is used consistently throughout
+Screenshot: 10-color-scheme-styling.png
 
-Step 11: Footer Sign In Test
-1. From landing page, click "Sign in here" link in footer
-2. Verify navigation to signin page occurs
-3. Check URL becomes http://localhost:8081/auth/signin
-4. Verify same signin page loads as header link
+Step 11: Page Scrolling and Layout Flow Test
+1. Scroll from top to bottom of page smoothly
+2. Verify all sections flow naturally
+3. Check for any layout breaks or overlapping content
+4. Verify proper spacing between all sections
+5. Check that sticky header remains functional during scroll
+6. Verify no horizontal scrolling is required
 
-Expected: Footer sign in link works identically to header button
-Screenshot: 11-footer-signin-navigation.png
+Expected: Smooth scrolling experience with well-organized content flow
+Screenshot: 11-page-scrolling-flow.png
 
-Step 12: Direct Landing Page Access Test
-1. Navigate directly to http://localhost:8081/landing
-2. Verify page loads without redirect
-3. Verify all content displays correctly
-4. Test all buttons/links function properly
+Step 12: Content Accuracy and Completeness Test
+1. Verify all text content is in English and grammatically correct
+2. Check that pricing information is accurate (€49/month, €79/10 hours)
+3. Verify testimonial content is realistic and appropriate
+4. Check that all buttons have clear, actionable text
+5. Verify contact form labels are clear and professional
+6. Check that overall messaging is consistent with education platform
 
-Expected: Direct access to landing page works without issues
-Screenshot: 12-direct-landing-access.png
+Expected: All content is accurate, professional, and appropriate for educational platform
+Screenshot: 12-content-accuracy.png
 
 === PASS/FAIL CRITERIA ===
 
-PASS: Landing page loads correctly, displays all required content sections, user type options are clearly distinguished, all navigation links work correctly, and both tutor and school signup flows are accessible with proper URL parameters
+PASS: Modern landing page loads correctly with all redesigned sections (header, hero, pricing, testimonials, CTA, contact, footer), displays indigo color scheme consistently, all content is properly formatted and accurate, and page layout flows smoothly
 
 FAIL: Any of the following occurs:
-- Landing page fails to load or displays errors
-- Required content sections are missing or malformed
-- User type options are not clearly distinguished
-- Navigation buttons don't work or go to wrong destinations
-- URL parameters are not set correctly for signup flows
-- Visual styling is broken or unprofessional
+- Landing page fails to load or displays JavaScript errors
+- Any major section is missing or broken (header, hero, pricing, testimonials, CTA, contact, footer)
+- Old blue color scheme appears instead of new indigo theme
+- Pricing information is incorrect or missing
+- Text content is broken, overlapping, or poorly formatted
+- Layout appears broken or unprofessional
+- Required content elements are missing from any section
 
 Individual Step Criteria:
-- Step 1: PASS if both servers start and respond, FAIL if either server fails to start
-- Step 2: PASS if automatic redirect to /landing works, FAIL if stays on root or redirects elsewhere
-- Step 3: PASS if all main content elements are visible, FAIL if any key content missing
-- Step 4: PASS if Individual Tutor section has all required elements and primary styling, FAIL if incomplete or not prominent
-- Step 5: PASS if School section has all institutional features listed, FAIL if content incomplete
-- Step 6: PASS if all four feature cards display with icons, FAIL if any missing or broken
-- Step 7: PASS if all navigation elements are visible and interactive, FAIL if missing or non-functional
-- Step 8: PASS if tutor button navigates to signup?type=tutor with correct content, FAIL otherwise
-- Step 9: PASS if school button navigates to signup?type=school with correct content, FAIL otherwise
-- Step 10-11: PASS if both signin links work correctly, FAIL if navigation broken
-- Step 12: PASS if direct access works properly, FAIL if redirect issues or content problems
+- Step 1: PASS if both servers start and respond, FAIL if either server fails
+- Step 2: PASS if page loads with modern design and no errors, FAIL if errors or old design appears
+- Step 3: PASS if sticky header displays properly with all elements, FAIL if header missing or broken
+- Step 4: PASS if hero section has large heading and proper content, FAIL if content missing or poorly formatted
+- Step 5: PASS if both pricing cards display with correct prices and features, FAIL if pricing incorrect or missing
+- Step 6: PASS if both testimonials display with proper formatting, FAIL if testimonials missing or broken
+- Step 7: PASS if CTA section displays with prominent button, FAIL if CTA missing or unclear
+- Step 8: PASS if contact form has all required fields, FAIL if form incomplete or broken
+- Step 9: PASS if footer displays with all links and proper styling, FAIL if footer incomplete
+- Step 10: PASS if indigo color scheme used consistently, FAIL if wrong colors or inconsistent styling
+- Step 11: PASS if smooth scrolling and good layout flow, FAIL if layout breaks or poor UX
+- Step 12: PASS if all content is accurate and professional, FAIL if content errors or inappropriate
 
 Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
 
 === UX/BEHAVIORAL REQUIREMENTS ===
-- Landing page must be professional and welcoming
-- Individual Tutor option should be visually prominent (primary styling)
-- Clear value propositions for both user types
-- Smooth navigation transitions without page flashes
-- Responsive design elements should adapt to screen size
-- All interactive elements should have proper hover/focus states
+- Modern, professional appearance suitable for educational platform
+- Indigo color scheme used consistently throughout
+- Clear visual hierarchy with proper typography scaling
+- Smooth user experience with no jarring transitions
+- All interactive elements should have proper hover states
+- Content should be scannable and easy to read
+- Pricing information must be clear and accurate
+- Contact form should appear trustworthy and professional 
