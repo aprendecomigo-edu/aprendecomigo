@@ -1,0 +1,4 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+parents-001,Parent Subscription Page Load,Verify parent subscription page loads at /parents route with subscription options,,,0,0,0
+parents-002,Navigation from Parent Page,Test navigation from parent subscription page to auth pages,,,0,0,0
+parents-003,Subscription Selection UI,Verify subscription cards display correctly and handle parent interactions,,,0,0,0

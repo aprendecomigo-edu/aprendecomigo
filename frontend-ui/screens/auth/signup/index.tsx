@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import useRouter from '@unitools/router';
-import { AlertTriangle } from 'lucide-react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { AlertTriangle, GraduationCap, School } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Keyboard, ScrollView } from 'react-native';
@@ -31,9 +32,10 @@ import { Radio, RadioGroup, RadioIcon, RadioIndicator, RadioLabel } from '@/comp
 import { Text } from '@/components/ui/text';
 import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
+import { HStack } from '@/components/ui/hstack';
 
-// Define the form schema
-const onboardingSchema = z.object({
+// Define the form schema based on user type
+const createOnboardingSchema = (userType: string) => z.object({
   // User information
   userName: z.string().min(1, 'Name is required').max(150, 'Name must be 150 characters or less'),
   userEmail: z
@@ -54,11 +56,12 @@ const onboardingSchema = z.object({
       'Plus sign (+) can only appear at the beginning'
     ),
 
-  // School information
-  schoolName: z
-    .string()
-    .min(1, 'School name is required')
-    .max(150, 'School name must be 150 characters or less'),
+  // School information - conditional based on user type
+  schoolName: userType === 'school' 
+    ? z.string()
+        .min(1, 'School name is required')
+        .max(150, 'School name must be 150 characters or less')
+    : z.string().optional(),
   schoolAddress: z.string().optional(),
   schoolWebsite: z
     .string()
@@ -71,13 +74,21 @@ const onboardingSchema = z.object({
   }),
 });
 
-type OnboardingSchemaType = z.infer<typeof onboardingSchema>;
+type OnboardingSchemaType = z.infer<ReturnType<typeof createOnboardingSchema>>;
 
 const OnboardingForm = () => {
   const toast = useToast();
   const router = useRouter();
+  const { type } = useLocalSearchParams<{ type: string }>();
+  const userType = type || 'tutor'; // Default to tutor if no type specified
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { checkAuthStatus, userProfile } = useAuth();
+
+  // Generate auto school name for tutors
+  const generateSchoolName = (userName: string) => {
+    if (!userName) return '';
+    return `${userName}'s Tutoring Practice`;
+  };
 
   const {
     control,
@@ -86,20 +97,21 @@ const OnboardingForm = () => {
     setValue,
     watch,
   } = useForm<OnboardingSchemaType>({
-    resolver: zodResolver(onboardingSchema),
+    resolver: zodResolver(createOnboardingSchema(userType)),
     defaultValues: {
       userName: userProfile?.name || '',
       userEmail: userProfile?.email || '',
       userPhone: userProfile?.phone_number || '',
-      schoolName: '',
+      schoolName: userType === 'tutor' ? generateSchoolName(userProfile?.name || '') : '',
       schoolAddress: '',
       schoolWebsite: '',
       primaryContact: 'email',
     },
   });
 
-  // Watch primary contact selection for dynamic UI updates
+  // Watch form values for dynamic UI updates
   const primaryContact = watch('primaryContact');
+  const userName = watch('userName');
 
   // Update form with user profile data when available
   useEffect(() => {
@@ -107,21 +119,37 @@ const OnboardingForm = () => {
       setValue('userName', userProfile.name || '');
       setValue('userEmail', userProfile.email || '');
       setValue('userPhone', userProfile.phone_number || '');
+      
+      // Auto-generate school name for tutors
+      if (userType === 'tutor' && userProfile.name) {
+        setValue('schoolName', generateSchoolName(userProfile.name));
+      }
     }
-  }, [userProfile, setValue]);
+  }, [userProfile, setValue, userType]);
+
+  // Update school name when tutor changes their name
+  useEffect(() => {
+    if (userType === 'tutor' && userName) {
+      setValue('schoolName', generateSchoolName(userName));
+    }
+  }, [userName, userType, setValue]);
 
   const onSubmit = async (data: OnboardingSchemaType) => {
     try {
       setIsSubmitting(true);
 
       // Convert form data to API request format that matches the backend serializer
+      const schoolName = userType === 'tutor' 
+        ? generateSchoolName(data.userName)
+        : data.schoolName || 'Untitled School';
+
       const onboardingData = {
         name: data.userName,
         email: data.userEmail,
         phone_number: data.userPhone,
         primary_contact: data.primaryContact,
         school: {
-          name: data.schoolName,
+          name: schoolName,
           address: data.schoolAddress || undefined,
           website: data.schoolWebsite || undefined,
         },
@@ -168,12 +196,34 @@ const OnboardingForm = () => {
         >
           <Icon as={ArrowLeftIcon} className="md:hidden text-background-800" size="xl" />
         </Pressable>
+        
+        {/* User Type Indicator */}
+        <HStack space="md" className="items-center justify-center mb-2">
+          <Box className={`w-12 h-12 rounded-full items-center justify-center ${
+            userType === 'tutor' ? 'bg-blue-100' : 'bg-green-100'
+          }`}>
+            <Icon 
+              as={userType === 'tutor' ? GraduationCap : School} 
+              className={userType === 'tutor' ? 'text-blue-600' : 'text-green-600'} 
+              size="lg" 
+            />
+          </Box>
+          <VStack>
+            <Text className="text-sm text-gray-500 uppercase tracking-wide font-medium">
+              {userType === 'tutor' ? 'Individual Tutor' : 'School/Institution'}
+            </Text>
+          </VStack>
+        </HStack>
+
         <VStack>
           <Heading className="md:text-center text-3xl font-bold" size="3xl">
-            Create Your Account
+            {userType === 'tutor' ? 'Set Up Your Tutoring Practice' : 'Register Your School'}
           </Heading>
           <Text className="md:text-center text-base opacity-80 mt-1">
-            Register your school with Aprende Comigo
+            {userType === 'tutor' 
+              ? 'Create your professional tutoring account with Aprende Comigo'
+              : 'Register your school or institution with Aprende Comigo'
+            }
           </Text>
         </VStack>
       </VStack>
@@ -211,12 +261,10 @@ const OnboardingForm = () => {
                   <FormControlErrorText>{errors.userName?.message}</FormControlErrorText>
                 </FormControlError>
               </FormControl>
-            </VStack>
 
-            <VStack space="md" className="md:flex-row md:space-x-4">
               <FormControl isInvalid={!!errors.userEmail} className="md:flex-1">
                 <FormControlLabel>
-                  <FormControlLabelText>Email</FormControlLabelText>
+                  <FormControlLabelText>Email Address</FormControlLabelText>
                 </FormControlLabel>
                 <Controller
                   name="userEmail"
@@ -224,12 +272,13 @@ const OnboardingForm = () => {
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input>
                       <InputField
-                        placeholder="Enter your email"
+                        placeholder="Enter your email address"
                         value={value}
                         onChangeText={onChange}
                         onBlur={onBlur}
                         keyboardType="email-address"
                         returnKeyType="next"
+                        autoCapitalize="none"
                       />
                     </Input>
                   )}
@@ -239,37 +288,37 @@ const OnboardingForm = () => {
                   <FormControlErrorText>{errors.userEmail?.message}</FormControlErrorText>
                 </FormControlError>
               </FormControl>
-
-              <FormControl isInvalid={!!errors.userPhone} className="md:flex-1">
-                <FormControlLabel>
-                  <FormControlLabelText>Phone Number</FormControlLabelText>
-                </FormControlLabel>
-                <Controller
-                  name="userPhone"
-                  control={control}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input>
-                      <InputField
-                        placeholder="Enter your phone number"
-                        value={value}
-                        onChangeText={text => {
-                          // Allow only digits, spaces, and + sign
-                          const sanitizedValue = text.replace(/[^\d\s+]/g, '');
-                          onChange(sanitizedValue);
-                        }}
-                        onBlur={onBlur}
-                        keyboardType="phone-pad"
-                        returnKeyType="next"
-                      />
-                    </Input>
-                  )}
-                />
-                <FormControlError>
-                  <FormControlErrorIcon as={AlertTriangle} />
-                  <FormControlErrorText>{errors.userPhone?.message}</FormControlErrorText>
-                </FormControlError>
-              </FormControl>
             </VStack>
+
+            <FormControl isInvalid={!!errors.userPhone}>
+              <FormControlLabel>
+                <FormControlLabelText>Phone Number</FormControlLabelText>
+              </FormControlLabel>
+              <Controller
+                name="userPhone"
+                control={control}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input>
+                    <InputField
+                      placeholder="Enter your phone number"
+                      value={value}
+                      onChangeText={text => {
+                        // Allow only digits, spaces, and + sign
+                        const sanitizedValue = text.replace(/[^\d\s+]/g, '');
+                        onChange(sanitizedValue);
+                      }}
+                      onBlur={onBlur}
+                      keyboardType="phone-pad"
+                      returnKeyType="next"
+                    />
+                  </Input>
+                )}
+              />
+              <FormControlError>
+                <FormControlErrorIcon as={AlertTriangle} />
+                <FormControlErrorText>{errors.userPhone?.message}</FormControlErrorText>
+              </FormControlError>
+            </FormControl>
 
             <FormControl isInvalid={!!errors.primaryContact}>
               <FormControlLabel>
@@ -323,15 +372,20 @@ const OnboardingForm = () => {
           {/* School Information Section */}
           <VStack space="md" className="mt-2">
             <Heading size="lg" className="mb-1">
-              School Information
+              {userType === 'tutor' ? 'Practice Information' : 'School Information'}
             </Heading>
             <Text className="text-sm opacity-70 mb-2">
-              Only school name is required. You can add more details later.
+              {userType === 'tutor' 
+                ? 'Your practice name will be auto-generated from your name. You can customize it later.'
+                : 'Only school name is required. You can add more details later.'
+              }
             </Text>
 
             <FormControl isInvalid={!!errors.schoolName}>
               <FormControlLabel>
-                <FormControlLabelText>School Name</FormControlLabelText>
+                <FormControlLabelText>
+                  {userType === 'tutor' ? 'Practice Name' : 'School Name'}
+                </FormControlLabelText>
               </FormControlLabel>
               <Controller
                 name="schoolName"
@@ -339,11 +393,16 @@ const OnboardingForm = () => {
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input>
                     <InputField
-                      placeholder="Enter your school name"
+                      placeholder={userType === 'tutor' 
+                        ? "Your practice name (auto-generated)"
+                        : "Enter your school name"
+                      }
                       value={value}
                       onChangeText={onChange}
                       onBlur={onBlur}
                       returnKeyType="next"
+                      editable={userType === 'school'}
+                      className={userType === 'tutor' ? 'bg-gray-50 text-gray-600' : ''}
                     />
                   </Input>
                 )}
@@ -352,72 +411,84 @@ const OnboardingForm = () => {
                 <FormControlErrorIcon as={AlertTriangle} />
                 <FormControlErrorText>{errors.schoolName?.message}</FormControlErrorText>
               </FormControlError>
+              {userType === 'tutor' && (
+                <FormControlHelper>
+                  <FormControlHelperText>
+                    This will be automatically generated from your name. You can change it later in settings.
+                  </FormControlHelperText>
+                </FormControlHelper>
+              )}
             </FormControl>
 
-            <VStack space="md" className="md:flex-row md:space-x-4">
-              <FormControl isInvalid={!!errors.schoolAddress} className="md:flex-1">
-                <FormControlLabel>
-                  <FormControlLabelText>School Address (Optional)</FormControlLabelText>
-                </FormControlLabel>
-                <Controller
-                  name="schoolAddress"
-                  control={control}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input>
-                      <InputField
-                        placeholder="Enter school address"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        returnKeyType="next"
-                      />
-                    </Input>
-                  )}
-                />
-                <FormControlError>
-                  <FormControlErrorIcon as={AlertTriangle} />
-                  <FormControlErrorText>{errors.schoolAddress?.message}</FormControlErrorText>
-                </FormControlError>
-              </FormControl>
+            {userType === 'school' && (
+              <>
+                <FormControl isInvalid={!!errors.schoolAddress}>
+                  <FormControlLabel>
+                    <FormControlLabelText>School Address (Optional)</FormControlLabelText>
+                  </FormControlLabel>
+                  <Controller
+                    name="schoolAddress"
+                    control={control}
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <Input>
+                        <InputField
+                          placeholder="Enter your school address"
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          returnKeyType="next"
+                          multiline
+                          numberOfLines={2}
+                        />
+                      </Input>
+                    )}
+                  />
+                  <FormControlError>
+                    <FormControlErrorIcon as={AlertTriangle} />
+                    <FormControlErrorText>{errors.schoolAddress?.message}</FormControlErrorText>
+                  </FormControlError>
+                </FormControl>
 
-              <FormControl isInvalid={!!errors.schoolWebsite} className="md:flex-1">
-                <FormControlLabel>
-                  <FormControlLabelText>Website (Optional)</FormControlLabelText>
-                </FormControlLabel>
-                <Controller
-                  name="schoolWebsite"
-                  control={control}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input>
-                      <InputField
-                        placeholder="Enter school website URL"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        keyboardType="url"
-                        returnKeyType="next"
-                        onSubmitEditing={handleKeyboardDismiss}
-                      />
-                    </Input>
-                  )}
-                />
-                <FormControlError>
-                  <FormControlErrorIcon as={AlertTriangle} />
-                  <FormControlErrorText>{errors.schoolWebsite?.message}</FormControlErrorText>
-                </FormControlError>
-              </FormControl>
-            </VStack>
+                <FormControl isInvalid={!!errors.schoolWebsite}>
+                  <FormControlLabel>
+                    <FormControlLabelText>School Website (Optional)</FormControlLabelText>
+                  </FormControlLabel>
+                  <Controller
+                    name="schoolWebsite"
+                    control={control}
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <Input>
+                        <InputField
+                          placeholder="https://example.com"
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          keyboardType="url"
+                          returnKeyType="done"
+                          autoCapitalize="none"
+                        />
+                      </Input>
+                    )}
+                  />
+                  <FormControlError>
+                    <FormControlErrorIcon as={AlertTriangle} />
+                    <FormControlErrorText>{errors.schoolWebsite?.message}</FormControlErrorText>
+                  </FormControlError>
+                </FormControl>
+              </>
+            )}
           </VStack>
 
-          <Box className="w-full mt-6">
-            <Button
-              className="w-full py-3"
-              onPress={handleSubmit(onSubmit)}
-              isDisabled={isSubmitting}
-            >
-              <ButtonText>{isSubmitting ? 'Submitting...' : 'Create Account'}</ButtonText>
-            </Button>
-          </Box>
+          <Button
+            size="lg"
+            className="w-full mt-6"
+            onPress={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
+          >
+            <ButtonText className="text-white">
+              {isSubmitting ? 'Creating Account...' : 'Create Account'}
+            </ButtonText>
+          </Button>
         </VStack>
       </ScrollView>
     </VStack>

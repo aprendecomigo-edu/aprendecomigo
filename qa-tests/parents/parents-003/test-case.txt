@@ -1,0 +1,229 @@
+QA Test Case: Subscription Selection UI and Stripe Integration Preparation
+
+Test ID: LANDING-003
+Test Name: Subscription Cards Interaction and Stripe Checkout Preparation
+Purpose: Verify subscription card interactions work correctly, console logging functions properly, and UI is prepared for Stripe integration
+Expected Result: Both subscription buttons respond to interactions, log appropriate product selections, and provide proper user feedback
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend with Expo Router
+- Current State: Stripe integration placeholder implemented (Issue #12)
+- Future Implementation: Full Stripe Checkout integration planned
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+4. Backend Server: Django running on http://localhost:8000
+5. Frontend Server: Expo dev server on http://localhost:8081
+
+Test Data:
+- No specific test data required
+- No authentication required for this test
+- Test focuses on UI interactions and preparation for payment flow
+
+Prerequisites:
+- Landing page must be accessible (LANDING-001 should pass)
+- Browser developer console should be accessible for log verification
+- Both subscription cards should be visible and interactive
+
+Current Implementation:
+- handleStripeCheckout function logs product selection to console
+- TODO comments indicate where Stripe Checkout integration will be added
+- No actual payment processing occurs during this test
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Console Access
+1. Start both backend and frontend servers
+2. Open browser to http://localhost:8081
+3. Open browser developer tools (F12)
+4. Navigate to Console tab in dev tools
+5. Clear console for clean test results
+
+Expected: Landing page loads with dev console open and ready
+Screenshot: 01_console_ready.png
+
+Step 2: Monthly Subscription Button Test
+1. Locate "Choose Monthly Plan" button on Monthly Subscription card
+2. Verify button displays with credit card icon and proper styling
+3. Hover over button to check hover state
+4. Click the "Choose Monthly Plan" button
+5. Immediately check console output
+
+Expected: Button shows hover effect and logs "Selected product: subscription"
+Screenshot: 02_monthly_button_clicked.png
+
+Step 3: Console Log Verification for Monthly
+1. In browser console, look for log message after clicking monthly button
+2. Verify exact message: "Selected product: subscription"
+3. Check that log appears immediately after button click
+4. Verify no error messages in console
+
+Expected: Console shows correct log message with no errors
+Screenshot: 03_monthly_console_log.png
+
+Step 4: One-time Package Button Test
+1. Locate "Buy One-time Package" button on One-time Package card
+2. Verify button displays with credit card icon and proper styling  
+3. Hover over button to check hover state
+4. Click the "Buy One-time Package" button
+5. Check console output
+
+Expected: Button shows hover effect and logs "Selected product: package"
+Screenshot: 04_package_button_clicked.png
+
+Step 5: Console Log Verification for Package
+1. In browser console, verify log message after clicking package button
+2. Verify exact message: "Selected product: package"
+3. Confirm log appears immediately after button click
+4. Check for any error messages
+
+Expected: Console shows correct log message with no errors
+Screenshot: 05_package_console_log.png
+
+Step 6: Multiple Clicks Test
+1. Click "Choose Monthly Plan" button multiple times rapidly
+2. Check console for multiple log entries
+3. Click "Buy One-time Package" button multiple times rapidly  
+4. Verify console logs each click separately
+
+Expected: Each click generates a separate console log entry
+Screenshot: 06_multiple_clicks_test.png
+
+Step 7: Button Accessibility and Keyboard Navigation
+1. Use Tab key to navigate to Monthly Subscription button
+2. Verify button receives focus (visual outline/highlight)
+3. Press Enter key while button is focused
+4. Check console for log message
+5. Repeat for One-time Package button
+
+Expected: Buttons are keyboard accessible and respond to Enter key
+Screenshot: 07_keyboard_accessibility.png
+
+Step 8: Visual Feedback and UI States
+1. Click and hold Monthly Subscription button (don't release)
+2. Observe button visual state during click
+3. Release click and observe return to normal state
+4. Repeat for One-time Package button
+5. Check for any visual glitches or state issues
+
+Expected: Buttons show appropriate active/pressed states
+Screenshot: 08_button_states.png
+
+Step 9: Product Type Parameter Verification
+1. Right-click on page and "View Page Source" or inspect element
+2. Find the handleStripeCheckout function calls in the code
+3. Verify Monthly button calls: handleStripeCheckout('subscription')
+4. Verify Package button calls: handleStripeCheckout('package')
+5. Confirm parameter strings are correct
+
+Expected: Function calls use correct product type parameters
+Screenshot: 09_code_verification.png
+
+Step 10: Error Handling Simulation
+1. Open browser dev tools Network tab
+2. Set network to "Offline" mode
+3. Click both subscription buttons
+4. Verify console logs still work (no network needed for current implementation)
+5. Check for any JavaScript errors
+
+Expected: Button interactions work offline since no network calls made yet
+Screenshot: 10_offline_test.png
+
+Step 11: Performance and Responsiveness Test
+1. Rapidly alternate clicking between both subscription buttons
+2. Monitor console for response time of log messages
+3. Check for any delayed responses or performance issues
+4. Test on different browser zoom levels (50%, 100%, 150%)
+
+Expected: Button responses are immediate and consistent across zoom levels
+Screenshot: 11_performance_test.png
+
+Step 12: Future Stripe Integration Preparation Verification
+1. Inspect the handleStripeCheckout function in browser dev tools
+2. Verify TODO comment is present: "// TODO: Implement Stripe Checkout integration"
+3. Confirm function receives correct product type parameter
+4. Check that function structure is ready for async/await implementation
+
+Expected: Code structure is prepared for future Stripe integration
+Screenshot: 12_stripe_preparation.png
+
+Step 13: Mobile Responsiveness Test
+1. Use browser dev tools to simulate mobile device
+2. Test button interactions on mobile viewport
+3. Verify buttons are properly sized for touch interaction
+4. Check that console logging works on mobile simulation
+
+Expected: Buttons work correctly on mobile viewport
+Screenshot: 13_mobile_test.png
+
+Step 14: Cross-Browser Compatibility Check
+1. Test in at least two different browsers (Chrome, Firefox, Safari)
+2. Verify button interactions work consistently
+3. Check console logging works in all browsers
+4. Note any browser-specific differences
+
+Expected: Consistent behavior across browsers
+Screenshot: 14_cross_browser.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND:
+- Both subscription buttons respond to clicks with proper visual feedback
+- Console logging works correctly for both product types ('subscription' and 'package')
+- Buttons are accessible via keyboard navigation
+- UI remains responsive and performant
+- Code structure is prepared for future Stripe integration
+- No JavaScript errors occur during interactions
+- Buttons work consistently across browsers and device viewports
+
+FAIL: Any step fails OR:
+- Subscription buttons don't respond to clicks
+- Console logging is missing, incorrect, or produces errors
+- Buttons are not keyboard accessible
+- Visual feedback is missing or broken
+- Performance issues or delayed responses
+- JavaScript errors occur during button interactions
+- Inconsistent behavior across browsers or device types
+
+Individual Step Criteria:
+- Step 1: PASS if console opens and page loads, FAIL if setup fails
+- Step 2: PASS if monthly button responds with visual feedback, FAIL if unresponsive
+- Step 3: PASS if console shows "Selected product: subscription", FAIL if wrong/missing log
+- Step 4: PASS if package button responds with visual feedback, FAIL if unresponsive  
+- Step 5: PASS if console shows "Selected product: package", FAIL if wrong/missing log
+- Step 6: PASS if multiple clicks generate multiple logs, FAIL if clicks missed
+- Step 7: PASS if keyboard navigation works, FAIL if buttons not accessible
+- Step 8: PASS if button states display correctly, FAIL if visual issues
+- Step 9: PASS if function parameters are correct, FAIL if wrong parameters
+- Step 10: PASS if buttons work offline, FAIL if errors occur
+- Step 11: PASS if performance is good, FAIL if slow or unresponsive
+- Step 12: PASS if code prepared for Stripe, FAIL if structure inadequate
+- Step 13: PASS if mobile interactions work, FAIL if mobile issues
+- Step 14: PASS if cross-browser consistent, FAIL if browser-specific issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Buttons should provide immediate visual feedback on interaction
+- Console logging should be immediate and accurate for debugging purposes
+- Interactions should work consistently across all devices and browsers
+- Button hover states should clearly indicate interactivity
+- Keyboard navigation should follow accessibility standards
+- No user-facing errors should occur during interactions
+- UI should remain responsive even with rapid clicking
+- Code should be structured to easily add Stripe Checkout integration
+- Button sizing should be appropriate for touch devices (minimum 44px)
+
+=== FUTURE INTEGRATION NOTES ===
+This test verifies the foundation for Stripe Checkout integration. When Stripe is implemented:
+- Console.log statements should be replaced with actual Stripe Checkout calls
+- Button clicks should redirect to Stripe-hosted checkout pages
+- Success/failure handling will need additional testing
+- This test case should be updated to reflect actual payment flow
