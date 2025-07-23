@@ -158,6 +158,8 @@ function RootLayoutNav() {
             <TutorialProvider>
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />
+                <Stack.Screen name="landing" />
+                <Stack.Screen name="parents" />
                 <Stack.Screen name="auth" />
                 <Stack.Screen name="home" />
                 <Stack.Screen name="profile" />
