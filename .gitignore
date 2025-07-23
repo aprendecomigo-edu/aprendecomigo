@@ -183,3 +183,6 @@ testing/playwright-report/*
 .gemini/logs/
 .gemini/cache/
 # Keep .gemini/settings.json and .gemini/sandbox.Dockerfile
+
+# Development server logs
+logs/
