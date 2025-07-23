@@ -1,0 +1,206 @@
+QA Test Case: Landing Page User Type Selection
+
+Test ID: LANDING-001
+Test Name: Landing Page User Type Selection and Navigation
+Purpose: Verify that the new landing page loads correctly, displays user type options clearly, and navigation to signup flows works properly
+Expected Result: Users can access landing page, see clear tutor vs school options, and navigate to appropriate signup flows
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- New Feature: Landing page with user type selection (Issue #15 implementation)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- No specific user accounts required (testing landing page access)
+- Test URLs: http://localhost:8081/ and http://localhost:8081/landing
+
+Prerequisites:
+- Both backend and frontend servers must be running
+- Feature branch: feature/improved-tutor-onboarding-issue-15 deployed
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+1. Navigate to project root: cd /Users/anapmc/Code/aprendecomigo
+2. Activate virtual environment: source .venv/bin/activate
+3. Start backend server: cd backend && python manage.py runserver 127.0.0.1:8000 > server.log 2>&1 &
+4. Start frontend server: cd ../frontend-ui && npm start > frontend.log 2>&1 &
+5. Wait 10 seconds for servers to start
+6. Verify backend: curl -s http://127.0.0.1:8000/api/ (should return 401 auth error - normal)
+7. Verify frontend: curl -s -I http://localhost:8081 (should return 200 OK)
+
+Expected: Both servers start successfully and respond to requests
+Screenshot: 01-servers-started.png
+
+Step 2: Default Route Redirect Test
+1. Open browser to http://localhost:8081/
+2. Verify automatic redirect to landing page occurs
+3. Check URL changes to http://localhost:8081/landing
+4. Verify page loads without errors
+
+Expected: Root URL automatically redirects to /landing page
+Screenshot: 02-default-redirect-to-landing.png
+
+Step 3: Landing Page Content Verification
+1. Verify page title shows "Aprende Comigo"
+2. Verify main heading "Aprende Comigo" is visible
+3. Verify subtitle mentions "Professional tutoring platform"
+4. Check for "Get Started" section heading
+5. Verify "Choose the option that best describes you" text is present
+
+Expected: All main content elements are visible and properly formatted
+Screenshot: 03-landing-page-content.png
+
+Step 4: Individual Tutor Section Verification
+1. Locate "Individual Tutor" card/section
+2. Verify graduation cap icon is displayed
+3. Verify "Individual Tutor" title is prominent
+4. Verify "Set up your tutoring practice" subtitle
+5. Check for feature list including:
+   - "Professional scheduling system"
+   - "Automated billing and invoicing"
+   - "Student progress tracking"
+   - "Cross-platform accessibility"
+   - "Secure payment processing"
+6. Verify "Start Your Tutoring Practice" button is visible
+7. Check that this section has visual prominence (highlighted/primary styling)
+
+Expected: Individual Tutor section is clearly marked as primary option with complete feature list
+Screenshot: 04-individual-tutor-section.png
+
+Step 5: School/Institution Section Verification
+1. Locate "School or Institution" card/section
+2. Verify school building icon is displayed
+3. Verify "School or Institution" title
+4. Verify "Manage your educational organization" subtitle
+5. Check for feature list including:
+   - "Multi-teacher management"
+   - "Advanced role-based permissions" 
+   - "Institutional billing settings"
+   - "Bulk student management"
+   - "Enterprise-grade features"
+6. Verify "Register Your Institution" button is visible
+
+Expected: School section displays all institutional features clearly
+Screenshot: 05-school-institution-section.png
+
+Step 6: Platform Features Section
+1. Scroll down to "Why Choose Aprende Comigo?" section
+2. Verify section heading is visible
+3. Verify "Built specifically for the Portuguese education market" subtitle
+4. Check for feature cards:
+   - "Smart Scheduling" with calendar icon
+   - "Professional Billing" with credit card icon
+   - "Student Management" with users icon
+   - "Cross-Platform Access" with globe icon
+5. Verify each card has descriptive text
+
+Expected: All platform feature cards are displayed with icons and descriptions
+Screenshot: 06-platform-features-section.png
+
+Step 7: Navigation Elements Test
+1. Locate "Sign In" button in header area
+2. Verify "Already have an account?" text in footer
+3. Verify "Sign in here" link in footer
+4. Check that all navigation elements are clickable (hover states work)
+
+Expected: Navigation elements are visible and interactive
+Screenshot: 07-navigation-elements.png
+
+Step 8: Tutor Signup Navigation Test
+1. Click "Start Your Tutoring Practice" button
+2. Verify navigation to signup page occurs
+3. Check URL becomes http://localhost:8081/auth/signup?type=tutor
+4. Verify page shows tutor-specific content:
+   - "Individual Tutor" indicator/badge
+   - "Set Up Your Tutoring Practice" heading
+   - Tutor-specific messaging
+5. Use browser back button to return to landing page
+
+Expected: Tutor signup button navigates to signup page with tutor type parameter
+Screenshot: 08-tutor-signup-navigation.png
+
+Step 9: School Signup Navigation Test
+1. From landing page, click "Register Your Institution" button
+2. Verify navigation to signup page occurs
+3. Check URL becomes http://localhost:8081/auth/signup?type=school
+4. Verify page shows school-specific content:
+   - "School/Institution" indicator/badge
+   - "Register Your School" heading
+   - School-specific messaging
+5. Use browser back button to return to landing page
+
+Expected: School signup button navigates to signup page with school type parameter
+Screenshot: 09-school-signup-navigation.png
+
+Step 10: Sign In Navigation Test
+1. From landing page, click "Sign In" button in header
+2. Verify navigation to signin page occurs
+3. Check URL becomes http://localhost:8081/auth/signin
+4. Verify signin page loads with login form
+5. Use browser back button to return to landing page
+
+Expected: Sign in button navigates to signin page correctly
+Screenshot: 10-signin-navigation.png
+
+Step 11: Footer Sign In Test
+1. From landing page, click "Sign in here" link in footer
+2. Verify navigation to signin page occurs
+3. Check URL becomes http://localhost:8081/auth/signin
+4. Verify same signin page loads as header link
+
+Expected: Footer sign in link works identically to header button
+Screenshot: 11-footer-signin-navigation.png
+
+Step 12: Direct Landing Page Access Test
+1. Navigate directly to http://localhost:8081/landing
+2. Verify page loads without redirect
+3. Verify all content displays correctly
+4. Test all buttons/links function properly
+
+Expected: Direct access to landing page works without issues
+Screenshot: 12-direct-landing-access.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Landing page loads correctly, displays all required content sections, user type options are clearly distinguished, all navigation links work correctly, and both tutor and school signup flows are accessible with proper URL parameters
+
+FAIL: Any of the following occurs:
+- Landing page fails to load or displays errors
+- Required content sections are missing or malformed
+- User type options are not clearly distinguished
+- Navigation buttons don't work or go to wrong destinations
+- URL parameters are not set correctly for signup flows
+- Visual styling is broken or unprofessional
+
+Individual Step Criteria:
+- Step 1: PASS if both servers start and respond, FAIL if either server fails to start
+- Step 2: PASS if automatic redirect to /landing works, FAIL if stays on root or redirects elsewhere
+- Step 3: PASS if all main content elements are visible, FAIL if any key content missing
+- Step 4: PASS if Individual Tutor section has all required elements and primary styling, FAIL if incomplete or not prominent
+- Step 5: PASS if School section has all institutional features listed, FAIL if content incomplete
+- Step 6: PASS if all four feature cards display with icons, FAIL if any missing or broken
+- Step 7: PASS if all navigation elements are visible and interactive, FAIL if missing or non-functional
+- Step 8: PASS if tutor button navigates to signup?type=tutor with correct content, FAIL otherwise
+- Step 9: PASS if school button navigates to signup?type=school with correct content, FAIL otherwise
+- Step 10-11: PASS if both signin links work correctly, FAIL if navigation broken
+- Step 12: PASS if direct access works properly, FAIL if redirect issues or content problems
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Landing page must be professional and welcoming
+- Individual Tutor option should be visually prominent (primary styling)
+- Clear value propositions for both user types
+- Smooth navigation transitions without page flashes
+- Responsive design elements should adapt to screen size
+- All interactive elements should have proper hover/focus states

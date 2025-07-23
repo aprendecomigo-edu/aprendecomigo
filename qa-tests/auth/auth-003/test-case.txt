@@ -1,0 +1,313 @@
+QA Test Case: Enhanced Tutor Signup Flow with Auto-Generated School Names
+
+Test ID: AUTH-003
+Test Name: Enhanced Tutor Signup Flow with Auto-Generated School Names
+Purpose: Verify that individual tutors can successfully complete the enhanced signup flow using URL parameters from the landing page, with automatic school name generation, proper visual indicators, and account creation
+Expected Result: Tutor account is created with auto-generated school name, email verified, and user can access their dashboard
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Enhanced signup flows with user type selection (Issue #15 implementation)
+- Authentication: Passwordless email verification with 6-digit codes
+- Email Backend: Console backend (prints emails to server logs)
+- Registration: Creates new tutor account with auto-generated school/practice name
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- Test Email: tutor.test+$(date +%s)@example.com (unique email for each test)
+- Alternative Test Email: individual.tutor@testdomain.com
+- Tutor Name: "Maria Silva"
+- Expected Auto-Generated School Name: "Maria Silva's Tutoring Practice"
+- Phone Number: "+351 912 345 678"
+- Expected User Role: teacher (to be created)
+
+Database Prerequisite:
+- Ensure test email does NOT exist in database before starting
+- Test should create entirely new user and school records
+- Tutor should be associated with auto-generated school name
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  export DJANGO_ENV=development
+  python manage.py runserver 127.0.0.1:8000 > /tmp/django_server.log 2>&1 &
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  export EXPO_PUBLIC_ENV=development
+  npm start > /tmp/frontend.log 2>&1 &
+
+Expected: Both services start successfully
+- Backend: http://127.0.0.1:8000/api/ responds with 401 for /api/ (normal auth error)
+- Frontend: http://localhost:8081 shows loading screen then redirects to landing
+
+Screenshot: 01-servers-started.png
+
+Step 2: Navigate Through Landing Page to Tutor Signup
+1. Open browser to http://localhost:8081/
+2. Verify automatic redirect to http://localhost:8081/landing
+3. Verify landing page loads with user type options
+4. Locate "Individual Tutor" card with graduation cap icon
+5. Verify "Individual Tutor" section has primary styling (blue background/border)
+6. Verify features list includes:
+   - "Professional scheduling system"
+   - "Automated billing and invoicing"
+   - "Student progress tracking"
+   - "Cross-platform accessibility"
+   - "Secure payment processing"
+7. Click "Start Your Tutoring Practice" button
+
+Expected Results:
+- Landing page displays correctly with clear tutor option
+- Individual Tutor card is visually prominent (primary styling)
+- Navigation to signup page occurs
+- URL becomes http://localhost:8081/auth/signup?type=tutor
+
+Screenshot: 02-landing-to-tutor-signup.png
+
+Step 3: Verify Tutor-Specific Signup Page Content
+1. Verify URL parameter correctly passed: ?type=tutor
+2. Check for tutor-specific visual indicators:
+   - User type indicator showing "Individual Tutor" with graduation cap icon
+   - Blue circular icon background for tutor type
+   - Heading reads "Set Up Your Tutoring Practice"
+   - Subtitle: "Create your professional tutoring account with Aprende Comigo"
+3. Verify form sections are present:
+   - "Personal Information" section
+   - "Practice Information" section (not "School Information")
+4. Verify practice-specific messaging:
+   - Practice name field shows "Practice Name" label
+   - Helper text: "Your practice name will be auto-generated from your name"
+
+Expected: Signup page displays tutor-specific content and visual indicators
+Screenshot: 03-tutor-signup-page-loaded.png
+
+Step 4: Fill Personal Information Section
+1. Click in "Full Name" field
+2. Type: Maria Silva
+3. Click in "Email Address" field  
+4. Type: individual.tutor@testdomain.com
+5. Click in "Phone Number" field
+6. Type: +351 912 345 678
+7. Verify phone number validation accepts Portuguese format
+8. Select "Email" as primary contact method (default should be selected)
+9. Verify helper text updates: "A verification code will be sent to your email address"
+
+Expected: All personal information fields accept input correctly
+- Phone validation accepts international format
+- Primary contact selection shows appropriate helper text
+Screenshot: 04-personal-information-filled.png
+
+Step 5: Verify Auto-Generated Practice Name Functionality
+1. Observe the "Practice Information" section
+2. Verify "Practice Name" field is present
+3. Check that practice name field shows "Maria Silva's Tutoring Practice"
+4. Verify the field appears disabled/read-only (grayed out background)
+5. Verify helper text: "This will be automatically generated from your name. You can change it later in settings."
+6. Try to edit the practice name field (should not be editable)
+7. Modify the name field to "Maria Santos" 
+8. Verify practice name automatically updates to "Maria Santos's Tutoring Practice"
+9. Change name back to "Maria Silva"
+
+Expected: Auto-generation functionality works correctly
+- Practice name updates automatically when tutor name changes
+- Field is read-only for tutors
+- Helper text explains auto-generation behavior
+Screenshot: 05-auto-generated-practice-name.png
+
+Step 6: Verify Tutor-Specific Form Behavior
+1. Verify that school-specific fields are NOT present:
+   - No "School Address" field
+   - No "School Website" field
+2. Verify only practice-related fields are shown
+3. Verify form validation messages are appropriate for tutors
+4. Verify the practice name field maintains auto-generated value
+5. Check that the primary contact radio buttons work correctly
+
+Expected: Form shows only tutor-relevant fields, no school-specific options
+Screenshot: 06-tutor-form-validation.png
+
+Step 7: Submit Tutor Registration
+1. Verify all required fields are filled:
+   - Full Name: "Maria Silva"
+   - Email: "individual.tutor@testdomain.com" 
+   - Phone: "+351 912 345 678"
+   - Primary Contact: "Email" selected
+   - Practice Name: "Maria Silva's Tutoring Practice" (auto-generated)
+2. Click "Create Account" button
+3. Verify button shows loading state: "Creating Account..."
+4. Wait for form submission to complete
+
+Expected: Form submits successfully without validation errors
+- Loading state appears during submission
+- No client-side validation errors
+Screenshot: 07-tutor-registration-submitted.png
+
+Step 8: Verify Navigation to Verification Page
+Expected Results:
+- Page navigates to verification code page
+- URL becomes /auth/verify-code?contact=individual.tutor@testdomain.com&contactType=email
+- Page shows "Verify Code" heading
+- Shows text "Enter the verification code sent to individual.tutor@testdomain.com"
+- Shows verification code input field
+- Shows "Verify Code" and "Try Again" buttons
+- Success toast appears: "Registration successful! Please verify your email."
+
+Screenshot: 08-verification-page-loaded.png
+
+Step 9: Extract Verification Code from Server Logs
+Command: tail -30 /tmp/django_server.log
+
+Look for email content containing:
+"Your verification code is: XXXXXX"
+"Welcome to Aprende Comigo" or similar welcome message
+
+Expected Log Content:
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Subject: Aprende Comigo - Verify Your Email
+From: noreply@aprendecomigo.com
+To: individual.tutor@testdomain.com
+Date: [timestamp]
+
+Welcome to Aprende Comigo!
+
+Your verification code is: [6-digit code]
+
+This code will expire in 5 minutes.
+
+Step 10: Complete Email Verification for Tutor
+1. Click in verification code input field
+2. Type the 6-digit code extracted from server logs
+3. Click "Verify Code" button
+4. Wait for verification processing
+
+Expected:
+- Code verification succeeds
+- Tutor account is created in database with auto-generated school name
+- Success message appears: "Verification successful!"
+- Navigation to dashboard or onboarding flow
+
+Step 11: Verify Successful Tutor Account Creation
+Expected Results:
+- Page navigates to dashboard ("/")
+- User sees tutor-specific dashboard interface
+- Welcome message for new tutor
+- Dashboard shows auto-generated practice name "Maria Silva's Tutoring Practice"
+- Success toast: "Verification successful!"
+
+Screenshot: 09-tutor-dashboard-loaded.png
+
+Step 12: Verify Backend Database State for Tutor
+Commands:
+  tail -20 /tmp/django_server.log
+  cd /Users/anapmc/Code/aprendecomigo/backend
+  python manage.py shell -c "
+from accounts.models import User, School
+user = User.objects.get(email='individual.tutor@testdomain.com')
+print(f'User: {user.email}, Name: {user.name}, Role: {user.role}')
+school = School.objects.get(owner=user)
+print(f'School/Practice: {school.name}')
+print(f'School Owner: {school.owner.email}')
+"
+
+Expected Database State:
+- User exists with email individual.tutor@testdomain.com
+- User name is 'Maria Silva'
+- User role is 'teacher' (tutor role)
+- User is_verified = True
+- School exists with name "Maria Silva's Tutoring Practice"
+- School owner is the created tutor user
+- Auto-generated school name follows the pattern: "[Name]'s Tutoring Practice"
+
+Expected Log Entries:
+INFO "POST /api/accounts/auth/register/ HTTP/1.1" 201 [response_size]
+INFO "POST /api/accounts/auth/verify-email/ HTTP/1.1" 200 [response_size]
+INFO "GET /api/accounts/users/dashboard_info/ HTTP/1.1" 200 [response_size]
+
+Step 13: Test Auto-Generation Edge Cases (Optional Verification)
+1. Navigate back to landing page and start new tutor signup
+2. Test auto-generation with different name formats:
+   - Single name: "João" → "João's Tutoring Practice"
+   - Compound name: "Ana Maria Santos" → "Ana Maria Santos's Tutoring Practice"
+   - Name with accents: "José António" → "José António's Tutoring Practice"
+3. Verify auto-generation handles edge cases correctly
+
+Expected: Auto-generation works with various Portuguese name formats
+Screenshot: 10-auto-generation-edge-cases.png
+
+Step 14: Verify Subsequent Login for Tutor (Optional)
+1. Sign out from the application (if logout available)
+2. Navigate to login page via landing page
+3. Use the tutor email (individual.tutor@testdomain.com) to login
+4. Complete verification process
+5. Verify dashboard access shows practice name correctly
+
+Expected: Tutor can successfully login with created account
+Screenshot: 11-tutor-subsequent-login.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND tutor account is created with auto-generated practice name AND verification works AND dashboard access is functional
+
+FAIL: Any of the following occurs:
+- URL parameters not properly handled from landing page
+- Tutor-specific visual indicators missing or incorrect
+- Auto-generation functionality doesn't work correctly
+- Practice name field is editable for tutors
+- School-specific fields appear in tutor signup
+- Form validation inappropriate for tutor signup
+- Account creation fails or creates wrong user type
+- Auto-generated school name doesn't follow expected pattern
+- Database state inconsistent or missing records
+
+Individual Step Criteria:
+- Step 1: PASS if both services start and respond, FAIL if either service fails
+- Step 2: PASS if landing navigation works with correct URL params, FAIL if navigation broken or wrong URL
+- Step 3: PASS if tutor-specific content displays correctly, FAIL if generic or wrong content
+- Step 4: PASS if personal information form accepts all input correctly, FAIL if validation errors
+- Step 5: PASS if auto-generation works and updates dynamically, FAIL if static or broken
+- Step 6: PASS if only tutor-relevant fields shown, FAIL if school fields appear
+- Step 7: PASS if form submits successfully, FAIL if validation prevents submission
+- Step 8: PASS if verification page loads with correct parameters, FAIL if navigation fails
+- Step 9: PASS if verification code found in logs, FAIL if no code generated
+- Step 10: PASS if code verification succeeds, FAIL if code rejected
+- Step 11: PASS if tutor dashboard loads with practice name, FAIL if error or wrong interface
+- Step 12: PASS if database contains correct tutor and auto-generated school records, FAIL if data inconsistent
+- Step 13-14: PASS if edge cases and subsequent login work, FAIL if functionality broken (optional steps)
+
+Edge Cases to Consider:
+- Empty name field should clear auto-generated practice name
+- Special characters in name should be handled appropriately
+- Very long names should not break auto-generation
+- Existing practice name conflict handling
+- Network interruption during registration
+- Invalid verification code handling
+- Expired verification code scenario
+
+Overall Result: PASS only if ALL required steps (1-12) pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- URL parameters from landing page must be properly handled
+- Tutor type selection must be visually clear and prominent
+- Auto-generation functionality must be intuitive and responsive
+- Form validation should be appropriate for tutor signup context
+- Practice name field must appear non-editable but auto-updating
+- Helper text should clearly explain auto-generation behavior
+- Visual indicators must clearly distinguish tutor from school signup
+- Loading states prevent double-submission during registration
+- Success feedback is clear and encouraging for new tutors
+- Dashboard immediately shows tutor-relevant content with practice name
+- Error messages are helpful and contextual to tutor signup

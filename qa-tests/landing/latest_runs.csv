@@ -1,0 +1,4 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+landing-001,Landing Page User Type Selection,Verify landing page loads correctly with user type options and navigation flows,2025-07-23T09:23:25Z,PASS,1,1,0
+landing-002,Landing Page Responsive Design Cross-Device Testing,Verify that the landing page displays correctly and functions properly across different screen sizes,,,0,0,0landing-001,Landing Page User Type Selection,Verify landing page loads correctly with user type options and navigation flows,2025-07-23T11:26:08+01:00,PASS,2,2,0
+landing-002,Landing Page Responsive Design Cross-Device Testing,Verify that the landing page displays correctly and functions properly across different screen sizes,2025-07-23T11:26:10+01:00,PASS,1,1,0

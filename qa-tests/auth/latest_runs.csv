@@ -1,3 +1,7 @@
 test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
 auth-001,School Manager Login Authentication Flow,Verify school manager can authenticate via passwordless email verification,run-20250704-115445,PASS,5,1,4
 auth-002,School Manager Registration and Signup Flow,Verify new user can register as school manager and complete onboarding,,,0,0,0
+auth-003,Enhanced Tutor Signup Flow with Auto-Generated School Names,Verify tutors can complete enhanced signup flow with URL parameters and auto-generated practice names,,,0,0,0
+auth-004,Enhanced School Signup Flow with Manual School Name Entry,Verify schools can complete enhanced signup flow with URL parameters and manual institutional details,,,0,0,0
+auth-003,Enhanced Tutor Signup Flow with Auto-Generated School Names,Verify tutors can complete enhanced signup flow with URL parameters and auto-generated practice names,2025-07-23T11:19:39+01:00,PASS,1,1,0
+auth-004,Enhanced School Signup Flow with Manual School Name Entry,Verify schools can complete enhanced signup flow with URL parameters and manual institutional details,2025-07-23T11:19:41+01:00,PASS,1,1,0
