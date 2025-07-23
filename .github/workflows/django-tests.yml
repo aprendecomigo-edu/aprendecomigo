@@ -22,6 +22,10 @@ jobs:
       matrix:
         python-version: ["3.11"]  # Using a stable Python version compatible with Django 5.2
 
+    env:
+      DJANGO_ENV: testing
+      DJANGO_SETTINGS_MODULE: aprendecomigo.settings.testing
+
     steps:
     - uses: actions/checkout@v4
 
@@ -36,6 +40,16 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -r requirements.txt
 
+    - name: Check Django configuration
+      working-directory: ./backend
+      run: |
+        python manage.py check --settings=aprendecomigo.settings.testing
+
+    - name: Run database migrations
+      working-directory: ./backend
+      run: |
+        python manage.py migrate --settings=aprendecomigo.settings.testing
+
     - name: Lint with flake8
       working-directory: ./backend
       run: |
@@ -48,4 +62,9 @@ jobs:
     - name: Test with Django
       working-directory: ./backend
       run: |
-        python manage.py test
+        python manage.py test --settings=aprendecomigo.settings.testing
+
+    - name: Test with pytest (alternative)
+      working-directory: ./backend
+      run: |
+        pytest --tb=short -v

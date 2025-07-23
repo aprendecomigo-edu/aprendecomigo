@@ -54,7 +54,10 @@ CACHES = {
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.InMemoryStorage",
-    }
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
 }
 
 # Use an in-memory email backend
@@ -63,3 +66,4 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 # Import all settings from base.py
 from .base import *  # noqa: F403, E402
+
