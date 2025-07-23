@@ -38,6 +38,7 @@ Step 1: Environment Setup and Database Preparation
 Commands:
   cd /Users/anapmc/Code/aprendecomigo
   source .venv/bin/activate
+  make dev
   cd backend
   # Verify no teacher profile for test user 1
   python manage.py shell -c "
@@ -46,7 +47,6 @@ Commands:
   existing = TeacherProfile.objects.filter(user=user).exists()
   print(f'User {user.email} has teacher profile: {existing}')
   "
-  python manage.py runserver --settings=aprendecomigo.settings.development
 
 Expected: Environment ready, user 1 confirmed WITHOUT teacher profile
 Screenshot: 01_environment_database_ready.png

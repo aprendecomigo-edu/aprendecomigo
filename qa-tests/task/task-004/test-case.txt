@@ -36,14 +36,8 @@ Step 1: Environment Setup and Server Start
 Commands:
   cd /Users/anapmc/Code/aprendecomigo
   source .venv/bin/activate
-  cd backend
-  python manage.py runserver --settings=aprendecomigo.settings.development
+  make dev
 
-Open new terminal:
-  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
-  npm start
-
-Expected: Both servers start successfully
 Screenshot: 01_servers_started.png
 
 Step 2: Navigate to Application and Login
