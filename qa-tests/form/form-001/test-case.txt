@@ -37,12 +37,7 @@ Step 1: Environment Setup and Authentication
 Commands:
   cd /Users/anapmc/Code/aprendecomigo
   source .venv/bin/activate
-  cd backend
-  python manage.py runserver --settings=aprendecomigo.settings.development
-  # In new terminal:
-  cd frontend-ui
-  npm start
-
+  make dev
 Expected: Both servers running, user authenticated and on /users page
 Screenshot: 01_environment_ready.png
 

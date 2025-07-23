@@ -39,18 +39,13 @@ Start required services:
 Commands:
   cd /Users/anapmc/Code/aprendecomigo
   source .venv/bin/activate
+  make dev
 
   # Start Redis for WebSocket support
   redis-server
 
-  # In new terminal - Start Django backend
-  cd backend
-  python manage.py runserver --settings=aprendecomigo.settings.development
 
   # In another terminal - Start React Native frontend
-  cd frontend-ui
-  npm start
-
 Expected: All services start without errors
 Screenshot: 01_services_running.png
 

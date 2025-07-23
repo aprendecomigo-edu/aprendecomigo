@@ -32,19 +32,13 @@ Step 1: Environment Setup and Server Start
 Commands:
   cd /Users/anapmc/Code/aprendecomigo
   source .venv/bin/activate
-  cd backend
-  python manage.py runserver --settings=aprendecomigo.settings.development
+  make dev
 
 Expected: Django development server starts successfully on port 8000
 Screenshot: 01_backend_server_started.png
 
 Step 2: Start Frontend Development Server
 Commands:
-  # In new terminal
-  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
-  npm start
-
-Expected: Expo development server starts and shows QR code/options
 Screenshot: 02_frontend_server_started.png
 
 Step 3: Navigate to Web Application (Desktop View)
