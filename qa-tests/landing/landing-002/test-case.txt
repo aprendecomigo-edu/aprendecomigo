@@ -1,16 +1,16 @@
-QA Test Case: Landing Page Responsive Design
+QA Test Case: Modern Landing Page Navigation and Interactions
 
 Test ID: LANDING-002
-Test Name: Landing Page Responsive Design Cross-Device Testing
-Purpose: Verify that the landing page displays correctly and functions properly across different screen sizes and devices
-Expected Result: Landing page maintains usability and visual integrity on desktop, tablet, and mobile viewports
+Test Name: Modern Landing Page Navigation and Interactions
+Purpose: Verify that all interactive elements, buttons, links, and form functionality work correctly on the redesigned landing page, including navigation to other pages and form submission handling
+Expected Result: All buttons navigate correctly, contact form accepts input and handles submission, hover effects work, and user can successfully navigate to signup/signin pages
 
 === CONTEXT (Pre-test Requirements) ===
 
 System Information:
 - Project: Aprende Comigo - Educational platform
 - Architecture: Django REST backend + React Native frontend
-- Feature: Responsive landing page design
+- New Feature: Modern landing page redesign (PR #22) with interactive elements and navigation
 
 Required Environment Setup:
 1. Project Location: /Users/anapmc/Code/aprendecomigo/
@@ -20,198 +20,219 @@ Required Environment Setup:
    - EXPO_PUBLIC_ENV=development
 
 Test Data:
-- No specific user accounts required
-- Test URL: http://localhost:8081/landing
-
-Test Viewports:
-- Desktop Large: 1920x1080
-- Desktop Standard: 1280x720
-- Tablet: 768x1024
-- Mobile Large: 414x896 (iPhone XR)
-- Mobile Standard: 375x667 (iPhone 8)
-- Mobile Small: 320x568 (iPhone 5)
+- Test contact form data:
+  - Name: "Test User"
+  - Email: "test@example.com"
+  - Message: "This is a test message for the contact form functionality."
 
 Prerequisites:
 - Both backend and frontend servers must be running
-- Modern browser with developer tools (Chrome/Firefox recommended)
+- Feature branch: landing-page-redesign-modern deployed
+- Modern browser with JavaScript enabled
+- All auth pages (/auth/signin, /auth/signup) should be accessible
 
 === DETAILED STEP-BY-STEP INSTRUCTIONS ===
 
-Step 1: Environment Setup
+Step 1: Environment Setup and Initial Load
 1. Navigate to project root: cd /Users/anapmc/Code/aprendecomigo
 2. Activate virtual environment: source .venv/bin/activate
 3. Start backend server: cd backend && python manage.py runserver 127.0.0.1:8000 > server.log 2>&1 &
 4. Start frontend server: cd ../frontend-ui && npm start > frontend.log 2>&1 &
-5. Open browser and navigate to http://localhost:8081/landing
-6. Open browser developer tools (F12)
-7. Access device simulation/responsive mode
+5. Open browser to http://localhost:8081/
+6. Verify landing page loads completely
+7. Open browser developer console to monitor for errors
 
-Expected: Servers running and browser ready for responsive testing
-Screenshot: 01-responsive-testing-setup.png
+Expected: Servers running and landing page loaded successfully
+Screenshot: 01-environment-setup.png
 
-Step 2: Desktop Large Display Test (1920x1080)
-1. Set viewport to 1920x1080 in dev tools
-2. Refresh page to ensure proper rendering
-3. Verify all content is visible without horizontal scrolling
-4. Check that content doesn't appear too stretched or sparse
-5. Verify proper spacing and alignment
-6. Test all buttons and links functionality
-7. Check that user type cards are well-proportioned
+Step 2: Header Navigation Testing
+1. Verify header "Sign In" button is clickable
+2. Click "Sign In" button in header
+3. Verify navigation to signin page (URL: /auth/signin)
+4. Check that signin page loads properly
+5. Use browser back button to return to landing page
+6. Verify landing page reloads correctly
+7. Test "Sign Up" button in header:
+   - Click "Sign Up" button
+   - Verify navigation to signup page (URL: /auth/signup)
+   - Check signup page loads properly
+   - Return to landing page using back button
 
-Expected: Page displays with optimal use of large screen space
-Screenshot: 02-desktop-large-1920x1080.png
+Expected: Header buttons navigate correctly to auth pages and back
+Screenshot: 02-header-navigation.png
 
-Step 3: Desktop Standard Display Test (1280x720)
-1. Set viewport to 1280x720
-2. Refresh page
-3. Verify all content remains fully visible
-4. Check that navigation elements are accessible
-5. Verify user type cards maintain good proportions
-6. Test that all interactive elements remain clickable
-7. Check text readability and font sizes
+Step 3: Hero Section Interaction Testing
+1. Scroll to hero section (should be at top)
+2. Verify "Get Started" button is visible and prominent
+3. Test hover effect on "Get Started" button (should show scale/color change)
+4. Click "Get Started" button
+5. Verify navigation to signup page (URL: /auth/signup)
+6. Check that signup page indicates it came from hero CTA
+7. Return to landing page
+8. Test hero image placeholder interaction (hover effect if any)
 
-Expected: Standard desktop experience with all functionality intact
-Screenshot: 03-desktop-standard-1280x720.png
+Expected: Hero CTA button works correctly and provides proper visual feedback
+Screenshot: 03-hero-interactions.png
 
-Step 4: Tablet Portrait Test (768x1024)
-1. Set viewport to 768x1024 (iPad portrait)
-2. Refresh page
-3. Verify content adapts to tablet layout
-4. Check that user type cards stack or resize appropriately
-5. Verify touch-friendly button sizes
-6. Test scrolling behavior (should be smooth)
-7. Check that platform features section displays well
-8. Verify navigation elements remain accessible
+Step 4: Pricing Section Interaction Testing
+1. Scroll to pricing section
+2. Test hover effects on both pricing cards
+3. Verify cards have proper hover animations (translate-y effect)
+4. Test "Choose Plan" button on Monthly Subscription card:
+   - Click the button
+   - Verify navigation to appropriate page (likely /parents or signup)
+   - Return to landing page
+5. Test "Buy Now" button on One-Time Purchase card:
+   - Click the button
+   - Verify navigation to appropriate page
+   - Return to landing page
+6. Verify "Most Popular" badge is clearly visible on one-time purchase card
 
-Expected: Tablet-optimized layout with touch-friendly elements
-Screenshot: 04-tablet-portrait-768x1024.png
+Expected: Pricing cards show proper hover effects and buttons navigate correctly
+Screenshot: 04-pricing-interactions.png
 
-Step 5: Tablet Landscape Test (1024x768)
-1. Set viewport to 1024x768 (iPad landscape)
-2. Refresh page
-3. Verify horizontal layout utilization
-4. Check that content doesn't appear cramped
-5. Test navigation and button functionality
-6. Verify user type cards display side-by-side if appropriate
+Step 5: Call-to-Action Section Testing
+1. Scroll to CTA section ("Ready to Start Learning?")
+2. Verify "Find Your Tutor Now" button is prominent
+3. Test hover effect on CTA button (scale and color change)
+4. Click "Find Your Tutor Now" button
+5. Verify navigation to signup page (URL: /auth/signup)
+6. Return to landing page
+7. Test button accessibility (tab navigation if available)
 
-Expected: Landscape tablet layout maximizes horizontal space
-Screenshot: 05-tablet-landscape-1024x768.png
+Expected: CTA button works correctly with proper visual feedback and navigation
+Screenshot: 05-cta-interactions.png
 
-Step 6: Mobile Large Test (414x896 - iPhone XR)
-1. Set viewport to 414x896
-2. Refresh page
-3. Verify mobile-first responsive design kicks in
-4. Check that user type cards stack vertically
-5. Verify text remains readable without zooming
-6. Test that buttons are large enough for finger taps
-7. Check that no horizontal scrolling is required
-8. Verify proper spacing between elements
-9. Test all navigation links work on mobile
+Step 6: Contact Form Field Testing
+1. Scroll to contact form section
+2. Click on "Full Name" input field
+3. Verify field receives focus (visual indicator)
+4. Type "Test User" in the name field
+5. Click on "Email Address" input field
+6. Type "test@example.com" in email field
+7. Click on "Message" textarea
+8. Type "This is a test message for the contact form functionality."
+9. Verify all text appears correctly in each field
+10. Test tab navigation between fields
 
-Expected: Mobile-optimized layout with stacked content and touch-friendly UI
-Screenshot: 06-mobile-large-414x896.png
+Expected: All form fields accept input correctly and show proper focus states
+Screenshot: 06-contact-form-inputs.png
 
-Step 7: Mobile Standard Test (375x667 - iPhone 8)
-1. Set viewport to 375x667
-2. Refresh page
-3. Verify all content fits within narrow viewport
-4. Check that text doesn't become too small to read
-5. Verify user type cards maintain good proportions when stacked
-6. Test button accessibility and tap targets
-7. Check scrolling performance
-8. Verify no content is cut off or hidden
+Step 7: Contact Form Validation Testing
+1. Clear all form fields
+2. Try to submit empty form (click "Send Message")
+3. Check if any client-side validation occurs
+4. Enter invalid email format (e.g., "invalid-email")
+5. Try to submit and check for email validation
+6. Enter valid data in all fields:
+   - Name: "Test User"
+   - Email: "test@example.com"  
+   - Message: "Testing form functionality"
+7. Verify form accepts valid data
 
-Expected: Compact mobile layout with all content accessible
-Screenshot: 07-mobile-standard-375x667.png
+Expected: Form handles validation appropriately and accepts valid input
+Screenshot: 07-form-validation.png
 
-Step 8: Mobile Small Test (320x568 - iPhone 5)
-1. Set viewport to 320x568 (smallest common mobile size)
-2. Refresh page  
-3. Verify page still functions on very small screens
-4. Check that critical content remains visible
-5. Verify buttons are still tappable
-6. Test that text doesn't wrap awkwardly
-7. Check minimum font sizes are maintained
-8. Verify user type selection remains functional
+Step 8: Contact Form Submission Testing
+1. With valid data in all form fields, click "Send Message" button
+2. Check browser console for any JavaScript errors or logs
+3. Verify button shows proper loading/click state
+4. Check if form provides feedback (success message or console log)
+5. Verify form behavior after submission (stays filled or clears)
+6. Check network tab in dev tools for any API calls (if implemented)
 
-Expected: Functional experience even on smallest mobile screens
-Screenshot: 08-mobile-small-320x568.png
+Note: Based on PR code, form submission just logs to console currently
+Expected: Form submission is handled gracefully with console log output
+Screenshot: 08-form-submission.png
 
-Step 9: Responsive Transition Testing
-1. Start at desktop size (1280x720)
-2. Slowly drag viewport width from large to small
-3. Observe how content reflows and adapts
-4. Check for any jarring layout jumps or breaks
-5. Verify smooth transitions between breakpoints
-6. Test at various intermediate sizes (900px, 600px, 480px)
-7. Check that no content disappears during transitions
+Step 9: Footer Navigation Testing
+1. Scroll to footer section
+2. Test each footer link individually:
+   - Click "About" link (check if implemented or shows placeholder)
+   - Click "Pricing" link (should navigate to /parents or scroll to pricing)
+   - Click "Contact" link (should scroll to contact form or show placeholder)
+   - Click "Terms" link (check if implemented or shows placeholder)
+3. Verify each link provides appropriate response
+4. Test social media icon interactions (hover effects)
+5. Verify footer links are accessible and clickable
 
-Expected: Smooth responsive transitions without layout breaks
-Screenshot: 09-responsive-transitions.png
+Expected: Footer links either navigate correctly or gracefully handle placeholder state
+Screenshot: 09-footer-navigation.png
 
-Step 10: Touch Interaction Testing (Mobile Viewports)
-1. Set viewport to mobile size (375x667)
-2. Test finger-sized tap targets on all buttons
-3. Verify proper touch feedback (hover states work on mobile)
-4. Test scrolling with touch gestures
-5. Check that links and buttons have adequate spacing
-6. Verify no accidental taps on nearby elements
-7. Test pinch-to-zoom behavior (should work appropriately)
+Step 10: Responsive Interaction Testing
+1. Resize browser window to tablet size (768px wide)
+2. Test all buttons remain clickable at tablet size
+3. Verify touch-friendly button sizes
+4. Test mobile size (375px wide)
+5. Verify header navigation still works on mobile
+6. Test pricing card interactions on mobile (should stack vertically)
+7. Test contact form usability on mobile
+8. Verify footer links remain accessible on mobile
 
-Expected: All touch interactions work smoothly on mobile
-Screenshot: 10-touch-interaction-testing.png
+Expected: All interactions work properly across different screen sizes
+Screenshot: 10-responsive-interactions.png
 
-Step 11: Text Readability Testing
-1. Test text readability at each major viewport size
-2. Verify heading hierarchy remains clear
-3. Check that body text is legible without zoom
-4. Verify button text remains readable
-5. Check that feature descriptions aren't truncated
-6. Test contrast and visibility in different sizes
+Step 11: Keyboard Navigation Testing
+1. Return to desktop size
+2. Use Tab key to navigate through interactive elements
+3. Verify tab order is logical (top to bottom)
+4. Test that all buttons can be activated with Enter key
+5. Test that form fields can be navigated with Tab
+6. Verify focus indicators are visible for keyboard users
+7. Test Escape key behavior in form fields
 
-Expected: Text remains readable and well-formatted across all sizes
-Screenshot: 11-text-readability-testing.png
+Expected: Keyboard navigation works properly with visible focus indicators
+Screenshot: 11-keyboard-navigation.png
 
-Step 12: Cross-Browser Mobile Testing
-1. Test on mobile Safari (if available) or Safari responsive mode
-2. Test on mobile Chrome or Chrome mobile simulation
-3. Verify consistent behavior across mobile browsers
-4. Check for any browser-specific layout issues
-5. Test navigation functionality in both browsers
+Step 12: Performance and Error Testing
+1. Open browser developer tools Network tab
+2. Refresh landing page and monitor network requests
+3. Verify no failed requests or 404 errors
+4. Check Console tab for any JavaScript errors
+5. Test rapid clicking on buttons to check for race conditions
+6. Verify page performance (should load quickly)
+7. Test multiple navigation back/forward cycles
+8. Check that hover effects perform smoothly
 
-Expected: Consistent experience across mobile browsers
-Screenshot: 12-cross-browser-mobile.png
+Expected: No errors, good performance, and smooth interactions
+Screenshot: 12-performance-testing.png
 
 === PASS/FAIL CRITERIA ===
 
-PASS: Landing page displays correctly and functions properly across all tested viewport sizes, maintains usability on mobile devices, shows smooth responsive transitions, and provides touch-friendly interactions
+PASS: All interactive elements function correctly, navigation buttons lead to appropriate pages, contact form accepts input and handles submission properly, hover effects work smoothly, keyboard navigation is functional, and no JavaScript errors occur
 
 FAIL: Any of the following occurs:
-- Content is cut off or hidden at any viewport size
-- Horizontal scrolling required on mobile viewports
-- Buttons or links are too small for touch interaction
-- Text becomes unreadable at smaller sizes
-- Layout breaks or jumps awkwardly during responsive transitions
-- Critical functionality is lost on mobile devices
-- Performance is severely degraded on smaller viewports
+- Any navigation button fails to work or leads to wrong destination
+- Contact form fields don't accept input or show validation errors inappropriately
+- Form submission fails or causes JavaScript errors
+- Hover effects are broken or missing
+- Buttons are not clickable or responsive
+- JavaScript errors appear in console during normal usage
+- Keyboard navigation is broken or inaccessible
+- Performance is severely degraded
 
 Individual Step Criteria:
-- Step 1: PASS if testing environment setup successful, FAIL if servers or dev tools unavailable
-- Step 2-3: PASS if desktop layouts display properly with good spacing, FAIL if content appears broken or poorly formatted
-- Step 4-5: PASS if tablet layouts adapt appropriately, FAIL if content cramped or poorly organized
-- Step 6-8: PASS if mobile layouts stack content properly and remain functional, FAIL if content inaccessible or buttons too small
-- Step 9: PASS if responsive transitions are smooth, FAIL if jarring layout breaks occur
-- Step 10: PASS if touch interactions work properly, FAIL if buttons too small or poor touch response
-- Step 11: PASS if text remains readable at all sizes, FAIL if text too small or poorly formatted
-- Step 12: PASS if consistent across mobile browsers, FAIL if significant browser-specific issues
+- Step 1: PASS if environment setup successful, FAIL if servers or page loading fails
+- Step 2: PASS if header buttons navigate correctly to auth pages, FAIL if navigation broken
+- Step 3: PASS if hero CTA button works with proper effects, FAIL if button non-functional
+- Step 4: PASS if pricing buttons work and cards show hover effects, FAIL if interactions broken
+- Step 5: PASS if CTA section button navigates correctly, FAIL if button non-functional
+- Step 6: PASS if all form fields accept input correctly, FAIL if fields broken or non-responsive
+- Step 7: PASS if form validation works appropriately, FAIL if validation broken or inappropriate
+- Step 8: PASS if form submission is handled gracefully, FAIL if submission causes errors
+- Step 9: PASS if footer links work or handle placeholder state gracefully, FAIL if links broken
+- Step 10: PASS if all interactions work across screen sizes, FAIL if mobile interactions broken
+- Step 11: PASS if keyboard navigation works with visible focus, FAIL if keyboard access broken
+- Step 12: PASS if no errors and good performance, FAIL if errors or poor performance
 
 Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
 
 === UX/BEHAVIORAL REQUIREMENTS ===
-- Minimum tap target size: 44px x 44px for mobile buttons
-- No horizontal scrolling on mobile viewports
-- Text must remain readable without zooming (minimum 16px effective size)
-- Content should reflow naturally without awkward breaks
-- Critical actions (signup buttons) must remain prominent on all screen sizes
-- Loading performance should be acceptable on mobile networks
-- Touch gestures should feel natural and responsive
+- All buttons should provide immediate visual feedback on interaction
+- Navigation should be intuitive and lead users to expected destinations
+- Form should feel responsive and provide appropriate feedback
+- Hover effects should enhance usability without being distracting
+- Keyboard navigation should be accessible for users who rely on it
+- Mobile interactions should feel natural and touch-friendly
+- No interaction should cause page crashes or JavaScript errors
+- Performance should remain smooth during all interactions 
