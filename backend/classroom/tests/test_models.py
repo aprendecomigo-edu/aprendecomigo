@@ -10,6 +10,7 @@ This module contains tests for the following models:
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from classroom.models import Attachment, Channel, Message, Reaction
@@ -165,11 +166,11 @@ class ReactionModelTest(TestCase):
 
     def test_multiple_reactions(self):
         """Test multiple reactions from different users."""
-        reaction1 = Reaction.objects.create(message=self.message, user=self.user, emoji="👍")
+        Reaction.objects.create(message=self.message, user=self.user, emoji="👍")
 
-        reaction2 = Reaction.objects.create(message=self.message, user=self.user2, emoji="👍")
+        Reaction.objects.create(message=self.message, user=self.user2, emoji="👍")
 
-        reaction3 = Reaction.objects.create(message=self.message, user=self.user, emoji="❤️")
+        Reaction.objects.create(message=self.message, user=self.user, emoji="❤️")
 
         # User can have different emojis on same message
         self.assertEqual(Reaction.objects.filter(user=self.user).count(), 2)
@@ -219,3 +220,22 @@ class AttachmentModelTest(TestCase):
         # Test string representation
         self.assertIn("document.pdf", str(attachment))
         self.assertIn("application/pdf", str(attachment))
+
+    def test_attachment_file_size_limit(self):
+        """Oversized files should raise a ValidationError."""
+        big_content = b"0" * (5 * 1024 * 1024 + 1)
+        big_file = SimpleUploadedFile(
+            "big.pdf",
+            big_content,
+            content_type="application/pdf",
+        )
+
+        attachment = Attachment(
+            message=self.message,
+            file=big_file,
+            filename="big.pdf",
+            file_type="application/pdf",
+            size=len(big_content),
+        )
+        with self.assertRaises(ValidationError):
+            attachment.full_clean()

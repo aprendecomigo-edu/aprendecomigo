@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
+
+from .validators import validate_file_size
 from django.db import models
 
 
@@ -51,8 +53,17 @@ class Message(models.Model):
         blank=True,
         validators=[
             FileExtensionValidator(
-                allowed_extensions=["pdf", "doc", "docx", "jpg", "jpeg", "png", "gif"]
-            )
+                allowed_extensions=[
+                    "pdf",
+                    "doc",
+                    "docx",
+                    "jpg",
+                    "jpeg",
+                    "png",
+                    "gif",
+                ]
+            ),
+            validate_file_size,
         ],
     )
 
@@ -89,8 +100,17 @@ class Attachment(models.Model):
         upload_to="chat_attachments/",
         validators=[
             FileExtensionValidator(
-                allowed_extensions=["pdf", "doc", "docx", "jpg", "jpeg", "png", "gif"]
-            )
+                allowed_extensions=[
+                    "pdf",
+                    "doc",
+                    "docx",
+                    "jpg",
+                    "jpeg",
+                    "png",
+                    "gif",
+                ]
+            ),
+            validate_file_size,
         ],
     )
     filename = models.CharField(max_length=255)
