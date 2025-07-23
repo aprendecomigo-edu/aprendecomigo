@@ -1,0 +1,242 @@
+QA Test Case: Landing Page Navigation Flow and URL Parameter Handling
+
+Test ID: NAV-005
+Test Name: Landing Page Navigation Flow and URL Parameter Handling
+Purpose: Verify that the new landing page routing works correctly, URL parameters are handled properly, and navigation between landing/signup/signin flows functions seamlessly
+Expected Result: All routing between landing page, signup flows, and signin works correctly with proper URL parameter preservation and state management
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- New Feature: Landing page with enhanced routing and URL parameter handling (Issue #15)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data:
+- No specific user accounts required
+- Test URLs: http://localhost:8081/, http://localhost:8081/landing, http://localhost:8081/auth/signup, http://localhost:8081/auth/signin
+
+Prerequisites:
+- Both backend and frontend servers must be running
+- Feature branch: feature/improved-tutor-onboarding-issue-15 deployed
+- Browser with developer tools (for URL parameter inspection)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+1. Navigate to project root: cd /Users/anapmc/Code/aprendecomigo
+2. Activate virtual environment: source .venv/bin/activate
+3. Start backend server: cd backend && python manage.py runserver 127.0.0.1:8000 > server.log 2>&1 &
+4. Start frontend server: cd ../frontend-ui && npm start > frontend.log 2>&1 &
+5. Wait 10 seconds for servers to start
+6. Open browser with developer tools (F12)
+7. Prepare to monitor Network tab for navigation requests
+
+Expected: Both servers running and browser ready for navigation testing
+Screenshot: 01-navigation-testing-setup.png
+
+Step 2: Root URL Default Redirect Test
+1. Navigate to http://localhost:8081/
+2. Verify automatic redirect to /landing occurs
+3. Check URL bar shows http://localhost:8081/landing
+4. Verify redirect happens without page flash or loading delays
+5. Check browser history shows both "/" and "/landing" entries
+6. Test browser back button behavior (should work normally)
+
+Expected: Root URL redirects to landing page smoothly with proper history management
+Screenshot: 02-root-url-redirect-test.png
+
+Step 3: Direct Landing Page Access Test
+1. Clear browser history/start fresh tab
+2. Navigate directly to http://localhost:8081/landing
+3. Verify page loads without redirect
+4. Check URL remains http://localhost:8081/landing
+5. Verify all landing page content displays correctly
+6. Test browser refresh behavior (should stay on landing page)
+
+Expected: Direct landing page access works without additional redirects
+Screenshot: 03-direct-landing-access.png
+
+Step 4: Tutor Signup Navigation Parameter Test
+1. From landing page, click "Start Your Tutoring Practice" button
+2. Verify URL changes to http://localhost:8081/auth/signup?type=tutor
+3. Check that "type=tutor" parameter is present in URL
+4. Verify signup page displays tutor-specific content:
+   - "Individual Tutor" badge/indicator
+   - Graduation cap icon
+   - "Set Up Your Tutoring Practice" heading
+5. Check that form shows tutor-specific fields (no school address, etc.)
+6. Test browser back button returns to landing page
+
+Expected: Tutor signup navigation includes correct URL parameter and displays tutor-specific UI
+Screenshot: 04-tutor-signup-navigation-params.png
+
+Step 5: School Signup Navigation Parameter Test
+1. Navigate back to landing page
+2. Click "Register Your Institution" button
+3. Verify URL changes to http://localhost:8081/auth/signup?type=school
+4. Check that "type=school" parameter is present in URL
+5. Verify signup page displays school-specific content:
+   - "School/Institution" badge/indicator
+   - Building icon
+   - "Register Your School" heading
+6. Check that form shows school-specific fields (address, website, etc.)
+7. Test browser back button returns to landing page
+
+Expected: School signup navigation includes correct URL parameter and displays school-specific UI
+Screenshot: 05-school-signup-navigation-params.png
+
+Step 6: URL Parameter Persistence Test
+1. Navigate to http://localhost:8081/auth/signup?type=tutor
+2. Refresh the page using F5
+3. Verify URL parameter persists after refresh
+4. Check that tutor-specific UI remains after refresh
+5. Navigate to http://localhost:8081/auth/signup?type=school
+6. Refresh the page using F5
+7. Verify school parameter persists and UI updates correctly
+
+Expected: URL parameters persist through page refreshes and maintain correct UI state
+Screenshot: 06-url-parameter-persistence.png
+
+Step 7: Invalid Parameter Handling Test
+1. Navigate to http://localhost:8081/auth/signup?type=invalid
+2. Verify page handles invalid parameter gracefully
+3. Check default behavior (should show school signup or neutral state)
+4. Navigate to http://localhost:8081/auth/signup?type=
+5. Verify empty parameter is handled correctly
+6. Navigate to http://localhost:8081/auth/signup (no parameter)
+7. Verify page works without any type parameter
+
+Expected: Invalid or missing parameters are handled gracefully without errors
+Screenshot: 07-invalid-parameter-handling.png
+
+Step 8: Signin Navigation from Landing Test
+1. Navigate to landing page
+2. Click "Sign In" button in header
+3. Verify URL changes to http://localhost:8081/auth/signin
+4. Check that no unnecessary parameters are added
+5. Verify signin page loads correctly
+6. Test "Sign in here" footer link from landing page
+7. Verify both signin links lead to same page
+
+Expected: Signin navigation works from both header and footer links without parameters
+Screenshot: 08-signin-navigation-test.png
+
+Step 9: Signin to Landing Navigation Test
+1. From signin page, test navigation back to landing
+2. Check if "Back to landing" or similar link exists
+3. If no direct link, test browser back button
+4. Verify landing page loads correctly when returning
+5. Test signin page refresh behavior
+6. Verify URLs remain clean without unwanted parameters
+
+Expected: Users can navigate between signin and landing pages smoothly
+Screenshot: 09-signin-to-landing-navigation.png
+
+Step 10: Deep Link Testing
+1. Open new browser tab/window
+2. Navigate directly to http://localhost:8081/auth/signup?type=tutor
+3. Verify direct deep link access works
+4. Check that tutor-specific UI loads immediately
+5. Navigate directly to http://localhost:8081/auth/signup?type=school
+6. Verify school-specific UI loads immediately
+7. Test sharing these URLs (copy/paste in new tab)
+
+Expected: Deep links with parameters work correctly for external access
+Screenshot: 10-deep-link-testing.png
+
+Step 11: Browser History Navigation Test
+1. Navigate through this sequence: landing → tutor signup → back to landing → school signup
+2. Use browser back/forward buttons exclusively
+3. Verify each step maintains correct URL and UI state
+4. Check that parameters are preserved during history navigation
+5. Test rapid back/forward navigation (click multiple times quickly)
+6. Verify no broken states or parameter loss occurs
+
+Expected: Browser history navigation maintains URL parameters and UI state consistently
+Screenshot: 11-browser-history-navigation.png
+
+Step 12: Cross-Tab URL Parameter Test
+1. Open landing page in first tab
+2. Navigate to tutor signup from landing page
+3. Copy URL from address bar
+4. Open new tab and paste URL
+5. Verify second tab shows identical tutor signup UI
+6. Repeat test with school signup URL
+7. Test switching between tabs (state should be independent)
+
+Expected: URL parameters work consistently across multiple browser tabs
+Screenshot: 12-cross-tab-parameter-test.png
+
+Step 13: Network Request Monitoring
+1. Open browser developer tools Network tab
+2. Clear network requests
+3. Navigate from landing to tutor signup
+4. Check network requests for:
+   - No unnecessary API calls during navigation
+   - Proper asset loading
+   - No error requests (4xx/5xx)
+5. Repeat for school signup navigation
+6. Verify efficient navigation without excessive requests
+
+Expected: Navigation generates minimal, necessary network requests without errors
+Screenshot: 13-network-request-monitoring.png
+
+Step 14: Mobile Navigation Testing
+1. Switch browser to mobile simulation mode (375x667)
+2. Navigate to landing page
+3. Test all navigation flows on mobile:
+   - Landing → tutor signup → back
+   - Landing → school signup → back
+   - Landing → signin → back
+4. Verify touch-friendly navigation
+5. Check that URL parameters work on mobile
+6. Test mobile browser back button behavior
+
+Expected: All navigation flows work correctly on mobile with proper parameter handling
+Screenshot: 14-mobile-navigation-testing.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All navigation flows work correctly, URL parameters are preserved and handled properly, browser history navigation maintains state, deep links function correctly, and no navigation errors occur
+
+FAIL: Any of the following occurs:
+- Root URL doesn't redirect to landing page
+- URL parameters are lost during navigation or refresh
+- Invalid parameters cause application errors
+- Browser back/forward navigation breaks application state
+- Deep links with parameters don't work correctly
+- Navigation generates unnecessary network requests or errors
+- Mobile navigation behavior differs from desktop unexpectedly
+
+Individual Step Criteria:
+- Step 1: PASS if servers start and browser ready, FAIL if environment setup fails
+- Step 2: PASS if root redirects to landing smoothly, FAIL if redirect missing or broken
+- Step 3: PASS if direct landing access works, FAIL if unwanted redirects occur
+- Step 4-5: PASS if signup navigation includes correct parameters and UI, FAIL if parameters missing or UI wrong
+- Step 6: PASS if parameters persist through refresh, FAIL if parameters lost or UI breaks
+- Step 7: PASS if invalid parameters handled gracefully, FAIL if errors or crashes occur
+- Step 8-9: PASS if signin navigation works cleanly, FAIL if broken links or parameter pollution
+- Step 10: PASS if deep links work correctly, FAIL if direct access fails or shows wrong UI
+- Step 11: PASS if browser history preserves state, FAIL if navigation breaks or loses parameters
+- Step 12: PASS if URLs work consistently across tabs, FAIL if tab-specific issues
+- Step 13: PASS if navigation is efficient with clean requests, FAIL if excessive or error requests
+- Step 14: PASS if mobile navigation matches desktop behavior, FAIL if mobile-specific issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Navigation should feel instant and responsive
+- URL parameters must be preserved across all navigation scenarios
+- Browser back button should work intuitively throughout all flows
+- Deep links should work reliably for sharing and bookmarking
+- No navigation should result in broken states or error pages
+- Mobile navigation should maintain same URL parameter functionality as desktop
+- All navigation transitions should be smooth without page flashes or loading delays

@@ -11,6 +11,67 @@ import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+// Constants for better maintainability
+const TUTOR_FEATURES = [
+  "Professional scheduling system",
+  "Automated billing and invoicing",
+  "Student progress tracking",
+  "Cross-platform accessibility (web, iOS, Android)",
+  "Secure payment processing"
+];
+
+const SCHOOL_FEATURES = [
+  "Multi-teacher management",
+  "Advanced role-based permissions",
+  "Institutional billing settings",
+  "Bulk student management",
+  "Enterprise-grade features"
+];
+
+const PLATFORM_FEATURES = [
+  {
+    icon: Calendar,
+    title: "Smart Scheduling",
+    description: "Automated booking system with conflict prevention, recurring classes, and availability management"
+  },
+  {
+    icon: CreditCard,
+    title: "Professional Billing",
+    description: "Automated invoicing, payment tracking, and comprehensive financial reporting for tax purposes"
+  },
+  {
+    icon: Users,
+    title: "Student Management",
+    description: "Complete student profiles, progress tracking, and parent communication tools"
+  },
+  {
+    icon: Globe,
+    title: "Cross-Platform Access",
+    description: "Works seamlessly on web browsers, iOS, and Android devices with synchronized data"
+  }
+];
+
+// User type configuration for consistency
+const USER_TYPE_CONFIG = {
+  tutor: {
+    icon: GraduationCap,
+    title: "Individual Tutor",
+    subtitle: "Set up your tutoring practice",
+    features: TUTOR_FEATURES,
+    buttonText: "Start Your Tutoring Practice",
+    isPrimary: true,
+  },
+  school: {
+    icon: School,
+    title: "School or Institution",
+    subtitle: "Manage your educational organization",
+    features: SCHOOL_FEATURES,
+    buttonText: "Register Your Institution",
+    isPrimary: false,
+  },
+} as const;
 
 const FeatureCard = ({ 
   icon, 
@@ -21,13 +82,18 @@ const FeatureCard = ({
   title: string; 
   description: string; 
 }) => (
-  <Card className="p-6 mb-4 bg-white border border-gray-200">
+  <Card className="p-6 mb-4 bg-white border border-gray-200" accessibilityRole="article">
     <VStack space="md">
       <Box className="w-12 h-12 bg-blue-100 rounded-lg items-center justify-center">
-        <Icon as={icon} size="lg" className="text-blue-600" />
+        <Icon 
+          as={icon} 
+          size="lg" 
+          className="text-blue-600" 
+          accessibilityLabel={`${title} feature icon`}
+        />
       </Box>
       <VStack space="sm">
-        <Heading size="md" className="text-gray-900">{title}</Heading>
+        <Heading size="md" className="text-gray-900" accessibilityRole="header">{title}</Heading>
         <Text size="sm" className="text-gray-600 leading-5">{description}</Text>
       </VStack>
     </VStack>
@@ -35,54 +101,60 @@ const FeatureCard = ({
 );
 
 const UserTypeCard = ({ 
-  icon, 
-  title, 
-  subtitle,
-  features,
-  buttonText,
-  onPress,
-  primary = false
+  userType,
+  onPress
 }: { 
-  icon: React.ComponentType; 
-  title: string; 
-  subtitle: string;
-  features: string[];
-  buttonText: string;
+  userType: 'tutor' | 'school';
   onPress: () => void;
-  primary?: boolean;
-}) => (
-  <Card className={`p-8 mb-6 ${primary ? 'bg-blue-50 border-2 border-blue-200' : 'bg-white border border-gray-200'}`}>
-    <VStack space="lg">
-      <VStack space="md" className="items-center">
-        <Box className={`w-16 h-16 ${primary ? 'bg-blue-600' : 'bg-gray-100'} rounded-full items-center justify-center`}>
-          <Icon as={icon} size="xl" className={primary ? 'text-white' : 'text-gray-600'} />
-        </Box>
-        <VStack space="xs" className="items-center">
-          <Heading size="xl" className="text-gray-900 text-center">{title}</Heading>
-          <Text size="md" className="text-gray-600 text-center">{subtitle}</Text>
+}) => {
+  const config = USER_TYPE_CONFIG[userType];
+  
+  return (
+    <Card 
+      className={`p-8 mb-6 ${config.isPrimary ? 'bg-blue-50 border-2 border-blue-200' : 'bg-white border border-gray-200'}`}
+      accessibilityRole="button"
+      accessibilityLabel={`${config.title} registration option`}
+      accessibilityHint={`Tap to ${config.buttonText.toLowerCase()}`}
+    >
+      <VStack space="lg">
+        <VStack space="md" className="items-center">
+          <Box className={`w-16 h-16 ${config.isPrimary ? 'bg-blue-600' : 'bg-gray-100'} rounded-full items-center justify-center`}>
+            <Icon 
+              as={config.icon} 
+              size="xl" 
+              className={config.isPrimary ? 'text-white' : 'text-gray-600'} 
+              accessibilityLabel={`${config.title} icon`}
+            />
+          </Box>
+          <VStack space="xs" className="items-center">
+            <Heading size="xl" className="text-gray-900 text-center" accessibilityRole="header">{config.title}</Heading>
+            <Text size="md" className="text-gray-600 text-center">{config.subtitle}</Text>
+          </VStack>
         </VStack>
+        
+        <VStack space="sm" accessibilityRole="list">
+          {config.features.map((feature, index) => (
+            <HStack key={index} space="sm" className="items-center" accessibilityRole="listitem">
+              <Box className="w-2 h-2 bg-green-500 rounded-full" accessibilityLabel="Feature bullet point" />
+              <Text size="sm" className="text-gray-700 flex-1">{feature}</Text>
+            </HStack>
+          ))}
+        </VStack>
+        
+        <Button 
+          onPress={onPress}
+          className={`w-full ${config.isPrimary ? 'bg-blue-600' : 'bg-gray-800'}`}
+          accessibilityLabel={config.buttonText}
+          accessibilityHint={`Navigate to ${userType} registration form`}
+        >
+          <ButtonText className="text-white font-medium">{config.buttonText}</ButtonText>
+        </Button>
       </VStack>
-      
-      <VStack space="sm">
-        {features.map((feature, index) => (
-          <HStack key={index} space="sm" className="items-center">
-            <Box className="w-2 h-2 bg-green-500 rounded-full" />
-            <Text size="sm" className="text-gray-700 flex-1">{feature}</Text>
-          </HStack>
-        ))}
-      </VStack>
-      
-      <Button 
-        onPress={onPress}
-        className={`w-full ${primary ? 'bg-blue-600' : 'bg-gray-800'}`}
-      >
-        <ButtonText className="text-white font-medium">{buttonText}</ButtonText>
-      </Button>
-    </VStack>
-  </Card>
-);
+    </Card>
+  );
+};
 
-export const Landing = () => {
+const LandingContent = () => {
   const router = useRouter();
 
   const handleTutorSignup = () => {
@@ -102,7 +174,12 @@ export const Landing = () => {
       <VStack space="xl" className="px-6 py-8">
         {/* Header */}
         <VStack space="lg" className="items-center py-8">
-          <Heading size="3xl" className="text-gray-900 text-center font-bold">
+          <Heading 
+            size="3xl" 
+            className="text-gray-900 text-center font-bold"
+            accessibilityRole="header"
+            accessibilityLevel={1}
+          >
             Aprende Comigo
           </Heading>
           <Text size="xl" className="text-gray-600 text-center leading-7 max-w-md">
@@ -110,7 +187,12 @@ export const Landing = () => {
           </Text>
           
           <HStack space="md" className="mt-4">
-            <Button variant="outline" onPress={handleSignIn}>
+            <Button 
+              variant="outline" 
+              onPress={handleSignIn}
+              accessibilityLabel="Sign in to your account"
+              accessibilityHint="Navigate to the sign in page for existing users"
+            >
               <ButtonText className="text-gray-700">Sign In</ButtonText>
             </Button>
           </HStack>
@@ -128,33 +210,12 @@ export const Landing = () => {
           </VStack>
 
           <UserTypeCard
-            icon={GraduationCap}
-            title="Individual Tutor"
-            subtitle="Set up your tutoring practice"
-            features={[
-              "Professional scheduling system",
-              "Automated billing and invoicing",
-              "Student progress tracking",
-              "Cross-platform accessibility (web, iOS, Android)",
-              "Secure payment processing"
-            ]}
-            buttonText="Start Your Tutoring Practice"
+            userType="tutor"
             onPress={handleTutorSignup}
-            primary={true}
           />
 
           <UserTypeCard
-            icon={School}
-            title="School or Institution"
-            subtitle="Manage your educational organization"
-            features={[
-              "Multi-teacher management",
-              "Advanced role-based permissions",
-              "Institutional billing settings",
-              "Bulk student management",
-              "Enterprise-grade features"
-            ]}
-            buttonText="Register Your Institution"
+            userType="school"
             onPress={handleSchoolSignup}
           />
         </VStack>
@@ -170,29 +231,14 @@ export const Landing = () => {
             </Text>
           </VStack>
 
-          <FeatureCard
-            icon={Calendar}
-            title="Smart Scheduling"
-            description="Automated booking system with conflict prevention, recurring classes, and availability management"
-          />
-
-          <FeatureCard
-            icon={CreditCard}
-            title="Professional Billing"
-            description="Automated invoicing, payment tracking, and comprehensive financial reporting for tax purposes"
-          />
-
-          <FeatureCard
-            icon={Users}
-            title="Student Management"
-            description="Complete student profiles, progress tracking, and parent communication tools"
-          />
-
-          <FeatureCard
-            icon={Globe}
-            title="Cross-Platform Access"
-            description="Works seamlessly on web browsers, iOS, and Android devices with synchronized data"
-          />
+          {PLATFORM_FEATURES.map((feature, index) => (
+            <FeatureCard
+              key={index}
+              icon={feature.icon}
+              title={feature.title}
+              description={feature.description}
+            />
+          ))}
         </VStack>
 
         {/* Footer */}
@@ -208,3 +254,14 @@ export const Landing = () => {
     </ScrollView>
   );
 };
+
+export const Landing = () => (
+  <ErrorBoundary
+    onError={(error, errorInfo) => {
+      // Log error for analytics/monitoring
+      console.error('Landing page error:', error, errorInfo);
+    }}
+  >
+    <LandingContent />
+  </ErrorBoundary>
+);

@@ -1,0 +1,2 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250723-092325,2025-07-23T09:23:25Z,PASS,12,0,Playwright Chrome,macOS development,All landing page functionality working perfectly. User type selection and navigation flows tested successfully. No issues found.
