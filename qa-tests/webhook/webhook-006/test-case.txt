@@ -1,0 +1,501 @@
+================================================================================
+STRIPE CLI TESTING AND MANAGEMENT COMMAND VALIDATION
+================================================================================
+
+Test ID: WEBHOOK-006
+Test Name: Stripe CLI Integration and Management Command Comprehensive Testing
+Test Type: End-to-End/CLI Integration
+Priority: Critical
+Estimated Time: 50 minutes
+
+================================================================================
+TEST PURPOSE
+================================================================================
+
+Validate complete Stripe CLI integration and management command functionality:
+✅ Stripe CLI webhook forwarding setup and configuration
+✅ Management command comprehensive testing and validation
+✅ Real webhook event testing with actual Stripe infrastructure
+✅ Live signature verification with genuine Stripe signatures
+✅ End-to-end payment flow testing using Stripe test environment
+✅ Management command error handling and edge cases
+✅ Production-ready webhook testing workflow validation
+✅ Stripe dashboard integration and event monitoring
+
+This test ensures the webhook system works perfectly with real Stripe
+infrastructure and provides reliable tools for development and testing.
+
+================================================================================
+PREREQUISITES
+================================================================================
+
+✅ Virtual environment configured (.venv directory exists)
+✅ Dependencies installed (backend/requirements.txt)
+✅ Stripe CLI installed and available in PATH
+✅ Stripe CLI authenticated with test account
+✅ Test database with clean state
+✅ STRIPE_WEBHOOK_SECRET configured (will be updated during test)
+
+================================================================================
+TEST PROCEDURE
+================================================================================
+
+Step 1: Environment Setup and Service Start
+===========================================
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected:
+✅ Django development server starts on port 8000
+✅ Backend accessible at http://localhost:8000/api/
+✅ Webhook endpoint available at /api/finances/webhooks/stripe/
+
+Screenshot: 01-environment-started.png
+Duration: ~15 seconds
+
+Step 2: Verify Stripe CLI Installation and Authentication
+=========================================================
+Commands:
+  # Check Stripe CLI installation
+  stripe --version
+  
+  # Check authentication status
+  stripe config --list
+
+Expected:
+✅ Stripe CLI version displayed (should be recent version)
+✅ Configuration shows test mode keys configured
+✅ Publishable and secret keys present
+✅ CLI authenticated with Stripe account
+
+Screenshot: 02-stripe-cli-verified.png
+
+Step 3: Test Management Command Help and Usage
+===============================================
+Commands:
+  cd backend
+  # Test command help system
+  python manage.py test_stripe_webhook --help
+
+Expected:
+✅ Complete help text displayed
+✅ All command options documented clearly
+✅ Usage examples provided
+✅ Parameter descriptions accurate
+✅ Professional help formatting
+
+Screenshot: 03-management-command-help.png
+
+Step 4: Test Management Command Configuration Validation
+========================================================
+Commands:
+  # Test Stripe configuration validation
+  python manage.py test_stripe_webhook --validate-config
+
+Expected:
+✅ STRIPE_SECRET_KEY validation passed (masked display)
+✅ STRIPE_PUBLIC_KEY validation passed (masked display)
+✅ STRIPE_WEBHOOK_SECRET validation passed (masked display)
+✅ Stripe API connection test successful
+✅ Account ID retrieved and displayed
+
+Screenshot: 04-config-validation-passed.png
+
+Step 5: Test Management Command Test Data Creation
+===================================================
+Commands:
+  # Test comprehensive test data creation
+  python manage.py test_stripe_webhook --create-test-data
+
+Expected:
+✅ Test student created: webhook.test@aprendecomigo.com
+✅ Test transaction created with PROCESSING status
+✅ Payment intent ID generated (pi_test_webhook_* format)
+✅ Student account balance initialized
+✅ Complete test data summary displayed
+
+Screenshot: 05-test-data-created.png
+
+Step 6: Test Management Command Endpoint Validation
+====================================================
+Commands:
+  # Test webhook endpoint security and functionality
+  python manage.py test_stripe_webhook --test-endpoint
+
+Expected:
+✅ Test 1: Missing signature correctly rejected (400 status)
+✅ Test 2: Invalid signature correctly rejected (400 status)
+✅ Test 3: Wrong HTTP method correctly rejected (405 status)
+✅ All endpoint security tests pass
+✅ Webhook URL displayed correctly
+
+Screenshot: 06-endpoint-validation-passed.png
+
+Step 7: Test Management Command All Features
+=============================================
+Commands:
+  # Test all command features together
+  python manage.py test_stripe_webhook --all
+
+Expected:
+✅ Configuration validation completed
+✅ Test data creation completed
+✅ Endpoint testing completed
+✅ Stripe CLI instructions displayed
+✅ All tests pass in integrated run
+✅ Complete workflow demonstrated
+
+Screenshot: 07-all-features-tested.png
+
+Step 8: Setup Stripe CLI Webhook Forwarding
+============================================
+Commands:
+  # Start Stripe CLI webhook forwarding in background
+  stripe listen --forward-to http://localhost:8000/api/finances/webhooks/stripe/ > stripe_cli_output.log 2>&1 &
+  STRIPE_CLI_PID=$!
+  echo "Stripe CLI PID: $STRIPE_CLI_PID"
+  
+  # Wait for startup and capture webhook secret
+  sleep 5
+  cat stripe_cli_output.log
+
+Expected:
+✅ Stripe CLI starts webhook forwarding successfully
+✅ Webhook signing secret generated and displayed
+✅ Connection to local webhook endpoint established
+✅ Ready to receive webhook events from Stripe
+
+Screenshot: 08-stripe-cli-forwarding-started.png
+
+Step 9: Update Webhook Secret for Live Testing
+===============================================
+Commands:
+  # Extract webhook secret from Stripe CLI output
+  WEBHOOK_SECRET=$(grep "whsec_" stripe_cli_output.log | awk '{print $NF}' | tr -d '\n')
+  echo "Webhook Secret: $WEBHOOK_SECRET"
+  
+  # Update Django settings temporarily for testing
+  export STRIPE_WEBHOOK_SECRET="$WEBHOOK_SECRET"
+  echo "Updated STRIPE_WEBHOOK_SECRET for live testing"
+
+Expected:
+✅ Webhook secret extracted from Stripe CLI output
+✅ Environment variable updated for testing
+✅ Django application ready for live webhook testing
+
+Screenshot: 09-webhook-secret-updated.png
+
+Step 10: Test Live Payment Success Event
+=========================================
+Commands:
+  # Create test transaction for live webhook testing
+  python manage.py test_stripe_webhook --create-test-data --payment-intent-id pi_live_test_success
+  
+  # Trigger live payment success event via Stripe CLI
+  stripe trigger payment_intent.succeeded --override payment_intent:id=pi_live_test_success
+
+Expected:
+✅ Test transaction created for live testing
+✅ Stripe CLI sends live webhook event
+✅ Webhook receives event with valid Stripe signature
+✅ Event processed successfully with real Stripe integration
+✅ HTTP 200 response sent back to Stripe
+
+Screenshot: 10-live-payment-success-tested.png
+
+Step 11: Verify Live Event Processing Results
+==============================================
+Commands:
+  # Check results of live webhook processing
+  python manage.py shell -c "
+from finances.models import PurchaseTransaction, StudentAccountBalance
+from accounts.models import CustomUser
+
+try:
+    student = CustomUser.objects.get(email='webhook.test@aprendecomigo.com')
+    transaction = PurchaseTransaction.objects.get(stripe_payment_intent_id='pi_live_test_success')
+    balance = StudentAccountBalance.objects.get(student=student)
+    
+    print('=== LIVE WEBHOOK RESULTS ===')
+    print(f'Transaction Status: {transaction.payment_status}')
+    print(f'Transaction Completed At: {transaction.completed_at}')
+    print(f'Student Hours Balance: {balance.hours_purchased}')
+    print(f'Student Amount Balance: €{balance.balance_amount}')
+    print(f'Live Integration Success: {transaction.payment_status == \"COMPLETED\"}')
+except Exception as e:
+    print(f'Error checking live results: {e}')
+"
+
+Expected:
+✅ Transaction status updated to COMPLETED
+✅ Hours properly credited to student account
+✅ Amount properly credited to student balance
+✅ Live webhook integration working perfectly
+
+Screenshot: 11-live-event-results-verified.png
+
+Step 12: Test Live Payment Failure Event
+=========================================
+Commands:
+  # Create transaction for failure testing
+  python manage.py test_stripe_webhook --create-test-data --payment-intent-id pi_live_test_failure
+  
+  # Trigger live payment failure event
+  stripe trigger payment_intent.payment_failed --override payment_intent:id=pi_live_test_failure
+
+Expected:
+✅ Test transaction created for failure testing
+✅ Stripe CLI sends live failure webhook event
+✅ Webhook processes failure event correctly
+✅ Transaction status updated to FAILED
+✅ Error information stored in metadata
+
+Screenshot: 12-live-payment-failure-tested.png
+
+Step 13: Test Live Event Idempotency
+=====================================
+Commands:
+  # Test idempotency with live Stripe events
+  echo "Testing live event idempotency..."
+  
+  # Send the same event multiple times
+  stripe trigger payment_intent.succeeded --override payment_intent:id=pi_live_test_success
+  sleep 2
+  stripe trigger payment_intent.succeeded --override payment_intent:id=pi_live_test_success
+  sleep 2
+  stripe trigger payment_intent.succeeded --override payment_intent:id=pi_live_test_success
+
+Expected:
+✅ Multiple duplicate events sent via Stripe CLI
+✅ All events receive HTTP 200 responses
+✅ Idempotency protection prevents double processing
+✅ Student balance remains correct (not multiplied)
+✅ Live idempotency working with real Stripe signatures
+
+Screenshot: 13-live-idempotency-tested.png
+
+Step 14: Test Stripe Dashboard Event Monitoring
+================================================
+Commands:
+  # Check Stripe CLI output for event processing
+  echo "=== STRIPE CLI EVENT LOG ==="
+  cat stripe_cli_output.log | tail -20
+  
+  echo -e "\n=== DJANGO WEBHOOK LOG ==="
+  make logs | grep -i webhook | tail -10
+
+Expected:
+✅ Stripe CLI log shows events forwarded successfully
+✅ Event IDs and types logged clearly
+✅ Django webhook log shows event processing
+✅ Correlation between Stripe events and Django processing
+✅ Complete audit trail for all events
+
+Screenshot: 14-event-monitoring-verified.png
+
+Step 15: Test Management Command Error Scenarios
+=================================================
+Commands:
+  # Test command with invalid payment intent ID
+  python manage.py test_stripe_webhook --create-test-data --payment-intent-id ""
+  
+  # Test command with missing Stripe CLI
+  PATH="/tmp:$PATH" python manage.py test_stripe_webhook --stripe-cli-instructions 2>/dev/null || echo "Handled missing CLI gracefully"
+
+Expected:
+✅ Invalid payment intent ID handled gracefully
+✅ Empty parameters validated and rejected appropriately
+✅ Missing Stripe CLI scenario handled without crashes
+✅ Error messages clear and helpful
+✅ Command robustness verified
+
+Screenshot: 15-command-error-handling.png
+
+Step 16: Test Production Workflow Instructions
+===============================================
+Commands:
+  # Test Stripe CLI instructions output
+  python manage.py test_stripe_webhook --stripe-cli-instructions
+
+Expected:
+✅ Complete Stripe CLI setup instructions displayed
+✅ Webhook URL provided correctly
+✅ Event testing commands included
+✅ Troubleshooting guide provided
+✅ Production-ready workflow documented
+
+Screenshot: 16-production-workflow-instructions.png
+
+Step 17: Test Real-time Event Monitoring
+=========================================
+Commands:
+  # Monitor real-time webhook processing
+  echo "Monitoring real-time webhook events..."
+  
+  # Start log monitoring in background
+  make logs | grep -i webhook &
+  LOG_PID=$!
+  
+  # Send series of test events
+  for event_type in payment_intent.succeeded payment_intent.payment_failed payment_intent.canceled; do
+    echo "Testing $event_type"
+    stripe trigger $event_type
+    sleep 3
+  done
+  
+  # Stop log monitoring
+  kill $LOG_PID 2>/dev/null || true
+
+Expected:
+✅ Real-time event processing monitored successfully
+✅ All event types processed correctly
+✅ Live monitoring provides immediate feedback
+✅ Event correlation between Stripe and Django clear
+✅ Real-time debugging capabilities verified
+
+Screenshot: 17-realtime-monitoring-tested.png
+
+Step 18: Test Webhook Performance Under Load
+=============================================
+Commands:
+  # Test webhook performance with multiple concurrent events
+  echo "Testing webhook performance under load..."
+  
+  # Send multiple events concurrently
+  for i in {1..5}; do
+    stripe trigger payment_intent.succeeded &
+  done
+  wait
+  
+  echo "Load test completed"
+
+Expected:
+✅ Multiple concurrent events handled successfully
+✅ No performance degradation under load
+✅ All events processed without errors
+✅ Webhook remains responsive throughout test
+✅ Production-level performance verified
+
+Screenshot: 18-performance-under-load.png
+
+Step 19: Verify Complete Integration Chain
+==========================================
+Commands:
+  # Final verification of complete Stripe CLI integration
+  python manage.py shell -c "
+from finances.models import PurchaseTransaction, StudentAccountBalance
+from accounts.models import CustomUser
+
+print('=== COMPLETE INTEGRATION VERIFICATION ===')
+
+# Count all transactions processed via live webhooks
+live_transactions = PurchaseTransaction.objects.filter(
+    stripe_payment_intent_id__startswith='pi_live_test'
+)
+print(f'Live Transactions Processed: {live_transactions.count()}')
+
+for t in live_transactions:
+    print(f'  {t.stripe_payment_intent_id}: {t.payment_status}')
+
+# Check final account state
+try:
+    student = CustomUser.objects.get(email='webhook.test@aprendecomigo.com')
+    balance = StudentAccountBalance.objects.get(student=student)
+    print(f'Final Student Balance: {balance.hours_purchased} hours, €{balance.balance_amount}')
+    
+    # Verify all completed transactions contributed to balance
+    completed_transactions = live_transactions.filter(payment_status='COMPLETED')
+    print(f'Completed Transactions: {completed_transactions.count()}')
+    
+    print('Live Stripe CLI Integration: SUCCESS')
+except Exception as e:
+    print(f'Integration verification error: {e}')
+"
+
+Expected:
+✅ All live transactions properly recorded in database
+✅ Student account balance correctly updated from live events
+✅ Complete integration chain working end-to-end
+✅ Real Stripe infrastructure integration verified
+✅ Production readiness confirmed
+
+Screenshot: 19-complete-integration-verified.png
+
+Step 20: Stop Stripe CLI and Cleanup
+=====================================
+Commands:
+  # Stop Stripe CLI webhook forwarding
+  if [ ! -z "$STRIPE_CLI_PID" ]; then
+    kill $STRIPE_CLI_PID 2>/dev/null || true
+    echo "Stopped Stripe CLI (PID: $STRIPE_CLI_PID)"
+  fi
+  
+  # Check final Stripe CLI output
+  echo "=== FINAL STRIPE CLI OUTPUT ==="
+  cat stripe_cli_output.log | tail -10
+  
+  # Cleanup
+  rm -f stripe_cli_output.log
+  make stop
+
+Expected:
+✅ Stripe CLI process terminated cleanly
+✅ Final output shows successful event processing
+✅ No hanging processes or resource leaks
+✅ Test environment cleaned up properly
+✅ System ready for next test
+
+Screenshot: 20-cleanup-completed.png
+
+================================================================================
+CLEANUP
+================================================================================
+
+Commands:
+  make stop
+  unset STRIPE_WEBHOOK_SECRET
+
+Expected:
+✅ All processes terminated
+✅ Environment variables reset
+✅ System in clean state
+
+================================================================================
+PASS/FAIL CRITERIA
+================================================================================
+
+✅ PASS: Stripe CLI integration working perfectly with live events
+✅ PASS: Management command comprehensive functionality validated
+✅ PASS: Real webhook signature verification with Stripe infrastructure
+✅ PASS: Live event processing maintaining data integrity
+✅ PASS: Production workflow tools ready for development teams
+✅ PASS: Performance acceptable under realistic load scenarios
+✅ PASS: Complete end-to-end integration with real Stripe environment
+✅ PASS: Robust error handling in management command utilities
+
+❌ FAIL: Stripe CLI integration errors or connection failures
+❌ FAIL: Management command functionality broken or incomplete
+❌ FAIL: Live signature verification failures with real Stripe events
+❌ FAIL: Data corruption or processing errors with live events
+❌ FAIL: Performance issues or resource exhaustion under load
+❌ FAIL: Incomplete or unreliable end-to-end integration
+
+================================================================================
+PRODUCTION READINESS VALIDATION
+================================================================================
+
+🚀 This test confirms production readiness of webhook infrastructure
+🚀 Stripe CLI integration enables reliable development and debugging
+🚀 Management command provides comprehensive testing and validation tools
+🚀 Live event testing ensures compatibility with Stripe infrastructure
+🚀 Performance validation confirms scalability for production traffic
+
+This comprehensive test validates that the webhook system is ready for
+production deployment with real Stripe infrastructure. It ensures
+developers have reliable tools for testing and debugging, and confirms
+the system can handle live payment processing with complete reliability.
+
+Any failures in this test indicate the system is not ready for production
+and requires additional development before handling real customer payments.

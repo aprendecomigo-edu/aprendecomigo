@@ -3,6 +3,8 @@ URL configuration for the finances app.
 """
 
 from django.urls import include, path
+
+app_name = 'finances'
 from rest_framework.routers import DefaultRouter
 
 from .views import (
@@ -35,4 +37,6 @@ urlpatterns = [
     path("api/stripe/config/", stripe_config, name="stripe-config"),
     path("api/stripe/test-connection/", stripe_connection_test, name="stripe-connection-test"),
     path("webhooks/stripe/", stripe_webhook, name="stripe-webhook"),
+    # TODO: Add subscription webhook endpoint when subscription features are implemented
+    # path("webhooks/stripe/subscriptions/", subscription_webhook, name="subscription-webhook"),
 ]

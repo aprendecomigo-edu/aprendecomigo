@@ -8,6 +8,7 @@ from decimal import Decimal
 
 from accounts.models import School, TeacherProfile
 from accounts.permissions import SchoolPermissionMixin
+from django.db import transaction
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.utils import timezone
@@ -36,6 +37,7 @@ from .serializers import (
 )
 from .services import BulkPaymentProcessor, TeacherPaymentCalculator
 from .services.stripe_base import StripeService
+from .services.payment_service import PaymentService
 
 
 class SchoolBillingSettingsViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
@@ -488,7 +490,7 @@ class TeacherPaymentEntryViewSet(SchoolPermissionMixin, viewsets.ReadOnlyModelVi
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# Initialize logger for webhook handling
+# Initialize logger for general finance views
 logger = logging.getLogger(__name__)
 
 
@@ -496,22 +498,46 @@ logger = logging.getLogger(__name__)
 @require_http_methods(["POST"])
 def stripe_webhook(request):
     """
-    Handle Stripe webhook events.
+    Handle Stripe webhook events securely with comprehensive processing.
     
-    This endpoint receives webhook events from Stripe and processes them
-    according to the platform's business logic. The endpoint verifies
-    the webhook signature and handles supported event types.
+    This endpoint processes webhook events from Stripe including:
+    - payment_intent.succeeded: Credit hours and update transaction status
+    - payment_intent.payment_failed: Update transaction status with failure details
+    - payment_intent.canceled: Handle payment cancellation
+    
+    Features:
+    - Signature verification using STRIPE_WEBHOOK_SECRET
+    - Idempotent processing to prevent duplicate updates
+    - Comprehensive logging for all webhook events
+    - Atomic database operations for consistency
+    - Appropriate HTTP status codes for Stripe retry logic
+    
+    Args:
+        request: Django HTTP request containing webhook payload and signature
+        
+    Returns:
+        HttpResponse with appropriate status code:
+        - 200: Successfully processed or already processed (idempotent)
+        - 400: Invalid signature or malformed request
+        - 500: Processing failure (triggers Stripe retry)
     """
+    webhook_id = None
+    event_type = None
+    
     try:
-        # Get the request body and Stripe signature
+        # Extract request data
         payload = request.body
         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
         
         if not sig_header:
-            logger.warning("Missing Stripe signature header in webhook request")
+            logger.warning("Webhook request missing Stripe signature header")
             return HttpResponse("Missing signature", status=400)
         
-        # Initialize Stripe service and construct event
+        if not payload:
+            logger.warning("Webhook request missing payload")
+            return HttpResponse("Missing payload", status=400)
+        
+        # Initialize Stripe service and verify webhook signature
         stripe_service = StripeService()
         result = stripe_service.construct_webhook_event(
             payload.decode('utf-8'), 
@@ -519,68 +545,87 @@ def stripe_webhook(request):
         )
         
         if not result['success']:
-            logger.error(f"Webhook signature verification failed: {result['message']}")
+            logger.error(f"Webhook signature verification failed: {result.get('message', 'Unknown error')}")
             return HttpResponse("Invalid signature", status=400)
         
         event = result['event']
-        event_type = event['type']
+        event_type = event.get('type')
+        webhook_id = event.get('id')
+        
+        logger.info(f"Received webhook event: {event_type} (ID: {webhook_id})")
         
         # Check if event type is supported
         if not stripe_service.is_webhook_event_type_supported(event_type):
-            logger.info(f"Unsupported webhook event type: {event_type}")
+            logger.info(f"Unsupported webhook event type: {event_type} (ID: {webhook_id})")
             return HttpResponse("Event type not supported", status=200)
         
-        # Process the event based on type
-        success = _process_webhook_event(event, event_type)
+        # Process the event with atomic database operations
+        with transaction.atomic():
+            success = _process_webhook_event(event, event_type, webhook_id)
         
         if success:
-            logger.info(f"Successfully processed webhook event: {event_type} ({event['id']})")
+            logger.info(f"Successfully processed webhook event: {event_type} (ID: {webhook_id})")
             return HttpResponse("Webhook processed successfully", status=200)
         else:
-            logger.error(f"Failed to process webhook event: {event_type} ({event['id']})")
+            logger.error(f"Failed to process webhook event: {event_type} (ID: {webhook_id})")
             return HttpResponse("Webhook processing failed", status=500)
             
     except Exception as e:
-        logger.error(f"Unexpected error in Stripe webhook handler: {e}")
+        logger.error(
+            f"Unexpected error in Stripe webhook handler for event {event_type} "
+            f"(ID: {webhook_id}): {str(e)}", 
+            exc_info=True
+        )
         return HttpResponse("Internal server error", status=500)
 
 
-def _process_webhook_event(event, event_type):
+def _process_webhook_event(event, event_type, webhook_id):
     """
-    Process individual webhook events based on their type.
+    Process individual webhook events based on their type with idempotent handling.
     
     Args:
         event: The Stripe event object
         event_type: The type of the event
+        webhook_id: The webhook event ID for logging
         
     Returns:
         bool: True if processing was successful, False otherwise
     """
     try:
-        if event_type == 'payment_intent.succeeded':
-            return _handle_payment_intent_succeeded(event)
-        elif event_type == 'payment_intent.payment_failed':
-            return _handle_payment_intent_failed(event)
-        elif event_type in ['customer.created', 'customer.updated']:
-            return _handle_customer_event(event, event_type)
-        elif event_type in ['invoice.payment_succeeded', 'invoice.payment_failed']:
-            return _handle_invoice_event(event, event_type)
+        # Map event types to handler functions
+        event_handlers = {
+            'payment_intent.succeeded': _handle_payment_intent_succeeded,
+            'payment_intent.payment_failed': _handle_payment_intent_failed,
+            'payment_intent.canceled': _handle_payment_intent_canceled,
+        }
+        
+        handler = event_handlers.get(event_type)
+        if handler:
+            return handler(event, webhook_id)
         else:
             # For supported but not yet implemented event types
-            logger.info(f"Event type {event_type} is supported but not yet implemented")
+            logger.info(f"Event type {event_type} is supported but handler not implemented (ID: {webhook_id})")
             return True
             
     except Exception as e:
-        logger.error(f"Error processing {event_type} event: {e}")
+        logger.error(f"Error processing {event_type} event (ID: {webhook_id}): {str(e)}", exc_info=True)
         return False
 
 
-def _handle_payment_intent_succeeded(event):
+def _handle_payment_intent_succeeded(event, webhook_id):
     """
-    Handle successful payment intent events.
+    Handle successful payment intent events with idempotent processing.
+    
+    This handler:
+    1. Extracts payment intent ID from event
+    2. Uses PaymentService to confirm payment completion
+    3. Credits hours to student account
+    4. Updates transaction status to completed
+    5. Handles idempotent processing for duplicate events
     
     Args:
         event: The Stripe event object
+        webhook_id: The webhook event ID for logging
         
     Returns:
         bool: True if processing was successful
@@ -588,24 +633,76 @@ def _handle_payment_intent_succeeded(event):
     payment_intent = event['data']['object']
     payment_intent_id = payment_intent['id']
     
-    logger.info(f"Processing successful payment intent: {payment_intent_id}")
+    logger.info(f"Processing successful payment intent: {payment_intent_id} (Webhook ID: {webhook_id})")
     
-    # TODO: Implement payment intent success logic
-    # This would typically involve:
-    # 1. Finding the associated PurchaseTransaction
-    # 2. Updating the transaction status to 'completed'
-    # 3. Adding hours to student account balance
-    # 4. Sending confirmation notifications
-    
-    return True
+    try:
+        # Check if this payment intent has already been processed (idempotent check)
+        try:
+            from .models import PurchaseTransaction, TransactionPaymentStatus
+            existing_transaction = PurchaseTransaction.objects.get(
+                stripe_payment_intent_id=payment_intent_id
+            )
+            if existing_transaction.payment_status == TransactionPaymentStatus.COMPLETED:
+                logger.info(
+                    f"Payment intent {payment_intent_id} already completed, "
+                    f"skipping processing (idempotent) (Webhook ID: {webhook_id})"
+                )
+                return True
+        except PurchaseTransaction.DoesNotExist:
+            logger.error(
+                f"No transaction found for payment intent {payment_intent_id} "
+                f"(Webhook ID: {webhook_id})"
+            )
+            return False
+        
+        # Use PaymentService to confirm payment completion
+        payment_service = PaymentService()
+        result = payment_service.confirm_payment_completion(payment_intent_id)
+        
+        if result['success']:
+            logger.info(
+                f"Successfully processed payment completion for transaction "
+                f"{result.get('transaction_id')} (Webhook ID: {webhook_id})"
+            )
+            return True
+        else:
+            # Handle the case where payment is already completed (idempotent)
+            if result.get('error_type') == 'invalid_transaction_state':
+                logger.info(
+                    f"Payment intent {payment_intent_id} already in completed state, "
+                    f"treating as success (idempotent) (Webhook ID: {webhook_id})"
+                )
+                return True
+            
+            logger.error(
+                f"Payment service failed to confirm completion for {payment_intent_id}: "
+                f"{result.get('message')} (Webhook ID: {webhook_id})"
+            )
+            return False
+            
+    except Exception as e:
+        logger.error(
+            f"Unexpected error handling payment success for {payment_intent_id}: "
+            f"{str(e)} (Webhook ID: {webhook_id})", 
+            exc_info=True
+        )
+        return False
 
 
-def _handle_payment_intent_failed(event):
+def _handle_payment_intent_failed(event, webhook_id):
     """
-    Handle failed payment intent events.
+    Handle failed payment intent events with comprehensive error tracking.
+    
+    This handler:
+    1. Extracts payment intent ID and error details from event
+    2. Uses PaymentService to handle payment failure
+    3. Updates transaction status to failed
+    4. Adds failure metadata to transaction record
+    5. Handles idempotent processing for duplicate events
     
     Args:
         event: The Stripe event object
+        webhook_id: The webhook event ID for logging
         
     Returns:
         bool: True if processing was successful
@@ -613,66 +710,150 @@ def _handle_payment_intent_failed(event):
     payment_intent = event['data']['object']
     payment_intent_id = payment_intent['id']
     
-    logger.info(f"Processing failed payment intent: {payment_intent_id}")
+    # Extract error message from payment intent
+    error_message = "Payment failed"
+    if 'last_payment_error' in payment_intent and payment_intent['last_payment_error']:
+        error_message = payment_intent['last_payment_error'].get('message', error_message)
     
-    # TODO: Implement payment intent failure logic
-    # This would typically involve:
-    # 1. Finding the associated PurchaseTransaction
-    # 2. Updating the transaction status to 'failed'
-    # 3. Sending failure notifications
-    # 4. Potentially retrying or handling recovery
+    logger.info(
+        f"Processing failed payment intent: {payment_intent_id} "
+        f"with error: {error_message} (Webhook ID: {webhook_id})"
+    )
     
-    return True
+    try:
+        # Check if this payment intent has already been processed (idempotent check)
+        try:
+            from .models import PurchaseTransaction, TransactionPaymentStatus
+            existing_transaction = PurchaseTransaction.objects.get(
+                stripe_payment_intent_id=payment_intent_id
+            )
+            if existing_transaction.payment_status == TransactionPaymentStatus.FAILED:
+                logger.info(
+                    f"Payment intent {payment_intent_id} already marked as failed, "
+                    f"skipping processing (idempotent) (Webhook ID: {webhook_id})"
+                )
+                return True
+        except PurchaseTransaction.DoesNotExist:
+            logger.error(
+                f"No transaction found for payment intent {payment_intent_id} "
+                f"(Webhook ID: {webhook_id})"
+            )
+            return False
+        
+        # Use PaymentService to handle payment failure
+        payment_service = PaymentService()
+        result = payment_service.handle_payment_failure(payment_intent_id, error_message)
+        
+        if result['success']:
+            logger.info(
+                f"Successfully processed payment failure for transaction "
+                f"{result.get('transaction_id')} (Webhook ID: {webhook_id})"
+            )
+            return True
+        else:
+            # Handle the case where payment is already failed (idempotent)
+            if result.get('error_type') == 'invalid_transaction_state':
+                logger.info(
+                    f"Payment intent {payment_intent_id} already in failed state, "
+                    f"treating as success (idempotent) (Webhook ID: {webhook_id})"
+                )
+                return True
+            
+            logger.error(
+                f"Payment service failed to handle failure for {payment_intent_id}: "
+                f"{result.get('message')} (Webhook ID: {webhook_id})"
+            )
+            return False
+            
+    except Exception as e:
+        logger.error(
+            f"Unexpected error handling payment failure for {payment_intent_id}: "
+            f"{str(e)} (Webhook ID: {webhook_id})", 
+            exc_info=True
+        )
+        return False
 
 
-def _handle_customer_event(event, event_type):
+def _handle_payment_intent_canceled(event, webhook_id):
     """
-    Handle customer-related events.
+    Handle canceled payment intent events.
+    
+    This handler:
+    1. Extracts payment intent ID from event
+    2. Uses PaymentService to handle payment cancellation as a failure
+    3. Updates transaction status to failed with cancellation reason
+    4. Handles idempotent processing for duplicate events
     
     Args:
         event: The Stripe event object
-        event_type: The specific event type
+        webhook_id: The webhook event ID for logging
         
     Returns:
         bool: True if processing was successful
     """
-    customer = event['data']['object']
-    customer_id = customer['id']
+    payment_intent = event['data']['object']
+    payment_intent_id = payment_intent['id']
     
-    logger.info(f"Processing customer event: {event_type} for {customer_id}")
+    logger.info(f"Processing canceled payment intent: {payment_intent_id} (Webhook ID: {webhook_id})")
     
-    # TODO: Implement customer event logic
-    # This would typically involve:
-    # 1. Syncing customer data with local user records
-    # 2. Updating customer information
-    # 3. Handling customer deletions
-    
-    return True
-
-
-def _handle_invoice_event(event, event_type):
-    """
-    Handle invoice-related events.
-    
-    Args:
-        event: The Stripe event object
-        event_type: The specific event type
+    try:
+        # Check if this payment intent has already been processed (idempotent check)
+        try:
+            from .models import PurchaseTransaction, TransactionPaymentStatus
+            existing_transaction = PurchaseTransaction.objects.get(
+                stripe_payment_intent_id=payment_intent_id
+            )
+            if existing_transaction.payment_status in [
+                TransactionPaymentStatus.FAILED, 
+                TransactionPaymentStatus.CANCELLED
+            ]:
+                logger.info(
+                    f"Payment intent {payment_intent_id} already marked as failed/cancelled, "
+                    f"skipping processing (idempotent) (Webhook ID: {webhook_id})"
+                )
+                return True
+        except PurchaseTransaction.DoesNotExist:
+            logger.error(
+                f"No transaction found for payment intent {payment_intent_id} "
+                f"(Webhook ID: {webhook_id})"
+            )
+            return False
         
-    Returns:
-        bool: True if processing was successful
-    """
-    invoice = event['data']['object']
-    invoice_id = invoice['id']
-    
-    logger.info(f"Processing invoice event: {event_type} for {invoice_id}")
-    
-    # TODO: Implement invoice event logic
-    # This would typically involve:
-    # 1. Processing subscription renewals
-    # 2. Handling invoice payment failures
-    # 3. Managing subscription lifecycle
-    
-    return True
+        # Handle cancellation as a payment failure
+        payment_service = PaymentService()
+        result = payment_service.handle_payment_failure(
+            payment_intent_id, 
+            "Payment was canceled"
+        )
+        
+        if result['success']:
+            logger.info(
+                f"Successfully processed payment cancellation for transaction "
+                f"{result.get('transaction_id')} (Webhook ID: {webhook_id})"
+            )
+            return True
+        else:
+            # Handle the case where payment is already failed/cancelled (idempotent)
+            if result.get('error_type') == 'invalid_transaction_state':
+                logger.info(
+                    f"Payment intent {payment_intent_id} already in failed/cancelled state, "
+                    f"treating as success (idempotent) (Webhook ID: {webhook_id})"
+                )
+                return True
+            
+            logger.error(
+                f"Payment service failed to handle cancellation for {payment_intent_id}: "
+                f"{result.get('message')} (Webhook ID: {webhook_id})"
+            )
+            return False
+            
+    except Exception as e:
+        logger.error(
+            f"Unexpected error handling payment cancellation for {payment_intent_id}: "
+            f"{str(e)} (Webhook ID: {webhook_id})", 
+            exc_info=True
+        )
+        return False
 
 
 @api_view(['GET'])
