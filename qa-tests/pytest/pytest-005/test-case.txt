@@ -1,0 +1,114 @@
+TEST ID: pytest-005
+TEST NAME: Authentication and Security Test Coverage Validation
+PURPOSE: Verify that authentication and security tests execute correctly, covering the business logic fixes in SchoolViewSet and authentication flows from GitHub Issue #8
+
+SETUP:
+1. Navigate to project root directory
+2. Activate virtual environment: source .venv/bin/activate
+3. Change to backend directory: cd backend/
+4. Ensure authentication test data and fixtures are available
+
+EXECUTION STEPS:
+
+Step 1: Authentication Test Suite Discovery
+- Run: pytest --collect-only accounts/tests/test_auth.py | grep -E "(test_.*|::)"
+- Verify all authentication test methods are discovered
+- Count total authentication tests available
+- Check test naming follows security test conventions
+- Take screenshot: 01-auth-test-discovery
+
+Step 2: Email Authentication Flow Tests
+- Run: pytest accounts/tests/test_auth.py::EmailAuthTests::test_request_email_code -v
+- Run: pytest accounts/tests/test_auth.py::EmailAuthTests::test_verify_email_code -v
+- Run: pytest accounts/tests/test_auth.py::EmailAuthTests::test_email_verification_flow -v
+- Verify core email authentication workflow tests pass
+- Take screenshot: 02-email-auth-tests
+
+Step 3: Security and Permission Tests
+- Run: pytest accounts/tests/test_security.py -v --tb=short
+- Verify security-related tests execute successfully
+- Check authentication edge cases and security validations
+- Monitor for any permission or access control issues
+- Take screenshot: 03-security-tests
+
+Step 4: Authentication Views and API Tests
+- Run: pytest accounts/tests/test_views.py -v --tb=line
+- Verify authentication API endpoints work correctly
+- Check view-level authentication and authorization
+- Test authentication error handling
+- Take screenshot: 04-auth-views-tests
+
+Step 5: User Model and Serializer Tests
+- Run: pytest accounts/tests/test_models.py::CustomUserTests -v
+- Run: pytest accounts/tests/test_serializers.py -v
+- Verify user model authentication features work
+- Check serializer authentication validation
+- Take screenshot: 05-user-model-tests
+
+Step 6: School ViewSet Business Logic Tests
+- Run: pytest accounts/tests/test_views.py -k "school" -v
+- Verify SchoolViewSet business logic fixes from Issue #8
+- Check school-related authentication and permissions
+- Test school membership and role management
+- Take screenshot: 06-school-viewset-tests
+
+Step 7: Authentication Error Handling
+- Run: pytest accounts/tests/test_auth.py::EmailAuthTests::test_verify_email_code_invalid -v
+- Run: pytest accounts/tests/test_auth.py::EmailAuthTests::test_verify_email_code_expired -v
+- Verify authentication error cases are handled correctly
+- Check proper error messages and status codes
+- Take screenshot: 07-auth-error-handling
+
+Step 8: Throttling and Rate Limiting Tests
+- Run: pytest accounts/tests/test_auth.py::ThrottlingTests -v --tb=short
+- Verify authentication rate limiting works correctly
+- Check throttling prevents abuse and attacks
+- Test different throttling scenarios
+- Take screenshot: 08-throttling-tests
+
+Step 9: Onboarding and Contact Verification Tests
+- Run: pytest accounts/tests/test_auth.py::ContactVerificationTests -v
+- Run: pytest accounts/tests/test_auth.py::EndToEndOnboardingTests -v
+- Verify complete user onboarding workflows
+- Check contact verification and primary contact selection
+- Take screenshot: 09-onboarding-tests
+
+Step 10: Authentication Integration and Coverage
+- Run: pytest accounts/tests/test_auth.py --tb=no -q
+- Verify overall authentication test suite success rate
+- Check test coverage for critical authentication paths
+- Monitor for any test failures or regressions
+- Take screenshot: 10-auth-integration-coverage
+
+VERIFICATION CRITERIA:
+- All authentication test methods are discovered and executable
+- Core email authentication workflow tests pass
+- Security and permission tests execute successfully
+- Authentication API endpoints work correctly
+- User model authentication features function properly
+- SchoolViewSet business logic fixes are validated
+- Authentication error handling works as expected
+- Rate limiting and throttling tests pass
+- Onboarding and verification workflows complete successfully
+- Overall authentication test success rate is high (>90%)
+
+PASS/FAIL CRITERIA:
+PASS: All critical authentication tests pass, security features work, business logic validates, no critical auth failures
+FAIL: Core authentication failures, security test failures, business logic issues, or auth system regressions
+
+EXPECTED OUTCOMES:
+- 25+ authentication test methods discovered and executed
+- Email authentication flow tests all pass
+- Security and permission validation tests succeed
+- Authentication API tests complete successfully
+- SchoolViewSet business logic tests validate fixes
+- Error handling tests confirm proper security responses
+- Throttling tests prevent authentication abuse
+- Onboarding workflow tests complete end-to-end
+- Overall authentication test suite achieves >90% success rate
+
+NOTES:
+- This test validates the authentication and business logic fixes from GitHub Issue #8
+- Focuses on the SchoolViewSet improvements and security enhancements
+- Should catch any regressions in authentication or authorization
+- Critical for ensuring secure user access and data protection

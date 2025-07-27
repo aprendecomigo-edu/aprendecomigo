@@ -88,6 +88,10 @@ def list_school_ids_owned_or_managed(user) -> list[int]:
     """
     Get list of schools ids based on request permissions
     """
+    # Handle anonymous users
+    if not user or not user.is_authenticated:
+        return []
+        
     admin_school_ids = SchoolMembership.objects.filter(
         user=user,
         role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],

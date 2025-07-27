@@ -669,8 +669,17 @@ class SchoolViewSet(KnoxAuthenticatedViewSet):
         if self.request.user.is_staff or self.request.user.is_superuser:
             return School.objects.all()
 
-        # Others can only see schools they own or administer
-        return get_schools_user_can_manage(self.request.user)
+        # If user is not authenticated (since list/retrieve are AllowAny), show all schools
+        if not self.request.user.is_authenticated:
+            return School.objects.all()
+
+        # Authenticated users see schools they're members of (any role)
+        user_school_ids = SchoolMembership.objects.filter(
+            user=self.request.user,
+            is_active=True
+        ).values_list("school_id", flat=True)
+        
+        return School.objects.filter(id__in=user_school_ids)
 
     def get_permissions(self):
         """Allow anyone to view schools, but only authorized users to modify."""

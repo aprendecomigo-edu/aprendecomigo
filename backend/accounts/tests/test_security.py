@@ -178,7 +178,7 @@ class AuthenticationProtectionTests(APITestCase):
         # List of protected URLs to test
         protected_urls = [
             reverse("accounts:user-list"),
-            reverse("accounts:school-list"),
+            # Note: school-list is intentionally public (AllowAny permission)
             reverse("accounts:student-list"),
             reverse("accounts:teacher-list"),
             reverse("accounts:user-detail", kwargs={"pk": self.user.pk}),
