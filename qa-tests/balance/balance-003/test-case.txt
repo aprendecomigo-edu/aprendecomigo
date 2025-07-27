@@ -1,18 +1,19 @@
-QA Test Case: StudentAccountBalance Data Validation
+QA Test Case: Purchase History API with Consumption Tracking
 
 Test ID: BALANCE-003
-Test Name: Data Validation Tests for StudentAccountBalance Model
-Purpose: Verify data validation, field constraints, decimal precision, boundary conditions, and edge cases for StudentAccountBalance model
-Expected Result: All validation rules enforced correctly with appropriate error messages and boundary handling
+Test Name: Purchase History API Testing with Consumption Analytics
+Purpose: Verify the /finances/api/student-balance/purchases/ endpoint provides detailed purchase history with consumption tracking, plan details, and expiration management
+Expected Result: API returns comprehensive purchase data with accurate consumption analytics
 
 === CONTEXT (Pre-test Requirements) ===
 
 System Information:
 - Project: Aprende Comigo - Educational platform
 - Architecture: Django REST backend + React Native frontend
-- Feature: StudentAccountBalance model data validation
-- Model Location: backend/finances/models.py
-- Validation: Django model validation and database constraints
+- Feature: Student Account Balance API - Purchase History Endpoint
+- API Endpoint: GET /finances/api/student-balance/purchases/
+- Authentication: JWT token authentication required
+- Admin Override: Supports ?email= parameter for admin users
 
 Required Environment Setup:
 1. Project Location: /Users/anapmc/Code/aprendecomigo/
@@ -22,9 +23,11 @@ Required Environment Setup:
    - EXPO_PUBLIC_ENV=development
 
 Test Data Requirements:
-- Test Users: Multiple test users for validation testing
-- Database: SQLite for development testing
-- Validation Scenarios: Valid and invalid data sets
+- Test Students: Multiple users with purchase history
+- Test Packages: Active, expired, and upcoming expiration packages
+- Test Subscriptions: Recurring subscription purchases
+- Test Consumption: Detailed hour consumption records
+- Test Plans: Various pricing plan configurations
 
 === DETAILED STEP-BY-STEP INSTRUCTIONS ===
 
@@ -32,328 +35,649 @@ Step 1: Environment Setup and Service Start
 Commands:
   cd /Users/anapmc/Code/aprendecomigo
   source .venv/bin/activate
-  cd backend
   make dev
 
 Expected: Both services start successfully
 - Backend: http://localhost:8000 responds
-- Django admin accessible
+- Frontend: http://localhost:8081 shows loading screen
+- API accessible at http://localhost:8000/api/
 
-Step 2: Create Test User for Validation
+Step 2: Create Test Users and Purchase Data Setup
 1. Open browser to http://localhost:8000/admin/
 2. Login with admin credentials
-3. Create test user:
-   - Email: validation-test@example.com
-   - Name: "Validation Test User"
+3. Create test users:
+   - purchase1@test.com: "Purchase Test One"
+   - purchase2@test.com: "Purchase Test Two"
+   - admin@test.com: "Test Admin User" (staff=True, superuser=True)
 
-Expected: Test user created successfully
-Screenshot: 01_test_user_created.png
+Expected: Test users created successfully
+Screenshot: 01_test_users_created.png
 
-Step 3: Test Valid Data Creation (Baseline)
-1. Navigate to Student Account Balances admin
-2. Create account with valid data:
-   - Student: Select validation test user
-   - Hours purchased: 15.50
-   - Hours consumed: 3.25
-   - Balance amount: 122.75
-3. Save and verify success
+Step 3: Create Test Pricing Plans
+1. Navigate to Pricing Plans admin section
+2. Create test pricing plans:
+   
+   Basic Package Plan:
+   - Name: "Basic Hours Package"
+   - Type: package
+   - Hours included: 10.00
+   - Price: 80.00
+   - Duration: 30 days
+   
+   Premium Package Plan:
+   - Name: "Premium Hours Package" 
+   - Type: package
+   - Hours included: 25.00
+   - Price: 180.00
+   - Duration: 60 days
+   
+   Monthly Subscription Plan:
+   - Name: "Monthly Unlimited"
+   - Type: subscription
+   - Hours included: 50.00
+   - Price: 200.00
+   - Duration: 30 days (recurring)
 
-Expected: Valid data saves successfully without errors
-Screenshot: 02_valid_data_baseline.png
+Expected: Test pricing plans created successfully
+Screenshot: 02_pricing_plans_created.png
 
-Step 4: Test Decimal Precision Validation - Hours Fields
-1. Create new account balance or edit existing
-2. Test hours_purchased with excessive precision:
-   - Enter: 15.123456789
-3. Save and check stored value
-4. Test hours_consumed with excessive precision:
-   - Enter: 3.987654321
-5. Save and check stored value
+Step 4: Create Test Purchase History with Various Scenarios
+1. Navigate to Purchase Transactions admin section
+2. Create purchases for purchase1@test.com:
+   
+   Purchase 1 - Active Package:
+   - Student: purchase1@test.com
+   - Plan: Basic Hours Package
+   - Payment status: completed
+   - Amount: 80.00
+   - Hours purchased: 10.00
+   - Expires at: [30 days from now]
+   
+   Purchase 2 - Expired Package:
+   - Student: purchase1@test.com
+   - Plan: Premium Hours Package
+   - Payment status: completed
+   - Amount: 180.00
+   - Hours purchased: 25.00
+   - Expires at: [30 days ago]
+   
+   Purchase 3 - Active Subscription:
+   - Student: purchase1@test.com
+   - Plan: Monthly Unlimited
+   - Payment status: completed
+   - Amount: 200.00
+   - Hours purchased: 50.00
+   - Expires at: [null - recurring]
+   
+   Purchase 4 - Soon Expiring Package:
+   - Student: purchase1@test.com
+   - Plan: Basic Hours Package
+   - Payment status: completed
+   - Amount: 80.00
+   - Hours purchased: 10.00
+   - Expires at: [3 days from now]
 
-Expected: 
-- Values automatically rounded to 2 decimal places
-- hours_purchased becomes 15.12
-- hours_consumed becomes 3.99
-- No validation errors, just precision enforcement
+Expected: Multiple purchase scenarios created successfully
+Screenshot: 03_purchase_scenarios_created.png
 
-Screenshot: 03_hours_precision_test.png
+Step 5: Create Hour Consumption Records
+1. Navigate to Hour Consumption admin section
+2. Create consumption records linked to purchases:
+   
+   For Active Package (Purchase 1):
+   - Hours consumed: 3.50
+   - Consumption date: [recent]
+   - Description: "Math tutoring session"
+   
+   For Expired Package (Purchase 2):
+   - Hours consumed: 15.00
+   - Consumption date: [before expiration]
+   - Description: "Science tutoring sessions"
+   
+   For Active Subscription (Purchase 3):
+   - Hours consumed: 8.25
+   - Consumption date: [recent]
+   - Description: "Language tutoring"
 
-Step 5: Test Decimal Precision Validation - Balance Field
-1. Edit account balance
-2. Test balance_amount with excessive precision:
-   - Enter: 122.999999
-3. Save and check stored value
+Expected: Hour consumption records created and linked to purchases
+Screenshot: 04_consumption_records_created.png
 
-Expected:
-- Value rounded to 2 decimal places: 123.00
-- No validation errors
-
-Screenshot: 04_balance_precision_test.png
-
-Step 6: Test Maximum Value Constraints - Hours Fields
-1. Test maximum values for hours fields (max_digits=5, decimal_places=2):
-   - Hours purchased: 999.99 (maximum valid)
-   - Hours consumed: 999.99 (maximum valid)
-2. Save and verify acceptance
-3. Test oversized values:
-   - Hours purchased: 9999.99 (too many digits)
-   - Hours consumed: 9999.99 (too many digits)
-4. Attempt to save
-
-Expected:
-- Valid maximums (999.99) accepted
-- Oversized values either rejected or truncated
-- Appropriate error messages if validation fails
-
-Screenshot: 05_hours_maximum_test.png
-
-Step 7: Test Maximum Value Constraints - Balance Field
-1. Test maximum value for balance field (max_digits=6, decimal_places=2):
-   - Balance amount: 9999.99 (maximum valid)
-2. Save and verify acceptance
-3. Test oversized value:
-   - Balance amount: 99999.99 (too many digits)
-4. Attempt to save
-
-Expected:
-- Valid maximum (9999.99) accepted
-- Oversized value rejected or truncated
-- Error message if validation fails
-
-Screenshot: 06_balance_maximum_test.png
-
-Step 8: Test Negative Values Handling
-1. Create account with negative values:
-   - Hours purchased: -5.00
-   - Hours consumed: -2.50
-   - Balance amount: -50.00
-2. Save and verify behavior
-
-Expected:
-- Negative values should be accepted (for overdraft scenarios)
-- System handles negative values without errors
-- Calculations work correctly with negative values
-
-Screenshot: 07_negative_values_test.png
-
-Step 9: Test Zero Values Handling
-1. Create account with zero values:
-   - Hours purchased: 0.00
-   - Hours consumed: 0.00
-   - Balance amount: 0.00
-2. Save and verify behavior
-
-Expected:
-- Zero values accepted without errors
-- remaining_hours calculation returns 0.00
-- Display formatting works correctly
-
-Screenshot: 08_zero_values_test.png
-
-Step 10: Test Minimum Precision Values
-1. Create account with minimum non-zero values:
-   - Hours purchased: 0.01
-   - Hours consumed: 0.01
-   - Balance amount: 0.01
-2. Save and verify storage accuracy
+Step 6: Test Unauthenticated Access to Purchases Endpoint
+1. Open browser developer tools
+2. Test API call without authentication:
+```javascript
+fetch('http://localhost:8000/finances/api/student-balance/purchases/')
+  .then(response => response.json())
+  .then(data => console.log('Unauthenticated purchases:', data))
+  .catch(error => console.error('Error:', error));
+```
 
 Expected:
-- Minimum values stored accurately
-- No precision loss
-- Calculations work with small values
+- HTTP 401 Unauthorized response
+- Error message about authentication required
+- No purchase data exposed
 
-Screenshot: 09_minimum_values_test.png
+Screenshot: 05_unauthenticated_access_denied.png
 
-Step 11: Test Very Large Calculations
-1. Create account approaching field limits:
-   - Hours purchased: 999.99
-   - Hours consumed: 500.50
-   - Balance amount: 9999.99
-2. Verify remaining_hours calculation: 499.49
-3. Test calculation accuracy
+Step 7: Authenticate and Test Basic Purchases API Access
+1. Navigate to http://localhost:8081/auth/signin
+2. Login as purchase1@test.com
+3. Get JWT token from browser storage
+4. Test authenticated purchases API call:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('Purchase History:', data);
+    console.log('Total purchases:', data.results.length);
+    console.log('Pagination info:', {
+      count: data.count,
+      next: data.next,
+      previous: data.previous
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
 
-Expected:
-- Large number calculations accurate
-- No overflow or precision errors
-- remaining_hours property works correctly
+Expected Response Structure:
+```json
+{
+  "count": 4,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "plan_details": {
+        "name": "Basic Hours Package",
+        "type": "package",
+        "duration_days": 30
+      },
+      "payment_status": "completed",
+      "amount": "80.00",
+      "hours_purchased": "10.00",
+      "expires_at": "2024-02-01T00:00:00Z",
+      "is_active": true,
+      "is_expired": false,
+      "consumption_summary": {
+        "total_consumed": "3.50",
+        "remaining_hours": "6.50",
+        "consumption_percentage": 35.0
+      },
+      "detailed_consumptions": [...]
+    }
+  ]
+}
+```
 
-Screenshot: 10_large_calculations_test.png
+Screenshot: 06_basic_purchases_response.png
 
-Step 12: Test String Length Validation (Related User Fields)
-1. Verify student field validation works
-2. Test with user that has very long name
-3. Ensure proper handling of related field constraints
-
-Expected:
-- Related field constraints enforced
-- Proper error handling for invalid relationships
-
-Screenshot: 11_related_field_validation.png
-
-Step 13: Test Required Field Validation
-1. Try to create account balance without selecting student
-2. Leave hours fields empty
-3. Leave balance field empty
-4. Attempt to save
-
-Expected:
-- Validation errors for required fields
-- Clear error messages displayed
-- Form prevents saving with missing required data
-
-Screenshot: 12_required_field_validation.png
-
-Step 14: Test Boundary Conditions - Edge Cases
-1. Test values at exact field boundaries:
-   - Hours: exactly 999.99 and 1000.00
-   - Balance: exactly 9999.99 and 10000.00
-2. Test one decimal place values: 15.5, 3.2, 100.7
-3. Test whole number values: 15, 3, 100
-
-Expected:
-- Boundary values handled correctly
-- Decimal formatting consistent
-- No unexpected rounding errors
-
-Screenshot: 13_boundary_conditions_test.png
-
-Step 15: Test Field Type Validation
-1. If possible through direct database/API access, test:
-   - Non-numeric input in decimal fields
-   - Invalid data types
-   - String values in numeric fields
-2. Verify proper validation and error handling
-
-Expected:
-- Type validation enforced
-- Appropriate error messages
-- Data integrity maintained
-
-Screenshot: 14_field_type_validation.png
-
-Step 16: Test Unicode and Special Characters
-1. Create test user with unicode characters in name
-2. Create account balance for this user
-3. Verify proper handling in string representation
-4. Test display in admin interface
-
-Expected:
-- Unicode characters handled properly
-- No encoding errors
-- Display works correctly in admin
-
-Screenshot: 15_unicode_handling.png
-
-Step 17: Test Concurrent Validation
-1. Open two browser tabs to admin interface
-2. Edit the same account balance in both tabs
-3. Save changes in first tab
-4. Try to save changes in second tab
-5. Verify conflict handling
+Step 8: Test Active-Only Filter
+1. Test filtering to show only active purchases:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/?active_only=true', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('Active purchases only:', data.results.length);
+    console.log('All active?', data.results.every(p => p.is_active === true));
+    console.log('No expired packages?', data.results.every(p => p.is_expired === false));
+  })
+  .catch(error => console.error('Error:', error));
+```
 
 Expected:
-- Proper handling of concurrent edits
-- No data corruption
-- Appropriate error messages if applicable
+- Only active purchases returned (should exclude expired package)
+- All results have is_active: true
+- All results have is_expired: false
 
-Screenshot: 16_concurrent_validation.png
+Screenshot: 07_active_only_filter.png
 
-Step 18: Test Validation Error Messages
-1. Trigger various validation errors deliberately
-2. Verify error messages are:
-   - Clear and understandable
-   - Specific to the validation issue
-   - Helpful for correcting the problem
-3. Test both field-level and form-level validation
+Step 9: Test Include Consumption Parameter
+1. Test detailed consumption data inclusion:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/?include_consumption=true', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('With detailed consumption:');
+    data.results.forEach((purchase, index) => {
+      console.log(`Purchase ${index + 1}:`);
+      console.log('  Plan:', purchase.plan_details.name);
+      console.log('  Consumption summary:', purchase.consumption_summary);
+      console.log('  Detailed consumptions:', purchase.detailed_consumptions.length);
+      purchase.detailed_consumptions.forEach((consumption, i) => {
+        console.log(`    ${i + 1}. ${consumption.hours_consumed}h - ${consumption.description}`);
+      });
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
 
-Expected:
-- All error messages clear and helpful
-- Validation feedback guides user to correct input
-- No technical jargon in user-facing messages
+Expected: Detailed consumption data included in response
+Screenshot: 08_include_consumption_data.png
 
-Screenshot: 17_error_messages_test.png
+Step 10: Test Purchase Status and Expiration Logic
+1. Verify expiration status logic:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== EXPIRATION STATUS VALIDATION ===');
+    data.results.forEach((purchase, index) => {
+      console.log(`Purchase ${index + 1}:`);
+      console.log('  Plan:', purchase.plan_details.name);
+      console.log('  Expires at:', purchase.expires_at);
+      console.log('  Is active:', purchase.is_active);
+      console.log('  Is expired:', purchase.is_expired);
+      
+      if (purchase.expires_at) {
+        const expiresAt = new Date(purchase.expires_at);
+        const now = new Date();
+        const shouldBeExpired = expiresAt < now;
+        console.log('  Expiration logic correct:', purchase.is_expired === shouldBeExpired);
+      } else {
+        console.log('  Subscription (no expiration):', purchase.plan_details.type === 'subscription');
+      }
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
 
-Step 19: Test Performance with Edge Data
-1. Create multiple accounts with maximum field values
-2. Test search and filtering performance
-3. Verify admin interface remains responsive
-4. Test calculation performance with extreme values
+Expected: Expiration status logic working correctly
+Screenshot: 09_expiration_status_validation.png
 
-Expected:
-- Performance remains acceptable
-- No timeout or memory issues
-- UI remains responsive
+Step 11: Test Consumption Summary Calculations
+1. Verify consumption percentage and remaining hours calculations:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== CONSUMPTION CALCULATIONS VALIDATION ===');
+    data.results.forEach((purchase, index) => {
+      console.log(`Purchase ${index + 1}:`);
+      const purchased = parseFloat(purchase.hours_purchased);
+      const consumed = parseFloat(purchase.consumption_summary.total_consumed);
+      const remaining = parseFloat(purchase.consumption_summary.remaining_hours);
+      const percentage = purchase.consumption_summary.consumption_percentage;
+      
+      console.log('  Hours purchased:', purchased);
+      console.log('  Hours consumed:', consumed);
+      console.log('  Remaining hours:', remaining);
+      console.log('  Consumption %:', percentage);
+      
+      console.log('  Remaining calculation correct:', 
+        Math.abs(remaining - (purchased - consumed)) < 0.01);
+      console.log('  Percentage calculation correct:', 
+        Math.abs(percentage - ((consumed / purchased) * 100)) < 0.1);
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
 
-Screenshot: 18_performance_edge_data.png
+Expected: All consumption calculations accurate
+Screenshot: 10_consumption_calculations.png
 
-Step 20: Test Data Consistency After Validation
-1. Create several accounts with various edge cases
-2. Perform bulk operations if available
-3. Verify data consistency across all records
-4. Check that all calculations remain accurate
+Step 12: Test Plan Details Structure
+1. Verify plan information completeness:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== PLAN DETAILS VALIDATION ===');
+    data.results.forEach((purchase, index) => {
+      console.log(`Purchase ${index + 1} plan details:`);
+      const plan = purchase.plan_details;
+      console.log('  Has name:', !!plan.name);
+      console.log('  Has type:', !!plan.type);
+      console.log('  Has duration:', !!plan.duration_days);
+      console.log('  Type valid:', ['package', 'subscription'].includes(plan.type));
+      console.log('  Structure complete:', !!(plan.name && plan.type));
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
 
-Expected:
-- Data consistency maintained
-- All calculations accurate
-- No data corruption
+Expected: Complete plan details in all purchases
+Screenshot: 11_plan_details_validation.png
 
-Screenshot: 19_data_consistency_test.png
+Step 13: Test Pagination with Purchases
+1. Test custom page size with purchases:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/?page_size=2', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('Paginated purchases:');
+    console.log('  Results returned:', data.results.length);
+    console.log('  Has next page:', !!data.next);
+    console.log('  Total count:', data.count);
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+Expected: Pagination working correctly with purchases
+Screenshot: 12_pagination_testing.png
+
+Step 14: Test Combined Filters
+1. Test active_only with include_consumption:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/?active_only=true&include_consumption=true', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('Active purchases with consumption:');
+    console.log('  Active purchases count:', data.results.length);
+    console.log('  All have consumption data:', 
+      data.results.every(p => p.detailed_consumptions !== undefined));
+    console.log('  All are active:', 
+      data.results.every(p => p.is_active === true));
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+Expected: Combined filters working correctly
+Screenshot: 13_combined_filters.png
+
+Step 15: Test Admin Email Parameter Access
+1. Login as admin user
+2. Test accessing another student's purchases:
+```javascript
+const adminToken = 'ADMIN_JWT_TOKEN';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/?email=purchase1@test.com', {
+  headers: {
+    'Authorization': `Bearer ${adminToken}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('Admin access to purchase1 purchases:', data.results.length);
+    console.log('Correct student data accessed:', 
+      data.results.length > 0 // Should have purchases for this student
+    );
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+Expected: Admin can access any student's purchase data
+Screenshot: 14_admin_email_access.png
+
+Step 16: Test Empty Purchases Scenario
+1. Create user with no purchases
+2. Test API response:
+```javascript
+// Login as user with no purchases
+const emptyToken = 'EMPTY_USER_JWT_TOKEN';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/', {
+  headers: {
+    'Authorization': `Bearer ${emptyToken}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('Empty purchases response:', {
+      count: data.count,
+      results_length: data.results.length,
+      next: data.next,
+      previous: data.previous
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+Expected: Empty response handled gracefully
+Screenshot: 15_empty_purchases_scenario.png
+
+Step 17: Test Purchase Chronological Ordering
+1. Verify purchases ordered by created_at descending:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== PURCHASE ORDERING TEST ===');
+    data.results.forEach((purchase, index) => {
+      console.log(`${index + 1}. ${purchase.created_at} - ${purchase.plan_details.name}`);
+    });
+    
+    const isOrderedDescending = data.results.every((purchase, index) => {
+      if (index === 0) return true;
+      return new Date(data.results[index - 1].created_at) >= new Date(purchase.created_at);
+    });
+    
+    console.log('Ordered chronologically (newest first):', isOrderedDescending);
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+Expected: Purchases ordered newest to oldest
+Screenshot: 16_chronological_ordering.png
+
+Step 18: Test Upcoming Expiration Detection
+1. Verify soon-to-expire packages are identified:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== UPCOMING EXPIRATION TEST ===');
+    data.results.forEach((purchase, index) => {
+      if (purchase.expires_at) {
+        const expiresAt = new Date(purchase.expires_at);
+        const now = new Date();
+        const daysUntilExpiry = (expiresAt - now) / (1000 * 60 * 60 * 24);
+        
+        console.log(`Purchase ${index + 1}:`);
+        console.log('  Plan:', purchase.plan_details.name);
+        console.log('  Days until expiry:', Math.ceil(daysUntilExpiry));
+        console.log('  Is soon expiring:', daysUntilExpiry <= 7 && daysUntilExpiry > 0);
+      }
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+Expected: Soon-to-expire packages properly identified
+Screenshot: 17_upcoming_expiration_detection.png
+
+Step 19: Test Performance with Consumption Data
+1. Measure API performance with detailed consumption:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const startTime = performance.now();
+fetch('http://localhost:8000/finances/api/student-balance/purchases/?include_consumption=true', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => {
+    const endTime = performance.now();
+    console.log(`Purchases API with consumption - Response Time: ${endTime - startTime} milliseconds`);
+    return response.json();
+  })
+  .then(data => {
+    console.log('Performance test results:');
+    console.log('  Purchases loaded:', data.results.length);
+    console.log('  Total consumption records:', 
+      data.results.reduce((total, p) => total + p.detailed_consumptions.length, 0));
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+Expected: Acceptable performance even with consumption data
+Screenshot: 18_performance_with_consumption.png
+
+Step 20: Comprehensive Purchase Data Validation
+1. Validate complete API response structure:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+fetch('http://localhost:8000/finances/api/student-balance/purchases/?include_consumption=true', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== COMPREHENSIVE PURCHASE VALIDATION ===');
+    
+    data.results.forEach((purchase, index) => {
+      console.log(`Purchase ${index + 1} validation:`);
+      
+      // Required fields
+      console.log('  Has required fields:', !!(
+        purchase.id && 
+        purchase.plan_details && 
+        purchase.payment_status && 
+        purchase.amount &&
+        purchase.hours_purchased
+      ));
+      
+      // Proper data types
+      console.log('  Proper data types:', {
+        idIsNumber: typeof purchase.id === 'number',
+        amountIsString: typeof purchase.amount === 'string',
+        isActiveIsBoolean: typeof purchase.is_active === 'boolean',
+        isExpiredIsBoolean: typeof purchase.is_expired === 'boolean'
+      });
+      
+      // Format validation
+      console.log('  Format validation:', {
+        amountFormat: /^\d+\.\d{2}$/.test(purchase.amount),
+        hoursFormat: /^\d+\.\d{2}$/.test(purchase.hours_purchased),
+        dateFormat: !isNaN(new Date(purchase.created_at).getTime())
+      });
+      
+      // Consumption summary structure
+      if (purchase.consumption_summary) {
+        console.log('  Consumption summary valid:', {
+          hasTotalConsumed: !!purchase.consumption_summary.total_consumed,
+          hasRemainingHours: !!purchase.consumption_summary.remaining_hours,
+          hasPercentage: typeof purchase.consumption_summary.consumption_percentage === 'number'
+        });
+      }
+    });
+  })
+  .catch(error => console.error('Validation error:', error));
+```
+
+Expected: All validation checks pass for purchase data
+Screenshot: 19_comprehensive_validation.png
 
 === PASS/FAIL CRITERIA ===
 
-PASS: All validation rules enforced correctly with proper error handling and boundary conditions
-FAIL: Any validation fails to work OR inappropriate error messages OR data integrity issues
+PASS: API returns comprehensive purchase data with accurate consumption analytics
+FAIL: Any purchase data inaccuracy OR consumption tracking failure OR expiration logic errors
 
 Individual Step Criteria:
-- Step 1-2: PASS if environment and test setup complete, FAIL if setup issues
-- Step 3: PASS if valid data saves successfully, FAIL if valid data rejected
-- Step 4-5: PASS if decimal precision enforced correctly, FAIL if precision not maintained
-- Step 6-7: PASS if maximum value constraints enforced, FAIL if oversized values accepted
-- Step 8: PASS if negative values handled properly, FAIL if negative values cause errors
-- Step 9: PASS if zero values work correctly, FAIL if zero values cause issues
-- Step 10: PASS if minimum values stored accurately, FAIL if precision loss
-- Step 11: PASS if large calculations accurate, FAIL if calculation errors
-- Step 12: PASS if related field validation works, FAIL if invalid relationships allowed
-- Step 13: PASS if required field validation enforced, FAIL if empty required fields accepted
-- Step 14: PASS if boundary conditions handled correctly, FAIL if boundary errors
-- Step 15: PASS if field type validation enforced, FAIL if invalid types accepted
-- Step 16: PASS if unicode handled properly, FAIL if encoding errors
-- Step 17: PASS if concurrent edits handled gracefully, FAIL if data corruption
-- Step 18: PASS if error messages clear and helpful, FAIL if confusing or missing errors
-- Step 19: PASS if performance acceptable with edge data, FAIL if performance issues
-- Step 20: PASS if data consistency maintained, FAIL if consistency issues
+- Step 1-5: PASS if environment setup and test data created, FAIL if setup issues
+- Step 6: PASS if unauthenticated access denied, FAIL if data exposed without auth
+- Step 7: PASS if basic purchases API works with proper structure, FAIL if API fails
+- Step 8: PASS if active_only filter works correctly, FAIL if filter broken
+- Step 9: PASS if include_consumption parameter works, FAIL if consumption data missing
+- Step 10: PASS if expiration logic correct, FAIL if expiration status wrong
+- Step 11: PASS if consumption calculations accurate, FAIL if calculation errors
+- Step 12: PASS if plan details complete, FAIL if missing plan information
+- Step 13: PASS if pagination works with purchases, FAIL if pagination broken
+- Step 14: PASS if combined filters work, FAIL if filter combination fails
+- Step 15: PASS if admin email access works, FAIL if admin access denied
+- Step 16: PASS if empty purchases handled properly, FAIL if errors on empty data
+- Step 17: PASS if chronological ordering correct, FAIL if wrong order
+- Step 18: PASS if upcoming expiration detection works, FAIL if expiration logic wrong
+- Step 19: PASS if performance acceptable (<2s), FAIL if slow performance
+- Step 20: PASS if all data validation passes, FAIL if validation issues
 
 Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
 
 === ADDITIONAL VERIFICATION POINTS ===
 
-Field Constraints Checklist:
-- hours_purchased: DecimalField(max_digits=5, decimal_places=2, default=0.00)
-- hours_consumed: DecimalField(max_digits=5, decimal_places=2, default=0.00)
-- balance_amount: DecimalField(max_digits=6, decimal_places=2, default=0.00)
-- student: OneToOneField(CustomUser, on_delete=CASCADE)
+Purchase Data Structure:
+- Complete purchase transaction information
+- Plan details with name, type, duration
+- Payment status and amount information
+- Expiration dates and status flags
+- Consumption summary with calculations
+- Detailed consumption records (when requested)
 
-Validation Rules:
-- All decimal fields maintain 2 decimal place precision
-- Maximum values: 999.99 for hours, 9999.99 for balance
-- Negative values allowed (overdraft scenarios)
-- Zero values allowed (empty accounts)
-- Required fields: student (others have defaults)
-- One-to-one constraint enforced (no duplicates)
+Consumption Analytics:
+- Total hours consumed calculation
+- Remaining hours calculation (purchased - consumed)
+- Consumption percentage calculation
+- Individual consumption record tracking
+- Consumption linked to specific purchases
 
-Edge Cases to Test:
-- Maximum field values (999.99, 9999.99)
-- Minimum non-zero values (0.01)
-- Zero values (0.00)
-- Negative values (-999.99, -9999.99)
-- High precision input (rounds to 2 places)
-- Unicode characters in related fields
-- Concurrent editing scenarios
-- Boundary value calculations
+Expiration Management:
+- Active/expired status determination
+- Soon-to-expire detection (within 7 days)
+- Subscription vs package handling
+- Expiration date null handling for subscriptions
 
-Error Handling:
-- Clear, user-friendly error messages
-- Field-specific validation feedback
-- Form-level validation for complex rules
-- Database constraint error handling
-- Type validation for all fields
+Filter Functionality:
+- active_only parameter working
+- include_consumption parameter working
+- Combined filter support
+- Pagination with filters
+- Admin email parameter override
+
+Performance Requirements:
+- Response time < 2000ms
+- Efficient query handling with consumption data
+- Proper database relationship optimization
+- Memory usage reasonable with detailed data

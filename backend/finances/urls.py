@@ -10,6 +10,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ClassSessionViewSet,
     SchoolBillingSettingsViewSet,
+    StudentBalanceViewSet,
     TeacherCompensationRuleViewSet,
     TeacherPaymentEntryViewSet,
     active_pricing_plans,
@@ -31,6 +32,7 @@ router.register(
 )
 router.register(r"sessions", ClassSessionViewSet, basename="class-sessions")
 router.register(r"payments", TeacherPaymentEntryViewSet, basename="teacher-payments")
+router.register(r"student-balance", StudentBalanceViewSet, basename="student-balance")
 
 # URL patterns
 urlpatterns = [

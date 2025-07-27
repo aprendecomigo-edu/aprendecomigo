@@ -24,6 +24,7 @@ from common.throttles import PurchaseInitiationThrottle, PurchaseInitiationEmail
 
 from .models import (
     ClassSession,
+    HourConsumption,
     PlanType,
     PricingPlan,
     PurchaseTransaction,
@@ -39,12 +40,15 @@ from .serializers import (
     MonthlyPaymentSummarySerializer,
     PaymentCalculationSerializer,
     PricingPlanSerializer,
+    PurchaseHistorySerializer,
     PurchaseInitiationRequestSerializer,
     PurchaseInitiationResponseSerializer,
     PurchaseInitiationErrorSerializer,
     SchoolBillingSettingsSerializer,
+    StudentBalanceSummarySerializer,
     TeacherCompensationRuleSerializer,
     TeacherPaymentEntrySerializer,
+    TransactionHistorySerializer,
 )
 from .services import BulkPaymentProcessor, TeacherPaymentCalculator
 from .services.stripe_base import StripeService
@@ -1255,3 +1259,337 @@ def _handle_payment_service_error(payment_result):
         error_response['details'] = payment_result['details']
     
     return Response(error_response, status=http_status)
+
+
+class StudentBalanceViewSet(viewsets.ViewSet):
+    """
+    ViewSet for student account balance management.
+    
+    Provides endpoints for students to view their tutoring hour balances,
+    purchase history, and consumption tracking. Supports both authenticated 
+    users and admin email parameter lookups with proper security validation.
+    """
+    
+    permission_classes = [IsAuthenticated]
+    
+    def _get_target_student(self, request):
+        """
+        Get the target student based on authentication and email parameter.
+        
+        Args:
+            request: The HTTP request object
+            
+        Returns:
+            tuple: (student_user, error_response)
+                student_user: The target student user object or None
+                error_response: Error response if any, or None
+        """
+        from accounts.models import CustomUser
+        from django.core.validators import EmailValidator
+        
+        email_param = request.query_params.get('email')
+        
+        # If no email parameter, use authenticated user
+        if not email_param:
+            return request.user, None
+        
+        # Validate email format
+        email_validator = EmailValidator()
+        try:
+            email_validator(email_param)
+        except Exception:
+            return None, Response(
+                {'error': 'Invalid email format'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if user is admin (can access any student's data)
+        if not (request.user.is_staff or request.user.is_superuser):
+            return None, Response(
+                {'error': 'Permission denied. Only administrators can access other students\' data.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Find student by email
+        try:
+            student_user = CustomUser.objects.get(email__iexact=email_param)
+            return student_user, None
+        except CustomUser.DoesNotExist:
+            return None, Response(
+                {'error': f'Student with email {email_param} not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    def _get_or_create_student_balance(self, student_user):
+        """Get or create student account balance."""
+        balance, created = StudentAccountBalance.objects.get_or_create(
+            student=student_user,
+            defaults={
+                'hours_purchased': Decimal('0.00'),
+                'hours_consumed': Decimal('0.00'),
+                'balance_amount': Decimal('0.00')
+            }
+        )
+        return balance
+    
+    def _calculate_package_status(self, student_user):
+        """Calculate active and expired package status."""
+        from django.utils import timezone
+        
+        # Get all completed transactions for this student with optimized queries
+        transactions = PurchaseTransaction.objects.filter(
+            student=student_user,
+            payment_status=TransactionPaymentStatus.COMPLETED
+        ).prefetch_related('hour_consumptions').order_by('-created_at')
+        
+        active_packages = []
+        expired_packages = []
+        
+        for transaction in transactions:
+            # Calculate hours consumed for this specific transaction
+            consumed_hours = sum(
+                consumption.hours_consumed 
+                for consumption in transaction.hour_consumptions.filter(is_refunded=False)
+            )
+            
+            # Get plan details from metadata or database
+            metadata = transaction.metadata or {}
+            plan_id = metadata.get('plan_id')
+            plan_name = metadata.get('plan_name', 'Unknown Plan')
+            hours_included = Decimal(metadata.get('hours_included', '0'))
+            
+            if plan_id:
+                try:
+                    plan = PricingPlan.objects.get(id=plan_id)
+                    plan_name = plan.name
+                    hours_included = plan.hours_included
+                except PricingPlan.DoesNotExist:
+                    pass
+            
+            hours_remaining = max(hours_included - consumed_hours, Decimal('0'))
+            
+            # Calculate days until expiry
+            days_until_expiry = None
+            if transaction.expires_at:
+                delta = transaction.expires_at.date() - timezone.now().date()
+                days_until_expiry = delta.days
+            
+            package_data = {
+                'transaction_id': transaction.id,
+                'plan_name': plan_name,
+                'hours_included': hours_included,
+                'hours_consumed': consumed_hours,
+                'hours_remaining': hours_remaining,
+                'expires_at': transaction.expires_at,
+                'days_until_expiry': days_until_expiry,
+                'is_expired': transaction.is_expired,
+            }
+            
+            if transaction.is_expired:
+                expired_packages.append(package_data)
+            else:
+                active_packages.append(package_data)
+        
+        return {
+            'active_packages': active_packages,
+            'expired_packages': expired_packages
+        }
+    
+    def _get_upcoming_expirations(self, student_user, days_ahead=30):
+        """Get packages expiring within specified days."""
+        from django.utils import timezone
+        
+        cutoff_date = timezone.now() + timezone.timedelta(days=days_ahead)
+        
+        upcoming = PurchaseTransaction.objects.filter(
+            student=student_user,
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            expires_at__isnull=False,
+            expires_at__gte=timezone.now(),
+            expires_at__lte=cutoff_date
+        ).prefetch_related('hour_consumptions').order_by('expires_at')
+        
+        result = []
+        for transaction in upcoming:
+            # Calculate remaining hours
+            consumed_hours = sum(
+                consumption.hours_consumed 
+                for consumption in transaction.hour_consumptions.filter(is_refunded=False)
+            )
+            
+            metadata = transaction.metadata or {}
+            plan_name = metadata.get('plan_name', 'Unknown Plan')
+            hours_included = Decimal(metadata.get('hours_included', '0'))
+            
+            # Try to get actual plan data
+            plan_id = metadata.get('plan_id')
+            if plan_id:
+                try:
+                    plan = PricingPlan.objects.get(id=plan_id)
+                    plan_name = plan.name
+                    hours_included = plan.hours_included
+                except PricingPlan.DoesNotExist:
+                    pass
+            
+            hours_remaining = max(hours_included - consumed_hours, Decimal('0'))
+            
+            # Only include if there are hours remaining
+            if hours_remaining > 0:
+                delta = transaction.expires_at.date() - timezone.now().date()
+                result.append({
+                    'transaction_id': transaction.id,
+                    'plan_name': plan_name,
+                    'hours_remaining': hours_remaining,
+                    'expires_at': transaction.expires_at,
+                    'days_until_expiry': delta.days,
+                })
+        
+        return result
+    
+    @action(detail=False, methods=['get'], url_path='')
+    def summary(self, request):
+        """
+        Get student account balance summary.
+        
+        Returns comprehensive balance information including:
+        - Student information
+        - Balance summary (hours purchased/consumed/remaining)
+        - Package status (active/expired packages)
+        - Upcoming expirations
+        """
+        student_user, error_response = self._get_target_student(request)
+        if error_response:
+            return error_response
+        
+        # Get or create student balance
+        student_balance = self._get_or_create_student_balance(student_user)
+        
+        # Calculate package status
+        package_status = self._calculate_package_status(student_user)
+        
+        # Get upcoming expirations
+        upcoming_expirations = self._get_upcoming_expirations(student_user, days_ahead=7)
+        
+        # Prepare response data
+        response_data = {
+            'student_info': {
+                'id': student_user.id,
+                'name': student_user.name,
+                'email': student_user.email,
+            },
+            'balance_summary': {
+                'hours_purchased': student_balance.hours_purchased,
+                'hours_consumed': student_balance.hours_consumed,
+                'remaining_hours': student_balance.remaining_hours,
+                'balance_amount': student_balance.balance_amount,
+            },
+            'package_status': package_status,
+            'upcoming_expirations': upcoming_expirations,
+        }
+        
+        serializer = StudentBalanceSummarySerializer(response_data)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'], url_path='history')
+    def history(self, request):
+        """
+        Get student transaction history.
+        
+        Supports filtering by:
+        - payment_status: completed, pending, failed, etc.
+        - transaction_type: package, subscription
+        - Pagination with page and page_size parameters
+        """
+        student_user, error_response = self._get_target_student(request)
+        if error_response:
+            return error_response
+        
+        # Get queryset with filters
+        queryset = PurchaseTransaction.objects.filter(
+            student=student_user
+        ).order_by('-created_at')
+        
+        # Apply filters
+        payment_status = request.query_params.get('payment_status')
+        if payment_status:
+            queryset = queryset.filter(payment_status=payment_status)
+        
+        transaction_type = request.query_params.get('transaction_type')
+        if transaction_type:
+            queryset = queryset.filter(transaction_type=transaction_type)
+        
+        # Optimize queries
+        queryset = queryset.prefetch_related('hour_consumptions')
+        
+        # Paginate results
+        from rest_framework.pagination import PageNumberPagination
+        paginator = PageNumberPagination()
+        page_size = request.query_params.get('page_size', 20)
+        try:
+            paginator.page_size = min(int(page_size), 100)  # Max 100 items per page
+        except (ValueError, TypeError):
+            paginator.page_size = 20
+        
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = TransactionHistorySerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = TransactionHistorySerializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'], url_path='purchases')
+    def purchases(self, request):
+        """
+        Get student purchase history with plan details and consumption tracking.
+        
+        Supports filtering by:
+        - active_only: true/false - only show non-expired packages
+        - include_consumption: true/false - include detailed consumption history
+        - Pagination with page and page_size parameters
+        """
+        student_user, error_response = self._get_target_student(request)
+        if error_response:
+            return error_response
+        
+        # Get queryset with filters
+        queryset = PurchaseTransaction.objects.filter(
+            student=student_user,
+            payment_status=TransactionPaymentStatus.COMPLETED
+        ).order_by('-created_at')
+        
+        # Filter by active status
+        active_only = request.query_params.get('active_only', '').lower() == 'true'
+        if active_only:
+            from django.utils import timezone
+            from django.db import models
+            queryset = queryset.filter(
+                models.Q(expires_at__isnull=True) |  # Subscriptions
+                models.Q(expires_at__gt=timezone.now())  # Non-expired packages
+            )
+        
+        # Optimize queries
+        queryset = queryset.prefetch_related(
+            'hour_consumptions__class_session'
+        ).select_related()
+        
+        # Paginate results
+        from rest_framework.pagination import PageNumberPagination
+        paginator = PageNumberPagination()
+        page_size = request.query_params.get('page_size', 20)
+        try:
+            paginator.page_size = min(int(page_size), 100)  # Max 100 items per page
+        except (ValueError, TypeError):
+            paginator.page_size = 20
+        
+        page = paginator.paginate_queryset(queryset, request)
+        
+        # Prepare serializer context
+        context = {'request': request}
+        
+        if page is not None:
+            serializer = PurchaseHistorySerializer(page, many=True, context=context)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = PurchaseHistorySerializer(queryset, many=True, context=context)
+        return Response(serializer.data)

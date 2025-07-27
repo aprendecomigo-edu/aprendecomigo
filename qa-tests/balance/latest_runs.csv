@@ -1,5 +1,7 @@
 test_id,test_name,last_run_date,last_run_time,result,notes
-balance-001,Django Admin Interface Tests,,,NOT_RUN,Test case created - ready for execution
-balance-002,Model Integration Tests,,,NOT_RUN,Test case created - ready for execution
-balance-003,Data Validation Tests,,,NOT_RUN,Test case created - ready for execution
-balance-004,Database Operations Tests,,,NOT_RUN,Test case created - ready for execution
+balance-001,Student Balance Summary API Endpoint Testing,,,NOT_RUN,Test case created - ready for execution
+balance-002,Transaction History API Testing with Advanced Filtering,,,NOT_RUN,Test case created - ready for execution
+balance-003,Purchase History API Testing with Consumption Analytics,,,NOT_RUN,Test case created - ready for execution
+balance-004,Authentication and Authorization Security for Student Balance API,,,NOT_RUN,Test case created - ready for execution
+balance-005,Data Accuracy and Balance Calculations Testing,,,NOT_RUN,Test case created - ready for execution
+balance-006,Performance and Load Testing for Student Balance API,,,NOT_RUN,Test case created - ready for execution

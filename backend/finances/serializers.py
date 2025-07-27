@@ -11,8 +11,11 @@ from rest_framework import serializers
 
 from .models import (
     ClassSession,
+    HourConsumption,
     PricingPlan,
+    PurchaseTransaction,
     SchoolBillingSettings,
+    StudentAccountBalance,
     TeacherCompensationRule,
     TeacherPaymentEntry,
 )
@@ -529,3 +532,196 @@ class PurchaseInitiationErrorSerializer(serializers.Serializer):
         required=False,
         help_text="Field-specific validation errors"
     )
+
+
+class StudentInfoDisplaySerializer(serializers.Serializer):
+    """Serializer for student information in balance responses."""
+    
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    email = serializers.CharField()
+
+
+class BalanceSummarySerializer(serializers.Serializer):
+    """Serializer for student account balance summary."""
+    
+    hours_purchased = serializers.DecimalField(max_digits=5, decimal_places=2)
+    hours_consumed = serializers.DecimalField(max_digits=5, decimal_places=2)
+    remaining_hours = serializers.DecimalField(max_digits=5, decimal_places=2)
+    balance_amount = serializers.DecimalField(max_digits=6, decimal_places=2)
+
+
+class PackageDetailsSerializer(serializers.Serializer):
+    """Serializer for package details in balance responses."""
+    
+    transaction_id = serializers.IntegerField()
+    plan_name = serializers.CharField(allow_null=True)
+    hours_included = serializers.DecimalField(max_digits=5, decimal_places=2, allow_null=True)
+    hours_consumed = serializers.DecimalField(max_digits=5, decimal_places=2)
+    hours_remaining = serializers.DecimalField(max_digits=5, decimal_places=2)
+    expires_at = serializers.DateTimeField(allow_null=True)
+    days_until_expiry = serializers.IntegerField(allow_null=True)
+    is_expired = serializers.BooleanField()
+
+
+class PackageStatusSerializer(serializers.Serializer):
+    """Serializer for package status information."""
+    
+    active_packages = PackageDetailsSerializer(many=True)
+    expired_packages = PackageDetailsSerializer(many=True)
+
+
+class UpcomingExpirationSerializer(serializers.Serializer):
+    """Serializer for upcoming package expirations."""
+    
+    transaction_id = serializers.IntegerField()
+    plan_name = serializers.CharField(allow_null=True)
+    hours_remaining = serializers.DecimalField(max_digits=5, decimal_places=2)
+    expires_at = serializers.DateTimeField()
+    days_until_expiry = serializers.IntegerField()
+
+
+class StudentBalanceSummarySerializer(serializers.Serializer):
+    """Main serializer for student balance summary endpoint."""
+    
+    student_info = StudentInfoDisplaySerializer()
+    balance_summary = BalanceSummarySerializer()
+    package_status = PackageStatusSerializer()
+    upcoming_expirations = UpcomingExpirationSerializer(many=True)
+
+
+class TransactionHistorySerializer(serializers.ModelSerializer):
+    """Serializer for transaction history."""
+    
+    transaction_type_display = serializers.CharField(source="get_transaction_type_display", read_only=True)
+    payment_status_display = serializers.CharField(source="get_payment_status_display", read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = PurchaseTransaction
+        fields = [
+            "id",
+            "transaction_type",
+            "transaction_type_display",
+            "amount",
+            "payment_status",
+            "payment_status_display",
+            "expires_at",
+            "is_expired",
+            "metadata",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class HourConsumptionSerializer(serializers.ModelSerializer):
+    """Serializer for hour consumption details."""
+    
+    class_session_id = serializers.IntegerField(source="class_session.id", read_only=True)
+    class_session_date = serializers.DateField(source="class_session.date", read_only=True)
+    
+    class Meta:
+        model = HourConsumption
+        fields = [
+            "id",
+            "hours_consumed",
+            "hours_originally_reserved",
+            "consumed_at",
+            "class_session_id",
+            "class_session_date",
+            "is_refunded",
+            "refund_reason",
+        ]
+        read_only_fields = ["id", "consumed_at"]
+
+
+class PlanDetailsSerializer(serializers.Serializer):
+    """Serializer for plan details in purchase history."""
+    
+    id = serializers.IntegerField(allow_null=True)
+    name = serializers.CharField(allow_null=True)
+    plan_type = serializers.CharField(allow_null=True)
+    hours_included = serializers.DecimalField(max_digits=5, decimal_places=2, allow_null=True)
+    price_eur = serializers.DecimalField(max_digits=6, decimal_places=2, allow_null=True)
+    validity_days = serializers.IntegerField(allow_null=True)
+
+
+class PurchaseHistorySerializer(serializers.ModelSerializer):
+    """Serializer for purchase history with plan details."""
+    
+    transaction_type_display = serializers.CharField(source="get_transaction_type_display", read_only=True)
+    payment_status_display = serializers.CharField(source="get_payment_status_display", read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
+    plan_details = serializers.SerializerMethodField()
+    hours_remaining = serializers.SerializerMethodField()
+    consumption_details = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PurchaseTransaction
+        fields = [
+            "id",
+            "transaction_type",
+            "transaction_type_display",
+            "amount",
+            "payment_status",
+            "payment_status_display",
+            "expires_at",
+            "is_expired",
+            "plan_details",
+            "hours_remaining",
+            "consumption_details",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+    
+    def get_plan_details(self, obj):
+        """Get plan details from metadata."""
+        metadata = obj.metadata or {}
+        plan_id = metadata.get('plan_id')
+        
+        if plan_id:
+            try:
+                plan = PricingPlan.objects.get(id=plan_id)
+                return {
+                    'id': plan.id,
+                    'name': plan.name,
+                    'plan_type': plan.plan_type,
+                    'hours_included': plan.hours_included,
+                    'price_eur': plan.price_eur,
+                    'validity_days': plan.validity_days,
+                }
+            except PricingPlan.DoesNotExist:
+                pass
+        
+        # Fallback to metadata
+        return {
+            'id': plan_id,
+            'name': metadata.get('plan_name'),
+            'plan_type': metadata.get('plan_type'),
+            'hours_included': Decimal(metadata.get('hours_included', '0')) if metadata.get('hours_included') else None,
+            'price_eur': Decimal(metadata.get('price_eur', '0')) if metadata.get('price_eur') else None,
+            'validity_days': metadata.get('validity_days'),
+        }
+    
+    def get_hours_remaining(self, obj):
+        """Calculate hours remaining for this purchase."""
+        plan_details = self.get_plan_details(obj)
+        hours_included = plan_details.get('hours_included') or Decimal('0')
+        
+        # Calculate hours consumed from this specific transaction
+        total_consumed = sum(
+            consumption.hours_consumed 
+            for consumption in obj.hour_consumptions.filter(is_refunded=False)
+        )
+        
+        return max(hours_included - total_consumed, Decimal('0'))
+    
+    def get_consumption_details(self, obj):
+        """Get consumption details if requested."""
+        request = self.context.get('request')
+        if request and request.query_params.get('include_consumption'):
+            consumptions = obj.hour_consumptions.select_related('class_session').order_by('-consumed_at')
+            return HourConsumptionSerializer(consumptions, many=True).data
+        return []

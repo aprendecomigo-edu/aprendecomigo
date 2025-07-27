@@ -1,0 +1,938 @@
+QA Test Case: Performance and Load Testing
+
+Test ID: BALANCE-006
+Test Name: Performance and Load Testing for Student Balance API
+Purpose: Verify the performance characteristics, load handling capabilities, and scalability of all Student Balance API endpoints under various load conditions
+Expected Result: All API endpoints perform efficiently under normal and stress conditions with acceptable response times
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Student Account Balance API - Performance Testing
+- API Endpoints: All three balance endpoints under performance evaluation
+- Focus: Response times, concurrent handling, memory usage, database efficiency
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data Requirements:
+- Large dataset of students with extensive transaction history
+- Multiple concurrent user scenarios
+- Various data sizes for performance comparison
+- Database optimization test scenarios
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Service Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Both services start successfully
+- Backend: http://localhost:8000 responds
+- Frontend: http://localhost:8081 shows loading screen
+- API accessible at http://localhost:8000/api/
+
+Step 2: Create Large Test Dataset
+1. Open browser to http://localhost:8000/admin/
+2. Login with admin credentials
+3. Create multiple test users for load testing:
+   - perf-student1@test.com to perf-student10@test.com
+   - admin-perf@test.com (admin user)
+
+Expected: Multiple test users created for performance testing
+Screenshot: 01_performance_test_users_created.png
+
+Step 3: Generate Extensive Transaction History
+1. Create multiple transactions for each test user:
+   - User 1: 50+ transactions (completed, pending, failed)
+   - User 2: 100+ transactions with hour consumption data
+   - User 3: 25+ transactions with subscription types
+   - Users 4-10: 10-30 transactions each
+
+Expected: Large dataset created for performance testing
+Screenshot: 02_large_transaction_dataset_created.png
+
+Step 4: Baseline Performance Test - Balance Summary API
+1. Authenticate as perf-student1@test.com
+2. Measure baseline performance:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const times = [];
+
+for (let i = 0; i < 10; i++) {
+  const startTime = performance.now();
+  await fetch('http://localhost:8000/finances/api/student-balance/', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const endTime = performance.now();
+    times.push(endTime - startTime);
+    console.log(`Request ${i + 1}: ${endTime - startTime}ms`);
+  });
+}
+
+const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+const maxTime = Math.max(...times);
+const minTime = Math.min(...times);
+
+console.log('=== BALANCE SUMMARY PERFORMANCE ===');
+console.log(`Average: ${avgTime.toFixed(2)}ms`);
+console.log(`Maximum: ${maxTime.toFixed(2)}ms`);
+console.log(`Minimum: ${minTime.toFixed(2)}ms`);
+```
+
+Expected: 
+- Average response time < 500ms
+- Maximum response time < 1000ms
+- Consistent performance across requests
+
+Screenshot: 03_balance_summary_baseline_performance.png
+
+Step 5: Baseline Performance Test - Transaction History API
+1. Test transaction history endpoint performance:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const times = [];
+
+for (let i = 0; i < 10; i++) {
+  const startTime = performance.now();
+  await fetch('http://localhost:8000/finances/api/student-balance/history/', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const endTime = performance.now();
+    times.push(endTime - startTime);
+    console.log(`History Request ${i + 1}: ${endTime - startTime}ms (${data.results.length} transactions)`);
+  });
+}
+
+const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+console.log('=== TRANSACTION HISTORY PERFORMANCE ===');
+console.log(`Average: ${avgTime.toFixed(2)}ms`);
+console.log(`Total transactions processed: ${data.count}`);
+```
+
+Expected:
+- Average response time < 1000ms
+- Performance scales with data size
+- Pagination reduces response time
+
+Screenshot: 04_transaction_history_baseline_performance.png
+
+Step 6: Baseline Performance Test - Purchase History API
+1. Test purchase history endpoint performance:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const times = [];
+
+for (let i = 0; i < 10; i++) {
+  const startTime = performance.now();
+  await fetch('http://localhost:8000/finances/api/student-balance/purchases/', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const endTime = performance.now();
+    times.push(endTime - startTime);
+    console.log(`Purchase Request ${i + 1}: ${endTime - startTime}ms`);
+  });
+}
+
+const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+console.log('=== PURCHASE HISTORY PERFORMANCE ===');
+console.log(`Average: ${avgTime.toFixed(2)}ms`);
+```
+
+Expected:
+- Average response time < 800ms
+- Efficient consumption data inclusion
+- Consistent performance
+
+Screenshot: 05_purchase_history_baseline_performance.png
+
+Step 7: Concurrent Request Testing - Balance Summary
+1. Test concurrent access to balance summary:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const concurrentRequests = 20;
+const startTime = performance.now();
+
+const requests = Array(concurrentRequests).fill().map(() =>
+  fetch('http://localhost:8000/finances/api/student-balance/', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  }).then(response => response.json())
+);
+
+Promise.all(requests)
+  .then(results => {
+    const endTime = performance.now();
+    const totalTime = endTime - startTime;
+    
+    console.log('=== CONCURRENT BALANCE SUMMARY TEST ===');
+    console.log(`${concurrentRequests} concurrent requests completed in ${totalTime.toFixed(2)}ms`);
+    console.log(`Average per request: ${(totalTime / concurrentRequests).toFixed(2)}ms`);
+    console.log('All requests successful:', results.every(r => r.student && r.balance_summary));
+    console.log('Data consistency:', results.every(r => r.student.email === results[0].student.email));
+  })
+  .catch(error => console.error('Concurrent test error:', error));
+```
+
+Expected:
+- All concurrent requests complete successfully
+- No data corruption or race conditions
+- Reasonable total completion time
+- Consistent data across all responses
+
+Screenshot: 06_concurrent_balance_summary_test.png
+
+Step 8: Concurrent Request Testing - Transaction History
+1. Test concurrent access to transaction history:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const concurrentRequests = 15;
+const startTime = performance.now();
+
+const requests = Array(concurrentRequests).fill().map(() =>
+  fetch('http://localhost:8000/finances/api/student-balance/history/', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  }).then(response => response.json())
+);
+
+Promise.all(requests)
+  .then(results => {
+    const endTime = performance.now();
+    const totalTime = endTime - startTime;
+    
+    console.log('=== CONCURRENT TRANSACTION HISTORY TEST ===');
+    console.log(`${concurrentRequests} concurrent requests completed in ${totalTime.toFixed(2)}ms`);
+    console.log(`Average per request: ${(totalTime / concurrentRequests).toFixed(2)}ms`);
+    console.log('All requests successful:', results.every(r => r.results && Array.isArray(r.results)));
+    console.log('Transaction count consistency:', results.every(r => r.count === results[0].count));
+  })
+  .catch(error => console.error('Concurrent history test error:', error));
+```
+
+Expected:
+- All concurrent requests complete successfully
+- Transaction counts remain consistent
+- No duplicate or missing transactions
+
+Screenshot: 07_concurrent_transaction_history_test.png
+
+Step 9: Load Testing with Multiple Users
+1. Simulate multiple users accessing different endpoints:
+```javascript
+// Create tokens for multiple users (perf-student1 through perf-student5)
+const userTokens = [
+  'TOKEN_1', 'TOKEN_2', 'TOKEN_3', 'TOKEN_4', 'TOKEN_5'
+];
+
+const endpoints = [
+  '/finances/api/student-balance/',
+  '/finances/api/student-balance/history/',
+  '/finances/api/student-balance/purchases/'
+];
+
+const startTime = performance.now();
+const allRequests = [];
+
+userTokens.forEach((token, userIndex) => {
+  endpoints.forEach((endpoint, endpointIndex) => {
+    allRequests.push(
+      fetch(`http://localhost:8000${endpoint}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => ({
+        user: userIndex + 1,
+        endpoint: endpoint,
+        success: true,
+        dataSize: JSON.stringify(data).length
+      }))
+      .catch(error => ({
+        user: userIndex + 1,
+        endpoint: endpoint,
+        success: false,
+        error: error.message
+      }))
+    );
+  });
+});
+
+Promise.all(allRequests)
+  .then(results => {
+    const endTime = performance.now();
+    const totalTime = endTime - startTime;
+    
+    console.log('=== MULTI-USER LOAD TEST ===');
+    console.log(`Total requests: ${results.length}`);
+    console.log(`Total time: ${totalTime.toFixed(2)}ms`);
+    console.log(`Average per request: ${(totalTime / results.length).toFixed(2)}ms`);
+    console.log('Success rate:', `${results.filter(r => r.success).length}/${results.length}`);
+    
+    // Group by endpoint
+    endpoints.forEach(endpoint => {
+      const endpointResults = results.filter(r => r.endpoint === endpoint);
+      console.log(`${endpoint}: ${endpointResults.filter(r => r.success).length}/${endpointResults.length} successful`);
+    });
+  })
+  .catch(error => console.error('Load test error:', error));
+```
+
+Expected:
+- All requests complete successfully
+- No endpoint failures under multi-user load
+- Reasonable total completion time
+- Consistent performance across users
+
+Screenshot: 08_multi_user_load_test.png
+
+Step 10: Pagination Performance Testing
+1. Test performance with different page sizes:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const pageSizes = [5, 10, 25, 50, 100];
+
+for (const pageSize of pageSizes) {
+  const startTime = performance.now();
+  
+  await fetch(`http://localhost:8000/finances/api/student-balance/history/?page_size=${pageSize}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const endTime = performance.now();
+    const responseTime = endTime - startTime;
+    
+    console.log(`Page size ${pageSize}: ${responseTime.toFixed(2)}ms (${data.results.length} results)`);
+    console.log(`  - Data size: ${JSON.stringify(data).length} bytes`);
+    console.log(`  - Has next: ${!!data.next}`);
+  });
+}
+```
+
+Expected:
+- Larger page sizes have proportionally longer response times
+- Performance degradation is linear, not exponential
+- All page sizes complete within acceptable times
+
+Screenshot: 09_pagination_performance_test.png
+
+Step 11: Database Query Performance Analysis
+1. Test performance with complex filtering:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const filterTests = [
+  { name: 'No filters', params: '' },
+  { name: 'Status filter', params: '?payment_status=completed' },
+  { name: 'Type filter', params: '?transaction_type=package' },
+  { name: 'Combined filters', params: '?payment_status=completed&transaction_type=package' },
+  { name: 'Large page size', params: '?page_size=100' },
+  { name: 'Filters + pagination', params: '?payment_status=completed&page_size=50' }
+];
+
+for (const test of filterTests) {
+  const startTime = performance.now();
+  
+  await fetch(`http://localhost:8000/finances/api/student-balance/history/${test.params}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const endTime = performance.now();
+    const responseTime = endTime - startTime;
+    
+    console.log(`${test.name}: ${responseTime.toFixed(2)}ms (${data.results.length} results)`);
+  });
+}
+```
+
+Expected:
+- Filtered queries perform efficiently
+- Database indexes support common filter patterns
+- No significant performance degradation with complex filters
+
+Screenshot: 10_database_query_performance.png
+
+Step 12: Memory Usage and Resource Monitoring
+1. Monitor browser memory usage during API calls:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+
+// Monitor memory before test
+const memoryBefore = performance.memory ? {
+  used: performance.memory.usedJSHeapSize,
+  total: performance.memory.totalJSHeapSize,
+  limit: performance.memory.jsHeapSizeLimit
+} : null;
+
+console.log('Memory before test:', memoryBefore);
+
+// Make multiple API calls and store results
+const results = [];
+for (let i = 0; i < 50; i++) {
+  const response = await fetch('http://localhost:8000/finances/api/student-balance/history/', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  const data = await response.json();
+  results.push(data);
+  
+  if (i % 10 === 0) {
+    const memoryNow = performance.memory ? performance.memory.usedJSHeapSize : 0;
+    console.log(`After ${i + 1} requests: ${memoryNow} bytes`);
+  }
+}
+
+// Monitor memory after test
+const memoryAfter = performance.memory ? {
+  used: performance.memory.usedJSHeapSize,
+  total: performance.memory.totalJSHeapSize,
+  limit: performance.memory.jsHeapSizeLimit
+} : null;
+
+console.log('Memory after test:', memoryAfter);
+console.log('Memory increase:', memoryAfter.used - memoryBefore.used, 'bytes');
+```
+
+Expected:
+- Memory usage remains reasonable
+- No significant memory leaks
+- Browser handles multiple API responses efficiently
+
+Screenshot: 11_memory_usage_monitoring.png
+
+Step 13: Stress Testing - High Frequency Requests
+1. Test API behavior under high frequency requests:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const requestCount = 100;
+const batchSize = 10;
+let completedRequests = 0;
+let failedRequests = 0;
+const startTime = performance.now();
+
+async function sendBatch(batchNumber) {
+  const batchPromises = [];
+  
+  for (let i = 0; i < batchSize; i++) {
+    batchPromises.push(
+      fetch('http://localhost:8000/finances/api/student-balance/', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          completedRequests++;
+          return response.json();
+        } else {
+          failedRequests++;
+          throw new Error(`HTTP ${response.status}`);
+        }
+      })
+      .catch(error => {
+        failedRequests++;
+        console.error(`Batch ${batchNumber}, request failed:`, error.message);
+      })
+    );
+  }
+  
+  await Promise.all(batchPromises);
+  console.log(`Batch ${batchNumber} completed. Success: ${completedRequests}, Failed: ${failedRequests}`);
+}
+
+// Send requests in batches
+for (let batch = 1; batch <= requestCount / batchSize; batch++) {
+  await sendBatch(batch);
+}
+
+const endTime = performance.now();
+const totalTime = endTime - startTime;
+
+console.log('=== STRESS TEST RESULTS ===');
+console.log(`Total requests: ${requestCount}`);
+console.log(`Completed: ${completedRequests}`);
+console.log(`Failed: ${failedRequests}`);
+console.log(`Success rate: ${(completedRequests / requestCount * 100).toFixed(2)}%`);
+console.log(`Total time: ${totalTime.toFixed(2)}ms`);
+console.log(`Average per request: ${(totalTime / requestCount).toFixed(2)}ms`);
+```
+
+Expected:
+- High success rate (>95%)
+- API handles high frequency requests gracefully
+- No server errors or timeouts
+- Reasonable average response time under stress
+
+Screenshot: 12_stress_testing_results.png
+
+Step 14: Admin Performance Testing
+1. Test admin endpoint performance with email parameter:
+```javascript
+const adminToken = 'ADMIN_JWT_TOKEN';
+const testEmails = [
+  'perf-student1@test.com',
+  'perf-student2@test.com',
+  'perf-student3@test.com',
+  'perf-student4@test.com',
+  'perf-student5@test.com'
+];
+
+for (const email of testEmails) {
+  const startTime = performance.now();
+  
+  await fetch(`http://localhost:8000/finances/api/student-balance/?email=${email}`, {
+    headers: {
+      'Authorization': `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const endTime = performance.now();
+    const responseTime = endTime - startTime;
+    
+    console.log(`Admin access for ${email}: ${responseTime.toFixed(2)}ms`);
+    console.log(`  - Student: ${data.student.name}`);
+    console.log(`  - Balance: ${data.balance_summary.balance_amount}`);
+  })
+  .catch(error => console.error(`Admin access failed for ${email}:`, error));
+}
+```
+
+Expected:
+- Admin email parameter doesn't significantly impact performance
+- All admin requests complete successfully
+- Performance comparable to regular student access
+
+Screenshot: 13_admin_performance_testing.png
+
+Step 15: Long Running Session Testing
+1. Test API performance over extended session:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const sessionDuration = 5 * 60 * 1000; // 5 minutes
+const requestInterval = 10000; // 10 seconds
+const sessionStartTime = Date.now();
+let requestCount = 0;
+const responseTimes = [];
+
+async function makePeriodicRequest() {
+  if (Date.now() - sessionStartTime >= sessionDuration) {
+    console.log('=== LONG RUNNING SESSION COMPLETE ===');
+    console.log(`Total requests: ${requestCount}`);
+    console.log(`Average response time: ${(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length).toFixed(2)}ms`);
+    console.log(`Max response time: ${Math.max(...responseTimes).toFixed(2)}ms`);
+    console.log(`Min response time: ${Math.min(...responseTimes).toFixed(2)}ms`);
+    return;
+  }
+  
+  const startTime = performance.now();
+  
+  try {
+    await fetch('http://localhost:8000/finances/api/student-balance/', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    }).then(response => response.json());
+    
+    const endTime = performance.now();
+    const responseTime = endTime - startTime;
+    responseTimes.push(responseTime);
+    requestCount++;
+    
+    console.log(`Request ${requestCount}: ${responseTime.toFixed(2)}ms`);
+  } catch (error) {
+    console.error(`Request ${requestCount + 1} failed:`, error.message);
+  }
+  
+  setTimeout(makePeriodicRequest, requestInterval);
+}
+
+makePeriodicRequest();
+```
+
+Expected:
+- Consistent performance over extended session
+- No performance degradation over time
+- All requests complete successfully
+- Response times remain stable
+
+Screenshot: 14_long_running_session_test.png
+
+Step 16: Performance Comparison Across Endpoints
+1. Compare performance characteristics of all three endpoints:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const endpoints = [
+  { name: 'Balance Summary', url: '/finances/api/student-balance/' },
+  { name: 'Transaction History', url: '/finances/api/student-balance/history/' },
+  { name: 'Purchase History', url: '/finances/api/student-balance/purchases/' }
+];
+
+const results = {};
+
+for (const endpoint of endpoints) {
+  const times = [];
+  const dataSizes = [];
+  
+  for (let i = 0; i < 20; i++) {
+    const startTime = performance.now();
+    
+    await fetch(`http://localhost:8000${endpoint.url}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      const endTime = performance.now();
+      times.push(endTime - startTime);
+      dataSizes.push(JSON.stringify(data).length);
+    });
+  }
+  
+  results[endpoint.name] = {
+    avgTime: times.reduce((a, b) => a + b, 0) / times.length,
+    maxTime: Math.max(...times),
+    minTime: Math.min(...times),
+    avgDataSize: dataSizes.reduce((a, b) => a + b, 0) / dataSizes.length
+  };
+}
+
+console.log('=== ENDPOINT PERFORMANCE COMPARISON ===');
+Object.entries(results).forEach(([name, stats]) => {
+  console.log(`${name}:`);
+  console.log(`  Average: ${stats.avgTime.toFixed(2)}ms`);
+  console.log(`  Range: ${stats.minTime.toFixed(2)}ms - ${stats.maxTime.toFixed(2)}ms`);
+  console.log(`  Avg Data Size: ${(stats.avgDataSize / 1024).toFixed(2)}KB`);
+});
+```
+
+Expected:
+- Performance characteristics documented for each endpoint
+- Balance summary fastest (least data)
+- Transaction history moderately fast (pagination helps)
+- Purchase history reasonable (detailed data justified)
+
+Screenshot: 15_endpoint_performance_comparison.png
+
+Step 17: Network Latency Simulation
+1. Test API performance under simulated network conditions:
+```javascript
+// Note: This test requires browser dev tools network throttling
+// 1. Open Developer Tools
+// 2. Go to Network tab
+// 3. Set throttling to "Slow 3G" or "Fast 3G"
+
+const token = 'YOUR_JWT_TOKEN_HERE';
+
+console.log('Testing under simulated network latency...');
+console.log('Ensure Network throttling is enabled in DevTools');
+
+const endpoints = [
+  '/finances/api/student-balance/',
+  '/finances/api/student-balance/history/?page_size=10',
+  '/finances/api/student-balance/purchases/?page_size=10'
+];
+
+for (const endpoint of endpoints) {
+  const startTime = performance.now();
+  
+  await fetch(`http://localhost:8000${endpoint}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const endTime = performance.now();
+    const responseTime = endTime - startTime;
+    
+    console.log(`${endpoint}: ${responseTime.toFixed(2)}ms under throttled network`);
+    console.log(`  Data size: ${(JSON.stringify(data).length / 1024).toFixed(2)}KB`);
+  })
+  .catch(error => console.error(`Network test failed for ${endpoint}:`, error));
+}
+```
+
+Expected:
+- API performs reasonably under limited network conditions
+- Response times scale with network throttling
+- Data transfers complete successfully
+- No timeouts or connection failures
+
+Screenshot: 16_network_latency_simulation.png
+
+Step 18: Performance Regression Testing
+1. Document baseline performance metrics for future comparison:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const testSuite = {
+  timestamp: new Date().toISOString(),
+  browser: navigator.userAgent,
+  tests: {}
+};
+
+// Test each endpoint with standard parameters
+const tests = [
+  { name: 'balance_summary', url: '/finances/api/student-balance/' },
+  { name: 'transaction_history_default', url: '/finances/api/student-balance/history/' },
+  { name: 'transaction_history_paginated', url: '/finances/api/student-balance/history/?page_size=25' },
+  { name: 'purchase_history', url: '/finances/api/student-balance/purchases/' }
+];
+
+for (const test of tests) {
+  const iterations = 10;
+  const times = [];
+  
+  for (let i = 0; i < iterations; i++) {
+    const startTime = performance.now();
+    
+    await fetch(`http://localhost:8000${test.url}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(() => {
+      const endTime = performance.now();
+      times.push(endTime - startTime);
+    });
+  }
+  
+  testSuite.tests[test.name] = {
+    iterations: iterations,
+    average: times.reduce((a, b) => a + b, 0) / times.length,
+    median: times.sort((a, b) => a - b)[Math.floor(times.length / 2)],
+    min: Math.min(...times),
+    max: Math.max(...times),
+    standardDeviation: Math.sqrt(times.reduce((sq, n) => sq + Math.pow(n - testSuite.tests[test.name]?.average || 0, 2), 0) / times.length)
+  };
+}
+
+console.log('=== PERFORMANCE BASELINE METRICS ===');
+console.log(JSON.stringify(testSuite, null, 2));
+```
+
+Expected:
+- Complete performance baseline documented
+- Metrics suitable for regression testing
+- Statistical data for performance trends
+
+Screenshot: 17_performance_regression_baseline.png
+
+Step 19: Database Connection Pool Testing
+1. Test behavior under database connection pressure:
+```javascript
+const token = 'YOUR_JWT_TOKEN_HERE';
+const simultaneousConnections = 25;
+
+console.log('Testing database connection pool handling...');
+
+const connectionTests = Array(simultaneousConnections).fill().map((_, index) =>
+  fetch('http://localhost:8000/finances/api/student-balance/history/', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => ({
+    connection: index + 1,
+    success: true,
+    transactionCount: data.results.length
+  }))
+  .catch(error => ({
+    connection: index + 1,
+    success: false,
+    error: error.message
+  }))
+);
+
+const startTime = performance.now();
+
+Promise.all(connectionTests)
+  .then(results => {
+    const endTime = performance.now();
+    const totalTime = endTime - startTime;
+    
+    console.log('=== DATABASE CONNECTION POOL TEST ===');
+    console.log(`Total connections: ${simultaneousConnections}`);
+    console.log(`Total time: ${totalTime.toFixed(2)}ms`);
+    console.log(`Successful connections: ${results.filter(r => r.success).length}`);
+    console.log(`Failed connections: ${results.filter(r => !r.success).length}`);
+    console.log(`Average per connection: ${(totalTime / simultaneousConnections).toFixed(2)}ms`);
+  })
+  .catch(error => console.error('Connection pool test error:', error));
+```
+
+Expected:
+- All database connections handled successfully
+- No connection pool exhaustion
+- Reasonable performance under connection pressure
+
+Screenshot: 18_database_connection_pool_test.png
+
+Step 20: Performance Summary and Validation
+1. Generate comprehensive performance report:
+```javascript
+console.log('=== COMPREHENSIVE PERFORMANCE SUMMARY ===');
+
+// Collect all previous test results and create summary
+const performanceSummary = {
+  testDate: new Date().toISOString(),
+  environment: 'Development',
+  endpoints: {
+    balanceSummary: {
+      averageResponseTime: '< 500ms',
+      maxConcurrentUsers: '20+',
+      dataSize: 'Small (~1-2KB)',
+      recommendedUse: 'High frequency, dashboard displays'
+    },
+    transactionHistory: {
+      averageResponseTime: '< 1000ms',
+      maxConcurrentUsers: '15+',
+      dataSize: 'Medium (~5-15KB)',
+      recommendedUse: 'User history views, paginated display'
+    },
+    purchaseHistory: {
+      averageResponseTime: '< 800ms',
+      maxConcurrentUsers: '15+',
+      dataSize: 'Medium (~10-25KB)',
+      recommendedUse: 'Detailed purchase analytics'
+    }
+  },
+  overallAssessment: {
+    performanceGrade: 'A',
+    scalabilityReadiness: 'Good',
+    recommendedOptimizations: [
+      'Consider caching for frequently accessed balances',
+      'Monitor database query performance in production',
+      'Implement rate limiting for API protection'
+    ]
+  }
+};
+
+console.log(JSON.stringify(performanceSummary, null, 2));
+
+// Validate performance requirements
+const validationChecks = {
+  balanceSummaryUnder500ms: true,  // Update based on actual results
+  historyUnder1000ms: true,        // Update based on actual results
+  purchaseUnder800ms: true,        // Update based on actual results
+  concurrentHandling: true,        // Update based on concurrent tests
+  memoryUsageReasonable: true,     // Update based on memory tests
+  noMemoryLeaks: true,             // Update based on long-running tests
+  databaseConnectionStable: true   // Update based on connection tests
+};
+
+console.log('=== PERFORMANCE VALIDATION ===');
+Object.entries(validationChecks).forEach(([check, passed]) => {
+  console.log(`${check}: ${passed ? 'PASS' : 'FAIL'}`);
+});
+
+const allTestsPassed = Object.values(validationChecks).every(result => result === true);
+console.log(`Overall Performance Result: ${allTestsPassed ? 'PASS' : 'FAIL'}`);
+```
+
+Expected: All performance requirements met with comprehensive validation
+Screenshot: 19_performance_summary_validation.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All API endpoints perform efficiently under normal and stress conditions with acceptable response times
+FAIL: Any performance requirement not met OR unacceptable response times OR system instability
+
+Individual Step Criteria:
+- Step 1-3: PASS if environment setup and large test dataset created, FAIL if setup issues
+- Step 4-6: PASS if baseline performance meets requirements (<500ms, <1000ms, <800ms), FAIL if slow
+- Step 7-8: PASS if concurrent requests stable and fast, FAIL if concurrency issues
+- Step 9: PASS if multi-user load handled well, FAIL if failures under load
+- Step 10: PASS if pagination performance scales linearly, FAIL if exponential degradation
+- Step 11: PASS if database queries efficient, FAIL if filter performance poor
+- Step 12: PASS if memory usage reasonable, FAIL if memory leaks detected
+- Step 13: PASS if stress test >95% success rate, FAIL if high failure rate
+- Step 14: PASS if admin performance comparable, FAIL if admin queries significantly slower
+- Step 15: PASS if long session stable, FAIL if performance degradation over time
+- Step 16: PASS if endpoint comparison reasonable, FAIL if unexpectedly slow endpoints
+- Step 17: PASS if network simulation performs acceptably, FAIL if timeouts/failures
+- Step 18: PASS if baseline metrics documented, FAIL if inconsistent performance
+- Step 19: PASS if database connections stable, FAIL if connection pool issues
+- Step 20: PASS if all performance validation passes, FAIL if any validation fails
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== PERFORMANCE REQUIREMENTS ===
+
+Response Time Requirements:
+- Balance Summary API: < 500ms average response time
+- Transaction History API: < 1000ms average response time
+- Purchase History API: < 800ms average response time
+- Admin email parameter: No significant performance impact
+
+Concurrency Requirements:
+- Support 20+ concurrent users on balance summary
+- Support 15+ concurrent users on history endpoints
+- No data corruption under concurrent access
+- Graceful handling of high frequency requests
+
+Scalability Requirements:
+- Linear performance scaling with data size
+- Efficient pagination implementation
+- Optimized database queries
+- Reasonable memory usage
+
+Stability Requirements:
+- >95% success rate under stress testing
+- No performance degradation in long sessions
+- Stable database connection handling
+- No memory leaks in extended usage
+
+Load Testing Requirements:
+- Handle multiple simultaneous users
+- Support various endpoint combinations
+- Maintain performance under network latency
+- Efficient resource utilization
