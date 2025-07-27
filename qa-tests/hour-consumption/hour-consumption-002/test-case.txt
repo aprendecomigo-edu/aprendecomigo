@@ -1,0 +1,275 @@
+QA Test Case: Hour Consumption Tracking Flow
+
+Test ID: HOUR-CONSUMPTION-002
+Test Name: End-to-End Hour Consumption Tracking Workflow
+Purpose: Verify complete hour consumption tracking from session creation through consumption recording and student balance updates
+Expected Result: Full workflow creates consumption records and accurately updates student account balances
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Feature: Hour Consumption Tracking Model (GitHub Issue #25)
+- Architecture: Django REST backend with cross-app integration
+- Models: HourConsumption, StudentAccountBalance, PurchaseTransaction, ClassSession
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Prerequisites:
+- Students with account balances and purchase transactions
+- Teachers with profiles and compensation rules
+- School with billing settings configured
+- Test data for creating class sessions
+
+Business Logic Validation:
+- Hour consumption automatically updates student balances
+- One-to-one relationship enforced between consumption and session
+- Audit trail maintains complete consumption history
+- Hours difference calculation works for early endings and overtime
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Data Verification
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Services start and test data is available
+Screenshot: 01_services_started.png
+
+Step 2: Verify Initial Student Balance State
+1. Access Django Admin at http://localhost:8000/admin/
+2. Navigate to Finances -> Student Account Balances
+3. Select a test student with positive balance
+4. Record initial values:
+   - hours_purchased: (e.g., 10.00)
+   - hours_consumed: (e.g., 0.00)
+   - remaining_hours: (e.g., 10.00)
+   - balance_amount: (e.g., €100.00)
+
+Expected: Student has positive balance with purchasable hours
+Screenshot: 02_initial_student_balance.png
+
+Step 3: Create Class Session for Testing
+1. Navigate to Finances -> Class Sessions
+2. Click "Add class session"
+3. Fill required fields:
+   - Teacher: (select test teacher)
+   - School: (select test school)
+   - Date: (today's date)
+   - Start time: 14:00
+   - End time: 15:00 (1 hour session)
+   - Session type: Individual
+   - Grade level: 10
+   - Student count: 1
+   - Status: Scheduled
+4. In Students section, add the test student
+5. Save the session
+
+Expected: Class session created successfully with 1-hour duration
+Screenshot: 03_class_session_created.png
+
+Step 4: Verify Session Duration Calculation
+1. Open the created session detail view
+2. Verify duration_hours property shows 1.00
+3. Check session time range displays correctly
+4. Confirm student is properly associated
+
+Expected: Session duration calculated as exactly 1.00 hours
+Screenshot: 04_session_duration_verification.png
+
+Step 5: Create Purchase Transaction for Hour Consumption
+1. Navigate to Finances -> Purchase Transactions
+2. Click "Add purchase transaction"
+3. Fill fields:
+   - Student: (same test student)
+   - Transaction type: Package
+   - Amount: €10.00
+   - Payment status: Completed
+   - Metadata: {"hours_purchased": "1.00"}
+4. Save transaction
+
+Expected: Purchase transaction created for hour consumption tracking
+Screenshot: 05_purchase_transaction_created.png
+
+Step 6: Create Hour Consumption Record - Normal Scenario
+1. Navigate to Finances -> Hour Consumptions
+2. Click "Add hour consumption"
+3. Fill fields:
+   - Student account: (select test student's account balance)
+   - Class session: (select the created session)
+   - Purchase transaction: (select the created transaction)
+   - Hours consumed: 1.00 (full session)
+   - Hours originally reserved: 1.00
+4. Save consumption record
+
+Expected: Hour consumption created successfully
+Screenshot: 06_hour_consumption_normal_created.png
+
+Step 7: Verify Automatic Student Balance Update
+1. Navigate back to Student Account Balances
+2. Find the test student's balance
+3. Verify automatic updates:
+   - hours_consumed increased by 1.00
+   - remaining_hours decreased by 1.00
+   - balance_amount unchanged (still tracking monetary balance)
+   - updated_at timestamp refreshed
+
+Expected: Student balance automatically updated when consumption created
+Screenshot: 07_student_balance_auto_updated.png
+
+Step 8: Verify Hour Consumption Properties
+1. Return to Hour Consumptions list
+2. Open the created consumption record
+3. Verify calculated properties:
+   - hours_difference = 0.00 (exact match)
+   - consumed_at timestamp set to creation time
+   - is_refunded = False
+   - refund_reason = empty
+
+Expected: All consumption properties calculated correctly
+Screenshot: 08_consumption_properties_verified.png
+
+Step 9: Test Early Session Ending Scenario
+1. Create another class session (15:30-16:30, 1 hour)
+2. Add same test student to new session
+3. Create hour consumption with early ending:
+   - Hours consumed: 0.75 (45 minutes, ended 15 minutes early)
+   - Hours originally reserved: 1.00
+4. Save consumption
+
+Expected: Early ending consumption created with positive hours_difference
+Screenshot: 09_early_ending_consumption.png
+
+Step 10: Verify Early Ending Calculations
+1. Open the early ending consumption record
+2. Verify hours_difference = 0.25 (positive, indicating refund due)
+3. Check that student balance still updated by hours_consumed (0.75)
+4. Verify remaining_hours calculation accounts for actual consumption
+
+Expected: Hours difference correctly shows 0.25 hours refund due
+Screenshot: 10_early_ending_calculations.png
+
+Step 11: Test Overtime Session Scenario
+1. Create third class session (17:00-18:00, 1 hour)
+2. Add same test student to session
+3. Create hour consumption with overtime:
+   - Hours consumed: 1.25 (75 minutes, 15 minutes overtime)
+   - Hours originally reserved: 1.00
+4. Save consumption
+
+Expected: Overtime consumption created with negative hours_difference
+Screenshot: 11_overtime_consumption.png
+
+Step 12: Verify Overtime Calculations
+1. Open the overtime consumption record
+2. Verify hours_difference = -0.25 (negative, indicating overtime)
+3. Check that student balance updated by full hours_consumed (1.25)
+4. Verify system accepts overtime consumption
+
+Expected: Hours difference correctly shows -0.25 hours overtime
+Screenshot: 12_overtime_calculations.png
+
+Step 13: Test One-to-One Relationship Constraint
+1. Attempt to create second consumption for existing session
+2. Use any of the previously created sessions
+3. Try to save duplicate consumption record
+4. Verify constraint violation prevents creation
+
+Expected: System prevents duplicate consumption for same session
+Screenshot: 13_one_to_one_constraint_test.png
+
+Step 14: Verify Cross-App Relationship Integrity
+1. From Hour Consumption, navigate to related ClassSession
+2. Verify reverse relationship works (session.hour_consumption)
+3. Check StudentAccountBalance.hour_consumptions relationship
+4. Verify PurchaseTransaction.hour_consumptions relationship
+
+Expected: All cross-app relationships function correctly
+Screenshot: 14_cross_app_relationships.png
+
+Step 15: Test Consumption History and Audit Trail
+1. View all consumptions for test student
+2. Verify chronological ordering by consumed_at
+3. Check that created_at and updated_at timestamps are accurate
+4. Confirm consumption history provides complete audit trail
+
+Expected: Complete audit trail maintained for all consumption activity
+Screenshot: 15_consumption_audit_trail.png
+
+Step 16: Validate Student Balance Calculations
+1. Manually calculate expected student balance:
+   - Initial hours_consumed + sum of all consumption hours_consumed
+2. Compare with actual balance in database
+3. Verify remaining_hours = hours_purchased - hours_consumed
+4. Check balance_amount remains correct (monetary tracking)
+
+Expected: All balance calculations accurate and consistent
+Screenshot: 16_balance_calculations_validation.png
+
+Step 17: Test Consumption Data Validation
+1. Attempt to create consumption with invalid data:
+   - Negative hours_consumed
+   - Negative hours_originally_reserved
+   - Student not in session's student list
+2. Verify all validation rules enforced
+
+Expected: Data validation prevents invalid consumption records
+Screenshot: 17_data_validation_test.png
+
+Step 18: Test Consumption Model String Representation
+1. View consumption list in admin
+2. Verify string representation format:
+   "Hour consumption: [Student Name] - [X.XX]h consumed for session on [Date]"
+3. Check that all consumption records display meaningful descriptions
+
+Expected: String representation provides clear, readable consumption descriptions
+Screenshot: 18_string_representation_test.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Complete hour consumption workflow functions correctly with accurate balance updates and audit trail
+FAIL: Any step in workflow fails or produces incorrect calculations
+
+Individual Step Criteria:
+- Step 1-2: PASS if services start and initial data available, FAIL if setup issues
+- Step 3-4: PASS if session creation works with correct duration, FAIL if creation fails
+- Step 5-6: PASS if consumption record creation successful, FAIL if creation fails
+- Step 7: PASS if balance auto-updates correctly, FAIL if balance not updated
+- Step 8: PASS if properties calculated correctly, FAIL if wrong calculations
+- Step 9-10: PASS if early ending scenario works, FAIL if calculations wrong
+- Step 11-12: PASS if overtime scenario works, FAIL if system rejects or calculates incorrectly
+- Step 13: PASS if constraint prevents duplicates, FAIL if duplicates allowed
+- Step 14: PASS if relationships work, FAIL if navigation broken
+- Step 15: PASS if audit trail complete, FAIL if timestamps missing
+- Step 16: PASS if balance calculations accurate, FAIL if discrepancies found
+- Step 17: PASS if validation enforced, FAIL if invalid data accepted
+- Step 18: PASS if string representation clear, FAIL if confusing display
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== VALIDATION CHECKPOINTS ===
+
+Hour Consumption Tracking Verification:
+- Consumption records automatically update student balances
+- Hours difference calculated correctly for all scenarios
+- One-to-one relationship with sessions enforced
+- Cross-app relationships maintain data integrity
+
+Business Logic Verification:
+- Early session endings tracked with positive hours_difference
+- Overtime sessions tracked with negative hours_difference
+- Student balances reflect actual hour consumption
+- Audit trail provides complete consumption history
+
+Data Integrity Verification:
+- All validation rules prevent invalid data
+- Relationships between models maintained correctly
+- Timestamp tracking accurate for audit purposes
+- Balance calculations consistent across all operations

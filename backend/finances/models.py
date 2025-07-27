@@ -609,3 +609,174 @@ class PurchaseTransaction(models.Model):
             raise ValidationError(
                 _("Subscription transactions should not have an expiration date")
             )
+
+
+class HourConsumption(models.Model):
+    """
+    Hour consumption tracking model that links sessions to hour usage.
+    
+    This model maintains an audit trail linking consumption back to original purchase 
+    transactions and provides refund functionality for early session endings.
+    """
+
+    student_account: models.ForeignKey = models.ForeignKey(
+        StudentAccountBalance,
+        on_delete=models.CASCADE,
+        related_name="hour_consumptions",
+        verbose_name=_("student account"),
+        help_text=_("Student account that this consumption is associated with"),
+    )
+
+    class_session: models.OneToOneField = models.OneToOneField(
+        ClassSession,
+        on_delete=models.CASCADE,
+        related_name="hour_consumption",
+        verbose_name=_("class session"),
+        help_text=_("The class session for which hours were consumed"),
+    )
+
+    purchase_transaction: models.ForeignKey = models.ForeignKey(
+        PurchaseTransaction,
+        on_delete=models.CASCADE,
+        related_name="hour_consumptions",
+        verbose_name=_("purchase transaction"),
+        help_text=_("Original purchase transaction from which hours were consumed"),
+    )
+
+    hours_consumed: models.DecimalField = models.DecimalField(
+        _("hours consumed"),
+        max_digits=4,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text=_("Actual hours consumed during the session"),
+    )
+
+    hours_originally_reserved: models.DecimalField = models.DecimalField(
+        _("hours originally reserved"),
+        max_digits=4,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text=_("Hours originally reserved/scheduled for the session"),
+    )
+
+    consumed_at: models.DateTimeField = models.DateTimeField(
+        _("consumed at"),
+        auto_now_add=True,
+        help_text=_("Timestamp when the consumption was recorded"),
+    )
+
+    # Refund functionality
+    is_refunded: models.BooleanField = models.BooleanField(
+        _("is refunded"),
+        default=False,
+        help_text=_("Whether this consumption has been refunded"),
+    )
+
+    refund_reason: models.TextField = models.TextField(
+        _("refund reason"),
+        blank=True,
+        help_text=_("Reason for the refund (if applicable)"),
+    )
+
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(
+        _("created at"), auto_now_add=True
+    )
+    updated_at: models.DateTimeField = models.DateTimeField(
+        _("updated at"), auto_now=True
+    )
+
+    class Meta:
+        verbose_name = _("Hour Consumption")
+        verbose_name_plural = _("Hour Consumptions")
+        ordering = ["-consumed_at"]
+        indexes = [
+            models.Index(fields=["student_account", "consumed_at"]),
+            models.Index(fields=["class_session"]),
+            models.Index(fields=["purchase_transaction"]),
+            models.Index(fields=["is_refunded"]),
+        ]
+
+    def __str__(self) -> str:
+        return (
+            f"Hour consumption: {self.student_account.student.name} - "
+            f"{self.hours_consumed}h consumed for session on {self.class_session.date}"
+        )
+
+    @property
+    def hours_difference(self) -> Decimal:
+        """
+        Calculate the difference between originally reserved and actually consumed hours.
+        
+        Returns:
+            Decimal: Positive value indicates refund due (early ending),
+                    negative value indicates overtime,
+                    zero indicates exact match.
+        """
+        return self.hours_originally_reserved - self.hours_consumed
+
+    def process_refund(self, reason: str) -> Decimal:
+        """
+        Process a refund for this consumption record.
+        
+        Args:
+            reason: The reason for the refund
+            
+        Returns:
+            Decimal: The amount of hours refunded (0 if no refund due)
+            
+        Raises:
+            ValueError: If consumption has already been refunded
+        """
+        if self.is_refunded:
+            raise ValueError("This consumption has already been refunded")
+        
+        refund_hours = self.hours_difference
+        
+        # Only process refund if there are hours to refund (positive difference)
+        if refund_hours > Decimal("0.00"):
+            # Update the student account balance
+            self.student_account.hours_consumed -= refund_hours
+            self.student_account.save(update_fields=["hours_consumed", "updated_at"])
+            
+            # Mark this consumption as refunded
+            self.is_refunded = True
+            self.refund_reason = reason
+            self.save(update_fields=["is_refunded", "refund_reason", "updated_at"])
+            
+            return refund_hours
+        
+        # No refund due
+        return Decimal("0.00")
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to update student account balance when consumption is created.
+        """
+        is_new = self.pk is None
+        
+        super().save(*args, **kwargs)
+        
+        # Update student account balance on creation
+        if is_new:
+            self.student_account.hours_consumed += self.hours_consumed
+            self.student_account.save(update_fields=["hours_consumed", "updated_at"])
+
+    def clean(self) -> None:
+        """Validate consumption data."""
+        super().clean()
+        
+        # Ensure hours are not negative (already handled by validators, but double-check)
+        if self.hours_consumed < Decimal("0.00"):
+            raise ValidationError(_("Hours consumed cannot be negative"))
+        
+        if self.hours_originally_reserved < Decimal("0.00"):
+            raise ValidationError(_("Hours originally reserved cannot be negative"))
+        
+        # Ensure the student account belongs to one of the session students
+        if hasattr(self, 'class_session') and hasattr(self, 'student_account'):
+            session_students = self.class_session.students.all()
+            if self.student_account.student not in session_students:
+                raise ValidationError(
+                    _("Student account must belong to a student in the class session")
+                )

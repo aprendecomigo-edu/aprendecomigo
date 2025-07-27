@@ -1,8 +1,10 @@
 from django.contrib import admin
+from django.db import models
 from django.utils.html import format_html
 
 from .models import (
     ClassSession,
+    HourConsumption,
     PurchaseTransaction,
     SchoolBillingSettings,
     StudentAccountBalance,
@@ -686,3 +688,208 @@ class PurchaseTransactionAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """Optimize queryset with select_related."""
         return super().get_queryset(request).select_related("student")
+
+
+@admin.register(HourConsumption)
+class HourConsumptionAdmin(admin.ModelAdmin):
+    """Admin interface for hour consumption tracking."""
+
+    list_display = [
+        "consumption_id",
+        "student_name",
+        "session_date",
+        "session_time_range",
+        "hours_consumed",
+        "hours_originally_reserved",
+        "hours_difference_display",
+        "is_refunded",
+        "consumed_at",
+    ]
+    list_filter = [
+        "is_refunded",
+        "consumed_at",
+        "class_session__date",
+        "class_session__session_type",
+        "class_session__status",
+        "student_account__student",
+    ]
+    search_fields = [
+        "student_account__student__name",
+        "student_account__student__email",
+        "class_session__teacher__user__name",
+        "purchase_transaction__stripe_payment_intent_id",
+    ]
+    readonly_fields = [
+        "consumed_at",
+        "created_at",
+        "updated_at",
+        "hours_difference_display",
+        "student_balance_display",
+    ]
+    date_hierarchy = "consumed_at"
+
+    fieldsets = (
+        (
+            "Consumption Information",
+            {
+                "fields": (
+                    "student_account",
+                    "class_session",
+                    "purchase_transaction",
+                )
+            },
+        ),
+        (
+            "Hours Tracking",
+            {
+                "fields": (
+                    "hours_consumed",
+                    "hours_originally_reserved",
+                    "hours_difference_display",
+                    "consumed_at",
+                )
+            },
+        ),
+        (
+            "Student Balance",
+            {
+                "fields": ("student_balance_display",),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Refund Information",
+            {
+                "fields": (
+                    "is_refunded",
+                    "refund_reason",
+                )
+            },
+        ),
+        (
+            "Timestamps",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            }
+        ),
+    )
+
+    actions = ["process_refunds"]
+
+    @admin.display(
+        description="Consumption ID",
+        ordering="id",
+    )
+    def consumption_id(self, obj):
+        """Display consumption ID."""
+        return f"#{obj.id}"
+
+    @admin.display(
+        description="Student",
+        ordering="student_account__student__name",
+    )
+    def student_name(self, obj):
+        """Display student name."""
+        return obj.student_account.student.name
+
+    @admin.display(
+        description="Session Date",
+        ordering="class_session__date",
+    )
+    def session_date(self, obj):
+        """Display session date."""
+        return obj.class_session.date
+
+    @admin.display(
+        description="Session Time"
+    )
+    def session_time_range(self, obj):
+        """Display session time range."""
+        return f"{obj.class_session.start_time} - {obj.class_session.end_time}"
+
+    @admin.display(
+        description="Hours Difference"
+    )
+    def hours_difference_display(self, obj):
+        """Display hours difference with color coding."""
+        difference = obj.hours_difference
+        if difference > 0:
+            return format_html(
+                '<span style="color: orange; font-weight: bold;">+{} hours (refund due)</span>',
+                difference
+            )
+        elif difference < 0:
+            return format_html(
+                '<span style="color: red;">-{} hours (overtime)</span>',
+                abs(difference)
+            )
+        else:
+            return format_html('<span style="color: green;">Exact match</span>')
+
+    @admin.display(
+        description="Student Balance"
+    )
+    def student_balance_display(self, obj):
+        """Display current student balance information."""
+        balance = obj.student_account
+        remaining = balance.remaining_hours
+        if remaining < 0:
+            hours_info = format_html(
+                '<span style="color: red; font-weight: bold;">{} hours (overdraft)</span>',
+                remaining
+            )
+        elif remaining < 2:
+            hours_info = format_html(
+                '<span style="color: orange; font-weight: bold;">{} hours (low balance)</span>',
+                remaining
+            )
+        else:
+            hours_info = format_html(
+                '<span style="color: green;">{} hours</span>',
+                remaining
+            )
+        
+        return format_html(
+            "{} | €{}",
+            hours_info,
+            balance.balance_amount
+        )
+
+    @admin.action(
+        description="Process refunds for early session endings"
+    )
+    def process_refunds(self, request, queryset):
+        """Process refunds for consumptions with early session endings."""
+        refund_candidates = queryset.filter(
+            is_refunded=False,
+            hours_consumed__lt=models.F('hours_originally_reserved')
+        )
+        
+        refunded_count = 0
+        total_refunded_hours = 0
+        
+        for consumption in refund_candidates:
+            refund_hours = consumption.process_refund("Admin bulk refund process")
+            if refund_hours > 0:
+                refunded_count += 1
+                total_refunded_hours += refund_hours
+        
+        if refunded_count > 0:
+            self.message_user(
+                request,
+                f"Processed {refunded_count} refunds totaling {total_refunded_hours} hours."
+            )
+        else:
+            self.message_user(
+                request,
+                "No refunds processed. Selected consumptions either have no refund due or are already refunded."
+            )
+
+    def get_queryset(self, request):
+        """Optimize queryset with select_related."""
+        return super().get_queryset(request).select_related(
+            "student_account__student",
+            "class_session__teacher__user",
+            "purchase_transaction"
+        )

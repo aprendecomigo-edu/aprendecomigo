@@ -1,0 +1,7 @@
+test_id,test_name,last_run,result,duration_seconds,tester,environment,notes
+hour-consumption-001,Django Admin Interface Management,,,,,,"Admin interface management and bulk refund processing"
+hour-consumption-002,Hour Consumption Tracking Flow,,,,,,"End-to-end hour consumption workflow validation"
+hour-consumption-003,Refund System Processing,,,,,,"Comprehensive refund processing and balance restoration"
+hour-consumption-004,Cross-App Integration Validation,,,,,,"Cross-app model relationships and data consistency"
+hour-consumption-005,Business Logic Edge Cases,,,,,,"Edge cases, boundary conditions, and validation rules"
+hour-consumption-006,Audit Trail and Data Integrity,,,,,,"Complete audit trail and data integrity verification"

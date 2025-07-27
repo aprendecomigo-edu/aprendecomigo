@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 
-from .models import (
+from ..models import (
     ClassSession,
     CompensationRuleType,
     PurchaseTransaction,
@@ -18,7 +18,7 @@ from .models import (
     TransactionType,
     TrialCostAbsorption,
 )
-from .services import TeacherPaymentCalculator
+from ..services import TeacherPaymentCalculator
 
 
 class TeacherPaymentCalculatorTestCase(TestCase):
