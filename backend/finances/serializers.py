@@ -9,6 +9,7 @@ from rest_framework import serializers
 
 from .models import (
     ClassSession,
+    PricingPlan,
     SchoolBillingSettings,
     TeacherCompensationRule,
     TeacherPaymentEntry,
@@ -286,3 +287,48 @@ class PaymentCalculationSerializer(serializers.Serializer):
     rate_applied = serializers.DecimalField(max_digits=6, decimal_places=2)
     hours = serializers.DecimalField(max_digits=4, decimal_places=2)
     notes = serializers.CharField()
+
+
+class PricingPlanSerializer(serializers.ModelSerializer):
+    """
+    Serializer for PricingPlan model.
+    
+    Provides public API representation of pricing plans with calculated
+    price_per_hour field and proper formatting for frontend consumption.
+    """
+    
+    price_per_hour = serializers.SerializerMethodField()
+    plan_type_display = serializers.CharField(source="get_plan_type_display", read_only=True)
+    
+    class Meta:
+        model = PricingPlan
+        fields = [
+            "id",
+            "name", 
+            "description",
+            "plan_type",
+            "plan_type_display",
+            "hours_included",
+            "price_eur",
+            "validity_days",
+            "display_order",
+            "is_featured",
+            "price_per_hour",
+        ]
+        read_only_fields = [
+            "id",
+            "plan_type_display", 
+            "price_per_hour",
+        ]
+    
+    def get_price_per_hour(self, obj: PricingPlan) -> str | None:
+        """
+        Calculate and format price per hour.
+        
+        Returns:
+            Formatted decimal string or None if hours_included is zero
+        """
+        price_per_hour = obj.price_per_hour
+        if price_per_hour is not None:
+            return str(price_per_hour)
+        return None

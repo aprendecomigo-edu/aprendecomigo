@@ -57,6 +57,13 @@ class PaymentFrequency(models.TextChoices):
     MONTHLY = "monthly", _("Monthly")
 
 
+class PlanType(models.TextChoices):
+    """Types of pricing plans."""
+
+    PACKAGE = "package", _("Package")
+    SUBSCRIPTION = "subscription", _("Subscription")
+
+
 class SchoolBillingSettings(models.Model):
     """Billing configuration settings for each school."""
 
@@ -608,6 +615,165 @@ class PurchaseTransaction(models.Model):
         if self.transaction_type == TransactionType.SUBSCRIPTION and self.expires_at is not None:
             raise ValidationError(
                 _("Subscription transactions should not have an expiration date")
+            )
+
+
+class PricingPlanManager(models.Manager):
+    """Manager for PricingPlan model."""
+    
+    def get_queryset(self):
+        """Return queryset ordered by display_order and name."""
+        return super().get_queryset().order_by('display_order', 'name')
+
+
+class ActivePricingPlanManager(models.Manager):
+    """Manager for active pricing plans only."""
+    
+    def get_queryset(self):
+        """Return only active plans ordered by display_order and name."""
+        return super().get_queryset().filter(is_active=True).order_by('display_order', 'name')
+
+
+class PricingPlan(models.Model):
+    """
+    Pricing plan configuration model for different tutoring packages and subscriptions.
+    
+    This model allows business users to configure pricing plans through the Django Admin
+    interface without requiring code changes. Supports both package-based plans with
+    validity periods and subscription-based plans.
+    """
+    
+    name: models.CharField = models.CharField(
+        _("plan name"),
+        max_length=100,
+        help_text=_("Display name for the pricing plan")
+    )
+    
+    description: models.TextField = models.TextField(
+        _("description"),
+        help_text=_("Detailed description of what the plan includes")
+    )
+    
+    plan_type: models.CharField = models.CharField(
+        _("plan type"),
+        max_length=20,
+        choices=PlanType.choices,
+        help_text=_("Type of plan: package (expires) or subscription (recurring)")
+    )
+    
+    hours_included: models.DecimalField = models.DecimalField(
+        _("hours included"),
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text=_("Number of tutoring hours included in this plan")
+    )
+    
+    price_eur: models.DecimalField = models.DecimalField(
+        _("price (EUR)"),
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text=_("Price of the plan in euros")
+    )
+    
+    validity_days: models.PositiveIntegerField = models.PositiveIntegerField(
+        _("validity days"),
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1)],
+        help_text=_("Number of days the plan is valid (null for subscriptions)")
+    )
+    
+    # Display and organization fields
+    display_order: models.PositiveIntegerField = models.PositiveIntegerField(
+        _("display order"),
+        default=1,
+        help_text=_("Order in which plans should be displayed (lower numbers first)")
+    )
+    
+    is_featured: models.BooleanField = models.BooleanField(
+        _("is featured"),
+        default=False,
+        help_text=_("Whether this plan should be highlighted as featured/recommended")
+    )
+    
+    is_active: models.BooleanField = models.BooleanField(
+        _("is active"),
+        default=True,
+        help_text=_("Whether this plan is currently available for purchase")
+    )
+    
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(
+        _("created at"), auto_now_add=True
+    )
+    updated_at: models.DateTimeField = models.DateTimeField(
+        _("updated at"), auto_now=True
+    )
+    
+    # Managers
+    objects = PricingPlanManager()
+    active = ActivePricingPlanManager()
+    
+    class Meta:
+        verbose_name = _("Pricing Plan")
+        verbose_name_plural = _("Pricing Plans")
+        ordering = ["display_order", "name"]
+        indexes = [
+            models.Index(fields=["is_active", "display_order"]),
+            models.Index(fields=["plan_type", "is_active"]),
+            models.Index(fields=["is_featured", "is_active"]),
+        ]
+    
+    def __str__(self) -> str:
+        validity_str = f"{self.validity_days} days" if self.validity_days else "subscription"
+        return f"{self.name} - €{self.price_eur} ({self.hours_included}h, {validity_str})"
+    
+    @property
+    def price_per_hour(self) -> Decimal | None:
+        """
+        Calculate the price per hour for this plan.
+        
+        Returns:
+            Decimal: Price per hour, or None if hours_included is zero
+        """
+        if self.hours_included > 0:
+            return self.price_eur / self.hours_included
+        return None
+    
+    def clean(self) -> None:
+        """Validate the pricing plan configuration."""
+        super().clean()
+        
+        # Package plans must have validity_days specified
+        if self.plan_type == PlanType.PACKAGE and not self.validity_days:
+            raise ValidationError(
+                _("Package plans must have validity_days specified")
+            )
+        
+        # Subscription plans should not have validity_days
+        if self.plan_type == PlanType.SUBSCRIPTION and self.validity_days is not None:
+            raise ValidationError(
+                _("Subscription plans should not have validity_days")
+            )
+        
+        # Ensure price is positive
+        if self.price_eur <= Decimal("0"):
+            raise ValidationError(
+                _("Price must be greater than 0")
+            )
+        
+        # Ensure hours_included is positive
+        if self.hours_included <= Decimal("0"):
+            raise ValidationError(
+                _("Hours included must be greater than 0")
+            )
+        
+        # Ensure validity_days is positive when specified
+        if self.validity_days is not None and self.validity_days <= 0:
+            raise ValidationError(
+                _("Validity days must be greater than 0")
             )
 
 

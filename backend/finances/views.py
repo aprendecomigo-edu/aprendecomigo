@@ -8,6 +8,7 @@ from decimal import Decimal
 
 from accounts.models import School, TeacherProfile
 from accounts.permissions import SchoolPermissionMixin
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import Sum
 from django.http import HttpResponse
@@ -22,6 +23,7 @@ from rest_framework.response import Response
 
 from .models import (
     ClassSession,
+    PricingPlan,
     SchoolBillingSettings,
     TeacherCompensationRule,
     TeacherPaymentEntry,
@@ -31,6 +33,7 @@ from .serializers import (
     ClassSessionSerializer,
     MonthlyPaymentSummarySerializer,
     PaymentCalculationSerializer,
+    PricingPlanSerializer,
     SchoolBillingSettingsSerializer,
     TeacherCompensationRuleSerializer,
     TeacherPaymentEntrySerializer,
@@ -488,6 +491,41 @@ class TeacherPaymentEntryViewSet(SchoolPermissionMixin, viewsets.ReadOnlyModelVi
 
         except TeacherProfile.DoesNotExist as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([])  # Allow unauthenticated access
+def active_pricing_plans(request):
+    """
+    API endpoint to fetch active pricing plans with caching.
+    
+    This endpoint provides public access to active pricing plans for 
+    the frontend pricing display. Results are cached for 1 hour to 
+    improve performance and reduce database load.
+    
+    Returns:
+        Response: List of active pricing plans ordered by display_order
+        
+    Cache Strategy:
+        - Cache key: 'active_pricing_plans'
+        - Cache duration: 3600 seconds (1 hour)
+        - Cache is cleared when pricing plans are modified via Django Admin
+    """
+    # Check cache first
+    cache_key = 'active_pricing_plans'
+    cached_data = cache.get(cache_key)
+    
+    if cached_data is not None:
+        return Response(cached_data)
+    
+    # Cache miss - fetch from database
+    active_plans = PricingPlan.active.all()
+    serializer = PricingPlanSerializer(active_plans, many=True)
+    
+    # Cache the result for 1 hour
+    cache.set(cache_key, serializer.data, timeout=3600)
+    
+    return Response(serializer.data)
 
 
 # Initialize logger for general finance views

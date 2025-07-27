@@ -12,6 +12,7 @@ from .views import (
     SchoolBillingSettingsViewSet,
     TeacherCompensationRuleViewSet,
     TeacherPaymentEntryViewSet,
+    active_pricing_plans,
     stripe_config,
     stripe_connection_test,
     stripe_webhook,
@@ -33,6 +34,8 @@ router.register(r"payments", TeacherPaymentEntryViewSet, basename="teacher-payme
 # URL patterns
 urlpatterns = [
     path("api/", include(router.urls)),
+    # Pricing plans endpoint
+    path("api/pricing-plans/", active_pricing_plans, name="pricing-plans-list"),
     # Stripe integration endpoints
     path("api/stripe/config/", stripe_config, name="stripe-config"),
     path("api/stripe/test-connection/", stripe_connection_test, name="stripe-connection-test"),

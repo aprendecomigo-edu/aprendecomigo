@@ -5,6 +5,7 @@ from django.utils.html import format_html
 from .models import (
     ClassSession,
     HourConsumption,
+    PricingPlan,
     PurchaseTransaction,
     SchoolBillingSettings,
     StudentAccountBalance,
@@ -893,3 +894,188 @@ class HourConsumptionAdmin(admin.ModelAdmin):
             "class_session__teacher__user",
             "purchase_transaction"
         )
+
+
+@admin.register(PricingPlan)
+class PricingPlanAdmin(admin.ModelAdmin):
+    """
+    Comprehensive Django Admin interface for PricingPlan model.
+    
+    Provides business users with full control over pricing plan configuration
+    including bulk actions for managing plan status and advanced filtering.
+    """
+    
+    list_display = [
+        "name",
+        "plan_type_display",
+        "hours_included",
+        "price_display",
+        "price_per_hour_display",
+        "validity_display",
+        "display_order",
+        "is_featured_display",
+        "is_active_display",
+        "created_at",
+    ]
+    
+    list_filter = [
+        "plan_type",
+        "is_active",
+        "is_featured",
+        "created_at",
+        "updated_at",
+    ]
+    
+    search_fields = [
+        "name",
+        "description",
+    ]
+    
+    readonly_fields = [
+        "created_at",
+        "updated_at",
+        "price_per_hour_display",
+    ]
+    
+    ordering = ["display_order", "name"]
+    
+    fieldsets = (
+        ("Basic Information", {
+            "fields": (
+                "name",
+                "description",
+                "plan_type",
+            )
+        }),
+        ("Pricing Configuration", {
+            "fields": (
+                "hours_included",
+                "price_eur",
+                "price_per_hour_display",
+                "validity_days",
+            )
+        }),
+        ("Display Settings", {
+            "fields": (
+                "display_order",
+                "is_featured",
+                "is_active",
+            )
+        }),
+        ("Audit Information", {
+            "fields": ("created_at", "updated_at"),
+            "classes": ("collapse",),
+        }),
+    )
+    
+    actions = [
+        "activate_plans",
+        "deactivate_plans",
+        "mark_as_featured",
+        "remove_featured_status",
+    ]
+    
+    @admin.display(description="Plan Type", ordering="plan_type")
+    def plan_type_display(self, obj):
+        """Display plan type with visual indicator."""
+        if obj.plan_type == 'package':
+            return format_html(
+                '<span style="color: blue; font-weight: bold;">📦 Package</span>'
+            )
+        else:
+            return format_html(
+                '<span style="color: green; font-weight: bold;">🔄 Subscription</span>'
+            )
+    
+    @admin.display(description="Price")
+    def price_display(self, obj):
+        """Display price with currency formatting."""
+        return format_html("€{}", obj.price_eur)
+    
+    @admin.display(description="Price/Hour")
+    def price_per_hour_display(self, obj):
+        """Display calculated price per hour."""
+        price_per_hour = obj.price_per_hour
+        if price_per_hour:
+            return format_html("€{:.2f}", price_per_hour)
+        return "-"
+    
+    @admin.display(description="Validity")
+    def validity_display(self, obj):
+        """Display validity period with appropriate formatting."""
+        if obj.validity_days:
+            return format_html(
+                '<span style="color: orange;">{} days</span>', 
+                obj.validity_days
+            )
+        else:
+            return format_html(
+                '<span style="color: green;">Subscription</span>'
+            )
+    
+    @admin.display(description="Featured", boolean=True)
+    def is_featured_display(self, obj):
+        """Display featured status with visual indicator."""
+        return obj.is_featured
+    
+    @admin.display(description="Active", boolean=True)
+    def is_active_display(self, obj):
+        """Display active status with visual indicator."""
+        return obj.is_active
+    
+    @admin.action(description="Activate selected pricing plans")
+    def activate_plans(self, request, queryset):
+        """Bulk action to activate pricing plans."""
+        updated = queryset.update(is_active=True)
+        self.message_user(
+            request, 
+            f"Successfully activated {updated} pricing plan(s)."
+        )
+    
+    @admin.action(description="Deactivate selected pricing plans")
+    def deactivate_plans(self, request, queryset):
+        """Bulk action to deactivate pricing plans."""
+        updated = queryset.update(is_active=False)
+        self.message_user(
+            request, 
+            f"Successfully deactivated {updated} pricing plan(s)."
+        )
+    
+    @admin.action(description="Mark selected plans as featured")
+    def mark_as_featured(self, request, queryset):
+        """Bulk action to mark plans as featured."""
+        updated = queryset.update(is_featured=True)
+        self.message_user(
+            request, 
+            f"Successfully marked {updated} pricing plan(s) as featured."
+        )
+    
+    @admin.action(description="Remove featured status from selected plans")
+    def remove_featured_status(self, request, queryset):
+        """Bulk action to remove featured status."""
+        updated = queryset.update(is_featured=False)
+        self.message_user(
+            request, 
+            f"Successfully removed featured status from {updated} pricing plan(s)."
+        )
+    
+    def save_model(self, request, obj, form, change):
+        """Override save to provide user feedback on validation."""
+        try:
+            super().save_model(request, obj, form, change)
+            if not change:  # Creating new object
+                self.message_user(
+                    request,
+                    f"Pricing plan '{obj.name}' created successfully.",
+                    level="SUCCESS"
+                )
+        except Exception as e:
+            self.message_user(
+                request,
+                f"Error saving pricing plan: {e}",
+                level="ERROR"
+            )
+    
+    def get_queryset(self, request):
+        """Optimize queryset for admin list view."""
+        return super().get_queryset(request)
