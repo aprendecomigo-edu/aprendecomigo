@@ -1,0 +1,284 @@
+TEST_ID: payment-006
+TEST_NAME: Service Integration Testing
+PURPOSE: Validate PaymentService integration with StripeService, model layers, error handling systems, and end-to-end workflow testing
+
+ENVIRONMENT_SETUP:
+- Django development server running on localhost:8000
+- Frontend server running on localhost:8081
+- Test Stripe API keys configured in environment
+- PostgreSQL or SQLite database available
+- Valid .env file with Stripe configuration
+- Complete PaymentService and StripeService integration
+- All models and related services available
+
+PRE_CONDITIONS:
+- Development servers are stopped initially
+- Environment variables are properly configured
+- Test Stripe keys (sk_test_, pk_test_) are available
+- User authentication system is functional
+- All database models are migrated and functional
+- PaymentService is fully integrated with all dependencies
+- StripeService base functionality is working correctly
+
+TEST_STEPS:
+
+1. ENVIRONMENT_SETUP_AND_STARTUP
+   - Navigate to project root: cd /Users/anapmc/Code/aprendecomigo
+   - Activate virtual environment: source .venv/bin/activate
+   - Start development servers: make dev
+   - Wait for both Django and Expo servers to be ready
+   - Verify no startup errors in logs
+   - Screenshot: Server startup success
+
+2. SERVICE_INTEGRATION_SETUP
+   - Open Django shell: python manage.py shell
+   - Import all required components:
+     * from accounts.models import CustomUser
+     * from finances.services.payment_service import PaymentService
+     * from finances.services.stripe_base import StripeService
+     * from finances.models import PurchaseTransaction, StudentAccountBalance, TransactionPaymentStatus
+     * from django.db import transaction, IntegrityError
+     * from django.core.exceptions import ValidationError
+     * import stripe
+     * import logging
+   - Initialize services:
+     * payment_service = PaymentService()
+     * stripe_service = StripeService()
+   - Verify service initialization and dependency injection
+   - Screenshot: Service integration setup complete
+
+3. STRIPESERVICE_INTEGRATION_VERIFICATION
+   - Test PaymentService integration with StripeService:
+     * Verify payment_service.stripe_service is properly initialized
+     * Test StripeService error handling integration:
+       * Test invalid API key scenario
+       * Test network connectivity error simulation
+       * Test rate limiting error handling
+     * Verify PaymentService properly delegates to StripeService for error handling
+   - Test StripeService method calls from PaymentService:
+     * Verify handle_stripe_error method is called appropriately
+     * Test error response formatting consistency
+   - Screenshot: StripeService integration verification
+
+4. MODEL_LAYER_INTEGRATION_TESTING
+   - Test PaymentService integration with all model layers:
+     * CustomUser model integration:
+       * Test with different user roles
+       * Verify user validation and role-based logic
+     * PurchaseTransaction model integration:
+       * Test transaction creation and updates
+       * Verify model constraints and validation
+       * Test custom model methods and properties
+     * StudentAccountBalance model integration:
+       * Test balance creation and updates
+       * Verify model calculations and properties
+       * Test concurrent balance updates
+   - Screenshot: Model layer integration testing
+
+5. END_TO_END_PAYMENT_FLOW_INTEGRATION
+   - Test complete end-to-end payment flow:
+     * Step 1: Create payment intent
+       * student = CustomUser.objects.filter(role='student').first()
+       * metadata = {"amount": "79.99", "hours": "8", "package_name": "8 Hour Premium Package"}
+       * result = payment_service.create_payment_intent(student, "premium_package", metadata)
+       * payment_intent_id = result['payment_intent_id']
+     * Step 2: Simulate frontend payment process
+       * Verify payment intent accessible via Stripe API
+       * Confirm payment: stripe.PaymentIntent.confirm(payment_intent_id, payment_method='pm_card_visa')
+     * Step 3: Complete payment processing
+       * result = payment_service.confirm_payment_completion(payment_intent_id)
+     * Step 4: Verify all integrations worked correctly
+       * Check database transaction status
+       * Verify student account balance updates
+       * Confirm Stripe payment intent status
+   - Screenshot: End-to-end payment flow integration
+
+6. ERROR_HANDLING_INTEGRATION_TESTING
+   - Test error handling integration across all service layers:
+     * Test Stripe API errors propagation through service layers
+     * Test database transaction errors and rollback behavior
+     * Test validation errors from model layer
+     * Test business logic errors and their handling
+   - Verify error handling consistency:
+     * All errors return consistent response format
+     * No sensitive information exposed at any layer
+     * Appropriate logging at each integration point
+   - Screenshot: Error handling integration testing
+
+7. DATABASE_TRANSACTION_INTEGRATION
+   - Test database transaction integration with external services:
+     * Test atomic transactions spanning Stripe API calls and database operations
+     * Simulate Stripe API failure after database update
+     * Simulate database failure after Stripe API success
+     * Verify rollback behavior maintains consistency
+   - Test transaction isolation and concurrency:
+     * Process multiple payments simultaneously
+     * Verify database transactions don't interfere with each other
+     * Test select_for_update usage in concurrent scenarios
+   - Screenshot: Database transaction integration testing
+
+8. LOGGING_AND_MONITORING_INTEGRATION
+   - Test logging integration across all service layers:
+     * Verify PaymentService logs operations appropriately
+     * Test StripeService logging integration
+     * Verify model layer audit logging
+     * Test log aggregation and filtering
+   - Test monitoring integration:
+     * Verify successful operations are logged for monitoring
+     * Test error operations provide monitoring data
+     * Verify log levels are appropriate for different scenarios
+   - Screenshot: Logging and monitoring integration
+
+9. AUTHENTICATION_AND_AUTHORIZATION_INTEGRATION
+   - Test PaymentService integration with authentication system:
+     * Verify user authentication requirements
+     * Test role-based authorization (students only)
+     * Test multi-school user scenarios
+     * Test authentication token integration
+   - Test security integration:
+     * Verify no payment operations work without proper authentication
+     * Test authorization bypass prevention
+     * Verify sensitive data protection across all layers
+   - Screenshot: Authentication and authorization integration
+
+10. WEBHOOK_INTEGRATION_PREPARATION
+    - Test PaymentService integration with webhook infrastructure:
+      * Verify PaymentService methods can be called from webhook handlers
+      * Test webhook signature verification integration
+      * Test webhook event processing with PaymentService
+      * Verify webhook error handling integration
+    - Prepare for webhook integration scenarios:
+      * Test payment completion via webhook simulation
+      * Test payment failure via webhook simulation
+      * Verify idempotency for webhook processing
+    - Screenshot: Webhook integration preparation
+
+11. FRONTEND_API_INTEGRATION_TESTING
+    - Test PaymentService integration with frontend API endpoints:
+      * Test payment intent creation via API endpoints
+      * Test payment status checking via API
+      * Test error handling through API layer
+      * Verify API response formatting consistency
+    - Test frontend integration scenarios:
+      * Simulate frontend payment flow
+      * Test API authentication integration
+      * Verify cross-platform compatibility
+    - Screenshot: Frontend API integration testing
+
+12. PERFORMANCE_INTEGRATION_TESTING
+    - Test performance across all integrated services:
+      * Measure end-to-end payment flow performance
+      * Test performance with multiple concurrent operations
+      * Verify database query optimization with service integration
+      * Test memory usage and resource management
+    - Test scalability integration:
+      * Process large numbers of transactions
+      * Test performance degradation points
+      * Verify service integration remains stable under load
+    - Screenshot: Performance integration testing
+
+13. DATA_CONSISTENCY_INTEGRATION_VERIFICATION
+    - Test data consistency across all integrated systems:
+      * Verify Stripe data matches database records
+      * Test data synchronization scenarios
+      * Verify business logic consistency across service layers
+      * Test data integrity during error scenarios
+    - Test data recovery scenarios:
+      * Simulate partial failures and recovery
+      * Verify data consistency after recovery
+      * Test manual data synchronization procedures
+    - Screenshot: Data consistency integration verification
+
+14. CONFIGURATION_AND_ENVIRONMENT_INTEGRATION
+    - Test PaymentService integration with different environments:
+      * Test development environment integration
+      * Test staging environment preparation
+      * Test production environment configuration
+      * Verify environment-specific behavior
+    - Test configuration integration:
+      * Test Stripe API key environment validation
+      * Test database configuration integration
+      * Test logging configuration integration
+      * Verify all service configurations work together
+    - Screenshot: Configuration and environment integration
+
+15. COMPREHENSIVE_INTEGRATION_STRESS_TESTING
+    - Test comprehensive integration under stress conditions:
+      * Process multiple payment types simultaneously
+      * Test service integration with database stress
+      * Test Stripe API integration under load
+      * Verify all error handling remains functional under stress
+    - Test integration resilience:
+      * Simulate various failure scenarios
+      * Test service integration recovery
+      * Verify no data corruption under stress
+      * Test monitoring and alerting integration
+    - Screenshot: Comprehensive integration stress testing
+
+EXPECTED_RESULTS:
+- PaymentService seamlessly integrates with StripeService for all operations
+- Model layer integration maintains data consistency and validation
+- End-to-end payment flows work correctly through all service layers
+- Error handling is consistent and appropriate across all integrations
+- Database transaction integration maintains ACID properties
+- Logging and monitoring work correctly across all service layers
+- Authentication and authorization integration provides proper security
+- All service integrations perform acceptably under normal and stress conditions
+
+PASS_CRITERIA:
+✅ PaymentService properly integrates with StripeService for all operations
+✅ Model layer integration maintains data consistency and enforces validation
+✅ End-to-end payment flows complete successfully through all service layers
+✅ Error handling integration provides consistent and appropriate responses
+✅ Database transaction integration maintains ACID properties
+✅ Atomic transactions work correctly across service boundaries
+✅ Logging integration provides appropriate audit trail without sensitive data
+✅ Authentication and authorization integration provides proper security
+✅ Webhook integration preparation works correctly
+✅ Frontend API integration maintains consistency and performance
+✅ Performance integration meets acceptable standards
+✅ Data consistency maintained across all integrated systems
+✅ Configuration integration works across all environments
+✅ Stress testing demonstrates integration resilience
+✅ All integration points handle errors gracefully
+
+FAIL_CRITERIA:
+❌ PaymentService integration with StripeService fails or is inconsistent
+❌ Model layer integration allows data corruption or validation bypass
+❌ End-to-end payment flows fail or produce inconsistent results
+❌ Error handling integration exposes sensitive information or fails silently
+❌ Database transaction integration violates ACID properties
+❌ Atomic transactions fail leaving partial or inconsistent data
+❌ Logging integration exposes sensitive information or fails to provide audit trail
+❌ Authentication and authorization integration has security vulnerabilities
+❌ Integration performance is unacceptable for production use
+❌ Data consistency failures occur across integrated systems
+❌ Configuration integration fails across different environments
+❌ Stress testing reveals integration failures or data corruption
+❌ Integration points do not handle errors appropriately
+❌ Service dependencies cause single points of failure
+
+FILES_TO_VERIFY:
+- backend/finances/services/payment_service.py (PaymentService complete implementation)
+- backend/finances/services/stripe_base.py (StripeService integration)
+- backend/finances/models.py (All model integrations)
+- backend/finances/views.py (API endpoint integrations)
+- backend/accounts/models.py (User model integration)
+- backend/aprendecomigo/settings/base.py (Configuration integration)
+
+SCREENSHOTS_REQUIRED:
+1. Server startup success
+2. Service integration setup complete
+3. StripeService integration verification
+4. Model layer integration testing
+5. End-to-end payment flow integration
+6. Error handling integration testing
+7. Database transaction integration testing
+8. Logging and monitoring integration
+9. Authentication and authorization integration
+10. Webhook integration preparation
+11. Frontend API integration testing
+12. Performance integration testing
+13. Data consistency integration verification
+14. Configuration and environment integration
+15. Comprehensive integration stress testing

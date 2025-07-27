@@ -1,0 +1,267 @@
+TEST_ID: payment-005
+TEST_NAME: Business Logic Integration
+PURPOSE: Validate PaymentService business logic including FIFO hour deduction, transaction type detection, atomic operations, and account balance management
+
+ENVIRONMENT_SETUP:
+- Django development server running on localhost:8000
+- Frontend server running on localhost:8081
+- Test Stripe API keys configured in environment
+- PostgreSQL or SQLite database available
+- Valid .env file with Stripe configuration
+- PaymentService with complete business logic implementation
+- Multiple test users with different purchase scenarios
+
+PRE_CONDITIONS:
+- Development servers are stopped initially
+- Environment variables are properly configured
+- Test Stripe keys (sk_test_, pk_test_) are available
+- User authentication system is functional
+- Multiple test student user accounts exist
+- Database models are migrated and functional
+- PaymentService is properly integrated with all business logic
+- HourConsumption model is available for FIFO testing
+
+TEST_STEPS:
+
+1. ENVIRONMENT_SETUP_AND_STARTUP
+   - Navigate to project root: cd /Users/anapmc/Code/aprendecomigo
+   - Activate virtual environment: source .venv/bin/activate
+   - Start development servers: make dev
+   - Wait for both Django and Expo servers to be ready
+   - Verify no startup errors in logs
+   - Screenshot: Server startup success
+
+2. DJANGO_SHELL_SETUP_AND_DATA_PREPARATION
+   - Open Django shell: python manage.py shell
+   - Import required components:
+     * from accounts.models import CustomUser
+     * from finances.services.payment_service import PaymentService
+     * from finances.models import PurchaseTransaction, StudentAccountBalance, TransactionType, TransactionPaymentStatus, HourConsumption
+     * from classroom.models import ClassSession
+     * from django.utils import timezone
+     * from decimal import Decimal
+     * import stripe
+   - Initialize service: service = PaymentService()
+   - Create test students if needed:
+     * student1 = CustomUser.objects.create_user(email='test1@student.com', name='Test Student 1', role='student')
+     * student2 = CustomUser.objects.create_user(email='test2@student.com', name='Test Student 2', role='student')
+   - Screenshot: Django shell setup and data preparation
+
+3. FIFO_HOUR_DEDUCTION_LOGIC_SETUP
+   - Create multiple package transactions for FIFO testing:
+     * # First package (oldest)
+     * package1_result = service.create_payment_intent(student1, "package_5h", {"amount": "49.99", "hours": "5"})
+     * stripe.PaymentIntent.confirm(package1_result['payment_intent_id'], payment_method='pm_card_visa')
+     * service.confirm_payment_completion(package1_result['payment_intent_id'])
+     * 
+     * # Second package (newer)
+     * package2_result = service.create_payment_intent(student1, "package_10h", {"amount": "89.99", "hours": "10"})
+     * stripe.PaymentIntent.confirm(package2_result['payment_intent_id'], payment_method='pm_card_visa')
+     * service.confirm_payment_completion(package2_result['payment_intent_id'])
+   - Verify both packages are completed and hours are credited
+   - Screenshot: FIFO hour deduction setup with multiple packages
+
+4. FIFO_BEST_SOURCE_TRANSACTION_TESTING
+   - Test _find_best_source_transaction method:
+     * best_source = service._find_best_source_transaction(student1)
+   - Verify best_source is the oldest package transaction (package1)
+   - Verify FIFO logic returns transactions in creation order
+   - Test with expired transactions:
+     * Create expired transaction by setting expires_at to past date
+     * Verify expired transactions are excluded from FIFO selection
+   - Screenshot: FIFO best source transaction testing
+
+5. TRANSACTION_TYPE_DETECTION_COMPREHENSIVE_TESTING
+   - Test package type detection:
+     * metadata = {"amount": "39.99", "hours": "3", "package_name": "3 Hour Package"}
+     * transaction_type = service._determine_transaction_type(metadata, "basic_package")
+     * Verify transaction_type is TransactionType.PACKAGE
+   - Test subscription detection via metadata:
+     * metadata = {"amount": "29.99", "subscription_name": "Monthly Plan", "billing_cycle": "monthly"}
+     * transaction_type = service._determine_transaction_type(metadata, "basic_plan")
+     * Verify transaction_type is TransactionType.SUBSCRIPTION
+   - Test subscription detection via pricing_plan_id:
+     * metadata = {"amount": "19.99"}
+     * transaction_type = service._determine_transaction_type(metadata, "monthly_subscription_premium")
+     * Verify transaction_type is TransactionType.SUBSCRIPTION
+   - Test edge cases and default behavior
+   - Screenshot: Transaction type detection comprehensive testing
+
+6. PACKAGE_EXPIRATION_LOGIC_TESTING
+   - Test package expiration date calculation:
+     * Create package transaction and verify expires_at is ~1 year from creation
+     * package_result = service.create_payment_intent(student1, "test_package", {"amount": "59.99", "hours": "6"})
+     * transaction = PurchaseTransaction.objects.get(id=package_result['transaction_id'])
+     * Verify transaction.expires_at is approximately 365 days from now
+     * Verify expires_at timezone is correct
+   - Test subscription expiration (should be None):
+     * sub_result = service.create_payment_intent(student1, "monthly_sub", {"amount": "29.99", "subscription_name": "Monthly"})
+     * sub_transaction = PurchaseTransaction.objects.get(id=sub_result['transaction_id'])
+     * Verify sub_transaction.expires_at is None
+   - Screenshot: Package expiration logic testing
+
+7. STUDENT_ACCOUNT_BALANCE_COMPLEX_SCENARIOS
+   - Test complex account balance scenarios:
+     * Get initial balance: initial_balance = StudentAccountBalance.objects.get(student=student1)
+     * Calculate expected final state after multiple transactions
+     * Create multiple package and subscription transactions
+     * Confirm all payments and verify cumulative balance updates
+   - Test balance calculations with mixed transaction types:
+     * Packages should add hours and amount
+     * Subscriptions should add amount only (no hours)
+   - Verify mathematical accuracy of all balance calculations
+   - Screenshot: Student account balance complex scenarios
+
+8. ATOMIC_TRANSACTION_BUSINESS_LOGIC
+   - Test atomic transaction behavior across all business logic:
+     * Test payment completion with account crediting atomicity
+     * Simulate failure during hour crediting and verify rollback
+     * Test payment failure with account preservation atomicity
+   - Verify business logic maintains consistency during failures:
+     * Hours and balance are updated together or not at all
+     * Transaction status and account state remain synchronized
+   - Screenshot: Atomic transaction business logic testing
+
+9. METADATA_PRESERVATION_AND_ENHANCEMENT
+   - Test metadata handling throughout payment lifecycle:
+     * Create transaction with rich metadata
+     * Verify metadata preservation during payment completion
+     * Verify metadata enhancement during payment failure
+     * Test metadata doesn't interfere with business logic
+   - Test metadata validation and sanitization:
+     * Test with various metadata formats and types
+     * Verify business logic extracts hours correctly from metadata
+   - Screenshot: Metadata preservation and enhancement testing
+
+10. ACCOUNT_BALANCE_EDGE_CASES
+    - Test edge cases in account balance management:
+      * Test with zero amount transactions
+      * Test with very large amounts (precision testing)
+      * Test with Decimal precision edge cases
+      * Test account creation vs. existing account updates
+    - Test overdraft scenarios (negative remaining hours):
+      * Create scenario where consumption exceeds purchased hours
+      * Verify system handles negative balances gracefully
+    - Screenshot: Account balance edge cases testing
+
+11. HOUR_CONSUMPTION_INTEGRATION_PREPARATION
+    - Prepare for hour consumption integration:
+      * Verify StudentAccountBalance tracks hours_purchased and hours_consumed separately
+      * Test remaining_hours property calculation
+      * Create scenarios with various consumption patterns
+    - Test integration points for future HourConsumption functionality:
+      * Verify account balance structure supports consumption tracking
+      * Test data consistency for consumption scenarios
+    - Screenshot: Hour consumption integration preparation
+
+12. BUSINESS_RULE_VALIDATION
+    - Test business rule enforcement:
+      * Verify only students can make purchases (role validation)
+      * Test minimum amount validation
+      * Test maximum amount handling
+      * Verify currency consistency (EUR)
+    - Test business constraints:
+      * Verify package hours must be positive
+      * Test subscription billing cycle validation
+      * Verify expiration date logic consistency
+    - Screenshot: Business rule validation testing
+
+13. CROSS_USER_ISOLATION_TESTING
+    - Test that business logic properly isolates user accounts:
+      * Create transactions for multiple students
+      * Verify each student's balance is updated independently
+      * Test FIFO logic works independently per student
+      * Verify no cross-contamination between user accounts
+    - Test concurrent operations across multiple users:
+      * Process payments for different users simultaneously
+      * Verify isolation and consistency
+    - Screenshot: Cross-user isolation testing
+
+14. PERFORMANCE_WITH_BUSINESS_LOGIC
+    - Test performance impact of business logic:
+      * Measure time for payment intent creation with complex metadata
+      * Test payment completion performance with account updates
+      * Verify FIFO logic performance with many transactions
+    - Test scalability scenarios:
+      * Create many transactions and test FIFO performance
+      * Test account balance updates with large numbers
+    - Screenshot: Performance with business logic testing
+
+15. COMPREHENSIVE_INTEGRATION_VERIFICATION
+    - Test complete integration of all business logic components:
+      * Create comprehensive test scenario with multiple users, packages, and subscriptions
+      * Process payments through complete lifecycle
+      * Verify all business logic works together correctly
+      * Test data consistency across all models and relationships
+    - Verify audit trail and logging for business operations:
+      * Check logs contain appropriate business logic information
+      * Verify sensitive data is not logged
+    - Screenshot: Comprehensive integration verification
+
+EXPECTED_RESULTS:
+- FIFO hour deduction logic correctly identifies oldest suitable transactions
+- Transaction type detection accurately classifies packages and subscriptions
+- Package expiration dates are correctly calculated and applied
+- Student account balances are accurately maintained across complex scenarios
+- Atomic transactions ensure business logic consistency
+- Metadata is properly preserved and enhanced throughout payment lifecycle
+- Business rules are consistently enforced
+- Cross-user isolation prevents account contamination
+- Performance remains acceptable with complex business logic
+
+PASS_CRITERIA:
+✅ FIFO logic correctly identifies oldest suitable transactions for hour deduction
+✅ Transaction type detection accurately classifies based on metadata and plan ID
+✅ Package expiration dates calculated correctly (~1 year from creation)
+✅ Subscription transactions have no expiration date (expires_at = None)
+✅ Student account balances accurately reflect all transactions and business rules
+✅ Hours are correctly added for packages but not for subscriptions
+✅ Atomic transactions maintain consistency across all business logic operations
+✅ Metadata preservation works throughout complete payment lifecycle
+✅ Business rule validation prevents invalid transactions
+✅ Cross-user isolation prevents account contamination
+✅ Performance remains acceptable with complex business logic
+✅ Mathematical accuracy maintained in all balance calculations
+✅ Edge cases handled gracefully without data corruption
+✅ Integration points prepared for future consumption tracking
+✅ Comprehensive audit trail maintained without sensitive data exposure
+
+FAIL_CRITERIA:
+❌ FIFO logic returns wrong transactions or fails to exclude expired ones
+❌ Transaction type detection misclassifies packages or subscriptions
+❌ Package expiration dates calculated incorrectly or inconsistently
+❌ Subscription transactions have expiration dates when they shouldn't
+❌ Student account balances incorrectly calculated or updated
+❌ Hours added for subscriptions or not added for packages
+❌ Atomic transaction failures leave inconsistent business logic state
+❌ Metadata corrupted or lost during payment lifecycle
+❌ Business rules not enforced consistently
+❌ Cross-user account contamination occurs
+❌ Performance degradation with business logic complexity
+❌ Mathematical errors in balance calculations
+❌ Edge cases cause data corruption or system failures
+❌ Integration points not properly prepared
+❌ Security vulnerabilities in business logic implementation
+
+FILES_TO_VERIFY:
+- backend/finances/services/payment_service.py (All business logic methods)
+- backend/finances/models.py (All business logic models and properties)
+- backend/accounts/models.py (CustomUser model with role validation)
+- backend/classroom/models.py (ClassSession model for consumption integration)
+
+SCREENSHOTS_REQUIRED:
+1. Server startup success
+2. Django shell setup and data preparation
+3. FIFO hour deduction setup with multiple packages
+4. FIFO best source transaction testing
+5. Transaction type detection comprehensive testing
+6. Package expiration logic testing
+7. Student account balance complex scenarios
+8. Atomic transaction business logic testing
+9. Metadata preservation and enhancement testing
+10. Account balance edge cases testing
+11. Hour consumption integration preparation
+12. Business rule validation testing
+13. Cross-user isolation testing
+14. Performance with business logic testing
+15. Comprehensive integration verification

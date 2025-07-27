@@ -1,0 +1,228 @@
+TEST_ID: payment-003
+TEST_NAME: Payment Failure Handling
+PURPOSE: Validate PaymentService handle_payment_failure method with failed payments, error states, and data consistency
+
+ENVIRONMENT_SETUP:
+- Django development server running on localhost:8000
+- Frontend server running on localhost:8081
+- Test Stripe API keys configured in environment
+- PostgreSQL or SQLite database available
+- Valid .env file with Stripe configuration
+- PaymentService with StripeService integration
+- Test payment intents in various failure states
+
+PRE_CONDITIONS:
+- Development servers are stopped initially
+- Environment variables are properly configured
+- Test Stripe keys (sk_test_, pk_test_) are available
+- User authentication system is functional
+- Test student user account exists
+- Database models are migrated and functional
+- PaymentService is properly integrated
+- PurchaseTransaction records exist in processing status
+
+TEST_STEPS:
+
+1. ENVIRONMENT_SETUP_AND_STARTUP
+   - Navigate to project root: cd /Users/anapmc/Code/aprendecomigo
+   - Activate virtual environment: source .venv/bin/activate
+   - Start development servers: make dev
+   - Wait for both Django and Expo servers to be ready
+   - Verify no startup errors in logs
+   - Screenshot: Server startup success
+
+2. DJANGO_SHELL_SETUP_AND_DATA_PREPARATION
+   - Open Django shell: python manage.py shell
+   - Import required components:
+     * from accounts.models import CustomUser
+     * from finances.services.payment_service import PaymentService
+     * from finances.models import PurchaseTransaction, StudentAccountBalance, TransactionPaymentStatus
+     * from django.utils import timezone
+     * import stripe
+   - Initialize service: service = PaymentService()
+   - Get or create test student: student = CustomUser.objects.filter(role='student').first()
+   - Create test transactions for failure scenarios:
+     * metadata = {"amount": "39.99", "hours": "3", "package_name": "Test Package"}
+     * result = service.create_payment_intent(student, "test_package", metadata)
+     * payment_intent_id = result['payment_intent_id']
+     * transaction_id = result['transaction_id']
+   - Screenshot: Django shell setup and data preparation
+
+3. BASIC_PAYMENT_FAILURE_HANDLING
+   - Test basic payment failure handling:
+     * error_message = "Payment declined by bank"
+     * result = service.handle_payment_failure(payment_intent_id, error_message)
+   - Verify result['success'] is True
+   - Verify result contains 'transaction_id' and 'payment_intent_id'
+   - Verify result['transaction_id'] matches expected transaction
+   - Verify result['payment_intent_id'] matches input payment_intent_id
+   - Screenshot: Basic payment failure handling success
+
+4. DATABASE_TRANSACTION_UPDATE_VERIFICATION
+   - Get updated transaction: transaction = PurchaseTransaction.objects.get(id=transaction_id)
+   - Verify transaction.payment_status is TransactionPaymentStatus.FAILED
+   - Verify transaction.updated_at has been updated (recent timestamp)
+   - Verify transaction.metadata contains failure information:
+     * Check 'error_message' key exists in metadata
+     * Check 'failed_at' timestamp exists in metadata
+     * Verify 'failed_at' is recent ISO timestamp
+   - Verify original transaction data is preserved (amount, student, etc.)
+   - Screenshot: Database transaction update verification
+
+5. STUDENT_ACCOUNT_BALANCE_PRESERVATION
+   - Get initial student account balance: initial_balance = StudentAccountBalance.objects.get(student=student)
+   - Verify account balance is NOT updated for failed payments:
+     * balance = StudentAccountBalance.objects.get(student=student)
+     * Verify balance.hours_purchased unchanged from initial state
+     * Verify balance.balance_amount unchanged from initial state
+     * Verify balance.hours_consumed unchanged from initial state
+   - Confirm no hours or credits are added to account for failed payments
+   - Screenshot: Student account balance preservation verification
+
+6. FAILURE_METADATA_HANDLING
+   - Create another test transaction for metadata testing
+   - Test failure with detailed error information:
+     * detailed_error = "Card was declined. Your request was in test mode, but used a non test card. For a list of valid test cards, visit: https://stripe.com/docs/testing."
+     * result = service.handle_payment_failure(new_payment_intent_id, detailed_error)
+   - Verify failure metadata is properly stored:
+     * transaction = PurchaseTransaction.objects.get(stripe_payment_intent_id=new_payment_intent_id)
+     * Verify transaction.metadata['error_message'] contains full error message
+     * Verify transaction.metadata['failed_at'] contains ISO timestamp
+     * Verify original metadata is preserved alongside failure metadata
+   - Screenshot: Failure metadata handling verification
+
+7. TRANSACTION_STATE_VALIDATION
+   - Create completed transaction for state validation testing:
+     * completed_metadata = {"amount": "19.99", "hours": "2"}
+     * completed_result = service.create_payment_intent(student, "completed_test", completed_metadata)
+     * completed_payment_intent_id = completed_result['payment_intent_id']
+     * # Simulate completion
+     * completed_transaction = PurchaseTransaction.objects.get(id=completed_result['transaction_id'])
+     * completed_transaction.payment_status = TransactionPaymentStatus.COMPLETED
+     * completed_transaction.save()
+   - Test failure handling on completed transaction:
+     * result = service.handle_payment_failure(completed_payment_intent_id, "Test error")
+     * Verify result['success'] is False
+     * Verify result['error_type'] is 'invalid_transaction_state'
+     * Verify result['message'] indicates cannot mark completed transaction as failed
+   - Verify completed transaction remains unchanged
+   - Screenshot: Transaction state validation testing
+
+8. NON_EXISTENT_TRANSACTION_HANDLING
+   - Test failure handling with non-existent payment intent:
+     * fake_payment_intent_id = "pi_fake_nonexistent_id_123456"
+     * result = service.handle_payment_failure(fake_payment_intent_id, "Test error")
+   - Verify result['success'] is False
+   - Verify result['error_type'] is 'transaction_not_found'
+   - Verify result['message'] indicates transaction not found
+   - Verify no database changes occur
+   - Screenshot: Non-existent transaction handling
+
+9. ERROR_MESSAGE_SANITIZATION
+   - Test failure handling with various error message types:
+     * Test with empty error message: result = service.handle_payment_failure(payment_intent_id, "")
+     * Test with None error message: result = service.handle_payment_failure(payment_intent_id, None)
+     * Test with very long error message (>1000 chars)
+     * Test with special characters and unicode in error message
+   - Verify all error messages are properly stored without causing database issues
+   - Verify no data truncation or encoding problems
+   - Screenshot: Error message sanitization testing
+
+10. CONCURRENT_FAILURE_HANDLING
+    - Create multiple transactions for concurrency testing
+    - Simulate concurrent failure handling:
+      * Create multiple payment intents
+      * Process failure handling simultaneously
+      * Verify all transactions are properly marked as failed
+      * Verify no race conditions cause data corruption
+      * Verify metadata is correctly stored for each transaction
+    - Screenshot: Concurrent failure handling testing
+
+11. ATOMIC_TRANSACTION_VERIFICATION
+    - Test atomic transaction behavior during failure handling:
+      * Simulate database error during failure handling
+      * Verify partial updates don't occur
+      * Verify transaction status and metadata are updated atomically
+      * Test recovery after fixing database issue
+    - Screenshot: Atomic transaction verification
+
+12. COMPREHENSIVE_ERROR_SCENARIOS
+    - Test various real-world error scenarios:
+      * Card declined: service.handle_payment_failure(pi_id, "Your card was declined.")
+      * Insufficient funds: service.handle_payment_failure(pi_id, "Your card has insufficient funds.")
+      * Expired card: service.handle_payment_failure(pi_id, "Your card has expired.")
+      * Authentication required: service.handle_payment_failure(pi_id, "Your card was declined. Your request was in test mode, but used a non test card.")
+      * Processing error: service.handle_payment_failure(pi_id, "An error occurred while processing your card. Try again in a little bit.")
+    - Verify all scenarios are handled consistently
+    - Verify appropriate metadata is stored for each scenario
+    - Screenshot: Comprehensive error scenarios testing
+
+13. LOGGING_AND_AUDIT_VERIFICATION
+    - Check logging output during failure handling:
+      * Verify failure events are logged appropriately
+      * Verify no sensitive information is logged
+      * Verify log levels are appropriate for different error types
+    - Verify audit trail in database:
+      * Check updated_at timestamp changes
+      * Verify metadata preserves audit trail
+      * Confirm no sensitive payment data is stored
+    - Screenshot: Logging and audit verification
+
+EXPECTED_RESULTS:
+- Payment failure handling marks transactions as failed atomically
+- Failure metadata is properly stored with error messages and timestamps
+- Student account balances are not modified for failed payments
+- Transaction state validation prevents invalid state transitions
+- Error handling provides appropriate feedback for various failure scenarios
+- Concurrent failure handling maintains data integrity
+- Comprehensive audit trail is maintained without sensitive data exposure
+
+PASS_CRITERIA:
+✅ Payment failure handling succeeds for valid processing transactions
+✅ Database transactions atomically updated to failed status
+✅ Failure metadata properly stored with error message and timestamp
+✅ Student account balances remain unchanged for failed payments
+✅ Transaction state validation prevents marking completed transactions as failed
+✅ Non-existent transaction handling returns appropriate error
+✅ Error message sanitization prevents database issues
+✅ Concurrent failure handling maintains data integrity
+✅ Atomic transactions ensure consistency
+✅ Comprehensive error scenarios handled consistently
+✅ Logging provides audit trail without sensitive data exposure
+✅ No sensitive information exposed in responses or logs
+✅ All business logic correctly preserves account state
+
+FAIL_CRITERIA:
+❌ Payment failure handling fails for valid processing transactions
+❌ Database transactions not updated or partially updated
+❌ Failure metadata not stored or stored incorrectly
+❌ Student account balances incorrectly modified for failed payments
+❌ Transaction state validation allows invalid state transitions
+❌ Error handling exposes sensitive information
+❌ Concurrent operations cause race conditions or data corruption
+❌ Atomic transaction failures leave inconsistent data
+❌ Error scenarios not handled consistently
+❌ Logging exposes sensitive payment information
+❌ Business logic incorrectly modifies account state
+❌ Security vulnerabilities in error handling
+
+FILES_TO_VERIFY:
+- backend/finances/services/payment_service.py (handle_payment_failure method)
+- backend/finances/models.py (PurchaseTransaction, TransactionPaymentStatus models)
+- backend/finances/services/stripe_base.py (StripeService error handling)
+- backend/accounts/models.py (CustomUser model)
+
+SCREENSHOTS_REQUIRED:
+1. Server startup success
+2. Django shell setup and data preparation
+3. Basic payment failure handling success
+4. Database transaction update verification
+5. Student account balance preservation verification
+6. Failure metadata handling verification
+7. Transaction state validation testing
+8. Non-existent transaction handling
+9. Error message sanitization testing
+10. Concurrent failure handling testing
+11. Atomic transaction verification
+12. Comprehensive error scenarios testing
+13. Logging and audit verification

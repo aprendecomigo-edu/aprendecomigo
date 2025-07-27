@@ -1,0 +1,810 @@
+"""
+Test suite for PaymentService following TDD principles.
+
+This module comprehensively tests all aspects of the PaymentService including
+payment intent creation, completion handling, failure management, and transaction consistency.
+"""
+
+import logging
+from decimal import Decimal
+from unittest.mock import Mock, patch
+from uuid import uuid4
+
+import stripe
+from django.test import TestCase, override_settings
+from django.db import transaction
+from django.utils import timezone
+
+from accounts.models import CustomUser
+from finances.models import (
+    PurchaseTransaction,
+    StudentAccountBalance,
+    TransactionPaymentStatus,
+    TransactionType,
+)
+from finances.services.payment_service import PaymentService
+
+
+# Disable logging during tests to reduce noise
+logging.disable(logging.CRITICAL)
+
+
+class PaymentServiceInitializationTests(TestCase):
+    """Test PaymentService initialization and configuration."""
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_payment_service_initialization_success(self):
+        """Test that PaymentService initializes correctly with valid Stripe configuration."""
+        service = PaymentService()
+        self.assertIsNotNone(service)
+        self.assertIsNotNone(service.stripe_service)
+
+    @override_settings(
+        STRIPE_SECRET_KEY="",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_payment_service_initialization_fails_with_invalid_stripe_config(self):
+        """Test that PaymentService raises error when Stripe configuration is invalid."""
+        with self.assertRaises(ValueError):
+            PaymentService()
+
+
+class PaymentServiceCreatePaymentIntentTests(TestCase):
+    """Test payment intent creation functionality."""
+
+    def setUp(self):
+        """Set up test environment with test user and Stripe configuration."""
+        self.stripe_settings = {
+            'STRIPE_SECRET_KEY': 'sk_test_example_key',
+            'STRIPE_PUBLIC_KEY': 'pk_test_example_key',
+            'STRIPE_WEBHOOK_SECRET': 'whsec_test_example'
+        }
+        
+        # Create test user
+        self.user = CustomUser.objects.create_user(
+            email="student@test.com",
+            name="Test Student"
+        )
+        
+        # Create or get student account balance
+        self.student_balance, _ = StudentAccountBalance.objects.get_or_create(
+            student=self.user,
+            defaults={
+                'hours_purchased': Decimal('0.00'),
+                'hours_consumed': Decimal('0.00'),
+                'balance_amount': Decimal('0.00')
+            }
+        )
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.create')
+    def test_create_payment_intent_success_package(self, mock_stripe_create):
+        """Test successful payment intent creation for package purchase."""
+        # Mock Stripe PaymentIntent response
+        mock_payment_intent = Mock()
+        mock_payment_intent.id = "pi_test123"
+        mock_payment_intent.client_secret = "pi_test123_secret_abc"
+        mock_payment_intent.amount = 2500  # 25.00 EUR in cents
+        mock_payment_intent.currency = "eur"
+        mock_payment_intent.status = "requires_payment_method"
+        mock_payment_intent.customer = None  # Add customer attribute
+        mock_stripe_create.return_value = mock_payment_intent
+
+        service = PaymentService()
+        
+        # Test data
+        pricing_plan_id = "plan_10_hours"
+        metadata = {
+            "package_name": "10 Hour Package",
+            "hours": 10,
+            "price_per_hour": 2.50,
+            "amount": 25.00
+        }
+
+        result = service.create_payment_intent(
+            user=self.user,
+            pricing_plan_id=pricing_plan_id,
+            metadata=metadata
+        )
+
+        # Verify successful result
+        self.assertTrue(result['success'])
+        self.assertEqual(result['client_secret'], "pi_test123_secret_abc")
+        self.assertIsNotNone(result['transaction_id'])
+
+        # Verify Stripe was called correctly
+        mock_stripe_create.assert_called_once()
+        call_args = mock_stripe_create.call_args[1]
+        self.assertEqual(call_args['amount'], 2500)
+        self.assertEqual(call_args['currency'], 'eur')
+        self.assertIn('automatic_payment_methods', call_args)
+
+        # Verify transaction was created
+        transaction_id = result['transaction_id']
+        transaction = PurchaseTransaction.objects.get(id=transaction_id)
+        self.assertEqual(transaction.student, self.user)
+        self.assertEqual(transaction.amount, Decimal('25.00'))
+        self.assertEqual(transaction.transaction_type, TransactionType.PACKAGE)
+        self.assertEqual(transaction.payment_status, TransactionPaymentStatus.PROCESSING)
+        self.assertEqual(transaction.stripe_payment_intent_id, "pi_test123")
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.create')
+    def test_create_payment_intent_success_subscription(self, mock_stripe_create):
+        """Test successful payment intent creation for subscription purchase."""
+        # Mock Stripe PaymentIntent response
+        mock_payment_intent = Mock()
+        mock_payment_intent.id = "pi_test456"
+        mock_payment_intent.client_secret = "pi_test456_secret_def"
+        mock_payment_intent.amount = 4999  # 49.99 EUR in cents
+        mock_payment_intent.currency = "eur"
+        mock_payment_intent.customer = None  # Add customer attribute
+        mock_stripe_create.return_value = mock_payment_intent
+
+        service = PaymentService()
+        
+        # Test data for subscription
+        pricing_plan_id = "monthly_unlimited"
+        metadata = {
+            "subscription_name": "Monthly Unlimited",
+            "billing_cycle": "monthly",
+            "amount": 49.99
+        }
+
+        result = service.create_payment_intent(
+            user=self.user,
+            pricing_plan_id=pricing_plan_id,
+            metadata=metadata
+        )
+
+        # Verify successful result
+        self.assertTrue(result['success'])
+        self.assertEqual(result['client_secret'], "pi_test456_secret_def")
+
+        # Verify transaction was created with subscription type
+        transaction_id = result['transaction_id']
+        transaction = PurchaseTransaction.objects.get(id=transaction_id)
+        self.assertEqual(transaction.transaction_type, TransactionType.SUBSCRIPTION)
+        self.assertIsNone(transaction.expires_at)  # Subscriptions don't expire
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.create')
+    def test_create_payment_intent_stripe_error_handling(self, mock_stripe_create):
+        """Test payment intent creation with Stripe API errors."""
+        # Mock Stripe CardError
+        mock_stripe_create.side_effect = stripe.error.CardError(
+            message="Your card was declined.",
+            param="number",
+            code="card_declined"
+        )
+
+        service = PaymentService()
+        
+        result = service.create_payment_intent(
+            user=self.user,
+            pricing_plan_id="plan_test",
+            metadata={"amount": 25.00}
+        )
+
+        # Verify error handling
+        self.assertFalse(result['success'])
+        self.assertEqual(result['error_type'], 'card_error')
+        self.assertIn('declined', result['message'].lower())
+
+        # Verify no transaction was created
+        self.assertFalse(
+            PurchaseTransaction.objects.filter(student=self.user).exists()
+        )
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_create_payment_intent_missing_metadata_amount(self):
+        """Test payment intent creation fails when amount is missing from metadata."""
+        service = PaymentService()
+        
+        # Missing amount in metadata
+        result = service.create_payment_intent(
+            user=self.user,
+            pricing_plan_id="plan_test",
+            metadata={"package_name": "Test Package"}
+        )
+
+        # Verify validation error
+        self.assertFalse(result['success'])
+        self.assertEqual(result['error_type'], 'validation_error')
+        self.assertIn('amount', result['message'].lower())
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_create_payment_intent_invalid_amount(self):
+        """Test payment intent creation fails with invalid amount."""
+        service = PaymentService()
+        
+        # Negative amount
+        result = service.create_payment_intent(
+            user=self.user,
+            pricing_plan_id="plan_test",
+            metadata={"amount": -10.00}
+        )
+
+        # Verify validation error
+        self.assertFalse(result['success'])
+        self.assertEqual(result['error_type'], 'validation_error')
+        self.assertIn('amount', result['message'].lower())
+
+
+class PaymentServiceConfirmPaymentCompletionTests(TestCase):
+    """Test payment completion confirmation functionality."""
+
+    def setUp(self):
+        """Set up test environment."""
+        self.stripe_settings = {
+            'STRIPE_SECRET_KEY': 'sk_test_example_key',
+            'STRIPE_PUBLIC_KEY': 'pk_test_example_key',
+            'STRIPE_WEBHOOK_SECRET': 'whsec_test_example'
+        }
+        
+        # Create test user
+        self.user = CustomUser.objects.create_user(
+            email="student@test.com",
+            name="Test Student"
+        )
+        
+        # Create student account balance
+        self.student_balance, _ = StudentAccountBalance.objects.get_or_create(
+            student=self.user,
+            defaults={
+                'hours_purchased': Decimal('5.00'),
+                'hours_consumed': Decimal('2.00'),
+                'balance_amount': Decimal('50.00')
+            }
+        )
+
+        # Create test transaction
+        self.transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('25.00'),
+            payment_status=TransactionPaymentStatus.PROCESSING,
+            stripe_payment_intent_id="pi_test123",
+            metadata={
+                "package_name": "10 Hour Package",
+                "hours": 10,
+                "amount": 25.00
+            }
+        )
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.retrieve')
+    def test_confirm_payment_completion_success(self, mock_stripe_retrieve):
+        """Test successful payment completion confirmation."""
+        # Mock successful Stripe PaymentIntent
+        mock_payment_intent = Mock()
+        mock_payment_intent.id = "pi_test123"
+        mock_payment_intent.status = "succeeded"
+        mock_payment_intent.amount = 2500
+        mock_payment_intent.currency = "eur"
+        mock_stripe_retrieve.return_value = mock_payment_intent
+
+        service = PaymentService()
+        
+        # Get initial balance
+        initial_hours = self.student_balance.hours_purchased
+        initial_balance = self.student_balance.balance_amount
+        
+        result = service.confirm_payment_completion("pi_test123")
+
+        # Verify successful result
+        self.assertTrue(result['success'])
+        self.assertEqual(result['transaction_id'], self.transaction.id)
+
+        # Verify transaction status updated
+        self.transaction.refresh_from_db()
+        self.assertEqual(self.transaction.payment_status, TransactionPaymentStatus.COMPLETED)
+
+        # Verify student account updated with hours
+        self.student_balance.refresh_from_db()
+        expected_hours = initial_hours + Decimal('10.00')  # From metadata
+        self.assertEqual(self.student_balance.hours_purchased, expected_hours)
+        
+        # Verify balance amount updated
+        expected_balance = initial_balance + Decimal('25.00')
+        self.assertEqual(self.student_balance.balance_amount, expected_balance)
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.retrieve')
+    def test_confirm_payment_completion_payment_intent_not_found(self, mock_stripe_retrieve):
+        """Test payment completion with non-existent payment intent."""
+        mock_stripe_retrieve.side_effect = stripe.error.InvalidRequestError(
+            message="No such payment_intent: pi_nonexistent",
+            param="id"
+        )
+
+        service = PaymentService()
+        
+        result = service.confirm_payment_completion("pi_nonexistent")
+
+        # Verify error handling
+        self.assertFalse(result['success'])
+        self.assertEqual(result['error_type'], 'invalid_request_error')
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.retrieve')
+    def test_confirm_payment_completion_payment_not_succeeded(self, mock_stripe_retrieve):
+        """Test payment completion when payment intent status is not succeeded."""
+        # Mock payment intent that requires payment method
+        mock_payment_intent = Mock()
+        mock_payment_intent.id = "pi_test123"
+        mock_payment_intent.status = "requires_payment_method"
+        mock_stripe_retrieve.return_value = mock_payment_intent
+
+        service = PaymentService()
+        
+        result = service.confirm_payment_completion("pi_test123")
+
+        # Verify error result
+        self.assertFalse(result['success'])
+        self.assertEqual(result['error_type'], 'payment_not_completed')
+        self.assertIn('requires_payment_method', result['message'])
+
+        # Verify transaction status not changed
+        self.transaction.refresh_from_db()
+        self.assertEqual(self.transaction.payment_status, TransactionPaymentStatus.PROCESSING)
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.retrieve')
+    def test_confirm_payment_completion_transaction_not_found(self, mock_stripe_retrieve):
+        """Test payment completion when transaction doesn't exist in database."""
+        # Mock successful Stripe PaymentIntent
+        mock_payment_intent = Mock()
+        mock_payment_intent.id = "pi_nonexistent_transaction"
+        mock_payment_intent.status = "succeeded"
+        mock_stripe_retrieve.return_value = mock_payment_intent
+
+        service = PaymentService()
+        
+        result = service.confirm_payment_completion("pi_nonexistent_transaction")
+
+        # Verify error handling
+        self.assertFalse(result['success'])
+        self.assertEqual(result['error_type'], 'transaction_not_found')
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.retrieve')
+    def test_confirm_payment_completion_atomic_transaction(self, mock_stripe_retrieve):
+        """Test that payment completion uses atomic transactions for consistency."""
+        # Mock successful Stripe PaymentIntent
+        mock_payment_intent = Mock()
+        mock_payment_intent.id = "pi_test123"
+        mock_payment_intent.status = "succeeded"
+        mock_stripe_retrieve.return_value = mock_payment_intent
+
+        service = PaymentService()
+        
+        # Simulate database error during balance update by patching save
+        with patch.object(StudentAccountBalance, 'save', side_effect=Exception("Database error")):
+            result = service.confirm_payment_completion("pi_test123")
+
+        # Verify error handling
+        self.assertFalse(result['success'])
+        
+        # Verify transaction rollback - status should remain unchanged
+        self.transaction.refresh_from_db()
+        self.assertEqual(self.transaction.payment_status, TransactionPaymentStatus.PROCESSING)
+
+
+class PaymentServiceHandlePaymentFailureTests(TestCase):
+    """Test payment failure handling functionality."""
+
+    def setUp(self):
+        """Set up test environment."""
+        self.stripe_settings = {
+            'STRIPE_SECRET_KEY': 'sk_test_example_key',
+            'STRIPE_PUBLIC_KEY': 'pk_test_example_key',
+            'STRIPE_WEBHOOK_SECRET': 'whsec_test_example'
+        }
+        
+        # Create test user
+        self.user = CustomUser.objects.create_user(
+            email="student@test.com",
+            name="Test Student"
+        )
+
+        # Create test transaction
+        self.transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('25.00'),
+            payment_status=TransactionPaymentStatus.PROCESSING,
+            stripe_payment_intent_id="pi_test_failed",
+            metadata={"package_name": "10 Hour Package", "hours": 10}
+        )
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_handle_payment_failure_success(self):
+        """Test successful payment failure handling."""
+        service = PaymentService()
+        
+        error_message = "Card was declined due to insufficient funds"
+        
+        result = service.handle_payment_failure("pi_test_failed", error_message)
+
+        # Verify successful result
+        self.assertTrue(result['success'])
+        self.assertEqual(result['transaction_id'], self.transaction.id)
+
+        # Verify transaction status updated
+        self.transaction.refresh_from_db()
+        self.assertEqual(self.transaction.payment_status, TransactionPaymentStatus.FAILED)
+        
+        # Verify error message stored in metadata
+        self.assertIn('error_message', self.transaction.metadata)
+        self.assertEqual(self.transaction.metadata['error_message'], error_message)
+        self.assertIn('failed_at', self.transaction.metadata)
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_handle_payment_failure_transaction_not_found(self):
+        """Test payment failure handling when transaction doesn't exist."""
+        service = PaymentService()
+        
+        result = service.handle_payment_failure(
+            "pi_nonexistent", 
+            "Some error message"
+        )
+
+        # Verify error handling
+        self.assertFalse(result['success'])
+        self.assertEqual(result['error_type'], 'transaction_not_found')
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_handle_payment_failure_already_completed(self):
+        """Test payment failure handling when transaction is already completed."""
+        # Mark transaction as completed first
+        self.transaction.payment_status = TransactionPaymentStatus.COMPLETED
+        self.transaction.save()
+
+        service = PaymentService()
+        
+        result = service.handle_payment_failure(
+            "pi_test_failed", 
+            "Some error message"
+        )
+
+        # Verify error handling
+        self.assertFalse(result['success'])
+        self.assertEqual(result['error_type'], 'invalid_transaction_state')
+        self.assertIn('already completed', result['message'].lower())
+
+
+class PaymentServiceGetPaymentStatusTests(TestCase):
+    """Test payment status retrieval functionality."""
+
+    def setUp(self):
+        """Set up test environment."""
+        self.stripe_settings = {
+            'STRIPE_SECRET_KEY': 'sk_test_example_key',
+            'STRIPE_PUBLIC_KEY': 'pk_test_example_key',
+            'STRIPE_WEBHOOK_SECRET': 'whsec_test_example'
+        }
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.retrieve')
+    def test_get_payment_status_success(self, mock_stripe_retrieve):
+        """Test successful payment status retrieval."""
+        # Mock Stripe PaymentIntent response
+        mock_payment_intent = Mock()
+        mock_payment_intent.id = "pi_test123"
+        mock_payment_intent.status = "succeeded"
+        mock_payment_intent.amount = 2500
+        mock_payment_intent.currency = "eur"
+        mock_payment_intent.created = 1234567890
+        mock_stripe_retrieve.return_value = mock_payment_intent
+
+        service = PaymentService()
+        
+        result = service.get_payment_status("pi_test123")
+
+        # Verify successful result
+        self.assertTrue(result['success'])
+        self.assertEqual(result['payment_intent_id'], "pi_test123")
+        self.assertEqual(result['status'], "succeeded")
+        self.assertEqual(result['amount'], 2500)
+        self.assertEqual(result['currency'], "eur")
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.retrieve')
+    def test_get_payment_status_not_found(self, mock_stripe_retrieve):
+        """Test payment status retrieval for non-existent payment intent."""
+        mock_stripe_retrieve.side_effect = stripe.error.InvalidRequestError(
+            message="No such payment_intent: pi_nonexistent",
+            param="id"
+        )
+
+        service = PaymentService()
+        
+        result = service.get_payment_status("pi_nonexistent")
+
+        # Verify error handling
+        self.assertFalse(result['success'])
+        self.assertEqual(result['error_type'], 'invalid_request_error')
+
+
+class PaymentServiceFindBestSourceTransactionTests(TestCase):
+    """Test the helper method for finding best source transaction for hour deduction."""
+
+    def setUp(self):
+        """Set up test environment with multiple transactions."""
+        # Create test user
+        self.user = CustomUser.objects.create_user(
+            email="student@test.com",
+            name="Test Student"
+        )
+        
+        # Create student account balance
+        self.student_balance, _ = StudentAccountBalance.objects.get_or_create(
+            student=self.user,
+            defaults={
+                'hours_purchased': Decimal('25.00'),
+                'hours_consumed': Decimal('5.00'),
+                'balance_amount': Decimal('100.00')
+            }
+        )
+
+        # Create multiple transactions with different dates
+        base_time = timezone.now()
+        
+        self.old_transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('50.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            metadata={"hours": 20, "package_name": "20 Hour Package"},
+            created_at=base_time - timezone.timedelta(days=30)
+        )
+        
+        self.new_transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('12.50'),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            metadata={"hours": 5, "package_name": "5 Hour Package"},
+            created_at=base_time - timezone.timedelta(days=1)
+        )
+        
+        self.expired_transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('25.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            expires_at=timezone.now() - timezone.timedelta(days=1),
+            metadata={"hours": 10, "package_name": "Expired Package"}
+        )
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_find_best_source_transaction_fifo_logic(self):
+        """Test that the method finds the best source transaction using FIFO logic."""
+        service = PaymentService()
+        
+        # Should return the oldest non-expired transaction first
+        best_transaction = service._find_best_source_transaction(self.user)
+        
+        self.assertEqual(best_transaction, self.old_transaction)
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_find_best_source_transaction_excludes_expired(self):
+        """Test that expired transactions are excluded from selection."""
+        service = PaymentService()
+        
+        # Mark older transactions as fully consumed
+        # This would make the method look for the next available transaction
+        best_transaction = service._find_best_source_transaction(self.user)
+        
+        # Should not return the expired transaction
+        self.assertNotEqual(best_transaction, self.expired_transaction)
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_find_best_source_transaction_no_available_transactions(self):
+        """Test when no suitable transactions are available."""
+        # Create a user with no transactions
+        empty_user = CustomUser.objects.create_user(
+            email="empty@test.com",
+            name="Empty User"
+        )
+        
+        service = PaymentService()
+        
+        best_transaction = service._find_best_source_transaction(empty_user)
+        
+        self.assertIsNone(best_transaction)
+
+
+class PaymentServiceConcurrencyTests(TestCase):
+    """Test PaymentService handling of concurrent requests safely."""
+
+    def setUp(self):
+        """Set up test environment."""
+        self.stripe_settings = {
+            'STRIPE_SECRET_KEY': 'sk_test_example_key',
+            'STRIPE_PUBLIC_KEY': 'pk_test_example_key',
+            'STRIPE_WEBHOOK_SECRET': 'whsec_test_example'
+        }
+        
+        # Create test user
+        self.user = CustomUser.objects.create_user(
+            email="student@test.com",
+            name="Test Student"
+        )
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.create')
+    def test_concurrent_payment_intent_creation(self, mock_stripe_create):
+        """Test that concurrent payment intent creation is handled safely."""
+        # Mock different Stripe responses for each call
+        mock_payment_intent_1 = Mock()
+        mock_payment_intent_1.id = "pi_concurrent_1"
+        mock_payment_intent_1.client_secret = "pi_concurrent_1_secret"
+        mock_payment_intent_1.amount = 2500
+        mock_payment_intent_1.customer = None
+        
+        mock_payment_intent_2 = Mock()
+        mock_payment_intent_2.id = "pi_concurrent_2"
+        mock_payment_intent_2.client_secret = "pi_concurrent_2_secret"
+        mock_payment_intent_2.amount = 2500
+        mock_payment_intent_2.customer = None
+        
+        mock_stripe_create.side_effect = [mock_payment_intent_1, mock_payment_intent_2]
+
+        service = PaymentService()
+        
+        # Simulate concurrent requests
+        result1 = service.create_payment_intent(
+            user=self.user,
+            pricing_plan_id="plan_test",
+            metadata={"amount": 25.00, "hours": 10}
+        )
+        
+        result2 = service.create_payment_intent(
+            user=self.user,
+            pricing_plan_id="plan_test",
+            metadata={"amount": 25.00, "hours": 10}
+        )
+
+        # Verify both requests succeeded
+        self.assertTrue(result1['success'])
+        self.assertTrue(result2['success'])
+        
+        # Verify different payment intents were created
+        self.assertNotEqual(result1['client_secret'], result2['client_secret'])
+        
+        # Verify both transactions exist in database
+        transactions = PurchaseTransaction.objects.filter(student=self.user)
+        self.assertEqual(transactions.count(), 2)
+
+
+class PaymentServiceLoggingTests(TestCase):
+    """Test PaymentService logging functionality."""
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('finances.services.payment_service.logger')
+    def test_payment_service_logs_payment_attempts(self, mock_logger):
+        """Test that payment attempts are logged properly."""
+        # Re-enable logging for this specific test
+        logging.disable(logging.NOTSET)
+        
+        try:
+            # Create test user
+            user = CustomUser.objects.create_user(
+                email="student@test.com",
+                name="Test Student"
+            )
+
+            service = PaymentService()
+            
+            with patch('stripe.PaymentIntent.create') as mock_stripe_create:
+                mock_payment_intent = Mock()
+                mock_payment_intent.id = "pi_test123"
+                mock_payment_intent.client_secret = "pi_test123_secret"
+                mock_payment_intent.amount = 2500
+                mock_stripe_create.return_value = mock_payment_intent
+
+                service.create_payment_intent(
+                    user=user,
+                    pricing_plan_id="plan_test",
+                    metadata={"amount": 25.00, "hours": 10}
+                )
+
+            # Verify logging calls were made
+            mock_logger.info.assert_called()
+            
+        finally:
+            # Disable logging again
+            logging.disable(logging.CRITICAL)
+
+
+# Re-enable logging after all tests
+def tearDownModule():
+    """Re-enable logging after test module completion."""
+    logging.disable(logging.NOTSET)

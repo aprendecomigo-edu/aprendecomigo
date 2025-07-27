@@ -1,0 +1,238 @@
+TEST_ID: payment-004
+TEST_NAME: Payment Status Monitoring
+PURPOSE: Validate PaymentService get_payment_status method for checking Stripe payment status and integration monitoring
+
+ENVIRONMENT_SETUP:
+- Django development server running on localhost:8000
+- Frontend server running on localhost:8081
+- Test Stripe API keys configured in environment
+- PostgreSQL or SQLite database available
+- Valid .env file with Stripe configuration
+- PaymentService with StripeService integration
+- Multiple payment intents in various states (succeeded, pending, failed)
+
+PRE_CONDITIONS:
+- Development servers are stopped initially
+- Environment variables are properly configured
+- Test Stripe keys (sk_test_, pk_test_) are available
+- User authentication system is functional
+- Test student user account exists
+- Database models are migrated and functional
+- PaymentService is properly integrated
+- Payment intents exist in various states for testing
+
+TEST_STEPS:
+
+1. ENVIRONMENT_SETUP_AND_STARTUP
+   - Navigate to project root: cd /Users/anapmc/Code/aprendecomigo
+   - Activate virtual environment: source .venv/bin/activate
+   - Start development servers: make dev
+   - Wait for both Django and Expo servers to be ready
+   - Verify no startup errors in logs
+   - Screenshot: Server startup success
+
+2. DJANGO_SHELL_SETUP_AND_DATA_PREPARATION
+   - Open Django shell: python manage.py shell
+   - Import required components:
+     * from accounts.models import CustomUser
+     * from finances.services.payment_service import PaymentService
+     * from finances.models import PurchaseTransaction
+     * import stripe
+   - Initialize service: service = PaymentService()
+   - Get or create test student: student = CustomUser.objects.filter(role='student').first()
+   - Create payment intents in different states for testing:
+     * Create pending payment intent:
+       * pending_result = service.create_payment_intent(student, "pending_test", {"amount": "29.99"})
+       * pending_payment_intent_id = pending_result['payment_intent_id']
+     * Create succeeded payment intent:
+       * success_result = service.create_payment_intent(student, "success_test", {"amount": "49.99"})
+       * success_payment_intent_id = success_result['payment_intent_id']
+       * stripe.PaymentIntent.confirm(success_payment_intent_id, payment_method='pm_card_visa')
+     * Create failed payment intent:
+       * failed_result = service.create_payment_intent(student, "failed_test", {"amount": "19.99"})
+       * failed_payment_intent_id = failed_result['payment_intent_id']
+       * Try to confirm with failing payment method: stripe.PaymentIntent.confirm(failed_payment_intent_id, payment_method='pm_card_visa_chargeDeclined')
+   - Screenshot: Django shell setup and test data preparation
+
+3. SUCCESSFUL_PAYMENT_STATUS_RETRIEVAL
+   - Test status retrieval for succeeded payment:
+     * result = service.get_payment_status(success_payment_intent_id)
+   - Verify result['success'] is True
+   - Verify result contains required fields:
+     * result['payment_intent_id'] matches input
+     * result['status'] is 'succeeded'
+     * result['amount'] matches original amount in cents
+     * result['currency'] is 'eur'
+     * result['created'] is a valid timestamp
+   - Verify all fields have correct data types and formats
+   - Screenshot: Successful payment status retrieval
+
+4. PENDING_PAYMENT_STATUS_RETRIEVAL
+   - Test status retrieval for pending payment:
+     * result = service.get_payment_status(pending_payment_intent_id)
+   - Verify result['success'] is True
+   - Verify result contains required fields:
+     * result['payment_intent_id'] matches input
+     * result['status'] is 'requires_payment_method' or similar pending status
+     * result['amount'] matches original amount in cents
+     * result['currency'] is 'eur'
+     * result['created'] is a valid timestamp
+   - Screenshot: Pending payment status retrieval
+
+5. FAILED_PAYMENT_STATUS_RETRIEVAL
+   - Test status retrieval for failed payment:
+     * result = service.get_payment_status(failed_payment_intent_id)
+   - Verify result['success'] is True
+   - Verify result contains required fields:
+     * result['payment_intent_id'] matches input
+     * result['status'] reflects failure state ('requires_payment_method' with last_payment_error)
+     * result['amount'] matches original amount in cents
+     * result['currency'] is 'eur'
+     * result['created'] is a valid timestamp
+   - Screenshot: Failed payment status retrieval
+
+6. NON_EXISTENT_PAYMENT_INTENT_HANDLING
+   - Test status retrieval for non-existent payment intent:
+     * fake_payment_intent_id = "pi_fake_nonexistent_id_123456"
+     * result = service.get_payment_status(fake_payment_intent_id)
+   - Verify result['success'] is False
+   - Verify result contains appropriate error information:
+     * result['error_type'] indicates Stripe error
+     * result['message'] provides user-friendly error description
+   - Verify no sensitive information is exposed in error response
+   - Screenshot: Non-existent payment intent handling
+
+7. INVALID_PAYMENT_INTENT_ID_HANDLING
+   - Test status retrieval with invalid payment intent ID formats:
+     * Test with empty string: result = service.get_payment_status("")
+     * Test with None: result = service.get_payment_status(None)
+     * Test with invalid format: result = service.get_payment_status("invalid_id_format")
+   - Verify all invalid inputs return result['success'] = False
+   - Verify appropriate error messages are provided
+   - Verify no exceptions are raised for invalid inputs
+   - Screenshot: Invalid payment intent ID handling
+
+8. STRIPE_API_ERROR_HANDLING
+   - Test various Stripe API error scenarios:
+     * Test with invalid API key (temporarily modify key)
+     * Test with rate limiting simulation
+     * Test with network connectivity issues (if possible to simulate)
+   - Verify all Stripe errors are properly handled by StripeService
+   - Verify appropriate error types and messages are returned
+   - Verify no sensitive API information is exposed
+   - Screenshot: Stripe API error handling
+
+9. PAYMENT_STATUS_CONSISTENCY_VERIFICATION
+   - Verify payment status consistency across multiple calls:
+     * status1 = service.get_payment_status(success_payment_intent_id)
+     * status2 = service.get_payment_status(success_payment_intent_id)
+   - Verify both calls return identical results
+   - Verify status doesn't change unexpectedly between calls
+   - Test with multiple payment intents in parallel
+   - Screenshot: Payment status consistency verification
+
+10. METADATA_AND_ADDITIONAL_FIELDS
+    - Test retrieval of additional payment intent fields:
+      * Retrieve payment intent status for payment with rich metadata
+      * Verify metadata accessibility through Stripe API
+      * Check for additional useful fields (setup_future_usage, etc.)
+    - Verify service returns core required fields consistently
+    - Test with different payment intent configurations
+    - Screenshot: Metadata and additional fields testing
+
+11. PERFORMANCE_AND_RESPONSE_TIME_TESTING
+    - Test response time for payment status retrieval:
+      * Measure time for single status retrieval
+      * Test bulk status retrieval for multiple payment intents
+      * Verify reasonable response times (< 2 seconds for single request)
+    - Test with payment intents created at different times
+    - Verify no performance degradation with older payment intents
+    - Screenshot: Performance and response time testing
+
+12. CONCURRENT_STATUS_RETRIEVAL
+    - Test concurrent status retrieval:
+      * Create multiple payment intents
+      * Retrieve status for all payment intents simultaneously
+      * Verify all requests complete successfully
+      * Verify no rate limiting or concurrency issues
+    - Test concurrent retrieval of same payment intent
+    - Verify thread safety and data consistency
+    - Screenshot: Concurrent status retrieval testing
+
+13. INTEGRATION_WITH_DATABASE_RECORDS
+    - Test correlation between Stripe status and database records:
+      * For each payment intent, compare Stripe status with database transaction status
+      * Verify consistency between Stripe payment_intent.status and PurchaseTransaction.payment_status
+      * Test status synchronization scenarios
+    - Identify any discrepancies and their implications
+    - Screenshot: Integration with database records verification
+
+14. MONITORING_AND_LOGGING_VERIFICATION
+    - Verify appropriate logging for payment status operations:
+      * Check logs for status retrieval operations
+      * Verify no sensitive information is logged
+      * Verify appropriate log levels for different scenarios
+    - Test monitoring capabilities:
+      * Verify successful operations are logged
+      * Verify error operations are logged with appropriate detail
+    - Screenshot: Monitoring and logging verification
+
+EXPECTED_RESULTS:
+- Payment status retrieval works for all payment intent states
+- All required fields are returned with correct data types and formats
+- Error handling provides appropriate feedback for various failure scenarios
+- No sensitive information is exposed in responses or logs
+- Performance meets acceptable standards for real-time status checking
+- Concurrent operations maintain data integrity and consistency
+- Integration with database records shows proper correlation
+
+PASS_CRITERIA:
+✅ Payment status retrieval succeeds for valid payment intents in all states
+✅ All required fields returned with correct data types and formats
+✅ Succeeded payments show 'succeeded' status with correct amount and currency
+✅ Pending payments show appropriate pending status
+✅ Failed payments show failure state correctly
+✅ Non-existent payment intents return appropriate error response
+✅ Invalid payment intent IDs handled gracefully without exceptions
+✅ Stripe API errors properly handled by StripeService
+✅ Payment status consistency maintained across multiple calls
+✅ Performance meets acceptable standards (< 2 seconds per request)
+✅ Concurrent status retrieval maintains data integrity
+✅ Database integration shows proper correlation between Stripe and local records
+✅ Logging provides audit trail without sensitive data exposure
+✅ No sensitive information exposed in any responses
+
+FAIL_CRITERIA:
+❌ Payment status retrieval fails for valid payment intents
+❌ Required fields missing or have incorrect data types
+❌ Payment status information is inaccurate or inconsistent
+❌ Error handling exposes sensitive API information
+❌ Exceptions raised for invalid inputs instead of graceful handling
+❌ Performance is unacceptable (> 5 seconds per request)
+❌ Concurrent operations cause race conditions or data corruption
+❌ Database integration shows inconsistencies
+❌ Logging exposes sensitive payment information
+❌ Security vulnerabilities in status retrieval
+❌ Stripe API errors not properly handled
+
+FILES_TO_VERIFY:
+- backend/finances/services/payment_service.py (get_payment_status method)
+- backend/finances/services/stripe_base.py (StripeService error handling)
+- backend/finances/models.py (PurchaseTransaction model)
+- backend/accounts/models.py (CustomUser model)
+
+SCREENSHOTS_REQUIRED:
+1. Server startup success
+2. Django shell setup and test data preparation
+3. Successful payment status retrieval
+4. Pending payment status retrieval
+5. Failed payment status retrieval
+6. Non-existent payment intent handling
+7. Invalid payment intent ID handling
+8. Stripe API error handling
+9. Payment status consistency verification
+10. Metadata and additional fields testing
+11. Performance and response time testing
+12. Concurrent status retrieval testing
+13. Integration with database records verification
+14. Monitoring and logging verification
