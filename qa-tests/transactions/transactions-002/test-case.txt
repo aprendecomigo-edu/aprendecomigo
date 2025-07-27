@@ -1,0 +1,345 @@
+QA Test Case: Payment Lifecycle and Status Management
+
+Test ID: TRANSACTIONS-002
+Test Name: Payment Lifecycle and Status Management Tests
+Purpose: Verify payment status transitions, mark_completed() method functionality, error handling, and status-based business logic throughout the payment lifecycle
+Expected Result: All payment status transitions work correctly with proper validation, error handling, and business logic enforcement
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Feature: PurchaseTransaction payment lifecycle management
+- Model Location: backend/finances/models.py
+- Status Choices: PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED, REFUNDED
+- Core Method: mark_completed() for payment processing
+- Related Models: StudentAccountBalance (for payment completion effects)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Backend Services: Django server running on localhost:8000
+4. Database: Development database with test data
+
+Test Data Requirements:
+- Multiple test students with account balances
+- Transactions in various payment states
+- Admin user access for status management
+- Test Stripe payment intent IDs
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Initial Data Creation
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Navigate to Django admin at http://localhost:8000/admin/
+2. Create 3 test students if they don't exist
+3. Create StudentAccountBalance records for each test student
+4. Verify initial state of system
+
+Expected: Clean test environment with test data ready
+Screenshot: 01_initial_test_setup.png
+
+Step 2: Create Transaction in PENDING Status
+1. Navigate to PurchaseTransaction admin
+2. Create new transaction:
+   - Student: Test Student 1
+   - Transaction type: Package
+   - Amount: 100.00
+   - Payment status: Pending
+   - Stripe payment intent ID: pi_lifecycle_test_001
+   - Expires at: 30 days from now
+   - Metadata: {"test": "lifecycle_pending", "hours": 15}
+3. Save and note the transaction ID
+
+Expected: Transaction created successfully in PENDING status
+Screenshot: 02_pending_transaction_created.png
+
+Step 3: Test mark_completed() Method via Admin Action
+1. Select the pending transaction in list view
+2. Choose "Mark selected transactions as completed" action
+3. Execute the action
+4. Verify the result and status change
+
+Expected: 
+- Transaction status changes to COMPLETED
+- Success message displayed
+- updated_at timestamp modified
+- mark_completed() method executed successfully
+
+Screenshot: 03_mark_completed_success.png
+
+Step 4: Test Direct mark_completed() Method Call
+1. Create another PENDING transaction
+2. Access Django shell or admin interface
+3. Call transaction.mark_completed() directly
+4. Verify database changes
+
+Commands (if using Django shell):
+  python manage.py shell
+  from finances.models import PurchaseTransaction
+  tx = PurchaseTransaction.objects.filter(payment_status='pending').first()
+  tx.mark_completed()
+  # Verify status change
+
+Expected:
+- Status changes to COMPLETED
+- updated_at field automatically updated
+- save() method called with correct update_fields
+
+Screenshot: 04_direct_method_call.png
+
+Step 5: Test Status Transition: PENDING → PROCESSING
+1. Create new PENDING transaction
+2. Manually change status to PROCESSING via admin edit
+3. Save and verify the change
+4. Note timestamp update
+
+Expected: Status transition allowed and saved successfully
+Screenshot: 05_pending_to_processing.png
+
+Step 6: Test Status Transition: PROCESSING → COMPLETED  
+1. Edit the PROCESSING transaction from Step 5
+2. Change status to COMPLETED
+3. Save and verify
+4. Check if this simulates normal payment flow
+
+Expected: Transition completes successfully
+Screenshot: 06_processing_to_completed.png
+
+Step 7: Test Status Transition: PENDING → FAILED
+1. Create new PENDING transaction
+2. Use admin action "Mark selected transactions as failed"
+3. Verify status change and business implications
+
+Expected: 
+- Status changes to FAILED
+- Transaction marked as unsuccessful
+- No side effects on account balance
+
+Screenshot: 07_pending_to_failed.png
+
+Step 8: Test Status Transition: COMPLETED → REFUNDED
+1. Select a COMPLETED transaction
+2. Use admin action "Mark selected transactions as refunded"
+3. Verify status change
+4. Check business logic implications (should reverse completed transaction effects)
+
+Expected: Status changes to REFUNDED successfully
+Screenshot: 08_completed_to_refunded.png
+
+Step 9: Test Invalid Status Transitions
+1. Try to mark a FAILED transaction as COMPLETED using admin action
+2. Try to mark a REFUNDED transaction as COMPLETED
+3. Verify system behavior with these invalid transitions
+
+Expected: 
+- System should handle gracefully
+- Either prevent invalid transitions or handle business logic correctly
+- No data corruption occurs
+
+Screenshot: 09_invalid_transitions.png
+
+Step 10: Test Concurrent Transaction Processing
+1. Create multiple PENDING transactions for same student
+2. Simultaneously mark them as completed via bulk admin action
+3. Verify all process correctly without conflicts
+
+Expected:
+- All transactions process successfully
+- No database lock issues
+- All status updates complete
+
+Screenshot: 10_concurrent_processing.png
+
+Step 11: Test Payment Status Filter Functionality
+1. Create transactions in all different statuses:
+   - PENDING
+   - PROCESSING  
+   - COMPLETED
+   - FAILED
+   - CANCELLED
+   - REFUNDED
+2. Use admin filters to view each status separately
+3. Verify filter accuracy
+
+Expected: Filters work correctly for all payment statuses
+Screenshot: 11_status_filtering.png
+
+Step 12: Test Status-Based Business Logic
+1. Create package transaction, mark as COMPLETED
+2. Verify business effects (should affect StudentAccountBalance)
+3. Create subscription transaction, mark as COMPLETED
+4. Compare business effects between package and subscription
+
+Expected:
+- Completed transactions trigger appropriate business logic
+- Package vs subscription handling differs appropriately
+- Account balances update correctly
+
+Screenshot: 12_business_logic_effects.png
+
+Step 13: Test Error Handling in mark_completed()
+1. Create transaction with invalid data (if possible)
+2. Attempt to call mark_completed()
+3. Verify error handling and system stability
+4. Test edge cases like missing related data
+
+Expected:
+- Errors handled gracefully
+- System remains stable
+- Appropriate error messages generated
+
+Screenshot: 13_error_handling.png
+
+Step 14: Test Status History and Audit Trail
+1. Create transaction and transition through multiple statuses:
+   PENDING → PROCESSING → COMPLETED
+2. Check if status change history is preserved
+3. Verify timestamps track each change
+4. Look for audit trail capabilities
+
+Expected:
+- Status changes tracked properly
+- Timestamps updated with each transition
+- Change history available for audit purposes
+
+Screenshot: 14_status_history.png
+
+Step 15: Test Bulk Status Operations Performance
+1. Create 20+ transactions in PENDING status
+2. Select all and mark as completed using bulk action
+3. Measure processing time and verify all complete
+4. Check for any performance issues or timeouts
+
+Expected:
+- Bulk operations complete in reasonable time
+- All transactions process successfully
+- No timeouts or performance degradation
+
+Screenshot: 15_bulk_operations_performance.png
+
+Step 16: Test Integration with Stripe Payment Intents
+1. Create transactions with realistic Stripe payment intent IDs
+2. Test status transitions that would correspond to Stripe webhook events:
+   - payment_intent.payment_failed → FAILED
+   - payment_intent.succeeded → COMPLETED
+   - payment_intent.canceled → CANCELLED
+3. Verify status updates work properly
+
+Expected: Status updates integrate well with Stripe-like workflow
+Screenshot: 16_stripe_integration_simulation.png
+
+Step 17: Test Transaction Type Impact on Status Management
+1. Create both PACKAGE and SUBSCRIPTION transactions
+2. Test mark_completed() on both types
+3. Verify type-specific behavior differences
+4. Check expiration date handling differences
+
+Expected:
+- Both transaction types handle status changes correctly
+- Type-specific business logic applied appropriately
+- Expiration dates handled per transaction type
+
+Screenshot: 17_transaction_type_differences.png
+
+Step 18: Test Database Consistency During Status Changes
+1. Create transaction with related data (metadata, Stripe IDs)
+2. Change status multiple times
+3. Verify all related data remains consistent
+4. Check for any data corruption or loss
+
+Expected:
+- All transaction data remains consistent
+- No data loss during status transitions
+- Relationships maintained properly
+
+Screenshot: 18_data_consistency.png
+
+Step 19: Test Status-Based Query Performance
+1. Create large dataset with mixed statuses
+2. Query transactions by each status type
+3. Test complex queries involving status + other fields
+4. Verify database indexes support efficient querying
+
+Expected:
+- Status-based queries perform efficiently
+- Database indexes optimize common queries
+- Complex filters remain responsive
+
+Screenshot: 19_query_performance.png
+
+Step 20: Test Status Validation and Constraints
+1. Try to create transaction with invalid payment_status
+2. Test save() method with invalid status values
+3. Verify model validation prevents invalid states
+4. Check CharField choices constraint enforcement
+
+Expected:
+- Invalid statuses rejected by model validation
+- Choices constraint enforced at database level
+- Error messages clear and helpful
+
+Screenshot: 20_status_validation.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All payment lifecycle operations work correctly with proper status management, business logic, and data integrity
+FAIL: Any status transition fails OR mark_completed() method fails OR data integrity compromised OR business logic incorrect
+
+Individual Step Criteria:
+- Steps 1-2: PASS if test environment setup and PENDING transaction created, FAIL if setup fails
+- Steps 3-4: PASS if mark_completed() works via both admin action and direct call, FAIL if method fails
+- Steps 5-8: PASS if all valid status transitions work, FAIL if any transition fails or causes errors
+- Step 9: PASS if invalid transitions handled gracefully, FAIL if system allows invalid states or crashes
+- Step 10: PASS if concurrent processing works, FAIL if race conditions or conflicts occur
+- Step 11: PASS if status filtering accurate, FAIL if filters return incorrect results
+- Step 12: PASS if business logic triggers correctly, FAIL if side effects missing or incorrect
+- Step 13: PASS if error handling robust, FAIL if errors cause system instability
+- Step 14: PASS if status changes tracked properly, FAIL if audit trail missing or incorrect
+- Step 15: PASS if bulk operations perform well, FAIL if significant performance issues
+- Step 16: PASS if Stripe integration workflow supported, FAIL if status updates fail
+- Step 17: PASS if transaction types handled correctly, FAIL if type-specific logic fails
+- Step 18: PASS if data consistency maintained, FAIL if data corruption occurs
+- Step 19: PASS if status queries perform efficiently, FAIL if performance unacceptable
+- Step 20: PASS if status validation works, FAIL if invalid states allowed
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== ADDITIONAL VERIFICATION POINTS ===
+
+Payment Status Flow Validation:
+- PENDING → PROCESSING → COMPLETED (normal flow)
+- PENDING → FAILED (payment failure)
+- PENDING → CANCELLED (user cancellation)
+- COMPLETED → REFUNDED (refund processing)
+- Any status → CANCELLED (administrative cancellation)
+
+mark_completed() Method Requirements:
+- Updates payment_status to COMPLETED
+- Updates updated_at timestamp automatically
+- Uses save(update_fields=['payment_status', 'updated_at'])
+- Can be called multiple times safely (idempotent)
+- Integrates with admin bulk actions
+
+Business Logic Integration:
+- Completed package transactions affect StudentAccountBalance
+- Completed subscription transactions enable ongoing access
+- Failed/cancelled transactions don't affect account balance
+- Refunded transactions should reverse completed transaction effects
+
+Performance Requirements:
+- mark_completed() executes in <100ms for single transaction
+- Bulk operations handle 50+ transactions without timeout
+- Status-based queries use database indexes efficiently
+- Admin interface remains responsive with large datasets
+
+Data Integrity Requirements:
+- All status transitions preserve transaction data
+- Timestamps accurately reflect state changes
+- Stripe integration fields maintained during status changes
+- Metadata preserved throughout lifecycle
+- Related models (StudentAccountBalance) remain consistent

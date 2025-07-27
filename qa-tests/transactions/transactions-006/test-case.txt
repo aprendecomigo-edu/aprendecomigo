@@ -1,0 +1,380 @@
+QA Test Case: Metadata Handling and Validation Tests
+
+Test ID: TRANSACTIONS-006
+Test Name: Metadata Handling and Validation Tests
+Purpose: Verify JSONField metadata handling, complex data structure storage, validation rules, extensible data patterns, and integration with transaction business logic
+Expected Result: All metadata operations work correctly with proper JSON validation, data integrity, and extensible storage capabilities
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Feature: PurchaseTransaction metadata JSONField
+- Field Type: JSONField with default=dict, blank=True
+- Use Cases: Package details, subscription features, promotional codes, billing information, custom attributes
+- Validation: JSON structure validation, data type preservation, nested object support
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Django JSONField Support: PostgreSQL or SQLite with JSON1 extension
+3. Admin Interface: JSON editing capabilities
+4. Test Scenarios: Various JSON data structures and patterns
+
+Test Data Requirements:
+- Simple JSON objects (key-value pairs)
+- Nested JSON structures (objects within objects)
+- JSON arrays and lists
+- Mixed data types (strings, numbers, booleans, null)
+- Large JSON documents
+- Edge cases and malformed JSON
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and JSON Support Verification
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Navigate to Django admin at http://localhost:8000/admin/
+2. Access PurchaseTransaction admin
+3. Verify JSONField appears in form with proper editing interface
+4. Check Django database JSON support capabilities
+
+Expected: JSONField properly configured with editing interface
+Screenshot: 01_json_field_setup.png
+
+Step 2: Test Simple Metadata Structure
+1. Create new transaction with simple metadata:
+   ```json
+   {
+     "package_name": "Basic Package",
+     "hours": 10,
+     "price_per_hour": 15.00,
+     "currency": "EUR"
+   }
+   ```
+2. Save and verify data preservation
+3. Edit and verify data integrity maintained
+
+Expected: Simple JSON structure saves and loads correctly
+Screenshot: 02_simple_metadata_structure.png
+
+Step 3: Test Complex Nested Metadata
+1. Create transaction with nested metadata structure:
+   ```json
+   {
+     "package_details": {
+       "name": "Premium Package",
+       "features": ["unlimited_access", "priority_support", "advanced_analytics"],
+       "billing": {
+         "amount": 199.99,
+         "currency": "EUR",
+         "billing_cycle": "monthly"
+       }
+     },
+     "customer_preferences": {
+       "notifications": {
+         "email": true,
+         "sms": false,
+         "push": true
+       },
+       "language": "pt_PT",
+       "timezone": "Europe/Lisbon"
+     }
+   }
+   ```
+2. Save and verify nested structure preservation
+
+Expected: Complex nested JSON structure maintains integrity
+Screenshot: 03_nested_metadata_structure.png
+
+Step 4: Test Data Type Preservation
+1. Create metadata with all JSON data types:
+   ```json
+   {
+     "string_value": "Test String",
+     "integer_value": 42,
+     "float_value": 3.14159,
+     "boolean_true": true,
+     "boolean_false": false,
+     "null_value": null,
+     "array_mixed": [1, "two", 3.0, true, null],
+     "empty_object": {},
+     "empty_array": []
+   }
+   ```
+2. Save, retrieve, and verify data types preserved
+
+Expected: All JSON data types preserved correctly
+Screenshot: 04_data_type_preservation.png
+
+Step 5: Test Array and List Handling
+1. Create metadata with various array structures:
+   ```json
+   {
+     "features": ["feature1", "feature2", "feature3"],
+     "pricing_tiers": [
+       {"name": "Basic", "price": 29.99},
+       {"name": "Premium", "price": 59.99},
+       {"name": "Enterprise", "price": 199.99}
+     ],
+     "tags": ["education", "online", "tutoring"],
+     "version_history": [
+       {"version": "1.0", "date": "2024-01-01", "changes": ["initial_release"]},
+       {"version": "1.1", "date": "2024-02-01", "changes": ["bug_fixes", "new_features"]}
+     ]
+   }
+   ```
+2. Verify array handling and ordering preservation
+
+Expected: Arrays and nested objects within arrays handle correctly
+Screenshot: 05_array_list_handling.png
+
+Step 6: Test Large Metadata Documents
+1. Create transaction with large metadata structure:
+   - 50+ key-value pairs
+   - Multiple levels of nesting
+   - Large text values
+   - Extensive array data
+2. Test save/load performance and data integrity
+3. Verify admin interface handles large JSON documents
+
+Expected: Large JSON documents handled efficiently without data loss
+Screenshot: 06_large_metadata_documents.png
+
+Step 7: Test Metadata Editing and Updates
+1. Create transaction with initial metadata
+2. Edit metadata to:
+   - Add new fields
+   - Modify existing values
+   - Remove fields
+   - Change data types
+   - Restructure nested objects
+3. Verify all editing operations work correctly
+
+Expected: Metadata editing flexible and maintains data integrity
+Screenshot: 07_metadata_editing_updates.png
+
+Step 8: Test Empty and Default Metadata Handling
+1. Create transaction with empty metadata: {}
+2. Create transaction with null metadata
+3. Create transaction without setting metadata (should default to {})
+4. Verify default behavior and empty object handling
+
+Expected: Empty and default metadata handled gracefully
+Screenshot: 08_empty_default_metadata.png
+
+Step 9: Test Metadata Validation - Invalid JSON
+1. Attempt to create transaction with invalid JSON:
+   - Malformed JSON syntax
+   - Unclosed brackets/braces
+   - Invalid escape sequences
+   - Non-UTF8 characters
+2. Verify proper validation error handling
+
+Expected: Invalid JSON rejected with clear error messages
+Screenshot: 09_invalid_json_validation.png
+
+Step 10: Test Unicode and Special Characters
+1. Create metadata with Unicode content:
+   ```json
+   {
+     "portuguese_text": "Educação premium para todos",
+     "emoji_content": "🎓📚✨",
+     "special_chars": "Symbols: €£¥₹ Accents: áéíóú àèìòù âêîôû ãõ çñ",
+     "currencies": {
+       "euro": "€",
+       "pound": "£",
+       "yen": "¥"
+     }
+   }
+   ```
+2. Verify Unicode handling and preservation
+
+Expected: Unicode and special characters stored and retrieved correctly
+Screenshot: 10_unicode_special_characters.png
+
+Step 11: Test Metadata in Business Logic Context
+1. Create package transactions with package-specific metadata
+2. Create subscription transactions with subscription-specific metadata
+3. Test how metadata integrates with:
+   - Package expiration logic
+   - Payment processing
+   - Business rule enforcement
+4. Verify metadata accessible in business logic
+
+Expected: Metadata properly integrated with business logic operations
+Screenshot: 11_business_logic_integration.png
+
+Step 12: Test Metadata Search and Filtering
+1. Create transactions with searchable metadata content
+2. Test Django admin search capabilities within metadata
+3. Try filtering based on metadata content (if supported)
+4. Test metadata-based queries
+
+Expected: Metadata content searchable where supported by Django/database
+Screenshot: 12_metadata_search_filtering.png
+
+Step 13: Test Metadata Export and Import
+1. Export transaction data including metadata
+2. Verify metadata exports correctly in JSON format
+3. Test import scenarios with metadata
+4. Verify data integrity during export/import operations
+
+Expected: Metadata exports and imports without data corruption
+Screenshot: 13_metadata_export_import.png
+
+Step 14: Test Concurrent Metadata Updates
+1. Create transaction with metadata
+2. Simulate concurrent updates to metadata field
+3. Test race condition handling
+4. Verify no metadata corruption during concurrent access
+
+Expected: Concurrent updates handled properly without data corruption
+Screenshot: 14_concurrent_metadata_updates.png
+
+Step 15: Test Metadata Performance with Large Datasets
+1. Create 100+ transactions with varied metadata structures
+2. Test admin list view performance with metadata
+3. Test filtering and search performance
+4. Verify no significant performance degradation
+
+Expected: Good performance even with extensive metadata usage
+Screenshot: 15_metadata_performance_testing.png
+
+Step 16: Test Metadata Versioning and History
+1. Create transaction with initial metadata
+2. Update metadata multiple times
+3. Check if metadata change history preserved
+4. Test metadata rollback scenarios (if supported)
+
+Expected: Metadata changes tracked appropriately
+Screenshot: 16_metadata_versioning_history.png
+
+Step 17: Test Metadata Integration with Stripe
+1. Create transactions with Stripe-related metadata:
+   ```json
+   {
+     "stripe_metadata": {
+       "customer_ip": "192.168.1.1",
+       "user_agent": "Mozilla/5.0...",
+       "payment_method": "card",
+       "last_4": "4242"
+     },
+     "billing_details": {
+       "name": "John Doe",
+       "email": "john@example.com",
+       "address": {
+         "line1": "123 Main St",
+         "city": "Lisbon",
+         "country": "PT"
+       }
+     }
+   }
+   ```
+2. Verify Stripe integration metadata handling
+
+Expected: Stripe-related metadata stored and accessible correctly
+Screenshot: 17_stripe_metadata_integration.png
+
+Step 18: Test Metadata Backup and Recovery
+1. Create transactions with important metadata
+2. Test backup procedures including metadata
+3. Test recovery scenarios
+4. Verify metadata integrity after backup/recovery
+
+Expected: Metadata properly backed up and recoverable
+Screenshot: 18_metadata_backup_recovery.png
+
+Step 19: Test Metadata Security and Sanitization
+1. Test metadata with potentially dangerous content:
+   - Script tags
+   - SQL injection attempts
+   - XSS payloads
+2. Verify proper sanitization and security handling
+3. Test metadata display security in admin interface
+
+Expected: Security measures prevent dangerous metadata content
+Screenshot: 19_metadata_security_testing.png
+
+Step 20: Test Metadata API and Serialization
+1. Access transaction metadata through Django serialization
+2. Test JSON API responses including metadata
+3. Verify metadata serialization formats
+4. Test metadata in REST API context (if available)
+
+Expected: Metadata serializes correctly for API consumption
+Screenshot: 20_metadata_api_serialization.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All metadata operations work correctly with proper JSON validation, data integrity, and extensible storage
+FAIL: Any metadata corruption OR JSON validation fails OR data types lost OR business logic integration broken
+
+Individual Step Criteria:
+- Step 1: PASS if JSONField properly configured, FAIL if field missing or misconfigured
+- Step 2: PASS if simple JSON saves/loads correctly, FAIL if data corruption
+- Step 3: PASS if nested structures preserved, FAIL if nesting lost or corrupted
+- Step 4: PASS if all data types preserved, FAIL if type conversion errors
+- Step 5: PASS if arrays handled correctly, FAIL if ordering lost or structure corrupted
+- Step 6: PASS if large documents handled efficiently, FAIL if performance issues or data loss
+- Step 7: PASS if editing works properly, FAIL if edits cause corruption
+- Step 8: PASS if empty/default handling correct, FAIL if unexpected behavior
+- Step 9: PASS if invalid JSON rejected properly, FAIL if invalid data accepted
+- Step 10: PASS if Unicode preserved correctly, FAIL if character encoding issues
+- Step 11: PASS if business logic integration works, FAIL if metadata inaccessible
+- Step 12: PASS if search/filtering functional, FAIL if metadata search broken
+- Step 13: PASS if export/import preserves metadata, FAIL if data corruption
+- Step 14: PASS if concurrent updates handled safely, FAIL if race conditions corrupt data
+- Step 15: PASS if performance acceptable, FAIL if significant degradation
+- Step 16: PASS if versioning works appropriately, FAIL if change tracking broken
+- Step 17: PASS if Stripe integration metadata works, FAIL if integration issues
+- Step 18: PASS if backup/recovery includes metadata, FAIL if metadata lost
+- Step 19: PASS if security measures effective, FAIL if security vulnerabilities
+- Step 20: PASS if API serialization works, FAIL if serialization broken
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== ADDITIONAL VERIFICATION POINTS ===
+
+JSONField Configuration:
+- Field type: models.JSONField
+- Default value: dict (empty dictionary)
+- Blank: True (field optional)
+- Help text: "Additional transaction data in JSON format"
+- Admin widget: Proper JSON editing interface
+
+Data Structure Support:
+- Objects: {"key": "value"} structures
+- Arrays: [1, 2, 3] and ["a", "b", "c"] structures
+- Nested objects: {"outer": {"inner": "value"}}
+- Mixed types: {"string": "text", "number": 42, "boolean": true}
+- Null values: {"nullable": null}
+
+Validation Requirements:
+- Valid JSON syntax enforced
+- Data type preservation across save/load cycles
+- Unicode support for international content
+- Large document support (reasonable size limits)
+- Empty object default behavior
+
+Business Integration:
+- Package metadata: package details, features, pricing
+- Subscription metadata: billing cycles, features, preferences
+- Promotional metadata: discount codes, campaign tracking
+- Billing metadata: tax information, billing addresses
+- Analytics metadata: tracking codes, referral sources
+
+Performance Considerations:
+- Efficient JSON parsing and serialization
+- Reasonable performance with large metadata documents
+- Database query efficiency with JSON operations
+- Admin interface responsiveness with complex metadata
+
+Security Features:
+- JSON structure validation
+- Proper escaping in admin display
+- Prevention of code injection through metadata
+- Safe serialization for API responses
+- Backup and recovery including metadata integrity

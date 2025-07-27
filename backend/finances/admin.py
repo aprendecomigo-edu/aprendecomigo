@@ -3,6 +3,7 @@ from django.utils.html import format_html
 
 from .models import (
     ClassSession,
+    PurchaseTransaction,
     SchoolBillingSettings,
     StudentAccountBalance,
     TeacherCompensationRule,
@@ -512,3 +513,176 @@ class StudentAccountBalanceAdmin(admin.ModelAdmin):
                 '<span style="color: green;">€{}</span>',
                 obj.balance_amount
             )
+
+
+@admin.register(PurchaseTransaction)
+class PurchaseTransactionAdmin(admin.ModelAdmin):
+    """Admin interface for purchase transactions."""
+
+    list_display = [
+        "transaction_id",
+        "student_name",
+        "student_email",
+        "transaction_type",
+        "amount_display",
+        "payment_status",
+        "stripe_payment_intent_id",
+        "expires_at_display",
+        "is_expired_display",
+        "created_at",
+    ]
+    list_filter = [
+        "transaction_type",
+        "payment_status",
+        "created_at",
+        "expires_at",
+    ]
+    search_fields = [
+        "student__name",
+        "student__email",
+        "stripe_payment_intent_id",
+        "stripe_customer_id",
+    ]
+    readonly_fields = [
+        "created_at",
+        "updated_at",
+        "is_expired_display",
+    ]
+    date_hierarchy = "created_at"
+
+    fieldsets = (
+        (
+            "Transaction Information",
+            {
+                "fields": (
+                    "student",
+                    "transaction_type",
+                    "amount",
+                    "payment_status",
+                )
+            },
+        ),
+        (
+            "Stripe Integration",
+            {
+                "fields": (
+                    "stripe_payment_intent_id",
+                    "stripe_customer_id",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Package Management",
+            {
+                "fields": (
+                    "expires_at",
+                    "is_expired_display",
+                ),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("metadata",),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Timestamps",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            }
+        ),
+    )
+
+    actions = ["mark_completed", "mark_failed", "mark_refunded"]
+
+    @admin.display(
+        description="Transaction ID",
+        ordering="id",
+    )
+    def transaction_id(self, obj):
+        """Display transaction ID."""
+        return f"#{obj.id}"
+
+    @admin.display(
+        description="Student Name",
+        ordering="student__name",
+    )
+    def student_name(self, obj):
+        """Display student name."""
+        return obj.student.name
+
+    @admin.display(
+        description="Student Email",
+        ordering="student__email",
+    )
+    def student_email(self, obj):
+        """Display student email."""
+        return obj.student.email
+
+    @admin.display(
+        description="Amount"
+    )
+    def amount_display(self, obj):
+        """Display amount with currency formatting."""
+        return format_html("€{}", obj.amount)
+
+    @admin.display(
+        description="Expires"
+    )
+    def expires_at_display(self, obj):
+        """Display expiration date or subscription indicator."""
+        if obj.expires_at:
+            return obj.expires_at.strftime("%Y-%m-%d %H:%M")
+        else:
+            return "Subscription (no expiration)"
+
+    @admin.display(
+        description="Status"
+    )
+    def is_expired_display(self, obj):
+        """Display expiration status with color coding."""
+        if obj.transaction_type == "subscription":
+            return format_html('<span style="color: blue;">Subscription</span>')
+        elif obj.is_expired:
+            return format_html('<span style="color: red; font-weight: bold;">Expired</span>')
+        elif obj.expires_at:
+            return format_html('<span style="color: green;">Active</span>')
+        else:
+            return "-"
+
+    @admin.action(
+        description="Mark selected transactions as completed"
+    )
+    def mark_completed(self, request, queryset):
+        """Mark selected transactions as completed."""
+        updated = 0
+        for transaction in queryset:
+            if transaction.payment_status != "completed":
+                transaction.mark_completed()
+                updated += 1
+        
+        self.message_user(request, f"{updated} transactions marked as completed.")
+
+    @admin.action(
+        description="Mark selected transactions as failed"
+    )
+    def mark_failed(self, request, queryset):
+        """Mark selected transactions as failed."""
+        updated = queryset.update(payment_status="failed")
+        self.message_user(request, f"{updated} transactions marked as failed.")
+
+    @admin.action(
+        description="Mark selected transactions as refunded"
+    )
+    def mark_refunded(self, request, queryset):
+        """Mark selected transactions as refunded."""
+        updated = queryset.update(payment_status="refunded")
+        self.message_user(request, f"{updated} transactions marked as refunded.")
+
+    def get_queryset(self, request):
+        """Optimize queryset with select_related."""
+        return super().get_queryset(request).select_related("student")

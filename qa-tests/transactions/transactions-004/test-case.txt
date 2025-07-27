@@ -1,0 +1,337 @@
+QA Test Case: Package Expiration and Business Logic Tests
+
+Test ID: TRANSACTIONS-004
+Test Name: Package Expiration and Business Logic Tests
+Purpose: Verify expiration management with expires_at field, is_expired property logic, timezone handling, package vs subscription differentiation, and business rule enforcement
+Expected Result: All expiration logic works correctly with proper timezone handling, business rule validation, and clear status indicators
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Feature: PurchaseTransaction expiration management
+- Key Fields: expires_at (DateTimeField), transaction_type (Package/Subscription)
+- Key Property: is_expired (computed based on timezone.now() vs expires_at)
+- Business Rules: Packages expire, Subscriptions don't have expiration dates
+- Validation: Subscriptions cannot have expires_at set
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Django Development Server with timezone awareness
+3. Database: Development database with various timezone scenarios
+4. Time Zones: Test with multiple timezone scenarios
+
+Test Data Requirements:
+- Package transactions with various expiration dates
+- Subscription transactions (no expiration)
+- Past, present, and future expiration dates
+- Different timezone scenarios
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Timezone Configuration
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Navigate to Django admin at http://localhost:8000/admin/
+2. Verify Django timezone settings in admin interface
+3. Check current server time and timezone
+4. Access PurchaseTransaction admin interface
+
+Expected: Timezone-aware Django environment ready for testing
+Screenshot: 01_timezone_environment_setup.png
+
+Step 2: Create Package Transaction - Future Expiration
+1. Create new Package transaction:
+   - Student: Test Student 1
+   - Transaction type: Package
+   - Amount: 100.00
+   - Payment status: Completed
+   - Expires at: Set to 30 days from now (precise datetime)
+   - Metadata: {"hours": 20, "package_name": "Monthly Package"}
+2. Save and verify creation
+
+Expected: 
+- Transaction created successfully
+- expires_at shows future datetime
+- is_expired_display shows "Active" in green
+- Expiration date formatted correctly in list view
+
+Screenshot: 02_future_expiration_package.png
+
+Step 3: Create Package Transaction - Past Expiration (Expired)
+1. Create new Package transaction:
+   - Transaction type: Package
+   - Amount: 75.00
+   - Payment status: Completed
+   - Expires at: Set to 7 days ago (past datetime)
+   - Metadata: {"hours": 15, "package_name": "Basic Package"}
+2. Save and verify expiration logic
+
+Expected:
+- Transaction created successfully
+- expires_at shows past datetime
+- is_expired_display shows "Expired" in red bold text
+- Property logic correctly identifies as expired
+
+Screenshot: 03_past_expiration_package.png
+
+Step 4: Create Package Transaction - Expires Today
+1. Create Package transaction expiring today:
+   - Set expires_at to today's date but 2 hours ago
+   - Set expires_at to today's date but 2 hours from now
+2. Create both scenarios and verify is_expired logic
+
+Expected:
+- Transaction expiring 2 hours ago shows as "Expired"
+- Transaction expiring in 2 hours shows as "Active"
+- Precise timezone-aware comparison working
+
+Screenshot: 04_same_day_expiration_logic.png
+
+Step 5: Create Subscription Transaction - No Expiration
+1. Create new Subscription transaction:
+   - Transaction type: Subscription
+   - Amount: 49.99
+   - Payment status: Completed
+   - Expires at: Leave blank/null
+   - Metadata: {"subscription_plan": "Monthly Premium"}
+2. Verify subscription behavior
+
+Expected:
+- Transaction created successfully
+- expires_at remains null
+- is_expired_display shows "Subscription" in blue
+- is_expired property returns False
+
+Screenshot: 05_subscription_no_expiration.png
+
+Step 6: Test Business Rule Validation - Subscription with Expiration
+1. Attempt to create Subscription transaction with expires_at date set
+2. Try to save and observe validation
+3. Verify clean() method prevents invalid combination
+
+Expected:
+- Validation error prevents saving
+- Error message: "Subscription transactions should not have an expiration date"
+- Form displays validation error clearly
+
+Screenshot: 06_subscription_validation_error.png
+
+Step 7: Test is_expired Property Edge Cases
+1. Create package with expires_at = null (edge case)
+2. Create package with expires_at exactly equal to current time
+3. Test microsecond precision in expiration logic
+4. Verify property behavior in all edge cases
+
+Expected:
+- null expires_at returns False for is_expired
+- Exact time comparison works correctly
+- Microsecond precision handled properly
+
+Screenshot: 07_is_expired_edge_cases.png
+
+Step 8: Test Timezone Handling Across Time Zones
+1. Create transactions with expiration times in different timezones
+2. Set Django timezone and verify expiration logic adapts
+3. Test UTC vs local timezone scenarios
+4. Verify datetime storage and comparison consistency
+
+Expected:
+- All timezone scenarios handled correctly
+- UTC storage with local timezone display
+- Expiration logic consistent across timezones
+
+Screenshot: 08_timezone_handling.png
+
+Step 9: Test Expiration Display Formatting
+1. Create packages with various expiration dates
+2. Verify expires_at_display formatting in admin list:
+   - Recent past: "2024-07-25 14:30"
+   - Far future: "2025-01-15 09:00"
+   - Subscription: "Subscription (no expiration)"
+3. Check date format consistency
+
+Expected: Consistent, readable date formatting across all scenarios
+Screenshot: 09_expiration_display_formatting.png
+
+Step 10: Test Bulk Expiration Status Operations
+1. Create mix of expired and active packages
+2. Use filters to show only expired packages
+3. Use filters to show only active packages
+4. Test bulk operations on expired transactions
+
+Expected: 
+- Filters accurately identify expired vs active packages
+- Bulk operations work correctly on filtered results
+- Status indicators remain accurate
+
+Screenshot: 10_bulk_expiration_operations.png
+
+Step 11: Test Package Expiration Near Midnight
+1. Create package expiring at 23:59 today
+2. Create package expiring at 00:01 tomorrow
+3. Test expiration logic around midnight boundary
+4. Verify proper date/time handling
+
+Expected: Midnight boundary handled correctly without edge case issues
+Screenshot: 11_midnight_boundary_testing.png
+
+Step 12: Test Package Lifecycle - Active to Expired
+1. Create package expiring in near future (next hour)
+2. Document current status as "Active"
+3. Manually advance system time or wait for expiration
+4. Refresh and verify status changes to "Expired"
+
+Expected: Status automatically updates when expiration time passes
+Screenshot: 12_active_to_expired_lifecycle.png
+
+Step 13: Test Expired Package Business Logic
+1. Identify expired package transactions
+2. Verify business logic for expired packages:
+   - Should not grant new access
+   - Historical record maintained
+   - Account balance implications
+3. Test interaction with StudentAccountBalance
+
+Expected: Expired packages properly handled in business logic
+Screenshot: 13_expired_package_business_logic.png
+
+Step 14: Test Package vs Subscription Filtering
+1. Create mix of packages and subscriptions
+2. Filter by transaction type
+3. Filter by expiration status
+4. Test combined filters (e.g., "Active Packages", "All Subscriptions")
+
+Expected: Filtering accurately distinguishes package/subscription behavior
+Screenshot: 14_package_subscription_filtering.png
+
+Step 15: Test Expiration Date Editing
+1. Edit existing package to extend expiration date
+2. Edit existing package to set earlier expiration date
+3. Try to edit subscription to add expiration date
+4. Verify all scenarios handle validation correctly
+
+Expected:
+- Package expiration dates editable
+- Subscription expiration validation enforced during edit
+- Status indicators update immediately
+
+Screenshot: 15_expiration_date_editing.png
+
+Step 16: Test Mass Expiration Scenarios
+1. Create 20+ package transactions with varied expiration dates
+2. Test admin performance with large number of expiration calculations
+3. Verify is_expired property performance
+4. Check list view performance with expiration status display
+
+Expected: Good performance even with many expiration calculations
+Screenshot: 16_mass_expiration_performance.png
+
+Step 17: Test Expiration Status in API Context
+1. Access transaction data through Django admin API views
+2. Verify is_expired property accessible in admin context
+3. Test expiration status in transaction serialization
+4. Check JSON representation of expiration data
+
+Expected: Expiration logic works consistently across admin and API contexts
+Screenshot: 17_api_expiration_context.png
+
+Step 18: Test Expiration Grace Period Logic
+1. Create packages with very recent expiration (1 minute ago)
+2. Verify strict expiration enforcement (no grace period)
+3. Test business requirements for expired package handling
+4. Document exact expiration behavior
+
+Expected: Strict expiration enforcement with no unintended grace periods
+Screenshot: 18_expiration_grace_period.png
+
+Step 19: Test Historical Expiration Data
+1. Create packages with expiration dates in distant past
+2. Create packages with expiration dates in distant future
+3. Verify date range handling and display
+4. Test historical data preservation
+
+Expected: All historical expiration data preserved and displayed correctly
+Screenshot: 19_historical_expiration_data.png
+
+Step 20: Test Expiration Logic Integration
+1. Test expiration status integration with:
+   - Payment status changes
+   - Transaction type modifications
+   - Stripe integration workflow
+   - StudentAccountBalance updates
+2. Verify expiration logic remains consistent
+
+Expected: Expiration logic integrates properly with all transaction features
+Screenshot: 20_expiration_integration_testing.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All expiration logic works correctly with proper timezone handling, business rule validation, and accurate status indicators
+FAIL: Any expiration logic fails OR timezone handling incorrect OR business rules violated OR status indicators wrong
+
+Individual Step Criteria:
+- Step 1: PASS if timezone environment configured properly, FAIL if timezone issues
+- Step 2: PASS if future expiration package created with "Active" status, FAIL if status wrong
+- Step 3: PASS if past expiration package shows "Expired" status, FAIL if logic incorrect
+- Step 4: PASS if same-day expiration logic accurate, FAIL if timezone boundary issues
+- Step 5: PASS if subscription shows no expiration properly, FAIL if expiration logic applied
+- Step 6: PASS if subscription validation prevents expires_at, FAIL if invalid combination allowed
+- Step 7: PASS if edge cases handled correctly, FAIL if property logic fails
+- Step 8: PASS if timezone handling accurate, FAIL if timezone conversion issues
+- Step 9: PASS if display formatting consistent, FAIL if dates unreadable or inconsistent
+- Step 10: PASS if bulk operations work with expiration, FAIL if filters inaccurate
+- Step 11: PASS if midnight boundary handled correctly, FAIL if edge case failures
+- Step 12: PASS if lifecycle transitions work, FAIL if status doesn't update properly
+- Step 13: PASS if expired package business logic correct, FAIL if business rules violated
+- Step 14: PASS if filtering accurate, FAIL if package/subscription distinction lost
+- Step 15: PASS if editing works with validation, FAIL if validation bypassed
+- Step 16: PASS if performance acceptable, FAIL if significant performance issues
+- Step 17: PASS if API context consistent, FAIL if expiration logic differs across contexts
+- Step 18: PASS if strict expiration enforced, FAIL if unintended grace periods
+- Step 19: PASS if historical data preserved, FAIL if date range issues
+- Step 20: PASS if integration consistent, FAIL if expiration conflicts with other features
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== ADDITIONAL VERIFICATION POINTS ===
+
+Expiration Logic Requirements:
+- is_expired property: Returns timezone.now() > self.expires_at if expires_at exists
+- Packages: Can have expires_at date
+- Subscriptions: expires_at must be null (validated in clean() method)
+- Null expires_at: Always returns False for is_expired
+
+Timezone Handling:
+- All datetime comparisons timezone-aware
+- UTC storage with local timezone display
+- Consistent behavior across different server timezones
+- Proper handling of daylight saving time transitions
+
+Display Requirements:
+- Active packages: Green "Active" status
+- Expired packages: Red "Expired" status (bold)
+- Subscriptions: Blue "Subscription" status
+- Date format: "YYYY-MM-DD HH:MM" for expires_at display
+- Null expiration: "Subscription (no expiration)" text
+
+Business Rule Validation:
+- clean() method prevents subscriptions with expires_at
+- ValidationError raised for invalid subscription configuration
+- Package vs subscription logic consistently applied
+- Transaction type changes validated properly
+
+Performance Requirements:
+- is_expired property calculation efficient for large datasets
+- Admin list view loads quickly with expiration status
+- Expiration filtering performs well
+- Database queries optimized for expiration checks
+
+Integration Points:
+- StudentAccountBalance considers transaction expiration
+- Payment processing respects expiration status
+- Stripe webhook handling preserves expiration logic
+- Admin bulk actions maintain expiration integrity

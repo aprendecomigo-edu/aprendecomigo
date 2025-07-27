@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from accounts.models import CustomUser, School, TeacherProfile
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -460,3 +461,151 @@ class StudentAccountBalance(models.Model):
         Can be negative in overdraft scenarios.
         """
         return self.hours_purchased - self.hours_consumed
+
+
+class TransactionType(models.TextChoices):
+    """Types of purchase transactions."""
+
+    PACKAGE = "package", _("Package")
+    SUBSCRIPTION = "subscription", _("Subscription")
+
+
+class TransactionPaymentStatus(models.TextChoices):
+    """Payment status choices for purchase transactions."""
+
+    PENDING = "pending", _("Pending")
+    PROCESSING = "processing", _("Processing")
+    COMPLETED = "completed", _("Completed")
+    FAILED = "failed", _("Failed")
+    CANCELLED = "cancelled", _("Cancelled")
+    REFUNDED = "refunded", _("Refunded")
+
+
+class PurchaseTransaction(models.Model):
+    """
+    Comprehensive transaction tracking for all student purchases.
+    Supports payment lifecycle tracking, Stripe integration, and package expiration management.
+    """
+
+    student: models.ForeignKey = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="purchase_transactions",
+        verbose_name=_("student"),
+        help_text=_("Student who made this purchase"),
+    )
+
+    transaction_type: models.CharField = models.CharField(
+        _("transaction type"),
+        max_length=20,
+        choices=TransactionType.choices,
+        help_text=_("Type of transaction (package or subscription)"),
+    )
+
+    amount: models.DecimalField = models.DecimalField(
+        _("amount"),
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text=_("Transaction amount in euros"),
+    )
+
+    payment_status: models.CharField = models.CharField(
+        _("payment status"),
+        max_length=20,
+        choices=TransactionPaymentStatus.choices,
+        default=TransactionPaymentStatus.PENDING,
+        help_text=_("Current payment status"),
+    )
+
+    # Stripe integration fields
+    stripe_payment_intent_id: models.CharField = models.CharField(
+        _("Stripe payment intent ID"),
+        max_length=255,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text=_("Stripe PaymentIntent ID for this transaction"),
+    )
+
+    stripe_customer_id: models.CharField = models.CharField(
+        _("Stripe customer ID"),
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_("Stripe Customer ID associated with this transaction"),
+    )
+
+    # Package expiration management
+    expires_at: models.DateTimeField = models.DateTimeField(
+        _("expires at"),
+        null=True,
+        blank=True,
+        help_text=_("Expiration date for packages (null for subscriptions)"),
+    )
+
+    # Extensible metadata storage
+    metadata: models.JSONField = models.JSONField(
+        _("metadata"),
+        default=dict,
+        blank=True,
+        help_text=_("Additional transaction data in JSON format"),
+    )
+
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(
+        _("created at"), auto_now_add=True
+    )
+    updated_at: models.DateTimeField = models.DateTimeField(
+        _("updated at"), auto_now=True
+    )
+
+    class Meta:
+        verbose_name = _("Purchase Transaction")
+        verbose_name_plural = _("Purchase Transactions")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["student", "payment_status"]),
+            models.Index(fields=["payment_status"]),
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["stripe_payment_intent_id"]),
+            models.Index(fields=["expires_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return (
+            f"Transaction {self.id}: {self.student.name} - "
+            f"€{self.amount} ({self.transaction_type.upper()} - {self.payment_status.upper()})"
+        )
+
+    @property
+    def is_expired(self) -> bool:
+        """
+        Check if the transaction has expired.
+        Returns False for subscriptions (no expiration) or if expires_at is None.
+        Returns True if expires_at is in the past.
+        """
+        if self.expires_at is None:
+            return False
+        return timezone.now() > self.expires_at
+
+    def mark_completed(self) -> None:
+        """
+        Mark the transaction as completed and save to database.
+        """
+        self.payment_status = TransactionPaymentStatus.COMPLETED
+        self.save(update_fields=["payment_status", "updated_at"])
+
+    def clean(self) -> None:
+        """Validate transaction data."""
+        super().clean()
+        
+        # Ensure amount is not negative
+        if self.amount < Decimal("0.00"):
+            raise ValidationError(_("Transaction amount cannot be negative"))
+        
+        # For subscriptions, expires_at should be null
+        if self.transaction_type == TransactionType.SUBSCRIPTION and self.expires_at is not None:
+            raise ValidationError(
+                _("Subscription transactions should not have an expiration date")
+            )

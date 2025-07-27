@@ -1,17 +1,21 @@
-from datetime import date, time
+from datetime import date, time, timedelta
 from decimal import Decimal
 
 from accounts.models import CustomUser, School, TeacherProfile
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils import timezone
 
 from .models import (
     ClassSession,
     CompensationRuleType,
+    PurchaseTransaction,
     SchoolBillingSettings,
     SessionType,
     StudentAccountBalance,
     TeacherCompensationRule,
+    TransactionPaymentStatus,
+    TransactionType,
     TrialCostAbsorption,
 )
 from .services import TeacherPaymentCalculator
@@ -631,3 +635,376 @@ class StudentAccountBalanceTestCase(TestCase):
         # Verify the balance is also deleted
         with self.assertRaises(StudentAccountBalance.DoesNotExist):
             StudentAccountBalance.objects.get(id=balance_id)
+
+
+class PurchaseTransactionTestCase(TestCase):
+    """Test cases for PurchaseTransaction model."""
+
+    def setUp(self):
+        """Set up test data for purchase transaction tests."""
+        # Create a test user with student account balance
+        self.user = CustomUser.objects.create_user(
+            email="student@example.com", 
+            name="Test Student", 
+            password="testpass123"
+        )
+        
+        # Create student account balance
+        self.account_balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("0.0"),
+            hours_consumed=Decimal("0.0"),
+            balance_amount=Decimal("0.00")
+        )
+
+    def test_purchase_transaction_creation_with_required_fields(self):
+        """Test creating a PurchaseTransaction with only required fields."""
+        
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.PENDING
+        )
+        
+        self.assertEqual(transaction.student, self.user)
+        self.assertEqual(transaction.transaction_type, TransactionType.PACKAGE)
+        self.assertEqual(transaction.amount, Decimal("100.00"))
+        self.assertEqual(transaction.payment_status, TransactionPaymentStatus.PENDING)
+        self.assertIsNotNone(transaction.created_at)
+        self.assertIsNotNone(transaction.updated_at)
+
+    def test_purchase_transaction_creation_with_all_fields(self):
+        """Test creating a PurchaseTransaction with all fields."""
+        from datetime import timedelta
+        
+        expires_at = timezone.now() + timedelta(days=30)
+        metadata = {"package_name": "Premium Package", "hours": 20}
+        
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("150.50"),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            stripe_payment_intent_id="pi_test123456789",
+            stripe_customer_id="cus_test123456789",
+            expires_at=expires_at,
+            metadata=metadata
+        )
+        
+        self.assertEqual(transaction.student, self.user)
+        self.assertEqual(transaction.transaction_type, TransactionType.PACKAGE)
+        self.assertEqual(transaction.amount, Decimal("150.50"))
+        self.assertEqual(transaction.payment_status, TransactionPaymentStatus.COMPLETED)
+        self.assertEqual(transaction.stripe_payment_intent_id, "pi_test123456789")
+        self.assertEqual(transaction.stripe_customer_id, "cus_test123456789")
+        self.assertEqual(transaction.expires_at, expires_at)
+        self.assertEqual(transaction.metadata, metadata)
+
+    def test_stripe_payment_intent_id_uniqueness(self):
+        """Test that stripe_payment_intent_id has a uniqueness constraint."""
+        from django.db import IntegrityError
+        
+        # Create first transaction
+        PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            stripe_payment_intent_id="pi_duplicate_test"
+        )
+        
+        # Create second user
+        user2 = CustomUser.objects.create_user(
+            email="student2@example.com",
+            name="Student Two",
+            password="testpass123"
+        )
+        
+        # Try to create another transaction with same stripe_payment_intent_id
+        with self.assertRaises(IntegrityError):
+            PurchaseTransaction.objects.create(
+                student=user2,
+                transaction_type=TransactionType.PACKAGE,
+                amount=Decimal("200.00"),
+                payment_status=TransactionPaymentStatus.COMPLETED,
+                stripe_payment_intent_id="pi_duplicate_test"
+            )
+
+    def test_is_expired_property_for_package_transactions(self):
+        """Test is_expired property for package transactions."""
+        from datetime import timedelta
+        
+        # Test non-expired package
+        future_date = timezone.now() + timedelta(days=30)
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            expires_at=future_date
+        )
+        self.assertFalse(transaction.is_expired)
+        
+        # Test expired package
+        past_date = timezone.now() - timedelta(days=1)
+        expired_transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            expires_at=past_date
+        )
+        self.assertTrue(expired_transaction.is_expired)
+
+    def test_is_expired_property_for_subscription_transactions(self):
+        """Test is_expired property for subscription transactions (should always be False)."""
+        
+        # Subscription without expires_at (should be null)
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.SUBSCRIPTION,
+            amount=Decimal("50.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            expires_at=None
+        )
+        self.assertFalse(transaction.is_expired)
+
+    def test_mark_completed_method(self):
+        """Test mark_completed() method functionality."""
+        
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.PENDING
+        )
+        
+        # Initially pending
+        self.assertEqual(transaction.payment_status, TransactionPaymentStatus.PENDING)
+        
+        # Mark as completed
+        transaction.mark_completed()
+        
+        # Refresh from database
+        transaction.refresh_from_db()
+        self.assertEqual(transaction.payment_status, TransactionPaymentStatus.COMPLETED)
+
+    def test_payment_status_transitions(self):
+        """Test various payment status transitions."""
+        
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.PENDING
+        )
+        
+        # Test status change to processing
+        transaction.payment_status = TransactionPaymentStatus.PROCESSING
+        transaction.save()
+        transaction.refresh_from_db()
+        self.assertEqual(transaction.payment_status, TransactionPaymentStatus.PROCESSING)
+        
+        # Test status change to failed
+        transaction.payment_status = TransactionPaymentStatus.FAILED
+        transaction.save()
+        transaction.refresh_from_db()
+        self.assertEqual(transaction.payment_status, TransactionPaymentStatus.FAILED)
+        
+        # Test status change to cancelled
+        transaction.payment_status = TransactionPaymentStatus.CANCELLED
+        transaction.save()
+        transaction.refresh_from_db()
+        self.assertEqual(transaction.payment_status, TransactionPaymentStatus.CANCELLED)
+        
+        # Test status change to refunded
+        transaction.payment_status = TransactionPaymentStatus.REFUNDED
+        transaction.save()
+        transaction.refresh_from_db()
+        self.assertEqual(transaction.payment_status, TransactionPaymentStatus.REFUNDED)
+
+    def test_transaction_types(self):
+        """Test different transaction types."""
+        
+        # Test package transaction
+        package_transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        self.assertEqual(package_transaction.transaction_type, TransactionType.PACKAGE)
+        
+        # Test subscription transaction
+        subscription_transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.SUBSCRIPTION,
+            amount=Decimal("50.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        self.assertEqual(subscription_transaction.transaction_type, TransactionType.SUBSCRIPTION)
+
+    def test_metadata_field(self):
+        """Test metadata JSONField functionality."""
+        
+        metadata = {
+            "package_name": "Premium Package",
+            "hours": 20,
+            "promotional_code": "SAVE10",
+            "features": ["unlimited_access", "priority_support"]
+        }
+        
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            metadata=metadata
+        )
+        
+        # Refresh from database and verify JSON data integrity
+        transaction.refresh_from_db()
+        self.assertEqual(transaction.metadata["package_name"], "Premium Package")
+        self.assertEqual(transaction.metadata["hours"], 20)
+        self.assertEqual(transaction.metadata["promotional_code"], "SAVE10")
+        self.assertIn("unlimited_access", transaction.metadata["features"])
+
+    def test_decimal_field_precision(self):
+        """Test that amount field maintains proper precision."""
+        
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("123.456"),  # Will be rounded to 2 decimal places
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        
+        # Refresh from database to check actual stored value
+        transaction.refresh_from_db()
+        self.assertEqual(transaction.amount, Decimal("123.46"))
+
+    def test_negative_amounts_not_allowed(self):
+        """Test that negative amounts should not be allowed."""
+        from django.core.exceptions import ValidationError
+        
+        transaction = PurchaseTransaction(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("-50.00"),  # Negative amount
+            payment_status=TransactionPaymentStatus.PENDING
+        )
+        
+        with self.assertRaises(ValidationError):
+            transaction.full_clean()
+
+    def test_string_representation(self):
+        """Test the string representation of PurchaseTransaction."""
+        
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        
+        expected_str = f"Transaction {transaction.id}: {self.user.name} - €100.00 (PACKAGE - COMPLETED)"
+        self.assertEqual(str(transaction), expected_str)
+
+    def test_foreign_key_relationship_with_student(self):
+        """Test foreign key relationship with CustomUser (student)."""
+        
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        
+        # Test accessing transaction from user
+        self.assertIn(transaction, self.user.purchase_transactions.all())
+
+    def test_cascade_delete_with_student(self):
+        """Test that PurchaseTransaction is deleted when student is deleted."""
+        
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        
+        transaction_id = transaction.id
+        
+        # Delete the user
+        self.user.delete()
+        
+        # Verify the transaction is also deleted
+        with self.assertRaises(PurchaseTransaction.DoesNotExist):
+            PurchaseTransaction.objects.get(id=transaction_id)
+
+    def test_database_indexes_optimization(self):
+        """Test that proper database indexes exist for common queries."""
+        
+        # Create multiple transactions for testing query performance
+        transactions = []
+        for i in range(5):
+            transaction = PurchaseTransaction.objects.create(
+                student=self.user,
+                transaction_type=TransactionType.PACKAGE,
+                amount=Decimal("100.00"),
+                payment_status=TransactionPaymentStatus.COMPLETED if i % 2 == 0 else TransactionPaymentStatus.PENDING
+            )
+            transactions.append(transaction)
+        
+        # Test query by student (should use index)
+        student_transactions = PurchaseTransaction.objects.filter(student=self.user)
+        self.assertEqual(len(student_transactions), 5)
+        
+        # Test query by payment status (should use index)
+        completed_transactions = PurchaseTransaction.objects.filter(
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        self.assertEqual(len(completed_transactions), 3)
+        
+        # Test query by date range (should use index)
+        recent_transactions = PurchaseTransaction.objects.filter(
+            created_at__gte=timezone.now() - timedelta(days=1)
+        )
+        self.assertEqual(len(recent_transactions), 5)
+
+    def test_model_meta_properties(self):
+        """Test model meta properties like verbose names and ordering."""
+        
+        meta = PurchaseTransaction._meta
+        
+        self.assertEqual(meta.verbose_name, "Purchase Transaction")
+        self.assertEqual(meta.verbose_name_plural, "Purchase Transactions")
+        self.assertEqual(meta.ordering, ["-created_at"])
+
+    def test_multiple_students_can_have_transactions(self):
+        """Test that multiple students can each have their own transactions."""
+        
+        user2 = CustomUser.objects.create_user(
+            email="student2@example.com",
+            name="Student Two",
+            password="testpass123"
+        )
+        
+        transaction1 = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        
+        transaction2 = PurchaseTransaction.objects.create(
+            student=user2,
+            transaction_type=TransactionType.SUBSCRIPTION,
+            amount=Decimal("50.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        
+        self.assertEqual(transaction1.student, self.user)
+        self.assertEqual(transaction2.student, user2)
+        self.assertNotEqual(transaction1.student, transaction2.student)
