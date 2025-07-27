@@ -1,0 +1,359 @@
+QA Test Case: StudentAccountBalance Data Validation
+
+Test ID: BALANCE-003
+Test Name: Data Validation Tests for StudentAccountBalance Model
+Purpose: Verify data validation, field constraints, decimal precision, boundary conditions, and edge cases for StudentAccountBalance model
+Expected Result: All validation rules enforced correctly with appropriate error messages and boundary handling
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: StudentAccountBalance model data validation
+- Model Location: backend/finances/models.py
+- Validation: Django model validation and database constraints
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data Requirements:
+- Test Users: Multiple test users for validation testing
+- Database: SQLite for development testing
+- Validation Scenarios: Valid and invalid data sets
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Service Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  make dev
+
+Expected: Both services start successfully
+- Backend: http://localhost:8000 responds
+- Django admin accessible
+
+Step 2: Create Test User for Validation
+1. Open browser to http://localhost:8000/admin/
+2. Login with admin credentials
+3. Create test user:
+   - Email: validation-test@example.com
+   - Name: "Validation Test User"
+
+Expected: Test user created successfully
+Screenshot: 01_test_user_created.png
+
+Step 3: Test Valid Data Creation (Baseline)
+1. Navigate to Student Account Balances admin
+2. Create account with valid data:
+   - Student: Select validation test user
+   - Hours purchased: 15.50
+   - Hours consumed: 3.25
+   - Balance amount: 122.75
+3. Save and verify success
+
+Expected: Valid data saves successfully without errors
+Screenshot: 02_valid_data_baseline.png
+
+Step 4: Test Decimal Precision Validation - Hours Fields
+1. Create new account balance or edit existing
+2. Test hours_purchased with excessive precision:
+   - Enter: 15.123456789
+3. Save and check stored value
+4. Test hours_consumed with excessive precision:
+   - Enter: 3.987654321
+5. Save and check stored value
+
+Expected: 
+- Values automatically rounded to 2 decimal places
+- hours_purchased becomes 15.12
+- hours_consumed becomes 3.99
+- No validation errors, just precision enforcement
+
+Screenshot: 03_hours_precision_test.png
+
+Step 5: Test Decimal Precision Validation - Balance Field
+1. Edit account balance
+2. Test balance_amount with excessive precision:
+   - Enter: 122.999999
+3. Save and check stored value
+
+Expected:
+- Value rounded to 2 decimal places: 123.00
+- No validation errors
+
+Screenshot: 04_balance_precision_test.png
+
+Step 6: Test Maximum Value Constraints - Hours Fields
+1. Test maximum values for hours fields (max_digits=5, decimal_places=2):
+   - Hours purchased: 999.99 (maximum valid)
+   - Hours consumed: 999.99 (maximum valid)
+2. Save and verify acceptance
+3. Test oversized values:
+   - Hours purchased: 9999.99 (too many digits)
+   - Hours consumed: 9999.99 (too many digits)
+4. Attempt to save
+
+Expected:
+- Valid maximums (999.99) accepted
+- Oversized values either rejected or truncated
+- Appropriate error messages if validation fails
+
+Screenshot: 05_hours_maximum_test.png
+
+Step 7: Test Maximum Value Constraints - Balance Field
+1. Test maximum value for balance field (max_digits=6, decimal_places=2):
+   - Balance amount: 9999.99 (maximum valid)
+2. Save and verify acceptance
+3. Test oversized value:
+   - Balance amount: 99999.99 (too many digits)
+4. Attempt to save
+
+Expected:
+- Valid maximum (9999.99) accepted
+- Oversized value rejected or truncated
+- Error message if validation fails
+
+Screenshot: 06_balance_maximum_test.png
+
+Step 8: Test Negative Values Handling
+1. Create account with negative values:
+   - Hours purchased: -5.00
+   - Hours consumed: -2.50
+   - Balance amount: -50.00
+2. Save and verify behavior
+
+Expected:
+- Negative values should be accepted (for overdraft scenarios)
+- System handles negative values without errors
+- Calculations work correctly with negative values
+
+Screenshot: 07_negative_values_test.png
+
+Step 9: Test Zero Values Handling
+1. Create account with zero values:
+   - Hours purchased: 0.00
+   - Hours consumed: 0.00
+   - Balance amount: 0.00
+2. Save and verify behavior
+
+Expected:
+- Zero values accepted without errors
+- remaining_hours calculation returns 0.00
+- Display formatting works correctly
+
+Screenshot: 08_zero_values_test.png
+
+Step 10: Test Minimum Precision Values
+1. Create account with minimum non-zero values:
+   - Hours purchased: 0.01
+   - Hours consumed: 0.01
+   - Balance amount: 0.01
+2. Save and verify storage accuracy
+
+Expected:
+- Minimum values stored accurately
+- No precision loss
+- Calculations work with small values
+
+Screenshot: 09_minimum_values_test.png
+
+Step 11: Test Very Large Calculations
+1. Create account approaching field limits:
+   - Hours purchased: 999.99
+   - Hours consumed: 500.50
+   - Balance amount: 9999.99
+2. Verify remaining_hours calculation: 499.49
+3. Test calculation accuracy
+
+Expected:
+- Large number calculations accurate
+- No overflow or precision errors
+- remaining_hours property works correctly
+
+Screenshot: 10_large_calculations_test.png
+
+Step 12: Test String Length Validation (Related User Fields)
+1. Verify student field validation works
+2. Test with user that has very long name
+3. Ensure proper handling of related field constraints
+
+Expected:
+- Related field constraints enforced
+- Proper error handling for invalid relationships
+
+Screenshot: 11_related_field_validation.png
+
+Step 13: Test Required Field Validation
+1. Try to create account balance without selecting student
+2. Leave hours fields empty
+3. Leave balance field empty
+4. Attempt to save
+
+Expected:
+- Validation errors for required fields
+- Clear error messages displayed
+- Form prevents saving with missing required data
+
+Screenshot: 12_required_field_validation.png
+
+Step 14: Test Boundary Conditions - Edge Cases
+1. Test values at exact field boundaries:
+   - Hours: exactly 999.99 and 1000.00
+   - Balance: exactly 9999.99 and 10000.00
+2. Test one decimal place values: 15.5, 3.2, 100.7
+3. Test whole number values: 15, 3, 100
+
+Expected:
+- Boundary values handled correctly
+- Decimal formatting consistent
+- No unexpected rounding errors
+
+Screenshot: 13_boundary_conditions_test.png
+
+Step 15: Test Field Type Validation
+1. If possible through direct database/API access, test:
+   - Non-numeric input in decimal fields
+   - Invalid data types
+   - String values in numeric fields
+2. Verify proper validation and error handling
+
+Expected:
+- Type validation enforced
+- Appropriate error messages
+- Data integrity maintained
+
+Screenshot: 14_field_type_validation.png
+
+Step 16: Test Unicode and Special Characters
+1. Create test user with unicode characters in name
+2. Create account balance for this user
+3. Verify proper handling in string representation
+4. Test display in admin interface
+
+Expected:
+- Unicode characters handled properly
+- No encoding errors
+- Display works correctly in admin
+
+Screenshot: 15_unicode_handling.png
+
+Step 17: Test Concurrent Validation
+1. Open two browser tabs to admin interface
+2. Edit the same account balance in both tabs
+3. Save changes in first tab
+4. Try to save changes in second tab
+5. Verify conflict handling
+
+Expected:
+- Proper handling of concurrent edits
+- No data corruption
+- Appropriate error messages if applicable
+
+Screenshot: 16_concurrent_validation.png
+
+Step 18: Test Validation Error Messages
+1. Trigger various validation errors deliberately
+2. Verify error messages are:
+   - Clear and understandable
+   - Specific to the validation issue
+   - Helpful for correcting the problem
+3. Test both field-level and form-level validation
+
+Expected:
+- All error messages clear and helpful
+- Validation feedback guides user to correct input
+- No technical jargon in user-facing messages
+
+Screenshot: 17_error_messages_test.png
+
+Step 19: Test Performance with Edge Data
+1. Create multiple accounts with maximum field values
+2. Test search and filtering performance
+3. Verify admin interface remains responsive
+4. Test calculation performance with extreme values
+
+Expected:
+- Performance remains acceptable
+- No timeout or memory issues
+- UI remains responsive
+
+Screenshot: 18_performance_edge_data.png
+
+Step 20: Test Data Consistency After Validation
+1. Create several accounts with various edge cases
+2. Perform bulk operations if available
+3. Verify data consistency across all records
+4. Check that all calculations remain accurate
+
+Expected:
+- Data consistency maintained
+- All calculations accurate
+- No data corruption
+
+Screenshot: 19_data_consistency_test.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All validation rules enforced correctly with proper error handling and boundary conditions
+FAIL: Any validation fails to work OR inappropriate error messages OR data integrity issues
+
+Individual Step Criteria:
+- Step 1-2: PASS if environment and test setup complete, FAIL if setup issues
+- Step 3: PASS if valid data saves successfully, FAIL if valid data rejected
+- Step 4-5: PASS if decimal precision enforced correctly, FAIL if precision not maintained
+- Step 6-7: PASS if maximum value constraints enforced, FAIL if oversized values accepted
+- Step 8: PASS if negative values handled properly, FAIL if negative values cause errors
+- Step 9: PASS if zero values work correctly, FAIL if zero values cause issues
+- Step 10: PASS if minimum values stored accurately, FAIL if precision loss
+- Step 11: PASS if large calculations accurate, FAIL if calculation errors
+- Step 12: PASS if related field validation works, FAIL if invalid relationships allowed
+- Step 13: PASS if required field validation enforced, FAIL if empty required fields accepted
+- Step 14: PASS if boundary conditions handled correctly, FAIL if boundary errors
+- Step 15: PASS if field type validation enforced, FAIL if invalid types accepted
+- Step 16: PASS if unicode handled properly, FAIL if encoding errors
+- Step 17: PASS if concurrent edits handled gracefully, FAIL if data corruption
+- Step 18: PASS if error messages clear and helpful, FAIL if confusing or missing errors
+- Step 19: PASS if performance acceptable with edge data, FAIL if performance issues
+- Step 20: PASS if data consistency maintained, FAIL if consistency issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== ADDITIONAL VERIFICATION POINTS ===
+
+Field Constraints Checklist:
+- hours_purchased: DecimalField(max_digits=5, decimal_places=2, default=0.00)
+- hours_consumed: DecimalField(max_digits=5, decimal_places=2, default=0.00)
+- balance_amount: DecimalField(max_digits=6, decimal_places=2, default=0.00)
+- student: OneToOneField(CustomUser, on_delete=CASCADE)
+
+Validation Rules:
+- All decimal fields maintain 2 decimal place precision
+- Maximum values: 999.99 for hours, 9999.99 for balance
+- Negative values allowed (overdraft scenarios)
+- Zero values allowed (empty accounts)
+- Required fields: student (others have defaults)
+- One-to-one constraint enforced (no duplicates)
+
+Edge Cases to Test:
+- Maximum field values (999.99, 9999.99)
+- Minimum non-zero values (0.01)
+- Zero values (0.00)
+- Negative values (-999.99, -9999.99)
+- High precision input (rounds to 2 places)
+- Unicode characters in related fields
+- Concurrent editing scenarios
+- Boundary value calculations
+
+Error Handling:
+- Clear, user-friendly error messages
+- Field-specific validation feedback
+- Form-level validation for complex rules
+- Database constraint error handling
+- Type validation for all fields

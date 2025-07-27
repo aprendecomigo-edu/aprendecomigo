@@ -396,3 +396,67 @@ class TeacherPaymentEntry(models.Model):
 
     def __str__(self) -> str:
         return f"{self.teacher.user.name} - €{self.amount_earned} for {self.session.date} session"
+
+
+class StudentAccountBalance(models.Model):
+    """
+    Student account balance model to track hours purchased, consumed, and remaining balance.
+    This is the core data structure for the student purchase system.
+    """
+
+    student: models.OneToOneField = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="account_balance",
+        verbose_name=_("student"),
+        help_text=_("Student who owns this account balance"),
+    )
+
+    hours_purchased: models.DecimalField = models.DecimalField(
+        _("hours purchased"),
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text=_("Total hours purchased by the student"),
+    )
+
+    hours_consumed: models.DecimalField = models.DecimalField(
+        _("hours consumed"),
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text=_("Total hours consumed by the student"),
+    )
+
+    balance_amount: models.DecimalField = models.DecimalField(
+        _("balance amount"),
+        max_digits=6,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text=_("Current account balance in euros"),
+    )
+
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(
+        _("created at"), auto_now_add=True
+    )
+    updated_at: models.DateTimeField = models.DateTimeField(
+        _("updated at"), auto_now=True
+    )
+
+    class Meta:
+        verbose_name = _("Student Account Balance")
+        verbose_name_plural = _("Student Account Balances")
+        ordering = ["-updated_at"]
+
+    def __str__(self) -> str:
+        remaining = self.remaining_hours
+        return f"Account Balance for {self.student.name}: €{self.balance_amount} ({remaining}h remaining)"
+
+    @property
+    def remaining_hours(self) -> Decimal:
+        """
+        Calculate remaining hours (purchased - consumed).
+        Can be negative in overdraft scenarios.
+        """
+        return self.hours_purchased - self.hours_consumed

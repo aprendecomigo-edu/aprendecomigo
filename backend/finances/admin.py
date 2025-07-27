@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from .models import (
     ClassSession,
     SchoolBillingSettings,
+    StudentAccountBalance,
     TeacherCompensationRule,
     TeacherPaymentEntry,
 )
@@ -401,3 +402,113 @@ class TeacherPaymentEntryAdmin(admin.ModelAdmin):
             readonly.remove("payment_status") if "payment_status" in readonly else None
             return readonly
         return readonly
+
+
+@admin.register(StudentAccountBalance)
+class StudentAccountBalanceAdmin(admin.ModelAdmin):
+    """Admin interface for student account balances."""
+
+    list_display = [
+        "student_name",
+        "student_email",
+        "hours_purchased",
+        "hours_consumed",
+        "remaining_hours_display",
+        "balance_amount_display",
+        "updated_at",
+    ]
+    list_filter = [
+        "created_at",
+        "updated_at",
+    ]
+    search_fields = [
+        "student__name",
+        "student__email",
+    ]
+    readonly_fields = ["created_at", "updated_at", "remaining_hours_display"]
+
+    fieldsets = (
+        (
+            "Student Information",
+            {
+                "fields": ("student",)
+            },
+        ),
+        (
+            "Hours Tracking",
+            {
+                "fields": (
+                    "hours_purchased",
+                    "hours_consumed",
+                    "remaining_hours_display",
+                )
+            },
+        ),
+        (
+            "Financial Information",
+            {
+                "fields": ("balance_amount",)
+            },
+        ),
+        (
+            "Timestamps",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            }
+        ),
+    )
+
+    @admin.display(
+        description="Student Name",
+        ordering="student__name",
+    )
+    def student_name(self, obj):
+        """Display student name."""
+        return obj.student.name
+
+    @admin.display(
+        description="Student Email",
+        ordering="student__email",
+    )
+    def student_email(self, obj):
+        """Display student email."""
+        return obj.student.email
+
+    @admin.display(
+        description="Remaining Hours"
+    )
+    def remaining_hours_display(self, obj):
+        """Display remaining hours with color coding."""
+        remaining = obj.remaining_hours
+        if remaining < 0:
+            return format_html(
+                '<span style="color: red; font-weight: bold;">{} hours (overdraft)</span>',
+                remaining
+            )
+        elif remaining < 2:
+            return format_html(
+                '<span style="color: orange; font-weight: bold;">{} hours (low balance)</span>',
+                remaining
+            )
+        else:
+            return format_html(
+                '<span style="color: green;">{} hours</span>',
+                remaining
+            )
+
+    @admin.display(
+        description="Balance Amount"
+    )
+    def balance_amount_display(self, obj):
+        """Display balance amount with color coding."""
+        if obj.balance_amount < 0:
+            return format_html(
+                '<span style="color: red; font-weight: bold;">€{}</span>',
+                obj.balance_amount
+            )
+        else:
+            return format_html(
+                '<span style="color: green;">€{}</span>',
+                obj.balance_amount
+            )

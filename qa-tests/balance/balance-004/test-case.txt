@@ -1,0 +1,533 @@
+QA Test Case: StudentAccountBalance Database Operations
+
+Test ID: BALANCE-004
+Test Name: Database Operations Tests for StudentAccountBalance Model
+Purpose: Verify database migration, data integrity, CRUD operations, performance, and database-level constraints for StudentAccountBalance model
+Expected Result: All database operations work correctly with proper migration, integrity, and performance
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: StudentAccountBalance model database operations
+- Model Location: backend/finances/models.py
+- Migration: backend/finances/migrations/0002_add_student_account_balance.py
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data Requirements:
+- Clean database state for migration testing
+- Multiple test users for CRUD testing
+- Performance testing with multiple records
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Service Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+
+Expected: Environment ready for database testing
+
+Step 2: Verify Migration Status
+Commands:
+  python manage.py showmigrations finances
+
+Expected: 
+- Shows migration 0002_add_student_account_balance as applied
+- No unapplied migrations
+- Migration system working correctly
+
+Screenshot: 01_migration_status.png
+
+Step 3: Test Migration Rollback and Reapply (Optional - Risk Assessment)
+⚠️  WARNING: This step involves database changes. Only proceed if testing environment allows rollback.
+
+Commands:
+  python manage.py migrate finances 0001 --fake
+  python manage.py migrate finances 0002
+
+Expected:
+- Rollback successful (if safe to test)
+- Re-application successful
+- No data loss or corruption
+- Table structure correct after re-migration
+
+Screenshot: 02_migration_rollback_test.png
+
+Step 4: Verify Database Schema
+Commands:
+  python manage.py dbshell
+  .schema finances_studentaccountbalance
+  .exit
+
+Expected Database Schema:
+- Table: finances_studentaccountbalance
+- Columns: id, student_id, hours_purchased, hours_consumed, balance_amount, created_at, updated_at
+- Constraints: Primary key on id, Foreign key on student_id, Unique constraint on student_id
+- Field types: Decimal for financial fields, DateTime for timestamps
+
+Screenshot: 03_database_schema.png
+
+Step 5: Test Database Constraint Enforcement - Primary Key
+Commands:
+  python manage.py shell
+
+Python commands:
+```python
+from finances.models import StudentAccountBalance
+from accounts.models import CustomUser
+from django.db import IntegrityError
+
+# Create test user
+user = CustomUser.objects.create_user(email="db-test@example.com", name="DB Test User")
+
+# Create account balance
+balance = StudentAccountBalance.objects.create(
+    student=user,
+    hours_purchased=10.0,
+    hours_consumed=2.0,
+    balance_amount=80.0
+)
+print(f"Created balance with ID: {balance.id}")
+
+# Try to create duplicate with same student (should fail)
+try:
+    duplicate = StudentAccountBalance.objects.create(
+        student=user,
+        hours_purchased=5.0,
+        hours_consumed=1.0,
+        balance_amount=40.0
+    )
+    print("ERROR: Duplicate creation should have failed!")
+except IntegrityError as e:
+    print(f"SUCCESS: Constraint enforced - {e}")
+
+exit()
+```
+
+Expected: 
+- First account balance created successfully
+- Duplicate creation fails with IntegrityError
+- One-to-one constraint properly enforced
+
+Screenshot: 04_constraint_testing.png
+
+Step 6: Test CRUD Operations - Create
+1. Start Django development server: make dev
+2. Open Django admin: http://localhost:8000/admin/
+3. Create multiple student account balances with different scenarios:
+   - Standard positive balance
+   - Zero balance
+   - Negative balance (overdraft)
+   - Maximum field values
+   - Minimum field values
+
+Expected: All CREATE operations succeed with proper data storage
+Screenshot: 05_crud_create_test.png
+
+Step 7: Test CRUD Operations - Read
+1. Navigate to Student Account Balances list view
+2. Test different sorting options by clicking column headers
+3. Test search functionality with various terms
+4. Test filtering by date ranges
+5. Verify all data displays correctly
+
+Expected: All READ operations work with accurate data retrieval
+Screenshot: 06_crud_read_test.png
+
+Step 8: Test CRUD Operations - Update
+1. Edit several existing account balances
+2. Test updating each field type:
+   - Change hours_purchased
+   - Change hours_consumed
+   - Change balance_amount
+3. Verify calculations update correctly
+4. Test bulk updates if available
+
+Expected: All UPDATE operations succeed with proper data modification
+Screenshot: 07_crud_update_test.png
+
+Step 9: Test CRUD Operations - Delete
+1. Delete individual account balance records
+2. Test cascade deletion by deleting a user who has an account balance
+3. Verify data integrity after deletions
+4. Test bulk deletions if available
+
+Expected: All DELETE operations succeed with proper cleanup
+Screenshot: 08_crud_delete_test.png
+
+Step 10: Test Database Performance - Insert Performance
+Commands:
+  python manage.py shell
+
+Python commands:
+```python
+from finances.models import StudentAccountBalance
+from accounts.models import CustomUser
+from decimal import Decimal
+import time
+
+# Create multiple users
+users = []
+for i in range(100):
+    user = CustomUser.objects.create_user(
+        email=f"perf-test-{i}@example.com",
+        name=f"Performance Test User {i}"
+    )
+    users.append(user)
+
+# Time bulk insert
+start_time = time.time()
+balances = []
+for i, user in enumerate(users):
+    balance = StudentAccountBalance(
+        student=user,
+        hours_purchased=Decimal(f"{10 + i}.00"),
+        hours_consumed=Decimal(f"{i}.50"),
+        balance_amount=Decimal(f"{100 + i * 5}.00")
+    )
+    balances.append(balance)
+
+StudentAccountBalance.objects.bulk_create(balances)
+end_time = time.time()
+
+print(f"Created 100 account balances in {end_time - start_time:.2f} seconds")
+exit()
+```
+
+Expected: Bulk operations complete in reasonable time (< 5 seconds for 100 records)
+Screenshot: 09_insert_performance.png
+
+Step 11: Test Database Performance - Query Performance
+Commands:
+  python manage.py shell
+
+Python commands:
+```python
+from finances.models import StudentAccountBalance
+from django.db import connection
+import time
+
+# Test query performance
+start_time = time.time()
+balances = list(StudentAccountBalance.objects.select_related('student').all())
+end_time = time.time()
+
+print(f"Queried {len(balances)} balances in {end_time - start_time:.3f} seconds")
+
+# Test search performance
+start_time = time.time()
+search_results = StudentAccountBalance.objects.filter(
+    student__name__icontains="Performance"
+).select_related('student')
+result_count = search_results.count()
+end_time = time.time()
+
+print(f"Search found {result_count} results in {end_time - start_time:.3f} seconds")
+
+# Check query count
+print(f"Total queries executed: {len(connection.queries)}")
+exit()
+```
+
+Expected: Query performance acceptable with proper use of select_related
+Screenshot: 10_query_performance.png
+
+Step 12: Test Database Transactions and Atomicity
+Commands:
+  python manage.py shell
+
+Python commands:
+```python
+from finances.models import StudentAccountBalance
+from accounts.models import CustomUser
+from django.db import transaction
+from decimal import Decimal
+
+# Create test user
+user = CustomUser.objects.create_user(email="tx-test@example.com", name="Transaction Test")
+
+# Test transaction rollback
+try:
+    with transaction.atomic():
+        balance = StudentAccountBalance.objects.create(
+            student=user,
+            hours_purchased=Decimal("10.0"),
+            hours_consumed=Decimal("2.0"),
+            balance_amount=Decimal("80.0")
+        )
+        print(f"Created balance ID: {balance.id}")
+        
+        # Force an error to test rollback
+        raise Exception("Forced rollback test")
+        
+except Exception as e:
+    print(f"Transaction rolled back: {e}")
+
+# Verify no balance was created
+count = StudentAccountBalance.objects.filter(student=user).count()
+print(f"Account balances for user after rollback: {count}")
+
+# Test successful transaction
+with transaction.atomic():
+    balance = StudentAccountBalance.objects.create(
+        student=user,
+        hours_purchased=Decimal("15.0"),
+        hours_consumed=Decimal("3.0"),
+        balance_amount=Decimal("120.0")
+    )
+    print(f"Successfully created balance ID: {balance.id}")
+
+exit()
+```
+
+Expected: 
+- Failed transaction properly rolled back (no record created)
+- Successful transaction committed properly
+- Transaction atomicity maintained
+
+Screenshot: 11_transaction_testing.png
+
+Step 13: Test Database Backup and Restore (Conceptual)
+Commands:
+  python manage.py dumpdata finances.StudentAccountBalance > balance_backup.json
+  python manage.py loaddata balance_backup.json
+
+Expected:
+- Data export successful
+- Data import successful
+- No data corruption during backup/restore process
+
+Screenshot: 12_backup_restore_test.png
+
+Step 14: Test Database Index Performance
+Commands:
+  python manage.py shell
+
+Python commands:
+```python
+from finances.models import StudentAccountBalance
+from django.db import connection
+import time
+
+# Test query with expected indexes
+start_time = time.time()
+# Query by student (should use foreign key index)
+balance = StudentAccountBalance.objects.filter(student_id=1).first()
+time1 = time.time() - start_time
+
+start_time = time.time()
+# Query by date (should use index if created)
+recent_balances = StudentAccountBalance.objects.filter(
+    updated_at__gte='2024-01-01'
+).count()
+time2 = time.time() - start_time
+
+print(f"Student query time: {time1:.4f}s")
+print(f"Date query time: {time2:.4f}s")
+print(f"Query count: {len(connection.queries)}")
+
+exit()
+```
+
+Expected: Query times acceptable, proper index utilization
+Screenshot: 13_index_performance.png
+
+Step 15: Test Database Connection Handling
+Commands:
+  python manage.py shell
+
+Python commands:
+```python
+from finances.models import StudentAccountBalance
+from django.db import connections
+from django.test.utils import override_settings
+
+# Test multiple database connections
+db_alias = 'default'
+connection = connections[db_alias]
+
+print(f"Database engine: {connection.vendor}")
+print(f"Database name: {connection.settings_dict['NAME']}")
+
+# Test connection recovery
+connection.close()
+# Next query should automatically reconnect
+count = StudentAccountBalance.objects.count()
+print(f"Successfully reconnected, found {count} records")
+
+exit()
+```
+
+Expected: Database connections handle properly, automatic reconnection works
+Screenshot: 14_connection_handling.png
+
+Step 16: Test Database Data Integrity Constraints
+1. Verify foreign key constraints work properly
+2. Test deletion cascade behavior
+3. Verify unique constraints enforced
+4. Test field-level constraints (decimal precision, not null)
+
+Expected: All database constraints properly enforced
+Screenshot: 15_integrity_constraints.png
+
+Step 17: Test Database Migration Dependencies
+Commands:
+  python manage.py showmigrations --plan
+
+Expected:
+- Migration dependencies properly defined
+- No circular dependencies
+- Migration order correct
+
+Screenshot: 16_migration_dependencies.png
+
+Step 18: Test Database Storage Efficiency
+Commands:
+  python manage.py shell
+
+Python commands:
+```python
+from finances.models import StudentAccountBalance
+from django.db import connection
+
+# Check table size information
+with connection.cursor() as cursor:
+    if connection.vendor == 'sqlite':
+        # SQLite specific query
+        cursor.execute("SELECT COUNT(*) FROM finances_studentaccountbalance")
+        count = cursor.fetchone()[0]
+        print(f"Total records: {count}")
+        
+        # Check for any obvious storage issues
+        cursor.execute("PRAGMA table_info(finances_studentaccountbalance)")
+        columns = cursor.fetchall()
+        print("Table structure:")
+        for column in columns:
+            print(f"  {column}")
+    else:
+        # For other databases
+        cursor.execute("SELECT COUNT(*) FROM finances_studentaccountbalance")
+        count = cursor.fetchone()[0]
+        print(f"Total records: {count}")
+
+exit()
+```
+
+Expected: Storage structure appropriate for data volume
+Screenshot: 17_storage_efficiency.png
+
+Step 19: Test Database Error Handling
+Commands:
+  python manage.py shell
+
+Python commands:
+```python
+from finances.models import StudentAccountBalance
+from accounts.models import CustomUser
+from django.db import IntegrityError, transaction
+from decimal import Decimal, InvalidOperation
+
+# Test various database error scenarios
+user = CustomUser.objects.create_user(email="error-test@example.com", name="Error Test")
+
+# Test constraint violations
+try:
+    # Create duplicate account
+    balance1 = StudentAccountBalance.objects.create(student=user, hours_purchased=10.0)
+    balance2 = StudentAccountBalance.objects.create(student=user, hours_purchased=5.0)
+except IntegrityError as e:
+    print(f"Constraint violation handled: {e}")
+
+# Test invalid data types (if possible to trigger)
+try:
+    balance = StudentAccountBalance(
+        student=user,
+        hours_purchased="invalid",  # Should be converted or cause error
+        hours_consumed=Decimal("5.0"),
+        balance_amount=Decimal("50.0")
+    )
+    balance.full_clean()  # Trigger validation
+    balance.save()
+except Exception as e:
+    print(f"Invalid data handled: {e}")
+
+exit()
+```
+
+Expected: Database errors handled gracefully with appropriate messages
+Screenshot: 18_error_handling.png
+
+Step 20: Final Database State Verification
+1. Review all created test data
+2. Verify database consistency
+3. Check for any orphaned records
+4. Verify all constraints still working
+5. Clean up test data if needed
+
+Expected: Database in consistent, clean state
+Screenshot: 19_final_verification.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All database operations work correctly with proper migration, integrity, and performance
+FAIL: Any database operation fails OR data integrity issues OR performance problems
+
+Individual Step Criteria:
+- Step 1-2: PASS if environment setup and migration status correct, FAIL if migration issues
+- Step 3: PASS if migration rollback/reapply works (if tested), FAIL if migration corruption
+- Step 4: PASS if database schema correct, FAIL if schema missing or wrong
+- Step 5: PASS if constraints enforced properly, FAIL if constraints bypassed
+- Step 6-9: PASS if all CRUD operations work correctly, FAIL if any CRUD operation fails
+- Step 10-11: PASS if performance acceptable, FAIL if performance issues
+- Step 12: PASS if transactions work atomically, FAIL if transaction issues
+- Step 13: PASS if backup/restore works, FAIL if data corruption
+- Step 14: PASS if index performance acceptable, FAIL if query performance poor
+- Step 15: PASS if database connections stable, FAIL if connection issues
+- Step 16: PASS if integrity constraints work, FAIL if constraints not enforced
+- Step 17: PASS if migration dependencies correct, FAIL if dependency issues
+- Step 18: PASS if storage efficiency reasonable, FAIL if storage problems
+- Step 19: PASS if error handling appropriate, FAIL if poor error handling
+- Step 20: PASS if final state clean and consistent, FAIL if inconsistencies
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== ADDITIONAL VERIFICATION POINTS ===
+
+Database Schema Verification:
+- Table: finances_studentaccountbalance
+- Primary Key: id (AutoField)
+- Foreign Key: student_id → accounts_customuser.id (CASCADE)
+- Unique Constraint: student_id (one-to-one relationship)
+- Decimal Fields: hours_purchased, hours_consumed (5,2), balance_amount (6,2)
+- Timestamp Fields: created_at, updated_at (auto-managed)
+
+Performance Benchmarks:
+- Insert 100 records: < 5 seconds
+- Query 1000 records: < 1 second
+- Search operations: < 0.5 seconds
+- Index utilization for foreign keys and dates
+- Reasonable memory usage
+
+Data Integrity Checklist:
+- One-to-one constraint enforced (no duplicates)
+- Foreign key constraint enforced (valid user references)
+- Cascade deletion works (user deletion removes balance)
+- Transaction atomicity maintained
+- Decimal precision preserved (2 decimal places)
+- Timestamp fields auto-updated correctly
+
+Migration Safety:
+- Migration reversible (if applicable)
+- No data loss during migration
+- Proper dependency management
+- Schema changes applied correctly
+- Indexes created appropriately

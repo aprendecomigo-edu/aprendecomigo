@@ -1,0 +1,264 @@
+QA Test Case: StudentAccountBalance Django Admin Interface
+
+Test ID: BALANCE-001
+Test Name: Django Admin Interface Tests for StudentAccountBalance Model
+Purpose: Verify Django admin interface functionality for StudentAccountBalance model including creation, editing, display, color coding, search, and filter capabilities
+Expected Result: All admin interface features work correctly with proper color coding and user experience
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: StudentAccountBalance model with Django Admin interface
+- Model Location: backend/finances/models.py
+- Admin Configuration: backend/finances/admin.py
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data Requirements:
+- Admin User: Must have superuser access to Django admin
+- Test Students: Will create test users for account balance testing
+- Test Email: admin@aprendecomigo.com (or existing admin credentials)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Service Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Both services start successfully
+- Backend: http://localhost:8000 responds
+- Frontend: http://localhost:8081 shows loading screen
+
+Step 2: Access Django Admin Interface
+1. Open browser to http://localhost:8000/admin/
+2. Login with admin credentials
+3. Verify Django admin homepage loads successfully
+
+Expected: Django admin interface loads with sidebar navigation
+Screenshot: 01_django_admin_home.png
+
+Step 3: Navigate to StudentAccountBalance Admin
+1. Look for "FINANCES" section in admin sidebar
+2. Click on "Student Account Balances" link
+3. Verify the list view loads
+
+Expected: StudentAccountBalance list view loads showing:
+- Column headers: Student Name, Student Email, Hours Purchased, Hours Consumed, Remaining Hours, Balance Amount, Updated At
+- Empty list initially (or existing records)
+- "ADD STUDENT ACCOUNT BALANCE +" button
+- Search box
+- Filter options on right sidebar
+
+Screenshot: 02_student_account_balance_list.png
+
+Step 4: Test Search and Filter Functionality
+1. Check the search box functionality (search by student name/email)
+2. Verify filter options in right sidebar:
+   - By created_at
+   - By updated_at
+3. Verify column sorting by clicking headers
+
+Expected: All search and filter controls work properly
+Screenshot: 03_search_filter_interface.png
+
+Step 5: Create New Student Account Balance - Positive Balance
+1. Click "ADD STUDENT ACCOUNT BALANCE +" button
+2. In "Student Information" section:
+   - Select/Add a test student user
+3. In "Hours Tracking" section:
+   - Hours purchased: 20.00
+   - Hours consumed: 5.50
+   - Verify "Remaining Hours" shows as readonly field
+4. In "Financial Information" section:
+   - Balance amount: 145.50
+5. Click "Save" button
+
+Expected: 
+- Form validation succeeds
+- Record is created successfully
+- Redirected to list view showing new record
+- Remaining hours calculated as 14.50 (20.00 - 5.50)
+- Balance amount shows in green color (positive)
+- Remaining hours show in green color (> 2 hours)
+
+Screenshot: 04_positive_balance_created.png
+
+Step 6: Create Low Balance Account
+1. Click "ADD STUDENT ACCOUNT BALANCE +" button
+2. Create account with:
+   - Hours purchased: 3.00
+   - Hours consumed: 2.25
+   - Balance amount: 15.00
+3. Save the record
+
+Expected:
+- Record created successfully
+- Remaining hours: 0.75 hours
+- Balance shows in green (positive)
+- Remaining hours show in orange (low balance warning - between 0 and 2 hours)
+
+Screenshot: 05_low_balance_created.png
+
+Step 7: Create Overdraft Account (Negative Balance)
+1. Click "ADD STUDENT ACCOUNT BALANCE +" button
+2. Create account with:
+   - Hours purchased: 5.00
+   - Hours consumed: 7.50
+   - Balance amount: -25.00
+3. Save the record
+
+Expected:
+- Record created successfully
+- Remaining hours: -2.50 hours (overdraft)
+- Balance shows in red (negative)
+- Remaining hours show in red with "overdraft" text
+
+Screenshot: 06_overdraft_account_created.png
+
+Step 8: Test Color Coding in List View
+1. Return to list view
+2. Verify all three created accounts display with proper color coding:
+   - Positive balance (green text for balance and remaining hours)
+   - Low balance (green balance, orange remaining hours)
+   - Overdraft (red balance and remaining hours with "overdraft" text)
+
+Expected: Color coding works correctly according to admin.py implementation:
+- Green: remaining_hours >= 2 AND balance_amount >= 0
+- Orange: 0 <= remaining_hours < 2
+- Red: remaining_hours < 0 OR balance_amount < 0
+
+Screenshot: 07_color_coding_verification.png
+
+Step 9: Test Edit Functionality
+1. Click on one of the created records to edit
+2. Modify the hours_consumed value
+3. Verify the readonly "Remaining Hours" field updates appropriately
+4. Change balance_amount
+5. Save changes
+
+Expected: 
+- Edit form loads correctly
+- Readonly fields are displayed but not editable
+- Changes save successfully
+- Color coding updates based on new values
+
+Screenshot: 08_edit_functionality.png
+
+Step 10: Test Field Validation
+1. Create a new account or edit existing
+2. Test decimal precision:
+   - Enter hours with more than 2 decimal places (e.g., 10.555)
+   - Enter balance with more than 2 decimal places (e.g., 100.999)
+3. Save and verify values are rounded correctly
+
+Expected:
+- Values rounded to 2 decimal places
+- 10.555 becomes 10.56
+- 100.999 becomes 101.00
+
+Screenshot: 09_decimal_precision_test.png
+
+Step 11: Test One-to-One Relationship Constraint
+1. Try to create a second account balance for an existing student
+2. Attempt to save
+
+Expected:
+- Database constraint prevents duplicate
+- Error message displayed
+- Form validation prevents saving
+
+Screenshot: 10_constraint_validation.png
+
+Step 12: Test Admin Fieldset Organization
+1. On add/edit form, verify fieldset organization:
+   - "Student Information" section with student field
+   - "Hours Tracking" section with hours fields and readonly remaining hours
+   - "Financial Information" section with balance amount
+   - "Timestamps" section (collapsed) with created_at and updated_at
+2. Verify readonly fields are properly marked
+
+Expected: Form is well-organized with logical fieldset groupings
+Screenshot: 11_fieldset_organization.png
+
+Step 13: Test Admin Actions and Bulk Operations
+1. Select multiple account balance records using checkboxes
+2. Check available admin actions
+3. Test any bulk operations if available
+
+Expected: Standard Django admin actions work properly
+Screenshot: 12_admin_actions.png
+
+Step 14: Test Responsive Design and Usability
+1. Test admin interface on different screen sizes
+2. Verify all columns are readable
+3. Test horizontal scrolling if needed
+
+Expected: Interface remains usable on different screen sizes
+Screenshot: 13_responsive_design.png
+
+Step 15: Verify Data Persistence and Relationships
+1. Navigate to the Users admin section
+2. Find a user who has an account balance
+3. Verify the account balance is accessible via related_name 'account_balance'
+4. Test deletion cascade - delete a user and verify account balance is also deleted
+
+Expected: 
+- Relationship works bidirectionally
+- Cascade deletion works properly
+- Data integrity maintained
+
+Screenshot: 14_relationship_verification.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All admin interface features work correctly with proper color coding and user experience
+FAIL: Any admin feature fails OR color coding incorrect OR data integrity issues
+
+Individual Step Criteria:
+- Step 1-2: PASS if admin interface loads, FAIL if login fails or admin inaccessible
+- Step 3: PASS if StudentAccountBalance admin loads with proper layout, FAIL if missing or broken
+- Step 4: PASS if search and filters work, FAIL if any search/filter functionality broken
+- Step 5-7: PASS if all balance types create successfully with correct calculations, FAIL if creation fails or calculations wrong
+- Step 8: PASS if color coding displays correctly, FAIL if colors wrong or missing
+- Step 9: PASS if edit functionality works, FAIL if edits fail or readonly fields editable
+- Step 10: PASS if decimal precision enforced, FAIL if precision not maintained
+- Step 11: PASS if one-to-one constraint enforced, FAIL if duplicates allowed
+- Step 12: PASS if fieldsets organized properly, FAIL if layout confusing or readonly fields editable
+- Step 13: PASS if admin actions work, FAIL if actions broken
+- Step 14: PASS if interface responsive, FAIL if unusable on different screen sizes
+- Step 15: PASS if relationships and cascade work, FAIL if data integrity issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== ADDITIONAL VERIFICATION POINTS ===
+
+Color Coding Verification:
+- remaining_hours >= 2: Green text
+- 0 <= remaining_hours < 2: Orange text with "low balance" warning
+- remaining_hours < 0: Red text with "overdraft" warning
+- balance_amount >= 0: Green text
+- balance_amount < 0: Red text
+
+Field Constraints:
+- hours_purchased: max_digits=5, decimal_places=2
+- hours_consumed: max_digits=5, decimal_places=2  
+- balance_amount: max_digits=6, decimal_places=2
+- One-to-one relationship with CustomUser
+- Cascade deletion when user deleted
+
+Admin Features:
+- List display with all required columns
+- Search by student name and email
+- Filter by created_at and updated_at
+- Readonly fields: created_at, updated_at, remaining_hours_display
+- Fieldset organization for better UX
+- Color-coded display methods

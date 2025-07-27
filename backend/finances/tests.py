@@ -10,6 +10,7 @@ from .models import (
     CompensationRuleType,
     SchoolBillingSettings,
     SessionType,
+    StudentAccountBalance,
     TeacherCompensationRule,
     TrialCostAbsorption,
 )
@@ -393,3 +394,240 @@ class SchoolBillingSettingsTestCase(TestCase):
         with self.assertRaises(ValidationError):
             settings = SchoolBillingSettings(school=school, payment_day_of_month=0)
             settings.full_clean()
+
+
+class StudentAccountBalanceTestCase(TestCase):
+    """Test cases for StudentAccountBalance model."""
+
+    def setUp(self):
+        """Set up test data for student account balance tests."""
+        # Create a test user
+        self.user = CustomUser.objects.create_user(
+            email="student@example.com", 
+            name="Test Student", 
+            password="testpass123"
+        )
+
+    def test_student_account_balance_creation(self):
+        """Test creating a StudentAccountBalance with valid data."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("10.0"),
+            hours_consumed=Decimal("3.5"),
+            balance_amount=Decimal("85.50")
+        )
+        
+        self.assertEqual(balance.student, self.user)
+        self.assertEqual(balance.hours_purchased, Decimal("10.0"))
+        self.assertEqual(balance.hours_consumed, Decimal("3.5"))
+        self.assertEqual(balance.balance_amount, Decimal("85.50"))
+        self.assertIsNotNone(balance.created_at)
+        self.assertIsNotNone(balance.updated_at)
+
+    def test_one_to_one_relationship_with_user(self):
+        """Test that StudentAccountBalance has one-to-one relationship with User."""
+        # Create first balance for the user
+        balance1 = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("10.0"),
+            hours_consumed=Decimal("0.0"),
+            balance_amount=Decimal("100.00")
+        )
+        
+        # Try to create another balance for the same user - should raise IntegrityError
+        from django.db import IntegrityError
+        with self.assertRaises(IntegrityError):
+            StudentAccountBalance.objects.create(
+                student=self.user,
+                hours_purchased=Decimal("5.0"),
+                hours_consumed=Decimal("0.0"),
+                balance_amount=Decimal("50.00")
+            )
+
+    def test_remaining_hours_property(self):
+        """Test the remaining_hours property calculation."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("20.0"),
+            hours_consumed=Decimal("7.5"),
+            balance_amount=Decimal("150.00")
+        )
+        
+        self.assertEqual(balance.remaining_hours, Decimal("12.5"))
+
+    def test_remaining_hours_when_zero(self):
+        """Test remaining_hours when purchased equals consumed."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("10.0"),
+            hours_consumed=Decimal("10.0"),
+            balance_amount=Decimal("0.00")
+        )
+        
+        self.assertEqual(balance.remaining_hours, Decimal("0.0"))
+
+    def test_remaining_hours_negative(self):
+        """Test remaining_hours when consumed exceeds purchased (overdraft scenario)."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("10.0"),
+            hours_consumed=Decimal("12.5"),
+            balance_amount=Decimal("-25.00")
+        )
+        
+        self.assertEqual(balance.remaining_hours, Decimal("-2.5"))
+
+    def test_decimal_field_precision(self):
+        """Test that decimal fields maintain proper precision."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("10.555"),  # Will be rounded to 2 decimal places
+            hours_consumed=Decimal("3.333"),
+            balance_amount=Decimal("123.456")  # Will be rounded to 2 decimal places
+        )
+        
+        # Refresh from database to check actual stored values
+        balance.refresh_from_db()
+        
+        # hours fields have 2 decimal places
+        self.assertEqual(balance.hours_purchased, Decimal("10.56"))
+        self.assertEqual(balance.hours_consumed, Decimal("3.33"))
+        # balance_amount field has 2 decimal places
+        self.assertEqual(balance.balance_amount, Decimal("123.46"))
+
+    def test_negative_values_allowed(self):
+        """Test that negative values are allowed for overdraft scenarios."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("5.0"),
+            hours_consumed=Decimal("8.0"),  # More consumed than purchased
+            balance_amount=Decimal("-30.00")  # Negative balance
+        )
+        
+        self.assertEqual(balance.hours_consumed, Decimal("8.0"))
+        self.assertEqual(balance.balance_amount, Decimal("-30.00"))
+        self.assertEqual(balance.remaining_hours, Decimal("-3.0"))
+
+    def test_zero_values_allowed(self):
+        """Test that zero values are allowed for all fields."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("0.0"),
+            hours_consumed=Decimal("0.0"),
+            balance_amount=Decimal("0.00")
+        )
+        
+        self.assertEqual(balance.hours_purchased, Decimal("0.0"))
+        self.assertEqual(balance.hours_consumed, Decimal("0.0"))
+        self.assertEqual(balance.balance_amount, Decimal("0.00"))
+        self.assertEqual(balance.remaining_hours, Decimal("0.0"))
+
+    def test_large_values_handling(self):
+        """Test handling of large decimal values within field limits."""
+        # Test max values based on max_digits and decimal_places
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("999.99"),  # 5 digits, 2 decimal places
+            hours_consumed=Decimal("500.25"),
+            balance_amount=Decimal("9999.99")  # 6 digits, 2 decimal places
+        )
+        
+        self.assertEqual(balance.hours_purchased, Decimal("999.99"))
+        self.assertEqual(balance.hours_consumed, Decimal("500.25"))
+        self.assertEqual(balance.balance_amount, Decimal("9999.99"))
+
+    def test_string_representation(self):
+        """Test the string representation of StudentAccountBalance."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("10.0"),
+            hours_consumed=Decimal("3.5"),
+            balance_amount=Decimal("85.50")
+        )
+        
+        expected_str = f"Account Balance for {self.user.name}: €85.50 (6.5h remaining)"
+        self.assertEqual(str(balance), expected_str)
+
+    def test_model_meta_properties(self):
+        """Test model meta properties like verbose names and ordering."""
+        meta = StudentAccountBalance._meta
+        
+        self.assertEqual(meta.verbose_name, "Student Account Balance")
+        self.assertEqual(meta.verbose_name_plural, "Student Account Balances")
+
+    def test_related_name_from_user(self):
+        """Test accessing StudentAccountBalance from User via related_name."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("10.0"),
+            hours_consumed=Decimal("3.5"),
+            balance_amount=Decimal("85.50")
+        )
+        
+        # Test that we can access the balance from the user
+        self.assertEqual(self.user.account_balance, balance)
+
+    def test_updating_existing_balance(self):
+        """Test updating an existing StudentAccountBalance."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("10.0"),
+            hours_consumed=Decimal("3.5"),
+            balance_amount=Decimal("85.50")
+        )
+        
+        # Update values
+        balance.hours_consumed = Decimal("5.0")
+        balance.balance_amount = Decimal("65.00")
+        balance.save()
+        
+        # Refresh and verify
+        balance.refresh_from_db()
+        self.assertEqual(balance.hours_consumed, Decimal("5.0"))
+        self.assertEqual(balance.balance_amount, Decimal("65.00"))
+        self.assertEqual(balance.remaining_hours, Decimal("5.0"))
+
+    def test_multiple_users_can_have_accounts(self):
+        """Test that multiple users can each have their own account balance."""
+        user2 = CustomUser.objects.create_user(
+            email="student2@example.com",
+            name="Student Two",
+            password="testpass123"
+        )
+        
+        balance1 = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("10.0"),
+            hours_consumed=Decimal("2.0"),
+            balance_amount=Decimal("80.00")
+        )
+        
+        balance2 = StudentAccountBalance.objects.create(
+            student=user2,
+            hours_purchased=Decimal("15.0"),
+            hours_consumed=Decimal("5.0"),
+            balance_amount=Decimal("100.00")
+        )
+        
+        self.assertEqual(balance1.student, self.user)
+        self.assertEqual(balance2.student, user2)
+        self.assertEqual(balance1.remaining_hours, Decimal("8.0"))
+        self.assertEqual(balance2.remaining_hours, Decimal("10.0"))
+
+    def test_cascade_delete_with_user(self):
+        """Test that StudentAccountBalance is deleted when User is deleted."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("10.0"),
+            hours_consumed=Decimal("3.5"),
+            balance_amount=Decimal("85.50")
+        )
+        
+        balance_id = balance.id
+        
+        # Delete the user
+        self.user.delete()
+        
+        # Verify the balance is also deleted
+        with self.assertRaises(StudentAccountBalance.DoesNotExist):
+            StudentAccountBalance.objects.get(id=balance_id)
