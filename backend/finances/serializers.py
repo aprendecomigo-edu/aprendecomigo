@@ -2,9 +2,11 @@
 Serializers for the finances app.
 """
 
+import re
 from decimal import Decimal
 from typing import Any
 
+from django.core.validators import EmailValidator
 from rest_framework import serializers
 
 from .models import (
@@ -332,3 +334,198 @@ class PricingPlanSerializer(serializers.ModelSerializer):
         if price_per_hour is not None:
             return str(price_per_hour)
         return None
+
+
+class StudentInfoSerializer(serializers.Serializer):
+    """
+    Serializer for student information in purchase initiation requests.
+    
+    Validates and sanitizes student data for both authenticated users and guests.
+    Includes comprehensive validation for name and email fields.
+    """
+    
+    name = serializers.CharField(
+        max_length=150,
+        help_text="Student's full name"
+    )
+    email = serializers.EmailField(
+        help_text="Student's email address"
+    )
+    
+    def validate_name(self, value: str) -> str:
+        """
+        Validate and sanitize student name.
+        
+        Args:
+            value: The name to validate
+            
+        Returns:
+            Cleaned name string
+            
+        Raises:
+            ValidationError: If name is invalid
+        """
+        if not value or not value.strip():
+            raise serializers.ValidationError("Name cannot be empty")
+        
+        # Strip whitespace and limit length
+        cleaned_name = value.strip()[:150]
+        
+        # Basic sanitization - remove potentially dangerous characters
+        # Allow letters, spaces, hyphens, apostrophes, and dots
+        if not re.match(r"^[a-zA-ZÀ-ÿ\s\-'\.]+$", cleaned_name):
+            raise serializers.ValidationError(
+                "Name contains invalid characters. Only letters, spaces, hyphens, "
+                "apostrophes, and dots are allowed."
+            )
+        
+        return cleaned_name
+    
+    def validate_email(self, value: str) -> str:
+        """
+        Validate student email address.
+        
+        Args:
+            value: The email to validate
+            
+        Returns:
+            Normalized email string
+            
+        Raises:
+            ValidationError: If email is invalid
+        """
+        if not value:
+            raise serializers.ValidationError("Email address is required")
+        
+        # Normalize email to lowercase
+        normalized_email = value.lower().strip()
+        
+        # Use Django's EmailValidator for comprehensive validation
+        email_validator = EmailValidator()
+        try:
+            email_validator(normalized_email)
+        except Exception:
+            raise serializers.ValidationError("Please provide a valid email address")
+        
+        return normalized_email
+
+
+class PurchaseInitiationRequestSerializer(serializers.Serializer):
+    """
+    Serializer for purchase initiation API requests.
+    
+    Handles validation of plan selection and student information for both
+    authenticated users and guest purchases. Ensures data integrity and
+    security through comprehensive field validation.
+    """
+    
+    plan_id = serializers.IntegerField(
+        min_value=1,
+        help_text="ID of the pricing plan to purchase"
+    )
+    student_info = StudentInfoSerializer(
+        help_text="Student information including name and email"
+    )
+    
+    def validate_plan_id(self, value: int) -> int:
+        """
+        Validate that the pricing plan exists and is active.
+        
+        Args:
+            value: The plan ID to validate
+            
+        Returns:
+            Validated plan ID
+            
+        Raises:
+            ValidationError: If plan doesn't exist or is not active
+        """
+        try:
+            plan = PricingPlan.objects.get(id=value)
+        except PricingPlan.DoesNotExist:
+            raise serializers.ValidationError(
+                f"Pricing plan with ID {value} not found"
+            )
+        
+        if not plan.is_active:
+            raise serializers.ValidationError(
+                f"Pricing plan '{plan.name}' is not currently active"
+            )
+        
+        return value
+    
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        """
+        Perform cross-field validation.
+        
+        Args:
+            attrs: Dictionary of validated attributes
+            
+        Returns:
+            Validated attributes dictionary
+            
+        Raises:
+            ValidationError: If cross-field validation fails
+        """
+        # Additional business logic validation can be added here
+        # For example, checking if user already has an active subscription
+        # when trying to purchase another subscription
+        
+        return attrs
+
+
+class PurchaseInitiationResponseSerializer(serializers.Serializer):
+    """
+    Serializer for purchase initiation API responses.
+    
+    Provides consistent response format for successful purchase initiations,
+    including all necessary data for frontend payment completion.
+    """
+    
+    success = serializers.BooleanField(
+        help_text="Whether the purchase initiation was successful"
+    )
+    client_secret = serializers.CharField(
+        help_text="Stripe payment intent client secret for frontend"
+    )
+    transaction_id = serializers.IntegerField(
+        help_text="Internal transaction ID for tracking"
+    )
+    payment_intent_id = serializers.CharField(
+        help_text="Stripe payment intent ID"
+    )
+    plan_details = serializers.DictField(
+        help_text="Details of the purchased plan"
+    )
+    message = serializers.CharField(
+        required=False,
+        help_text="Optional success message"
+    )
+
+
+class PurchaseInitiationErrorSerializer(serializers.Serializer):
+    """
+    Serializer for purchase initiation API error responses.
+    
+    Provides consistent error format with detailed information for debugging
+    and user feedback.
+    """
+    
+    success = serializers.BooleanField(
+        default=False,
+        help_text="Always false for error responses"
+    )
+    error_type = serializers.CharField(
+        help_text="Type of error that occurred"
+    )
+    message = serializers.CharField(
+        help_text="Human-readable error message"
+    )
+    details = serializers.DictField(
+        required=False,
+        help_text="Additional error details"
+    )
+    field_errors = serializers.DictField(
+        required=False,
+        help_text="Field-specific validation errors"
+    )

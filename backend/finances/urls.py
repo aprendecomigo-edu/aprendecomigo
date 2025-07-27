@@ -13,6 +13,7 @@ from .views import (
     TeacherCompensationRuleViewSet,
     TeacherPaymentEntryViewSet,
     active_pricing_plans,
+    purchase_initiate,
     stripe_config,
     stripe_connection_test,
     stripe_webhook,
@@ -36,6 +37,8 @@ urlpatterns = [
     path("api/", include(router.urls)),
     # Pricing plans endpoint
     path("api/pricing-plans/", active_pricing_plans, name="pricing-plans-list"),
+    # Purchase initiation endpoint
+    path("api/purchase/initiate/", purchase_initiate, name="purchase-initiate"),
     # Stripe integration endpoints
     path("api/stripe/config/", stripe_config, name="stripe-config"),
     path("api/stripe/test-connection/", stripe_connection_test, name="stripe-connection-test"),

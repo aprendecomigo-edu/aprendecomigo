@@ -241,6 +241,8 @@ REST_FRAMEWORK = {
         "user": "100/minute",
         "auth_code_request": "5/hour",  # Limit code requests to 5 per hour per IP
         "auth_code_verify": "10/hour",  # Limit verification attempts to 10 per hour per IP
+        "purchase_initiation": "10/hour",  # Limit purchase attempts to 10 per hour per IP
+        "purchase_initiation_email": "5/hour",  # Limit purchase attempts to 5 per hour per email
     },
 }
 

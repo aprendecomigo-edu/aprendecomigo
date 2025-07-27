@@ -17,16 +17,21 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from rest_framework import status, viewsets
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes, throttle_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from common.throttles import PurchaseInitiationThrottle, PurchaseInitiationEmailThrottle
 
 from .models import (
     ClassSession,
+    PlanType,
     PricingPlan,
+    PurchaseTransaction,
     SchoolBillingSettings,
+    StudentAccountBalance,
     TeacherCompensationRule,
     TeacherPaymentEntry,
+    TransactionPaymentStatus,
 )
 from .serializers import (
     BulkPaymentProcessorSerializer,
@@ -34,6 +39,9 @@ from .serializers import (
     MonthlyPaymentSummarySerializer,
     PaymentCalculationSerializer,
     PricingPlanSerializer,
+    PurchaseInitiationRequestSerializer,
+    PurchaseInitiationResponseSerializer,
+    PurchaseInitiationErrorSerializer,
     SchoolBillingSettingsSerializer,
     TeacherCompensationRuleSerializer,
     TeacherPaymentEntrySerializer,
@@ -951,3 +959,299 @@ def stripe_connection_test(request):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['POST'])
+@permission_classes([])  # Allow both authenticated and unauthenticated access
+@throttle_classes([PurchaseInitiationThrottle, PurchaseInitiationEmailThrottle])
+def purchase_initiate(request):
+    """
+    API endpoint to initiate tutoring hour purchases for students.
+    
+    This endpoint allows both authenticated users and guests to initiate purchases
+    of tutoring hour packages or subscriptions. It integrates with Stripe to create
+    payment intents and maintains transaction records for order management.
+    
+    Features:
+    - Support for both package and subscription plan types
+    - Guest user creation and management
+    - Stripe payment intent creation with proper metadata
+    - Atomic database transactions for consistency
+    - Comprehensive validation and error handling
+    - Security measures against common attacks
+    - Rate limiting: 10 attempts/hour per IP, 5 attempts/hour per email
+    
+    Request Format:
+    {
+        "plan_id": 1,
+        "student_info": {
+            "name": "Student Name",
+            "email": "student@example.com"
+        }
+    }
+    
+    Response Format (Success):
+    {
+        "success": true,
+        "client_secret": "pi_xxx_secret_yyy",
+        "transaction_id": 123,
+        "payment_intent_id": "pi_xxx",
+        "plan_details": {...},
+        "message": "Purchase initiated successfully"
+    }
+    
+    Response Format (Error):
+    {
+        "success": false,
+        "error_type": "validation_error",
+        "message": "Description of the error",
+        "details": {...}
+    }
+    
+    Args:
+        request: Django HTTP request containing purchase data
+        
+    Returns:
+        Response: JSON response with payment intent details or error information
+    """
+    logger.info(f"Purchase initiation request from user: {request.user if request.user.is_authenticated else 'Guest'}")
+    
+    try:
+        # DRF automatically parses JSON, so we can just use request.data
+        # Handle JSON parsing errors are automatically handled by DRF
+        request_data = request.data
+        
+        # Validate request data using serializer
+        serializer = PurchaseInitiationRequestSerializer(data=request_data)
+        if not serializer.is_valid():
+            logger.warning(f"Invalid purchase initiation request: {serializer.errors}")
+            
+            # Create a more descriptive error message
+            error_message = "Invalid request data"
+            if serializer.errors:
+                # Get the first error to make message more specific
+                first_field = next(iter(serializer.errors.keys()))
+                field_errors = serializer.errors[first_field]
+                if isinstance(field_errors, list) and field_errors:
+                    first_error = str(field_errors[0])
+                elif isinstance(field_errors, dict):
+                    # Handle nested field errors (like student_info.email)
+                    first_nested_field = next(iter(field_errors.keys()))
+                    nested_errors = field_errors[first_nested_field]
+                    if isinstance(nested_errors, list) and nested_errors:
+                        first_error = str(nested_errors[0])
+                        first_field = f"{first_field}.{first_nested_field}"
+                    else:
+                        first_error = "is invalid"
+                else:
+                    first_error = "is invalid"
+                error_message = f"{first_field}: {first_error}"
+            
+            return Response(
+                {
+                    'success': False,
+                    'error_type': 'validation_error',
+                    'message': error_message,
+                    'field_errors': serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        validated_data = serializer.validated_data
+        plan_id = validated_data['plan_id']
+        student_info = validated_data['student_info']
+        
+        # Get the pricing plan
+        try:
+            pricing_plan = PricingPlan.objects.get(id=plan_id, is_active=True)
+        except PricingPlan.DoesNotExist:
+            logger.error(f"Pricing plan {plan_id} not found or inactive")
+            return Response(
+                {
+                    'success': False,
+                    'error_type': 'validation_error',
+                    'message': f'Pricing plan with ID {plan_id} not found or inactive'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Determine the student user
+        student_user = _get_or_create_student_user(
+            request.user if request.user.is_authenticated else None,
+            student_info
+        )
+        
+        # Ensure student has an account balance record
+        student_balance, created = StudentAccountBalance.objects.get_or_create(
+            student=student_user,
+            defaults={
+                'hours_purchased': Decimal('0.00'),
+                'hours_consumed': Decimal('0.00'),
+                'balance_amount': Decimal('0.00')
+            }
+        )
+        
+        if created:
+            logger.info(f"Created new student account balance for user {student_user.id}")
+        
+        # Prepare metadata for Stripe and transaction
+        purchase_metadata = {
+            'plan_id': pricing_plan.id,
+            'plan_name': pricing_plan.name,
+            'plan_type': pricing_plan.plan_type,
+            'hours_included': str(pricing_plan.hours_included),
+            'price_eur': str(pricing_plan.price_eur),
+            'student_name': student_user.name,
+            'student_email': student_user.email,
+            'amount': str(pricing_plan.price_eur)
+        }
+        
+        # Add subscription indicator for proper type detection
+        if pricing_plan.plan_type == PlanType.SUBSCRIPTION:
+            purchase_metadata['subscription_name'] = pricing_plan.name
+        
+        # Add validity information for packages
+        if pricing_plan.plan_type == PlanType.PACKAGE and pricing_plan.validity_days:
+            purchase_metadata['validity_days'] = pricing_plan.validity_days
+        
+        # Use atomic transaction for consistency
+        with transaction.atomic():
+            # Create payment intent using PaymentService
+            payment_service = PaymentService()
+            payment_result = payment_service.create_payment_intent(
+                user=student_user,
+                pricing_plan_id=str(pricing_plan.id),
+                metadata=purchase_metadata
+            )
+            
+            if not payment_result['success']:
+                logger.error(f"Payment service failed: {payment_result}")
+                return _handle_payment_service_error(payment_result)
+            
+            # Update transaction status to PENDING for purchase initiation
+            transaction_id = payment_result['transaction_id']
+            purchase_transaction = PurchaseTransaction.objects.get(id=transaction_id)
+            purchase_transaction.payment_status = TransactionPaymentStatus.PENDING
+            purchase_transaction.save(update_fields=['payment_status', 'updated_at'])
+        
+        # Prepare successful response
+        plan_details = {
+            'id': pricing_plan.id,
+            'name': pricing_plan.name,
+            'description': pricing_plan.description,
+            'plan_type': pricing_plan.plan_type,
+            'hours_included': str(pricing_plan.hours_included),
+            'price_eur': str(pricing_plan.price_eur),
+            'validity_days': pricing_plan.validity_days,
+            'price_per_hour': str(pricing_plan.price_per_hour) if pricing_plan.price_per_hour else None
+        }
+        
+        response_data = {
+            'success': True,
+            'client_secret': payment_result['client_secret'],
+            'transaction_id': payment_result['transaction_id'],
+            'payment_intent_id': payment_result['payment_intent_id'],
+            'plan_details': plan_details,
+            'message': f'Purchase of {pricing_plan.name} initiated successfully'
+        }
+        
+        logger.info(
+            f"Purchase initiated successfully for user {student_user.id}, "
+            f"plan {pricing_plan.id}, transaction {payment_result['transaction_id']}"
+        )
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        logger.error(f"Unexpected error in purchase initiation: {str(e)}", exc_info=True)
+        return Response(
+            {
+                'success': False,
+                'error_type': 'internal_error',
+                'message': 'An unexpected error occurred while processing your purchase'
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+def _get_or_create_student_user(authenticated_user, student_info):
+    """
+    Get or create a student user based on authentication status and provided info.
+    
+    For authenticated users, uses the authenticated user if email matches,
+    otherwise creates/finds user by email. For unauthenticated requests,
+    creates a new user or finds existing user by email.
+    
+    Args:
+        authenticated_user: The authenticated user or None for guests
+        student_info: Dictionary containing name and email
+        
+    Returns:
+        CustomUser: The student user to use for the transaction
+    """
+    from accounts.models import CustomUser
+    
+    student_email = student_info['email']
+    student_name = student_info['name']
+    
+    # If user is authenticated and email matches, use authenticated user
+    if authenticated_user and authenticated_user.email.lower() == student_email.lower():
+        return authenticated_user
+    
+    # Try to find existing user by email
+    try:
+        existing_user = CustomUser.objects.get(email__iexact=student_email)
+        logger.info(f"Found existing user for email {student_email}")
+        return existing_user
+    except CustomUser.DoesNotExist:
+        pass
+    
+    # Create new user for guest purchase
+    logger.info(f"Creating new user for guest purchase: {student_email}")
+    new_user = CustomUser.objects.create_user(
+        email=student_email,
+        name=student_name,
+        password=None  # No password for guest users
+    )
+    
+    return new_user
+
+
+def _handle_payment_service_error(payment_result):
+    """
+    Handle errors from PaymentService and return appropriate HTTP response.
+    
+    Args:
+        payment_result: Result dictionary from PaymentService
+        
+    Returns:
+        Response: Appropriate HTTP response for the error type
+    """
+    error_type = payment_result.get('error_type', 'unknown_error')
+    error_message = payment_result.get('message', 'Payment processing failed')
+    
+    # Map payment service error types to HTTP status codes
+    status_code_mapping = {
+        'validation_error': status.HTTP_400_BAD_REQUEST,
+        'card_error': status.HTTP_400_BAD_REQUEST,
+        'invalid_request_error': status.HTTP_400_BAD_REQUEST,
+        'authentication_error': status.HTTP_401_UNAUTHORIZED,
+        'api_connection_error': status.HTTP_503_SERVICE_UNAVAILABLE,
+        'api_error': status.HTTP_500_INTERNAL_SERVER_ERROR,
+        'rate_limit_error': status.HTTP_429_TOO_MANY_REQUESTS,
+        'unknown_error': status.HTTP_500_INTERNAL_SERVER_ERROR
+    }
+    
+    http_status = status_code_mapping.get(error_type, status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    error_response = {
+        'success': False,
+        'error_type': error_type,
+        'message': error_message
+    }
+    
+    # Add additional details if available
+    if 'details' in payment_result:
+        error_response['details'] = payment_result['details']
+    
+    return Response(error_response, status=http_status)
