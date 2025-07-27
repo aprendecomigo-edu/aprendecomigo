@@ -1,21 +1,15 @@
 #!/usr/bin/env python
 """
-Manual test script for invite existing teacher functionality.
-Run this with: python manage.py shell < test_invite_existing.py
+Test script for invite existing teacher functionality.
+Converted to pytest format.
 """
 
-import os
-
-import django
-
-# Setup Django
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "aprendecomigo.settings")
-django.setup()
-
+import pytest
 from accounts.db_queries import create_school_invitation
 from accounts.models import CustomUser, School, SchoolMembership, SchoolRole
 
 
+@pytest.mark.django_db
 def test_invite_existing_flow():
     """Test the complete invite existing teacher flow."""
     print("\n🧪 Testing Invite Existing Teacher Flow")
@@ -115,9 +109,15 @@ def test_invite_existing_flow():
     )
 
     print("\n🎉 Test completed successfully!")
-    return True
+    
+    # Assert that all test conditions are met
+    assert hasattr(existing_user, 'teacher_profile'), "User should have teacher profile"
+    assert teacher_memberships.count() == 1, "User should have exactly one teacher membership"
+    assert teacher_memberships.first().school == school, "Membership should be for the correct school"
+    assert invitation.is_accepted, "Invitation should be marked as accepted"
 
 
+@pytest.mark.django_db
 def test_api_endpoints():
     """Show the available API endpoints."""
     print("\n📡 Available API Endpoints")

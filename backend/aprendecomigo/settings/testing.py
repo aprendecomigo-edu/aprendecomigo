@@ -63,7 +63,13 @@ STORAGES = {
 # Use an in-memory email backend
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
+# Silence Swagger warnings in tests
+SWAGGER_USE_COMPAT_RENDERERS = False
+
 
 # Import all settings from base.py
 from .base import *  # noqa: F403, E402
+
+# Allow testserver for Django test client
+ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
 
