@@ -1,0 +1,151 @@
+TEST_ID: stripe-001
+TEST_NAME: Stripe API Configuration
+PURPOSE: Validate Stripe API configuration, environment setup, key validation, and connection testing
+
+ENVIRONMENT_SETUP:
+- Django development server running on localhost:8000
+- Frontend server running on localhost:8081
+- Test Stripe API keys configured in environment
+- PostgreSQL or SQLite database available
+- Valid .env file with Stripe configuration
+
+PRE_CONDITIONS:
+- Development servers are stopped initially
+- Environment variables are properly configured
+- Test Stripe keys (sk_test_, pk_test_) are available
+- User authentication system is functional
+- Admin user account exists for testing
+
+TEST_STEPS:
+
+1. ENVIRONMENT_VALIDATION
+   - Navigate to backend directory
+   - Verify .env file contains required Stripe settings
+   - Check STRIPE_SECRET_KEY format (should be sk_test_ for development)
+   - Check STRIPE_PUBLIC_KEY format (should be pk_test_ for development)
+   - Check STRIPE_WEBHOOK_SECRET is configured
+   - Screenshot: Environment configuration verification
+
+2. SERVER_STARTUP
+   - Start development servers with: make dev
+   - Wait for both Django and Expo servers to be ready
+   - Verify no startup errors related to Stripe configuration
+   - Check server logs for successful Stripe initialization
+   - Screenshot: Server startup success
+
+3. DJANGO_STRIPE_SERVICE_VALIDATION
+   - Open Django shell: python manage.py shell
+   - Import StripeService: from finances.services.stripe_base import StripeService
+   - Initialize service: service = StripeService()
+   - Verify no configuration errors during initialization
+   - Check service string representation shows correct environment
+   - Screenshot: Django shell Stripe service validation
+
+4. API_KEY_ACCESS_VALIDATION
+   - In Django shell, test: service.get_public_key()
+   - Verify returns correct pk_test_ key
+   - Test: service.get_webhook_secret()
+   - Verify returns configured webhook secret
+   - Ensure secret key is not exposed in logs or string representations
+   - Screenshot: API key access validation
+
+5. STRIPE_API_CONNECTION_TEST
+   - In Django shell, test: result = service.verify_api_connection()
+   - Verify result['success'] is True
+   - Check result contains account_id and message
+   - Verify connection uses correct test environment
+   - Test with invalid key to verify error handling works
+   - Screenshot: API connection test results
+
+6. FRONTEND_CONFIG_ENDPOINT_TEST
+   - Navigate to frontend at localhost:8081
+   - Authenticate as admin user
+   - Open browser developer tools
+   - Make API request to: http://localhost:8000/finances/api/stripe/config/
+   - Verify response contains public_key
+   - Verify response success: true
+   - Confirm secret key is NOT exposed in response
+   - Screenshot: Frontend config endpoint response
+
+7. ADMIN_CONNECTION_TEST_ENDPOINT
+   - While authenticated, make API request to: http://localhost:8000/finances/api/stripe/test-connection/
+   - Verify response contains success: true
+   - Check response includes account_id and connection message
+   - Verify proper authentication required (test without auth)
+   - Screenshot: Admin connection test endpoint
+
+8. ENVIRONMENT_KEY_VALIDATION
+   - Test development environment with live keys (should fail)
+   - In Django shell: from django.conf import settings
+   - Temporarily modify settings with live key format
+   - Verify StripeService initialization raises ValueError
+   - Restore test keys and verify working again
+   - Screenshot: Environment key validation
+
+9. CONFIGURATION_ERROR_HANDLING
+   - Test missing STRIPE_SECRET_KEY configuration
+   - Test missing STRIPE_PUBLIC_KEY configuration  
+   - Test missing STRIPE_WEBHOOK_SECRET configuration
+   - Verify each raises appropriate ValueError with clear message
+   - Test empty string values for each setting
+   - Screenshot: Configuration error handling
+
+10. API_VERSION_VERIFICATION
+    - In Django shell, import stripe and check: stripe.api_version
+    - Verify version is set to "2023-10-16" as configured
+    - Test that service maintains consistent API version
+    - Verify version is logged appropriately
+    - Screenshot: API version verification
+
+EXPECTED_RESULTS:
+- All Stripe configuration loads successfully
+- Service initializes without errors in development environment
+- Public key is accessible via safe methods
+- Secret key is properly protected and not exposed
+- API connection test succeeds with test account
+- Frontend can retrieve configuration safely
+- Environment validation prevents key type mismatches
+- Error handling provides clear messages for configuration issues
+- Consistent API version is maintained
+
+PASS_CRITERIA:
+✅ Environment validation passes with test keys
+✅ StripeService initializes successfully
+✅ API connection test returns success with account info
+✅ Frontend config endpoint returns public key only
+✅ Admin connection test endpoint works with authentication
+✅ Environment key validation prevents live keys in development
+✅ All configuration errors are handled gracefully
+✅ API version is set correctly and consistently
+✅ No sensitive data exposed in logs or responses
+✅ All security validations pass
+
+FAIL_CRITERIA:
+❌ Any Stripe configuration fails to load
+❌ Service initialization raises unhandled errors
+❌ API connection test fails with valid test keys
+❌ Secret key is exposed in any frontend response
+❌ Live keys are accepted in development environment
+❌ Configuration errors lack clear error messages
+❌ API version is incorrect or inconsistent
+❌ Authentication bypass in admin endpoints
+❌ Sensitive data appears in logs or error messages
+
+FILES_TO_VERIFY:
+- backend/aprendecomigo/settings/base.py (Stripe settings)
+- backend/finances/services/stripe_base.py (Service implementation)
+- backend/finances/views.py (API endpoints)
+- backend/finances/urls.py (URL routing)
+- backend/env.example (Configuration template)
+
+SCREENSHOTS_REQUIRED:
+1. Environment configuration verification
+2. Server startup success
+3. Django shell Stripe service validation
+4. API key access validation
+5. API connection test results
+6. Frontend config endpoint response
+7. Admin connection test endpoint
+8. Environment key validation
+9. Configuration error handling
+10. API version verification

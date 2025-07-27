@@ -296,6 +296,11 @@ SMS_API_URL = os.getenv("SMS_API_URL", default="https://gatewayapi.com/rest/mtsm
 SMS_API_KEY = os.getenv("SMS_API_KEY", default="")
 SMS_SENDER_ID = os.getenv("SMS_SENDER_ID", default="AprendeCoM")
 
+# Stripe settings
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+
 # Channel Layers Configuration
 CHANNEL_LAYERS = {
     "default": {

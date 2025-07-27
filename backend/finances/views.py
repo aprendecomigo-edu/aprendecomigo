@@ -2,14 +2,20 @@
 API views for the finances app.
 """
 
+import json
+import logging
 from decimal import Decimal
 
 from accounts.models import School, TeacherProfile
 from accounts.permissions import SchoolPermissionMixin
 from django.db.models import Sum
+from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from rest_framework import status, viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -29,6 +35,7 @@ from .serializers import (
     TeacherPaymentEntrySerializer,
 )
 from .services import BulkPaymentProcessor, TeacherPaymentCalculator
+from .services.stripe_base import StripeService
 
 
 class SchoolBillingSettingsViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
@@ -479,3 +486,249 @@ class TeacherPaymentEntryViewSet(SchoolPermissionMixin, viewsets.ReadOnlyModelVi
 
         except TeacherProfile.DoesNotExist as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Initialize logger for webhook handling
+logger = logging.getLogger(__name__)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def stripe_webhook(request):
+    """
+    Handle Stripe webhook events.
+    
+    This endpoint receives webhook events from Stripe and processes them
+    according to the platform's business logic. The endpoint verifies
+    the webhook signature and handles supported event types.
+    """
+    try:
+        # Get the request body and Stripe signature
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+        
+        if not sig_header:
+            logger.warning("Missing Stripe signature header in webhook request")
+            return HttpResponse("Missing signature", status=400)
+        
+        # Initialize Stripe service and construct event
+        stripe_service = StripeService()
+        result = stripe_service.construct_webhook_event(
+            payload.decode('utf-8'), 
+            sig_header
+        )
+        
+        if not result['success']:
+            logger.error(f"Webhook signature verification failed: {result['message']}")
+            return HttpResponse("Invalid signature", status=400)
+        
+        event = result['event']
+        event_type = event['type']
+        
+        # Check if event type is supported
+        if not stripe_service.is_webhook_event_type_supported(event_type):
+            logger.info(f"Unsupported webhook event type: {event_type}")
+            return HttpResponse("Event type not supported", status=200)
+        
+        # Process the event based on type
+        success = _process_webhook_event(event, event_type)
+        
+        if success:
+            logger.info(f"Successfully processed webhook event: {event_type} ({event['id']})")
+            return HttpResponse("Webhook processed successfully", status=200)
+        else:
+            logger.error(f"Failed to process webhook event: {event_type} ({event['id']})")
+            return HttpResponse("Webhook processing failed", status=500)
+            
+    except Exception as e:
+        logger.error(f"Unexpected error in Stripe webhook handler: {e}")
+        return HttpResponse("Internal server error", status=500)
+
+
+def _process_webhook_event(event, event_type):
+    """
+    Process individual webhook events based on their type.
+    
+    Args:
+        event: The Stripe event object
+        event_type: The type of the event
+        
+    Returns:
+        bool: True if processing was successful, False otherwise
+    """
+    try:
+        if event_type == 'payment_intent.succeeded':
+            return _handle_payment_intent_succeeded(event)
+        elif event_type == 'payment_intent.payment_failed':
+            return _handle_payment_intent_failed(event)
+        elif event_type in ['customer.created', 'customer.updated']:
+            return _handle_customer_event(event, event_type)
+        elif event_type in ['invoice.payment_succeeded', 'invoice.payment_failed']:
+            return _handle_invoice_event(event, event_type)
+        else:
+            # For supported but not yet implemented event types
+            logger.info(f"Event type {event_type} is supported but not yet implemented")
+            return True
+            
+    except Exception as e:
+        logger.error(f"Error processing {event_type} event: {e}")
+        return False
+
+
+def _handle_payment_intent_succeeded(event):
+    """
+    Handle successful payment intent events.
+    
+    Args:
+        event: The Stripe event object
+        
+    Returns:
+        bool: True if processing was successful
+    """
+    payment_intent = event['data']['object']
+    payment_intent_id = payment_intent['id']
+    
+    logger.info(f"Processing successful payment intent: {payment_intent_id}")
+    
+    # TODO: Implement payment intent success logic
+    # This would typically involve:
+    # 1. Finding the associated PurchaseTransaction
+    # 2. Updating the transaction status to 'completed'
+    # 3. Adding hours to student account balance
+    # 4. Sending confirmation notifications
+    
+    return True
+
+
+def _handle_payment_intent_failed(event):
+    """
+    Handle failed payment intent events.
+    
+    Args:
+        event: The Stripe event object
+        
+    Returns:
+        bool: True if processing was successful
+    """
+    payment_intent = event['data']['object']
+    payment_intent_id = payment_intent['id']
+    
+    logger.info(f"Processing failed payment intent: {payment_intent_id}")
+    
+    # TODO: Implement payment intent failure logic
+    # This would typically involve:
+    # 1. Finding the associated PurchaseTransaction
+    # 2. Updating the transaction status to 'failed'
+    # 3. Sending failure notifications
+    # 4. Potentially retrying or handling recovery
+    
+    return True
+
+
+def _handle_customer_event(event, event_type):
+    """
+    Handle customer-related events.
+    
+    Args:
+        event: The Stripe event object
+        event_type: The specific event type
+        
+    Returns:
+        bool: True if processing was successful
+    """
+    customer = event['data']['object']
+    customer_id = customer['id']
+    
+    logger.info(f"Processing customer event: {event_type} for {customer_id}")
+    
+    # TODO: Implement customer event logic
+    # This would typically involve:
+    # 1. Syncing customer data with local user records
+    # 2. Updating customer information
+    # 3. Handling customer deletions
+    
+    return True
+
+
+def _handle_invoice_event(event, event_type):
+    """
+    Handle invoice-related events.
+    
+    Args:
+        event: The Stripe event object
+        event_type: The specific event type
+        
+    Returns:
+        bool: True if processing was successful
+    """
+    invoice = event['data']['object']
+    invoice_id = invoice['id']
+    
+    logger.info(f"Processing invoice event: {event_type} for {invoice_id}")
+    
+    # TODO: Implement invoice event logic
+    # This would typically involve:
+    # 1. Processing subscription renewals
+    # 2. Handling invoice payment failures
+    # 3. Managing subscription lifecycle
+    
+    return True
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def stripe_config(request):
+    """
+    Get Stripe configuration for frontend use.
+    
+    Returns the public key and other safe configuration needed
+    by the frontend to initialize Stripe.
+    """
+    try:
+        stripe_service = StripeService()
+        
+        config_data = {
+            'public_key': stripe_service.get_public_key(),
+            'success': True
+        }
+        
+        return Response(config_data)
+        
+    except Exception as e:
+        logger.error(f"Error getting Stripe configuration: {e}")
+        return Response(
+            {
+                'success': False,
+                'error': 'Unable to load payment configuration'
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def stripe_connection_test(request):
+    """
+    Test Stripe API connection.
+    
+    This endpoint allows administrators to verify that the Stripe
+    integration is working correctly.
+    """
+    try:
+        stripe_service = StripeService()
+        result = stripe_service.verify_api_connection()
+        
+        if result['success']:
+            return Response(result)
+        else:
+            return Response(result, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+    except Exception as e:
+        logger.error(f"Error testing Stripe connection: {e}")
+        return Response(
+            {
+                'success': False,
+                'error': 'Unable to test payment service connection'
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

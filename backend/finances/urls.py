@@ -10,6 +10,9 @@ from .views import (
     SchoolBillingSettingsViewSet,
     TeacherCompensationRuleViewSet,
     TeacherPaymentEntryViewSet,
+    stripe_config,
+    stripe_connection_test,
+    stripe_webhook,
 )
 
 # Create a router and register our viewsets
@@ -28,4 +31,8 @@ router.register(r"payments", TeacherPaymentEntryViewSet, basename="teacher-payme
 # URL patterns
 urlpatterns = [
     path("api/", include(router.urls)),
+    # Stripe integration endpoints
+    path("api/stripe/config/", stripe_config, name="stripe-config"),
+    path("api/stripe/test-connection/", stripe_connection_test, name="stripe-connection-test"),
+    path("webhooks/stripe/", stripe_webhook, name="stripe-webhook"),
 ]

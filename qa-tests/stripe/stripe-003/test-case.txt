@@ -1,0 +1,213 @@
+TEST_ID: stripe-003
+TEST_NAME: Frontend Integration
+PURPOSE: Validate frontend integration with Stripe including configuration endpoints, public key access, environment handling, and payment flow integration
+
+ENVIRONMENT_SETUP:
+- Django backend server running on localhost:8000
+- React Native frontend server running on localhost:8081
+- Valid Stripe test keys configured
+- User authentication system functional
+- API endpoints accessible from frontend
+
+PRE_CONDITIONS:
+- Both servers are running successfully
+- User can authenticate and access the application
+- Stripe configuration endpoints are available
+- Frontend has proper API client setup
+- Network connectivity between frontend and backend
+
+TEST_STEPS:
+
+1. FRONTEND_STRIPE_CONFIG_ACCESS
+   - Navigate to frontend application at localhost:8081
+   - Authenticate as a valid user
+   - Open browser developer tools (Network tab)
+   - Monitor API calls to Stripe configuration endpoint
+   - Verify request to: /finances/api/stripe/config/
+   - Screenshot: Frontend config API call
+
+2. STRIPE_CONFIG_RESPONSE_VALIDATION
+   - Examine the response from /finances/api/stripe/config/
+   - Verify response contains: {"public_key": "pk_test_...", "success": true}
+   - Confirm NO secret key in response
+   - Verify public key format is correct (pk_test_ prefix)
+   - Check response headers and status code (200)
+   - Screenshot: Config response validation
+
+3. FRONTEND_ERROR_HANDLING
+   - Test config endpoint when backend is down
+   - Verify frontend handles network errors gracefully
+   - Test with invalid authentication token
+   - Check frontend displays appropriate error messages
+   - Verify no sensitive data in error responses
+   - Screenshot: Frontend error handling
+
+4. STRIPE_JS_INITIALIZATION
+   - Check if frontend can initialize Stripe.js with public key
+   - Verify Stripe object is created correctly
+   - Test that invalid public key is rejected
+   - Verify frontend validates key format before initialization
+   - Check console for any Stripe-related errors
+   - Screenshot: Stripe.js initialization
+
+5. PAYMENT_FORM_INTEGRATION
+   - Navigate to any payment or billing section
+   - Verify Stripe Elements are loaded correctly
+   - Test card input field functionality
+   - Verify proper Stripe styling and themes
+   - Check payment form validation
+   - Screenshot: Payment form integration
+
+6. ENVIRONMENT_AWARENESS
+   - Verify frontend detects test environment correctly
+   - Check that test mode indicators are shown
+   - Verify no live payment processing in development
+   - Test environment-specific configuration loading
+   - Verify appropriate warnings for test mode
+   - Screenshot: Environment awareness
+
+7. API_CLIENT_STRIPE_INTEGRATION
+   - Test API calls to Stripe connection test endpoint
+   - Verify: /finances/api/stripe/test-connection/
+   - Check proper authentication headers
+   - Verify response handling in frontend
+   - Test error scenarios (network, auth, server errors)
+   - Screenshot: API client integration
+
+8. CROSS_PLATFORM_COMPATIBILITY
+   - Test Stripe integration on web browser
+   - If available, test on mobile simulator/device
+   - Verify consistent behavior across platforms
+   - Check responsive design of payment forms
+   - Test touch interactions on mobile
+   - Screenshot: Cross-platform compatibility
+
+9. SECURITY_VALIDATION_FRONTEND
+   - Verify no Stripe secret keys in frontend code
+   - Check browser storage for sensitive data
+   - Verify secure handling of payment tokens
+   - Check that webhook secrets are not accessible
+   - Test CSP headers don't block Stripe resources
+   - Screenshot: Security validation
+
+10. PAYMENT_FLOW_END_TO_END
+    - Navigate to payment/checkout flow
+    - Enter test card information
+    - Verify payment intent creation
+    - Check payment processing status
+    - Verify proper success/failure handling
+    - Test webhook event handling (if applicable)
+    - Screenshot: Payment flow end-to-end
+
+11. FRONTEND_CONFIGURATION_CACHING
+    - Test Stripe config is cached appropriately
+    - Verify config refreshes when needed
+    - Check cache invalidation on authentication changes
+    - Test offline behavior if applicable
+    - Verify proper cache headers
+    - Screenshot: Configuration caching
+
+12. STRIPE_ELEMENTS_STYLING
+    - Verify Stripe Elements match application theme
+    - Test custom styling options
+    - Check responsive behavior of payment elements
+    - Verify proper focus and error states
+    - Test accessibility features
+    - Screenshot: Elements styling
+
+13. ERROR_BOUNDARY_TESTING
+    - Test frontend error boundaries with Stripe errors
+    - Simulate Stripe.js loading failures
+    - Test invalid API key scenarios
+    - Verify graceful degradation of payment features
+    - Check error reporting and logging
+    - Screenshot: Error boundary testing
+
+14. PERFORMANCE_TESTING
+    - Test Stripe.js loading performance
+    - Measure payment form initialization time
+    - Check API response times for config endpoints
+    - Verify no memory leaks with Stripe objects
+    - Test concurrent payment operations
+    - Screenshot: Performance metrics
+
+15. LOCALIZATION_TESTING
+    - Test Stripe Elements in different locales
+    - Verify proper error message localization
+    - Check currency formatting
+    - Test right-to-left language support
+    - Verify date/time formatting
+    - Screenshot: Localization testing
+
+EXPECTED_RESULTS:
+- Frontend successfully retrieves Stripe configuration
+- Public key is accessible and properly formatted
+- Secret keys are never exposed to frontend
+- Stripe.js initializes correctly with public key
+- Payment forms integrate seamlessly with Stripe Elements
+- Error handling is comprehensive and user-friendly
+- Security measures prevent sensitive data exposure
+- Cross-platform compatibility is maintained
+- Performance is acceptable for payment operations
+- Localization works correctly for international users
+
+PASS_CRITERIA:
+✅ Frontend successfully calls Stripe config endpoint
+✅ Response contains only public key, no secrets
+✅ Stripe.js initializes correctly with retrieved key
+✅ Payment forms load and function properly
+✅ Error handling provides good user experience
+✅ No sensitive Stripe data in frontend code/storage
+✅ Cross-platform compatibility maintained
+✅ Payment flow works end-to-end in test mode
+✅ Performance is acceptable (<2s for config load)
+✅ Security validation passes all checks
+✅ Styling and theming work correctly
+✅ Localization functions properly
+
+FAIL_CRITERIA:
+❌ Frontend cannot access Stripe configuration
+❌ Secret keys exposed in any frontend response
+❌ Stripe.js fails to initialize properly
+❌ Payment forms don't load or function
+❌ Poor error handling confuses users
+❌ Sensitive data stored in browser
+❌ Cross-platform inconsistencies
+❌ Payment flow fails in test environment
+❌ Performance issues affect user experience
+❌ Security vulnerabilities detected
+❌ Styling issues affect usability
+❌ Localization failures
+
+FILES_TO_VERIFY:
+- Frontend API client code
+- Stripe configuration handling
+- Payment form components
+- Error handling components
+- Configuration caching logic
+- Security implementations
+
+SCREENSHOTS_REQUIRED:
+1. Frontend config API call
+2. Config response validation
+3. Frontend error handling
+4. Stripe.js initialization
+5. Payment form integration
+6. Environment awareness
+7. API client integration
+8. Cross-platform compatibility
+9. Security validation
+10. Payment flow end-to-end
+11. Configuration caching
+12. Elements styling
+13. Error boundary testing
+14. Performance metrics
+15. Localization testing
+
+TOOLS_NEEDED:
+- Browser developer tools
+- Network monitoring tools
+- Performance profiling tools
+- Mobile device simulators
+- Accessibility testing tools
+- Localization testing tools

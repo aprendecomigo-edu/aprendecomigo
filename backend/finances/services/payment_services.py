@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from django.db import models, transaction
 
-from .models import (
+from ..models import (
     ClassSession,
     CompensationRuleType,
     SchoolBillingSettings,
