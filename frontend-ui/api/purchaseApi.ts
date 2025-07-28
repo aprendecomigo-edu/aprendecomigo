@@ -12,6 +12,10 @@ import type {
   PurchaseInitiationResponse,
   StudentBalanceResponse,
   StripeConfig,
+  PaginatedTransactionHistory,
+  PaginatedPurchaseHistory,
+  TransactionFilterOptions,
+  PurchaseFilterOptions,
 } from '@/types/purchase';
 
 /**
@@ -224,13 +228,11 @@ export class PurchaseApiClient {
    * @returns Promise resolving to paginated transaction history
    * @throws Error with descriptive message if request fails
    */
-  static async getTransactionHistory(options: {
-    email?: string;
-    payment_status?: string;
-    transaction_type?: string;
+  static async getTransactionHistory(options: TransactionFilterOptions & {
     page?: number;
     page_size?: number;
-  } = {}): Promise<any> {
+    email?: string;
+  } = {}): Promise<PaginatedTransactionHistory> {
     try {
       const response = await apiClient.get('/finances/api/student-balance/history/', {
         params: options,
@@ -260,13 +262,11 @@ export class PurchaseApiClient {
    * @returns Promise resolving to detailed purchase history
    * @throws Error with descriptive message if request fails
    */
-  static async getPurchaseHistory(options: {
-    email?: string;
-    active_only?: boolean;
-    include_consumption?: boolean;
+  static async getPurchaseHistory(options: PurchaseFilterOptions & {
     page?: number;
     page_size?: number;
-  } = {}): Promise<any> {
+    email?: string;
+  } = {}): Promise<PaginatedPurchaseHistory> {
     try {
       const params: any = { ...options };
       if (options.active_only !== undefined) {

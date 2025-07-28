@@ -174,3 +174,109 @@ export interface PaymentState {
     status: string;
   } | null;
 }
+
+// Transaction history types
+export interface TransactionHistoryItem {
+  id: number;
+  transaction_id: string;
+  transaction_type: 'purchase' | 'consumption' | 'refund' | 'adjustment';
+  transaction_type_display: string;
+  amount: string;
+  hours_changed: string;
+  payment_status: 'pending' | 'succeeded' | 'failed' | 'refunded';
+  payment_status_display: string;
+  plan_name?: string;
+  description: string;
+  created_at: string;
+  processed_at?: string;
+}
+
+export interface PaginatedTransactionHistory {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: TransactionHistoryItem[];
+}
+
+// Purchase history types
+export interface PurchaseHistoryItem {
+  id: number;
+  transaction_id: string;
+  plan_id: number;
+  plan_name: string;
+  plan_type: 'package' | 'subscription';
+  hours_included: string;
+  hours_consumed: string;
+  hours_remaining: string;
+  amount_paid: string;
+  payment_status: 'pending' | 'succeeded' | 'failed' | 'refunded';
+  payment_status_display: string;
+  purchase_date: string;
+  expires_at: string | null;
+  days_until_expiry: number | null;
+  is_expired: boolean;
+  is_active: boolean;
+  consumption_history?: ConsumptionRecord[];
+}
+
+export interface ConsumptionRecord {
+  id: number;
+  session_id: string;
+  hours_consumed: string;
+  session_date: string;
+  teacher_name?: string;
+  subject?: string;
+  session_type: 'individual' | 'group';
+  description: string;
+}
+
+export interface PaginatedPurchaseHistory {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: PurchaseHistoryItem[];
+}
+
+// Dashboard filter types
+export interface TransactionFilterOptions {
+  payment_status?: string;
+  transaction_type?: string;
+  date_from?: string;
+  date_to?: string;
+  search?: string;
+}
+
+export interface PurchaseFilterOptions {
+  active_only?: boolean;
+  include_consumption?: boolean;
+  date_from?: string;
+  date_to?: string;
+  search?: string;
+}
+
+// Dashboard state types
+export interface DashboardState {
+  activeTab: 'overview' | 'transactions' | 'purchases' | 'settings';
+  transactionFilters: TransactionFilterOptions;
+  purchaseFilters: PurchaseFilterOptions;
+  searchQuery: string;
+}
+
+// User profile types
+export interface UserProfile {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  avatar_url?: string;
+  roles: string[];
+  preferences?: {
+    notifications: {
+      email: boolean;
+      push: boolean;
+      sms: boolean;
+    };
+    language: string;
+    timezone: string;
+  };
+}
