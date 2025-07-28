@@ -14,15 +14,96 @@ export interface TeacherProfile {
   calendar_iframe?: string;
 }
 
+export interface EducationalSystem {
+  id: number;
+  name: string;
+  country: string;
+  description: string;
+  is_active: boolean;
+}
+
 export interface StudentProfile {
   id: number;
   user: UserProfile;
+  educational_system: EducationalSystem;
   school_year: string;
   birth_date: string;
   address: string;
   cc_number: string;
   cc_photo?: string;
   calendar_iframe?: string;
+  status?: 'active' | 'inactive' | 'graduated';
+  parent_contact?: {
+    name: string;
+    email: string;
+    phone: string;
+    relationship: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateStudentData {
+  name: string;
+  email: string;
+  phone_number?: string;
+  primary_contact: 'email' | 'phone';
+  educational_system_id: number;
+  school_year: string;
+  birth_date: string;
+  address?: string;
+  school_id: number;
+  parent_contact?: {
+    name: string;
+    email: string;
+    phone: string;
+    relationship: string;
+  };
+}
+
+export interface UpdateStudentData {
+  name?: string;
+  email?: string;
+  phone_number?: string;
+  educational_system_id?: number;
+  school_year?: string;
+  birth_date?: string;
+  address?: string;
+  status?: 'active' | 'inactive' | 'graduated';
+  parent_contact?: {
+    name: string;
+    email: string;
+    phone: string;
+    relationship: string;
+  };
+}
+
+export interface StudentFilters {
+  search?: string;
+  educational_system?: number;
+  school_year?: string;
+  status?: 'active' | 'inactive' | 'graduated';
+  page?: number;
+  page_size?: number;
+  ordering?: string;
+}
+
+export interface StudentListResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: StudentProfile[];
+}
+
+export interface BulkImportResult {
+  success: boolean;
+  created_count: number;
+  failed_count: number;
+  errors: Array<{
+    row: number;
+    field: string;
+    message: string;
+  }>;
 }
 
 export interface DashboardInfo {
@@ -84,21 +165,104 @@ export const getTeachers = async (): Promise<TeacherProfile[]> => {
 };
 
 /**
- * Get list of students
+ * Get list of students with filtering and pagination
  */
-export const getStudents = async (): Promise<StudentProfile[]> => {
-  const response = await apiClient.get('/accounts/students/');
+export const getStudents = async (filters?: StudentFilters): Promise<StudentListResponse> => {
+  const queryParams = new URLSearchParams();
+  
+  if (filters?.search) queryParams.append('search', filters.search);
+  if (filters?.educational_system) queryParams.append('educational_system', filters.educational_system.toString());
+  if (filters?.school_year) queryParams.append('school_year', filters.school_year);
+  if (filters?.status) queryParams.append('status', filters.status);
+  if (filters?.page) queryParams.append('page', filters.page.toString());
+  if (filters?.page_size) queryParams.append('page_size', filters.page_size.toString());
+  if (filters?.ordering) queryParams.append('ordering', filters.ordering);
 
-  // Handle paginated response - extract results
-  if (response.data && Array.isArray(response.data.results)) {
-    return response.data.results;
+  const url = `/accounts/students/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const response = await apiClient.get<StudentListResponse>(url);
+  
+  // Handle both paginated and non-paginated responses
+  if (response.data.results) {
+    return response.data;
   } else if (Array.isArray(response.data)) {
     // Fallback for non-paginated response
-    return response.data;
+    return {
+      count: response.data.length,
+      next: null,
+      previous: null,
+      results: response.data,
+    };
   } else {
     console.warn('API did not return expected format:', response.data);
-    return [];
+    return {
+      count: 0,
+      next: null,
+      previous: null,
+      results: [],
+    };
   }
+};
+
+/**
+ * Create a new student
+ */
+export const createStudent = async (data: CreateStudentData): Promise<StudentProfile> => {
+  const response = await apiClient.post<StudentProfile>('/accounts/students/create_student/', data);
+  return response.data;
+};
+
+/**
+ * Update student profile
+ */
+export const updateStudent = async (id: number, data: UpdateStudentData): Promise<StudentProfile> => {
+  const response = await apiClient.patch<StudentProfile>(`/accounts/students/${id}/`, data);
+  return response.data;
+};
+
+/**
+ * Delete a student
+ */
+export const deleteStudent = async (id: number): Promise<void> => {
+  await apiClient.delete(`/accounts/students/${id}/`);
+};
+
+/**
+ * Get student by ID
+ */
+export const getStudentById = async (id: number): Promise<StudentProfile> => {
+  const response = await apiClient.get<StudentProfile>(`/accounts/students/${id}/`);
+  return response.data;
+};
+
+/**
+ * Update student status
+ */
+export const updateStudentStatus = async (id: number, status: 'active' | 'inactive' | 'graduated'): Promise<StudentProfile> => {
+  const response = await apiClient.patch<StudentProfile>(`/accounts/students/${id}/`, { status });
+  return response.data;
+};
+
+/**
+ * Bulk import students from CSV
+ */
+export const bulkImportStudents = async (file: File): Promise<BulkImportResult> => {
+  const formData = new FormData();
+  formData.append('csv_file', file);
+  
+  const response = await apiClient.post<BulkImportResult>('/accounts/students/bulk_import/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+/**
+ * Get educational systems
+ */
+export const getEducationalSystems = async (): Promise<EducationalSystem[]> => {
+  const response = await apiClient.get<EducationalSystem[]>('/accounts/educational-systems/');
+  return Array.isArray(response.data) ? response.data : response.data.results || [];
 };
 
 /**

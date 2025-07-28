@@ -1,7 +1,8 @@
 import { X, User, Calendar, Mail, Phone, GraduationCap } from 'lucide-react-native';
 import React, { useState } from 'react';
 
-import apiClient from '@/api/apiClient';
+import { createStudent, CreateStudentData, getEducationalSystems, EducationalSystem } from '@/api/userApi';
+import { useAuth } from '@/api/authContext';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
@@ -33,6 +34,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
+import AuthGuard from '@/components/common/AuthGuard';
 
 // Color constants
 const COLORS = {
@@ -55,10 +57,11 @@ interface StudentFormData {
   name: string;
   email: string;
   phone_number: string;
-  primary_contact: string;
+  primary_contact: 'email' | 'phone';
   educational_system_id: number;
   school_year: string;
   birth_date: string;
+  address: string;
 }
 
 const SCHOOL_YEARS = [
@@ -76,16 +79,22 @@ const SCHOOL_YEARS = [
   '12º ano',
 ];
 
-// API call to create student
-const createStudent = async (studentData: StudentFormData): Promise<void> => {
-  try {
-    const response = await apiClient.post('/api/accounts/students/create_student/', studentData);
-    console.log('Student created successfully:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Error creating student:', error);
-    throw error;
+// Helper function to get current school ID - throws error if not found for security
+const getCurrentSchoolId = (userProfile: any): number => {
+  // Get the first school where user has admin privileges
+  if (userProfile?.school_memberships) {
+    const adminMembership = userProfile.school_memberships.find(
+      (membership: any) => 
+        membership.is_active && 
+        (membership.role === 'school_owner' || membership.role === 'school_admin')
+    );
+    if (adminMembership?.school?.id) {
+      return adminMembership.school.id;
+    }
   }
+  
+  // Security: throw error instead of fallback to prevent unauthorized access
+  throw new Error('Unable to determine school context. Please ensure you have proper school administration privileges.');
 };
 
 interface AddStudentModalProps {
@@ -96,17 +105,37 @@ interface AddStudentModalProps {
 
 export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalProps) => {
   const { showToast } = useToast();
+  const { userProfile } = useAuth();
+  
   const [formData, setFormData] = useState<StudentFormData>({
     name: '',
     email: '',
     phone_number: '',
     primary_contact: 'email',
-    educational_system_id: 1, // Default to 1, you might want to load this dynamically
+    educational_system_id: 1, // Default to Portugal system
     school_year: '',
     birth_date: '',
+    address: '',
   });
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Partial<StudentFormData>>({});
+  const [educationalSystems, setEducationalSystems] = useState<EducationalSystem[]>([]);
+
+  // Load educational systems on mount
+  React.useEffect(() => {
+    const loadEducationalSystems = async () => {
+      try {
+        const systems = await getEducationalSystems();
+        setEducationalSystems(systems);
+      } catch (error) {
+        console.error('Failed to load educational systems:', error);
+      }
+    };
+    
+    if (isOpen) {
+      loadEducationalSystems();
+    }
+  }, [isOpen]);
 
   const updateFormData = (field: keyof StudentFormData, value: string | number) => {
     setFormData(prev => ({
@@ -122,31 +151,69 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
     }
   };
 
+  // Input sanitization helper
+  const sanitizeInput = (input: string): string => {
+    return input.trim().replace(/<[^>]*>/g, ''); // Remove HTML tags and trim
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Partial<StudentFormData> = {};
 
-    if (!formData.name.trim()) {
+    // Name validation with length limits
+    const sanitizedName = sanitizeInput(formData.name);
+    if (!sanitizedName) {
       newErrors.name = 'Nome é obrigatório';
+    } else if (sanitizedName.length < 2) {
+      newErrors.name = 'Nome deve ter pelo menos 2 caracteres';
+    } else if (sanitizedName.length > 100) {
+      newErrors.name = 'Nome deve ter no máximo 100 caracteres';
+    } else if (!/^[a-zA-ZÀ-ÿ\s'-]+$/.test(sanitizedName)) {
+      newErrors.name = 'Nome deve conter apenas letras, espaços, hífens e apostrofos';
     }
 
-    if (!formData.email.trim()) {
+    // Email validation with enhanced patterns
+    const sanitizedEmail = sanitizeInput(formData.email.toLowerCase());
+    if (!sanitizedEmail) {
       newErrors.email = 'Email é obrigatório';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) {
+      newErrors.email = 'Formato de email inválido';
+    } else if (sanitizedEmail.length > 254) {
+      newErrors.email = 'Email muito longo (máximo 254 caracteres)';
     }
 
-    if (!formData.phone_number.trim()) {
+    // Phone number validation
+    const sanitizedPhone = sanitizeInput(formData.phone_number);
+    if (!sanitizedPhone) {
       newErrors.phone_number = 'Telefone é obrigatório';
+    } else if (!/^[\+]?[0-9\s\-\(\)]{8,20}$/.test(sanitizedPhone)) {
+      newErrors.phone_number = 'Formato de telefone inválido (8-20 dígitos)';
     }
 
+    // School year validation
     if (!formData.school_year) {
       newErrors.school_year = 'Ano escolar é obrigatório';
     }
 
+    // Birth date validation with age constraints
     if (!formData.birth_date.trim()) {
       newErrors.birth_date = 'Data de nascimento é obrigatória';
     } else if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.birth_date)) {
       newErrors.birth_date = 'Data deve estar no formato AAAA-MM-DD';
+    } else {
+      const birthDate = new Date(formData.birth_date);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      
+      if (birthDate > today) {
+        newErrors.birth_date = 'Data de nascimento não pode ser no futuro';
+      } else if (age < 5 || age > 25) {
+        newErrors.birth_date = 'Idade deve estar entre 5 e 25 anos';
+      }
+    }
+
+    // Address validation (optional but with limits)
+    if (formData.address.trim() && formData.address.length > 500) {
+      newErrors.address = 'Endereço deve ter no máximo 500 caracteres';
     }
 
     setErrors(newErrors);
@@ -160,7 +227,30 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
 
     try {
       setIsSaving(true);
-      await createStudent(formData);
+      
+      // Validate school context first
+      let schoolId: number;
+      try {
+        schoolId = getCurrentSchoolId(userProfile);
+      } catch (schoolError: any) {
+        showToast('error', schoolError.message || 'Erro ao validar permissões de escola');
+        return;
+      }
+      
+      // Sanitize all form data before submission
+      const createData: CreateStudentData = {
+        name: sanitizeInput(formData.name),
+        email: sanitizeInput(formData.email.toLowerCase()),
+        phone_number: sanitizeInput(formData.phone_number),
+        primary_contact: formData.primary_contact,
+        educational_system_id: formData.educational_system_id,
+        school_year: formData.school_year,
+        birth_date: formData.birth_date.trim(),
+        address: sanitizeInput(formData.address),
+        school_id: schoolId,
+      };
+      
+      await createStudent(createData);
 
       // Show success feedback
       showToast('success', 'Aluno criado com sucesso!');
@@ -178,16 +268,29 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
         educational_system_id: 1,
         school_year: '',
         birth_date: '',
+        address: '',
       });
       setErrors({});
     } catch (error: any) {
       console.error('Error saving student:', error);
 
-      // Show error feedback
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.detail ||
-        'Erro ao criar aluno. Tente novamente.';
+      // Show specific error feedback based on error type
+      let errorMessage = 'Erro ao criar aluno. Tente novamente.';
+      
+      if (error.response?.status === 403) {
+        errorMessage = 'Você não tem permissão para criar alunos nesta escola.';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Sua sessão expirou. Faça login novamente.';
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response?.data?.message || 
+                     error.response?.data?.detail || 
+                     'Dados inválidos. Verifique as informações fornecidas.';
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Erro interno do servidor. Tente novamente em alguns minutos.';
+      } else if (error.response?.data?.message || error.response?.data?.detail) {
+        errorMessage = error.response.data.message || error.response.data.detail;
+      }
+      
       showToast('error', errorMessage);
     } finally {
       setIsSaving(false);
@@ -203,13 +306,15 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
       educational_system_id: 1,
       school_year: '',
       birth_date: '',
+      address: '',
     });
     setErrors({});
     onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="lg">
+    <AuthGuard requiredRoles={['school_owner', 'school_admin']}>
+      <Modal isOpen={isOpen} onClose={handleClose} size="lg">
       <ModalBackdrop />
       <ModalContent>
         <ModalHeader>
@@ -312,6 +417,30 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
                 )}
               </VStack>
 
+              {/* Educational System Field */}
+              <VStack space="xs">
+                <Text className="text-sm font-medium text-gray-700">Sistema Educacional</Text>
+                <Select
+                  selectedValue={formData.educational_system_id?.toString()}
+                  onValueChange={value => updateFormData('educational_system_id', parseInt(value))}
+                >
+                  <SelectTrigger>
+                    <SelectInput placeholder="Selecione o sistema educacional" />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent>
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      {educationalSystems.map(system => (
+                        <SelectItem key={system.id} label={system.name} value={system.id.toString()} />
+                      ))}
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
+              </VStack>
+
               {/* Birth Date Field */}
               <VStack space="xs">
                 <Text className="text-sm font-medium text-gray-700">Data de Nascimento *</Text>
@@ -332,6 +461,19 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
                 )}
               </VStack>
 
+              {/* Address Field */}
+              <VStack space="xs">
+                <Text className="text-sm font-medium text-gray-700">Endereço</Text>
+                <Input>
+                  <InputField
+                    placeholder="Rua, número, código postal e localidade"
+                    value={formData.address}
+                    onChangeText={text => updateFormData('address', text)}
+                    multiline
+                  />
+                </Input>
+              </VStack>
+
               {/* Info Box */}
               <Box className="rounded-lg p-3" style={{ backgroundColor: COLORS.gray[50] }}>
                 <Text className="text-sm text-gray-600">
@@ -344,13 +486,21 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
 
         <ModalFooter>
           <HStack space="sm" className="justify-end">
-            <Button variant="outline" onPress={handleClose} disabled={isSaving}>
+            <Button 
+              variant="outline" 
+              onPress={handleClose} 
+              disabled={isSaving}
+              accessibilityLabel="Cancelar criação de aluno"
+              accessibilityHint="Toque para fechar o formulário sem salvar"
+            >
               <ButtonText>Cancelar</ButtonText>
             </Button>
             <Button
               onPress={handleSave}
               disabled={isSaving}
               style={{ backgroundColor: COLORS.primary }}
+              accessibilityLabel={isSaving ? "Salvando aluno..." : "Criar aluno"}
+              accessibilityHint={isSaving ? "Aguarde enquanto o aluno é criado" : "Toque para salvar o novo aluno"}
             >
               {isSaving ? (
                 <HStack space="xs" className="items-center">
@@ -364,6 +514,7 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
           </HStack>
         </ModalFooter>
       </ModalContent>
-    </Modal>
+      </Modal>
+    </AuthGuard>
   );
 };

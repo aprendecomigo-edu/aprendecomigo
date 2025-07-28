@@ -1,0 +1,255 @@
+QA Test Case: Parent Contact Information Management
+
+Test ID: STUDENT-007
+Test Name: Parent Contact Information Management
+Purpose: Verify parent contact information management functionality works correctly for younger students with proper validation, display, and editing capabilities
+Expected Result: Parent contact information can be added, edited, and displayed correctly with appropriate validation
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native/Expo frontend
+- Test Focus: Parent contact functionality in student forms and profiles
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` (starts both backend and frontend)
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com (school manager/owner account)
+- Parent Contact Test Data:
+  - Name: "Maria Santos Silva"
+  - Email: "maria.parent@exemplo.com"
+  - Phone: "+351912345678"
+  - Relationship: "mother"
+- Alternative Parent Data:
+  - Name: "João Silva Santos"
+  - Email: "joao.parent@exemplo.com"
+  - Phone: "+351987654321"
+  - Relationship: "father"
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Create Student with Parent Contact
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Start development servers and authenticate
+2. Navigate to Users → Alunos → Add Student
+3. Create new student: "Sofia Parent Test" with parent contact information
+4. Fill all parent contact fields during student creation
+
+Expected: Student created successfully with parent contact information
+Screenshot: 01_student_with_parent_created.png
+
+Step 2: Verify Parent Contact in Add Student Form
+1. Open Add Student modal
+2. Scroll to parent contact section
+3. Verify all parent contact fields are present:
+   - Nome do Responsável (text input)
+   - Email do Responsável (email input)
+   - Telefone do Responsável (phone input)
+   - Relação (select dropdown)
+4. Check relationship options: Pai, Mãe, Responsável Legal, Outro
+
+Expected: Complete parent contact form section with all fields and options
+Screenshot: 02_parent_contact_add_form.png
+
+Step 3: Test Parent Contact Form Validation
+1. Fill parent name but leave email empty
+2. Try to submit form
+3. Test invalid email format in parent email field
+4. Test invalid phone format
+5. Verify validation messages appear appropriately
+
+Expected: Parent contact validation works without preventing student creation
+Screenshot: 03_parent_contact_validation.png
+
+Step 4: Navigate to Student Profile with Parent Contact
+1. Find student with parent contact in list
+2. Navigate to student profile page
+3. Verify "Contato dos Pais/Responsáveis" card displays
+4. Check all parent information displays correctly:
+   - Nome: parent name
+   - Email: parent email
+   - Telefone: parent phone
+   - Relação: relationship in Portuguese
+
+Expected: Parent contact card displays all information correctly
+Screenshot: 04_parent_contact_profile_display.png
+
+Step 5: Test Parent Contact Empty State
+1. Navigate to student without parent contact
+2. Verify parent contact card shows empty state:
+   - Users icon
+   - "Nenhum contato de responsável registrado" message
+3. Check empty state visual design
+
+Expected: Professional empty state for missing parent contact
+Screenshot: 05_parent_contact_empty_state.png
+
+Step 6: Edit Student - Add Parent Contact
+1. Navigate to student without parent contact
+2. Enter edit mode
+3. Fill in parent contact information:
+   - Nome do Responsável: "Maria Santos Silva"
+   - Email do Responsável: "maria.parent@exemplo.com"
+   - Telefone do Responsável: "+351912345678"
+   - Relação: "Mãe"
+4. Save changes
+
+Expected: Parent contact successfully added through edit interface
+Screenshot: 06_add_parent_contact_edit.png
+
+Step 7: Edit Student - Modify Existing Parent Contact
+1. Navigate to student with existing parent contact
+2. Enter edit mode
+3. Modify parent contact fields:
+   - Change name
+   - Update email address
+   - Change phone number
+   - Change relationship
+4. Save changes and verify updates
+
+Expected: Parent contact modifications save successfully
+Screenshot: 07_modify_parent_contact_edit.png
+
+Step 8: Test Relationship Dropdown Options
+1. In edit mode, click relationship dropdown
+2. Verify all options are available:
+   - Pai (father)
+   - Mãe (mother)
+   - Responsável Legal (guardian)
+   - Outro (other)
+3. Test selecting each option
+4. Verify Portuguese translations display correctly
+
+Expected: All relationship options work with proper translations
+Screenshot: 08_relationship_dropdown_options.png
+
+Step 9: Test Parent Contact Email Validation
+1. In edit mode, enter invalid email formats:
+   - "invalid-email"
+   - "test@"
+   - "@exemplo.com"
+2. Verify email validation works
+3. Test valid email formats are accepted
+4. Check validation messaging
+
+Expected: Email validation works correctly for parent contact field
+Screenshot: 09_parent_email_validation.png
+
+Step 10: Test Parent Contact Phone Validation
+1. Test various phone number formats:
+   - "+351912345678" (international)
+   - "912345678" (national)
+   - "351 912 345 678" (with spaces)
+2. Verify acceptable formats are allowed
+3. Test obviously invalid formats are rejected
+
+Expected: Phone validation accepts reasonable formats
+Screenshot: 10_parent_phone_validation.png
+
+Step 11: Test Parent Contact in Student List Display
+1. Navigate to student list
+2. Verify parent contact information doesn't appear in list view
+3. Check that parent contact doesn't interfere with list display
+4. Verify parent contact is profile-specific information
+
+Expected: Parent contact is appropriately scoped to profile view
+Screenshot: 11_parent_contact_list_scope.png
+
+Step 12: Test Parent Contact Deletion/Clearing
+1. Navigate to student with parent contact
+2. Enter edit mode
+3. Clear all parent contact fields
+4. Save changes
+5. Verify parent contact card shows empty state
+
+Expected: Parent contact can be completely removed
+Screenshot: 12_parent_contact_deletion.png
+
+Step 13: Test Bulk Import with Parent Contact
+1. Create CSV with parent contact information
+2. Include columns for parent data if supported
+3. Test bulk import with parent information
+4. Verify imported students show parent contact correctly
+
+Expected: Bulk import handles parent contact data appropriately
+Screenshot: 13_bulk_import_parent_contact.png
+
+Step 14: Test Parent Contact API Integration
+1. Open browser developer tools
+2. Edit parent contact information
+3. Monitor API calls for parent contact updates
+4. Verify proper request/response format
+5. Check that parent contact is included in student data model
+
+Expected: Parent contact integrates properly with backend API
+Screenshot: 14_parent_contact_api_integration.png
+
+Step 15: Test Parent Contact Edge Cases
+1. Test very long parent names
+2. Test special characters in parent information
+3. Test multiple students with same parent contact
+4. Test parent contact with minimal required information
+
+Expected: Edge cases handled gracefully
+Screenshot: 15_parent_contact_edge_cases.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND all of the following conditions are met:
+- Parent contact form fields are present in add student modal
+- Parent contact validation works appropriately without blocking student creation
+- Parent contact information displays correctly in student profiles
+- Empty state displays professionally when no parent contact exists
+- Parent contact can be added through student edit interface
+- Existing parent contact can be modified successfully
+- Relationship dropdown includes all expected options with proper translations
+- Email and phone validation work correctly for parent contact fields
+- Parent contact information is appropriately scoped to profile view only
+- Parent contact can be completely removed/cleared
+- Bulk import handles parent contact data correctly (if supported)
+- API integration works properly for parent contact operations
+- Edge cases are handled gracefully
+
+FAIL: Any step fails OR any of the following issues occur:
+- Parent contact form fields are missing or incomplete
+- Parent contact validation prevents student creation inappropriately
+- Parent contact information doesn't display correctly or is missing
+- Empty state is unprofessional or missing
+- Parent contact cannot be added through edit interface
+- Existing parent contact modifications don't save
+- Relationship dropdown is missing options or has incorrect translations
+- Email/phone validation is too strict or too lenient for parent fields
+- Parent contact appears inappropriately in list views
+- Parent contact cannot be removed when desired
+- Bulk import fails to handle parent contact data
+- API integration failures for parent contact operations
+- Edge cases cause errors or data corruption
+- Console errors during parent contact operations
+- UI glitches or layout issues with parent contact components
+
+Individual Step Criteria:
+- Step 1-3: PASS if parent contact form works in add student modal
+- Step 4-5: PASS if parent contact displays correctly in profiles
+- Step 6-8: PASS if parent contact can be added and modified via edit
+- Step 9-10: PASS if validation works appropriately for parent fields
+- Step 11-12: PASS if scoping and deletion work correctly
+- Step 13-15: PASS if bulk import, API integration, and edge cases work
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Parent contact section is clearly separated and labeled
+- Form validation for parent contact is helpful but not blocking
+- Empty state provides clear indication of missing parent contact
+- Edit interface makes parent contact management intuitive
+- Relationship options are culturally appropriate and properly translated
+- Parent contact information is treated as optional but encouraged
+- Visual design maintains consistency with other form sections

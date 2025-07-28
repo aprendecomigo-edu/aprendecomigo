@@ -1,0 +1,187 @@
+QA Test Case: Backend API Integration and Error Handling
+
+Test ID: STUDENT-008
+Test Name: Backend API Integration and Error Handling
+Purpose: Verify comprehensive backend integration with proper error handling, validation, and API communication for all student management operations
+Expected Result: All API operations work correctly with proper error handling and user feedback
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Backend: Django REST Framework with comprehensive student management APIs
+- Frontend: React Native/Expo with API integration via userApi.ts
+- Test Focus: Complete API integration testing with error scenarios
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` (starts both backend and frontend)
+4. Browser Developer Tools for API monitoring
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com (school manager/owner account)
+- Student API Test Data for various operations
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and API Endpoint Verification
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Start servers and authenticate
+2. Open browser Developer Tools → Network tab
+3. Navigate to Students section
+4. Monitor initial API calls and verify endpoints
+
+Expected: Initial API calls succeed with proper endpoints
+Screenshot: 01_api_endpoints_verified.png
+
+Step 2: Test Student List API Integration
+1. Navigate to student list
+2. Monitor API calls for student list loading
+3. Verify GET request to students endpoint
+4. Check response format includes all required fields
+5. Test pagination API calls if applicable
+
+Expected: Student list API works with proper data structure
+Screenshot: 02_student_list_api.png
+
+Step 3: Test Student Creation API
+1. Open Add Student modal
+2. Fill form with valid data
+3. Submit form while monitoring Network tab
+4. Verify POST request with correct payload
+5. Check 201 Created response
+
+Expected: Student creation API works with proper HTTP methods
+Screenshot: 03_student_creation_api.png
+
+Step 4: Test Student Update API
+1. Edit existing student
+2. Make changes and save
+3. Monitor PUT/PATCH request
+4. Verify request payload includes only changed fields
+5. Check 200 OK response
+
+Expected: Student update API works efficiently
+Screenshot: 04_student_update_api.png
+
+Step 5: Test Student Deletion API
+1. Delete a test student
+2. Monitor DELETE request
+3. Verify proper endpoint and HTTP method
+4. Check 204 No Content response
+5. Verify student removed from list
+
+Expected: Student deletion API works correctly
+Screenshot: 05_student_deletion_api.png
+
+Step 6: Test Educational Systems API
+1. Open Add Student modal
+2. Monitor API call for educational systems
+3. Verify GET request to educational systems endpoint
+4. Check response format and data structure
+5. Verify systems populate dropdown correctly
+
+Expected: Educational systems API provides proper data
+Screenshot: 06_educational_systems_api.png
+
+Step 7: Test Search and Filter API Integration
+1. Use search functionality
+2. Monitor API calls with search parameters
+3. Test filter changes and verify API calls
+4. Check query parameters in requests
+5. Verify debouncing prevents excessive calls
+
+Expected: Search/filter API calls are optimized
+Screenshot: 07_search_filter_api.png
+
+Step 8: Test Status Update API
+1. Change student status
+2. Monitor PATCH request for status update
+3. Verify minimal payload (only status change)
+4. Check immediate UI update
+5. Verify 200 OK response
+
+Expected: Status update API is efficient and responsive
+Screenshot: 08_status_update_api.png
+
+Step 9: Test Bulk Import API
+1. Perform CSV bulk import
+2. Monitor file upload and processing APIs
+3. Verify multipart/form-data upload
+4. Check bulk creation endpoint
+5. Monitor progress/result APIs
+
+Expected: Bulk import API handles file upload and processing
+Screenshot: 09_bulk_import_api.png
+
+Step 10: Test Error Handling - Network Issues
+1. Disconnect network during API operation
+2. Verify appropriate error handling
+3. Test error recovery when network restored
+4. Check error messages to user
+5. Verify retry mechanisms work
+
+Expected: Graceful network error handling
+Screenshot: 10_network_error_handling.png
+
+Step 11: Test Error Handling - Server Errors
+1. Simulate server error (500) scenarios
+2. Submit invalid data to trigger validation errors
+3. Test unauthorized access scenarios
+4. Verify appropriate error messages
+5. Check error boundary functionality
+
+Expected: Server errors handled appropriately
+Screenshot: 11_server_error_handling.png
+
+Step 12: Test Validation Error Handling
+1. Submit form with invalid data
+2. Monitor 400 Bad Request responses
+3. Verify validation errors are displayed
+4. Test field-specific error messages
+5. Check error message localization
+
+Expected: Validation errors provide clear feedback
+Screenshot: 12_validation_error_handling.png
+
+Step 13: Test Authentication Error Handling
+1. Test expired token scenarios
+2. Verify 401 Unauthorized responses
+3. Check automatic redirect to login
+4. Test token refresh functionality
+5. Verify protected endpoints behavior
+
+Expected: Authentication errors handled securely
+Screenshot: 13_auth_error_handling.png
+
+Step 14: Test API Performance and Optimization
+1. Monitor API response times
+2. Check for unnecessary duplicate requests
+3. Verify efficient payload sizes
+4. Test with large datasets
+5. Check memory usage during operations
+
+Expected: API performance is acceptable
+Screenshot: 14_api_performance_testing.png
+
+Step 15: Test CORS and Security Headers
+1. Check API responses for security headers
+2. Verify CORS configuration works
+3. Test API from different origins if applicable
+4. Check for XSS protection headers
+5. Verify CSP headers if applicable
+
+Expected: Proper security headers and CORS configuration
+Screenshot: 15_security_headers_verified.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All API operations work correctly with proper error handling and security
+FAIL: Any API failures, poor error handling, or security issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

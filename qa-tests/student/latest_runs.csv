@@ -1,0 +1,11 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+student-001,Add Student Form Validation and Creation,Verify Add Student form with required fields validation and successful creation,,,0,0,0
+student-002,Student Directory Search and Filter Functionality,Verify student directory shows all enrolled students with search and filter capabilities,,,0,0,0
+student-003,Individual Student Profile Pages with Edit Capabilities,Verify individual student profile pages display correctly and allow editing,,,0,0,0
+student-004,Grade Level and Educational System Validation,Verify grade level and educational system validation based on school configuration,,,0,0,0
+student-005,Bulk CSV Import with Drag-and-Drop Interface,Verify bulk student import via CSV with drag-and-drop interface works correctly,,,0,0,0
+student-006,Student Status Management Active Inactive Graduated,Verify student status management with visual indicators for active/inactive/graduated states,,,0,0,0
+student-007,Parent Contact Information Management,Verify parent contact information management for younger students works correctly,,,0,0,0
+student-008,Backend API Integration and Error Handling,Verify comprehensive backend integration with proper error handling and validation,,,0,0,0
+student-009,Mobile Responsive Design and Cross-Platform Compatibility,Verify mobile responsiveness and cross-platform compatibility for student management,,,0,0,0
+student-010,Student List Pagination and Performance,Verify student list pagination performance with large datasets and virtual scrolling,,,0,0,0

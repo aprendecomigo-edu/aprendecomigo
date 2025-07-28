@@ -1,0 +1,309 @@
+QA Test Case: Bulk CSV Import with Drag-and-Drop Interface
+
+Test ID: STUDENT-005
+Test Name: Bulk CSV Import with Drag-and-Drop Interface
+Purpose: Verify that bulk student import via CSV with drag-and-drop interface works correctly, handles various file formats, validates data, and provides comprehensive error reporting
+Expected Result: CSV import processes successfully with proper validation, error handling, and user feedback
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native/Expo frontend
+- Test Focus: BulkImportStudentsModal component with CSV processing
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` (starts both backend and frontend)
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com (school manager/owner account)
+- Valid CSV file content (save as bulk_students_valid.csv):
+```csv
+name,email,school_year,educational_system,phone_number,birth_date,address
+"Ana Silva Costa","ana.silva@test.com","6º ano","Sistema Português","+351911111111","2012-03-15","Rua A, 123, Lisboa"
+"Bruno Santos Lima","bruno.santos@test.com","8º ano","Sistema Português","+351922222222","2010-07-20","Avenida B, 456, Porto"
+"Carla Ferreira Dias","carla.ferreira@test.com","10º ano","Sistema Internacional","+351933333333","2008-11-10","Praça C, 789, Coimbra"
+"Daniel Oliveira Rocha","daniel.oliveira@test.com","12º ano","Sistema Português","+351944444444","2006-01-25","Largo D, 321, Braga"
+```
+- Invalid CSV file content (save as bulk_students_invalid.csv):
+```csv
+name,email,school_year,educational_system
+"Missing Email Student","","7º ano","Sistema Português"
+"Invalid Email Student","not-an-email","9º ano","Sistema Português"
+"","valid.email@test.com","11º ano","Sistema Português"
+"Duplicate Email","ana.silva@test.com","5º ano","Sistema Internacional"
+```
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Navigate to Students Section
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Start development servers
+2. Navigate to http://localhost:8081
+3. Sign in with test email: anapmc.carvalho@gmail.com
+4. Navigate to Users → Alunos tab
+5. Verify student list interface loads
+
+Expected: Authentication successful and students section loads
+Screenshot: 01_students_section_loaded.png
+
+Step 2: Open Bulk Import Modal
+1. Locate "Importar CSV" button in students interface
+2. Click "Importar CSV" button
+3. Verify bulk import modal opens
+4. Examine modal interface for:
+   - Modal title: "Importar Alunos via CSV"
+   - File upload area with drag-and-drop zone
+   - Template download link or instructions
+   - Import button (initially disabled)
+   - Cancel/close button
+
+Expected: Bulk import modal opens with complete upload interface
+Screenshot: 02_bulk_import_modal_opened.png
+
+Step 3: Examine CSV Template and Instructions
+1. Look for CSV template information in modal
+2. Verify instructions show required columns:
+   - name (required)
+   - email (required)
+   - school_year (required)
+   - educational_system (required)
+   - phone_number (optional)
+   - birth_date (optional)
+   - address (optional)
+3. Check for downloadable template or format guidance
+
+Expected: Clear instructions and template information displayed
+Screenshot: 03_csv_template_instructions.png
+
+Step 4: Create Valid CSV File
+1. Create valid test CSV file with content from test data
+2. Save as "bulk_students_valid.csv" on desktop or downloads
+3. Verify file contains proper headers and data
+4. Check file size and format compatibility
+
+Expected: Valid CSV file created with proper structure
+Screenshot: 04_valid_csv_file_created.png
+
+Step 5: Test Drag-and-Drop Upload
+1. Drag "bulk_students_valid.csv" file over upload area
+2. Verify drag-over visual feedback (highlight, cursor change)
+3. Drop file in upload area
+4. Verify file is accepted and upload starts
+5. Check for file processing indicators
+
+Expected: 
+- Visual feedback during drag operation
+- File accepted on drop
+- Upload/processing indicators appear
+Screenshot: 05_drag_drop_upload.png
+
+Step 6: Test Click-to-Upload Alternative
+1. Clear current file (if any)
+2. Click on upload area to trigger file dialog
+3. Select "bulk_students_valid.csv" from file picker
+4. Verify file is loaded successfully
+5. Check file information display (name, size, etc.)
+
+Expected: File picker opens and file loads successfully via click
+Screenshot: 06_click_upload_alternative.png
+
+Step 7: Preview Imported Data
+1. After file upload, verify data preview appears
+2. Check preview shows:
+   - Number of students to be imported
+   - Table preview of first few rows
+   - Column headers match expected fields
+   - Data appears correctly formatted
+3. Verify "Importar" button becomes enabled
+
+Expected: Data preview displays correctly with proper formatting
+Screenshot: 07_data_preview_displayed.png
+
+Step 8: Execute Valid Import
+1. Click "Importar" button to process valid CSV
+2. Verify loading state appears during import
+3. Monitor progress indicators (if any)
+4. Wait for import completion
+5. Verify success notification appears
+
+Expected:
+- Loading state during processing
+- Success notification when complete
+- Modal shows import results
+Screenshot: 08_valid_import_executed.png
+
+Step 9: Verify Import Results
+1. Check import success summary:
+   - Number of students imported successfully
+   - Any warnings or notices
+2. Close modal and return to student list
+3. Verify imported students appear in list:
+   - "Ana Silva Costa" - 6º ano
+   - "Bruno Santos Lima" - 8º ano  
+   - "Carla Ferreira Dias" - 10º ano
+   - "Daniel Oliveira Rocha" - 12º ano
+4. Check all data imported correctly
+
+Expected: All students from CSV appear in list with correct information
+Screenshot: 09_import_results_verified.png
+
+Step 10: Test Invalid File Format
+1. Create text file with .txt extension containing CSV data
+2. Try to upload .txt file via drag-and-drop
+3. Verify appropriate error message about file format
+4. Try uploading .xlsx Excel file (if available)
+5. Verify only .csv files are accepted
+
+Expected: Clear error messages for unsupported file formats
+Screenshot: 10_invalid_format_handling.png
+
+Step 11: Test Invalid CSV Data
+1. Create and upload "bulk_students_invalid.csv" 
+2. Verify data validation occurs during preview
+3. Check error reporting for:
+   - Missing required fields (empty email)
+   - Invalid email format
+   - Missing student name
+   - Duplicate email addresses
+4. Verify import is prevented with invalid data
+
+Expected: 
+- Validation errors displayed clearly
+- Import button remains disabled
+- Specific error messages for each issue
+Screenshot: 11_invalid_data_validation.png
+
+Step 12: Test Large File Handling
+1. Create CSV with 50+ student records
+2. Upload large CSV file
+3. Verify system handles large files appropriately:
+   - Loading indicators during processing
+   - Memory usage remains reasonable
+   - Preview shows subset of data
+   - Import processes successfully
+
+Expected: Large files handled efficiently with appropriate UI feedback
+Screenshot: 12_large_file_handling.png
+
+Step 13: Test Educational System Validation
+1. Create CSV with invalid educational system names
+2. Upload file and verify validation
+3. Check that only configured educational systems are accepted
+4. Verify error messages for invalid systems
+5. Test with mixed valid/invalid systems
+
+Expected: Educational system validation works correctly with clear error messages
+Screenshot: 13_educational_system_validation.png
+
+Step 14: Test Duplicate Email Handling
+1. Upload CSV with duplicate emails within file
+2. Verify duplicate detection during validation
+3. Upload CSV with emails that already exist in system
+4. Check handling of existing vs new duplicates
+5. Verify appropriate error messages and resolution options
+
+Expected: Comprehensive duplicate email detection and clear resolution guidance
+Screenshot: 14_duplicate_email_handling.png
+
+Step 15: Test Network Error Handling
+1. Start uploading a valid CSV file
+2. Simulate network disconnection during upload
+3. Verify appropriate error handling
+4. Restore network and test retry functionality
+5. Check error recovery mechanisms
+
+Expected: Graceful network error handling with retry options
+Screenshot: 15_network_error_handling.png
+
+Step 16: Test Modal Close and State Management
+1. Upload file and start import process
+2. Try to close modal during import
+3. Verify appropriate handling (prevent close or show warning)
+4. Complete import and verify modal can be closed
+5. Reopen modal and verify clean state
+
+Expected: Proper state management and user protection during import operations
+Screenshot: 16_modal_state_management.png
+
+Step 17: Verify Backend API Integration
+1. Open browser developer tools Network tab
+2. Perform complete CSV import process
+3. Monitor API calls:
+   - File upload endpoint
+   - Data validation endpoint
+   - Bulk import endpoint
+4. Verify proper request/response formats
+5. Check for appropriate HTTP status codes
+
+Expected:
+- Proper REST API integration
+- File upload handled correctly
+- Bulk creation API calls successful
+- No console errors
+Screenshot: 17_backend_api_integration.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND all of the following conditions are met:
+- Bulk import modal opens with complete drag-and-drop interface
+- CSV template and format instructions are clear and accessible
+- Drag-and-drop upload works with proper visual feedback
+- Click-to-upload alternative functions correctly
+- Data preview displays accurately after file upload
+- Valid CSV files import successfully with proper feedback
+- Invalid file formats are rejected with clear error messages
+- CSV data validation works correctly for all required fields
+- Large files are handled efficiently without performance issues
+- Educational system validation works with school configuration
+- Duplicate email detection works within file and against existing data
+- Network error handling is graceful with retry mechanisms
+- Modal state management protects users during import operations
+- Backend API integration works correctly with proper HTTP methods
+- All imported students appear in student list with correct data
+
+FAIL: Any step fails OR any of the following issues occur:
+- Bulk import modal fails to open or missing interface elements
+- CSV instructions are unclear or template is incorrect
+- Drag-and-drop functionality is broken or lacks visual feedback
+- Click upload doesn't work or file picker issues
+- Data preview is missing, incorrect, or poorly formatted
+- Valid CSV imports fail or show incorrect error messages
+- Invalid file formats are accepted or error messages are unclear
+- CSV validation is missing or incorrectly validates data
+- Large files cause performance issues or memory problems
+- Educational system validation doesn't work with school settings
+- Duplicate email detection is incomplete or incorrect
+- Poor network error handling or no retry mechanisms
+- Modal state management allows data loss or corruption
+- Backend API integration failures or incorrect data format
+- Imported students don't appear or have incorrect information
+- Console errors during any import operations
+- UI glitches, broken layouts, or unresponsive elements
+
+Individual Step Criteria:
+- Step 1-3: PASS if modal opens with complete interface
+- Step 4-6: PASS if file upload works via both drag-drop and click
+- Step 7-9: PASS if preview and valid import work correctly
+- Step 10-11: PASS if invalid files and data are handled properly
+- Step 12-13: PASS if large files and system validation work
+- Step 14-15: PASS if duplicate handling and error recovery work
+- Step 16-17: PASS if state management and API integration work
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Drag-and-drop area provides clear visual feedback during operations
+- File processing shows progress indicators for user awareness
+- Data validation provides specific, actionable error messages
+- Import operations include loading states to prevent double-submission
+- Success feedback includes summary of imported records
+- Error states provide clear guidance for resolution
+- Modal protects against accidental closure during imports
+- All operations are accessible via both drag-drop and traditional upload

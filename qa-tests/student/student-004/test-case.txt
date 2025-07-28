@@ -1,0 +1,275 @@
+QA Test Case: Grade Level and Educational System Validation
+
+Test ID: STUDENT-004
+Test Name: Grade Level and Educational System Validation
+Purpose: Verify that grade level and educational system validation works correctly based on school's configuration, ensuring only valid combinations are allowed and proper validation messages appear
+Expected Result: Form validation prevents invalid grade/system combinations and displays appropriate error messages based on school configuration
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native/Expo frontend
+- Test Focus: Grade level and educational system validation in student forms
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` (starts both backend and frontend)
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com (school manager/owner account)
+- Expected Educational Systems:
+  - Sistema Português (grades 1º-12º ano)
+  - Sistema Internacional (grades 1º-12º ano)
+  - Sistema Britânico (if available)
+- School Year Options: 1º ano through 12º ano
+- Test combinations to validate
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Navigate to Add Student Form
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Start development servers
+2. Navigate to http://localhost:8081
+3. Sign in with test email: anapmc.carvalho@gmail.com
+4. Navigate to Users → Alunos tab
+5. Click "Adicionar Aluno" to open add student modal
+
+Expected: Add Student modal opens with grade and system fields visible
+Screenshot: 01_add_student_modal_opened.png
+
+Step 2: Examine Available Educational Systems
+1. Click on "Sistema Educacional" dropdown
+2. Document all available educational systems
+3. Verify systems are loaded from backend API
+4. Check that systems match school's configuration
+5. Note the default selection (if any)
+
+Expected: Educational systems dropdown populated with school's configured systems
+Systems should include:
+- Sistema Português
+- Sistema Internacional  
+- Any other systems configured for the school
+Screenshot: 02_educational_systems_available.png
+
+Step 3: Examine Available Grade Levels
+1. Click on "Ano Escolar" dropdown
+2. Verify all grade levels are available:
+   - 1º ano through 12º ano (Portuguese system)
+3. Check that grades are displayed in correct order
+4. Verify no invalid or duplicate entries
+
+Expected: Complete range of grade levels available in correct order
+Screenshot: 03_grade_levels_available.png
+
+Step 4: Test Valid Grade/System Combinations
+1. Select "Sistema Português" from educational system dropdown
+2. Select "5º ano" from grade level dropdown
+3. Fill other required fields:
+   - Nome: "Test Valid Combination"
+   - Email: "valid.test@exemplo.com"
+4. Attempt to create student
+5. Verify creation succeeds without validation errors
+
+Expected: Valid combination allows successful student creation
+Screenshot: 04_valid_combination_success.png
+
+Step 5: Test Educational System API Integration
+1. Open browser developer tools Network tab
+2. Refresh the add student modal
+3. Verify API call to fetch educational systems
+4. Check response format and data structure:
+   - Each system should have id, name fields
+   - Response should be JSON array
+5. Verify no errors in API response
+
+Expected:
+- GET request to educational systems endpoint
+- 200 OK response with properly formatted data
+- Systems loaded correctly in dropdown
+Screenshot: 05_educational_systems_api.png
+
+Step 6: Test Grade Level Validation with Different Systems
+1. Select "Sistema Internacional" 
+2. Try different grade levels (1º ano, 6º ano, 12º ano)
+3. Verify all combinations are accepted
+4. Fill required fields and create test students
+5. Verify each creation succeeds
+
+Expected: All grade levels work with international system
+Screenshot: 06_international_system_grades.png
+
+Step 7: Test Form Validation - Missing Educational System
+1. Fill in all fields except educational system:
+   - Nome: "Missing System Test"
+   - Email: "missing.system@exemplo.com"
+   - Ano Escolar: "7º ano"
+2. Leave "Sistema Educacional" empty
+3. Attempt to submit form
+4. Verify validation error appears for educational system
+
+Expected: Form prevents submission with clear error message for missing educational system
+Screenshot: 07_missing_system_validation.png
+
+Step 8: Test Form Validation - Missing Grade Level
+1. Fill in all fields except grade level:
+   - Nome: "Missing Grade Test"
+   - Email: "missing.grade@exemplo.com"
+   - Sistema Educacional: "Sistema Português"
+2. Leave "Ano Escolar" empty
+3. Attempt to submit form
+4. Verify validation error appears for grade level
+
+Expected: Form prevents submission with clear error message for missing grade level
+Screenshot: 08_missing_grade_validation.png
+
+Step 9: Test System Change Preserves Grade Selection
+1. Select "Sistema Português" 
+2. Select "8º ano"
+3. Change educational system to "Sistema Internacional"
+4. Verify grade selection is preserved
+5. Change back to "Sistema Português"
+6. Verify grade selection still preserved
+
+Expected: Grade selection persists when changing educational systems
+Screenshot: 09_grade_preserved_system_change.png
+
+Step 10: Test Edit Student - System/Grade Validation
+1. Create a test student with Sistema Português and 9º ano
+2. Navigate to student profile and enter edit mode
+3. Try changing educational system to "Sistema Internacional"
+4. Verify grade level remains valid
+5. Save changes and verify update succeeds
+
+Expected: Existing students can have their system changed with valid grade combinations
+Screenshot: 10_edit_student_system_change.png
+
+Step 11: Test Bulk Import - System/Grade Validation
+1. Create a CSV file with mixed educational systems and grades:
+   ```csv
+   name,email,school_year,educational_system
+   "Ana Test","ana@test.com","6º ano","Sistema Português"
+   "João Test","joao@test.com","10º ano","Sistema Internacional"
+   "Maria Test","maria@test.com","12º ano","Sistema Português"
+   ```
+2. Use bulk import functionality
+3. Verify all valid combinations are imported successfully
+4. Check that import process validates systems/grades
+
+Expected: Bulk import correctly validates and imports students with valid system/grade combinations
+Screenshot: 11_bulk_import_system_validation.png
+
+Step 12: Test Edge Cases - System Names
+1. Check if educational system names are case-sensitive
+2. Verify system names display correctly in all locations:
+   - Add student modal
+   - Edit student form
+   - Student list table
+   - Student profile display
+3. Test with special characters in system names (if any)
+
+Expected: Educational system names are consistent and display correctly everywhere
+Screenshot: 12_system_names_consistency.png
+
+Step 13: Test Filter Integration with Systems
+1. Navigate to student list
+2. Open filters panel
+3. Verify educational system filter includes all available systems
+4. Test filtering by each educational system
+5. Verify filter results match students' assigned systems
+
+Expected: Filters work correctly with all educational systems
+Screenshot: 13_filter_system_integration.png
+
+Step 14: Test API Error Handling
+1. Simulate network failure during educational systems API call
+2. Verify appropriate error handling:
+   - Loading state during API call
+   - Error message if API fails
+   - Retry mechanism or graceful degradation
+3. Restore network and verify recovery
+
+Expected: Graceful error handling for educational systems API failures
+Screenshot: 14_api_error_handling.png
+
+Step 15: Test Backend Validation
+1. Open browser developer tools
+2. Create student with valid frontend selections
+3. Monitor API request payload
+4. Verify backend receives correct system ID and grade level
+5. Check backend response for any additional validation
+
+Expected:
+- API payload includes correct educational_system_id and school_year
+- Backend accepts valid combinations
+- 201 Created response for successful student creation
+Screenshot: 15_backend_validation_verified.png
+
+Step 16: Test School Configuration Consistency
+1. Check if school configuration affects available systems
+2. Verify systems are filtered based on school settings
+3. Test with different user roles (if applicable)
+4. Confirm only systems enabled for the school appear
+
+Expected: Educational systems respect school configuration settings
+Screenshot: 16_school_configuration_consistency.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND all of the following conditions are met:
+- Educational systems are loaded correctly from backend API
+- All valid grade levels (1º-12º ano) are available
+- Valid grade/system combinations are accepted without errors
+- Form validation prevents submission with missing system or grade
+- Grade selection is preserved when changing educational systems
+- Existing students can have their system changed via edit
+- Bulk import validates system/grade combinations correctly
+- Educational system names are consistent across all interfaces
+- Filter integration works with all educational systems
+- API error handling is graceful and provides appropriate feedback
+- Backend validation accepts valid combinations and rejects invalid ones
+- School configuration is respected for available systems
+
+FAIL: Any step fails OR any of the following issues occur:
+- Educational systems fail to load or display incorrectly
+- Grade levels are missing, incomplete, or in wrong order
+- Valid grade/system combinations are rejected inappropriately
+- Form validation is missing for required fields
+- Grade selection is lost when changing systems
+- Edit functionality doesn't work for system changes
+- Bulk import fails to validate combinations correctly
+- Educational system names are inconsistent across interfaces
+- Filter integration is broken or incomplete
+- Poor API error handling or no error feedback
+- Backend validation failures or incorrect API responses
+- School configuration is not respected
+- Console errors during any validation operations
+- UI glitches or broken form interactions
+
+Individual Step Criteria:
+- Step 1-3: PASS if systems and grades load correctly
+- Step 4-6: PASS if valid combinations work across different systems
+- Step 7-8: PASS if form validation prevents missing data
+- Step 9: PASS if grade selection persists during system changes
+- Step 10: PASS if edit functionality validates correctly
+- Step 11: PASS if bulk import validates combinations
+- Step 12-13: PASS if system names are consistent and filter integration works
+- Step 14-15: PASS if error handling and backend validation work
+- Step 16: PASS if school configuration is respected
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Educational systems load immediately when modal opens
+- Grade levels are sorted in natural order (1º, 2º, 3º, etc.)
+- Form validation provides clear, specific error messages
+- System changes preserve user selections when possible
+- Loading states appear during API calls
+- Error states provide actionable guidance to users
+- All validation happens both client-side and server-side
+- Consistent terminology across all interfaces

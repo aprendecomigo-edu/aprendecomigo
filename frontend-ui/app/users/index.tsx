@@ -15,6 +15,8 @@ import { MainLayout } from '@/components/layouts/main-layout';
 import { AddStudentModal } from '@/components/modals/add-student-modal';
 import { AddTeacherModal } from '@/components/modals/add-teacher-modal';
 import { InviteTeacherModal } from '@/components/modals/invite-teacher-modal';
+import { BulkImportStudentsModal } from '@/components/modals/bulk-import-students-modal';
+import { StudentListTable } from '@/components/students/StudentListTable';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
@@ -245,57 +247,16 @@ const TeachersTab = ({
 
 interface StudentsTabProps {
   onAddStudent: () => void;
+  onBulkImport: () => void;
 }
 
-const StudentsTab = ({ onAddStudent }: StudentsTabProps) => {
+const StudentsTab = ({ onAddStudent, onBulkImport }: StudentsTabProps) => {
   return (
-    <VStack space="md">
-      {/* Students List with inline action buttons */}
-      <HStack className="w-full items-center" space="lg">
-        <Heading size="lg" className="text-gray-900">
-          Lista de Alunos
-        </Heading>
-        <HStack style={{ paddingHorizontal: 4 }}>
-          <ActionButton
-            icon={UserPlus}
-            title="Adicionar aluno"
-            onPress={onAddStudent}
-            variant="secondary"
-          />
-          <ActionButton
-            icon={Plus}
-            title="Importar lista"
-            onPress={onAddStudent}
-            variant="primary"
-          />
-        </HStack>
-      </HStack>
-
-      <Box className="rounded-lg border border-gray-200" style={{ backgroundColor: COLORS.white }}>
-        <VStack>
-          {/* Table header */}
-          <HStack className="p-4 border-b border-gray-200">
-            <Text className="flex-1 font-medium text-gray-700">Nome</Text>
-            <Text className="flex-1 font-medium text-gray-700">Email</Text>
-            <Text className="flex-1 font-medium text-gray-700">Turma</Text>
-            <Text className="w-20 font-medium text-gray-700">Status</Text>
-          </HStack>
-
-          {/* Empty state */}
-          <Box className="p-8">
-            <Center>
-              <VStack className="items-center" space="xs">
-                <Icon as={Users} size="lg" className="text-gray-400" />
-                <Text className="text-gray-500">Nenhum aluno cadastrado</Text>
-                <Text className="text-gray-400 text-sm text-center">
-                  Use os botões acima para adicionar alunos
-                </Text>
-              </VStack>
-            </Center>
-          </Box>
-        </VStack>
-      </Box>
-    </VStack>
+    <StudentListTable
+      showAddButton={true}
+      onAddStudent={onAddStudent}
+      onBulkImport={onBulkImport}
+    />
   );
 };
 
@@ -356,6 +317,7 @@ export default function UsersPage() {
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [isInviteTeacherModalOpen, setIsInviteTeacherModalOpen] = useState(false);
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+  const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -414,9 +376,18 @@ export default function UsersPage() {
     setIsAddStudentModalOpen(true);
   };
 
+  const handleBulkImport = () => {
+    setIsBulkImportModalOpen(true);
+  };
+
+  const handleBulkImportSuccess = () => {
+    console.log('Bulk import completed successfully!');
+    // Student list will refresh automatically via useStudents hook
+  };
+
   const handleStudentSuccess = () => {
     console.log('Student created successfully!');
-    // TODO: Refresh students list when implemented
+    // Student list will refresh automatically via useStudents hook
   };
 
   const fetchTeachers = async () => {
@@ -458,7 +429,7 @@ export default function UsersPage() {
           />
         );
       case 'students':
-        return <StudentsTab onAddStudent={handleAddStudent} />;
+        return <StudentsTab onAddStudent={handleAddStudent} onBulkImport={handleBulkImport} />;
       case 'staff':
         return <StaffTab />;
       default:
@@ -549,6 +520,13 @@ export default function UsersPage() {
         isOpen={isAddStudentModalOpen}
         onClose={() => setIsAddStudentModalOpen(false)}
         onSuccess={handleStudentSuccess}
+      />
+
+      {/* Bulk Import Students Modal */}
+      <BulkImportStudentsModal
+        isOpen={isBulkImportModalOpen}
+        onClose={() => setIsBulkImportModalOpen(false)}
+        onSuccess={handleBulkImportSuccess}
       />
     </MainLayout>
   );

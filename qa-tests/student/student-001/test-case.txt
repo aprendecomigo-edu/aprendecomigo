@@ -1,0 +1,218 @@
+QA Test Case: Add Student Form Validation and Creation
+
+Test ID: STUDENT-001
+Test Name: Add Student Form Validation and Creation
+Purpose: Verify that the "Add Student" form contains all required fields (name, email, grade level, educational system) with proper validation and successfully creates students
+Expected Result: Form validates all required fields correctly and creates student with proper backend integration
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native/Expo frontend
+- Test Focus: Student Management System frontend implementation for GitHub Issue #38
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` (starts both backend and frontend)
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com (school manager/owner account)
+- New Student Data:
+  - Name: "Maria Silva Santos"
+  - Email: "maria.silva.test@exemplo.com"
+  - Phone: "+351912345678"
+  - Grade Level: "8º ano"
+  - Educational System: "Sistema Português"
+  - Birth Date: "2010-05-15"
+  - Address: "Rua da Escola, 123, Lisboa"
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Both Django backend and Expo frontend servers start successfully
+Debug: Use 'make logs' to view server logs if issues occur
+Screenshot: 01_servers_started.png
+
+Step 2: Navigate to Application and Authenticate
+1. Open browser to http://localhost:8081
+2. Sign in with test email: anapmc.carvalho@gmail.com
+3. Complete email verification flow
+4. Verify successful authentication and dashboard load
+
+Expected: User successfully logged in and reaches main dashboard
+Screenshot: 02_authenticated_dashboard.png
+
+Step 3: Navigate to Users/Students Tab
+1. Click on "Users" or "Utilizadores" in main navigation
+2. Verify the page loads with tabs: Professores, Alunos, Colaboradores
+3. Click on "Alunos" tab
+4. Verify Students tab loads with StudentListTable component
+
+Expected: Students tab loads with proper student list interface
+Screenshot: 03_students_tab_loaded.png
+
+Step 4: Open Add Student Modal
+1. Locate "Adicionar Aluno" button in the student interface
+2. Click the "Adicionar Aluno" button
+3. Verify Add Student modal opens
+4. Inspect modal for required form fields
+
+Expected: Add Student modal opens with all required form fields visible
+Required fields to verify:
+- Nome Completo (Name) - text input with User icon
+- Email - email input with Mail icon  
+- Telefone (Phone) - phone input with Phone icon
+- Ano Escolar (School Year) - select dropdown with GraduationCap icon
+- Sistema Educacional (Educational System) - select dropdown
+- Data de Nascimento (Birth Date) - date input with Calendar icon
+- Endereço (Address) - text input with MapPin icon
+Screenshot: 04_add_student_modal_opened.png
+
+Step 5: Test Form Validation - Empty Form Submission
+1. Without filling any fields, click "Criar Aluno" button
+2. Verify validation messages appear for required fields
+3. Check that modal does not close and no API call is made
+
+Expected: Form validation prevents submission with clear error messages
+Required field validation should appear for:
+- Nome Completo (required)
+- Email (required, valid email format)
+- Ano Escolar (required)
+- Sistema Educacional (required)
+Screenshot: 05_form_validation_empty.png
+
+Step 6: Test Form Validation - Invalid Email Format
+1. Fill in Nome: "Test Invalid Email"
+2. Fill in Email: "invalid-email-format"  
+3. Select Ano Escolar: "8º ano"
+4. Select Sistema Educacional: first available option
+5. Click "Criar Aluno"
+
+Expected: Email validation error appears, form does not submit
+Screenshot: 06_form_validation_invalid_email.png
+
+Step 7: Test Form Validation - Successful Form Completion
+1. Clear all fields and start fresh
+2. Fill in Nome Completo: "Maria Silva Santos"
+3. Fill in Email: "maria.silva.test@exemplo.com"
+4. Fill in Telefone: "+351912345678"
+5. Select Ano Escolar: "8º ano"
+6. Select Sistema Educacional: first available system
+7. Fill in Data de Nascimento: "2010-05-15"
+8. Fill in Endereço: "Rua da Escola, 123, Lisboa"
+
+Expected: All fields accept valid input without validation errors
+Screenshot: 07_form_completed_valid.png
+
+Step 8: Submit Valid Form and Verify Student Creation
+1. With all valid data entered, click "Criar Aluno" button
+2. Verify loading state appears (spinner or loading text)
+3. Monitor for success/error notifications
+4. Verify modal closes on successful creation
+5. Check that student appears in student list
+
+Expected: 
+- Form submits successfully with loading indicators
+- Success notification appears
+- Modal closes automatically
+- New student "Maria Silva Santos" appears in student list
+- API call to create student endpoint succeeds
+Screenshot: 08_student_created_success.png
+
+Step 9: Verify Student Data in List
+1. Locate the newly created student in the student list
+2. Verify all displayed information matches entered data:
+   - Name: "Maria Silva Santos"
+   - Email: "maria.silva.test@exemplo.com" 
+   - School Year: "8º ano"
+   - Educational System: matches selected system
+   - Status: "Ativo" (default active status)
+
+Expected: Student appears in list with correct data and "Ativo" status
+Screenshot: 09_student_in_list_verified.png
+
+Step 10: Test Modal Close and Reopen Functionality
+1. Click "Adicionar Aluno" button again
+2. Verify modal opens with empty/reset form
+3. Fill in some data
+4. Click X button or "Cancelar" to close modal
+5. Reopen modal and verify form is reset
+
+Expected: Modal consistently opens/closes properly with form reset
+Screenshot: 10_modal_reset_functionality.png
+
+Step 11: Verify Backend API Integration
+1. Open browser developer tools (F12)
+2. Go to Network tab
+3. Open Add Student modal and create another test student
+4. Monitor API calls during form submission
+5. Verify successful POST request to student creation endpoint
+
+Expected: 
+- POST request to /api/students/ endpoint (or similar)
+- Request includes all form data in proper format
+- Response returns 201 Created with student data
+- No console errors during the process
+Screenshot: 11_api_integration_verified.png
+
+Step 12: Edge Case Testing - Duplicate Email
+1. Try to create another student with same email: "maria.silva.test@exemplo.com"
+2. Fill other required fields with different data
+3. Submit form
+4. Verify appropriate error handling for duplicate email
+
+Expected: Clear error message about duplicate email, form remains open for correction
+Screenshot: 12_duplicate_email_handling.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND all of the following conditions are met:
+- Add Student modal opens properly with all required fields visible
+- Form validation works correctly for required fields and email format
+- Valid form submission creates student successfully
+- Success notification appears and modal closes
+- Created student appears in student list with correct information
+- Backend API integration works properly (201 Created response)
+- Modal close/reopen functionality works consistently
+- Duplicate email error is handled gracefully
+
+FAIL: Any step fails OR any of the following issues occur:
+- Add Student modal fails to open or missing required fields
+- Form validation is missing or incorrect
+- Valid form submission fails or shows errors
+- Created student does not appear in list or has incorrect data
+- Backend API calls fail or return errors
+- Modal functionality is broken (doesn't close/reopen properly)
+- No error handling for duplicate email or other conflicts
+- Any console errors during the student creation process
+- UI glitches, broken layouts, or unresponsive elements
+
+Individual Step Criteria:
+- Step 1-2: PASS if servers start and authentication succeeds
+- Step 3: PASS if Students tab loads with proper interface
+- Step 4: PASS if Add Student modal opens with all required fields
+- Step 5-6: PASS if form validation works for empty and invalid inputs
+- Step 7: PASS if form accepts all valid input without errors
+- Step 8: PASS if valid form submits successfully with proper UI feedback
+- Step 9: PASS if created student appears in list with correct data
+- Step 10: PASS if modal close/reopen functionality works properly
+- Step 11: PASS if backend API integration is successful
+- Step 12: PASS if duplicate email error is handled appropriately
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Modal opens with smooth animation and proper focus management
+- Form fields have clear labels and appropriate input types
+- Loading states prevent double-submission during API calls
+- Success/error feedback is immediate and clear to users
+- Modal closes automatically after successful submission
+- Form resets properly when modal reopens
+- No visual glitches or layout shifts during interactions
