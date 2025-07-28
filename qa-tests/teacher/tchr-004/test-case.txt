@@ -1,0 +1,291 @@
+QA Test Case: Teacher Analytics Dashboard and Insights
+
+Test ID: TCHR-004
+Test Name: Teacher Analytics Dashboard - Completion Statistics and Insights
+Purpose: Verify that school administrators can access comprehensive analytics about teacher profiles, completion rates, and actionable insights for improving teacher management and profile completion rates
+Expected Result: Analytics dashboard displays meaningful statistics, charts render correctly, insights are actionable, and data accurately reflects the current teacher pool
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native Expo frontend
+- Frontend URL: http://localhost:8081
+- Backend URL: http://localhost:8000
+- User Authentication: Passwordless email verification with JWT tokens
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+
+Test Data:
+- Test School Admin Email: anapmc.carvalho@gmail.com
+- Expected Role: school_owner with admin privileges
+- Teachers: Multiple teachers with varying profile completion levels
+- Teacher Analytics API: Should provide completion statistics and insights
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Authentication
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Ensure both Django backend and Expo frontend servers are running
+2. Navigate to http://localhost:8081
+3. Complete login process with anapmc.carvalho@gmail.com
+4. Verify successful authentication and dashboard access
+
+Expected: Successful login and access to school admin dashboard
+Screenshot: 01_authentication_successful.png
+Debug: Check server logs and authentication flow
+
+Step 2: Navigate to Teacher Analytics View
+1. From dashboard, navigate to Users page
+2. Ensure Teachers tab is active
+3. Locate the view mode switcher (List, Analytics, Communication)
+4. Click on "Análises" (Analytics) tab
+5. Wait for analytics view to load completely
+
+Expected: Successfully navigate to teacher analytics dashboard view
+Screenshot: 02_analytics_view_navigation.png
+Debug: Check that TeacherAnalyticsDashboard component loads correctly
+
+Step 3: Verify Analytics Dashboard Layout
+1. Examine the overall layout of the analytics dashboard
+2. Verify presence of key sections:
+   - Overview statistics/summary cards
+   - Profile completion breakdown
+   - Charts and visualizations
+   - Actionable insights and recommendations
+   - Filter or time period controls (if available)
+3. Check that all sections render without layout issues
+
+Expected: Analytics dashboard displays with comprehensive layout and all sections visible
+Screenshot: 03_analytics_dashboard_layout.png
+Debug: Verify all dashboard components render properly
+
+Step 4: Examine Overview Statistics Cards
+1. Locate the overview statistics section (typically at top of dashboard)
+2. Verify display of key metrics:
+   - Total number of teachers
+   - Average profile completion percentage
+   - Number of complete profiles
+   - Number of incomplete profiles
+   - Number of critical/missing profiles
+3. Check that numbers are accurate and properly formatted
+4. Verify visual design is consistent and readable
+
+Expected: Overview statistics display accurate teacher metrics with proper formatting
+Screenshot: 04_overview_statistics_cards.png
+Debug: Verify API calls to teacher analytics endpoints return correct data
+
+Step 5: Test Profile Completion Breakdown Analysis
+1. Locate the profile completion breakdown section
+2. Verify display of completion categories:
+   - Profiles with 80%+ completion (complete)
+   - Profiles with 50-79% completion (partial)
+   - Profiles with <50% completion (critical)
+3. Check for visual indicators:
+   - Color coding (green for complete, yellow for partial, red for critical)
+   - Percentage breakdowns
+   - Count numbers for each category
+4. Verify percentages add up to 100% of total teachers
+
+Expected: Profile completion breakdown shows accurate categorization with proper visual indicators
+Screenshot: 05_completion_breakdown_analysis.png
+Debug: Check ProfileCompletionService calculations are reflected correctly
+
+Step 6: Verify Charts and Data Visualizations
+1. Locate chart/graph sections in the analytics dashboard
+2. Test different chart types that may be present:
+   - Bar charts for completion distribution
+   - Pie charts for status breakdown
+   - Line charts for trends over time (if available)
+   - Progress bars for completion rates
+3. Verify charts render correctly:
+   - Data displays accurately
+   - Labels and legends are readable
+   - Colors are appropriate and consistent
+   - Interactive features work (hover, click, zoom if available)
+
+Expected: Charts and visualizations render correctly with accurate data representation
+Screenshot: 06_charts_visualizations.png
+Debug: Check that chart libraries are loading and data is properly formatted
+
+Step 7: Examine Missing Fields Analysis
+1. Look for section showing most commonly missing profile fields
+2. Verify it displays:
+   - List of fields most often missing across teachers
+   - Frequency or percentage of missing fields
+   - Priority level indicators for critical fields
+   - Visual representation (bars, percentages, or icons)
+3. Check that missing fields analysis is actionable and specific
+
+Expected: Missing fields analysis provides specific, actionable information about profile gaps
+Screenshot: 07_missing_fields_analysis.png
+Debug: Verify backend analytics correctly identify and prioritize missing fields
+
+Step 8: Test Actionable Insights and Recommendations
+1. Locate the insights/recommendations section
+2. Verify display of actionable recommendations:
+   - Specific suggestions for improving completion rates
+   - Identification of teachers needing immediate attention
+   - Recommended actions for administrators
+   - Priority levels for different recommendations
+3. Check that insights are contextual and specific to current data
+4. Verify recommendations link to appropriate actions (if clickable)
+
+Expected: Insights section provides specific, actionable recommendations based on current teacher data
+Screenshot: 08_actionable_insights_recommendations.png
+Debug: Check that recommendation algorithms provide meaningful suggestions
+
+Step 9: Test Teacher List Integration from Analytics
+1. Look for links or buttons to view specific teachers from analytics
+2. Test navigation from analytics to individual teacher profiles:
+   - Click on teachers needing attention
+   - Navigate to incomplete profile details
+   - Access teachers from different completion categories
+3. Verify that context is maintained during navigation
+4. Test return navigation back to analytics
+
+Expected: Navigation between analytics and individual teacher profiles works smoothly with context preservation
+Screenshot: 09_teacher_list_integration.png
+Debug: Check navigation state management and routing
+
+Step 10: Test Data Refresh and Real-time Updates
+1. Locate refresh controls or automatic update features
+2. Test manual refresh of analytics data:
+   - Click refresh button if available
+   - Verify data updates correctly
+   - Check loading states during refresh
+3. Test whether analytics update when teachers are modified:
+   - Make changes to a teacher profile in another tab/window
+   - Return to analytics to check if data reflects changes
+4. Verify appropriate loading states and feedback
+
+Expected: Data refresh works correctly with proper loading states and accurate updated information
+Screenshot: 10_data_refresh_updates.png
+Debug: Check API calls and data synchronization
+
+Step 11: Test Filtering and Date Range Controls
+1. Look for filter controls in the analytics dashboard
+2. Test available filters:
+   - Date range selection (if available)
+   - Teacher status filters
+   - Completion level filters
+   - Department or subject filters
+3. Verify that filters update analytics data appropriately:
+   - Charts update to reflect filtered data
+   - Statistics recalculate for filtered subset
+   - Clear indication of active filters
+4. Test clearing filters and returning to full data view
+
+Expected: Filtering controls work correctly and update all dashboard elements appropriately
+Screenshot: 11_filtering_controls.png
+Debug: Verify filter logic correctly modifies analytics queries
+
+Step 12: Test Export and Sharing Features
+1. Look for export or sharing options in the analytics dashboard
+2. Test available export features:
+   - Export analytics data to CSV/Excel
+   - Generate PDF reports
+   - Share dashboard views
+   - Email reports (if available)
+3. Verify export functionality:
+   - Files download correctly
+   - Data is properly formatted in exports
+   - All relevant information is included
+4. Test any sharing or collaboration features
+
+Expected: Export and sharing features work correctly with properly formatted output
+Screenshot: 12_export_sharing_features.png
+Debug: Check export APIs and file generation
+
+Step 13: Test Mobile Responsiveness of Analytics
+1. Open browser developer tools
+2. Switch to mobile viewport (375px width)
+3. Navigate through analytics dashboard on mobile
+4. Verify mobile-specific adaptations:
+   - Charts resize appropriately
+   - Statistics cards stack properly
+   - Touch interactions work correctly
+   - Text remains readable
+   - Navigation remains functional
+5. Test scrolling and interaction on mobile
+
+Expected: Analytics dashboard is fully functional and readable on mobile devices
+Screenshot: 13_mobile_responsiveness.png
+Debug: Check responsive design and mobile-specific layouts
+
+Step 14: Test Performance with Large Data Sets
+1. Test analytics dashboard performance with current teacher data
+2. Monitor loading times for:
+   - Initial dashboard load
+   - Chart rendering
+   - Data filtering operations
+   - Refresh operations
+3. Check for performance optimization:
+   - Progressive loading of charts
+   - Efficient data queries
+   - Appropriate caching
+   - No memory leaks during extended use
+4. Verify smooth user experience even with larger data sets
+
+Expected: Analytics dashboard performs well with good loading times and smooth interactions
+Screenshot: 14_performance_large_datasets.png
+Debug: Monitor browser performance tools and network requests
+
+Step 15: Test Integration with Other Teacher Management Features
+1. Test how analytics integrates with other teacher management features:
+   - Links to bulk operations
+   - Connection to communication tools
+   - Integration with profile completion workflows
+2. Verify contextual actions from analytics:
+   - Send reminders to incomplete profiles
+   - Bulk message teachers by completion status
+   - Quick access to teacher editing
+3. Test workflow continuity between analytics and management actions
+4. Verify that actions taken reflect back in analytics data
+
+Expected: Analytics dashboard integrates well with other teacher management features and workflows
+Screenshot: 15_integration_other_features.png
+Debug: Check that workflows between different components work smoothly
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Analytics dashboard displays comprehensive teacher statistics, charts render correctly with accurate data, insights are actionable and specific, filtering works properly, mobile responsiveness is good, performance is acceptable, and integration with other features works smoothly
+
+FAIL: Any of the following occur:
+- Analytics dashboard fails to load or display incomplete information
+- Statistics or charts show incorrect data
+- Charts fail to render or display improperly
+- Missing fields analysis is inaccurate or unavailable
+- Insights are generic or not actionable
+- Filtering doesn't work or produces incorrect results
+- Export features are broken
+- Mobile interface is non-functional
+- Performance is unacceptably poor
+- Integration with other features fails
+- Critical errors prevent normal operation
+
+Individual Step Criteria:
+- Step 1: PASS if authentication and setup complete successfully, FAIL if login fails
+- Step 2: PASS if analytics view navigation works, FAIL if navigation fails
+- Step 3: PASS if dashboard layout displays properly, FAIL if layout is broken
+- Step 4: PASS if overview statistics are accurate and readable, FAIL if statistics wrong/missing
+- Step 5: PASS if completion breakdown is accurate with proper visual indicators, FAIL if breakdown incorrect
+- Step 6: PASS if charts render correctly with accurate data, FAIL if charts broken/inaccurate
+- Step 7: PASS if missing fields analysis is actionable and specific, FAIL if analysis missing/wrong
+- Step 8: PASS if insights are contextual and actionable, FAIL if insights generic/missing
+- Step 9: PASS if navigation integration works smoothly, FAIL if navigation broken
+- Step 10: PASS if data refresh works with proper feedback, FAIL if refresh fails
+- Step 11: PASS if filtering works and updates all elements, FAIL if filtering broken
+- Step 12: PASS if export features work correctly, FAIL if exports fail
+- Step 13: PASS if mobile interface is fully functional, FAIL if mobile broken
+- Step 14: PASS if performance is acceptable, FAIL if major performance issues
+- Step 15: PASS if integration with other features works well, FAIL if integration broken
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

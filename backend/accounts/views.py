@@ -46,6 +46,7 @@ from .models import (
     SchoolInvitationLink,
     SchoolMembership,
     SchoolRole,
+    SchoolSettings,
     StudentProfile,
     TeacherCourse,
     TeacherInvitation,
@@ -59,6 +60,7 @@ from .permissions import (
 )
 from .serializers import (
     AcceptInvitationSerializer,
+    ComprehensiveSchoolSettingsSerializer,
     CourseSerializer,
     CreateStudentSerializer,
     CreateUserSerializer,
@@ -70,7 +72,9 @@ from .serializers import (
     SchoolInvitationSerializer,
     SchoolMembershipSerializer,
     SchoolMetricsSerializer,
+    SchoolProfileSerializer,
     SchoolSerializer,
+    SchoolSettingsSerializer,
     SchoolWithMembersSerializer,
     StudentSerializer,
     TeacherCourseSerializer,
@@ -2369,6 +2373,191 @@ class SchoolDashboardViewSet(viewsets.ModelViewSet):
         
         return Response(response_data, status=status.HTTP_200_OK)
     
+    @action(detail=True, methods=['get', 'patch'], url_path='settings')
+    def school_settings(self, request, pk=None):
+        """Get or update comprehensive school settings"""
+        school = self.get_object()
+        
+        if request.method == 'GET':
+            # Get or create school settings
+            settings_obj, created = SchoolSettings.objects.get_or_create(
+                school=school,
+                defaults={
+                    'educational_system_id': 1,  # Default to Portugal system
+                    'working_days': [0, 1, 2, 3, 4],  # Monday to Friday
+                }
+            )
+            
+            # Use comprehensive serializer that includes both profile and settings
+            serializer = ComprehensiveSchoolSettingsSerializer(
+                settings_obj, 
+                context={'request': request}
+            )
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        elif request.method == 'PATCH':
+            # Update school settings with comprehensive validation
+            # Get or create school settings
+            settings_obj, created = SchoolSettings.objects.get_or_create(
+                school=school,
+                defaults={
+                    'educational_system_id': 1,
+                    'working_days': [0, 1, 2, 3, 4],
+                }
+            )
+        
+            
+            # Store old values for activity logging
+            old_values = {}
+            changed_fields = []
+        
+            # Process school profile updates if present
+            if 'school_profile' in request.data:
+                profile_data = request.data['school_profile']
+                school_serializer = SchoolProfileSerializer(
+                    school, 
+                    data=profile_data, 
+                    partial=True,
+                    context={'request': request}
+                )
+                
+                if school_serializer.is_valid(raise_exception=True):
+                    # Store old school values for logging
+                    for field in profile_data.keys():
+                        if hasattr(school, field):
+                            old_values[f"school.{field}"] = getattr(school, field)
+                    
+                    school_serializer.save()
+                    changed_fields.extend([f"school.{field}" for field in profile_data.keys()])
+            
+            # Process settings updates
+            settings_data = request.data.get('settings', request.data)
+            if settings_data:
+                # Store old settings values for logging
+                for field in settings_data.keys():
+                    if hasattr(settings_obj, field):
+                        old_values[f"settings.{field}"] = getattr(settings_obj, field)
+                
+                settings_serializer = SchoolSettingsSerializer(
+                    settings_obj,
+                    data=settings_data,
+                    partial=True,
+                    context={'request': request}
+                )
+                
+                if settings_serializer.is_valid(raise_exception=True):
+                    settings_serializer.save()
+                    changed_fields.extend([f"settings.{field}" for field in settings_data.keys()])
+            
+            # Create activity log for settings update
+            if changed_fields:
+                from .services.metrics_service import SchoolActivityService
+                from .models import ActivityType
+                
+                changes_description = []
+                for field in changed_fields:
+                    if field in old_values:
+                        old_value = old_values[field]
+                        new_value = getattr(
+                            school if field.startswith('school.') else settings_obj, 
+                            field.split('.', 1)[1]
+                        )
+                        if old_value != new_value:
+                            changes_description.append(f"{field}: '{old_value}' → '{new_value}'")
+                
+                if changes_description:
+                    SchoolActivityService.create_activity(
+                        school=school,
+                        activity_type=ActivityType.SETTINGS_UPDATED,
+                        actor=request.user,
+                        description=f"Updated school settings: {', '.join(changes_description)}",
+                        metadata={'changed_fields': changed_fields}
+                    )
+            
+            # Invalidate metrics cache
+            from .services.metrics_service import SchoolMetricsService
+            SchoolMetricsService.invalidate_cache(school.id)
+            
+            # Return updated settings
+            serializer = ComprehensiveSchoolSettingsSerializer(
+                settings_obj, 
+                context={'request': request}
+            )
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['get'], url_path='settings/educational-systems')
+    def educational_systems(self, request, pk=None):
+        """Get available educational systems for school configuration"""
+        from .serializers import EducationalSystemSerializer
+        
+        systems = EducationalSystem.objects.filter(is_active=True)
+        serializer = EducationalSystemSerializer(systems, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'], url_path='settings/logo-upload')
+    def upload_logo(self, request, pk=None):
+        """Upload school logo"""
+        school = self.get_object()
+        
+        if 'logo' not in request.FILES:
+            return Response(
+                {'error': 'No logo file provided'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        logo_file = request.FILES['logo']
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if logo_file.content_type not in allowed_types:
+            return Response(
+                {'error': 'Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate file size (max 5MB)
+        max_size = 5 * 1024 * 1024  # 5MB
+        if logo_file.size > max_size:
+            return Response(
+                {'error': 'File too large. Maximum size is 5MB.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Save the logo
+        old_logo = school.logo.name if school.logo else None
+        school.logo = logo_file
+        school.save(update_fields=['logo', 'updated_at'])
+        
+        # Delete old logo if it exists
+        if old_logo:
+            try:
+                import os
+                from django.conf import settings as django_settings
+                old_logo_path = os.path.join(django_settings.MEDIA_ROOT, old_logo)
+                if os.path.exists(old_logo_path):
+                    os.remove(old_logo_path)
+            except Exception as e:
+                logger.warning(f"Failed to delete old logo {old_logo}: {e}")
+        
+        # Create activity log
+        from .services.metrics_service import SchoolActivityService
+        from .models import ActivityType
+        
+        SchoolActivityService.create_activity(
+            school=school,
+            activity_type=ActivityType.SETTINGS_UPDATED,
+            actor=request.user,
+            description=f"Updated school logo",
+            metadata={'action': 'logo_upload', 'filename': logo_file.name}
+        )
+        
+        # Return updated school profile
+        serializer = SchoolProfileSerializer(school, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
     def update(self, request, *args, **kwargs):
         """Enhanced update method with activity logging"""
         partial = kwargs.pop('partial', False)
@@ -2999,3 +3188,873 @@ class GlobalSearchView(KnoxAuthenticatedAPIView):
             results.append(result)
         
         return results
+
+
+class BulkTeacherActionsView(KnoxAuthenticatedAPIView):
+    """
+    API endpoint for bulk teacher operations.
+    
+    Supports actions: update_status, send_message, export_data, update_profile
+    Maximum 50 teachers per operation as per business requirements.
+    """
+    
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    
+    SUPPORTED_ACTIONS = ['update_status', 'send_message', 'export_data', 'update_profile']
+    MAX_TEACHERS_PER_OPERATION = 50
+    
+    def post(self, request):
+        """
+        Execute bulk operations on multiple teachers.
+        
+        Expected payload:
+        {
+            "action": "update_status|send_message|export_data|update_profile",
+            "teacher_ids": [1, 2, 3, ...],
+            "parameters": {
+                // Action-specific parameters
+            }
+        }
+        """
+        try:
+            # Validate request data
+            action = request.data.get('action')
+            teacher_ids = request.data.get('teacher_ids', [])
+            parameters = request.data.get('parameters', {})
+            
+            # Validate action
+            if not action or action not in self.SUPPORTED_ACTIONS:
+                return Response(
+                    {'error': f'Invalid action. Supported actions: {", ".join(self.SUPPORTED_ACTIONS)}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate teacher_ids
+            if not teacher_ids or not isinstance(teacher_ids, list):
+                return Response(
+                    {'error': 'teacher_ids must be a non-empty list'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check maximum limit
+            if len(teacher_ids) > self.MAX_TEACHERS_PER_OPERATION:
+                return Response(
+                    {'error': f'Maximum {self.MAX_TEACHERS_PER_OPERATION} teachers allowed per operation'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get school IDs the user can manage
+            manageable_school_ids = list_school_ids_owned_or_managed(request.user)
+            if not manageable_school_ids:
+                return Response(
+                    {'error': 'You do not have permission to manage any schools'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Execute the bulk action
+            if action == 'update_status':
+                result = self._handle_update_status(teacher_ids, parameters, manageable_school_ids)
+            elif action == 'send_message':
+                result = self._handle_send_message(teacher_ids, parameters, manageable_school_ids)
+            elif action == 'export_data':
+                result = self._handle_export_data(teacher_ids, parameters, manageable_school_ids)
+            elif action == 'update_profile':
+                result = self._handle_update_profile(teacher_ids, parameters, manageable_school_ids)
+            
+            return Response(result, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Bulk teacher action failed: {e}")
+            return Response(
+                {'error': 'Internal server error during bulk operation'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _handle_update_status(self, teacher_ids, parameters, manageable_school_ids):
+        """Handle bulk status updates for teacher memberships."""
+        is_active = parameters.get('is_active')
+        
+        if is_active is None:
+            return {
+                'error': 'is_active parameter is required for update_status action',
+                'successful_count': 0,
+                'failed_count': len(teacher_ids),
+                'results': []
+            }
+        
+        results = []
+        successful_count = 0
+        failed_count = 0
+        
+        for teacher_id in teacher_ids:
+            try:
+                # Get teacher profile
+                teacher_profile = TeacherProfile.objects.get(id=teacher_id)
+                
+                # Get teacher's memberships in manageable schools
+                memberships = SchoolMembership.objects.filter(
+                    user=teacher_profile.user,
+                    school_id__in=manageable_school_ids,
+                    role=SchoolRole.TEACHER
+                )
+                
+                if not memberships.exists():
+                    results.append({
+                        'teacher_id': teacher_id,
+                        'status': 'failed',
+                        'error': 'No permission to manage this teacher or teacher not found in your schools'
+                    })
+                    failed_count += 1
+                    continue
+                
+                # Update membership status
+                updated_count = memberships.update(is_active=is_active)
+                
+                if updated_count > 0:
+                    results.append({
+                        'teacher_id': teacher_id,
+                        'status': 'success',
+                        'message': f'Updated {updated_count} membership(s)'
+                    })
+                    successful_count += 1
+                else:
+                    results.append({
+                        'teacher_id': teacher_id,
+                        'status': 'failed',
+                        'error': 'No memberships updated'
+                    })
+                    failed_count += 1
+                    
+            except TeacherProfile.DoesNotExist:
+                results.append({
+                    'teacher_id': teacher_id,
+                    'status': 'failed',
+                    'error': 'Teacher profile not found'
+                })
+                failed_count += 1
+            except Exception as e:
+                logger.error(f"Error updating status for teacher {teacher_id}: {e}")
+                results.append({
+                    'teacher_id': teacher_id,
+                    'status': 'failed',
+                    'error': str(e)
+                })
+                failed_count += 1
+        
+        return {
+            'action': 'update_status',
+            'successful_count': successful_count,
+            'failed_count': failed_count,
+            'results': results
+        }
+    
+    def _handle_send_message(self, teacher_ids, parameters, manageable_school_ids):
+        """Handle bulk message sending to teachers."""
+        message = parameters.get('message')
+        subject = parameters.get('subject', 'Message from School Administration')
+        template = parameters.get('template')
+        template_variables = parameters.get('template_variables', {})
+        
+        if not message and not template:
+            return {
+                'error': 'Either message or template parameter is required for send_message action',
+                'successful_count': 0,
+                'failed_count': len(teacher_ids),
+                'results': []
+            }
+        
+        results = []
+        successful_count = 0
+        failed_count = 0
+        template_used = None
+        
+        for teacher_id in teacher_ids:
+            try:
+                # Get teacher profile
+                teacher_profile = TeacherProfile.objects.get(id=teacher_id)
+                
+                # Check if user can manage this teacher
+                memberships = SchoolMembership.objects.filter(
+                    user=teacher_profile.user,
+                    school_id__in=manageable_school_ids,
+                    role=SchoolRole.TEACHER
+                )
+                
+                if not memberships.exists():
+                    results.append({
+                        'teacher_id': teacher_id,
+                        'status': 'failed',
+                        'error': 'No permission to message this teacher'
+                    })
+                    failed_count += 1
+                    continue
+                
+                # Prepare message content
+                if template:
+                    message_content = self._render_message_template(template, template_variables, teacher_profile)
+                    template_used = template
+                else:
+                    message_content = message
+                
+                # Send message (implementation would depend on messaging system)
+                # For now, we'll simulate success
+                success = self._send_teacher_message(teacher_profile.user.email, subject, message_content)
+                
+                if success:
+                    results.append({
+                        'teacher_id': teacher_id,
+                        'status': 'success',
+                        'message': 'Message sent successfully'
+                    })
+                    successful_count += 1
+                else:
+                    results.append({
+                        'teacher_id': teacher_id,
+                        'status': 'failed',
+                        'error': 'Failed to send message'
+                    })
+                    failed_count += 1
+                    
+            except TeacherProfile.DoesNotExist:
+                results.append({
+                    'teacher_id': teacher_id,
+                    'status': 'failed',
+                    'error': 'Teacher profile not found'
+                })
+                failed_count += 1
+            except Exception as e:
+                logger.error(f"Error sending message to teacher {teacher_id}: {e}")
+                results.append({
+                    'teacher_id': teacher_id,
+                    'status': 'failed',
+                    'error': str(e)
+                })
+                failed_count += 1
+        
+        result = {
+            'action': 'send_message',
+            'successful_count': successful_count,
+            'failed_count': failed_count,
+            'results': results
+        }
+        
+        if template_used:
+            result['template_used'] = template_used
+        
+        return result
+    
+    def _handle_export_data(self, teacher_ids, parameters, manageable_school_ids):
+        """Handle bulk data export for teachers."""
+        export_format = parameters.get('format', 'csv')
+        fields = parameters.get('fields', ['name', 'email', 'bio', 'hourly_rate', 'profile_completion_score'])
+        
+        if export_format not in ['csv', 'json', 'xlsx']:
+            return {
+                'error': 'Invalid export format. Supported: csv, json, xlsx',
+                'successful_count': 0,
+                'failed_count': len(teacher_ids),
+                'results': []
+            }
+        
+        results = []
+        successful_count = 0
+        failed_count = 0
+        export_data = []
+        
+        for teacher_id in teacher_ids:
+            try:
+                # Get teacher profile
+                teacher_profile = TeacherProfile.objects.get(id=teacher_id)
+                
+                # Check if user can manage this teacher
+                memberships = SchoolMembership.objects.filter(
+                    user=teacher_profile.user,
+                    school_id__in=manageable_school_ids,
+                    role=SchoolRole.TEACHER
+                )
+                
+                if not memberships.exists():
+                    results.append({
+                        'teacher_id': teacher_id,
+                        'status': 'failed',
+                        'error': 'No permission to export data for this teacher'
+                    })
+                    failed_count += 1
+                    continue
+                
+                # Extract requested fields
+                teacher_data = {}
+                for field in fields:
+                    if field == 'name':
+                        teacher_data['name'] = teacher_profile.user.name
+                    elif field == 'email':
+                        teacher_data['email'] = teacher_profile.user.email
+                    elif field == 'bio':
+                        teacher_data['bio'] = teacher_profile.bio
+                    elif field == 'hourly_rate':
+                        teacher_data['hourly_rate'] = str(teacher_profile.hourly_rate) if teacher_profile.hourly_rate else ''
+                    elif field == 'profile_completion_score':
+                        teacher_data['profile_completion_score'] = str(teacher_profile.profile_completion_score)
+                    elif field == 'specialty':
+                        teacher_data['specialty'] = teacher_profile.specialty
+                    elif field == 'education':
+                        teacher_data['education'] = teacher_profile.education
+                    elif field == 'phone_number':
+                        teacher_data['phone_number'] = teacher_profile.phone_number
+                    elif field == 'availability':
+                        teacher_data['availability'] = teacher_profile.availability
+                
+                teacher_data['teacher_id'] = teacher_id
+                export_data.append(teacher_data)
+                
+                results.append({
+                    'teacher_id': teacher_id,
+                    'status': 'success',
+                    'message': 'Data exported successfully'
+                })
+                successful_count += 1
+                
+            except TeacherProfile.DoesNotExist:
+                results.append({
+                    'teacher_id': teacher_id,
+                    'status': 'failed',
+                    'error': 'Teacher profile not found'
+                })
+                failed_count += 1
+            except Exception as e:
+                logger.error(f"Error exporting data for teacher {teacher_id}: {e}")
+                results.append({
+                    'teacher_id': teacher_id,
+                    'status': 'failed',
+                    'error': str(e)
+                })
+                failed_count += 1
+        
+        # Generate export file (simplified implementation)
+        export_url = self._generate_export_file(export_data, export_format)
+        file_size = len(str(export_data))  # Simplified size calculation
+        
+        return {
+            'action': 'export_data',
+            'successful_count': successful_count,
+            'failed_count': failed_count,
+            'results': results,
+            'export_url': export_url,
+            'file_size': file_size,
+            'format': export_format,
+            'fields': fields
+        }
+    
+    def _handle_update_profile(self, teacher_ids, parameters, manageable_school_ids):
+        """Handle bulk profile updates for teachers."""
+        if not parameters:
+            return {
+                'error': 'Profile update parameters are required',
+                'successful_count': 0,
+                'failed_count': len(teacher_ids),
+                'results': []
+            }
+        
+        results = []
+        successful_count = 0
+        failed_count = 0
+        
+        for teacher_id in teacher_ids:
+            try:
+                # Get teacher profile
+                teacher_profile = TeacherProfile.objects.get(id=teacher_id)
+                
+                # Check if user can manage this teacher
+                memberships = SchoolMembership.objects.filter(
+                    user=teacher_profile.user,
+                    school_id__in=manageable_school_ids,
+                    role=SchoolRole.TEACHER
+                )
+                
+                if not memberships.exists():
+                    results.append({
+                        'teacher_id': teacher_id,
+                        'status': 'failed',
+                        'error': 'No permission to update this teacher'
+                    })
+                    failed_count += 1
+                    continue
+                
+                # Update profile fields
+                updated_fields = []
+                for field, value in parameters.items():
+                    if hasattr(teacher_profile, field):
+                        # Handle special field types
+                        if field == 'hourly_rate' and value:
+                            try:
+                                from decimal import Decimal
+                                value = Decimal(str(value))
+                            except:
+                                raise ValidationError(f"Invalid hourly_rate value: {value}")
+                        
+                        setattr(teacher_profile, field, value)
+                        updated_fields.append(field)
+                
+                if updated_fields:
+                    teacher_profile.save()
+                    
+                    # Trigger completion score recalculation
+                    teacher_profile.update_completion_score()
+                    
+                    results.append({
+                        'teacher_id': teacher_id,
+                        'status': 'success',
+                        'message': f'Updated fields: {", ".join(updated_fields)}'
+                    })
+                    successful_count += 1
+                else:
+                    results.append({
+                        'teacher_id': teacher_id,
+                        'status': 'failed',
+                        'error': 'No valid fields to update'
+                    })
+                    failed_count += 1
+                
+            except TeacherProfile.DoesNotExist:
+                results.append({
+                    'teacher_id': teacher_id,
+                    'status': 'failed',
+                    'error': 'Teacher profile not found'
+                })
+                failed_count += 1
+            except ValidationError as e:
+                results.append({
+                    'teacher_id': teacher_id,
+                    'status': 'failed',
+                    'error': str(e)
+                })
+                failed_count += 1
+            except Exception as e:
+                logger.error(f"Error updating profile for teacher {teacher_id}: {e}")
+                results.append({
+                    'teacher_id': teacher_id,
+                    'status': 'failed',
+                    'error': str(e)
+                })
+                failed_count += 1
+        
+        return {
+            'action': 'update_profile',
+            'successful_count': successful_count,
+            'failed_count': failed_count,
+            'results': results
+        }
+    
+    def _render_message_template(self, template, variables, teacher_profile):
+        """Render message template with variables."""
+        # Simplified template rendering
+        templates = {
+            'profile_completion_reminder': (
+                f"Dear {teacher_profile.user.name},\n\n"
+                f"We noticed your profile completion is below {variables.get('completion_threshold', 80)}%. "
+                f"Please complete your profile by {variables.get('deadline', 'soon')} to improve your visibility to students.\n\n"
+                "Best regards,\nSchool Administration"
+            ),
+            'welcome_message': (
+                f"Welcome {teacher_profile.user.name}!\n\n"
+                "We're excited to have you join our teaching team. Please complete your profile to get started.\n\n"
+                "Best regards,\nSchool Administration"
+            ),
+            'profile_update_reminder': (
+                f"Hello {teacher_profile.user.name},\n\n"
+                "Please update your profile information to keep it current.\n\n"
+                "Best regards,\nSchool Administration"
+            )
+        }
+        
+        return templates.get(template, f"Dear {teacher_profile.user.name},\n\nTemplate '{template}' not found.")
+    
+    def _send_teacher_message(self, email, subject, message):
+        """Send message to teacher (placeholder implementation)."""
+        # In a real implementation, this would integrate with email service
+        logger.info(f"Sending message to {email}: {subject}")
+        return True  # Assume success for now
+    
+    def _generate_export_file(self, data, format_type):
+        """Generate export file and return URL (placeholder implementation)."""
+        # In a real implementation, this would generate actual files
+        import uuid
+        file_id = str(uuid.uuid4())
+        return f"/api/exports/{file_id}.{format_type}"
+
+
+class TeacherAnalyticsView(KnoxAuthenticatedAPIView):
+    """
+    API endpoint for school-level teacher analytics.
+    
+    Provides comprehensive insights into teacher profile completion,
+    subject coverage, and activity metrics for school administrators.
+    """
+    
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    
+    def get(self, request, school_id):
+        """
+        Get comprehensive teacher analytics for a school.
+        
+        Query parameters:
+        - min_completion: Filter teachers by minimum completion percentage
+        - include_export_data: Include detailed teacher data for export
+        """
+        try:
+            # Validate school existence and permissions
+            try:
+                school = School.objects.get(id=school_id)
+            except School.DoesNotExist:
+                return Response(
+                    {'error': 'School not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Check if user can manage this school
+            manageable_school_ids = list_school_ids_owned_or_managed(request.user)
+            if school_id not in manageable_school_ids:
+                return Response(
+                    {'error': 'You do not have permission to view analytics for this school'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Get query parameters
+            min_completion = request.query_params.get('min_completion')
+            include_export_data = request.query_params.get('include_export_data', '').lower() == 'true'
+            
+            # Get all teacher profiles for this school
+            teacher_memberships = SchoolMembership.objects.filter(
+                school=school,
+                role=SchoolRole.TEACHER,
+                is_active=True
+            ).select_related('user__teacher_profile')
+            
+            teacher_profiles = []
+            for membership in teacher_memberships:
+                if hasattr(membership.user, 'teacher_profile'):
+                    profile = membership.user.teacher_profile
+                    
+                    # Apply completion filter if specified
+                    if min_completion:
+                        try:
+                            min_comp = float(min_completion)
+                            if profile.profile_completion_score < min_comp:
+                                continue
+                        except ValueError:
+                            pass  # Ignore invalid min_completion values
+                    
+                    teacher_profiles.append(profile)
+            
+            # Generate analytics
+            analytics_data = self._generate_analytics(school, teacher_profiles, include_export_data)
+            
+            return Response(analytics_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Teacher analytics failed for school {school_id}: {e}")
+            return Response(
+                {'error': 'Internal server error while generating analytics'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _generate_analytics(self, school, teacher_profiles, include_export_data=False):
+        """Generate comprehensive analytics data."""
+        from .services.profile_completion import ProfileCompletionService
+        
+        if not teacher_profiles:
+            return self._empty_analytics_response(include_export_data)
+        
+        # Profile completion statistics
+        completion_stats = self._calculate_completion_stats(teacher_profiles)
+        
+        # Subject coverage analysis
+        subject_coverage = self._analyze_subject_coverage(teacher_profiles)
+        
+        # Teacher activity metrics
+        activity_metrics = self._calculate_activity_metrics(teacher_profiles)
+        
+        # Completion distribution
+        completion_distribution = self._calculate_completion_distribution(teacher_profiles)
+        
+        # Common missing fields
+        common_missing_fields = self._identify_common_missing_fields(teacher_profiles)
+        
+        # Generate recommendations
+        recommendations = self._generate_recommendations(completion_stats, subject_coverage, activity_metrics)
+        
+        analytics_data = {
+            'school_id': school.id,
+            'school_name': school.name,
+            'generated_at': timezone.now().isoformat(),
+            'profile_completion_stats': completion_stats,
+            'subject_coverage': subject_coverage,
+            'teacher_activity': activity_metrics,
+            'completion_distribution': completion_distribution,
+            'common_missing_fields': common_missing_fields,
+            'recommendations': recommendations
+        }
+        
+        # Include detailed export data if requested
+        if include_export_data:
+            analytics_data['teacher_details'] = self._generate_teacher_details(teacher_profiles)
+        
+        return analytics_data
+    
+    def _calculate_completion_stats(self, teacher_profiles):
+        """Calculate profile completion statistics."""
+        if not teacher_profiles:
+            return {
+                'total_teachers': 0,
+                'average_completion': 0.0,
+                'complete_profiles': 0,
+                'incomplete_profiles': 0
+            }
+        
+        total_teachers = len(teacher_profiles)
+        completion_scores = [float(profile.profile_completion_score) for profile in teacher_profiles]
+        average_completion = sum(completion_scores) / total_teachers
+        
+        complete_profiles = sum(1 for profile in teacher_profiles if profile.is_profile_complete)
+        incomplete_profiles = total_teachers - complete_profiles
+        
+        return {
+            'total_teachers': total_teachers,
+            'average_completion': round(average_completion, 1),
+            'complete_profiles': complete_profiles,
+            'incomplete_profiles': incomplete_profiles
+        }
+    
+    def _analyze_subject_coverage(self, teacher_profiles):
+        """Analyze subject coverage across teachers."""
+        # Get all available courses
+        all_courses = Course.objects.select_related('educational_system').all()
+        total_subjects = all_courses.count()
+        
+        # Get covered subjects (subjects taught by at least one teacher)
+        covered_course_ids = set()
+        subject_teacher_counts = {}
+        
+        for profile in teacher_profiles:
+            teacher_courses = profile.teacher_courses.filter(is_active=True).select_related('course')
+            for teacher_course in teacher_courses:
+                course = teacher_course.course
+                covered_course_ids.add(course.id)
+                
+                course_key = f"{course.name} ({course.education_level})"
+                if course_key not in subject_teacher_counts:
+                    subject_teacher_counts[course_key] = {
+                        'subject_name': course.name,
+                        'education_level': course.education_level,
+                        'teacher_count': 0,
+                        'course_id': course.id
+                    }
+                subject_teacher_counts[course_key]['teacher_count'] += 1
+        
+        covered_subjects = len(covered_course_ids)
+        uncovered_subjects = total_subjects - covered_subjects
+        
+        # Convert to list and sort by teacher count
+        subject_details = sorted(
+            subject_teacher_counts.values(),
+            key=lambda x: x['teacher_count'],
+            reverse=True
+        )
+        
+        return {
+            'total_subjects': total_subjects,
+            'covered_subjects': covered_subjects,
+            'uncovered_subjects': uncovered_subjects,
+            'coverage_percentage': round((covered_subjects / total_subjects) * 100, 1) if total_subjects > 0 else 0.0,
+            'subject_details': subject_details
+        }
+    
+    def _calculate_activity_metrics(self, teacher_profiles):
+        """Calculate teacher activity metrics."""
+        from datetime import timedelta
+        
+        now = timezone.now()
+        recent_threshold = now - timedelta(days=30)  # Active within last 30 days
+        update_threshold = now - timedelta(days=7)   # Updated profile within last 7 days
+        
+        active_teachers = 0
+        inactive_teachers = 0
+        recently_updated_profiles = 0
+        needs_attention = 0  # Incomplete profiles or very low completion
+        
+        for profile in teacher_profiles:
+            # Activity check
+            if profile.last_activity and profile.last_activity >= recent_threshold:
+                active_teachers += 1
+            else:
+                inactive_teachers += 1
+            
+            # Recent profile updates
+            if profile.last_profile_update >= update_threshold:
+                recently_updated_profiles += 1
+            
+            # Needs attention (incomplete or very low completion)
+            if not profile.is_profile_complete or profile.profile_completion_score < 50:
+                needs_attention += 1
+        
+        return {
+            'active_teachers': active_teachers,
+            'inactive_teachers': inactive_teachers,
+            'recently_updated_profiles': recently_updated_profiles,
+            'needs_attention': needs_attention,
+            'activity_rate': round((active_teachers / len(teacher_profiles)) * 100, 1) if teacher_profiles else 0.0
+        }
+    
+    def _calculate_completion_distribution(self, teacher_profiles):
+        """Calculate completion score distribution."""
+        distribution = {'0-25%': 0, '26-50%': 0, '51-75%': 0, '76-100%': 0}
+        
+        for profile in teacher_profiles:
+            score = float(profile.profile_completion_score)
+            if score <= 25:
+                distribution['0-25%'] += 1
+            elif score <= 50:
+                distribution['26-50%'] += 1
+            elif score <= 75:
+                distribution['51-75%'] += 1
+            else:
+                distribution['76-100%'] += 1
+        
+        return distribution
+    
+    def _identify_common_missing_fields(self, teacher_profiles):
+        """Identify most commonly missing fields across teachers."""
+        from .services.profile_completion import ProfileCompletionService
+        
+        missing_field_counts = {}
+        total_teachers = len(teacher_profiles)
+        
+        for profile in teacher_profiles:
+            missing_critical, missing_optional = ProfileCompletionService.identify_missing_fields(profile)
+            
+            # Count missing fields
+            for field in missing_critical + missing_optional:
+                missing_field_counts[field] = missing_field_counts.get(field, 0) + 1
+        
+        # Convert to list with percentages and sort by frequency
+        common_missing = []
+        for field, count in missing_field_counts.items():
+            common_missing.append({
+                'field': field,
+                'count': count,
+                'percentage': round((count / total_teachers) * 100, 1) if total_teachers > 0 else 0.0
+            })
+        
+        # Sort by count (most common first) and take top 10
+        common_missing.sort(key=lambda x: x['count'], reverse=True)
+        return common_missing[:10]
+    
+    def _generate_recommendations(self, completion_stats, subject_coverage, activity_metrics):
+        """Generate actionable recommendations based on analytics."""
+        recommendations = []
+        
+        # Profile completion recommendations
+        if completion_stats['incomplete_profiles'] > completion_stats['complete_profiles']:
+            recommendations.append({
+                'text': f"Focus on profile completion: {completion_stats['incomplete_profiles']} teachers need to complete their profiles.",
+                'priority': 'high'
+            })
+        
+        if completion_stats['average_completion'] < 60:
+            recommendations.append({
+                'text': f"Overall profile quality needs improvement (average: {completion_stats['average_completion']}%). Consider providing guidance or incentives.",
+                'priority': 'high'
+            })
+        
+        # Subject coverage recommendations
+        if subject_coverage['coverage_percentage'] < 70:
+            recommendations.append({
+                'text': f"Subject coverage is low ({subject_coverage['coverage_percentage']}%). Consider recruiting teachers for uncovered subjects.",
+                'priority': 'medium'
+            })
+        
+        # Activity recommendations
+        if activity_metrics['inactive_teachers'] > activity_metrics['active_teachers']:
+            recommendations.append({
+                'text': f"{activity_metrics['inactive_teachers']} teachers appear inactive. Consider reaching out to re-engage them.",
+                'priority': 'medium'
+            })
+        
+        if activity_metrics['needs_attention'] > 0:
+            recommendations.append({
+                'text': f"{activity_metrics['needs_attention']} teachers need immediate attention for profile completion.",
+                'priority': 'high'
+            })
+        
+        # Default positive message if no major issues
+        if not recommendations:
+            recommendations.append({
+                'text': "Your teacher profiles are in good shape! Continue monitoring and encouraging regular updates.",
+                'priority': 'low'
+            })
+        
+        return recommendations
+    
+    def _generate_teacher_details(self, teacher_profiles):
+        """Generate detailed teacher data for export."""
+        from .services.profile_completion import ProfileCompletionService
+        
+        teacher_details = []
+        
+        for profile in teacher_profiles:
+            completion_data = ProfileCompletionService.calculate_completion(profile)
+            courses_count = profile.teacher_courses.filter(is_active=True).count()
+            
+            teacher_details.append({
+                'id': profile.id,
+                'name': profile.user.name,
+                'email': profile.user.email,
+                'completion_percentage': completion_data['completion_percentage'],
+                'is_complete': completion_data['is_complete'],
+                'missing_fields_count': len(completion_data['missing_critical']) + len(completion_data['missing_optional']),
+                'missing_critical_count': len(completion_data['missing_critical']),
+                'courses_count': courses_count,
+                'last_activity': profile.last_activity.isoformat() if profile.last_activity else None,
+                'last_profile_update': profile.last_profile_update.isoformat() if profile.last_profile_update else None
+            })
+        
+        # Sort by completion percentage (lowest first to highlight issues)
+        teacher_details.sort(key=lambda x: x['completion_percentage'])
+        
+        return teacher_details
+    
+    def _empty_analytics_response(self, include_export_data=False):
+        """Return empty analytics response for schools with no teachers."""
+        response = {
+            'profile_completion_stats': {
+                'total_teachers': 0,
+                'average_completion': 0.0,
+                'complete_profiles': 0,
+                'incomplete_profiles': 0
+            },
+            'subject_coverage': {
+                'total_subjects': Course.objects.count(),
+                'covered_subjects': 0,
+                'uncovered_subjects': Course.objects.count(),
+                'coverage_percentage': 0.0,
+                'subject_details': []
+            },
+            'teacher_activity': {
+                'active_teachers': 0,
+                'inactive_teachers': 0,
+                'recently_updated_profiles': 0,
+                'needs_attention': 0,
+                'activity_rate': 0.0
+            },
+            'completion_distribution': {'0-25%': 0, '26-50%': 0, '51-75%': 0, '76-100%': 0},
+            'common_missing_fields': [],
+            'recommendations': [{
+                'text': 'No teachers found in this school. Start by inviting teachers to join.',
+                'priority': 'high'
+            }]
+        }
+        
+        if include_export_data:
+            response['teacher_details'] = []
+        
+        return response

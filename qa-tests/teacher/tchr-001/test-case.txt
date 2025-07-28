@@ -1,0 +1,236 @@
+QA Test Case: Teacher Directory Management with Profile Completion Status
+
+Test ID: TCHR-001
+Test Name: Teacher Directory Management with Profile Completion Status
+Purpose: Verify that school administrators can view teacher directory with clear profile completion indicators, filter teachers by completion status, and access individual teacher profiles from the directory
+Expected Result: Teacher directory displays with visual completion indicators, filtering works correctly, and individual teacher profiles are accessible
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native Expo frontend
+- Frontend URL: http://localhost:8081
+- Backend URL: http://localhost:8000
+- User Authentication: Passwordless email verification with JWT tokens
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+
+Test Data:
+- Test School Admin Email: anapmc.carvalho@gmail.com
+- Expected Role: school_owner with admin privileges
+- Teachers: Multiple teachers with varying profile completion levels
+- Database: Should contain existing teachers with different completion statuses
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Both Django backend (port 8000) and Expo frontend (port 8081) servers start successfully
+Screenshot: 01_servers_started.png
+Debug: Use 'make logs' to check server status if issues occur
+
+Step 2: Navigate to Application and Login
+1. Open browser to http://localhost:8081
+2. Navigate to login page if not already there
+3. Enter email: anapmc.carvalho@gmail.com
+4. Click "Enviar código" (Send code)
+5. Check terminal for verification code or email
+6. Enter the 6-digit verification code
+7. Verify successful login and landing on dashboard
+
+Expected: Successful authentication and access to school admin dashboard
+Screenshot: 02_successful_login_dashboard.png
+Debug: Check browser console and network tab for authentication errors
+
+Step 3: Navigate to Teacher Management (Users Page)
+1. From the dashboard, locate the navigation menu
+2. Click on "Users" or "Utilizadores" option
+3. Verify you land on the Users page with tabs
+4. Ensure "Professores" (Teachers) tab is active by default
+5. Verify the page loads with teacher management interface
+
+Expected: Users page loads with Teachers tab active, showing teacher management interface
+Screenshot: 03_teacher_management_page_loaded.png
+Debug: Check for any loading errors or navigation issues
+
+Step 4: Verify Teacher Directory Display
+1. Examine the teacher directory/list view
+2. Verify teacher table headers are present: 
+   - Professor (Name)
+   - Perfil (Profile completion)
+   - Cursos (Courses)
+   - Atividade (Activity)
+   - Status
+   - Ações (Actions)
+3. Verify each teacher row shows:
+   - Teacher name and email
+   - Profile completion indicator (percentage and visual indicator)
+   - Course assignments
+   - Last activity date
+   - Status badge (Active/Inactive/Pending)
+   - Action buttons (View, Message, More options)
+
+Expected: Teacher directory displays with all required columns and data
+Screenshot: 04_teacher_directory_layout.png
+Debug: Verify API calls are successful in browser network tab
+
+Step 5: Test Profile Completion Indicators
+1. Examine profile completion indicators for different teachers
+2. Verify visual indicators show:
+   - Percentage completion (0-100%)
+   - Color coding (red for low, yellow for medium, green for high completion)
+   - Missing critical information warnings if applicable
+3. Look for teachers with different completion levels:
+   - Complete profiles (80%+ with green indicators)
+   - Incomplete profiles (below 80% with yellow/red indicators)
+   - Critical missing information (red warning indicators)
+
+Expected: Profile completion indicators clearly show completion status with appropriate visual cues
+Screenshot: 05_profile_completion_indicators.png
+Debug: Check that backend ProfileCompletionService is returning completion data
+
+Step 6: Test Profile Completion Filtering
+1. Locate the filter controls (should have a filter icon or dropdown)
+2. Click on filter options to reveal completion status filters
+3. Test each filter option:
+   - "Todos" (All) - should show all teachers
+   - "Completos" (Complete) - should show only teachers with complete profiles
+   - "Incompletos" (Incomplete) - should show teachers with incomplete profiles
+   - "Críticos" (Critical) - should show teachers with critical missing information
+4. Verify that teacher list updates correctly for each filter
+5. Verify teacher count updates to reflect filtered results
+
+Expected: Filtering works correctly, showing appropriate teachers for each filter option
+Screenshot: 06_completion_filtering_working.png
+Debug: Check that filtering logic correctly identifies completion levels
+
+Step 7: Test Search Functionality
+1. Locate the search input field (should be above the teacher list)
+2. Test searching by teacher name:
+   - Enter partial teacher name
+   - Verify results update in real-time
+3. Test searching by email:
+   - Enter partial email address
+   - Verify results filter correctly
+4. Test searching by specialty:
+   - Enter subject or specialty keyword
+   - Verify teachers with matching specialties appear
+5. Clear search and verify all teachers return
+
+Expected: Search functionality works across name, email, and specialty fields
+Screenshot: 07_search_functionality_working.png
+Debug: Verify search is case-insensitive and works with partial matches
+
+Step 8: Test Bulk Selection and Actions
+1. Locate the bulk selection checkbox in the table header
+2. Click to select all teachers
+3. Verify all teacher rows are selected (checkboxes checked)
+4. Verify bulk actions panel appears or becomes enabled
+5. Test individual teacher selection:
+   - Unselect all and select individual teachers
+   - Verify selection count updates correctly
+6. Look for bulk action options (should include messaging, status updates)
+
+Expected: Bulk selection works correctly with proper visual feedback and action availability
+Screenshot: 08_bulk_selection_working.png
+Debug: Check that selection state is maintained during page interactions
+
+Step 9: Test Individual Teacher Profile Access
+1. From the teacher directory, locate the "View" action button for a teacher
+2. Click the view/eye icon to access individual teacher profile
+3. Verify navigation to individual teacher profile page (/teachers/[id])
+4. Verify the profile page loads with comprehensive teacher information:
+   - Teacher contact information
+   - Profile completion details
+   - Course assignments
+   - Teaching information
+   - Recent activity
+5. Verify admin editing capabilities are available (Edit button)
+
+Expected: Individual teacher profiles are accessible and display comprehensive information with admin controls
+Screenshot: 09_individual_teacher_profile.png
+Debug: Check URL routing and API calls for individual teacher data
+
+Step 10: Test View Mode Switching
+1. Return to the teacher directory (Users page)
+2. Locate the view mode switcher (should show List, Analytics, Communication tabs)
+3. Test switching between view modes:
+   - "Lista" (List) - should show the table view
+   - "Análises" (Analytics) - should show analytics dashboard
+   - "Comunicação" (Communication) - should show communication panel
+4. Verify each view mode loads correctly and maintains data
+5. Verify navigation between modes works smoothly
+
+Expected: View mode switching works correctly, each mode displays appropriate content
+Screenshot: 10_view_mode_switching.png
+Debug: Check that each view mode makes appropriate API calls
+
+Step 11: Test Mobile Responsiveness
+1. Open browser developer tools
+2. Switch to mobile viewport (375px width)
+3. Navigate through the teacher directory interface
+4. Verify all elements are properly responsive:
+   - Table layout adapts to mobile
+   - Action buttons remain accessible
+   - Navigation remains functional
+   - Text remains readable
+5. Test key interactions on mobile:
+   - Teacher selection
+   - Profile access
+   - Filtering and search
+
+Expected: Teacher directory interface is fully functional and readable on mobile devices
+Screenshot: 11_mobile_responsiveness.png
+Debug: Check for horizontal scrolling or layout issues on small screens
+
+Step 12: Test Performance and Loading States
+1. Refresh the teacher directory page
+2. Observe loading states during initial page load
+3. Test performance with search and filtering operations
+4. Verify that large teacher lists (if available) load efficiently
+5. Check for any obvious performance issues or delays
+6. Verify error handling if API calls fail
+
+Expected: Page loads efficiently with appropriate loading states and good performance
+Screenshot: 12_performance_and_loading.png
+Debug: Check network tab for slow API calls or excessive requests
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Teacher directory displays correctly with all profile completion indicators working, filtering and search function properly, individual teacher profiles are accessible, view mode switching works, interface is mobile-responsive, and performance is acceptable
+
+FAIL: Any of the following occur:
+- Teacher directory fails to load or display teachers
+- Profile completion indicators are missing or incorrect
+- Filtering by completion status doesn't work
+- Search functionality is broken
+- Individual teacher profiles are not accessible
+- Bulk selection doesn't work
+- View mode switching fails
+- Interface is not mobile-responsive
+- Significant performance issues
+- Critical errors prevent normal operation
+
+Individual Step Criteria:
+- Step 1: PASS if servers start successfully, FAIL if servers don't start or show errors
+- Step 2: PASS if login succeeds and dashboard loads, FAIL if authentication fails
+- Step 3: PASS if teacher management page loads correctly, FAIL if navigation fails
+- Step 4: PASS if teacher directory displays with all required columns, FAIL if layout is broken
+- Step 5: PASS if completion indicators show correctly with visual cues, FAIL if indicators missing
+- Step 6: PASS if filtering works for all completion levels, FAIL if filters don't work
+- Step 7: PASS if search works across all specified fields, FAIL if search is broken
+- Step 8: PASS if bulk selection and actions work correctly, FAIL if selection is broken
+- Step 9: PASS if individual profiles are accessible with full data, FAIL if profiles don't load
+- Step 10: PASS if all view modes work correctly, FAIL if switching fails
+- Step 11: PASS if interface is fully functional on mobile, FAIL if mobile UX is broken
+- Step 12: PASS if performance is acceptable with proper loading states, FAIL if major issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

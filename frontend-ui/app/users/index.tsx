@@ -6,11 +6,25 @@ import {
   Users,
   GraduationCap,
   Building,
+  Eye,
+  Filter,
+  MoreVertical,
+  CheckSquare,
+  Activity,
+  ExternalLink,
+  MessageCircle,
+  Settings,
 } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'expo-router';
 
 import { useAuth } from '@/api/authContext';
 import { getTeachers, TeacherProfile } from '@/api/userApi';
+import { ProfileCompletionIndicator } from '@/components/teachers/profile-completion-indicator';
+import { BulkTeacherActions } from '@/components/teachers/bulk-teacher-actions';
+import { TeacherCommunicationPanel } from '@/components/teachers/teacher-communication-panel';
+import { TeacherAnalyticsDashboard } from '@/components/teachers/teacher-analytics-dashboard';
+import { useTeachers } from '@/hooks/useTeachers';
 import { MainLayout } from '@/components/layouts/main-layout';
 import { AddStudentModal } from '@/components/modals/add-student-modal';
 import { AddTeacherModal } from '@/components/modals/add-teacher-modal';
@@ -28,6 +42,10 @@ import { ScrollView } from '@/components/ui/scroll-view';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Menu } from '@/components/ui/menu';
 
 // Color constants
 const COLORS = {
@@ -47,6 +65,7 @@ const COLORS = {
 } as const;
 
 type TabType = 'teachers' | 'students' | 'staff';
+type TeacherViewMode = 'list' | 'analytics' | 'communication';
 
 interface TabInfo {
   key: TabType;
@@ -166,6 +185,7 @@ interface TeachersTabProps {
   onInviteTeacher: () => void;
   onAddManually: () => void;
   userHasTeacherProfile: boolean;
+  onRefresh?: () => void;
 }
 
 const TeachersTab = ({
@@ -174,73 +194,389 @@ const TeachersTab = ({
   onInviteTeacher,
   onAddManually,
   userHasTeacherProfile,
+  onRefresh,
 }: TeachersTabProps) => {
-  return (
-    <VStack space="md">
-      {/* Teachers List with inline action buttons */}
-      <HStack className="w-full items-center" space="lg">
-        <Heading size="lg" className="text-gray-900">
-          Lista de Professores
-        </Heading>
-        <HStack style={{ paddingHorizontal: 4 }}>
-          {!userHasTeacherProfile && (
-            <ActionButton
-              icon={UserPlus}
-              title="Adicionar-me como professor"
-              onPress={onAddTeacher}
-              variant="primary"
-            />
-          )}
-          <ActionButton
-            icon={Mail}
-            title="Convidar professor"
-            onPress={onInviteTeacher}
-            variant="secondary"
-          />
-        </HStack>
-      </HStack>
+  const router = useRouter();
+  const [viewMode, setViewMode] = useState<TeacherViewMode>('list');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTeachers, setSelectedTeachers] = useState<Set<number>>(new Set());
+  const [completionFilter, setCompletionFilter] = useState<'all' | 'complete' | 'incomplete' | 'critical'>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
-      <Box className="rounded-lg border border-gray-200" style={{ backgroundColor: COLORS.white }}>
+  // Filter teachers based on search and completion status
+  const filteredTeachers = React.useMemo(() => {
+    let filtered = teachers;
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(teacher => 
+        teacher.user.name.toLowerCase().includes(query) ||
+        teacher.user.email.toLowerCase().includes(query) ||
+        teacher.specialty?.toLowerCase().includes(query) ||
+        teacher.bio?.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply completion filter
+    if (completionFilter !== 'all') {
+      filtered = filtered.filter(teacher => {
+        const completionScore = teacher.profile_completion_score || 0;
+        const hasCritical = teacher.profile_completion?.missing_critical?.length > 0;
+
+        switch (completionFilter) {
+          case 'complete':
+            return teacher.is_profile_complete && completionScore >= 80;
+          case 'critical':
+            return hasCritical || completionScore < 30;
+          case 'incomplete':
+            return !teacher.is_profile_complete && completionScore < 80 && !hasCritical;
+          default:
+            return true;
+        }
+      });
+    }
+
+    return filtered;
+  }, [teachers, searchQuery, completionFilter]);
+
+  const handleSelectTeacher = (teacherId: number, selected: boolean) => {
+    const newSelected = new Set(selectedTeachers);
+    if (selected) {
+      newSelected.add(teacherId);
+    } else {
+      newSelected.delete(teacherId);
+    }
+    setSelectedTeachers(newSelected);
+  };
+
+  const handleSelectAll = (selected: boolean) => {
+    if (selected) {
+      setSelectedTeachers(new Set(filteredTeachers.map(t => t.id)));
+    } else {
+      setSelectedTeachers(new Set());
+    }
+  };
+
+  const handleViewTeacherProfile = (teacherId: number) => {
+    router.push(`/teachers/${teacherId}`);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedTeachers(new Set());
+  };
+
+  const handleSendMessage = (teacherId: number) => {
+    // TODO: Open message modal for specific teacher
+    console.log('Send message to teacher:', teacherId);
+  };
+
+  const handleTeacherActions = (teacherId: number) => {
+    // TODO: Show action menu for specific teacher
+    console.log('Show actions for teacher:', teacherId);
+  };
+
+  const getLastActivityText = (teacher: TeacherProfile): string => {
+    if (teacher.last_activity) {
+      const date = new Date(teacher.last_activity);
+      const now = new Date();
+      const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'Hoje';
+      if (diffDays === 1) return 'Ontem';
+      if (diffDays < 7) return `${diffDays} dias atrás`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} semanas atrás`;
+      return date.toLocaleDateString('pt-BR');
+    }
+    return 'Nunca';
+  };
+
+  const getCoursesText = (teacher: TeacherProfile): string => {
+    const courses = teacher.teacher_courses?.filter(c => c.is_active) || [];
+    if (courses.length === 0) return 'Nenhum curso';
+    if (courses.length === 1) return courses[0].course_name;
+    return `${courses.length} cursos`;
+  };
+
+  const renderViewModeContent = () => {
+    switch (viewMode) {
+      case 'analytics':
+        return (
+          <TeacherAnalyticsDashboard
+            onRefresh={onRefresh}
+            onViewTeacher={handleViewTeacherProfile}
+          />
+        );
+      case 'communication':
+        return (
+          <TeacherCommunicationPanel
+            teachers={teachers}
+            selectedTeachers={Array.from(selectedTeachers)}
+            onTeacherSelect={handleSelectTeacher}
+            onSelectAll={handleSelectAll}
+            onRefresh={onRefresh}
+          />
+        );
+      default:
+        return renderTeachersList();
+    }
+  };
+
+  const renderTeachersList = () => (
+    <>
+      {/* Search and Filters */}
+      <VStack space="sm">
+        <HStack space="sm" className="items-center">
+          <Box className="flex-1">
+            <Input
+              placeholder="Buscar professores..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              className="bg-white"
+            />
+          </Box>
+          <Pressable
+            onPress={() => setShowFilters(!showFilters)}
+            className={`p-2 rounded-md border ${showFilters ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-300'}`}
+          >
+            <Icon as={Filter} size="sm" className={showFilters ? 'text-blue-600' : 'text-gray-500'} />
+          </Pressable>
+        </HStack>
+
+        {showFilters && (
+          <HStack space="sm" className="flex-wrap">
+            {(['all', 'complete', 'incomplete', 'critical'] as const).map(filter => (
+              <Pressable
+                key={filter}
+                onPress={() => setCompletionFilter(filter)}
+                className={`px-3 py-1 rounded-full border ${
+                  completionFilter === filter 
+                    ? 'bg-blue-100 border-blue-300' 
+                    : 'bg-white border-gray-300'
+                }`}
+              >
+                <Text className={`text-sm ${
+                  completionFilter === filter ? 'text-blue-700' : 'text-gray-600'
+                }`}>
+                  {filter === 'all' ? 'Todos' : 
+                   filter === 'complete' ? 'Completos' :
+                   filter === 'incomplete' ? 'Incompletos' : 'Críticos'}
+                </Text>
+              </Pressable>
+            ))}
+          </HStack>
+        )}
+      </VStack>
+
+      {/* Teachers Table */}
+      <Box className="rounded-lg border border-gray-200 bg-white">
         <VStack>
           {/* Table header */}
-          <HStack className="p-4 border-b border-gray-200">
-            <Text className="flex-1 font-medium text-gray-700">Nome</Text>
-            <Text className="flex-1 font-medium text-gray-700">Email</Text>
-            <Text className="flex-1 font-medium text-gray-700">Especialidade</Text>
+          <HStack className="p-4 border-b border-gray-200 items-center">
+            <Box className="w-8">
+              <Checkbox
+                value={selectedTeachers.size > 0 && selectedTeachers.size === filteredTeachers.length}
+                onValueChange={handleSelectAll}
+              />
+            </Box>
+            <Text className="flex-1 font-medium text-gray-700">Professor</Text>
+            <Text className="w-32 font-medium text-gray-700">Perfil</Text>
+            <Text className="w-24 font-medium text-gray-700">Cursos</Text>
+            <Text className="w-24 font-medium text-gray-700">Atividade</Text>
             <Text className="w-20 font-medium text-gray-700">Status</Text>
+            <Text className="w-20 font-medium text-gray-700">Ações</Text>
           </HStack>
 
-          {teachers.length === 0 ? (
+          {filteredTeachers.length === 0 ? (
             /* Empty state */
             <Box className="p-8">
               <Center>
                 <VStack className="items-center" space="xs">
                   <Icon as={GraduationCap} size="lg" className="text-gray-400" />
-                  <Text className="text-gray-500">Nenhum professor cadastrado</Text>
+                  <Text className="text-gray-500">
+                    {searchQuery || completionFilter !== 'all' 
+                      ? 'Nenhum professor encontrado' 
+                      : 'Nenhum professor cadastrado'}
+                  </Text>
                   <Text className="text-gray-400 text-sm text-center">
-                    Use os botões acima para adicionar professores
+                    {searchQuery || completionFilter !== 'all'
+                      ? 'Tente ajustar os filtros de busca'
+                      : 'Use os botões acima para adicionar professores'}
                   </Text>
                 </VStack>
               </Center>
             </Box>
           ) : (
             /* Teachers list */
-            teachers.map((teacher, index) => (
+            filteredTeachers.map((teacher, index) => (
               <HStack
                 key={teacher.id}
-                className={`p-4 ${index < teachers.length - 1 ? 'border-b border-gray-200' : ''}`}
+                className={`p-4 items-center ${index < filteredTeachers.length - 1 ? 'border-b border-gray-200' : ''}`}
               >
-                <Text className="flex-1 text-gray-900">{teacher.user.name}</Text>
-                <Text className="flex-1 text-gray-600">{teacher.user.email}</Text>
-                <Text className="flex-1 text-gray-600">
-                  {teacher.specialty || 'Não especificado'}
-                </Text>
-                <Text className="w-20 text-green-600 text-sm">Ativo</Text>
+                {/* Selection checkbox */}
+                <Box className="w-8">
+                  <Checkbox
+                    value={selectedTeachers.has(teacher.id)}
+                    onValueChange={(selected) => handleSelectTeacher(teacher.id, selected)}
+                  />
+                </Box>
+
+                {/* Teacher info */}
+                <VStack className="flex-1" space="xs">
+                  <Text className="font-medium text-gray-900">{teacher.user.name}</Text>
+                  <Text className="text-sm text-gray-600">{teacher.user.email}</Text>
+                  {teacher.specialty && (
+                    <Text className="text-xs text-gray-500">{teacher.specialty}</Text>
+                  )}
+                </VStack>
+
+                {/* Profile completion */}
+                <Box className="w-32">
+                  <ProfileCompletionIndicator
+                    completionPercentage={teacher.profile_completion_score || 0}
+                    isComplete={teacher.is_profile_complete || false}
+                    missingCritical={teacher.profile_completion?.missing_critical}
+                    variant="compact"
+                    onViewDetails={() => handleViewTeacherProfile(teacher.id)}
+                  />
+                </Box>
+
+                {/* Courses */}
+                <Box className="w-24">
+                  <Text className="text-sm text-gray-600">
+                    {getCoursesText(teacher)}
+                  </Text>
+                </Box>
+
+                {/* Last activity */}
+                <Box className="w-24">
+                  <Text className="text-xs text-gray-500">
+                    {getLastActivityText(teacher)}
+                  </Text>
+                </Box>
+
+                {/* Status */}
+                <Box className="w-20">
+                  <Badge 
+                    variant={teacher.status === 'active' ? 'success' : teacher.status === 'inactive' ? 'secondary' : 'outline'}
+                    size="sm"
+                  >
+                    {teacher.status === 'active' ? 'Ativo' : 
+                     teacher.status === 'inactive' ? 'Inativo' : 'Pendente'}
+                  </Badge>
+                </Box>
+
+                {/* Actions */}
+                <HStack className="w-20" space="xs">
+                  <Pressable
+                    onPress={() => handleViewTeacherProfile(teacher.id)}
+                    className="p-1 rounded bg-blue-50"
+                  >
+                    <Icon as={ExternalLink} size="xs" className="text-blue-600" />
+                  </Pressable>
+                  
+                  <Pressable
+                    onPress={() => handleSendMessage(teacher.id)}
+                    className="p-1 rounded bg-green-50"
+                  >
+                    <Icon as={MessageCircle} size="xs" className="text-green-600" />
+                  </Pressable>
+                  
+                  <Pressable
+                    onPress={() => handleTeacherActions(teacher.id)}
+                    className="p-1 rounded bg-gray-50"
+                  >
+                    <Icon as={MoreVertical} size="xs" className="text-gray-400" />
+                  </Pressable>
+                </HStack>
               </HStack>
             ))
           )}
         </VStack>
       </Box>
+    </>
+  );
+
+  return (
+    <VStack space="md">
+      {/* Header with view mode switcher */}
+      <HStack className="w-full items-center justify-between">
+        <VStack>
+          <Heading size="lg" className="text-gray-900">
+            Gestão de Professores
+          </Heading>
+          <Text className="text-sm text-gray-600">
+            {filteredTeachers.length} professor{filteredTeachers.length !== 1 ? 'es' : ''} 
+            {selectedTeachers.size > 0 && ` • ${selectedTeachers.size} selecionado${selectedTeachers.size > 1 ? 's' : ''}`}
+          </Text>
+        </VStack>
+        
+        <HStack space="sm">
+          {!userHasTeacherProfile && (
+            <ActionButton
+              icon={UserPlus}
+              title="Adicionar-me"
+              onPress={onAddTeacher}
+              variant="primary"
+            />
+          )}
+          <ActionButton
+            icon={Mail}
+            title="Convidar"
+            onPress={onInviteTeacher}
+            variant="secondary"
+          />
+        </HStack>
+      </HStack>
+
+      {/* View Mode Switcher */}
+      <HStack className="w-full border-b border-gray-200">
+        {(['list', 'analytics', 'communication'] as const).map((mode) => {
+          const isActive = viewMode === mode;
+          
+          return (
+            <Pressable
+              key={mode}
+              className="flex-1 py-3 px-4"
+              style={{
+                backgroundColor: isActive ? `${COLORS.primary}10` : 'transparent',
+                borderBottomWidth: isActive ? 2 : 0,
+                borderBottomColor: COLORS.primary,
+              }}
+              onPress={() => setViewMode(mode)}
+            >
+              <HStack className="items-center justify-center" space="xs">
+                <Icon 
+                  as={mode === 'list' ? Users : mode === 'analytics' ? Activity : MessageCircle} 
+                  size="sm" 
+                  className={isActive ? 'text-primary-600' : 'text-gray-500'} 
+                />
+                <Text
+                  className={`text-sm font-medium ${isActive ? 'text-primary-600' : 'text-gray-500'}`}
+                >
+                  {mode === 'list' ? 'Lista' : mode === 'analytics' ? 'Análises' : 'Comunicação'}
+                </Text>
+              </HStack>
+            </Pressable>
+          );
+        })}
+      </HStack>
+
+      {/* Content based on view mode */}
+      {renderViewModeContent()}
+
+      {/* Bulk Actions - only show in list mode */}
+      {viewMode === 'list' && (
+        <BulkTeacherActions
+          selectedTeachers={Array.from(selectedTeachers)}
+          teachers={teachers}
+          onClearSelection={handleClearSelection}
+          onActionComplete={() => {
+            handleClearSelection();
+            onRefresh?.();
+          }}
+        />
+      )}
     </VStack>
   );
 };
@@ -426,6 +762,7 @@ export default function UsersPage() {
             onInviteTeacher={handleInviteTeacher}
             onAddManually={handleAddManually}
             userHasTeacherProfile={userHasTeacherProfile}
+            onRefresh={fetchTeachers}
           />
         );
       case 'students':
@@ -440,6 +777,7 @@ export default function UsersPage() {
             onInviteTeacher={handleInviteTeacher}
             onAddManually={handleAddManually}
             userHasTeacherProfile={userHasTeacherProfile}
+            onRefresh={fetchTeachers}
           />
         );
     }

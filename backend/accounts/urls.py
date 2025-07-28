@@ -3,6 +3,7 @@ from knox import views as knox_views
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    BulkTeacherActionsView,
     CourseViewSet,
     EducationalSystemViewSet,
     GlobalSearchView,
@@ -13,6 +14,7 @@ from .views import (
     SchoolMembershipViewSet,
     SchoolViewSet,
     StudentViewSet,
+    TeacherAnalyticsView,
     TeacherCourseViewSet,
     TeacherInvitationViewSet,
     TeacherViewSet,
@@ -61,6 +63,18 @@ urlpatterns = [
         "search/global/",
         GlobalSearchView.as_view(),
         name="global-search",
+    ),
+    # Bulk teacher actions endpoint
+    path(
+        "teachers/bulk-actions/",
+        BulkTeacherActionsView.as_view(),
+        name="bulk-teacher-actions",
+    ),
+    # Teacher analytics endpoint
+    path(
+        "schools/<int:school_id>/teacher-analytics/",
+        TeacherAnalyticsView.as_view(),
+        name="teacher-analytics",
     ),
     # Knox authentication URLs
     path("auth/logout/", knox_views.LogoutView.as_view(), name="knox_logout"),

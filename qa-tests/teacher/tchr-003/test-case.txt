@@ -1,0 +1,282 @@
+QA Test Case: Bulk Teacher Operations and Management
+
+Test ID: TCHR-003
+Test Name: Bulk Teacher Operations - Messaging and Status Management
+Purpose: Verify that school administrators can efficiently perform bulk operations on multiple teachers including messaging, status updates, and profile completion reminders while maintaining appropriate oversight and teacher autonomy
+Expected Result: Bulk selection works correctly, bulk messaging operates with template options, progress tracking functions properly, and all operations complete successfully with appropriate feedback
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native Expo frontend
+- Frontend URL: http://localhost:8081
+- Backend URL: http://localhost:8000
+- User Authentication: Passwordless email verification with JWT tokens
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+
+Test Data:
+- Test School Admin Email: anapmc.carvalho@gmail.com
+- Expected Role: school_owner with admin privileges
+- Teachers: Multiple teachers (minimum 3-5) for meaningful bulk operations
+- Various Profile Completion Levels: Teachers with different completion statuses
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Authentication
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Ensure both Django backend and Expo frontend servers are running
+2. Navigate to http://localhost:8081
+3. Complete login process with anapmc.carvalho@gmail.com
+4. Verify successful authentication and dashboard access
+
+Expected: Successful login and access to school admin dashboard with teacher management capabilities
+Screenshot: 01_authentication_and_setup.png
+Debug: Check server logs and browser console for any authentication issues
+
+Step 2: Navigate to Teacher Management Interface
+1. From dashboard, navigate to Users page
+2. Ensure Teachers tab is active
+3. Verify teacher directory displays with multiple teachers (minimum 3-5 for testing)
+4. Confirm the interface is in "List" view mode
+5. Verify all teachers display with selection checkboxes
+
+Expected: Teacher directory loads in list view with multiple teachers and selection capabilities
+Screenshot: 02_teacher_management_loaded.png
+Debug: Verify API calls return adequate teacher data for bulk operations
+
+Step 3: Test Individual Teacher Selection
+1. Locate the checkbox column in the teacher table
+2. Click individual checkboxes to select specific teachers
+3. Verify visual feedback shows selected state:
+   - Checkbox appears checked
+   - Row highlighting or visual change
+   - Selection counter updates
+4. Test selecting and deselecting individual teachers
+5. Verify selection state persists during page interactions
+
+Expected: Individual teacher selection works with proper visual feedback and state management
+Screenshot: 03_individual_teacher_selection.png
+Debug: Check that selection state is properly maintained in component state
+
+Step 4: Test Bulk Select All Functionality
+1. Locate the "Select All" checkbox in the table header
+2. Click to select all visible teachers
+3. Verify all teacher rows become selected
+4. Check that selection counter shows total number of teachers
+5. Test deselecting all teachers using the header checkbox
+6. Verify proper state changes for bulk selection/deselection
+
+Expected: Bulk select all functionality works correctly with accurate count and visual feedback
+Screenshot: 04_bulk_select_all_functionality.png
+Debug: Ensure bulk selection logic handles filtering correctly
+
+Step 5: Verify Bulk Actions Panel Activation
+1. Select multiple teachers (3-5 teachers)
+2. Verify that bulk actions panel becomes visible/enabled
+3. Examine the bulk actions interface elements:
+   - Action buttons for different operations
+   - Selected teacher count display
+   - Clear selection option
+   - Progress indicator area (if present)
+4. Verify the BulkTeacherActions component renders properly
+
+Expected: Bulk actions panel activates correctly when teachers are selected
+Screenshot: 05_bulk_actions_panel_active.png
+Debug: Check that BulkTeacherActions component receives selected teachers correctly
+
+Step 6: Test Bulk Messaging Feature Setup
+1. With multiple teachers selected, locate the bulk messaging option
+2. Click on the bulk message/communication action
+3. Verify bulk messaging interface opens with:
+   - Message composition area
+   - Message template options (if available)
+   - Recipient list showing selected teachers
+   - Send options and settings
+4. Examine available message templates or predefined options
+
+Expected: Bulk messaging interface opens with proper setup and teacher list
+Screenshot: 06_bulk_messaging_setup.png
+Debug: Verify that selected teachers are properly passed to messaging component
+
+Step 7: Test Message Template Selection
+1. In the bulk messaging interface, examine available templates
+2. Test selecting different message templates:
+   - Profile completion reminders
+   - General announcements
+   - Welcome messages
+   - Custom message option
+3. Verify template content previews correctly
+4. Test switching between templates
+5. Verify template personalization tokens (like teacher name) are available
+
+Expected: Message templates work correctly with proper preview and personalization options
+Screenshot: 07_message_template_selection.png
+Debug: Check that template system is properly implemented and functional
+
+Step 8: Test Custom Message Composition
+1. Select custom message option or compose new message
+2. Test message composition features:
+   - Text input area
+   - Message formatting options (if available)
+   - Character/word count
+   - Subject line entry
+3. Verify message validation:
+   - Required field validation
+   - Message length limits
+   - Appropriate content checking
+4. Test message preview functionality
+
+Expected: Message composition works with proper validation and preview capabilities
+Screenshot: 08_custom_message_composition.png
+Debug: Verify form validation and message handling work correctly
+
+Step 9: Test Bulk Message Send Process
+1. Compose or select a message for bulk sending
+2. Review recipient list to ensure correct teachers are included
+3. Initiate the bulk send process
+4. Monitor progress tracking:
+   - Progress bar or indicator
+   - Individual teacher send status
+   - Success/failure reporting
+   - Overall completion status
+5. Verify proper feedback during sending process
+
+Expected: Bulk message sending works with proper progress tracking and status reporting
+Screenshot: 09_bulk_message_send_process.png
+Debug: Check API calls for bulk messaging and response handling
+
+Step 10: Test Bulk Profile Completion Reminders
+1. Select teachers with incomplete profiles (use completion filter if needed)
+2. Locate bulk action for sending profile completion reminders
+3. Initiate profile completion reminder process
+4. Verify the system:
+   - Identifies incomplete profiles correctly
+   - Sends appropriate reminder messages
+   - Tracks completion status
+   - Provides success/failure feedback
+5. Verify reminders are contextual to missing profile elements
+
+Expected: Profile completion reminders work correctly with appropriate context and tracking
+Screenshot: 10_profile_completion_reminders.png
+Debug: Verify integration with ProfileCompletionService
+
+Step 11: Test Bulk Status Updates
+1. Select multiple teachers with different statuses
+2. Locate bulk status update options:
+   - Activate teachers
+   - Deactivate teachers
+   - Change status in bulk
+3. Test bulk status change process:
+   - Select new status for all selected teachers
+   - Confirm bulk status change
+   - Monitor progress of status updates
+   - Verify success/failure reporting
+4. Check that status changes are reflected in the teacher list
+
+Expected: Bulk status updates work correctly with proper confirmation and feedback
+Screenshot: 11_bulk_status_updates.png
+Debug: Check that status changes are properly persisted and reflected
+
+Step 12: Test Progress Tracking and Error Handling
+1. During any bulk operation, monitor progress tracking features:
+   - Progress bars or completion indicators
+   - Individual teacher operation status
+   - Success/failure counts
+   - Error reporting for failed operations
+2. Test error handling:
+   - Network connectivity issues (simulate if possible)
+   - Invalid data scenarios
+   - Permission errors
+   - Server-side validation failures
+3. Verify appropriate error messages and recovery options
+
+Expected: Progress tracking is accurate and error handling is graceful with informative messages
+Screenshot: 12_progress_tracking_errors.png
+Debug: Test error scenarios and verify proper error boundary behavior
+
+Step 13: Test Bulk Operation Results and Feedback
+1. After completing bulk operations, verify results display:
+   - Summary of successful operations
+   - List of any failures with reasons
+   - Total counts and statistics
+   - Options for retrying failed operations
+2. Verify that teacher list refreshes to reflect changes
+3. Check that success feedback is clear and actionable
+4. Test dismissing results and returning to normal interface
+
+Expected: Operation results are clearly presented with appropriate options for follow-up
+Screenshot: 13_bulk_operation_results.png
+Debug: Verify that results accurately reflect the actual operation outcomes
+
+Step 14: Test Selection Clearing and Interface Reset
+1. Test clearing selection after bulk operations:
+   - Using "Clear Selection" button
+   - Manual deselection of all teachers
+   - Automatic clearing after operations
+2. Verify interface returns to normal state:
+   - Bulk actions panel hides/disables
+   - Selection counters reset
+   - Teacher list returns to unselected state
+3. Test starting new bulk operations after clearing
+
+Expected: Selection clearing works properly and interface resets to normal state
+Screenshot: 14_selection_clearing_reset.png
+Debug: Check that selection state management is properly implemented
+
+Step 15: Test Performance and Scalability
+1. Test bulk operations with maximum available teachers
+2. Monitor performance during:
+   - Large bulk selections
+   - Multiple simultaneous operations
+   - Progress tracking with many items
+3. Verify interface responsiveness during operations
+4. Test cancellation of bulk operations if feature is available
+5. Check for memory leaks or performance degradation
+
+Expected: Bulk operations perform adequately even with larger teacher lists
+Screenshot: 15_performance_scalability.png
+Debug: Monitor browser performance tools and server response times
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Bulk teacher selection works correctly with proper visual feedback, bulk messaging operates with template options and progress tracking, bulk status updates function properly, error handling is graceful, and all operations complete successfully with appropriate user feedback
+
+FAIL: Any of the following occur:
+- Bulk selection doesn't work or lacks visual feedback
+- Bulk actions panel doesn't activate properly
+- Messaging interface fails to open or function
+- Message templates don't work or lack personalization
+- Bulk operations fail without proper error reporting
+- Progress tracking is inaccurate or missing
+- Status updates don't persist correctly
+- Interface doesn't reset properly after operations
+- Performance is unacceptably poor
+- Critical errors prevent operation completion
+
+Individual Step Criteria:
+- Step 1: PASS if authentication and setup complete successfully, FAIL if login or servers fail
+- Step 2: PASS if teacher management interface loads with adequate data, FAIL if interface broken
+- Step 3: PASS if individual selection works with proper feedback, FAIL if selection broken
+- Step 4: PASS if bulk select all works correctly, FAIL if bulk selection fails
+- Step 5: PASS if bulk actions panel activates properly, FAIL if panel doesn't appear
+- Step 6: PASS if bulk messaging interface opens correctly, FAIL if messaging doesn't work
+- Step 7: PASS if message templates function properly, FAIL if templates broken
+- Step 8: PASS if custom message composition works, FAIL if composition fails
+- Step 9: PASS if bulk sending works with progress tracking, FAIL if sending fails
+- Step 10: PASS if profile reminders work contextually, FAIL if reminders broken
+- Step 11: PASS if bulk status updates work correctly, FAIL if status changes fail
+- Step 12: PASS if progress tracking and error handling work, FAIL if errors crash system
+- Step 13: PASS if operation results are properly displayed, FAIL if results missing/wrong
+- Step 14: PASS if selection clearing and reset work properly, FAIL if interface doesn't reset
+- Step 15: PASS if performance is acceptable with good scalability, FAIL if major performance issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

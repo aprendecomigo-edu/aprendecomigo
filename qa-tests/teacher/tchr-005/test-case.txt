@@ -1,0 +1,308 @@
+QA Test Case: Teacher Communication Tools and Message Templates
+
+Test ID: TCHR-005
+Test Name: Teacher Communication Tools - Message Templates and Coordination
+Purpose: Verify that school administrators can effectively communicate with teachers using template-based messaging, profile completion reminders, and coordinated communication tools while maintaining professional and respectful interactions
+Expected Result: Communication panel functions properly, message templates work with personalization, teacher selection and filtering work for messaging, and all communication features provide appropriate feedback and tracking
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native Expo frontend
+- Frontend URL: http://localhost:8081
+- Backend URL: http://localhost:8000
+- User Authentication: Passwordless email verification with JWT tokens
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+
+Test Data:
+- Test School Admin Email: anapmc.carvalho@gmail.com
+- Expected Role: school_owner with admin privileges
+- Teachers: Multiple teachers with different profile completion levels
+- Communication Templates: Should have predefined message templates available
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Authentication
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Ensure both Django backend and Expo frontend servers are running
+2. Navigate to http://localhost:8081
+3. Complete login process with anapmc.carvalho@gmail.com
+4. Verify successful authentication and dashboard access
+
+Expected: Successful login and access to school admin dashboard
+Screenshot: 01_authentication_successful.png
+Debug: Check server logs and authentication flow for any issues
+
+Step 2: Navigate to Teacher Communication Panel
+1. From dashboard, navigate to Users page
+2. Ensure Teachers tab is active
+3. Locate the view mode switcher (List, Analytics, Communication)
+4. Click on "Comunicação" (Communication) tab
+5. Wait for communication panel to load completely
+
+Expected: Successfully navigate to teacher communication panel view
+Screenshot: 02_communication_panel_navigation.png
+Debug: Check that TeacherCommunicationPanel component loads correctly
+
+Step 3: Verify Communication Panel Layout
+1. Examine the overall layout of the communication panel
+2. Verify presence of key sections:
+   - Teacher selection area with checkboxes
+   - Message composition interface
+   - Template selection options
+   - Send options and controls
+   - Message history or tracking (if available)
+3. Check that all sections render without layout issues
+4. Verify the interface is intuitive and well-organized
+
+Expected: Communication panel displays with comprehensive layout and all sections visible
+Screenshot: 03_communication_panel_layout.png
+Debug: Verify all communication components render properly
+
+Step 4: Test Teacher Selection for Communication
+1. Examine the teacher selection interface within communication view
+2. Verify teacher list displays with:
+   - Teacher names and basic info
+   - Selection checkboxes
+   - Profile completion indicators
+   - Filters for selection (complete/incomplete profiles)
+3. Test individual teacher selection:
+   - Click checkboxes to select specific teachers
+   - Verify visual feedback for selection
+   - Check selection counter updates
+4. Test bulk selection options if available
+
+Expected: Teacher selection works correctly with proper visual feedback and accurate counting
+Screenshot: 04_teacher_selection_communication.png
+Debug: Check that teacher data is properly passed to communication component
+
+Step 5: Test Message Template Categories
+1. Locate the message template selection area
+2. Verify available template categories:
+   - Profile completion reminders
+   - Welcome messages for new teachers
+   - General announcements
+   - Meeting invitations
+   - Performance feedback templates
+   - Custom message option
+3. Test switching between template categories
+4. Verify templates are appropriately categorized and labeled
+
+Expected: Message template categories are well-organized and easily accessible
+Screenshot: 05_message_template_categories.png
+Debug: Check that template system is properly organized and functional
+
+Step 6: Test Template Content and Personalization
+1. Select different message templates and examine their content
+2. Verify template personalization features:
+   - Teacher name personalization ({{teacher_name}})
+   - School name variables ({{school_name}})
+   - Profile-specific information ({{missing_fields}})
+   - Date/time personalization
+3. Test template preview functionality:
+   - Preview shows personalized content
+   - Variables are properly replaced
+   - Formatting is maintained
+4. Verify template content is professional and appropriate
+
+Expected: Templates contain appropriate content with proper personalization variables and preview
+Screenshot: 06_template_personalization.png
+Debug: Check that template rendering and personalization work correctly
+
+Step 7: Test Profile Completion Reminder Templates
+1. Select teachers with incomplete profiles
+2. Choose profile completion reminder templates
+3. Verify reminder templates are contextual:
+   - Mention specific missing fields
+   - Provide guidance on completion
+   - Include appropriate deadlines (if configured)
+   - Maintain respectful and encouraging tone
+4. Test different reminder variations:
+   - First reminder (gentle)
+   - Follow-up reminder (more urgent)
+   - Final reminder (deadline-focused)
+
+Expected: Profile completion reminders are contextual, respectful, and provide actionable guidance
+Screenshot: 07_profile_completion_reminders.png
+Debug: Verify integration with profile completion analysis
+
+Step 8: Test Custom Message Composition
+1. Select the custom message option
+2. Test message composition interface:
+   - Subject line entry
+   - Message body text area
+   - Formatting options (if available)
+   - Character/word count
+   - Personalization token insertion
+3. Verify composition features:
+   - Rich text editing (if supported)
+   - Message validation
+   - Save draft functionality (if available)
+   - Message preview
+
+Expected: Custom message composition provides full functionality with proper validation and preview
+Screenshot: 08_custom_message_composition.png
+Debug: Check that message editor and validation work correctly
+
+Step 9: Test Message Scheduling and Send Options
+1. Examine send options and scheduling features
+2. Test immediate sending options:
+   - Send now functionality
+   - Recipient verification
+   - Send confirmation dialogs
+3. Test scheduling features (if available):
+   - Schedule for later delivery
+   - Recurring message options
+   - Time zone considerations
+4. Verify send options are clear and confirmable
+
+Expected: Message scheduling and send options work correctly with appropriate confirmation steps
+Screenshot: 09_message_scheduling_options.png
+Debug: Check that scheduling and send functionality is properly implemented
+
+Step 10: Test Message Sending Process and Tracking
+1. Compose or select a message for sending
+2. Select target teachers for the message
+3. Initiate the sending process
+4. Monitor sending progress and tracking:
+   - Progress indicators during sending
+   - Individual delivery status per teacher
+   - Success/failure reporting
+   - Delivery confirmation tracking
+5. Verify appropriate feedback during and after sending
+
+Expected: Message sending works with comprehensive progress tracking and delivery confirmation
+Screenshot: 10_message_sending_tracking.png
+Debug: Check API calls for message sending and tracking functionality
+
+Step 11: Test Communication History and Logs
+1. Look for communication history or message log features
+2. Verify history displays:
+   - Previously sent messages
+   - Recipients and delivery status
+   - Timestamps and dates
+   - Message content preview
+   - Delivery and read status (if available)
+3. Test filtering and searching communication history:
+   - Filter by date range
+   - Filter by recipient
+   - Filter by message type
+   - Search message content
+
+Expected: Communication history provides comprehensive tracking with useful filtering options
+Screenshot: 11_communication_history_logs.png
+Debug: Check that message history API and interface work correctly
+
+Step 12: Test Teacher Response and Interaction Features
+1. Look for features that handle teacher responses
+2. Test response tracking and management:
+   - Reply notifications (if implemented)
+   - Response organization
+   - Follow-up scheduling
+   - Conversation threading
+3. Verify two-way communication features:
+   - Teachers can respond to messages
+   - Admins can see responses
+   - Conversation context is maintained
+4. Test notification systems for responses
+
+Expected: Teacher response and interaction features work properly with good conversation management
+Screenshot: 12_teacher_response_interaction.png
+Debug: Check bidirectional communication and response handling
+
+Step 13: Test Communication Preferences and Settings
+1. Look for communication preferences or settings
+2. Test available preference options:
+   - Default message templates
+   - Notification preferences
+   - Sender identity settings
+   - Message signature configuration
+   - Privacy and consent settings
+3. Verify settings persistence:
+   - Changes are saved correctly
+   - Settings apply to future messages
+   - User preferences are respected
+
+Expected: Communication preferences and settings work correctly with proper persistence
+Screenshot: 13_communication_preferences.png
+Debug: Check that preference management and persistence work correctly
+
+Step 14: Test Mobile Communication Interface
+1. Open browser developer tools
+2. Switch to mobile viewport (375px width)
+3. Navigate through communication panel on mobile
+4. Verify mobile-specific adaptations:
+   - Teacher selection remains functional
+   - Message composition adapts to mobile
+   - Template selection works on touch
+   - Send controls remain accessible
+5. Test mobile-specific features:
+   - Touch interactions
+   - Mobile keyboard support
+   - Responsive layout adjustments
+
+Expected: Communication interface is fully functional and user-friendly on mobile devices
+Screenshot: 14_mobile_communication_interface.png
+Debug: Check responsive design and mobile usability
+
+Step 15: Test Integration with Other Teacher Management Features
+1. Test how communication integrates with other teacher management features
+2. Verify contextual communication options:
+   - Send message from teacher profile pages
+   - Communication from analytics insights
+   - Bulk messaging from teacher directory
+   - Follow-up communications from previous interactions
+3. Test workflow continuity:
+   - Return to teacher management after sending
+   - Context preservation during navigation
+   - Action tracking across different views
+4. Verify that communication actions are reflected in teacher activity logs
+
+Expected: Communication tools integrate seamlessly with other teacher management workflows
+Screenshot: 15_integration_other_features.png
+Debug: Check that cross-component integration and workflows function properly
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Communication panel functions properly with intuitive layout, message templates work with proper personalization, teacher selection and messaging work correctly, sending process provides good tracking, communication history is accessible, mobile interface is functional, and integration with other features works seamlessly
+
+FAIL: Any of the following occur:
+- Communication panel fails to load or has broken layout
+- Teacher selection for messaging doesn't work
+- Message templates are missing or don't personalize correctly
+- Custom message composition is broken
+- Sending process fails or lacks progress tracking
+- Communication history is inaccessible or inaccurate
+- Mobile interface is non-functional
+- Integration with other features fails
+- Messages don't deliver or tracking is incorrect
+- Response handling is broken
+- Critical errors prevent communication functionality
+
+Individual Step Criteria:
+- Step 1: PASS if authentication and setup complete successfully, FAIL if login fails
+- Step 2: PASS if communication panel navigation works, FAIL if navigation fails
+- Step 3: PASS if panel layout displays properly, FAIL if layout is broken
+- Step 4: PASS if teacher selection works with proper feedback, FAIL if selection broken
+- Step 5: PASS if template categories are well-organized, FAIL if templates missing/broken
+- Step 6: PASS if personalization and preview work correctly, FAIL if personalization fails
+- Step 7: PASS if completion reminders are contextual and appropriate, FAIL if reminders generic/broken
+- Step 8: PASS if custom composition works with full functionality, FAIL if composition broken
+- Step 9: PASS if scheduling and send options work correctly, FAIL if sending controls fail
+- Step 10: PASS if sending process has good tracking and feedback, FAIL if sending fails
+- Step 11: PASS if communication history works with proper filtering, FAIL if history broken
+- Step 12: PASS if response features work correctly, FAIL if interaction handling broken
+- Step 13: PASS if preferences work with proper persistence, FAIL if settings don't save
+- Step 14: PASS if mobile interface is fully functional, FAIL if mobile interface broken
+- Step 15: PASS if integration works seamlessly across features, FAIL if integration broken
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

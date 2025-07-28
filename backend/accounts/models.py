@@ -84,6 +84,36 @@ class School(models.Model):
     contact_email: models.EmailField = models.EmailField(_("contact email"), blank=True)
     phone_number: models.CharField = models.CharField(_("phone number"), max_length=20, blank=True)
     website: models.URLField = models.URLField(_("website"), blank=True)
+    
+    # Branding and visual identity
+    logo: models.ImageField = models.ImageField(
+        _("logo"), 
+        upload_to="school_logos/", 
+        blank=True, 
+        null=True,
+        help_text=_("School logo image")
+    )
+    primary_color: models.CharField = models.CharField(
+        _("primary color"),
+        max_length=7,
+        default="#3B82F6",
+        blank=True,
+        help_text=_("Primary brand color in hex format")
+    )
+    secondary_color: models.CharField = models.CharField(
+        _("secondary color"),
+        max_length=7,
+        default="#1F2937",
+        blank=True,
+        help_text=_("Secondary brand color in hex format")
+    )
+    email_domain: models.CharField = models.CharField(
+        _("email domain"),
+        max_length=100,
+        blank=True,
+        help_text=_("Official email domain for the school")
+    )
+    
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
@@ -421,6 +451,8 @@ class TeacherProfile(models.Model):
     """
     Teacher profile with additional information.
     A user can have this profile regardless of which schools they belong to as a teacher.
+    
+    Enhanced with structured data fields for better profile management and completion tracking.
     """
 
     user: models.OneToOneField = models.OneToOneField(
@@ -451,10 +483,101 @@ class TeacherProfile(models.Model):
     )
     phone_number: models.CharField = models.CharField(_("teacher phone"), max_length=20, blank=True)
     calendar_iframe: models.TextField = models.TextField(_("calendar iframe"), blank=True)
+    
+    # New structured data fields for enhanced profile management
+    education_background: models.JSONField = models.JSONField(
+        _("education background"),
+        default=dict,
+        blank=True,
+        help_text=_("Structured educational background data (degree, institution, field, year)")
+    )
+    teaching_subjects: models.JSONField = models.JSONField(
+        _("teaching subjects"),
+        default=list,
+        blank=True,
+        help_text=_("List of subjects the teacher specializes in")
+    )
+    rate_structure: models.JSONField = models.JSONField(
+        _("rate structure"),
+        default=dict,
+        blank=True,
+        help_text=_("Detailed rate structure for different class types")
+    )
+    weekly_availability: models.JSONField = models.JSONField(
+        _("weekly availability"),
+        default=dict,
+        blank=True,
+        help_text=_("Structured weekly availability schedule")
+    )
+    
+    # Profile completion tracking fields
+    profile_completion_score: models.DecimalField = models.DecimalField(
+        _("profile completion score"),
+        max_digits=5,
+        decimal_places=2,
+        default=0.0,
+        help_text=_("Calculated profile completion percentage (0-100)")
+    )
+    is_profile_complete: models.BooleanField = models.BooleanField(
+        _("is profile complete"),
+        default=False,
+        help_text=_("Whether the profile meets completion requirements")
+    )
+    last_profile_update: models.DateTimeField = models.DateTimeField(
+        _("last profile update"),
+        auto_now=True,
+        help_text=_("When the profile was last updated")
+    )
+    
+    # Activity tracking for school administrators
+    last_activity: models.DateTimeField = models.DateTimeField(
+        _("last activity"),
+        null=True,
+        blank=True,
+        help_text=_("When the teacher was last active in the system")
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['profile_completion_score']),
+            models.Index(fields=['is_profile_complete']),
+            models.Index(fields=['last_profile_update']),
+            models.Index(fields=['last_activity']),
+        ]
 
     def __str__(self) -> str:
         user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
         return f"Teacher Profile: {user_name}"
+    
+    def update_completion_score(self) -> None:
+        """Update the profile completion score using ProfileCompletionService."""
+        from .services.profile_completion import ProfileCompletionService
+        
+        try:
+            completion_data = ProfileCompletionService.calculate_completion(self)
+            self.profile_completion_score = completion_data['completion_percentage']
+            self.is_profile_complete = completion_data['is_complete']
+            self.save(update_fields=['profile_completion_score', 'is_profile_complete', 'last_profile_update'])
+        except Exception as e:
+            logger.error(f"Failed to update completion score for teacher {self.id}: {e}")
+    
+    def get_school_memberships(self):
+        """Get all school memberships for this teacher."""
+        return self.user.school_memberships.filter(
+            role=SchoolRole.TEACHER,
+            is_active=True
+        ).select_related('school')
+    
+    def get_completion_data(self) -> dict:
+        """Get detailed completion data for this profile."""
+        from .services.profile_completion import ProfileCompletionService
+        return ProfileCompletionService.calculate_completion(self)
+    
+    def mark_activity(self) -> None:
+        """Mark that the teacher was active."""
+        from django.utils import timezone
+        self.last_activity = timezone.now()
+        self.save(update_fields=['last_activity'])
 
 
 class Course(models.Model):
@@ -762,12 +885,73 @@ class TrialCostAbsorption(models.TextChoices):
     SPLIT = "split", _("Split")
 
 
+class CurrencyChoices(models.TextChoices):
+    """Currency options for school billing"""
+    
+    EUR = "EUR", _("Euro")
+    USD = "USD", _("US Dollar")
+    BRL = "BRL", _("Brazilian Real")
+    GBP = "GBP", _("British Pound")
+
+
+class LanguageChoices(models.TextChoices):
+    """Language options for school interface"""
+    
+    PT = "pt", _("Portuguese")
+    EN = "en", _("English")
+    ES = "es", _("Spanish")
+    FR = "fr", _("French")
+
+
+class CalendarIntegrationChoices(models.TextChoices):
+    """Calendar integration options"""
+    
+    GOOGLE = "google", _("Google Calendar")
+    OUTLOOK = "outlook", _("Microsoft Outlook")
+    CALDAV = "caldav", _("CalDAV")
+
+
+class EmailIntegrationChoices(models.TextChoices):
+    """Email integration options"""
+    
+    GMAIL = "gmail", _("Gmail")
+    OUTLOOK = "outlook", _("Outlook")
+    CUSTOM = "custom", _("Custom SMTP")
+
+
+class DataRetentionChoices(models.TextChoices):
+    """Data retention policy options"""
+    
+    ONE_YEAR = "1_year", _("1 Year")
+    TWO_YEARS = "2_years", _("2 Years")
+    FIVE_YEARS = "5_years", _("5 Years")
+    INDEFINITE = "indefinite", _("Indefinite")
+
+
 class SchoolSettings(models.Model):
     """
-    Extended settings for schools
+    Comprehensive settings for schools including operational, billing, and configuration options
     """
     
     school = models.OneToOneField(School, on_delete=models.CASCADE, related_name="settings")
+    
+    # Educational system configuration
+    educational_system: models.ForeignKey = models.ForeignKey(
+        EducationalSystem,
+        on_delete=models.PROTECT,
+        related_name="schools_using_system",
+        help_text=_("Educational system used by this school"),
+        verbose_name=_("educational system"),
+        default=1  # Portugal system as default
+    )
+    grade_levels: models.JSONField = models.JSONField(
+        _("grade levels"),
+        default=list,
+        blank=True,
+        help_text=_("List of grade levels offered by this school")
+    )
+    
+    # Operational settings
     trial_cost_absorption = models.CharField(
         max_length=20, 
         choices=TrialCostAbsorption.choices, 
@@ -779,6 +963,147 @@ class SchoolSettings(models.Model):
     )
     timezone = models.CharField(max_length=50, default="UTC")
     
+    # Billing configuration
+    billing_contact_name: models.CharField = models.CharField(
+        _("billing contact name"),
+        max_length=100,
+        blank=True,
+        help_text=_("Name of billing contact person")
+    )
+    billing_contact_email: models.EmailField = models.EmailField(
+        _("billing contact email"),
+        blank=True,
+        help_text=_("Email for billing-related communications")
+    )
+    billing_address: models.TextField = models.TextField(
+        _("billing address"),
+        blank=True,
+        help_text=_("Billing address for invoices and payments")
+    )
+    tax_id: models.CharField = models.CharField(
+        _("tax ID"),
+        max_length=50,
+        blank=True,
+        help_text=_("Tax identification number for billing")
+    )
+    currency_code: models.CharField = models.CharField(
+        _("currency"),
+        max_length=3,
+        choices=CurrencyChoices.choices,
+        default=CurrencyChoices.EUR,
+        help_text=_("Default currency for pricing and billing")
+    )
+    
+    # Localization settings
+    language: models.CharField = models.CharField(
+        _("language"),
+        max_length=5,
+        choices=LanguageChoices.choices,
+        default=LanguageChoices.PT,
+        help_text=_("Default language for the school interface")
+    )
+    
+    # Schedule and availability settings
+    working_hours_start: models.TimeField = models.TimeField(
+        _("working hours start"),
+        default="08:00",
+        help_text=_("School working hours start time")
+    )
+    working_hours_end: models.TimeField = models.TimeField(
+        _("working hours end"),
+        default="18:00",
+        help_text=_("School working hours end time")
+    )
+    working_days: models.JSONField = models.JSONField(
+        _("working days"),
+        default=list,
+        help_text=_("List of working days (0=Monday, 6=Sunday)")
+    )
+    
+    # Communication preferences
+    email_notifications_enabled: models.BooleanField = models.BooleanField(
+        _("email notifications enabled"),
+        default=True,
+        help_text=_("Enable email notifications for school events")
+    )
+    sms_notifications_enabled: models.BooleanField = models.BooleanField(
+        _("SMS notifications enabled"),
+        default=False,
+        help_text=_("Enable SMS notifications for school events")
+    )
+    
+    # User permissions and access control
+    allow_student_self_enrollment: models.BooleanField = models.BooleanField(
+        _("allow student self-enrollment"),
+        default=False,
+        help_text=_("Allow students to enroll themselves")
+    )
+    require_parent_approval: models.BooleanField = models.BooleanField(
+        _("require parent approval"),
+        default=True,
+        help_text=_("Require parental approval for student actions")
+    )
+    auto_assign_teachers: models.BooleanField = models.BooleanField(
+        _("auto assign teachers"),
+        default=False,
+        help_text=_("Automatically assign available teachers to classes")
+    )
+    class_reminder_hours: models.PositiveIntegerField = models.PositiveIntegerField(
+        _("class reminder hours"),
+        default=24,
+        help_text=_("Hours before class to send reminder notifications")
+    )
+    
+    # Integration settings
+    enable_calendar_integration: models.BooleanField = models.BooleanField(
+        _("enable calendar integration"),
+        default=False,
+        help_text=_("Enable integration with external calendar systems")
+    )
+    calendar_integration_type: models.CharField = models.CharField(
+        _("calendar integration type"),
+        max_length=20,
+        choices=CalendarIntegrationChoices.choices,
+        blank=True,
+        help_text=_("Type of calendar integration")
+    )
+    enable_email_integration: models.BooleanField = models.BooleanField(
+        _("enable email integration"),
+        default=False,
+        help_text=_("Enable integration with external email systems")
+    )
+    email_integration_provider: models.CharField = models.CharField(
+        _("email integration provider"),
+        max_length=20,
+        choices=EmailIntegrationChoices.choices,
+        blank=True,
+        help_text=_("Email integration provider")
+    )
+    
+    # Privacy and data handling
+    data_retention_policy: models.CharField = models.CharField(
+        _("data retention policy"),
+        max_length=20,
+        choices=DataRetentionChoices.choices,
+        default=DataRetentionChoices.TWO_YEARS,
+        help_text=_("How long to retain student and class data")
+    )
+    gdpr_compliance_enabled: models.BooleanField = models.BooleanField(
+        _("GDPR compliance enabled"),
+        default=True,
+        help_text=_("Enable GDPR compliance features")
+    )
+    allow_data_export: models.BooleanField = models.BooleanField(
+        _("allow data export"),
+        default=True,
+        help_text=_("Allow users to export their personal data")
+    )
+    require_data_processing_consent: models.BooleanField = models.BooleanField(
+        _("require data processing consent"),
+        default=True,
+        help_text=_("Require explicit consent for data processing")
+    )
+    
     # Dashboard preferences
     dashboard_refresh_interval = models.PositiveIntegerField(
         default=30, 
@@ -789,8 +1114,49 @@ class SchoolSettings(models.Model):
         help_text="Days to retain activity logs"
     )
     
+    # Timestamps
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True, null=True)
+    
+    class Meta:
+        verbose_name = _("School Settings")
+        verbose_name_plural = _("School Settings")
+        indexes = [
+            models.Index(fields=['school']),
+            models.Index(fields=['educational_system']),
+            models.Index(fields=['language']),
+            models.Index(fields=['timezone']),
+        ]
+    
     def __str__(self) -> str:
         return f"Settings for {self.school.name}"
+    
+    def save(self, *args, **kwargs):
+        """Override save to set default working days if not provided"""
+        if not self.working_days:
+            # Default to Monday-Friday (0-4)
+            self.working_days = [0, 1, 2, 3, 4]
+        super().save(*args, **kwargs)
+    
+    def get_working_days_display(self) -> list[str]:
+        """Get human-readable working days"""
+        day_names = [
+            _("Monday"), _("Tuesday"), _("Wednesday"), 
+            _("Thursday"), _("Friday"), _("Saturday"), _("Sunday")
+        ]
+        return [str(day_names[day]) for day in self.working_days if 0 <= day <= 6]
+    
+    def is_working_day(self, weekday: int) -> bool:
+        """Check if a given weekday (0=Monday) is a working day"""
+        return weekday in self.working_days
+    
+    def get_grade_levels_display(self) -> list[str]:
+        """Get human-readable grade levels"""
+        if not self.grade_levels or not self.educational_system:
+            return []
+        
+        choices_dict = dict(self.educational_system.school_year_choices)
+        return [choices_dict.get(level, level) for level in self.grade_levels]
 
 
 class InvitationStatus(models.TextChoices):
