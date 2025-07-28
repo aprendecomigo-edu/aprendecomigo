@@ -55,10 +55,13 @@ from .serializers import (
     CreateStudentSerializer,
     CreateUserSerializer,
     EducationalSystemSerializer,
+    EnhancedSchoolSerializer,
     InviteExistingTeacherSerializer,
     RequestCodeSerializer,
+    SchoolActivitySerializer,
     SchoolInvitationSerializer,
     SchoolMembershipSerializer,
+    SchoolMetricsSerializer,
     SchoolSerializer,
     SchoolWithMembersSerializer,
     StudentSerializer,
@@ -1827,3 +1830,180 @@ class SchoolInvitationLinkView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+# School Dashboard Views
+
+class SchoolDashboardViewSet(viewsets.ModelViewSet):
+    """ViewSet for school dashboard functionality"""
+    
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    serializer_class = EnhancedSchoolSerializer
+    
+    def get_queryset(self):
+        """Return schools that user can manage"""
+        user_schools = get_schools_user_can_manage(self.request.user)
+        return School.objects.filter(id__in=user_schools).select_related('settings')
+    
+    @action(detail=True, methods=['get'], url_path='metrics')
+    def metrics(self, request, pk=None):
+        """Get comprehensive metrics for school dashboard"""
+        school = self.get_object()
+        
+        # Import here to avoid circular imports
+        from .services.metrics_service import SchoolMetricsService
+        
+        metrics_service = SchoolMetricsService(school)
+        metrics_data = metrics_service.get_metrics()
+        
+        serializer = SchoolMetricsSerializer(data=metrics_data)
+        serializer.is_valid(raise_exception=True)
+        
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['get'], url_path='activity')
+    def activity(self, request, pk=None):
+        """Get paginated activity feed for school"""
+        school = self.get_object()
+        
+        # Import here to avoid circular imports
+        from .services.metrics_service import SchoolActivityService
+        from rest_framework.pagination import PageNumberPagination
+        from django.core.paginator import Paginator, EmptyPage
+        
+        # Get query parameters for filtering
+        activity_types = request.query_params.get('activity_types')
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        
+        # Safely parse pagination parameters with validation
+        try:
+            page = int(request.query_params.get('page', 1))
+            if page < 1:
+                page = 1
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid page parameter. Must be a positive integer.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            page_size = int(request.query_params.get('page_size', 20))
+            if page_size < 1:
+                page_size = 20
+            elif page_size > 100:
+                page_size = 100
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid page_size parameter. Must be a positive integer.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Build filters
+        filters = {}
+        if activity_types:
+            filters['activity_types'] = activity_types
+        if date_from:
+            try:
+                from django.utils.dateparse import parse_datetime
+                filters['date_from'] = parse_datetime(date_from)
+            except (ValueError, TypeError):
+                pass
+        if date_to:
+            try:
+                from django.utils.dateparse import parse_datetime
+                filters['date_to'] = parse_datetime(date_to)
+            except (ValueError, TypeError):
+                pass
+        
+        # Get activities
+        from .models import SchoolActivity
+        activities = SchoolActivity.objects.filter(school=school).select_related(
+            'actor', 'target_user', 'target_class__teacher'
+        ).prefetch_related(
+            'target_invitation__invited_by'
+        )
+        
+        # Apply filters
+        if filters.get('activity_types'):
+            activity_types_list = filters['activity_types'].split(',')
+            activities = activities.filter(activity_type__in=activity_types_list)
+        
+        if filters.get('date_from'):
+            activities = activities.filter(timestamp__gte=filters['date_from'])
+        
+        if filters.get('date_to'):
+            activities = activities.filter(timestamp__lte=filters['date_to'])
+        
+        # Paginate
+        paginator = Paginator(activities, page_size)
+        try:
+            page_obj = paginator.page(page)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+        
+        # Serialize
+        serializer = SchoolActivitySerializer(
+            page_obj.object_list, 
+            many=True,
+            context={'school': school, 'request': request}
+        )
+        
+        # Build pagination response
+        response_data = {
+            'count': paginator.count,
+            'next': f"?page={page_obj.next_page_number()}" if page_obj.has_next() else None,
+            'previous': f"?page={page_obj.previous_page_number()}" if page_obj.has_previous() else None,
+            'results': serializer.data
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+    
+    def update(self, request, *args, **kwargs):
+        """Enhanced update method with activity logging"""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        # Store old values before update for comparison
+        old_values = {}
+        for field, value in request.data.items():
+            if field != 'settings' and hasattr(instance, field):
+                old_values[field] = getattr(instance, field)
+        
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        # Create activity log for school update
+        from .services.metrics_service import SchoolActivityService
+        from .models import ActivityType
+        
+        changes = []
+        for field, value in request.data.items():
+            if field != 'settings' and field in old_values:
+                old_value = old_values[field]
+                if old_value != value:
+                    changes.append(f"{field}: '{old_value}' → '{value}'")
+        
+        if changes or 'settings' in request.data:
+            description = f"Updated school settings"
+            if changes:
+                description = f"Updated school: {', '.join(changes)}"
+            
+            SchoolActivityService.create_activity(
+                school=instance,
+                activity_type=ActivityType.SETTINGS_UPDATED,
+                actor=request.user,
+                description=description,
+                metadata={'changes': changes}
+            )
+        
+        # Invalidate metrics cache
+        from .services.metrics_service import SchoolMetricsService
+        SchoolMetricsService.invalidate_cache(instance.id)
+        
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)

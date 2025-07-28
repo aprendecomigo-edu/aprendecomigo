@@ -1,4 +1,5 @@
 import logging
+import uuid
 from datetime import timedelta
 from typing import Any, ClassVar, TypeVar
 
@@ -174,6 +175,10 @@ class SchoolMembership(models.Model):
 
     class Meta:
         unique_together: ClassVar[list[str]] = ["user", "school", "role"]
+        indexes = [
+            models.Index(fields=['school', 'role', 'is_active']),
+            models.Index(fields=['school', 'joined_at']),
+        ]
 
     def __str__(self) -> str:
         user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
@@ -695,3 +700,84 @@ class VerificationCode(models.Model):
         self.failed_attempts += 1
         self.save()
         return self.failed_attempts >= self.max_attempts
+
+
+class ActivityType(models.TextChoices):
+    """Types of activities that can occur in a school"""
+    
+    INVITATION_SENT = "invitation_sent", _("Invitation Sent")
+    INVITATION_ACCEPTED = "invitation_accepted", _("Invitation Accepted")
+    INVITATION_DECLINED = "invitation_declined", _("Invitation Declined")
+    STUDENT_JOINED = "student_joined", _("Student Joined")
+    TEACHER_JOINED = "teacher_joined", _("Teacher Joined")
+    CLASS_CREATED = "class_created", _("Class Created")
+    CLASS_COMPLETED = "class_completed", _("Class Completed")
+    CLASS_CANCELLED = "class_cancelled", _("Class Cancelled")
+    SETTINGS_UPDATED = "settings_updated", _("Settings Updated")
+
+
+class SchoolActivity(models.Model):
+    """
+    Model to track all school-related activities for admin dashboard
+    """
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="activities")
+    activity_type = models.CharField(max_length=30, choices=ActivityType.choices)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    actor = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name="activities_performed")
+    target_user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name="activities_targeted")
+    target_class = models.ForeignKey('finances.ClassSession', on_delete=models.SET_NULL, null=True, blank=True)
+    target_invitation = models.ForeignKey(SchoolInvitation, on_delete=models.SET_NULL, null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    description = models.TextField()
+    
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['school', '-timestamp']),
+            models.Index(fields=['school', 'activity_type', '-timestamp']),
+            models.Index(fields=['actor', '-timestamp']),
+        ]
+        
+    def __str__(self) -> str:
+        return f"{self.school.name}: {self.activity_type} at {self.timestamp}"
+
+
+class TrialCostAbsorption(models.TextChoices):
+    """Options for who absorbs trial class costs"""
+    
+    SCHOOL = "school", _("School")
+    TEACHER = "teacher", _("Teacher")
+    SPLIT = "split", _("Split")
+
+
+class SchoolSettings(models.Model):
+    """
+    Extended settings for schools
+    """
+    
+    school = models.OneToOneField(School, on_delete=models.CASCADE, related_name="settings")
+    trial_cost_absorption = models.CharField(
+        max_length=20, 
+        choices=TrialCostAbsorption.choices, 
+        default=TrialCostAbsorption.SCHOOL
+    )
+    default_session_duration = models.PositiveIntegerField(
+        default=60, 
+        help_text="Default session duration in minutes"
+    )
+    timezone = models.CharField(max_length=50, default="UTC")
+    
+    # Dashboard preferences
+    dashboard_refresh_interval = models.PositiveIntegerField(
+        default=30, 
+        help_text="Dashboard refresh interval in seconds"
+    )
+    activity_retention_days = models.PositiveIntegerField(
+        default=90, 
+        help_text="Days to retain activity logs"
+    )
+    
+    def __str__(self) -> str:
+        return f"Settings for {self.school.name}"

@@ -7,6 +7,7 @@ from .views import (
     EducationalSystemViewSet,
     InvitationViewSet,
     RequestCodeView,
+    SchoolDashboardViewSet,
     SchoolInvitationLinkView,
     SchoolMembershipViewSet,
     SchoolViewSet,
@@ -29,6 +30,7 @@ router.register(r"courses", CourseViewSet, basename="course")
 router.register(r"educational-systems", EducationalSystemViewSet, basename="educational_system")
 router.register(r"teacher-courses", TeacherCourseViewSet, basename="teacher_course")
 router.register(r"invitations", InvitationViewSet, basename="invitation")
+router.register(r"school-dashboard", SchoolDashboardViewSet, basename="school-dashboard")
 
 # URL patterns for the accounts app
 urlpatterns = [

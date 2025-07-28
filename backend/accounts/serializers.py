@@ -10,9 +10,11 @@ from .models import (
     Course,
     EducationalSystem,
     School,
+    SchoolActivity,
     SchoolInvitation,
     SchoolMembership,
     SchoolRole,
+    SchoolSettings,
     StudentProfile,
     TeacherCourse,
     TeacherProfile,
@@ -745,3 +747,186 @@ class CreateStudentResponseSerializer(serializers.Serializer):
     student = StudentSerializer()
     school_membership = SchoolMembershipSerializer()
     user_created = serializers.BooleanField(default=True)
+
+
+# School Dashboard Serializers
+
+class SchoolSettingsSerializer(serializers.ModelSerializer):
+    """Serializer for school settings"""
+    
+    class Meta:
+        model = SchoolSettings
+        fields = [
+            'trial_cost_absorption',
+            'default_session_duration',
+            'timezone',
+            'dashboard_refresh_interval',
+            'activity_retention_days'
+        ]
+
+
+class SchoolActivityActorSerializer(serializers.ModelSerializer):
+    """Serializer for activity actor information"""
+    
+    role = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'name', 'email', 'role']
+        
+    def get_role(self, obj):
+        """Get the user's role in the school context"""
+        # Get school from context
+        school = self.context.get('school')
+        if school:
+            membership = obj.school_memberships.filter(
+                school=school, 
+                is_active=True
+            ).first()
+            if membership:
+                return membership.role
+        return None
+
+
+class SchoolActivityTargetSerializer(serializers.Serializer):
+    """Serializer for activity target information"""
+    
+    type = serializers.CharField()
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+
+class SchoolActivitySerializer(serializers.ModelSerializer):
+    """Serializer for school activities"""
+    
+    actor = SchoolActivityActorSerializer(read_only=True)
+    target = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SchoolActivity
+        fields = [
+            'id',
+            'activity_type',
+            'timestamp',
+            'actor',
+            'target',
+            'metadata',
+            'description'
+        ]
+        
+    def get_target(self, obj):
+        """Get target information based on activity type"""
+        if obj.target_user:
+            return {
+                'type': 'user',
+                'id': obj.target_user.id,
+                'name': obj.target_user.name
+            }
+        elif obj.target_class:
+            return {
+                'type': 'class',
+                'id': obj.target_class.id,
+                'name': f"Grade {obj.target_class.grade_level} class"
+            }
+        elif obj.target_invitation:
+            return {
+                'type': 'invitation',
+                'id': obj.target_invitation.id,
+                'name': obj.target_invitation.email
+            }
+        return None
+
+
+class TrendDataSerializer(serializers.Serializer):
+    """Serializer for trend data points"""
+    
+    daily = serializers.ListField(child=serializers.IntegerField())
+    weekly = serializers.ListField(child=serializers.IntegerField())
+    monthly = serializers.ListField(child=serializers.IntegerField())
+
+
+class CountMetricsSerializer(serializers.Serializer):
+    """Serializer for count-based metrics with trends"""
+    
+    total = serializers.IntegerField()
+    active = serializers.IntegerField()
+    inactive = serializers.IntegerField()
+    trend = TrendDataSerializer()
+
+
+class ClassMetricsSerializer(serializers.Serializer):
+    """Serializer for class-related metrics"""
+    
+    active_classes = serializers.IntegerField()
+    completed_today = serializers.IntegerField()
+    scheduled_today = serializers.IntegerField()
+    completion_rate = serializers.FloatField()
+    trend = serializers.DictField(
+        child=serializers.ListField(child=serializers.IntegerField())
+    )
+
+
+class EngagementMetricsSerializer(serializers.Serializer):
+    """Serializer for engagement metrics"""
+    
+    invitations_sent = serializers.IntegerField()
+    invitations_accepted = serializers.IntegerField()
+    acceptance_rate = serializers.FloatField()
+    avg_time_to_accept = serializers.CharField()
+
+
+class SchoolMetricsSerializer(serializers.Serializer):
+    """Serializer for complete school metrics"""
+    
+    student_count = CountMetricsSerializer()
+    teacher_count = CountMetricsSerializer()
+    class_metrics = ClassMetricsSerializer()
+    engagement_metrics = EngagementMetricsSerializer()
+
+
+class EnhancedSchoolSerializer(serializers.ModelSerializer):
+    """Enhanced school serializer with settings support"""
+    
+    settings = SchoolSettingsSerializer(read_only=True)
+    
+    class Meta:
+        model = School
+        fields = [
+            'id',
+            'name',
+            'description',
+            'address',
+            'contact_email',
+            'phone_number',
+            'website',
+            'created_at',
+            'updated_at',
+            'settings'
+        ]
+        
+    def update(self, instance, validated_data):
+        """Update school and settings together"""
+        settings_data = None
+        
+        # Extract settings from request if present
+        request = self.context.get('request')
+        if request and hasattr(request, 'data') and 'settings' in request.data:
+            settings_data = request.data['settings']
+        
+        # Update school fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Update or create settings
+        if settings_data:
+            settings, created = SchoolSettings.objects.get_or_create(
+                school=instance,
+                defaults=settings_data
+            )
+            if not created:
+                for key, value in settings_data.items():
+                    setattr(settings, key, value)
+                settings.save()
+        
+        return instance

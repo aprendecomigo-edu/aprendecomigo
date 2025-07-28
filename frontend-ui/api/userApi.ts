@@ -269,3 +269,46 @@ export const getSchoolInfo = async (schoolId: number): Promise<SchoolInfo> => {
   const response = await apiClient.get<SchoolInfo>(`/accounts/schools/${schoolId}/`);
   return response.data;
 };
+
+/**
+ * School membership types
+ */
+export interface SchoolMembership {
+  id: number;
+  user: number;
+  school: {
+    id: number;
+    name: string;
+    description: string;
+  };
+  role: 'school_owner' | 'school_admin' | 'teacher' | 'student' | 'parent';
+  is_active: boolean;
+  joined_at: string;
+}
+
+export interface SchoolMembershipResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: SchoolMembership[];
+}
+
+/**
+ * Get current user's school memberships
+ */
+export const getUserSchoolMemberships = async (): Promise<SchoolMembership[]> => {
+  const response = await apiClient.get<SchoolMembershipResponse>('/accounts/school-memberships/');
+  return response.data.results;
+};
+
+/**
+ * Get user's school memberships with admin privileges (school_owner or school_admin)
+ */
+export const getUserAdminSchools = async (): Promise<SchoolMembership[]> => {
+  const memberships = await getUserSchoolMemberships();
+  return memberships.filter(
+    membership => 
+      membership.is_active && 
+      (membership.role === 'school_owner' || membership.role === 'school_admin')
+  );
+};

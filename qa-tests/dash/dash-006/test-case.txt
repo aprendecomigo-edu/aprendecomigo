@@ -1,0 +1,226 @@
+QA Test Case: Frontend School Info Card Editing and Validation
+
+Test ID: DASH-006
+Test Name: Frontend School Info Card Editing and Validation
+Purpose: Verify that the school information card displays correctly, allows editing of school details, and validates inputs properly
+Expected Result: School info card shows current information, allows editing with proper validation, and saves changes successfully
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational Platform
+- Architecture: React Native + Expo frontend with form validation
+- Authentication: JWT token-based authentication
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: make dev-open
+4. View server logs: make logs
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com (school admin/owner)
+- School ID: 1 (default test school)
+- User Role: school_owner (required for editing permissions)
+
+Component Under Test:
+- SchoolInfoCard component in dashboard
+- Expected Fields: name, description, address, contact_email, phone_number, website, settings
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Setup and Navigate to Dashboard
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev-open
+
+Complete authentication and navigate to dashboard:
+http://localhost:8081/(school-admin)/dashboard
+
+Expected: Dashboard loads with SchoolInfoCard visible in right column
+Screenshot: 01_dashboard_with_school_info_card.png
+
+Step 2: Identify School Information Card
+Locate the SchoolInfoCard component and verify it displays:
+- School name
+- School description (if available)
+- Contact information (email, phone)
+- Address (if available)
+- Website (if available)
+- Edit button or edit icon (if user has permissions)
+
+Expected: School info card clearly visible with current school information
+Screenshot: 02_school_info_card_display.png
+
+Step 3: Test Edit Mode Activation
+1. Look for edit button/icon on the school info card
+2. Click the edit button to enter edit mode
+3. Verify form fields become editable
+
+Expected: Edit mode activates, showing editable form fields
+Screenshot: 03_edit_mode_activated.png
+
+Step 4: Test School Name Editing
+1. In edit mode, modify the school name field
+2. Try various inputs:
+   - Valid name: "Test School Updated"
+   - Empty name: "" (should show validation error)
+   - Very long name: (test character limits)
+
+Expected: Name field accepts valid input, shows validation errors for invalid input
+Screenshot: 04_school_name_editing.png
+
+Step 5: Test Description Editing
+1. Modify the school description field
+2. Test inputs:
+   - Valid description: "This is a test school for educational purposes."
+   - Very long description: (test character limits)
+   - HTML/script injection attempts: "<script>alert('test')</script>"
+
+Expected: Description field accepts valid input, sanitizes harmful content
+Screenshot: 05_description_editing.png
+
+Step 6: Test Contact Email Validation
+1. Modify the contact email field
+2. Test various inputs:
+   - Valid email: "contact@testschool.com"
+   - Invalid email format: "invalid-email"
+   - Empty email: ""
+   - Email with special characters
+
+Expected: Email validation works, showing errors for invalid formats
+Screenshot: 06_email_validation_testing.png
+
+Step 7: Test Phone Number Validation
+1. Modify the phone number field
+2. Test inputs:
+   - Valid Portuguese phone: "+351 912 345 678"
+   - Invalid format: "abc123"
+   - International format: "+1 555 123 4567"
+   - Empty phone number
+
+Expected: Phone validation works appropriately for expected formats
+Screenshot: 07_phone_validation_testing.png
+
+Step 8: Test Website URL Validation
+1. Modify the website field
+2. Test inputs:
+   - Valid URL: "https://www.testschool.com"
+   - Invalid URL: "not-a-url"
+   - HTTP URL: "http://testschool.com"
+   - URL without protocol: "www.testschool.com"
+
+Expected: URL validation works, accepting valid URLs and rejecting invalid ones
+Screenshot: 08_website_validation_testing.png
+
+Step 9: Test Save Functionality
+1. Make valid changes to multiple fields
+2. Click save/submit button
+3. Verify loading state during save
+4. Check for success message
+
+Expected: Changes save successfully with proper user feedback
+Screenshot: 09_save_functionality_test.png
+
+Step 10: Test Cancel/Discard Changes
+1. Enter edit mode
+2. Make changes to fields
+3. Click cancel button (if available)
+4. Verify changes are discarded
+
+Expected: Cancel functionality discards unsaved changes
+Screenshot: 10_cancel_discard_changes.png
+
+Step 11: Test Settings Section
+If school settings are editable through the card:
+1. Locate settings section (trial cost absorption, timezone, etc.)
+2. Test changing settings values
+3. Verify dropdown/select functionality
+
+Expected: Settings fields work correctly if present
+Screenshot: 11_settings_section_test.png
+
+Step 12: Test Permission-Based Editing
+If possible, test with different user roles:
+1. Test as school_owner (should have edit permissions)
+2. Test as school_admin (may have limited permissions)
+3. Test as teacher (should not have edit permissions)
+
+Expected: Edit functionality only available to users with proper permissions
+Screenshot: 12_permission_based_editing.png
+
+Step 13: Test Data Persistence
+1. Save changes to school information
+2. Refresh the page
+3. Verify changes are persisted
+4. Check that updated information displays correctly
+
+Expected: Saved changes persist after page refresh
+Screenshot: 13_data_persistence_test.png
+
+Step 14: Test Error Handling
+1. Try to save with invalid data
+2. Simulate network error (temporarily stop backend)
+3. Verify error messages display appropriately
+
+Expected: Proper error handling with clear error messages
+Screenshot: 14_error_handling_test.png
+
+Step 15: Test Loading States and UX
+1. Observe loading states during:
+   - Initial data load
+   - Save operations
+   - Cancel operations
+2. Verify good user experience during operations
+
+Expected: Proper loading states and smooth user experience
+Screenshot: 15_loading_states_ux_test.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All conditions must be met
+- School info card displays current school information correctly ✓
+- Edit mode activates properly with editable fields ✓
+- School name editing works with proper validation ✓
+- Description editing accepts valid input and sanitizes harmful content ✓
+- Email validation rejects invalid email formats ✓
+- Phone number validation works for expected formats ✓
+- Website URL validation accepts valid URLs only ✓
+- Save functionality works with proper loading states ✓
+- Cancel functionality discards unsaved changes ✓
+- Settings section functional (if present) ✓
+- Edit permissions properly restricted based on user role ✓
+- Saved changes persist after page refresh ✓
+- Error handling displays clear error messages ✓
+- Good UX with proper loading states throughout ✓
+
+FAIL: Any condition fails
+- School info card missing or not displaying information ✗
+- Edit mode not working or missing ✗
+- Validation not working for required fields ✗
+- Accepting invalid data (security risk) ✗
+- Save functionality not working ✗
+- Users without permissions can edit school info ✗
+- Changes not persisting after save ✗
+- Poor error handling or unclear error messages ✗
+- Poor user experience or missing loading states ✗
+
+Individual Step Criteria:
+- Step 1: PASS if dashboard loads with school info card visible
+- Step 2: PASS if school info card displays current information
+- Step 3: PASS if edit mode activates correctly
+- Step 4: PASS if school name editing works with validation
+- Step 5: PASS if description editing works properly
+- Step 6: PASS if email validation works correctly
+- Step 7: PASS if phone validation works correctly  
+- Step 8: PASS if website validation works correctly
+- Step 9: PASS if save functionality works with proper feedback
+- Step 10: PASS if cancel functionality works correctly
+- Step 11: PASS if settings section works (if present)
+- Step 12: PASS if permissions properly restrict editing
+- Step 13: PASS if changes persist after refresh
+- Step 14: PASS if error handling works properly
+- Step 15: PASS if loading states and UX are good
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

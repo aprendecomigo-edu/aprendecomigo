@@ -1,0 +1,227 @@
+QA Test Case: Empty State Onboarding Flow Testing
+
+Test ID: DASH-009
+Test Name: Empty State Onboarding and Call-to-Action Testing  
+Purpose: Verify that the dashboard displays appropriate empty states with clear guidance when school has no teachers or students
+Expected Result: Dashboard shows helpful onboarding content and clear calls-to-action for new schools with empty state
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational Platform
+- Architecture: React Native + Expo frontend with conditional rendering
+- Testing Focus: Empty state UX and onboarding flow
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root  
+3. Start development servers: make dev-open
+4. View server logs: make logs
+
+Test Data:
+- Create a new school or ensure test school has zero teachers and students
+- Test Email: Use school owner email for newly created school
+- User Role: school_owner (to trigger onboarding flow)
+
+Empty State Conditions:
+- Student count: 0
+- Teacher count: 0  
+- No active classes
+- No recent activity
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Setup Clean School Environment
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev-open
+
+Option A: Create new school via API
+Option B: Clean existing test school data to achieve empty state
+Option C: Use development data fixtures for empty school
+
+Expected: School environment with zero teachers and students
+Screenshot: 01_clean_school_environment.png
+
+Step 2: Authenticate as School Owner
+Complete authentication process:
+1. Use school owner credentials for the empty school
+2. Navigate to dashboard
+3. Verify user has school owner permissions
+
+Expected: Successfully authenticated as school owner of empty school
+Screenshot: 02_school_owner_authenticated.png
+
+Step 3: Navigate to Dashboard and Verify Empty State
+Navigate to: http://localhost:8081/(school-admin)/dashboard
+
+Verify dashboard recognizes empty state:
+- Student count shows 0
+- Teacher count shows 0
+- Active classes shows 0
+
+Expected: Dashboard loads with empty metrics
+Screenshot: 03_dashboard_empty_metrics.png
+
+Step 4: Verify Empty State Welcome Section
+Look for special welcome section for new schools:
+- Welcome message: "Bem-vindo à sua escola! 🎉"
+- Explanatory text about getting started
+- Mention of reducing abandonment and creating active learning environment
+
+Expected: Welcoming onboarding message displayed prominently
+Screenshot: 04_empty_state_welcome_section.png
+
+Step 5: Verify Call-to-Action Buttons
+Check for primary action buttons in empty state:
+- "Convidar Professor" (Invite Teacher) button
+- "Adicionar Estudante" (Add Student) button
+- Buttons styled prominently (solid and outline variants)
+
+Expected: Clear call-to-action buttons visible and properly styled
+Screenshot: 05_call_to_action_buttons.png
+
+Step 6: Test "Convidar Professor" Empty State Action
+1. Click the "Convidar Professor" button from empty state section
+2. Verify navigation occurs
+3. Check destination page loads correctly
+
+Expected: Navigation to teacher invitation flow works from empty state
+Screenshot: 06_invite_teacher_from_empty_state.png
+
+Step 7: Test "Adicionar Estudante" Empty State Action  
+1. Return to dashboard
+2. Click the "Adicionar Estudante" button from empty state section
+3. Verify navigation occurs
+4. Check destination page loads correctly
+
+Expected: Navigation to student addition flow works from empty state
+Screenshot: 07_add_student_from_empty_state.png
+
+Step 8: Verify Empty State Visual Design
+Check visual design elements:
+- Gradient background (green-blue gradient with dashed border)
+- Emoji usage (🎉) for friendly tone
+- Proper spacing and typography
+- Contrast and readability
+
+Expected: Visually appealing empty state design
+Screenshot: 08_empty_state_visual_design.png
+
+Step 9: Test Empty State Responsiveness
+Commands:
+- Resize browser to mobile viewport (375px width)
+- Check tablet viewport (768px width)  
+- Verify empty state adapts to different screen sizes
+
+Expected: Empty state section responsive across screen sizes
+Screenshot: 09_empty_state_responsive.png
+
+Step 10: Test Empty State with Partial Data
+If possible, add only one teacher or one student and verify:
+1. Empty state still shows if student count is 0 AND teacher count is 0
+2. Empty state disappears when both counts are > 0
+3. Logic correctly evaluates the empty state condition
+
+Expected: Empty state logic works correctly with partial data
+Screenshot: 10_partial_data_empty_state.png
+
+Step 11: Verify Activity Feed Empty State
+Check Activity Feed component in empty state:
+- Shows appropriate empty message
+- No confusing "loading" states
+- Clear indication that activities will appear when school becomes active
+
+Expected: Activity feed shows appropriate empty state
+Screenshot: 11_activity_feed_empty_state.png
+
+Step 12: Test Metrics Cards in Empty State
+Verify MetricsCard component with zero data:
+- Displays zeros appropriately
+- No division by zero errors
+- Proper formatting of zero values
+- No confusing or negative percentages
+
+Expected: Metrics display cleanly with zero values
+Screenshot: 12_metrics_cards_empty_state.png
+
+Step 13: Test Onboarding Copy and Messaging
+Review all text content for:
+- Portuguese language accuracy
+- Encouraging and helpful tone
+- Clear next steps
+- Mention of platform benefits (reducing abandonment)
+
+Expected: All copy is helpful, accurate, and encouraging
+Screenshot: 13_onboarding_copy_review.png
+
+Step 14: Test Empty State Persistence
+Commands:
+1. Refresh the page while in empty state
+2. Verify empty state persists
+3. Navigate away and back
+4. Confirm empty state logic reliable
+
+Expected: Empty state consistently shows when conditions met
+Screenshot: 14_empty_state_persistence.png
+
+Step 15: Test Transition Out of Empty State
+If possible, simulate adding first teacher/student:
+1. Add first teacher via invitation
+2. Return to dashboard  
+3. Verify empty state disappears appropriately
+4. Check normal dashboard content appears
+
+Expected: Smooth transition from empty state to populated dashboard
+Screenshot: 15_transition_out_empty_state.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All conditions must be met
+- Dashboard recognizes empty state (0 teachers AND 0 students) ✓
+- Welcome section displays with encouraging message ✓
+- Welcome text mentions reducing abandonment and active learning ✓
+- Primary call-to-action buttons present ("Convidar Professor", "Adicionar Estudante") ✓
+- Call-to-action buttons properly styled and prominent ✓
+- "Convidar Professor" button navigates correctly ✓
+- "Adicionar Estudante" button navigates correctly ✓
+- Empty state visual design appealing and professional ✓
+- Empty state responsive across different screen sizes ✓
+- Empty state logic works correctly with partial data ✓
+- Activity feed shows appropriate empty state ✓
+- Metrics cards display zero values cleanly ✓
+- All Portuguese copy accurate and encouraging ✓
+- Empty state persists correctly across page refreshes ✓
+- Smooth transition out of empty state when data added ✓
+
+FAIL: Any condition fails
+- Empty state not triggered when it should be ✗
+- Missing or unclear welcome messaging ✗
+- Call-to-action buttons missing or not working ✗
+- Poor visual design or confusing layout ✗
+- Empty state not responsive or breaks on mobile ✗
+- Incorrect empty state logic (showing when shouldn't) ✗
+- Error states or confusing messaging in empty components ✗
+- Portuguese copy inaccurate or discouraging ✗
+- Empty state doesn't persist or behaves inconsistently ✗
+- Poor transition experience when moving out of empty state ✗
+
+Individual Step Criteria:
+- Step 1: PASS if clean school environment setup successfully
+- Step 2: PASS if school owner authentication works  
+- Step 3: PASS if dashboard recognizes and displays empty state
+- Step 4: PASS if welcome section shows encouraging message
+- Step 5: PASS if call-to-action buttons present and styled well
+- Step 6: PASS if invite teacher button works from empty state
+- Step 7: PASS if add student button works from empty state
+- Step 8: PASS if empty state visual design is appealing
+- Step 9: PASS if empty state responsive across screen sizes
+- Step 10: PASS if empty state logic works with partial data
+- Step 11: PASS if activity feed empty state appropriate
+- Step 12: PASS if metrics cards display zero values cleanly
+- Step 13: PASS if onboarding copy helpful and accurate
+- Step 14: PASS if empty state persists correctly
+- Step 15: PASS if transition out of empty state smooth
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

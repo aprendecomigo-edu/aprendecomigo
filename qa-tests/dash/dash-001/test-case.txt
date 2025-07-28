@@ -1,0 +1,166 @@
+QA Test Case: Backend School Metrics API Testing
+
+Test ID: DASH-001
+Test Name: Backend School Metrics API Authentication and Data Structure
+Purpose: Verify that the school dashboard metrics API endpoint works correctly with proper authentication and returns expected data structure
+Expected Result: API returns comprehensive school metrics with correct data types and values
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational Platform
+- Architecture: Django REST API backend with PostgreSQL database
+- Authentication: JWT token-based authentication
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: make dev
+4. View server logs: make logs
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com (school admin/owner)
+- School ID: 1 (default test school)
+- User Role: school_owner or school_admin
+
+API Endpoint Under Test:
+- GET /api/accounts/schools/{id}/metrics/
+- Expected Response: SchoolMetrics object with student counts, teacher counts, class metrics, and engagement metrics
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Both Django backend and Expo frontend servers start successfully
+Screenshot: 01_servers_started.png
+
+Debug: Use 'make logs' to view server logs if issues occur
+
+Step 2: Authenticate and Get JWT Token
+Using curl or API client:
+Commands:
+  # Request verification code
+  curl -X POST http://localhost:8000/api/accounts/auth/request-code/ \
+    -H "Content-Type: application/json" \
+    -d '{"email": "anapmc.carvalho@gmail.com"}'
+  
+  # Get 6-digit code from email/logs and verify
+  curl -X POST http://localhost:8000/api/accounts/auth/verify-code/ \
+    -H "Content-Type: application/json" \
+    -d '{"email": "anapmc.carvalho@gmail.com", "code": "XXXXXX"}'
+
+Expected: Receive JWT token in response
+Screenshot: 02_authentication_successful.png
+
+Step 3: Test School Metrics API Without Authentication
+Commands:
+  curl -X GET http://localhost:8000/api/accounts/schools/1/metrics/ \
+    -H "Content-Type: application/json"
+
+Expected: HTTP 401 Unauthorized response
+Screenshot: 03_unauthenticated_request_rejected.png
+
+Step 4: Test School Metrics API With Valid Authentication
+Commands:
+  curl -X GET http://localhost:8000/api/accounts/schools/1/metrics/ \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+Expected: HTTP 200 OK with metrics data structure
+Screenshot: 04_authenticated_metrics_request.png
+
+Step 5: Validate Response Data Structure
+Check the JSON response contains:
+- student_count object with total, active, inactive fields
+- teacher_count object with total, active, inactive fields  
+- class_metrics object with active_classes, completed_today, scheduled_today, completion_rate
+- engagement_metrics object with invitations_sent, invitations_accepted, acceptance_rate
+
+Expected: All required fields present with correct data types
+Screenshot: 05_response_structure_validation.png
+
+Step 6: Test Non-Existent School ID
+Commands:
+  curl -X GET http://localhost:8000/api/accounts/schools/999999/metrics/ \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+Expected: HTTP 404 Not Found or HTTP 403 Forbidden
+Screenshot: 06_invalid_school_id_rejected.png
+
+Step 7: Test Unauthorized School Access
+Use a different user's token to access another school's metrics:
+Commands:
+  # If you have access to another user token, test with different school ID
+
+Expected: HTTP 403 Forbidden (user cannot access other schools' data)
+Screenshot: 07_unauthorized_school_access_rejected.png
+
+Step 8: Verify Caching Behavior
+Make multiple rapid requests to test caching:
+Commands:
+  for i in {1..5}; do
+    curl -X GET http://localhost:8000/api/accounts/schools/1/metrics/ \
+      -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+      -w "Time: %{time_total}s\n"
+    sleep 1
+  done
+
+Expected: Subsequent requests should be faster (cached responses)
+Screenshot: 08_caching_performance_test.png
+
+Step 9: Test API Response Time
+Measure API response time:
+Commands:
+  curl -X GET http://localhost:8000/api/accounts/schools/1/metrics/ \
+    -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+    -w "Total time: %{time_total}s\n" \
+    -o /dev/null -s
+
+Expected: Response time should be under 200ms (as per requirements)
+Screenshot: 09_response_time_measurement.png
+
+Step 10: Database Query Analysis
+Check server logs for database queries:
+Commands:
+  make logs
+
+Expected: Efficient database queries with proper use of aggregations, no N+1 query problems
+Screenshot: 10_database_query_analysis.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All conditions must be met
+- Authentication required for API access ✓
+- Correct HTTP status codes for valid/invalid requests ✓  
+- Response contains all required fields with correct data types ✓
+- API response time under 200ms ✓
+- Proper authorization checks prevent unauthorized access ✓
+- Efficient database queries visible in logs ✓
+- Caching improves performance on repeated requests ✓
+
+FAIL: Any condition fails
+- API accessible without authentication ✗
+- Missing required fields in response ✗
+- Incorrect data types in response ✗
+- Response time over 200ms ✗
+- Users can access other schools' data ✗
+- N+1 database query problems ✗
+
+Individual Step Criteria:
+- Step 1: PASS if servers start without errors
+- Step 2: PASS if JWT token obtained successfully
+- Step 3: PASS if unauthenticated request rejected with 401
+- Step 4: PASS if authenticated request returns 200 with metrics data
+- Step 5: PASS if response structure matches expected schema
+- Step 6: PASS if invalid school ID rejected appropriately
+- Step 7: PASS if unauthorized access properly blocked
+- Step 8: PASS if caching improves performance
+- Step 9: PASS if response time meets performance requirements
+- Step 10: PASS if database queries are optimized
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

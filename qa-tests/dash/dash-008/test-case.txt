@@ -1,0 +1,236 @@
+QA Test Case: Real-time Updates Integration Testing
+
+Test ID: DASH-008
+Test Name: End-to-End Real-time Updates Integration
+Purpose: Verify that real-time updates work correctly from backend events through WebSocket to frontend dashboard updates
+Expected Result: Dashboard receives and displays real-time updates when school data changes via WebSocket connection
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational Platform
+- Architecture: Django Channels WebSocket + React Frontend with real-time hooks
+- Real-time Components: useSchoolDashboard hook with WebSocket integration
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: make dev-open
+4. View server logs: make logs
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com (school admin/owner)
+- School ID: 1 (default test school)
+- User Role: school_owner
+- Additional test email for invitations: test.teacher@example.com
+
+WebSocket Integration:
+- Frontend: useSchoolDashboard hook with WebSocket
+- Backend: SchoolDashboardConsumer
+- Expected Message Types: metrics_update, activity_new, invitation_status_update
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Setup Dual Browser Session
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate  
+  make dev-open
+
+Setup:
+1. Open first browser tab: Dashboard view (authenticated)
+2. Open second browser tab: Admin actions (same authentication)
+3. Position browsers side-by-side for real-time observation
+
+Expected: Both browser sessions active and authenticated
+Screenshot: 01_dual_browser_setup.png
+
+Step 2: Verify WebSocket Connection Status
+In the dashboard (first tab):
+1. Check for WebSocket connection indicator
+2. Look for online/connected status
+3. Verify no connection errors or warnings
+
+Expected: WebSocket connection established and indicated in UI
+Screenshot: 02_websocket_connection_verified.png
+
+Step 3: Record Initial Dashboard State
+Document the current dashboard state:
+- Student count
+- Teacher count  
+- Active classes count
+- Acceptance rate
+- Recent activities in feed
+
+Expected: Baseline metrics recorded for comparison
+Screenshot: 03_initial_dashboard_state.png
+
+Step 4: Trigger Teacher Invitation (Real-time Test 1)
+In the second browser tab:
+1. Navigate to teacher invitation page
+2. Send invitation to: test.teacher@example.com
+3. Complete invitation form submission
+
+Monitor first tab (dashboard) for:
+- New activity in activity feed
+- Updated metrics (invitations sent count)
+- WebSocket message receipt
+
+Expected: Dashboard updates in real-time with new invitation activity
+Screenshot: 04_teacher_invitation_realtime.png
+
+Step 5: Test Metrics Update Broadcasting
+Using API calls or second browser tab:
+Commands:
+  # Send additional invitations to trigger metrics changes
+  curl -X POST http://localhost:8000/api/accounts/schools/1/invitations/ \
+    -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "email": "teacher2@example.com",
+      "role": "teacher",
+      "message": "Welcome!"
+    }'
+
+Expected: Dashboard metrics update automatically without page refresh
+Screenshot: 05_metrics_update_broadcast.png
+
+Step 6: Test Activity Feed Real-time Updates
+Monitor the activity feed in dashboard while:
+1. Creating new invitations
+2. If possible, accepting invitations
+3. Any other school activities
+
+Expected: New activities appear at top of feed in real-time
+Screenshot: 06_activity_feed_realtime.png
+
+Step 7: Test WebSocket Reconnection
+Commands:
+1. Temporarily disconnect internet or pause network in browser dev tools
+2. Wait for connection loss indication
+3. Restore connection
+4. Verify automatic reconnection
+
+Expected: Dashboard handles connection loss and automatically reconnects
+Screenshot: 07_websocket_reconnection_test.png
+
+Step 8: Test Multiple Dashboard Sessions
+Commands:
+1. Open dashboard in third browser tab/window
+2. Trigger events from second tab
+3. Verify all dashboard sessions receive updates
+
+Expected: All connected dashboard sessions receive real-time updates
+Screenshot: 08_multiple_sessions_sync.png
+
+Step 9: Test Connection Status Indicators
+Monitor connection status indicators during:
+1. Normal operation (connected)
+2. Network disconnection (disconnected)
+3. Reconnection (connecting/connected)
+
+Expected: Clear visual feedback about WebSocket connection status
+Screenshot: 09_connection_status_indicators.png
+
+Step 10: Test Real-time Error Handling
+Commands:
+1. Send malformed invitation to trigger error
+2. Monitor dashboard for error handling
+3. Verify graceful handling of backend errors
+
+Expected: Errors handled gracefully without breaking real-time functionality
+Screenshot: 10_realtime_error_handling.png
+
+Step 11: Performance Testing with Real-time Updates
+Commands:
+1. Generate multiple rapid events (if possible)
+2. Monitor browser performance during real-time updates
+3. Check for memory leaks or performance degradation
+
+Expected: Good performance maintained during real-time operations
+Screenshot: 11_realtime_performance_test.png
+
+Step 12: Test Fallback to Polling
+Commands:
+1. Disable WebSocket connection (if possible in config)
+2. Verify dashboard falls back to polling
+3. Check that updates still occur via periodic refresh
+
+Expected: Dashboard continues to work with polling fallback
+Screenshot: 12_polling_fallback_test.png
+
+Step 13: Test Message Type Handling
+If you can trigger different types of school events:
+1. Invitation events → invitation_status_update messages
+2. Student additions → metrics_update messages  
+3. New activities → activity_new messages
+
+Expected: Different message types handled correctly by frontend
+Screenshot: 13_message_type_handling.png
+
+Step 14: Test Real-time Update Accuracy
+Commands:
+1. Make specific changes via API/second tab
+2. Verify exact accuracy of real-time updates
+3. Compare real-time updates with manual refresh
+
+Expected: Real-time updates match manual refresh data exactly
+Screenshot: 14_update_accuracy_verification.png
+
+Step 15: Test Browser Tab Visibility Handling
+Commands:
+1. Switch to different browser tab (dashboard not visible)
+2. Trigger events while dashboard tab not active
+3. Return to dashboard tab
+4. Verify updates received while tab was inactive
+
+Expected: Updates received and displayed correctly regardless of tab visibility
+Screenshot: 15_tab_visibility_handling.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All conditions must be met
+- WebSocket connection establishes successfully ✓
+- Connection status properly indicated in UI ✓
+- Teacher invitation triggers real-time activity feed update ✓
+- Metrics update in real-time when events occur ✓
+- Activity feed shows new activities without page refresh ✓
+- WebSocket connection recovers automatically after disconnection ✓
+- Multiple dashboard sessions receive synchronized updates ✓
+- Connection status indicators work correctly ✓
+- Errors handled gracefully without breaking real-time functionality ✓
+- Good performance maintained during real-time operations ✓
+- Polling fallback works if WebSocket unavailable ✓
+- Different message types handled correctly ✓
+- Real-time updates match manual refresh data ✓
+- Updates received correctly when browser tab not active ✓
+
+FAIL: Any condition fails
+- WebSocket connection fails to establish ✗
+- No real-time updates received ✗
+- Updates inaccurate or delayed significantly ✗
+- Connection issues not handled properly ✗
+- Poor performance during real-time operations ✗
+- Multiple sessions not synchronized ✗
+- Missing connection status feedback ✗
+- Real-time functionality breaks on errors ✗
+- No fallback mechanism when WebSocket fails ✗
+
+Individual Step Criteria:
+- Step 1: PASS if dual browser setup works correctly
+- Step 2: PASS if WebSocket connection status verified
+- Step 3: PASS if initial dashboard state recorded
+- Step 4: PASS if teacher invitation triggers real-time update
+- Step 5: PASS if metrics broadcast correctly
+- Step 6: PASS if activity feed updates in real-time
+- Step 7: PASS if WebSocket reconnection works
+- Step 8: PASS if multiple sessions sync correctly
+- Step 9: PASS if connection indicators work properly
+- Step 10: PASS if real-time errors handled gracefully
+- Step 11: PASS if performance good during real-time operations
+- Step 12: PASS if polling fallback works
+- Step 13: PASS if different message types handled correctly
+- Step 14: PASS if real-time updates are accurate
+- Step 15: PASS if tab visibility handled correctly
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

@@ -1,0 +1,276 @@
+QA Test Case: Error Handling and Recovery Mechanisms
+
+Test ID: DASH-010
+Test Name: Error Handling and Recovery Mechanisms Testing
+Purpose: Verify that the dashboard handles various error conditions gracefully and provides clear recovery options
+Expected Result: Dashboard displays helpful error messages and provides functional recovery mechanisms for all error scenarios
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational Platform
+- Architecture: React Native + Expo frontend with error boundaries and recovery
+- Testing Focus: Error states, loading failures, and recovery mechanisms
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: make dev-open
+4. View server logs: make logs
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com (school admin/owner)
+- School ID: 1 (default test school)
+- User Role: school_owner
+
+Error Scenarios to Test:
+- Backend server unavailable
+- Network connectivity issues
+- API endpoint failures
+- WebSocket connection failures
+- Invalid authentication tokens
+- Server timeout errors
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Setup and Baseline Dashboard
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev-open
+
+Complete authentication and verify dashboard works normally:
+http://localhost:8081/(school-admin)/dashboard
+
+Expected: Dashboard loads successfully with all data
+Screenshot: 01_baseline_dashboard_working.png
+
+Step 2: Test Backend Server Unavailable Error
+Commands:
+1. Stop the Django backend server: Ctrl+C in backend terminal
+2. Refresh the dashboard page
+3. Observe error handling behavior
+
+Expected: Clear error message about server unavailability with retry option
+Screenshot: 02_backend_server_unavailable_error.png
+
+Step 3: Test Error Recovery - Restart Backend
+Commands:
+1. Restart backend server: make dev
+2. Click any "Retry" or "Try Again" buttons in dashboard
+3. Verify dashboard recovers functionality
+
+Expected: Dashboard successfully recovers when backend restored
+Screenshot: 03_backend_recovery_successful.png
+
+Step 4: Test Network Connectivity Error
+Commands:
+1. Use browser dev tools to simulate offline mode
+2. Or disconnect network temporarily
+3. Try to refresh dashboard or trigger actions
+
+Expected: Appropriate offline/network error messaging
+Screenshot: 04_network_connectivity_error.png
+
+Step 5: Test WebSocket Connection Failure
+Commands:
+1. If possible, configure WebSocket to fail or use dev tools to block WS
+2. Observe WebSocket error handling in dashboard
+3. Check for fallback behavior
+
+Expected: WebSocket error clearly indicated, polling fallback works
+Screenshot: 05_websocket_connection_failure.png
+
+Step 6: Test API Endpoint 404 Error
+Commands:
+1. Temporarily modify API endpoint URL in frontend to invalid endpoint
+2. Reload dashboard to trigger 404 errors
+3. Observe error handling
+
+Expected: Clear error message about data loading failure
+Screenshot: 06_api_endpoint_404_error.png
+
+Step 7: Test API Endpoint 500 Error
+Commands:
+1. If possible, trigger 500 error from backend (modify endpoint to crash)
+2. Or use network tools to simulate 500 response
+3. Observe error handling behavior
+
+Expected: Server error handled gracefully with user-friendly message
+Screenshot: 07_api_endpoint_500_error.png
+
+Step 8: Test Authentication Token Expiry
+Commands:
+1. Manually expire or modify JWT token in browser storage
+2. Try to perform dashboard actions
+3. Observe authentication error handling
+
+Expected: Authentication error handled, user redirected to login or token refreshed
+Screenshot: 08_authentication_token_expiry.png
+
+Step 9: Test Timeout Errors
+Commands:
+1. Use dev tools to throttle network to very slow speeds
+2. Try to load dashboard or perform actions
+3. Observe timeout handling
+
+Expected: Timeout errors handled with appropriate messaging and retry options
+Screenshot: 09_timeout_error_handling.png
+
+Step 10: Test Partial Data Loading Failures
+Commands:
+1. Configure one API endpoint to fail while others succeed
+2. Observe how dashboard handles partial data availability
+
+Expected: Dashboard displays available data, clearly indicates missing sections
+Screenshot: 10_partial_data_loading_failure.png
+
+Step 11: Test Error Recovery Actions
+For each error state, test recovery mechanisms:
+1. "Try Again" or "Retry" buttons
+2. "Refresh" functionality
+3. Automatic retry behavior (if implemented)
+
+Expected: All recovery actions work correctly and restore functionality
+Screenshot: 11_error_recovery_actions.png
+
+Step 12: Test Error Message Quality
+Review all error messages for:
+- Clear, user-friendly language in Portuguese
+- Specific and helpful information
+- Appropriate tone (not technical jargon)
+- Clear next steps for users
+
+Expected: All error messages helpful and appropriately worded
+Screenshot: 12_error_message_quality.png
+
+Step 13: Test Loading State Error Handling
+Commands:
+1. Interrupt loading states (close browser during load)
+2. Test what happens when loading never completes
+3. Verify no infinite loading states
+
+Expected: Loading states timeout appropriately with error handling
+Screenshot: 13_loading_state_error_handling.png
+
+Step 14: Test Browser Console Error Handling
+Commands:
+1. Monitor browser console during error scenarios
+2. Check for unhandled JavaScript errors
+3. Verify proper error logging without exposing sensitive data
+
+Expected: Clean console with appropriate error logging, no unhandled errors
+Screenshot: 14_browser_console_error_handling.png
+
+Step 15: Test Error Boundary Fallback
+Commands:
+1. If possible, trigger a JavaScript error in a component
+2. Verify error boundary catches and displays fallback UI
+3. Test if other parts of dashboard remain functional
+
+Expected: Error boundaries contain errors without crashing entire dashboard
+Screenshot: 15_error_boundary_fallback.png
+
+Step 16: Test Progressive Enhancement
+Commands:
+1. Disable JavaScript in browser
+2. Try to access dashboard
+3. Verify graceful degradation or appropriate messaging
+
+Expected: Appropriate handling when JavaScript disabled
+Screenshot: 16_progressive_enhancement.png
+
+Step 17: Test Error State Accessibility
+Commands:
+1. Use screen reader or accessibility tools
+2. Test error messages for accessibility
+3. Verify error states are properly announced
+
+Expected: Error states accessible to users with disabilities
+Screenshot: 17_error_state_accessibility.png
+
+Step 18: Test Multiple Simultaneous Errors
+Commands:
+1. Trigger multiple types of errors simultaneously
+2. Test how dashboard handles multiple error conditions
+3. Verify error message priority and display
+
+Expected: Multiple errors handled gracefully without UI conflicts
+Screenshot: 18_multiple_simultaneous_errors.png
+
+Step 19: Test Error Persistence and Recovery
+Commands:
+1. Trigger error state
+2. Navigate away from dashboard
+3. Return to dashboard
+4. Verify error state cleared appropriately
+
+Expected: Error states don't persist inappropriately across navigation
+Screenshot: 19_error_persistence_recovery.png
+
+Step 20: Test Critical vs Non-Critical Error Handling
+Commands:
+1. Test critical errors (complete dashboard failure)
+2. Test non-critical errors (single component failure)
+3. Verify appropriate error severity handling
+
+Expected: Different error severities handled with appropriate responses
+Screenshot: 20_critical_vs_noncritical_errors.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All conditions must be met
+- Backend server unavailable error handled gracefully ✓
+- Dashboard recovers successfully when backend restored ✓
+- Network connectivity errors handled appropriately ✓
+- WebSocket failures indicated clearly with fallback behavior ✓
+- API 404 errors handled with clear messaging ✓
+- API 500 errors handled gracefully ✓
+- Authentication token expiry handled properly ✓
+- Timeout errors handled with retry options ✓
+- Partial data failures handled gracefully ✓
+- All recovery mechanisms (retry, refresh) work correctly ✓
+- Error messages clear, helpful, and in appropriate language ✓
+- Loading states timeout appropriately ✓
+- No unhandled JavaScript errors in console ✓
+- Error boundaries contain component errors ✓
+- Graceful handling when JavaScript disabled ✓
+- Error states accessible to screen readers ✓
+- Multiple simultaneous errors handled without conflicts ✓
+- Error states don't persist inappropriately ✓
+- Critical and non-critical errors handled with appropriate severity ✓
+
+FAIL: Any condition fails
+- Errors cause complete dashboard crash ✗
+- No error recovery mechanisms available ✗
+- Error messages confusing, technical, or in wrong language ✗
+- Infinite loading states with no timeout ✗
+- Unhandled JavaScript errors breaking functionality ✗
+- Error boundaries not working or missing ✗
+- Poor accessibility in error states ✗
+- Multiple errors causing UI conflicts or crashes ✗
+- Error states persisting when they shouldn't ✗
+
+Individual Step Criteria:
+- Step 1: PASS if baseline dashboard works normally
+- Step 2: PASS if backend unavailable error handled gracefully
+- Step 3: PASS if recovery works when backend restored
+- Step 4: PASS if network errors handled appropriately
+- Step 5: PASS if WebSocket failures handled with fallback
+- Step 6: PASS if 404 errors handled clearly
+- Step 7: PASS if 500 errors handled gracefully
+- Step 8: PASS if authentication expiry handled properly
+- Step 9: PASS if timeout errors handled with retry
+- Step 10: PASS if partial data failures handled gracefully
+- Step 11: PASS if all recovery actions work correctly
+- Step 12: PASS if error messages clear and helpful
+- Step 13: PASS if loading states timeout appropriately
+- Step 14: PASS if console errors handled cleanly
+- Step 15: PASS if error boundaries work correctly
+- Step 16: PASS if graceful degradation when JS disabled
+- Step 17: PASS if error states accessible
+- Step 18: PASS if multiple errors handled without conflicts
+- Step 19: PASS if error persistence handled correctly
+- Step 20: PASS if error severity handled appropriately
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

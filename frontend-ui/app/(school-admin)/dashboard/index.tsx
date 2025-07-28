@@ -1,9 +1,10 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router } from 'expo-router';
-import { AlertTriangleIcon, RefreshCwIcon, WifiOffIcon } from 'lucide-react-native';
-import React, { useCallback, useMemo } from 'react';
+import { AlertTriangleIcon, RefreshCwIcon, WifiOffIcon, SchoolIcon, ChevronDownIcon } from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/api/authContext';
+import { getUserAdminSchools, SchoolMembership } from '@/api/userApi';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
 import MetricsCard from '@/components/dashboard/MetricsCard';
 import QuickActionsPanel from '@/components/dashboard/QuickActionsPanel';
@@ -19,18 +20,51 @@ import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import useSchoolDashboard from '@/hooks/useSchoolDashboard';
+import useSchoolDashboard, { DashboardError } from '@/hooks/useSchoolDashboard';
 
 const SchoolAdminDashboard = () => {
   const { userProfile } = useAuth();
-
-  // Get school ID - assuming the user profile contains school information
-  // In a real implementation, you'd extract this from the user's school memberships
-  const schoolId = useMemo(() => {
-    // This is a placeholder - you'll need to implement logic to get the school ID
-    // from the user profile or from navigation params
-    return 1; // Default to school ID 1 for now
+  
+  // State for school management
+  const [adminSchools, setAdminSchools] = useState<SchoolMembership[]>([]);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<number | null>(null);
+  const [schoolsLoading, setSchoolsLoading] = useState(true);
+  const [schoolsError, setSchoolsError] = useState<string | null>(null);
+  
+  // Load user's admin schools on mount
+  useEffect(() => {
+    const loadAdminSchools = async () => {
+      try {
+        setSchoolsLoading(true);
+        setSchoolsError(null);
+        const schools = await getUserAdminSchools();
+        setAdminSchools(schools);
+        
+        // Auto-select the first school if only one, or the last selected one
+        if (schools.length === 1) {
+          setSelectedSchoolId(schools[0].school.id);
+        } else if (schools.length > 1) {
+          // For now, default to the first school - in a real app, you might want to
+          // save the user's last selected school in localStorage
+          setSelectedSchoolId(schools[0].school.id);
+        }
+      } catch (error) {
+        console.error('Error loading admin schools:', error);
+        setSchoolsError('Falha ao carregar escolas. Você pode não ter permissões de administrador.');
+      } finally {
+        setSchoolsLoading(false);
+      }
+    };
+    
+    if (userProfile) {
+      loadAdminSchools();
+    }
   }, [userProfile]);
+  
+  // Get selected school info
+  const selectedSchool = useMemo(() => {
+    return adminSchools.find(school => school.school.id === selectedSchoolId);
+  }, [adminSchools, selectedSchoolId]);
 
   const {
     metrics,
@@ -44,11 +78,12 @@ const SchoolAdminDashboard = () => {
     wsError,
     isConnected,
     refreshAll,
+    refreshAllWithRetry,
     loadMoreActivities,
     updateSchool,
     clearError,
   } = useSchoolDashboard({
-    schoolId,
+    schoolId: selectedSchoolId || 0,
     enableRealtime: true,
     refreshInterval: 30000,
   });
@@ -101,23 +136,82 @@ const SchoolAdminDashboard = () => {
     }
   }, [userProfile]);
 
-  // Error state
+  // Loading state for schools
+  if (schoolsLoading) {
+    return (
+      <Center className="flex-1 p-6">
+        <VStack space="md" className="items-center">
+          <Icon as={SchoolIcon} size="xl" className="text-blue-500" />
+          <Text className="text-gray-600">Carregando suas escolas...</Text>
+        </VStack>
+      </Center>
+    );
+  }
+  
+  // No admin schools available
+  if (!schoolsLoading && adminSchools.length === 0) {
+    return (
+      <Center className="flex-1 p-6">
+        <VStack space="lg" className="items-center max-w-md">
+          <Icon as={SchoolIcon} size="xl" className="text-gray-400" />
+          <VStack space="sm" className="items-center">
+            <Heading size="lg" className="text-center text-gray-900">
+              Nenhuma escola encontrada
+            </Heading>
+            <Text className="text-center text-gray-600">
+              {schoolsError || 'Você não possui permissões de administrador em nenhuma escola.'}
+            </Text>
+          </VStack>
+          <Button onPress={() => router.push('/')} variant="outline">
+            <ButtonText>Voltar ao início</ButtonText>
+          </Button>
+        </VStack>
+      </Center>
+    );
+  }
+  
+  // No school selected yet
+  if (!selectedSchoolId) {
+    return (
+      <Center className="flex-1 p-6">
+        <VStack space="md" className="items-center">
+          <Icon as={SchoolIcon} size="xl" className="text-blue-500" />
+          <Text className="text-gray-600">Selecionando escola...</Text>
+        </VStack>
+      </Center>
+    );
+  }
+  
+  // Dashboard error state
   if (error && !isLoading) {
+    const dashboardError = error as DashboardError;
     return (
       <Center className="flex-1 p-6">
         <VStack space="lg" className="items-center max-w-md">
           <Icon as={AlertTriangleIcon} size="xl" className="text-red-500" />
           <VStack space="sm" className="items-center">
             <Heading size="lg" className="text-center text-gray-900">
-              Erro ao carregar dashboard
+              {dashboardError.type === 'permission' ? 'Acesso negado' : 'Erro ao carregar dashboard'}
             </Heading>
             <Text className="text-center text-gray-600">
-              {error}
+              {dashboardError.message}
             </Text>
+            {dashboardError.details && (
+              <Text className="text-center text-gray-500 text-sm">
+                {dashboardError.details}
+              </Text>
+            )}
           </VStack>
-          <Button onPress={refreshAll} variant="solid">
-            <ButtonText>Tentar novamente</ButtonText>
-          </Button>
+          {dashboardError.canRetry && (
+            <Button onPress={refreshAllWithRetry} variant="solid">
+              <ButtonText>Tentar novamente</ButtonText>
+            </Button>
+          )}
+          {!dashboardError.canRetry && (
+            <Button onPress={() => router.push('/')} variant="outline">
+              <ButtonText>Voltar ao início</ButtonText>
+            </Button>
+          )}
         </VStack>
       </Center>
     );
@@ -136,13 +230,35 @@ const SchoolAdminDashboard = () => {
         {/* Header Section */}
         <VStack space="sm">
           <HStack className="justify-between items-start">
-            <VStack space="xs">
+            <VStack space="xs" className="flex-1">
               <Heading size="xl" className="text-gray-900">
                 {welcomeMessage}
               </Heading>
-              <Text className="text-gray-600">
-                {schoolInfo?.name || 'Carregando...'}
-              </Text>
+              
+              {/* School Selector */}
+              {adminSchools.length > 1 && (
+                <Pressable 
+                  onPress={() => {
+                    // In a real app, you might want to show a modal or dropdown
+                    // For now, cycle through schools
+                    const currentIndex = adminSchools.findIndex(s => s.school.id === selectedSchoolId);
+                    const nextIndex = (currentIndex + 1) % adminSchools.length;
+                    setSelectedSchoolId(adminSchools[nextIndex].school.id);
+                  }}
+                  className="flex-row items-center space-x-2"
+                >
+                  <Text className="text-gray-600 font-medium">
+                    {selectedSchool?.school.name || 'Carregando...'}
+                  </Text>
+                  <Icon as={ChevronDownIcon} size="sm" className="text-gray-400" />
+                </Pressable>
+              )}
+              
+              {adminSchools.length === 1 && (
+                <Text className="text-gray-600">
+                  {selectedSchool?.school.name || schoolInfo?.name || 'Carregando...'}
+                </Text>
+              )}
             </VStack>
             
             <HStack space="xs" className="items-center">
@@ -201,15 +317,27 @@ const SchoolAdminDashboard = () => {
               <Icon as={AlertTriangleIcon} size="sm" className="text-red-600 mt-0.5" />
               <VStack className="flex-1">
                 <Text className="font-medium text-red-900">
-                  Erro no carregamento
+                  {(error as DashboardError).type === 'permission' ? 'Acesso negado' : 'Erro no carregamento'}
                 </Text>
                 <Text className="text-sm text-red-700">
-                  {error}
+                  {(error as DashboardError).message}
                 </Text>
+                {(error as DashboardError).details && (
+                  <Text className="text-xs text-red-600 mt-1">
+                    {(error as DashboardError).details}
+                  </Text>
+                )}
               </VStack>
-              <Pressable onPress={clearError}>
-                <Text className="text-sm font-medium text-red-600">Dispensar</Text>
-              </Pressable>
+              <VStack space="xs">
+                {(error as DashboardError).canRetry && (
+                  <Pressable onPress={refreshAllWithRetry}>
+                    <Text className="text-sm font-medium text-red-600">Tentar novamente</Text>
+                  </Pressable>
+                )}
+                <Pressable onPress={clearError}>
+                  <Text className="text-sm font-medium text-red-600">Dispensar</Text>
+                </Pressable>
+              </VStack>
             </HStack>
           </Box>
         )}

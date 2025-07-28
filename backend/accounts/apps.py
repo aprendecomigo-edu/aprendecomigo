@@ -8,4 +8,5 @@ class AccountsConfig(AppConfig):
     verbose_name = _("Accounts and User Management")
 
     def ready(self):
-        pass
+        # Import signals to ensure they are registered
+        import accounts.signals
