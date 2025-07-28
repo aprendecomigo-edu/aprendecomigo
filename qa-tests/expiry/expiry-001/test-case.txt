@@ -1,0 +1,372 @@
+QA Test Case: Package Expiration Detection and Processing
+
+Test ID: EXPIRY-001
+Test Name: Package Expiration Detection and Processing Workflow
+Purpose: Verify that the system correctly detects expired packages, processes them according to grace period rules, and updates student balances accurately
+Expected Result: Expired packages are detected and processed correctly with accurate balance updates
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Package Expiration Management (GitHub Issue #33)
+- Service: PackageExpirationService for automated processing
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data Required:
+- Admin User: anapmc.carvalho@gmail.com (has admin permissions)
+- Test Students: Multiple students with various package states
+- Database: Test packages with different expiration dates and consumption levels
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Database Preparation
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py migrate
+  make dev
+
+Expected: Both services start successfully
+- Backend: http://localhost:8000 responds with 401 for /api/
+- Frontend: http://localhost:8081 shows loading screen
+
+Step 2: Create Test Data - Expired Packages
+Commands:
+  python manage.py shell
+  
+Python Shell Commands:
+```python
+from django.contrib.auth import get_user_model
+from finances.models import PurchaseTransaction, StudentAccountBalance, TransactionType, TransactionPaymentStatus
+from decimal import Decimal
+from django.utils import timezone
+from datetime import timedelta
+
+User = get_user_model()
+
+# Create test student if not exists
+student, created = User.objects.get_or_create(
+    email='student.expiry.test@example.com',
+    defaults={
+        'name': 'Expiry Test Student',
+        'role': 'student'
+    }
+)
+
+# Create student balance if not exists
+balance, created = StudentAccountBalance.objects.get_or_create(
+    student=student,
+    defaults={
+        'hours_purchased': Decimal('10.00'),
+        'balance_amount': Decimal('150.00')
+    }
+)
+
+# Create expired package (expired 2 days ago, outside 24h grace period)
+expired_package = PurchaseTransaction.objects.create(
+    student=student,
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('100.00'),
+    expires_at=timezone.now() - timedelta(days=2),
+    metadata={'hours_included': 8.0}
+)
+
+# Create package expiring soon (expires in 3 days)
+expiring_soon_package = PurchaseTransaction.objects.create(
+    student=student,
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('75.00'),
+    expires_at=timezone.now() + timedelta(days=3),
+    metadata={'hours_included': 6.0}
+)
+
+# Create package within grace period (expired 12 hours ago)
+grace_period_package = PurchaseTransaction.objects.create(
+    student=student,
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('50.00'),
+    expires_at=timezone.now() - timedelta(hours=12),
+    metadata={'hours_included': 4.0}
+)
+
+print(f"Created test packages:")
+print(f"- Expired package ID: {expired_package.id}")
+print(f"- Expiring soon package ID: {expiring_soon_package.id}")
+print(f"- Grace period package ID: {grace_period_package.id}")
+print(f"- Student balance: {balance.hours_purchased} hours")
+```
+
+Expected: Test data created successfully with package IDs displayed
+Screenshot: 01_test_data_created.png
+
+Step 3: Test Expired Package Detection
+Python Shell Commands:
+```python
+from finances.services.package_expiration_service import PackageExpirationService
+
+# Test expired packages detection
+expired_packages = PackageExpirationService.get_expired_packages()
+print(f"Total expired packages: {len(expired_packages)}")
+
+# Test expired packages outside grace period
+expired_outside_grace = PackageExpirationService.get_expired_packages_outside_grace_period(grace_hours=24)
+print(f"Expired packages outside grace period: {len(expired_outside_grace)}")
+
+# Test packages expiring soon
+expiring_soon = PackageExpirationService.get_packages_expiring_soon(days_ahead=7)
+print(f"Packages expiring soon: {len(expiring_soon)}")
+
+# Verify specific package detection
+print(f"Expired package in results: {expired_package in expired_outside_grace}")
+print(f"Grace period package excluded: {grace_period_package not in expired_outside_grace}")
+print(f"Expiring soon package detected: {expiring_soon_package in expiring_soon}")
+```
+
+Expected Results:
+- Total expired packages >= 2 (expired + grace period packages)
+- Expired packages outside grace period >= 1 (only the 2-day expired package)
+- Packages expiring soon >= 1 (the 3-day expiring package)
+- Expired package correctly identified
+- Grace period package correctly excluded from processing
+- Expiring soon package correctly identified
+
+Screenshot: 02_package_detection_results.png
+
+Step 4: Test Hours Calculation
+Python Shell Commands:
+```python
+# Test hours calculation for expired package
+hours_to_expire = PackageExpirationService.calculate_hours_to_expire(expired_package)
+print(f"Hours to expire for expired package: {hours_to_expire}")
+
+# Test hours calculation for other packages
+hours_grace = PackageExpirationService.calculate_hours_to_expire(grace_period_package)
+hours_soon = PackageExpirationService.calculate_hours_to_expire(expiring_soon_package)
+
+print(f"Hours to expire (grace period package): {hours_grace}")
+print(f"Hours to expire (expiring soon package): {hours_soon}")
+
+# Verify calculation accuracy
+expected_hours = Decimal('8.00')  # All hours since no consumption yet
+print(f"Calculation accurate: {hours_to_expire == expected_hours}")
+```
+
+Expected Results:
+- Hours to expire = 8.00 for expired package (all hours since no consumption)
+- Hours calculations accurate for all packages
+- No negative hours returned
+
+Screenshot: 03_hours_calculation_verified.png
+
+Step 5: Test Single Package Processing
+Python Shell Commands:
+```python
+# Record initial balance
+initial_balance = StudentAccountBalance.objects.get(student=student)
+initial_hours = initial_balance.hours_purchased
+print(f"Initial student balance: {initial_hours} hours")
+
+# Process the expired package
+result = PackageExpirationService.process_expired_package(expired_package)
+print(f"Processing result - Success: {result.success}")
+print(f"Hours expired: {result.hours_expired}")
+print(f"Audit log: {result.audit_log}")
+
+# Verify balance update
+updated_balance = StudentAccountBalance.objects.get(student=student)
+updated_hours = updated_balance.hours_purchased
+print(f"Updated student balance: {updated_hours} hours")
+print(f"Balance change: {initial_hours - updated_hours} hours")
+
+# Verify audit information
+print(f"Package ID processed: {result.package_id}")
+print(f"Student ID: {result.student_id}")
+print(f"Processing timestamp: {result.processed_at}")
+```
+
+Expected Results:
+- Processing result success = True
+- Hours expired = 8.00
+- Student balance reduced by 8.00 hours
+- Audit log contains package ID, student info, and timestamp
+- Processing timestamp is recent
+
+Screenshot: 04_single_package_processed.png
+
+Step 6: Test Bulk Expiration Processing
+Python Shell Commands:
+```python
+# Create another expired package for bulk testing
+bulk_test_package = PurchaseTransaction.objects.create(
+    student=student,
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('60.00'),
+    expires_at=timezone.now() - timedelta(days=3),
+    metadata={'hours_included': 5.0}
+)
+
+# Record balance before bulk processing
+pre_bulk_balance = StudentAccountBalance.objects.get(student=student)
+pre_bulk_hours = pre_bulk_balance.hours_purchased
+print(f"Balance before bulk processing: {pre_bulk_hours} hours")
+
+# Process bulk expiration
+bulk_results = PackageExpirationService.process_bulk_expiration(grace_hours=24)
+print(f"Bulk processing results: {len(bulk_results)} packages processed")
+
+successful_results = [r for r in bulk_results if r.success]
+failed_results = [r for r in bulk_results if not r.success]
+
+print(f"Successful: {len(successful_results)}")
+print(f"Failed: {len(failed_results)}")
+
+total_hours_expired = sum(r.hours_expired for r in successful_results)
+print(f"Total hours expired in bulk: {total_hours_expired}")
+
+# Verify final balance
+final_balance = StudentAccountBalance.objects.get(student=student)
+final_hours = final_balance.hours_purchased
+print(f"Final student balance: {final_hours} hours")
+print(f"Total balance change: {initial_hours - final_hours} hours")
+```
+
+Expected Results:
+- Bulk processing processes at least 1 package (the new bulk test package)
+- All processed packages return success = True
+- No failed results
+- Total hours expired matches expected (5.00 from bulk test package)
+- Final balance reflects all processing
+
+Screenshot: 05_bulk_processing_completed.png
+
+Step 7: Test Error Handling and Edge Cases
+Python Shell Commands:
+```python
+# Test processing already processed package (should handle gracefully)
+duplicate_result = PackageExpirationService.process_expired_package(expired_package)
+print(f"Duplicate processing - Success: {duplicate_result.success}")
+print(f"Duplicate processing - Hours expired: {duplicate_result.hours_expired}")
+
+# Test with non-existent student (create corrupted data scenario)
+from finances.models import PurchaseTransaction
+import tempfile
+
+# This should be handled gracefully by the service
+try:
+    # Create package with invalid student reference (edge case)
+    invalid_package = PurchaseTransaction(
+        student_id=99999,  # Non-existent student
+        transaction_type=TransactionType.PACKAGE,
+        payment_status=TransactionPaymentStatus.COMPLETED,
+        amount=Decimal('25.00'),
+        expires_at=timezone.now() - timedelta(days=1),
+        metadata={'hours_included': 2.0}
+    )
+    # Don't save it, just test calculation
+    print("Error handling test completed - service should handle missing data gracefully")
+except Exception as e:
+    print(f"Expected error handling: {str(e)}")
+
+# Test with zero hours package
+zero_hours_package = PurchaseTransaction.objects.create(
+    student=student,
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('0.00'),
+    expires_at=timezone.now() - timedelta(days=1),
+    metadata={'hours_included': 0.0}
+)
+
+zero_hours_result = PackageExpirationService.process_expired_package(zero_hours_package)
+print(f"Zero hours package - Success: {zero_hours_result.success}")
+print(f"Zero hours package - Hours expired: {zero_hours_result.hours_expired}")
+```
+
+Expected Results:
+- Duplicate processing handles gracefully (hours_expired = 0 since already processed)
+- Error handling works for edge cases
+- Zero hours package processes successfully with 0 hours expired
+- No system crashes or exceptions
+
+Screenshot: 06_error_handling_verified.png
+
+Step 8: Verify Database Consistency
+Python Shell Commands:
+```python
+# Final verification of database state
+final_student_balance = StudentAccountBalance.objects.get(student=student)
+print(f"Final verification - Student balance: {final_student_balance.hours_purchased} hours")
+
+# Count processed packages
+all_packages = PurchaseTransaction.objects.filter(student=student)
+expired_packages_count = sum(1 for p in all_packages if p.expires_at < timezone.now())
+print(f"Total student packages: {all_packages.count()}")
+print(f"Expired packages: {expired_packages_count}")
+
+# Verify processing was accurate
+expected_final_balance = Decimal('10.00') - Decimal('8.00') - Decimal('5.00')  # Initial - expired hours
+print(f"Expected final balance: {expected_final_balance} hours")
+print(f"Actual matches expected: {final_student_balance.hours_purchased == expected_final_balance}")
+
+print("Database consistency verified!")
+```
+
+Expected Results:
+- Final balance is mathematically correct
+- All expired packages accounted for
+- Database state is consistent
+- No orphaned or corrupted data
+
+Screenshot: 07_database_consistency_verified.png
+
+Step 9: Clean Up Test Data
+Python Shell Commands:
+```python
+# Clean up test data
+PurchaseTransaction.objects.filter(student__email='student.expiry.test@example.com').delete()
+User.objects.filter(email='student.expiry.test@example.com').delete()
+print("Test data cleaned up successfully")
+```
+
+Expected: Test data removed cleanly
+Screenshot: 08_cleanup_completed.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND all verifications pass
+FAIL: Any step fails OR any verification returns incorrect results
+
+Individual Step Criteria:
+- Step 1: PASS if services start, FAIL if startup fails
+- Step 2: PASS if test data created successfully, FAIL if creation fails
+- Step 3: PASS if package detection works correctly, FAIL if detection logic is wrong
+- Step 4: PASS if hours calculations are accurate, FAIL if calculations are incorrect
+- Step 5: PASS if single package processing works and updates balance, FAIL if processing fails
+- Step 6: PASS if bulk processing works correctly, FAIL if bulk processing fails
+- Step 7: PASS if error handling is robust, FAIL if system crashes on edge cases
+- Step 8: PASS if database consistency is maintained, FAIL if data corruption occurs
+- Step 9: PASS if cleanup completes, FAIL if cleanup fails
+
+Critical Requirements for PASS:
+1. Expired packages correctly identified (excluding grace period)
+2. Hours calculations are mathematically accurate
+3. Student balances updated correctly after processing
+4. Bulk processing handles multiple packages
+5. Error handling prevents system crashes
+6. Database consistency maintained throughout
+7. Grace period logic works correctly
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

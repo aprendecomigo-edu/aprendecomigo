@@ -1,0 +1,935 @@
+QA Test Case: Package Extension and Renewal Workflows
+
+Test ID: EXPIRY-005
+Test Name: Package Extension and Renewal Workflow Testing
+Purpose: Verify that package extension and renewal functionality works correctly, including date calculations, audit logging, and database integrity for both individual and bulk operations
+Expected Result: Package extensions and renewals function correctly with accurate date calculations and proper audit trails
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Package Extension and Renewal Systems (GitHub Issue #33)
+- Service: PackageExpirationService with extension and renewal methods
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data Required:
+- Test students with various package states
+- Packages with different expiration dates and consumption levels
+- Various extension and renewal scenarios
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Service Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py migrate
+  make dev
+
+Expected: Both services start successfully
+- Backend: http://localhost:8000 responds with 401 for /api/
+- Frontend: http://localhost:8081 shows loading screen
+
+Screenshot: 01_services_started.png
+
+Step 2: Create Test Data for Extension and Renewal Testing
+Commands:
+  python manage.py shell
+
+Python Shell Commands:
+```python
+from django.contrib.auth import get_user_model
+from finances.models import PurchaseTransaction, StudentAccountBalance, HourConsumption, TransactionType, TransactionPaymentStatus
+from decimal import Decimal
+from django.utils import timezone
+from datetime import timedelta
+
+User = get_user_model()
+
+# Create test students
+students = []
+for i in range(3):
+    student, created = User.objects.get_or_create(
+        email=f'student.extension.test{i+1}@example.com',
+        defaults={
+            'name': f'Extension Test Student {i+1}',
+            'role': 'student'
+        }
+    )
+    students.append(student)
+    
+    # Create balance for each student
+    StudentAccountBalance.objects.get_or_create(
+        student=student,
+        defaults={
+            'hours_purchased': Decimal('20.00'),
+            'balance_amount': Decimal('300.00')
+        }
+    )
+
+# Create packages for extension testing
+test_packages = []
+
+# Package 1: Expires soon (good for extension)
+package1 = PurchaseTransaction.objects.create(
+    student=students[0],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('100.00'),
+    expires_at=timezone.now() + timedelta(days=2),
+    metadata={'hours_included': 8.0}
+)
+test_packages.append(package1)
+
+# Package 2: Already expired (extension from now scenario)
+package2 = PurchaseTransaction.objects.create(
+    student=students[0],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('75.00'),
+    expires_at=timezone.now() - timedelta(days=1),
+    metadata={'hours_included': 6.0}
+)
+test_packages.append(package2)
+
+# Package 3: For bulk extension testing
+package3 = PurchaseTransaction.objects.create(
+    student=students[1],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('120.00'),
+    expires_at=timezone.now() + timedelta(days=5),
+    metadata={'hours_included': 10.0}
+)
+test_packages.append(package3)
+
+# Package 4: For bulk extension testing
+package4 = PurchaseTransaction.objects.create(
+    student=students[1],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('80.00'),
+    expires_at=timezone.now() + timedelta(days=3),
+    metadata={'hours_included': 6.5}
+)
+test_packages.append(package4)
+
+# Package 5: Expired package for renewal testing
+expired_package = PurchaseTransaction.objects.create(
+    student=students[2],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('90.00'),
+    expires_at=timezone.now() - timedelta(days=5),
+    metadata={'hours_included': 7.0}
+)
+test_packages.append(expired_package)
+
+# Add some hour consumption to test renewal scenarios
+HourConsumption.objects.create(
+    student=students[2],
+    purchase_transaction=expired_package,
+    hours_consumed=Decimal('3.0'),
+    session_date=timezone.now() - timedelta(days=7)
+)
+
+print(f"Created test data:")
+print(f"- Students: {len(students)}")
+print(f"- Test packages: {len(test_packages)}")
+print(f"Package details:")
+for i, pkg in enumerate(test_packages, 1):
+    days_diff = (pkg.expires_at - timezone.now()).days
+    status = "expired" if days_diff < 0 else f"expires in {days_diff} days"
+    print(f"  Package {i} (ID: {pkg.id}): €{pkg.amount} - {status}")
+print(f"- Package {expired_package.id} has 3.0 hours consumed")
+```
+
+Expected: Comprehensive test data created for extension and renewal testing
+Screenshot: 02_extension_test_data_created.png
+
+Step 3: Test Single Package Extension (Extend from Original Expiry)
+Python Shell Commands:
+```python
+from finances.services.package_expiration_service import PackageExpirationService
+
+# Test extending package1 by 30 days from original expiry date
+print("Testing single package extension from original expiry date...")
+
+package_to_extend = test_packages[0]  # package1
+original_expiry = package_to_extend.expires_at
+print(f"Package {package_to_extend.id}:")
+print(f"  Original expiry: {original_expiry}")
+print(f"  Student: {package_to_extend.student.name}")
+print(f"  Amount: €{package_to_extend.amount}")
+
+# Perform extension
+extension_result = PackageExpirationService.extend_package_expiration(
+    package=package_to_extend,
+    extension_days=30,
+    reason="Customer service extension for testing",
+    extend_from_now=False
+)
+
+print(f"\nExtension Result:")
+print(f"  Success: {extension_result.success}")
+print(f"  Package ID: {extension_result.package_id}")
+print(f"  Original expiry: {extension_result.original_expiry}")
+print(f"  New expiry: {extension_result.new_expiry}")
+print(f"  Extension days: {extension_result.extension_days}")
+print(f"  Audit log: {extension_result.audit_log}")
+
+# Verify database update
+updated_package = PurchaseTransaction.objects.get(id=package_to_extend.id)
+expected_new_expiry = original_expiry + timedelta(days=30)
+print(f"\nDatabase Verification:")
+print(f"  Expected new expiry: {expected_new_expiry}")
+print(f"  Actual new expiry: {updated_package.expires_at}")
+print(f"  Dates match: {updated_package.expires_at == expected_new_expiry}")
+```
+
+Expected Results:
+- Extension result success = True
+- New expiry date = original expiry + 30 days
+- Database updated correctly
+- Audit log contains detailed information
+
+Screenshot: 03_single_extension_from_original.png
+
+Step 4: Test Single Package Extension (Extend from Now)
+Python Shell Commands:
+```python
+# Test extending package2 (expired) from current time
+print("Testing single package extension from current time...")
+
+expired_package_to_extend = test_packages[1]  # package2
+original_expiry = expired_package_to_extend.expires_at
+current_time = timezone.now()
+
+print(f"Package {expired_package_to_extend.id}:")
+print(f"  Original expiry: {original_expiry}")
+print(f"  Current time: {current_time}")
+print(f"  Days expired: {(current_time - original_expiry).days}")
+
+# Perform extension from now
+extension_result = PackageExpirationService.extend_package_expiration(
+    package=expired_package_to_extend,
+    extension_days=45,
+    reason="Extension from current time for expired package",
+    extend_from_now=True
+)
+
+print(f"\nExtension Result:")
+print(f"  Success: {extension_result.success}")
+print(f"  Original expiry: {extension_result.original_expiry}")
+print(f"  New expiry: {extension_result.new_expiry}")
+print(f"  Extension days: {extension_result.extension_days}")
+
+# Verify database update
+updated_package = PurchaseTransaction.objects.get(id=expired_package_to_extend.id)
+# New expiry should be approximately current_time + 45 days
+time_diff = abs((updated_package.expires_at - (current_time + timedelta(days=45))).total_seconds())
+print(f"\nDatabase Verification:")
+print(f"  New expiry: {updated_package.expires_at}")
+print(f"  Time difference from expected: {time_diff} seconds")
+print(f"  Extension accurate (within 60 seconds): {time_diff < 60}")
+```
+
+Expected Results:
+- Extension result success = True
+- New expiry date = current time + 45 days
+- Extension works correctly for expired packages
+- Database updated accurately
+
+Screenshot: 04_single_extension_from_now.png
+
+Step 5: Test Bulk Package Extension
+Python Shell Commands:
+```python
+# Test bulk extension of multiple packages
+print("Testing bulk package extension...")
+
+packages_for_bulk = [test_packages[2], test_packages[3]]  # package3 and package4
+print(f"Packages selected for bulk extension:")
+
+for pkg in packages_for_bulk:
+    print(f"  Package {pkg.id}: €{pkg.amount}, expires {pkg.expires_at}")
+
+# Record original expiry dates
+original_expiries = {pkg.id: pkg.expires_at for pkg in packages_for_bulk}
+
+# Perform bulk extension
+bulk_extension_results = PackageExpirationService.bulk_extend_packages(
+    packages=packages_for_bulk,
+    extension_days=60,
+    reason="Bulk extension for system maintenance"
+)
+
+print(f"\nBulk Extension Results:")
+print(f"  Total packages processed: {len(bulk_extension_results)}")
+
+successful_extensions = [r for r in bulk_extension_results if r.success]
+failed_extensions = [r for r in bulk_extension_results if not r.success]
+
+print(f"  Successful: {len(successful_extensions)}")
+print(f"  Failed: {len(failed_extensions)}")
+
+print(f"\nDetailed Results:")
+for result in bulk_extension_results:
+    print(f"  Package {result.package_id}:")
+    print(f"    Success: {result.success}")
+    print(f"    Original expiry: {result.original_expiry}")
+    print(f"    New expiry: {result.new_expiry}")
+    print(f"    Extension days: {result.extension_days}")
+    if result.error_message:
+        print(f"    Error: {result.error_message}")
+
+# Verify database updates
+print(f"\nDatabase Verification:")
+for pkg in packages_for_bulk:
+    updated_pkg = PurchaseTransaction.objects.get(id=pkg.id)
+    expected_expiry = original_expiries[pkg.id] + timedelta(days=60)
+    print(f"  Package {pkg.id}:")
+    print(f"    Expected: {expected_expiry}")
+    print(f"    Actual: {updated_pkg.expires_at}")
+    print(f"    Match: {updated_pkg.expires_at == expected_expiry}")
+```
+
+Expected Results:
+- All packages in bulk operation succeed
+- Each package extended by exactly 60 days
+- Database updates are accurate for all packages
+- Audit logs generated for each package
+
+Screenshot: 05_bulk_extension_completed.png
+
+Step 6: Test Package Renewal Functionality
+Python Shell Commands:
+```python
+# Test creating a package renewal
+print("Testing package renewal functionality...")
+
+# Use the expired package with consumption
+package_to_renew = expired_package
+student = package_to_renew.student
+
+print(f"Original Package Details:")
+print(f"  Package ID: {package_to_renew.id}")
+print(f"  Student: {student.name}")
+print(f"  Amount: €{package_to_renew.amount}")
+print(f"  Expired: {package_to_renew.expires_at}")
+print(f"  Hours included: {package_to_renew.metadata.get('hours_included')}")
+
+# Check student balance before renewal
+balance_before = StudentAccountBalance.objects.get(student=student)
+print(f"  Student balance before: {balance_before.hours_purchased} hours, €{balance_before.balance_amount}")
+
+# Create renewal
+renewal_result = PackageExpirationService.create_package_renewal(
+    expired_package=package_to_renew,
+    new_amount=Decimal('150.00'),
+    new_hours=Decimal('12.00'),
+    new_validity_days=90
+)
+
+print(f"\nRenewal Result:")
+print(f"  Success: {renewal_result.success}")
+print(f"  Original package ID: {renewal_result.original_package_id}")
+print(f"  New package ID: {renewal_result.new_package_id}")
+print(f"  Audit log: {renewal_result.audit_log}")
+
+if renewal_result.success and renewal_result.new_package_id:
+    # Verify new package details
+    new_package = PurchaseTransaction.objects.get(id=renewal_result.new_package_id)
+    print(f"\nNew Package Details:")
+    print(f"  Package ID: {new_package.id}")
+    print(f"  Amount: €{new_package.amount}")
+    print(f"  Expires: {new_package.expires_at}")
+    print(f"  Hours included: {new_package.metadata.get('hours_included')}")
+    print(f"  Renewed from: {new_package.metadata.get('renewed_from')}")
+    
+    # Check expiry date calculation
+    expected_expiry = timezone.now() + timedelta(days=90)
+    time_diff = abs((new_package.expires_at - expected_expiry).total_seconds())
+    print(f"  Expiry calculation accurate: {time_diff < 3600}")  # Within 1 hour
+    
+    # Verify balance update
+    balance_after = StudentAccountBalance.objects.get(student=student)
+    print(f"\nBalance Update Verification:")
+    print(f"  Hours before: {balance_before.hours_purchased}")
+    print(f"  Hours after: {balance_after.hours_purchased}")
+    print(f"  Hours added: {balance_after.hours_purchased - balance_before.hours_purchased}")
+    print(f"  Expected hours added: 12.00")
+    print(f"  Hours update correct: {balance_after.hours_purchased - balance_before.hours_purchased == Decimal('12.00')}")
+    
+    print(f"  Balance before: €{balance_before.balance_amount}")
+    print(f"  Balance after: €{balance_after.balance_amount}")
+    print(f"  Amount added: €{balance_after.balance_amount - balance_before.balance_amount}")
+    print(f"  Expected amount added: €150.00")
+    print(f"  Amount update correct: {balance_after.balance_amount - balance_before.balance_amount == Decimal('150.00')}")
+```
+
+Expected Results:
+- Renewal result success = True
+- New package created with correct details
+- New package expires 90 days from now
+- Student balance updated with new hours and amount
+- Metadata links new package to original
+
+Screenshot: 06_package_renewal_completed.png
+
+Step 7: Test Extension Error Handling
+Python Shell Commands:
+```python
+# Test extension error handling scenarios
+print("Testing extension error handling...")
+
+# Test 1: Invalid extension days (negative)
+print("Test 1: Negative extension days")
+invalid_result = PackageExpirationService.extend_package_expiration(
+    package=test_packages[0],
+    extension_days=-10,
+    reason="Testing negative extension"
+)
+print(f"  Result: {invalid_result.success}")
+print(f"  Error message: {invalid_result.error_message}")
+
+# Test 2: Zero extension days
+print("\nTest 2: Zero extension days")
+zero_result = PackageExpirationService.extend_package_expiration(
+    package=test_packages[0],
+    extension_days=0,
+    reason="Testing zero extension"
+)
+print(f"  Result: {zero_result.success}")
+
+# Test 3: Very large extension days (should work but test limits)
+print("\nTest 3: Very large extension (10 years)")
+large_result = PackageExpirationService.extend_package_expiration(
+    package=test_packages[0],
+    extension_days=3650,
+    reason="Testing large extension"
+)
+print(f"  Result: {large_result.success}")
+if large_result.success:
+    updated_pkg = PurchaseTransaction.objects.get(id=test_packages[0].id)
+    years_added = (updated_pkg.expires_at - timezone.now()).days / 365.25
+    print(f"  Years added: {years_added:.1f}")
+
+# Test 4: Extension with non-existent package (simulate database error)
+print("\nTest 4: Error handling in service")
+try:
+    # Create a package object but don't save it (simulates deleted package)
+    fake_package = PurchaseTransaction(
+        id=99999,
+        student=students[0],
+        transaction_type=TransactionType.PACKAGE,
+        payment_status=TransactionPaymentStatus.COMPLETED,
+        amount=Decimal('50.00'),
+        expires_at=timezone.now() + timedelta(days=30),
+        metadata={'hours_included': 4.0}
+    )
+    
+    error_result = PackageExpirationService.extend_package_expiration(
+        package=fake_package,
+        extension_days=30,
+        reason="Testing error handling"
+    )
+    print(f"  Result: {error_result.success}")
+    print(f"  Error handled gracefully: {not error_result.success}")
+    
+except Exception as e:
+    print(f"  Exception caught: {str(e)}")
+```
+
+Expected Results:
+- Negative extension days handled appropriately
+- Zero extension days work or fail gracefully
+- Large extension days work (system should handle reasonable limits)
+- Error conditions return proper failure status
+- No system crashes on edge cases
+
+Screenshot: 07_extension_error_handling.png
+
+Step 8: Test Renewal Error Handling
+Python Shell Commands:
+```python
+# Test renewal error handling scenarios  
+print("Testing renewal error handling...")
+
+# Test 1: Renewal with invalid amounts
+print("Test 1: Invalid renewal amounts")
+invalid_renewal = PackageExpirationService.create_package_renewal(
+    expired_package=expired_package,
+    new_amount=Decimal('-50.00'),  # Negative amount
+    new_hours=Decimal('5.00'),
+    new_validity_days=30
+)
+print(f"  Negative amount result: {invalid_renewal.success}")
+
+# Test 2: Renewal with zero hours
+print("\nTest 2: Zero hours renewal")
+zero_hours_renewal = PackageExpirationService.create_package_renewal(
+    expired_package=expired_package,
+    new_amount=Decimal('100.00'),
+    new_hours=Decimal('0.00'),
+    new_validity_days=30
+)
+print(f"  Zero hours result: {zero_hours_renewal.success}")
+
+# Test 3: Renewal with zero validity days
+print("\nTest 3: Zero validity days")
+zero_validity_renewal = PackageExpirationService.create_package_renewal(
+    expired_package=expired_package,
+    new_amount=Decimal('100.00'),
+    new_hours=Decimal('8.00'),
+    new_validity_days=0
+)
+print(f"  Zero validity result: {zero_validity_renewal.success}")
+
+# Test 4: Renewal with student having insufficient permissions (if applicable)
+print("\nTest 4: Edge case handling")
+try:
+    # Test with very large values
+    large_renewal = PackageExpirationService.create_package_renewal(
+        expired_package=expired_package,
+        new_amount=Decimal('999999.99'),
+        new_hours=Decimal('9999.99'),
+        new_validity_days=36500  # 100 years
+    )
+    print(f"  Large values result: {large_renewal.success}")
+    
+except Exception as e:
+    print(f"  Exception with large values: {str(e)}")
+```
+
+Expected Results:
+- Invalid amounts handled gracefully
+- Edge cases (zero values) handled appropriately
+- Large values either work or fail gracefully
+- All error conditions return proper status
+- No system crashes
+
+Screenshot: 08_renewal_error_handling.png
+
+Step 9: Test Audit Logging and Tracking
+Python Shell Commands:
+```python
+# Test audit logging functionality
+print("Testing audit logging and tracking...")
+
+# Create a test package for audit testing
+audit_test_package = PurchaseTransaction.objects.create(
+    student=students[0],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('85.00'),
+    expires_at=timezone.now() + timedelta(days=10),
+    metadata={'hours_included': 7.0}
+)
+
+# Perform multiple operations and check audit logs
+operations = []
+
+# Extension 1
+result1 = PackageExpirationService.extend_package_expiration(
+    package=audit_test_package,
+    extension_days=15,
+    reason="First extension for audit testing"
+)
+operations.append(("Extension 1", result1))
+
+# Extension 2 (extend from now)
+result2 = PackageExpirationService.extend_package_expiration(
+    package=audit_test_package,
+    extension_days=20,
+    reason="Second extension from current time",
+    extend_from_now=True
+)
+operations.append(("Extension 2", result2))
+
+# Renewal
+renewal = PackageExpirationService.create_package_renewal(
+    expired_package=audit_test_package,
+    new_amount=Decimal('120.00'),
+    new_hours=Decimal('10.00'),
+    new_validity_days=60
+)
+operations.append(("Renewal", renewal))
+
+print(f"Audit Log Analysis:")
+print(f"Operations performed: {len(operations)}")
+
+for op_name, result in operations:
+    print(f"\n{op_name}:")
+    print(f"  Success: {result.success}")
+    if hasattr(result, 'audit_log') and result.audit_log:
+        print(f"  Audit log: {result.audit_log}")
+        
+        # Verify audit log contains key information
+        required_info = [
+            str(audit_test_package.id),  # Package ID
+            str(students[0].id),  # Student ID
+            result.processed_at.strftime('%Y-%m-%d') if hasattr(result, 'processed_at') else "timestamp"
+        ]
+        
+        for info in required_info:
+            if info in result.audit_log:
+                print(f"    ✓ Contains {info}")
+            else:
+                print(f"    ✗ Missing {info}")
+```
+
+Expected Results:
+- All operations generate detailed audit logs
+- Audit logs contain package IDs, student IDs, timestamps
+- Audit logs include reasons for operations
+- Audit logs track operation types clearly
+
+Screenshot: 09_audit_logging_verified.png
+
+Step 10: Test Integration with Database Transactions
+Python Shell Commands:
+```python
+# Test transaction integrity and rollback scenarios
+print("Testing database transaction integrity...")
+
+from django.db import transaction
+from django.core.exceptions import ValidationError
+
+# Test 1: Successful transaction
+print("Test 1: Successful transaction")
+with transaction.atomic():
+    trans_test_package = PurchaseTransaction.objects.create(
+        student=students[0],
+        transaction_type=TransactionType.PACKAGE,
+        payment_status=TransactionPaymentStatus.COMPLETED,
+        amount=Decimal('70.00'),
+        expires_at=timezone.now() + timedelta(days=15),
+        metadata={'hours_included': 5.5}
+    )
+    
+    # Extend within transaction
+    extension_result = PackageExpirationService.extend_package_expiration(
+        package=trans_test_package,
+        extension_days=25,
+        reason="Transaction test extension"
+    )
+    
+    print(f"  Extension within transaction: {extension_result.success}")
+
+# Verify the package was extended
+final_package = PurchaseTransaction.objects.get(id=trans_test_package.id)
+expected_expiry = timezone.now() + timedelta(days=40)  # Original 15 + extension 25
+actual_days = (final_package.expires_at - timezone.now()).days
+print(f"  Package extended correctly: {35 <= actual_days <= 45}")  # Allow some tolerance
+
+# Test 2: Atomic operations in renewal
+print("\nTest 2: Atomic operations in renewal")
+renewal_student = students[1]
+pre_renewal_balance = StudentAccountBalance.objects.get(student=renewal_student)
+
+renewal_package = PurchaseTransaction.objects.create(
+    student=renewal_student,
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('80.00'),
+    expires_at=timezone.now() - timedelta(days=3),
+    metadata={'hours_included': 6.0}
+)
+
+# The renewal should be atomic (both package creation and balance update)
+atomic_renewal = PackageExpirationService.create_package_renewal(
+    expired_package=renewal_package,
+    new_amount=Decimal('110.00'),
+    new_hours=Decimal('9.00'),
+    new_validity_days=75
+)
+
+print(f"  Atomic renewal success: {atomic_renewal.success}")
+
+if atomic_renewal.success:
+    # Check that both operations completed
+    new_package_exists = PurchaseTransaction.objects.filter(
+        id=atomic_renewal.new_package_id
+    ).exists()
+    
+    post_renewal_balance = StudentAccountBalance.objects.get(student=renewal_student)
+    balance_updated = (
+        post_renewal_balance.hours_purchased > pre_renewal_balance.hours_purchased and
+        post_renewal_balance.balance_amount > pre_renewal_balance.balance_amount
+    )
+    
+    print(f"  New package created: {new_package_exists}")
+    print(f"  Balance updated: {balance_updated}")
+    print(f"  Atomic operation complete: {new_package_exists and balance_updated}")
+```
+
+Expected Results:
+- Extensions work correctly within database transactions
+- Renewals are atomic (both package creation and balance update succeed together)
+- Database consistency maintained throughout operations
+- Transaction integrity preserved
+
+Screenshot: 10_transaction_integrity_verified.png
+
+Step 11: Test Performance with Multiple Operations
+Python Shell Commands:
+```python
+# Test performance of extension and renewal operations
+import time
+
+print("Testing performance of extension and renewal operations...")
+
+# Create multiple packages for performance testing
+perf_packages = []
+for i in range(20):
+    pkg = PurchaseTransaction.objects.create(
+        student=students[i % 3],  # Distribute across students
+        transaction_type=TransactionType.PACKAGE,
+        payment_status=TransactionPaymentStatus.COMPLETED,
+        amount=Decimal('60.00'),
+        expires_at=timezone.now() + timedelta(days=i + 1),
+        metadata={'hours_included': 5.0}
+    )
+    perf_packages.append(pkg)
+
+print(f"Created {len(perf_packages)} packages for performance testing")
+
+# Test bulk extension performance
+start_time = time.time()
+bulk_perf_results = PackageExpirationService.bulk_extend_packages(
+    packages=perf_packages,
+    extension_days=30,
+    reason="Performance testing bulk extension"
+)
+bulk_time = time.time() - start_time
+
+print(f"\nBulk Extension Performance:")
+print(f"  Packages processed: {len(bulk_perf_results)}")
+print(f"  Time taken: {bulk_time:.2f} seconds")
+print(f"  Average per package: {(bulk_time / len(perf_packages)):.3f} seconds")
+
+successful_bulk = [r for r in bulk_perf_results if r.success]
+print(f"  Successful operations: {len(successful_bulk)}")
+
+# Test individual extension performance
+individual_packages = perf_packages[:5]  # Test with 5 packages
+start_time = time.time()
+
+individual_results = []
+for pkg in individual_packages:
+    result = PackageExpirationService.extend_package_expiration(
+        package=pkg,
+        extension_days=45,
+        reason="Performance testing individual extension"
+    )
+    individual_results.append(result)
+
+individual_time = time.time() - start_time
+
+print(f"\nIndividual Extension Performance:")
+print(f"  Packages processed: {len(individual_results)}")
+print(f"  Time taken: {individual_time:.2f} seconds")
+print(f"  Average per package: {(individual_time / len(individual_packages)):.3f} seconds")
+
+# Test renewal performance
+renewal_packages = perf_packages[-3:]  # Use last 3 packages for renewal
+start_time = time.time()
+
+renewal_results = []
+for pkg in renewal_packages:
+    result = PackageExpirationService.create_package_renewal(
+        expired_package=pkg,
+        new_amount=Decimal('100.00'),
+        new_hours=Decimal('8.00'),
+        new_validity_days=60
+    )
+    renewal_results.append(result)
+
+renewal_time = time.time() - start_time
+
+print(f"\nRenewal Performance:")
+print(f"  Packages processed: {len(renewal_results)}")
+print(f"  Time taken: {renewal_time:.2f} seconds")
+print(f"  Average per package: {(renewal_time / len(renewal_packages)):.3f} seconds")
+
+successful_renewals = [r for r in renewal_results if r.success]
+print(f"  Successful renewals: {len(successful_renewals)}")
+```
+
+Expected Results:
+- Bulk operations significantly faster than individual operations
+- All operations complete within reasonable time (< 1 second per package)
+- High success rate for all operation types
+- Performance scales appropriately with data volume
+
+Screenshot: 11_performance_testing_completed.png
+
+Step 12: Test Integration with Admin APIs
+Commands:
+  # First, get admin token by authenticating through frontend
+  # Then test the admin API endpoints
+
+Using curl commands (replace YOUR_ADMIN_TOKEN with actual token):
+```bash
+# Test single package extension via API
+curl -X POST "http://localhost:8000/api/finances/admin/extend-package/PACKAGE_ID/" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "extension_days": 30,
+    "reason": "API integration test",
+    "extend_from_now": false
+  }'
+
+# Test bulk extension via API
+curl -X POST "http://localhost:8000/api/finances/admin/bulk-extend-packages/" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "package_ids": ["PACKAGE_ID_1", "PACKAGE_ID_2"],
+    "extension_days": 45,
+    "reason": "Bulk API integration test"
+  }'
+```
+
+Expected Results:
+- API endpoints work correctly with service methods
+- Proper JSON responses returned
+- Database updates match API responses
+- Error handling works through API layer
+
+Screenshot: 12_admin_api_integration.png
+
+Step 13: Verify Final State and Data Consistency
+Python Shell Commands:
+```python
+# Final verification of all operations and data consistency
+print("Final verification of operations and data consistency...")
+
+# Check all test packages and their current states
+all_test_packages = PurchaseTransaction.objects.filter(
+    student__email__startswith='student.extension.test'
+)
+
+print(f"Test Package Summary:")
+print(f"Total packages created: {all_test_packages.count()}")
+
+# Group packages by student
+for student in students:
+    student_packages = all_test_packages.filter(student=student)
+    print(f"\n{student.name} ({student.email}):")
+    print(f"  Packages: {student_packages.count()}")
+    
+    for pkg in student_packages:
+        days_until_expiry = (pkg.expires_at - timezone.now()).days
+        status = "expired" if days_until_expiry < 0 else f"expires in {days_until_expiry} days"
+        print(f"    Package {pkg.id}: €{pkg.amount} - {status}")
+
+# Check for any renewal packages created
+renewal_packages = PurchaseTransaction.objects.filter(
+    metadata__renewed_from__isnull=False,
+    student__email__startswith='student.extension.test'
+)
+
+print(f"\nRenewal Packages Created: {renewal_packages.count()}")
+for renewal_pkg in renewal_packages:
+    original_id = renewal_pkg.metadata.get('renewed_from')
+    print(f"  Package {renewal_pkg.id} renewed from {original_id}")
+
+# Verify balance consistency
+print(f"\nStudent Balance Verification:")
+for student in students:
+    try:
+        balance = StudentAccountBalance.objects.get(student=student)
+        print(f"  {student.name}: {balance.hours_purchased} hours, €{balance.balance_amount}")
+    except StudentAccountBalance.DoesNotExist:
+        print(f"  {student.name}: No balance record")
+
+print(f"\nData consistency check completed successfully!")
+```
+
+Expected Results:
+- All package states are consistent with operations performed
+- Renewal packages properly linked to original packages
+- Student balances reflect all renewal operations
+- No orphaned or corrupted data
+
+Screenshot: 13_final_state_verified.png
+
+Step 14: Clean Up Test Data
+Commands:
+```python
+python manage.py shell
+from django.contrib.auth import get_user_model
+from finances.models import PurchaseTransaction, StudentAccountBalance, HourConsumption
+
+User = get_user_model()
+
+# Clean up extension and renewal test data
+test_emails = [
+    'student.extension.test1@example.com',
+    'student.extension.test2@example.com',
+    'student.extension.test3@example.com'
+]
+
+for email in test_emails:
+    try:
+        user = User.objects.get(email=email)
+        PurchaseTransaction.objects.filter(student=user).delete()
+        HourConsumption.objects.filter(student=user).delete()
+        StudentAccountBalance.objects.filter(student=user).delete()
+        user.delete()
+        print(f"Cleaned up: {email}")
+    except User.DoesNotExist:
+        pass
+
+print("All extension and renewal test data cleaned up successfully")
+```
+
+Expected: All test data removed cleanly
+Screenshot: 14_extension_cleanup_completed.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All extension and renewal operations work correctly with accurate calculations
+FAIL: Any operation fails OR calculations are incorrect OR data integrity issues
+
+Individual Step Criteria:
+- Step 1: PASS if services start, FAIL if startup fails
+- Step 2: PASS if test data created, FAIL if creation fails
+- Step 3: PASS if single extension from original expiry works, FAIL if extension fails
+- Step 4: PASS if single extension from now works, FAIL if extension from current time fails
+- Step 5: PASS if bulk extension works correctly, FAIL if bulk operations fail
+- Step 6: PASS if renewal functionality works, FAIL if package renewal fails
+- Step 7: PASS if extension error handling is robust, FAIL if error handling inadequate
+- Step 8: PASS if renewal error handling works, FAIL if renewal errors not handled
+- Step 9: PASS if audit logging is comprehensive, FAIL if audit logs inadequate
+- Step 10: PASS if transaction integrity maintained, FAIL if database consistency issues
+- Step 11: PASS if performance is acceptable, FAIL if operations too slow
+- Step 12: PASS if API integration works, FAIL if API endpoints fail
+- Step 13: PASS if final data state is consistent, FAIL if data corruption detected
+- Step 14: PASS if cleanup works, FAIL if cleanup fails
+
+Critical Requirements for PASS:
+1. Single package extensions calculate dates correctly
+2. Bulk extensions handle multiple packages efficiently
+3. Renewal creates new packages and updates balances accurately
+4. Error handling prevents system crashes and provides useful feedback
+5. Audit logging captures all necessary information
+6. Database transactions maintain consistency
+7. Performance is acceptable for production use
+8. Integration with admin APIs works properly
+9. All date calculations are mathematically correct
+10. No data integrity issues or orphaned records
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

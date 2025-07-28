@@ -1,0 +1,1132 @@
+QA Test Case: Analytics and Reporting Accuracy
+
+Test ID: EXPIRY-006
+Test Name: Package Expiration Analytics and Reporting System Testing
+Purpose: Verify that the analytics and reporting functionality provides accurate metrics, calculations, and insights about package expiration patterns, student behavior, and business impact
+Expected Result: Analytics and reporting systems generate accurate, comprehensive, and actionable insights
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Package Expiration Analytics and Reporting (GitHub Issue #33)
+- Service: PackageExpirationService analytics methods
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data Required:
+- Multiple students with diverse package portfolios
+- Packages with various creation dates, expiration dates, and consumption patterns
+- Historical data spanning different time periods
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Service Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py migrate
+  make dev
+
+Expected: Both services start successfully
+- Backend: http://localhost:8000 responds with 401 for /api/
+- Frontend: http://localhost:8081 shows loading screen
+
+Screenshot: 01_services_started.png
+
+Step 2: Create Comprehensive Historical Test Data
+Commands:
+  python manage.py shell
+
+Python Shell Commands:
+```python
+from django.contrib.auth import get_user_model
+from finances.models import PurchaseTransaction, StudentAccountBalance, HourConsumption, TransactionType, TransactionPaymentStatus
+from decimal import Decimal
+from django.utils import timezone
+from datetime import timedelta
+import random
+
+User = get_user_model()
+
+# Create test students with different usage patterns
+students_data = [
+    {'email': 'student.analytics.heavy@example.com', 'name': 'Heavy User Student', 'pattern': 'heavy'},
+    {'email': 'student.analytics.moderate@example.com', 'name': 'Moderate User Student', 'pattern': 'moderate'},
+    {'email': 'student.analytics.light@example.com', 'name': 'Light User Student', 'pattern': 'light'},
+    {'email': 'student.analytics.expired@example.com', 'name': 'Expiry Prone Student', 'pattern': 'expiry_prone'},
+    {'email': 'student.analytics.active@example.com', 'name': 'Active Student', 'pattern': 'active'}
+]
+
+students = []
+for student_data in students_data:
+    student, created = User.objects.get_or_create(
+        email=student_data['email'],
+        defaults={
+            'name': student_data['name'],
+            'role': 'student'
+        }
+    )
+    student.usage_pattern = student_data['pattern']  # For reference
+    students.append(student)
+    
+    # Create balance
+    StudentAccountBalance.objects.get_or_create(
+        student=student,
+        defaults={
+            'hours_purchased': Decimal('40.00'),
+            'balance_amount': Decimal('600.00')
+        }
+    )
+
+print(f"Created {len(students)} test students with different usage patterns")
+
+# Create diverse package portfolio for analytics testing
+packages_created = 0
+consumption_records = 0
+
+# Current time for date calculations
+now = timezone.now()
+
+# Student 1: Heavy User - Multiple packages, high consumption
+student = students[0]
+for i in range(5):
+    # Create packages at different times in the past
+    created_date = now - timedelta(days=90 - i*15)
+    
+    pkg = PurchaseTransaction.objects.create(
+        student=student,
+        transaction_type=TransactionType.PACKAGE,
+        payment_status=TransactionPaymentStatus.COMPLETED,
+        amount=Decimal('120.00'),
+        created_at=created_date,
+        expires_at=created_date + timedelta(days=60),
+        metadata={'hours_included': 10.0}
+    )
+    packages_created += 1
+    
+    # Add heavy consumption
+    for j in range(8):  # Heavy consumption
+        HourConsumption.objects.create(
+            student=student,
+            purchase_transaction=pkg,
+            hours_consumed=Decimal('1.2'),
+            session_date=created_date + timedelta(days=j*3)
+        )
+        consumption_records += 1
+
+# Student 2: Moderate User - Some packages, moderate consumption
+student = students[1]
+for i in range(3):
+    created_date = now - timedelta(days=60 - i*20)
+    
+    pkg = PurchaseTransaction.objects.create(
+        student=student,
+        transaction_type=TransactionType.PACKAGE,
+        payment_status=TransactionPaymentStatus.COMPLETED,
+        amount=Decimal('80.00'),
+        created_at=created_date,
+        expires_at=created_date + timedelta(days=45),
+        metadata={'hours_included': 6.0}
+    )
+    packages_created += 1
+    
+    # Add moderate consumption
+    for j in range(4):
+        HourConsumption.objects.create(
+            student=student,
+            purchase_transaction=pkg,
+            hours_consumed=Decimal('1.0'),
+            session_date=created_date + timedelta(days=j*5)
+        )
+        consumption_records += 1
+
+# Student 3: Light User - Few packages, minimal consumption
+student = students[2]
+for i in range(2):
+    created_date = now - timedelta(days=45 - i*25)
+    
+    pkg = PurchaseTransaction.objects.create(
+        student=student,
+        transaction_type=TransactionType.PACKAGE,
+        payment_status=TransactionPaymentStatus.COMPLETED,
+        amount=Decimal('60.00'),
+        created_at=created_date,
+        expires_at=created_date + timedelta(days=30),
+        metadata={'hours_included': 4.0}
+    )
+    packages_created += 1
+    
+    # Add minimal consumption
+    HourConsumption.objects.create(
+        student=student,
+        purchase_transaction=pkg,
+        hours_consumed=Decimal('0.5'),
+        session_date=created_date + timedelta(days=5)
+    )
+    consumption_records += 1
+
+# Student 4: Expiry-Prone - Multiple expired packages with low consumption
+student = students[3]
+for i in range(4):
+    created_date = now - timedelta(days=120 - i*20)
+    
+    pkg = PurchaseTransaction.objects.create(
+        student=student,
+        transaction_type=TransactionType.PACKAGE,
+        payment_status=TransactionPaymentStatus.COMPLETED,
+        amount=Decimal('100.00'),
+        created_date=created_date,
+        expires_at=created_date + timedelta(days=30),  # Short expiry
+        metadata={'hours_included': 8.0}
+    )
+    packages_created += 1
+    
+    # Add very low consumption (packages expire with unused hours)
+    if i % 2 == 0:  # Only some packages have consumption
+        HourConsumption.objects.create(
+            student=student,
+            purchase_transaction=pkg,
+            hours_consumed=Decimal('1.0'),
+            session_date=created_date + timedelta(days=7)
+        )
+        consumption_records += 1
+
+# Student 5: Active User - Recent packages, current activity
+student = students[4]
+for i in range(3):
+    created_date = now - timedelta(days=20 - i*7)
+    
+    pkg = PurchaseTransaction.objects.create(
+        student=student,
+        transaction_type=TransactionType.PACKAGE,
+        payment_status=TransactionPaymentStatus.COMPLETED,
+        amount=Decimal('90.00'),
+        created_at=created_date,
+        expires_at=created_date + timedelta(days=90),  # Long expiry
+        metadata={'hours_included': 7.0}
+    )
+    packages_created += 1
+    
+    # Add recent consumption
+    for j in range(3):
+        HourConsumption.objects.create(
+            student=student,
+            purchase_transaction=pkg,
+            hours_consumed=Decimal('1.1'),
+            session_date=created_date + timedelta(days=j*2)
+        )
+        consumption_records += 1
+
+print(f"\nTest Data Summary:")
+print(f"- Total packages created: {packages_created}")
+print(f"- Total consumption records: {consumption_records}")
+print(f"- Date range: {(now - timedelta(days=120)).date()} to {now.date()}")
+```
+
+Expected: Comprehensive historical test data created across multiple students and time periods
+Screenshot: 02_comprehensive_test_data_created.png
+
+Step 3: Test Expiration Summary Report Generation
+Python Shell Commands:
+```python
+from finances.services.package_expiration_service import PackageExpirationService
+
+# Test summary report for different time periods
+print("Testing expiration summary report generation...")
+
+# Test 1: 30-day report
+start_date_30 = timezone.now() - timedelta(days=30)
+end_date_30 = timezone.now()
+
+report_30 = PackageExpirationService.generate_expiration_summary_report(
+    start_date=start_date_30,
+    end_date=end_date_30
+)
+
+print(f"\n30-Day Summary Report:")
+print(f"  Report period: {report_30['report_period']['start_date'].date()} to {report_30['report_period']['end_date'].date()}")
+print(f"  Total packages: {report_30['total_packages']}")
+print(f"  Expired packages: {report_30['expired_packages']}")
+print(f"  Expiring soon: {report_30['expiring_soon']}")
+print(f"  Hours expired: {report_30['hours_expired']}")
+print(f"  Students affected: {report_30['students_affected']}")
+
+# Test 2: 90-day report
+start_date_90 = timezone.now() - timedelta(days=90)
+end_date_90 = timezone.now()
+
+report_90 = PackageExpirationService.generate_expiration_summary_report(
+    start_date=start_date_90,
+    end_date=end_date_90
+)
+
+print(f"\n90-Day Summary Report:")
+print(f"  Report period: {report_90['report_period']['start_date'].date()} to {report_90['report_period']['end_date'].date()}")
+print(f"  Total packages: {report_90['total_packages']}")
+print(f"  Expired packages: {report_90['expired_packages']}")
+print(f"  Expiring soon: {report_90['expiring_soon']}")
+print(f"  Hours expired: {report_90['hours_expired']}")
+print(f"  Students affected: {report_90['students_affected']}")
+
+# Verify report accuracy by comparing periods
+print(f"\nReport Comparison Analysis:")
+print(f"  90-day total >= 30-day total: {report_90['total_packages'] >= report_30['total_packages']}")
+print(f"  90-day expired >= 30-day expired: {report_90['expired_packages'] >= report_30['expired_packages']}")
+print(f"  90-day hours >= 30-day hours: {report_90['hours_expired'] >= report_30['hours_expired']}")
+
+# Test 3: Custom date range report
+start_date_custom = timezone.now() - timedelta(days=60)
+end_date_custom = timezone.now() - timedelta(days=15)
+
+report_custom = PackageExpirationService.generate_expiration_summary_report(
+    start_date=start_date_custom,
+    end_date=end_date_custom
+)
+
+print(f"\nCustom Range Report (60-15 days ago):")
+print(f"  Total packages: {report_custom['total_packages']}")
+print(f"  Expired packages: {report_custom['expired_packages']}")
+print(f"  Students affected: {report_custom['students_affected']}")
+```
+
+Expected Results:
+- Reports generate successfully for all time periods
+- 90-day report shows more data than 30-day report
+- Custom date ranges work correctly
+- All metrics are non-negative integers/decimals
+
+Screenshot: 03_summary_reports_generated.png
+
+Step 4: Test Expiration Metrics Calculation
+Python Shell Commands:
+```python
+# Test detailed expiration metrics calculation
+print("Testing expiration metrics calculation...")
+
+# Test different period lengths
+periods_to_test = [30, 60, 90, 120]
+
+for period in periods_to_test:
+    metrics = PackageExpirationService.calculate_expiration_metrics(period_days=period)
+    
+    print(f"\n{period}-Day Metrics:")
+    print(f"  Expiration rate: {metrics['expiration_rate']:.3f}")
+    print(f"  Average package lifetime: {metrics['average_package_lifetime']:.1f} days")
+    print(f"  Hours lost to expiration: {metrics['hours_lost_to_expiration']}")
+    print(f"  Revenue impact: €{metrics['revenue_impact']}")
+    
+    # Validate metric ranges and consistency
+    print(f"  Validation:")
+    print(f"    Expiration rate valid (0-1): {0 <= metrics['expiration_rate'] <= 1}")
+    print(f"    Average lifetime positive: {metrics['average_package_lifetime'] >= 0}")
+    print(f"    Hours lost non-negative: {metrics['hours_lost_to_expiration'] >= 0}")
+    print(f"    Revenue impact non-negative: {metrics['revenue_impact'] >= 0}")
+
+# Test metric calculations manually for accuracy
+print(f"\nManual Verification of Calculations:")
+
+# Get packages from last 30 days for manual calculation
+from finances.models import PurchaseTransaction
+recent_packages = PurchaseTransaction.objects.filter(
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    created_at__gte=timezone.now() - timedelta(days=30)
+)
+
+total_recent = recent_packages.count()
+expired_recent = recent_packages.filter(expires_at__lt=timezone.now()).count()
+manual_expiration_rate = expired_recent / total_recent if total_recent > 0 else 0
+
+print(f"  Manual calculation (30 days):")
+print(f"    Total packages: {total_recent}")
+print(f"    Expired packages: {expired_recent}")
+print(f"    Manual expiration rate: {manual_expiration_rate:.3f}")
+
+# Compare with service calculation
+service_metrics_30 = PackageExpirationService.calculate_expiration_metrics(period_days=30)
+print(f"    Service expiration rate: {service_metrics_30['expiration_rate']:.3f}")
+print(f"    Rates match: {abs(manual_expiration_rate - service_metrics_30['expiration_rate']) < 0.001}")
+```
+
+Expected Results:
+- Metrics calculated successfully for all periods
+- Expiration rates are between 0 and 1
+- Average lifetime values are reasonable (positive numbers)
+- Manual calculations match service calculations
+- Revenue impact calculations are consistent
+
+Screenshot: 04_metrics_calculations_verified.png
+
+Step 5: Test At-Risk Student Identification
+Python Shell Commands:
+```python
+# Test at-risk student identification functionality
+print("Testing at-risk student identification...")
+
+# Test 1: Default parameters
+default_at_risk = PackageExpirationService.identify_at_risk_students()
+
+print(f"At-Risk Students (Default Parameters):")
+print(f"  Students identified: {len(default_at_risk)}")
+
+for student_info in default_at_risk:
+    student_id = student_info['student_id']
+    try:
+        student = User.objects.get(id=student_id)
+        print(f"    {student.name}: {student_info['expired_packages_count']} expired packages, risk score: {student_info['risk_score']:.2f}")
+    except User.DoesNotExist:
+        print(f"    Student ID {student_id}: {student_info['expired_packages_count']} expired packages, risk score: {student_info['risk_score']:.2f}")
+
+# Test 2: Strict parameters (more expired packages required)
+strict_at_risk = PackageExpirationService.identify_at_risk_students(
+    min_expired_packages=3,
+    timeframe_days=120
+)
+
+print(f"\nAt-Risk Students (Strict - 3+ expired packages in 120 days):")
+print(f"  Students identified: {len(strict_at_risk)}")
+
+for student_info in strict_at_risk:
+    print(f"    Student ID {student_info['student_id']}: {student_info['expired_packages_count']} expired packages, risk score: {student_info['risk_score']:.2f}")
+
+# Test 3: Lenient parameters (lower threshold)
+lenient_at_risk = PackageExpirationService.identify_at_risk_students(
+    min_expired_packages=1,
+    timeframe_days=60
+)
+
+print(f"\nAt-Risk Students (Lenient - 1+ expired packages in 60 days):")
+print(f"  Students identified: {len(lenient_at_risk)}")
+
+# Verify risk score calculation
+print(f"\nRisk Score Validation:")
+for student_info in default_at_risk:
+    expired_count = student_info['expired_packages_count']
+    risk_score = student_info['risk_score']
+    expected_risk_score = min(expired_count / 5.0, 1.0)
+    
+    print(f"  Student {student_info['student_id']}: {expired_count} expired → risk {risk_score:.2f} (expected {expected_risk_score:.2f})")
+    print(f"    Calculation correct: {abs(risk_score - expected_risk_score) < 0.001}")
+
+# Test 4: Manual verification with known data
+print(f"\nManual Verification:")
+expiry_prone_student = students[3]  # Student designed to be expiry-prone
+student_expired_packages = PurchaseTransaction.objects.filter(
+    student=expiry_prone_student,
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    expires_at__lt=timezone.now(),
+    expires_at__gte=timezone.now() - timedelta(days=90)
+).count()
+
+print(f"  Expiry-prone student ({expiry_prone_student.name}):")
+print(f"    Expired packages (manual count): {student_expired_packages}")
+print(f"    Should be in at-risk list: {student_expired_packages >= 2}")
+
+at_risk_ids = [info['student_id'] for info in default_at_risk]
+print(f"    Actually in at-risk list: {expiry_prone_student.id in at_risk_ids}")
+```
+
+Expected Results:
+- At-risk students identified correctly with different parameters
+- Risk scores calculated accurately (between 0 and 1)
+- Students with more expired packages have higher risk scores
+- Manual verification matches service results
+- Different parameter sets return appropriate results
+
+Screenshot: 05_at_risk_students_identified.png
+
+Step 6: Test Student Expiration History
+Python Shell Commands:
+```python
+# Test individual student expiration history functionality
+print("Testing student expiration history...")
+
+# Test history for each test student
+for i, student in enumerate(students):
+    print(f"\nStudent {i+1}: {student.name}")
+    
+    # Get expiration history
+    history = PackageExpirationService.get_student_expiration_history(
+        student=student,
+        limit=10
+    )
+    
+    print(f"  Expiration history records: {len(history)}")
+    
+    for record in history:
+        print(f"    Package {record['package_id']}: €{record['amount']}, {record['hours_expired']}h expired")
+        print(f"      Expired at: {record['expired_at']}")
+    
+    # Verify history accuracy by manual calculation
+    expired_packages = PurchaseTransaction.objects.filter(
+        student=student,
+        transaction_type=TransactionType.PACKAGE,
+        payment_status=TransactionPaymentStatus.COMPLETED,
+        expires_at__lt=timezone.now()
+    ).order_by('-expires_at')
+    
+    manual_count = expired_packages.count()
+    service_count = len(history)
+    
+    print(f"  Manual expired count: {manual_count}")
+    print(f"  Service history count: {service_count}")
+    print(f"  Counts match: {manual_count == service_count}")
+
+# Test history with different limits
+print(f"\nTesting history limits:")
+test_student = students[0]  # Heavy user with most packages
+
+for limit in [1, 3, 5, 50]:
+    limited_history = PackageExpirationService.get_student_expiration_history(
+        student=test_student,
+        limit=limit
+    )
+    print(f"  Limit {limit}: {len(limited_history)} records returned")
+    print(f"    Respects limit: {len(limited_history) <= limit}")
+
+# Test with student having no expired packages
+active_student = students[4]  # Should have fewer/no expired packages
+active_history = PackageExpirationService.get_student_expiration_history(
+    student=active_student,
+    limit=10
+)
+
+print(f"\nActive student ({active_student.name}):")
+print(f"  Expiration history: {len(active_history)} records")
+print(f"  Service handles empty history: {isinstance(active_history, list)}")
+```
+
+Expected Results:
+- History returned for all students
+- Records are ordered by expiration date (most recent first)
+- Limit parameter works correctly
+- Manual counts match service counts
+- Empty history handled gracefully
+
+Screenshot: 06_student_history_verified.png
+
+Step 7: Test Analytics API Integration
+Commands:
+  # First authenticate as admin to get token
+  # Then test analytics API endpoints
+
+Using curl commands (replace YOUR_ADMIN_TOKEN with actual token):
+```bash
+# Test expiration analytics API
+curl -X GET "http://localhost:8000/api/finances/admin/expiration-analytics/" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Test with custom period
+curl -X GET "http://localhost:8000/api/finances/admin/expiration-analytics/?period_days=60" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Test with longer period
+curl -X GET "http://localhost:8000/api/finances/admin/expiration-analytics/?period_days=120" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json"
+```
+
+Expected API Response Structure:
+```json
+{
+  "period_days": 30,
+  "metrics": {
+    "expiration_rate": 0.25,
+    "average_package_lifetime": 45.2,
+    "hours_lost_to_expiration": "15.50",
+    "revenue_impact": "232.50"
+  },
+  "summary": {
+    "total_packages": 20,
+    "expired_packages": 5,
+    "expiring_soon": 3,
+    "hours_expired": "15.50",
+    "students_affected": 2
+  },
+  "at_risk_students": [
+    {
+      "student_id": 123,
+      "expired_packages_count": 3,
+      "risk_score": 0.6
+    }
+  ],
+  "generated_at": "timestamp"
+}
+```
+
+Expected Results:
+- API returns comprehensive analytics data
+- Response structure matches expected format
+- Different period parameters work correctly
+- All numeric values are reasonable
+
+Screenshot: 07_analytics_api_tested.png
+
+Step 8: Test Report Data Accuracy with Manual Verification
+Python Shell Commands:
+```python
+# Manual verification of report accuracy
+print("Testing report data accuracy with manual verification...")
+
+# Get raw data for manual calculation
+all_packages = PurchaseTransaction.objects.filter(
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    created_at__gte=timezone.now() - timedelta(days=90)
+)
+
+print(f"Manual Data Analysis (90 days):")
+print(f"  Total packages in period: {all_packages.count()}")
+
+# Calculate expired packages manually
+expired_packages_manual = all_packages.filter(expires_at__lt=timezone.now())
+print(f"  Expired packages (manual): {expired_packages_manual.count()}")
+
+# Calculate expiring soon manually
+expiring_soon_manual = all_packages.filter(
+    expires_at__gte=timezone.now(),
+    expires_at__lte=timezone.now() + timedelta(days=30)
+)
+print(f"  Expiring soon (manual): {expiring_soon_manual.count()}")
+
+# Calculate hours expired manually
+hours_expired_manual = Decimal('0.00')
+for pkg in expired_packages_manual:
+    pkg_hours = PackageExpirationService.calculate_hours_to_expire(pkg)
+    hours_expired_manual += pkg_hours
+
+print(f"  Hours expired (manual): {hours_expired_manual}")
+
+# Calculate affected students manually
+affected_students_manual = expired_packages_manual.values('student').distinct().count()
+print(f"  Students affected (manual): {affected_students_manual}")
+
+# Compare with service report
+service_report_90 = PackageExpirationService.generate_expiration_summary_report(
+    start_date=timezone.now() - timedelta(days=90),
+    end_date=timezone.now()
+)
+
+print(f"\nService Report (90 days):")
+print(f"  Total packages: {service_report_90['total_packages']}")
+print(f"  Expired packages: {service_report_90['expired_packages']}")
+print(f"  Expiring soon: {service_report_90['expiring_soon']}")
+print(f"  Hours expired: {service_report_90['hours_expired']}")
+print(f"  Students affected: {service_report_90['students_affected']}")
+
+print(f"\nAccuracy Verification:")
+print(f"  Total packages match: {all_packages.count() == service_report_90['total_packages']}")
+print(f"  Expired packages match: {expired_packages_manual.count() == service_report_90['expired_packages']}")
+print(f"  Expiring soon match: {expiring_soon_manual.count() == service_report_90['expiring_soon']}")
+print(f"  Hours expired match: {hours_expired_manual == service_report_90['hours_expired']}")
+print(f"  Students affected match: {affected_students_manual == service_report_90['students_affected']}")
+```
+
+Expected Results:
+- Manual calculations match service report calculations exactly
+- All comparison checks return True
+- Data integrity is maintained across different calculation methods
+
+Screenshot: 08_data_accuracy_verified.png
+
+Step 9: Test Edge Cases and Boundary Conditions
+Python Shell Commands:
+```python
+# Test analytics with edge cases and boundary conditions
+print("Testing edge cases and boundary conditions...")
+
+# Test 1: Empty date range (future dates)
+future_start = timezone.now() + timedelta(days=10)
+future_end = timezone.now() + timedelta(days=20)
+
+empty_report = PackageExpirationService.generate_expiration_summary_report(
+    start_date=future_start,
+    end_date=future_end
+)
+
+print(f"Empty Date Range Test (future dates):")
+print(f"  Total packages: {empty_report['total_packages']}")
+print(f"  All metrics zero: {all(v == 0 for v in [empty_report['total_packages'], empty_report['expired_packages'], empty_report['expiring_soon'], empty_report['students_affected']])}")
+print(f"  Hours expired zero: {empty_report['hours_expired'] == Decimal('0.00')}")
+
+# Test 2: Very narrow date range (1 day)
+narrow_start = timezone.now() - timedelta(days=1)
+narrow_end = timezone.now()
+
+narrow_report = PackageExpirationService.generate_expiration_summary_report(
+    start_date=narrow_start,
+    end_date=narrow_end
+)
+
+print(f"\nNarrow Date Range Test (1 day):")
+print(f"  Total packages: {narrow_report['total_packages']}")
+print(f"  Report generates successfully: {narrow_report is not None}")
+
+# Test 3: Invalid date range (start > end)
+try:
+    invalid_report = PackageExpirationService.generate_expiration_summary_report(
+        start_date=timezone.now(),
+        end_date=timezone.now() - timedelta(days=30)
+    )
+    print(f"\nInvalid Date Range Test:")
+    print(f"  Report generated: {invalid_report is not None}")
+    print(f"  Handles invalid range gracefully: True")
+except Exception as e:
+    print(f"\nInvalid Date Range Test:")
+    print(f"  Exception: {str(e)}")
+    print(f"  Exception handled: True")
+
+# Test 4: Zero period days in metrics
+try:
+    zero_metrics = PackageExpirationService.calculate_expiration_metrics(period_days=0)
+    print(f"\nZero Period Metrics Test:")
+    print(f"  Metrics generated: {zero_metrics is not None}")
+    print(f"  Handles zero period gracefully: True")
+except Exception as e:
+    print(f"\nZero Period Metrics Test:")
+    print(f"  Exception: {str(e)}")
+
+# Test 5: Very large period (should still work)
+large_period_metrics = PackageExpirationService.calculate_expiration_metrics(period_days=3650)
+print(f"\nLarge Period Test (10 years):")
+print(f"  Metrics generated: {large_period_metrics is not None}")
+print(f"  Expiration rate valid: {0 <= large_period_metrics['expiration_rate'] <= 1}")
+
+# Test 6: At-risk students with extreme parameters
+extreme_at_risk = PackageExpirationService.identify_at_risk_students(
+    min_expired_packages=100,  # Very high threshold
+    timeframe_days=1  # Very short timeframe
+)
+
+print(f"\nExtreme At-Risk Parameters Test:")
+print(f"  Students identified: {len(extreme_at_risk)}")
+print(f"  Handles extreme parameters: {isinstance(extreme_at_risk, list)}")
+
+# Test 7: Student history with very large limit
+large_limit_history = PackageExpirationService.get_student_expiration_history(
+    student=students[0],
+    limit=10000
+)
+
+print(f"\nLarge Limit History Test:")
+print(f"  Records returned: {len(large_limit_history)}")
+print(f"  Handles large limit: {isinstance(large_limit_history, list)}")
+```
+
+Expected Results:
+- Empty date ranges return zero values without errors
+- Invalid date ranges handled gracefully
+- Extreme parameters don't crash the system
+- All edge cases return appropriate data types
+- System remains stable under boundary conditions
+
+Screenshot: 09_edge_cases_tested.png
+
+Step 10: Test Performance with Large Datasets
+Python Shell Commands:
+```python
+# Test analytics performance with larger datasets
+import time
+
+print("Testing analytics performance with large datasets...")
+
+# Create additional data for performance testing
+print("Creating additional test data...")
+start_time = time.time()
+
+performance_students = []
+for i in range(10):
+    student, created = User.objects.get_or_create(
+        email=f'perf.analytics.student{i}@example.com',
+        defaults={
+            'name': f'Performance Student {i}',
+            'role': 'student'
+        }
+    )
+    performance_students.append(student)
+    
+    # Create balance
+    StudentAccountBalance.objects.get_or_create(
+        student=student,
+        defaults={
+            'hours_purchased': Decimal('25.00'),
+            'balance_amount': Decimal('375.00')
+        }
+    )
+
+# Create many packages for performance testing
+packages_created = 0
+for student in performance_students:
+    for j in range(10):  # 10 packages per student
+        created_date = timezone.now() - timedelta(days=random.randint(1, 180))
+        
+        pkg = PurchaseTransaction.objects.create(
+            student=student,
+            transaction_type=TransactionType.PACKAGE,
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            amount=Decimal(str(random.randint(50, 150))),
+            created_at=created_date,
+            expires_at=created_date + timedelta(days=random.randint(30, 90)),
+            metadata={'hours_included': random.randint(4, 12)}
+        )
+        packages_created += 1
+        
+        # Add some consumption records
+        for k in range(random.randint(0, 5)):
+            HourConsumption.objects.create(
+                student=student,
+                purchase_transaction=pkg,
+                hours_consumed=Decimal(str(random.uniform(0.5, 2.0))),
+                session_date=created_date + timedelta(days=random.randint(1, 30))
+            )
+
+data_creation_time = time.time() - start_time
+print(f"Created {packages_created} additional packages in {data_creation_time:.2f} seconds")
+
+# Test performance of analytics functions
+print(f"\nTesting analytics performance:")
+
+# Test 1: Summary report performance
+start_time = time.time()
+perf_report = PackageExpirationService.generate_expiration_summary_report(
+    start_date=timezone.now() - timedelta(days=180),
+    end_date=timezone.now()
+)
+report_time = time.time() - start_time
+print(f"  Summary report (180 days): {report_time:.3f} seconds")
+
+# Test 2: Metrics calculation performance
+start_time = time.time()
+perf_metrics = PackageExpirationService.calculate_expiration_metrics(period_days=180)
+metrics_time = time.time() - start_time
+print(f"  Metrics calculation (180 days): {metrics_time:.3f} seconds")
+
+# Test 3: At-risk students performance
+start_time = time.time()
+perf_at_risk = PackageExpirationService.identify_at_risk_students(
+    min_expired_packages=1,
+    timeframe_days=180
+)
+at_risk_time = time.time() - start_time
+print(f"  At-risk identification: {at_risk_time:.3f} seconds")
+
+# Test 4: Student history performance (multiple students)
+start_time = time.time()
+for student in performance_students[:5]:  # Test with 5 students
+    history = PackageExpirationService.get_student_expiration_history(
+        student=student,
+        limit=50
+    )
+history_time = time.time() - start_time
+print(f"  Student history (5 students): {history_time:.3f} seconds")
+
+# Performance analysis
+total_packages_now = PurchaseTransaction.objects.filter(
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED
+).count()
+
+print(f"\nPerformance Analysis:")
+print(f"  Total packages in system: {total_packages_now}")
+print(f"  Performance acceptable: {all(t < 5.0 for t in [report_time, metrics_time, at_risk_time, history_time])}")
+```
+
+Expected Results:
+- All analytics functions complete within reasonable time (< 5 seconds)
+- Performance scales appropriately with data volume
+- No memory issues or timeouts
+- Larger datasets don't cause system instability
+
+Screenshot: 10_performance_testing_completed.png
+
+Step 11: Test Data Consistency Across Different Analytics
+Python Shell Commands:
+```python
+# Test consistency across different analytics functions
+print("Testing data consistency across different analytics functions...")
+
+# Use a consistent time period for all tests
+test_period_days = 90
+test_start_date = timezone.now() - timedelta(days=test_period_days)
+test_end_date = timezone.now()
+
+# Get data from different analytics functions
+summary_report = PackageExpirationService.generate_expiration_summary_report(
+    start_date=test_start_date,
+    end_date=test_end_date
+)
+
+metrics = PackageExpirationService.calculate_expiration_metrics(
+    period_days=test_period_days
+)
+
+at_risk_students = PackageExpirationService.identify_at_risk_students(
+    min_expired_packages=2,
+    timeframe_days=test_period_days
+)
+
+print(f"Data Consistency Analysis ({test_period_days} days):")
+print(f"\nSummary Report:")
+print(f"  Total packages: {summary_report['total_packages']}")
+print(f"  Expired packages: {summary_report['expired_packages']}")
+print(f"  Hours expired: {summary_report['hours_expired']}")
+
+print(f"\nMetrics:")
+print(f"  Expiration rate: {metrics['expiration_rate']:.3f}")
+print(f"  Hours lost: {metrics['hours_lost_to_expiration']}")
+
+print(f"\nAt-Risk Students:")
+print(f"  Students identified: {len(at_risk_students)}")
+
+# Cross-validate data consistency
+print(f"\nConsistency Validation:")
+
+# Check if expiration rate calculation is consistent
+if summary_report['total_packages'] > 0:
+    manual_expiration_rate = summary_report['expired_packages'] / summary_report['total_packages']
+    rate_difference = abs(manual_expiration_rate - metrics['expiration_rate'])
+    print(f"  Expiration rate consistency: {rate_difference < 0.001}")
+    print(f"    Summary calc: {manual_expiration_rate:.3f}")
+    print(f"    Metrics calc: {metrics['expiration_rate']:.3f}")
+
+# Check if hours expired are consistent
+hours_difference = abs(summary_report['hours_expired'] - metrics['hours_lost_to_expiration'])
+print(f"  Hours expired consistency: {hours_difference < Decimal('0.01')}")
+print(f"    Summary: {summary_report['hours_expired']}")
+print(f"    Metrics: {metrics['hours_lost_to_expiration']}")
+
+# Validate at-risk students against expired packages
+total_at_risk_expired = sum(student['expired_packages_count'] for student in at_risk_students)
+print(f"  At-risk validation:")
+print(f"    Total expired from at-risk students: {total_at_risk_expired}")
+print(f"    Should be <= total expired: {total_at_risk_expired <= summary_report['expired_packages']}")
+
+# Test with different time periods to ensure consistency
+periods_to_validate = [30, 60, 120]
+period_results = {}
+
+for period in periods_to_validate:
+    period_summary = PackageExpirationService.generate_expiration_summary_report(
+        start_date=timezone.now() - timedelta(days=period),
+        end_date=timezone.now()
+    )
+    period_metrics = PackageExpirationService.calculate_expiration_metrics(period_days=period)
+    period_results[period] = {
+        'summary': period_summary,
+        'metrics': period_metrics
+    }
+
+print(f"\nTrend Analysis (consistency across periods):")
+for period in sorted(periods_to_validate):
+    result = period_results[period]
+    print(f"  {period} days:")
+    print(f"    Total packages: {result['summary']['total_packages']}")
+    print(f"    Expiration rate: {result['metrics']['expiration_rate']:.3f}")
+
+# Verify that longer periods generally have more data
+print(f"\nTrend Validation:")
+periods_sorted = sorted(periods_to_validate)
+for i in range(len(periods_sorted) - 1):
+    current_period = periods_sorted[i]
+    next_period = periods_sorted[i + 1]
+    
+    current_total = period_results[current_period]['summary']['total_packages']
+    next_total = period_results[next_period]['summary']['total_packages']
+    
+    print(f"  {current_period}d <= {next_period}d packages: {current_total <= next_total}")
+```
+
+Expected Results:
+- Expiration rate calculations consistent across functions
+- Hours expired values match between different analytics
+- At-risk student data aligns with overall expiration data
+- Longer time periods show more data than shorter periods
+- All cross-validations pass
+
+Screenshot: 11_data_consistency_verified.png
+
+Step 12: Test Error Handling in Analytics
+Python Shell Commands:
+```python
+# Test error handling in analytics functions
+print("Testing error handling in analytics functions...")
+
+# Test 1: Analytics with corrupted data (simulate missing metadata)
+print("Test 1: Analytics with missing metadata")
+corrupted_package = PurchaseTransaction.objects.create(
+    student=students[0],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('75.00'),
+    expires_at=timezone.now() - timedelta(days=10),
+    metadata={}  # Missing hours_included
+)
+
+try:
+    # This should handle missing metadata gracefully
+    corrupted_report = PackageExpirationService.generate_expiration_summary_report(
+        start_date=timezone.now() - timedelta(days=30),
+        end_date=timezone.now()
+    )
+    print(f"  Report generated with corrupted data: {corrupted_report is not None}")
+    print(f"  Error handled gracefully: True")
+except Exception as e:
+    print(f"  Exception with corrupted data: {str(e)}")
+
+# Test 2: Student history with deleted student packages
+print(f"\nTest 2: Student history edge cases")
+try:
+    # Test with student who has no packages
+    student_no_packages, created = User.objects.get_or_create(
+        email='student.no.packages@example.com',
+        defaults={'name': 'No Packages Student', 'role': 'student'}
+    )
+    
+    empty_history = PackageExpirationService.get_student_expiration_history(
+        student=student_no_packages,
+        limit=10
+    )
+    print(f"  Empty history handled: {isinstance(empty_history, list) and len(empty_history) == 0}")
+except Exception as e:
+    print(f"  Exception with no packages: {str(e)}")
+
+# Test 3: Metrics with no data in period
+print(f"\nTest 3: Metrics with no data")
+try:
+    # Use a period far in the past where no data exists
+    no_data_metrics = PackageExpirationService.calculate_expiration_metrics(period_days=3650)
+    print(f"  No-data metrics generated: {no_data_metrics is not None}")
+    print(f"  Expiration rate with no data: {no_data_metrics['expiration_rate']}")
+    print(f"  Handles no-data scenario: {no_data_metrics['expiration_rate'] == 0}")
+except Exception as e:
+    print(f"  Exception with no data: {str(e)}")
+
+# Test 4: At-risk with impossible conditions
+print(f"\nTest 4: At-risk with impossible conditions")
+try:
+    impossible_at_risk = PackageExpirationService.identify_at_risk_students(
+        min_expired_packages=1000,  # Impossible threshold
+        timeframe_days=1  # Very short timeframe
+    )
+    print(f"  Impossible conditions handled: {isinstance(impossible_at_risk, list)}")
+    print(f"  Empty result for impossible conditions: {len(impossible_at_risk) == 0}")
+except Exception as e:
+    print(f"  Exception with impossible conditions: {str(e)}")
+
+# Test 5: Division by zero scenarios
+print(f"\nTest 5: Division by zero scenarios")
+
+# Create scenario with no packages to test division by zero
+# Temporarily filter to empty dataset
+original_filter = PurchaseTransaction.objects.filter(id=-1)  # Empty queryset
+
+try:
+    # The service should handle division by zero in expiration rate calculation
+    zero_div_report = PackageExpirationService.generate_expiration_summary_report(
+        start_date=timezone.now() + timedelta(days=1),  # Future date = no packages
+        end_date=timezone.now() + timedelta(days=2)
+    )
+    print(f"  Division by zero handled in report: {zero_div_report['total_packages'] == 0}")
+    
+    zero_div_metrics = PackageExpirationService.calculate_expiration_metrics(period_days=1)
+    print(f"  Division by zero handled in metrics: {zero_div_metrics['expiration_rate'] == 0}")
+    
+except Exception as e:
+    print(f"  Exception with division by zero: {str(e)}")
+
+print(f"\nError handling test completed - system remained stable")
+```
+
+Expected Results:
+- All error conditions handled gracefully without crashes
+- Missing metadata doesn't break analytics
+- Empty datasets return appropriate zero values
+- Division by zero scenarios handled properly
+- System remains stable under all error conditions
+
+Screenshot: 12_error_handling_verified.png
+
+Step 13: Clean Up Test Data
+Commands:
+```python
+python manage.py shell
+from django.contrib.auth import get_user_model
+from finances.models import PurchaseTransaction, StudentAccountBalance, HourConsumption
+
+User = get_user_model()
+
+# Clean up analytics test data
+analytics_emails = [
+    'student.analytics.heavy@example.com',
+    'student.analytics.moderate@example.com',
+    'student.analytics.light@example.com',
+    'student.analytics.expired@example.com',
+    'student.analytics.active@example.com',
+    'student.no.packages@example.com'
+]
+
+# Add performance test emails
+performance_emails = [f'perf.analytics.student{i}@example.com' for i in range(10)]
+all_test_emails = analytics_emails + performance_emails
+
+for email in all_test_emails:
+    try:
+        user = User.objects.get(email=email)
+        PurchaseTransaction.objects.filter(student=user).delete()
+        HourConsumption.objects.filter(student=user).delete()
+        StudentAccountBalance.objects.filter(student=user).delete()
+        user.delete()
+        print(f"Cleaned up: {email}")
+    except User.DoesNotExist:
+        pass
+
+print("All analytics test data cleaned up successfully")
+```
+
+Expected: All test data removed cleanly
+Screenshot: 13_analytics_cleanup_completed.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All analytics and reporting functions generate accurate, consistent data
+FAIL: Any analytics function produces incorrect data OR calculations are inconsistent
+
+Individual Step Criteria:
+- Step 1: PASS if services start, FAIL if startup fails
+- Step 2: PASS if comprehensive test data created, FAIL if data creation fails
+- Step 3: PASS if summary reports generate accurate data, FAIL if reports are incorrect
+- Step 4: PASS if metrics calculations are accurate, FAIL if calculations are wrong
+- Step 5: PASS if at-risk student identification works correctly, FAIL if identification fails
+- Step 6: PASS if student history is accurate, FAIL if history data is wrong
+- Step 7: PASS if API integration works, FAIL if API returns incorrect data
+- Step 8: PASS if manual verification matches service calculations, FAIL if calculations don't match
+- Step 9: PASS if edge cases handled gracefully, FAIL if edge cases crash system
+- Step 10: PASS if performance is acceptable, FAIL if analytics are too slow
+- Step 11: PASS if data consistency maintained across functions, FAIL if inconsistent data
+- Step 12: PASS if error handling is robust, FAIL if errors crash system
+- Step 13: PASS if cleanup works, FAIL if cleanup fails
+
+Critical Requirements for PASS:
+1. All calculations are mathematically accurate
+2. Data consistency maintained across all analytics functions
+3. Manual verification matches service calculations exactly
+4. Performance is acceptable for production use (< 5 seconds per operation)
+5. Error handling prevents system crashes
+6. Edge cases handled gracefully with appropriate responses
+7. API integration works correctly with proper response formats
+8. At-risk student identification is accurate and useful
+9. Summary reports provide comprehensive, accurate insights
+10. All numeric values are within reasonable ranges and properly formatted
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

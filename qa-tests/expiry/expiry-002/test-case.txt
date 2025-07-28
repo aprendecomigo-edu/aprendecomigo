@@ -1,0 +1,478 @@
+QA Test Case: Management Command Batch Operations
+
+Test ID: EXPIRY-002
+Test Name: Django Management Command for Package Expiration Processing
+Purpose: Verify that the Django management command `process_package_expiration` correctly processes expired packages in batch mode with various options and configurations
+Expected Result: Management command executes successfully with accurate batch processing and comprehensive reporting
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Package Expiration Management Command (GitHub Issue #33)
+- Command: `python manage.py process_package_expiration`
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data Required:
+- Multiple test students with various package states
+- Packages with different expiration dates and consumption levels
+- Notification preference settings for students
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Service Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  cd backend
+  python manage.py migrate
+  make dev
+
+Expected: Both services start successfully
+- Backend: http://localhost:8000 responds with 401 for /api/
+- Frontend: http://localhost:8081 shows loading screen
+
+Screenshot: 01_services_started.png
+
+Step 2: Create Comprehensive Test Data
+Commands:
+  python manage.py shell
+
+Python Shell Commands:
+```python
+from django.contrib.auth import get_user_model
+from finances.models import PurchaseTransaction, StudentAccountBalance, HourConsumption, TransactionType, TransactionPaymentStatus
+from decimal import Decimal
+from django.utils import timezone
+from datetime import timedelta
+
+User = get_user_model()
+
+# Create multiple test students
+students = []
+for i in range(3):
+    student, created = User.objects.get_or_create(
+        email=f'student.cmd.test{i+1}@example.com',
+        defaults={
+            'name': f'Command Test Student {i+1}',
+            'role': 'student'
+        }
+    )
+    students.append(student)
+    
+    # Create balance for each student
+    StudentAccountBalance.objects.get_or_create(
+        student=student,
+        defaults={
+            'hours_purchased': Decimal('20.00'),
+            'balance_amount': Decimal('300.00')
+        }
+    )
+
+# Student 1: Multiple expired packages
+expired_pkg_1 = PurchaseTransaction.objects.create(
+    student=students[0],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('100.00'),
+    expires_at=timezone.now() - timedelta(days=5),
+    metadata={'hours_included': 8.0}
+)
+
+expired_pkg_2 = PurchaseTransaction.objects.create(
+    student=students[0],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('75.00'),
+    expires_at=timezone.now() - timedelta(days=3),
+    metadata={'hours_included': 6.0}
+)
+
+# Student 2: One expired package with some hours consumed
+expired_pkg_3 = PurchaseTransaction.objects.create(
+    student=students[1],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('120.00'),
+    expires_at=timezone.now() - timedelta(days=2),
+    metadata={'hours_included': 10.0}
+)
+
+# Add hour consumption for student 2's package
+HourConsumption.objects.create(
+    student=students[1],
+    purchase_transaction=expired_pkg_3,
+    hours_consumed=Decimal('3.0'),
+    session_date=timezone.now() - timedelta(days=10)
+)
+
+# Student 3: Package within grace period
+grace_pkg = PurchaseTransaction.objects.create(
+    student=students[2],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('50.00'),
+    expires_at=timezone.now() - timedelta(hours=12),
+    metadata={'hours_included': 4.0}
+)
+
+# Packages expiring soon (for notification tests)
+expiring_soon_1 = PurchaseTransaction.objects.create(
+    student=students[0],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('80.00'),
+    expires_at=timezone.now() + timedelta(days=5),
+    metadata={'hours_included': 6.0}
+)
+
+expiring_soon_2 = PurchaseTransaction.objects.create(
+    student=students[1],
+    transaction_type=TransactionType.PACKAGE,
+    payment_status=TransactionPaymentStatus.COMPLETED,
+    amount=Decimal('90.00'),
+    expires_at=timezone.now() + timedelta(days=3),
+    metadata={'hours_included': 7.0}
+)
+
+print(f"Created test data:")
+print(f"- Students: {len(students)}")
+print(f"- Expired packages: 3 (2 for student 1, 1 for student 2)")
+print(f"- Grace period packages: 1 (student 3)")
+print(f"- Expiring soon packages: 2")
+print(f"- Package with consumption: {expired_pkg_3.id} (3h consumed of 10h)")
+```
+
+Expected: Comprehensive test data created successfully
+Screenshot: 02_test_data_created.png
+
+Step 3: Test Basic Command Help and Options
+Commands:
+  python manage.py help process_package_expiration
+  python manage.py process_package_expiration --help
+
+Expected Output Should Include:
+- Command description: "Process package expirations and update student balances"
+- Available options: --dry-run, --grace-hours, --student-email, --send-notifications, --notification-days, --force
+- Usage examples and parameter descriptions
+
+Screenshot: 03_command_help_displayed.png
+
+Step 4: Test Dry Run Mode (No Changes)
+Commands:
+  python manage.py process_package_expiration --dry-run --verbosity=2
+
+Expected Output:
+- "DRY RUN - Processing package expirations..."
+- "Grace period: 24 hours"
+- "Found X packages to process"
+- List of packages that would be processed
+- "Total: X packages, Y hours would be expired"
+- NO actual changes to database
+
+Verification Commands:
+```python
+python manage.py shell
+from finances.models import StudentAccountBalance
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+student1 = User.objects.get(email='student.cmd.test1@example.com')
+balance1 = StudentAccountBalance.objects.get(student=student1)
+print(f"Student 1 balance unchanged: {balance1.hours_purchased} hours")
+# Should still be 20.00 hours
+```
+
+Expected: Balance unchanged after dry run
+Screenshot: 04_dry_run_completed.png
+
+Step 5: Test Command with Custom Grace Period
+Commands:
+  python manage.py process_package_expiration --dry-run --grace-hours=48 --verbosity=2
+
+Expected Results:
+- Different number of packages identified (should be fewer with 48h grace period)
+- Grace period package (12h old) should not be included
+- Only packages older than 48 hours should be shown
+
+Commands:
+  python manage.py process_package_expiration --dry-run --grace-hours=6 --verbosity=2
+
+Expected Results:
+- More packages identified (including the 12h old package)
+- Grace period package should now be included
+
+Screenshot: 05_custom_grace_period_tested.png
+
+Step 6: Test Student-Specific Processing
+Commands:
+  python manage.py process_package_expiration --student-email=student.cmd.test1@example.com --dry-run --verbosity=2
+
+Expected Output:
+- "Processing packages only for specific student email"
+- "Found X packages for student Command Test Student 1"
+- Only packages belonging to student1 should be listed
+- Should show 2 expired packages for this student
+
+Commands:
+  python manage.py process_package_expiration --student-email=nonexistent@example.com --dry-run
+
+Expected Output:
+- Error message: "Student with email nonexistent@example.com not found"
+- Command should exit with error code
+
+Screenshot: 06_student_specific_processing.png
+
+Step 7: Test Actual Processing (Not Dry Run)
+Commands:
+  python manage.py process_package_expiration --grace-hours=24 --verbosity=2
+
+Expected Output:
+- "Processing package expirations..."
+- "Found X packages to process"
+- "Successfully processed X packages (Y hours expired)"
+- If any failures: "Failed to process X packages"
+- Detailed processing results for each package
+
+Verification Commands:
+```python
+python manage.py shell
+from finances.models import StudentAccountBalance
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+# Check student 1 balance (should have lost 14 hours: 8+6 from 2 expired packages)
+student1 = User.objects.get(email='student.cmd.test1@example.com')
+balance1 = StudentAccountBalance.objects.get(student=student1)
+print(f"Student 1 balance after processing: {balance1.hours_purchased} hours")
+expected1 = Decimal('20.00') - Decimal('14.00')  # 8h + 6h expired
+print(f"Expected: {expected1}, Actual: {balance1.hours_purchased}, Match: {balance1.hours_purchased == expected1}")
+
+# Check student 2 balance (should have lost 7 hours: 10h - 3h consumed = 7h expired)
+student2 = User.objects.get(email='student.cmd.test2@example.com')
+balance2 = StudentAccountBalance.objects.get(student=student2)
+print(f"Student 2 balance after processing: {balance2.hours_purchased} hours")
+expected2 = Decimal('20.00') - Decimal('7.00')  # 10h package - 3h consumed = 7h expired
+print(f"Expected: {expected2}, Actual: {balance2.hours_purchased}, Match: {balance2.hours_purchased == expected2}")
+
+# Check student 3 balance (should be unchanged due to grace period)
+student3 = User.objects.get(email='student.cmd.test3@example.com')
+balance3 = StudentAccountBalance.objects.get(student=student3)
+print(f"Student 3 balance (grace period): {balance3.hours_purchased} hours")
+print(f"Should be unchanged: {balance3.hours_purchased == Decimal('20.00')}")
+```
+
+Expected: Balances updated correctly based on expired packages and consumption
+Screenshot: 07_actual_processing_completed.png
+
+Step 8: Test Notification Sending
+Commands:
+  python manage.py process_package_expiration --send-notifications --notification-days=7 --verbosity=2
+
+Expected Output:
+- "Sending notifications for packages expiring within 7 days..."
+- "Found X packages expiring soon"
+- "Successfully sent X notifications"
+- If any failures: "Failed to send X notifications"
+
+Verification - Check Server Logs:
+Commands:
+  tail -50 logs/backend.log | grep -A 10 -B 5 "Package Expiring Soon"
+
+Expected Log Content:
+- Email notifications sent to students with expiring packages
+- Subject: "Package Expiring Soon - X Days Remaining"
+- Email content mentioning package details and expiry dates
+
+Screenshot: 08_notifications_sent.png
+
+Step 9: Test Combined Options
+Commands:
+  python manage.py process_package_expiration --student-email=student.cmd.test3@example.com --grace-hours=6 --verbosity=2
+
+Expected Results:
+- Should now process student 3's package (12h old, within 6h grace period exceeded)
+- Only student 3's packages should be processed
+
+Verification:
+```python
+python manage.py shell
+from finances.models import StudentAccountBalance
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+student3 = User.objects.get(email='student.cmd.test3@example.com')
+balance3 = StudentAccountBalance.objects.get(student=student3)
+print(f"Student 3 balance after 6h grace processing: {balance3.hours_purchased} hours")
+expected3 = Decimal('20.00') - Decimal('4.00')  # 4h package expired
+print(f"Expected: {expected3}, Actual: {balance3.hours_purchased}, Match: {balance3.hours_purchased == expected3}")
+```
+
+Expected: Student 3's balance now reduced by 4 hours
+Screenshot: 09_combined_options_tested.png
+
+Step 10: Test Error Handling and Edge Cases
+Commands:
+  # Test with invalid grace hours
+  python manage.py process_package_expiration --grace-hours=-5 --dry-run
+
+  # Test with invalid notification days
+  python manage.py process_package_expiration --send-notifications --notification-days=0 --dry-run
+
+  # Test processing when no packages exist
+  python manage.py process_package_expiration --student-email=student.cmd.test1@example.com --dry-run
+
+Expected Results:
+- Invalid parameters should be handled gracefully
+- No packages scenario should display appropriate message
+- Command should not crash on edge cases
+
+Screenshot: 10_error_handling_tested.png
+
+Step 11: Test Verbose Output Levels
+Commands:
+  # Minimal output
+  python manage.py process_package_expiration --dry-run --verbosity=0
+
+  # Normal output  
+  python manage.py process_package_expiration --dry-run --verbosity=1
+
+  # Detailed output
+  python manage.py process_package_expiration --dry-run --verbosity=2
+
+Expected Results:
+- Verbosity 0: Minimal or no output
+- Verbosity 1: Standard progress messages
+- Verbosity 2: Detailed package-by-package information
+
+Screenshot: 11_verbosity_levels_tested.png
+
+Step 12: Performance and Scalability Test
+Create large dataset and test performance:
+```python
+python manage.py shell
+from django.contrib.auth import get_user_model
+from finances.models import PurchaseTransaction, StudentAccountBalance, TransactionType, TransactionPaymentStatus
+from decimal import Decimal
+from django.utils import timezone
+from datetime import timedelta
+
+User = get_user_model()
+
+# Create multiple students with many packages
+for student_num in range(10):
+    student, created = User.objects.get_or_create(
+        email=f'perf.test.student{student_num}@example.com',
+        defaults={
+            'name': f'Performance Test Student {student_num}',
+            'role': 'student'
+        }
+    )
+    
+    StudentAccountBalance.objects.get_or_create(
+        student=student,
+        defaults={
+            'hours_purchased': Decimal('50.00'),
+            'balance_amount': Decimal('750.00')
+        }
+    )
+    
+    # Create multiple packages per student
+    for pkg_num in range(5):
+        PurchaseTransaction.objects.create(
+            student=student,
+            transaction_type=TransactionType.PACKAGE,
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            amount=Decimal('60.00'),
+            expires_at=timezone.now() - timedelta(days=2, hours=pkg_num),
+            metadata={'hours_included': 5.0}
+        )
+
+print("Created performance test data: 10 students, 50 packages")
+```
+
+Commands:
+  time python manage.py process_package_expiration --dry-run --verbosity=1
+
+Expected Results:
+- Command completes within reasonable time (< 30 seconds for 50 packages)
+- Memory usage remains reasonable
+- All packages correctly identified and processed
+
+Screenshot: 12_performance_test_completed.png
+
+Step 13: Clean Up Test Data
+Commands:
+```python
+python manage.py shell
+from django.contrib.auth import get_user_model
+from finances.models import PurchaseTransaction, StudentAccountBalance, HourConsumption
+
+User = get_user_model()
+
+# Clean up test data
+test_emails = [
+    'student.cmd.test1@example.com',
+    'student.cmd.test2@example.com', 
+    'student.cmd.test3@example.com'
+]
+
+performance_emails = [f'perf.test.student{i}@example.com' for i in range(10)]
+all_test_emails = test_emails + performance_emails
+
+for email in all_test_emails:
+    try:
+        user = User.objects.get(email=email)
+        PurchaseTransaction.objects.filter(student=user).delete()
+        HourConsumption.objects.filter(student=user).delete()
+        StudentAccountBalance.objects.filter(student=user).delete()
+        user.delete()
+        print(f"Cleaned up: {email}")
+    except User.DoesNotExist:
+        pass
+
+print("All test data cleaned up successfully")
+```
+
+Expected: All test data removed cleanly
+Screenshot: 13_cleanup_completed.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND all command options work correctly
+FAIL: Any step fails OR any command option produces incorrect results
+
+Individual Step Criteria:
+- Step 1: PASS if services start, FAIL if startup fails
+- Step 2: PASS if test data created, FAIL if creation fails
+- Step 3: PASS if help displays correctly, FAIL if help is incomplete
+- Step 4: PASS if dry run works without changes, FAIL if dry run modifies data
+- Step 5: PASS if grace period logic works, FAIL if incorrect packages selected
+- Step 6: PASS if student filtering works, FAIL if wrong student data processed
+- Step 7: PASS if actual processing works and balances update correctly, FAIL if processing fails
+- Step 8: PASS if notifications send successfully, FAIL if notification sending fails
+- Step 9: PASS if combined options work, FAIL if option combinations fail
+- Step 10: PASS if error handling is robust, FAIL if command crashes
+- Step 11: PASS if verbosity levels work, FAIL if output levels incorrect
+- Step 12: PASS if performance is acceptable, FAIL if command is too slow
+- Step 13: PASS if cleanup works, FAIL if cleanup fails
+
+Critical Requirements for PASS:
+1. Dry run mode never modifies database
+2. Grace period logic correctly excludes recent expirations
+3. Student filtering works accurately
+4. Actual processing updates balances mathematically correct
+5. Notification system sends emails properly
+6. Error handling prevents crashes
+7. All command options work as documented
+8. Performance is acceptable for reasonable data volumes
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
