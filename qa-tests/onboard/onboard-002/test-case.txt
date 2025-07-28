@@ -1,0 +1,290 @@
+QA Test Case: Onboarding Checklist Functionality and Progress Tracking
+
+Test ID: ONBOARD-002
+Test Name: Step-by-Step Onboarding Checklist with Progress Tracking
+Purpose: Verify the 5-step onboarding checklist displays correctly with progress tracking (0/5 steps completed initially), interactive step actions, and proper navigation
+Expected Result: Checklist shows all 5 steps with progress indicators, step actions work correctly, and progress updates in real-time
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native/Expo frontend
+- Onboarding: 5-step guided checklist for school administrator setup
+- Progress Tracking: Real-time progress updates via API integration
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: source .venv/bin/activate (from project root)
+3. Development servers: make dev-open (starts both backend and frontend)
+4. Backend URL: http://localhost:8000
+5. Frontend URL: http://localhost:8081
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com (school admin account)
+- User Role: school_owner/admin
+- Expected Initial State: 0/5 steps completed (0% completion)
+- Expected Steps:
+  1. Complete School Profile
+  2. Invite First Teacher  
+  3. Add First Student
+  4. Set Up Billing
+  5. Create First Class Schedule
+
+Backend APIs Tested:
+- GET/POST /api/accounts/onboarding_progress/
+- GET/POST /api/accounts/navigation_preferences/
+- POST /api/tasks/ (for onboarding task creation)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Authentication
+1. Open terminal in project root directory
+2. Activate virtual environment: source .venv/bin/activate
+3. Start development servers: make dev-open
+4. Complete authentication process to reach onboarding checklist
+5. Navigate directly to http://localhost:8081/onboarding/checklist
+
+Expected: Checklist page loads successfully with authentication
+Screenshot: 01_checklist_page_loaded.png
+Debug: Use 'make logs' to view server logs if issues occur
+
+Step 2: Verify Progress Section Display
+1. Locate the progress section at top of checklist
+2. Verify progress percentage shows 0% initially
+3. Verify progress bar visual indicator shows empty state
+4. Verify completed steps counter shows 0/5
+5. Check for any progress-related loading states
+
+Expected: Progress section shows 0/5 steps completed (0%)
+Screenshot: 02_initial_progress_display.png
+
+Step 3: Verify Checklist Header Elements
+1. Locate "Setup Checklist" heading
+2. Verify descriptive text about configuring school
+3. Check heading hierarchy and typography
+4. Verify proper spacing and layout
+
+Expected: Clear checklist header with descriptive text
+Screenshot: 03_checklist_header.png
+
+Step 4: Verify All 5 Steps Are Present
+1. Count all step cards in the checklist
+2. Verify each step has the correct information:
+   - Step 1: Complete School Profile (Building2 icon)
+   - Step 2: Invite First Teacher (UserPlus icon)
+   - Step 3: Add First Student (GraduationCap icon)
+   - Step 4: Set Up Billing (CreditCard icon)
+   - Step 5: Create First Class Schedule (Calendar icon)
+3. Verify each step shows "pending" status initially
+4. Verify proper step icons and styling
+
+Expected: All 5 steps present with correct icons and content
+Screenshot: 04_all_five_steps_present.png
+
+Step 5: Verify Step Card Structure
+1. For each step card, verify the following elements:
+   - Step icon (appropriate for step type)
+   - Step title/name
+   - Step description
+   - Status indicator (pending initially)
+   - Action buttons section (Start Step, Skip)
+2. Verify card styling and hover effects
+3. Check responsive layout of cards
+
+Expected: Each step card has complete structure and proper styling
+Screenshot: 05_step_card_structure.png
+
+Step 6: Test "Start Step" Button for School Profile
+1. Locate Step 1: Complete School Profile
+2. Click "Start Step" button
+3. Verify button loading state appears
+4. Monitor for navigation to /settings page
+5. Verify task creation in backend (optional)
+
+Expected: Navigation to settings page for school profile completion
+Screenshot: 06_school_profile_step_started.png
+
+Step 7: Return and Test "Start Step" for Teacher Invitation
+1. Navigate back to checklist page
+2. Locate Step 2: Invite First Teacher
+3. Click "Start Step" button
+4. Verify guided flow modal opens (AddFirstTeacherFlow)
+5. Verify modal contains teacher invitation interface
+6. Close modal and return to checklist
+
+Expected: Teacher invitation modal opens with proper interface
+Screenshot: 07_teacher_invitation_modal.png
+
+Step 8: Test "Start Step" for Student Addition
+1. Locate Step 3: Add First Student
+2. Click "Start Step" button
+3. Verify guided flow modal opens (AddFirstStudentFlow)
+4. Verify modal contains student addition interface
+5. Close modal and return to checklist
+
+Expected: Student addition modal opens with proper interface
+Screenshot: 08_student_addition_modal.png
+
+Step 9: Test "Start Step" for Billing Setup
+1. Locate Step 4: Set Up Billing
+2. Click "Start Step" button
+3. Verify navigation to /purchase page
+4. Verify purchase page loads correctly
+5. Navigate back to checklist
+
+Expected: Navigation to purchase page for billing setup
+Screenshot: 09_billing_setup_navigation.png
+
+Step 10: Test "Start Step" for Schedule Creation
+1. Locate Step 5: Create First Class Schedule
+2. Click "Start Step" button
+3. Verify navigation to /calendar page
+4. Verify calendar interface loads correctly
+5. Navigate back to checklist
+
+Expected: Navigation to calendar page for schedule creation
+Screenshot: 10_schedule_creation_navigation.png
+
+Step 11: Test "Skip" Button Functionality
+1. For any pending step, click "Skip" button
+2. Verify skip confirmation dialog appears
+3. Verify dialog content:
+   - "Skip This Step?" heading
+   - Step name in confirmation message
+   - "Cancel" and "Skip Step" buttons
+4. Test "Cancel" button returns to checklist
+
+Expected: Skip confirmation dialog appears with proper content
+Screenshot: 11_skip_confirmation_dialog.png
+
+Step 12: Test Skip Step Confirmation
+1. In skip confirmation dialog, click "Skip Step"
+2. Verify loading state during skip process
+3. Verify step status changes to "skipped"
+4. Verify "Skipped" badge appears on step card
+5. Verify progress counter updates appropriately
+
+Expected: Step marked as skipped with proper UI updates
+Screenshot: 12_step_skipped_status.png
+
+Step 13: Test Progress Updates
+1. Skip or complete multiple steps using various methods
+2. Monitor progress percentage updates in real-time
+3. Verify completed steps counter increases
+4. Verify progress bar visual indicator updates
+5. Test both completed and skipped steps affect progress
+
+Expected: Progress updates reflect step completions and skips
+Screenshot: 13_progress_updates.png
+
+Step 14: Test Step Status Indicators
+1. Verify completed steps show:
+   - Green checkmark icon
+   - "Completed" badge
+   - "Review" button option
+2. Verify skipped steps show:
+   - Gray step icon
+   - "Skipped" badge  
+   - "Complete Now" button option
+3. Verify pending steps show original action buttons
+
+Expected: Different step statuses display appropriate indicators
+Screenshot: 14_step_status_indicators.png
+
+Step 15: Test Completion Celebration
+1. Complete or skip all 5 steps to reach 100% completion
+2. Verify completion celebration card appears
+3. Verify congratulations message and emoji
+4. Verify "Go to Dashboard" button appears
+5. Test navigation to dashboard works
+
+Expected: Completion celebration displays with dashboard navigation
+Screenshot: 15_completion_celebration.png
+
+Step 16: Test API Integration
+1. Open browser developer tools Network tab
+2. Perform step actions (start, skip, complete)
+3. Monitor API calls to onboarding endpoints
+4. Verify proper request/response data
+5. Check for error handling on API failures
+
+Expected: API integration works properly with correct data flow
+Screenshot: 16_api_integration_monitoring.png
+
+Step 17: Test Task Creation Integration
+1. Access Django admin at http://localhost:8000/admin/
+2. Navigate to Tasks section
+3. Verify onboarding tasks are created when steps are started
+4. Check task details: title, description, priority, due_date
+5. Verify tasks are associated with correct user
+
+Expected: Onboarding tasks created in backend with correct data
+Screenshot: 17_task_creation_verification.png
+
+Step 18: Test Error Handling
+1. Simulate network disconnection
+2. Attempt step actions while offline
+3. Verify error handling and user feedback
+4. Reconnect and verify recovery functionality
+5. Test with invalid API responses
+
+Expected: Graceful error handling with user-friendly messages
+Screenshot: 18_error_handling_testing.png
+
+Step 19: Test Interactive Tutorial Integration
+1. Look for tutorial trigger elements or hints
+2. Verify contextual help tooltips appear when needed
+3. Test guided tour functionality if available
+4. Verify tutorial can be dismissed properly
+
+Expected: Interactive tutorial elements function correctly
+Screenshot: 19_tutorial_integration.png
+
+Step 20: Test Data Persistence
+1. Complete some steps and refresh the page
+2. Navigate away and return to checklist
+3. Verify step statuses persist correctly
+4. Verify progress is maintained across sessions
+5. Test with browser cache clearing
+
+Expected: Step progress persists across page refreshes and sessions
+Screenshot: 20_data_persistence_testing.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All step interactions work correctly AND progress tracking functions properly
+FAIL: Any step action fails OR progress tracking doesn't update correctly
+
+Individual Step Criteria:
+- Step 1: PASS if checklist loads properly, FAIL if page doesn't load
+- Step 2: PASS if progress shows 0/5 initially, FAIL if incorrect display
+- Step 3: PASS if header elements present, FAIL if any missing
+- Step 4: PASS if all 5 steps present, FAIL if any step missing
+- Step 5: PASS if step cards structured properly, FAIL if elements missing
+- Steps 6-10: PASS if "Start Step" navigation works, FAIL if navigation fails
+- Steps 11-12: PASS if skip functionality works, FAIL if skip fails
+- Step 13: PASS if progress updates correctly, FAIL if progress doesn't update
+- Step 14: PASS if status indicators correct, FAIL if indicators wrong
+- Step 15: PASS if completion celebration shows, FAIL if completion doesn't work
+- Steps 16-17: PASS if API integration works, FAIL if API calls fail
+- Steps 18-20: PASS if error handling and persistence work, FAIL otherwise
+
+Critical Acceptance Criteria Verification:
+✓ Step-by-step onboarding checklist with progress tracking (0/5 steps completed)
+✓ Interactive tutorial highlighting key dashboard features and actions
+✓ Contextual help tooltips for first-time actions (invite teacher, add student)
+✓ Progress celebration when completing major milestones
+✓ Integration with user preferences and backend APIs
+✓ Proper task creation for onboarding steps
+
+Overall Result: PASS only if ALL steps pass and critical criteria verified, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Step actions should provide immediate visual feedback
+- Progress updates should be smooth and noticeable
+- Modal dialogs should be properly centered and accessible
+- Loading states should prevent double-submission
+- Skip confirmations should feel supportive, not discouraging
+- Completion celebration should feel rewarding and motivating
+- Error messages should be clear and actionable

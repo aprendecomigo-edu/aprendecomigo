@@ -1,0 +1,6 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+onboard-001,Welcome Screen Display,Test welcome screen appears after email verification with all required elements,,ENVIRONMENT_ISSUE,0,0,0  
+onboard-002,Onboarding Checklist Functionality,Test 5-step checklist with progress tracking and step interactions,,READY_FOR_EXECUTION,0,0,0
+onboard-003,Skip Functionality and Confirmation,Test skip options with confirmation dialogs and preference persistence,,READY_FOR_EXECUTION,0,0,0
+onboard-004,Mobile Responsiveness,Test onboarding flow across different viewport sizes and devices,,READY_FOR_EXECUTION,0,0,0
+onboard-005,Progress Tracking and API Integration,Test backend API integration for progress tracking and preferences,,READY_FOR_EXECUTION,0,0,0

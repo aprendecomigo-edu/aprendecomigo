@@ -101,6 +101,8 @@ const LoginForm = () => {
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input>
                   <InputField
+                    type="email"
+                    testID="email-input"
                     placeholder="Enter email"
                     value={value}
                     onChangeText={onChange}

@@ -10,8 +10,9 @@ import { z } from 'zod';
 
 import { AuthLayout } from '../layout';
 
-import { verifyEmailCode, requestEmailCode } from '@/api/authApi';
+import { verifyEmailCode, requestEmailCode, AuthResponse } from '@/api/authApi';
 import { useAuth } from '@/api/authContext';
+import { onboardingApi } from '@/api/onboardingApi';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Checkbox, CheckboxIcon, CheckboxIndicator, CheckboxLabel } from '@/components/ui/checkbox';
 import {
@@ -95,7 +96,7 @@ const VerifyCodeForm = () => {
           : { phone: data.contact, code: data.code };
 
       console.log('Verification API params:', params);
-      const response = await verifyEmailCode(params);
+      const response: AuthResponse = await verifyEmailCode(params);
       console.log('Verification response:', response);
 
       // Successfully verified - now explicitly update auth state
@@ -103,13 +104,57 @@ const VerifyCodeForm = () => {
 
       toast.showToast('success', 'Verification successful!');
 
-      // Navigate to root after verification - auth context will handle redirect
-      router.replace('/');
+      // Check if this is a new school admin that needs onboarding
+      const shouldShowOnboarding = await checkForOnboarding(response);
+      
+      if (shouldShowOnboarding) {
+        console.log('Redirecting new school admin to onboarding welcome screen');
+        router.replace('/onboarding/welcome');
+      } else {
+        // Navigate to root after verification - auth context will handle redirect
+        router.replace('/');
+      }
     } catch (error) {
       console.error('Verification error:', error);
       toast.showToast('error', 'Invalid verification code. Please try again.');
     } finally {
       setIsVerifying(false);
+    }
+  };
+
+  // Check if user should see onboarding
+  const checkForOnboarding = async (authResponse: AuthResponse): Promise<boolean> => {
+    try {
+      // Only check for school admins
+      if (!authResponse.user.is_admin || authResponse.user.user_type !== 'school_admin') {
+        return false;
+      }
+
+      // Check if user has completed first login
+      if (authResponse.user.first_login_completed) {
+        return false;
+      }
+
+      // Check onboarding preferences
+      try {
+        const preferences = await onboardingApi.getNavigationPreferences();
+        const progress = await onboardingApi.getOnboardingProgress();
+        
+        // Show onboarding if:
+        // 1. User hasn't disabled onboarding (show_onboarding is true)
+        // 2. User hasn't completed the onboarding process (completion < 100%)
+        // 3. This appears to be a new user (is_new_user flag or low completion)
+        return preferences.show_onboarding && 
+               progress.completion_percentage < 100 &&
+               (authResponse.is_new_user || progress.completion_percentage === 0);
+      } catch (apiError) {
+        // If we can't fetch onboarding data, default to showing onboarding for new admins
+        console.log('Could not fetch onboarding data, defaulting to show onboarding for new admin');
+        return authResponse.is_new_user || !authResponse.user.first_login_completed;
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      return false;
     }
   };
 
@@ -185,6 +230,8 @@ const VerifyCodeForm = () => {
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input>
                   <InputField
+                    name="code"
+                    testID="verification-code-input"
                     placeholder="Enter the verification code"
                     value={value}
                     onChangeText={onChange}

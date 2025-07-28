@@ -124,6 +124,15 @@ class CustomUser(AbstractUser):
     first_login_completed: models.BooleanField = models.BooleanField(
         _("first login completed"), default=False
     )
+    onboarding_completed: models.BooleanField = models.BooleanField(
+        _("onboarding completed"), default=False
+    )
+    onboarding_progress: models.JSONField = models.JSONField(
+        _("onboarding progress"), default=dict, blank=True
+    )
+    tutorial_preferences: models.JSONField = models.JSONField(
+        _("tutorial preferences"), default=dict, blank=True
+    )
 
     # user_type field is removed - roles are now in SchoolMembership
 

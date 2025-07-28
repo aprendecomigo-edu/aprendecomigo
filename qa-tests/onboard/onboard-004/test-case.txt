@@ -1,0 +1,59 @@
+QA Test Case: Mobile-Optimized Onboarding Flow
+
+Test ID: ONBOARD-004
+Test Name: Mobile-Optimized Onboarding Flow for All Device Types
+Purpose: Verify onboarding flow works properly across different viewport sizes and provides excellent mobile experience
+Expected Result: Onboarding is fully functional and optimized for mobile, tablet, and desktop devices
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Responsive Design: Mobile-first approach with viewport adaptations
+- Device Testing: iPhone, iPad, Android, Desktop viewports
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Development servers: make dev-open
+3. Browser Developer Tools for viewport testing
+
+Test Data:
+- Viewport Sizes: 320px, 375px, 425px, 768px, 1024px, 1440px
+- Test Email: anapmc.carvalho@gmail.com
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Test Mobile Viewport (320px-425px)
+1. Set browser to mobile viewport
+2. Complete onboarding authentication flow
+3. Verify welcome screen mobile layout
+4. Test button touch targets and spacing
+5. Verify text readability and scaling
+
+Expected: Mobile layout functions perfectly with proper touch targets
+Screenshot: 01_mobile_onboarding.png
+
+Step 2: Test Tablet Viewport (768px-1024px)
+1. Set browser to tablet viewport
+2. Navigate through onboarding flow
+3. Verify checklist layout adapts properly
+4. Test modal dialogs on tablet
+5. Verify progress indicators scale correctly
+
+Expected: Tablet layout provides optimal experience
+Screenshot: 02_tablet_onboarding.png
+
+Step 3: Test Desktop Responsiveness
+1. Test on large desktop viewport (1440px+)
+2. Verify proper content centering and max-width
+3. Test hover states and desktop interactions
+4. Verify proper spacing and typography
+
+Expected: Desktop layout is properly optimized
+Screenshot: 03_desktop_onboarding.png
+
+=== PASS/FAIL CRITERIA ===
+- Mobile layout functions properly on small screens
+- Tablet experience is optimized for touch
+- Desktop layout is well-centered and spaced
+- All interactive elements work across devices

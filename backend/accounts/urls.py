@@ -5,6 +5,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CourseViewSet,
     EducationalSystemViewSet,
+    GlobalSearchView,
     InvitationViewSet,
     RequestCodeView,
     SchoolDashboardViewSet,
@@ -54,6 +55,12 @@ urlpatterns = [
         "invitation-links/<str:token>/",
         SchoolInvitationLinkView.as_view(),
         name="invitation_link_details",
+    ),
+    # Global search endpoint
+    path(
+        "search/global/",
+        GlobalSearchView.as_view(),
+        name="global-search",
     ),
     # Knox authentication URLs
     path("auth/logout/", knox_views.LogoutView.as_view(), name="knox_logout"),

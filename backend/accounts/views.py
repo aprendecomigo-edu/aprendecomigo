@@ -503,6 +503,155 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             status=status.HTTP_201_CREATED,
         )
 
+    @action(detail=False, methods=["get", "post"])
+    def onboarding_progress(self, request):
+        """
+        GET/POST /api/accounts/onboarding-progress/
+        
+        GET: Returns current user's onboarding progress
+        POST: Updates user's onboarding progress
+        """
+        user = request.user
+        
+        if request.method == "GET":
+            # Return current onboarding progress
+            progress_data = user.onboarding_progress or {}
+            
+            response_data = {
+                "steps_completed": progress_data.get("steps_completed", []),
+                "current_step": progress_data.get("current_step", "profile"),
+                "completion_percentage": progress_data.get("completion_percentage", 0),
+                "skipped": progress_data.get("skipped", False),
+                "completed_at": progress_data.get("completed_at"),
+                "onboarding_completed": user.onboarding_completed
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+        
+        elif request.method == "POST":
+            # Validate input data
+            steps_completed = request.data.get("steps_completed")
+            current_step = request.data.get("current_step")
+            completion_percentage = request.data.get("completion_percentage")
+            skipped = request.data.get("skipped", False)
+            
+            # Validation
+            if not isinstance(steps_completed, list):
+                return Response(
+                    {"error": "steps_completed must be a list"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if not current_step:
+                return Response(
+                    {"error": "current_step is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if completion_percentage is None:
+                return Response(
+                    {"error": "completion_percentage is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if not (0 <= completion_percentage <= 100):
+                return Response(
+                    {"error": "completion_percentage must be between 0 and 100"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Update user's onboarding progress
+            progress_data = {
+                "steps_completed": steps_completed,
+                "current_step": current_step,
+                "completion_percentage": completion_percentage,
+                "skipped": skipped
+            }
+            
+            # Mark as completed if percentage is 100 or current_step is "completed"
+            if completion_percentage == 100 or current_step == "completed":
+                user.onboarding_completed = True
+                progress_data["completed_at"] = timezone.now().isoformat()
+            
+            user.onboarding_progress = progress_data
+            user.save(update_fields=["onboarding_progress", "onboarding_completed"])
+            
+            # Return updated progress
+            response_data = {
+                "steps_completed": steps_completed,
+                "current_step": current_step,
+                "completion_percentage": completion_percentage,
+                "skipped": skipped,
+                "completed_at": progress_data.get("completed_at"),
+                "onboarding_completed": user.onboarding_completed
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get", "post"])
+    def navigation_preferences(self, request):
+        """
+        GET/POST /api/accounts/navigation-preferences/
+        
+        GET: Returns current user's navigation preferences
+        POST: Updates user's navigation preferences
+        """
+        user = request.user
+        
+        if request.method == "GET":
+            # Return current navigation preferences
+            preferences = user.tutorial_preferences or {}
+            
+            return Response(preferences, status=status.HTTP_200_OK)
+        
+        elif request.method == "POST":
+            # Validate and update navigation preferences
+            current_preferences = user.tutorial_preferences or {}
+            
+            # Define valid values for specific fields
+            valid_landing_pages = ["dashboard", "students", "teachers", "reports", "billing"]
+            valid_navigation_styles = ["sidebar", "top_nav", "compact"]
+            
+            update_data = request.data
+            
+            # Validation
+            if "quick_actions" in update_data:
+                if not isinstance(update_data["quick_actions"], list):
+                    return Response(
+                        {"error": "quick_actions must be a list"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            if "default_landing_page" in update_data:
+                if update_data["default_landing_page"] not in valid_landing_pages:
+                    return Response(
+                        {"error": f"default_landing_page must be one of: {', '.join(valid_landing_pages)}"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            if "navigation_style" in update_data:
+                if update_data["navigation_style"] not in valid_navigation_styles:
+                    return Response(
+                        {"error": f"navigation_style must be one of: {', '.join(valid_navigation_styles)}"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            if "tutorial_auto_start" in update_data:
+                if not isinstance(update_data["tutorial_auto_start"], bool):
+                    return Response(
+                        {"error": "tutorial_auto_start must be a boolean"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Update preferences (merge with existing)
+            current_preferences.update(update_data)
+            
+            user.tutorial_preferences = current_preferences
+            user.save(update_fields=["tutorial_preferences"])
+            
+            # Return updated preferences
+            return Response(current_preferences, status=status.HTTP_200_OK)
+
 
 class RequestCodeView(APIView):
     """
@@ -2637,3 +2786,216 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class GlobalSearchView(KnoxAuthenticatedAPIView):
+    """
+    Global search API for searching across teachers, students, courses, and school settings.
+    GET /api/search/global/?q=query&types=teacher,student&limit=10
+    
+    Supports school-scoped results with PostgreSQL full-text search capabilities.
+    Performance target: <200ms response time.
+    """
+    
+    def get(self, request):
+        """
+        Search across multiple entity types within the user's school context.
+        
+        Query parameters:
+        - q: Search query (required)
+        - types: Comma-separated list of types to search (teacher,student,course)
+        - limit: Number of results to return (default 10, max 50)
+        """
+        # Get and validate query parameter
+        query = request.query_params.get('q', '').strip()
+        if not query:
+            return Response(
+                {"error": "Query parameter 'q' is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get and validate types parameter
+        types_param = request.query_params.get('types', 'teacher,student,course')
+        valid_types = {'teacher', 'student', 'course'}
+        requested_types = set(type.strip() for type in types_param.split(','))
+        
+        # Validate that all requested types are valid
+        invalid_types = requested_types - valid_types
+        if invalid_types:
+            return Response(
+                {"error": f"Invalid types: {', '.join(invalid_types)}. Valid types: {', '.join(valid_types)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get and validate limit parameter
+        try:
+            limit = int(request.query_params.get('limit', 10))
+            if limit > 50:
+                limit = 50
+            elif limit < 1:
+                limit = 1
+        except ValueError:
+            return Response(
+                {"error": "Limit must be a valid integer"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get user's schools to scope search results
+        user_school_ids = list(
+            SchoolMembership.objects.filter(
+                user=request.user, 
+                is_active=True
+            ).values_list('school_id', flat=True)
+        )
+        
+        if not user_school_ids:
+            return Response({
+                "results": [],
+                "total_count": 0,
+                "query": query,
+                "types": list(requested_types)
+            }, status=status.HTTP_200_OK)
+        
+        results = []
+        
+        # Search teachers
+        if 'teacher' in requested_types:
+            teacher_results = self._search_teachers(query, user_school_ids, limit)
+            results.extend(teacher_results)
+        
+        # Search students
+        if 'student' in requested_types:
+            student_results = self._search_students(query, user_school_ids, limit)
+            results.extend(student_results)
+        
+        # Search courses
+        if 'course' in requested_types:
+            course_results = self._search_courses(query, limit)
+            results.extend(course_results)
+        
+        # Sort results by relevance (could be enhanced with actual scoring)
+        # For now, we'll sort by exact matches first, then partial matches
+        def sort_key(result):
+            name_lower = result.get('name', '').lower()
+            query_lower = query.lower()
+            if query_lower == name_lower:
+                return 0  # Exact match
+            elif query_lower in name_lower:
+                return 1  # Partial match
+            else:
+                return 2  # Other match
+        
+        results.sort(key=sort_key)
+        
+        # Apply final limit across all results
+        results = results[:limit]
+        
+        return Response({
+            "results": results,
+            "total_count": len(results),
+            "query": query,
+            "types": list(requested_types)
+        }, status=status.HTTP_200_OK)
+    
+    def _search_teachers(self, query, user_school_ids, limit):
+        """Search for teachers within user's schools."""
+        # Build the queryset with school filtering
+        teacher_memberships = SchoolMembership.objects.filter(
+            school_id__in=user_school_ids,
+            role=SchoolRole.TEACHER,
+            is_active=True
+        ).select_related('user', 'user__teacher_profile')
+        
+        # Apply text search on user name and teacher profile fields
+        query_lower = query.lower()
+        teacher_memberships = teacher_memberships.filter(
+            models.Q(user__name__icontains=query) |
+            models.Q(user__email__icontains=query) |
+            models.Q(user__teacher_profile__specialty__icontains=query) |
+            models.Q(user__teacher_profile__bio__icontains=query)
+        )
+        
+        results = []
+        for membership in teacher_memberships[:limit]:
+            user = membership.user
+            teacher_profile = getattr(user, 'teacher_profile', None)
+            
+            result = {
+                "id": user.id,
+                "type": "teacher",
+                "name": user.name,
+                "email": user.email,
+            }
+            
+            if teacher_profile:
+                result.update({
+                    "specialty": teacher_profile.specialty,
+                    "bio": teacher_profile.bio[:200] if teacher_profile.bio else "",
+                })
+            
+            results.append(result)
+        
+        return results
+    
+    def _search_students(self, query, user_school_ids, limit):
+        """Search for students within user's schools."""
+        # Build the queryset with school filtering
+        student_memberships = SchoolMembership.objects.filter(
+            school_id__in=user_school_ids,
+            role=SchoolRole.STUDENT,
+            is_active=True
+        ).select_related('user', 'user__student_profile', 'user__student_profile__educational_system')
+        
+        # Apply text search on user name and student profile fields  
+        query_lower = query.lower()
+        student_memberships = student_memberships.filter(
+            models.Q(user__name__icontains=query) |
+            models.Q(user__email__icontains=query) |
+            models.Q(user__student_profile__school_year__icontains=query)
+        )
+        
+        results = []
+        for membership in student_memberships[:limit]:
+            user = membership.user
+            student_profile = getattr(user, 'student_profile', None)
+            
+            result = {
+                "id": user.id,
+                "type": "student", 
+                "name": user.name,
+                "email": user.email,
+            }
+            
+            if student_profile:
+                result.update({
+                    "school_year": student_profile.school_year,
+                    "educational_system": student_profile.educational_system.name if student_profile.educational_system else None,
+                })
+            
+            results.append(result)
+        
+        return results
+    
+    def _search_courses(self, query, limit):
+        """Search for courses across all educational systems."""
+        # Apply text search on course fields
+        courses = Course.objects.filter(
+            models.Q(name__icontains=query) |
+            models.Q(code__icontains=query) |
+            models.Q(description__icontains=query)
+        ).select_related('educational_system')
+        
+        results = []
+        for course in courses[:limit]:
+            result = {
+                "id": course.id,
+                "type": "course",
+                "name": course.name,
+                "code": course.code,
+                "description": course.description[:200] if course.description else "",
+                "education_level": course.education_level,
+                "educational_system": course.educational_system.name if course.educational_system else None,
+            }
+            results.append(result)
+        
+        return results
