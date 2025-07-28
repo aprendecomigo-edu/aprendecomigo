@@ -1,8 +1,9 @@
-import { X, Mail, Copy, Check, MessageCircle, QrCode } from 'lucide-react-native';
+import { X, Mail, Copy, Check, MessageCircle, QrCode, Users } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Platform, Alert, Linking } from 'react-native';
 
-import apiClient from '@/api/apiClient';
+import { useInviteTeacher, useBulkInvitations } from '@/hooks/useInvitations';
+import { SchoolRole } from '@/api/invitationApi';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
@@ -22,6 +23,11 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { Select, SelectTrigger, SelectInput, SelectIcon, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator, SelectItem } from '@/components/ui/select';
+import { ChevronDownIcon } from '@/components/ui/icon';
+import { Textarea, TextareaInput } from '@/components/ui/textarea';
+import { Divider } from '@/components/ui/divider';
+import { Badge, BadgeText } from '@/components/ui/badge';
 
 // Color constants
 const COLORS = {
@@ -46,34 +52,36 @@ interface InvitationLink {
   usage_count: number;
 }
 
-// API calls
+// Role options for dropdown
+const ROLE_OPTIONS = [
+  { value: SchoolRole.TEACHER, label: 'Professor', description: 'Pode dar aulas e gerenciar estudantes' },
+  { value: SchoolRole.SCHOOL_ADMIN, label: 'Administrador', description: 'Pode gerenciar escola e professores' },
+];
+
+// Invitation mode
+type InvitationMode = 'single' | 'bulk';
+
+// API calls (keeping link functionality for now)
 const getSchoolInvitationLink = async (schoolId: number): Promise<InvitationLink> => {
   try {
-    const response = await apiClient.get(`/accounts/schools/${schoolId}/invitation-link/`);
-    return response.data.invitation_link;
-  } catch (error) {
-    console.error('Error getting school invitation link:', error);
-    // Mock response for now
+    // This endpoint might not exist yet, using mock data
     return {
       url: 'https://aprendecomigo.com/join-school/xyz789abc123',
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       usage_count: 5,
     };
+  } catch (error) {
+    console.error('Error getting school invitation link:', error);
+    throw error;
   }
 };
 
-const sendEmailInvite = async (email: string, schoolId: number): Promise<void> => {
-  try {
-    const response = await apiClient.post('/accounts/teachers/invite-email/', {
-      email: email,
-      school_id: schoolId,
-      role: 'teacher',
-    });
-    console.log('Email invite sent successfully:', response.data);
-  } catch (error) {
-    console.error('Error sending email invite:', error);
-    throw error;
-  }
+// Helper function to parse bulk emails
+const parseBulkEmails = (text: string): string[] => {
+  return text
+    .split(/[,\n;]+/) // Split by comma, newline, or semicolon
+    .map(email => email.trim())
+    .filter(email => email.length > 0 && email.includes('@'));
 };
 
 interface InviteTeacherModalProps {
@@ -91,9 +99,16 @@ export const InviteTeacherModal = ({
 }: InviteTeacherModalProps) => {
   const [invitationLink, setInvitationLink] = useState<InvitationLink | null>(null);
   const [email, setEmail] = useState('');
+  const [bulkEmails, setBulkEmails] = useState('');
+  const [selectedRole, setSelectedRole] = useState<SchoolRole>(SchoolRole.TEACHER);
+  const [customMessage, setCustomMessage] = useState('');
+  const [invitationMode, setInvitationMode] = useState<InvitationMode>('single');
   const [isLoading, setIsLoading] = useState(false);
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  
+  // Use hooks
+  const { inviteTeacher, loading: inviteLoading } = useInviteTeacher();
+  const { sendBulkInvitations, loading: bulkLoading, progress, resetProgress } = useBulkInvitations();
 
   React.useEffect(() => {
     if (isOpen) {
@@ -173,24 +188,90 @@ export const InviteTeacherModal = ({
     }
 
     try {
-      setIsSendingEmail(true);
-      await sendEmailInvite(email, schoolId);
+      await inviteTeacher({
+        email: email.trim(),
+        school_id: schoolId,
+        role: selectedRole,
+        custom_message: customMessage.trim() || undefined,
+      });
+      
       Alert.alert('Sucesso', 'Convite enviado por email com sucesso!');
       setEmail('');
+      setCustomMessage('');
       onSuccess();
     } catch (error) {
+      // Error handling is done in the hook
       console.error('Error sending email invite:', error);
-      Alert.alert('Erro', 'Não foi possível enviar o convite por email.');
-    } finally {
-      setIsSendingEmail(false);
+    }
+  };
+
+  const handleBulkInvite = async () => {
+    const emails = parseBulkEmails(bulkEmails);
+    
+    if (emails.length === 0) {
+      Alert.alert('Erro', 'Por favor, insira pelo menos um email válido.');
+      return;
+    }
+
+    if (emails.length > 50) {
+      Alert.alert('Erro', 'Máximo de 50 convites por vez.');
+      return;
+    }
+
+    try {
+      const response = await sendBulkInvitations({
+        school_id: schoolId,
+        invitations: emails.map(email => ({
+          email,
+          role: selectedRole,
+          custom_message: customMessage.trim() || undefined,
+        })),
+      });
+
+      // Show results
+      const { summary } = response;
+      let message = `Processados: ${summary.total_requested}\n`;
+      message += `Sucesso: ${summary.total_created}\n`;
+      if (summary.total_duplicates > 0) {
+        message += `Duplicados: ${summary.total_duplicates}\n`;
+      }
+      if (summary.total_errors > 0) {
+        message += `Erros: ${summary.total_errors}`;
+      }
+
+      Alert.alert('Convites Enviados', message);
+      setBulkEmails('');
+      setCustomMessage('');
+      resetProgress();
+      onSuccess();
+    } catch (error) {
+      // Error handling is done in the hook
+      console.error('Error sending bulk invites:', error);
     }
   };
 
   const handleClose = () => {
     setEmail('');
+    setBulkEmails('');
+    setCustomMessage('');
+    setSelectedRole(SchoolRole.TEACHER);
+    setInvitationMode('single');
     setInvitationLink(null);
     setLinkCopied(false);
+    resetProgress();
     onClose();
+  };
+
+  const getCurrentEmails = () => {
+    if (invitationMode === 'bulk') {
+      return parseBulkEmails(bulkEmails);
+    }
+    return email.trim() ? [email.trim()] : [];
+  };
+
+  const isFormValid = () => {
+    const emails = getCurrentEmails();
+    return emails.length > 0 && emails.every(e => e.includes('@'));
   };
 
   return (
@@ -263,34 +344,170 @@ export const InviteTeacherModal = ({
                 </VStack>
               </VStack>
 
+              <Divider className="my-4" />
+              
               {/* Email Invite Section */}
-              <VStack space="md">
-                <Text className="font-medium text-gray-900">Ou envie por email</Text>
+              <VStack space="lg">
+                <Text className="font-medium text-gray-900">Convitar por Email</Text>
 
-                <Input>
-                  <InputField
-                    placeholder="email@exemplo.com"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
-                </Input>
+                {/* Mode Selection */}
+                <HStack space="sm">
+                  <Button
+                    variant={invitationMode === 'single' ? 'solid' : 'outline'}
+                    size="sm"
+                    onPress={() => setInvitationMode('single')}
+                    style={invitationMode === 'single' ? { backgroundColor: COLORS.primary } : {}}
+                  >
+                    <HStack space="xs" className="items-center">
+                      <Icon as={Mail} size="sm" className={invitationMode === 'single' ? 'text-white' : 'text-gray-600'} />
+                      <ButtonText className={invitationMode === 'single' ? 'text-white' : 'text-gray-600'}>
+                        Único
+                      </ButtonText>
+                    </HStack>
+                  </Button>
+                  
+                  <Button
+                    variant={invitationMode === 'bulk' ? 'solid' : 'outline'}
+                    size="sm"
+                    onPress={() => setInvitationMode('bulk')}
+                    style={invitationMode === 'bulk' ? { backgroundColor: COLORS.primary } : {}}
+                  >
+                    <HStack space="xs" className="items-center">
+                      <Icon as={Users} size="sm" className={invitationMode === 'bulk' ? 'text-white' : 'text-gray-600'} />
+                      <ButtonText className={invitationMode === 'bulk' ? 'text-white' : 'text-gray-600'}>
+                        Múltiplos
+                      </ButtonText>
+                    </HStack>
+                  </Button>
+                </HStack>
 
+                {/* Role Selection */}
+                <VStack space="sm">
+                  <Text className="text-sm font-medium text-gray-700">Função</Text>
+                  <Select selectedValue={selectedRole} onValueChange={setSelectedRole}>
+                    <SelectTrigger variant="outline" size="md">
+                      <SelectInput placeholder="Selecionar função" />
+                      <SelectIcon className="mr-3" as={ChevronDownIcon} />
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectBackdrop />
+                      <SelectContent>
+                        <SelectDragIndicatorWrapper>
+                          <SelectDragIndicator />
+                        </SelectDragIndicatorWrapper>
+                        {ROLE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} label={option.label} value={option.value}>
+                            <VStack>
+                              <Text className="font-medium">{option.label}</Text>
+                              <Text className="text-xs text-gray-500">{option.description}</Text>
+                            </VStack>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </SelectPortal>
+                  </Select>
+                </VStack>
+
+                {/* Email Input - Single Mode */}
+                {invitationMode === 'single' && (
+                  <VStack space="sm">
+                    <Text className="text-sm font-medium text-gray-700">Email</Text>
+                    <Input>
+                      <InputField
+                        placeholder="email@exemplo.com"
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                      />
+                    </Input>
+                  </VStack>
+                )}
+
+                {/* Bulk Email Input */}
+                {invitationMode === 'bulk' && (
+                  <VStack space="sm">
+                    <HStack className="justify-between items-center">
+                      <Text className="text-sm font-medium text-gray-700">Emails</Text>
+                      <Text className="text-xs text-gray-500">
+                        {parseBulkEmails(bulkEmails).length} emails válidos
+                      </Text>
+                    </HStack>
+                    <Textarea>
+                      <TextareaInput
+                        placeholder="email1@exemplo.com, email2@exemplo.com
+ou um por linha"
+                        value={bulkEmails}
+                        onChangeText={setBulkEmails}
+                        numberOfLines={4}
+                        textAlignVertical="top"
+                      />
+                    </Textarea>
+                    <Text className="text-xs text-gray-500">
+                      Separe os emails por vírgula, ponto e vírgula ou quebra de linha. Máximo 50 emails.
+                    </Text>
+                  </VStack>
+                )}
+
+                {/* Custom Message */}
+                <VStack space="sm">
+                  <Text className="text-sm font-medium text-gray-700">Mensagem personalizada (opcional)</Text>
+                  <Textarea>
+                    <TextareaInput
+                      placeholder="Adicione uma mensagem personalizada ao convite..."
+                      value={customMessage}
+                      onChangeText={setCustomMessage}
+                      numberOfLines={3}
+                      textAlignVertical="top"
+                      maxLength={500}
+                    />
+                  </Textarea>
+                  <Text className="text-xs text-gray-500">
+                    {customMessage.length}/500 caracteres
+                  </Text>
+                </VStack>
+
+                {/* Progress indicator for bulk */}
+                {invitationMode === 'bulk' && (progress.total > 0) && (
+                  <Box className="p-3 bg-blue-50 rounded-lg">
+                    <VStack space="xs">
+                      <Text className="text-sm font-medium">Progresso do envio:</Text>
+                      <HStack space="md">
+                        <Badge variant="solid" className="bg-green-500">
+                          <BadgeText className="text-white">Sucesso: {progress.completed}</BadgeText>
+                        </Badge>
+                        {progress.failed > 0 && (
+                          <Badge variant="solid" className="bg-red-500">
+                            <BadgeText className="text-white">Falha: {progress.failed}</BadgeText>
+                          </Badge>
+                        )}
+                      </HStack>
+                    </VStack>
+                  </Box>
+                )}
+
+                {/* Send Button */}
                 <Button
-                  onPress={handleSendEmailInvite}
-                  disabled={!email.trim() || isSendingEmail}
+                  onPress={invitationMode === 'single' ? handleSendEmailInvite : handleBulkInvite}
+                  disabled={!isFormValid() || inviteLoading || bulkLoading}
                   style={{ backgroundColor: COLORS.primary }}
                 >
-                  {isSendingEmail ? (
+                  {(inviteLoading || bulkLoading) ? (
                     <HStack space="xs" className="items-center">
                       <Spinner size="small" />
-                      <ButtonText className="text-white">Enviando...</ButtonText>
+                      <ButtonText className="text-white">
+                        {invitationMode === 'bulk' ? 'Enviando...' : 'Enviando...'}
+                      </ButtonText>
                     </HStack>
                   ) : (
                     <HStack space="xs" className="items-center">
-                      <Icon as={Mail} size="sm" className="text-white" />
-                      <ButtonText className="text-white">Enviar por Email</ButtonText>
+                      <Icon as={invitationMode === 'bulk' ? Users : Mail} size="sm" className="text-white" />
+                      <ButtonText className="text-white">
+                        {invitationMode === 'bulk' 
+                          ? `Enviar ${getCurrentEmails().length} Convites` 
+                          : 'Enviar Convite'
+                        }
+                      </ButtonText>
                     </HStack>
                   )}
                 </Button>

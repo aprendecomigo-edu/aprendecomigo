@@ -1,0 +1,253 @@
+QA Test Case: Invitation Email Generation and Delivery
+
+Test ID: INVITE-004
+Test Name: Invitation Email Generation and Delivery Workflow
+Purpose: Verify that invitation emails are properly generated with correct templates, content, and delivery tracking
+Expected Result: Professional invitation emails are generated and sent with proper tracking and error handling
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend with email integration
+- Feature: Teacher Invitation System - Email Generation and Delivery
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: `make dev-open`
+4. Backend logs: `make logs` (essential for email debugging)
+5. Email backend configured (check SMTP settings or console backend)
+
+Test Data:
+- School Admin Email: anapmc.carvalho@gmail.com (school_owner role)
+- Test Email Recipients:
+  - email.test1@example.com (HTML template test)
+  - email.test2@example.com (Plain text fallback test)
+  - email.test3@example.com (Custom message test)
+- School Name: Test School (for email template context)
+- Invitation Role: teacher
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Email Backend Verification
+1. Navigate to project root and activate environment
+2. Start development servers: make dev-open
+3. Check Django email backend configuration in settings
+4. Verify email backend is properly configured for testing
+5. Open backend logs: make logs (keep this terminal open)
+
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev-open
+  # In separate terminal:
+  make logs
+
+Expected: Servers running with email backend configured
+Screenshot: 01_email_backend_setup.png
+
+Step 2: School Admin Authentication
+1. Navigate to application: http://localhost:8081
+2. Complete school admin authentication
+3. Verify access to invitation functionality
+4. Confirm school context for email templates
+
+Expected: Admin authenticated with invitation access
+Screenshot: 02_admin_authenticated.png
+
+Step 3: Create Test Invitation for HTML Email Template
+1. Access invitation form
+2. Enter email: email.test1@example.com
+3. Select role: teacher
+4. Leave custom message empty (test default template)
+5. Submit invitation
+6. Monitor backend logs for email generation activity
+
+Expected: Invitation submitted successfully with email processing
+Screenshot: 03_html_template_invitation.png
+
+Step 4: Verify HTML Email Template Generation
+1. Check backend logs for email template processing
+2. Look for HTML template rendering activities
+3. Verify template context variables are populated:
+   - Invitee email
+   - School name
+   - Inviter name
+   - Invitation link
+   - Role information
+4. Check for any template rendering errors
+
+Expected: Backend logs show successful HTML template generation
+Screenshot: 04_html_template_logs.png
+
+Step 5: Test Plain Text Email Fallback
+1. Create another invitation: email.test2@example.com
+2. Submit invitation
+3. Check backend logs for both HTML and plain text generation
+4. Verify plain text template is also created
+5. Confirm both templates have consistent content
+
+Expected: Both HTML and plain text templates generated successfully
+Screenshot: 05_plaintext_template_test.png
+
+Step 6: Test Custom Message Integration
+1. Create invitation: email.test3@example.com
+2. Add custom message: "We're excited to have you join our math department!"
+3. Submit invitation
+4. Check backend logs for custom message integration
+5. Verify custom message appears in email template context
+
+Expected: Custom message properly integrated into email templates
+Screenshot: 06_custom_message_test.png
+
+Step 7: Verify Email Content Structure
+1. If using console email backend, check console output for email content
+2. If using SMTP, check test email account for received emails
+3. Verify email structure includes:
+   - Professional subject line
+   - School branding/header
+   - Personal greeting with invitee name/email
+   - Clear invitation purpose and role
+   - Prominent invitation acceptance link
+   - Custom message (if provided)
+   - Professional footer with contact information
+   - Unsubscribe/contact options
+
+Expected: Email content is professional and complete
+Screenshot: 07_email_content_structure.png
+
+Step 8: Test Email Delivery Tracking
+1. Create new invitation: delivery.test@example.com
+2. Monitor backend logs for delivery tracking
+3. Check for email delivery status updates:
+   - Email queued
+   - Email sent
+   - Delivery confirmation (if available)
+   - Bounce handling (if applicable)
+4. Verify status updates are logged properly
+
+Expected: Email delivery process tracked and logged
+Screenshot: 08_delivery_tracking.png
+
+Step 9: Test Email Delivery Error Handling
+1. Create invitation with intentionally problematic email: invalid@nonexistent-domain-test-12345.com
+2. Submit invitation
+3. Monitor backend logs for error handling
+4. Verify graceful error handling:
+   - Error caught and logged
+   - Invitation status updated appropriately
+   - No system crashes
+   - Clear error messages
+
+Expected: Email delivery errors handled gracefully with proper logging
+Screenshot: 09_error_handling.png
+
+Step 10: Verify Email Template Personalization
+1. Create invitation from different admin user (if available)
+2. Use different school context (if multiple schools available)
+3. Submit invitation
+4. Check that email templates reflect:
+   - Correct inviter name
+   - Correct school name
+   - Correct school branding
+   - Appropriate context variables
+
+Expected: Email templates properly personalized for context
+Screenshot: 10_template_personalization.png
+
+Step 11: Test Email Link Generation and Security
+1. Create invitation: link.test@example.com
+2. Extract invitation link from backend logs or email content
+3. Verify link structure:
+   - Contains secure token
+   - Points to correct acceptance URL
+   - Includes proper domain
+   - Token is unique and secure
+4. Test link accessibility (don't accept yet)
+
+Expected: Invitation links properly generated and secure
+Screenshot: 11_link_generation.png
+
+Step 12: Test Email Template Responsiveness
+1. If possible, view generated HTML email in email client
+2. Test email display on different devices/clients:
+   - Desktop email client
+   - Mobile email app
+   - Web-based email (Gmail, Outlook, etc.)
+3. Verify email remains readable and professional
+4. Check that invitation links are clickable
+
+Expected: Email templates display correctly across different clients
+Screenshot: 12_email_responsiveness.png
+
+Step 13: Verify Email Compliance and Professionalism
+1. Review generated email content for:
+   - Professional tone and language
+   - Clear call-to-action
+   - Contact information for support
+   - Privacy and data handling information
+   - Unsubscribe mechanisms (if required)
+2. Check email headers for proper sender information
+3. Verify email doesn't trigger spam filters
+
+Expected: Emails meet professional standards and compliance requirements
+Screenshot: 13_email_compliance.png
+
+Step 14: Test Bulk Email Generation Efficiency
+1. Create bulk invitation with 5 emails
+2. Monitor backend logs for bulk email processing
+3. Verify emails are generated efficiently:
+   - Template rendering optimized
+   - No duplicate processing
+   - Batch processing used where appropriate
+4. Check for any performance issues or errors
+
+Expected: Bulk email generation is efficient and error-free
+Screenshot: 14_bulk_email_efficiency.png
+
+Step 15: Verify Email Delivery Status Updates
+1. Return to invitation dashboard
+2. Check email delivery status for created invitations:
+   - Email delivery status fields
+   - Last email sent timestamp
+   - Delivery confirmation status
+3. Verify status accuracy reflects actual email processing
+4. Check for real-time status updates
+
+Expected: Email delivery status accurately reflected in system
+Screenshot: 15_delivery_status_updates.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All emails generated correctly with professional templates, proper content, and reliable delivery tracking
+FAIL: Any email generation failures, template errors, delivery issues, or missing functionality
+
+Individual Step Criteria:
+- Step 1: PASS if email backend configured and accessible, FAIL if email system not working
+- Step 2: PASS if admin authentication successful, FAIL if auth issues
+- Step 3: PASS if invitation triggers email generation, FAIL if no email processing
+- Step 4: PASS if HTML templates generated correctly, FAIL if template errors
+- Step 5: PASS if plain text fallback works, FAIL if plain text issues
+- Step 6: PASS if custom messages integrated properly, FAIL if custom message problems
+- Step 7: PASS if email content professional and complete, FAIL if content issues
+- Step 8: PASS if delivery tracking works, FAIL if no delivery tracking
+- Step 9: PASS if errors handled gracefully, FAIL if system crashes or poor error handling
+- Step 10: PASS if personalization works correctly, FAIL if personalization missing/wrong
+- Step 11: PASS if links generated securely, FAIL if link generation issues
+- Step 12: PASS if emails display well across clients, FAIL if display issues
+- Step 13: PASS if emails meet professional standards, FAIL if unprofessional content
+- Step 14: PASS if bulk processing efficient, FAIL if performance issues
+- Step 15: PASS if status updates accurate, FAIL if status inconsistencies
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Email templates must be professional and branded appropriately
+- Email content should be clear and actionable
+- Invitation links must be secure and easy to use
+- Delivery tracking should be accurate and timely
+- Error handling should be graceful and informative
+- Custom messages should integrate naturally into templates
+- Emails should be mobile-friendly and accessible
+- Processing should be efficient for both single and bulk invitations

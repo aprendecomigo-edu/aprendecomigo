@@ -1,13 +1,17 @@
 import logging
 
-from common.messaging import send_email_verification_code
+from common.messaging import send_email_verification_code, TeacherInvitationEmailService
 from common.throttles import (
+    BulkInvitationIPThrottle,
+    BulkInvitationThrottle,
     EmailBasedThrottle,
     EmailCodeRequestThrottle,
+    IndividualInvitationThrottle,
     IPBasedThrottle,
     IPSignupThrottle,
 )
 from django.contrib.auth import login
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from knox.auth import TokenAuthentication
@@ -34,13 +38,17 @@ from .models import (
     Course,
     CustomUser,
     EducationalSystem,
+    EmailDeliveryStatus,
+    InvitationStatus,
     School,
+    SchoolActivity,
     SchoolInvitation,
     SchoolInvitationLink,
     SchoolMembership,
     SchoolRole,
     StudentProfile,
     TeacherCourse,
+    TeacherInvitation,
     TeacherProfile,
     VerificationCode,
 )
@@ -988,7 +996,7 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
             permission_classes = [IsAuthenticated, IsOwnerOrSchoolAdmin]
         elif self.action == "onboarding":
             permission_classes = [IsAuthenticated]
-        elif self.action in ["invite_new", "invite_existing"]:
+        elif self.action in ["invite_new", "invite_existing", "invite_bulk"]:
             permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
         else:
             permission_classes = [IsAuthenticated, IsTeacherInAnySchool]
@@ -1089,7 +1097,7 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    @action(detail=False, methods=["post"])
+    @action(detail=False, methods=["post"], throttle_classes=[IndividualInvitationThrottle])
     def invite_existing(self, request):
         """
         Invite an existing user to become a teacher at a school.
@@ -1161,11 +1169,19 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
             # Send email notification if requested
             if send_email:
                 try:
-                    # TODO: Implement email sending
-                    # send_invitation_email(invitation, invitation_link)
-                    response_data["notifications_sent"]["email"] = True
+                    email_result = TeacherInvitationEmailService.send_invitation_email(invitation)
+                    
+                    if email_result['success']:
+                        response_data["notifications_sent"]["email"] = True
+                        invitation.mark_email_sent()
+                        logger.info(f"Individual invitation email sent to {invitation.email}")
+                    else:
+                        logger.warning(f"Failed to send invitation email: {email_result.get('error', 'Unknown error')}")
+                        invitation.mark_email_failed(email_result.get('error', 'Unknown error'))
+                        
                 except Exception as e:
                     logger.warning(f"Failed to send invitation email: {e}")
+                    invitation.mark_email_failed(f"Exception: {str(e)}")
 
             # Send SMS notification if requested
             if send_sms:
@@ -1179,10 +1195,241 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
             return Response(response_data, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            logger.error(f"Invite existing teacher failed for email {email}: {e!s}")
+            # Log detailed error for debugging but don't expose to user
+            logger.error(f"Invite existing teacher failed for user {request.user.id}, email {email}: {str(e)}", exc_info=True)
 
             return Response(
-                {"error": "Failed to create invitation. Please try again."},
+                {
+                    "error": "Unable to create invitation at this time. Please try again later.",
+                    "error_code": "INVITATION_CREATION_FAILED"
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="invite-bulk",
+        url_name="invite-bulk",
+        throttle_classes=[BulkInvitationThrottle, BulkInvitationIPThrottle]
+    )
+    def invite_bulk(self, request):
+        """
+        Create bulk teacher invitations with transaction management.
+        
+        Supports processing 50+ invitations efficiently with proper error handling,
+        transaction rollback, and detailed response for partial failures.
+        """
+        import uuid
+        from django.db import transaction
+        from .serializers import BulkTeacherInvitationSerializer, BulkInvitationResponseSerializer
+        
+        # Validate request data
+        serializer = BulkTeacherInvitationSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        validated_data = serializer.validated_data
+        school_id = validated_data['school_id']
+        custom_message = validated_data.get('custom_message', '')
+        send_email = validated_data.get('send_email', False)
+        invitations_data = validated_data['invitations']
+        
+        # Generate batch ID for grouping invitations
+        batch_id = uuid.uuid4()
+        
+        # Track results
+        successful_invitations = []
+        failed_invitations = []
+        errors = []
+        processed_emails = set()  # Track duplicates within the request
+        
+        # Process each invitation within transaction for consistency
+        try:
+            # Pre-validate all data before starting transaction
+            validation_errors = []
+            valid_emails = []
+            
+            for invitation_data in invitations_data:
+                email = invitation_data['email']
+                
+                # Skip if we already processed this email in this batch
+                if email in processed_emails:
+                    validation_errors.append({
+                        'email': email,
+                        'error': 'Duplicate email address in request'
+                    })
+                    continue
+                
+                processed_emails.add(email)
+                
+                # Validate email format (basic validation)
+                if not email or not email.strip() or '@' not in email:
+                    validation_errors.append({
+                        'email': email if email else '(empty)',
+                        'error': 'Invalid email format'
+                    })
+                    continue
+                
+                valid_emails.append(email)
+            
+            # If all emails failed validation, return early
+            if not valid_emails:
+                failed_invitations.extend([error['email'] for error in validation_errors])
+                errors.extend(validation_errors)
+                
+                response_data = {
+                    'batch_id': batch_id,
+                    'total_invitations': len(invitations_data),
+                    'successful_invitations': 0,
+                    'failed_invitations': len(failed_invitations),
+                    'errors': errors,
+                    'invitations': [],
+                    'message': f'All invitations failed validation. 0 successful, {len(failed_invitations)} failed.'
+                }
+                
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Now process valid emails within transaction
+            with transaction.atomic():
+                school = School.objects.select_for_update().get(id=school_id)
+                
+                # Check for existing active invitations in bulk (more efficient)
+                existing_emails = set(
+                    TeacherInvitation.objects.filter(
+                        school=school,
+                        email__in=valid_emails,
+                        is_accepted=False,
+                        expires_at__gt=timezone.now(),
+                        status__in=[
+                            InvitationStatus.PENDING,
+                            InvitationStatus.SENT,
+                            InvitationStatus.DELIVERED,
+                            InvitationStatus.VIEWED,
+                        ]
+                    ).values_list('email', flat=True)
+                )
+                
+                # Process each valid email
+                for email in valid_emails:
+                    try:
+                        # Check if invitation already exists
+                        if email in existing_emails:
+                            failed_invitations.append(email)
+                            errors.append({
+                                'email': email,
+                                'error': 'An active invitation already exists for this email and school'
+                            })
+                            continue
+                        
+                        # Create invitation
+                        invitation = TeacherInvitation.objects.create(
+                            school=school,
+                            email=email,
+                            invited_by=request.user,
+                            custom_message=custom_message,
+                            batch_id=batch_id,
+                            role=SchoolRole.TEACHER
+                        )
+                        
+                        successful_invitations.append(invitation)
+                        
+                    except ValidationError as e:
+                        failed_invitations.append(email)
+                        errors.append({
+                            'email': email,
+                            'error': str(e)
+                        })
+                    except Exception as e:
+                        failed_invitations.append(email)
+                        errors.append({
+                            'email': email,
+                            'error': f'Unexpected error: {str(e)}'
+                        })
+                
+                # Add validation errors to final errors
+                failed_invitations.extend([error['email'] for error in validation_errors])
+                errors.extend(validation_errors)
+                
+                # Prepare response data
+                response_data = {
+                    'batch_id': batch_id,
+                    'total_invitations': len(invitations_data),
+                    'successful_invitations': len(successful_invitations),
+                    'failed_invitations': len(failed_invitations),
+                    'errors': errors,
+                    'invitations': [],
+                    'message': f'Batch invitation completed. {len(successful_invitations)} successful, {len(failed_invitations)} failed.'
+                }
+                
+                # Add invitation details for successful invitations
+                for invitation in successful_invitations:
+                    invitation_link = f"https://aprendecomigo.com/accept-teacher-invitation/{invitation.token}"
+                    response_data['invitations'].append({
+                        'id': invitation.id,
+                        'email': invitation.email,
+                        'token': invitation.token,
+                        'link': invitation_link,
+                        'expires_at': invitation.expires_at,
+                        'status': invitation.status,
+                        'email_delivery_status': invitation.email_delivery_status
+                    })
+                
+                # Determine response status code
+                if len(failed_invitations) == 0:
+                    # All invitations successful
+                    response_status = status.HTTP_201_CREATED
+                elif len(successful_invitations) == 0:
+                    # All invitations failed
+                    response_status = status.HTTP_400_BAD_REQUEST
+                else:
+                    # Partial success
+                    response_status = status.HTTP_207_MULTI_STATUS
+                
+                # Send batch email notifications if requested
+                email_results = {'successful_emails': 0, 'failed_emails': 0, 'errors': []}
+                if send_email and successful_invitations:
+                    try:
+                        email_results = TeacherInvitationEmailService.send_bulk_invitation_emails(
+                            successful_invitations
+                        )
+                        
+                        # Update response with email results
+                        response_data['email_results'] = {
+                            'emails_sent': email_results['successful_emails'],
+                            'email_failures': email_results['failed_emails'],
+                            'email_errors': email_results['errors']
+                        }
+                        
+                        logger.info(
+                            f"Bulk emails processed: {email_results['successful_emails']} sent, "
+                            f"{email_results['failed_emails']} failed"
+                        )
+                        
+                    except Exception as e:
+                        logger.error(f"Failed to send batch emails: {e}")
+                        response_data['email_results'] = {
+                            'emails_sent': 0,
+                            'email_failures': len(successful_invitations),
+                            'email_errors': [{'error': f'Batch email processing failed: {str(e)}'}]
+                        }
+                
+                return Response(response_data, status=response_status)
+                
+        except Exception as e:
+            # Log detailed error for debugging but don't expose to user
+            logger.error(f"Bulk teacher invitation failed for user {request.user.id}: {str(e)}", exc_info=True)
+            
+            # Return generic error message to prevent information leakage
+            return Response(
+                {
+                    "error": "Unable to process bulk invitations at this time. Please try again later.",
+                    "error_code": "BULK_INVITATION_FAILED"
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -1726,11 +1973,24 @@ class InvitationViewSet(viewsets.ModelViewSet):
         # Send email if requested
         if send_email:
             try:
-                # TODO: Implement email sending
-                # send_invitation_email(invitation, invitation_link)
-                notifications_sent["email"] = True
+                # For resending, we use the retry method if the invitation previously failed
+                if invitation.email_delivery_status == EmailDeliveryStatus.FAILED:
+                    email_result = TeacherInvitationEmailService.retry_failed_invitation_email(invitation)
+                else:
+                    email_result = TeacherInvitationEmailService.send_invitation_email(invitation)
+                
+                if email_result['success']:
+                    notifications_sent["email"] = True
+                    if invitation.email_delivery_status != EmailDeliveryStatus.SENT:
+                        invitation.mark_email_sent()
+                    logger.info(f"Invitation email resent to {invitation.email}")
+                else:
+                    logger.warning(f"Failed to resend invitation email: {email_result.get('error', 'Unknown error')}")
+                    invitation.mark_email_failed(email_result.get('error', 'Unknown error'))
+                    
             except Exception as e:
                 logger.warning(f"Failed to resend invitation email: {e}")
+                invitation.mark_email_failed(f"Resend exception: {str(e)}")
 
         # Send SMS if requested
         if send_sms:
@@ -2007,3 +2267,373 @@ class SchoolDashboardViewSet(viewsets.ModelViewSet):
             instance._prefetched_objects_cache = {}
 
         return Response(serializer.data)
+
+
+class TeacherInvitationViewSet(viewsets.ModelViewSet):
+    """
+    Simplified API endpoints for teacher invitation management.
+    Provides clean REST endpoints without WebSocket complexity.
+    """
+    
+    queryset = TeacherInvitation.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    lookup_field = "token"  # Use token instead of id for lookups
+    
+    def get_queryset(self):
+        """Filter invitations based on user permissions."""
+        user = self.request.user
+        
+        # System admins can see all invitations
+        if user.is_staff or user.is_superuser:
+            return TeacherInvitation.objects.all()
+        
+        # Get schools where user is admin
+        admin_school_ids = list_school_ids_owned_or_managed(user)
+        
+        if admin_school_ids:
+            # School admins can see invitations for their schools
+            return TeacherInvitation.objects.filter(school_id__in=admin_school_ids)
+        
+        # Users can see invitations sent to them
+        return TeacherInvitation.objects.filter(email=user.email)
+    
+    def get_permissions(self):
+        """Different permissions for different actions."""
+        if self.action in ["accept", "status"]:
+            # Anyone can check status or accept (with token validation)
+            permission_classes = [AllowAny]
+        elif self.action == "list":
+            # Only admins can list invitations
+            permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+        else:
+            # All other actions require authentication
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+    
+    @action(detail=True, methods=["post"], permission_classes=[AllowAny])
+    def accept(self, request, token=None):
+        """
+        Accept a teacher invitation (POST /api/accounts/invitations/{token}/accept/).
+        
+        This simplified endpoint allows teachers to accept invitations without WebSocket complexity.
+        """
+        try:
+            invitation = TeacherInvitation.objects.select_related('school', 'invited_by').get(token=token)
+        except TeacherInvitation.DoesNotExist:
+            return Response(
+                {"error": "Invalid invitation token"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        
+        # Check if invitation is valid
+        if not invitation.is_valid():
+            if invitation.is_accepted:
+                return Response(
+                    {"error": "This invitation has already been accepted"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                return Response(
+                    {"error": "This invitation has expired or is no longer valid"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return Response(
+                {
+                    "error": "Authentication required to accept invitation",
+                    "invitation_details": {
+                        "school_name": invitation.school.name,
+                        "email": invitation.email,
+                        "expires_at": invitation.expires_at,
+                    }
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        
+        # Verify the current user is the intended recipient
+        if invitation.email != request.user.email:
+            return Response(
+                {"error": "This invitation is not for your account"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
+        # Process the acceptance
+        from django.db import transaction
+        
+        try:
+            with transaction.atomic():
+                # Check if user already has a teacher profile
+                if hasattr(request.user, "teacher_profile"):
+                    teacher_profile = request.user.teacher_profile
+                else:
+                    # Create minimal teacher profile
+                    teacher_profile = TeacherProfile.objects.create(
+                        user=request.user,
+                        bio="",
+                        specialty="",
+                    )
+                
+                # Create school membership if it doesn't exist
+                membership, created = SchoolMembership.objects.get_or_create(
+                    user=request.user,
+                    school=invitation.school,
+                    role=invitation.role,
+                    defaults={"is_active": True},
+                )
+                
+                if not created and not membership.is_active:
+                    # Reactivate if was previously inactive
+                    membership.is_active = True
+                    membership.save()
+                
+                # Mark invitation as accepted and update status
+                invitation.accept()
+                invitation.mark_viewed()  # Also mark as viewed
+                
+                # Create activity log
+                from .services.metrics_service import SchoolActivityService
+                from .models import ActivityType
+                
+                SchoolActivityService.create_activity(
+                    school=invitation.school,
+                    activity_type=ActivityType.INVITATION_ACCEPTED,
+                    actor=request.user,
+                    target_user=request.user,
+                    target_invitation=invitation,
+                    description=f"{request.user.name} accepted teacher invitation",
+                    metadata={
+                        'invitation_id': str(invitation.id),
+                        'batch_id': str(invitation.batch_id),
+                        'role': invitation.role
+                    }
+                )
+                
+                # Return success response
+                return Response(
+                    {
+                        "message": "Invitation accepted successfully! You are now a teacher at this school.",
+                        "invitation": {
+                            "id": invitation.id,
+                            "school": {
+                                "id": invitation.school.id,
+                                "name": invitation.school.name,
+                            },
+                            "role": invitation.role,
+                            "role_display": invitation.get_role_display(),
+                            "accepted_at": invitation.accepted_at,
+                        },
+                        "membership": {
+                            "id": membership.id,
+                            "role": membership.role,
+                            "joined_at": membership.joined_at,
+                            "is_active": membership.is_active,
+                        },
+                        "teacher_profile_created": not hasattr(request.user, "teacher_profile"),
+                    },
+                    status=status.HTTP_200_OK,
+                )
+                
+        except Exception as e:
+            logger.error(f"Accept invitation failed for token {token}: {e}")
+            return Response(
+                {"error": "Failed to accept invitation. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    
+    @action(detail=True, methods=["get"], permission_classes=[AllowAny])
+    def status(self, request, token=None):
+        """
+        Check invitation status (GET /api/accounts/invitations/{token}/status/).
+        
+        Returns current status and details without requiring authentication.
+        """
+        try:
+            invitation = TeacherInvitation.objects.select_related('school', 'invited_by').get(token=token)
+        except TeacherInvitation.DoesNotExist:
+            return Response(
+                {"error": "Invalid invitation token"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        
+        # Mark as viewed if not already
+        if not invitation.viewed_at:
+            invitation.mark_viewed()
+        
+        # Build response data
+        response_data = {
+            "invitation": {
+                "id": invitation.id,
+                "email": invitation.email,
+                "status": invitation.status,
+                "is_accepted": invitation.is_accepted,
+                "is_valid": invitation.is_valid(),
+                "school": {
+                    "id": invitation.school.id,
+                    "name": invitation.school.name,
+                    "description": invitation.school.description or "",
+                },
+                "role": invitation.role,
+                "role_display": invitation.get_role_display(),
+                "invited_by": {
+                    "name": invitation.invited_by.name,
+                    "email": invitation.invited_by.email,
+                },
+                "created_at": invitation.created_at,
+                "expires_at": invitation.expires_at,
+                "accepted_at": invitation.accepted_at,
+                "viewed_at": invitation.viewed_at,
+            },
+            "email_delivery": {
+                "status": invitation.email_delivery_status,
+                "sent_at": invitation.email_sent_at,
+                "delivered_at": invitation.email_delivered_at,
+                "failure_reason": invitation.email_failure_reason,
+                "retry_count": invitation.retry_count,
+                "can_retry": invitation.can_retry(),
+            },
+            "user_context": {
+                "is_authenticated": request.user.is_authenticated,
+                "is_correct_user": (
+                    request.user.is_authenticated and 
+                    request.user.email == invitation.email
+                ),
+                "can_accept": (
+                    invitation.is_valid() and 
+                    request.user.is_authenticated and 
+                    request.user.email == invitation.email
+                ),
+            }
+        }
+        
+        # Add custom message if present
+        if invitation.custom_message:
+            response_data["invitation"]["custom_message"] = invitation.custom_message
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated, IsSchoolOwnerOrAdmin])
+    def list_for_school(self, request):
+        """
+        Get invitation status for school admins (GET /api/accounts/teachers/invitations/).
+        
+        Returns all invitations for schools that the user can manage.
+        """
+        # Get query parameters
+        school_id = request.query_params.get('school_id')
+        status_filter = request.query_params.get('status')
+        email_status_filter = request.query_params.get('email_status')
+        
+        # Base queryset - user can only see invitations for schools they manage
+        queryset = self.get_queryset().select_related('school', 'invited_by')
+        
+        # Apply filters
+        if school_id:
+            try:
+                school_id = int(school_id)
+                # Verify user can manage this school
+                admin_school_ids = list_school_ids_owned_or_managed(request.user)
+                if school_id not in admin_school_ids:
+                    return Response(
+                        {"error": "You don't have permission to view invitations for this school"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                queryset = queryset.filter(school_id=school_id)
+            except (ValueError, TypeError):
+                return Response(
+                    {"error": "Invalid school_id parameter"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        
+        if status_filter:
+            status_choices = [choice[0] for choice in InvitationStatus.choices]
+            if status_filter in status_choices:
+                queryset = queryset.filter(status=status_filter)
+            else:
+                return Response(
+                    {"error": f"Invalid status. Must be one of: {', '.join(status_choices)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        
+        if email_status_filter:
+            email_status_choices = [choice[0] for choice in EmailDeliveryStatus.choices]
+            if email_status_filter in email_status_choices:
+                queryset = queryset.filter(email_delivery_status=email_status_filter)
+            else:
+                return Response(
+                    {"error": f"Invalid email_status. Must be one of: {', '.join(email_status_choices)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        
+        # Order by creation date (newest first)
+        queryset = queryset.order_by('-created_at')
+        
+        # Build response
+        invitations_data = []
+        for invitation in queryset:
+            invitation_data = {
+                "id": invitation.id,
+                "email": invitation.email,
+                "status": invitation.status,
+                "is_accepted": invitation.is_accepted,
+                "is_valid": invitation.is_valid(),
+                "school": {
+                    "id": invitation.school.id,
+                    "name": invitation.school.name,
+                },
+                "role": invitation.role,
+                "role_display": invitation.get_role_display(),
+                "invited_by": {
+                    "name": invitation.invited_by.name,
+                    "email": invitation.invited_by.email,
+                },
+                "batch_id": str(invitation.batch_id),
+                "created_at": invitation.created_at,
+                "expires_at": invitation.expires_at,
+                "accepted_at": invitation.accepted_at,
+                "viewed_at": invitation.viewed_at,
+                "email_delivery": {
+                    "status": invitation.email_delivery_status,
+                    "sent_at": invitation.email_sent_at,
+                    "delivered_at": invitation.email_delivered_at,
+                    "failure_reason": invitation.email_failure_reason,
+                    "retry_count": invitation.retry_count,
+                    "can_retry": invitation.can_retry(),
+                },
+                "actions": {
+                    "can_cancel": not invitation.is_accepted and invitation.is_valid(),
+                    "can_resend": invitation.is_valid() and invitation.can_retry(),
+                    "invitation_link": f"https://aprendecomigo.com/accept-teacher-invitation/{invitation.token}",
+                }
+            }
+            
+            # Add custom message if present
+            if invitation.custom_message:
+                invitation_data["custom_message"] = invitation.custom_message
+            
+            invitations_data.append(invitation_data)
+        
+        # Add summary statistics
+        total_count = queryset.count()
+        summary_stats = {
+            "total_invitations": total_count,
+            "pending_invitations": queryset.filter(status=InvitationStatus.PENDING).count(),
+            "sent_invitations": queryset.filter(status=InvitationStatus.SENT).count(),
+            "accepted_invitations": queryset.filter(status=InvitationStatus.ACCEPTED).count(),
+            "expired_invitations": queryset.filter(expires_at__lt=timezone.now(), is_accepted=False).count(),
+        }
+        
+        return Response(
+            {
+                "invitations": invitations_data,
+                "summary": summary_stats,
+                "filters_applied": {
+                    "school_id": school_id,
+                    "status": status_filter,
+                    "email_status": email_status_filter,
+                }
+            },
+            status=status.HTTP_200_OK,
+        )

@@ -9,6 +9,8 @@ from rest_framework import serializers
 from .models import (
     Course,
     EducationalSystem,
+    EmailDeliveryStatus,
+    InvitationStatus,
     School,
     SchoolActivity,
     SchoolInvitation,
@@ -17,6 +19,7 @@ from .models import (
     SchoolSettings,
     StudentProfile,
     TeacherCourse,
+    TeacherInvitation,
     TeacherProfile,
 )
 
@@ -930,3 +933,184 @@ class EnhancedSchoolSerializer(serializers.ModelSerializer):
                 settings.save()
         
         return instance
+
+
+class TeacherInvitationSerializer(BaseNestedModelSerializer):
+    """
+    Serializer for the TeacherInvitation model.
+    """
+    
+    school = SchoolSerializer(read_only=True)
+    school_id = serializers.PrimaryKeyRelatedField(
+        write_only=True, queryset=School.objects.all(), source="school"
+    )
+    invited_by = UserSerializer(read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    email_delivery_status_display = serializers.CharField(
+        source='get_email_delivery_status_display', read_only=True
+    )
+    
+    class Meta:
+        model = TeacherInvitation
+        fields = [
+            "id",
+            "school",
+            "school_id", 
+            "email",
+            "invited_by",
+            "role",
+            "custom_message",
+            "batch_id",
+            "status",
+            "status_display",
+            "email_delivery_status",
+            "email_delivery_status_display",
+            "email_sent_at",
+            "email_delivered_at",
+            "email_failure_reason",
+            "retry_count",
+            "max_retries",
+            "token",
+            "created_at",
+            "updated_at",
+            "expires_at",
+            "is_accepted",
+            "accepted_at",
+            "viewed_at",
+        ]
+        read_only_fields = [
+            "id",
+            "invited_by",
+            "status",
+            "email_delivery_status",
+            "email_sent_at",
+            "email_delivered_at",
+            "email_failure_reason",
+            "retry_count",
+            "token",
+            "created_at",
+            "updated_at",
+            "is_accepted",
+            "accepted_at",
+            "viewed_at",
+        ]
+
+
+class SingleInvitationSerializer(serializers.Serializer):
+    """
+    Serializer for a single invitation in a bulk request.
+    """
+    
+    email = serializers.CharField()  # Use CharField to allow invalid emails, validate in view
+
+
+class BulkTeacherInvitationSerializer(serializers.Serializer):
+    """
+    Serializer for bulk teacher invitation requests.
+    Handles validation and processing of multiple invitations at once.
+    """
+    
+    school_id = serializers.IntegerField()
+    custom_message = serializers.CharField(
+        max_length=1000, 
+        required=False, 
+        allow_blank=True,
+        help_text="Personal message to include in all invitations"
+    )
+    send_email = serializers.BooleanField(
+        default=False,
+        help_text="Whether to immediately send invitation emails"
+    )
+    invitations = serializers.ListField(
+        child=SingleInvitationSerializer(),
+        min_length=1,
+        max_length=100,
+        help_text="List of email addresses to invite (max 100)"
+    )
+    
+    def validate_custom_message(self, value):
+        """Validate and sanitize custom message for security."""
+        if not value:
+            return value
+        
+        # Strip dangerous HTML tags and script content
+        import re
+        from django.utils.html import strip_tags
+        
+        # Remove script tags and their content
+        value = re.sub(r'<script[^>]*>.*?</script>', '', value, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove dangerous HTML attributes (on* event handlers)
+        value = re.sub(r'\son\w+\s*=\s*["\'][^"\']*["\']', '', value, flags=re.IGNORECASE)
+        
+        # Strip remaining HTML tags to plain text
+        value = strip_tags(value)
+        
+        # Limit line breaks to prevent formatting abuse
+        value = re.sub(r'\n{3,}', '\n\n', value)
+        
+        # Ensure reasonable length after sanitization
+        if len(value.strip()) > 1000:
+            raise serializers.ValidationError("Custom message is too long after processing")
+        
+        return value.strip()
+    
+    def validate_school_id(self, value):
+        """Validate that the school exists and user has permission."""
+        try:
+            school = School.objects.get(id=value)
+        except School.DoesNotExist:
+            raise serializers.ValidationError("School does not exist")
+        
+        # Check user permission
+        request = self.context.get('request')
+        if not request or not request.user:
+            raise serializers.ValidationError("Authentication required")
+        
+        from .db_queries import can_user_manage_school
+        if not can_user_manage_school(request.user, school.id):
+            raise serializers.ValidationError(
+                "You don't have permission to invite teachers to this school"
+            )
+        
+        return value
+    
+    def validate_invitations(self, value):
+        """Validate invitation list for duplicates and limits."""
+        if len(value) == 0:
+            raise serializers.ValidationError("At least one invitation is required")
+        
+        if len(value) > 100:
+            raise serializers.ValidationError("Maximum 100 invitations allowed per batch")
+        
+        # Note: Duplicate and invalid email validation moved to view level
+        # to allow partial success handling as per API requirements
+        
+        return value
+    
+    def validate(self, data):
+        """Additional validation across fields."""
+        school_id = data.get('school_id')
+        emails = [inv['email'] for inv in data.get('invitations', [])]
+        
+        # Note: We don't validate existing invitations here anymore to allow partial success
+        # This validation is moved to the view level for better error handling
+        
+        return data
+
+
+class BulkInvitationResponseSerializer(serializers.Serializer):
+    """
+    Serializer for bulk invitation response data.
+    """
+    
+    batch_id = serializers.UUIDField(read_only=True)
+    total_invitations = serializers.IntegerField(read_only=True)
+    successful_invitations = serializers.IntegerField(read_only=True)
+    failed_invitations = serializers.IntegerField(read_only=True)
+    errors = serializers.ListField(
+        child=serializers.DictField(),
+        read_only=True
+    )
+    invitations = TeacherInvitationSerializer(many=True, read_only=True)
+    message = serializers.CharField(read_only=True)

@@ -1,4 +1,4 @@
-import { CalendarPlusIcon, MessageCircleIcon, PlusIcon, SettingsIcon, UserPlusIcon, UsersIcon } from 'lucide-react-native';
+import { CalendarPlusIcon, MessageCircleIcon, PlusIcon, SettingsIcon, UserPlusIcon, UsersIcon, MailIcon } from 'lucide-react-native';
 import React from 'react';
 
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -25,6 +25,7 @@ interface QuickActionsPanelProps {
   onScheduleClass: () => void;
   onViewMessages: () => void;
   onManageUsers: () => void;
+  onManageInvitations?: () => void;
   onSettings: () => void;
 }
 
@@ -73,6 +74,7 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
   onScheduleClass,
   onViewMessages,
   onManageUsers,
+  onManageInvitations,
   onSettings,
 }) => {
   const actions: QuickAction[] = [
@@ -116,6 +118,14 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
       color: 'indigo',
       onPress: onManageUsers,
     },
+    ...(onManageInvitations ? [{
+      id: 'manage-invitations',
+      title: 'Gerir Convites',
+      description: 'Acompanhe status dos convites',
+      icon: MailIcon,
+      color: 'teal',
+      onPress: onManageInvitations,
+    }] : []),
     {
       id: 'settings',
       title: 'Configurações',
@@ -135,23 +145,14 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
       </CardHeader>
       <CardBody>
         <VStack space="md">
-          {/* Primary Actions Row */}
-          <HStack space="md" className="flex-wrap">
-            <QuickActionItem action={actions[0]} />
-            <QuickActionItem action={actions[1]} />
-          </HStack>
-
-          {/* Secondary Actions Row */}
-          <HStack space="md" className="flex-wrap">
-            <QuickActionItem action={actions[2]} />
-            <QuickActionItem action={actions[3]} />
-          </HStack>
-
-          {/* Management Actions Row */}
-          <HStack space="md" className="flex-wrap">
-            <QuickActionItem action={actions[4]} />
-            <QuickActionItem action={actions[5]} />
-          </HStack>
+          {/* Render actions in pairs */}
+          {Array.from({ length: Math.ceil(actions.length / 2) }, (_, rowIndex) => (
+            <HStack key={rowIndex} space="md" className="flex-wrap">
+              {actions.slice(rowIndex * 2, rowIndex * 2 + 2).map((action) => (
+                <QuickActionItem key={action.id} action={action} />
+              ))}
+            </HStack>
+          ))}
         </VStack>
       </CardBody>
     </Card>

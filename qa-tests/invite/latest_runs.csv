@@ -1,0 +1,10 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+invite-001,Single Teacher Invitation Form,Test invitation form with email input and role selection,,,0,0,0
+invite-002,Bulk Teacher Invitation,Test bulk invitation with multiple emails and progress tracking,,,0,0,0
+invite-003,Teacher Invitation Status Dashboard,Test invitation dashboard with filtering and real-time updates,,,0,0,0
+invite-004,Invitation Email Generation and Delivery,Test email generation and delivery workflow,,,0,0,0
+invite-005,Teacher Invitation Acceptance Flow,End-to-end test from invitation to acceptance,,,0,0,0
+invite-006,Invitation Resend and Management,Test invitation resend and management features,,,0,0,0
+invite-007,Backend API Integration,Test all invitation-related API endpoints,,,0,0,0
+invite-008,Mobile Responsiveness,Test mobile-responsive interface for invitation features,,,0,0,0
+invite-009,Error Handling and Edge Cases,Test error handling and edge case scenarios,,,0,0,0

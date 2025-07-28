@@ -1,4 +1,4 @@
-from rest_framework.throttling import AnonRateThrottle
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
 
 class EmailCodeRequestThrottle(AnonRateThrottle):
@@ -59,3 +59,24 @@ class PurchaseInitiationEmailThrottle(AnonRateThrottle):
             # Fallback to IP-based if no email provided
             return None
         return self.cache_format % {"scope": self.scope, "ident": email.lower()}
+
+
+class BulkInvitationThrottle(UserRateThrottle):
+    """Rate limit for bulk teacher invitations - based on authenticated user"""
+    
+    rate = "100/h"  # 100 invitations per hour per user (reasonable for school admins)
+    scope = "bulk_invitations"
+
+
+class BulkInvitationIPThrottle(AnonRateThrottle):
+    """Rate limit for bulk teacher invitations - based on IP address (backup protection)"""
+    
+    rate = "200/h"  # 200 invitations per hour per IP (allows multiple users from same network)
+    scope = "bulk_invitations_ip"
+
+
+class IndividualInvitationThrottle(UserRateThrottle):
+    """Rate limit for individual teacher invitations - based on authenticated user"""
+    
+    rate = "50/h"  # 50 individual invitations per hour per user
+    scope = "individual_invitations"
