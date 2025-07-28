@@ -11,8 +11,10 @@ import { Platform, Alert } from 'react-native';
 
 import type { School } from './navigation-config';
 import { schools, NAVIGATION_COLORS } from './navigation-config';
+import { QuickActions } from './quick-actions';
 
 import { useAuth } from '@/api/authContext';
+import { GlobalSearch } from '@/components/search/global-search';
 import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -38,6 +40,8 @@ interface TopNavigationProps {
   onToggleSidebar?: () => void;
   onSchoolChange?: (school: School) => void;
   className?: string;
+  showSearch?: boolean;
+  showQuickActions?: boolean;
 }
 
 /**
@@ -48,17 +52,24 @@ interface TopNavigationProps {
  * @param onToggleSidebar Callback for sidebar toggle (web only)
  * @param onSchoolChange Callback when school is changed
  * @param className Additional CSS classes
+ * @param showSearch Whether to show the global search component
+ * @param showQuickActions Whether to show quick actions dropdown
  */
 export const TopNavigation = ({
   variant = 'web',
   onToggleSidebar,
   onSchoolChange,
   className = '',
+  showSearch = true,
+  showQuickActions = true,
 }: TopNavigationProps) => {
-  const { logout } = useAuth();
+  const { logout, userProfile } = useAuth();
   const [selectedSchool, setSelectedSchool] = useState<School>(schools[2]); // Default to 3ponto14
   const [showSchoolMenu, setShowSchoolMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Check if user is admin to show admin features
+  const isAdmin = userProfile?.user_type === 'admin' || userProfile?.is_admin;
 
   // School selector handlers
   const handleSelectSchool = (school: School) => {
@@ -217,14 +228,26 @@ export const TopNavigation = ({
         className={`pt-4 pr-10 pb-3 items-center justify-between border-b border-border-300 ${className}`}
         style={{ backgroundColor: NAVIGATION_COLORS.primary }}
       >
-        <HStack className="items-center">
+        <HStack className="items-center" space="md">
           <Pressable onPress={() => onToggleSidebar && onToggleSidebar()}>
             <Icon as={MenuIcon} size="lg" className="mx-5 text-white" />
           </Pressable>
           <SchoolSelector />
         </HStack>
 
+        {/* Center - Global Search */}
+        {showSearch && (
+          <Box className="flex-1 max-w-md mx-8">
+            <GlobalSearch placeholder="Search teachers, students, classes..." />
+          </Box>
+        )}
+
         <HStack space="md" className="items-center">
+          {/* Quick Actions - Only for admins */}
+          {showQuickActions && isAdmin && (
+            <QuickActions variant="dropdown" />
+          )}
+          
           <Button
             size="sm"
             variant="outline"
@@ -238,10 +261,18 @@ export const TopNavigation = ({
             </HStack>
           </Button>
           <Avatar className="h-9 w-9">
-            <AvatarFallbackText className="font-light">A</AvatarFallbackText>
+            <AvatarFallbackText className="font-light">
+              {userProfile?.first_name?.charAt(0) || 'U'}
+            </AvatarFallbackText>
           </Avatar>
         </HStack>
       </HStack>
+      
+      {/* Quick Actions FAB for mobile */}
+      {showQuickActions && isAdmin && variant === 'mobile' && (
+        <QuickActions variant="fab" />
+      )}
+      
       <LogoutModal />
     </>
   );

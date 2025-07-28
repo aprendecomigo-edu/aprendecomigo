@@ -5,6 +5,7 @@ import {
   MobileNavigation,
   SideNavigation,
   TopNavigation,
+  Breadcrumb,
   schools,
   type School,
 } from '@/components/navigation';
@@ -19,6 +20,9 @@ interface MainLayoutProps {
   _title?: string;
   showSidebar?: boolean;
   requireAuth?: boolean;
+  showBreadcrumbs?: boolean;
+  showSearch?: boolean;
+  showQuickActions?: boolean;
 }
 
 /**
@@ -29,12 +33,18 @@ interface MainLayoutProps {
  * @param _title Optional page title (used for internal tracking, school name shown in header)
  * @param showSidebar Whether to show the sidebar (defaults to true)
  * @param requireAuth Whether to require authentication (defaults to true)
+ * @param showBreadcrumbs Whether to show breadcrumb navigation (defaults to true)
+ * @param showSearch Whether to show global search in header (defaults to true)
+ * @param showQuickActions Whether to show quick actions (defaults to true)
  */
 export const MainLayout = ({
   children,
   _title = 'Dashboard',
   showSidebar = true,
   requireAuth = true,
+  showBreadcrumbs = true,
+  showSearch = true,
+  showQuickActions = true,
 }: MainLayoutProps) => {
   const [selectedSchool, setSelectedSchool] = useState<School>(schools[0]);
   const [isSidebarVisible, setIsSidebarVisible] = useState(showSidebar);
@@ -55,7 +65,12 @@ export const MainLayout = ({
       <VStack className="min-h-screen w-full bg-background-0">
         {/* Mobile Header */}
         <Box className="md:hidden">
-          <TopNavigation variant="mobile" onSchoolChange={handleSchoolChange} />
+          <TopNavigation 
+            variant="mobile" 
+            onSchoolChange={handleSchoolChange}
+            showSearch={showSearch}
+            showQuickActions={showQuickActions}
+          />
         </Box>
 
         {/* Web Header */}
@@ -64,6 +79,8 @@ export const MainLayout = ({
             variant="web"
             onToggleSidebar={toggleSidebar}
             onSchoolChange={handleSchoolChange}
+            showSearch={showSearch}
+            showQuickActions={showQuickActions}
           />
         </Box>
 
@@ -83,7 +100,16 @@ export const MainLayout = ({
             </Box>
 
             {/* Main Content with bottom padding for mobile navigation */}
-            <VStack className="flex-1 w-full pb-20 md:pb-0">{children}</VStack>
+            <VStack className="flex-1 w-full pb-20 md:pb-0">
+              {/* Breadcrumb Navigation */}
+              {showBreadcrumbs && (
+                <Box className="px-4 py-2 border-b border-border-100 bg-background-0">
+                  <Breadcrumb />
+                </Box>
+              )}
+              
+              {children}
+            </VStack>
           </HStack>
         </VStack>
       </VStack>
