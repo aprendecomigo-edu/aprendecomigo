@@ -1,0 +1,140 @@
+QA Test Case: Search and Filter Functionality
+
+Test ID: TOB-006
+Test Name: Search and Filter Functionality for Finding Specific Courses Quickly
+Purpose: Verify that search and filter features help tutors quickly find and select specific courses
+Expected Result: Search and filter functionality works effectively to narrow down course selections
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Individual Tutor Onboarding Flow (GitHub Issue #44)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+4. Backend API endpoints accessible
+5. Frontend accessible at http://localhost:8081
+
+Test Data:
+- Educational system selected (Portugal recommended for comprehensive data)
+- Large course catalog with diverse subjects and levels
+- Courses with various subject areas, education levels, and difficulty levels
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Access Search and Filter Interface
+1. Navigate to course catalog browser in tutor onboarding
+2. Locate search input field
+3. Locate filter options/button
+4. Verify both search and filter interfaces are available
+
+Expected: Search input and filter options are visible and accessible
+Screenshot: 01_search_filter_interface.png
+
+Step 2: Test Basic Course Search by Name
+1. Enter course name in search field (e.g., "Mathematics")
+2. Verify search results update in real-time or after pressing search
+3. Verify only relevant courses appear in results
+4. Test search with partial course names
+
+Expected: Search by course name works correctly, showing relevant results
+Screenshot: 02_search_by_name.png
+
+Step 3: Test Search by Course Code
+1. Search using course codes (e.g., "MAT", "PORT", "BIO")
+2. Verify courses with matching codes appear in results
+3. Test both full and partial code searches
+4. Verify search is case-insensitive
+
+Expected: Search by course code functions correctly
+Screenshot: 03_search_by_code.png
+
+Step 4: Test Search by Subject Area
+1. Search for subject areas (e.g., "Science", "Language", "Arts")
+2. Verify courses from matching subject areas appear
+3. Test variations and synonyms of subject names
+4. Verify comprehensive subject area coverage
+
+Expected: Search by subject area returns appropriate courses
+Screenshot: 04_search_by_subject.png
+
+Step 5: Test Education Level Filters
+1. Open filter interface/modal
+2. Select specific education levels to filter by:
+   - 1st Cycle Basic Education
+   - Secondary Education
+   - Higher Education
+3. Apply filters and verify results show only courses from selected levels
+4. Test multiple education level selections
+
+Expected: Education level filters work correctly, showing only relevant courses
+Screenshot: 05_education_level_filters.png
+
+Step 6: Test Subject Area Filters
+1. Use subject area filters to narrow results
+2. Select specific subject areas (Math, Science, Languages)
+3. Apply filters and verify results
+4. Test combining multiple subject area filters
+
+Expected: Subject area filters function correctly
+Screenshot: 06_subject_area_filters.png
+
+Step 7: Test Difficulty Level Filters
+1. Filter courses by difficulty level (Beginner, Intermediate, Advanced)
+2. Apply filters and verify appropriate courses appear
+3. Test multiple difficulty level selections
+4. Verify difficulty filtering logic is sound
+
+Expected: Difficulty level filters work as expected
+Screenshot: 07_difficulty_filters.png
+
+Step 8: Test Combined Search and Filters
+1. Use search term with active filters simultaneously
+2. Example: Search "Math" + Filter for "Secondary Education"
+3. Verify results show courses matching both search and filter criteria
+4. Test various combinations of search + filters
+
+Expected: Search and filters work together to refine results effectively
+Screenshot: 08_combined_search_filters.png
+
+Step 9: Test Filter Clearing and Reset
+1. Apply multiple filters
+2. Test clearing individual filters
+3. Test "Clear All" or reset functionality
+4. Verify course list returns to full view after clearing
+
+Expected: Filter clearing works correctly, restoring full course list
+Screenshot: 09_filter_clearing.png
+
+Step 10: Test Search Performance and UX
+1. Test search response time with various queries
+2. Verify search results appear quickly (< 1 second)
+3. Test search result highlighting or indication
+4. Verify empty state handling when no results found
+
+Expected: Search is fast and responsive with good user experience
+Screenshot: 10_search_performance_ux.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Search and filter functionality effectively helps users find specific courses quickly with good performance and user experience
+
+FAIL: Search/filters not working properly, poor performance, confusing interface, or missing functionality
+
+Individual Step Criteria:
+- Step 1: PASS if search and filter interfaces are available, FAIL if missing
+- Step 2: PASS if course name search works correctly, FAIL if broken
+- Step 3: PASS if course code search functions, FAIL if not working
+- Step 4: PASS if subject area search works, FAIL if ineffective
+- Step 5: PASS if education level filters work properly, FAIL if broken
+- Step 6: PASS if subject area filters function correctly, FAIL if issues
+- Step 7: PASS if difficulty filters work as expected, FAIL if broken
+- Step 8: PASS if combined search+filters work together, FAIL if conflicts
+- Step 9: PASS if filter clearing works correctly, FAIL if issues
+- Step 10: PASS if search is fast with good UX, FAIL if slow/poor UX
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

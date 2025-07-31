@@ -543,6 +543,11 @@ class TeacherProfile(models.Model):
             models.Index(fields=['is_profile_complete']),
             models.Index(fields=['last_profile_update']),
             models.Index(fields=['last_activity']),
+            # Indexes for tutor discovery optimization
+            models.Index(fields=['specialty']),
+            models.Index(fields=['hourly_rate']),
+            models.Index(fields=['is_profile_complete', '-profile_completion_score']),
+            models.Index(fields=['is_profile_complete', 'hourly_rate']),
         ]
 
     def __str__(self) -> str:
@@ -663,6 +668,13 @@ class TeacherCourse(models.Model):
 
     class Meta:
         unique_together: ClassVar = ["teacher", "course"]
+        indexes = [
+            # Indexes for tutor discovery filtering
+            models.Index(fields=['hourly_rate']),
+            models.Index(fields=['is_active', 'hourly_rate']),
+            models.Index(fields=['course', 'is_active']),
+            models.Index(fields=['teacher', 'is_active']),
+        ]
 
     def __str__(self) -> str:
         teacher_name = (

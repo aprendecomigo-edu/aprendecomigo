@@ -13,6 +13,8 @@ from .views import (
     StudentBalanceViewSet,
     TeacherCompensationRuleViewSet,
     TeacherPaymentEntryViewSet,
+    TutorAnalyticsAPIView,
+    TutorAnalyticsView,
     active_pricing_plans,
     purchase_initiate,
     stripe_config,
@@ -51,6 +53,8 @@ urlpatterns = [
     path("api/pricing-plans/", active_pricing_plans, name="pricing-plans-list"),
     # Purchase initiation endpoint
     path("api/purchase/initiate/", purchase_initiate, name="purchase-initiate"),
+    # Tutor analytics endpoint
+    path("api/tutor-analytics/<int:school_id>/", TutorAnalyticsAPIView.as_view(), name="tutor-analytics"),
     # Stripe integration endpoints
     path("api/stripe/config/", stripe_config, name="stripe-config"),
     path("api/stripe/test-connection/", stripe_connection_test, name="stripe-connection-test"),

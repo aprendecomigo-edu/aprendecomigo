@@ -1,0 +1,142 @@
+QA Test Case: Course-Specific Rate Configuration
+
+Test ID: TOB-005
+Test Name: Course-Specific Rate Configuration Allowing Different Prices per Subject
+Purpose: Verify that tutors can set different hourly rates for different courses/subjects
+Expected Result: Rate configuration interface allows setting custom rates for each selected course
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Individual Tutor Onboarding Flow (GitHub Issue #44)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+4. Backend API endpoints accessible
+5. Frontend accessible at http://localhost:8081
+
+Test Data:
+- Educational system selected
+- Multiple courses selected with grade levels specified
+- Currency options (EUR expected as primary)
+- Default rate suggestions available
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Navigate to Rate Configuration Step
+1. Complete course and grade level selection
+2. Proceed to rate configuration step
+3. Verify rate configuration interface loads
+
+Expected: Rate configuration interface displays with all selected courses listed
+Screenshot: 01_rate_config_interface.png
+
+Step 2: Verify Default Rate Display
+1. Examine default rates shown for each course
+2. Verify default rates are reasonable (around €30/hour expected)
+3. Check currency display (EUR expected)
+4. Verify each course has individual rate setting
+
+Expected: Default rates displayed for each course, reasonable values, correct currency
+Screenshot: 02_default_rates.png
+
+Step 3: Test Individual Course Rate Modification
+1. Change rate for first course (e.g., Mathematics from €30 to €35)
+2. Verify rate change is accepted and displayed
+3. Verify other courses retain their original rates
+4. Test various rate values (€15-€100 range)
+
+Expected: Individual course rates can be modified independently
+Screenshot: 03_individual_rate_change.png
+
+Step 4: Test Different Rates for Different Subjects
+1. Set different rates for different subject areas:
+   - Mathematics: €35/hour
+   - Language: €30/hour
+   - Science: €40/hour
+   - Arts: €25/hour
+2. Verify each rate is maintained independently
+
+Expected: Different courses can have different rates set
+Screenshot: 04_different_subject_rates.png
+
+Step 5: Test Rate Input Validation
+1. Try entering invalid rates:
+   - Negative numbers (-€10)
+   - Zero (€0)
+   - Extremely high numbers (€1000+)
+   - Non-numeric values (text, symbols)
+2. Verify appropriate validation messages
+3. Test minimum and maximum rate constraints
+
+Expected: Rate validation prevents invalid inputs with clear error messages
+Screenshot: 05_rate_validation.png
+
+Step 6: Test Currency Options (if available)
+1. Check if currency selection is available
+2. Test changing currency for individual courses
+3. Verify currency formatting updates appropriately
+4. Test common currencies (EUR, USD, GBP if available)
+
+Expected: Currency options work correctly with proper formatting
+Screenshot: 06_currency_options.png
+
+Step 7: Test Rate Calculation and Display
+1. Verify rate calculations are displayed correctly
+2. Check for any rate summaries or averages
+3. Test rate formatting (decimal places, currency symbols)
+4. Verify consistent number formatting throughout
+
+Expected: Rate calculations and formatting are accurate and consistent
+Screenshot: 07_rate_calculations.png
+
+Step 8: Test Rate Recommendations or Market Data
+1. Look for any rate recommendations or market data
+2. Check if suggested rates are provided based on course type
+3. Verify any market comparison features if available
+4. Test acceptance of recommended rates
+
+Expected: Rate recommendations (if available) are helpful and accurate
+Screenshot: 08_rate_recommendations.png
+
+Step 9: Test Rate Persistence and Review
+1. Set custom rates for all courses
+2. Navigate to review/summary if available
+3. Verify all custom rates are maintained and displayed correctly
+4. Check rate summary displays
+
+Expected: Custom rates persist and are accurately displayed in summaries
+Screenshot: 09_rate_persistence.png
+
+Step 10: Test Continue with Rate Configuration
+1. Complete rate configuration for all courses
+2. Verify continue button becomes enabled
+3. Click continue to proceed to next step
+4. Verify rate data is maintained in subsequent steps
+
+Expected: Rate configuration data is maintained when proceeding to next step
+Screenshot: 10_continue_with_rates.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Rate configuration interface allows setting different rates for each course with proper validation, formatting, and data persistence
+
+FAIL: Cannot set different rates per course, poor validation, formatting issues, or data not persisting
+
+Individual Step Criteria:
+- Step 1: PASS if rate config interface loads properly, FAIL otherwise
+- Step 2: PASS if default rates are reasonable and properly displayed, FAIL otherwise
+- Step 3: PASS if individual rate modification works, FAIL if issues
+- Step 4: PASS if different subjects can have different rates, FAIL if restricted
+- Step 5: PASS if rate validation works properly, FAIL if poor validation
+- Step 6: PASS if currency options work correctly, FAIL if issues
+- Step 7: PASS if rate calculations and formatting correct, FAIL if errors
+- Step 8: PASS if rate recommendations helpful, FAIL if poor/missing
+- Step 9: PASS if rates persist and display correctly, FAIL if data lost
+- Step 10: PASS if continue works with rate data maintained, FAIL otherwise
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

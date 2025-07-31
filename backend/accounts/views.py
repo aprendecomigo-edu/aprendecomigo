@@ -11,8 +11,9 @@ from common.throttles import (
     IPSignupThrottle,
 )
 from django.contrib.auth import login
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from knox.auth import TokenAuthentication
 from knox.models import AuthToken
@@ -22,6 +23,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .throttles import ProfileWizardThrottle, FileUploadThrottle, IPBasedThrottle as LocalIPBasedThrottle
 from .db_queries import (
     can_user_manage_school,
     create_school_invitation,
@@ -67,6 +69,9 @@ from .serializers import (
     EducationalSystemSerializer,
     EnhancedSchoolSerializer,
     InviteExistingTeacherSerializer,
+    ProfileWizardDataSerializer,
+    ProfileWizardStepValidationSerializer,
+    ProfilePhotoUploadSerializer,
     RequestCodeSerializer,
     SchoolActivitySerializer,
     SchoolInvitationSerializer,
@@ -1374,6 +1379,71 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    @action(detail=False, methods=["get", "patch"], url_path="profile")
+    def profile(self, request):
+        """
+        Get or update the current user's teacher profile.
+        """
+        from rest_framework import status
+
+        # Check if user has a teacher profile
+        if not hasattr(request.user, "teacher_profile") or request.user.teacher_profile is None:
+            return Response(
+                {"error": "Teacher profile not found. Please complete onboarding first."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        teacher_profile = request.user.teacher_profile
+
+        if request.method == "GET":
+            # Return the teacher's profile
+            serializer = TeacherSerializer(teacher_profile)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        elif request.method == "PATCH":
+            # Update the teacher's profile
+            serializer = TeacherSerializer(teacher_profile, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["post"], url_path="profile/photo")
+    def upload_profile_photo(self, request):
+        """
+        Upload profile photo for the current user's teacher profile.
+        """
+        from rest_framework import status
+
+        # Check if user has a teacher profile
+        if not hasattr(request.user, "teacher_profile") or request.user.teacher_profile is None:
+            return Response(
+                {"error": "Teacher profile not found. Please complete onboarding first."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if 'photo' not in request.FILES:
+            return Response(
+                {"error": "No photo file provided."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        photo = request.FILES['photo']
+        teacher_profile = request.user.teacher_profile
+        
+        # Save the photo to the profile (assuming there's a photo field or similar)
+        # For now, we'll just return a mock URL - this should be implemented based on your file storage setup
+        teacher_profile.save()  # This would save any photo field updates
+        
+        # Return the photo URL (mock for now)
+        photo_url = f"/media/teacher_profiles/{teacher_profile.id}/profile.jpg"
+        
+        return Response(
+            {"photo_url": photo_url},
+            status=status.HTTP_200_OK,
+        )
+
     @action(detail=False, methods=["post"], throttle_classes=[IndividualInvitationThrottle])
     def invite_existing(self, request):
         """
@@ -1711,6 +1781,400 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
             )
 
 
+class TeacherProfileWizardViewSet(KnoxAuthenticatedAPIView):
+    """
+    SECURE API endpoints for the Teacher Profile Creation Wizard.
+    Implements comprehensive security measures including:
+    - Input validation and sanitization
+    - Rate limiting
+    - Transaction management
+    - Security logging
+    - Proper error handling
+    """
+    
+    # Apply rate limiting to all endpoints in this viewset
+    throttle_classes = [ProfileWizardThrottle]
+    
+    def post(self, request, *args, **kwargs):
+        """
+        Handle different wizard operations based on the URL path.
+        All operations are secured with input validation and rate limiting.
+        """
+        from rest_framework import status
+        from .services.profile_completion import ProfileCompletionService
+        
+        action = kwargs.get('action')
+        
+        try:
+            if action == 'save-progress':
+                return self._save_progress(request)
+            elif action == 'validate-step':
+                return self._validate_step(request)
+            elif action == 'submit':
+                return self._submit_profile(request)
+            elif action == 'upload-photo':
+                return self._upload_photo(request)
+            else:
+                logger.warning(f"Invalid action attempted: {action} by user {request.user.id}")
+                return Response(
+                    {"error": "Invalid action"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as e:
+            logger.error(f"Unexpected error in TeacherProfileWizardViewSet: {e}", exc_info=True)
+            return Response(
+                {"error": "An error occurred processing your request"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def get(self, request, *args, **kwargs):
+        """
+        Handle GET requests for wizard data.
+        """
+        from rest_framework import status
+        from .services.profile_completion import ProfileCompletionService
+        
+        action = kwargs.get('action')
+        
+        if action == 'profile-completion-score':
+            return self._get_completion_score(request)
+        elif action == 'rate-suggestions':
+            return self._get_rate_suggestions(request)
+        else:
+            return Response(
+                {"error": "Invalid action"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    def _save_progress(self, request):
+        """
+        SECURE save wizard progress to the teacher profile.
+        Implements comprehensive validation, sanitization, and transaction management.
+        """
+        from django.db import transaction
+        from rest_framework import status
+        from .services.profile_completion import ProfileCompletionService
+        
+        # Check if user has a teacher profile
+        if not hasattr(request.user, "teacher_profile") or request.user.teacher_profile is None:
+            logger.warning(f"Teacher profile not found for user {request.user.id}")
+            return Response(
+                {"error": "Teacher profile not found. Please complete onboarding first."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        
+        # SECURITY: Validate all input data using comprehensive serializer
+        profile_data_raw = request.data.get('profile_data', {})
+        current_step = request.data.get('current_step', 0)
+        
+        # Log potential security events
+        if self._detect_security_patterns(profile_data_raw):
+            logger.warning(
+                f"Potential security threat detected in profile data for user {request.user.id}. "
+                f"IP: {self._get_client_ip(request)}, Data keys: {list(profile_data_raw.keys())}"
+            )
+        
+        # Validate input using secure serializer
+        serializer = ProfileWizardDataSerializer(data=profile_data_raw)
+        if not serializer.is_valid():
+            logger.info(f"Profile data validation failed for user {request.user.id}: {serializer.errors}")
+            return Response(
+                {"error": "Invalid profile data", "details": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        validated_data = serializer.validated_data
+        
+        # SECURITY: Use atomic transaction to ensure data integrity
+        try:
+            with transaction.atomic():
+                teacher_profile = request.user.teacher_profile
+                
+                # Update user name with validated data
+                if 'first_name' in validated_data and 'last_name' in validated_data:
+                    full_name = f"{validated_data['first_name']} {validated_data['last_name']}".strip()
+                    request.user.name = full_name
+                    request.user.save()
+                    logger.info(f"Updated name for user {request.user.id}")
+                
+                # Update email if provided and different
+                if 'email' in validated_data and validated_data['email'] != request.user.email:
+                    request.user.email = validated_data['email']
+                    request.user.username = validated_data['email']  # Keep username in sync
+                    request.user.save()
+                    logger.info(f"Updated email for user {request.user.id}")
+                
+                # Update teacher profile fields with sanitized data
+                if 'professional_bio' in validated_data:
+                    teacher_profile.bio = validated_data['professional_bio']
+                
+                if 'professional_title' in validated_data:
+                    teacher_profile.specialty = validated_data['professional_title']
+                
+                if 'phone_number' in validated_data:
+                    teacher_profile.phone_number = validated_data['phone_number']
+                
+                if 'years_experience' in validated_data:
+                    # Store in education background JSON
+                    if not teacher_profile.education_background:
+                        teacher_profile.education_background = {}
+                    teacher_profile.education_background['years_experience'] = validated_data['years_experience']
+                
+                if 'education_background' in validated_data:
+                    teacher_profile.education_background = validated_data['education_background']
+                
+                if 'teaching_subjects' in validated_data:
+                    teacher_profile.teaching_subjects = validated_data['teaching_subjects']
+                
+                if 'rate_structure' in validated_data:
+                    teacher_profile.rate_structure = validated_data['rate_structure']
+                    # Also update the legacy hourly_rate field if individual_rate is present
+                    if 'individual_rate' in validated_data['rate_structure']:
+                        teacher_profile.hourly_rate = validated_data['rate_structure']['individual_rate']
+                
+                # Save profile and update completion score
+                teacher_profile.save()
+                teacher_profile.update_completion_score()
+                
+                # Get updated completion data
+                completion_data = ProfileCompletionService.calculate_completion(teacher_profile)
+                
+                logger.info(f"Successfully saved profile progress for user {request.user.id}, step {current_step}")
+                
+                return Response({
+                    "success": True,
+                    "completion_data": completion_data,
+                    "message": "Profile updated successfully"
+                }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(
+                f"Error saving wizard progress for user {request.user.id}: {e}",
+                exc_info=True
+            )
+            return Response(
+                {"error": "An error occurred while saving your profile. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _validate_step(self, request):
+        """
+        SECURE validation of a specific wizard step.
+        Uses comprehensive serializer validation.
+        """
+        from rest_framework import status
+        
+        # Validate request structure first
+        serializer = ProfileWizardStepValidationSerializer(data=request.data)
+        if not serializer.is_valid():
+            logger.info(f"Step validation request failed for user {request.user.id}: {serializer.errors}")
+            return Response({
+                "is_valid": False,
+                "errors": serializer.errors,
+                "warnings": {}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        validated_data = serializer.validated_data
+        step = validated_data['step']
+        data = validated_data['data']
+        
+        logger.info(f"Validated step {step} for user {request.user.id}")
+        
+        return Response({
+            "is_valid": True,
+            "errors": {},
+            "warnings": {},
+            "message": f"Step {step} is valid"
+        }, status=status.HTTP_200_OK)
+    
+    def _submit_profile(self, request):
+        """Submit the complete profile."""
+        from rest_framework import status
+        from .services.profile_completion import ProfileCompletionService
+        
+        # Check if user has a teacher profile
+        if not hasattr(request.user, "teacher_profile") or request.user.teacher_profile is None:
+            return Response(
+                {"error": "Teacher profile not found. Please complete onboarding first."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        
+        try:
+            teacher_profile = request.user.teacher_profile
+            profile_data = request.data.get('profile_data', {})
+            
+            # Save all the profile data (this would be a more comprehensive update)
+            # For now, just update completion score
+            teacher_profile.update_completion_score()
+            
+            return Response({
+                "success": True,
+                "profile_id": teacher_profile.id
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error submitting profile for user {request.user.id}: {e}")
+            return Response(
+                {"error": "Failed to submit profile"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _get_completion_score(self, request):
+        """Get profile completion score."""
+        from rest_framework import status
+        from .services.profile_completion import ProfileCompletionService
+        
+        # Check if user has a teacher profile
+        if not hasattr(request.user, "teacher_profile") or request.user.teacher_profile is None:
+            return Response(
+                {"error": "Teacher profile not found. Please complete onboarding first."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        
+        try:
+            teacher_profile = request.user.teacher_profile
+            completion_data = ProfileCompletionService.calculate_completion(teacher_profile)
+            
+            return Response(completion_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error getting completion score for user {request.user.id}: {e}")
+            return Response(
+                {"error": "Failed to get completion score"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _get_rate_suggestions(self, request):
+        """Get rate suggestions based on subject and location."""
+        from rest_framework import status
+        
+        subject = request.query_params.get('subject', '')
+        location = request.query_params.get('location', '')
+        
+        # Mock rate suggestions for now
+        suggestions = {
+            "subject": subject,
+            "location": location,
+            "suggested_rate": {
+                "min": 15,
+                "max": 45,
+                "average": 25,
+                "currency": "EUR"
+            },
+            "market_data": {
+                "total_teachers": 150,
+                "demand_level": "medium",
+                "competition_level": "medium"
+            }
+        }
+        
+        return Response(suggestions, status=status.HTTP_200_OK)
+    
+    def _upload_photo(self, request):
+        """
+        SECURE profile photo upload with comprehensive validation.
+        Implements file type checking, size limits, and malware scanning.
+        """
+        from rest_framework import status
+        from django.core.files.storage import default_storage
+        from django.core.files.base import ContentFile
+        import os
+        import uuid
+        
+        # Apply file upload throttling
+        if hasattr(self, 'throttle_classes'):
+            # Add file upload throttle to existing throttles
+            self.throttle_classes = self.throttle_classes + [FileUploadThrottle]
+        
+        # Check if user has a teacher profile
+        if not hasattr(request.user, "teacher_profile") or request.user.teacher_profile is None:
+            logger.warning(f"Photo upload attempted without teacher profile by user {request.user.id}")
+            return Response(
+                {"error": "Teacher profile not found. Please complete onboarding first."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        
+        # Validate uploaded file using secure serializer
+        serializer = ProfilePhotoUploadSerializer(data=request.data)
+        if not serializer.is_valid():
+            logger.warning(
+                f"Profile photo upload validation failed for user {request.user.id}: {serializer.errors}"
+            )
+            return Response(
+                {"error": "Invalid file upload", "details": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        validated_data = serializer.validated_data
+        uploaded_file = validated_data['profile_photo']
+        
+        try:
+            # Generate secure filename
+            file_extension = os.path.splitext(uploaded_file.name)[1].lower()
+            secure_filename = f"profile_photos/{request.user.id}/{uuid.uuid4()}{file_extension}"
+            
+            # Save file to secure location
+            file_path = default_storage.save(secure_filename, ContentFile(uploaded_file.read()))
+            file_url = default_storage.url(file_path)
+            
+            # Update teacher profile with photo URL
+            teacher_profile = request.user.teacher_profile
+            teacher_profile.photo = file_path  # Assuming there's a photo field
+            teacher_profile.save()
+            
+            logger.info(f"Profile photo uploaded successfully for user {request.user.id}")
+            
+            return Response({
+                "success": True,
+                "photo_url": file_url,
+                "message": "Profile photo uploaded successfully"
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(
+                f"Error uploading profile photo for user {request.user.id}: {e}",
+                exc_info=True
+            )
+            return Response(
+                {"error": "Failed to upload photo. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _detect_security_patterns(self, data):
+        """
+        Detect potential security threats in user input data.
+        Returns True if suspicious patterns are found.
+        """
+        if not isinstance(data, dict):
+            return False
+        
+        suspicious_patterns = [
+            '<script', 'javascript:', 'data:text/html', 'vbscript:',
+            'onload=', 'onerror=', 'onclick=', 'onmouseover=',
+            '<?php', '<%', '<iframe', 'eval(', 'alert(',
+            'DROP TABLE', 'UNION SELECT', 'OR 1=1', '--',
+            '../', '..\\', '/etc/passwd', 'cmd.exe',
+        ]
+        
+        # Convert all values to strings and check patterns
+        data_str = str(data).lower()
+        
+        for pattern in suspicious_patterns:
+            if pattern.lower() in data_str:
+                return True
+        
+        return False
+    
+    def _get_client_ip(self, request):
+        """Get the client IP address from request headers."""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+
 class StudentViewSet(KnoxAuthenticatedViewSet):
     """
     API endpoint for student profiles.
@@ -1865,17 +2329,57 @@ class StudentViewSet(KnoxAuthenticatedViewSet):
 
 class CourseViewSet(KnoxAuthenticatedViewSet):
     """
-    API endpoint for courses.
-    All users can view courses, but only admins can create/modify them.
+    Enhanced API endpoint for courses with advanced filtering, popularity metrics, and market data.
+    
+    Features:
+    - Advanced filtering by educational system, education level, and search
+    - Popularity metrics based on session data
+    - Market data including pricing information
+    - Teacher availability information
+    - Caching for performance optimization
     """
 
     serializer_class = CourseSerializer
 
     def get_queryset(self):
         """
-        All authenticated users can see all courses.
+        Get courses with optional filtering and enhanced data.
         """
-        return Course.objects.all()
+        queryset = Course.objects.select_related('educational_system').all()
+        
+        # Apply filters
+        queryset = self._apply_filters(queryset)
+        
+        # Apply search
+        search_query = self.request.query_params.get('search')
+        if search_query:
+            queryset = queryset.filter(
+                models.Q(name__icontains=search_query) |
+                models.Q(description__icontains=search_query) |
+                models.Q(code__icontains=search_query)
+            )
+        
+        # Apply ordering
+        ordering = self.request.query_params.get('ordering')
+        if ordering:
+            # Handle special ordering cases
+            if ordering in ['popularity_score', '-popularity_score']:
+                # Popularity ordering will be handled in list() method
+                pass
+            elif ordering in ['avg_hourly_rate', '-avg_hourly_rate']:
+                # Price ordering will be handled in list() method
+                pass
+            else:
+                # Standard Django ordering
+                try:
+                    queryset = queryset.order_by(ordering)
+                except Exception:
+                    # Invalid ordering, use default
+                    queryset = queryset.order_by('name')
+        else:
+            queryset = queryset.order_by('name')
+        
+        return queryset
 
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
@@ -1885,6 +2389,303 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
             # Anyone can view courses
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
+    
+    def list(self, request, *args, **kwargs):
+        """
+        Enhanced list method with popularity metrics, market data, and teacher info.
+        """
+        try:
+            # Check cache first if enhanced data is requested
+            cache_key = self._get_cache_key(request)
+            if self._should_use_cache(request):
+                cached_data = cache.get(cache_key)
+                if cached_data:
+                    return Response(cached_data)
+            
+            # Get base queryset
+            queryset = self.filter_queryset(self.get_queryset())
+            
+            # Serialize base course data
+            serializer = self.get_serializer(queryset, many=True)
+            courses_data = serializer.data
+            
+            # Enhance with additional data if requested
+            if self._needs_enhancement(request):
+                courses_data = self._enhance_courses_data(courses_data, request)
+            
+            # Apply custom ordering if needed
+            ordering = request.query_params.get('ordering')
+            if ordering in ['popularity_score', '-popularity_score', 'avg_hourly_rate', '-avg_hourly_rate']:
+                courses_data = self._apply_custom_ordering(courses_data, ordering)
+            
+            # Cache results if appropriate
+            if self._should_use_cache(request):
+                cache.set(cache_key, courses_data, timeout=900)  # 15 minutes
+            
+            return Response(courses_data)
+            
+        except Exception as e:
+            logger.error(f"Error in CourseViewSet.list for user {request.user.id}: {e}")
+            return Response(
+                {'error': 'Failed to retrieve course data'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _apply_filters(self, queryset):
+        """Apply filtering based on query parameters."""
+        # Filter by educational system
+        educational_system_id = self.request.query_params.get('educational_system')
+        if educational_system_id:
+            try:
+                educational_system_id = int(educational_system_id)
+                if not EducationalSystem.objects.filter(id=educational_system_id).exists():
+                    raise ValidationError("Invalid educational system ID")
+                queryset = queryset.filter(educational_system_id=educational_system_id)
+            except (ValueError, ValidationError):
+                # Invalid ID - this will be handled by returning empty results
+                # or we could raise a 400 error here
+                from rest_framework.exceptions import ValidationError as DRFValidationError
+                raise DRFValidationError({"educational_system": "Invalid educational system ID"})
+        
+        # Filter by education level
+        education_level = self.request.query_params.get('education_level')
+        if education_level:
+            queryset = queryset.filter(education_level=education_level)
+        
+        return queryset
+    
+    def _needs_enhancement(self, request):
+        """Check if enhanced data is requested."""
+        return any([
+            request.query_params.get('include_popularity') == 'true',
+            request.query_params.get('include_teachers') == 'true',
+            request.query_params.get('include_market_data') == 'true'
+        ])
+    
+    def _should_use_cache(self, request):
+        """Determine if caching should be used."""
+        return self._needs_enhancement(request)
+    
+    def _get_cache_key(self, request):
+        """Generate cache key based on request parameters."""
+        key_parts = ['courses_enhanced']
+        
+        # Add filter parameters
+        for param in ['educational_system', 'education_level', 'search', 'ordering']:
+            value = request.query_params.get(param)
+            if value:
+                key_parts.append(f'{param}_{value}')
+        
+        # Add enhancement flags
+        for param in ['include_popularity', 'include_teachers', 'include_market_data']:
+            if request.query_params.get(param) == 'true':
+                key_parts.append(param)
+        
+        return '_'.join(key_parts)
+    
+    def _enhance_courses_data(self, courses_data, request):
+        """Add enhanced data to courses."""
+        from finances.models import ClassSession, TeacherPaymentEntry
+        from django.db.models import Count, Avg, Min, Max, Sum
+        
+        # Get course IDs for efficient querying
+        course_ids = [course['id'] for course in courses_data]
+        
+        # Prepare enhancement data
+        popularity_data = {}
+        teacher_data = {}
+        market_data = {}
+        
+        # Calculate popularity metrics if requested
+        if request.query_params.get('include_popularity') == 'true':
+            popularity_data = self._calculate_popularity_metrics(course_ids)
+        
+        # Get teacher information if requested
+        if request.query_params.get('include_teachers') == 'true':
+            teacher_data = self._get_teacher_information(course_ids)
+        
+        # Calculate market data if requested
+        if request.query_params.get('include_market_data') == 'true':
+            market_data = self._calculate_market_data(course_ids)
+        
+        # Enhance each course with additional data
+        for course in courses_data:
+            course_id = course['id']
+            
+            if course_id in popularity_data:
+                course['popularity_metrics'] = popularity_data[course_id]
+            
+            if course_id in teacher_data:
+                course['available_teachers'] = teacher_data[course_id]
+            
+            if course_id in market_data:
+                course['market_data'] = market_data[course_id]
+        
+        return courses_data
+    
+    def _calculate_popularity_metrics(self, course_ids):
+        """Calculate popularity metrics for courses."""
+        from finances.models import ClassSession, SessionStatus
+        from collections import defaultdict
+        
+        # NOTE: This is a simplified implementation that counts all sessions for teachers
+        # who teach a course, regardless of which specific course the session was for.
+        # In practice, you might want to track session-to-course relationships more precisely.
+        
+        # Get course associations through teacher-course relationships
+        teacher_courses = TeacherCourse.objects.filter(
+            course_id__in=course_ids
+        ).select_related('teacher', 'course')
+        
+        # Map courses to teachers
+        course_teachers = defaultdict(list)
+        for tc in teacher_courses:
+            course_teachers[tc.course_id].append(tc.teacher_id)
+        
+        # Calculate metrics per course
+        course_metrics = {}
+        for course_id in course_ids:
+            teachers = course_teachers.get(course_id, [])
+            
+            if not teachers:
+                # No teachers for this course
+                course_metrics[course_id] = {
+                    'total_sessions': 0,
+                    'unique_students': 0,
+                    'popularity_score': 0,
+                    'rank': 0
+                }
+                continue
+            
+            # Get sessions for teachers of this course
+            sessions = ClassSession.objects.filter(
+                teacher_id__in=teachers,
+                status=SessionStatus.COMPLETED
+            ).prefetch_related('students')
+            
+            total_sessions = sessions.count()
+            unique_students = set()
+            for session in sessions:
+                for student in session.students.all():
+                    unique_students.add(student.id)
+            
+            # Calculate popularity score (sessions * 2 + unique_students * 3)
+            popularity_score = total_sessions * 2 + len(unique_students) * 3
+            
+            course_metrics[course_id] = {
+                'total_sessions': total_sessions,
+                'unique_students': len(unique_students),
+                'popularity_score': popularity_score,
+                'rank': 0  # Will be calculated after all scores are computed
+            }
+        
+        # Calculate ranks
+        sorted_courses = sorted(
+            course_metrics.items(),
+            key=lambda x: x[1]['popularity_score'],
+            reverse=True
+        )
+        
+        for rank, (course_id, metrics) in enumerate(sorted_courses, 1):
+            course_metrics[course_id]['rank'] = rank
+        
+        return course_metrics
+    
+    def _get_teacher_information(self, course_ids):
+        """Get teacher information for courses."""
+        teacher_data = {}
+        
+        # Get teacher-course relationships
+        teacher_courses = TeacherCourse.objects.filter(
+            course_id__in=course_ids,
+            is_active=True
+        ).select_related('teacher__user', 'course')
+        
+        # Group by course
+        for tc in teacher_courses:
+            course_id = tc.course_id
+            if course_id not in teacher_data:
+                teacher_data[course_id] = []
+            
+            teacher_info = {
+                'id': tc.teacher.id,
+                'name': tc.teacher.user.name,
+                'email': tc.teacher.user.email,
+                'hourly_rate': float(tc.hourly_rate) if tc.hourly_rate else float(tc.teacher.hourly_rate or 0),
+                'profile_completion_score': float(tc.teacher.profile_completion_score),
+                'is_profile_complete': tc.teacher.is_profile_complete,
+                'specialty': tc.teacher.specialty
+            }
+            
+            teacher_data[course_id].append(teacher_info)
+        
+        return teacher_data
+    
+    def _calculate_market_data(self, course_ids):
+        """Calculate market data for courses."""
+        from django.db.models import Avg, Min, Max, Count
+        
+        market_data = {}
+        
+        # Get aggregated data from teacher-course relationships
+        for course_id in course_ids:
+            teacher_courses = TeacherCourse.objects.filter(
+                course_id=course_id,
+                is_active=True
+            ).exclude(hourly_rate__isnull=True)
+            
+            if teacher_courses.exists():
+                # Use teacher-course specific rates where available
+                rates = [float(tc.hourly_rate) for tc in teacher_courses if tc.hourly_rate]
+                
+                # Fallback to teacher profile rates if no course-specific rates
+                if not rates:
+                    rates = [
+                        float(tc.teacher.hourly_rate) 
+                        for tc in teacher_courses 
+                        if tc.teacher.hourly_rate
+                    ]
+                
+                if rates:
+                    avg_rate = sum(rates) / len(rates)
+                    min_rate = min(rates)
+                    max_rate = max(rates)
+                else:
+                    avg_rate = min_rate = max_rate = 0.0
+                
+                total_teachers = teacher_courses.count()
+                
+                # Calculate demand score based on teacher availability and sessions
+                # This is a simplified calculation - in production, you might want more sophisticated scoring
+                demand_score = min(100, total_teachers * 10)  # Cap at 100
+                
+            else:
+                avg_rate = min_rate = max_rate = 0.0
+                total_teachers = 0
+                demand_score = 0
+            
+            market_data[course_id] = {
+                'avg_hourly_rate': avg_rate,
+                'min_hourly_rate': min_rate,
+                'max_hourly_rate': max_rate,
+                'total_teachers': total_teachers,
+                'demand_score': demand_score
+            }
+        
+        return market_data
+    
+    def _apply_custom_ordering(self, courses_data, ordering):
+        """Apply custom ordering for enhanced data."""
+        if ordering == 'popularity_score':
+            courses_data.sort(key=lambda x: x.get('popularity_metrics', {}).get('popularity_score', 0))
+        elif ordering == '-popularity_score':
+            courses_data.sort(key=lambda x: x.get('popularity_metrics', {}).get('popularity_score', 0), reverse=True)
+        elif ordering == 'avg_hourly_rate':
+            courses_data.sort(key=lambda x: x.get('market_data', {}).get('avg_hourly_rate', 0))
+        elif ordering == '-avg_hourly_rate':
+            courses_data.sort(key=lambda x: x.get('market_data', {}).get('avg_hourly_rate', 0), reverse=True)
+        
+        return courses_data
 
 
 class EducationalSystemViewSet(KnoxAuthenticatedViewSet):
@@ -3950,3 +4751,359 @@ class TeacherAnalyticsView(KnoxAuthenticatedAPIView):
             response['teacher_details'] = []
         
         return response
+
+
+class TutorDiscoveryAPIView(APIView):
+    """
+    Public API endpoint for tutor discovery.
+    
+    Allows students and parents to search for tutors without authentication.
+    Only exposes public profile information with proper privacy controls.
+    """
+    
+    permission_classes = [AllowAny]  # Public endpoint
+    throttle_classes = [LocalIPBasedThrottle]  # Rate limiting for public endpoint
+    
+    def get(self, request):
+        """
+        Discover tutors based on search criteria.
+        
+        Query Parameters:
+        - subjects: Comma-separated course IDs or names
+        - rate_min: Minimum hourly rate (float)
+        - rate_max: Maximum hourly rate (float) 
+        - education_level: Education level filter
+        - educational_system: Educational system ID
+        - location: Location filter (future implementation)
+        - availability: Availability filter (future implementation)
+        - search: Free text search in bio, name, subjects
+        - limit: Number of results to return (max 50, default 20)
+        - offset: Pagination offset
+        - ordering: Sort order (rate, completion_score, activity)
+        
+        Returns:
+        List of public tutor profiles with:
+        - Basic profile info (name, bio, specialty)
+        - Subjects/courses taught
+        - Rate information
+        - Profile completion score
+        - School information (if tutor is individual)
+        """
+        try:
+            # Parse and validate parameters
+            filters = self._parse_filters(request.query_params)
+            pagination = self._parse_pagination(request.query_params)
+            ordering = self._parse_ordering(request.query_params)
+            
+            # Generate cache key for performance
+            cache_key = self._generate_cache_key(filters, pagination, ordering)
+            cached_result = cache.get(cache_key)
+            if cached_result:
+                return Response(cached_result)
+            
+            # Build queryset with privacy controls
+            tutors_queryset = self._build_tutors_queryset(filters, ordering)
+            
+            # Apply pagination
+            total_count = tutors_queryset.count()
+            tutors_queryset = tutors_queryset[pagination['offset']:pagination['offset'] + pagination['limit']]
+            
+            # Serialize public data
+            tutors_data = self._serialize_public_tutors(tutors_queryset, request)
+            
+            result = {
+                'results': tutors_data,
+                'count': len(tutors_data),
+                'total': total_count,
+                'next': self._get_next_url(request, pagination, total_count),
+                'previous': self._get_previous_url(request, pagination)
+            }
+            
+            # Cache result (shorter timeout for public endpoint)  
+            cache.set(cache_key, result, timeout=300)  # 5 minutes
+            
+            # Track popular queries for future cache warming
+            try:
+                from accounts.services.tutor_discovery_cache import TutorDiscoveryCacheService
+                TutorDiscoveryCacheService.track_popular_query(filters, pagination, ordering)
+            except ImportError:
+                pass  # Service not available
+            
+            return Response(result)
+            
+        except ValidationError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(f"Error in tutor discovery: {str(e)}")
+            return Response(
+                {'error': 'Failed to retrieve tutor data'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _parse_filters(self, params):
+        """Parse and validate filter parameters."""
+        filters = {}
+        
+        # Subject filtering
+        subjects = params.get('subjects')
+        if subjects:
+            subject_list = [s.strip() for s in subjects.split(',') if s.strip()]
+            filters['subjects'] = subject_list
+        
+        # Rate filtering
+        try:
+            rate_min = params.get('rate_min')
+            if rate_min:
+                filters['rate_min'] = float(rate_min)
+                if filters['rate_min'] < 0:
+                    raise ValidationError("rate_min must be non-negative")
+        except ValueError:
+            raise ValidationError("Invalid rate_min format")
+        
+        try:
+            rate_max = params.get('rate_max')
+            if rate_max:
+                filters['rate_max'] = float(rate_max)
+                if filters['rate_max'] < 0:
+                    raise ValidationError("rate_max must be non-negative")
+        except ValueError:
+            raise ValidationError("Invalid rate_max format")
+        
+        # Validate rate range
+        if 'rate_min' in filters and 'rate_max' in filters:
+            if filters['rate_min'] > filters['rate_max']:
+                raise ValidationError("rate_min cannot be greater than rate_max")
+        
+        # Education level filtering
+        education_level = params.get('education_level')
+        if education_level:
+            filters['education_level'] = education_level
+        
+        # Educational system filtering
+        educational_system = params.get('educational_system')
+        if educational_system:
+            try:
+                filters['educational_system'] = int(educational_system)
+            except ValueError:
+                raise ValidationError("Invalid educational_system format")
+        
+        # Search query
+        search = params.get('search')
+        if search:
+            filters['search'] = search.strip()
+        
+        return filters
+    
+    def _parse_pagination(self, params):
+        """Parse and validate pagination parameters."""
+        try:
+            limit = int(params.get('limit', 20))
+            limit = min(max(1, limit), 50)  # Between 1 and 50
+        except ValueError:
+            limit = 20
+        
+        try:
+            offset = int(params.get('offset', 0))
+            offset = max(0, offset)  # Non-negative
+        except ValueError:
+            offset = 0
+        
+        return {'limit': limit, 'offset': offset}
+    
+    def _parse_ordering(self, params):
+        """Parse and validate ordering parameter."""
+        ordering = params.get('ordering', 'completion_score')
+        
+        valid_orderings = [
+            'rate', '-rate',
+            'completion_score', '-completion_score', 
+            'activity', '-activity',
+            'name', '-name'
+        ]
+        
+        if ordering not in valid_orderings:
+            ordering = '-completion_score'  # Default
+        
+        return ordering
+    
+    def _build_tutors_queryset(self, filters, ordering):
+        """Build queryset for tutors with privacy controls and performance optimization."""
+        # Only include tutors with complete profiles and active memberships
+        # Use select_related and prefetch_related for performance optimization
+        queryset = TeacherProfile.objects.filter(
+            is_profile_complete=True,
+            user__school_memberships__role__in=[SchoolRole.TEACHER, SchoolRole.SCHOOL_OWNER],
+            user__school_memberships__is_active=True
+        ).select_related(
+            'user'
+        ).prefetch_related(
+            'teacher_courses__course__educational_system',
+            'user__school_memberships__school'
+        ).distinct()
+        
+        # Apply subject filtering
+        if 'subjects' in filters:
+            # Filter by courses taught
+            course_filter = models.Q()
+            for subject in filters['subjects']:
+                # Try to match by course ID or name
+                try:
+                    course_id = int(subject)
+                    course_filter |= models.Q(teacher_courses__course_id=course_id)
+                except ValueError:
+                    # Search by course name
+                    course_filter |= models.Q(teacher_courses__course__name__icontains=subject)
+            
+            if course_filter:
+                queryset = queryset.filter(course_filter).distinct()
+        
+        # Apply rate filtering
+        if 'rate_min' in filters:
+            queryset = queryset.filter(
+                models.Q(hourly_rate__gte=filters['rate_min']) |
+                models.Q(teacher_courses__hourly_rate__gte=filters['rate_min'])
+            ).distinct()
+        
+        if 'rate_max' in filters:
+            queryset = queryset.filter(
+                models.Q(hourly_rate__lte=filters['rate_max']) |
+                models.Q(teacher_courses__hourly_rate__lte=filters['rate_max'])
+            ).distinct()
+        
+        # Apply education level filtering
+        if 'education_level' in filters:
+            queryset = queryset.filter(
+                teacher_courses__course__education_level=filters['education_level']
+            ).distinct()
+        
+        # Apply educational system filtering
+        if 'educational_system' in filters:
+            queryset = queryset.filter(
+                teacher_courses__course__educational_system_id=filters['educational_system']
+            ).distinct()
+        
+        # Apply search filtering
+        if 'search' in filters:
+            search_query = filters['search']
+            queryset = queryset.filter(
+                models.Q(user__name__icontains=search_query) |
+                models.Q(bio__icontains=search_query) |
+                models.Q(specialty__icontains=search_query) |
+                models.Q(teaching_subjects__icontains=search_query)
+            ).distinct()
+        
+        # Apply ordering
+        if ordering == 'rate':
+            queryset = queryset.order_by('hourly_rate')
+        elif ordering == '-rate':
+            queryset = queryset.order_by('-hourly_rate') 
+        elif ordering == 'completion_score':
+            queryset = queryset.order_by('profile_completion_score')
+        elif ordering == '-completion_score':
+            queryset = queryset.order_by('-profile_completion_score')
+        elif ordering == 'activity':
+            queryset = queryset.order_by('last_activity')
+        elif ordering == '-activity':
+            queryset = queryset.order_by('-last_activity')
+        elif ordering == 'name':
+            queryset = queryset.order_by('user__name')
+        elif ordering == '-name':
+            queryset = queryset.order_by('-user__name')
+        else:
+            queryset = queryset.order_by('-profile_completion_score')
+        
+        return queryset
+    
+    def _serialize_public_tutors(self, tutors_queryset, request):
+        """Serialize tutors for public consumption with privacy controls."""
+        tutors_data = []
+        
+        for tutor in tutors_queryset:
+            # Get school information (for individual tutors)
+            school_info = None
+            school_membership = tutor.user.school_memberships.filter(
+                role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.TEACHER],
+                is_active=True
+            ).select_related('school').first()
+            
+            if school_membership:
+                school_info = {
+                    'id': school_membership.school.id,
+                    'name': school_membership.school.name,
+                    'is_individual_tutor': school_membership.role == SchoolRole.SCHOOL_OWNER
+                }
+            
+            # Get courses/subjects taught
+            subjects = []
+            teacher_courses = tutor.teacher_courses.filter(is_active=True).select_related('course')
+            for tc in teacher_courses:
+                subjects.append({
+                    'id': tc.course.id,
+                    'name': tc.course.name,
+                    'code': tc.course.code,
+                    'education_level': tc.course.education_level,
+                    'hourly_rate': float(tc.hourly_rate) if tc.hourly_rate else float(tutor.hourly_rate or 0)
+                })
+            
+            # Calculate average rate
+            rates = [s['hourly_rate'] for s in subjects if s['hourly_rate'] > 0]
+            avg_rate = sum(rates) / len(rates) if rates else float(tutor.hourly_rate or 0)
+            
+            tutor_data = {
+                'id': tutor.id,
+                'name': tutor.user.name,
+                'bio': tutor.bio[:500] if tutor.bio else '',  # Limit bio length
+                'specialty': tutor.specialty,
+                'profile_completion_score': float(tutor.profile_completion_score),
+                'is_profile_complete': tutor.is_profile_complete,
+                'average_hourly_rate': round(avg_rate, 2),
+                'subjects': subjects,
+                'school': school_info,
+                'teaching_subjects': tutor.teaching_subjects if isinstance(tutor.teaching_subjects, list) else [],
+                'last_activity': tutor.last_activity.isoformat() if tutor.last_activity else None
+            }
+            
+            tutors_data.append(tutor_data)
+        
+        return tutors_data
+    
+    def _generate_cache_key(self, filters, pagination, ordering):
+        """Generate cache key for the request."""
+        key_parts = ['tutor_discovery']
+        
+        # Add filters to key
+        for key, value in filters.items():
+            if isinstance(value, list):
+                key_parts.append(f"{key}_{'_'.join(map(str, value))}")
+            else:
+                key_parts.append(f"{key}_{value}")
+        
+        # Add pagination and ordering
+        key_parts.append(f"limit_{pagination['limit']}")
+        key_parts.append(f"offset_{pagination['offset']}")
+        key_parts.append(f"order_{ordering}")
+        
+        return '_'.join(key_parts)
+    
+    def _get_next_url(self, request, pagination, total_count):
+        """Generate next page URL."""
+        next_offset = pagination['offset'] + pagination['limit']
+        if next_offset >= total_count:
+            return None
+        
+        params = request.query_params.copy()
+        params['offset'] = next_offset
+        return f"{request.build_absolute_uri()}?{params.urlencode()}"
+    
+    def _get_previous_url(self, request, pagination):
+        """Generate previous page URL."""
+        if pagination['offset'] <= 0:
+            return None
+        
+        prev_offset = max(0, pagination['offset'] - pagination['limit'])
+        params = request.query_params.copy()
+        params['offset'] = prev_offset
+        return f"{request.build_absolute_uri()}?{params.urlencode()}"

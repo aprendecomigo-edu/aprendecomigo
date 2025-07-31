@@ -1,0 +1,156 @@
+QA Test Case: Backend API Integration
+
+Test ID: TOB-008
+Test Name: Integration with Existing Course and TeacherCourse Backend Models
+Purpose: Verify that the frontend properly integrates with backend APIs and Course/TeacherCourse models
+Expected Result: Frontend successfully communicates with backend APIs and data is properly stored in database
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Individual Tutor Onboarding Flow (GitHub Issue #44)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+4. Backend API endpoints accessible
+5. Frontend accessible at http://localhost:8081
+6. Database accessible for verification
+
+Test Data:
+- Fresh user account for testing
+- Course data populated in database
+- Educational systems configured in backend
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Verify Backend API Endpoints
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make logs
+
+1. Check backend logs for API endpoint registration
+2. Verify course catalog API endpoints are available
+3. Verify tutor onboarding API endpoints exist
+4. Check educational system API endpoints
+
+Expected: All required API endpoints are registered and accessible
+Screenshot: 01_api_endpoints_verified.png
+Debug: Check Django logs for API registration messages
+
+Step 2: Test Educational System API Call
+1. Open browser developer tools to monitor network requests
+2. Navigate to educational system selection step
+3. Observe API calls to fetch educational systems
+4. Verify API response contains Portugal, Brazil, and Custom options
+
+Expected: Educational system API call succeeds with proper data
+Screenshot: 02_educational_system_api.png
+Debug: Check network tab for API request/response details
+
+Step 3: Test Course Catalog API Integration
+1. Select educational system (Portugal)
+2. Monitor network requests as course catalog loads
+3. Verify API call to fetch courses for selected educational system
+4. Check API response format and content
+
+Expected: Course catalog API integration works correctly
+Screenshot: 03_course_catalog_api.png
+Debug: Verify API returns courses filtered by educational system
+
+Step 4: Test Course Selection Data Persistence
+1. Select multiple courses through the interface
+2. Monitor API calls for saving course selections
+3. Verify course selection data is sent to backend
+4. Check that selected courses are properly formatted in API payload
+
+Expected: Course selection data is properly sent to backend APIs
+Screenshot: 04_course_selection_persistence.png
+Debug: Check API payload format matches backend expectations
+
+Step 5: Test Grade Level and Rate Configuration APIs
+1. Complete grade level specification for selected courses
+2. Complete rate configuration for courses
+3. Monitor API calls for saving grade levels and rates
+4. Verify data format matches TeacherCourse model requirements
+
+Expected: Grade level and rate data properly integrated with backend
+Screenshot: 05_grade_rate_api_integration.png
+Debug: Verify API payload includes all required TeacherCourse fields
+
+Step 6: Test Database Data Verification
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/backend
+  python manage.py shell
+
+1. Access Django shell to verify database records
+2. Check Course model records are created/updated properly
+3. Verify TeacherCourse relationships are established
+4. Confirm all onboarding data is persisted correctly
+
+Expected: Database contains correct Course and TeacherCourse records
+Screenshot: 06_database_verification.png
+Debug: Use Django ORM to query and verify data integrity
+
+Step 7: Test API Error Handling
+1. Simulate network errors (disconnect internet temporarily)
+2. Try to complete onboarding steps during network issues
+3. Verify appropriate error messages are displayed
+4. Test retry functionality and error recovery
+
+Expected: Proper error handling and user feedback for API failures
+Screenshot: 07_api_error_handling.png
+Debug: Check console logs for error handling implementation
+
+Step 8: Test API Performance and Response Times
+1. Monitor API response times during onboarding flow
+2. Measure time to load educational systems
+3. Measure time to load course catalog
+4. Verify API responses are within acceptable limits (< 2 seconds)
+
+Expected: API responses are fast and within performance requirements
+Screenshot: 08_api_performance.png
+Debug: Use browser network timing to measure response times
+
+Step 9: Test Data Validation and Integrity
+1. Complete full onboarding flow
+2. Verify all submitted data matches what was entered in UI
+3. Check for data consistency between frontend and backend
+4. Verify no data loss during API transactions
+
+Expected: Complete data integrity between frontend and backend
+Screenshot: 09_data_validation_integrity.png
+Debug: Compare frontend state with backend database records
+
+Step 10: Test API Authentication and Authorization
+1. Verify API calls include proper authentication headers
+2. Test that only authenticated users can access onboarding APIs
+3. Verify user-specific data isolation (courses belong to correct user)
+4. Test API security and access controls
+
+Expected: Proper authentication and authorization for all API calls
+Screenshot: 10_api_auth_security.png
+Debug: Check API headers and authentication tokens
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Frontend successfully integrates with backend APIs, data is properly stored in Course and TeacherCourse models, with good error handling and performance
+
+FAIL: API integration failures, data not persisting correctly, poor error handling, or security issues
+
+Individual Step Criteria:
+- Step 1: PASS if all API endpoints are available, FAIL if missing endpoints
+- Step 2: PASS if educational system API works correctly, FAIL if broken
+- Step 3: PASS if course catalog API integration successful, FAIL if issues
+- Step 4: PASS if course selection data persists properly, FAIL if data loss
+- Step 5: PASS if grade/rate APIs work correctly, FAIL if broken integration
+- Step 6: PASS if database records are correct, FAIL if data integrity issues
+- Step 7: PASS if error handling is proper, FAIL if poor error handling
+- Step 8: PASS if API performance is acceptable, FAIL if slow/unresponsive
+- Step 9: PASS if data validation and integrity maintained, FAIL if inconsistencies
+- Step 10: PASS if authentication/authorization proper, FAIL if security issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

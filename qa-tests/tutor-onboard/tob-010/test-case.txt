@@ -1,0 +1,154 @@
+QA Test Case: Mobile Responsiveness and Cross-Platform Compatibility
+
+Test ID: TOB-010
+Test Name: Mobile Responsiveness and Cross-Platform Compatibility Testing
+Purpose: Verify that the individual tutor onboarding flow works correctly across different devices and screen sizes
+Expected Result: Onboarding interface is fully functional and visually appropriate on mobile, tablet, and desktop devices
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Individual Tutor Onboarding Flow (GitHub Issue #44)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+4. Backend API endpoints accessible
+5. Frontend accessible at http://localhost:8081
+
+Test Data:
+- Educational system with comprehensive course data
+- Various screen size testing scenarios
+- Cross-browser compatibility requirements
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Test Desktop Browser Functionality (1920x1080)
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+1. Open browser at full desktop resolution (1920x1080)
+2. Navigate through complete onboarding flow
+3. Verify all elements are properly positioned and sized
+4. Check for optimal use of screen space
+
+Expected: Perfect functionality and visual design at desktop resolution
+Screenshot: 01_desktop_1920x1080.png
+
+Step 2: Test Laptop Resolution (1366x768)
+1. Resize browser window to 1366x768 resolution
+2. Navigate through all onboarding steps
+3. Verify all content remains accessible and usable
+4. Check for any content cutting off or overlapping
+
+Expected: Full functionality maintained at laptop resolution
+Screenshot: 02_laptop_1366x768.png
+
+Step 3: Test Tablet Landscape (1024x768)
+1. Resize browser to tablet landscape dimensions
+2. Test all onboarding functionality
+3. Verify touch-friendly interface elements
+4. Check course catalog browsing in tablet mode
+
+Expected: Optimized interface for tablet landscape viewing
+Screenshot: 03_tablet_landscape_1024x768.png
+
+Step 4: Test Tablet Portrait (768x1024) 
+1. Resize browser to tablet portrait orientation
+2. Navigate through onboarding steps
+3. Verify vertical navigation and scrolling
+4. Test course selection interface in portrait mode
+
+Expected: Effective portrait orientation layout and navigation
+Screenshot: 04_tablet_portrait_768x1024.png
+
+Step 5: Test Mobile Landscape (667x375)
+1. Resize browser to mobile landscape (iPhone dimensions)
+2. Complete key onboarding steps
+3. Verify horizontal navigation and layout
+4. Test touch interactions and button sizing
+
+Expected: Functional mobile landscape interface with appropriate sizing
+Screenshot: 05_mobile_landscape_667x375.png
+
+Step 6: Test Mobile Portrait (375x667)
+1. Resize browser to mobile portrait orientation
+2. Navigate through complete onboarding flow
+3. Verify all functionality works in portrait mobile
+4. Test course selection and scrolling behavior
+
+Expected: Fully functional mobile portrait interface
+Screenshot: 06_mobile_portrait_375x667.png
+
+Step 7: Test Small Mobile (320x568)
+1. Resize to smallest common mobile size
+2. Test critical onboarding functionality
+3. Verify no content is inaccessible
+4. Check minimum touch target sizes
+
+Expected: Maintains functionality even at smallest screen size
+Screenshot: 07_small_mobile_320x568.png
+
+Step 8: Test Touch Interactions and Gestures
+1. Simulate touch interactions (if browser supports)
+2. Test course selection via touch/tap
+3. Verify scroll gestures work properly
+4. Test pinch-to-zoom compatibility if applicable
+
+Expected: Natural touch interactions work correctly across interface
+Screenshot: 08_touch_interactions.png
+
+Step 9: Test Cross-Browser Compatibility
+1. Test in Chrome (primary browser)
+2. Test in Safari (webkit engine)
+3. Test in Firefox (gecko engine)
+4. Verify consistent functionality across browsers
+
+Expected: Consistent functionality and appearance across major browsers
+Screenshot: 09_cross_browser_compatibility.png
+
+Step 10: Test Performance on Different Devices
+1. Monitor performance metrics on different screen sizes
+2. Check loading times for course catalog on mobile
+3. Verify smooth scrolling and interactions
+4. Test for any performance degradation on smaller devices
+
+Expected: Good performance across all device categories
+Screenshot: 10_performance_different_devices.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Individual tutor onboarding flow works correctly across all tested screen sizes and browsers with appropriate responsive design
+
+FAIL: Functionality broken on any screen size, poor responsive design, or cross-browser compatibility issues
+
+Individual Step Criteria:
+- Step 1: PASS if desktop functionality is perfect, FAIL if any issues
+- Step 2: PASS if laptop resolution works well, FAIL if content issues
+- Step 3: PASS if tablet landscape is optimized, FAIL if poor layout
+- Step 4: PASS if tablet portrait navigation works, FAIL if broken
+- Step 5: PASS if mobile landscape is functional, FAIL if unusable
+- Step 6: PASS if mobile portrait works completely, FAIL if broken
+- Step 7: PASS if small mobile maintains functionality, FAIL if inaccessible
+- Step 8: PASS if touch interactions work naturally, FAIL if poor touch UX
+- Step 9: PASS if cross-browser compatibility maintained, FAIL if browser issues
+- Step 10: PASS if performance is good across devices, FAIL if slow/unresponsive
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== RESPONSIVE DESIGN CHECKLIST ===
+
+Must verify for each screen size:
+- ✓ All text remains readable
+- ✓ All buttons remain tappable (minimum 44px touch targets)
+- ✓ Navigation remains accessible
+- ✓ Content doesn't get cut off or overlap
+- ✓ Course selection interface remains usable
+- ✓ Search and filter functionality works
+- ✓ Visual hierarchy is maintained
+- ✓ Loading states display appropriately
+- ✓ Error messages are visible and actionable

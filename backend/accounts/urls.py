@@ -17,7 +17,9 @@ from .views import (
     TeacherAnalyticsView,
     TeacherCourseViewSet,
     TeacherInvitationViewSet,
+    TeacherProfileWizardViewSet,
     TeacherViewSet,
+    TutorDiscoveryAPIView,
     UserViewSet,
     VerifyCodeView,
 )
@@ -75,6 +77,30 @@ urlpatterns = [
         "schools/<int:school_id>/teacher-analytics/",
         TeacherAnalyticsView.as_view(),
         name="teacher-analytics",
+    ),
+    # Teacher Profile Wizard endpoints
+    path(
+        "teachers/profile-wizard/<str:action>/",
+        TeacherProfileWizardViewSet.as_view(),
+        name="teacher-profile-wizard",
+    ),
+    path(
+        "teachers/profile-completion-score/",
+        TeacherProfileWizardViewSet.as_view(),
+        {'action': 'profile-completion-score'},
+        name="teacher-profile-completion-score",
+    ),
+    path(
+        "teachers/rate-suggestions/",
+        TeacherProfileWizardViewSet.as_view(),
+        {'action': 'rate-suggestions'},
+        name="teacher-rate-suggestions",
+    ),
+    # Tutor Discovery endpoint (public)
+    path(
+        "tutors/discover/",
+        TutorDiscoveryAPIView.as_view(),
+        name="tutor-discovery",
     ),
     # Knox authentication URLs
     path("auth/logout/", knox_views.LogoutView.as_view(), name="knox_logout"),

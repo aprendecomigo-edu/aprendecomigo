@@ -1,0 +1,157 @@
+QA Test Case: Complete Individual Tutor Onboarding Flow
+
+Test ID: TOB-009
+Test Name: Complete Individual Tutor Onboarding Flow from Start to Finish
+Purpose: Verify the entire individual tutor onboarding process works seamlessly from beginning to end
+Expected Result: Complete onboarding flow functions correctly with all steps integrated smoothly
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Individual Tutor Onboarding Flow (GitHub Issue #44)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+4. Backend API endpoints accessible
+5. Frontend accessible at http://localhost:8081
+
+Test Data:
+- Fresh user account for complete flow testing
+- Test email for notifications
+- All backend data properly seeded
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Start Individual Tutor Onboarding
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+1. Open browser to http://localhost:8081
+2. Navigate to individual tutor onboarding entry point
+3. Verify onboarding welcome/intro screen displays
+4. Begin onboarding process
+
+Expected: Onboarding flow starts successfully with clear introduction
+Screenshot: 01_onboarding_start.png
+
+Step 2: Complete School/Practice Setup
+1. Create tutoring practice/school setup
+2. Enter practice name: "Test Tutoring Practice"
+3. Add description: "Professional tutoring services"
+4. Complete initial business profile setup
+
+Expected: Practice setup completes successfully and advances to next step
+Screenshot: 02_practice_setup_complete.png
+
+Step 3: Select Educational System
+1. Review educational system options (Portugal, Brazil, Custom)
+2. Select Portugal educational system
+3. Read system description and confirm selection
+4. Proceed to next step
+
+Expected: Educational system selection works and advances flow
+Screenshot: 03_educational_system_selected.png
+
+Step 4: Browse and Select Courses
+1. Browse course catalog organized by education levels
+2. Use search to find specific courses (e.g., "Mathematics")
+3. Select 4-5 courses across different education levels:
+   - 1 course from Basic Education (1st Cycle)
+   - 1 course from Basic Education (3rd Cycle)  
+   - 2 courses from Secondary Education
+   - 1 course from Higher Education
+4. Verify selection counter updates correctly
+
+Expected: Course selection works across all education levels
+Screenshot: 04_courses_selected.png
+
+Step 5: Specify Grade Levels for Selected Courses
+1. For each selected course, specify appropriate grade levels
+2. Select multiple grade levels for versatile courses
+3. Ensure all courses have at least one grade level selected
+4. Proceed to rate configuration
+
+Expected: Grade level specification completes for all courses
+Screenshot: 05_grade_levels_specified.png
+
+Step 6: Configure Rates for Each Course
+1. Set different rates for different courses:
+   - Basic Education courses: €25/hour
+   - Secondary Education courses: €30/hour
+   - Higher Education courses: €40/hour
+2. Verify rate calculations and displays
+3. Confirm all courses have rates configured
+
+Expected: Rate configuration completed with different rates per course
+Screenshot: 06_rates_configured.png
+
+Step 7: Complete Teacher Profile Integration
+1. Proceed to teacher profile completion step
+2. Verify integration with existing teacher profile wizard
+3. Complete or verify profile information is handled
+4. Confirm profile completion status
+
+Expected: Teacher profile integration works smoothly
+Screenshot: 07_teacher_profile_integration.png
+
+Step 8: Review Final Configuration
+1. Review complete onboarding summary
+2. Verify all selected courses are listed
+3. Confirm grade levels and rates are displayed correctly
+4. Check practice/school information accuracy
+
+Expected: Complete and accurate summary of all onboarding choices
+Screenshot: 08_final_configuration_review.png
+
+Step 9: Complete Onboarding Process
+1. Submit/complete the onboarding process
+2. Verify success confirmation is displayed
+3. Check for next steps or dashboard navigation
+4. Confirm onboarding completion status
+
+Expected: Onboarding completes successfully with confirmation
+Screenshot: 09_onboarding_completed.png
+
+Step 10: Verify Post-Onboarding State
+1. Navigate to tutor dashboard or profile
+2. Verify all onboarding data is reflected in user profile
+3. Check that tutor is now discoverable/active
+4. Confirm all course offerings are properly configured
+
+Expected: User profile reflects all onboarding choices correctly
+Screenshot: 10_post_onboarding_verification.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Complete individual tutor onboarding flow works seamlessly from start to finish with all steps integrated and data properly persisted
+
+FAIL: Any step in the onboarding flow fails, data is lost between steps, or final configuration is incorrect
+
+Individual Step Criteria:
+- Step 1: PASS if onboarding starts successfully, FAIL if entry point broken
+- Step 2: PASS if practice setup completes, FAIL if setup issues
+- Step 3: PASS if educational system selection works, FAIL if broken
+- Step 4: PASS if course browsing and selection works, FAIL if issues
+- Step 5: PASS if grade level specification completes, FAIL if incomplete
+- Step 6: PASS if rate configuration works for all courses, FAIL if issues
+- Step 7: PASS if teacher profile integration works, FAIL if broken
+- Step 8: PASS if final review displays correctly, FAIL if incorrect data
+- Step 9: PASS if onboarding completion succeeds, FAIL if submission issues
+- Step 10: PASS if post-onboarding state is correct, FAIL if data missing
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== SPECIAL NOTES ===
+
+This is a comprehensive end-to-end test that validates the entire GitHub Issue #44 implementation. 
+Pay special attention to:
+- Data persistence between steps
+- Integration points between components
+- Final data accuracy in user profile
+- User experience throughout the flow
+- Performance of the complete process
