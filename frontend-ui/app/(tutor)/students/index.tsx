@@ -56,8 +56,8 @@ const TutorStudentsPage = () => {
     // Apply search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(student =>
-        student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.email.toLowerCase().includes(searchQuery.toLowerCase())
+        student.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        student.user.email.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -82,7 +82,7 @@ const TutorStudentsPage = () => {
       case 'email':
         Alert.alert(
           'Enviar Email',
-          `Abrir cliente de email para ${student.email}?`,
+          `Abrir cliente de email para ${student.user.email}?`,
           [
             { text: 'Cancelar', style: 'cancel' },
             { text: 'Abrir', onPress: () => console.log('Open email client') }
@@ -92,7 +92,7 @@ const TutorStudentsPage = () => {
       case 'phone':
         Alert.alert(
           'Ligar',
-          `Ligar para ${student.name}?`,
+          `Ligar para ${student.user.name}?`,
           [
             { text: 'Cancelar', style: 'cancel' },
             { text: 'Ligar', onPress: () => console.log('Make phone call') }
@@ -260,15 +260,15 @@ const TutorStudentsPage = () => {
                             <HStack space="sm" className="items-center flex-1">
                               <VStack className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center">
                                 <Text className="text-lg font-bold text-blue-600">
-                                  {student.name.charAt(0).toUpperCase()}
+                                  {student.user.name.charAt(0).toUpperCase()}
                                 </Text>
                               </VStack>
                               <VStack className="flex-1">
                                 <Text className="text-lg font-semibold text-gray-900">
-                                  {student.name}
+                                  {student.user.name}
                                 </Text>
                                 <Text className="text-sm text-gray-600">
-                                  {student.email}
+                                  {student.user.email}
                                 </Text>
                                 <HStack space="xs" className="items-center mt-1">
                                   <Badge 

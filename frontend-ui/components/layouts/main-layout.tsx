@@ -37,7 +37,7 @@ interface MainLayoutProps {
  * @param showSearch Whether to show global search in header (defaults to true)
  * @param showQuickActions Whether to show quick actions (defaults to true)
  */
-export const MainLayout = ({
+const MainLayout = ({
   children,
   _title = 'Dashboard',
   showSidebar = true,
@@ -133,4 +133,5 @@ export const MainLayout = ({
   return layoutContent;
 };
 
+export { MainLayout };
 export default MainLayout;

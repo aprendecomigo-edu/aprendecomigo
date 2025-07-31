@@ -397,12 +397,12 @@ const TutorDashboard = () => {
                   <HStack key={student.id} space="sm" className="items-center py-2">
                     <VStack className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center">
                       <Text className="text-xs font-bold text-blue-600">
-                        {student.name.charAt(0).toUpperCase()}
+                        {student.user.name.charAt(0).toUpperCase()}
                       </Text>
                     </VStack>
                     <VStack className="flex-1">
                       <Text className="text-sm font-medium text-gray-900">
-                        {student.name}
+                        {student.user.name}
                       </Text>
                       <Text className="text-xs text-gray-500">
                         {student.progress?.lastSessionDate 

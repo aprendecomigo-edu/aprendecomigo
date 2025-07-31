@@ -29,7 +29,7 @@ import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
-import { Textarea, TextareaField } from '@/components/ui/textarea';
+import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
 
 const TutorAcquisitionPage = () => {
@@ -154,7 +154,7 @@ const TutorAcquisitionPage = () => {
                     Lista de Emails (separados por vírgula ou linha)
                   </Text>
                   <Textarea>
-                    <TextareaField
+                    <TextareaInput
                       placeholder="email1@exemplo.com, email2@exemplo.com&#10;email3@exemplo.com"
                       value={bulkEmails}
                       onChangeText={setBulkEmails}
@@ -170,7 +170,7 @@ const TutorAcquisitionPage = () => {
                     Mensagem Personalizada (Opcional)
                   </Text>
                   <Textarea>
-                    <TextareaField
+                    <TextareaInput
                       placeholder="Olá! Sou professor(a) especializado(a) em... Convido-te a conhecer as minhas aulas personalizadas."
                       value={customMessage}
                       onChangeText={setCustomMessage}

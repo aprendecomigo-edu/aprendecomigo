@@ -20,7 +20,8 @@ module.exports = function (api) {
             '@': './',
           },
           root: ['./'],
-          extensions: ['.js', '.jsx', '.ts', '.tsx'],
+          extensions: ['.js', '.jsx', '.ts', '.tsx', '.web.js', '.web.tsx', '.web.ts'],
+          cwd: 'packagejson',
         },
       ],
       'react-native-reanimated/plugin',
@@ -28,6 +29,11 @@ module.exports = function (api) {
     env: {
       test: {
         plugins: ['@babel/plugin-transform-modules-commonjs'],
+      },
+      web: {
+        plugins: [
+          // Better React Native Web compatibility
+        ],
       },
     },
   };

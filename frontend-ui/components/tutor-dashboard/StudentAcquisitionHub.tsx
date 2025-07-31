@@ -34,7 +34,7 @@ interface InvitationStats {
   conversionRate: number;
 }
 
-export const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({
+const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({
   schoolId,
   tutorName,
 }) => {
@@ -279,4 +279,5 @@ export const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({
   );
 };
 
+export { StudentAcquisitionHub };
 export default StudentAcquisitionHub;

@@ -92,7 +92,7 @@ const StudentDetailPage = () => {
       case 'email':
         Alert.alert(
           'Enviar Email',
-          `Abrir cliente de email para ${student.email}?`,
+          `Abrir cliente de email para ${student.user.email}?`,
           [
             { text: 'Cancelar', style: 'cancel' },
             { text: 'Abrir', onPress: () => console.log('Open email client') }
@@ -102,7 +102,7 @@ const StudentDetailPage = () => {
       case 'phone':
         Alert.alert(
           'Ligar',
-          `Ligar para ${student.name}?`,
+          `Ligar para ${student.user.name}?`,
           [
             { text: 'Cancelar', style: 'cancel' },
             { text: 'Ligar', onPress: () => console.log('Make phone call') }
@@ -166,7 +166,7 @@ const StudentDetailPage = () => {
     mockSessions.filter(s => s.rating).length || 0;
 
   return (
-    <MainLayout _title={student.name}>
+    <MainLayout _title={student.user.name}>
       <ScrollView 
         className="flex-1 bg-gray-50"
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -179,7 +179,7 @@ const StudentDetailPage = () => {
                 <Icon as={ArrowLeftIcon} size="sm" className="text-gray-600" />
               </Pressable>
               <Heading size="xl" className="text-gray-900 flex-1">
-                {student.name}
+                {student.user.name}
               </Heading>
             </HStack>
           </VStack>
@@ -191,15 +191,15 @@ const StudentDetailPage = () => {
                 <HStack space="sm" className="items-center">
                   <VStack className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center">
                     <Text className="text-2xl font-bold text-blue-600">
-                      {student.name.charAt(0).toUpperCase()}
+                      {student.user.name.charAt(0).toUpperCase()}
                     </Text>
                   </VStack>
                   <VStack className="flex-1">
                     <Text className="text-xl font-semibold text-gray-900">
-                      {student.name}
+                      {student.user.name}
                     </Text>
                     <Text className="text-sm text-gray-600">
-                      {student.email}
+                      {student.user.email}
                     </Text>
                     <HStack space="xs" className="items-center mt-1">
                       <Badge 
