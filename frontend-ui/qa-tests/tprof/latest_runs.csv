@@ -1,0 +1,7 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+tprof-001,Complete Wizard Flow,End-to-end teacher profile creation with all required steps,20250731-133608,FAIL,1,0,1
+tprof-002,Form Validation Testing,Test validation rules and error handling across all wizard steps,,,0,0,0
+tprof-003,Auto-Save & Persistence,Verify auto-save functionality and data persistence,,,0,0,0
+tprof-004,Mobile Responsive Design,Test wizard functionality on mobile devices and responsive layouts,,,0,0,0
+tprof-005,Edge Case & Boundary Testing,Test with extreme values and edge cases,,,0,0,0
+tprof-006,Step Navigation & Flow Control,Test wizard navigation between steps and flow control,,,0,0,0

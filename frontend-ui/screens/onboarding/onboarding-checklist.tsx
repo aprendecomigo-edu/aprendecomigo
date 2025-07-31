@@ -7,10 +7,10 @@ import {
   CreditCard, 
   Calendar,
   ArrowRight,
-  Skip,
   HelpCircle,
   ExternalLink
 } from 'lucide-react-native';
+import { ArrowRightIcon } from '@/components/ui/icon';
 import React, { useState } from 'react';
 import { Platform, Dimensions } from 'react-native';
 import useRouter from '@unitools/router';
@@ -307,7 +307,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                         className={`border-gray-300 ${isMobile ? 'flex-1' : ''}`}
                         testID={`skip-step-${step.id}`}
                       >
-                        <ButtonIcon as={Skip} className="text-gray-600 mr-1" />
+                        <ButtonIcon as={ArrowRightIcon} className="text-gray-600 mr-1" />
                         <ButtonText className="text-gray-600">
                           Skip
                         </ButtonText>

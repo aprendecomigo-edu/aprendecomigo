@@ -8,12 +8,12 @@ import { FormControl } from '@/components/ui/form-control';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import { Input } from '@/components/ui/input';
+import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
 import { Select, SelectTrigger, SelectInput, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator, SelectItem } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Text } from '@/components/ui/text';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
 
 interface SchoolInfoCardProps {
@@ -200,40 +200,48 @@ export const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
           <VStack space="lg">
             <FormControl>
               <Text className="text-sm font-medium text-gray-700 mb-2">Nome da Escola</Text>
-              <Input
-                value={editData.name || ''}
-                onChangeText={(text: string) => updateField('name', text)}
-                placeholder="Nome da escola"
-              />
+              <Input>
+                <InputField
+                  value={editData.name || ''}
+                  onChangeText={(text: string) => updateField('name', text)}
+                  placeholder="Nome da escola"
+                />
+              </Input>
             </FormControl>
 
             <FormControl>
               <Text className="text-sm font-medium text-gray-700 mb-2">Descrição</Text>
-              <Textarea
-                value={editData.description || ''}
-                onChangeText={(text: string) => updateField('description', text)}
-                placeholder="Descrição da escola"
-              />
+              <Textarea>
+                <TextareaInput
+                  value={editData.description || ''}
+                  onChangeText={(text: string) => updateField('description', text)}
+                  placeholder="Descrição da escola"
+                />
+              </Textarea>
             </FormControl>
 
             <FormControl>
               <Text className="text-sm font-medium text-gray-700 mb-2">Endereço</Text>
-              <Input
-                value={editData.address || ''}
-                onChangeText={(text: string) => updateField('address', text)}
-                placeholder="Endereço completo"
-              />
+              <Input>
+                <InputField
+                  value={editData.address || ''}
+                  onChangeText={(text: string) => updateField('address', text)}
+                  placeholder="Endereço completo"
+                />
+              </Input>
             </FormControl>
 
             <HStack space="md" className="flex-wrap">
               <VStack className="flex-1 min-w-0">
                 <FormControl>
                   <Text className="text-sm font-medium text-gray-700 mb-2">Email</Text>
-                  <Input
-                    value={editData.contact_email || ''}
-                    onChangeText={(text: string) => updateField('contact_email', text)}
-                    placeholder="email@escola.com"
-                  />
+                  <Input>
+                    <InputField
+                      value={editData.contact_email || ''}
+                      onChangeText={(text: string) => updateField('contact_email', text)}
+                      placeholder="email@escola.com"
+                    />
+                  </Input>
                 </FormControl>
               </VStack>
 

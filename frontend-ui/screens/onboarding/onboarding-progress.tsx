@@ -1,4 +1,5 @@
-import { CheckCircle, Circle, Skip } from 'lucide-react-native';
+import { CheckCircle, Circle } from 'lucide-react-native';
+import { ArrowRightIcon } from '@/components/ui/icon';
 import React from 'react';
 import { Platform, Dimensions } from 'react-native';
 
@@ -61,7 +62,7 @@ export const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
       case 'skipped':
         return (
           <Icon 
-            as={Skip} 
+            as={ArrowRightIcon} 
             size={compact ? 16 : 20} 
             className="text-gray-400"
           />

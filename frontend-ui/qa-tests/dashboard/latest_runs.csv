@@ -1,0 +1,7 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+dashboard-001,Main Dashboard Overview and Navigation,Verify complete dashboard functionality and navigation flows,,,0,0,0
+dashboard-002,Transaction History with Filtering,Test transaction history display and filtering capabilities,,,0,0,0
+dashboard-003,Purchase History and Consumption Tracking,Verify purchase history and real-time consumption tracking,,,0,0,0
+dashboard-004,Account Settings and Profile Management,Test account settings and profile management functionality,,,0,0,0
+dashboard-005,Responsive Design and Cross-Platform Testing,Verify dashboard responsiveness across different devices and platforms,,,0,0,0
+dashboard-006,Data Accuracy and Real-time Updates,Test data accuracy and real-time synchronization,,,0,0,0

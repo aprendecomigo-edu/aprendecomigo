@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, Plus } from 'lucide-react-native';
+import { RefreshCw, Plus, BarChart3 } from 'lucide-react-native';
 import useRouter from '@unitools/router';
 
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
@@ -20,6 +20,10 @@ export default function StudentBalancePage() {
 
   const handleScheduleSession = () => {
     router.push('/calendar');
+  };
+
+  const handleViewDashboard = () => {
+    router.push('/student/dashboard');
   };
 
   return (
@@ -51,7 +55,7 @@ export default function StudentBalancePage() {
                 variant="solid"
                 size="lg"
                 onPress={handleScheduleSession}
-                className="flex-1 min-w-48"
+                className="flex-1 min-w-40"
               >
                 <ButtonIcon as={RefreshCw} />
                 <ButtonText>Schedule Session</ButtonText>
@@ -62,10 +66,21 @@ export default function StudentBalancePage() {
                 variant="outline"
                 size="lg"
                 onPress={handlePurchaseMore}
-                className="flex-1 min-w-48"
+                className="flex-1 min-w-40"
               >
                 <ButtonIcon as={Plus} />
                 <ButtonText>Purchase More Hours</ButtonText>
+              </Button>
+
+              <Button
+                action="secondary"
+                variant="solid"
+                size="lg"
+                onPress={handleViewDashboard}
+                className="flex-1 min-w-40"
+              >
+                <ButtonIcon as={BarChart3} />
+                <ButtonText>Full Dashboard</ButtonText>
               </Button>
             </HStack>
           </VStack>

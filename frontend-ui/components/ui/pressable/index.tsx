@@ -7,6 +7,7 @@ import { createPressable } from '@gluestack-ui/pressable';
 import { cssInterop } from 'nativewind';
 import React from 'react';
 import { Pressable as RNPressable, Platform } from 'react-native';
+import { filterWebProps } from '../utils/filterWebProps';
 
 const UIPressable = createPressable({
   Root:
@@ -25,7 +26,7 @@ const Pressable = React.forwardRef<React.ElementRef<typeof UIPressable>, IPressa
   ({ className, ...props }, ref) => {
     return (
       <UIPressable
-        {...props}
+        {...filterWebProps(props)}
         ref={ref}
         className={pressableStyle({
           class: className,

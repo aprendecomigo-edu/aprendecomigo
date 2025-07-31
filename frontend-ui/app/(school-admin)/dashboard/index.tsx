@@ -109,8 +109,12 @@ const SchoolAdminDashboard = () => {
     router.push('/users');
   }, []);
 
+  const handleManageInvitations = useCallback(() => {
+    router.push('/(school-admin)/invitations');
+  }, []);
+
   const handleSettings = useCallback(() => {
-    router.push('/settings');
+    router.push('/(school-admin)/settings');
   }, []);
 
   const handleUpdateSchool = useCallback(async (data: any) => {
@@ -393,6 +397,7 @@ const SchoolAdminDashboard = () => {
               onScheduleClass={handleScheduleClass}
               onViewMessages={handleViewMessages}
               onManageUsers={handleManageUsers}
+              onManageInvitations={handleManageInvitations}
               onSettings={handleSettings}
             />
           </VStack>

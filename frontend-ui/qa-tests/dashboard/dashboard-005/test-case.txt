@@ -1,0 +1,292 @@
+QA Test Case: Responsive Design and Cross-Platform Testing
+
+Test ID: DASHBOARD-005
+Test Name: Responsive Design and Cross-Platform Testing
+Purpose: Verify dashboard functionality across different devices, browsers, screen sizes, and platform-specific behaviors
+Expected Result: Dashboard provides consistent, fully functional experience across all supported platforms and devices
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native Expo frontend with cross-platform support
+- Platform Support: Web (Chrome, Firefox, Safari, Edge), iOS Safari, Android Chrome
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: make dev-open
+4. Backend: http://localhost:8000
+5. Frontend: http://localhost:8081 (web), mobile apps via Expo Go
+
+Test Data:
+- Test Student Email: student@test.com
+- Complete Student Profile: Full dashboard data for comprehensive testing
+- Multiple Device Access: Same account across different devices
+- Network Conditions: Test various connection speeds
+
+Device/Browser Matrix:
+- Desktop: Chrome, Firefox, Safari, Edge (1920x1080, 1366x768)
+- Tablet: iPad Safari, Android Chrome (768x1024, 1024x768)
+- Mobile: iPhone Safari, Android Chrome (375x667, 414x896, 360x640)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Initial Testing
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  source ../.venv/bin/activate
+  make dev-open
+
+1. Start development servers
+2. Verify all services running correctly
+3. Test initial access on primary browser (Chrome desktop)
+4. Complete authentication with student@test.com
+5. Verify baseline functionality on desktop
+
+Expected: Servers running, desktop version functional as baseline
+Screenshot: 01-desktop-baseline.png
+Debug: Use 'make logs' for troubleshooting
+
+Step 2: Desktop Browser Cross-Compatibility
+1. Test dashboard on multiple desktop browsers:
+   - Chrome (latest)
+   - Firefox (latest)
+   - Safari (if on macOS)
+   - Edge (latest)
+2. For each browser, verify:
+   - Dashboard loads completely
+   - All interactive elements function
+   - CSS styling renders correctly
+   - JavaScript functionality works
+   - Form submissions successful
+3. Compare rendering consistency across browsers
+4. Note any browser-specific issues
+
+Expected: Consistent functionality and appearance across all desktop browsers
+Screenshot: 02-browser-comparison.png
+PASS if: All browsers render correctly with full functionality
+FAIL if: Browser-specific issues, rendering problems, or functionality gaps
+
+Step 3: Desktop Screen Resolution Testing
+1. Test dashboard at different desktop resolutions:
+   - 1920x1080 (Full HD)
+   - 1366x768 (Common laptop)
+   - 1440x900 (MacBook)
+   - 2560x1440 (QHD)
+2. For each resolution, verify:
+   - Layout adapts appropriately
+   - No horizontal scrolling required
+   - All elements remain accessible
+   - Text remains readable
+   - Navigation menus work properly
+3. Test zooming in/out (75%, 100%, 125%, 150%)
+
+Expected: Dashboard adapts well to all tested resolutions and zoom levels
+Screenshot: 03-resolution-testing.png
+PASS if: Layout responsive and functional at all resolutions
+FAIL if: Layout breaks, elements inaccessible, or poor adaptation
+
+Step 4: Tablet Interface Testing
+1. Switch to tablet viewport (768x1024 portrait, 1024x768 landscape)
+2. Test on actual tablets if available (iPad, Android tablet)
+3. Verify tablet-specific adaptations:
+   - Touch-friendly button sizes
+   - Appropriate spacing for finger navigation
+   - Tablet-optimized layouts
+   - Gesture support (swipe, pinch, tap)
+4. Test orientation changes (portrait ↔ landscape)
+5. Verify all dashboard sections accessible
+
+Expected: Tablet interface optimized for touch interaction
+Screenshot: 04-tablet-interface.png
+PASS if: Tablet interface fully functional with good touch experience
+FAIL if: Poor touch interactions, layout issues, or missing functionality
+
+Step 5: Mobile Phone Interface Testing
+1. Test on multiple mobile viewports:
+   - iPhone SE (375x667)
+   - iPhone 12 (390x844)
+   - Android Medium (360x640)
+   - Android Large (414x896)
+2. Verify mobile-specific features:
+   - Collapsible navigation menu
+   - Mobile-optimized card layouts
+   - Touch-friendly form elements
+   - Swipe gestures for navigation
+3. Test both portrait and landscape orientations
+4. Verify mobile keyboard interactions
+
+Expected: Mobile interface provides excellent mobile user experience
+Screenshot: 05-mobile-interface.png
+PASS if: Mobile interface fully functional with excellent UX
+FAIL if: Mobile interface broken, poor usability, or missing features
+
+Step 6: Cross-Platform Data Consistency
+1. Log in on desktop and note account data
+2. Switch to mobile device/viewport
+3. Verify same data appears consistently:
+   - Account balance matches
+   - Transaction history identical
+   - Purchase history consistent
+   - Settings synchronized
+4. Make changes on one platform
+5. Verify changes appear on other platforms
+6. Test concurrent access scenarios
+
+Expected: Data remains consistent across all platforms
+Screenshot: 06-data-consistency.png
+PASS if: Data identical across platforms with proper synchronization
+FAIL if: Data inconsistencies, synchronization issues, or platform-specific data
+
+Step 7: Touch Interaction and Gesture Testing
+1. Test touch interactions on mobile/tablet:
+   - Tap accuracy on buttons and links
+   - Scroll smoothness and momentum
+   - Pinch-to-zoom functionality (if applicable)
+   - Swipe gestures for navigation
+   - Long press actions (if any)
+2. Test form interactions:
+   - Input field focus and keyboard display
+   - Dropdown menu interactions
+   - Date picker functionality
+   - File upload from mobile device
+3. Verify touch feedback and visual responses
+
+Expected: All touch interactions feel natural and responsive
+Screenshot: 07-touch-interactions.png
+PASS if: Touch interactions smooth and intuitive
+FAIL if: Touch interactions poor, unresponsive, or confusing
+
+Step 8: Performance Across Platforms
+1. Measure dashboard loading times on each platform:
+   - Desktop browsers
+   - Mobile browsers
+   - Tablet browsers
+2. Test performance with different network conditions:
+   - Fast 3G
+   - Slow 3G
+   - WiFi
+   - Offline/poor connectivity
+3. Monitor resource usage:
+   - Memory consumption
+   - CPU usage
+   - Battery impact on mobile
+4. Test performance with large datasets
+
+Expected: Good performance across all platforms and network conditions
+Screenshot: 08-performance-testing.png
+PASS if: Performance acceptable on all platforms and network conditions
+FAIL if: Slow performance, high resource usage, or platform-specific issues
+
+Step 9: Navigation Consistency Testing
+1. Test navigation patterns across platforms:
+   - Menu accessibility (hamburger menu on mobile)
+   - Breadcrumb navigation
+   - Back button functionality
+   - Deep linking and URL handling
+2. Verify navigation history works properly
+3. Test bookmark functionality
+4. Check search functionality across platforms
+5. Verify navigation shortcuts (keyboard shortcuts on desktop)
+
+Expected: Navigation consistent and appropriate for each platform
+Screenshot: 09-navigation-consistency.png
+PASS if: Navigation works well on all platforms with platform-appropriate patterns
+FAIL if: Navigation inconsistent, broken, or inappropriate for platform
+
+Step 10: Platform-Specific Feature Testing
+1. Test platform-specific features:
+   - Push notifications (mobile)
+   - Offline functionality
+   - App icon and splash screen (mobile)
+   - Desktop notifications (web)
+   - Integration with platform services
+2. Verify platform permissions:
+   - Camera access (for profile pictures)
+   - File system access
+   - Location services (if applicable)
+3. Test platform-specific UI elements:
+   - Native modals vs web modals
+   - Platform-appropriate buttons and controls
+
+Expected: Platform-specific features work correctly where implemented
+Screenshot: 10-platform-features.png
+PASS if: Platform features appropriate and functional
+FAIL if: Platform features broken or inappropriate
+
+Step 11: Accessibility Across Platforms
+1. Test accessibility features on each platform:
+   - Screen reader compatibility
+   - Keyboard navigation (desktop)
+   - Voice control (mobile)
+   - High contrast mode
+   - Text size adjustment
+2. Verify WCAG compliance across platforms
+3. Test with accessibility tools:
+   - Screen readers (NVDA, VoiceOver)
+   - Keyboard-only navigation
+   - Color blindness simulation
+4. Check accessibility on different operating systems
+
+Expected: Excellent accessibility across all platforms and assistive technologies
+Screenshot: 11-accessibility-testing.png
+PASS if: Accessibility comprehensive and works well across platforms
+FAIL if: Accessibility issues, inconsistent support, or poor assistive technology compatibility
+
+Step 12: Error Handling Across Platforms
+1. Test error scenarios on each platform:
+   - Network connectivity loss
+   - Server errors (500, 404)
+   - Authentication failures
+   - Form validation errors
+   - Timeout scenarios
+2. Verify error messages are platform-appropriate
+3. Test error recovery mechanisms
+4. Check offline/online state handling
+5. Verify graceful degradation
+
+Expected: Error handling consistent and appropriate across all platforms
+Screenshot: 12-error-handling.png
+PASS if: Error handling excellent with platform-appropriate messaging
+FAIL if: Error handling inconsistent, poor messaging, or platform-specific issues
+
+Step 13: Integration and Synchronization Testing
+1. Test multi-device scenarios:
+   - Login on multiple devices simultaneously
+   - Data synchronization across devices
+   - Session management across platforms
+   - Logout behavior across devices
+2. Test platform switching:
+   - Start task on desktop, continue on mobile
+   - Account changes propagating across platforms
+   - Real-time updates across devices
+3. Verify conflict resolution for concurrent changes
+
+Expected: Seamless integration and synchronization across all platforms
+Screenshot: 13-integration-testing.png
+PASS if: Multi-platform integration works smoothly with proper synchronization
+FAIL if: Integration issues, poor synchronization, or session management problems
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Dashboard provides consistent, fully functional experience across all tested platforms, browsers, and devices with excellent performance and accessibility
+
+FAIL: Any platform shows significant functionality issues, poor performance, accessibility problems, or inconsistent behavior
+
+Individual Step Criteria:
+- Step 1: PASS if baseline desktop functionality confirmed, FAIL if basic issues
+- Step 2: PASS if all browsers render consistently, FAIL if browser compatibility issues
+- Step 3: PASS if responsive at all resolutions, FAIL if layout problems
+- Step 4: PASS if tablet interface excellent, FAIL if tablet usability poor
+- Step 5: PASS if mobile interface fully functional, FAIL if mobile experience poor
+- Step 6: PASS if data consistent across platforms, FAIL if synchronization issues
+- Step 7: PASS if touch interactions smooth, FAIL if touch experience poor
+- Step 8: PASS if performance good across platforms, FAIL if performance issues
+- Step 9: PASS if navigation consistent, FAIL if navigation problems
+- Step 10: PASS if platform features appropriate, FAIL if platform-specific issues
+- Step 11: PASS if accessibility comprehensive, FAIL if accessibility problems
+- Step 12: PASS if error handling excellent, FAIL if error handling poor
+- Step 13: PASS if integration seamless, FAIL if integration/sync issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

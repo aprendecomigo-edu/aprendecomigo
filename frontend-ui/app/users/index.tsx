@@ -42,7 +42,7 @@ import { ScrollView } from '@/components/ui/scroll-view';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Input } from '@/components/ui/input';
+import { Input, InputField } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Menu } from '@/components/ui/menu';
@@ -328,12 +328,13 @@ const TeachersTab = ({
       <VStack space="sm">
         <HStack space="sm" className="items-center">
           <Box className="flex-1">
-            <Input
-              placeholder="Buscar professores..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              className="bg-white"
-            />
+            <Input className="bg-white">
+              <InputField
+                placeholder="Buscar professores..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </Input>
           </Box>
           <Pressable
             onPress={() => setShowFilters(!showFilters)}

@@ -1,6 +1,30 @@
 import apiClient from './apiClient';
 import { UserProfile } from './authApi';
 
+export interface ProfileCompletion {
+  completion_percentage: number;
+  missing_critical: string[];
+  missing_optional: string[];
+  recommendations: Array<{
+    text: string;
+    priority: 'high' | 'medium' | 'low';
+  }>;
+  is_complete: boolean;
+  scores_breakdown: {
+    basic_info: number;
+    teaching_details: number;
+    professional_info: number;
+  };
+}
+
+export interface TeacherCourse {
+  id: number;
+  course_name: string;
+  grade_level: string;
+  is_active: boolean;
+  subject_area: string;
+}
+
 export interface TeacherProfile {
   id: number;
   user: UserProfile;
@@ -12,6 +36,27 @@ export interface TeacherProfile {
   address: string;
   phone_number: string;
   calendar_iframe?: string;
+  
+  // Enhanced fields from backend
+  profile_completion_score: number;
+  is_profile_complete: boolean;
+  last_activity?: string;
+  status?: 'active' | 'inactive' | 'pending';
+  
+  // Structured fields
+  education_background?: Record<string, any>;
+  teaching_subjects?: string[];
+  rate_structure?: Record<string, any>;
+  weekly_availability?: Record<string, any>;
+  
+  // Related data
+  teacher_courses?: TeacherCourse[];
+  profile_completion?: ProfileCompletion;
+  
+  // Timestamps
+  created_at?: string;
+  updated_at?: string;
+  last_profile_update?: string;
 }
 
 export interface EducationalSystem {
@@ -475,4 +520,362 @@ export const getUserAdminSchools = async (): Promise<SchoolMembership[]> => {
       membership.is_active && 
       (membership.role === 'school_owner' || membership.role === 'school_admin')
   );
+};
+
+// Teacher Management Interfaces and APIs
+
+export interface TeacherFilters {
+  search?: string;
+  specialty?: string;
+  status?: 'active' | 'inactive' | 'pending';
+  completion_status?: 'complete' | 'incomplete' | 'critical_missing';
+  min_completion?: number;
+  has_courses?: boolean;
+  page?: number;
+  page_size?: number;
+  ordering?: string;
+}
+
+export interface TeacherListResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: TeacherProfile[];
+}
+
+export interface TeacherAnalytics {
+  total_teachers: number;
+  average_completion: number;
+  complete_profiles: number;
+  incomplete_profiles: number;
+  completion_distribution: {
+    '0-25%': number;
+    '26-50%': number;
+    '51-75%': number;
+    '76-100%': number;
+  };
+  common_missing_fields: Array<{
+    field: string;
+    count: number;
+    percentage: number;
+  }>;
+  profile_completion_stats: {
+    average_score: number;
+    complete_count: number;
+    needs_attention: Array<{
+      teacher_id: number;
+      name: string;
+      completion_percentage: number;
+      missing_critical: string[];
+    }>;
+  };
+  activity_metrics?: {
+    active_this_week: number;
+    total_courses_taught: number;
+    avg_student_rating?: number;
+  };
+}
+
+export interface BulkTeacherAction {
+  action: 'update_status' | 'send_message' | 'export_data' | 'update_profile';
+  teacher_ids: number[];
+  parameters?: Record<string, any>;
+}
+
+export interface BulkActionResult {
+  success: boolean;
+  total_processed: number;
+  successful_count: number;
+  failed_count: number;
+  errors: Array<{
+    teacher_id: number;
+    error: string;
+  }>;
+  export_url?: string; // For export actions
+}
+
+export interface TeacherMessageTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  content: string;
+  variables: string[];
+}
+
+export interface UpdateTeacherData {
+  bio?: string;
+  specialty?: string;
+  education?: string;
+  hourly_rate?: number;
+  availability?: string;
+  address?: string;
+  phone_number?: string;
+  calendar_iframe?: string;
+  status?: 'active' | 'inactive' | 'pending';
+}
+
+/**
+ * Get enhanced list of teachers with filtering and pagination
+ */
+export const getTeachersEnhanced = async (filters?: TeacherFilters): Promise<TeacherListResponse> => {
+  const queryParams = new URLSearchParams();
+  
+  if (filters?.search) queryParams.append('search', filters.search);
+  if (filters?.specialty) queryParams.append('specialty', filters.specialty);
+  if (filters?.status) queryParams.append('status', filters.status);
+  if (filters?.completion_status) queryParams.append('completion_status', filters.completion_status);
+  if (filters?.min_completion) queryParams.append('min_completion', filters.min_completion.toString());
+  if (filters?.has_courses !== undefined) queryParams.append('has_courses', filters.has_courses.toString());
+  if (filters?.page) queryParams.append('page', filters.page.toString());
+  if (filters?.page_size) queryParams.append('page_size', filters.page_size.toString());
+  if (filters?.ordering) queryParams.append('ordering', filters.ordering);
+
+  const url = `/accounts/teachers/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const response = await apiClient.get<TeacherListResponse>(url);
+  return response.data;
+};
+
+/**
+ * Get teacher analytics for a school
+ */
+export const getTeacherAnalytics = async (schoolId: number): Promise<TeacherAnalytics> => {
+  const response = await apiClient.get<TeacherAnalytics>(`/accounts/schools/${schoolId}/teacher-analytics/`);
+  return response.data;
+};
+
+/**
+ * Perform bulk actions on teachers
+ */
+export const performBulkTeacherActions = async (action: BulkTeacherAction): Promise<BulkActionResult> => {
+  const response = await apiClient.post<BulkActionResult>('/accounts/teachers/bulk-actions/', action);
+  return response.data;
+};
+
+/**
+ * Get available message templates for teacher communication
+ */
+export const getTeacherMessageTemplates = async (): Promise<TeacherMessageTemplate[]> => {
+  const response = await apiClient.get<TeacherMessageTemplate[]>('/accounts/teachers/message-templates/');
+  return response.data;
+};
+
+/**
+ * Update teacher profile (admin-editable fields only)
+ */
+export const updateTeacherProfileAdmin = async (id: number, data: UpdateTeacherData): Promise<TeacherProfile> => {
+  const response = await apiClient.patch<TeacherProfile>(`/accounts/teachers/${id}/`, data);
+  return response.data;
+};
+
+/**
+ * Get detailed teacher profile with completion data
+ */
+export const getTeacherProfileDetailed = async (id: number): Promise<TeacherProfile> => {
+  const response = await apiClient.get<TeacherProfile>(`/accounts/teachers/${id}/`);
+  return response.data;
+};
+
+// Teacher Profile Wizard APIs
+
+export interface TeacherProfileWizardData {
+  // Basic Info Step
+  profile_photo?: string;
+  first_name: string;
+  last_name: string;
+  professional_title: string;
+  email: string;
+  phone_number: string;
+  location: {
+    city: string;
+    country: string;
+    timezone: string;
+  };
+  languages: string[];
+  years_experience: number;
+  teaching_level: string;
+  introduction: string;
+
+  // Biography Step
+  professional_bio: string;
+  teaching_philosophy: string;
+  specializations: string[];
+  achievements: string[];
+  teaching_approach: string;
+  student_outcomes: string;
+
+  // Education Step
+  degrees: Array<{
+    id: string;
+    degree_type: string;
+    field_of_study: string;
+    institution: string;
+    location: string;
+    graduation_year: number;
+    gpa?: string;
+    honors?: string;
+    description?: string;
+  }>;
+  certifications: Array<{
+    id: string;
+    name: string;
+    issuing_organization: string;
+    issue_date: string;
+    expiration_date?: string;
+    credential_id?: string;
+    verification_url?: string;
+  }>;
+  additional_training: string[];
+
+  // Subjects Step
+  teaching_subjects: Array<{
+    id: string;
+    subject: string;
+    grade_levels: string[];
+    expertise_level: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+    years_teaching: number;
+    description?: string;
+  }>;
+  subject_categories: string[];
+
+  // Rates Step
+  rate_structure: {
+    individual_rate: number;
+    group_rate?: number;
+    trial_lesson_rate?: number;
+    package_deals?: Array<{
+      id: string;
+      name: string;
+      sessions: number;
+      price: number;
+      discount_percentage: number;
+    }>;
+    currency: string;
+  };
+  payment_methods: string[];
+  cancellation_policy: string;
+
+  // Availability Step
+  weekly_availability: {
+    [key: string]: Array<{
+      start_time: string;
+      end_time: string;
+      timezone: string;
+    }>;
+  };
+  booking_preferences: {
+    min_notice_hours: number;
+    max_advance_days: number;
+    session_duration_options: number[];
+    auto_accept_bookings: boolean;
+  };
+  time_zone: string;
+}
+
+export interface WizardValidationResponse {
+  is_valid: boolean;
+  errors: Record<string, string[]>;
+  warnings: Record<string, string[]>;
+}
+
+export interface WizardProgressResponse {
+  success: boolean;
+  completion_data: ProfileCompletion;
+  next_step_suggestion?: string;
+}
+
+export interface RateSuggestion {
+  subject: string;
+  location: string;
+  suggested_rate: {
+    min: number;
+    max: number;
+    average: number;
+    currency: string;
+  };
+  market_data: {
+    total_teachers: number;
+    demand_level: 'low' | 'medium' | 'high';
+    competition_level: 'low' | 'medium' | 'high';
+  };
+}
+
+/**
+ * Save teacher profile wizard progress
+ */
+export const saveTeacherProfileWizardProgress = async (data: {
+  profile_data: TeacherProfileWizardData;
+  current_step: number;
+}): Promise<WizardProgressResponse> => {
+  const response = await apiClient.post<WizardProgressResponse>(
+    '/accounts/teachers/profile-wizard/save-progress/',
+    data
+  );
+  return response.data;
+};
+
+/**
+ * Validate teacher profile wizard step
+ */
+export const validateTeacherProfileWizardStep = async (data: {
+  step: number;
+  data: TeacherProfileWizardData;
+}): Promise<WizardValidationResponse> => {
+  const response = await apiClient.post<WizardValidationResponse>(
+    '/accounts/teachers/profile-wizard/validate-step/',
+    data
+  );
+  return response.data;
+};
+
+/**
+ * Submit complete teacher profile
+ */
+export const submitTeacherProfile = async (data: {
+  profile_data: TeacherProfileWizardData;
+}): Promise<{ success: boolean; profile_id: number }> => {
+  const response = await apiClient.post<{ success: boolean; profile_id: number }>(
+    '/accounts/teachers/profile-wizard/submit/',
+    data
+  );
+  return response.data;
+};
+
+/**
+ * Get rate suggestions for a subject and location
+ */
+export const getRateSuggestions = async (params: {
+  subject: string;
+  location: string;
+}): Promise<RateSuggestion> => {
+  const response = await apiClient.get<RateSuggestion>('/accounts/teachers/rate-suggestions/', {
+    params,
+  });
+  return response.data;
+};
+
+/**
+ * Upload teacher profile photo
+ */
+export const uploadTeacherProfilePhoto = async (file: File | Blob): Promise<{ photo_url: string }> => {
+  const formData = new FormData();
+  formData.append('photo', file);
+
+  const response = await apiClient.post<{ photo_url: string }>(
+    '/accounts/teachers/profile/photo/',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+  return response.data;
+};
+
+/**
+ * Get teacher profile completion score
+ */
+export const getTeacherProfileCompletionScore = async (): Promise<ProfileCompletion> => {
+  const response = await apiClient.get<ProfileCompletion>('/accounts/teachers/profile-completion-score/');
+  return response.data;
 };

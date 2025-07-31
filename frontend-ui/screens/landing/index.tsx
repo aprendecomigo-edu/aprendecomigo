@@ -1,6 +1,6 @@
 import useRouter from '@unitools/router';
-import { CheckCircle, Star } from 'lucide-react-native';
-import React, { useState } from 'react';
+import { CheckCircle, Star, Users, GraduationCap, Heart, Building, BookOpen, TrendingUp, Shield, Award, Clock, BarChart3 } from 'lucide-react-native';
+import React, { useState, createContext, useContext } from 'react';
 import { ScrollView, Platform } from 'react-native';
 
 import { Box } from '@/components/ui/box';
@@ -14,13 +14,29 @@ import { Text } from '@/components/ui/text';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { PricingPlanSelector } from '@/components/purchase';
+
+// User Type Context
+type UserType = 'schools' | 'teachers' | 'families';
+
+interface UserTypeContextType {
+  selectedUserType: UserType;
+  setSelectedUserType: (type: UserType) => void;
+}
+
+const UserTypeContext = createContext<UserTypeContextType>({
+  selectedUserType: 'schools',
+  setSelectedUserType: () => {}
+});
+
+const useUserType = () => useContext(UserTypeContext);
 
 // Header Component with Sticky Navigation
 const StickyHeader = () => {
   const router = useRouter();
 
   return (
-    <Box className="bg-white/90 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+    <Box className="bg-white/95 backdrop-blur-md sticky top-0 z-50 shadow-sm border-b border-gray-100">
       <Box className="container mx-auto px-4">
         <HStack className="items-center justify-between py-4">
           <Heading size="3xl" className="text-gray-900 font-bold">
@@ -33,15 +49,15 @@ const StickyHeader = () => {
               className="hidden sm:flex"
             >
               <ButtonText className="text-sm font-medium text-gray-600 hover:text-indigo-600">
-                Sign In
+                Entrar
               </ButtonText>
             </Button>
             <Button 
               onPress={() => router.push('/auth/signup')}
-              className="bg-indigo-600 hover:bg-indigo-700 rounded-full px-5 py-2.5 shadow-lg transition-all duration-300"
+              className="bg-indigo-600 hover:bg-indigo-700 rounded-lg px-6 py-2.5 shadow-lg transition-all duration-300"
             >
               <ButtonText className="text-sm font-semibold text-white">
-                Sign Up
+                Começar Agora
               </ButtonText>
             </Button>
           </HStack>
@@ -51,46 +67,165 @@ const StickyHeader = () => {
   );
 };
 
-// Hero Section
-const HeroSection = () => {
-  const router = useRouter();
+// User Type Selector Component
+const UserTypeSelector = () => {
+  const { selectedUserType, setSelectedUserType } = useUserType();
+
+  const userTypes = [
+    { id: 'schools' as UserType, label: 'Escolas', icon: Building },
+    { id: 'teachers' as UserType, label: 'Professores', icon: GraduationCap },
+    { id: 'families' as UserType, label: 'Famílias', icon: Heart }
+  ];
 
   return (
-    <Box className="relative bg-white py-20">
-      <Box className="container mx-auto px-4">
-        <HStack className="lg:grid-cols-2 gap-12 items-center flex-col lg:flex-row">
-          <VStack space="lg" className="flex-1 lg:pr-8">
-            <Heading 
-              className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight"
-              accessibilityRole="header"
-              accessibilityLevel={1}
-            >
-              Unlock Your Potential with Expert Tutoring
-            </Heading>
-            <Text className="mt-6 text-lg text-gray-600 leading-relaxed">
-              Connect with top-rated tutors for personalized learning experiences. 
-              Achieve your academic goals with our flexible and effective tutoring platform.
-            </Text>
-            <Button 
-              onPress={() => router.push('/auth/signup')}
-              className="mt-8 bg-indigo-600 hover:bg-indigo-700 rounded-full px-8 py-4 w-fit shadow-lg transition-all duration-300 transform hover:scale-105"
-            >
-              <ButtonText className="text-base font-semibold text-white">
-                Get Started
+    <HStack space="xs" className="justify-center mb-8">
+      {userTypes.map((type) => {
+        const IconComponent = type.icon;
+        const isSelected = selectedUserType === type.id;
+        return (
+          <Button
+            key={type.id}
+            onPress={() => setSelectedUserType(type.id)}
+            className={`px-6 py-3 rounded-lg border-2 transition-all duration-300 ${
+              isSelected 
+                ? 'bg-indigo-600 border-indigo-600' 
+                : 'bg-white border-gray-200 hover:border-indigo-300'
+            }`}
+          >
+            <HStack space="xs" className="items-center">
+              <Icon 
+                as={IconComponent} 
+                className={`w-4 h-4 ${
+                  isSelected ? 'text-white' : 'text-gray-600'
+                }`} 
+              />
+              <ButtonText className={`text-sm font-medium ${
+                isSelected ? 'text-white' : 'text-gray-700'
+              }`}>
+                {type.label}
               </ButtonText>
-            </Button>
-          </VStack>
+            </HStack>
+          </Button>
+        );
+      })}
+    </HStack>
+  );
+};
+
+// Dynamic Content Component
+const DynamicHeroContent = () => {
+  const { selectedUserType } = useUserType();
+  const router = useRouter();
+
+  const content = {
+    schools: {
+      headline: "Transforme a Gestão Educacional da Sua Escola",
+      subtitle: "Plataforma completa para administrar 50-500 alunos com visibilidade total",
+      benefits: [
+        "Compensação automática de professores",
+        "Monitorização em tempo real",
+        "Relatórios detalhados de progresso",
+        "Gestão multi-institucional"
+      ],
+      cta: "Agendar Demo Administrativa",
+      metrics: "€15.000-90.000/ano de receita potencial"
+    },
+    teachers: {
+      headline: "Ganhe €500-2.000/Mês Ensinando em Múltiplas Escolas",
+      subtitle: "Junte-se à rede de educadores qualificados e maximize o seu rendimento",
+      benefits: [
+        "Oportunidades em múltiplas escolas",
+        "Pagamentos transparentes e automáticos",
+        "Horários flexíveis e personalizados",
+        "Ferramentas de ensino avançadas"
+      ],
+      cta: "Candidatar-se a Educador",
+      metrics: "Rendimento suplementar garantido"
+    },
+    families: {
+      headline: "Acompanhe o Progresso do Seu Filho com Tutores Certificados",
+      subtitle: "Investimento €50-300/mês com resultados visíveis e acompanhamento completo",
+      benefits: [
+        "Tutores verificados e qualificados",
+        "Relatórios detalhados de progresso",
+        "Apoio personalizado 1º-12º ano",
+        "Plataforma segura e confiável"
+      ],
+      cta: "Começar Teste Grátis",
+      metrics: "Melhoria média de 2 pontos nas notas"
+    }
+  };
+
+  const currentContent = content[selectedUserType];
+
+  return (
+    <VStack space="lg" className="flex-1 lg:pr-8 text-center lg:text-left">
+      <VStack space="sm">
+        <Text className="text-sm font-semibold text-indigo-600 uppercase tracking-wide">
+          {currentContent.metrics}
+        </Text>
+        <Heading 
+          className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight"
+          accessibilityRole="header"
+          accessibilityLevel={1}
+        >
+          {currentContent.headline}
+        </Heading>
+        <Text className="mt-4 text-xl text-gray-600 leading-relaxed">
+          {currentContent.subtitle}
+        </Text>
+      </VStack>
+
+      <VStack space="xs" className="mt-6">
+        {currentContent.benefits.map((benefit, index) => (
+          <HStack key={index} space="sm" className="items-center justify-center lg:justify-start">
+            <Icon as={CheckCircle} className="w-5 h-5 text-green-500" />
+            <Text className="text-gray-700 font-medium">{benefit}</Text>
+          </HStack>
+        ))}
+      </VStack>
+
+      <Button 
+        onPress={() => router.push('/auth/signup')}
+        className="mt-8 bg-indigo-600 hover:bg-indigo-700 rounded-lg px-10 py-4 w-fit mx-auto lg:mx-0 shadow-xl transition-all duration-300 transform hover:scale-105"
+      >
+        <ButtonText className="text-base font-semibold text-white">
+          {currentContent.cta}
+        </ButtonText>
+      </Button>
+    </VStack>
+  );
+};
+
+// Hero Section with Multi-Segment Support
+const HeroSection = () => {
+  return (
+    <Box className="relative bg-gradient-to-br from-gray-50 to-white py-20 lg:py-28">
+      <Box className="container mx-auto px-4">
+        <UserTypeSelector />
+        
+        <HStack className="lg:grid-cols-2 gap-12 items-center flex-col lg:flex-row">
+          <DynamicHeroContent />
           
           <Box className="flex-1 relative mt-12 lg:mt-0">
-            <Box className="w-full h-auto rounded-3xl shadow-2xl overflow-hidden transform hover:rotate-1 transition-transform duration-500">
-              <Box className="w-full h-80 bg-gradient-to-br from-indigo-100 to-purple-100 items-center justify-center">
-                <VStack space="sm" className="items-center text-center px-6">
-                  <Text className="text-gray-600 text-lg font-medium">
-                    Hero Image
+            <Box className="w-full h-auto rounded-2xl shadow-2xl overflow-hidden bg-white border border-gray-200">
+              <Box className="w-full h-96 bg-gradient-to-br from-indigo-50 via-white to-purple-50 items-center justify-center p-8">
+                <VStack space="md" className="items-center text-center">
+                  <Box className="w-16 h-16 bg-indigo-100 rounded-2xl items-center justify-center mb-4">
+                    <Icon as={BarChart3} className="w-8 h-8 text-indigo-600" />
+                  </Box>
+                  <Text className="text-gray-700 text-lg font-semibold">
+                    Dashboard Administrativo
                   </Text>
-                  <Text className="text-gray-500 text-sm">
-                    Study scene illustration would go here
+                  <Text className="text-gray-500 text-sm leading-relaxed">
+                    Visualização completa de métricas de desempenho,
+                    gestão de utilizadores e relatórios em tempo real
                   </Text>
+                  <Box className="mt-6 w-full h-32 bg-white rounded-lg shadow-sm border border-gray-100 items-center justify-center">
+                    <Text className="text-gray-400 text-xs">
+                      [Screenshot da plataforma]
+                    </Text>
+                  </Box>
                 </VStack>
               </Box>
             </Box>
@@ -104,114 +239,34 @@ const HeroSection = () => {
 // Pricing Section
 const PricingSection = () => {
   const router = useRouter();
+  const { selectedUserType } = useUserType();
+  
+  const handlePlanSelect = (plan: any) => {
+    // For the landing page, we'll navigate to the purchase page
+    // where the full purchase flow is available
+    router.push('/purchase');
+  };
 
-  const PricingCard = ({ 
-    title, 
-    price, 
-    period, 
-    description, 
-    features, 
-    buttonText, 
-    isPopular = false 
-  }: {
-    title: string;
-    price: string;
-    period: string;
-    description: string;
-    features: string[];
-    buttonText: string;
-    isPopular?: boolean;
-  }) => (
-    <Card className={`flex-1 rounded-3xl bg-white shadow-xl transform hover:-translate-y-2 transition-transform duration-300 ${isPopular ? 'ring-2 ring-indigo-600' : ''}`}>
-      <VStack className="flex-1 p-8" space="lg">
-        {isPopular && (
-          <Box className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-indigo-600 px-4 py-1.5 rounded-full">
-            <Text className="text-sm font-semibold text-white">Most Popular</Text>
-          </Box>
-        )}
-        
-        <VStack space="md" className="flex-1">
-          <Heading className="text-xl font-semibold text-gray-900">
-            {title}
-          </Heading>
-          <HStack className="items-baseline text-gray-900">
-            <Text className="text-5xl font-extrabold tracking-tight">
-              {price}
-            </Text>
-            <Text className="ml-1 text-xl font-semibold">
-              {period}
-            </Text>
-          </HStack>
-          <Text className="text-gray-500 mt-6">{description}</Text>
-        </VStack>
-
-        <VStack space="sm" className="mt-8 flex-1">
-          {features.map((feature, index) => (
-            <HStack key={index} space="sm" className="items-start">
-              <Icon as={CheckCircle} className="h-6 w-6 text-green-500 flex-shrink-0" />
-              <Text className="text-base text-gray-700 ml-3 flex-1">{feature}</Text>
-            </HStack>
-          ))}
-        </VStack>
-
-        <Button 
-          onPress={() => router.push('/parents')}
-          className={`w-full rounded-full px-6 py-3 shadow-md transition-colors ${
-            isPopular 
-              ? 'bg-indigo-600 hover:bg-indigo-700' 
-              : 'bg-indigo-100 hover:bg-indigo-200'
-          }`}
-        >
-          <ButtonText className={`font-semibold text-base text-center ${
-            isPopular ? 'text-white' : 'text-indigo-600'
-          }`}>
-            {buttonText}
-          </ButtonText>
-        </Button>
-      </VStack>
-    </Card>
-  );
+  // Only show pricing for families - schools and teachers have custom pricing
+  if (selectedUserType !== 'families') {
+    return null;
+  }
 
   return (
     <Box className="py-16 sm:py-24 bg-gray-50">
       <Box className="container mx-auto px-4">
-        <VStack space="lg" className="text-center">
-          <Heading className="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Our Pricing Plans
+        <VStack space="lg" className="text-center mb-16">
+          <Heading className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            Planos Para Famílias
           </Heading>
-          <Text className="mt-4 text-center text-lg text-gray-600">
-            Choose the plan that's right for you.
+          <Text className="mt-4 text-lg text-gray-600">
+            Escolha o plano ideal para o sucesso académico do seu filho
           </Text>
         </VStack>
-
-        <HStack className="mt-16 grid-cols-1 gap-8 md:grid-cols-2 flex-col md:flex-row">
-          <PricingCard
-            title="Monthly Subscription"
-            price="€49"
-            period="/month"
-            description="5 tutoring hours per month. Perfect for consistent progress."
-            features={[
-              "5 tutoring hours per month",
-              "Access to all subjects",
-              "Cancel anytime"
-            ]}
-            buttonText="Choose Plan"
-          />
-
-          <PricingCard
-            title="One-Time Purchase"
-            price="€79"
-            period="/ 10 hours"
-            description="10 tutoring hours. Flexible and valid for 3 months."
-            features={[
-              "10 tutoring hours",
-              "Access to all subjects",
-              "Valid for 3 months"
-            ]}
-            buttonText="Buy Now"
-            isPopular={true}
-          />
-        </HStack>
+        <PricingPlanSelector
+          onPlanSelect={handlePlanSelect}
+          className="max-w-6xl mx-auto"
+        />
       </Box>
     </Box>
   );
@@ -221,16 +276,22 @@ const PricingSection = () => {
 const TestimonialsSection = () => {
   const testimonials = [
     {
-      name: "Sarah J.",
-      role: "University Student",
-      content: "Aprende Comigo has been a game-changer for my studies. The tutors are incredibly knowledgeable and supportive. I've seen a significant improvement in my grades!",
-      avatar: "SJ"
+      name: "Escola Secundária do Porto",
+      role: "Administração Escolar",
+      content: "Escola Secundária do Porto reduziu custos administrativos em 40%",
+      avatar: "ESP"
     },
     {
-      name: "Michael B.", 
-      role: "High School Student",
-      content: "I was struggling with calculus, but my tutor broke down complex concepts into easy-to-understand lessons. Highly recommended!",
-      avatar: "MB"
+      name: "Prof. Maria Santos", 
+      role: "Professora de Matemática",
+      content: "Prof. Maria Santos: €1,200/mês extra ensinando em 3 escolas",
+      avatar: "MS"
+    },
+    {
+      name: "Família Oliveira",
+      role: "Pais de Estudante",
+      content: "Família Oliveira: +2 pontos nas notas em 6 meses",
+      avatar: "FO"
     }
   ];
 
@@ -239,10 +300,10 @@ const TestimonialsSection = () => {
       <Box className="container mx-auto px-4">
         <VStack space="lg" className="text-center">
           <Heading className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            What Our Students Say
+            O Que Dizem os Nossos Clientes
           </Heading>
           <Text className="mt-4 text-lg text-gray-600">
-            Real stories from students who achieved their goals with us.
+            Histórias reais de sucesso na nossa plataforma educacional.
           </Text>
         </VStack>
 
@@ -283,17 +344,17 @@ const CTASection = () => {
     <Box className="bg-gray-50 py-16 sm:py-24">
       <Box className="container mx-auto px-4 text-center">
         <Heading className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-          Ready to Start Learning?
+          Pronto Para Começar?
         </Heading>
         <Text className="mt-4 text-lg text-gray-600">
-          Join thousands of students and unlock your full academic potential.
+          Junte-se a milhares de estudantes e descubra o seu potencial académico completo.
         </Text>
         <Button 
           onPress={() => router.push('/auth/signup')}
           className="mt-8 bg-indigo-600 hover:bg-indigo-700 rounded-full px-8 py-4 shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
           <ButtonText className="text-base font-semibold text-white">
-            Find Your Tutor Now
+            Encontrar o Seu Tutor Agora
           </ButtonText>
         </Button>
       </Box>
@@ -319,20 +380,20 @@ const ContactSection = () => {
       <Box className="container mx-auto px-4">
         <VStack space="lg" className="text-center">
           <Heading className="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Contact Us
+            Contacte-nos
           </Heading>
           <Text className="mt-4 text-center text-lg text-gray-600">
-            Have questions? We'd love to hear from you.
+            Tem questões? Adoraríamos ouvir de si.
           </Text>
         </VStack>
 
         <Box className="mt-12 max-w-lg mx-auto">
           <VStack space="lg">
             <VStack space="xs">
-              <Text className="block text-sm font-medium text-gray-700">Full Name</Text>
+              <Text className="block text-sm font-medium text-gray-700">Nome Completo</Text>
               <Input className="mt-1">
                 <InputField
-                  placeholder="Your full name"
+                  placeholder="O seu nome completo"
                   value={formData.name}
                   onChangeText={(value) => setFormData(prev => ({ ...prev, name: value }))}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3 px-4"
@@ -341,10 +402,10 @@ const ContactSection = () => {
             </VStack>
 
             <VStack space="xs">
-              <Text className="block text-sm font-medium text-gray-700">Email Address</Text>
+              <Text className="block text-sm font-medium text-gray-700">Endereço de Email</Text>
               <Input className="mt-1">
                 <InputField
-                  placeholder="your.email@example.com"
+                  placeholder="seu.email@exemplo.com"
                   value={formData.email}
                   onChangeText={(value) => setFormData(prev => ({ ...prev, email: value }))}
                   keyboardType="email-address"
@@ -354,10 +415,10 @@ const ContactSection = () => {
             </VStack>
 
             <VStack space="xs">
-              <Text className="block text-sm font-medium text-gray-700">Message</Text>
+              <Text className="block text-sm font-medium text-gray-700">Mensagem</Text>
               <Textarea className="mt-1">
                 <TextareaInput
-                  placeholder="Tell us how we can help you..."
+                  placeholder="Diga-nos como podemos ajudá-lo..."
                   value={formData.message}
                   onChangeText={(value) => setFormData(prev => ({ ...prev, message: value }))}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3 px-4"
@@ -370,7 +431,7 @@ const ContactSection = () => {
               className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-full px-6 py-3 shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             >
               <ButtonText className="text-base font-semibold text-white justify-center">
-                Send Message
+                Enviar Mensagem
               </ButtonText>
             </Button>
           </VStack>
@@ -392,21 +453,21 @@ const Footer = () => {
             <Heading className="text-2xl font-bold text-white">
               Aprende Comigo
             </Heading>
-            <Text className="mt-2 text-gray-400">Unlock your potential.</Text>
+            <Text className="mt-2 text-gray-400">Desbloqueie o seu potencial.</Text>
           </VStack>
 
           <HStack className="flex-wrap justify-center gap-x-6 gap-y-2 md:justify-start">
             <Button variant="link" onPress={() => {}}>
-              <ButtonText className="text-sm text-gray-400 hover:text-white">About</ButtonText>
+              <ButtonText className="text-sm text-gray-400 hover:text-white">Sobre</ButtonText>
             </Button>
             <Button variant="link" onPress={() => router.push('/parents')}>
-              <ButtonText className="text-sm text-gray-400 hover:text-white">Pricing</ButtonText>
+              <ButtonText className="text-sm text-gray-400 hover:text-white">Preços</ButtonText>
             </Button>
             <Button variant="link" onPress={() => {}}>
-              <ButtonText className="text-sm text-gray-400 hover:text-white">Contact</ButtonText>
+              <ButtonText className="text-sm text-gray-400 hover:text-white">Contacto</ButtonText>
             </Button>
             <Button variant="link" onPress={() => {}}>
-              <ButtonText className="text-sm text-gray-400 hover:text-white">Terms</ButtonText>
+              <ButtonText className="text-sm text-gray-400 hover:text-white">Termos</ButtonText>
             </Button>
           </HStack>
         </HStack>
@@ -414,7 +475,7 @@ const Footer = () => {
         <Box className="mt-8 border-t border-gray-800 pt-8">
           <HStack className="flex-col items-center justify-between gap-4 md:flex-row">
             <Text className="text-sm text-gray-500">
-              © 2024 Aprende Comigo. All rights reserved.
+              © 2024 Aprende Comigo. Todos os direitos reservados.
             </Text>
             <HStack space="md" className="gap-4">
               <Text className="text-gray-500 text-sm hover:text-white">🐦</Text>
@@ -430,20 +491,24 @@ const Footer = () => {
 
 // Main Landing Page Component
 const LandingContent = () => {
+  const [selectedUserType, setSelectedUserType] = useState<UserType>('schools');
+
   return (
-    <ScrollView className="flex-1 bg-gray-50">
-      <VStack className="relative size-full min-h-screen flex-col justify-between overflow-x-hidden">
-        <VStack>
-          <StickyHeader />
-          <HeroSection />
-          <PricingSection />
-          <TestimonialsSection />
-          <CTASection />
-          <ContactSection />
+    <UserTypeContext.Provider value={{ selectedUserType, setSelectedUserType }}>
+      <ScrollView className="flex-1 bg-white">
+        <VStack className="relative size-full min-h-screen flex-col justify-between overflow-x-hidden">
+          <VStack>
+            <StickyHeader />
+            <HeroSection />
+            <TestimonialsSection />
+            <PricingSection />
+            <CTASection />
+            <ContactSection />
+          </VStack>
+          <Footer />
         </VStack>
-        <Footer />
-      </VStack>
-    </ScrollView>
+      </ScrollView>
+    </UserTypeContext.Provider>
   );
 };
 

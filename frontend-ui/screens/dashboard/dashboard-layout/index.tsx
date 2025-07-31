@@ -12,6 +12,7 @@ import {
   MessagesSquare,
   HomeIcon,
   Home,
+  BarChart3,
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Platform, Alert } from 'react-native';
@@ -79,6 +80,11 @@ const bottomTabsList: BottomTabs[] = [
     iconName: HomeIcon,
     iconText: 'Home',
     route: '/home',
+  },
+  {
+    iconName: BarChart3,
+    iconText: 'Dashboard',
+    route: '/student/dashboard',
   },
   {
     iconName: MessagesSquare,

@@ -1,0 +1,293 @@
+QA Test Case: Account Settings and Profile Management
+
+Test ID: DASHBOARD-004
+Test Name: Account Settings and Profile Management
+Purpose: Verify account settings functionality, profile management, security settings, preferences, and notification controls
+Expected Result: Students can successfully manage their account settings, update profile information, configure preferences, and control notifications
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native Expo frontend
+- Database: PostgreSQL with user profile and settings data
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: make dev-open
+4. Backend: http://localhost:8000
+5. Frontend: http://localhost:8081
+
+Test Data:
+- Test Student Email: student@test.com
+- Profile Information: Existing profile with basic information
+- Notification Settings: Various notification preferences
+- Security Settings: Current authentication settings
+- School Associations: Active enrollment in at least one school
+- Contact Information: Phone, email, emergency contacts
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Authentication
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  source ../.venv/bin/activate
+  make dev-open
+
+1. Start development servers
+2. Navigate to http://localhost:8081
+3. Complete authentication with student@test.com
+4. Verify successful login to dashboard
+
+Expected: Authentication successful, dashboard accessible
+Screenshot: 01-authenticated-dashboard.png
+Debug: Use 'make logs' for server troubleshooting
+
+Step 2: Navigate to Account Settings
+1. From dashboard, locate account settings navigation
+2. Look for "Account Settings", "Profile", or "My Account" menu item
+3. Click to navigate to account settings page
+4. Verify page loads with settings interface
+5. Check page title and navigation breadcrumbs
+
+Expected: Account settings page loads with organized settings sections
+Screenshot: 02-account-settings-page.png
+PASS if: Settings page loads with clear navigation and sections
+FAIL if: Navigation fails, page doesn't load, or poor organization
+
+Step 3: Profile Information Section
+1. Locate profile information section
+2. Verify current profile data displays correctly:
+   - Full name (first and last name)
+   - Email address
+   - Phone number
+   - Profile picture/avatar
+   - Date of birth (if applicable)
+   - Grade level/academic year
+3. Check that sensitive information is properly protected
+4. Verify profile picture display and placeholder handling
+
+Expected: Profile information displays accurately with proper data protection
+Screenshot: 03-profile-information.png
+PASS if: All profile data displays correctly with appropriate privacy
+FAIL if: Missing information, incorrect data, or privacy concerns
+
+Step 4: Profile Information Editing
+1. Click "Edit Profile" or similar action button
+2. Test editing each profile field:
+   - Update first name
+   - Update last name
+   - Update phone number
+   - Update grade level (if editable)
+3. Verify form validation:
+   - Required field validation
+   - Format validation (phone, email)
+   - Length restrictions
+4. Test saving profile changes
+5. Verify changes persist after page refresh
+
+Expected: Profile editing works with proper validation and persistence
+Screenshot: 04-profile-editing.png
+PASS if: All editable fields work with proper validation
+FAIL if: Editing fails, validation issues, or changes don't persist
+
+Step 5: Profile Picture Management
+1. Locate profile picture section
+2. Test uploading new profile picture:
+   - Click upload/change picture button
+   - Select image file (test various formats: JPG, PNG)
+   - Verify image preview before saving
+   - Test file size restrictions
+3. Test profile picture cropping (if available)
+4. Test removing/resetting profile picture
+5. Verify new picture displays across the application
+
+Expected: Profile picture management works with proper file handling
+Screenshot: 05-profile-picture.png
+PASS if: Picture upload works with proper validation and display
+FAIL if: Upload fails, poor file handling, or display issues
+
+Step 6: Contact Information Management
+1. Locate contact information section
+2. Verify editable contact fields:
+   - Primary email address
+   - Secondary email (if applicable)
+   - Phone number
+   - Emergency contact information
+   - Mailing address (if applicable)
+3. Test updating contact information
+4. Verify email change process (if allowed):
+   - Verification requirements
+   - Confirmation process
+   - Security notifications
+
+Expected: Contact information can be managed with proper verification
+Screenshot: 06-contact-information.png
+PASS if: Contact updates work with appropriate security measures
+FAIL if: Updates fail, security issues, or verification problems
+
+Step 7: Security Settings Management
+1. Navigate to security settings section
+2. Verify security options available:
+   - Password/authentication settings
+   - Two-factor authentication (if available)
+   - Active sessions management
+   - Login history
+   - Account recovery options
+3. Test security features:
+   - View active sessions
+   - Review login history
+   - Configure authentication preferences
+
+Expected: Security settings provide comprehensive account protection options
+Screenshot: 07-security-settings.png
+PASS if: Security features work and provide good account protection
+FAIL if: Security settings missing, non-functional, or inadequate
+
+Step 8: Notification Preferences
+1. Locate notification settings section
+2. Verify notification categories:
+   - Class reminders
+   - Package expiration warnings
+   - Payment notifications
+   - System announcements
+   - Marketing communications
+3. Test toggling notification preferences:
+   - Email notifications on/off
+   - SMS notifications (if available)
+   - Push notifications (mobile)
+   - In-app notifications
+4. Test granular notification controls
+5. Verify changes save immediately
+
+Expected: Comprehensive notification control with immediate updates
+Screenshot: 08-notification-preferences.png
+PASS if: All notification controls work and save properly
+FAIL if: Controls don't work, changes don't save, or missing options
+
+Step 9: Privacy Settings
+1. Locate privacy settings section
+2. Verify privacy controls:
+   - Profile visibility settings
+   - Data sharing preferences
+   - Marketing opt-in/opt-out
+   - Cookie preferences
+   - Data download/export options
+3. Test privacy setting changes
+4. Verify privacy policy links and information
+5. Check GDPR compliance features (if applicable)
+
+Expected: Privacy settings provide proper user control over data
+Screenshot: 09-privacy-settings.png
+PASS if: Privacy controls comprehensive and functional
+FAIL if: Privacy settings inadequate or non-functional
+
+Step 10: School and Enrollment Settings
+1. Locate school enrollment section
+2. Verify current school associations display
+3. Check enrollment status and details:
+   - School name and contact
+   - Enrollment date
+   - Grade level/class assignments
+   - Active/inactive status
+4. Test updating school-related information (if editable)
+5. Verify school switching process (if multiple schools)
+
+Expected: School enrollment information accurate and manageable
+Screenshot: 10-school-settings.png
+PASS if: School information complete with proper management options
+FAIL if: School data missing, incorrect, or management issues
+
+Step 11: Billing and Payment Settings
+1. Navigate to billing/payment section (if available)
+2. Verify payment method management:
+   - Saved payment methods
+   - Default payment method selection
+   - Payment method adding/removing
+3. Check billing information:
+   - Billing address
+   - Invoice delivery preferences
+   - Payment history access
+4. Test payment method updates
+5. Verify security for payment information
+
+Expected: Billing settings secure and comprehensive
+Screenshot: 11-billing-settings.png
+PASS if: Payment management secure with full functionality
+FAIL if: Payment settings insecure, incomplete, or non-functional
+
+Step 12: Account Deactivation and Data Management
+1. Look for account management options
+2. Verify data management features:
+   - Download account data
+   - Delete account data
+   - Account deactivation options
+3. Test account data download (if available)
+4. Check account deactivation process:
+   - Warning messages
+   - Confirmation requirements
+   - Reversibility options
+5. Verify data retention policies are clear
+
+Expected: Account management provides proper control with clear policies
+Screenshot: 12-account-management.png
+PASS if: Account management comprehensive with clear data policies
+FAIL if: Account controls inadequate or unclear policies
+
+Step 13: Settings Validation and Error Handling
+1. Test form validation across all settings:
+   - Required field validation
+   - Format validation (email, phone)
+   - Length restrictions
+   - Special character handling
+2. Test invalid data submission
+3. Verify error messages are clear and helpful
+4. Test network error handling
+5. Check concurrent editing scenarios
+6. Verify unsaved changes warnings
+
+Expected: Robust validation with clear error messaging
+Screenshot: 13-validation-errors.png
+PASS if: Validation comprehensive with helpful error messages
+FAIL if: Validation poor, unclear errors, or missing safeguards
+
+Step 14: Mobile Responsiveness and Accessibility
+1. Test account settings on mobile viewport (375px)
+2. Verify all settings sections accessible on mobile
+3. Test form interactions on touch devices
+4. Check accessibility features:
+   - Screen reader compatibility
+   - Keyboard navigation
+   - Color contrast compliance
+   - Focus indicators
+5. Test settings across different devices and browsers
+
+Expected: Settings fully accessible across all devices and accessibility standards
+Screenshot: 14-mobile-accessibility.png
+PASS if: Mobile interface fully functional with excellent accessibility
+FAIL if: Mobile issues, accessibility problems, or device compatibility
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All account settings function correctly, profile management works properly, security features are comprehensive, notifications can be controlled, and mobile interface is fully accessible
+
+FAIL: Any critical settings functionality fails, security concerns exist, profile management broken, or poor accessibility
+
+Individual Step Criteria:
+- Step 1: PASS if authentication successful, FAIL if login issues
+- Step 2: PASS if settings page loads properly, FAIL if navigation fails
+- Step 3: PASS if profile information displays correctly, FAIL if data missing/incorrect
+- Step 4: PASS if profile editing works with validation, FAIL if editing fails
+- Step 5: PASS if picture management functional, FAIL if upload/display issues
+- Step 6: PASS if contact information manageable, FAIL if update problems
+- Step 7: PASS if security settings comprehensive, FAIL if security inadequate
+- Step 8: PASS if notification controls work, FAIL if notification issues
+- Step 9: PASS if privacy settings adequate, FAIL if privacy controls insufficient
+- Step 10: PASS if school settings accurate, FAIL if school information issues
+- Step 11: PASS if billing settings secure and functional, FAIL if payment issues
+- Step 12: PASS if account management comprehensive, FAIL if data control inadequate
+- Step 13: PASS if validation robust, FAIL if validation poor or missing
+- Step 14: PASS if mobile/accessibility excellent, FAIL if usability issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

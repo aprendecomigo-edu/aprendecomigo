@@ -259,7 +259,7 @@ const AcceptInvitationPage = () => {
               </VStack>
             </CardBody>
           </Card>
-        </VStack>
+        </Box>
       </Center>
     </Box>
   );

@@ -51,7 +51,7 @@ export default function PurchaseSuccessPage() {
           {/* Success Header */}
           <Card className="p-8 bg-success-50 border border-success-200">
             <VStack space="lg" className="items-center text-center">
-              <Icon as={CheckCircle} size="3xl" className="text-success-600" />
+              <Icon as={CheckCircle} size="xl" className="text-success-600" />
               
               <VStack space="sm" className="items-center">
                 <Heading size="3xl" className="text-success-900">

@@ -4,6 +4,7 @@ import { cssInterop } from 'nativewind';
 import React, { forwardRef, memo } from 'react';
 
 import { headingStyle } from './styles';
+import { filterWebProps } from '../utils/filterWebProps';
 
 type IHeadingProps = VariantProps<typeof headingStyle> &
   React.ComponentPropsWithoutRef<typeof H1> & {
@@ -51,7 +52,7 @@ const MappedHeading = memo(
                 highlight,
                 class: className,
               })}
-              {...props}
+              {...filterWebProps(props)}
               ref={ref}
             />
           );
@@ -69,7 +70,7 @@ const MappedHeading = memo(
                 highlight,
                 class: className,
               })}
-              {...props}
+              {...filterWebProps(props)}
               ref={ref}
             />
           );
@@ -87,7 +88,7 @@ const MappedHeading = memo(
                 highlight,
                 class: className,
               })}
-              {...props}
+              {...filterWebProps(props)}
               ref={ref}
             />
           );
@@ -105,7 +106,7 @@ const MappedHeading = memo(
                 highlight,
                 class: className,
               })}
-              {...props}
+              {...filterWebProps(props)}
               ref={ref}
             />
           );
@@ -123,7 +124,7 @@ const MappedHeading = memo(
                 highlight,
                 class: className,
               })}
-              {...props}
+              {...filterWebProps(props)}
               ref={ref}
             />
           );
@@ -142,7 +143,7 @@ const MappedHeading = memo(
                 highlight,
                 class: className,
               })}
-              {...props}
+              {...filterWebProps(props)}
               ref={ref}
             />
           );
@@ -160,7 +161,7 @@ const MappedHeading = memo(
                 highlight,
                 class: className,
               })}
-              {...props}
+              {...filterWebProps(props)}
               ref={ref}
             />
           );
