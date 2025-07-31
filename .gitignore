@@ -168,21 +168,5 @@ lerna-debug.log*
 tmp/
 temp/
 
-# Projects
-credentials.json
-backend/DOCS_BRAINSTORM
-bin/*
-testing/test-results/*
-testing/playwright-report/*
-
-# AI Assistant configurations
-.claude/
-
-# Gemini CLI
-.gemini/sandbox/
-.gemini/logs/
-.gemini/cache/
-# Keep .gemini/settings.json and .gemini/sandbox.Dockerfile
-
 # Development server logs
 logs/
