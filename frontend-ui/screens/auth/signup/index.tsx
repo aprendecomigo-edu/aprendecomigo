@@ -238,12 +238,22 @@ const OnboardingForm = () => {
         }.`
       );
 
-      // Navigate to verification screen - fix type issue by using proper navigation
-      router.replace(
-        `/auth/verify-code?contact=${encodeURIComponent(
-          data.primaryContact === 'email' ? data.userEmail : data.userPhone
-        )}&contactType=${data.primaryContact}`
-      );
+      // Navigate based on user type
+      if (userType === 'tutor') {
+        // For tutors, go to verification first, then to tutor onboarding
+        router.replace(
+          `/auth/verify-code?contact=${encodeURIComponent(
+            data.primaryContact === 'email' ? data.userEmail : data.userPhone
+          )}&contactType=${data.primaryContact}&nextRoute=${encodeURIComponent('/onboarding/tutor-flow')}`
+        );
+      } else {
+        // For schools, use existing verification flow
+        router.replace(
+          `/auth/verify-code?contact=${encodeURIComponent(
+            data.primaryContact === 'email' ? data.userEmail : data.userPhone
+          )}&contactType=${data.primaryContact}`
+        );
+      }
     } catch (error: any) {
       console.error('Error during registration:', error);
       

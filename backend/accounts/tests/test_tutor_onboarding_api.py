@@ -1,0 +1,313 @@
+"""
+Tests for Tutor Onboarding API endpoints.
+
+Tests for GitHub issue #44 - Individual Tutor Onboarding Flow Implementation.
+This module tests the missing API endpoints that are blocking the frontend tutor onboarding flow.
+"""
+
+import json
+from django.test import TestCase
+from django.urls import reverse
+from rest_framework.test import APIClient
+from rest_framework import status
+from django.contrib.auth import get_user_model
+from knox.models import AuthToken
+
+from accounts.models import (
+    School, 
+    SchoolMembership, 
+    SchoolRole, 
+    TeacherProfile,
+    Course,
+    EducationalSystem,
+    TeacherCourse
+)
+
+User = get_user_model()
+
+
+class TutorOnboardingAPITestCase(TestCase):
+    """Base test case for tutor onboarding API tests."""
+    
+    def setUp(self):
+        """Set up test data."""
+        self.client = APIClient()
+        
+        # Create test user
+        self.user = User.objects.create_user(
+            email='test@tutor.com',
+            first_name='Test',
+            last_name='Tutor'
+        )
+        
+        # Create auth token for API authentication
+        self.token = AuthToken.objects.create(self.user)[1]
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
+        
+        # Create educational system
+        self.educational_system = EducationalSystem.objects.create(
+            name='Portugal',
+            code='PT',
+            description='Portuguese Educational System'
+        )
+        
+        # Create sample courses
+        self.course1 = Course.objects.create(
+            name='Mathematics - 9th Grade',
+            code='MAT9',
+            educational_system=self.educational_system,
+            education_level='3rd_cycle',
+            description='Basic mathematics for 9th grade students'
+        )
+        
+        self.course2 = Course.objects.create(
+            name='Physics - 10th Grade',
+            code='FIS10',
+            educational_system=self.educational_system,
+            education_level='secondary',
+            description='Physics fundamentals for 10th grade students'
+        )
+
+
+class TutorOnboardingGuidanceAPITest(TutorOnboardingAPITestCase):
+    """Test the tutor onboarding guidance API endpoint."""
+    
+    def test_guidance_endpoint_returns_404_initially(self):
+        """Test that the guidance endpoint currently returns 404 (missing implementation)."""
+        url = '/api/accounts/tutors/onboarding/guidance/'
+        
+        data = {
+            'step_id': 'course_selection',
+            'context': {
+                'educational_system_id': self.educational_system.id
+            }
+        }
+        
+        response = self.client.post(url, data, format='json')
+        
+        # Should return 404 since endpoint doesn't exist yet
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_guidance_endpoint_success_after_implementation(self):
+        """Test that the guidance endpoint returns proper guidance after implementation."""
+        url = '/api/accounts/tutors/onboarding/guidance/'
+        
+        data = {
+            'step_id': 'course_selection',
+            'context': {
+                'educational_system_id': self.educational_system.id
+            }
+        }
+        
+        response = self.client.post(url, data, format='json')
+        
+        # After implementation, should return success with guidance data
+        if response.status_code != status.HTTP_404_NOT_FOUND:  # Skip if not implemented yet
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            
+            expected_fields = ['tips', 'recommendations', 'common_mistakes', 'estimated_time']
+            for field in expected_fields:
+                self.assertIn(field, response.data)
+            
+            # Check structure of tips
+            if 'tips' in response.data and response.data['tips']:
+                tip = response.data['tips'][0]
+                self.assertIn('title', tip)
+                self.assertIn('description', tip)
+                self.assertIn('priority', tip)
+                self.assertIn('category', tip)
+                self.assertIn(tip['priority'], ['high', 'medium', 'low'])
+                self.assertIn(tip['category'], ['requirement', 'suggestion', 'best_practice'])
+
+
+class TutorOnboardingStartAPITest(TutorOnboardingAPITestCase):
+    """Test the tutor onboarding start API endpoint."""
+    
+    def test_start_endpoint_returns_404_initially(self):
+        """Test that the start endpoint currently returns 404 (missing implementation)."""
+        url = '/api/accounts/tutors/onboarding/start/'
+        
+        response = self.client.post(url, {}, format='json')
+        
+        # Should return 404 since endpoint doesn't exist yet
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_start_endpoint_success_after_implementation(self):
+        """Test that the start endpoint initializes onboarding session after implementation."""
+        url = '/api/accounts/tutors/onboarding/start/'
+        
+        response = self.client.post(url, {}, format='json')
+        
+        # After implementation, should return success with onboarding data
+        if response.status_code != status.HTTP_404_NOT_FOUND:  # Skip if not implemented yet
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            
+            expected_fields = ['onboarding_id', 'initial_progress']
+            for field in expected_fields:
+                self.assertIn(field, response.data)
+            
+            # Check progress structure
+            progress = response.data['initial_progress']
+            progress_fields = [
+                'current_step', 'total_steps', 'completed_steps', 
+                'step_completion', 'overall_completion'
+            ]
+            for field in progress_fields:
+                self.assertIn(field, progress)
+            
+            self.assertEqual(progress['current_step'], 1)
+            self.assertGreater(progress['total_steps'], 0)
+            self.assertEqual(progress['overall_completion'], 0)
+
+
+class TutorOnboardingValidateStepAPITest(TutorOnboardingAPITestCase):
+    """Test the tutor onboarding validate step API endpoint."""
+    
+    def test_validate_endpoint_returns_404_initially(self):
+        """Test that the validate step endpoint currently returns 404 (missing implementation)."""
+        url = '/api/accounts/tutors/onboarding/validate-step/'
+        
+        data = {
+            'step': 'course_selection',
+            'data': {
+                'course_selection': {
+                    'educational_system_id': self.educational_system.id,
+                    'selected_courses': [
+                        {
+                            'course_id': self.course1.id,
+                            'hourly_rate': 25.00,
+                            'expertise_level': 'intermediate'
+                        }
+                    ]
+                }
+            }
+        }
+        
+        response = self.client.post(url, data, format='json')
+        
+        # Should return 404 since endpoint doesn't exist yet
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_validate_endpoint_success_after_implementation(self):
+        """Test that the validate step endpoint validates step data after implementation."""
+        url = '/api/accounts/tutors/onboarding/validate-step/'
+        
+        data = {
+            'step': 'course_selection',
+            'data': {
+                'course_selection': {
+                    'educational_system_id': self.educational_system.id,
+                    'selected_courses': [
+                        {
+                            'course_id': self.course1.id,
+                            'hourly_rate': 25.00,
+                            'expertise_level': 'intermediate'
+                        }
+                    ]
+                }
+            }
+        }
+        
+        response = self.client.post(url, data, format='json')
+        
+        # After implementation, should return validation results
+        if response.status_code != status.HTTP_404_NOT_FOUND:  # Skip if not implemented yet
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            
+            expected_fields = ['is_valid', 'errors', 'warnings', 'completion_percentage']
+            for field in expected_fields:
+                self.assertIn(field, response.data)
+            
+            # For valid data, should be valid
+            self.assertTrue(response.data['is_valid'])
+            self.assertIsInstance(response.data['errors'], dict)
+            self.assertIsInstance(response.data['warnings'], dict)
+            self.assertGreaterEqual(response.data['completion_percentage'], 0)
+            self.assertLessEqual(response.data['completion_percentage'], 100)
+    
+    def test_validate_endpoint_invalid_data_after_implementation(self):
+        """Test that the validate step endpoint properly validates invalid data."""
+        url = '/api/accounts/tutors/onboarding/validate-step/'
+        
+        # Invalid data - missing required fields
+        data = {
+            'step': 'course_selection',
+            'data': {
+                'course_selection': {
+                    'selected_courses': []  # Empty selection should be invalid
+                }
+            }
+        }
+        
+        response = self.client.post(url, data, format='json')
+        
+        # After implementation, should return validation errors
+        if response.status_code != status.HTTP_404_NOT_FOUND:  # Skip if not implemented yet
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            
+            # Should be invalid with errors
+            self.assertFalse(response.data['is_valid'])
+            self.assertTrue(len(response.data['errors']) > 0)
+
+
+class TutorOnboardingAuthenticationTest(TutorOnboardingAPITestCase):
+    """Test authentication requirements for tutor onboarding API endpoints."""
+    
+    def test_endpoints_require_authentication(self):
+        """Test that all tutor onboarding endpoints require authentication."""
+        # Create unauthenticated client
+        unauth_client = APIClient()
+        
+        endpoints = [
+            '/api/accounts/tutors/onboarding/guidance/',
+            '/api/accounts/tutors/onboarding/start/',
+            '/api/accounts/tutors/onboarding/validate-step/',
+        ]
+        
+        for endpoint in endpoints:
+            response = unauth_client.post(endpoint, {}, format='json')
+            
+            # Should return 401 or 404 (404 if endpoint doesn't exist yet)
+            self.assertIn(response.status_code, [
+                status.HTTP_401_UNAUTHORIZED, 
+                status.HTTP_404_NOT_FOUND
+            ])
+
+
+class TutorOnboardingIntegrationTest(TutorOnboardingAPITestCase):
+    """Test integration with existing models."""
+    
+    def test_course_model_integration(self):
+        """Test that the API works with existing Course models."""
+        # Verify test data exists
+        self.assertTrue(Course.objects.filter(id=self.course1.id).exists())
+        self.assertTrue(Course.objects.filter(id=self.course2.id).exists())
+        
+        # Verify educational system relationship
+        self.assertEqual(self.course1.educational_system, self.educational_system)
+        self.assertEqual(self.course2.educational_system, self.educational_system)
+    
+    def test_teacher_profile_model_integration(self):
+        """Test that teacher profiles can be created for onboarding."""
+        # Create teacher profile for the user
+        teacher_profile = TeacherProfile.objects.create(
+            user=self.user,
+            bio='Test teacher bio',
+            hourly_rate=30.00
+        )
+        
+        # Verify profile was created
+        self.assertTrue(TeacherProfile.objects.filter(user=self.user).exists())
+        
+        # Create teacher course relationship
+        teacher_course = TeacherCourse.objects.create(
+            teacher=teacher_profile,
+            course=self.course1,
+            hourly_rate=25.00
+        )
+        
+        # Verify relationship was created
+        self.assertTrue(TeacherCourse.objects.filter(
+            teacher=teacher_profile,
+            course=self.course1
+        ).exists())

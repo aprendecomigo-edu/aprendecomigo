@@ -373,35 +373,6 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
     }
   }, [setCurrentStep]);
 
-  const nextStep = useCallback(async (): Promise<boolean> => {
-    try {
-      const isValid = await validateCurrentStep();
-      if (!isValid) return false;
-
-      await saveProgress();
-      
-      setState(prev => ({
-        ...prev,
-        completedSteps: new Set([...prev.completedSteps, currentStepConfig.id]),
-      }));
-
-      if (state.currentStep < TUTOR_ONBOARDING_STEPS.length - 1) {
-        setCurrentStep(state.currentStep + 1);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error moving to next step:', error);
-      return false;
-    }
-  }, [validateCurrentStep, saveProgress, currentStepConfig, state.currentStep, setCurrentStep]);
-
-  const previousStep = useCallback(() => {
-    if (state.currentStep > 0) {
-      setCurrentStep(state.currentStep - 1);
-    }
-  }, [state.currentStep, setCurrentStep]);
-
   // Validation
   const validateCurrentStep = useCallback(async (): Promise<boolean> => {
     try {
@@ -471,6 +442,35 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
       }));
     }
   }, [currentStepConfig, state.stepData, state.formData, state.onboardingId, state.currentStep]);
+
+  const nextStep = useCallback(async (): Promise<boolean> => {
+    try {
+      const isValid = await validateCurrentStep();
+      if (!isValid) return false;
+
+      await saveProgress();
+      
+      setState(prev => ({
+        ...prev,
+        completedSteps: new Set([...prev.completedSteps, currentStepConfig.id]),
+      }));
+
+      if (state.currentStep < TUTOR_ONBOARDING_STEPS.length - 1) {
+        setCurrentStep(state.currentStep + 1);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error moving to next step:', error);
+      return false;
+    }
+  }, [validateCurrentStep, saveProgress, currentStepConfig, state.currentStep, setCurrentStep]);
+
+  const previousStep = useCallback(() => {
+    if (state.currentStep > 0) {
+      setCurrentStep(state.currentStep - 1);
+    }
+  }, [state.currentStep, setCurrentStep]);
 
   // Submit onboarding
   const submitOnboarding = useCallback(async (publishingOptions: ProfilePublishingOptions) => {

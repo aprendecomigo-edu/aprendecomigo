@@ -1,15 +1,13 @@
 import React from 'react';
 import useRouter from '@unitools/router';
-import { GraduationCap, School, Building2, ArrowRight } from 'lucide-react-native';
 
 import { AuthLayout } from './layout';
 
 import { Box } from '@/components/ui/box';
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
+import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
@@ -27,7 +25,7 @@ const USER_TYPE_OPTIONS = [
       'Build your student base',
       'Manage your own business'
     ],
-    icon: GraduationCap,
+    icon: '🎓',
     iconColor: 'text-blue-600',
     backgroundColor: 'bg-blue-100',
     borderColor: 'border-blue-200',
@@ -45,7 +43,7 @@ const USER_TYPE_OPTIONS = [
       'Monitor educational progress',
       'Institutional oversight tools'
     ],
-    icon: School,
+    icon: '🏫',
     iconColor: 'text-green-600',
     backgroundColor: 'bg-green-100',
     borderColor: 'border-green-200',
@@ -65,70 +63,13 @@ const UserTypeCard: React.FC<{
   onSelect: (type: UserTypeOption) => void;
 }> = ({ option, onSelect }) => {
   return (
-    <Pressable
-      onPress={() => onSelect(option.type)}
-      className={`w-full ${option.hoverColor} transition-colors duration-200`}
-      accessibilityRole="button"
-      accessibilityLabel={`Select ${option.title}`}
-      accessibilityHint={option.description}
-    >
-      <Card className={`border-2 ${option.borderColor} bg-white shadow-sm`}>
-        <CardHeader className="pb-3">
-          <HStack space="md" className="items-center">
-            <Box className={`w-16 h-16 rounded-full items-center justify-center ${option.backgroundColor}`}>
-              <Icon 
-                as={option.icon} 
-                className={option.iconColor} 
-                size="xl"
-                accessibilityLabel={`${option.title} icon`}
-              />
-            </Box>
-            <VStack className="flex-1" space="xs">
-              <Heading size="lg" className="text-gray-900">
-                {option.title}
-              </Heading>
-              <Text className="text-blue-600 font-medium text-base">
-                {option.subtitle}
-              </Text>
-            </VStack>
-            <Icon 
-              as={ArrowRight} 
-              className="text-gray-400" 
-              size="lg"
-              accessibilityLabel="Select option"
-            />
-          </HStack>
-        </CardHeader>
-        
-        <CardContent className="pt-0">
-          <VStack space="md">
-            <Text className="text-gray-600 leading-relaxed">
-              {option.description}
-            </Text>
-            
-            <VStack space="xs">
-              {option.features.map((feature, index) => (
-                <HStack key={index} space="sm" className="items-center">
-                  <Box className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  <Text className="text-gray-700 text-sm">{feature}</Text>
-                </HStack>
-              ))}
-            </VStack>
-            
-            <Button
-              className="mt-4 w-full bg-gray-900 hover:bg-gray-800"
-              onPress={() => onSelect(option.type)}
-              accessibilityLabel={`${option.ctaText} - ${option.description}`}
-            >
-              <ButtonText className="text-white font-medium">
-                {option.ctaText}
-              </ButtonText>
-              <ButtonIcon as={ArrowRight} className="text-white ml-2" />
-            </Button>
-          </VStack>
-        </CardContent>
-      </Card>
-    </Pressable>
+    <Box className="p-4 border rounded">
+      <Text>{option.title}</Text>
+      <Text>{option.description}</Text>
+      <Text onPress={() => onSelect(option.type)}>
+        Select {option.type}
+      </Text>
+    </Box>
   );
 };
 

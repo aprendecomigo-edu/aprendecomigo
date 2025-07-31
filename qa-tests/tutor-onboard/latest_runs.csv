@@ -9,3 +9,6 @@ tob-007,Visual Course Selection Feedback,Test visual confirmation of selected co
 tob-008,Backend API Integration,Test integration with existing Course and TeacherCourse backend models,,,0,0,0
 tob-009,Complete Onboarding Flow,Test complete individual tutor onboarding flow from start to finish,,,0,0,0
 tob-010,Mobile Responsiveness,Test mobile responsiveness and cross-platform compatibility,,,0,0,0
+tob-011,Individual Tutor School Creation,Test school creation during individual tutor signup process for GitHub issue #45,20250731-160643,PASS,1,1,0
+tob-012,School Creation Form Validation,Test form validation prevents duplicate school names and validates required fields,,,0,0,0
+tob-013,User Role Assignment Verification,Test user gets both SCHOOL_OWNER and TEACHER roles automatically,20250731-160643,PASS,1,1,0

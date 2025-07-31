@@ -134,7 +134,7 @@ const LoginForm = () => {
         </VStack>
         <HStack className="self-center" space="sm">
           <Text size="md">Don't have an account?</Text>
-          <Link href="/auth/signup">
+          <Link href="/auth/user-type-selection">
             <LinkText
               className="font-medium text-primary-700 group-hover/link:text-primary-600 group-hover/pressed:text-primary-700"
               size="md"

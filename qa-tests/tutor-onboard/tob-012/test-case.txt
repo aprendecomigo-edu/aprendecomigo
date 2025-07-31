@@ -1,0 +1,226 @@
+QA Test Case: Individual Tutor School Creation Form Validation
+
+Test ID: TOB-012
+Test Name: School Creation Form Validation and Duplicate Prevention
+Purpose: Verify form validation prevents duplicate school names and validates all required fields
+Expected Result: Comprehensive form validation works correctly with proper error messages
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Individual Tutor Business Setup Form Validation (GitHub Issue #45)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+4. Backend API endpoints accessible
+5. Frontend accessible at http://localhost:8081
+6. At least one existing tutor school in database for duplicate testing
+
+Test Data:
+- Existing School: "Jane Smith's Tutoring Practice" (pre-created)
+- Test User 1: John Doe
+- Test User 2: Jane Smith (duplicate school name scenario)
+- Test Emails: Use unique emails for each test
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+1. Ensure backend is running
+2. Create a test user/school for duplicate testing:
+   Commands:
+   python backend/manage.py shell
+   # Create existing school for duplicate testing
+   from accounts.models import User, School, SchoolMembership
+   existing_user = User.objects.create(name="Jane Smith", email="jane.smith@test.com")
+   existing_school = School.objects.create(name="Jane Smith's Tutoring Practice")
+   SchoolMembership.objects.create(user=existing_user, school=existing_school, role='school_owner')
+
+Expected: Test environment ready with existing school for duplicate testing
+Screenshot: 01_test_environment_setup.png
+
+Step 2: Test Empty Form Validation
+1. Navigate to http://localhost:8081
+2. Go to tutor signup form
+3. Leave all fields empty
+4. Click "Create Account"
+5. Verify validation errors appear for required fields
+
+Expected: Form validation prevents submission with empty required fields
+Screenshot: 02_empty_form_validation.png
+
+Step 3: Test Invalid Email Validation
+1. Fill form with invalid email: "invalid-email"
+2. Fill other fields with valid data
+3. Attempt to submit
+4. Verify email validation error appears
+
+Expected: Email validation works correctly
+Screenshot: 03_invalid_email_validation.png
+
+Step 4: Test Invalid Phone Validation
+1. Fill form with invalid phone: "abc123"
+2. Fill other fields with valid data
+3. Attempt to submit
+4. Verify phone validation error appears
+
+Expected: Phone validation rejects invalid characters
+Screenshot: 04_invalid_phone_validation.png
+
+Step 5: Test Phone Number Formatting
+1. Enter phone with special characters: "123-456-789!@#"
+2. Verify input field automatically sanitizes to digits, spaces, and + only
+3. Enter phone starting with space: " 123456789"
+4. Verify validation prevents submission
+
+Expected: Phone input sanitization and validation works
+Screenshot: 05_phone_formatting_validation.png
+
+Step 6: Test Auto-Generated School Name Limits
+1. Enter very long name: "A" * 200 (200 characters)
+2. Observe auto-generated school name
+3. Verify it doesn't exceed character limits
+4. Test with special characters in name
+
+Expected: Auto-generated school names respect character limits
+Screenshot: 06_school_name_limits.png
+
+Step 7: Test Duplicate School Name Prevention (Backend)
+1. Fill form with name "Jane Smith" (which would generate "Jane Smith's Tutoring Practice")
+2. Use unique email: "jane.smith.duplicate@test.com"
+3. Submit the form
+4. Check for duplicate school name handling
+5. Verify if backend prevents duplicate or handles gracefully
+
+Expected: System handles duplicate school names appropriately
+Screenshot: 07_duplicate_school_name_handling.png
+
+Step 8: Test Field Length Validation
+1. Test name field with 151 characters (over limit)
+2. Test email field with 151 characters
+3. Test phone field with 21 characters
+4. Verify validation prevents submission
+
+Expected: Field length validation works for all inputs
+Screenshot: 08_field_length_validation.png
+
+Step 9: Test Required Field Enforcement
+1. Fill all fields except name, submit
+2. Fill all fields except email, submit
+3. Fill all fields except phone, submit
+4. Fill all fields except primary contact, submit
+5. Verify each scenario shows appropriate error
+
+Expected: All required fields are properly enforced
+Screenshot: 09_required_field_enforcement.png
+
+Step 10: Test Successful Validation
+1. Fill all fields with valid data:
+   - Name: "John Doe"
+   - Email: "john.doe.valid@test.com"
+   - Phone: "+351 912 345 678"
+   - Primary Contact: "Email"
+2. Submit form
+3. Verify successful submission
+
+Expected: Valid form submits successfully
+Screenshot: 10_successful_form_submission.png
+
+Step 11: Test Form Reset on Errors
+1. Fill form with some invalid data
+2. Get validation errors
+3. Correct the errors
+4. Resubmit
+5. Verify form state management works correctly
+
+Expected: Form error states reset properly when corrected
+Screenshot: 11_form_error_state_management.png
+
+Step 12: Test Auto-Generation with Edge Cases
+1. Test with name containing apostrophes: "O'Connor"
+2. Test with hyphenated name: "Mary-Jane Smith"
+3. Test with multiple spaces: "John   Doe"
+4. Verify auto-generation handles edge cases correctly
+
+Expected: Auto-generation works with name edge cases
+Screenshot: 12_auto_generation_edge_cases.png
+
+Step 13: Test Frontend-Backend Validation Consistency
+1. Submit form with data that passes frontend validation
+2. Verify backend also accepts the data
+3. Submit form with data that might fail backend validation
+4. Verify proper error handling from backend
+
+Expected: Frontend and backend validation are consistent
+Screenshot: 13_validation_consistency.png
+
+Step 14: Test Error Message Quality
+1. Trigger various validation errors
+2. Verify error messages are:
+   - Clear and user-friendly
+   - Specific to the field/issue
+   - Helpful for correction
+   - Properly positioned near relevant fields
+
+Expected: Error messages are high quality and user-friendly
+Screenshot: 14_error_message_quality.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All validation scenarios work correctly:
+- Empty form validation prevents submission ✓
+- Email format validation works ✓
+- Phone number validation and sanitization works ✓
+- Field length validation enforced ✓
+- Required field validation works ✓
+- Auto-generated school names respect limits ✓
+- Duplicate school name handling works ✓
+- Error messages are clear and helpful ✓
+- Form state management works correctly ✓
+
+FAIL: Any validation scenario fails:
+- Required fields not enforced
+- Invalid data accepted
+- Poor error messages
+- Form state issues
+- Duplicate prevention doesn't work
+- Auto-generation issues
+
+Individual Step Criteria:
+- Step 1: PASS if test environment ready, FAIL if setup issues
+- Step 2: PASS if empty form validation works, FAIL if not
+- Step 3: PASS if email validation works, FAIL if not
+- Step 4: PASS if phone validation works, FAIL if not
+- Step 5: PASS if phone formatting works, FAIL if not
+- Step 6: PASS if school name limits work, FAIL if not
+- Step 7: PASS if duplicate handling works, FAIL if not
+- Step 8: PASS if length validation works, FAIL if not
+- Step 9: PASS if required fields enforced, FAIL if not
+- Step 10: PASS if valid form submits, FAIL if not
+- Step 11: PASS if form state management works, FAIL if not
+- Step 12: PASS if edge cases handled, FAIL if not
+- Step 13: PASS if validation consistent, FAIL if not
+- Step 14: PASS if error messages good, FAIL if not
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== SPECIAL NOTES ===
+
+This test focuses on the validation aspects of GitHub Issue #45:
+- Comprehensive form validation testing
+- Edge case handling for auto-generated school names
+- Duplicate school name prevention
+- User experience with error handling
+
+Pay special attention to:
+- Frontend-backend validation consistency
+- Error message quality and positioning
+- Form state management during validation
+- Auto-generation edge cases with special characters

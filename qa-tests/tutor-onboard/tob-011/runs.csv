@@ -1,0 +1,2 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250731-160643,2025-07-31T16:06:43Z,FAIL,7,5,API Testing,macOS development,Critical implementation gaps - missing TEACHER role and TeacherProfile creation

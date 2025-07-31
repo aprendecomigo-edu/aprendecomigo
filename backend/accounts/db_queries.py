@@ -20,7 +20,7 @@ User = get_user_model()
 
 
 def create_school_owner(
-    email: str, name: str, phone_number: str, primary_contact: str, school_data: dict
+    email: str, name: str, phone_number: str, primary_contact: str, school_data: dict, is_tutor: bool = False
 ) -> tuple[CustomUser, School]:
     # Use CustomUser.objects.create_user for type safety
     # Create the user
@@ -41,10 +41,26 @@ def create_school_owner(
         website=school_data.get("website", ""),
     )
 
-    # Create school membership
+    # Create school owner membership
     SchoolMembership.objects.create(
         user=user, school=school, role=SchoolRole.SCHOOL_OWNER, is_active=True
     )
+    
+    # For individual tutors, also create teacher role and profile
+    if is_tutor:
+        # Create teacher membership
+        SchoolMembership.objects.create(
+            user=user, school=school, role=SchoolRole.TEACHER, is_active=True
+        )
+        
+        # Create teacher profile
+        TeacherProfile.objects.create(
+            user=user,
+            bio='',  # Empty bio initially
+            specialty='',  # Empty specialty initially
+            # Other fields will use their default values
+        )
+    
     return user, school
 
 

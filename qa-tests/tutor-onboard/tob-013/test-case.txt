@@ -1,0 +1,284 @@
+QA Test Case: Individual Tutor User Role Assignment Verification
+
+Test ID: TOB-013
+Test Name: User Role Assignment - SCHOOL_OWNER and TEACHER Verification
+Purpose: Verify that individual tutors are automatically assigned both SCHOOL_OWNER and TEACHER roles
+Expected Result: User has both required roles with correct permissions and access
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Individual Tutor Role Assignment (GitHub Issue #45)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+4. Backend API endpoints accessible
+5. Frontend accessible at http://localhost:8081
+6. Clean database state for testing
+
+Test Data:
+- Test User: Alice Johnson
+- Test Email: alice.johnson.roles@test.com
+- Test Phone: +351 913 456 789
+- Expected School: "Alice Johnson's Tutoring Practice"
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Complete Individual Tutor Registration
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+1. Navigate to tutor signup form
+2. Complete registration with test data:
+   - Name: "Alice Johnson"
+   - Email: "alice.johnson.roles@test.com"
+   - Phone: "+351 913 456 789"
+   - Primary Contact: "Email"
+3. Submit form and complete email verification
+4. Complete basic onboarding if required
+
+Expected: User registration and verification completed successfully
+Screenshot: 01_user_registration_completed.png
+
+Step 2: Verify Backend User Creation
+Commands:
+  python backend/manage.py shell
+  from accounts.models import User, School, SchoolMembership
+  user = User.objects.get(email='alice.johnson.roles@test.com')
+  print(f"User ID: {user.id}, Name: {user.name}, Email: {user.email}")
+
+Expected: User record exists in database with correct information
+Screenshot: 02_user_record_verification.png
+
+Step 3: Verify School Creation and Association
+Commands (continue in Django shell):
+  schools = School.objects.filter(memberships__user=user)
+  print(f"Associated Schools: {[s.name for s in schools]}")
+  school = schools.first()
+  print(f"Primary School: {school.name}, ID: {school.id}")
+
+Expected: User has one associated school with auto-generated name
+Screenshot: 03_school_association_verification.png
+
+Step 4: Verify SchoolMembership Records
+Commands (continue in Django shell):
+  memberships = SchoolMembership.objects.filter(user=user)
+  for membership in memberships:
+      print(f"School: {membership.school.name}")
+      print(f"Role: {membership.role}")
+      print(f"Is Active: {membership.is_active}")
+      print(f"Created: {membership.created_at}")
+      print("---")
+
+Expected: User has memberships with both SCHOOL_OWNER and TEACHER roles
+Screenshot: 04_membership_roles_verification.png
+
+Step 5: Verify SCHOOL_OWNER Role Details
+Commands (continue in Django shell):
+  owner_membership = memberships.filter(role='school_owner').first()
+  if owner_membership:
+      print(f"SCHOOL_OWNER Role: {owner_membership.role}")
+      print(f"School: {owner_membership.school.name}")
+      print(f"Active: {owner_membership.is_active}")
+      print(f"Permissions: Owner should have full school management access")
+  else:
+      print("ERROR: SCHOOL_OWNER role not found!")
+
+Expected: SCHOOL_OWNER role exists and is active
+Screenshot: 05_school_owner_role_verification.png
+
+Step 6: Verify TEACHER Role Details
+Commands (continue in Django shell):
+  teacher_membership = memberships.filter(role='teacher').first()
+  if teacher_membership:
+      print(f"TEACHER Role: {teacher_membership.role}")
+      print(f"School: {teacher_membership.school.name}")
+      print(f"Active: {teacher_membership.is_active}")
+      print(f"Permissions: Teacher should have teaching and student management access")
+  else:
+      print("ERROR: TEACHER role not found!")
+
+Expected: TEACHER role exists and is active
+Screenshot: 06_teacher_role_verification.png
+
+Step 7: Verify Role Count and Uniqueness
+Commands (continue in Django shell):
+  total_memberships = memberships.count()
+  unique_roles = memberships.values_list('role', flat=True).distinct()
+  print(f"Total Memberships: {total_memberships}")
+  print(f"Unique Roles: {list(unique_roles)}")
+  
+  # Should have exactly 2 memberships (SCHOOL_OWNER and TEACHER)
+  expected_roles = ['school_owner', 'teacher']
+  actual_roles = list(memberships.values_list('role', flat=True))
+  print(f"Expected Roles: {expected_roles}")
+  print(f"Actual Roles: {actual_roles}")
+
+Expected: Exactly 2 memberships with SCHOOL_OWNER and TEACHER roles
+Screenshot: 07_role_count_verification.png
+
+Step 8: Test Frontend Role-Based Access (School Owner Features)
+1. Log in as the created user
+2. Navigate to school management/admin features
+3. Verify access to:
+   - School settings
+   - Teacher invitations
+   - School dashboard
+   - Student management
+4. Check if school owner features are accessible
+
+Expected: User has access to school owner features
+Screenshot: 08_school_owner_access_test.png
+
+Step 9: Test Frontend Role-Based Access (Teacher Features)
+1. While logged in as the same user
+2. Navigate to teacher-specific features
+3. Verify access to:
+   - Teacher profile management
+   - Course/subject configuration
+   - Student interaction features
+   - Teaching schedule management
+4. Check if teacher features are accessible
+
+Expected: User has access to teacher features
+Screenshot: 09_teacher_access_test.png
+
+Step 10: Test API-Level Role Verification
+Commands:
+  # Test API endpoints for role verification
+  curl -H "Authorization: Bearer <user_token>" http://localhost:8000/api/accounts/profile/
+  # Check user roles in response
+
+1. Make API calls to verify user roles are returned correctly
+2. Test school-owner-only endpoints
+3. Test teacher-only endpoints
+4. Verify role-based permissions work at API level
+
+Expected: API correctly recognizes both roles and grants appropriate access
+Screenshot: 10_api_role_verification.png
+
+Step 11: Test Role Persistence After Onboarding
+1. Complete the full tutor onboarding flow
+2. After onboarding completion, re-verify roles
+3. Check that roles persist through the onboarding process
+4. Verify no roles are lost or modified during onboarding
+
+Commands:
+  # Re-check roles after onboarding
+  python backend/manage.py shell
+  from accounts.models import User, SchoolMembership
+  user = User.objects.get(email='alice.johnson.roles@test.com')
+  final_memberships = SchoolMembership.objects.filter(user=user)
+  for membership in final_memberships:
+      print(f"Final Role: {membership.role}, Active: {membership.is_active}")
+
+Expected: Roles persist correctly after onboarding completion
+Screenshot: 11_role_persistence_verification.png
+
+Step 12: Test Cross-Role Functionality
+1. Perform actions that require both roles:
+   - Create a teacher profile (teacher role)
+   - Modify school settings (owner role)
+   - Invite another teacher (owner role)
+   - Accept student bookings (teacher role)
+2. Verify user can perform actions from both roles seamlessly
+
+Expected: User can perform actions requiring either role without issues
+Screenshot: 12_cross_role_functionality_test.png
+
+Step 13: Test Role-Based Navigation and UI
+1. Log in and observe navigation menu
+2. Verify both school owner and teacher menu items are present
+3. Check that UI elements reflect both roles
+4. Verify role-specific features are all accessible
+
+Expected: UI correctly reflects both roles with appropriate navigation
+Screenshot: 13_role_based_ui_verification.png
+
+Step 14: Verify Database Constraints and Integrity
+Commands:
+  python backend/manage.py shell
+  from accounts.models import SchoolMembership
+  from django.db import IntegrityError
+  
+  # Test that duplicate roles for same user/school are prevented
+  user = User.objects.get(email='alice.johnson.roles@test.com')
+  school = user.schools.first()
+  
+  try:
+      # This should fail due to unique constraints
+      duplicate = SchoolMembership.objects.create(
+          user=user, 
+          school=school, 
+          role='school_owner'
+      )
+      print("ERROR: Duplicate role creation allowed!")
+  except IntegrityError:
+      print("SUCCESS: Duplicate role creation properly prevented")
+
+Expected: Database constraints prevent duplicate roles
+Screenshot: 14_database_integrity_verification.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All role assignment requirements are met:
+- User has exactly 2 school memberships ✓
+- SCHOOL_OWNER role exists and is active ✓
+- TEACHER role exists and is active ✓
+- Both roles are for the same auto-created school ✓
+- Frontend access works for both roles ✓
+- API-level permissions work correctly ✓
+- Roles persist through onboarding ✓
+- Cross-role functionality works ✓
+- UI reflects both roles appropriately ✓
+- Database integrity maintained ✓
+
+FAIL: Any role assignment issue:
+- Missing SCHOOL_OWNER role
+- Missing TEACHER role
+- Roles not active
+- Wrong school associations
+- Frontend access denied
+- API permissions incorrect
+- Roles lost during onboarding
+- Cross-role functionality broken
+- UI doesn't reflect roles
+- Database integrity issues
+
+Individual Step Criteria:
+- Step 1: PASS if registration completes, FAIL if not
+- Step 2: PASS if user record exists, FAIL if not
+- Step 3: PASS if school association correct, FAIL if not
+- Step 4: PASS if memberships exist, FAIL if not
+- Step 5: PASS if SCHOOL_OWNER role verified, FAIL if not
+- Step 6: PASS if TEACHER role verified, FAIL if not
+- Step 7: PASS if role count correct, FAIL if not
+- Step 8: PASS if owner access works, FAIL if not
+- Step 9: PASS if teacher access works, FAIL if not
+- Step 10: PASS if API verification works, FAIL if not
+- Step 11: PASS if roles persist, FAIL if not
+- Step 12: PASS if cross-role functionality works, FAIL if not
+- Step 13: PASS if UI reflects roles, FAIL if not
+- Step 14: PASS if database integrity maintained, FAIL if not
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== SPECIAL NOTES ===
+
+This test is critical for GitHub Issue #45 acceptance criteria:
+- Verifies the dual role assignment requirement
+- Tests both backend data integrity and frontend functionality
+- Ensures role-based permissions work correctly
+- Validates the complete role lifecycle from creation to usage
+
+Key focus areas:
+- Database-level verification of roles
+- Frontend access testing for both roles
+- API-level permission verification
+- Role persistence through onboarding process
+- Cross-role functionality testing

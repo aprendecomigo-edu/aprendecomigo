@@ -1,0 +1,219 @@
+QA Test Case: Individual Tutor School Creation During Signup
+
+Test ID: TOB-011
+Test Name: Individual Tutor School Creation During Signup Process
+Purpose: Verify that individual tutors can create a new school during the signup process with all required features
+Expected Result: Complete school creation flow works with proper role assignment and backend integration
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Individual Tutor Business Setup (GitHub Issue #45)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+4. Backend API endpoints accessible
+5. Frontend accessible at http://localhost:8081
+6. Database cleared or fresh state for testing
+
+Test Data:
+- Test User: John Doe
+- Test Email: john.doe.tutor@test.com (use unique email each run)
+- Test Phone: +351 912 345 678
+- Expected School Name: "John Doe's Tutoring Practice" (auto-generated)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Navigation
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+1. Open browser to http://localhost:8081
+2. Navigate to landing page
+3. Click "Sign Up" or registration link
+4. Select "Individual Tutor" user type
+5. Verify signup form loads correctly
+
+Expected: Individual tutor signup form displays with proper sections and auto-generation notice
+Screenshot: 01_tutor_signup_form_loaded.png
+Debug: Use 'make logs' to view server logs if issues occur
+
+Step 2: Fill Personal Information
+1. Enter Full Name: "John Doe"
+2. Enter Email: "john.doe.tutor@test.com" (use unique email for each test run)
+3. Enter Phone: "+351 912 345 678"
+4. Select Primary Contact Method: "Email"
+5. Verify all fields accept input correctly
+
+Expected: All personal information fields accept valid input
+Screenshot: 02_personal_info_completed.png
+
+Step 3: Verify Auto-Generated School Name
+1. Observe the "Practice Name" field in School Information section
+2. Verify it shows "John Doe's Tutoring Practice" (auto-generated from name)
+3. Verify the field is disabled/read-only for tutors
+4. Verify helper text explains auto-generation
+
+Expected: School name is auto-generated correctly and field is properly configured
+Screenshot: 03_auto_school_name_generated.png
+
+Step 4: Complete School Information (Tutor-Specific)
+1. Verify that only required school fields are shown for tutors
+2. Verify that school address and website fields are NOT shown (tutor-specific behavior)
+3. Verify practice name is auto-generated and non-editable
+4. Check the information banner explaining tutor setup
+
+Expected: Tutor-specific school setup form with minimal required fields
+Screenshot: 04_tutor_school_info_section.png
+
+Step 5: Submit Registration Form
+1. Click "Create Account" button
+2. Wait for form submission
+3. Observe loading state and feedback
+4. Check for successful submission
+
+Expected: Form submits successfully with proper loading states
+Screenshot: 05_registration_submission.png
+
+Step 6: Verify Navigation to Verification
+1. Verify redirect to email verification page
+2. Check that URL includes next route parameter for tutor onboarding: `/auth/verify-code?...&nextRoute=/onboarding/tutor-flow`
+3. Verify verification page displays correctly
+4. Check email was sent (check server logs for email sending)
+
+Expected: Proper navigation to verification with tutor onboarding next route configured
+Screenshot: 06_verification_page_with_tutor_route.png
+
+Step 7: Complete Email Verification
+1. Check server logs for verification code: `make logs`
+2. Find the verification code in the logs
+3. Enter the verification code
+4. Submit verification
+5. Verify successful verification
+
+Expected: Email verification completes successfully
+Screenshot: 07_verification_successful.png
+
+Step 8: Verify Navigation to Tutor Onboarding
+1. After verification, verify automatic navigation to tutor onboarding flow
+2. Check URL shows `/onboarding/tutor-flow` or similar tutor onboarding route
+3. Verify tutor onboarding welcome screen displays
+4. Verify user is properly authenticated
+
+Expected: Automatic navigation to tutor onboarding flow after verification
+Screenshot: 08_tutor_onboarding_welcome.png
+
+Step 9: Check Backend User and School Creation
+1. Open Django admin or check via API
+2. Verify User record was created with correct information
+3. Verify School record was created with auto-generated name
+4. Verify User has both SCHOOL_OWNER and TEACHER roles for the school
+5. Check SchoolMembership records
+
+Commands to check backend:
+  # Check via Django shell
+  python backend/manage.py shell
+  from accounts.models import User, School, SchoolMembership
+  user = User.objects.get(email='john.doe.tutor@test.com')
+  print(f"User: {user.name}, Email: {user.email}")
+  school = School.objects.filter(memberships__user=user).first()
+  print(f"School: {school.name}")
+  memberships = SchoolMembership.objects.filter(user=user)
+  for m in memberships:
+      print(f"Role: {m.role} in {m.school.name}")
+
+Expected: User created with school, proper role assignments (SCHOOL_OWNER and TEACHER)
+Screenshot: 09_backend_user_school_verification.png
+
+Step 10: Verify TeacherProfile Creation
+1. Check if TeacherProfile was automatically created
+2. Verify TeacherProfile is linked to the correct school
+3. Verify TeacherProfile has correct initial status
+4. Check via Django admin or API
+
+Commands to check TeacherProfile:
+  # In Django shell
+  from accounts.models import TeacherProfile
+  teacher_profile = TeacherProfile.objects.filter(user=user, school=school).first()
+  print(f"TeacherProfile: {teacher_profile}")
+  print(f"Linked School: {teacher_profile.school.name}")
+  print(f"Profile Status: {teacher_profile.status}")
+
+Expected: TeacherProfile created and properly linked to school
+Screenshot: 10_teacher_profile_verification.png
+
+Step 11: Test Tutor Onboarding School Setup Step
+1. In the tutor onboarding flow, proceed to the school setup step
+2. Verify the school setup shows the created school information
+3. Click "Create My Practice" to access the school creation modal
+4. Verify the modal shows the existing school information
+5. Verify you can proceed to next onboarding steps
+
+Expected: Tutor onboarding integrates with created school properly
+Screenshot: 11_onboarding_school_integration.png
+
+Step 12: Complete Basic Onboarding Flow
+1. Complete the educational system selection
+2. Complete subject/course selection
+3. Complete rate configuration
+4. Verify all steps work with the created school context
+5. Complete the onboarding process
+
+Expected: Full onboarding flow works with the created school
+Screenshot: 12_complete_onboarding_flow.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All acceptance criteria from GitHub issue #45 are met:
+- Individual tutors can create school during signup ✓
+- School creation form includes necessary fields (name auto-generated) ✓
+- User assigned as both SCHOOL_OWNER and TEACHER ✓
+- TeacherProfile automatically created and linked ✓
+- Teaching preferences setup through onboarding ✓
+- Success confirmation shown ✓
+- All backend integrations work correctly ✓
+
+FAIL: Any of the following occurs:
+- Signup form doesn't load or work correctly
+- School name auto-generation fails
+- User roles not assigned properly
+- TeacherProfile not created or not linked
+- Backend integration failures
+- Navigation flow breaks
+- Onboarding integration doesn't work
+
+Individual Step Criteria:
+- Step 1: PASS if tutor signup form loads correctly, FAIL if form issues
+- Step 2: PASS if personal info fields work, FAIL if validation issues
+- Step 3: PASS if school name auto-generates correctly, FAIL if not
+- Step 4: PASS if tutor-specific form configuration correct, FAIL if not
+- Step 5: PASS if form submission works, FAIL if submission fails
+- Step 6: PASS if verification navigation correct, FAIL if routing issues
+- Step 7: PASS if email verification works, FAIL if verification fails
+- Step 8: PASS if tutor onboarding navigation works, FAIL if not
+- Step 9: PASS if backend user/school creation correct, FAIL if missing data
+- Step 10: PASS if TeacherProfile created correctly, FAIL if not
+- Step 11: PASS if onboarding integration works, FAIL if broken
+- Step 12: PASS if complete flow works, FAIL if any step breaks
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== SPECIAL NOTES ===
+
+This test validates the core GitHub Issue #45 functionality:
+- Focus on the school creation DURING signup (not post-signup onboarding)
+- Verify the auto-generation of school names for tutors
+- Ensure proper role assignment (both SCHOOL_OWNER and TEACHER)
+- Validate TeacherProfile creation and linking
+- Test the integration between signup and onboarding flows
+
+Critical validations:
+- Backend data integrity (User, School, SchoolMembership, TeacherProfile)
+- Role assignments match requirements
+- Navigation flow from signup → verification → onboarding
+- Auto-generated school name follows correct pattern

@@ -1526,3 +1526,441 @@ class BulkInvitationResponseSerializer(serializers.Serializer):
     )
     invitations = TeacherInvitationSerializer(many=True, read_only=True)
     message = serializers.CharField(read_only=True)
+
+
+# =======================
+# TEACHER PROFILE WIZARD SECURITY SERIALIZERS
+# =======================
+
+class ProfileWizardDataSerializer(serializers.Serializer):
+    """
+    Comprehensive input validation serializer for Teacher Profile Wizard.
+    Implements strict validation and sanitization for all user inputs.
+    """
+    
+    # Personal Information Fields
+    first_name = serializers.CharField(
+        max_length=50,
+        required=True,
+        help_text="Teacher's first name"
+    )
+    last_name = serializers.CharField(
+        max_length=50,
+        required=True,
+        help_text="Teacher's last name"
+    )
+    email = serializers.EmailField(
+        required=True,
+        help_text="Teacher's email address"
+    )
+    phone_number = serializers.CharField(
+        max_length=20,
+        required=False,
+        allow_blank=True,
+        help_text="Teacher's phone number"
+    )
+    
+    # Professional Information Fields
+    professional_bio = serializers.CharField(
+        max_length=2500,  # ~500 words
+        required=False,
+        allow_blank=True,
+        help_text="Teacher's professional biography"
+    )
+    professional_title = serializers.CharField(
+        max_length=100,
+        required=False,
+        allow_blank=True,
+        help_text="Teacher's professional title or specialty"
+    )
+    years_experience = serializers.IntegerField(
+        min_value=0,
+        max_value=50,
+        required=False,
+        allow_null=True,
+        help_text="Years of teaching experience"
+    )
+    
+    # Education Background (structured data)
+    education_background = serializers.JSONField(
+        required=False,
+        help_text="Structured educational background data"
+    )
+    
+    # Teaching Subjects
+    teaching_subjects = serializers.ListField(
+        child=serializers.CharField(max_length=100),
+        required=False,
+        help_text="List of subjects the teacher can teach"
+    )
+    
+    # Rate Structure
+    rate_structure = serializers.JSONField(
+        required=False,
+        help_text="Teaching rate structure"
+    )
+    
+    def validate_first_name(self, value):
+        """Validate and sanitize first name."""
+        if not value or not value.strip():
+            raise serializers.ValidationError("First name cannot be empty.")
+        
+        # Remove HTML tags and sanitize
+        import bleach
+        clean_value = bleach.clean(value, tags=[], strip=True).strip()
+        
+        if len(clean_value) < 1:
+            raise serializers.ValidationError("First name must contain at least one character.")
+        
+        # Check for suspicious patterns
+        suspicious_patterns = ['<script', 'javascript:', 'data:', 'vbscript:', 'onload=', 'onerror=']
+        clean_lower = clean_value.lower()
+        
+        for pattern in suspicious_patterns:
+            if pattern in clean_lower:
+                raise serializers.ValidationError("First name contains invalid characters.")
+        
+        return clean_value
+    
+    def validate_last_name(self, value):
+        """Validate and sanitize last name."""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Last name cannot be empty.")
+        
+        # Remove HTML tags and sanitize
+        import bleach
+        clean_value = bleach.clean(value, tags=[], strip=True).strip()
+        
+        if len(clean_value) < 1:
+            raise serializers.ValidationError("Last name must contain at least one character.")
+        
+        # Check for suspicious patterns
+        suspicious_patterns = ['<script', 'javascript:', 'data:', 'vbscript:', 'onload=', 'onerror=']
+        clean_lower = clean_value.lower()
+        
+        for pattern in suspicious_patterns:
+            if pattern in clean_lower:
+                raise serializers.ValidationError("Last name contains invalid characters.")
+        
+        return clean_value
+    
+    def validate_email(self, value):
+        """Validate email format and security."""
+        if not value:
+            raise serializers.ValidationError("Email address is required.")
+        
+        # Basic email format validation (Django's EmailField handles most of this)
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        
+        if not re.match(email_pattern, value):
+            raise serializers.ValidationError("Please enter a valid email address.")
+        
+        # Check for suspicious patterns in email
+        suspicious_patterns = ['<script', 'javascript:', 'data:', 'vbscript:']
+        clean_lower = value.lower()
+        
+        for pattern in suspicious_patterns:
+            if pattern in clean_lower:
+                raise serializers.ValidationError("Email address contains invalid characters.")
+        
+        return value.lower().strip()
+    
+    def validate_phone_number(self, value):
+        """Validate phone number format and security."""
+        if not value:
+            return value
+        
+        # Remove HTML tags and sanitize
+        import bleach
+        clean_value = bleach.clean(value, tags=[], strip=True).strip()
+        
+        # Check for suspicious patterns
+        suspicious_patterns = ['<script', 'javascript:', 'data:', 'vbscript:', 'onload=', 'onerror=']
+        clean_lower = clean_value.lower()
+        
+        for pattern in suspicious_patterns:
+            if pattern in clean_lower:
+                raise serializers.ValidationError("Phone number contains invalid characters.")
+        
+        # Basic phone number validation
+        import re
+        # Allow common phone number formats
+        phone_pattern = r'^[\+]?[\d\s\(\)\-\.]{7,20}$'
+        
+        if not re.match(phone_pattern, clean_value):
+            raise serializers.ValidationError(
+                "Please enter a valid phone number (7-20 digits, may include +, spaces, (), -, .)"
+            )
+        
+        return clean_value
+    
+    def validate_professional_bio(self, value):
+        """Validate and sanitize professional bio."""
+        if not value:
+            return value
+        
+        # Word count validation (approximately 500 words max)
+        word_count = len(value.split())
+        if word_count > 500:
+            raise serializers.ValidationError(
+                f"Professional bio is too long ({word_count} words). Maximum 500 words allowed."
+            )
+        
+        # HTML sanitization - allow safe HTML tags
+        import bleach
+        
+        allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'a']
+        allowed_attributes = {
+            'a': ['href', 'title'],
+        }
+        
+        clean_value = bleach.clean(
+            value,
+            tags=allowed_tags,
+            attributes=allowed_attributes,
+            strip=True
+        ).strip()
+        
+        # Additional security checks
+        suspicious_patterns = ['javascript:', 'data:', 'vbscript:', 'onload=', 'onerror=', 'onclick=']
+        clean_lower = clean_value.lower()
+        
+        for pattern in suspicious_patterns:
+            if pattern in clean_lower:
+                raise serializers.ValidationError("Professional bio contains invalid content.")
+        
+        return clean_value
+    
+    def validate_professional_title(self, value):
+        """Validate and sanitize professional title."""
+        if not value:
+            return value
+        
+        # Remove HTML tags and sanitize
+        import bleach
+        clean_value = bleach.clean(value, tags=[], strip=True).strip()
+        
+        if len(clean_value) > 100:
+            raise serializers.ValidationError("Professional title is too long (maximum 100 characters).")
+        
+        # Check for suspicious patterns
+        suspicious_patterns = ['<script', 'javascript:', 'data:', 'vbscript:', 'onload=', 'onerror=']
+        clean_lower = clean_value.lower()
+        
+        for pattern in suspicious_patterns:
+            if pattern in clean_lower:
+                raise serializers.ValidationError("Professional title contains invalid characters.")
+        
+        return clean_value
+    
+    def validate_education_background(self, value):
+        """Validate education background JSON structure."""
+        if not value:
+            return value
+        
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Education background must be a valid object.")
+        
+        # Limit the size of the JSON data
+        import json
+        json_str = json.dumps(value)
+        if len(json_str) > 5000:  # 5KB limit
+            raise serializers.ValidationError("Education background data is too large.")
+        
+        # Validate expected fields if present
+        expected_fields = ['degree', 'institution', 'field_of_study', 'graduation_year']
+        
+        for field, field_value in value.items():
+            if field not in expected_fields:
+                continue
+            
+            if not isinstance(field_value, str):
+                raise serializers.ValidationError(f"Education background field '{field}' must be a string.")
+            
+            # Sanitize string values
+            import bleach
+            clean_value = bleach.clean(field_value, tags=[], strip=True)
+            
+            # Check for suspicious patterns
+            suspicious_patterns = ['<script', 'javascript:', 'data:', 'vbscript:']
+            if any(pattern in clean_value.lower() for pattern in suspicious_patterns):
+                raise serializers.ValidationError(f"Education background field '{field}' contains invalid content.")
+            
+            value[field] = clean_value
+        
+        return value
+    
+    def validate_teaching_subjects(self, value):
+        """Validate teaching subjects list."""
+        if not value:
+            return value
+        
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Teaching subjects must be a list.")
+        
+        if len(value) > 20:  # Reasonable limit
+            raise serializers.ValidationError("Too many teaching subjects (maximum 20 allowed).")
+        
+        clean_subjects = []
+        for subject in value:
+            if not isinstance(subject, str):
+                raise serializers.ValidationError("Each teaching subject must be a string.")
+            
+            # Sanitize subject name
+            import bleach
+            clean_subject = bleach.clean(subject, tags=[], strip=True).strip()
+            
+            if len(clean_subject) > 100:
+                raise serializers.ValidationError("Teaching subject name is too long (maximum 100 characters).")
+            
+            # Check for suspicious patterns
+            suspicious_patterns = ['<script', 'javascript:', 'data:', 'vbscript:']
+            if any(pattern in clean_subject.lower() for pattern in suspicious_patterns):
+                raise serializers.ValidationError("Teaching subject contains invalid characters.")
+            
+            if clean_subject:  # Only add non-empty subjects
+                clean_subjects.append(clean_subject)
+        
+        return clean_subjects
+    
+    def validate_rate_structure(self, value):
+        """Validate rate structure JSON."""
+        if not value:
+            return value
+        
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Rate structure must be a valid object.")
+        
+        # Validate specific rate fields
+        rate_fields = ['individual_rate', 'group_rate', 'premium_rate']
+        
+        for field, rate_value in value.items():
+            if field not in rate_fields:
+                continue
+            
+            # Validate rate is a positive number
+            try:
+                rate_float = float(rate_value)
+                if rate_float < 0:
+                    raise serializers.ValidationError(f"Rate '{field}' cannot be negative.")
+                if rate_float > 1000:  # Reasonable upper limit
+                    raise serializers.ValidationError(f"Rate '{field}' is too high (maximum €1000/hour).")
+                
+                # Round to 2 decimal places
+                value[field] = round(rate_float, 2)
+                
+            except (ValueError, TypeError):
+                raise serializers.ValidationError(f"Rate '{field}' must be a valid number.")
+        
+        return value
+
+
+class ProfileWizardStepValidationSerializer(serializers.Serializer):
+    """
+    Serializer for validating individual wizard steps.
+    """
+    
+    step = serializers.IntegerField(
+        min_value=0,
+        max_value=10,  # Reasonable limit for wizard steps
+        required=True
+    )
+    data = serializers.JSONField(required=True)
+    
+    def validate_data(self, value):
+        """Validate step data using the main ProfileWizardDataSerializer."""
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Step data must be a valid object.")
+        
+        # Use the main serializer for validation
+        serializer = ProfileWizardDataSerializer(data=value)
+        if not serializer.is_valid():
+            raise serializers.ValidationError(serializer.errors)
+        
+        return serializer.validated_data
+
+
+class ProfilePhotoUploadSerializer(serializers.Serializer):
+    """
+    Secure serializer for profile photo uploads.
+    """
+    
+    profile_photo = serializers.ImageField(required=True)
+    
+    def validate_profile_photo(self, value):
+        """Validate uploaded profile photo for security."""
+        if not value:
+            raise serializers.ValidationError("Profile photo is required.")
+        
+        # File size validation (5MB limit)
+        max_size = 5 * 1024 * 1024  # 5MB
+        if value.size > max_size:
+            raise serializers.ValidationError("Profile photo file size cannot exceed 5MB.")
+        
+        # File type validation
+        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if value.content_type not in allowed_types:
+            raise serializers.ValidationError(
+                "Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed."
+            )
+        
+        # File extension validation
+        import os
+        file_extension = os.path.splitext(value.name)[1].lower()
+        allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+        
+        if file_extension not in allowed_extensions:
+            raise serializers.ValidationError(
+                "Invalid file extension. Only .jpg, .jpeg, .png, .gif, and .webp files are allowed."
+            )
+        
+        # Image validation using PIL
+        try:
+            from PIL import Image
+            import io
+            
+            # Reset file pointer
+            value.seek(0)
+            
+            # Try to open and verify the image
+            with Image.open(io.BytesIO(value.read())) as img:
+                # Verify it's a valid image
+                img.verify()
+                
+                # Check image dimensions (reasonable limits)
+                if img.width > 4000 or img.height > 4000:
+                    raise serializers.ValidationError("Image dimensions too large (maximum 4000x4000 pixels).")
+                
+                if img.width < 50 or img.height < 50:
+                    raise serializers.ValidationError("Image dimensions too small (minimum 50x50 pixels).")
+            
+            # Reset file pointer for further processing
+            value.seek(0)
+            
+        except Exception as e:
+            raise serializers.ValidationError("Invalid or corrupted image file.")
+        
+        # Scan for embedded scripts or suspicious content
+        value.seek(0)
+        file_content = value.read()
+        
+        # Look for suspicious patterns in binary data
+        suspicious_patterns = [
+            b'<script',
+            b'javascript:',
+            b'data:text/html',
+            b'<?php',
+            b'<%',
+            b'<iframe',
+        ]
+        
+        file_content_lower = file_content.lower()
+        for pattern in suspicious_patterns:
+            if pattern in file_content_lower:
+                raise serializers.ValidationError("Image file contains suspicious content.")
+        
+        # Reset file pointer
+        value.seek(0)
+        
+        return value

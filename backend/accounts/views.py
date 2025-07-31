@@ -471,7 +471,11 @@ class UserViewSet(KnoxAuthenticatedViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user, school = create_school_owner(email, name, phone_number, primary_contact, school_data)
+        # Detect if this is a tutor signup based on school name pattern
+        school_name = school_data.get('name', '')
+        is_tutor = "'s Tutoring Practice" in school_name or "Tutoring" in school_name
+        
+        user, school = create_school_owner(email, name, phone_number, primary_contact, school_data, is_tutor=is_tutor)
 
         # Generate verification code for primary contact
         if primary_contact == "email":

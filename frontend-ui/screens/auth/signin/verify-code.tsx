@@ -45,10 +45,11 @@ type VerifyCodeSchemaType = z.infer<typeof verifyCodeSchema>;
 const VerifyCodeForm = () => {
   const toast = useToast();
   const router = useRouter();
-  const { contact, contactType, email } = useLocalSearchParams<{
+  const { contact, contactType, email, nextRoute } = useLocalSearchParams<{
     contact: string;
     contactType: 'email' | 'phone';
     email: string;
+    nextRoute?: string;
   }>();
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -103,6 +104,13 @@ const VerifyCodeForm = () => {
       await checkAuthStatus();
 
       toast.showToast('success', 'Verification successful!');
+
+      // Check if there's a specific next route (e.g., for tutors)
+      if (nextRoute) {
+        console.log('Redirecting to specified next route:', nextRoute);
+        router.replace(decodeURIComponent(nextRoute));
+        return;
+      }
 
       // Check if this is a new school admin that needs onboarding
       const shouldShowOnboarding = await checkForOnboarding(response);
