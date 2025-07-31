@@ -564,7 +564,7 @@ class CreateUserSerializer(serializers.Serializer):
     Serializer for creating a new user during signup.
 
     Requires both email and name, with phone number optional.
-    Allows selection of primary contact method.
+    Allows selection of primary contact method and explicit user type.
     """
 
     name = serializers.CharField(max_length=150)
@@ -572,6 +572,11 @@ class CreateUserSerializer(serializers.Serializer):
     phone_number = serializers.CharField(max_length=20, required=True)
     primary_contact = serializers.ChoiceField(
         choices=[("email", "Email"), ("phone", "Phone")], default="email"
+    )
+    user_type = serializers.ChoiceField(
+        choices=[("tutor", "Individual Tutor"), ("school", "School/Institution")],
+        required=True,
+        help_text="Explicit user type selection from frontend"
     )
 
     # School information is required

@@ -20,6 +20,10 @@ from .views import (
     TeacherProfileWizardViewSet,
     TeacherViewSet,
     TutorDiscoveryAPIView,
+    TutorOnboardingGuidanceView,
+    TutorOnboardingSaveProgressView,
+    TutorOnboardingStartView,
+    TutorOnboardingValidateStepView,
     UserViewSet,
     VerifyCodeView,
 )
@@ -101,6 +105,27 @@ urlpatterns = [
         "tutors/discover/",
         TutorDiscoveryAPIView.as_view(),
         name="tutor-discovery",
+    ),
+    # Tutor Onboarding endpoints
+    path(
+        "tutors/onboarding/guidance/",
+        TutorOnboardingGuidanceView.as_view(),
+        name="tutor-onboarding-guidance",
+    ),
+    path(
+        "tutors/onboarding/start/",
+        TutorOnboardingStartView.as_view(),
+        name="tutor-onboarding-start",
+    ),
+    path(
+        "tutors/onboarding/validate-step/",
+        TutorOnboardingValidateStepView.as_view(),
+        name="tutor-onboarding-validate-step",
+    ),
+    path(
+        "tutors/onboarding/save-progress/",
+        TutorOnboardingSaveProgressView.as_view(),
+        name="tutor-onboarding-save-progress",
     ),
     # Knox authentication URLs
     path("auth/logout/", knox_views.LogoutView.as_view(), name="knox_logout"),

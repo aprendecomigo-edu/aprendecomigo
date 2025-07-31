@@ -453,6 +453,8 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         This handles the first step of the onboarding process where a user
         fills out the form with their information and selects a primary contact.
         """
+        from django.db import transaction
+        
         serializer = CreateUserSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -462,6 +464,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         phone_number = validated_data.get("phone_number")
         name = validated_data.get("name")
         primary_contact = validated_data.get("primary_contact")
+        user_type = validated_data.get("user_type")  # Explicit user type from frontend
         school_data = validated_data.get("school", {})
 
         # Check if user already exists
@@ -471,33 +474,38 @@ class UserViewSet(KnoxAuthenticatedViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Detect if this is a tutor signup based on school name pattern
-        school_name = school_data.get('name', '')
-        is_tutor = "'s Tutoring Practice" in school_name or "Tutoring" in school_name
+        # Use explicit user type instead of vulnerable pattern matching
+        is_tutor = user_type == "tutor"
         
-        user, school = create_school_owner(email, name, phone_number, primary_contact, school_data, is_tutor=is_tutor)
-
-        # Generate verification code for primary contact
-        if primary_contact == "email":
-            verification = VerificationCode.generate_code(email)
-            contact_value = email
-        else:
-            # For phone verification, in a real system we'd use a different
-            # mechanism like SMS, but for this example we'll use email
-            verification = VerificationCode.generate_code(phone_number)
-            contact_value = phone_number
-
-        code = verification.get_current_code()
-
-        # Send verification code
+        # Wrap all database operations in a transaction for rollback protection
         try:
-            contact_type_display = "email" if primary_contact == "email" else "phone number"
-            send_email_verification_code(contact_value, code)
+            with transaction.atomic():
+                user, school = create_school_owner(email, name, phone_number, primary_contact, school_data, is_tutor=is_tutor)
+                
+                # Generate verification code for primary contact
+                if primary_contact == "email":
+                    verification = VerificationCode.generate_code(email)
+                    contact_value = email
+                else:
+                    # For phone verification, in a real system we'd use a different
+                    # mechanism like SMS, but for this example we'll use email
+                    verification = VerificationCode.generate_code(phone_number)
+                    contact_value = phone_number
+
+                code = verification.get_current_code()
+
+                # Send verification code (if this fails, transaction will rollback)
+                contact_type_display = "email" if primary_contact == "email" else "phone number"
+                try:
+                    send_email_verification_code(contact_value, code)
+                except Exception as e:
+                    # This will cause the transaction to rollback automatically
+                    raise Exception(f"Failed to send verification code: {e!s}")
+                    
         except Exception as e:
-            # Rollback user creation if email fails
-            user.delete()
+            # Transaction automatically rolled back, return error
             return Response(
-                {"error": f"Failed to send verification code: {e!s}"},
+                {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -5111,3 +5119,992 @@ class TutorDiscoveryAPIView(APIView):
         params = request.query_params.copy()
         params['offset'] = prev_offset
         return f"{request.build_absolute_uri()}?{params.urlencode()}"
+
+
+class TutorOnboardingAPIView(KnoxAuthenticatedAPIView):
+    """
+    API endpoints for individual tutor onboarding process.
+    
+    Handles the complete onboarding flow for individual tutors including:
+    - Onboarding guidance and tips
+    - Starting onboarding session
+    - Step validation
+    - Progress tracking
+    """
+    
+    throttle_classes = [ProfileWizardThrottle]
+    
+    def get_onboarding_guidance(self, request):
+        """
+        POST /api/accounts/tutors/onboarding/guidance/
+        
+        Get onboarding guidance and tips for a specific step.
+        """
+        try:
+            step_id = request.data.get('step_id')
+            context = request.data.get('context', {})
+            
+            if not step_id:
+                return Response(
+                    {'error': 'step_id is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            guidance_data = self._get_step_guidance(step_id, context)
+            
+            return Response(guidance_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error getting onboarding guidance: {e}")
+            return Response(
+                {'error': 'Failed to get onboarding guidance'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def start_onboarding(self, request):
+        """
+        POST /api/accounts/tutors/onboarding/start/
+        
+        Initialize a tutor onboarding session and return initial progress.
+        """
+        try:
+            user = request.user
+            
+            # Generate onboarding session ID
+            import uuid
+            onboarding_id = str(uuid.uuid4())
+            
+            # Initialize onboarding progress in user profile
+            initial_progress = {
+                'current_step': 1,
+                'total_steps': 6,  # Educational system, course selection, rates, availability, profile, publish
+                'completed_steps': [],
+                'step_completion': {
+                    'educational_system_selection': {
+                        'is_complete': False,
+                        'completion_percentage': 0,
+                        'validation_errors': [],
+                        'last_updated': timezone.now().isoformat()
+                    },
+                    'course_selection': {
+                        'is_complete': False,
+                        'completion_percentage': 0,
+                        'validation_errors': [],
+                        'last_updated': timezone.now().isoformat()
+                    },
+                    'rate_configuration': {
+                        'is_complete': False,
+                        'completion_percentage': 0,
+                        'validation_errors': [],
+                        'last_updated': timezone.now().isoformat()
+                    },
+                    'availability_setup': {
+                        'is_complete': False,
+                        'completion_percentage': 0,
+                        'validation_errors': [],
+                        'last_updated': timezone.now().isoformat()
+                    },
+                    'profile_completion': {
+                        'is_complete': False,
+                        'completion_percentage': 0,
+                        'validation_errors': [],
+                        'last_updated': timezone.now().isoformat()
+                    },
+                    'profile_publishing': {
+                        'is_complete': False,
+                        'completion_percentage': 0,
+                        'validation_errors': [],
+                        'last_updated': timezone.now().isoformat()
+                    }
+                },
+                'overall_completion': 0,
+                'estimated_time_remaining': 45,  # minutes
+                'next_recommended_step': 'educational_system_selection'
+            }
+            
+            # Store in user's onboarding progress
+            user.onboarding_progress = {
+                'tutor_onboarding': {
+                    'onboarding_id': onboarding_id,
+                    'started_at': timezone.now().isoformat(),
+                    'progress': initial_progress
+                }
+            }
+            user.save(update_fields=['onboarding_progress'])
+            
+            return Response({
+                'onboarding_id': onboarding_id,
+                'initial_progress': initial_progress
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error starting tutor onboarding: {e}")
+            return Response(
+                {'error': 'Failed to start onboarding session'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def validate_step(self, request):
+        """
+        POST /api/accounts/tutors/onboarding/validate-step/
+        
+        Validate completion of a specific onboarding step.
+        """
+        try:
+            step = request.data.get('step')
+            step_data = request.data.get('data', {})
+            
+            if not step:
+                return Response(
+                    {'error': 'step is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            validation_result = self._validate_onboarding_step(step, step_data, request.user)
+            
+            return Response(validation_result, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error validating onboarding step: {e}")
+            return Response(
+                {'error': 'Failed to validate onboarding step'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _get_step_guidance(self, step_id, context):
+        """Get guidance data for a specific onboarding step."""
+        guidance_map = {
+            'educational_system_selection': {
+                'tips': [
+                    {
+                        'title': 'Choose Your Educational System',
+                        'description': 'Select the educational system that best matches your teaching expertise and target students.',
+                        'priority': 'high',
+                        'category': 'requirement'
+                    },
+                    {
+                        'title': 'Portugal System',
+                        'description': 'Perfect if you teach Portuguese curriculum from 1st cycle through secondary education.',
+                        'priority': 'medium',
+                        'category': 'suggestion'
+                    },
+                    {
+                        'title': 'Brazil System',
+                        'description': 'Ideal for Brazilian educational content and curriculum standards.',
+                        'priority': 'medium',
+                        'category': 'suggestion'
+                    },
+                    {
+                        'title': 'Custom System',
+                        'description': 'Choose this for specialized subjects, adult education, or professional training.',
+                        'priority': 'medium',
+                        'category': 'suggestion'
+                    }
+                ],
+                'recommendations': [
+                    {
+                        'text': 'You can always add more educational systems later',
+                        'action': 'reassurance'
+                    },
+                    {
+                        'text': 'Start with the system you know best',
+                        'action': 'guidance'
+                    }
+                ],
+                'common_mistakes': [
+                    {
+                        'mistake': 'Choosing multiple systems when starting',
+                        'solution': 'Start with one system and expand later as you grow your tutoring practice'
+                    }
+                ],
+                'estimated_time': 3
+            },
+            'course_selection': {
+                'tips': [
+                    {
+                        'title': 'Select Your Teaching Subjects',
+                        'description': 'Choose courses that match your expertise and qualifications.',
+                        'priority': 'high',
+                        'category': 'requirement'
+                    },
+                    {
+                        'title': 'Quality Over Quantity',
+                        'description': 'Better to teach fewer subjects excellently than many subjects poorly.',
+                        'priority': 'high',
+                        'category': 'best_practice'
+                    },
+                    {
+                        'title': 'Use Search and Filters',
+                        'description': 'Use the search functionality to quickly find specific courses.',
+                        'priority': 'medium',
+                        'category': 'suggestion'
+                    }
+                ],
+                'recommendations': [
+                    {
+                        'text': 'Start with 2-4 core subjects you are most confident teaching',
+                        'action': 'guidance'
+                    },
+                    {
+                        'text': 'You can add more subjects to your profile later',
+                        'action': 'reassurance'
+                    }
+                ],
+                'common_mistakes': [
+                    {
+                        'mistake': 'Selecting too many courses at once',
+                        'solution': 'Focus on your strongest subjects first, then expand gradually'
+                    },
+                    {
+                        'mistake': 'Not setting grade levels for courses',
+                        'solution': 'Always specify which grade levels you can teach for each subject'
+                    }
+                ],
+                'estimated_time': 8
+            },
+            'rate_configuration': {
+                'tips': [
+                    {
+                        'title': 'Set Competitive Rates',
+                        'description': 'Research local market rates for your subjects and experience level.',
+                        'priority': 'high',
+                        'category': 'requirement'
+                    },
+                    {
+                        'title': 'Different Rates for Different Subjects',
+                        'description': 'You can set different hourly rates for different subjects based on demand and your expertise.',
+                        'priority': 'medium',
+                        'category': 'suggestion'
+                    },
+                    {
+                        'title': 'Consider Your Experience',
+                        'description': 'New tutors typically start 10-20% below market average and increase rates as they gain reviews.',
+                        'priority': 'medium',
+                        'category': 'best_practice'
+                    }
+                ],
+                'recommendations': [
+                    {
+                        'text': 'You can adjust your rates anytime from your profile settings',
+                        'action': 'reassurance'
+                    },
+                    {
+                        'text': 'Consider offering a slightly lower rate for first-time students',
+                        'action': 'suggestion'
+                    }
+                ],
+                'common_mistakes': [
+                    {
+                        'mistake': 'Setting rates too high when starting',
+                        'solution': 'Start competitive and increase rates as you build reviews and reputation'
+                    },
+                    {
+                        'mistake': 'Using the same rate for all subjects',
+                        'solution': 'Price specialized or high-demand subjects higher than basic subjects'
+                    }
+                ],
+                'estimated_time': 10
+            }
+        }
+        
+        return guidance_map.get(step_id, {
+            'tips': [],
+            'recommendations': [],
+            'common_mistakes': [],
+            'estimated_time': 5
+        })
+    
+    def _validate_onboarding_step(self, step, step_data, user):
+        """Validate a specific onboarding step and return validation results."""
+        validation_result = {
+            'is_valid': True,
+            'errors': {},
+            'warnings': {},
+            'completion_percentage': 0
+        }
+        
+        if step == 'course_selection':
+            return self._validate_course_selection_step(step_data, validation_result)
+        elif step == 'educational_system_selection':
+            return self._validate_educational_system_step(step_data, validation_result)
+        elif step == 'rate_configuration':
+            return self._validate_rate_configuration_step(step_data, validation_result)
+        else:
+            validation_result['warnings']['step'] = [f'Unknown step: {step}']
+            validation_result['completion_percentage'] = 50  # Partial validation
+        
+        return validation_result
+    
+    def _validate_course_selection_step(self, step_data, validation_result):
+        """Validate course selection step data."""
+        course_selection = step_data.get('course_selection', {})
+        
+        # Check educational system selection
+        educational_system_id = course_selection.get('educational_system_id')
+        if not educational_system_id:
+            validation_result['is_valid'] = False
+            validation_result['errors']['educational_system'] = ['Educational system is required']
+        else:
+            # Verify educational system exists
+            try:
+                EducationalSystem.objects.get(id=educational_system_id)
+            except EducationalSystem.DoesNotExist:
+                validation_result['is_valid'] = False
+                validation_result['errors']['educational_system'] = ['Invalid educational system']
+        
+        # Check selected courses
+        selected_courses = course_selection.get('selected_courses', [])
+        if not selected_courses:
+            validation_result['is_valid'] = False
+            validation_result['errors']['courses'] = ['At least one course must be selected']
+        else:
+            # Validate each selected course
+            for i, course_data in enumerate(selected_courses):
+                course_id = course_data.get('course_id')
+                hourly_rate = course_data.get('hourly_rate')
+                expertise_level = course_data.get('expertise_level')
+                
+                if not course_id:
+                    validation_result['errors'][f'course_{i}_id'] = ['Course ID is required']
+                    validation_result['is_valid'] = False
+                
+                if not hourly_rate or hourly_rate <= 0:
+                    validation_result['errors'][f'course_{i}_rate'] = ['Valid hourly rate is required']
+                    validation_result['is_valid'] = False
+                elif hourly_rate > 200:  # Reasonable upper limit
+                    validation_result['warnings'][f'course_{i}_rate'] = ['Rate seems high - consider market rates']
+                
+                if expertise_level not in ['beginner', 'intermediate', 'advanced', 'expert']:
+                    validation_result['errors'][f'course_{i}_expertise'] = ['Valid expertise level is required']
+                    validation_result['is_valid'] = False
+                
+                # Verify course exists
+                if course_id:
+                    try:
+                        Course.objects.get(id=course_id)
+                    except Course.DoesNotExist:
+                        validation_result['errors'][f'course_{i}_id'] = ['Invalid course ID']
+                        validation_result['is_valid'] = False
+        
+        # Calculate completion percentage
+        completion_score = 0
+        if educational_system_id:
+            completion_score += 30
+        if selected_courses:
+            completion_score += 50
+            # Bonus for each valid course
+            for course_data in selected_courses:
+                if (course_data.get('course_id') and 
+                    course_data.get('hourly_rate', 0) > 0 and 
+                    course_data.get('expertise_level')):
+                    completion_score += min(20, 20 // len(selected_courses))
+        
+        validation_result['completion_percentage'] = min(100, completion_score)
+        
+        return validation_result
+    
+    def _validate_educational_system_step(self, step_data, validation_result):
+        """Validate educational system selection step."""
+        educational_system_id = step_data.get('educational_system_id')
+        
+        if not educational_system_id:
+            validation_result['is_valid'] = False
+            validation_result['errors']['educational_system'] = ['Educational system selection is required']
+            validation_result['completion_percentage'] = 0
+        else:
+            try:
+                EducationalSystem.objects.get(id=educational_system_id)
+                validation_result['completion_percentage'] = 100
+            except EducationalSystem.DoesNotExist:
+                validation_result['is_valid'] = False
+                validation_result['errors']['educational_system'] = ['Invalid educational system']
+                validation_result['completion_percentage'] = 0
+        
+        return validation_result
+    
+    def _validate_rate_configuration_step(self, step_data, validation_result):
+        """Validate rate configuration step."""
+        rates = step_data.get('rates', {})
+        
+        if not rates:
+            validation_result['is_valid'] = False
+            validation_result['errors']['rates'] = ['Rate configuration is required']
+            validation_result['completion_percentage'] = 0
+            return validation_result
+        
+        valid_rates = 0
+        total_rates = len(rates)
+        
+        for course_id, rate_data in rates.items():
+            rate = rate_data.get('hourly_rate', 0)
+            
+            if rate <= 0:
+                validation_result['errors'][f'rate_{course_id}'] = ['Valid hourly rate is required']
+                validation_result['is_valid'] = False
+            elif rate > 200:
+                validation_result['warnings'][f'rate_{course_id}'] = ['Rate seems high - consider market rates']
+                valid_rates += 1
+            else:
+                valid_rates += 1
+        
+        validation_result['completion_percentage'] = int((valid_rates / total_rates) * 100) if total_rates > 0 else 0
+        
+        return validation_result
+    
+    def save_progress(self, request):
+        """
+        POST /api/accounts/tutors/onboarding/save-progress/
+        
+        Save tutor onboarding progress and data to user profile and related models.
+        """
+        try:
+            step = request.data.get('step')
+            step_data = request.data.get('data', {})
+            onboarding_id = request.data.get('onboarding_id')
+            
+            if not step:
+                return Response(
+                    {'error': 'step is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            user = request.user
+            
+            # Ensure user has onboarding progress initialized
+            if not hasattr(user, 'onboarding_progress') or not user.onboarding_progress:
+                user.onboarding_progress = {}
+            
+            if 'tutor_onboarding' not in user.onboarding_progress:
+                import uuid
+                user.onboarding_progress['tutor_onboarding'] = {
+                    'onboarding_id': onboarding_id or str(uuid.uuid4()),
+                    'started_at': timezone.now().isoformat(),
+                    'progress': {}
+                }
+            
+            # Save step-specific data
+            result = self._save_step_data(step, step_data, user)
+            
+            if result.get('success'):
+                # Update onboarding progress
+                tutor_progress = user.onboarding_progress['tutor_onboarding']['progress']
+                if 'step_completion' not in tutor_progress:
+                    tutor_progress['step_completion'] = {}
+                
+                tutor_progress['step_completion'][step] = {
+                    'is_complete': result.get('is_complete', False),
+                    'completion_percentage': result.get('completion_percentage', 0),
+                    'validation_errors': result.get('validation_errors', []),
+                    'last_updated': timezone.now().isoformat()
+                }
+                
+                # Update overall progress
+                completed_steps = sum(1 for step_info in tutor_progress.get('step_completion', {}).values() 
+                                    if step_info.get('is_complete', False))
+                total_steps = 9  # Updated to match frontend's 9-step wizard
+                tutor_progress['overall_completion'] = int((completed_steps / total_steps) * 100)
+                
+                user.save(update_fields=['onboarding_progress'])
+                
+                return Response({
+                    'success': True,
+                    'step': step,
+                    'saved_data': result.get('saved_data', {}),
+                    'progress': tutor_progress
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'errors': result.get('errors', {}),
+                    'step': step
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            logger.error(f"Error saving tutor onboarding progress: {e}")
+            return Response(
+                {'error': 'Failed to save onboarding progress'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _save_step_data(self, step, step_data, user):
+        """Save data for a specific onboarding step."""
+        try:
+            if step == 'business_setup':
+                return self._save_business_setup_data(step_data, user)
+            elif step == 'educational_system':
+                return self._save_educational_system_data(step_data, user)
+            elif step == 'teaching_subjects':
+                return self._save_teaching_subjects_data(step_data, user)
+            elif step == 'personal_information':
+                return self._save_personal_information_data(step_data, user)
+            elif step == 'professional_bio':
+                return self._save_professional_bio_data(step_data, user)
+            elif step == 'education_background':
+                return self._save_education_background_data(step_data, user)
+            elif step == 'availability':
+                return self._save_availability_data(step_data, user)
+            elif step == 'business_settings':
+                return self._save_business_settings_data(step_data, user)
+            elif step == 'profile_preview':
+                return self._save_profile_preview_data(step_data, user)
+            else:
+                return {
+                    'success': False,
+                    'errors': {'step': [f'Unknown step: {step}']}
+                }
+        except Exception as e:
+            logger.error(f"Error saving step data for {step}: {e}")
+            return {
+                'success': False,
+                'errors': {'general': [f'Failed to save {step} data']}
+            }
+    
+    def _save_business_setup_data(self, step_data, user):
+        """Save business setup data (school creation)."""
+        try:
+            school_name = step_data.get('school_name', '').strip()
+            school_description = step_data.get('school_description', '').strip()
+            
+            if not school_name:
+                return {
+                    'success': False,
+                    'errors': {'school_name': ['School name is required']}
+                }
+            
+            # Get or create school for this tutor
+            from .models import School, SchoolMembership
+            
+            # Check if user already has a school as owner
+            existing_membership = SchoolMembership.objects.filter(
+                user=user, role='school_owner'
+            ).first()
+            
+            if existing_membership:
+                school = existing_membership.school
+                school.name = school_name
+                school.description = school_description
+                school.save()
+            else:
+                # Create new school
+                school = School.objects.create(
+                    name=school_name,
+                    description=school_description,
+                    owner=user,
+                    school_type='individual_tutor'
+                )
+                
+                # Create school membership
+                SchoolMembership.objects.create(
+                    user=user,
+                    school=school,
+                    role='school_owner',
+                    status='active'
+                )
+            
+            return {
+                'success': True,
+                'is_complete': bool(school_name and school_description),
+                'completion_percentage': 100 if school_name and school_description else 50,
+                'saved_data': {
+                    'school_id': school.id,
+                    'school_name': school.name,
+                    'school_description': school.description
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error saving business setup data: {e}")
+            return {
+                'success': False,
+                'errors': {'general': ['Failed to save business setup data']}
+            }
+    
+    def _save_educational_system_data(self, step_data, user):
+        """Save educational system selection."""
+        try:
+            system_id = step_data.get('educational_system_id')
+            
+            if not system_id:
+                return {
+                    'success': False,
+                    'errors': {'educational_system_id': ['Educational system is required']}
+                }
+            
+            # Get or create teacher profile
+            teacher_profile = self._get_or_create_teacher_profile(user)
+            
+            from .models import EducationalSystem
+            try:
+                educational_system = EducationalSystem.objects.get(id=system_id)
+                teacher_profile.educational_system = educational_system
+                teacher_profile.save()
+                
+                return {
+                    'success': True,
+                    'is_complete': True,
+                    'completion_percentage': 100,
+                    'saved_data': {
+                        'educational_system_id': educational_system.id,
+                        'educational_system_name': educational_system.name
+                    }
+                }
+            except EducationalSystem.DoesNotExist:
+                return {
+                    'success': False,
+                    'errors': {'educational_system_id': ['Invalid educational system']}
+                }
+                
+        except Exception as e:
+            logger.error(f"Error saving educational system data: {e}")
+            return {
+                'success': False,
+                'errors': {'general': ['Failed to save educational system data']}
+            }
+    
+    def _save_teaching_subjects_data(self, step_data, user):
+        """Save teaching subjects and rates."""
+        try:
+            subjects = step_data.get('subjects', [])
+            
+            if not subjects:
+                return {
+                    'success': False,
+                    'errors': {'subjects': ['At least one subject is required']}
+                }
+            
+            teacher_profile = self._get_or_create_teacher_profile(user)
+            school = self._get_user_school(user)
+            
+            if not school:
+                return {
+                    'success': False,
+                    'errors': {'general': ['School not found. Please complete business setup first.']}
+                }
+            
+            from .models import Course, TeacherCourse, TeacherCompensationRule
+            
+            # Clear existing teacher courses for this school
+            TeacherCourse.objects.filter(teacher=teacher_profile, school=school).delete()
+            
+            saved_subjects = []
+            for subject_data in subjects:
+                course_id = subject_data.get('course_id')
+                hourly_rate = subject_data.get('hourly_rate')
+                
+                if not course_id or not hourly_rate:
+                    continue
+                
+                try:
+                    course = Course.objects.get(id=course_id)
+                    
+                    # Create teacher-course relationship
+                    teacher_course = TeacherCourse.objects.create(
+                        teacher=teacher_profile,
+                        course=course,
+                        school=school,
+                        is_active=True
+                    )
+                    
+                    # Create or update compensation rule
+                    compensation_rule, created = TeacherCompensationRule.objects.get_or_create(
+                        teacher=teacher_profile,
+                        school=school,
+                        course=course,
+                        defaults={
+                            'base_hourly_rate': float(hourly_rate),
+                            'effective_date': timezone.now().date()
+                        }
+                    )
+                    if not created:
+                        compensation_rule.base_hourly_rate = float(hourly_rate)
+                        compensation_rule.save()
+                    
+                    saved_subjects.append({
+                        'course_id': course.id,
+                        'course_name': course.name,
+                        'hourly_rate': float(hourly_rate)
+                    })
+                    
+                except Course.DoesNotExist:
+                    continue
+            
+            return {
+                'success': True,
+                'is_complete': len(saved_subjects) > 0,
+                'completion_percentage': 100 if saved_subjects else 0,
+                'saved_data': {
+                    'subjects': saved_subjects
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error saving teaching subjects data: {e}")
+            return {
+                'success': False,
+                'errors': {'general': ['Failed to save teaching subjects data']}
+            }
+    
+    def _save_personal_information_data(self, step_data, user):
+        """Save personal information data."""
+        try:
+            teacher_profile = self._get_or_create_teacher_profile(user)
+            
+            # Update user fields
+            user.first_name = step_data.get('first_name', user.first_name)
+            user.last_name = step_data.get('last_name', user.last_name)
+            user.save(update_fields=['first_name', 'last_name'])
+            
+            # Update teacher profile fields
+            if 'phone_number' in step_data:
+                teacher_profile.phone_number = step_data['phone_number']
+            if 'location' in step_data:
+                teacher_profile.location = step_data['location']
+            if 'years_of_experience' in step_data:
+                teacher_profile.years_of_experience = step_data['years_of_experience']
+            
+            teacher_profile.save()
+            
+            completion_fields = ['first_name', 'last_name', 'phone_number', 'location']
+            completed_count = sum(1 for field in completion_fields 
+                                if getattr(user if field in ['first_name', 'last_name'] else teacher_profile, field))
+            
+            return {
+                'success': True,
+                'is_complete': completed_count >= 3,  # At least 3 of 4 fields
+                'completion_percentage': int((completed_count / len(completion_fields)) * 100),
+                'saved_data': {
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'phone_number': teacher_profile.phone_number,
+                    'location': teacher_profile.location,
+                    'years_of_experience': teacher_profile.years_of_experience
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error saving personal information data: {e}")
+            return {
+                'success': False,
+                'errors': {'general': ['Failed to save personal information data']}
+            }
+    
+    def _save_professional_bio_data(self, step_data, user):
+        """Save professional bio data."""
+        try:
+            teacher_profile = self._get_or_create_teacher_profile(user)
+            
+            bio = step_data.get('bio', '').strip()
+            teaching_approach = step_data.get('teaching_approach', '').strip()
+            
+            teacher_profile.bio = bio
+            teacher_profile.teaching_approach = teaching_approach
+            teacher_profile.save()
+            
+            is_complete = bool(bio and len(bio) >= 50)  # Minimum 50 characters
+            
+            return {
+                'success': True,
+                'is_complete': is_complete,
+                'completion_percentage': 100 if is_complete else 50,
+                'saved_data': {
+                    'bio': bio,
+                    'teaching_approach': teaching_approach
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error saving professional bio data: {e}")
+            return {
+                'success': False,
+                'errors': {'general': ['Failed to save professional bio data']}
+            }
+    
+    def _save_education_background_data(self, step_data, user):
+        """Save education background data."""
+        try:
+            teacher_profile = self._get_or_create_teacher_profile(user)
+            
+            qualifications = step_data.get('qualifications', '').strip()
+            certifications = step_data.get('certifications', [])
+            
+            teacher_profile.qualifications = qualifications
+            
+            # Handle certifications as JSON field
+            if certifications:
+                teacher_profile.certifications = certifications
+            
+            teacher_profile.save()
+            
+            is_complete = bool(qualifications and len(qualifications) >= 20)
+            
+            return {
+                'success': True,
+                'is_complete': is_complete,
+                'completion_percentage': 100 if is_complete else 50,
+                'saved_data': {
+                    'qualifications': qualifications,
+                    'certifications': certifications
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error saving education background data: {e}")
+            return {
+                'success': False,
+                'errors': {'general': ['Failed to save education background data']}
+            }
+    
+    def _save_availability_data(self, step_data, user):
+        """Save availability data."""
+        try:
+            teacher_profile = self._get_or_create_teacher_profile(user)
+            
+            availability = step_data.get('availability', {})
+            timezone_preference = step_data.get('timezone', 'Europe/Lisbon')
+            
+            # Save availability as JSON field
+            teacher_profile.availability = availability
+            teacher_profile.timezone = timezone_preference
+            teacher_profile.save()
+            
+            # Check if availability has at least some time slots
+            has_availability = bool(availability and any(
+                day_data.get('slots') for day_data in availability.values()
+            ))
+            
+            return {
+                'success': True,
+                'is_complete': has_availability,
+                'completion_percentage': 100 if has_availability else 0,
+                'saved_data': {
+                    'availability': availability,
+                    'timezone': timezone_preference
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error saving availability data: {e}")
+            return {
+                'success': False,
+                'errors': {'general': ['Failed to save availability data']}
+            }
+    
+    def _save_business_settings_data(self, step_data, user):
+        """Save business settings data."""
+        try:
+            teacher_profile = self._get_or_create_teacher_profile(user)
+            school = self._get_user_school(user)
+            
+            # Update school settings
+            if school:
+                school.cancellation_policy = step_data.get('cancellation_policy', school.cancellation_policy)
+                school.session_type_preferences = step_data.get('session_preferences', {})
+                school.save()
+            
+            # Update teacher profile settings
+            teacher_profile.accepts_new_students = step_data.get('accepts_new_students', True)
+            teacher_profile.min_session_duration = step_data.get('min_session_duration', 60)
+            teacher_profile.max_session_duration = step_data.get('max_session_duration', 120)
+            teacher_profile.save()
+            
+            return {
+                'success': True,
+                'is_complete': True,
+                'completion_percentage': 100,
+                'saved_data': {
+                    'cancellation_policy': school.cancellation_policy if school else None,
+                    'session_preferences': school.session_type_preferences if school else {},
+                    'accepts_new_students': teacher_profile.accepts_new_students,
+                    'min_session_duration': teacher_profile.min_session_duration,
+                    'max_session_duration': teacher_profile.max_session_duration
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error saving business settings data: {e}")
+            return {
+                'success': False,
+                'errors': {'general': ['Failed to save business settings data']}
+            }
+    
+    def _save_profile_preview_data(self, step_data, user):
+        """Save profile preview data and mark profile as published."""
+        try:
+            teacher_profile = self._get_or_create_teacher_profile(user)
+            
+            # Mark profile as published/active
+            teacher_profile.is_available = step_data.get('publish_profile', False)
+            teacher_profile.profile_published_at = timezone.now() if teacher_profile.is_available else None
+            teacher_profile.save()
+            
+            # Mark onboarding as completed
+            user.onboarding_completed = True
+            user.save(update_fields=['onboarding_completed'])
+            
+            return {
+                'success': True,
+                'is_complete': True,
+                'completion_percentage': 100,
+                'saved_data': {
+                    'is_published': teacher_profile.is_available,
+                    'published_at': teacher_profile.profile_published_at.isoformat() if teacher_profile.profile_published_at else None
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error saving profile preview data: {e}")
+            return {
+                'success': False,
+                'errors': {'general': ['Failed to save profile preview data']}
+            }
+    
+    def _get_or_create_teacher_profile(self, user):
+        """Get or create teacher profile for user."""
+        from .models import TeacherProfile
+        
+        teacher_profile, created = TeacherProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                'is_available': False,
+                'years_of_experience': 0
+            }
+        )
+        return teacher_profile
+    
+    def _get_user_school(self, user):
+        """Get the school owned by this user."""
+        from .models import SchoolMembership
+        
+        membership = SchoolMembership.objects.filter(
+            user=user, role='school_owner'
+        ).first()
+        
+        return membership.school if membership else None
+
+
+class TutorOnboardingGuidanceView(TutorOnboardingAPIView):
+    """Dedicated view for tutor onboarding guidance endpoint."""
+    
+    def post(self, request):
+        return self.get_onboarding_guidance(request)
+
+
+class TutorOnboardingStartView(TutorOnboardingAPIView):
+    """Dedicated view for tutor onboarding start endpoint."""
+    
+    def post(self, request):
+        return self.start_onboarding(request)
+
+
+class TutorOnboardingValidateStepView(TutorOnboardingAPIView):
+    """Dedicated view for tutor onboarding step validation endpoint."""
+    
+    def post(self, request):
+        return self.validate_step(request)
+
+
+class TutorOnboardingSaveProgressView(TutorOnboardingAPIView):
+    """Dedicated view for tutor onboarding save progress endpoint."""
+    
+    def post(self, request):
+        return self.save_progress(request)

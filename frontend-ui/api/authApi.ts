@@ -69,6 +69,7 @@ export interface OnboardingData {
   email: string;
   phone_number: string;
   primary_contact: 'email' | 'phone';
+  user_type: 'tutor' | 'school';
   school: {
     name: string;
     description?: string;

@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.core.cache import cache
 
 from accounts.models import School, TeacherProfile, SchoolMembership, SchoolRole
+from common.cache_utils import SecureCacheKeyGenerator
 from finances.models import (
     ClassSession, SessionStatus, SessionType,
     TeacherPaymentEntry, PaymentStatus,
@@ -61,8 +62,14 @@ class TutorAnalyticsService:
         end_date = timezone.now().date()
         start_date = cls._calculate_start_date(end_date, time_range)
         
-        # Generate cache key
-        cache_key = f"tutor_analytics_{teacher.id}_{school.id}_{time_range}_{start_date}_{end_date}"
+        # Generate secure cache key
+        cache_key = SecureCacheKeyGenerator.generate_analytics_key(
+            teacher_id=teacher.id,
+            school_id=school.id,
+            time_range=time_range,
+            start_date=start_date.isoformat(),
+            end_date=end_date.isoformat()
+        )
         
         # Try to get from cache
         cached_data = cache.get(cache_key)

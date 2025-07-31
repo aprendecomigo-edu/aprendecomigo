@@ -8,6 +8,7 @@ from typing import Dict, List, Any
 from django.db.models import Count, Q, Avg
 from django.utils import timezone
 from django.core.cache import cache
+from common.cache_utils import SecureCacheKeyGenerator
 from accounts.models import School, SchoolMembership, SchoolRole, SchoolInvitation
 from finances.models import ClassSession
 
@@ -22,7 +23,7 @@ class SchoolMetricsService:
         
     def get_metrics(self) -> Dict[str, Any]:
         """Get complete metrics for the school with caching"""
-        cache_key = f'school_metrics_{self.school.id}'
+        cache_key = SecureCacheKeyGenerator.generate_school_metrics_key(self.school.id)
         metrics = cache.get(cache_key)
         
         if metrics is None:
@@ -230,7 +231,9 @@ class SchoolMetricsService:
     @classmethod
     def invalidate_cache(cls, school_id: int):
         """Invalidate cached metrics for a school"""
-        cache_key = f'school_metrics_{school_id}'
+        # Note: With secure cache keys, we need to regenerate the key to invalidate
+        # In production, consider using cache tagging for pattern-based invalidation
+        cache_key = SecureCacheKeyGenerator.generate_school_metrics_key(school_id)
         cache.delete(cache_key)
 
 

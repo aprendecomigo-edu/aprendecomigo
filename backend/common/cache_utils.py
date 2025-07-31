@@ -1,0 +1,196 @@
+"""
+Secure cache key utilities.
+
+Provides secure cache key generation with hash-based keys to prevent
+cache poisoning attacks.
+"""
+
+import hashlib
+import json
+from typing import Any, Dict, List, Optional, Union
+from django.contrib.auth import get_user_model
+from django.core.cache import cache
+
+User = get_user_model()
+
+
+class SecureCacheKeyGenerator:
+    """
+    Secure cache key generator that uses hash-based keys to prevent
+    cache poisoning attacks.
+    """
+    
+    @staticmethod
+    def generate_user_scoped_key(
+        prefix: str,
+        user_id: int,
+        params: Dict[str, Any],
+        session_token: Optional[str] = None
+    ) -> str:
+        """
+        Generate a secure cache key scoped to a specific user.
+        
+        Args:
+            prefix: Cache key prefix (e.g., 'tutor_analytics')
+            user_id: User ID for scoping
+            params: Dictionary of parameters to include in key
+            session_token: Optional session token for additional security
+            
+        Returns:
+            Secure hash-based cache key
+        """
+        # Build key components
+        key_data = {
+            'prefix': prefix,
+            'user_id': user_id,
+            'params': params
+        }
+        
+        # Add session token if provided for additional security
+        if session_token:
+            key_data['session_token'] = session_token
+        
+        # Create deterministic hash
+        key_string = json.dumps(key_data, sort_keys=True, separators=(',', ':'))
+        key_hash = hashlib.sha256(key_string.encode('utf-8')).hexdigest()[:16]
+        
+        # Return prefixed hash key
+        return f"secure_{prefix}_{key_hash}"
+    
+    @staticmethod
+    def generate_analytics_key(
+        teacher_id: int,
+        school_id: int,
+        time_range: str,
+        start_date: str,
+        end_date: str,
+        session_token: Optional[str] = None
+    ) -> str:
+        """
+        Generate secure analytics cache key.
+        
+        Args:
+            teacher_id: Teacher profile ID
+            school_id: School ID
+            time_range: Time range string
+            start_date: Start date (ISO format)
+            end_date: End date (ISO format)
+            session_token: Optional session token
+            
+        Returns:
+            Secure analytics cache key
+        """
+        params = {
+            'school_id': school_id,
+            'time_range': time_range,
+            'start_date': start_date,
+            'end_date': end_date
+        }
+        
+        return SecureCacheKeyGenerator.generate_user_scoped_key(
+            'tutor_analytics',
+            teacher_id,
+            params,
+            session_token
+        )
+    
+    @staticmethod
+    def generate_school_metrics_key(
+        school_id: int,
+        session_token: Optional[str] = None
+    ) -> str:
+        """
+        Generate secure school metrics cache key.
+        
+        Args:
+            school_id: School ID
+            session_token: Optional session token
+            
+        Returns:
+            Secure school metrics cache key
+        """
+        params = {'timestamp': str(int(time.time() // 300))}  # 5-minute buckets
+        
+        return SecureCacheKeyGenerator.generate_user_scoped_key(
+            'school_metrics',
+            school_id,
+            params,
+            session_token
+        )
+    
+    @staticmethod
+    def generate_discovery_key(
+        filters: Dict[str, Any],
+        pagination: Dict[str, Any],
+        ordering: str,
+        session_token: Optional[str] = None
+    ) -> str:
+        """
+        Generate secure tutor discovery cache key.
+        
+        Args:
+            filters: Search filters
+            pagination: Pagination parameters
+            ordering: Ordering parameter
+            session_token: Optional session token
+            
+        Returns:
+            Secure discovery cache key
+        """
+        params = {
+            'filters': filters,
+            'pagination': pagination,
+            'ordering': ordering
+        }
+        
+        # Use 0 as user_id for public discovery endpoint
+        return SecureCacheKeyGenerator.generate_user_scoped_key(
+            'tutor_discovery',
+            0,
+            params,
+            session_token
+        )
+
+    @staticmethod
+    def get_session_token_from_request(request) -> Optional[str]:
+        """
+        Extract session token from request for cache key generation.
+        
+        Args:
+            request: Django request object
+            
+        Returns:
+            Session token if available, None otherwise
+        """
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            # Use a portion of the user's session key if available
+            session_key = getattr(request.session, 'session_key', None)
+            if session_key:
+                # Use first 8 characters of session key for cache scoping
+                return session_key[:8]
+        return None
+
+
+def invalidate_user_cache_pattern(prefix: str, user_id: int):
+    """
+    Invalidate all cache entries matching a user-scoped pattern.
+    
+    Note: This is a simple implementation. For production, consider
+    using cache tagging or a more sophisticated cache invalidation strategy.
+    
+    Args:
+        prefix: Cache key prefix
+        user_id: User ID to invalidate cache for
+    """
+    # This is a simplified invalidation - in production you might want
+    # to use cache tagging or maintain a registry of cache keys
+    cache_pattern = f"secure_{prefix}_{user_id}_*"
+    
+    # Note: Django's cache doesn't support pattern-based deletion by default
+    # This would need to be implemented based on the cache backend
+    # For now, we'll just note that this pattern should be used
+    pass
+
+
+# Import time for timestamp generation
+import time

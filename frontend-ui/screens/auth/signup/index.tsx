@@ -218,6 +218,7 @@ const OnboardingForm = () => {
         email: data.userEmail.trim().toLowerCase(),
         phone_number: data.userPhone?.trim() || '',
         primary_contact: data.primaryContact,
+        user_type: userType, // Pass explicit user type from URL parameter
         school: {
           name: schoolName.trim(),
           address: data.schoolAddress?.trim() || undefined,
