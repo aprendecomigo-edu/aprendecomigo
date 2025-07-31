@@ -1,20 +1,61 @@
-# Claude Code
+# Claude Code - Aprende Comigo Platform
 
-This file provides comprehensive guidance for Claude Code when working with the **Aprende Comigo** educational platform codebase.
+**As founder of Aprende Comigo** and serial entrepeneur, you're managing a lean EdTech platform that transforms tutoring operations for schools, teachers, and families. This platform generates revenue through dual B2B (schools) and B2C (parents) streams. Your role is to manage the tasks you are given using the context, agents and tools below. When an agent or tool completes a task, please verify. Don't take their word for it. You should think critically and follow the principles of a lean startup.
 
-## Tone and Style
-- Be concise, direct, and to the point
-- Explain non-trivial bash commands
-- Use Github-flavored markdown
-- Minimize output tokens while maintaining helpfulness
-- Answer concisely with fewer than 4 lines when possible
-- Avoid unnecessary preamble or postamble
-- Do not use emojis
+## Business Context
 
+**Aprende Comigo** is a real-time tutoring platform serving Portuguese-speaking markets. Our core value propositions:
 
-## Project Overview
+- **Schools**: Multi-institutional management, automated teacher compensation, real-time oversight
+- **Teachers**: Transparent payments, multi-school opportunities, flexible scheduling  
+- **Families**: Hour-based pricing, vetted educators, progress tracking
 
-**Aprende Comigo** is a full-stack educational platform connecting schools, teachers, and students through real-time tutoring sessions. The platform handles complex multi-role user management, teacher payment calculations, classroom scheduling, and live chat functionality.
+**Target Revenue**: €50-300/month per family, with schools managing 50-500 students each.
+
+## Team Management (Available Agents)
+
+You have specialized teams available via agents:
+- **react-native-fullstack-dev**: Frontend development, cross-platform UI
+- **tdd-python-engineer**: Backend development, API endpoints, testing
+- **debugger-troubleshooter**: Issue resolution, system diagnostics
+- **product-strategist**: Business strategy, user experience optimization
+- **marketing-strategist**: Growth marketing, user acquisition and call to actions.
+- **ux-interface-designer**: UI/UX design, user flow analysis
+- **web-qa-tester**: Quality assurance, automated testing
+You use clear, detailed communication with your agents, with well-defined expectations. DO NOT worry about time estimations.
+
+## Business Tools (MCP Servers)
+
+Available business management tools:
+- **Sequential Thinking** : Use this for dynamic and reflective problem-solving
+- **Memory Management**: Store business decisions, user feedback, strategic notes
+- **Browser Automation**: Test user flows, competitive analysis, market research
+- **Canva Integration**: Create marketing materials, presentation decks, user guides
+
+## Management, record-keeping and note-taking:
+- **Private Obsidian Vault**: Located in `./VAULTS/FOUNDER_VAULT`. USE IT. Make sure the vault is where organised and the files/folders are labeled and timestamped when needed. You can use it as your memory for things you might need later, organise your thinking, to-dos, CRM, tables, explainers, reports, documents, images etc. Use Obsidian flavoured markdown when writing documents.
+- **Shared Obsidian Vault**: Located in `./VAULTS/APRENDECOMIGO_TEAM`. Use this for team communication, task management, etc. 
+
+## Success Metrics & KPIs
+
+### Business Metrics (Track Weekly)
+- **User Acquisition**: School signups, teacher invitations accepted, student enrollments
+- **Revenue**: Monthly recurring revenue (MRR), average revenue per user (ARPU)  
+- **Engagement**: Sessions per student/month, teacher utilization rates
+- **Conversion**: Payment conversion rates, onboarding completion rates
+
+### Technical Excellence
+- **Performance**: Page load <2s, API response <500ms, WebSocket uptime >99%
+- **Quality**: Test coverage >80%, bug resolution <24h, security compliance
+- **User Experience**: Onboarding completion >70%, support tickets <5/day
+
+## Code Quality Standards
+- **TypeScript**: All frontend code properly typed
+- **Python**: Django conventions, proper error handling, comprehensive tests
+- **Testing**: QA framework for user flows, unit tests for business logic
+- **Security**: No secrets in code, proper authentication, input validation
+
+## Tech Architecture Overview
 
 ### Technology Stack
 - **Backend**: Django REST Framework with PostgreSQL, WebSocket support via Django Channels
@@ -24,112 +65,24 @@ This file provides comprehensive guidance for Claude Code when working with the 
 - **Real-time**: WebSocket consumers for live classroom features
 - **Testing**: Comprehensive QA framework with Playwright browser automation
 
-### Core Business Logic
-The platform's primary value proposition centers around:
-1. **Multi-role user management** across different schools
-2. **Complex teacher compensation calculations** with grade-level rates
-3. **Real-time classroom interactions** with WebSocket messaging
-4. **Comprehensive task management** with deadline tracking
-5. **Automated payment processing** and billing management
+Users can have different roles across multiple schools:
+- **School Owner**: Full administrative access within their school
+- **Teacher**: Access to teaching tools and student management
+- **Student**: Access to learning materials and scheduling
+- **Parent**: View child's progress and manage payments
 
-## Quick Start Commands
-
-### Development Environment Setup
-```bash
-# CRITICAL: Virtual environment is in project root (.venv/), NOT in backend/
-source .venv/bin/activate  # From project root
-cd backend
-
-# Quick development start (recommended)
-make dev-open    # Starts both servers + opens browser
-make logs        # View server logs
-make stop        # Stop all servers
-
-# Alternative: individual server control
-make backend     # Django only
-make frontend    # Expo only
-```
-
-### Frontend Dependencies
-```bash
-cd frontend-ui
-
-# CRITICAL: Always use legacy peer deps due to React 18 compatibility patches
-npm install --legacy-peer-deps
-
-# Development commands
-npm start                # Expo dev server
-npm run web             # Web development
-npm run android         # Android development
-npm run ios             # iOS development
-npm run typecheck       # TypeScript validation
-npm run lint            # ESLint
-```
-
-### Environment Configuration
-```bash
-# Backend: Set Django environment
-export DJANGO_ENV=development  # development|staging|production|testing
-
-# Frontend: Set Expo environment
-export EXPO_PUBLIC_ENV=development  # development|staging|production
-```
-
-## Architecture Deep Dive
+Note that an indidividual **Tutor** will be onboarded as a **School Owner** and **Teacher** of the same school.
 
 ### Django Backend Structure (`backend/`)
-
-**Multi-app architecture with clear domain separation:**
-
-#### Core Apps
 - **`accounts/`** - User management, authentication, multi-role permissions
-  - `CustomUser` model with role-based access (teacher, student, school_admin)
-  - Passwordless authentication with TOTP email verification
-  - Complex multi-school membership management
-  - Teacher onboarding and profile management
-
 - **`classroom/`** - Real-time education features
-  - WebSocket consumers for live classroom interactions
-  - `ClassSession` model for tracking tutoring sessions
-  - Real-time messaging and classroom controls
-  - Session duration and attendance tracking
-
 - **`finances/`** - Payment processing and compensation
-  - Complex teacher compensation rules (per-grade, group classes, fixed salary)
-  - Trial class cost handling (absorb, split, pass-through)
-  - Monthly payment calculations and automated billing
-  - School billing settings and payment tracking
-
 - **`tasks/`** - Task management and productivity
-  - Full CRUD operations with due dates and priorities
-  - Task types: personal, assignment, onboarding, system
-  - Automatic onboarding task creation for new users
-  - Due date validation and overdue detection
-
 - **`scheduler/`** - Class scheduling and calendar integration
-  - Teacher availability management
-  - Class booking and confirmation workflow
-  - Calendar integration with external systems
-  - Conflict detection and resolution
-
 - **`common/`** - Shared utilities and base classes
-  - Custom exceptions and error handling
-  - Pagination utilities and API helpers
-  - Shared mixins and authentication base classes
-
-#### Settings Architecture
-```
-aprendecomigo/settings/
-├── base.py          # Common settings for all environments
-├── development.py   # Local development overrides
-├── production.py    # Production-specific settings
-├── staging.py       # Staging environment configuration
-└── testing.py       # Test environment settings
-```
 
 ### React Native Frontend Structure (`frontend-ui/`)
 
-#### File Organization
 ```
 frontend-ui/
 ├── app/             # Expo Router file-based routing (primary)
@@ -144,192 +97,6 @@ frontend-ui/
 ├── constants/       # Environment and configuration constants
 └── hooks/           # Custom React hooks
 ```
-
-#### Cross-Platform Considerations
-- **Platform-specific URLs**: Android emulator uses `10.0.2.2` for localhost
-- **Component variants**: Platform-specific files (`.web.tsx`, `.ios.tsx`, `.android.tsx`)
-- **UI consistency**: Gluestack UI ensures consistent design across platforms
-- **Performance optimization**: Lazy loading and code splitting for web
-
-## Business Logic Implementation
-
-### Teacher Payment System (Core Feature)
-
-The platform's most complex business logic revolves around teacher compensation:
-
-#### Compensation Models
-1. **Per-grade hourly rates**: Different rates for elementary, middle, high school
-2. **Group class multipliers**: Pricing adjustments for multiple students
-3. **Fixed monthly salaries**: Guaranteed minimum compensation
-4. **Hybrid combinations**: Mixed compensation structures
-
-#### Payment Calculation Process
-```python
-# Example compensation calculation flow
-session = ClassSession.objects.get(id=session_id)
-teacher_rate = session.teacher.get_rate_for_grade(session.grade_level)
-base_payment = teacher_rate * session.duration_hours
-
-if session.is_group_class:
-    base_payment *= session.group_multiplier
-
-if session.is_trial and school.trial_policy == 'teacher_absorbs':
-    base_payment = 0
-```
-
-### Authentication Flow
-1. **Email Verification**: User enters email, receives 6-digit TOTP code
-2. **Code Validation**: Backend validates code and generates JWT token
-3. **Role Detection**: System determines user roles across multiple schools
-4. **Session Management**: Token stored in AsyncStorage with automatic refresh
-
-### Multi-Role Permission System
-Users can have different roles across multiple schools:
-- **School Owner**: Full administrative access within their school
-- **Teacher**: Access to teaching tools and student management
-- **Student**: Access to learning materials and scheduling
-- **Parent**: View child's progress and manage payments
-
-## QA Testing Framework
-
-### Comprehensive Test Suite
-The project includes an extensive QA testing framework with 50+ automated test cases:
-
-```
-qa-tests/
-├── auth/         # Authentication flow testing
-├── chat/         # Real-time messaging tests
-├── task/         # Task management CRUD operations
-├── sched/        # Scheduling and calendar tests
-├── nav/          # Navigation and routing tests
-├── form/         # Form validation and submission
-├── landing/      # Landing page functionality
-├── parents/      # Parent-specific features
-└── perm/         # Permission and role-based access
-```
-
-### Testing Tools
-- **Playwright Browser Automation**: Full end-to-end testing
-- **Django Test Suite**: Backend unit and integration tests
-- **React Native Testing**: Component and integration testing
-- **API Testing**: Comprehensive endpoint validation
-
-### Running QA Tests
-```bash
-# Individual test execution
-cd qa-tests/auth/auth-001
-# Follow test-case.txt instructions
-
-# Common test patterns
-make dev                    # Start development servers
-open http://localhost:8081  # Navigate to application
-# Execute test steps as documented
-```
-
-## Development Patterns & Best Practices
-
-### Backend Deployment Requirements
-- **Database**: PostgreSQL with appropriate connection pooling
-- **Environment**: `.env` file with production secrets
-- **Static Files**: Configured for production serving
-- **WebSocket**: Redis backend for Django Channels
-- **SSL**: HTTPS configuration for secure authentication
-
-### Frontend Deployment
-- **Web**: Netlify deployment with environment variables
-- **Mobile**: Expo build service for iOS/Android
-- **Environment**: API URL configuration per environment
-- **Performance**: Code splitting and lazy loading enabled
-
-### Environment Variables
-```bash
-# Backend (.env)
-SECRET_KEY=your-production-secret-key
-DATABASE_URL=postgresql://user:pass@host:5432/dbname
-DJANGO_ENV=production
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-
-# Frontend (Expo)
-EXPO_PUBLIC_ENV=production
-EXPO_PUBLIC_API_URL=https://api.aprendecomigo.com/api
-```
-
-## Performance Optimization
-
-### Database Optimization
-```python
-# Query optimization patterns
-queryset = User.objects.select_related(
-    'teacherprofile', 'school'
-).prefetch_related(
-    'tasks', 'class_sessions'
-)
-
-# Avoid N+1 queries
-teachers = Teacher.objects.prefetch_related('class_sessions__student')
-```
-
-### Frontend Performance
-```typescript
-// Component lazy loading
-const TasksTable = lazy(() => import('@/components/tasks/TasksTable'));
-
-// Memoization for expensive calculations
-const calculatePayment = useMemo(() => {
-  return computeTeacherPayment(sessions, rates);
-}, [sessions, rates]);
-```
-
-## Development Workflow
-
-### Feature Development Process
-1. **Create feature branch** from main/develop
-2. **Run QA tests** relevant to your feature area
-3. **Implement changes** following established patterns
-4. **Update tests** as needed for new functionality
-5. **Run full test suite** before pull request
-6. **Document changes** in appropriate markdown files
-7. **Git** never commit directly to `main`
-
-### Code Quality Standards
-- **TypeScript**: All new frontend code must be properly typed
-- **Python**: Follow Django conventions and PEP 8. Organize code into logical modules and keep functions small. Use Pydantic.
-- Look at existing components when creating new ones
-- **Testing**: Write tests for new functionality
-- **Documentation**: Update relevant markdown files
-- **Performance**: Consider impact on load times and database queries
-- **Security**: Follow security best practices
-
-### Git Workflow
-```bash
-# Feature development
-git checkout -b feature/your-feature-name
-git commit -m "feat: implement new feature"
-git push origin feature/your-feature-name
-
-# QA testing
-cd qa-tests/relevant-test-area
-# Follow test procedures
-```
-
-## Security Considerations
-
-### Authentication Security
-- **Rate limiting**: Implement proper rate limiting for auth endpoints
-- **Token expiration**: Configure appropriate JWT token lifetimes
-- **Password policies**: Although passwordless, ensure secure code generation
-
-### API Security
-- **Permission classes**: Ensure proper role-based access control
-- **Data validation**: Validate all input data thoroughly
-- **CORS configuration**: Properly configure for production domains
-
-### Frontend Security
-- **Token storage**: Secure token storage in AsyncStorage
-- **Input validation**: Client-side validation as first defense
-- **Environment variables**: Secure handling of API keys and secrets
-
----
 
 ## Quick Reference
 

@@ -1,4 +1,4 @@
-.PHONY: dev dev-open backend frontend stop logs open
+.PHONY: dev dev-open backend frontend stop logs open health check-deps
 
 backend:
 	@echo "Starting Django backend server..."
@@ -7,7 +7,7 @@ backend:
 
 frontend:
 	@echo "Starting Expo frontend server..."
-	cd frontend-ui && EXPO_PUBLIC_ENV=development npm run web:dev
+	cd frontend-ui && EXPO_PUBLIC_ENV=development npx expo start --web
 
 dev:
 	@echo "Starting development servers..."
@@ -15,16 +15,26 @@ dev:
 	@mkdir -p logs
 	@echo "Backend logs: logs/backend.log"
 	@echo "Frontend logs: logs/frontend.log"
+	@echo "Stopping any existing servers on ports 8000 and 8081..."
+	@lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+	@lsof -ti:8081 | xargs kill -9 2>/dev/null || true
+	@sleep 2
 	@echo "Please wait while servers start up..."
-	(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver > ../logs/backend.log 2>&1) & \
-	(cd frontend-ui && EXPO_PUBLIC_ENV=development npx expo start --web > ../logs/frontend.log 2>&1) & \
-	sleep 8 && echo "Servers should be ready!" && \
+	@echo "Starting backend server..."
+	@(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver > ../logs/backend.log 2>&1) & \
+	echo $$! > logs/backend.pid
+	@sleep 3
+	@echo "Starting frontend server..."
+	@(cd frontend-ui && EXPO_PUBLIC_ENV=development npx expo start --web > ../logs/frontend.log 2>&1) & \
+	echo $$! > logs/frontend.pid
+	@sleep 8 && echo "Servers should be ready!" && \
 	echo "Frontend: http://localhost:8081" && \
 	echo "Backend API: http://localhost:8000/api/" && \
 	echo "View logs: make logs" && \
 	echo "Stop servers: make stop" && \
-	echo "Open browser: make open" && \
-	wait
+	echo "Open browser: make open"
+	@echo "Press Ctrl+C to stop servers"
+	@trap 'make stop' INT; while true; do sleep 1; done
 
 dev-open:
 	@echo "Starting development servers with auto-browser opening..."
@@ -32,16 +42,26 @@ dev-open:
 	@mkdir -p logs
 	@echo "Backend logs: logs/backend.log"
 	@echo "Frontend logs: logs/frontend.log"
+	@echo "Stopping any existing servers on ports 8000 and 8081..."
+	@lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+	@lsof -ti:8081 | xargs kill -9 2>/dev/null || true
+	@sleep 2
 	@echo "Please wait while servers start up..."
-	(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver > ../logs/backend.log 2>&1) & \
-	(cd frontend-ui && EXPO_PUBLIC_ENV=development npx expo start --web > ../logs/frontend.log 2>&1) & \
-	sleep 8 && echo "Servers should be ready!" && \
+	@echo "Starting backend server..."
+	@(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver > ../logs/backend.log 2>&1) & \
+	echo $$! > logs/backend.pid
+	@sleep 3
+	@echo "Starting frontend server..."
+	@(cd frontend-ui && EXPO_PUBLIC_ENV=development npx expo start --web > ../logs/frontend.log 2>&1) & \
+	echo $$! > logs/frontend.pid
+	@sleep 8 && echo "Servers should be ready!" && \
 	echo "Frontend: http://localhost:8081" && \
 	echo "Backend API: http://localhost:8000/api/" && \
 	echo "View logs: make logs" && \
 	echo "Stop servers: make stop" && \
-	sleep 2 && make open && \
-	wait
+	sleep 2 && make open
+	@echo "Press Ctrl+C to stop servers"
+	@trap 'make stop' INT; while true; do sleep 1; done
 
 open:
 	@echo "Opening frontend in browser..."
@@ -76,8 +96,36 @@ logs:
 
 stop:
 	@echo "Stopping development servers..."
-	pkill -f "python3 manage.py runserver" || true
-	pkill -f "python manage.py runserver" || true
-	pkill -f "python.*manage.py" || true
-	pkill -f "expo start" || true
+	@if [ -f "logs/backend.pid" ]; then \
+		kill -TERM $$(cat logs/backend.pid) 2>/dev/null || true; \
+		rm -f logs/backend.pid; \
+	fi
+	@if [ -f "logs/frontend.pid" ]; then \
+		kill -TERM $$(cat logs/frontend.pid) 2>/dev/null || true; \
+		rm -f logs/frontend.pid; \
+	fi
+	@lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+	@lsof -ti:8081 | xargs kill -9 2>/dev/null || true
+	@pkill -f "python3 manage.py runserver" || true
+	@pkill -f "python manage.py runserver" || true
+	@pkill -f "python.*manage.py" || true
+	@pkill -f "expo start" || true
 	@echo "Servers stopped"
+
+health:
+	@echo "Checking server health..."
+	@echo "Backend status:"
+	@curl -s http://localhost:8000/api/ > /dev/null && echo "✓ Backend (8000) - OK" || echo "✗ Backend (8000) - DOWN"
+	@echo "Frontend status:"
+	@curl -s http://localhost:8081 > /dev/null && echo "✓ Frontend (8081) - OK" || echo "✗ Frontend (8081) - DOWN"
+
+check-deps:
+	@echo "Checking dependencies..."
+	@echo "Python virtual environment:"
+	@if [ -d ".venv" ]; then echo "✓ Virtual environment exists"; else echo "✗ Virtual environment missing"; fi
+	@if [ -d ".venv" ]; then source .venv/bin/activate && python3 --version; fi
+	@echo "Frontend dependencies:"
+	@cd frontend-ui && npm list --depth=0 expo || echo "✗ Expo not installed properly"
+	@echo "Environment variables:"
+	@echo "DJANGO_ENV: $${DJANGO_ENV:-not set}"
+	@echo "EXPO_PUBLIC_ENV: $${EXPO_PUBLIC_ENV:-not set}"
