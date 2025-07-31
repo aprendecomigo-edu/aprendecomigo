@@ -1,0 +1,218 @@
+QA Test Case: School Settings Mobile Responsiveness and User Experience
+
+Test ID: SCHOOL-SETTINGS-004
+Test Name: Mobile Responsiveness and User Experience
+Purpose: Verify that school settings interface is fully responsive, accessible, and provides optimal user experience across all device sizes
+Expected Result: Settings interface adapts properly to mobile devices with excellent usability and accessibility
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- UI Framework: React Native with NativeWind CSS
+- Test URL: /(school-admin)/settings
+
+Required Environment Setup:
+1. Backend and frontend servers running (make dev)
+2. User authenticated as school owner
+3. Browser with responsive design testing capabilities
+
+Test Devices/Viewports:
+- Desktop: 1920x1080
+- Tablet: 768x1024
+- Mobile Large: 414x896 (iPhone 11 Pro Max)
+- Mobile Standard: 375x667 (iPhone 8)
+- Mobile Small: 320x568 (iPhone 5/SE)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Desktop Baseline Test
+1. Open browser at desktop resolution (1920x1080)
+2. Navigate to settings page
+3. Verify all sections and controls display properly
+4. Take note of layout and spacing
+
+Expected: Settings interface looks clean and professional on desktop
+Screenshot: 01_desktop_baseline.png
+
+Step 2: Tablet Responsiveness Test
+1. Resize browser to tablet size (768x1024)
+2. Verify section navigation buttons adapt properly
+3. Check form field layout and spacing
+4. Test section switching functionality
+5. Verify save/cancel buttons remain accessible
+
+Expected: Interface adapts to tablet with proper layout adjustments
+Screenshot: 02_tablet_responsive.png
+
+Step 3: Mobile Large Screen Test (iPhone 11 Pro Max)
+1. Set viewport to 414x896
+2. Verify section navigation becomes mobile-friendly
+3. Check that form fields stack properly
+4. Test that all text remains readable
+5. Verify buttons are touch-friendly (minimum 44px)
+
+Expected: Interface fully functional on large mobile screens
+Screenshot: 03_mobile_large_responsive.png
+
+Step 4: Mobile Standard Screen Test (iPhone 8)
+1. Set viewport to 375x667
+2. Verify all sections accessible via navigation
+3. Check form field responsiveness
+4. Test scrolling behavior within sections
+5. Verify input fields expand properly when focused
+
+Expected: Standard mobile size provides good user experience
+Screenshot: 04_mobile_standard_responsive.png
+
+Step 5: Small Mobile Screen Test (iPhone 5/SE)
+1. Set viewport to 320x568
+2. Verify interface doesn't break on small screens
+3. Check that section buttons don't overlap
+4. Test form field usability
+5. Verify save/cancel buttons remain accessible
+
+Expected: Interface remains functional even on smallest mobile screens
+Screenshot: 05_mobile_small_responsive.png
+
+Step 6: Section Navigation Mobile UX Test
+1. On mobile viewport (375x667)
+2. Test section navigation button layout
+3. Verify buttons wrap properly if needed
+4. Test active section highlighting visibility
+5. Verify smooth section switching
+
+Expected: Section navigation is intuitive and accessible on mobile
+Screenshot: 06_mobile_navigation_ux.png
+
+Step 7: Form Field Mobile Usability Test
+1. On mobile viewport
+2. Test input field focus behavior
+3. Verify virtual keyboard doesn't break layout
+4. Test textarea resize behavior
+5. Check dropdown/select functionality on mobile
+6. Test toggle switches accessibility
+
+Expected: All form controls work well with touch input
+Screenshot: 07_mobile_form_usability.png
+
+Step 8: Save/Cancel Button Mobile Accessibility
+1. On mobile viewport
+2. Scroll to bottom of settings form
+3. Verify save/cancel buttons are properly sized
+4. Test button touch targets (should be ≥44px)
+5. Verify buttons don't get cut off or overlap
+
+Expected: Action buttons are easily accessible and touch-friendly
+Screenshot: 08_mobile_buttons_accessibility.png
+
+Step 9: Mobile Scrolling and Content Flow Test
+1. On mobile viewport
+2. Test scrolling through long sections (Privacy section)
+3. Verify sticky/fixed elements behave correctly
+4. Test that content doesn't get cut off
+5. Verify smooth scroll performance
+
+Expected: Scrolling is smooth with no content accessibility issues
+Screenshot: 09_mobile_scrolling_test.png
+
+Step 10: Touch Interaction Test
+1. On mobile device or touch simulation
+2. Test all interactive elements with touch
+3. Verify dropdowns open properly on touch
+4. Test toggle switches respond to touch
+5. Check for any touch-specific issues
+
+Expected: All touch interactions work smoothly and responsively
+Screenshot: 10_touch_interaction_test.png
+
+Step 11: Cross-Device Consistency Test
+1. Test same functionality across multiple viewport sizes
+2. Verify data persistence works across device changes
+3. Check that section state maintains across responsive breakpoints
+4. Test form validation display on different screen sizes
+
+Expected: Functionality remains consistent across all device sizes
+Screenshot: 11_cross_device_consistency.png
+
+Step 12: Performance on Mobile Test
+1. Test page load time on mobile viewport
+2. Check for any performance issues with section switching
+3. Verify smooth animations and transitions
+4. Test memory usage during extended mobile use
+
+Expected: Performance remains good on mobile with smooth interactions
+Screenshot: 12_mobile_performance_test.png
+
+Step 13: Accessibility Features Test
+1. Test with mobile screen reader simulation
+2. Verify all form labels are properly associated
+3. Check focus management on mobile
+4. Test keyboard navigation (if available)
+5. Verify color contrast meets accessibility standards
+
+Expected: Interface meets accessibility standards on mobile
+Screenshot: 13_mobile_accessibility_test.png
+
+Step 14: Orientation Change Test
+1. Test interface in portrait mode
+2. Switch to landscape mode (if applicable)
+3. Verify layout adapts appropriately
+4. Test that no functionality is lost
+5. Verify form state persists through orientation changes
+
+Expected: Interface handles orientation changes gracefully
+Screenshot: 14_orientation_change_test.png
+
+Step 15: Mobile Error Message Display Test
+1. On mobile viewport
+2. Create validation errors in multiple fields
+3. Verify error messages display properly without layout breaks
+4. Check that error messages don't overlap other content
+5. Test error message readability on small screens
+
+Expected: Error messages display clearly and don't break mobile layout
+Screenshot: 15_mobile_error_display.png
+
+Step 16: Mobile Unsaved Changes Dialog Test
+1. On mobile viewport
+2. Make changes and try to navigate away
+3. Verify unsaved changes dialog appears properly
+4. Check dialog is properly sized for mobile
+5. Test dialog button accessibility
+
+Expected: Modal dialogs work properly on mobile devices
+Screenshot: 16_mobile_dialog_test.png
+
+Step 17: Mobile Multi-Section Workflow Test
+1. On mobile viewport
+2. Navigate through all 9 sections sequentially
+3. Make changes in multiple sections
+4. Test the complete save workflow on mobile
+5. Verify no usability issues in end-to-end flow
+
+Expected: Complete mobile workflow is smooth and intuitive
+Screenshot: 17_mobile_workflow_test.png
+
+Step 18: Mobile Edge Case Testing
+1. Test with very long text in form fields
+2. Test with maximum number of selected options
+3. Test rapid section switching on mobile
+4. Verify interface handles edge cases gracefully
+
+Expected: Edge cases handled properly without breaking mobile layout
+Screenshot: 18_mobile_edge_cases.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Interface is fully responsive, accessible, and provides excellent mobile user experience
+FAIL: Any layout breaks, usability issues, or accessibility problems on mobile
+
+Individual Step Criteria:
+- Steps 1-5: PASS if layout adapts properly to all screen sizes, FAIL if any breakpoints broken
+- Steps 6-8: PASS if mobile navigation and controls are usable, FAIL if touch targets too small or inaccessible
+- Steps 9-12: PASS if scrolling and performance are smooth, FAIL if performance issues or content cutoffs
+- Steps 13-14: PASS if accessibility and orientation work properly, FAIL if accessibility barriers exist
+- Steps 15-18: PASS if edge cases and workflows work on mobile, FAIL if any mobile-specific issues
+
+Overall Result: PASS only if ALL mobile experience criteria are met, FAIL if ANY significant mobile usability issues exist

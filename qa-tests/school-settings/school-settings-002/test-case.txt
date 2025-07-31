@@ -1,0 +1,252 @@
+QA Test Case: School Settings Form Validation and Error Handling
+
+Test ID: SCHOOL-SETTINGS-002
+Test Name: Form Validation and Error Handling
+Purpose: Verify that all form validation rules work correctly and provide appropriate error messages across all settings sections
+Expected Result: All form fields validate correctly with clear error messages and prevent invalid data submission
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST API backend + React Native Expo frontend
+- Feature: School Settings Form Validation (Zod Schema)
+- Test URL: /(school-admin)/settings
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Backend and frontend servers running (make dev)
+3. User authenticated as school owner (anapmc.carvalho@gmail.com)
+
+Test Data:
+- Valid test data for comparison
+- Invalid test inputs for validation testing
+- Expected error messages from Zod schema
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Servers running and user authenticated
+Screenshot: 01_validation_test_setup.png
+
+Step 2: Navigate to School Settings
+1. Go to http://localhost:8081/(school-admin)/settings
+2. Verify settings page loads successfully
+3. Ensure Profile section is active by default
+
+Expected: Settings page loaded with Profile section active
+Screenshot: 02_settings_page_ready.png
+
+Step 3: Test School Name Validation (Required Field)
+1. Navigate to Profile section
+2. Clear the School Name field completely
+3. Click Save Settings button
+4. Verify error message appears: "School name is required"
+5. Enter a name longer than 150 characters
+6. Verify error message: "Name too long"
+7. Enter valid school name and verify error disappears
+
+Expected: Required field validation works with appropriate error messages
+Screenshot: 03_school_name_validation.png
+
+Step 4: Test Email Validation (Profile Section)
+1. In Contact Email field, enter invalid email: "invalid-email"
+2. Tab out of field or trigger validation
+3. Verify error message: "Invalid email address"
+4. Test empty email (should be allowed)
+5. Enter valid email and verify error disappears
+
+Expected: Email validation correctly identifies invalid formats
+Screenshot: 04_email_validation_profile.png
+
+Step 5: Test Website URL Validation
+1. In Website field, enter invalid URL: "not-a-url"
+2. Verify error message: "Invalid URL"
+3. Test empty website (should be allowed)
+4. Enter valid URL (https://example.com) and verify error disappears
+
+Expected: URL validation correctly identifies invalid formats
+Screenshot: 05_website_validation.png
+
+Step 6: Test Color Field Validation
+1. In Primary Color field, enter invalid hex: "invalid-color"
+2. Verify error message: "Invalid hex color"
+3. Enter valid hex color (#FF0000) and verify error disappears
+4. Repeat test for Secondary Color field
+5. Test empty color fields (should be allowed)
+
+Expected: Hex color validation works for both color fields
+Screenshot: 06_color_validation.png
+
+Step 7: Test Educational System Validation
+1. Navigate to Educational section
+2. Try to save without selecting educational system
+3. Verify error message: "Educational system is required"
+4. Select a valid educational system
+5. Verify error disappears
+
+Expected: Educational system required validation works
+Screenshot: 07_educational_system_validation.png
+
+Step 8: Test Session Duration Validation
+1. Navigate to Operational section
+2. Enter session duration less than 15 minutes (e.g., "10")
+3. Verify error message: "Minimum 15 minutes"
+4. Enter session duration more than 480 minutes (e.g., "500")
+5. Verify error message: "Maximum 8 hours"
+6. Enter valid duration (60) and verify error disappears
+
+Expected: Session duration range validation works correctly
+Screenshot: 08_session_duration_validation.png
+
+Step 9: Test Timezone Required Validation
+1. In Operational section, clear timezone field
+2. Try to save settings
+3. Verify error message: "Timezone is required"
+4. Enter valid timezone and verify error disappears
+
+Expected: Timezone required field validation works
+Screenshot: 09_timezone_validation.png
+
+Step 10: Test Billing Email Validation
+1. Navigate to Billing section
+2. Enter invalid email in Billing Contact Email: "bad-email"
+3. Verify error message: "Invalid email"
+4. Test empty billing email (should be allowed)
+5. Enter valid email and verify error disappears
+
+Expected: Billing email validation works like profile email
+Screenshot: 10_billing_email_validation.png
+
+Step 11: Test Working Hours Time Format Validation
+1. Navigate to Schedule section
+2. Enter invalid time format in Working Hours Start: "25:00"
+3. Verify error message: "Invalid time format"
+4. Enter invalid time format: "abc"
+5. Verify error message appears
+6. Enter valid time format: "08:00"
+7. Verify error disappears
+
+Expected: Time format validation enforces HH:MM format
+Screenshot: 11_working_hours_validation.png
+
+Step 12: Test Working Hours Logic Validation
+1. In Schedule section, set Working Hours Start: "18:00"
+2. Set Working Hours End: "08:00" (earlier than start)
+3. Try to save settings
+4. Verify error message: "End time must be after start time"
+5. Correct the times (Start: 08:00, End: 18:00)
+6. Verify error disappears
+
+Expected: Cross-field validation ensures logical time ranges
+Screenshot: 12_working_hours_logic_validation.png
+
+Step 13: Test Class Reminder Hours Range Validation
+1. In Schedule section, enter class reminder hours: "0"
+2. Verify error message: "Minimum 1 hour"
+3. Enter class reminder hours: "200"
+4. Verify error message: "Maximum 1 week"
+5. Enter valid hours: "24"
+6. Verify error disappears
+
+Expected: Class reminder hours range validation works
+Screenshot: 13_class_reminder_validation.png
+
+Step 14: Test Integration Conditional Validation
+1. Navigate to Integrations section
+2. Enable Calendar Integration toggle
+3. Leave Calendar Provider dropdown empty
+4. Try to save settings
+5. Verify error message: "Integration type is required when integration is enabled"
+6. Select a calendar provider
+7. Verify error disappears
+
+Expected: Conditional validation enforces required fields when integration enabled
+Screenshot: 14_integration_conditional_validation.png
+
+Step 15: Test Dashboard Refresh Interval Range
+1. Navigate to Privacy section
+2. Enter dashboard refresh interval: "1"
+3. Verify error message: "Minimum 5 seconds"
+4. Enter refresh interval: "400"
+5. Verify error message: "Maximum 5 minutes"
+6. Enter valid interval: "30"
+7. Verify error disappears
+
+Expected: Dashboard refresh interval range validation works
+Screenshot: 15_dashboard_refresh_validation.png
+
+Step 16: Test Activity Retention Days Range
+1. In Privacy section, enter activity retention days: "10"
+2. Verify error message: "Minimum 30 days"
+3. Enter retention days: "400"
+4. Verify error message: "Maximum 1 year"
+5. Enter valid days: "90"
+6. Verify error disappears
+
+Expected: Activity retention range validation works
+Screenshot: 16_activity_retention_validation.png
+
+Step 17: Test Multiple Validation Errors
+1. Navigate to Profile section
+2. Clear School Name field
+3. Enter invalid email
+4. Enter invalid website URL
+5. Enter invalid hex colors
+6. Try to save settings
+7. Verify multiple error messages appear simultaneously
+8. Verify each error is clearly associated with its field
+
+Expected: Multiple validation errors display correctly without interfering
+Screenshot: 17_multiple_validation_errors.png
+
+Step 18: Test Validation Error Clearing
+1. Create validation errors in multiple fields
+2. Fix errors one by one
+3. Verify each error disappears as soon as field becomes valid
+4. Verify no phantom errors remain after fixing all issues
+
+Expected: Validation errors clear immediately when fields become valid
+Screenshot: 18_validation_error_clearing.png
+
+Step 19: Test Form Submission Prevention
+1. Create validation errors in any section
+2. Try to submit form with Save Settings button
+3. Verify form submission is prevented
+4. Verify error messages remain visible
+5. Fix all errors and verify save button becomes functional
+
+Expected: Form submission prevented when validation errors exist
+Screenshot: 19_form_submission_prevention.png
+
+Step 20: Test API Error Handling
+1. Fill form with valid data
+2. Simulate network error (disconnect internet or use developer tools)
+3. Try to save settings
+4. Verify appropriate error message appears
+5. Reconnect and verify retry functionality works
+
+Expected: Network and API errors handled gracefully with user feedback
+Screenshot: 20_api_error_handling.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All validation rules work correctly with appropriate error messages and proper form behavior
+FAIL: Any validation missing, incorrect error messages, or form submission allowed with invalid data
+
+Individual Step Criteria:
+- Steps 3-6: PASS if Profile section validation works correctly, FAIL if any validation missing
+- Step 7: PASS if educational system required validation works, FAIL if not enforced
+- Steps 8-9: PASS if operational section validation works, FAIL if any validation missing
+- Step 10: PASS if billing email validation works, FAIL if validation broken
+- Steps 11-13: PASS if schedule section validation works correctly, FAIL if any validation missing
+- Step 14: PASS if conditional validation works, FAIL if integration validation broken
+- Steps 15-16: PASS if privacy section range validation works, FAIL if ranges not enforced
+- Steps 17-19: PASS if multiple errors and form prevention work, FAIL if behavior incorrect
+- Step 20: PASS if API errors handled gracefully, FAIL if errors cause crashes
+
+Overall Result: PASS only if ALL validation rules work correctly, FAIL if ANY validation is broken or missing

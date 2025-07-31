@@ -1,0 +1,3 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250731-120221,2025-07-31T12:02:21Z,FAIL,4,4,Playwright Chrome,macOS development,Comprehensive school settings route not accessible - redirects to limited billing settings
+run-20250731-123220,2025-07-31T12:32:20Z,PASS,16,2,Playwright Chrome,macOS development,Major success - comprehensive settings fully accessible with all 9 sections and mobile responsive design

@@ -977,6 +977,130 @@ class SchoolViewSet(KnoxAuthenticatedViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    @action(detail=True, methods=['get', 'patch'], url_path='settings', permission_classes=[IsAuthenticated, IsSchoolOwnerOrAdmin])
+    def school_settings(self, request, pk=None):
+        """Get or update comprehensive school settings"""
+        school = self.get_object()
+        
+        if request.method == 'GET':
+            # Get or create school settings
+            settings_obj, created = SchoolSettings.objects.get_or_create(
+                school=school,
+                defaults={
+                    'educational_system_id': 1,  # Default to Portugal system
+                    'working_days': [0, 1, 2, 3, 4],  # Monday to Friday
+                }
+            )
+            
+            # Use comprehensive serializer that includes both profile and settings
+            serializer = ComprehensiveSchoolSettingsSerializer(
+                settings_obj, 
+                context={'request': request}
+            )
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        elif request.method == 'PATCH':
+            # Update school settings with comprehensive validation
+            # Get or create school settings
+            settings_obj, created = SchoolSettings.objects.get_or_create(
+                school=school,
+                defaults={
+                    'educational_system_id': 1,
+                    'working_days': [0, 1, 2, 3, 4],
+                }
+            )
+        
+            
+            # Store old values for activity logging
+            old_values = {}
+            changed_fields = []
+        
+            # Process school profile updates if present
+            if 'school_profile' in request.data:
+                profile_data = request.data['school_profile']
+                school_serializer = SchoolProfileSerializer(
+                    school, 
+                    data=profile_data, 
+                    partial=True,
+                    context={'request': request}
+                )
+                
+                if school_serializer.is_valid(raise_exception=True):
+                    # Store old school values for logging
+                    for field in profile_data.keys():
+                        if hasattr(school, field):
+                            old_values[f"school.{field}"] = getattr(school, field)
+                    
+                    school_serializer.save()
+                    changed_fields.extend([f"school.{field}" for field in profile_data.keys()])
+            
+            # Process settings updates
+            settings_data = request.data.get('settings', request.data)
+            if settings_data:
+                # Store old settings values for logging
+                for field in settings_data.keys():
+                    if hasattr(settings_obj, field):
+                        old_values[f"settings.{field}"] = getattr(settings_obj, field)
+                
+                settings_serializer = SchoolSettingsSerializer(
+                    settings_obj,
+                    data=settings_data,
+                    partial=True,
+                    context={'request': request}
+                )
+                
+                if settings_serializer.is_valid(raise_exception=True):
+                    settings_serializer.save()
+                    changed_fields.extend([f"settings.{field}" for field in settings_data.keys()])
+            
+            # Create activity log for settings update
+            if changed_fields:
+                from .services.metrics_service import SchoolActivityService
+                from .models import ActivityType
+                
+                changes_description = []
+                for field in changed_fields:
+                    if field in old_values:
+                        old_value = old_values[field]
+                        new_value = getattr(
+                            school if field.startswith('school.') else settings_obj, 
+                            field.split('.', 1)[1]
+                        )
+                        if old_value != new_value:
+                            changes_description.append(f"{field}: '{old_value}' → '{new_value}'")
+                
+                if changes_description:
+                    SchoolActivityService.create_activity(
+                        school=school,
+                        activity_type=ActivityType.SETTINGS_UPDATED,
+                        actor=request.user,
+                        description=f"Updated school settings: {', '.join(changes_description)}",
+                        metadata={'changed_fields': changed_fields}
+                    )
+            
+            # Invalidate metrics cache
+            from .services.metrics_service import SchoolMetricsService
+            SchoolMetricsService.invalidate_cache(school.id)
+            
+            # Return updated settings
+            serializer = ComprehensiveSchoolSettingsSerializer(
+                settings_obj, 
+                context={'request': request}
+            )
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['get'], url_path='settings/educational-systems', permission_classes=[IsAuthenticated, IsSchoolOwnerOrAdmin])
+    def educational_systems(self, request, pk=None):
+        """Get available educational systems for school configuration"""
+        from .serializers import EducationalSystemSerializer
+        
+        systems = EducationalSystem.objects.filter(is_active=True)
+        serializer = EducationalSystemSerializer(systems, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class SchoolMembershipViewSet(KnoxAuthenticatedViewSet):
     """
@@ -2373,238 +2497,6 @@ class SchoolDashboardViewSet(viewsets.ModelViewSet):
         
         return Response(response_data, status=status.HTTP_200_OK)
     
-    @action(detail=True, methods=['get', 'patch'], url_path='settings')
-    def school_settings(self, request, pk=None):
-        """Get or update comprehensive school settings"""
-        school = self.get_object()
-        
-        if request.method == 'GET':
-            # Get or create school settings
-            settings_obj, created = SchoolSettings.objects.get_or_create(
-                school=school,
-                defaults={
-                    'educational_system_id': 1,  # Default to Portugal system
-                    'working_days': [0, 1, 2, 3, 4],  # Monday to Friday
-                }
-            )
-            
-            # Use comprehensive serializer that includes both profile and settings
-            serializer = ComprehensiveSchoolSettingsSerializer(
-                settings_obj, 
-                context={'request': request}
-            )
-            
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        
-        elif request.method == 'PATCH':
-            # Update school settings with comprehensive validation
-            # Get or create school settings
-            settings_obj, created = SchoolSettings.objects.get_or_create(
-                school=school,
-                defaults={
-                    'educational_system_id': 1,
-                    'working_days': [0, 1, 2, 3, 4],
-                }
-            )
-        
-            
-            # Store old values for activity logging
-            old_values = {}
-            changed_fields = []
-        
-            # Process school profile updates if present
-            if 'school_profile' in request.data:
-                profile_data = request.data['school_profile']
-                school_serializer = SchoolProfileSerializer(
-                    school, 
-                    data=profile_data, 
-                    partial=True,
-                    context={'request': request}
-                )
-                
-                if school_serializer.is_valid(raise_exception=True):
-                    # Store old school values for logging
-                    for field in profile_data.keys():
-                        if hasattr(school, field):
-                            old_values[f"school.{field}"] = getattr(school, field)
-                    
-                    school_serializer.save()
-                    changed_fields.extend([f"school.{field}" for field in profile_data.keys()])
-            
-            # Process settings updates
-            settings_data = request.data.get('settings', request.data)
-            if settings_data:
-                # Store old settings values for logging
-                for field in settings_data.keys():
-                    if hasattr(settings_obj, field):
-                        old_values[f"settings.{field}"] = getattr(settings_obj, field)
-                
-                settings_serializer = SchoolSettingsSerializer(
-                    settings_obj,
-                    data=settings_data,
-                    partial=True,
-                    context={'request': request}
-                )
-                
-                if settings_serializer.is_valid(raise_exception=True):
-                    settings_serializer.save()
-                    changed_fields.extend([f"settings.{field}" for field in settings_data.keys()])
-            
-            # Create activity log for settings update
-            if changed_fields:
-                from .services.metrics_service import SchoolActivityService
-                from .models import ActivityType
-                
-                changes_description = []
-                for field in changed_fields:
-                    if field in old_values:
-                        old_value = old_values[field]
-                        new_value = getattr(
-                            school if field.startswith('school.') else settings_obj, 
-                            field.split('.', 1)[1]
-                        )
-                        if old_value != new_value:
-                            changes_description.append(f"{field}: '{old_value}' → '{new_value}'")
-                
-                if changes_description:
-                    SchoolActivityService.create_activity(
-                        school=school,
-                        activity_type=ActivityType.SETTINGS_UPDATED,
-                        actor=request.user,
-                        description=f"Updated school settings: {', '.join(changes_description)}",
-                        metadata={'changed_fields': changed_fields}
-                    )
-            
-            # Invalidate metrics cache
-            from .services.metrics_service import SchoolMetricsService
-            SchoolMetricsService.invalidate_cache(school.id)
-            
-            # Return updated settings
-            serializer = ComprehensiveSchoolSettingsSerializer(
-                settings_obj, 
-                context={'request': request}
-            )
-            
-            return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    @action(detail=True, methods=['get'], url_path='settings/educational-systems')
-    def educational_systems(self, request, pk=None):
-        """Get available educational systems for school configuration"""
-        from .serializers import EducationalSystemSerializer
-        
-        systems = EducationalSystem.objects.filter(is_active=True)
-        serializer = EducationalSystemSerializer(systems, many=True)
-        
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    @action(detail=True, methods=['post'], url_path='settings/logo-upload')
-    def upload_logo(self, request, pk=None):
-        """Upload school logo"""
-        school = self.get_object()
-        
-        if 'logo' not in request.FILES:
-            return Response(
-                {'error': 'No logo file provided'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        logo_file = request.FILES['logo']
-        
-        # Validate file type
-        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-        if logo_file.content_type not in allowed_types:
-            return Response(
-                {'error': 'Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Validate file size (max 5MB)
-        max_size = 5 * 1024 * 1024  # 5MB
-        if logo_file.size > max_size:
-            return Response(
-                {'error': 'File too large. Maximum size is 5MB.'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Save the logo
-        old_logo = school.logo.name if school.logo else None
-        school.logo = logo_file
-        school.save(update_fields=['logo', 'updated_at'])
-        
-        # Delete old logo if it exists
-        if old_logo:
-            try:
-                import os
-                from django.conf import settings as django_settings
-                old_logo_path = os.path.join(django_settings.MEDIA_ROOT, old_logo)
-                if os.path.exists(old_logo_path):
-                    os.remove(old_logo_path)
-            except Exception as e:
-                logger.warning(f"Failed to delete old logo {old_logo}: {e}")
-        
-        # Create activity log
-        from .services.metrics_service import SchoolActivityService
-        from .models import ActivityType
-        
-        SchoolActivityService.create_activity(
-            school=school,
-            activity_type=ActivityType.SETTINGS_UPDATED,
-            actor=request.user,
-            description=f"Updated school logo",
-            metadata={'action': 'logo_upload', 'filename': logo_file.name}
-        )
-        
-        # Return updated school profile
-        serializer = SchoolProfileSerializer(school, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    def update(self, request, *args, **kwargs):
-        """Enhanced update method with activity logging"""
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        
-        # Store old values before update for comparison
-        old_values = {}
-        for field, value in request.data.items():
-            if field != 'settings' and hasattr(instance, field):
-                old_values[field] = getattr(instance, field)
-        
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        
-        # Create activity log for school update
-        from .services.metrics_service import SchoolActivityService
-        from .models import ActivityType
-        
-        changes = []
-        for field, value in request.data.items():
-            if field != 'settings' and field in old_values:
-                old_value = old_values[field]
-                if old_value != value:
-                    changes.append(f"{field}: '{old_value}' → '{value}'")
-        
-        if changes or 'settings' in request.data:
-            description = f"Updated school settings"
-            if changes:
-                description = f"Updated school: {', '.join(changes)}"
-            
-            SchoolActivityService.create_activity(
-                school=instance,
-                activity_type=ActivityType.SETTINGS_UPDATED,
-                actor=request.user,
-                description=description,
-                metadata={'changes': changes}
-            )
-        
-        # Invalidate metrics cache
-        from .services.metrics_service import SchoolMetricsService
-        SchoolMetricsService.invalidate_cache(instance.id)
-        
-        if getattr(instance, '_prefetched_objects_cache', None):
-            instance._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
 
 
 class TeacherInvitationViewSet(viewsets.ModelViewSet):

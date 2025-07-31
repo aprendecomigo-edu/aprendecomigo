@@ -1,0 +1,263 @@
+QA Test Case: School Settings Interface Navigation and Functionality
+
+Test ID: SCHOOL-SETTINGS-001
+Test Name: Settings Interface Navigation and Functionality
+Purpose: Verify that school administrators can access, navigate, and interact with all sections of the school settings interface
+Expected Result: All 9 settings sections are accessible, navigable, and display correct content with proper form controls
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST API backend + React Native Expo frontend
+- Feature: School Settings & Configuration (GitHub Issue #42)
+- Test URL: /(school-admin)/settings
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Backend server running on http://localhost:8000
+4. Frontend server running on http://localhost:8081
+5. `make dev` command available for starting servers
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com (school_owner role)
+- School ID: Auto-selected (first available school)
+- Expected API Endpoints:
+  - GET /api/accounts/schools/{id}/settings/
+  - GET /api/accounts/schools/{id}/settings/educational-systems/
+  - PATCH /api/accounts/schools/{id}/settings/
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Both backend and frontend servers start successfully
+Screenshot: 01_servers_started.png
+Debug: Use 'make logs' to view server logs if issues occur
+
+Step 2: Navigate to Application and Authenticate
+1. Open browser to http://localhost:8081
+2. If not already logged in, sign in with test email: anapmc.carvalho@gmail.com
+3. Complete authentication flow
+4. Verify successful login and dashboard access
+
+Expected: User successfully authenticated and can access school admin features
+Screenshot: 02_authentication_successful.png
+
+Step 3: Access School Settings Page
+1. Navigate to the settings page: http://localhost:8081/(school-admin)/settings
+2. Wait for settings page to load completely
+3. Verify loading spinner appears then disappears
+4. Verify "School Settings" header is visible
+
+Expected: Settings page loads with header "School Settings" and configuration sections
+Screenshot: 03_settings_page_loaded.png
+
+Step 4: Verify Settings Section Navigation Buttons
+1. Locate the section navigation buttons area
+2. Verify all 9 section buttons are visible:
+   - Profile
+   - Education
+   - Operational  
+   - Billing
+   - Schedule
+   - Communication
+   - Permissions
+   - Integrations
+   - Privacy
+3. Verify "Profile" section is active by default (highlighted button)
+
+Expected: All 9 section buttons visible with Profile section active by default
+Screenshot: 04_section_buttons_visible.png
+
+Step 5: Test Profile Section Content
+1. Verify Profile section is displayed (should be default)
+2. Check for required form fields:
+   - School Name (required field with *)
+   - Description (textarea)
+   - Address (textarea)
+   - Contact Email
+   - Phone Number
+   - Website
+   - Primary Color (hex input)
+   - Secondary Color (hex input)
+3. Verify form controls are properly rendered and accessible
+
+Expected: Profile section displays all expected form fields with proper labels and controls
+Screenshot: 05_profile_section_content.png
+
+Step 6: Test Educational System Section Navigation
+1. Click "Education" section button
+2. Verify section content changes to Educational System settings
+3. Check for:
+   - Educational System dropdown (required field with *)
+   - Grade Levels selection (should appear after educational system selected)
+   - Helper text explaining the fields
+4. Verify active button styling switches to "Education"
+
+Expected: Educational section loads with educational system dropdown and proper active styling
+Screenshot: 06_educational_section_content.png
+
+Step 7: Test Operational Settings Section
+1. Click "Operational" section button
+2. Verify section content changes to Operational Settings
+3. Check for:
+   - Trial Cost Absorption dropdown
+   - Default Session Duration (minutes) input
+   - Timezone input field
+   - Currency selection dropdown
+   - Language selection dropdown
+4. Verify all form controls are functional
+
+Expected: Operational section displays all operational configuration options
+Screenshot: 07_operational_section_content.png
+
+Step 8: Test Billing Configuration Section
+1. Click "Billing" section button
+2. Verify section content changes to Billing Configuration
+3. Check for:
+   - Billing Contact Name input
+   - Billing Contact Email input
+   - Billing Address textarea
+   - Tax ID / VAT Number input
+4. Verify proper form layout and accessibility
+
+Expected: Billing section shows all billing-related configuration fields
+Screenshot: 08_billing_section_content.png
+
+Step 9: Test Schedule & Availability Section
+1. Click "Schedule" section button
+2. Verify section content changes to Schedule settings
+3. Check for:
+   - Working Hours Start (time input)
+   - Working Hours End (time input)
+   - Working Days (checkbox list for each day)
+   - Class Reminder Hours (numeric input)
+4. Verify time format helpers and day selection functionality
+
+Expected: Schedule section displays time inputs and working days selection
+Screenshot: 09_schedule_section_content.png
+
+Step 10: Test Communication Preferences Section
+1. Click "Communication" section button
+2. Verify section content changes to Communication settings
+3. Check for:
+   - Email Notifications toggle switch with description
+   - SMS Notifications toggle switch with description
+4. Verify toggle switches are functional and have clear labels
+
+Expected: Communication section shows notification preference toggles
+Screenshot: 10_communication_section_content.png
+
+Step 11: Test Permissions & Access Control Section
+1. Click "Permissions" section button
+2. Verify section content changes to Permissions settings
+3. Check for toggle switches with descriptions:
+   - Allow Student Self-Enrollment
+   - Require Parent Approval
+   - Auto-Assign Teachers
+4. Verify all toggles are functional with clear descriptions
+
+Expected: Permissions section displays access control toggles with explanatory text
+Screenshot: 11_permissions_section_content.png
+
+Step 12: Test Integrations Section
+1. Click "Integrations" section button
+2. Verify section content changes to Integrations settings
+3. Check for:
+   - Calendar Integration toggle and provider dropdown (conditional)
+   - Email Integration toggle and provider dropdown (conditional)
+4. Test conditional display: Enable calendar integration and verify provider dropdown appears
+
+Expected: Integrations section shows integration toggles with conditional dropdowns
+Screenshot: 12_integrations_section_content.png
+
+Step 13: Test Privacy & Compliance Section
+1. Click "Privacy" section button
+2. Verify section content changes to Privacy settings
+3. Check for:
+   - Data Retention Policy dropdown
+   - GDPR Compliance toggle
+   - Allow Data Export toggle
+   - Require Data Processing Consent toggle
+   - Dashboard Refresh Interval input
+   - Activity Log Retention input
+4. Verify all privacy controls are present and functional
+
+Expected: Privacy section displays all compliance and data handling options
+Screenshot: 13_privacy_section_content.png
+
+Step 14: Test Section Navigation Persistence
+1. Navigate through multiple sections in sequence
+2. Verify content changes appropriately for each section
+3. Verify active button styling updates correctly
+4. Test rapid section switching (click multiple buttons quickly)
+5. Verify no visual glitches or loading issues
+
+Expected: Section navigation is smooth, persistent, and visually consistent
+Screenshot: 14_navigation_persistence_test.png
+
+Step 15: Test Form Control Functionality
+1. Go back to Profile section
+2. Test basic form interactions:
+   - Type in the School Name field
+   - Enter text in the Description textarea
+   - Test email field validation (try invalid email format)
+   - Test website field validation (try invalid URL format)
+   - Test color field validation (try invalid hex codes)
+3. Verify field validation feedback appears correctly
+
+Expected: Form controls are responsive and show appropriate validation feedback
+Screenshot: 15_form_controls_functional.png
+
+Step 16: Test Save/Cancel Button Functionality
+1. Make a small change to any field (e.g., modify school name)
+2. Verify Save/Cancel buttons are visible at bottom of form
+3. Check button states and styling
+4. Do NOT click save yet (save testing is in separate test case)
+5. Test Cancel button behavior (should show unsaved changes dialog)
+
+Expected: Save/Cancel buttons are properly positioned and functional
+Screenshot: 16_save_cancel_buttons.png
+
+Step 17: Test Mobile Responsiveness (Basic Check)
+1. Open browser developer tools
+2. Switch to mobile viewport (e.g., iPhone 12)
+3. Verify settings interface adapts to mobile screen
+4. Test section button layout on mobile
+5. Verify form fields are still accessible and readable
+
+Expected: Settings interface is mobile-responsive with proper layout adaptation
+Screenshot: 17_mobile_responsiveness_basic.png
+
+Step 18: Test Error Handling and Loading States
+1. Check browser console for any JavaScript errors
+2. Verify no broken images or missing resources
+3. Test page refresh - verify settings load correctly after refresh
+4. Check network tab for proper API calls being made
+
+Expected: No console errors, proper resource loading, and correct API communication
+Screenshot: 18_error_handling_check.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All sections accessible, form controls functional, proper navigation, mobile responsive, no errors
+FAIL: Any section inaccessible, missing form controls, navigation issues, console errors, or mobile layout problems
+
+Individual Step Criteria:
+- Step 1: PASS if servers start without errors, FAIL if server startup fails
+- Step 2: PASS if authentication successful, FAIL if login fails
+- Step 3: PASS if settings page loads with proper header, FAIL if page doesn't load
+- Step 4: PASS if all 9 section buttons visible, FAIL if any buttons missing
+- Step 5-13: PASS if section content loads correctly, FAIL if content missing or malformed
+- Step 14: PASS if navigation smooth and consistent, FAIL if glitches or errors
+- Step 15: PASS if form controls functional with validation, FAIL if controls broken
+- Step 16: PASS if Save/Cancel buttons work properly, FAIL if buttons non-functional
+- Step 17: PASS if mobile layout acceptable, FAIL if mobile unusable
+- Step 18: PASS if no console errors and APIs working, FAIL if errors present
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

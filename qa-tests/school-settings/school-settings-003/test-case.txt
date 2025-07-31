@@ -1,0 +1,235 @@
+QA Test Case: School Settings Save Functionality and Data Persistence
+
+Test ID: SCHOOL-SETTINGS-003
+Test Name: Save Functionality and Data Persistence
+Purpose: Verify that school settings can be successfully saved to the backend and persist correctly across sessions
+Expected Result: All settings save successfully, persist after page refresh, and integrate properly with backend APIs
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Backend API: PATCH /api/accounts/schools/{id}/settings/
+- Test URL: /(school-admin)/settings
+
+Required Environment Setup:
+1. Backend and frontend servers running (make dev)
+2. User authenticated as school owner
+3. Database accessible for data persistence verification
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Initial Data Load
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+1. Navigate to settings page
+2. Note initial values in all sections
+3. Verify data loads from backend properly
+
+Expected: Settings page loads with existing data from backend
+Screenshot: 01_initial_data_load.png
+
+Step 2: Test Basic Save Functionality - Profile Section
+1. Navigate to Profile section
+2. Modify School Name to "Test School Updated"
+3. Modify Description to "Updated description for testing"
+4. Click Save Settings button
+5. Verify success message appears
+6. Verify loading state during save operation
+
+Expected: Profile changes save successfully with user feedback
+Screenshot: 02_profile_save_success.png
+
+Step 3: Test Data Persistence After Page Refresh
+1. After successful save in Step 2
+2. Refresh the browser page (F5 or Cmd+R)
+3. Wait for page to reload completely
+4. Navigate to Profile section
+5. Verify School Name shows "Test School Updated"
+6. Verify Description shows updated text
+
+Expected: Saved changes persist after page refresh
+Screenshot: 03_data_persistence_after_refresh.png
+
+Step 4: Test Educational System Save and Persistence
+1. Navigate to Educational section
+2. Change educational system selection
+3. Select different grade levels
+4. Click Save Settings
+5. Verify success message
+6. Refresh page and verify changes persist
+
+Expected: Educational system settings save and persist correctly
+Screenshot: 04_educational_system_save.png
+
+Step 5: Test Operational Settings Save
+1. Navigate to Operational section
+2. Change trial cost absorption to different option
+3. Modify default session duration to 90 minutes
+4. Change timezone to different value
+5. Change currency and language
+6. Click Save Settings
+7. Verify all changes are saved
+
+Expected: All operational settings save successfully
+Screenshot: 05_operational_settings_save.png
+
+Step 6: Test Billing Configuration Save
+1. Navigate to Billing section
+2. Update billing contact name
+3. Update billing contact email
+4. Modify billing address
+5. Update tax ID
+6. Click Save Settings
+7. Verify success message and data persistence
+
+Expected: Billing configuration saves correctly
+Screenshot: 06_billing_config_save.png
+
+Step 7: Test Schedule Settings Save
+1. Navigate to Schedule section
+2. Change working hours (start and end times)
+3. Modify working days selection
+4. Change class reminder hours
+5. Click Save Settings
+6. Verify schedule changes persist after page refresh
+
+Expected: Schedule settings save and persist correctly
+Screenshot: 07_schedule_settings_save.png
+
+Step 8: Test Communication Preferences Save
+1. Navigate to Communication section
+2. Toggle email notifications setting
+3. Toggle SMS notifications setting
+4. Click Save Settings
+5. Refresh page and verify toggle states persist
+
+Expected: Communication preferences save and maintain toggle states
+Screenshot: 08_communication_preferences_save.png
+
+Step 9: Test Permissions Settings Save
+1. Navigate to Permissions section
+2. Toggle student self-enrollment setting
+3. Toggle parent approval requirement
+4. Toggle auto-assign teachers setting
+5. Click Save Settings
+6. Verify all permission changes persist
+
+Expected: Permission settings save correctly with persistent toggle states
+Screenshot: 09_permissions_settings_save.png
+
+Step 10: Test Integrations Save with Conditional Fields
+1. Navigate to Integrations section
+2. Enable calendar integration
+3. Select calendar provider
+4. Enable email integration
+5. Select email provider
+6. Click Save Settings
+7. Verify conditional settings persist correctly
+
+Expected: Integration settings with conditional fields save properly
+Screenshot: 10_integrations_save.png
+
+Step 11: Test Privacy Settings Save
+1. Navigate to Privacy section
+2. Change data retention policy
+3. Toggle GDPR compliance
+4. Toggle data export permission
+5. Toggle consent requirement
+6. Modify dashboard refresh interval
+7. Change activity retention days
+8. Click Save Settings
+
+Expected: All privacy and compliance settings save successfully
+Screenshot: 11_privacy_settings_save.png
+
+Step 12: Test Comprehensive Save Across Multiple Sections
+1. Make changes in 3 different sections (Profile, Schedule, Privacy)
+2. Navigate between sections without saving
+3. Verify unsaved changes dialog appears when trying to leave
+4. Save all changes
+5. Verify all sections maintain their changes after save
+
+Expected: Multi-section changes save correctly with unsaved changes handling
+Screenshot: 12_multi_section_save.png
+
+Step 13: Test Save Error Handling
+1. Make valid changes to any section
+2. Simulate network error (disconnect or block API)
+3. Try to save settings
+4. Verify appropriate error message
+5. Reconnect network
+6. Retry save operation
+7. Verify successful save after network restored
+
+Expected: Save errors handled gracefully with retry capability
+Screenshot: 13_save_error_handling.png
+
+Step 14: Test Concurrent Save Prevention
+1. Make changes to settings
+2. Click Save Settings button
+3. Immediately click Save Settings again before first save completes
+4. Verify only one save operation occurs
+5. Verify proper loading state management
+
+Expected: Concurrent saves prevented with proper loading states
+Screenshot: 14_concurrent_save_prevention.png
+
+Step 15: Test API Response Integration
+1. Open browser developer tools Network tab
+2. Make changes and save settings
+3. Verify correct PATCH request to /api/accounts/schools/{id}/settings/
+4. Verify request payload contains all changed data
+5. Verify successful response (200 status)
+6. Verify response data updates the form
+
+Expected: Proper API integration with correct request/response handling
+Screenshot: 15_api_integration_verification.png
+
+Step 16: Test Large Data Set Save
+1. Fill in maximum length data for text fields
+2. Select all grade levels in educational system
+3. Select all working days
+4. Save settings with maximum data
+5. Verify large dataset saves successfully
+6. Verify no data truncation or loss
+
+Expected: Large datasets save without data loss or truncation
+Screenshot: 16_large_dataset_save.png
+
+Step 17: Test Save State Persistence Across Browser Sessions
+1. Make and save changes to settings
+2. Close browser completely
+3. Reopen browser and navigate to settings
+4. Verify all previously saved changes are still present
+5. Verify user doesn't need to re-save data
+
+Expected: Settings persist across browser sessions and application restarts
+Screenshot: 17_cross_session_persistence.png
+
+Step 18: Test Cancel Functionality After Save
+1. Make and save changes successfully
+2. Make additional changes without saving
+3. Click Cancel button
+4. Verify unsaved changes dialog appears
+5. Confirm cancellation
+6. Verify page reverts to last saved state
+
+Expected: Cancel functionality works correctly after successful saves
+Screenshot: 18_cancel_after_save.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All settings save successfully, persist correctly, and integrate properly with backend APIs
+FAIL: Any save failures, data loss, persistence issues, or API integration problems
+
+Individual Step Criteria:
+- Steps 2-11: PASS if each section saves successfully with persistence, FAIL if any section fails
+- Step 12: PASS if multi-section saves work correctly, FAIL if cross-section issues
+- Steps 13-14: PASS if error handling and concurrency work, FAIL if issues not handled properly
+- Step 15: PASS if API integration correct, FAIL if API requests malformed or failing
+- Steps 16-18: PASS if edge cases handled properly, FAIL if data loss or state issues
+
+Overall Result: PASS only if ALL save functionality works correctly, FAIL if ANY save issues exist

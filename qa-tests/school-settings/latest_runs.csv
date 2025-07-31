@@ -1,0 +1,5 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+school-settings-001,Settings Interface Navigation,Comprehensive test of school settings interface navigation and section functionality,20250731-123220,PASS,2,1,1
+school-settings-002,Form Validation and Error Handling,Test form validation rules and error handling across all settings sections,,,0,0,0
+school-settings-003,Save Functionality and Data Persistence,Test save operations and data persistence with backend integration,,,0,0,0
+school-settings-004,Mobile Responsiveness and UX,Test mobile interface responsiveness and user experience optimization,,,0,0,0

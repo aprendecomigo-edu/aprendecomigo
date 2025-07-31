@@ -159,16 +159,27 @@ function RootLayoutNav() {
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />
                 <Stack.Screen name="landing" />
-                <Stack.Screen name="parents" />
                 <Stack.Screen name="auth" />
                 <Stack.Screen name="home" />
                 <Stack.Screen name="profile" />
+                <Stack.Screen name="settings" />
+                <Stack.Screen name="chat" />
+                <Stack.Screen name="purchase" />
+                <Stack.Screen name="onboarding" />
+                <Stack.Screen name="accept-invitation" />
+                <Stack.Screen 
+                  name="(school-admin)" 
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen name="parents" />
                 <Stack.Screen name="admin" />
                 <Stack.Screen name="student" />
-                <Stack.Screen name="chat" />
+                <Stack.Screen name="students" />
+                <Stack.Screen name="teachers" />
                 <Stack.Screen name="calendar" />
                 <Stack.Screen name="users" />
-                <Stack.Screen name="settings" />
               </Stack>
               <TutorialOverlay />
             </TutorialProvider>
