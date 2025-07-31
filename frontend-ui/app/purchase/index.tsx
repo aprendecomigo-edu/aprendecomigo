@@ -20,7 +20,7 @@ export default function PurchasePage() {
     
     // Navigate to success page or dashboard after a brief delay
     setTimeout(() => {
-      router.push('/dashboard');
+      router.push('/home');
     }, 3000);
   };
 

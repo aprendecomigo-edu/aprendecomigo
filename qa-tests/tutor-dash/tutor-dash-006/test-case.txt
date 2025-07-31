@@ -1,0 +1,61 @@
+QA Test Case: Business Analytics Dashboard
+
+Test ID: TUTOR-DASH-006
+Test Name: Business Analytics Dashboard
+Purpose: Verify revenue trends, performance metrics, acquisition funnel analytics, and insight recommendations
+Expected Result: Comprehensive analytics dashboard with charts, trends, and actionable business insights
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- GitHub Issues: #47 (Student Acquisition and Discovery Tools) and #73 (Frontend Implementation)
+- API: /api/finances/tutor-analytics/<school_id>/
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Development servers: `make dev`
+3. Browser access: http://localhost:8081
+
+Test Data:
+- Test User: Individual tutor with historical data for analytics
+- Required: Multiple sessions, students, and financial data for meaningful analytics
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Navigate to Analytics Dashboard
+Access business analytics section from tutor dashboard
+Expected: Analytics dashboard loads with charts and metrics
+Screenshot: 01_analytics_dashboard_navigation.png
+
+Step 2: Verify Revenue Trends Display
+Check revenue charts show trends over time (daily, weekly, monthly)
+Verify earnings progression and growth indicators
+Expected: Revenue trends display with clear visualizations
+Screenshot: 02_revenue_trends_display.png
+
+Step 3: Test Performance Metrics
+Verify student satisfaction metrics, session completion rates
+Check average session duration, retention rates
+Expected: Performance metrics provide meaningful insights
+Screenshot: 03_performance_metrics.png
+
+Step 4: Test Acquisition Funnel Analytics
+Check student acquisition analytics: sources, conversion rates, funnel stages
+Verify invitation performance tracking
+Expected: Acquisition analytics show complete funnel from invitation to enrollment
+Screenshot: 04_acquisition_funnel_analytics.png
+
+Step 5: Verify Insight Recommendations
+Check for automated insights and recommendations based on data
+Test actionable suggestions for business improvement
+Expected: System provides valuable business insights and recommendations
+Screenshot: 05_insight_recommendations.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Analytics dashboard provides comprehensive business insights with accurate data visualization and actionable recommendations
+
+FAIL: Analytics are missing, inaccurate, or don't provide meaningful business insights
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

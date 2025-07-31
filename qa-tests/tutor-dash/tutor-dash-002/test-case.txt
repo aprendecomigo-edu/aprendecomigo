@@ -1,0 +1,162 @@
+QA Test Case: Key Metrics Display
+
+Test ID: TUTOR-DASH-002
+Test Name: Key Metrics Display
+Purpose: Verify that the dashboard displays key business metrics correctly: students enrolled, upcoming sessions, monthly earnings
+Expected Result: All key metrics are visible, accurate, and update properly with real data
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: React Native + Expo (frontend) + Django REST Framework (backend)
+- GitHub Issues: #47 (Student Acquisition and Discovery Tools) and #73 (Frontend Implementation)
+- API Endpoint: /api/finances/tutor-analytics/<school_id>/
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` to start frontend and backend
+4. Browser access: http://localhost:8081
+
+Test Data:
+- Test User: Individual tutor with SCHOOL_OWNER + TEACHER roles
+- Test Email: anapmc.carvalho@gmail.com (or valid tutor account)
+- Required: Tutor must have some test data (students, sessions, earnings) for meaningful testing
+- School ID: Will be retrieved from authenticated user context
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Authentication
+1. Start development servers with `make dev`
+2. Navigate to http://localhost:8081
+3. Complete authentication as tutor user
+4. Navigate to /app/(tutor)/dashboard/
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Authenticated and on tutor dashboard
+Screenshot: 01_dashboard_loaded.png
+
+Step 2: Verify Students Enrolled Metric
+1. Locate the "Students Enrolled" metric on dashboard
+2. Verify the number is displayed prominently
+3. Check that the metric has a clear label/description
+4. Verify the number appears accurate (non-negative integer)
+5. Look for additional context (e.g., "active students", "total students")
+
+Expected: Students enrolled metric is clearly displayed with appropriate labeling
+Screenshot: 02_students_enrolled_metric.png
+
+Step 3: Verify Upcoming Sessions Metric
+1. Locate the "Upcoming Sessions" metric on dashboard
+2. Verify the count is displayed clearly
+3. Check for time context (e.g., "this week", "next 7 days")
+4. Verify the number appears accurate
+5. Look for any additional details (session dates, times)
+
+Expected: Upcoming sessions metric shows clear count with time context
+Screenshot: 03_upcoming_sessions_metric.png
+
+Step 4: Verify Monthly Earnings Metric
+1. Locate the "Monthly Earnings" metric on dashboard
+2. Verify currency is displayed correctly (€ symbol)
+3. Check that the amount format is appropriate (e.g., €150.00)
+4. Verify month context is clear (current month, last month, etc.)
+5. Look for trend indicators (up/down arrows, percentages)
+
+Expected: Monthly earnings displayed with proper currency formatting and context
+Screenshot: 04_monthly_earnings_metric.png
+
+Step 5: Test API Data Integration
+1. Open browser developer tools and go to Network tab
+2. Refresh the dashboard page
+3. Look for API calls to /api/finances/tutor-analytics/
+4. Verify the API call returns 200 status
+5. Check the response data structure matches displayed metrics
+6. Verify data is fetched for the correct school_id
+
+Expected: API calls successful with data matching displayed metrics
+Screenshot: 05_api_data_integration.png
+
+Step 6: Verify Metric Refresh and Real-time Updates
+1. Note current metric values
+2. Refresh the browser page
+3. Verify metrics reload correctly
+4. If possible, make a change that would affect metrics (add student, book session)
+5. Check if metrics update appropriately
+
+Expected: Metrics refresh correctly and show updated data when changes occur
+Screenshot: 06_metrics_refresh.png
+
+Step 7: Test Empty State Handling
+1. If possible, test with a tutor account that has no students/sessions/earnings
+2. Verify empty states are handled gracefully
+3. Look for appropriate messaging (e.g., "No students yet", "Start earning")
+4. Check that zero values are displayed clearly (€0.00, not blank)
+5. Verify call-to-action buttons or guidance for new tutors
+
+Expected: Empty states handled gracefully with clear messaging and guidance
+Screenshot: 07_empty_state_handling.png (if applicable)
+
+Step 8: Verify Metric Layout and Visual Design
+1. Check that metrics are arranged in a logical, scannable layout
+2. Verify consistent styling across all metric cards/sections
+3. Look for proper visual hierarchy (numbers prominent, labels clear)
+4. Check spacing and alignment of metric elements
+5. Verify metrics work well on different screen sizes
+
+Expected: Metrics have consistent, professional visual design and layout
+Screenshot: 08_metrics_visual_design.png
+
+Step 9: Test Performance Metrics Loading
+1. Measure dashboard load time with metrics
+2. Check for loading states while metrics are being fetched
+3. Verify metrics don't cause layout shifts when data loads
+4. Look for any performance issues with metric calculations
+5. Test with slow network conditions if possible
+
+Expected: Metrics load quickly with appropriate loading states and no layout shifts
+Screenshot: 09_metrics_performance.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND:
+- Students enrolled metric displays correctly with accurate count
+- Upcoming sessions metric shows proper count with time context
+- Monthly earnings displays with correct currency formatting
+- API integration works properly (200 responses, correct data)
+- Empty states handled gracefully with clear messaging
+- Visual design is consistent and professional
+- Performance is acceptable (metrics load within 2 seconds)
+
+FAIL: Any step fails OR:
+- Key metrics are missing or display incorrectly
+- API calls fail or return incorrect data
+- Currency formatting is wrong or inconsistent
+- Empty states cause errors or confusion
+- Visual design is broken or inconsistent
+- Performance is poor (>5 seconds to load metrics)
+
+Individual Step Criteria:
+- Step 1: PASS if dashboard loads successfully, FAIL if auth/navigation fails
+- Step 2: PASS if students metric displays correctly, FAIL if missing/broken
+- Step 3: PASS if sessions metric shows properly, FAIL if missing/incorrect
+- Step 4: PASS if earnings display with proper formatting, FAIL if wrong format
+- Step 5: PASS if API integration works, FAIL if API errors or wrong data
+- Step 6: PASS if metrics refresh correctly, FAIL if refresh breaks metrics
+- Step 7: PASS if empty states handled well, FAIL if empty states cause errors
+- Step 8: PASS if visual design is consistent, FAIL if layout/styling broken
+- Step 9: PASS if performance acceptable, FAIL if metrics load too slowly
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Metrics should be the most prominent elements on dashboard
+- Numbers should be large and easily scannable
+- Loading states should prevent confusion during data fetch
+- Empty states should encourage action, not discourage
+- Currency should always include € symbol and proper decimal formatting
+- Metrics should update in real-time when underlying data changes
+- Visual hierarchy should guide user attention to most important numbers

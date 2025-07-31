@@ -1,0 +1,200 @@
+QA Test Case: Student Management Interface
+
+Test ID: TUTOR-DASH-003
+Test Name: Student Management Interface
+Purpose: Verify that tutors can view, search, filter, and manage their enrolled students with progress tracking
+Expected Result: Complete student management interface with directory, search, filtering, and student detail pages
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: React Native + Expo (frontend) + Django REST Framework (backend)
+- GitHub Issues: #47 (Student Acquisition and Discovery Tools) and #73 (Frontend Implementation)
+- API Endpoints: /api/accounts/courses/, student-related endpoints
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` to start frontend and backend
+4. Browser access: http://localhost:8081
+
+Test Data:
+- Test User: Individual tutor with SCHOOL_OWNER + TEACHER roles
+- Test Email: anapmc.carvalho@gmail.com (or valid tutor account)
+- Required: Tutor should have multiple enrolled students for comprehensive testing
+- Student data should include names, progress information, and contact details
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Navigate to Student Management
+1. Start development servers with `make dev`
+2. Navigate to http://localhost:8081 and authenticate as tutor
+3. Access the tutor dashboard at /app/(tutor)/dashboard/
+4. Locate and click on Student Management section or link
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Successfully navigate to student management interface from dashboard
+Screenshot: 01_student_management_navigation.png
+
+Step 2: Verify Student Directory Display
+1. Confirm student list/directory is visible and populated
+2. Check that each student entry shows essential information:
+   - Student name
+   - Enrollment status
+   - Progress indicators
+   - Contact information (email/phone if available)
+3. Verify list formatting and visual organization
+4. Check for pagination or infinite scroll if many students
+
+Expected: Student directory displays with clear, organized student information
+Screenshot: 02_student_directory_display.png
+
+Step 3: Test Student Search Functionality
+1. Locate the search input field for students
+2. Test searching by student name (enter partial name)
+3. Verify search results update in real-time or on submit
+4. Test search with different criteria:
+   - Full name
+   - Partial name
+   - Email address (if searchable)
+5. Test clearing search results
+
+Expected: Search functionality works accurately with real-time or immediate results
+Screenshot: 03_student_search_functionality.png
+
+Step 4: Test Student Filtering Options
+1. Look for filter options (status, progress level, subject, etc.)
+2. Apply different filters:
+   - Active/inactive students
+   - Progress level (beginner, intermediate, advanced)
+   - Subject areas
+   - Enrollment date ranges
+3. Verify filters can be combined
+4. Test clearing/resetting filters
+
+Expected: Filtering works correctly and can be combined for refined results
+Screenshot: 04_student_filtering_options.png
+
+Step 5: Test Student Detail Pages
+1. Click on a student entry to access detailed view
+2. Verify student detail page loads with comprehensive information:
+   - Personal details
+   - Progress tracking
+   - Session history
+   - Performance metrics
+   - Communication history
+3. Check for edit capabilities if available
+4. Test navigation back to student list
+
+Expected: Student detail pages provide comprehensive student information
+Screenshot: 05_student_detail_pages.png
+
+Step 6: Verify Progress Tracking Display
+1. In student list and detail views, check progress indicators
+2. Verify progress is displayed visually (progress bars, percentages, levels)
+3. Check that progress data is accurate and up-to-date
+4. Look for progress trends or historical data
+5. Verify progress relates to specific subjects or overall performance
+
+Expected: Progress tracking is clear, visual, and provides meaningful insights
+Screenshot: 06_progress_tracking_display.png
+
+Step 7: Test Communication Features
+1. Look for communication options with students:
+   - Send message
+   - Email contact
+   - Schedule meeting/session
+2. Test any available messaging functionality
+3. Verify contact information is accessible and formatted correctly
+4. Check communication history if available
+
+Expected: Communication features are easily accessible and functional
+Screenshot: 07_communication_features.png
+
+Step 8: Test Student Acquisition Tracking
+1. Look for indicators of how students were acquired:
+   - Invitation source
+   - Referral information
+   - Sign-up method
+2. Check for acquisition analytics:
+   - Conversion rates
+   - Source tracking
+   - Acquisition funnel data
+3. Verify this data helps tutors understand their student acquisition
+
+Expected: Student acquisition data is tracked and displayed meaningfully
+Screenshot: 08_student_acquisition_tracking.png
+
+Step 9: Test Bulk Actions and Management
+1. Look for bulk action capabilities:
+   - Select multiple students
+   - Send bulk messages
+   - Export student data
+   - Bulk status updates
+2. Test selecting multiple students
+3. Verify bulk actions work correctly
+4. Check for confirmation dialogs for important actions
+
+Expected: Bulk actions available and work correctly with proper confirmations
+Screenshot: 09_bulk_actions_management.png
+
+Step 10: Test Mobile Responsiveness
+1. Resize browser to mobile dimensions (375px width)
+2. Verify student list adapts to mobile layout
+3. Test search and filter functionality on mobile
+4. Check that student details are accessible on mobile
+5. Verify touch interactions work properly
+
+Expected: Student management interface is fully functional on mobile devices
+Screenshot: 10_mobile_responsiveness.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND:
+- Student directory displays with clear, organized information
+- Search functionality works accurately across different criteria
+- Filtering options work correctly and can be combined
+- Student detail pages provide comprehensive information
+- Progress tracking is visual, clear, and meaningful
+- Communication features are accessible and functional
+- Student acquisition data is tracked and displayed
+- Bulk actions work correctly with proper safeguards
+- Mobile responsiveness is complete and functional
+
+FAIL: Any step fails OR:
+- Student directory is missing, empty, or displays incorrectly
+- Search functionality is broken or inaccurate
+- Filters don't work or produce incorrect results
+- Student detail pages are missing essential information
+- Progress tracking is unclear or inaccurate
+- Communication features are broken or inaccessible
+- No student acquisition tracking or analytics
+- Bulk actions cause errors or lack proper confirmations
+- Mobile interface is broken or unusable
+
+Individual Step Criteria:
+- Step 1: PASS if navigation to student management works, FAIL if inaccessible
+- Step 2: PASS if student directory displays correctly, FAIL if broken/empty
+- Step 3: PASS if search works accurately, FAIL if search broken/inaccurate
+- Step 4: PASS if filtering works correctly, FAIL if filters broken
+- Step 5: PASS if detail pages comprehensive, FAIL if missing essential info
+- Step 6: PASS if progress tracking clear, FAIL if unclear/inaccurate
+- Step 7: PASS if communication features work, FAIL if broken/inaccessible
+- Step 8: PASS if acquisition tracking displayed, FAIL if no tracking
+- Step 9: PASS if bulk actions work safely, FAIL if broken/unsafe
+- Step 10: PASS if mobile fully functional, FAIL if mobile broken/unusable
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Student information should be scannable and well-organized
+- Search should provide immediate feedback and be forgiving of typos
+- Filters should be intuitive with clear labels and options
+- Progress indicators should motivate both tutor and student
+- Communication options should be prominently available
+- Mobile experience should be optimized for touch interactions
+- Bulk actions should have clear confirmations to prevent mistakes
+- Loading states should keep users informed during data fetches

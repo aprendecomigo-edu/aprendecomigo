@@ -1,0 +1,9 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+tutor-dash-001,Dashboard Navigation and Layout,Test tutor dashboard navigation to /app/(tutor)/dashboard/ and basic layout rendering,20250731-202238,PARTIAL_PASS,2,0,2
+tutor-dash-002,Key Metrics Display,Test dashboard displays key metrics: students enrolled upcoming sessions monthly earnings,,,0,0,0
+tutor-dash-003,Student Management Interface,Test student directory search filtering and student detail pages,,,0,0,0
+tutor-dash-004,Session Management System,Test session calendar functionality status tracking and quick actions,,,0,0,0
+tutor-dash-005,Student Invitation System,Test student invitation functionality with email links and tracking,,,0,0,0
+tutor-dash-006,Business Analytics Dashboard,Test revenue trends performance metrics and acquisition analytics,,,0,0,0
+tutor-dash-007,Quick Actions and Calendar,Test quick actions for scheduling sessions and calendar view functionality,,,0,0,0
+tutor-dash-008,Cross-Platform Mobile Responsiveness,Test dashboard responsiveness on different screen sizes and mobile optimization,,,0,0,0

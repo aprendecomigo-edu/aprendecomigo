@@ -1,0 +1,147 @@
+QA Test Case: Tutor Dashboard Navigation and Layout
+
+Test ID: TUTOR-DASH-001
+Test Name: Dashboard Navigation and Layout
+Purpose: Verify that tutors can successfully navigate to the dashboard and all core layout elements render correctly
+Expected Result: Dashboard loads at /app/(tutor)/dashboard/ with proper navigation, layout, and initial data display
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: React Native + Expo (frontend) + Django REST Framework (backend)
+- GitHub Issues: #47 (Student Acquisition and Discovery Tools) and #73 (Frontend Implementation)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` to start frontend and backend
+4. Browser access: http://localhost:8081
+
+Test Data:
+- Test User: Individual tutor with SCHOOL_OWNER + TEACHER roles
+- Test Email: anapmc.carvalho@gmail.com (or valid tutor account)
+- User must have completed onboarding and have an active school
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+1. Open terminal in project root directory (/Users/anapmc/Code/aprendecomigo)
+2. Activate Python virtual environment if needed
+3. Start development servers
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Both frontend (port 8081) and backend (port 8000) servers start successfully
+Screenshot: 01_servers_started.png
+Debug: Use 'make logs' if servers fail to start
+
+Step 2: Authentication and Initial Login
+1. Open browser to http://localhost:8081
+2. Navigate to sign-in page if not already authenticated
+3. Complete authentication flow with tutor email
+4. Verify successful login and redirection
+Commands (if needed):
+  # Check server logs if authentication fails
+  make logs
+
+Expected: Successful authentication and redirect to appropriate post-login page
+Screenshot: 02_authentication_successful.png
+
+Step 3: Navigate to Tutor Dashboard
+1. In the authenticated application, navigate to /app/(tutor)/dashboard/
+2. Verify the URL correctly loads the tutor dashboard
+3. Check for any loading states or errors during navigation
+4. Confirm the page title/header indicates "Dashboard" or similar
+
+Expected: Successfully navigate to tutor dashboard with URL /app/(tutor)/dashboard/
+Screenshot: 03_dashboard_navigation.png
+
+Step 4: Verify Core Layout Structure
+1. Check that main navigation is present and accessible
+2. Verify header/top navigation contains user info and main actions
+3. Confirm sidebar navigation (if applicable) contains dashboard menu items
+4. Check footer or bottom navigation elements
+5. Verify responsive layout adapts to browser window
+
+Expected: Complete dashboard layout with navigation, header, main content area
+Screenshot: 04_dashboard_layout_structure.png
+
+Step 5: Verify Key Dashboard Sections Render
+1. Look for metrics/KPI section (students enrolled, sessions, earnings)
+2. Check for student management section or quick access
+3. Verify session management area is visible
+4. Look for quick action buttons or shortcuts
+5. Check for analytics/charts area (may be loading states initially)
+
+Expected: All major dashboard sections are present, even if showing loading states
+Screenshot: 05_dashboard_sections_rendered.png
+
+Step 6: Test Navigation Menu Functionality
+1. Click through available navigation menu items
+2. Test navigation to different dashboard subsections
+3. Verify active/selected states update correctly
+4. Test back/forward browser navigation
+5. Confirm URLs update appropriately for different sections
+
+Expected: Navigation works smoothly with proper state management
+Screenshot: 06_navigation_functionality.png
+
+Step 7: Verify Loading States and Error Handling
+1. Refresh the page and observe loading states
+2. Check network tab for API calls being made
+3. Look for any error messages or failed requests
+4. Verify graceful degradation if data isn't available yet
+5. Check console for any JavaScript errors
+
+Expected: Clean loading states, no errors, graceful handling of missing data
+Screenshot: 07_loading_states_handling.png
+
+Step 8: Responsive Design Verification
+1. Resize browser window to different widths (desktop, tablet, mobile)
+2. Test dashboard at 1200px, 768px, and 375px widths
+3. Verify navigation adapts appropriately for smaller screens
+4. Check that content remains accessible and functional
+5. Test touch interactions if mobile simulation is available
+
+Expected: Dashboard is fully responsive and functional across screen sizes
+Screenshot: 08_responsive_design_verification.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND:
+- Dashboard loads at correct URL (/app/(tutor)/dashboard/)
+- Navigation works without errors
+- Core layout sections are present and rendered
+- Responsive design functions properly
+- No critical JavaScript errors in console
+- Loading states are handled gracefully
+
+FAIL: Any step fails OR:
+- Dashboard fails to load or redirects incorrectly
+- Navigation is broken or non-functional
+- Core layout sections are missing or broken
+- Responsive design fails significantly
+- Critical JavaScript errors prevent functionality
+- Authentication issues prevent dashboard access
+
+Individual Step Criteria:
+- Step 1: PASS if servers start without errors, FAIL if servers won't start
+- Step 2: PASS if authentication completes successfully, FAIL if auth fails
+- Step 3: PASS if dashboard URL loads correctly, FAIL if navigation fails
+- Step 4: PASS if layout structure is complete, FAIL if major elements missing
+- Step 5: PASS if dashboard sections render, FAIL if sections are broken/missing
+- Step 6: PASS if navigation works smoothly, FAIL if navigation is broken
+- Step 7: PASS if loading/errors handled well, FAIL if critical errors occur
+- Step 8: PASS if responsive design works, FAIL if mobile/tablet unusable
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Dashboard should load within 2 seconds on local development
+- Navigation should feel smooth and responsive
+- Loading states should be clear and informative
+- Error messages should be user-friendly and actionable
+- Mobile experience should be fully functional, not just adapted
+- Quick actions should be easily discoverable and accessible

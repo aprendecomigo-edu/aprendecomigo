@@ -173,6 +173,12 @@ function RootLayoutNav() {
                     headerShown: false,
                   }}
                 />
+                <Stack.Screen 
+                  name="(tutor)" 
+                  options={{
+                    headerShown: false,
+                  }}
+                />
                 <Stack.Screen name="parents" />
                 <Stack.Screen name="admin" />
                 <Stack.Screen name="student" />

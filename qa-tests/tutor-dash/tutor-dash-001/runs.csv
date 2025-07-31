@@ -1,0 +1,3 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250731-200802,2025-07-31T20:08:02Z,PARTIAL_PASS,5,3,Playwright Chrome,macOS development,Implementation complete but routing configuration prevents direct URL access
+run-20250731-202238,2025-07-31T20:22:38Z,PARTIAL_PASS,6,2,Playwright Chrome,macOS development,Routing fix confirmed successful but dashboard loading state prevents full verification

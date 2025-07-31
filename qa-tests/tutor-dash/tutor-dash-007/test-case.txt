@@ -1,0 +1,64 @@
+QA Test Case: Quick Actions and Calendar
+
+Test ID: TUTOR-DASH-007
+Test Name: Quick Actions and Calendar
+Purpose: Verify quick action buttons for scheduling sessions, sending invitations, and calendar view functionality
+Expected Result: Intuitive quick actions that speed up common tutor tasks with integrated calendar view
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- GitHub Issues: #47 (Student Acquisition and Discovery Tools) and #73 (Frontend Implementation)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Development servers: `make dev`
+3. Browser access: http://localhost:8081
+
+Test Data:
+- Test User: Individual tutor with active students
+- Required: Students available for session scheduling
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Verify Quick Actions Panel
+Locate quick action buttons on dashboard (Schedule Session, Send Invitation, etc.)
+Expected: Quick actions are prominently displayed and easily accessible
+Screenshot: 01_quick_actions_panel.png
+
+Step 2: Test Schedule Session Quick Action
+Click "Schedule Session" quick action button
+Verify scheduling interface opens with available time slots
+Test scheduling a new session with a student
+Expected: Session scheduling works smoothly from quick action
+Screenshot: 02_schedule_session_quick_action.png
+
+Step 3: Test Send Invitation Quick Action
+Click "Send Invitation" quick action
+Verify invitation interface opens
+Test sending a quick invitation
+Expected: Invitation process is streamlined from quick action
+Screenshot: 03_send_invitation_quick_action.png
+
+Step 4: Test Calendar View Integration
+Access full calendar view from dashboard
+Verify calendar shows all scheduled sessions
+Test navigation between calendar views (day, week, month)
+Expected: Calendar integration is seamless and comprehensive
+Screenshot: 04_calendar_view_integration.png
+
+Step 5: Test Calendar Interactions
+Test clicking on calendar events to view/edit sessions
+Verify drag-and-drop rescheduling if available
+Test adding new sessions directly from calendar
+Expected: Calendar is interactive with session management capabilities
+Screenshot: 05_calendar_interactions.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Quick actions provide efficient access to common tasks and calendar integration is seamless
+
+FAIL: Quick actions are broken, missing, or calendar functionality doesn't work
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

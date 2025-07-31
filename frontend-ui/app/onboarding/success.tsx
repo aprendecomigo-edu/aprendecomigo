@@ -86,7 +86,7 @@ export default function OnboardingSuccessScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isTutor) {
-        router.replace('/dashboard'); // Or wherever tutors should go
+        router.replace('/(tutor)/dashboard');
       } else {
         router.replace('/(school-admin)/dashboard');
       }
@@ -124,7 +124,7 @@ export default function OnboardingSuccessScreen() {
 
   const handleGoToDashboard = () => {
     if (isTutor) {
-      router.replace('/dashboard');
+      router.replace('/(tutor)/dashboard');
     } else {
       router.replace('/(school-admin)/dashboard');
     }

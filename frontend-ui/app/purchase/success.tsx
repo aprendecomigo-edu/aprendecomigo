@@ -26,14 +26,14 @@ export default function PurchaseSuccessPage() {
   // Auto-redirect after 30 seconds if user doesn't take action
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push('/dashboard');
+      router.push('/home');
     }, 30000);
 
     return () => clearTimeout(timer);
   }, [router]);
 
   const handleViewDashboard = () => {
-    router.push('/dashboard');
+    router.push('/home');
   };
 
   const handleScheduleSession = () => {

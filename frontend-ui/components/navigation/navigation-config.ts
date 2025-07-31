@@ -9,7 +9,9 @@ import {
   UsersIcon,
   BookOpenIcon,
   BarChart3Icon,
-  MailIcon
+  MailIcon,
+  TrendingUpIcon,
+  UserPlusIcon
 } from 'lucide-react-native';
 
 // Color constants
@@ -117,6 +119,55 @@ export const adminSidebarNavItems: SidebarItem[] = [
   },
 ];
 
+// Tutor-specific navigation items for individual tutors
+export const tutorSidebarNavItems: SidebarItem[] = [
+  {
+    id: 'dashboard',
+    icon: HomeIcon,
+    route: '/(tutor)/dashboard',
+    permission: 'tutor',
+  },
+  {
+    id: 'students',
+    icon: UsersIcon,
+    route: '/(tutor)/students',
+    permission: 'tutor',
+  },
+  {
+    id: 'sessions', 
+    icon: Calendar,
+    route: '/(tutor)/sessions',
+    permission: 'tutor',
+  },
+  {
+    id: 'analytics',
+    icon: TrendingUpIcon,
+    route: '/(tutor)/analytics',
+    permission: 'tutor',
+  },
+  {
+    id: 'acquisition',
+    icon: UserPlusIcon,
+    route: '/(tutor)/acquisition',
+    permission: 'tutor',
+  },
+  {
+    id: 'calendar',
+    icon: Calendar,
+    route: '/calendar',
+  },
+  {
+    id: 'chat',
+    icon: MessagesSquare,
+    route: '/chat',
+  },
+  {
+    id: 'settings',
+    icon: Settings,
+    route: '/settings',
+  },
+];
+
 // Default sidebar navigation items (for non-admin users)
 export const sidebarNavItems: SidebarItem[] = [
   {
@@ -204,15 +255,17 @@ export const schools: School[] = [
 // Route permissions for role-based access control
 export const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/school-admin': ['school_admin'],
+  '/(school-admin)': ['school_admin'],
+  '/(tutor)': ['tutor', 'teacher'],
   '/teachers': ['school_admin'],
   '/students': ['school_admin', 'teacher'],
-  '/analytics': ['school_admin'],
+  '/analytics': ['school_admin', 'tutor'],
   '/invitations': ['school_admin'],
   '/classes': ['school_admin', 'teacher'],
-  '/calendar': ['school_admin', 'teacher', 'student'],
-  '/chat': ['school_admin', 'teacher', 'student'],
-  '/settings': ['school_admin', 'teacher', 'student'],
-  '/home': ['school_admin', 'teacher', 'student', 'parent'],
+  '/calendar': ['school_admin', 'teacher', 'student', 'tutor'],
+  '/chat': ['school_admin', 'teacher', 'student', 'tutor'],
+  '/settings': ['school_admin', 'teacher', 'student', 'tutor'],
+  '/home': ['school_admin', 'teacher', 'student', 'parent', 'tutor'],
 };
 
 // Navigation items getter based on user role
@@ -220,6 +273,11 @@ export const getNavigationItems = (userRole: string): SidebarItem[] => {
   if (userRole === 'school_admin') {
     return adminSidebarNavItems.filter(item => 
       !item.permission || item.permission === userRole
+    );
+  }
+  if (userRole === 'tutor' || userRole === 'teacher') {
+    return tutorSidebarNavItems.filter(item => 
+      !item.permission || item.permission === 'tutor' || !item.permission
     );
   }
   return sidebarNavItems;
