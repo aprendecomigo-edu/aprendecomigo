@@ -1,0 +1,428 @@
+QA Test Case: Communication Tools, Resource Management and School Announcements
+
+Test ID: TEACHDASH-005
+Test Name: Communication Tools, Resource Management and School Announcements
+Purpose: Verify teacher can effectively communicate with students, manage teaching resources, view school announcements, and handle quick actions for classroom management
+Expected Result: Teacher successfully uses all communication features, uploads/manages resources, stays informed with school updates, and efficiently performs quick actions
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform (EdTech tutoring platform)
+- Architecture: Django REST Framework backend + React Native + Expo frontend 
+- GitHub Issue: #51 - Teacher Dashboard Implementation (Backend: #90, Frontend: #91)
+- Backend APIs: Communication APIs, file upload services, school activity APIs
+- Frontend Components: Communication panels, resource management, announcement feeds
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` (starts both backend and frontend)
+4. Browser: Chrome or Firefox for web testing
+
+Test Data:
+- Test Teacher Email: anapmc.carvalho@gmail.com (must have completed teacher profile)
+- Test Students: Multiple students for communication testing
+- Test Files: Various file types for resource upload testing (PDF, images, documents)
+- School Data: School should have announcements and activity feed for testing
+
+Prerequisites:
+- Teacher must be authenticated (complete TEACHDASH-001 first)
+- Teacher should have assigned students for communication testing
+- School should have announcements and administrative updates
+- File upload services must be functional
+- Communication backend services must be running
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Access Communication Tools from Dashboard
+1. From teacher dashboard, locate communication features:
+   - "Message Student" quick actions
+   - Communication panel or messaging section
+   - Student communication history
+2. Verify communication interfaces are accessible
+3. Check for any communication notifications or badges
+4. Verify communication tools load without errors
+
+Expected: 
+- Communication tools are easily discoverable from dashboard
+- All communication interfaces load properly
+- Notification indicators work correctly
+- No console errors during communication tool access
+Screenshot: 01_communication_tools_access.png
+
+Step 2: Student Communication Interface Testing
+1. Test direct student messaging functionality:
+   - Select a student to message
+   - Open messaging interface (modal, page, or chat window)
+   - Verify message composition area is functional
+   - Check student information displays correctly
+2. Test message composition features:
+   - Text formatting options if available
+   - Attachment capabilities
+   - Message length validation
+   - Send button functionality
+
+Expected:
+- Student selection and messaging interface work smoothly
+- Message composition has appropriate features
+- Student context is maintained during communication
+- Send functionality works without errors
+Screenshot: 02_student_messaging_interface.png
+
+Step 3: Message History and Communication Records
+1. Access message history with students:
+   - View past communication threads
+   - Check message timestamps and chronological order
+   - Verify message status indicators (sent, delivered, read)
+   - Test message search functionality if available
+2. Verify communication record completeness:
+   - All past messages display correctly
+   - Message formatting is preserved
+   - Attachments are accessible
+   - Communication context is maintained
+
+Expected:
+- Message history provides complete communication record
+- Chronological ordering is accurate
+- Message status indicators work properly
+- Search and filtering help find specific conversations
+Screenshot: 03_message_history_records.png
+
+Step 4: Bulk Communication and Announcements
+1. Test bulk communication features:
+   - Send message to multiple students
+   - Create class announcements
+   - Send assignment notifications
+   - Broadcast important updates
+2. Verify bulk messaging functionality:
+   - Student selection for bulk messages
+   - Message customization for different recipients
+   - Delivery confirmation and status tracking
+   - Opt-out or notification preferences
+
+Expected:
+- Bulk communication tools are efficient and user-friendly
+- Message delivery works correctly to all selected recipients
+- Status tracking provides delivery confirmation
+- Customization options enhance message relevance
+Screenshot: 04_bulk_communication_testing.png
+
+Step 5: Resource Management Interface Access
+1. Navigate to resource management section:
+   - Look for "Resources", "Materials", or "Files" section
+   - Access resource management from dashboard or navigation
+2. Verify resource management interface displays:
+   - Existing uploaded resources
+   - Upload functionality and controls
+   - Resource organization (folders, categories, tags)
+   - Resource sharing and permission settings
+
+Expected:
+- Resource management section is easily accessible
+- Interface displays existing resources clearly
+- Upload functionality is prominent and functional
+- Organization tools help manage multiple resources
+Screenshot: 05_resource_management_access.png
+
+Step 6: File Upload and Resource Creation
+1. Test file upload functionality:
+   - Upload various file types (PDF, images, documents, presentations)
+   - Test drag-and-drop upload if available
+   - Verify file size limits and validation
+   - Test multiple file upload simultaneously
+2. Complete resource creation workflow:
+   - Add resource titles and descriptions
+   - Set resource categories or tags
+   - Configure sharing permissions
+   - Associate resources with specific students or classes
+
+Expected:
+- File upload works smoothly with various file types
+- Upload process provides progress indicators
+- Resource metadata can be added comprehensively
+- Sharing and permission settings work correctly
+Screenshot: 06_file_upload_resource_creation.png
+
+Step 7: Resource Organization and Management
+1. Test resource organization features:
+   - Create folders or categories for resources
+   - Move resources between folders
+   - Rename resources and update metadata
+   - Delete resources with proper confirmation
+2. Verify resource management efficiency:
+   - Bulk operations on multiple resources
+   - Search and filter resources by type, date, or tags
+   - Resource preview functionality
+   - Resource version management if available
+
+Expected:
+- Resource organization tools are intuitive and comprehensive
+- Bulk operations improve efficiency for multiple resources
+- Search and filtering help locate specific resources quickly
+- Resource management maintains file integrity
+Screenshot: 07_resource_organization_management.png
+
+Step 8: Resource Sharing and Student Access
+1. Test resource sharing functionality:
+   - Share resources with specific students
+   - Create resource collections for classes
+   - Set resource access permissions and visibility
+   - Generate resource sharing links if available
+2. Verify student access controls:
+   - Test different permission levels (view, download, comment)
+   - Check resource expiration dates if applicable
+   - Verify student notification when resources are shared
+   - Test resource access tracking and analytics
+
+Expected:
+- Resource sharing provides flexible permission management
+- Students receive appropriate notifications for shared resources
+- Access controls work correctly with different permission levels
+- Sharing analytics provide insights into resource usage
+Screenshot: 08_resource_sharing_student_access.png
+
+Step 9: School Announcements and Updates Feed
+1. Locate school announcements section:
+   - Find announcements panel on dashboard
+   - Access dedicated announcements or news feed
+2. Verify school announcements display:
+   - Recent school announcements and updates
+   - Administrative messages and policy changes
+   - Event notifications and calendar updates
+   - Emergency notifications or important alerts
+3. Test announcement interaction:
+   - Mark announcements as read
+   - Save important announcements
+   - Share announcements with students if applicable
+
+Expected:
+- School announcements are prominently displayed
+- Announcements are current, relevant, and properly formatted
+- Interaction features help manage announcement status
+- Important announcements are clearly highlighted
+Screenshot: 09_school_announcements_feed.png
+
+Step 10: Quick Actions Panel Comprehensive Testing
+1. Test all quick action functionalities:
+   - "Schedule Session" - verify proper navigation/modal
+   - "Message Student" - confirm messaging interface opens
+   - "Update Availability" - check availability management
+   - "Add Resource" - verify resource upload shortcut
+   - Additional quick actions specific to teacher role
+2. Verify quick action efficiency:
+   - Actions complete in minimal steps
+   - Context is preserved during actions
+   - Actions integrate properly with other dashboard sections
+
+Expected:
+- All quick actions work correctly and efficiently
+- Actions provide shortcuts to common teacher tasks
+- Context preservation enhances user experience
+- Integration with dashboard sections is seamless
+Screenshot: 10_quick_actions_comprehensive.png
+
+Step 11: Communication Notifications and Alerts
+1. Test notification system:
+   - Incoming message notifications
+   - Student response alerts
+   - Resource sharing confirmations
+   - System announcements and updates
+2. Verify notification management:
+   - Notification preferences and settings
+   - Mark notifications as read/unread
+   - Notification history and archive
+   - Push notification integration if available
+
+Expected:
+- Notification system provides timely and relevant alerts
+- Notification preferences allow customization
+- Notification management tools help organize alerts
+- Push notifications work properly if implemented
+Screenshot: 11_communication_notifications.png
+
+Step 12: Mobile Communication and Resource Management
+1. Test communication tools on mobile screen sizes:
+   - Use browser developer tools to simulate mobile
+   - Test messaging interface on mobile
+   - Verify resource upload on mobile
+   - Check announcement reading on mobile
+2. Test mobile-specific features:
+   - Touch-friendly messaging interface
+   - Mobile file selection and upload
+   - Swipe actions for message management
+   - Mobile notification handling
+
+Expected:
+- Mobile interface maintains full communication functionality
+- Touch interactions are smooth and intuitive
+- File upload works properly on mobile devices
+- Mobile notifications integrate with device capabilities
+Screenshot: 12_mobile_communication_resources.png
+
+Step 13: Communication Security and Privacy
+1. Verify communication security features:
+   - Message encryption or secure transmission
+   - Student privacy protection
+   - Resource access logging
+   - Administrative oversight capabilities
+2. Test privacy controls:
+   - Teacher-student communication boundaries
+   - Resource sharing privacy settings
+   - Communication audit trails if available
+   - Data retention and deletion policies
+
+Expected:
+- Communication maintains appropriate security standards
+- Privacy controls protect all parties appropriately
+- Audit trails provide necessary oversight
+- Security features don't impede normal usage
+Screenshot: 13_communication_security_privacy.png
+
+Step 14: Integration with Student Progress and Sessions
+1. Test communication integration with other dashboard sections:
+   - Send messages from student detail pages
+   - Share resources related to specific sessions
+   - Communication triggered by progress updates
+   - Resource recommendations based on student needs
+2. Verify contextual communication:
+   - Session-specific messaging
+   - Progress-related resource sharing
+   - Automated communication triggers
+   - Communication history linked to student records
+
+Expected:
+- Communication integrates seamlessly with other dashboard functions
+- Contextual messaging enhances teaching effectiveness
+- Automated triggers reduce manual communication overhead
+- Integration maintains comprehensive student interaction records
+Screenshot: 14_integration_progress_sessions.png
+
+Step 15: Performance and Scalability Testing
+1. Test communication performance with large datasets:
+   - Many message threads with extensive history
+   - Large number of uploaded resources
+   - Bulk messaging to many students
+   - Resource management with many files
+2. Monitor performance during:
+   - Message loading and sending
+   - File upload progress and completion
+   - Resource search and filtering
+   - Bulk operations execution
+
+Expected:
+- Communication performance remains good with large datasets
+- File upload handles large files efficiently
+- Bulk operations complete within reasonable timeframes
+- Resource management scales well with many files
+Screenshot: 15_communication_performance_testing.png
+
+Step 16: Error Handling and Recovery
+1. Test error scenarios:
+   - Network interruption during message sending
+   - File upload failures and recovery
+   - Backend API failures during communication
+   - Invalid file types or sizes
+2. Verify error handling provides helpful feedback:
+   - Clear error messages for failed operations
+   - Retry mechanisms for failed communications
+   - Recovery options for interrupted uploads
+   - Graceful degradation during service outages
+
+Expected:
+- Error handling is robust and user-friendly
+- Recovery mechanisms help complete interrupted operations
+- Error messages provide clear guidance for resolution
+- System maintains data integrity during failures
+Screenshot: 16_error_handling_recovery.png
+
+Step 17: Cross-Platform Consistency and Synchronization
+1. Test communication synchronization across platforms:
+   - Send message on web, verify mobile receipt
+   - Upload resource on one platform, access on another
+   - Notification synchronization across devices
+   - Read status synchronization
+2. Verify cross-platform feature parity:
+   - All communication features work on web and mobile
+   - Resource management functions consistently
+   - UI consistency across platforms
+   - Performance parity across devices
+
+Expected:
+- Communication synchronizes properly across all platforms
+- Feature parity ensures consistent user experience
+- UI remains functional and attractive across platforms
+- Performance is acceptable on all supported devices
+Screenshot: 17_cross_platform_synchronization.png
+
+Step 18: Business Value and Teaching Enhancement
+1. Evaluate communication tools' impact on teaching:
+   - Assess efficiency gains from integrated communication
+   - Verify resource sharing enhances learning
+   - Check if announcements improve school coordination
+   - Evaluate quick actions' impact on teacher productivity
+2. Test workflow integration:
+   - Communication supports complete teaching workflow
+   - Tools reduce administrative overhead
+   - Features enhance student engagement
+   - Integration improves overall platform value
+
+Expected:
+- Communication tools provide significant teaching value
+- Workflow integration enhances teacher productivity
+- Features support better student outcomes
+- Overall integration improves platform usefulness
+Screenshot: 18_business_value_teaching_enhancement.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: ALL of the following conditions must be met:
+- Teacher can successfully access and use all communication tools
+- Student messaging works correctly with proper history and status tracking
+- Resource management allows efficient upload, organization, and sharing
+- School announcements display properly with interaction capabilities
+- Quick actions provide efficient shortcuts to common tasks
+- Communication notifications work correctly with proper management
+- Mobile interface maintains full communication functionality
+- Security and privacy controls work appropriately
+- Integration with other dashboard sections is seamless
+- Performance remains good with large communication datasets
+- Error handling provides helpful guidance and recovery options
+- Cross-platform synchronization works properly
+- Tools provide meaningful business value for teaching enhancement
+
+FAIL: ANY of the following conditions occur:
+- Cannot access or use communication tools
+- Student messaging fails or loses message history
+- Resource management is broken or doesn't support file operations
+- School announcements don't display or lack functionality
+- Quick actions are broken or don't complete successfully
+- Notifications don't work or can't be managed properly
+- Mobile interface loses communication functionality
+- Security or privacy issues compromise user safety
+- Integration with other dashboard sections is broken
+- Performance issues make communication tools unusable
+- Error handling crashes or provides no guidance
+- Cross-platform features are inconsistent or broken
+- Tools provide no meaningful value for teaching workflow
+
+Individual Step Criteria:
+- Steps 1-4: PASS if communication interfaces and messaging work, FAIL if broken
+- Steps 5-8: PASS if resource management works completely, FAIL if upload/sharing fails
+- Steps 9-11: PASS if announcements and quick actions work, FAIL if broken/missing
+- Steps 12-14: PASS if mobile and integration work, FAIL if functionality lost
+- Steps 15-18: PASS if performance, error handling, and value are good, FAIL if poor
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Communication tools should integrate seamlessly into teaching workflow
+- Resource management should be intuitive and efficient for teachers
+- School announcements should be prominent and easily accessible
+- Quick actions should provide genuine productivity improvements
+- Mobile communication should maintain desktop-level functionality
+- Security features should protect all parties without impeding usage
+- Error handling should guide teachers to successful task completion
+- Cross-platform synchronization should provide consistent experience
+- Performance should remain smooth even with extensive communication history
+- Overall tools should enhance teaching effectiveness and student engagement

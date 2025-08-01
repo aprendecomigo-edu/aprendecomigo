@@ -1,0 +1,60 @@
+QA Test Case: School Preview and Details
+
+Test ID: TACPT-008
+Test Name: School Preview and Details
+Purpose: Verify that school information is displayed comprehensively and accurately during invitation acceptance
+Expected Result: Complete school information helps teacher make informed decision about joining
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django backend (localhost:8000) + React Native frontend (localhost:8081)
+- GitHub Issue: #52 - School preview functionality (Issue #77)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Development servers: `make dev`
+3. Database: PostgreSQL with complete school data
+
+Test Data:
+- School with complete information (name, description, logo, contact info)
+- School statistics (student count, teacher count)
+- Valid invitation token
+- Test teacher email
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Verify Complete School Information Display
+1. Navigate to invitation URL
+2. Verify school name, logo, and description are shown
+3. Check contact information (email, phone, address, website)
+4. Confirm all information is properly formatted
+
+Expected: Complete school information displayed professionally
+Screenshot: 01_complete_school_info.png
+
+Step 2: School Statistics Verification
+1. Check student count display
+2. Verify teacher count information
+3. Confirm statistics are current and accurate
+4. Test loading states for statistics
+
+Expected: Accurate school statistics help inform decision
+Screenshot: 02_school_statistics.png
+
+Step 3: Visual Design and Layout
+1. Verify school logo displays properly
+2. Check responsive layout of school information
+3. Confirm visual hierarchy is clear
+4. Test expansion/collapse of detailed information
+
+Expected: Professional, visually appealing school presentation
+Screenshot: 03_visual_design_layout.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: School information is complete, accurate, and professionally presented
+FAIL: Missing information, poor presentation, or inaccurate data
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

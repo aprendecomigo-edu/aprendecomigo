@@ -1,0 +1,700 @@
+QA Test Case: Package Expiration and Renewal Integration
+
+Test ID: SESSION-005
+Test Name: Package Expiration and Renewal Integration
+Purpose: Verify that session booking properly handles hour package expiration scenarios and integrates with package renewal functionality during the booking process
+Expected Result: System prevents bookings with expired packages and provides seamless renewal integration
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Package Expiration Handling in Session Booking (GitHub Issue #32)
+- Integration: Session booking with package management and renewal flows
+- APIs: /scheduler/api/book-session/, /finances/api/packages/, /finances/api/renew-package/
+- Authentication: JWT token authentication required
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data Requirements:
+- Expired Package Student: expired.student@test.com with expired hour packages
+- Expiring Soon Student: expiring.soon@test.com with package expiring within 24 hours
+- Multiple Package Student: multi.package@test.com with mix of active/expired packages
+- Renewal Test Student: renewal.test@test.com for testing renewal integration
+- Teacher Account: teacher.package@test.com with available time slots
+- Package Types: Standard (30 days), Premium (60 days), Trial (7 days)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Service Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Both services start successfully
+Screenshot: 01_servers_started.png
+
+Step 2: Create Test Users and Package Scenarios
+1. Open browser to http://localhost:8000/admin/
+2. Login with admin credentials
+3. Create test users and various package expiration scenarios:
+
+   Expired Package Student:
+   - Email: expired.student@test.com
+   - Name: "Expired Package Student"
+   - Package: 10 hours, expired 5 days ago
+   - Remaining hours: 7.5 hours (but expired)
+   - Balance status: Expired
+
+   Expiring Soon Student:
+   - Email: expiring.soon@test.com
+   - Name: "Expiring Soon Student"
+   - Package: 8 hours, expires in 12 hours
+   - Remaining hours: 6.0 hours
+   - Balance status: Expiring soon
+
+   Multiple Package Student:
+   - Email: multi.package@test.com
+   - Name: "Multiple Package Student"
+   - Package 1: 5 hours, expired 10 days ago
+   - Package 2: 8 hours, active, expires in 20 days
+   - Package 3: 3 hours, expires in 2 hours
+   - Total remaining: 16 hours (8 active + 8 from expiring packages)
+
+   Renewal Test Student:
+   - Email: renewal.test@test.com
+   - Name: "Renewal Test Student"
+   - Package: 4 hours, expired 1 day ago
+   - Renewal credit: Available for auto-renewal
+
+   Teacher:
+   - Email: teacher.package@test.com
+   - Name: "Package Test Teacher"
+
+Expected: All test users and package scenarios created
+Screenshot: 02_package_test_data_created.png
+
+Step 3: Verify Package Status via API for All Test Users
+1. Check package status for each student:
+```javascript
+// Function to check package status
+function checkPackageStatus(email, token) {
+  return fetch('http://localhost:8000/finances/api/packages/', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log(`=== ${email.toUpperCase()} PACKAGE STATUS ===`);
+    console.log('Active packages:', data.active_packages.length);
+    console.log('Expired packages:', data.expired_packages.length);
+    console.log('Expiring soon:', data.expiring_soon.length);
+    console.log('Total available hours:', data.total_available_hours);
+    console.log('Usable hours:', data.usable_hours);
+    
+    data.active_packages.forEach(pkg => {
+      console.log(`Active: ${pkg.remaining_hours} hours, expires ${pkg.expiration_date}`);
+    });
+    
+    data.expired_packages.forEach(pkg => {
+      console.log(`Expired: ${pkg.remaining_hours} hours, expired ${pkg.expiration_date}`);
+    });
+    
+    return data;
+  });
+}
+
+// Check each student's package status
+// (Login to each student account first to get tokens)
+```
+
+Expected: All package expiration scenarios correctly reflected in API
+Screenshot: 03_package_status_verification.png
+
+Step 4: Test Booking with Completely Expired Package
+1. Login as expired.student@test.com
+2. Attempt to book session with expired package:
+```javascript
+const expiredToken = 'EXPIRED_STUDENT_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${expiredToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.package@test.com',
+    date: '2025-07-28',
+    time: '10:00',
+    duration: 1.0,
+    session_type: 'individual',
+    title: 'Expired Package Test'
+  })
+})
+  .then(response => {
+    console.log('Expired package booking status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== EXPIRED PACKAGE BOOKING RESULT ===');
+    console.log('Error message:', data.error);
+    console.log('Package status:', data.package_status);
+    console.log('Expiration info:', data.expiration_info);
+    console.log('Renewal options:', data.renewal_options);
+    console.log('Suggested actions:', data.suggested_actions);
+  });
+```
+
+Expected:
+- HTTP 400 Bad Request
+- Clear error about expired package
+- Renewal options presented
+- No session created
+
+Screenshot: 04_expired_package_booking_denied.png
+
+Step 5: Test Booking with Package Expiring Soon
+1. Login as expiring.soon@test.com
+2. Attempt to book session with soon-to-expire package:
+```javascript
+const expiringSoonToken = 'EXPIRING_SOON_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${expiringSoonToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.package@test.com',
+    date: '2025-07-28',
+    time: '11:00',
+    duration: 1.0,
+    session_type: 'individual',
+    title: 'Expiring Soon Test'
+  })
+})
+  .then(response => {
+    console.log('Expiring soon booking status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== EXPIRING SOON BOOKING RESULT ===');
+    console.log('Booking allowed:', response.status === 201);
+    console.log('Warning message:', data.warning);
+    console.log('Expiration warning:', data.expiration_warning);
+    console.log('Renewal reminder:', data.renewal_reminder);
+    console.log('Session created:', data.session_id);
+  });
+```
+
+Expected:
+- HTTP 201 Created (booking allowed)
+- Warning about upcoming expiration
+- Renewal reminder included
+- Session successfully created
+
+Screenshot: 05_expiring_soon_booking_with_warning.png
+
+Step 6: Test Multiple Package Scenario
+1. Login as multi.package@test.com
+2. Book session with mixed active/expired packages:
+```javascript
+const multiPackageToken = 'MULTI_PACKAGE_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${multiPackageToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.package@test.com',
+    date: '2025-07-28',
+    time: '12:00',
+    duration: 1.5,
+    session_type: 'individual',
+    title: 'Multiple Package Test'
+  })
+})
+  .then(response => {
+    console.log('Multiple package booking status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== MULTIPLE PACKAGE BOOKING RESULT ===');
+    console.log('Booking successful:', response.status === 201);
+    console.log('Package used:', data.package_used);
+    console.log('Hours deducted from:', data.deduction_source);
+    console.log('Remaining active hours:', data.remaining_active_hours);
+    console.log('Package warnings:', data.package_warnings);
+  });
+```
+
+Expected:
+- HTTP 201 Created (using active package)
+- Hours deducted from active package only
+- Warnings about expired packages
+- Clear indication of which package was used
+
+Screenshot: 06_multiple_package_booking_success.png
+
+Step 7: Test Package Renewal Integration During Booking
+1. Login as renewal.test@test.com (with expired package)
+2. Attempt booking that triggers renewal flow:
+```javascript
+const renewalToken = 'RENEWAL_TEST_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${renewalToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.package@test.com',
+    date: '2025-07-28',
+    time: '13:00',
+    duration: 1.0,
+    session_type: 'individual',
+    title: 'Renewal Integration Test',
+    auto_renew_if_needed: true
+  })
+})
+  .then(response => {
+    console.log('Renewal integration status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== RENEWAL INTEGRATION RESULT ===');
+    console.log('Booking successful:', response.status === 201);
+    console.log('Renewal triggered:', data.renewal_triggered);
+    console.log('New package info:', data.new_package);
+    console.log('Session created:', data.session_id);
+    console.log('Total cost:', data.total_cost);
+  });
+```
+
+Expected:
+- HTTP 201 Created (with auto-renewal)
+- New package created automatically
+- Session booked using renewed package
+- Clear cost breakdown
+
+Screenshot: 07_renewal_integration_success.png
+
+Step 8: Test Manual Package Renewal Before Booking
+1. Test manual renewal flow:
+```javascript
+const expiredToken = 'EXPIRED_STUDENT_JWT_TOKEN';
+
+// First, manually renew package
+fetch('http://localhost:8000/finances/api/renew-package/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${expiredToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    package_type: 'standard',
+    hours: 10,
+    payment_method: 'credit_card'
+  })
+})
+  .then(response => {
+    console.log('Manual renewal status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== MANUAL RENEWAL RESULT ===');
+    console.log('Renewal successful:', response.status === 201);
+    console.log('New package ID:', data.package_id);
+    console.log('Hours purchased:', data.hours_purchased);
+    console.log('Expiration date:', data.expiration_date);
+    
+    // Then try booking with renewed package
+    return fetch('http://localhost:8000/scheduler/api/book-session/', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${expiredToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        teacher_email: 'teacher.package@test.com',
+        date: '2025-07-28',
+        time: '14:00',
+        duration: 1.0,
+        session_type: 'individual',
+        title: 'Post-Renewal Booking Test'
+      })
+    });
+  })
+  .then(response => {
+    console.log('Post-renewal booking status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== POST-RENEWAL BOOKING ===');
+    console.log('Booking after renewal successful:', data.session_id);
+  });
+```
+
+Expected: Manual renewal followed by successful booking
+Screenshot: 08_manual_renewal_then_booking.png
+
+Step 9: Test Package Priority and Deduction Order
+1. For student with multiple active packages, verify deduction order:
+```javascript
+const multiPackageToken = 'MULTI_PACKAGE_JWT_TOKEN';
+
+// Check package status before booking
+fetch('http://localhost:8000/finances/api/packages/', {
+  headers: {
+    'Authorization': `Bearer ${multiPackageToken}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(beforeData => {
+    console.log('=== BEFORE BOOKING PACKAGE STATUS ===');
+    beforeData.active_packages.forEach((pkg, index) => {
+      console.log(`Package ${index + 1}: ${pkg.remaining_hours} hours, expires ${pkg.expiration_date}`);
+    });
+    
+    // Book session
+    return fetch('http://localhost:8000/scheduler/api/book-session/', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${multiPackageToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        teacher_email: 'teacher.package@test.com',
+        date: '2025-07-28',
+        time: '15:00',
+        duration: 1.0,
+        session_type: 'individual',
+        title: 'Package Priority Test'
+      })
+    });
+  })
+  .then(response => response.json())
+  .then(bookingData => {
+    console.log('=== BOOKING WITH PRIORITY TEST ===');
+    console.log('Package used for deduction:', bookingData.package_used);
+    console.log('Deduction logic:', bookingData.deduction_logic);
+    
+    // Check package status after booking
+    return fetch('http://localhost:8000/finances/api/packages/', {
+      headers: {
+        'Authorization': `Bearer ${multiPackageToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  })
+  .then(response => response.json())
+  .then(afterData => {
+    console.log('=== AFTER BOOKING PACKAGE STATUS ===');
+    afterData.active_packages.forEach((pkg, index) => {
+      console.log(`Package ${index + 1}: ${pkg.remaining_hours} hours, expires ${pkg.expiration_date}`);
+    });
+  });
+```
+
+Expected: Hours deducted from package expiring soonest (FIFO logic)
+Screenshot: 09_package_priority_deduction.png
+
+Step 10: Test Package Expiration During Session
+1. Create package that expires between booking and session time:
+```javascript
+// Book session with package that will expire before session occurs
+const expiringSoonToken = 'EXPIRING_SOON_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${expiringSoonToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.package@test.com',
+    date: '2025-07-30', // 2 days from now, package expires tomorrow
+    time: '10:00',
+    duration: 1.0,
+    session_type: 'individual',
+    title: 'Mid-Flight Expiration Test'
+  })
+})
+  .then(response => {
+    console.log('Mid-flight expiration booking status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== MID-FLIGHT EXPIRATION BOOKING ===');
+    console.log('Booking allowed:', response.status === 201);
+    console.log('Expiration warning:', data.expiration_warning);
+    console.log('Session created:', data.session_id);
+    console.log('Expiration handling:', data.expiration_handling);
+  });
+```
+
+Expected: Booking allowed with clear warnings about package expiration
+Screenshot: 10_mid_flight_expiration_booking.png
+
+Step 11: Test Package Status in Session Details
+1. Verify package information is included in session details:
+```javascript
+const multiPackageToken = 'MULTI_PACKAGE_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/session-details/SESSION_ID/', {
+  headers: {
+    'Authorization': `Bearer ${multiPackageToken}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== SESSION PACKAGE DETAILS ===');
+    console.log('Session ID:', data.session_id);
+    console.log('Hours deducted:', data.hours_deducted);
+    console.log('Package used:', data.package_used);
+    console.log('Package status at booking:', data.package_status_at_booking);
+    console.log('Package remaining after:', data.package_remaining_after);
+    console.log('Expiration info:', data.package_expiration_info);
+  });
+```
+
+Expected: Complete package information linked to session
+Screenshot: 11_session_package_details.png
+
+Step 12: Test Frontend Package Warnings and Renewal Flow
+1. Navigate to booking interface as expired.student@test.com
+2. Verify frontend handles package expiration:
+   - Warning messages about expired packages
+   - Renewal buttons/links in booking interface
+   - Clear explanation of package status
+   - Seamless renewal flow integration
+   - Prevention of booking with expired packages
+
+Expected: User-friendly package expiration handling in UI
+Screenshot: 12_frontend_package_warnings.png
+
+Step 13: Test Bulk Package Expiration Handling
+1. Test system behavior with multiple expired packages:
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/backend
+  python manage.py shell -c "
+  from finances.models import HourPackage, StudentAccountBalance
+  from accounts.models import CustomUser
+  from datetime import datetime, timedelta
+  
+  # Check students with multiple expired packages
+  student = CustomUser.objects.get(email='multi.package@test.com')
+  packages = HourPackage.objects.filter(student=student)
+  
+  print('=== BULK PACKAGE EXPIRATION CHECK ===')
+  print(f'Student: {student.email}')
+  print(f'Total packages: {packages.count()}')
+  
+  active_count = 0
+  expired_count = 0
+  total_active_hours = 0
+  total_expired_hours = 0
+  
+  for package in packages:
+      if package.expiration_date > datetime.now().date():
+          active_count += 1
+          total_active_hours += package.remaining_hours
+          print(f'Active: {package.remaining_hours} hours, expires {package.expiration_date}')
+      else:
+          expired_count += 1
+          total_expired_hours += package.remaining_hours
+          print(f'Expired: {package.remaining_hours} hours, expired {package.expiration_date}')
+  
+  print(f'Active packages: {active_count} ({total_active_hours} hours)')
+  print(f'Expired packages: {expired_count} ({total_expired_hours} hours)')
+  print(f'Usable hours: {total_active_hours}')
+  "
+
+Expected: Proper separation of active vs expired package hours
+Screenshot: 13_bulk_expiration_handling.png
+
+Step 14: Test Package Auto-Renewal Preferences
+1. Test user auto-renewal preferences:
+```javascript
+const renewalToken = 'RENEWAL_TEST_JWT_TOKEN';
+
+// Set auto-renewal preferences
+fetch('http://localhost:8000/finances/api/auto-renewal-settings/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${renewalToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    auto_renew_enabled: true,
+    renewal_package_type: 'standard',
+    renewal_hours: 10,
+    renew_when_hours_below: 2
+  })
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== AUTO-RENEWAL SETTINGS ===');
+    console.log('Settings saved:', data.success);
+    console.log('Auto-renew enabled:', data.auto_renew_enabled);
+    
+    // Now test booking that triggers auto-renewal
+    return fetch('http://localhost:8000/scheduler/api/book-session/', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${renewalToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        teacher_email: 'teacher.package@test.com',
+        date: '2025-07-29',
+        time: '16:00',
+        duration: 1.0,
+        session_type: 'individual',
+        title: 'Auto-Renewal Trigger Test'
+      })
+    });
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== AUTO-RENEWAL TRIGGERED ===');
+    console.log('Auto-renewal occurred:', data.auto_renewal_triggered);
+    console.log('New package created:', data.new_package_id);
+    console.log('Booking successful:', data.session_id);
+  });
+```
+
+Expected: Auto-renewal triggered by booking when hours low
+Screenshot: 14_auto_renewal_preferences.png
+
+Step 15: Test Package Expiration Notifications
+1. Test expiration notification system:
+```javascript
+const expiringSoonToken = 'EXPIRING_SOON_JWT_TOKEN';
+fetch('http://localhost:8000/finances/api/expiration-notifications/', {
+  headers: {
+    'Authorization': `Bearer ${expiringSoonToken}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== EXPIRATION NOTIFICATIONS ===');
+    console.log('Notifications count:', data.notifications.length);
+    
+    data.notifications.forEach(notification => {
+      console.log(`Package: ${notification.package_id}`);
+      console.log(`Expires: ${notification.expiration_date}`);
+      console.log(`Hours remaining: ${notification.hours_remaining}`);
+      console.log(`Priority: ${notification.priority}`);
+      console.log(`Action required: ${notification.action_required}`);
+      console.log('---');
+    });
+  });
+```
+
+Expected: Comprehensive expiration notification system
+Screenshot: 15_expiration_notifications.png
+
+Step 16: Test Package Integration Performance
+1. Test performance with multiple packages and complex scenarios:
+```javascript
+const multiPackageToken = 'MULTI_PACKAGE_JWT_TOKEN';
+const startTime = performance.now();
+
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${multiPackageToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.package@test.com',
+    date: '2025-07-29',
+    time: '17:00',
+    duration: 1.0,
+    session_type: 'individual',
+    title: 'Performance Test'
+  })
+})
+  .then(response => {
+    const endTime = performance.now();
+    console.log(`Package Integration Response Time: ${endTime - startTime} milliseconds`);
+    console.log('Response status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== PACKAGE INTEGRATION PERFORMANCE ===');
+    console.log('Booking processed:', data.session_id);
+    console.log('Package calculations time acceptable:', (endTime - startTime) < 2000);
+    console.log('Package used:', data.package_used);
+  });
+```
+
+Expected: Package processing within 2 seconds even with complex scenarios
+Screenshot: 16_package_integration_performance.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All package expiration scenarios handled correctly AND renewal integration works AND proper warnings provided AND booking restrictions enforced AND performance acceptable
+
+FAIL: Expired packages allow booking OR renewal integration broken OR poor user experience OR authorization issues OR performance problems
+
+Individual Step Criteria:
+- Step 1-2: PASS if environment and package scenarios set up correctly, FAIL if setup issues
+- Step 3: PASS if package status API accurate for all scenarios, FAIL if API data incorrect
+- Step 4: PASS if expired package booking properly blocked, FAIL if booking allowed inappropriately
+- Step 5: PASS if expiring soon booking allowed with warnings, FAIL if warnings missing
+- Step 6: PASS if multiple package scenario handled correctly, FAIL if wrong package used
+- Step 7: PASS if auto-renewal integration works during booking, FAIL if renewal fails
+- Step 8: PASS if manual renewal followed by booking works, FAIL if renewal process broken
+- Step 9: PASS if package deduction priority correct (FIFO), FAIL if wrong priority
+- Step 10: PASS if mid-flight expiration handled with warnings, FAIL if inadequate handling
+- Step 11: PASS if session details include package information, FAIL if package data missing
+- Step 12: PASS if frontend package handling user-friendly, FAIL if poor UX
+- Step 13: PASS if bulk expiration handling correct, FAIL if calculation errors
+- Step 14: PASS if auto-renewal preferences work, FAIL if preferences not applied
+- Step 15: PASS if expiration notifications comprehensive, FAIL if notification system broken
+- Step 16: PASS if performance acceptable, FAIL if slow package processing
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== ADDITIONAL VERIFICATION POINTS ===
+
+Package Expiration Requirements:
+- Expired packages cannot be used for new bookings
+- Active packages with sufficient hours allow booking
+- Packages expiring soon provide warnings but allow booking
+- Multiple packages handled with correct priority (expiring first)
+- Clear expiration dates and remaining hours displayed
+
+Renewal Integration Standards:
+- Auto-renewal triggered by user preferences
+- Manual renewal available at any time
+- Seamless integration with booking process
+- Clear cost breakdown for renewals
+- Proper package activation after renewal
+
+User Experience Requirements:
+- Clear warnings about package expiration
+- Easy renewal options presented during booking
+- Comprehensive package status information
+- User-friendly error messages for expired packages
+- Seamless flow from renewal to booking
+
+Technical Requirements:
+- Package calculations accurate across all scenarios
+- Performance acceptable with multiple packages
+- Database consistency maintained during renewals
+- Proper audit trail for package usage and renewals
+- Transaction integrity for package operations

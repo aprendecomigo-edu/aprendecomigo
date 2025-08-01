@@ -1,0 +1,319 @@
+QA Test Case: Course Catalog Selection Interface for Tutors
+
+Test ID: TPROF-007
+Test Name: Course Catalog Selection Interface for Tutors (GitHub Issue #44)
+Purpose: Validate comprehensive course catalog selection functionality for individual tutors during onboarding
+Expected Result: Tutors can successfully browse, select, configure rates for, and manage courses they want to teach
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - EdTech Platform
+- Architecture: Django REST API backend + React Native Expo frontend
+- Frontend Route: /auth/user-type-selection → Individual Tutor flow → Course catalog step
+- GitHub Issue: #44 - Course Catalog Selection Interface for Tutors
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: .venv/ in project root (backend)
+3. Node.js environment with Expo
+4. Development servers: make dev
+
+Test Data:
+- Test Email: course.tutor@aprendecomigo.com
+- User Role: Individual Tutor (school_owner/teacher dual role)
+- Course selections: Mix of different education levels and subjects
+- Rate configurations: Different pricing per subject area
+
+Pre-test Authentication:
+- Must complete user type selection (Individual Tutor)
+- Must complete basic signup flow
+- Must reach course catalog selection step in onboarding
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev
+
+Wait for both backend and frontend servers to start completely.
+Backend should be available at http://localhost:8000
+Frontend should be available at http://localhost:8081
+
+Expected: Both servers start without errors, API endpoints accessible
+Screenshot: 01_servers_started.png
+Debug: Use 'make logs' if servers don't start properly
+
+Step 2: Navigate to User Type Selection
+1. Open browser to http://localhost:8081
+2. Navigate to /auth/user-type-selection
+3. Verify page loads with three user type options
+
+Expected: User type selection page loads successfully with clear options
+Screenshot: 02_user_type_selection.png
+
+Step 3: Select Individual Tutor and Begin Signup
+1. Click on "Individual Tutor" option
+2. Verify selection feedback and continue button activation
+3. Click continue/next to proceed to signup
+4. Complete email verification process:
+   - Enter email: course.tutor@aprendecomigo.com
+   - Follow verification flow
+   - Complete basic account setup
+
+Expected: Successfully progresses through signup flow
+Screenshot: 03_tutor_signup_complete.png
+
+Step 4: Reach Course Catalog Selection Step
+1. Complete initial onboarding steps until reaching course catalog
+2. Verify course catalog interface loads
+3. Confirm all 8 acceptance criteria elements are present:
+   - Educational system selection
+   - Course browsing interface
+   - Multi-select functionality
+   - Grade level specification
+   - Rate configuration
+   - Search and filter functionality
+   - Visual confirmation of selections
+   - Backend integration
+
+Expected: Course catalog selection interface loads completely
+Screenshot: 04_course_catalog_loaded.png
+
+Step 5: Test Educational System Selection (Acceptance Criteria #1)
+1. Verify educational system options are displayed:
+   - Portugal
+   - Brazil 
+   - Custom/Other
+2. Each option should have clear descriptions
+3. Select "Portugal" educational system
+4. Verify system selection updates available courses
+
+Expected: Educational system selection works with clear descriptions
+Screenshot: 05_education_system_portugal.png
+
+Step 6: Test Course Browsing Interface (Acceptance Criteria #2)
+1. Verify courses are organized by education level:
+   - Elementary (1st-6th grade)
+   - Middle School (7th-9th grade)
+   - High School (10th-12th grade)
+   - University Preparatory
+2. Within each level, verify organization by subject area:
+   - Mathematics
+   - Sciences (Physics, Chemistry, Biology)
+   - Languages (Portuguese, English, etc.)
+   - Humanities (History, Geography, etc.)
+3. Verify course cards show relevant information:
+   - Course name
+   - Description
+   - Target grade levels
+   - Typical hourly rate suggestions
+
+Expected: Courses are well-organized and informative
+Screenshot: 06_course_browsing_organized.png
+
+Step 7: Test Multi-Select Functionality (Acceptance Criteria #3)
+1. Select multiple courses across different subjects:
+   - Mathematics (10th-12th grade)
+   - Physics (11th-12th grade)
+   - Chemistry (10th-11th grade)
+   - English Language (9th-12th grade)
+   - Portuguese Literature (10th-12th grade)
+2. Verify each selection provides visual feedback
+3. Verify selection counter updates correctly
+4. Test deselection by clicking selected courses
+
+Expected: Multi-select works smoothly with clear visual feedback
+Screenshot: 07_multi_select_courses.png
+
+Step 8: Test Grade Level Specification (Acceptance Criteria #4)
+1. For each selected course, verify grade level options:
+   - Default to course's standard grade levels
+   - Allow customization of specific grades taught
+2. Test grade level modification:
+   - Mathematics: Select grades 10, 11, 12
+   - Physics: Select grades 11, 12 only
+   - Chemistry: Select grades 10, 11 only
+   - English: Select grades 9, 10, 11, 12
+   - Portuguese: Select grades 10, 11, 12
+3. Verify changes save automatically or with confirmation
+
+Expected: Grade level specification works for each course
+Screenshot: 08_grade_levels_specified.png
+
+Step 9: Test Course-Specific Rate Configuration (Acceptance Criteria #5)
+1. For each selected course, configure different hourly rates:
+   - Mathematics: €30/hour (premium subject)
+   - Physics: €28/hour
+   - Chemistry: €28/hour
+   - English Language: €25/hour
+   - Portuguese Literature: €22/hour
+2. Test rate input validation:
+   - Minimum rates (e.g., €10/hour)
+   - Maximum rates (e.g., €100/hour)
+   - Invalid input handling (text, negative numbers)
+3. Verify suggested pricing is displayed where available
+4. Test bulk rate setting option if available
+
+Expected: Rate configuration works with proper validation
+Screenshot: 09_rate_configuration.png
+
+Step 10: Test Search and Filter Functionality (Acceptance Criteria #6)
+1. Test search functionality:
+   - Search for "Math" - should show Mathematics courses
+   - Search for "Science" - should show Physics, Chemistry, Biology
+   - Search for specific grade "11th" - should filter appropriately
+2. Test filter options:
+   - Filter by education level (Elementary, Middle, High School)
+   - Filter by subject area (STEM, Languages, Humanities)
+   - Filter by grade level (9th, 10th, 11th, 12th)
+3. Test combined search and filters
+4. Test clear filters functionality
+
+Expected: Search and filters work accurately and quickly
+Screenshot: 10_search_filter_functionality.png
+
+Step 11: Test Visual Confirmation and Management (Acceptance Criteria #7)
+1. Verify selected courses section shows:
+   - Course name and description
+   - Selected grade levels
+   - Configured hourly rate
+   - Easy removal option (X button or similar)
+2. Test course removal:
+   - Remove English Language course
+   - Verify it's removed from selections
+   - Verify it's available again in catalog
+3. Test edit functionality:
+   - Modify Mathematics rate from €30 to €32
+   - Change Physics grade levels to include 10th grade
+4. Verify selection summary shows accurate totals
+
+Expected: Visual confirmation and management works intuitively
+Screenshot: 11_visual_confirmation_management.png
+
+Step 12: Test Backend Integration (Acceptance Criteria #8)
+1. Verify API calls are made when:
+   - Loading course catalog
+   - Selecting/deselecting courses
+   - Configuring rates
+   - Saving changes
+2. Test data persistence:
+   - Select courses and configure rates
+   - Navigate away and return
+   - Verify selections persist
+3. Test error handling:
+   - Simulate network errors
+   - Verify appropriate error messages
+   - Test retry functionality
+4. Verify final submission saves to backend properly
+
+Expected: Backend integration works reliably with proper error handling
+Screenshot: 12_backend_integration_verified.png
+
+Step 13: Complete Course Selection and Continue
+1. Finalize course selections:
+   - Mathematics (10th-12th grade, €32/hour)
+   - Physics (10th-12th grade, €28/hour)
+   - Chemistry (10th-11th grade, €28/hour)
+   - Portuguese Literature (10th-12th grade, €22/hour)
+2. Review selections summary
+3. Click "Continue with Selected Courses" or similar
+4. Verify progression to next onboarding step
+5. Confirm data was saved to backend
+
+Expected: Course selection completes successfully and progresses
+Screenshot: 13_course_selection_complete.png
+
+Step 14: Verify Integration with Teacher Profile
+1. Complete remaining onboarding steps
+2. Navigate to teacher profile/dashboard
+3. Verify selected courses appear in:
+   - Teacher profile overview
+   - Available subjects for booking
+   - Rate information in booking system
+4. Test that course selections integrate properly with scheduling system
+
+Expected: Course selections integrate properly with teacher profile
+Screenshot: 14_profile_integration_verified.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: ALL of the following conditions must be met:
+
+**Acceptance Criteria #1 - Educational System Selection:**
+- Portugal, Brazil, and Custom options clearly displayed with descriptions
+- System selection updates available courses appropriately
+
+**Acceptance Criteria #2 - Course Browsing Interface:**
+- Courses organized by education level and subject area
+- Course cards show comprehensive information
+- Interface is intuitive and easy to navigate
+
+**Acceptance Criteria #3 - Multi-Select Functionality:**
+- Multiple courses can be selected simultaneously
+- Clear visual feedback for selections
+- Easy deselection capability
+
+**Acceptance Criteria #4 - Grade Level Specification:**
+- Grade levels can be specified for each selected course
+- Default and custom grade level options work
+- Changes save properly
+
+**Acceptance Criteria #5 - Course-Specific Rate Configuration:**
+- Different hourly rates can be set per course
+- Rate validation works properly
+- Suggested pricing displayed where applicable
+
+**Acceptance Criteria #6 - Search and Filter Functionality:**
+- Search finds courses accurately
+- Filters work correctly (level, subject, grade)
+- Combined search and filter operations work
+- Clear filters functionality works
+
+**Acceptance Criteria #7 - Visual Confirmation and Management:**
+- Selected courses displayed clearly with all details
+- Easy removal and editing options
+- Selection summary accurate
+
+**Acceptance Criteria #8 - Backend Integration:**
+- Course and TeacherCourse models integration works
+- Data persistence across navigation
+- API error handling appropriate
+- Final submission saves correctly
+
+**General Requirements:**
+- No JavaScript errors in browser console
+- No server errors in backend logs
+- Performance acceptable (each action <2 seconds)
+- Mobile responsive design works
+- User experience is smooth and intuitive
+
+FAIL: ANY of the following conditions occur:
+- Any acceptance criteria fails to meet requirements
+- JavaScript errors appear in browser console
+- Server errors occur during the process
+- User interface has visual glitches or poor usability
+- Data persistence fails
+- API integration doesn't work properly
+- Performance is unacceptable (>5 seconds for actions)
+- Mobile interface doesn't work
+- Search or filter functionality fails
+- Course selection or rate configuration fails
+- Error handling is inadequate
+
+Individual Step Criteria:
+- Steps 1-4: PASS if environment setup and navigation to course catalog works
+- Step 5: PASS if educational system selection works with descriptions
+- Step 6: PASS if course browsing is well-organized and informative
+- Step 7: PASS if multi-select functionality works smoothly
+- Step 8: PASS if grade level specification works for all courses
+- Step 9: PASS if rate configuration works with proper validation
+- Step 10: PASS if search and filter functionality works accurately
+- Step 11: PASS if visual confirmation and management is intuitive
+- Step 12: PASS if backend integration works reliably
+- Step 13: PASS if course selection completes and progresses properly
+- Step 14: PASS if course selections integrate with teacher profile
+
+Overall Result: PASS only if ALL steps pass AND all 8 acceptance criteria are fully validated
+Performance Criteria: Complete test should execute within 30 minutes, each step <3 minutes

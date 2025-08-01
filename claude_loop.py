@@ -17,12 +17,14 @@ def run_claude_loop(start_issue=43, end_issue=59, delay=5):
     try:
         i=start_issue
         while i<=end_issue:
-            i+=1
+
+            code_user_story = f'implement-gh-user-story {i}'
+            plan_user_story = f'user-story-to-tech-plan {i}'
+            command_issue = code_user_story
+            
             print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] Starting 'claude' command...")
             start_time = time.time()
-
-            command_issue = f'implement-gh-user-story {i}'
-            
+            print(f"Command: /{command_issue}")
             try:
                 # Use subprocess.run without timeout to let command complete naturally
                 result = subprocess.run([f'claude -p --dangerously-skip-permissions "/{command_issue}"'], 
@@ -47,12 +49,22 @@ def run_claude_loop(start_issue=43, end_issue=59, delay=5):
             except Exception as e:
                 print(f"Error executing command: {e}")
             
-            if delay > 0:
-                print(f"Waiting {delay} seconds before next execution...")
-                time.sleep(delay)
+            i+=1
+            print(f"Waiting {delay} seconds before next execution...")
+            time.sleep(delay)
             
     except KeyboardInterrupt:
         print("\nLoop stopped by user")
 
+import sys
+
 if __name__ == "__main__":
-    run_claude_loop(start_issue=43, end_issue=59, delay=1)
+    if len(sys.argv) < 2:
+        print("Usage: python claude_loop.py <start_issue>")
+        sys.exit(1)
+    try:
+        start_issue = int(sys.argv[1])
+    except ValueError:
+        print("Error: <start_issue> must be an integer")
+        sys.exit(1)
+    run_claude_loop(start_issue=start_issue, end_issue=59, delay=300)

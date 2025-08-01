@@ -1,0 +1,2 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250731-160518,2025-07-31T16:05:18Z,FAIL,2,3,Playwright Chrome,macOS development,Backend API endpoints missing - cannot access course catalog

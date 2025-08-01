@@ -1,0 +1,770 @@
+QA Test Case: Performance and Load Testing
+
+Test ID: PURCHASE-006
+Test Name: API Performance Testing and Load Capacity Verification
+Purpose: Verify that the Purchase Initiation API performs adequately under normal and stress conditions, and identify performance bottlenecks
+Expected Result: API maintains good response times under load and handles concurrent requests efficiently
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- API Endpoint: POST /finances/api/purchase/initiate/
+- Performance Focus: Response time, throughput, resource usage, scalability
+- Load Testing: Concurrent requests, sustained load, peak capacity
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - Database: SQLite (development) - note performance limitations
+   - Stripe: Test mode for payment intent creation
+
+Performance Benchmarks:
+- Normal Response Time: < 2 seconds
+- Under Load Response Time: < 5 seconds
+- Concurrent Users: 10-50 simultaneous requests
+- Throughput Target: 10+ requests/second
+- Memory Usage: Stable (no memory leaks)
+- Database Connections: Proper pooling and cleanup
+
+Testing Tools:
+- curl for individual requests
+- Apache Bench (ab) for load testing
+- Python scripts for concurrent testing
+- System monitoring (htop, iostat)
+- Database query analysis
+
+Test Categories:
+1. Baseline Performance Measurement
+2. Single Request Response Time
+3. Concurrent Request Handling
+4. Sustained Load Testing
+5. Peak Capacity Testing
+6. Resource Usage Monitoring
+7. Database Performance Impact
+8. Error Rate Under Load
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Baseline Measurement
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+System Resource Baseline:
+  # Monitor initial system state
+  top -l 1 | grep "CPU usage"
+  ps aux | grep python | head -5
+  free -h  # On Linux, or equivalent memory check on macOS
+
+Database Connection Baseline:
+  cd backend
+  python manage.py shell
+  
+  from django.db import connections
+  from django.conf import settings
+  
+  print(f"Database engine: {settings.DATABASES['default']['ENGINE']}")
+  print(f"Database name: {settings.DATABASES['default']['NAME']}")
+  
+  # Check initial database state
+  from finances.models import PurchaseTransaction, StudentAccountBalance
+  print(f"Initial transactions: {PurchaseTransaction.objects.count()}")
+  print(f"Initial balances: {StudentAccountBalance.objects.count()}")
+
+API Baseline Response:
+  time curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Baseline Test",
+        "email": "baseline@example.com"
+      }
+    }' \
+    -w "\nTime: %{time_total}s\nSize: %{size_download} bytes\n" \
+    -v
+
+Expected Baseline:
+- Response time: < 2 seconds
+- HTTP 201 status
+- Valid response format
+- No memory spikes
+
+Screenshot: 01_baseline_performance_established.png
+
+Step 2: Single Request Performance Analysis
+Test 2.1: Multiple individual requests with timing
+
+Create performance test script (perf_single.sh):
+```bash
+#!/bin/bash
+echo "Single Request Performance Test"
+echo "==============================="
+
+total_time=0
+success_count=0
+failed_count=0
+
+for i in {1..10}; do
+  echo -n "Request $i: "
+  
+  start_time=$(date +%s.%N)
+  
+  response=$(curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"plan_id\": 1,
+      \"student_info\": {
+        \"name\": \"Perf Test $i\",
+        \"email\": \"perf$i@example.com\"
+      }
+    }" \
+    -w "%{http_code}" \
+    -s -o /dev/null)
+  
+  end_time=$(date +%s.%N)
+  duration=$(echo "$end_time - $start_time" | bc)
+  total_time=$(echo "$total_time + $duration" | bc)
+  
+  if [ "$response" -eq 201 ]; then
+    echo "✓ ${duration}s (SUCCESS)"
+    ((success_count++))
+  else
+    echo "✗ ${duration}s (HTTP $response)"
+    ((failed_count++))
+  fi
+  
+  sleep 1  # 1 second between requests
+done
+
+echo ""
+echo "Performance Summary:"
+echo "==================="
+echo "Total requests: 10"
+echo "Successful: $success_count"
+echo "Failed: $failed_count"
+avg_time=$(echo "scale=3; $total_time / 10" | bc)
+echo "Average response time: ${avg_time}s"
+```
+
+Execute:
+  chmod +x perf_single.sh
+  ./perf_single.sh
+
+Expected Results:
+- All 10 requests: HTTP 201
+- Average response time: < 2 seconds
+- No significant variance between requests
+- Success rate: 100%
+
+Test 2.2: Response time consistency
+
+Measure 20 consecutive requests and analyze variance:
+```bash
+#!/bin/bash
+echo "Response Time Consistency Test"
+times=()
+
+for i in {1..20}; do
+  start=$(date +%s.%N)
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d "{\"plan_id\": 1, \"student_info\": {\"name\": \"Consistency $i\", \"email\": \"consistency$i@example.com\"}}" \
+    -s -o /dev/null
+  end=$(date +%s.%N)
+  duration=$(echo "$end - $start" | bc)
+  times+=($duration)
+  echo "Request $i: ${duration}s"
+done
+
+# Calculate statistics
+python3 -c "
+import sys
+times = [float(x) for x in '''${times[*]}'''.split()]
+print(f'Min: {min(times):.3f}s')
+print(f'Max: {max(times):.3f}s')
+print(f'Avg: {sum(times)/len(times):.3f}s')
+print(f'Std Dev: {(sum((x-sum(times)/len(times))**2 for x in times)/len(times))**0.5:.3f}s')
+"
+```
+
+Expected Consistency:
+- Standard deviation < 0.5 seconds
+- No outliers > 5 seconds
+- Minimal performance degradation over time
+
+Screenshot: 02_single_request_performance.png
+
+Step 3: Concurrent Request Handling
+Test 3.1: Low concurrency (5 simultaneous requests)
+
+Concurrent test script (concurrent_low.sh):
+```bash
+#!/bin/bash
+echo "Low Concurrency Test (5 concurrent requests)"
+echo "============================================"
+
+start_time=$(date +%s.%N)
+
+for i in {1..5}; do
+  (
+    response=$(curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+      -H "Content-Type: application/json" \
+      -d "{
+        \"plan_id\": 1,
+        \"student_info\": {
+          \"name\": \"Concurrent Low $i\",
+          \"email\": \"concurrent_low$i@example.com\"
+        }
+      }" \
+      -w "%{http_code}:%{time_total}" \
+      -s -o /dev/null)
+    
+    echo "Worker $i: $response"
+  ) &
+done
+
+wait  # Wait for all background processes to complete
+
+end_time=$(date +%s.%N)
+total_duration=$(echo "$end_time - $start_time" | bc)
+echo "Total time for 5 concurrent requests: ${total_duration}s"
+```
+
+Execute:
+  chmod +x concurrent_low.sh
+  ./concurrent_low.sh
+
+Expected Results:
+- All 5 requests: HTTP 201
+- Total time: < 5 seconds
+- No database locking issues
+- Unique transaction IDs for each request
+
+Test 3.2: Medium concurrency (15 simultaneous requests)
+
+Similar script with 15 concurrent requests:
+```bash
+#!/bin/bash
+echo "Medium Concurrency Test (15 concurrent requests)"
+
+success_count=0
+start_time=$(date +%s.%N)
+
+for i in {1..15}; do
+  (
+    response=$(curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+      -H "Content-Type: application/json" \
+      -d "{\"plan_id\": 1, \"student_info\": {\"name\": \"Concurrent Med $i\", \"email\": \"concurrent_med$i@example.com\"}}" \
+      -w "%{http_code}" \
+      -s -o /dev/null)
+    
+    if [ "$response" -eq 201 ]; then
+      echo "✓ Worker $i: SUCCESS"
+    else
+      echo "✗ Worker $i: HTTP $response"
+    fi
+  ) &
+done
+
+wait
+end_time=$(date +%s.%N)
+total_duration=$(echo "$end_time - $start_time" | bc)
+echo "15 concurrent requests completed in: ${total_duration}s"
+```
+
+Expected Results:
+- Success rate: ≥ 90% (allowing for some timeouts)
+- Total time: < 10 seconds
+- Server remains responsive
+
+Test 3.3: High concurrency (50 simultaneous requests)
+
+Test system limits with 50 concurrent requests:
+```bash
+#!/bin/bash
+echo "High Concurrency Test (50 concurrent requests)"
+
+pids=()
+start_time=$(date +%s.%N)
+
+for i in {1..50}; do
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d "{\"plan_id\": 1, \"student_info\": {\"name\": \"High $i\", \"email\": \"high$i@example.com\"}}" \
+    -w "Request $i: %{http_code}:%{time_total}s\n" \
+    -s -o /dev/null &
+  
+  pids+=($!)
+  
+  # Add small delay to prevent overwhelming
+  sleep 0.02
+done
+
+echo "Waiting for all requests to complete..."
+wait
+
+end_time=$(date +%s.%N)
+total_duration=$(echo "$end_time - $start_time" | bc)
+echo "50 concurrent requests completed in: ${total_duration}s"
+```
+
+Expected Results:
+- Success rate: ≥ 80% (some failures acceptable under extreme load)
+- Total time: < 30 seconds
+- Server doesn't crash or become unresponsive
+
+Screenshot: 03_concurrent_request_handling.png
+
+Step 4: Sustained Load Testing
+Test 4.1: Sustained moderate load (2 requests/second for 2 minutes)
+
+Sustained load script (sustained_load.sh):
+```bash
+#!/bin/bash
+echo "Sustained Load Test (2 req/sec for 2 minutes)"
+echo "=============================================="
+
+start_time=$(date +%s)
+end_time=$((start_time + 120))  # 2 minutes
+request_count=0
+success_count=0
+failed_count=0
+
+while [ $(date +%s) -lt $end_time ]; do
+  ((request_count++))
+  
+  response=$(curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d "{\"plan_id\": 1, \"student_info\": {\"name\": \"Sustained $request_count\", \"email\": \"sustained$request_count@example.com\"}}" \
+    -w "%{http_code}" \
+    -s -o /dev/null)
+  
+  if [ "$response" -eq 201 ]; then
+    ((success_count++))
+    echo -n "✓"
+  else
+    ((failed_count++))
+    echo -n "✗"
+  fi
+  
+  # Maintain 2 requests per second
+  sleep 0.5
+done
+
+echo ""
+echo "Sustained Load Test Results:"
+echo "Total requests: $request_count"
+echo "Successful: $success_count"
+echo "Failed: $failed_count"
+success_rate=$(echo "scale=2; $success_count * 100 / $request_count" | bc)
+echo "Success rate: ${success_rate}%"
+echo "Requests per second: $(echo "scale=2; $request_count / 120" | bc)"
+```
+
+Execute and monitor system resources:
+  # Terminal 1: Run the test
+  ./sustained_load.sh
+  
+  # Terminal 2: Monitor resources
+  top -l 10 -s 5 -o cpu
+
+Expected Results:
+- Success rate: ≥ 95%
+- ~240 total requests (2/sec × 120 seconds)
+- Stable memory usage
+- No significant CPU spikes
+
+Screenshot: 04_sustained_load_testing.png
+
+Step 5: Database Performance Impact
+Test 5.1: Database query analysis during load
+
+Monitor database activity during concurrent requests:
+
+Database monitoring script (db_monitor.py):
+```python
+#!/usr/bin/env python3
+import os
+import sys
+import django
+import time
+import threading
+from datetime import datetime
+
+# Setup Django
+sys.path.append('/Users/anapmc/Code/aprendecomigo/backend')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'aprendecomigo.settings.development')
+django.setup()
+
+from django.db import connection
+from finances.models import PurchaseTransaction, StudentAccountBalance
+from accounts.models import CustomUser
+
+def monitor_database():
+    start_count = PurchaseTransaction.objects.count()
+    start_users = CustomUser.objects.count()
+    start_balances = StudentAccountBalance.objects.count()
+    
+    print(f"Initial state:")
+    print(f"  Transactions: {start_count}")
+    print(f"  Users: {start_users}")
+    print(f"  Balances: {start_balances}")
+    print(f"  DB queries: {len(connection.queries)}")
+    print("")
+    
+    # Monitor for 30 seconds
+    for i in range(30):
+        time.sleep(1)
+        current_txs = PurchaseTransaction.objects.count()
+        current_users = CustomUser.objects.count()
+        current_balances = StudentAccountBalance.objects.count()
+        current_queries = len(connection.queries)
+        
+        print(f"T+{i+1:02d}s: Txs={current_txs} (+{current_txs-start_count}) "
+              f"Users={current_users} (+{current_users-start_users}) "
+              f"Balances={current_balances} (+{current_balances-start_balances}) "
+              f"Queries={current_queries}")
+
+if __name__ == "__main__":
+    monitor_database()
+```
+
+Run database monitoring during concurrent test:
+  # Terminal 1: Start database monitoring
+  python3 db_monitor.py
+  
+  # Terminal 2: Run concurrent requests
+  ./concurrent_med.sh
+
+Expected Database Behavior:
+- Linear increase in transactions
+- Proper user creation/reuse
+- Account balance creation
+- No database deadlocks or timeout errors
+
+Test 5.2: Database connection handling
+
+Check for connection leaks:
+```python
+from django.db import connections
+
+# Before load test
+initial_connections = len(connections.all())
+print(f"Initial DB connections: {initial_connections}")
+
+# Run load test here
+
+# After load test
+final_connections = len(connections.all())
+print(f"Final DB connections: {final_connections}")
+print(f"Connection difference: {final_connections - initial_connections}")
+```
+
+Expected: No significant connection leak (difference < 5)
+
+Screenshot: 05_database_performance_impact.png
+
+Step 6: Memory Usage and Resource Monitoring
+Test 6.1: Memory usage during load
+
+Memory monitoring script (memory_monitor.sh):
+```bash
+#!/bin/bash
+echo "Memory Usage Monitoring During Load Test"
+echo "========================================"
+
+# Get initial memory usage
+initial_memory=$(ps aux | grep 'python.*manage.py runserver' | grep -v grep | awk '{print $6}')
+echo "Initial Django memory usage: ${initial_memory}KB"
+
+# Start background load test
+echo "Starting background load test..."
+for i in {1..100}; do
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d "{\"plan_id\": 1, \"student_info\": {\"name\": \"Memory $i\", \"email\": \"memory$i@example.com\"}}" \
+    -s -o /dev/null &
+  
+  # Monitor memory every 10 requests
+  if [ $((i % 10)) -eq 0 ]; then
+    current_memory=$(ps aux | grep 'python.*manage.py runserver' | grep -v grep | awk '{print $6}')
+    echo "After $i requests: ${current_memory}KB (+$((current_memory - initial_memory))KB)"
+    sleep 1
+  fi
+done
+
+wait  # Wait for all requests to complete
+
+# Final memory check
+final_memory=$(ps aux | grep 'python.*manage.py runserver' | grep -v grep | awk '{print $6}')
+echo ""
+echo "Memory Usage Summary:"
+echo "Initial: ${initial_memory}KB"
+echo "Final: ${final_memory}KB"
+echo "Increase: $((final_memory - initial_memory))KB"
+
+memory_increase_percent=$(echo "scale=2; ($final_memory - $initial_memory) * 100 / $initial_memory" | bc)
+echo "Percentage increase: ${memory_increase_percent}%"
+```
+
+Execute:
+  chmod +x memory_monitor.sh
+  ./memory_monitor.sh
+
+Expected Memory Behavior:
+- Memory increase < 50MB during test
+- No continuous memory growth (no leaks)
+- Memory stabilizes after requests complete
+
+Test 6.2: CPU usage monitoring
+
+CPU monitoring during sustained load:
+```bash
+#!/bin/bash
+echo "CPU Usage Monitoring"
+echo "==================="
+
+# Start background load
+echo "Starting sustained load test..."
+for i in {1..50}; do
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d "{\"plan_id\": 1, \"student_info\": {\"name\": \"CPU $i\", \"email\": \"cpu$i@example.com\"}}" \
+    -s -o /dev/null &
+  sleep 0.1
+done &
+
+# Monitor CPU for 30 seconds
+for i in {1..30}; do
+  cpu_usage=$(top -l 1 -n 0 | grep "CPU usage" | awk '{print $3}' | sed 's/%//')
+  echo "T+${i}s: CPU usage: ${cpu_usage}%"
+  sleep 1
+done
+
+wait  # Wait for background requests
+echo "Load test completed"
+```
+
+Expected CPU Behavior:
+- CPU usage spikes during requests
+- CPU returns to baseline after completion
+- No sustained high CPU usage
+
+Screenshot: 06_resource_usage_monitoring.png
+
+Step 7: Error Rate Analysis Under Load
+Test 7.1: Error rate measurement during stress
+
+Stress test with error tracking:
+```bash
+#!/bin/bash
+echo "Error Rate Analysis Under Stress"
+echo "================================"
+
+total_requests=0
+success_count=0
+error_400=0
+error_500=0
+error_timeout=0
+error_other=0
+
+# Generate high load
+for i in {1..200}; do
+  ((total_requests++))
+  
+  response=$(timeout 10 curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d "{\"plan_id\": 1, \"student_info\": {\"name\": \"Stress $i\", \"email\": \"stress$i@example.com\"}}" \
+    -w "%{http_code}" \
+    -s -o /dev/null 2>/dev/null)
+  
+  case $response in
+    "201") ((success_count++)); echo -n "✓";;
+    "400") ((error_400++)); echo -n "4";;
+    "500"|"502"|"503") ((error_500++)); echo -n "5";;
+    "") ((error_timeout++)); echo -n "T";;
+    *) ((error_other++)); echo -n "?";;
+  esac
+  
+  # No delay - maximum stress
+done &
+
+# Wait for completion
+wait
+
+echo ""
+echo "Error Rate Analysis Results:"
+echo "============================"
+echo "Total requests: $total_requests"
+echo "Successful (201): $success_count ($(echo "scale=1; $success_count * 100 / $total_requests" | bc)%)"
+echo "Client errors (400): $error_400 ($(echo "scale=1; $error_400 * 100 / $total_requests" | bc)%)"
+echo "Server errors (5xx): $error_500 ($(echo "scale=1; $error_500 * 100 / $total_requests" | bc)%)"
+echo "Timeouts: $error_timeout ($(echo "scale=1; $error_timeout * 100 / $total_requests" | bc)%)"
+echo "Other errors: $error_other ($(echo "scale=1; $error_other * 100 / $total_requests" | bc)%)"
+
+total_errors=$((error_400 + error_500 + error_timeout + error_other))
+echo "Total error rate: $(echo "scale=1; $total_errors * 100 / $total_requests" | bc)%"
+```
+
+Expected Error Rates:
+- Success rate: ≥ 70% under maximum stress
+- Server errors (5xx): < 10%
+- Timeouts: < 20%
+- Total error rate: < 30%
+
+Screenshot: 07_error_rate_analysis.png
+
+Step 8: Recovery and Cleanup Testing
+Test 8.1: System recovery after load
+
+Recovery test script:
+```bash
+#!/bin/bash
+echo "System Recovery Test"
+echo "==================="
+
+# Generate heavy load
+echo "Generating heavy load for 30 seconds..."
+for i in {1..100}; do
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d "{\"plan_id\": 1, \"student_info\": {\"name\": \"Recovery $i\", \"email\": \"recovery$i@example.com\"}}" \
+    -s -o /dev/null &
+done &
+
+sleep 30
+echo "Load phase completed. Testing recovery..."
+
+# Wait for all background processes
+wait
+
+# Test normal operation after load
+echo "Testing normal operation after load..."
+for i in {1..5}; do
+  start_time=$(date +%s.%N)
+  
+  response=$(curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d "{\"plan_id\": 1, \"student_info\": {\"name\": \"Post Recovery $i\", \"email\": \"post_recovery$i@example.com\"}}" \
+    -w "%{http_code}" \
+    -s -o /dev/null)
+  
+  end_time=$(date +%s.%N)
+  duration=$(echo "$end_time - $start_time" | bc)
+  
+  echo "Post-load request $i: HTTP $response in ${duration}s"
+  sleep 2
+done
+```
+
+Expected Recovery:
+- Normal response times restored within 30 seconds
+- All post-load requests successful (HTTP 201)
+- No degraded performance after load test
+
+Test 8.2: Database integrity after stress
+
+Database integrity check:
+```python
+import django
+import os
+import sys
+
+sys.path.append('/Users/anapmc/Code/aprendecomigo/backend')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'aprendecomigo.settings.development')
+django.setup()
+
+from finances.models import PurchaseTransaction, StudentAccountBalance
+from accounts.models import CustomUser
+
+print("Database Integrity Check After Load Test")
+print("========================================")
+
+# Check for orphaned records
+total_transactions = PurchaseTransaction.objects.count()
+transactions_with_users = PurchaseTransaction.objects.filter(student__isnull=False).count()
+print(f"Total transactions: {total_transactions}")
+print(f"Transactions with valid users: {transactions_with_users}")
+print(f"Orphaned transactions: {total_transactions - transactions_with_users}")
+
+# Check balance consistency
+total_balances = StudentAccountBalance.objects.count()
+users_with_balances = CustomUser.objects.filter(student_balance__isnull=False).count()
+print(f"Total account balances: {total_balances}")
+print(f"Users with balances: {users_with_balances}")
+
+# Check for duplicate payment intents
+from django.db.models import Count
+duplicate_intents = PurchaseTransaction.objects.values('stripe_payment_intent_id').annotate(
+    count=Count('stripe_payment_intent_id')
+).filter(count__gt=1)
+
+print(f"Duplicate payment intent IDs: {duplicate_intents.count()}")
+
+if duplicate_intents.count() == 0:
+    print("✓ Database integrity maintained")
+else:
+    print("✗ Database integrity issues found")
+```
+
+Expected Integrity:
+- No orphaned transaction records
+- All users have account balances
+- No duplicate payment intent IDs
+- Database constraints maintained
+
+Screenshot: 08_recovery_and_cleanup_verified.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: API performs adequately under load AND handles stress gracefully
+FAIL: Poor performance OR system instability under load OR resource issues
+
+Individual Step Criteria:
+- Step 1: PASS if baseline performance established < 2s, FAIL if slow baseline
+- Step 2: PASS if single requests consistent < 2s average, FAIL if inconsistent/slow
+- Step 3: PASS if concurrent requests handled well (≥90% success), FAIL if high failure rate
+- Step 4: PASS if sustained load handled (≥95% success), FAIL if degradation
+- Step 5: PASS if database performance stable, FAIL if deadlocks/slow queries
+- Step 6: PASS if resource usage reasonable, FAIL if memory leaks/high CPU
+- Step 7: PASS if error rates acceptable under stress (≥70% success), FAIL if excessive errors
+- Step 8: PASS if system recovers quickly, FAIL if degraded post-load performance
+
+Performance Requirements:
+- Normal response time: < 2 seconds
+- Under load response time: < 5 seconds
+- Concurrent request success rate: ≥ 90%
+- Sustained load success rate: ≥ 95%
+- Stress test success rate: ≥ 70%
+- Recovery time: < 30 seconds to baseline
+
+Resource Usage Requirements:
+- Memory increase during load: < 50MB
+- No memory leaks (memory returns to baseline)
+- CPU usage spikes acceptable but returns to normal
+- Database connections properly managed (no leaks)
+
+Scalability Requirements:
+- Handle 10 concurrent requests efficiently
+- Handle 50 concurrent requests with acceptable degradation
+- Sustain 2 requests/second for extended periods
+- Recover gracefully from stress conditions
+
+Database Performance:
+- No deadlocks under concurrent load
+- Query execution time stable under load
+- Proper connection pooling and cleanup
+- Data integrity maintained under all conditions
+
+Error Handling Under Load:
+- Appropriate error responses even under stress
+- No silent failures or data corruption
+- Graceful degradation rather than crashes
+- Proper logging of performance issues
+
+Overall Result: PASS only if ALL performance criteria met AND system stable under load

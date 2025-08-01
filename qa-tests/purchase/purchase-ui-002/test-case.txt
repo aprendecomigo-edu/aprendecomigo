@@ -1,0 +1,274 @@
+QA Test Case: Guest User Purchase Flow with Registration UI Testing
+
+Test ID: PURCHASE-UI-002
+Test Name: Guest User Purchase and Registration Flow UI Testing
+Purpose: Verify that guest users can complete purchase flow, create accounts during process, and experience seamless onboarding
+Expected Result: Guest user successfully completes purchase, creates account, and receives proper post-purchase guidance
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform frontend UI
+- Component: PurchaseFlow with guest user support and registration integration
+- Architecture: React Native + Expo with authentication flow
+- Routes: /purchase → /auth/signup → /purchase/success
+- Guest Flow: Purchase → Registration → Completion
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: .venv/ in project root (for backend)
+3. Environment Variables:
+   - EXPO_PUBLIC_ENV=development
+   - EXPO_PUBLIC_STRIPE_PUBLIC_KEY=pk_test_... (test mode)
+   - EXPO_PUBLIC_API_URL=http://localhost:8000/api
+
+Test Data:
+- Guest Email: guest.test@example.com (use unique email for each test run)
+- Guest Name: Guest Test User
+- Test Plan: Any available pricing plan
+- Stripe Test Card: 4242 4242 4242 4242 (expires: any future date, CVC: any 3 digits)
+
+Browser Testing:
+- Primary: Chrome browser incognito mode (to ensure no cached auth)
+- Resolution: Desktop 1920x1080, Mobile 375x667
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup - Guest User State
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Open Chrome in incognito mode
+2. Navigate to http://localhost:8081
+3. Verify NO user is authenticated:
+   - Check that no user data appears in UI
+   - No authentication state in browser storage
+   - Landing page or public content displayed
+4. Clear any existing session data if needed
+
+Expected: Clean slate with no authenticated user
+- No authentication indicators in UI
+- Public/guest view of the application
+- No cached user data
+Screenshot: 01_guest_state_verified.png
+
+Step 2: Access Purchase Flow as Guest
+1. Navigate directly to http://localhost:8081/purchase
+2. Observe guest user experience on purchase page:
+   - Purchase flow loads for guest users
+   - No authentication required initially
+   - All UI components render properly for guests
+3. Check browser console for errors
+
+Expected: Purchase page accessible to guest users
+- Purchase flow initiates without authentication requirement
+- Clean UI with guest-appropriate messaging
+- No console errors or authentication blocks
+Screenshot: 02_guest_purchase_access.png
+
+Step 3: Plan Selection as Guest User
+1. Test pricing plan selection interface:
+   - All plans are available to guest users
+   - Plan cards display properly with prices and features
+   - Selection states work correctly
+2. Select a pricing plan:
+   - Click on plan card
+   - Verify visual feedback for selection
+   - Note any guest-specific messaging or pricing
+3. Proceed to next step:
+   - Click "Continue" or "Next" button
+   - Verify smooth transition
+
+Expected: Plan selection works identically for guest users
+- No restricted plans or guest limitations
+- Clear visual feedback on selection
+- Smooth progression to user information step
+Screenshot: 03_guest_plan_selection.png
+
+Step 4: Student Information Form - Guest Experience
+1. Verify guest user form experience:
+   - Name field is empty (no pre-fill)
+   - Email field is empty (no pre-fill)
+   - Form clearly indicates this will create new account
+   - Guest registration messaging is clear
+2. Test form with guest data:
+   - Enter name: "Guest Test User"
+   - Enter email: "guest.test@example.com" (unique email)
+   - Verify form validation works
+   - Check for any guest-specific validation
+3. Test form behavior:
+   - Real-time validation feedback
+   - Clear indication that account will be created
+   - Proper form progression
+
+Expected: Form clearly supports guest user registration
+- Empty fields ready for guest input
+- Clear messaging about account creation
+- Validation works properly for new users
+- No confusing authentication-related errors
+Screenshot: 04_guest_user_form.png
+
+Step 5: Account Creation Integration
+1. Continue from student info form
+2. Observe account creation process:
+   - System should initiate user registration
+   - Clear messaging about account creation
+   - No interruption in purchase flow
+3. Check for registration confirmation:
+   - User receives feedback about account creation
+   - Email verification process (if applicable)
+   - Seamless integration with purchase flow
+
+Expected: Smooth account creation during purchase
+- Account creation happens transparently
+- User receives clear feedback
+- Purchase flow continues without disruption
+- New user is properly authenticated
+Screenshot: 05_account_creation.png
+
+Step 6: Payment Processing for New User
+1. Verify payment form for newly created user:
+   - Stripe payment form loads properly
+   - New user context is maintained
+   - Payment form shows correct plan and pricing
+2. Complete payment with test card:
+   - Card: 4242 4242 4242 4242
+   - Expiry: any future date
+   - CVC: any 3 digits
+   - Name: Guest Test User
+3. Monitor payment processing:
+   - Loading states display properly
+   - New user session is maintained during payment
+   - No authentication errors during processing
+
+Expected: Payment processing works for newly registered user
+- Payment form functions identically to authenticated users
+- User session is maintained throughout
+- Payment processes successfully
+Screenshot: 06_guest_payment_processing.png
+
+Step 7: Success Screen for New User
+1. Verify post-purchase success experience:
+   - Success screen displays properly
+   - Welcome messaging appropriate for new users
+   - Account creation confirmation included
+   - Purchase confirmation details
+2. Test new user guidance:
+   - Onboarding information for new users
+   - Account setup guidance
+   - Next steps clearly explained
+3. Check navigation options:
+   - Dashboard access (should work for new user)
+   - Profile setup links
+   - Tutorial or onboarding triggers
+
+Expected: Excellent new user success experience
+- Success screen tailored for new users
+- Clear onboarding guidance
+- Account access works immediately
+- Professional welcome experience  
+Screenshot: 07_new_user_success.png
+
+Step 8: Post-Purchase Account Verification
+1. Verify new user account is fully functional:
+   - Navigate to dashboard or profile
+   - Confirm user is properly authenticated
+   - Check that purchase is reflected in account
+2. Test account functionality:
+   - User can access protected areas
+   - Balance reflects completed purchase
+   - Account settings are accessible
+3. Verify user data persistence:
+   - Refresh browser and confirm user remains logged in
+   - Check that account data is properly saved
+
+Expected: New user account is fully functional
+- User is authenticated and can access all features
+- Purchase is properly associated with new account
+- Account data persists across browser refresh
+Screenshot: 08_account_verification.png
+
+Step 9: Email Verification Flow (if applicable)
+1. Check for email verification requirements:
+   - If system sends email verification
+   - Check email (if possible) for verification message
+   - Test verification process if required
+   - Ensure purchase is not blocked by unverified email
+2. Test account access with/without email verification:
+   - Verify user can access purchased content
+   - Check if email verification is required for full access
+
+Expected: Email verification (if required) doesn't block purchase benefits
+- User can access purchased services immediately
+- Email verification process is clear and user-friendly
+- No blocking of essential functionality
+Screenshot: 09_email_verification.png
+
+Step 10: Guest vs Authenticated User Comparison
+1. Complete the same purchase flow with authenticated user
+2. Compare experiences:
+   - Form pre-filling differences
+   - User guidance differences
+   - Success screen differences
+   - Time to completion differences
+3. Verify both flows lead to equivalent outcomes:
+   - Same access to purchased services
+   - Same account functionality
+   - Equivalent user experience quality
+
+Expected: Guest flow provides equivalent value to authenticated flow
+- Guest users aren't penalized with worse experience
+- Both flows result in same level of access
+- New user gets same quality service as existing users
+Screenshot: 10_flow_comparison.png
+
+Step 11: Mobile Guest User Experience
+1. Switch to mobile view (375x667)
+2. Repeat critical guest user flow steps on mobile:
+   - Plan selection on mobile
+   - Guest form completion on mobile
+   - Payment form on mobile device view
+   - Success screen mobile experience
+3. Test touch interactions and mobile usability
+
+Expected: Excellent mobile experience for guest users
+- Mobile form inputs are user-friendly
+- Touch targets are appropriately sized
+- No mobile-specific guest user issues
+Screenshot: 11_mobile_guest_experience.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Guest user can complete purchase and account creation with excellent experience
+FAIL: Any barriers, confusion, or poor UX for guest users
+
+Individual Step Criteria:
+- Step 1: PASS if clean guest state verified, FAIL if authentication issues
+- Step 2: PASS if purchase accessible to guests, FAIL if blocked or restricted
+- Step 3: PASS if plan selection works identically for guests, FAIL if guest limitations
+- Step 4: PASS if form supports guest registration clearly, FAIL if confusing UX
+- Step 5: PASS if account creation is seamless, FAIL if disruptive or confusing
+- Step 6: PASS if payment works for new users, FAIL if authentication errors
+- Step 7: PASS if success screen welcomes new users properly, FAIL if generic experience
+- Step 8: PASS if new account is fully functional, FAIL if access issues
+- Step 9: PASS if email verification doesn't block benefits, FAIL if blocks access
+- Step 10: PASS if guest flow equals authenticated flow quality, FAIL if inferior experience
+- Step 11: PASS if mobile guest experience excellent, FAIL if mobile UX issues
+
+Guest User Experience Requirements:
+- No authentication barriers during purchase
+- Clear messaging about account creation
+- Seamless transition from guest to authenticated user
+- Equivalent experience quality as existing users
+- Proper onboarding for new users
+- No confusing authentication-related messaging
+
+Conversion Optimization:
+- Minimal friction for guest users
+- Clear value proposition during signup
+- No abandonment points in flow
+- Professional and trustworthy experience
+
+Overall Result: PASS only if guest users can complete purchase with excellent UX and receive same quality service as authenticated users

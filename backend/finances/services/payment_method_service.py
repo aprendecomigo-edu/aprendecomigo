@@ -1,0 +1,409 @@
+"""
+Payment Method Management Service for the finances app.
+
+Handles secure payment method storage using Stripe tokenization.
+Maintains PCI compliance by storing only Stripe tokens, not card data.
+"""
+
+import logging
+from typing import Dict, Any, Optional, List
+
+from django.db import transaction
+from accounts.models import CustomUser
+from finances.models import StoredPaymentMethod
+from finances.services.stripe_base import StripeService
+
+
+logger = logging.getLogger(__name__)
+
+
+class PaymentMethodService:
+    """
+    Service for managing stored payment methods with Stripe tokenization.
+    
+    Features:
+    - Secure payment method storage using Stripe tokens
+    - PCI compliance (no sensitive card data stored)
+    - Default payment method management
+    - Payment method validation and cleanup
+    - Comprehensive error handling
+    """
+    
+    def __init__(self):
+        """Initialize the service with Stripe integration."""
+        self.stripe_service = StripeService()
+    
+    def add_payment_method(self, student_user: CustomUser, stripe_payment_method_id: str, 
+                          is_default: bool = False) -> Dict[str, Any]:
+        """
+        Add a new payment method for a student using Stripe tokenization.
+        
+        Args:
+            student_user: Student user to add payment method for
+            stripe_payment_method_id: Stripe PaymentMethod ID from frontend
+            is_default: Whether to set as default payment method
+            
+        Returns:
+            Dict containing success status, payment method data, or error information
+        """
+        try:
+            # Validate Stripe payment method
+            payment_method_data = self._validate_stripe_payment_method(stripe_payment_method_id)
+            if not payment_method_data['success']:
+                return payment_method_data
+            
+            stripe_pm_data = payment_method_data['payment_method']
+            
+            # Check if payment method already exists
+            if StoredPaymentMethod.objects.filter(
+                stripe_payment_method_id=stripe_payment_method_id
+            ).exists():
+                return {
+                    'success': False,
+                    'error_type': 'already_exists',
+                    'message': 'This payment method is already stored'
+                }
+            
+            # Create payment method record with atomic transaction
+            with transaction.atomic():
+                # If setting as default, unset other defaults
+                if is_default:
+                    StoredPaymentMethod.objects.filter(
+                        student=student_user,
+                        is_default=True
+                    ).update(is_default=False)
+                
+                # Create new payment method record
+                stored_payment_method = StoredPaymentMethod.objects.create(
+                    student=student_user,
+                    stripe_payment_method_id=stripe_payment_method_id,
+                    card_brand=stripe_pm_data.get('brand', ''),
+                    card_last4=stripe_pm_data.get('last4', ''),
+                    card_exp_month=stripe_pm_data.get('exp_month'),
+                    card_exp_year=stripe_pm_data.get('exp_year'),
+                    is_default=is_default,
+                    is_active=True
+                )
+            
+            logger.info(
+                f"Added payment method {stored_payment_method.id} "
+                f"for student {student_user.id} (Stripe PM: {stripe_payment_method_id})"
+            )
+            
+            return {
+                'success': True,
+                'payment_method_id': stored_payment_method.id,
+                'card_display': stored_payment_method.card_display,
+                'is_default': stored_payment_method.is_default,
+                'message': 'Payment method added successfully'
+            }
+            
+        except Exception as e:
+            logger.error(
+                f"Error adding payment method for student {student_user.id}: {e}", 
+                exc_info=True
+            )
+            return {
+                'success': False,
+                'error_type': 'creation_error',
+                'message': f'Failed to add payment method: {str(e)}'
+            }
+    
+    def remove_payment_method(self, student_user: CustomUser, payment_method_id: int) -> Dict[str, Any]:
+        """
+        Remove a stored payment method and detach from Stripe.
+        
+        Args:
+            student_user: Student user removing the payment method
+            payment_method_id: ID of the stored payment method to remove
+            
+        Returns:
+            Dict containing success status or error information
+        """
+        try:
+            # Get and validate payment method
+            try:
+                stored_payment_method = StoredPaymentMethod.objects.get(
+                    id=payment_method_id,
+                    student=student_user
+                )
+            except StoredPaymentMethod.DoesNotExist:
+                return {
+                    'success': False,
+                    'error_type': 'not_found',
+                    'message': 'Payment method not found'
+                }
+            
+            stripe_payment_method_id = stored_payment_method.stripe_payment_method_id
+            was_default = stored_payment_method.is_default
+            
+            # Detach from Stripe and remove from database
+            with transaction.atomic():
+                # Detach from Stripe (best effort - don't fail if Stripe call fails)
+                try:
+                    self.stripe_service.detach_payment_method(stripe_payment_method_id)
+                    logger.info(f"Detached payment method {stripe_payment_method_id} from Stripe")
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to detach payment method {stripe_payment_method_id} from Stripe: {e}"
+                    )
+                
+                # Remove from database
+                stored_payment_method.delete()
+                
+                # If this was the default, set another one as default
+                if was_default:
+                    next_payment_method = StoredPaymentMethod.objects.filter(
+                        student=student_user,
+                        is_active=True
+                    ).first()
+                    
+                    if next_payment_method:
+                        next_payment_method.is_default = True
+                        next_payment_method.save()
+                        logger.info(f"Set payment method {next_payment_method.id} as new default")
+            
+            logger.info(f"Removed payment method {payment_method_id} for student {student_user.id}")
+            
+            return {
+                'success': True,
+                'message': 'Payment method removed successfully',
+                'was_default': was_default
+            }
+            
+        except Exception as e:
+            logger.error(
+                f"Error removing payment method {payment_method_id} for student {student_user.id}: {e}", 
+                exc_info=True
+            )
+            return {
+                'success': False,
+                'error_type': 'removal_error',
+                'message': f'Failed to remove payment method: {str(e)}'
+            }
+    
+    def list_payment_methods(self, student_user: CustomUser, include_expired: bool = False) -> Dict[str, Any]:
+        """
+        List all stored payment methods for a student.
+        
+        Args:
+            student_user: Student user to list payment methods for
+            include_expired: Whether to include expired payment methods
+            
+        Returns:
+            Dict containing payment methods list or error information
+        """
+        try:
+            queryset = StoredPaymentMethod.objects.filter(
+                student=student_user,
+                is_active=True
+            ).order_by('-is_default', '-created_at')
+            
+            payment_methods = []
+            for pm in queryset:
+                # Skip expired unless explicitly requested
+                if pm.is_expired and not include_expired:
+                    continue
+                
+                payment_methods.append({
+                    'id': pm.id,
+                    'card_brand': pm.card_brand,
+                    'card_last4': pm.card_last4,
+                    'card_exp_month': pm.card_exp_month,
+                    'card_exp_year': pm.card_exp_year,
+                    'card_display': pm.card_display,
+                    'is_default': pm.is_default,
+                    'is_expired': pm.is_expired,
+                    'created_at': pm.created_at.isoformat(),
+                })
+            
+            return {
+                'success': True,
+                'payment_methods': payment_methods,
+                'count': len(payment_methods)
+            }
+            
+        except Exception as e:
+            logger.error(f"Error listing payment methods for student {student_user.id}: {e}", exc_info=True)
+            return {
+                'success': False,
+                'error_type': 'list_error',
+                'message': f'Failed to list payment methods: {str(e)}'
+            }
+    
+    def set_default_payment_method(self, student_user: CustomUser, payment_method_id: int) -> Dict[str, Any]:
+        """
+        Set a payment method as the default for a student.
+        
+        Args:
+            student_user: Student user setting the default
+            payment_method_id: ID of the payment method to set as default
+            
+        Returns:
+            Dict containing success status or error information
+        """
+        try:
+            with transaction.atomic():
+                # Validate payment method exists and belongs to user
+                try:
+                    new_default = StoredPaymentMethod.objects.get(
+                        id=payment_method_id,
+                        student=student_user,
+                        is_active=True
+                    )
+                except StoredPaymentMethod.DoesNotExist:
+                    return {
+                        'success': False,
+                        'error_type': 'not_found',
+                        'message': 'Payment method not found'
+                    }
+                
+                # Check if expired
+                if new_default.is_expired:
+                    return {
+                        'success': False,
+                        'error_type': 'expired',
+                        'message': 'Cannot set expired payment method as default'
+                    }
+                
+                # Unset current default
+                StoredPaymentMethod.objects.filter(
+                    student=student_user,
+                    is_default=True
+                ).update(is_default=False)
+                
+                # Set new default
+                new_default.is_default = True
+                new_default.save()
+            
+            logger.info(f"Set payment method {payment_method_id} as default for student {student_user.id}")
+            
+            return {
+                'success': True,
+                'message': 'Default payment method updated successfully'
+            }
+            
+        except Exception as e:
+            logger.error(
+                f"Error setting default payment method {payment_method_id} for student {student_user.id}: {e}", 
+                exc_info=True
+            )
+            return {
+                'success': False,
+                'error_type': 'update_error',
+                'message': f'Failed to update default payment method: {str(e)}'
+            }
+    
+    def get_default_payment_method(self, student_user: CustomUser) -> Optional[StoredPaymentMethod]:
+        """
+        Get the default payment method for a student.
+        
+        Args:
+            student_user: Student user to get default payment method for
+            
+        Returns:
+            StoredPaymentMethod instance or None if no default found
+        """
+        try:
+            return StoredPaymentMethod.objects.filter(
+                student=student_user,
+                is_default=True,
+                is_active=True
+            ).first()
+        except Exception as e:
+            logger.error(f"Error getting default payment method for student {student_user.id}: {e}")
+            return None
+    
+    def cleanup_expired_payment_methods(self, student_user: Optional[CustomUser] = None) -> Dict[str, Any]:
+        """
+        Clean up expired payment methods (mark as inactive).
+        
+        Args:
+            student_user: Optional specific student to clean up (None for all students)
+            
+        Returns:
+            Dict containing cleanup results
+        """
+        try:
+            queryset = StoredPaymentMethod.objects.filter(is_active=True)
+            
+            if student_user:
+                queryset = queryset.filter(student=student_user)
+            
+            expired_count = 0
+            for pm in queryset:
+                if pm.is_expired:
+                    pm.is_active = False
+                    if pm.is_default:
+                        pm.is_default = False
+                    pm.save()
+                    expired_count += 1
+                    
+                    logger.info(f"Marked expired payment method {pm.id} as inactive")
+            
+            return {
+                'success': True,
+                'expired_count': expired_count,
+                'message': f'Cleaned up {expired_count} expired payment methods'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error cleaning up expired payment methods: {e}", exc_info=True)
+            return {
+                'success': False,
+                'error_type': 'cleanup_error',
+                'message': f'Failed to cleanup expired payment methods: {str(e)}'
+            }
+    
+    def _validate_stripe_payment_method(self, stripe_payment_method_id: str) -> Dict[str, Any]:
+        """
+        Validate a Stripe payment method and retrieve its details.
+        
+        Args:
+            stripe_payment_method_id: Stripe PaymentMethod ID to validate
+            
+        Returns:
+            Dict containing validation result and payment method data
+        """
+        try:
+            # Retrieve payment method from Stripe
+            result = self.stripe_service.retrieve_payment_method(stripe_payment_method_id)
+            
+            if not result['success']:
+                return {
+                    'success': False,
+                    'error_type': 'stripe_error',
+                    'message': f'Invalid payment method: {result.get("message", "Unknown error")}'
+                }
+            
+            stripe_pm = result['payment_method']
+            
+            # Extract card details
+            card_data = {}
+            if stripe_pm.get('type') == 'card' and 'card' in stripe_pm:
+                card_info = stripe_pm['card']
+                card_data = {
+                    'brand': card_info.get('brand', ''),
+                    'last4': card_info.get('last4', ''),
+                    'exp_month': card_info.get('exp_month'),
+                    'exp_year': card_info.get('exp_year'),
+                }
+            
+            return {
+                'success': True,
+                'payment_method': card_data,
+                'stripe_data': stripe_pm
+            }
+            
+        except Exception as e:
+            logger.error(f"Error validating Stripe payment method {stripe_payment_method_id}: {e}")
+            return {
+                'success': False,
+                'error_type': 'validation_error',
+                'message': f'Failed to validate payment method: {str(e)}'
+            }
+
+
+class PaymentMethodValidationError(Exception):
+    """Exception raised for payment method validation errors."""
+    pass

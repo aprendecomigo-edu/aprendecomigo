@@ -1,0 +1,476 @@
+QA Test Case: Group Session Booking with Multiple Students
+
+Test ID: SESSION-002
+Test Name: Group Session Booking with Multiple Students  
+Purpose: Verify that group tutoring session bookings correctly handle hour deduction for multiple students with proper cost distribution and financial integration
+Expected Result: Group session booking succeeds and hours are accurately deducted from all participating students' balances
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Group Session Booking Hour Deduction (GitHub Issue #32)
+- Integration: Classroom-Finances app integration with group session support
+- APIs: /scheduler/api/book-group-session/ and /finances/api/student-balance/
+- Authentication: JWT token authentication required
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data Requirements:
+- Student1 Account: student1.group@test.com with sufficient balance (15.00 hours)
+- Student2 Account: student2.group@test.com with sufficient balance (10.00 hours)
+- Student3 Account: student3.group@test.com with sufficient balance (12.00 hours)
+- Teacher Account: teacher.group@test.com with available time slots
+- School: Test School with all users as members
+- Group Session Duration: 1.5 hours
+- Expected Hour Deduction per Student: 1.5 hours each
+- Group Pricing: Standard rate (no discount/premium for group)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Service Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Both services start successfully
+Screenshot: 01_servers_started.png
+
+Step 2: Create Test Users and Initial Balance Data
+1. Open browser to http://localhost:8000/admin/
+2. Login with admin credentials
+3. Create test users:
+   - Email: student1.group@test.com, Name: "Group Student One", Role: student
+   - Email: student2.group@test.com, Name: "Group Student Two", Role: student
+   - Email: student3.group@test.com, Name: "Group Student Three", Role: student
+   - Email: teacher.group@test.com, Name: "Group Teacher", Role: teacher
+4. Create initial student balances:
+   
+   Student1:
+   - Hours purchased: 15.00
+   - Hours consumed: 0.00
+   - Balance amount: 150.00
+   
+   Student2:
+   - Hours purchased: 10.00  
+   - Hours consumed: 0.00
+   - Balance amount: 100.00
+   
+   Student3:
+   - Hours purchased: 12.00
+   - Hours consumed: 0.00
+   - Balance amount: 120.00
+
+Expected: Test users and initial balances created successfully
+Screenshot: 02_group_test_data_created.png
+
+Step 3: Verify Initial Balance States for All Students
+1. Navigate to http://localhost:8081/auth/signin
+2. Login as student1.group@test.com
+3. Get JWT token and check balance:
+```javascript
+const token1 = 'STUDENT1_JWT_TOKEN';
+fetch('http://localhost:8000/finances/api/student-balance/', {
+  headers: {
+    'Authorization': `Bearer ${token1}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== STUDENT1 INITIAL BALANCE ===');
+    console.log('Remaining hours:', data.balance_summary.remaining_hours);
+    console.log('Balance amount:', data.balance_summary.balance_amount);
+  });
+```
+
+4. Repeat for Student2 and Student3
+5. Verify all students have sufficient hours for 1.5-hour group session
+
+Expected: All students show correct initial balances
+Screenshot: 03_all_students_initial_balance.png
+
+Step 4: Login as School Admin or Group Session Creator
+1. Logout from student accounts
+2. Login as school admin or user with group session booking permissions
+3. Navigate to calendar/schedule interface
+4. Verify group session booking capabilities are available
+
+Expected: Admin access to group session booking functionality
+Screenshot: 04_admin_group_access.png
+
+Step 5: Initiate Group Session Booking
+1. Click "Book Group Session" or equivalent button
+2. Wait for group booking form/modal to appear
+3. Verify form contains required fields:
+   - Teacher selection
+   - Date selection
+   - Time slot selection
+   - Session duration
+   - Multiple student selection capability
+   - Group session type indicator
+4. Verify interface allows multiple student selection
+
+Expected: Group booking form loads with multi-student selection
+Screenshot: 05_group_booking_form.png
+
+Step 6: Fill Group Session Details
+1. Select teacher: teacher.group@test.com
+2. Select date: Tomorrow's date (future date)
+3. Select time slot: Available time (e.g., 2:00 PM)
+4. Set session type: Group
+5. Set duration: 1.5 hours
+6. Add session title: "Group Math Review Session"
+7. Select multiple students:
+   - student1.group@test.com
+   - student2.group@test.com  
+   - student3.group@test.com
+8. Add session notes: "Algebra review for three students"
+
+Expected: All group session fields populated correctly
+Screenshot: 06_group_details_filled.png
+
+Step 7: Verify Student Balance Check Before Booking
+1. Before submitting, verify system checks all students have sufficient balance
+2. Look for balance validation messages or warnings
+3. Confirm all three students can afford 1.5-hour deduction
+
+Expected: System validates sufficient balance for all participants
+Screenshot: 07_balance_validation_check.png
+
+Step 8: Submit Group Session Booking
+1. Click "Book Group Session" or "Submit" button
+2. Wait for API response
+3. Monitor network tab for API calls:
+   - POST /scheduler/api/book-group-session/
+   - Multiple calls to finances endpoints for each student
+4. Check for success/error messages
+
+Expected:
+- HTTP 201 Created response for group session booking
+- Success message displayed
+- Hour deduction processed for all students
+- Group session appears in calendar
+
+Screenshot: 08_group_booking_submitted.png
+
+Step 9: Verify Group Session Creation
+1. Check that group session appears in calendar view
+2. Verify session details:
+   - Teacher: teacher.group@test.com
+   - Duration: 1.5 hours
+   - Session type: Group
+   - Participants: All three students listed
+   - Status: Scheduled/Confirmed
+3. Click on session to view full participant list
+
+Expected: Group session successfully created with all participants
+Screenshot: 09_group_session_in_calendar.png
+
+Step 10: Verify Hour Deduction for Student1
+1. Login as student1.group@test.com
+2. Get JWT token and check balance after booking:
+```javascript
+const token1 = 'STUDENT1_JWT_TOKEN';
+fetch('http://localhost:8000/finances/api/student-balance/', {
+  headers: {
+    'Authorization': `Bearer ${token1}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== STUDENT1 POST-BOOKING BALANCE ===');
+    console.log('Hours consumed:', data.balance_summary.hours_consumed);
+    console.log('Remaining hours:', data.balance_summary.remaining_hours);
+    console.log('Balance amount:', data.balance_summary.balance_amount);
+    console.log('Expected consumed: 1.50');
+    console.log('Expected remaining: 13.50');
+    console.log('Expected balance: 135.00');
+  });
+```
+
+Expected:
+- hours_consumed: "1.50"
+- remaining_hours: "13.50"
+- balance_amount: "135.00"
+
+Screenshot: 10_student1_balance_after.png
+
+Step 11: Verify Hour Deduction for Student2
+1. Login as student2.group@test.com
+2. Check balance after booking:
+```javascript
+const token2 = 'STUDENT2_JWT_TOKEN';
+fetch('http://localhost:8000/finances/api/student-balance/', {
+  headers: {
+    'Authorization': `Bearer ${token2}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== STUDENT2 POST-BOOKING BALANCE ===');
+    console.log('Hours consumed:', data.balance_summary.hours_consumed);
+    console.log('Remaining hours:', data.balance_summary.remaining_hours);
+    console.log('Balance amount:', data.balance_summary.balance_amount);
+    console.log('Expected consumed: 1.50');
+    console.log('Expected remaining: 8.50');
+    console.log('Expected balance: 85.00');
+  });
+```
+
+Expected:
+- hours_consumed: "1.50"
+- remaining_hours: "8.50"
+- balance_amount: "85.00"
+
+Screenshot: 11_student2_balance_after.png
+
+Step 12: Verify Hour Deduction for Student3
+1. Login as student3.group@test.com
+2. Check balance after booking:
+```javascript
+const token3 = 'STUDENT3_JWT_TOKEN';
+fetch('http://localhost:8000/finances/api/student-balance/', {
+  headers: {
+    'Authorization': `Bearer ${token3}`,
+    'Content-Type': 'application/json'
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== STUDENT3 POST-BOOKING BALANCE ===');
+    console.log('Hours consumed:', data.balance_summary.hours_consumed);
+    console.log('Remaining hours:', data.balance_summary.remaining_hours);
+    console.log('Balance amount:', data.balance_summary.balance_amount);
+    console.log('Expected consumed: 1.50');
+    console.log('Expected remaining: 10.50');
+    console.log('Expected balance: 105.00');
+  });
+```
+
+Expected:
+- hours_consumed: "1.50"
+- remaining_hours: "10.50"
+- balance_amount: "105.00"
+
+Screenshot: 12_student3_balance_after.png
+
+Step 13: Verify Hour Consumption Records for All Students
+1. Navigate to http://localhost:8000/admin/finances/hourconsumption/
+2. Verify three consumption records exist for the group session:
+   
+   Record 1:
+   - Student: student1.group@test.com
+   - Hours consumed: 1.50
+   - Session reference: Group session ID
+   
+   Record 2:
+   - Student: student2.group@test.com
+   - Hours consumed: 1.50
+   - Session reference: Same group session ID
+   
+   Record 3:
+   - Student: student3.group@test.com
+   - Hours consumed: 1.50
+   - Session reference: Same group session ID
+
+Expected: Three consumption records all referencing same group session
+Screenshot: 13_group_consumption_records.png
+
+Step 14: Test Group Session Participant Management
+1. Navigate to session details in admin:
+   http://localhost:8000/admin/scheduler/groupsession/ (or equivalent)
+2. Find the created group session and verify:
+   - Teacher: teacher.group@test.com
+   - Duration: 1.5 hours
+   - Participants: All three students listed
+   - Session type: Group
+   - Hour deduction status for each participant
+3. Verify participant list is complete and accurate
+
+Expected: Group session with complete participant information
+Screenshot: 14_group_session_details.png
+
+Step 15: Test Total Hour Consumption Calculation
+1. Calculate total hours consumed across all students:
+```javascript
+console.log('=== GROUP SESSION HOUR CONSUMPTION SUMMARY ===');
+console.log('Student1 consumed: 1.50 hours');
+console.log('Student2 consumed: 1.50 hours');
+console.log('Student3 consumed: 1.50 hours');
+console.log('Total hours consumed: 4.50 hours');
+console.log('Session duration: 1.5 hours');
+console.log('Participants: 3 students');
+console.log('Calculation check: 1.5 * 3 = 4.5 hours total');
+```
+
+2. Verify this matches the group session business logic
+3. Confirm each student pays full session duration regardless of group size
+
+Expected: Each student charged for full session duration (no group discount)
+Screenshot: 15_group_calculation_verification.png
+
+Step 16: Test Group Session API Performance
+1. Measure group booking API performance:
+```javascript
+const token = 'ADMIN_JWT_TOKEN';
+const startTime = performance.now();
+fetch('http://localhost:8000/scheduler/api/book-group-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.group@test.com',
+    date: '2025-07-29',
+    time: '15:00',
+    duration: 1.5,
+    session_type: 'group',
+    title: 'Performance Test Group Session',
+    participants: [
+      'student1.group@test.com',
+      'student2.group@test.com',
+      'student3.group@test.com'
+    ]
+  })
+})
+  .then(response => {
+    const endTime = performance.now();
+    console.log(`Group Booking API Response Time: ${endTime - startTime} milliseconds`);
+    return response.json();
+  });
+```
+
+Expected: Group booking response time acceptable with multiple student processing
+Screenshot: 16_group_api_performance.png
+
+Step 17: Test Partial Balance Failure Scenario
+1. Create a new student with insufficient balance (0.5 hours)
+2. Attempt to book group session including this student:
+```javascript
+const token = 'ADMIN_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-group-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.group@test.com',
+    date: '2025-07-30',
+    time: '16:00',
+    duration: 1.5,
+    session_type: 'group',
+    title: 'Insufficient Balance Test',
+    participants: [
+      'student1.group@test.com',
+      'insufficient.balance@test.com'
+    ]
+  })
+})
+  .then(response => {
+    console.log('Insufficient balance test status:', response.status);
+    return response.json();
+  })
+  .then(data => console.log('Error handling result:', data));
+```
+
+Expected:
+- HTTP 400 Bad Request or appropriate error code
+- Clear error message about insufficient balance
+- No partial hour deduction for any participant
+- Transaction rollback for all participants
+
+Screenshot: 17_insufficient_balance_handling.png
+
+Step 18: Database Consistency Check for Group Session
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/backend
+  python manage.py shell -c "
+  from finances.models import StudentAccountBalance, HourConsumption
+  from scheduler.models import GroupSession, ClassSession
+  from accounts.models import CustomUser
+  
+  # Check group session and related consumptions
+  students = ['student1.group@test.com', 'student2.group@test.com', 'student3.group@test.com']
+  
+  print('=== GROUP SESSION DATABASE CONSISTENCY ===')
+  
+  for email in students:
+      student = CustomUser.objects.get(email=email)
+      balance = StudentAccountBalance.objects.get(student=student)
+      consumptions = HourConsumption.objects.filter(student=student)
+      
+      print(f'Student: {email}')
+      print(f'  Balance consumed: {balance.hours_consumed}')
+      print(f'  Consumption records: {consumptions.count()}')
+      
+      for consumption in consumptions:
+          print(f'  Record: {consumption.hours_consumed} hours, Session: {consumption.session_id}')
+  
+  # Verify all consumptions reference same session
+  session_ids = HourConsumption.objects.filter(
+      student__email__in=students
+  ).values_list('session_id', flat=True).distinct()
+  
+  print(f'Unique session IDs: {list(session_ids)}')
+  print(f'All reference same session: {len(session_ids) == 1}')
+  "
+
+Expected: Consistent group session references across all consumption records
+Screenshot: 18_group_database_consistency.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Group session booking succeeds AND hours deducted from all participants AND calculations accurate AND audit trail complete AND error handling proper
+
+FAIL: Group booking fails OR missing hour deductions OR incorrect calculations OR inconsistent data OR poor error handling
+
+Individual Step Criteria:
+- Step 1-2: PASS if environment and group test data creation successful, FAIL if setup issues
+- Step 3: PASS if all students show correct initial balances, FAIL if balance API fails
+- Step 4-6: PASS if group booking interface loads and supports multiple students, FAIL if UI limitations
+- Step 7-8: PASS if group session booking succeeds with proper validation, FAIL if booking fails
+- Step 9: PASS if group session appears correctly in calendar, FAIL if session missing or wrong
+- Step 10-12: PASS if all three students show correct hour deductions, FAIL if any incorrect
+- Step 13: PASS if consumption records created for all participants, FAIL if missing records
+- Step 14: PASS if group session details complete, FAIL if participant information missing
+- Step 15: PASS if group calculation logic correct, FAIL if mathematical errors
+- Step 16: PASS if group API performance acceptable, FAIL if slow or failed responses
+- Step 17: PASS if insufficient balance handled properly, FAIL if partial deductions occur
+- Step 18: PASS if database consistency maintained, FAIL if data inconsistencies
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== ADDITIONAL VERIFICATION POINTS ===
+
+Group Session Requirements:
+- Each participant charged full session duration
+- No group discounts or shared cost distribution
+- All participants must have sufficient balance before booking
+- Atomic transaction: all succeed or all fail
+- Group session references maintained consistently
+
+Multi-Student Processing:
+- Concurrent hour deduction for multiple students
+- Proper balance validation for all participants
+- Transaction integrity across multiple student accounts
+- Error handling prevents partial group bookings
+- Audit trail links all participants to same session
+
+Performance Considerations:
+- Group booking response time scales reasonably with participant count
+- Database operations optimized for multiple student updates
+- No race conditions in concurrent balance updates
+- Proper locking mechanisms for financial operations
+- Transaction rollback capability for failed group bookings

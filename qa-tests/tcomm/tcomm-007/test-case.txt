@@ -1,0 +1,93 @@
+QA Test Case: Cross-Platform Responsiveness Test
+
+Test ID: TCOMM-007
+Test Name: Cross-Platform Responsiveness Test
+Purpose: Verify teacher communication features work consistently across web, tablet, and mobile platforms with responsive design
+Expected Result: Communication features maintain functionality and usability across all device types and screen sizes
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: React Native with web, iOS, Android support
+- Focus: Cross-platform communication feature consistency
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/backend
+2. Frontend UI: /Users/anapmc/Code/aprendecomigo/frontend-ui
+3. Multiple device testing capabilities
+4. Browser dev tools for responsive testing
+
+Test Data:
+- Devices: Desktop (1920x1080), Tablet (768x1024), Mobile (375x667)
+- Browsers: Chrome, Safari, Firefox
+- Platforms: Web, iOS, Android (if available)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Desktop Web Communication Features
+1. Access communication dashboard on desktop (1920x1080)
+2. Test all communication features:
+   - Template management interface
+   - Email analytics dashboard
+   - FAQ system navigation
+   - Progress tracking display
+3. Verify layout and functionality
+
+Expected: Full functionality with optimized desktop layout
+Screenshot: 01_desktop_communication_features.png
+
+Step 2: Tablet Responsiveness
+1. Resize browser to tablet dimensions (768x1024)
+2. Test communication features adaptation:
+   - Navigation menu behavior
+   - Dashboard layout adjustment
+   - Template editing interface
+   - FAQ system usability
+3. Verify touch-friendly interface elements
+
+Expected: Responsive adaptation with maintained functionality
+Screenshot: 02_tablet_responsive_design.png
+
+Step 3: Mobile Communication Interface
+1. Resize browser to mobile dimensions (375x667)
+2. Test mobile-optimized communication features:
+   - Collapsible navigation
+   - Simplified dashboard layout
+   - Mobile-friendly forms
+   - Touch-optimized interactions
+3. Verify readability and usability
+
+Expected: Mobile-optimized interface with full feature access
+Screenshot: 03_mobile_communication_interface.png
+
+Step 4: Cross-Platform Feature Consistency
+1. Compare feature availability across platforms:
+   - Template creation/editing
+   - FAQ search functionality
+   - Progress tracking visualization
+   - Communication analytics
+2. Test feature parity across devices
+3. Verify data consistency
+
+Expected: Consistent feature set across all platforms
+Screenshot: 04_cross_platform_consistency.png
+
+Step 5: Touch and Interaction Testing
+1. Test touch interactions on mobile/tablet:
+   - Button tap responsiveness
+   - Form field interactions
+   - Scrolling behavior
+   - Gesture support
+2. Verify accessibility features
+3. Test keyboard navigation
+
+Expected: Intuitive touch interactions with accessibility support
+Screenshot: 05_touch_interaction_testing.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Communication features work consistently across all platforms with appropriate responsive design
+FAIL: Platform-specific issues, poor responsive design, or feature inconsistencies
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

@@ -1,0 +1,243 @@
+QA Test Case: Complete Purchase Flow - Authenticated Users UI Testing
+
+Test ID: PURCHASE-UI-001
+Test Name: Complete Purchase Flow UI Testing for Authenticated Users
+Purpose: Verify that authenticated users can complete the full purchase flow through the React Native UI with excellent user experience
+Expected Result: User successfully navigates through plan selection, student info, payment, and success screens
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform frontend UI
+- Component: PurchaseFlow orchestrator with Stripe integration
+- Architecture: React Native + Expo with cross-platform support
+- Route: /purchase (main purchase page)
+- Success Route: /purchase/success
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: .venv/ in project root (for backend)
+3. Environment Variables:
+   - EXPO_PUBLIC_ENV=development
+   - EXPO_PUBLIC_STRIPE_PUBLIC_KEY=pk_test_... (test mode)
+   - EXPO_PUBLIC_API_URL=http://localhost:8000/api
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com
+- User Role: student (authenticated)
+- Test Plan: Select any available pricing plan during testing
+- Stripe Test Card: 4242 4242 4242 4242 (expires: any future date, CVC: any 3 digits)
+
+Browser/Platform Testing:
+- Primary: Chrome browser (web view)
+- Secondary: Mobile responsive view (Chrome DevTools)
+- Resolution: Desktop 1920x1080, Mobile 375x667
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Authentication
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Verify both servers start successfully
+2. Navigate to http://localhost:8081
+3. Complete authentication flow for anapmc.carvalho@gmail.com
+4. Verify user is authenticated (check for dashboard/profile access)
+
+Expected: User successfully authenticated and can access protected routes
+Screenshot: 01_user_authenticated.png
+
+Step 2: Access Purchase Flow Page
+1. Navigate directly to http://localhost:8081/purchase
+2. Observe initial page load and component rendering
+3. Verify purchase flow loads without errors
+4. Check browser console for any JavaScript errors
+
+Expected: Purchase page loads with clean UI showing step progress and plan selection
+- Progress bar shows 25% (step 1 of 4)
+- "Select Plan" step is active
+- PricingPlanSelector component renders properly
+- No console errors
+Screenshot: 02_purchase_page_loaded.png
+
+Step 3: Plan Selection UI Testing
+1. Observe pricing plan cards display:
+   - Plans load from backend API
+   - Each card shows plan details (name, price, hours, description)
+   - Popular plans are highlighted
+   - Cards have proper hover effects
+2. Test plan selection:
+   - Click on different pricing plan cards
+   - Verify selection state changes (visual feedback)
+   - Confirm selected plan shows active state
+3. Test "Continue" or "Next" button:
+   - Verify button is enabled only after plan selection
+   - Click to proceed to next step
+
+Expected: Plan selection works smoothly with clear visual feedback
+- Plans display in responsive grid layout
+- Selected plan has distinct styling
+- Smooth transition to user information step
+- Progress bar updates to 50%
+Screenshot: 03_plan_selected.png
+
+Step 4: Student Information Form UI
+1. Verify student information form displays:
+   - Name field (should be pre-filled for authenticated users)
+   - Email field (should be pre-filled and potentially disabled)
+   - Clean form layout and styling
+2. Test form interactions:
+   - Click in input fields
+   - Verify focus states and styling
+   - Test form validation (try empty/invalid inputs)
+   - Observe real-time validation feedback
+3. Test navigation:
+   - "Back" button returns to plan selection
+   - "Continue" button proceeds to payment (when valid)
+
+Expected: Form provides excellent user experience
+- Pre-filled with authenticated user data
+- Clear validation messages
+- Smooth focus transitions
+- Proper button states (enabled/disabled)
+Screenshot: 04_student_info_form.png
+
+Step 5: Stripe Payment Form UI Testing
+1. Verify Stripe payment form loads:
+   - Card number input field
+   - Expiry date field
+   - CVC field
+   - Cardholder name field
+2. Test Stripe Elements integration:
+   - Fields should have Stripe styling
+   - Real-time validation for card inputs
+   - Error messages display properly
+   - Fields are properly focused and styled
+3. Test payment form behavior:
+   - Enter test card: 4242 4242 4242 4242
+   - Expiry: any future date (e.g., 12/25)
+   - CVC: any 3 digits (e.g., 123)
+   - Name: Test User
+
+Expected: Stripe payment form integrates seamlessly
+- Professional payment form styling
+- Real-time card validation
+- No visual glitches or rendering issues
+- Form fields are accessible and user-friendly
+Screenshot: 05_payment_form_loaded.png
+
+Step 6: Payment Processing and Loading States
+1. Click "Complete Purchase" or "Pay Now" button
+2. Observe loading states during payment processing:
+   - Button shows loading spinner
+   - Form is disabled during processing
+   - Progress indicators or loading messages
+3. Monitor for any UI freezing or unresponsiveness
+4. Check browser network tab for API calls
+
+Expected: Smooth payment processing with clear loading states
+- Button transforms to loading state
+- User receives feedback that payment is processing
+- No UI freezing or unresponsive elements
+- API calls complete successfully
+Screenshot: 06_payment_processing.png
+
+Step 7: Success Screen and Completion
+1. Verify successful payment redirects to success state
+2. Observe success screen components:
+   - Success checkmark or confirmation icon
+   - Purchase confirmation message
+   - Transaction details
+   - Next steps guidance
+3. Test success screen navigation:
+   - "Go to Dashboard" button
+   - "Schedule Session" button (if present)
+   - Auto-redirect timer (should redirect after delay)
+
+Expected: Professional success screen with clear next steps
+- Clear visual confirmation of successful purchase
+- Helpful guidance for user's next actions
+- Student balance updates reflected
+- Smooth navigation to other parts of app
+Screenshot: 07_purchase_success.png
+
+Step 8: Student Balance Updates Verification
+1. Navigate to student balance section or dashboard
+2. Verify account balance reflects new purchase:
+   - Hours added to account
+   - New package information
+   - Updated balance display
+3. Test StudentBalanceCard component:
+   - Proper balance formatting
+   - Package expiration dates
+   - Visual presentation of balance information
+
+Expected: Student balance immediately reflects purchase
+- New hours are added to account
+- Balance display is accurate and well-formatted
+- Package information is current
+Screenshot: 08_balance_updated.png
+
+Step 9: End-to-End Flow Validation
+1. Repeat the entire flow once more to test consistency
+2. Verify all UI transitions are smooth
+3. Test browser back/forward buttons during flow
+4. Confirm no memory leaks or performance degradation
+
+Expected: Consistent experience across multiple purchase attempts
+- All steps work reliably
+- No degradation in performance
+- Browser navigation behaves properly
+Screenshot: 09_flow_validation.png
+
+Step 10: Mobile Responsive Testing
+1. Switch Chrome DevTools to mobile view (375x667)
+2. Repeat key steps of the purchase flow:
+   - Plan selection on mobile layout
+   - Form interactions with touch targets
+   - Payment form usability on mobile
+   - Success screen mobile layout
+3. Test different mobile breakpoints
+
+Expected: Excellent mobile user experience
+- All elements are properly sized for mobile
+- Touch targets are appropriate size
+- Text is readable
+- No horizontal scrolling required
+Screenshot: 10_mobile_responsive.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Complete purchase flow works flawlessly with excellent UI/UX
+FAIL: Any UI glitch, error message, confusing flow, or poor user experience
+
+Individual Step Criteria:
+- Step 1: PASS if authentication works and servers start, FAIL if auth issues
+- Step 2: PASS if purchase page loads cleanly, FAIL if console errors or broken UI
+- Step 3: PASS if plan selection has clear feedback and smooth interaction, FAIL if confusing UX
+- Step 4: PASS if form is pre-filled and validates properly, FAIL if poor UX or validation issues
+- Step 5: PASS if Stripe form looks professional and works properly, FAIL if styling/functional issues
+- Step 6: PASS if loading states are clear and processing is smooth, FAIL if UI freezes or poor feedback
+- Step 7: PASS if success screen is clear and helpful, FAIL if confusing or missing information
+- Step 8: PASS if balance updates immediately and accurately, FAIL if incorrect or delayed updates
+- Step 9: PASS if flow is consistent and reliable, FAIL if inconsistent behavior
+- Step 10: PASS if mobile experience is excellent, FAIL if mobile UI issues
+
+UX Requirements:
+- Zero UI glitches or visual bugs
+- Clear user feedback at every step
+- Smooth transitions between steps
+- Professional appearance throughout
+- Intuitive navigation and flow
+- Proper loading and error states
+- Mobile-friendly responsive design
+
+Performance Requirements:
+- Page load time < 3 seconds
+- Smooth transitions without lag
+- No memory leaks during repeated use
+- Responsive touch/click interactions
+
+Overall Result: PASS only if ALL steps pass AND UX meets high quality standards

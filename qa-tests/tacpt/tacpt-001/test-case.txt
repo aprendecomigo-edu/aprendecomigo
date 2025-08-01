@@ -1,0 +1,171 @@
+QA Test Case: Email Invitation Acceptance Happy Path
+
+Test ID: TACPT-001
+Test Name: Email Invitation Acceptance Happy Path
+Purpose: Verify that a teacher can successfully accept an email-based invitation and complete the profile wizard
+Expected Result: Teacher successfully accepts invitation, completes profile setup, and is redirected to teacher dashboard
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django backend (localhost:8000) + React Native frontend (localhost:8081)
+- GitHub Issue: #52 - Complete teacher invitation acceptance system
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` or individual startup commands
+4. Database: PostgreSQL with test data
+
+Test Data:
+- Test Teacher Email: teacher.test@aprendecomigo.com
+- School: Test School (should exist in database)
+- Valid invitation token (generated via admin or API)
+- No existing teacher profile for this email
+
+Pre-test Database State:
+- Teacher invitation exists with status 'pending'
+- No existing teacher profile for test email
+- School exists and is active
+- User account may or may not exist for test email
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Startup
+1. Navigate to project directory
+2. Start development servers
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Both backend and frontend servers start successfully
+Debug: Use 'make logs' to check server status if issues occur
+Screenshot: 01_servers_started.png
+
+Step 2: Generate Test Invitation (Backend Setup)
+1. Open Django admin or use API to create teacher invitation
+2. Record the invitation token for testing
+Commands (alternative via Django shell):
+  cd backend
+  python manage.py shell
+  from accounts.models import TeacherInvitation
+  # Create invitation or get existing one
+
+Expected: Valid invitation token obtained
+Screenshot: 02_invitation_created.png
+
+Step 3: Navigate to Invitation URL
+1. Open browser to localhost:8081
+2. Navigate to /accept-invitation/[TOKEN] where [TOKEN] is the invitation token
+URL: http://localhost:8081/accept-invitation/[YOUR_TOKEN_HERE]
+
+Expected: Invitation acceptance page loads with school details
+Screenshot: 03_invitation_page_loaded.png
+
+Step 4: Verify Invitation Details Display
+1. Confirm school name is displayed correctly
+2. Verify teacher role is shown
+3. Check invitation email matches expected
+4. Verify school preview information appears
+5. Confirm accept/decline buttons are present and enabled
+
+Expected: All invitation details are clearly displayed with proper formatting
+Screenshot: 04_invitation_details_display.png
+
+Step 5: Handle Authentication (if needed)
+If user is not logged in:
+1. Click "Fazer Login" button
+2. Complete authentication with invitation email
+3. Return to invitation page
+
+Expected: User is authenticated and invitation page refreshes
+Screenshot: 05_authentication_completed.png (if applicable)
+
+Step 6: Accept Invitation
+1. Click "Aceitar Convite" or "Configurar Perfil" button
+2. Confirm loading state appears
+3. Wait for profile wizard or success message
+
+Expected: Button shows loading state, then redirects to profile wizard or dashboard
+Screenshot: 06_accept_button_clicked.png
+
+Step 7: Profile Wizard (if triggered)
+If profile wizard appears:
+1. Complete basic information step
+2. Fill education/qualification details
+3. Set availability and rates
+4. Add biography and subjects
+5. Review and confirm profile
+
+Expected: Profile wizard completes successfully with all steps
+Screenshots: 07a_profile_wizard_step1.png, 07b_profile_wizard_step2.png, etc.
+
+Step 8: Verify Success State
+1. Confirm success message appears
+2. Verify "Ir para Dashboard" button is present
+3. Click dashboard button
+
+Expected: Clear success confirmation with appropriate next action
+Screenshot: 08_success_confirmation.png
+
+Step 9: Dashboard Access Verification
+1. Verify redirection to teacher dashboard
+2. Confirm teacher role permissions are active
+3. Check school membership is visible
+4. Verify multi-school functionality (if applicable)
+
+Expected: Teacher dashboard loads with proper permissions and school context
+Screenshot: 09_teacher_dashboard_loaded.png
+
+Step 10: Database State Verification
+1. Check invitation status changed to 'accepted'
+2. Verify teacher profile was created
+3. Confirm school membership record exists
+Commands (backend verification):
+  python manage.py shell
+  from accounts.models import TeacherInvitation, User, TeacherProfile
+  # Verify database state
+
+Expected: All database records reflect successful acceptance
+Screenshot: 10_database_verification.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND:
+- Invitation page loads with correct details
+- Authentication works smoothly (if required)
+- Accept button functions properly with loading states
+- Profile wizard completes (if triggered)
+- Success confirmation is clear and actionable
+- Teacher dashboard is accessible with proper permissions
+- Database reflects accepted status and created records
+
+FAIL: Any step fails OR:
+- Invitation page doesn't load or shows incorrect information
+- Authentication fails or causes errors
+- Accept button doesn't work or causes errors
+- Profile wizard fails or has missing steps
+- No success confirmation or unclear next steps
+- Dashboard access denied or incorrect permissions
+- Database state doesn't reflect successful acceptance
+
+Individual Step Criteria:
+- Step 1: PASS if servers start, FAIL if startup errors
+- Step 2: PASS if valid token obtained, FAIL if invitation creation fails
+- Step 3: PASS if page loads, FAIL if 404 or loading errors
+- Step 4: PASS if all details display correctly, FAIL if missing/incorrect info
+- Step 5: PASS if authentication works, FAIL if auth errors
+- Step 6: PASS if accept button works, FAIL if errors or no response
+- Step 7: PASS if wizard completes, FAIL if wizard errors or incomplete
+- Step 8: PASS if clear success message, FAIL if unclear or no confirmation
+- Step 9: PASS if dashboard loads with permissions, FAIL if access denied
+- Step 10: PASS if database state correct, FAIL if inconsistent data
+
+Business Critical Requirements:
+- Teacher can join school successfully (revenue impact)
+- Profile setup is complete and functional (quality requirement)
+- Multi-school support works properly (scalability requirement)
+- User experience is smooth and professional (retention requirement)
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

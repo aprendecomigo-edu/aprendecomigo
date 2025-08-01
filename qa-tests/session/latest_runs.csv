@@ -1,0 +1,7 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+session-001,Individual Session Booking with Hour Deduction,Verify individual tutoring session bookings correctly deduct hours from student account balance,,,0,0,0
+session-002,Group Session Booking with Multiple Students,Verify group tutoring session bookings correctly handle hour deduction for multiple students,,,0,0,0
+session-003,Balance Validation and Insufficient Funds Handling,Verify session booking properly validates student balances and handles insufficient funds scenarios,,,0,0,0
+session-004,Session Cancellation and Hour Refund Process,Verify session cancellations correctly refund hours to student account balance,,,0,0,0
+session-005,Package Expiration and Renewal Integration,Verify session booking properly handles hour package expiration and renewal functionality,,,0,0,0
+session-006,Security and Audit Trail Validation,Verify session booking maintains comprehensive security controls and complete audit trails,,,0,0,0

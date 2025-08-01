@@ -1,6 +1,7 @@
 import logging
 import uuid
 from datetime import timedelta
+from decimal import Decimal
 from typing import Any, ClassVar, TypeVar
 
 import pyotp
@@ -1220,13 +1221,18 @@ class InvitationStatus(models.TextChoices):
 
 
 class EmailDeliveryStatus(models.TextChoices):
-    """Email delivery status options"""
+    """Email delivery status options with comprehensive tracking"""
     
     NOT_SENT = "not_sent", _("Not Sent")
+    QUEUED = "queued", _("Queued")
+    SENDING = "sending", _("Sending")
     SENT = "sent", _("Sent")
     DELIVERED = "delivered", _("Delivered")
+    OPENED = "opened", _("Opened")
+    CLICKED = "clicked", _("Clicked")
     FAILED = "failed", _("Failed")
     BOUNCED = "bounced", _("Bounced")
+    SPAM = "spam", _("Marked as Spam")
 
 
 class TeacherInvitationManager(models.Manager):
@@ -1447,6 +1453,10 @@ class TeacherInvitation(models.Model):
         
         return True
     
+    def is_expired(self) -> bool:
+        """Check if the invitation has expired."""
+        return timezone.now() > self.expires_at
+    
     def accept(self):
         """Mark invitation as accepted."""
         if not self.is_accepted:
@@ -1523,3 +1533,798 @@ class TeacherInvitation(models.Model):
             if not self.is_accepted:
                 self.status = InvitationStatus.VIEWED
             self.save(update_fields=["viewed_at", "status", "updated_at"])
+
+
+class StudentProgressLevel(models.TextChoices):
+    """Progress levels for student learning."""
+    
+    BEGINNER = "beginner", _("Beginner")
+    ELEMENTARY = "elementary", _("Elementary")
+    INTERMEDIATE = "intermediate", _("Intermediate")
+    ADVANCED = "advanced", _("Advanced")
+    EXPERT = "expert", _("Expert")
+
+
+class StudentProgress(models.Model):
+    """
+    Student progress tracking model for individual learning progress.
+    
+    Tracks a student's progress in a specific course under a specific teacher,
+    including skill mastery, completion percentage, and learning notes.
+    """
+    
+    student = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="learning_progress",
+        verbose_name=_("student"),
+        help_text=_("Student whose progress is being tracked")
+    )
+    
+    teacher = models.ForeignKey(
+        TeacherProfile,
+        on_delete=models.CASCADE,
+        related_name="student_progress_records",
+        verbose_name=_("teacher"),
+        help_text=_("Teacher tracking this student's progress")
+    )
+    
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="student_progress_records",
+        verbose_name=_("school"),
+        help_text=_("School where progress is being tracked")
+    )
+    
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="student_progress_records",
+        verbose_name=_("course"),
+        help_text=_("Course for which progress is being tracked")
+    )
+    
+    current_level = models.CharField(
+        _("current level"),
+        max_length=20,
+        choices=StudentProgressLevel.choices,
+        default=StudentProgressLevel.BEGINNER,
+        help_text=_("Current learning level of the student")
+    )
+    
+    completion_percentage = models.DecimalField(
+        _("completion percentage"),
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text=_("Percentage of course completed (0-100)")
+    )
+    
+    skills_mastered = models.JSONField(
+        _("skills mastered"),
+        default=list,
+        blank=True,
+        help_text=_("List of skills the student has mastered")
+    )
+    
+    current_topics = models.JSONField(
+        _("current topics"),
+        default=list,
+        blank=True,
+        help_text=_("Topics currently being studied")
+    )
+    
+    learning_goals = models.JSONField(
+        _("learning goals"),
+        default=list,
+        blank=True,
+        help_text=_("Specific learning goals for this student")
+    )
+    
+    notes = models.TextField(
+        _("progress notes"),
+        blank=True,
+        help_text=_("Teacher's notes about student progress")
+    )
+    
+    last_assessment_date = models.DateField(
+        _("last assessment date"),
+        null=True,
+        blank=True,
+        help_text=_("Date of the most recent assessment")
+    )
+    
+    created_at = models.DateTimeField(
+        _("created at"), 
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        _("updated at"), 
+        auto_now=True
+    )
+    
+    class Meta:
+        verbose_name = _("Student Progress")
+        verbose_name_plural = _("Student Progress Records")
+        ordering = ["-updated_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student", "teacher", "course"],
+                name="unique_student_teacher_course_progress"
+            )
+        ]
+        indexes = [
+            models.Index(fields=["student", "course"]),
+            models.Index(fields=["teacher", "-updated_at"]),
+            models.Index(fields=["school", "course"]),
+            models.Index(fields=["completion_percentage"]),
+            models.Index(fields=["current_level"]),
+        ]
+    
+    def __str__(self) -> str:
+        return f"{self.student.name} - {self.course.name} (Teacher: {self.teacher.user.name})"
+    
+    def clean(self):
+        """Validate the progress data."""
+        super().clean()
+        
+        # Validate completion percentage is between 0 and 100
+        if self.completion_percentage < Decimal("0.00") or self.completion_percentage > Decimal("100.00"):
+            raise ValidationError(
+                _("Completion percentage must be between 0 and 100")
+            )
+    
+    @property
+    def recent_assessments(self):
+        """Get recent assessments for this progress record."""
+        return self.assessments.order_by("-assessment_date")[:5]
+    
+    @property
+    def average_assessment_score(self) -> Decimal | None:
+        """Calculate average assessment score percentage."""
+        assessments = self.assessments.filter(is_graded=True)
+        if not assessments.exists():
+            return None
+        
+        total_percentage = sum(assessment.percentage for assessment in assessments)
+        return Decimal(str(total_percentage / assessments.count()))
+    
+    def update_completion_from_assessments(self):
+        """Update completion percentage based on recent assessments."""
+        avg_score = self.average_assessment_score
+        if avg_score is not None:
+            self.completion_percentage = avg_score
+            self.save(update_fields=["completion_percentage", "updated_at"])
+
+
+class AssessmentType(models.TextChoices):
+    """Types of assessments that can be recorded."""
+    
+    QUIZ = "quiz", _("Quiz")
+    TEST = "test", _("Test")
+    HOMEWORK = "homework", _("Homework")
+    PROJECT = "project", _("Project")
+    ORAL_EXAM = "oral_exam", _("Oral Exam")
+    PRACTICAL = "practical", _("Practical Exercise")
+    PRESENTATION = "presentation", _("Presentation")
+    OTHER = "other", _("Other")
+
+
+class ProgressAssessment(models.Model):
+    """
+    Assessment records for student progress tracking.
+    
+    Records individual assessments, scores, and teacher feedback
+    for specific students in their learning journey.
+    """
+    
+    student_progress = models.ForeignKey(
+        StudentProgress,
+        on_delete=models.CASCADE,
+        related_name="assessments",
+        verbose_name=_("student progress"),
+        help_text=_("Progress record this assessment belongs to")
+    )
+    
+    assessment_type = models.CharField(
+        _("assessment type"),
+        max_length=20,
+        choices=AssessmentType.choices,
+        help_text=_("Type of assessment conducted")
+    )
+    
+    title = models.CharField(
+        _("assessment title"),
+        max_length=200,
+        help_text=_("Title or name of the assessment")
+    )
+    
+    description = models.TextField(
+        _("description"),
+        blank=True,
+        help_text=_("Detailed description of the assessment")
+    )
+    
+    score = models.DecimalField(
+        _("score"),
+        max_digits=6,
+        decimal_places=2,
+        help_text=_("Score achieved by the student")
+    )
+    
+    max_score = models.DecimalField(
+        _("maximum score"),
+        max_digits=6,
+        decimal_places=2,
+        help_text=_("Maximum possible score for this assessment")
+    )
+    
+    assessment_date = models.DateField(
+        _("assessment date"),
+        help_text=_("Date when the assessment was conducted")
+    )
+    
+    skills_assessed = models.JSONField(
+        _("skills assessed"),
+        default=list,
+        blank=True,
+        help_text=_("List of specific skills that were assessed")
+    )
+    
+    teacher_notes = models.TextField(
+        _("teacher notes"),
+        blank=True,
+        help_text=_("Teacher's observations and feedback")
+    )
+    
+    is_graded = models.BooleanField(
+        _("is graded"),
+        default=True,
+        help_text=_("Whether this assessment contributes to grades")
+    )
+    
+    improvement_areas = models.JSONField(
+        _("improvement areas"),
+        default=list,
+        blank=True,
+        help_text=_("Areas where the student needs improvement")
+    )
+    
+    strengths = models.JSONField(
+        _("strengths"),
+        default=list,
+        blank=True,
+        help_text=_("Areas where the student performed well")
+    )
+    
+    created_at = models.DateTimeField(
+        _("created at"), 
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        _("updated at"), 
+        auto_now=True
+    )
+    
+    class Meta:
+        verbose_name = _("Progress Assessment")
+        verbose_name_plural = _("Progress Assessments")
+        ordering = ["-assessment_date", "-created_at"]
+        indexes = [
+            models.Index(fields=["student_progress", "-assessment_date"]),
+            models.Index(fields=["assessment_type", "-assessment_date"]),
+            models.Index(fields=["is_graded", "-assessment_date"]),
+            models.Index(fields=["assessment_date"]),
+        ]
+    
+    def __str__(self) -> str:
+        percentage = self.percentage
+        return f"{self.title} - {self.student_progress.student.name} ({percentage:.2f}%)"
+    
+    @property
+    def percentage(self) -> Decimal:
+        """Calculate the percentage score for this assessment."""
+        if self.max_score > 0:
+            return (self.score / self.max_score) * Decimal("100.00")
+        return Decimal("0.00")
+    
+    @property
+    def grade_letter(self) -> str:
+        """Convert percentage to letter grade."""
+        percentage = self.percentage
+        if percentage >= 90:
+            return "A"
+        elif percentage >= 80:
+            return "B"
+        elif percentage >= 70:
+            return "C"
+        elif percentage >= 60:
+            return "D"
+        else:
+            return "F"
+    
+    def clean(self):
+        """Validate the assessment data."""
+        super().clean()
+        
+        # Validate score is not greater than max_score
+        if self.score > self.max_score:
+            raise ValidationError(
+                _("Score cannot be greater than maximum score")
+            )
+        
+        # Validate score is not negative
+        if self.score < Decimal("0.00"):
+            raise ValidationError(
+                _("Score cannot be negative")
+            )
+        
+        # Validate max_score is positive
+        if self.max_score <= Decimal("0.00"):
+            raise ValidationError(
+                _("Maximum score must be greater than 0")
+            )
+    
+    def save(self, *args, **kwargs):
+        """Override save to update related progress record."""
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        # Update the student progress last assessment date
+        if is_new or self.assessment_date != self.__class__.objects.get(pk=self.pk).assessment_date:
+            self.student_progress.last_assessment_date = self.assessment_date
+            self.student_progress.save(update_fields=["last_assessment_date", "updated_at"])
+
+
+# Email Communication System Models (Issues #99 & #100)
+
+class EmailTemplateType(models.TextChoices):
+    """
+    Types of email templates for teacher communications.
+    """
+    INVITATION = "invitation", _("Invitation")
+    REMINDER = "reminder", _("Reminder")
+    WELCOME = "welcome", _("Welcome")
+    PROFILE_REMINDER = "profile_reminder", _("Profile Reminder")
+    COMPLETION_CELEBRATION = "completion_celebration", _("Completion Celebration")
+    ONGOING_SUPPORT = "ongoing_support", _("Ongoing Support")
+
+
+class EmailCommunicationType(models.TextChoices):
+    """
+    Types of email communications for tracking purposes.
+    """
+    MANUAL = "manual", _("Manual")
+    AUTOMATED = "automated", _("Automated")
+    SEQUENCE = "sequence", _("Sequence")
+
+
+class SchoolEmailTemplate(models.Model):
+    """
+    Customizable email templates for schools with branding integration.
+    Supports template variables and school-specific customization.
+    """
+    
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="email_templates",
+        help_text=_("School this template belongs to")
+    )
+    template_type = models.CharField(
+        _("template type"),
+        max_length=50,
+        choices=EmailTemplateType.choices,
+        help_text=_("Type of email template")
+    )
+    name = models.CharField(
+        _("template name"),
+        max_length=200,
+        help_text=_("Human-readable name for the template")
+    )
+    
+    # Template content
+    subject_template = models.CharField(
+        _("subject template"),
+        max_length=300,
+        help_text=_("Email subject with template variables like {{teacher_name}}")
+    )
+    html_content = models.TextField(
+        _("HTML content"),
+        help_text=_("HTML email content with template variables")
+    )
+    text_content = models.TextField(
+        _("text content"),
+        help_text=_("Plain text email content with template variables")
+    )
+    
+    # Branding and customization
+    use_school_branding = models.BooleanField(
+        _("use school branding"),
+        default=True,
+        help_text=_("Apply school colors and logo to template")
+    )
+    custom_css = models.TextField(
+        _("custom CSS"),
+        blank=True,
+        null=True,
+        help_text=_("Additional CSS for template customization")
+    )
+    
+    # Metadata
+    is_active = models.BooleanField(
+        _("is active"),
+        default=True,
+        help_text=_("Whether this template is active and can be used")
+    )
+    is_default = models.BooleanField(
+        _("is default"),
+        default=False,
+        help_text=_("Whether this is the default template for this type")
+    )
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_email_templates",
+        help_text=_("User who created this template")
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _("School Email Template")
+        verbose_name_plural = _("School Email Templates")
+        ordering = ["school", "template_type", "name"]
+        indexes = [
+            models.Index(fields=["school", "template_type", "is_active"]),
+            models.Index(fields=["template_type", "is_default"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["school", "template_type"],
+                condition=models.Q(is_default=True),
+                name="unique_default_template_per_school_type"
+            )
+        ]
+    
+    def __str__(self):
+        return f"{self.school.name} - {self.get_template_type_display()}: {self.name}"
+    
+    def clean(self):
+        """Validate template constraints."""
+        super().clean()
+        
+        # Ensure only one default template per school and type
+        if self.is_default:
+            existing_default = SchoolEmailTemplate.objects.filter(
+                school=self.school,
+                template_type=self.template_type,
+                is_default=True
+            ).exclude(pk=self.pk)
+            
+            if existing_default.exists():
+                raise ValidationError(
+                    _("Only one default template per school and type is allowed")
+                )
+
+
+class EmailSequence(models.Model):
+    """
+    Defines automated email sequences with timing and trigger conditions.
+    """
+    
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="email_sequences",
+        help_text=_("School this sequence belongs to")
+    )
+    name = models.CharField(
+        _("sequence name"),
+        max_length=200,
+        help_text=_("Human-readable name for the sequence")
+    )
+    description = models.TextField(
+        _("description"),
+        blank=True,
+        null=True,
+        help_text=_("Description of what this sequence does")
+    )
+    
+    # Trigger configuration
+    trigger_event = models.CharField(
+        _("trigger event"),
+        max_length=50,
+        choices=[
+            ("invitation_sent", _("Invitation Sent")),
+            ("invitation_viewed", _("Invitation Viewed")),
+            ("invitation_accepted", _("Invitation Accepted")),
+            ("profile_incomplete", _("Profile Incomplete")),
+            ("profile_completed", _("Profile Completed")),
+        ],
+        help_text=_("Event that triggers this sequence")
+    )
+    
+    # Sequence configuration
+    is_active = models.BooleanField(
+        _("is active"),
+        default=True,
+        help_text=_("Whether this sequence is active")
+    )
+    max_emails = models.PositiveIntegerField(
+        _("maximum emails"),
+        default=5,
+        help_text=_("Maximum number of emails to send in this sequence")
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _("Email Sequence")
+        verbose_name_plural = _("Email Sequences")
+        ordering = ["school", "name"]
+        indexes = [
+            models.Index(fields=["school", "trigger_event", "is_active"]),
+        ]
+    
+    def __str__(self):
+        return f"{self.school.name} - {self.name}"
+
+
+class EmailSequenceStep(models.Model):
+    """
+    Individual steps within an email sequence with timing and template.
+    """
+    
+    sequence = models.ForeignKey(
+        EmailSequence,
+        on_delete=models.CASCADE,
+        related_name="steps",
+        help_text=_("Email sequence this step belongs to")
+    )
+    template = models.ForeignKey(
+        SchoolEmailTemplate,
+        on_delete=models.CASCADE,
+        related_name="sequence_steps",
+        help_text=_("Email template to use for this step")
+    )
+    
+    # Step configuration
+    step_number = models.PositiveIntegerField(
+        _("step number"),
+        help_text=_("Order of this step in the sequence")
+    )
+    delay_hours = models.PositiveIntegerField(
+        _("delay hours"),
+        default=24,
+        help_text=_("Hours to wait before sending this email")
+    )
+    
+    # Conditions
+    send_condition = models.CharField(
+        _("send condition"),
+        max_length=50,
+        choices=[
+            ("always", _("Always Send")),
+            ("if_no_response", _("If No Response")),
+            ("if_not_accepted", _("If Not Accepted")),
+            ("if_profile_incomplete", _("If Profile Incomplete")),
+        ],
+        default="always",
+        help_text=_("Condition that must be met to send this email")
+    )
+    
+    is_active = models.BooleanField(
+        _("is active"),
+        default=True,
+        help_text=_("Whether this step is active")
+    )
+    
+    class Meta:
+        verbose_name = _("Email Sequence Step")
+        verbose_name_plural = _("Email Sequence Steps")
+        ordering = ["sequence", "step_number"]
+        indexes = [
+            models.Index(fields=["sequence", "step_number", "is_active"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["sequence", "step_number"],
+                name="unique_step_number_per_sequence"
+            )
+        ]
+    
+    def __str__(self):
+        return f"{self.sequence.name} - Step {self.step_number}"
+
+
+class EmailCommunication(models.Model):
+    """
+    Tracks individual email communications sent to teachers.
+    Provides comprehensive tracking and analytics.
+    """
+    
+    # Recipient information
+    recipient = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="received_emails",
+        help_text=_("User who received the email (if registered)")
+    )
+    recipient_email = models.EmailField(
+        _("recipient email"),
+        help_text=_("Email address of the recipient")
+    )
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="sent_emails",
+        help_text=_("School that sent the email")
+    )
+    
+    # Email content and template
+    template = models.ForeignKey(
+        SchoolEmailTemplate,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_emails",
+        help_text=_("Template used for this email")
+    )
+    template_type = models.CharField(
+        _("template type"),
+        max_length=50,
+        choices=EmailTemplateType.choices,
+        help_text=_("Type of email template used")
+    )
+    subject = models.CharField(
+        _("email subject"),
+        max_length=300,
+        help_text=_("Rendered email subject")
+    )
+    
+    # Communication tracking
+    communication_type = models.CharField(
+        _("communication type"),
+        max_length=20,
+        choices=EmailCommunicationType.choices,
+        default=EmailCommunicationType.MANUAL,
+        help_text=_("Type of communication")
+    )
+    
+    # Sequence tracking (for automated emails)
+    sequence = models.ForeignKey(
+        EmailSequence,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_emails",
+        help_text=_("Email sequence this belongs to (if automated)")
+    )
+    sequence_step = models.ForeignKey(
+        EmailSequenceStep,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_emails",
+        help_text=_("Sequence step this email represents")
+    )
+    
+    # Delivery tracking
+    delivery_status = models.CharField(
+        _("delivery status"),
+        max_length=20,
+        choices=EmailDeliveryStatus.choices,
+        default=EmailDeliveryStatus.QUEUED,
+        help_text=_("Current delivery status")
+    )
+    
+    # Timestamps
+    queued_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    opened_at = models.DateTimeField(null=True, blank=True)
+    clicked_at = models.DateTimeField(null=True, blank=True)
+    failed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Error handling
+    failure_reason = models.TextField(
+        _("failure reason"),
+        blank=True,
+        null=True,
+        help_text=_("Reason for delivery failure")
+    )
+    retry_count = models.PositiveIntegerField(
+        _("retry count"),
+        default=0,
+        help_text=_("Number of delivery attempts")
+    )
+    max_retries = models.PositiveIntegerField(
+        _("maximum retries"),
+        default=3,
+        help_text=_("Maximum number of retry attempts")
+    )
+    
+    # Related objects
+    teacher_invitation = models.ForeignKey(
+        TeacherInvitation,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="email_communications",
+        help_text=_("Related teacher invitation (if applicable)")
+    )
+    
+    # Metadata
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_email_communications",
+        help_text=_("User who initiated this communication")
+    )
+    
+    class Meta:
+        verbose_name = _("Email Communication")
+        verbose_name_plural = _("Email Communications")
+        ordering = ["-queued_at"]
+        indexes = [
+            models.Index(fields=["school", "delivery_status", "-queued_at"]),
+            models.Index(fields=["recipient_email", "template_type", "-queued_at"]),
+            models.Index(fields=["sequence", "delivery_status", "-queued_at"]),
+            models.Index(fields=["teacher_invitation", "-queued_at"]),
+            models.Index(fields=["delivery_status", "retry_count", "-queued_at"]),
+        ]
+    
+    def __str__(self):
+        return f"{self.template_type} to {self.recipient_email} ({self.delivery_status})"
+    
+    def can_retry(self):
+        """Check if this email can be retried."""
+        return (
+            self.delivery_status == EmailDeliveryStatus.FAILED and
+            self.retry_count < self.max_retries
+        )
+    
+    def mark_sent(self):
+        """Mark email as sent."""
+        self.delivery_status = EmailDeliveryStatus.SENT
+        self.sent_at = timezone.now()
+        self.save(update_fields=["delivery_status", "sent_at"])
+    
+    def mark_delivered(self):
+        """Mark email as delivered."""
+        self.delivery_status = EmailDeliveryStatus.DELIVERED
+        self.delivered_at = timezone.now()
+        self.save(update_fields=["delivery_status", "delivered_at"])
+    
+    def mark_opened(self):
+        """Mark email as opened."""
+        self.delivery_status = EmailDeliveryStatus.OPENED
+        self.opened_at = timezone.now()
+        self.save(update_fields=["delivery_status", "opened_at"])
+    
+    def mark_clicked(self):
+        """Mark email as clicked."""
+        self.delivery_status = EmailDeliveryStatus.CLICKED
+        self.clicked_at = timezone.now()
+        self.save(update_fields=["delivery_status", "clicked_at"])
+    
+    def mark_failed(self, reason=None):
+        """Mark email as failed."""
+        self.delivery_status = EmailDeliveryStatus.FAILED
+        self.failed_at = timezone.now()
+        self.retry_count += 1
+        if reason:
+            self.failure_reason = reason
+        self.save(update_fields=["delivery_status", "failed_at", "retry_count", "failure_reason"])

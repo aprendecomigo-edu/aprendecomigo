@@ -1,0 +1,283 @@
+QA Test Case: Complete Teacher Profile Wizard Flow
+
+Test ID: TPROF-001
+Test Name: Complete Teacher Profile Wizard Flow
+Purpose: Verify that a tutor can successfully complete the entire 7-step teacher profile creation wizard
+Expected Result: User completes all steps and successfully creates a comprehensive teacher profile
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Architecture: React Native + Expo frontend with Django REST backend
+- Feature: Teacher Profile Creation Wizard (GitHub issue #43)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev`
+4. Backend logs: `make logs` (if needed for debugging)
+
+Test Data:
+- Test Email: teacher.test@aprendecomigo.com
+- User Role: Individual tutor (will be both school_owner and teacher)
+- Profile Photo: Use any valid image file for upload testing
+- Languages: ["Portuguese", "English", "Spanish"]
+- Subjects: Mathematics, Physics (High School level)
+- Location: Lisbon, Portugal (GMT timezone)
+
+Pre-Conditions:
+- User has completed email verification
+- User is redirected to teacher profile wizard (/onboarding/teacher-profile)
+- User has clean profile state (no existing profile data)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Navigation
+1. Start development environment
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+2. Open browser to http://localhost:8081
+3. Complete authentication flow to reach the teacher profile wizard
+4. Verify wizard loads with Step 1 of 7 visible
+
+Expected: Wizard interface loads showing Basic Information step
+Screenshot: 01_wizard_loaded.png
+Debug: Use 'make logs' if wizard fails to load
+
+Step 2: Basic Information Step (Step 1/7)
+1. Verify Basic Information form is displayed with:
+   - Profile photo upload area
+   - First name and last name fields
+   - Professional title field
+   - Email field (pre-populated)
+   - Phone number field
+   - Location fields (city, country, timezone)
+   - Languages multi-select
+   - Years of experience dropdown
+   - Teaching level selection
+   - Introduction text area
+
+2. Fill out the form:
+   - Upload a profile photo (click upload area, select image)
+   - First Name: "Maria"
+   - Last Name: "Silva"
+   - Professional Title: "Mathematics & Physics Tutor"
+   - Phone: "+351912345678"
+   - City: "Lisbon"
+   - Country: "Portugal"
+   - Timezone: "Europe/Lisbon"
+   - Languages: Select "Portuguese", "English", "Spanish"
+   - Years Experience: "5"
+   - Teaching Level: "High School"
+   - Introduction: "Experienced math and physics tutor passionate about helping students excel"
+
+3. Verify form validation works for required fields
+4. Click "Next Step" button
+
+Expected: Form validates successfully, advances to Step 2
+Screenshot: 02_basic_info_completed.png
+
+Step 3: Professional Biography Step (Step 2/7)
+1. Verify Biography step loads with rich text editor
+2. Verify fields are present:
+   - Professional Bio (rich text, 500 words max)
+   - Teaching Philosophy
+   - Specializations (tags/chips)
+   - Achievements (list)
+   - Teaching Approach
+   - Student Outcomes
+
+3. Fill out biography information:
+   - Professional Bio: "With over 5 years of experience teaching mathematics and physics, I specialize in making complex concepts accessible and engaging. My approach combines traditional methods with innovative digital tools to ensure every student reaches their potential."
+   - Teaching Philosophy: "Every student can succeed with the right guidance and support"
+   - Specializations: Add "Algebra", "Calculus", "Mechanics", "Thermodynamics"
+   - Achievements: Add "95% of students improved grades by at least one level", "Certified in advanced teaching methodologies"
+   - Teaching Approach: "Interactive problem-solving with real-world applications"
+   - Student Outcomes: "Consistent improvement in grades and confidence levels"
+
+4. Verify character count shows for bio field
+5. Click "Next Step"
+
+Expected: Biography step completes, advances to Step 3
+Screenshot: 03_biography_completed.png
+
+Step 4: Education Background Step (Step 3/7)
+1. Verify Education step with sections for:
+   - Degrees (with add/remove functionality)
+   - Certifications
+   - Additional Training
+
+2. Add a degree:
+   - Click "Add Degree"
+   - Degree Type: "Master's Degree"
+   - Field of Study: "Mathematics Education"
+   - Institution: "University of Lisbon"
+   - Location: "Lisbon, Portugal"
+   - Graduation Year: "2019"
+   - GPA: "17/20"
+   - Description: "Specialized in advanced mathematics pedagogy"
+
+3. Add a certification:
+   - Click "Add Certification"
+   - Name: "Advanced Teaching Methods Certificate"
+   - Issuing Organization: "Portuguese Education Ministry"
+   - Issue Date: "2020-06-15"
+   - Credential ID: "ATM-2020-1234"
+
+4. Add additional training:
+   - "Digital Learning Platforms Workshop (2021)"
+   - "Student Psychology and Motivation (2022)"
+
+5. Click "Next Step"
+
+Expected: Education step completes, advances to Step 4
+Screenshot: 04_education_completed.png
+
+Step 5: Teaching Subjects Step (Step 4/7)
+1. Verify Subjects step with:
+   - Teaching subjects list (add/remove)
+   - Grade levels for each subject
+   - Expertise levels
+   - Subject categories
+
+2. Add Mathematics subject:
+   - Click "Add Subject"
+   - Subject: "Mathematics"
+   - Grade Levels: Select "9th Grade", "10th Grade", "11th Grade", "12th Grade"
+   - Expertise Level: "Advanced"
+   - Years Teaching: "5"
+   - Description: "Comprehensive mathematics covering algebra, geometry, calculus, and statistics"
+
+3. Add Physics subject:
+   - Click "Add Subject"
+   - Subject: "Physics"
+   - Grade Levels: Select "10th Grade", "11th Grade", "12th Grade"
+   - Expertise Level: "Advanced"
+   - Years Teaching: "4"
+   - Description: "Classical mechanics, thermodynamics, and electromagnetism"
+
+4. Verify subject categories auto-populate
+5. Click "Next Step"
+
+Expected: Subjects step completes, advances to Step 5
+Screenshot: 05_subjects_completed.png
+
+Step 6: Rates & Pricing Step (Step 5/7)
+1. Verify Rates step with:
+   - Individual rate field
+   - Group rate field (optional)
+   - Trial lesson rate (optional)
+   - Package deals (add/remove)
+   - Currency selection
+   - Payment methods
+   - Cancellation policy
+
+2. Set rates:
+   - Individual Rate: "25"
+   - Group Rate: "20"
+   - Trial Lesson Rate: "15"
+   - Currency: "EUR"
+
+3. Add a package deal:
+   - Click "Add Package"
+   - Name: "Monthly Package"
+   - Sessions: "8"
+   - Price: "180"
+   - This shows 10% discount
+
+4. Select payment methods: "Bank Transfer", "PayPal"
+5. Set cancellation policy: "24 hours notice required"
+6. Click "Next Step"
+
+Expected: Rates step completes, advances to Step 6
+Screenshot: 06_rates_completed.png
+
+Step 7: Availability Step (Step 6/7)
+1. Verify Availability step with:
+   - Weekly schedule grid (days/times)
+   - Timezone selection
+   - Booking preferences
+   - Session duration options
+
+2. Set weekly availability:
+   - Monday: 14:00-18:00
+   - Tuesday: 14:00-18:00
+   - Wednesday: 16:00-20:00
+   - Thursday: 14:00-18:00
+   - Friday: 16:00-20:00
+   - Saturday: 10:00-14:00
+   - Sunday: No availability
+
+3. Set booking preferences:
+   - Minimum Notice: "24 hours"
+   - Maximum Advance Booking: "30 days"
+   - Session Duration Options: "60 minutes", "90 minutes"
+   - Auto-accept bookings: "No"
+
+4. Verify timezone matches location (Europe/Lisbon)
+5. Click "Next Step"
+
+Expected: Availability step completes, advances to Step 7
+Screenshot: 07_availability_completed.png
+
+Step 8: Profile Preview Step (Step 7/7)
+1. Verify Preview step shows complete profile as students would see it
+2. Verify all entered information is displayed correctly:
+   - Profile photo
+   - Basic information
+   - Biography sections
+   - Education credentials
+   - Teaching subjects
+   - Rates and pricing
+   - Availability schedule
+
+3. Check that preview is professional and complete
+4. Verify "Complete Profile" button is enabled
+5. Click "Complete Profile"
+
+Expected: Profile preview displays correctly, completion succeeds
+Screenshot: 08_profile_preview.png
+
+Step 9: Profile Completion and Navigation
+1. Verify wizard shows completion loading state
+2. Wait for successful completion
+3. Verify redirect to dashboard occurs
+4. Check that profile is saved and accessible
+
+Expected: User successfully redirected to school admin dashboard
+Screenshot: 09_completion_success.png
+
+Step 10: Verification of Saved Profile
+1. Navigate back to teacher profile or settings
+2. Verify all data was saved correctly
+3. Check that profile completion shows 100%
+4. Verify profile is visible to students (if applicable)
+
+Expected: All profile data persisted correctly
+Screenshot: 10_profile_verification.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND profile is created AND user reaches dashboard AND all data is persisted
+FAIL: Any step fails OR wizard crashes OR data is lost OR user cannot complete flow
+
+Individual Step Criteria:
+- Step 1: PASS if basic info form accepts all data and validates properly, FAIL if form errors or navigation fails
+- Step 2: PASS if biography editor works and accepts content within limits, FAIL if editor fails or validation issues
+- Step 3: PASS if education entries can be added/edited/removed properly, FAIL if data handling fails
+- Step 4: PASS if subjects can be configured with all options, FAIL if subject management fails
+- Step 5: PASS if rates can be set and package deals work, FAIL if pricing logic fails
+- Step 6: PASS if availability schedule can be set properly, FAIL if calendar functionality fails
+- Step 7: PASS if preview shows complete profile accurately, FAIL if preview is incomplete or inaccurate
+- Overall: PASS if complete flow works and profile is saved, FAIL if any critical functionality fails
+
+Performance Requirements:
+- Each step should load within 2 seconds
+- Form interactions should be responsive (<500ms)
+- Auto-save should work without user intervention
+- No JavaScript errors or console warnings
+
+Overall Result: PASS only if ALL steps pass and complete flow succeeds, FAIL if ANY step fails or critical functionality is broken

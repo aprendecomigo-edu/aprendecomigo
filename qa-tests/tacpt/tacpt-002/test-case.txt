@@ -1,0 +1,180 @@
+QA Test Case: Generic Invitation Link Acceptance
+
+Test ID: TACPT-002
+Test Name: Generic Invitation Link Acceptance
+Purpose: Verify that a teacher can successfully use a generic school invitation link (not email-specific)
+Expected Result: Teacher can access generic invitation link, provide their email, and join the school
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django backend (localhost:8000) + React Native frontend (localhost:8081)
+- GitHub Issue: #52 - Support for generic school invitation links
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev`
+4. Database: PostgreSQL with test data
+
+Test Data:
+- Generic Teacher Email: generic.teacher@aprendecomigo.com
+- School: Test School with generic invitation link enabled
+- Generic invitation link/token (not tied to specific email)
+- No existing teacher profile for this email
+
+Pre-test Database State:
+- School has generic invitation enabled
+- Generic invitation link is active and valid
+- No existing profile for test email
+- School exists and accepts teacher applications
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup
+1. Start development servers
+2. Verify servers are running correctly
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Both servers start without errors
+Screenshot: 01_servers_started.png
+
+Step 2: Generate Generic Invitation Link
+1. Access Django admin or use API to create/retrieve generic invitation
+2. Obtain the generic invitation token/link
+Commands (via Django shell):
+  cd backend
+  python manage.py shell
+  from accounts.models import SchoolInvitationLink
+  # Get or create generic invitation
+
+Expected: Valid generic invitation link obtained
+Screenshot: 02_generic_link_created.png
+
+Step 3: Access Generic Invitation Link
+1. Open browser to localhost:8081
+2. Navigate to generic invitation URL
+URL: http://localhost:8081/accept-invitation/[GENERIC_TOKEN]
+
+Expected: Generic invitation page loads (may request email input)
+Screenshot: 03_generic_invitation_loaded.png
+
+Step 4: Verify Generic Invitation Interface
+1. Confirm school information is displayed
+2. Check if email input field is present (for generic links)
+3. Verify school preview shows correct details
+4. Confirm accept/join button is available
+
+Expected: Clean interface for generic invitation with school details
+Screenshot: 04_generic_interface_display.png
+
+Step 5: Email Input (if required)
+If generic link requires email input:
+1. Enter test teacher email address
+2. Verify email validation works
+3. Confirm email is accepted
+
+Expected: Email input is validated and accepted
+Screenshot: 05_email_input_completed.png
+
+Step 6: Authentication Process
+1. If not logged in, complete authentication with entered email
+2. Follow authentication flow (signup or signin)
+3. Return to invitation acceptance
+
+Expected: User successfully authenticates with provided email
+Screenshot: 06_authentication_process.png
+
+Step 7: Join School via Generic Link
+1. Click "Juntar à Escola" or equivalent button
+2. Confirm loading state appears
+3. Wait for success or profile wizard
+
+Expected: Successful join process initiated with proper loading states
+Screenshot: 07_join_school_initiated.png
+
+Step 8: Profile Setup Process
+If profile wizard is triggered:
+1. Complete all required profile steps
+2. Fill mandatory teacher information
+3. Set availability and teaching preferences
+4. Complete profile creation
+
+Expected: Teacher profile is successfully created through wizard
+Screenshots: 08a_profile_step1.png, 08b_profile_step2.png, etc.
+
+Step 9: Verify School Membership
+1. Confirm success message for school joining
+2. Check that teacher appears in school roster
+3. Verify permissions are correctly assigned
+4. Test access to teacher dashboard
+
+Expected: Teacher successfully becomes school member with proper permissions
+Screenshot: 09_membership_confirmed.png
+
+Step 10: Multi-School Integration Test
+1. Access multi-school dashboard (if applicable)
+2. Verify new school appears in school list
+3. Test school switching functionality
+4. Confirm teacher can work with multiple schools
+
+Expected: Generic invitation integrates properly with multi-school system
+Screenshot: 10_multi_school_integration.png
+
+Step 11: Database Verification
+1. Check school membership record created
+2. Verify teacher profile exists and is complete
+3. Confirm invitation link usage is tracked
+Commands:
+  python manage.py shell
+  from accounts.models import User, TeacherProfile, SchoolMembership
+  # Verify records
+
+Expected: All database records reflect successful generic invitation acceptance
+Screenshot: 11_database_state_verified.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND:
+- Generic invitation link loads and displays school information
+- Email input (if required) works with proper validation
+- Authentication process completes successfully
+- School joining process works without errors
+- Profile wizard completes all required steps
+- Teacher gains proper school membership and permissions
+- Multi-school functionality works correctly
+- Database state reflects successful membership
+
+FAIL: Any step fails OR:
+- Generic link doesn't load or shows errors
+- Email input fails validation or causes errors
+- Authentication process fails or has issues
+- School joining fails or shows errors
+- Profile wizard has missing steps or fails
+- Teacher doesn't gain proper permissions
+- Multi-school functionality breaks
+- Database state is inconsistent or incomplete
+
+Individual Step Criteria:
+- Step 1: PASS if servers start, FAIL if errors
+- Step 2: PASS if generic link obtained, FAIL if creation fails
+- Step 3: PASS if page loads, FAIL if 404 or errors
+- Step 4: PASS if interface displays correctly, FAIL if missing elements
+- Step 5: PASS if email validation works, FAIL if validation errors
+- Step 6: PASS if authentication succeeds, FAIL if auth fails
+- Step 7: PASS if join process works, FAIL if errors occur
+- Step 8: PASS if profile setup completes, FAIL if wizard fails
+- Step 9: PASS if membership confirmed, FAIL if permissions missing
+- Step 10: PASS if multi-school works, FAIL if integration issues
+- Step 11: PASS if database correct, FAIL if data inconsistent
+
+Business Requirements:
+- Generic links enable easier teacher recruitment (growth requirement)
+- Teachers can join multiple schools through different methods (flexibility)
+- User experience is consistent between email and generic invitations
+- System supports both invitation types without conflicts
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

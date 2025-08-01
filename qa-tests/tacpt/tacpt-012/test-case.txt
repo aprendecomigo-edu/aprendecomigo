@@ -1,0 +1,189 @@
+QA Test Case: Profile Wizard Integration
+
+Test ID: TACPT-012
+Test Name: Profile Wizard Integration
+Purpose: Verify seamless integration between invitation acceptance and teacher profile wizard
+Expected Result: Smooth transition from invitation acceptance to complete profile setup
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django backend (localhost:8000) + React Native frontend (localhost:8081)
+- GitHub Issue: #52 - Profile wizard integration for teacher invitations
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Development servers: `make dev`
+3. Database: PostgreSQL with test data
+
+Test Data:
+- Valid invitation token requiring profile setup
+- Teacher email: profile.wizard@aprendecomigo.com
+- School: Test School
+- No existing teacher profile (to trigger wizard)
+
+Pre-test Database State:
+- Teacher invitation exists with profile setup required
+- User account may exist but no teacher profile
+- School exists and is active
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Setup Profile Wizard Scenario
+1. Ensure teacher invitation requires profile setup
+2. Verify no existing teacher profile for test email
+3. Confirm invitation metadata indicates wizard needed
+Commands:
+  python manage.py shell
+  from accounts.models import TeacherInvitation, TeacherProfile
+  # Verify wizard setup conditions
+
+Expected: Invitation properly configured to trigger profile wizard
+Screenshot: 01_wizard_scenario_setup.png
+
+Step 2: Access Invitation Requiring Profile Setup
+1. Navigate to invitation URL
+2. Authenticate with teacher credentials
+3. Verify invitation page shows profile setup requirement
+4. Check that accept button indicates profile setup needed
+URL: http://localhost:8081/accept-invitation/[TOKEN]
+
+Expected: Invitation clearly indicates profile setup will be required
+Screenshot: 02_invitation_shows_profile_setup.png
+
+Step 3: Initiate Profile Wizard Flow
+1. Click "Configurar Perfil" or equivalent button
+2. Verify smooth transition to profile wizard
+3. Check that invitation context is maintained
+4. Confirm wizard shows appropriate steps
+
+Expected: Seamless transition to profile wizard with context preserved
+Screenshot: 03_profile_wizard_initiated.png
+
+Step 4: Complete Basic Information Step
+1. Fill in required basic information (name, phone, etc.)
+2. Test field validation
+3. Verify step completion indicators
+4. Navigate to next step
+
+Expected: Basic information step works properly with validation
+Screenshot: 04_basic_info_step_completed.png
+
+Step 5: Complete Education/Qualifications Step
+1. Add education background
+2. Include teaching qualifications
+3. Test file upload for certificates (if available)
+4. Verify step data is saved
+
+Expected: Education step captures comprehensive teaching background
+Screenshot: 05_education_step_completed.png
+
+Step 6: Complete Subjects and Availability
+1. Select teaching subjects
+2. Set availability schedule
+3. Configure hourly rates
+4. Test subject-specific settings
+
+Expected: Subjects and availability properly configured
+Screenshot: 06_subjects_availability_completed.png
+
+Step 7: Complete Biography and Additional Info
+1. Write teaching biography
+2. Add any additional qualifications
+3. Set teaching preferences
+4. Review all entered information
+
+Expected: Biography and additional info enhance teacher profile
+Screenshot: 07_biography_additional_info.png
+
+Step 8: Profile Wizard Completion
+1. Review complete profile in final step
+2. Confirm all sections are completed
+3. Submit completed profile
+4. Verify success confirmation
+
+Expected: Profile wizard completes successfully with all data
+Screenshot: 08_profile_wizard_completion.png
+
+Step 9: Verify Integration with Invitation Acceptance
+1. Check that profile completion triggers invitation acceptance
+2. Verify teacher membership is created
+3. Confirm teacher gains appropriate permissions
+4. Test transition to teacher dashboard
+
+Expected: Profile completion seamlessly completes invitation acceptance
+Screenshot: 09_integration_with_acceptance.png
+
+Step 10: Verify Database State Post-Wizard
+1. Check that teacher profile is created and complete
+2. Verify school membership record exists
+3. Confirm invitation status is updated to accepted
+4. Test that all wizard data is properly saved
+Commands:
+  python manage.py shell
+  from accounts.models import TeacherProfile, SchoolMembership
+  # Verify all records created correctly
+
+Expected: Complete database state reflects successful profile setup
+Screenshot: 10_database_verification_post_wizard.png
+
+Step 11: Test Teacher Dashboard Access
+1. Navigate to teacher dashboard
+2. Verify all profile information is accessible
+3. Check that teacher can perform all expected functions
+4. Confirm school context is properly set
+
+Expected: Teacher dashboard fully functional with complete profile
+Screenshot: 11_teacher_dashboard_functional.png
+
+Step 12: Test Profile Editing After Setup
+1. Access teacher profile settings
+2. Verify all wizard-entered data can be edited
+3. Test updating profile information
+4. Confirm changes are saved and reflected
+
+Expected: Profile remains editable and maintainable after wizard
+Screenshot: 12_profile_editing_post_setup.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND:
+- Profile wizard integration is seamless with invitation acceptance
+- All wizard steps function properly with validation
+- Teacher profile is created completely and accurately
+- Integration with invitation acceptance works without issues
+- Database state is consistent and complete
+- Teacher dashboard is fully functional after profile setup
+- Profile remains editable and maintainable
+
+FAIL: Any step fails OR:
+- Profile wizard integration is broken or confusing
+- Wizard steps have validation errors or missing functionality
+- Teacher profile is incomplete or has data issues
+- Integration between wizard and invitation acceptance fails
+- Database state is inconsistent or incomplete
+- Teacher dashboard access is denied or non-functional
+- Profile editing is broken after initial setup
+
+Individual Step Criteria:
+- Step 1: PASS if setup correct, FAIL if wizard conditions not met
+- Step 2: PASS if invitation clear, FAIL if profile requirement unclear
+- Step 3: PASS if transition smooth, FAIL if context lost
+- Step 4: PASS if basic info works, FAIL if validation issues
+- Step 5: PASS if education captured, FAIL if incomplete
+- Step 6: PASS if subjects/availability set, FAIL if configuration issues
+- Step 7: PASS if biography complete, FAIL if missing functionality
+- Step 8: PASS if wizard completes, FAIL if completion issues
+- Step 9: PASS if integration works, FAIL if acceptance fails
+- Step 10: PASS if database correct, FAIL if data inconsistent
+- Step 11: PASS if dashboard works, FAIL if access issues
+- Step 12: PASS if editing works, FAIL if profile locked
+
+Business Requirements:
+- Complete teacher profiles are essential for platform quality
+- Profile setup must not create barriers to teacher onboarding
+- Integration must feel seamless to maintain user experience
+- Teachers must be able to maintain and update their profiles
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

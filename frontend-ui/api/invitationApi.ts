@@ -253,7 +253,7 @@ export class InvitationApi {
    * Get invitation status by token
    */
   static async getInvitationStatus(token: string): Promise<InvitationStatusResponse> {
-    const response = await apiClient.get(`/accounts/teacher-invitations/${token}/`);
+    const response = await apiClient.get(`/accounts/teacher-invitations/${token}/status/`);
     return response.data;
   }
 

@@ -1,0 +1,198 @@
+QA Test Case: Multi-School Dashboard Functionality
+
+Test ID: TACPT-003
+Test Name: Multi-School Dashboard Functionality
+Purpose: Verify that teachers can view, manage, and switch between multiple school memberships
+Expected Result: Teacher can access multi-school dashboard, view all schools, switch between them, and manage memberships
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django backend (localhost:8000) + React Native frontend (localhost:8081)
+- GitHub Issue: #52 - Multi-school dashboard functionality (Issue #76)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev`
+4. Database: PostgreSQL with test data
+
+Test Data:
+- Multi-school Teacher: multischool.teacher@aprendecomigo.com
+- School A: Primary Test School
+- School B: Secondary Test School  
+- School C: Optional Third School
+- Teacher has accepted invitations to multiple schools
+- Different roles possible across schools (teacher, admin)
+
+Pre-test Database State:
+- Teacher profile exists and is complete
+- Teacher has active memberships in 2+ schools
+- Schools have different stats (students, teachers)
+- School memberships have different join dates and roles
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Authentication
+1. Start development servers
+2. Navigate to application
+3. Authenticate as multi-school teacher
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Servers start and teacher authentication succeeds
+Screenshot: 01_authenticated_multischool_teacher.png
+
+Step 2: Access Multi-School Dashboard
+1. Navigate to multi-school dashboard (may be in teacher profile or settings)
+2. Locate school management or "Minhas Escolas" section
+URL patterns to try:
+- http://localhost:8081/(teacher)/schools
+- http://localhost:8081/profile (look for school section)
+- http://localhost:8081/settings (look for school management)
+
+Expected: Multi-school dashboard loads showing all teacher's school memberships
+Screenshot: 02_multischool_dashboard_loaded.png
+
+Step 3: Verify School List Display
+1. Confirm all schools where teacher is member are displayed
+2. Check school names, logos, and basic information
+3. Verify role badges are shown correctly (Teacher, Admin, etc.)
+4. Confirm current/active school is highlighted or marked
+
+Expected: Complete list of schools with proper information and visual indicators
+Screenshot: 03_school_list_display.png
+
+Step 4: School Statistics Verification
+1. Check if school statistics are displayed (student count, teacher count)
+2. Verify statistics are accurate for each school
+3. Confirm loading states work properly for stats
+4. Test refresh functionality if available
+
+Expected: School statistics load correctly with proper loading states
+Screenshot: 04_school_statistics_display.png
+
+Step 5: School Switching Functionality
+1. Click "Tornar Ativa" or switch button for a different school
+2. Confirm loading state during switch
+3. Verify active school indicator updates
+4. Check that context switches properly
+
+Expected: School switching works smoothly with proper visual feedback
+Screenshot: 05_school_switching_test.png
+
+Step 6: School Details Expansion
+1. Click "Mais" or expand button on a school card
+2. Verify detailed information appears
+3. Check contact information display
+4. Confirm membership details (join date, status)
+5. Test collapse functionality
+
+Expected: School details expand/collapse properly with complete information
+Screenshot: 06_school_details_expanded.png
+
+Step 7: School Context Verification
+1. After switching schools, navigate to teacher dashboard
+2. Verify dashboard shows correct school context
+3. Check that students, classes belong to selected school
+4. Confirm navigation reflects current school
+
+Expected: School context is maintained across application navigation
+Screenshot: 07_school_context_verified.png
+
+Step 8: Leave School Functionality (if available)
+1. Attempt to leave one school (if teacher has multiple)
+2. Confirm confirmation dialog appears
+3. Test cancellation of leave action
+4. Complete leave action if safe (non-destructive test)
+
+Expected: Leave school functionality works with proper confirmations
+Screenshot: 08_leave_school_test.png
+
+Step 9: School Invitation Management
+1. Check for pending invitations section
+2. Verify current invitations are displayed
+3. Test invitation status indicators
+4. Check invitation management controls
+
+Expected: Invitation management integrates properly with multi-school view
+Screenshot: 09_invitation_management.png
+
+Step 10: Mobile Responsiveness Test
+1. Resize browser to mobile width (e.g., 375px)
+2. Verify multi-school dashboard adapts properly
+3. Test touch interactions on school cards
+4. Confirm buttons are properly sized for mobile
+
+Expected: Multi-school dashboard is fully responsive and touch-friendly
+Screenshot: 10_mobile_responsiveness.png
+
+Step 11: Navigation Integration Test
+1. Test breadcrumb navigation (if present)
+2. Verify quick school switcher in header/navigation
+3. Check deep linking to specific schools
+4. Test back/forward browser navigation
+
+Expected: Multi-school functionality integrates seamlessly with navigation
+Screenshot: 11_navigation_integration.png
+
+Step 12: Performance and Loading Test
+1. Refresh page and measure load time
+2. Test school switching speed
+3. Verify lazy loading of school statistics
+4. Check for any console errors or warnings
+
+Expected: Multi-school dashboard performs well with no errors
+Screenshot: 12_performance_verification.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND:
+- Multi-school dashboard loads and displays all teacher's schools
+- School information is accurate and properly formatted
+- School statistics load correctly with proper states
+- School switching works smoothly with visual feedback
+- School details expand/collapse functionality works
+- School context is maintained across navigation
+- Leave school functionality (if available) works with confirmations
+- Invitation management integrates properly
+- Mobile responsiveness is complete and usable
+- Navigation integration works seamlessly
+- Performance is acceptable with no console errors
+
+FAIL: Any step fails OR:
+- Dashboard doesn't load or shows incomplete school list
+- School information is missing, incorrect, or poorly formatted
+- Statistics fail to load or show incorrect data
+- School switching fails or doesn't update context
+- Details expansion/collapse doesn't work properly
+- School context is lost during navigation
+- Leave school functionality has errors or missing confirmations
+- Invitation management is broken or missing
+- Mobile view is broken or unusable
+- Navigation integration has issues
+- Performance is poor or console shows errors
+
+Individual Step Criteria:
+- Step 1: PASS if authentication works, FAIL if login issues
+- Step 2: PASS if dashboard loads, FAIL if 404 or loading errors
+- Step 3: PASS if school list complete, FAIL if missing schools
+- Step 4: PASS if statistics accurate, FAIL if incorrect data
+- Step 5: PASS if switching works, FAIL if switch failures
+- Step 6: PASS if details display, FAIL if expansion errors
+- Step 7: PASS if context maintained, FAIL if context lost
+- Step 8: PASS if leave works, FAIL if no confirmations
+- Step 9: PASS if invitations display, FAIL if management broken
+- Step 10: PASS if mobile works, FAIL if responsive issues
+- Step 11: PASS if navigation works, FAIL if integration broken
+- Step 12: PASS if performance good, FAIL if errors or slow
+
+Business Requirements:
+- Teachers can efficiently manage multiple school relationships
+- School context switching preserves user workflow
+- Multi-school view supports teacher productivity and growth
+- System scales properly with teachers in many schools
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

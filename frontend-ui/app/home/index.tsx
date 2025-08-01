@@ -46,9 +46,9 @@ const RoleBasedHome: React.FC = () => {
       return '/(school-admin)/dashboard';
     }
     
-    // Teachers go to tutor dashboard (individual tutors are also teachers)
+    // Teachers go to teacher dashboard
     if (userProfile.user_type === 'teacher') {
-      return '/(tutor)/dashboard';
+      return '/(teacher)/dashboard';
     }
     
     // Students go to student dashboard

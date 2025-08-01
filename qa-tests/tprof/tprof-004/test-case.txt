@@ -1,0 +1,303 @@
+QA Test Case: Mobile Responsive Design Testing
+
+Test ID: TPROF-004
+Test Name: Mobile Responsive Design Testing
+Purpose: Verify Teacher Profile Wizard works perfectly on mobile devices and different screen sizes
+Expected Result: Wizard provides excellent user experience across all device types and screen orientations
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Architecture: React Native + Expo with responsive web support
+- Feature: Teacher Profile Wizard mobile optimization
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Development servers: `make dev`
+3. Browser dev tools for device simulation
+4. Access wizard at: http://localhost:8081/onboarding/teacher-profile
+
+Test Devices/Viewports:
+- Mobile Portrait: 375x667 (iPhone SE)
+- Mobile Landscape: 667x375 (iPhone SE rotated)
+- Tablet Portrait: 768x1024 (iPad)
+- Tablet Landscape: 1024x768 (iPad rotated)
+- Small Desktop: 1024x768
+- Large Desktop: 1920x1080
+
+Test Data:
+- Test email: mobile.test@aprendecomigo.com
+- Standard profile data for form completion
+- Test images for upload functionality
+
+Pre-Conditions:
+- User authenticated and accessing wizard
+- Browser dev tools available for viewport simulation
+- Clear profile state for testing
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Mobile Portrait Layout Testing (375x667)
+1. Open browser dev tools and set viewport to 375x667
+2. Navigate to teacher profile wizard
+3. Test overall layout:
+   - Header fits properly without horizontal scroll
+   - Progress bar is visible and readable
+   - Step navigation is appropriate for mobile
+   - Footer navigation buttons accessible
+
+4. Test Step 1 (Basic Info) on mobile:
+   - Form fields stack vertically properly
+   - Input fields are touch-friendly (minimum 44px height)
+   - Labels are readable without truncation
+   - Profile photo upload area sized appropriately
+   - Dropdown menus work with touch
+   - Multi-select components usable
+
+5. Verify touch interactions:
+   - Tap targets are large enough
+   - No accidental activations
+   - Scroll behavior is smooth
+   - Form inputs focus properly with virtual keyboard
+
+Expected: Perfect mobile portrait experience with all elements accessible
+Screenshot: 01_mobile_portrait_basic.png
+
+Step 2: Virtual Keyboard Behavior Testing
+1. Stay in mobile portrait mode (375x667)
+2. Test form input with virtual keyboard:
+   - Tap first name field
+   - Verify page adjusts for virtual keyboard
+   - Ensure input field remains visible
+   - Test navigation between fields with keyboard
+
+3. Test different input types:
+   - Text inputs (name, title)
+   - Email input (keyboard type)
+   - Phone number input (numeric keyboard)
+   - Text areas (biography)
+
+4. Test form behavior:
+   - Page scrolls to keep active field visible
+   - "Next" button remains accessible
+   - No content gets cut off by keyboard
+
+Expected: Virtual keyboard integration works seamlessly
+Screenshot: 02_virtual_keyboard.png
+
+Step 3: Mobile Landscape Testing (667x375)
+1. Rotate device to landscape mode (667x375)
+2. Test layout adaptation:
+   - Header remains functional
+   - Progress bar adapts to wider screen
+   - Form layout optimizes for landscape
+   - Navigation buttons positioned properly
+
+3. Test form usability in landscape:
+   - Fields may arrange in columns if space allows
+   - Profile photo upload maintains aspect ratio
+   - Dropdown menus position correctly
+   - Scrolling behavior remains smooth
+
+Expected: Landscape mode provides optimized experience
+Screenshot: 03_mobile_landscape.png
+
+Step 4: Tablet Portrait Testing (768x1024)
+1. Set viewport to tablet portrait (768x1024)
+2. Test enhanced tablet experience:
+   - More spacious layout utilizes screen real estate
+   - Form may use multi-column layout where appropriate
+   - Sidebar navigation may appear (if implemented)
+   - Touch targets optimized for tablet use
+
+3. Test Step 2 (Biography) specifically:
+   - Rich text editor sized appropriately
+   - Toolbar buttons accessible
+   - Character counter visible
+   - Preview pane may be available
+
+Expected: Tablet portrait offers enhanced experience with better space utilization
+Screenshot: 04_tablet_portrait.png
+
+Step 5: Tablet Landscape Testing (1024x768)
+1. Rotate to tablet landscape (1024x768)
+2. Test desktop-like experience:
+   - May show desktop navigation patterns
+   - Form layout may be side-by-side with navigation
+   - Profile preview may be live-updating
+   - More advanced UI patterns available
+
+3. Test complex forms (Education, Subjects):
+   - Multiple items may display in grid
+   - Add/remove functionality optimized
+   - Form validation displays clearly
+
+Expected: Tablet landscape approaches desktop experience quality
+Screenshot: 05_tablet_landscape.png
+
+Step 6: Touch Interaction Quality Testing
+1. Test across all mobile/tablet viewports
+2. Verify touch interactions:
+   - All buttons have proper touch feedback
+   - No double-tap zoom issues
+   - Swipe gestures work where appropriate
+   - Drag and drop functionality (if any)
+
+3. Test specific components:
+   - Dropdown menus open properly
+   - Multi-select tags can be added/removed
+   - Date pickers work with touch
+   - Time selectors (availability step)
+   - Photo upload touch interaction
+
+Expected: All touch interactions feel native and responsive
+Screenshot: 06_touch_interactions.png
+
+Step 7: Progressive Web App Features
+1. Test PWA capabilities on mobile:
+   - Add to home screen functionality
+   - Offline behavior (if implemented)
+   - Push notifications (if implemented)
+   - App-like navigation
+
+2. Test installation and usage:
+   - Install PWA to home screen
+   - Launch from home screen
+   - Verify full-screen experience
+   - Test navigation within app
+
+Expected: PWA features enhance mobile experience
+Screenshot: 07_pwa_features.png
+
+Step 8: Performance on Mobile Devices
+1. Test loading performance:
+   - Initial wizard load time on mobile
+   - Step transition speed
+   - Image upload performance
+   - Auto-save responsiveness
+
+2. Use browser dev tools performance tab:
+   - Monitor CPU usage
+   - Check memory consumption
+   - Verify no performance warnings
+   - Test with throttled connection (3G)
+
+3. Test with simulated slow connection:
+   - Enable "Slow 3G" in dev tools
+   - Test wizard loading and interaction
+   - Verify progressive loading if implemented
+   - Check loading states are shown
+
+Expected: Performance remains good even on slower mobile connections
+Screenshot: 08_mobile_performance.png
+
+Step 9: Cross-Browser Mobile Testing
+1. Test on different mobile browsers:
+   - Chrome Mobile
+   - Safari Mobile (if available)
+   - Firefox Mobile
+   - Samsung Internet (if available)
+
+2. For each browser, verify:
+   - Layout renders correctly
+   - Form inputs work properly
+   - Navigation functions correctly
+   - Auto-save works
+
+3. Test specific mobile browser behaviors:
+   - Safari's address bar hiding
+   - Chrome's pull-to-refresh
+   - Browser zoom behavior
+   - Back button behavior
+
+Expected: Consistent experience across mobile browsers
+Screenshot: 09_cross_browser_mobile.png
+
+Step 10: Accessibility on Mobile
+1. Test mobile accessibility features:
+   - Screen reader compatibility (if available)
+   - Voice over navigation
+   - High contrast mode
+   - Font size scaling
+
+2. Test with accessibility tools:
+   - Enable VoiceOver (iOS) or TalkBack (Android)
+   - Test navigation with screen reader
+   - Verify proper focus management
+   - Check alt text on images
+
+3. Test physical accessibility:
+   - One-handed operation
+   - Reach zones for different hand sizes
+   - Alternative input methods
+
+Expected: Mobile experience is accessible to users with disabilities
+Screenshot: 10_mobile_accessibility.png
+
+Step 11: Complete Wizard Flow on Mobile
+1. Use mobile portrait mode (375x667)
+2. Complete entire wizard on mobile:
+   - Step 1: Basic Info (test photo upload on mobile)
+   - Step 2: Biography (test rich text editor)
+   - Step 3: Education (test add/remove functionality)
+   - Step 4: Subjects (test complex form interactions)
+   - Step 5: Rates (test numeric inputs)
+   - Step 6: Availability (test calendar/time picker)
+   - Step 7: Preview (test complete profile view)
+
+3. Verify completion:
+   - All steps work correctly on mobile
+   - Data submission succeeds
+   - Redirect to dashboard works
+   - Profile saves correctly
+
+Expected: Complete wizard flow works perfectly on mobile
+Screenshot: 11_complete_mobile_flow.png
+
+Step 12: Edge Case Testing
+1. Test edge cases specific to mobile:
+   - Very small screens (320px width)
+   - Very tall screens (iPhone X style)
+   - Landscape-only devices
+   - Devices with notches/safe areas
+
+2. Test interruption scenarios:
+   - Phone call during wizard completion
+   - App switching behavior
+   - Background/foreground transitions
+   - Battery optimization impacts
+
+Expected: Edge cases handled gracefully without data loss
+Screenshot: 12_mobile_edge_cases.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Perfect mobile experience across all device types AND orientations AND all functionality works
+FAIL: Any mobile usability issues OR functionality broken on mobile OR poor responsive behavior
+
+Individual Criteria:
+- Layout Adaptation: PASS if layout optimizes for each screen size, FAIL if layout breaks or is unusable
+- Touch Interactions: PASS if all touch targets are appropriate size and responsive, FAIL if touch UX is poor
+- Virtual Keyboard: PASS if keyboard integration is seamless, FAIL if keyboard causes usability issues
+- Performance: PASS if performance is good on mobile, FAIL if wizard is slow or unresponsive
+- Cross-Browser: PASS if works consistently across mobile browsers, FAIL if browser-specific issues
+- Accessibility: PASS if accessible on mobile devices, FAIL if accessibility features don't work
+- Complete Flow: PASS if entire wizard works on mobile, FAIL if any step fails on mobile
+- Progressive Enhancement: PASS if mobile experience is enhanced appropriately, FAIL if mobile is just shrunk desktop
+
+Performance Requirements:
+- Mobile load time should be under 3 seconds
+- Step transitions should be under 1 second
+- Touch responses should be immediate (<100ms)
+- Smooth scrolling at 60fps
+- Auto-save should work within 3 seconds on mobile
+
+UX Requirements:
+- Touch targets minimum 44px
+- Text must be readable without zooming
+- No horizontal scrolling required
+- One-thumb operation possible for common tasks
+- Virtual keyboard should not break layout
+
+Overall Result: PASS only if mobile experience is excellent across all tested scenarios, FAIL if any significant mobile usability issues exist

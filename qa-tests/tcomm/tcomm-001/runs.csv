@@ -1,0 +1,2 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250801-144411,2025-08-01T14:44:11Z,FAIL,1,1,Playwright Chrome,macOS development,Critical frontend routing failure - authentication broken

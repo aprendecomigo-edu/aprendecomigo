@@ -1,11 +1,9 @@
-import { CheckCircle, AlertCircle, Clock, X, UserCheck, UserX } from 'lucide-react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Alert } from 'react-native';
+import { CheckCircle, AlertCircle, Clock, UserCheck } from 'lucide-react-native';
 
-import { useInvitationActions } from '@/hooks/useInvitations';
-import InvitationApi, { TeacherInvitation, InvitationStatusResponse } from '@/api/invitationApi';
-import MainLayout from '@/components/layouts/main-layout';
+import InvitationApi, { InvitationStatusResponse } from '@/api/invitationApi';
 import { useAuth } from '@/api/authContext';
 
 import { Box } from '@/components/ui/box';
@@ -33,8 +31,6 @@ const AcceptInvitationPage = () => {
   const [declined, setDeclined] = useState(false);
   const [needsAuth, setNeedsAuth] = useState(false);
 
-  const { acceptInvitation, declineInvitation } = useInvitationActions();
-
   useEffect(() => {
     if (token) {
       fetchInvitationStatus();
@@ -45,21 +41,18 @@ const AcceptInvitationPage = () => {
     try {
       setLoading(true);
       setError(null);
+      
       const response = await InvitationApi.getInvitationStatus(token!);
       setInvitationData(response);
       
-      // Check if user needs to authenticate and if invitation email matches current user
+      // Check if user needs to authenticate
       if (isLoggedIn && userProfile && response.invitation.email !== userProfile.email) {
         setError('Este convite não é para o usuário atualmente autenticado. Por favor, faça login com o email correto.');
       } else if (!isLoggedIn) {
         setNeedsAuth(true);
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 
-                          err.response?.data?.detail || 
-                          err.message || 
-                          'Falha ao carregar informações do convite';
-      setError(errorMessage);
+      setError(err?.response?.data?.message || 'O convite não pôde ser encontrado ou é inválido.');
     } finally {
       setLoading(false);
     }
@@ -86,23 +79,9 @@ const AcceptInvitationPage = () => {
       return;
     }
 
-    // For teacher invitations, check if we need to go through profile wizard
-    const invitation = invitationData.invitation;
-    if (invitation.role === 'teacher') {
-      // Check if teacher profile needs to be created/completed
-      const needsProfileWizard = invitationData.needs_profile_wizard || 
-                               invitationData.wizard_metadata?.requires_profile_completion;
-      
-      if (needsProfileWizard) {
-        // Navigate to profile wizard instead of accepting directly
-        router.push(`/accept-invitation/profile-wizard?token=${token}` as any);
-        return;
-      }
-    }
-
     try {
       setAccepting(true);
-      const result = await acceptInvitation(token!);
+      const result = await InvitationApi.acceptInvitation(token!);
       setAccepted(true);
       
       Alert.alert(
@@ -122,8 +101,8 @@ const AcceptInvitationPage = () => {
           }
         ]
       );
-    } catch (err) {
-      // Error handling is done in the hook
+    } catch (err: any) {
+      Alert.alert('Erro', err?.response?.data?.message || 'Erro ao aceitar convite');
     } finally {
       setAccepting(false);
     }
@@ -141,11 +120,11 @@ const AcceptInvitationPage = () => {
           onPress: async () => {
             try {
               setDeclining(true);
-              await declineInvitation(token!);
+              await InvitationApi.declineInvitation(token!);
               setDeclined(true);
               Alert.alert('Convite Declinado', 'O convite foi declinado com sucesso.');
-            } catch (err) {
-              // Error handling is done in the hook
+            } catch (err: any) {
+              Alert.alert('Erro', err?.response?.data?.message || 'Erro ao declinar convite');
             } finally {
               setDeclining(false);
             }
@@ -153,18 +132,6 @@ const AcceptInvitationPage = () => {
         }
       ]
     );
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'accepted':
-        return { icon: CheckCircle, color: '#10B981' };
-      case 'expired':
-      case 'cancelled':
-        return { icon: X, color: '#EF4444' };
-      default:
-        return { icon: Clock, color: '#F59E0B' };
-    }
   };
 
   const formatDate = (dateString: string) => {
@@ -177,9 +144,22 @@ const AcceptInvitationPage = () => {
     });
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'accepted':
+        return { icon: CheckCircle, color: '#10B981' };
+      case 'expired':
+      case 'cancelled':
+        return { icon: AlertCircle, color: '#EF4444' };
+      default:
+        return { icon: Clock, color: '#F59E0B' };
+    }
+  };
+
+  // Loading state
   if (loading) {
     return (
-      <Center className="flex-1">
+      <Center className="flex-1 bg-gray-50 p-6">
         <VStack space="md" className="items-center">
           <Spinner size="large" />
           <Text className="text-gray-600">Carregando convite...</Text>
@@ -188,21 +168,18 @@ const AcceptInvitationPage = () => {
     );
   }
 
+  // Error state
   if (error || !invitationData) {
     return (
-      <Center className="flex-1 p-6">
-        <VStack space="lg" className="items-center max-w-md">
+      <Center className="flex-1 bg-gray-50 p-6">
+        <VStack space="md" className="items-center max-w-md">
           <Icon as={AlertCircle} size="xl" className="text-red-500" />
-          <VStack space="sm" className="items-center">
-            <Heading size="lg" className="text-center text-gray-900">
-              Erro ao carregar convite
-            </Heading>
-            <Text className="text-center text-gray-600">
-              {error || 'O convite não pôde ser encontrado ou é inválido.'}
-            </Text>
-          </VStack>
-          <Button variant="outline" onPress={fetchInvitationStatus}>
-            <ButtonText>Tentar novamente</ButtonText>
+          <Heading size="lg" className="text-red-900 text-center">Erro</Heading>
+          <Text className="text-red-700 text-center">
+            {error || 'O convite não pôde ser encontrado ou é inválido.'}
+          </Text>
+          <Button variant="outline" onPress={() => router.push('/')}>
+            <ButtonText>Voltar ao Início</ButtonText>
           </Button>
         </VStack>
       </Center>
@@ -212,9 +189,10 @@ const AcceptInvitationPage = () => {
   const invitation = invitationData.invitation;
   const statusConfig = getStatusIcon(invitation.status);
 
+  // Success state - accepted
   if (accepted || invitation.status === 'accepted') {
     return (
-      <Center className="flex-1 p-6">
+      <Center className="flex-1 bg-gray-50 p-6">
         <VStack space="lg" className="items-center max-w-md">
           <Icon as={CheckCircle} size="xl" className="text-green-500" />
           <VStack space="sm" className="items-center">
@@ -226,9 +204,7 @@ const AcceptInvitationPage = () => {
             </Text>
           </VStack>
           <Button 
-            variant="solid"
             onPress={() => {
-              // Navigate to dashboard based on role
               if (invitation.role === 'teacher') {
                 router.push('/(tutor)/dashboard');
               } else {
@@ -243,11 +219,12 @@ const AcceptInvitationPage = () => {
     );
   }
 
+  // Success state - declined
   if (declined || invitation.status === 'declined') {
     return (
-      <Center className="flex-1 p-6">
+      <Center className="flex-1 bg-gray-50 p-6">
         <VStack space="lg" className="items-center max-w-md">
-          <Icon as={UserX} size="xl" className="text-red-500" />
+          <Icon as={AlertCircle} size="xl" className="text-red-500" />
           <VStack space="sm" className="items-center">
             <Heading size="lg" className="text-center text-gray-900">
               Convite Declinado
@@ -256,10 +233,7 @@ const AcceptInvitationPage = () => {
               Você declinou o convite para se juntar à escola {invitation.school.name}.
             </Text>
           </VStack>
-          <Button 
-            variant="outline"
-            onPress={() => router.push('/')}
-          >
+          <Button variant="outline" onPress={() => router.push('/')}>
             <ButtonText>Voltar ao Início</ButtonText>
           </Button>
         </VStack>
@@ -267,10 +241,10 @@ const AcceptInvitationPage = () => {
     );
   }
 
-  // Show authentication prompt if user needs to log in
+  // Authentication required state
   if (needsAuth) {
     return (
-      <Center className="flex-1 p-6">
+      <Center className="flex-1 bg-gray-50 p-6">
         <VStack space="lg" className="items-center max-w-md">
           <Icon as={UserCheck} size="xl" className="text-blue-500" />
           <VStack space="sm" className="items-center">
@@ -283,7 +257,6 @@ const AcceptInvitationPage = () => {
           </VStack>
           <VStack space="sm" className="w-full">
             <Button 
-              variant="solid"
               onPress={() => router.push(`/auth/signin?redirect=/accept-invitation/${token}`)}
             >
               <ButtonText>Fazer Login</ButtonText>
@@ -300,157 +273,152 @@ const AcceptInvitationPage = () => {
     );
   }
 
+  // Main invitation acceptance interface
   return (
-    <Box className="flex-1 bg-gray-50 p-6">
-      <Center className="flex-1">
-        <Box className="w-full max-w-md">
-          <Card variant="elevated" className="bg-white shadow-lg">
-            <CardHeader className="text-center">
-              <VStack space="md" className="items-center">
-                <Icon 
-                  as={statusConfig.icon} 
-                  size="xl" 
-                  className={`text-[${statusConfig.color}]`}
-                />
-                <VStack space="xs" className="items-center">
-                  <Heading size="lg" className="text-gray-900">
-                    Convite para Professor
-                  </Heading>
-                  <Text className="text-gray-600">
-                    {invitation.school.name}
-                  </Text>
-                </VStack>
+    <Center className="flex-1 bg-gray-50 p-6">
+      <Box className="w-full max-w-md">
+        <Card variant="elevated" className="bg-white shadow-lg">
+          <CardHeader className="text-center">
+            <VStack space="md" className="items-center">
+              <Icon 
+                as={statusConfig.icon} 
+                size="xl" 
+                style={{ color: statusConfig.color }}
+              />
+              <VStack space="xs" className="items-center">
+                <Heading size="lg" className="text-gray-900">
+                  Convite para Professor
+                </Heading>
+                <Text className="text-gray-600">
+                  {invitation.school.name}
+                </Text>
               </VStack>
-            </CardHeader>
+            </VStack>
+          </CardHeader>
 
-            <CardBody>
-              <VStack space="lg">
-                {/* Invitation Details */}
-                <VStack space="md">
-                  <Box className="p-4 bg-gray-50 rounded-lg">
-                    <VStack space="sm">
-                      <HStack className="justify-between">
-                        <Text className="text-sm text-gray-500">Email:</Text>
-                        <Text className="text-sm font-medium">{invitation.email}</Text>
-                      </HStack>
-                      
-                      <HStack className="justify-between">
-                        <Text className="text-sm text-gray-500">Função:</Text>
-                        <Text className="text-sm font-medium">
-                          {invitation.role === 'teacher' ? 'Professor' : 
-                           invitation.role === 'school_admin' ? 'Administrador' : 
-                           invitation.role}
-                        </Text>
-                      </HStack>
-                      
-                      <HStack className="justify-between">
-                        <Text className="text-sm text-gray-500">Convidado por:</Text>
-                        <Text className="text-sm font-medium">{invitation.invited_by.name}</Text>
-                      </HStack>
-                      
-                      <HStack className="justify-between">
-                        <Text className="text-sm text-gray-500">Data do convite:</Text>
-                        <Text className="text-sm font-medium">
-                          {formatDate(invitation.created_at)}
-                        </Text>
-                      </HStack>
-                      
-                      <HStack className="justify-between">
-                        <Text className="text-sm text-gray-500">Expira em:</Text>
-                        <Text className={`text-sm font-medium ${
-                          new Date(invitation.expires_at) < new Date() ? 'text-red-600' : ''
-                        }`}>
-                          {formatDate(invitation.expires_at)}
-                        </Text>
-                      </HStack>
-                    </VStack>
-                  </Box>
-
-                  {/* Custom Message */}
-                  {invitation.custom_message && (
-                    <Box className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-                      <VStack space="xs">
-                        <Text className="text-sm font-medium text-blue-900">
-                          Mensagem pessoal:
-                        </Text>
-                        <Text className="text-sm text-blue-800 italic">
-                          "{invitation.custom_message}"
-                        </Text>
-                      </VStack>
-                    </Box>
-                  )}
-                </VStack>
-
-                {/* Action Buttons */}
+          <CardBody>
+            <VStack space="lg">
+              {/* Invitation Details */}
+              <Box className="p-4 bg-gray-50 rounded-lg">
                 <VStack space="sm">
-                  {invitationData.can_accept ? (
-                    <>
-                      <Button 
-                        onPress={handleAcceptInvitation}
-                        disabled={accepting || declining}
-                        className="bg-green-600"
-                      >
-                        {accepting ? (
-                          <HStack space="xs" className="items-center">
-                            <Spinner size="small" />
-                            <ButtonText className="text-white">Processando...</ButtonText>
-                          </HStack>
-                        ) : (
-                          <ButtonText className="text-white">
-                            {invitation.role === 'teacher' && (invitationData.needs_profile_wizard || invitationData.wizard_metadata?.requires_profile_completion) 
-                              ? 'Configurar Perfil' 
-                              : 'Aceitar Convite'}
-                          </ButtonText>
-                        )}
-                      </Button>
-                      
-                      <Button 
-                        variant="outline"
-                        onPress={handleDeclineInvitation}
-                        disabled={accepting || declining}
-                        className="border-red-300"
-                      >
-                        {declining ? (
-                          <HStack space="xs" className="items-center">
-                            <Spinner size="small" />
-                            <ButtonText className="text-red-600">Declinando...</ButtonText>
-                          </HStack>
-                        ) : (
-                          <ButtonText className="text-red-600">Declinar Convite</ButtonText>
-                        )}
-                      </Button>
-                    </>
-                  ) : (
-                    <Box className="p-3 bg-red-50 rounded border border-red-200">
-                      <Text className="text-sm text-red-700 text-center">
-                        {invitationData.reason || 'Este convite não pode ser aceito'}
-                      </Text>
-                    </Box>
-                  )}
+                  <HStack className="justify-between">
+                    <Text className="text-sm text-gray-500">Email:</Text>
+                    <Text className="text-sm font-medium">{invitation.email}</Text>
+                  </HStack>
                   
-                  <Button 
-                    variant="outline"
-                    onPress={() => router.push('/')}
-                  >
-                    <ButtonText>Voltar ao Início</ButtonText>
-                  </Button>
+                  <HStack className="justify-between">
+                    <Text className="text-sm text-gray-500">Função:</Text>
+                    <Text className="text-sm font-medium">
+                      {invitation.role === 'teacher' ? 'Professor' : 
+                       invitation.role === 'school_admin' ? 'Administrador' : 
+                       invitation.role}
+                    </Text>
+                  </HStack>
+                  
+                  <HStack className="justify-between">
+                    <Text className="text-sm text-gray-500">Convidado por:</Text>
+                    <Text className="text-sm font-medium">{invitation.invited_by.name}</Text>
+                  </HStack>
+                  
+                  <HStack className="justify-between">
+                    <Text className="text-sm text-gray-500">Data do convite:</Text>
+                    <Text className="text-sm font-medium">
+                      {formatDate(invitation.created_at)}
+                    </Text>
+                  </HStack>
+                  
+                  <HStack className="justify-between">
+                    <Text className="text-sm text-gray-500">Expira em:</Text>
+                    <Text className={`text-sm font-medium ${
+                      new Date(invitation.expires_at) < new Date() ? 'text-red-600' : ''
+                    }`}>
+                      {formatDate(invitation.expires_at)}
+                    </Text>
+                  </HStack>
                 </VStack>
+              </Box>
+
+              {/* Custom Message */}
+              {invitation.custom_message && (
+                <Box className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                  <VStack space="xs">
+                    <Text className="text-sm font-medium text-blue-900">
+                      Mensagem pessoal:
+                    </Text>
+                    <Text className="text-sm text-blue-800 italic">
+                      "{invitation.custom_message}"
+                    </Text>
+                  </VStack>
+                </Box>
+              )}
+
+              {/* Action Buttons */}
+              <VStack space="sm" className="w-full">
+                {invitationData.can_accept ? (
+                  <>
+                    <Button 
+                      onPress={handleAcceptInvitation}
+                      disabled={accepting || declining}
+                      className="bg-green-600 w-full"
+                    >
+                      {accepting ? (
+                        <HStack space="xs" className="items-center">
+                          <Spinner size="small" />
+                          <ButtonText className="text-white">
+                            Processando...
+                          </ButtonText>
+                        </HStack>
+                      ) : (
+                        <ButtonText className="text-white font-medium">
+                          Aceitar Convite
+                        </ButtonText>
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      variant="outline"
+                      onPress={handleDeclineInvitation}
+                      disabled={accepting || declining}
+                      className="border-red-300 w-full"
+                    >
+                      {declining ? (
+                        <HStack space="xs" className="items-center">
+                          <Spinner size="small" />
+                          <ButtonText className="text-red-600">
+                            Declinando...
+                          </ButtonText>
+                        </HStack>
+                      ) : (
+                        <ButtonText className="text-red-600 font-medium">
+                          Declinar Convite
+                        </ButtonText>
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  <Box className="p-4 bg-red-50 rounded border border-red-200">
+                    <Text className="text-sm text-red-700 text-center">
+                      {invitationData.reason || 'Este convite não pode ser aceito'}
+                    </Text>
+                  </Box>
+                )}
+                
+                <Button 
+                  variant="outline"
+                  onPress={() => router.push('/')}
+                  className="w-full"
+                >
+                  <ButtonText className="font-medium">
+                    Voltar ao Início
+                  </ButtonText>
+                </Button>
               </VStack>
-            </CardBody>
-          </Card>
-        </Box>
-      </Center>
-    </Box>
+            </VStack>
+          </CardBody>
+        </Card>
+      </Box>
+    </Center>
   );
 };
 
-// Export wrapped with MainLayout
-export const AcceptInvitationPageWithLayout = () => {
-  return (
-    <MainLayout _title="Aceitar Convite">
-      <AcceptInvitationPage />
-    </MainLayout>
-  );
-};
-
-export default AcceptInvitationPageWithLayout;
+export default AcceptInvitationPage;

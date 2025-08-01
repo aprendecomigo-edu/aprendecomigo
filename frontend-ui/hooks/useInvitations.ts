@@ -11,6 +11,121 @@ import InvitationApi, {
   TeacherProfileData,
 } from '@/api/invitationApi';
 
+// Enhanced error handling types
+export interface InvitationError {
+  code?: string;
+  message: string;
+  details?: Record<string, any>;
+  timestamp?: string;
+  path?: string;
+  retryable?: boolean;
+}
+
+// Retry configuration
+interface RetryConfig {
+  maxAttempts: number;
+  delay: number;
+  backoffMultiplier: number;
+}
+
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  maxAttempts: 3,
+  delay: 1000,
+  backoffMultiplier: 2,
+};
+
+// Enhanced error parsing
+const parseInvitationError = (err: any): InvitationError => {
+  const response = err.response;
+  const data = response?.data;
+  
+  // Handle standardized backend error format
+  if (data?.error) {
+    return {
+      code: data.error.code,
+      message: data.error.message,
+      details: data.error.details || {},
+      timestamp: data.timestamp,
+      path: data.path,
+      retryable: isRetryableError(data.error.code),
+    };
+  }
+  
+  // Handle legacy error formats
+  const message = data?.detail || data?.message || err.message || 'Unknown error';
+  const code = getErrorCodeFromMessage(message, response?.status);
+  
+  return {
+    code,
+    message,
+    retryable: isRetryableError(code),
+    timestamp: new Date().toISOString(),
+  };
+};
+
+// Determine error code from message and status
+const getErrorCodeFromMessage = (message: string, status?: number): string => {
+  if (status === 404) return 'INVITATION_NOT_FOUND';
+  if (status === 401) return 'AUTHENTICATION_REQUIRED';
+  if (status === 403) return 'PERMISSION_DENIED';
+  if (status === 409) return 'DUPLICATE_MEMBERSHIP';
+  if (status >= 500) return 'SERVER_ERROR';
+  if (!navigator.onLine) return 'NETWORK_ERROR';
+  
+  // Check message content
+  const lowerMessage = message.toLowerCase();
+  if (lowerMessage.includes('expired')) return 'INVITATION_EXPIRED';
+  if (lowerMessage.includes('not found')) return 'INVITATION_NOT_FOUND';
+  if (lowerMessage.includes('already')) return 'INVITATION_ALREADY_PROCESSED';
+  if (lowerMessage.includes('network')) return 'NETWORK_ERROR';
+  
+  return 'UNKNOWN_ERROR';
+};
+
+// Determine if error is retryable
+const isRetryableError = (code?: string): boolean => {
+  const retryableCodes = [
+    'NETWORK_ERROR',
+    'SERVER_ERROR',
+    'TIMEOUT_ERROR',
+    'UNKNOWN_ERROR',
+  ];
+  return retryableCodes.includes(code || '');
+};
+
+// Retry utility with exponential backoff
+const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  config: RetryConfig = DEFAULT_RETRY_CONFIG
+): Promise<T> => {
+  let lastError: any;
+  
+  for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      const parsedError = parseInvitationError(error);
+      
+      // Don't retry if error is not retryable
+      if (!parsedError.retryable) {
+        throw error;
+      }
+      
+      // Don't retry on last attempt
+      if (attempt === config.maxAttempts) {
+        throw error;
+      }
+      
+      // Calculate delay with exponential backoff
+      const delay = config.delay * Math.pow(config.backoffMultiplier, attempt - 1);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError;
+};
+
 // Hook for managing teacher invitations (admin view)
 export const useInvitations = (autoFetch = true) => {
   const [invitations, setInvitations] = useState<TeacherInvitation[]>([]);
@@ -161,10 +276,11 @@ export const useBulkInvitations = () => {
   };
 };
 
-// Hook for managing individual invitation actions
+// Hook for managing individual invitation actions with enhanced error handling
 export const useInvitationActions = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<InvitationError | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const cancelInvitation = useCallback(async (token: string) => {
     try {
@@ -202,54 +318,100 @@ export const useInvitationActions = () => {
     }
   }, []);
 
-  const acceptInvitation = useCallback(async (token: string, profileData?: TeacherProfileData) => {
+  const acceptInvitation = useCallback(async (
+    token: string, 
+    profileData?: TeacherProfileData,
+    retryConfig?: Partial<RetryConfig>
+  ) => {
     try {
       setLoading(true);
       setError(null);
+      setRetryCount(0);
       
-      const result = await InvitationApi.acceptInvitation(token, profileData);
+      const result = await retryWithBackoff(
+        () => InvitationApi.acceptInvitation(token, profileData),
+        { ...DEFAULT_RETRY_CONFIG, ...retryConfig }
+      );
+      
       return result;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.response?.data?.detail || err.message || 'Failed to accept invitation';
-      setError(errorMessage);
-      Alert.alert('Erro', errorMessage);
-      throw err;
+      const parsedError = parseInvitationError(err);
+      setError(parsedError);
+      
+      // Only show alert for non-retryable errors or final failure
+      if (!parsedError.retryable) {
+        Alert.alert('Erro', parsedError.message);
+      }
+      
+      throw parsedError;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const declineInvitation = useCallback(async (token: string) => {
+  const declineInvitation = useCallback(async (
+    token: string,
+    retryConfig?: Partial<RetryConfig>
+  ) => {
     try {
       setLoading(true);
       setError(null);
+      setRetryCount(0);
       
-      const result = await InvitationApi.declineInvitation(token);
+      const result = await retryWithBackoff(
+        () => InvitationApi.declineInvitation(token),
+        { ...DEFAULT_RETRY_CONFIG, ...retryConfig }
+      );
+      
       return result;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.response?.data?.detail || err.message || 'Failed to decline invitation';
-      setError(errorMessage);
-      Alert.alert('Erro', errorMessage);
-      throw err;
+      const parsedError = parseInvitationError(err);
+      setError(parsedError);
+      Alert.alert('Erro', parsedError.message);
+      throw parsedError;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const getInvitationStatus = useCallback(async (token: string) => {
+  const getInvitationStatus = useCallback(async (
+    token: string,
+    retryConfig?: Partial<RetryConfig>
+  ) => {
     try {
       setLoading(true);
       setError(null);
+      setRetryCount(0);
       
-      const result = await InvitationApi.getInvitationStatus(token);
+      const result = await retryWithBackoff(
+        () => InvitationApi.getInvitationStatus(token),
+        { ...DEFAULT_RETRY_CONFIG, ...retryConfig }
+      );
+      
       return result;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to get invitation status';
-      setError(errorMessage);
-      throw err;
+      const parsedError = parseInvitationError(err);
+      setError(parsedError);
+      throw parsedError;
     } finally {
       setLoading(false);
     }
+  }, []);
+  
+  // Retry last failed operation
+  const retryLastOperation = useCallback(async () => {
+    if (!error?.retryable) {
+      throw new Error('Last operation is not retryable');
+    }
+    setRetryCount(prev => prev + 1);
+    // The specific retry logic would depend on which operation failed
+    // This is a placeholder for the retry mechanism
+  }, [error]);
+  
+  // Clear error state
+  const clearError = useCallback(() => {
+    setError(null);
+    setRetryCount(0);
   }, []);
 
   return {
@@ -258,8 +420,12 @@ export const useInvitationActions = () => {
     acceptInvitation,
     declineInvitation,
     getInvitationStatus,
+    retryLastOperation,
+    clearError,
     loading,
     error,
+    retryCount,
+    canRetry: error?.retryable ?? false,
   };
 };
 

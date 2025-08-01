@@ -274,6 +274,30 @@ class ClassSession(models.Model):
         _("status"), max_length=20, choices=SessionStatus.choices, default=SessionStatus.SCHEDULED
     )
 
+    # Session tracking fields
+    actual_duration_hours: models.DecimalField = models.DecimalField(
+        _("actual duration hours"),
+        max_digits=4,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Actual duration in hours when session was completed"),
+    )
+    
+    booking_confirmed_at: models.DateTimeField = models.DateTimeField(
+        _("booking confirmed at"),
+        null=True,
+        blank=True,
+        help_text=_("Timestamp when the session booking was confirmed"),
+    )
+    
+    cancelled_at: models.DateTimeField = models.DateTimeField(
+        _("cancelled at"),
+        null=True,
+        blank=True,
+        help_text=_("Timestamp when the session was cancelled"),
+    )
+
     # Additional information
     notes: models.TextField = models.TextField(
         _("notes"), blank=True, help_text=_("Additional notes about this session")
@@ -316,6 +340,65 @@ class ClassSession(models.Model):
 
         if self.session_type == SessionType.INDIVIDUAL and self.student_count > 1:
             raise ValidationError(_("Individual sessions can only have 1 student"))
+
+    def save(self, *args, **kwargs):
+        """Override save to handle status changes and timestamps for existing sessions."""
+        from django.utils import timezone
+        
+        is_new = self.pk is None
+        old_status = None
+        
+        if not is_new:
+            # Get the old status to detect status changes
+            try:
+                old_session = ClassSession.objects.get(pk=self.pk)
+                old_status = old_session.status
+            except ClassSession.DoesNotExist:
+                pass
+        
+        # Handle timestamp updates based on status changes
+        if old_status != self.status:
+            if self.status == SessionStatus.SCHEDULED and not self.booking_confirmed_at:
+                self.booking_confirmed_at = timezone.now()
+            elif self.status == SessionStatus.CANCELLED and not self.cancelled_at:
+                self.cancelled_at = timezone.now()
+            elif self.status == SessionStatus.COMPLETED and not self.actual_duration_hours:
+                # Set actual duration to calculated duration if not specified
+                self.actual_duration_hours = self.duration_hours
+        
+        # Save the session first
+        super().save(*args, **kwargs)
+        
+        # Handle status changes for existing sessions
+        if not is_new and old_status != self.status:
+            self._handle_session_status_change(old_status)
+
+    def _handle_session_status_change(self, old_status):
+        """Handle status changes for existing sessions."""
+        from finances.services.hour_deduction_service import HourDeductionService
+        
+        # Handle cancellation
+        if self.status == SessionStatus.CANCELLED and old_status != SessionStatus.CANCELLED:
+            HourDeductionService.refund_hours_for_session(
+                self, 
+                reason=f"Session cancelled (changed from {old_status})"
+            )
+
+    def process_hour_deduction(self):
+        """
+        Process hour deduction for this session.
+        
+        This method is called explicitly after students are added to handle
+        hour deduction logic properly.
+        """
+        if self.is_trial:
+            return []
+        
+        if self.status != SessionStatus.SCHEDULED:
+            return []
+        
+        from finances.services.hour_deduction_service import HourDeductionService
+        return HourDeductionService.validate_and_deduct_hours_for_session(self)
 
 
 class TeacherPaymentEntry(models.Model):
@@ -793,10 +876,10 @@ class HourConsumption(models.Model):
         help_text=_("Student account that this consumption is associated with"),
     )
 
-    class_session: models.OneToOneField = models.OneToOneField(
+    class_session: models.ForeignKey = models.ForeignKey(
         ClassSession,
         on_delete=models.CASCADE,
-        related_name="hour_consumption",
+        related_name="hour_consumptions",
         verbose_name=_("class session"),
         help_text=_("The class session for which hours were consumed"),
     )
@@ -856,6 +939,12 @@ class HourConsumption(models.Model):
         verbose_name = _("Hour Consumption")
         verbose_name_plural = _("Hour Consumptions")
         ordering = ["-consumed_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student_account", "class_session"],
+                name="unique_student_session_consumption"
+            )
+        ]
         indexes = [
             models.Index(fields=["student_account", "consumed_at"]),
             models.Index(fields=["class_session"]),
@@ -946,3 +1035,259 @@ class HourConsumption(models.Model):
                 raise ValidationError(
                     _("Student account must belong to a student in the class session")
                 )
+
+
+class Receipt(models.Model):
+    """
+    Receipt model for tracking generated receipts for student purchases.
+    
+    Provides audit trail and PDF storage for all generated receipts,
+    supporting both automatic and manual receipt generation.
+    """
+    
+    student: models.ForeignKey = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="receipts",
+        verbose_name=_("student"),
+        help_text=_("Student who received this receipt"),
+    )
+    
+    transaction: models.ForeignKey = models.ForeignKey(
+        PurchaseTransaction,
+        on_delete=models.CASCADE,
+        related_name="receipts",
+        verbose_name=_("transaction"),
+        help_text=_("Purchase transaction this receipt is for"),
+    )
+    
+    receipt_number: models.CharField = models.CharField(
+        _("receipt number"),
+        max_length=50,
+        unique=True,
+        help_text=_("Unique receipt identifier"),
+    )
+    
+    amount: models.DecimalField = models.DecimalField(
+        _("amount"),
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text=_("Receipt amount in euros"),
+    )
+    
+    generated_at: models.DateTimeField = models.DateTimeField(
+        _("generated at"),
+        auto_now_add=True,
+        help_text=_("When the receipt was generated"),
+    )
+    
+    pdf_file: models.FileField = models.FileField(
+        _("PDF file"),
+        upload_to="receipts/%Y/%m/",
+        null=True,
+        blank=True,
+        help_text=_("Generated PDF receipt file"),
+    )
+    
+    is_valid: models.BooleanField = models.BooleanField(
+        _("is valid"),
+        default=True,
+        help_text=_("Whether this receipt is still valid"),
+    )
+    
+    metadata: models.JSONField = models.JSONField(
+        _("metadata"),
+        default=dict,
+        blank=True,
+        help_text=_("Additional receipt data in JSON format"),
+    )
+    
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(
+        _("created at"), auto_now_add=True
+    )
+    updated_at: models.DateTimeField = models.DateTimeField(
+        _("updated at"), auto_now=True
+    )
+    
+    class Meta:
+        verbose_name = _("Receipt")
+        verbose_name_plural = _("Receipts")
+        ordering = ["-generated_at"]
+        indexes = [
+            models.Index(fields=["student", "generated_at"]),
+            models.Index(fields=["receipt_number"]),
+            models.Index(fields=["transaction"]),
+        ]
+    
+    def __str__(self) -> str:
+        return f"Receipt {self.receipt_number} - €{self.amount} for {self.student.name}"
+    
+    def save(self, *args, **kwargs):
+        """Override save to auto-generate receipt number if not provided."""
+        if not self.receipt_number:
+            self.receipt_number = self._generate_receipt_number()
+        super().save(*args, **kwargs)
+    
+    def _generate_receipt_number(self) -> str:
+        """Generate unique receipt number."""
+        import uuid
+        from django.utils import timezone
+        
+        # Format: RCP-YYYY-XXXXXXXX (e.g., RCP-2025-A1B2C3D4)
+        year = timezone.now().year
+        unique_id = str(uuid.uuid4()).replace('-', '').upper()[:8]
+        return f"RCP-{year}-{unique_id}"
+    
+    def clean(self) -> None:
+        """Validate receipt data."""
+        super().clean()
+        
+        # Ensure amount matches transaction amount
+        if self.transaction and self.amount != self.transaction.amount:
+            raise ValidationError(
+                _("Receipt amount must match transaction amount")
+            )
+        
+        # Ensure transaction belongs to the same student
+        if self.transaction and self.student != self.transaction.student:
+            raise ValidationError(
+                _("Receipt student must match transaction student")
+            )
+
+
+class StoredPaymentMethod(models.Model):
+    """
+    Stored payment method model for secure payment method management.
+    
+    Uses Stripe tokenization to securely store payment methods without
+    handling sensitive card data directly, maintaining PCI compliance.
+    """
+    
+    student: models.ForeignKey = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="stored_payment_methods",
+        verbose_name=_("student"),
+        help_text=_("Student who owns this payment method"),
+    )
+    
+    stripe_payment_method_id: models.CharField = models.CharField(
+        _("Stripe payment method ID"),
+        max_length=255,
+        unique=True,
+        help_text=_("Stripe PaymentMethod ID for secure storage"),
+    )
+    
+    card_brand: models.CharField = models.CharField(
+        _("card brand"),
+        max_length=20,
+        blank=True,
+        help_text=_("Card brand (e.g., visa, mastercard)"),
+    )
+    
+    card_last4: models.CharField = models.CharField(
+        _("card last 4 digits"),
+        max_length=4,
+        blank=True,
+        help_text=_("Last 4 digits of the card for display"),
+    )
+    
+    card_exp_month: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(
+        _("card expiration month"),
+        null=True,
+        blank=True,
+        help_text=_("Card expiration month (1-12)"),
+    )
+    
+    card_exp_year: models.PositiveIntegerField = models.PositiveIntegerField(
+        _("card expiration year"),
+        null=True,
+        blank=True,
+        help_text=_("Card expiration year"),
+    )
+    
+    is_default: models.BooleanField = models.BooleanField(
+        _("is default"),
+        default=False,
+        help_text=_("Whether this is the default payment method"),
+    )
+    
+    is_active: models.BooleanField = models.BooleanField(
+        _("is active"),
+        default=True,
+        help_text=_("Whether this payment method is active"),
+    )
+    
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(
+        _("created at"), auto_now_add=True
+    )
+    updated_at: models.DateTimeField = models.DateTimeField(
+        _("updated at"), auto_now=True
+    )
+    
+    class Meta:
+        verbose_name = _("Stored Payment Method")
+        verbose_name_plural = _("Stored Payment Methods")
+        ordering = ["-is_default", "-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student"],
+                condition=models.Q(is_default=True),
+                name="unique_default_payment_method_per_student"
+            )
+        ]
+        indexes = [
+            models.Index(fields=["student", "is_active"]),
+            models.Index(fields=["stripe_payment_method_id"]),
+        ]
+    
+    def __str__(self) -> str:
+        default_text = " (Default)" if self.is_default else ""
+        return f"{self.card_brand.title()} ****{self.card_last4} - {self.student.name}{default_text}"
+    
+    @property
+    def is_expired(self) -> bool:
+        """Check if the payment method is expired."""
+        if not self.card_exp_month or not self.card_exp_year:
+            return False
+        
+        from django.utils import timezone
+        now = timezone.now()
+        
+        # Card expires at the end of the expiration month
+        if self.card_exp_year < now.year:
+            return True
+        elif self.card_exp_year == now.year and self.card_exp_month < now.month:
+            return True
+        
+        return False
+    
+    def save(self, *args, **kwargs):
+        """Override save to handle default payment method logic."""
+        # If this is being set as default, unset other defaults for the same student
+        if self.is_default:
+            StoredPaymentMethod.objects.filter(
+                student=self.student,
+                is_default=True
+            ).exclude(pk=self.pk).update(is_default=False)
+        
+        super().save(*args, **kwargs)
+    
+    def clean(self) -> None:
+        """Validate payment method data."""
+        super().clean()
+        
+        # Validate expiration month
+        if self.card_exp_month is not None and (self.card_exp_month < 1 or self.card_exp_month > 12):
+            raise ValidationError(
+                _("Card expiration month must be between 1 and 12")
+            )
+        
+        # Validate last 4 digits format
+        if self.card_last4 and not self.card_last4.isdigit():
+            raise ValidationError(
+                _("Card last 4 digits must contain only numbers")
+            )

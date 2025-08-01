@@ -1,4 +1,4 @@
-import { CalendarPlusIcon, MessageCircleIcon, PlusIcon, SettingsIcon, UserPlusIcon, UsersIcon, MailIcon } from 'lucide-react-native';
+import { CalendarPlus, MessageCircleIcon, PlusIcon, SettingsIcon, UserPlusIcon, UsersIcon, MailIcon } from 'lucide-react-native';
 import React from 'react';
 
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -68,7 +68,7 @@ const QuickActionItem: React.FC<{ action: QuickAction }> = ({ action }) => (
   </Pressable>
 );
 
-export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
+const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
   onInviteTeacher,
   onAddStudent,
   onScheduleClass,
@@ -98,7 +98,7 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
       id: 'schedule-class',
       title: 'Agendar Aula',
       description: 'Marque uma nova aula',
-      icon: CalendarPlusIcon,
+      icon: CalendarPlus,
       color: 'purple',
       onPress: onScheduleClass,
     },
@@ -159,4 +159,5 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
   );
 };
 
+export { QuickActionsPanel };
 export default QuickActionsPanel;

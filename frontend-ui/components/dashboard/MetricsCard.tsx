@@ -1,4 +1,4 @@
-import { TrendingDownIcon, TrendingUpIcon, UsersIcon, GraduationCapIcon, BookOpenIcon, ActivityIcon } from 'lucide-react-native';
+import { TrendingDown, TrendingUp, Users, GraduationCap, BookOpen, Activity } from 'lucide-react-native';
 import React from 'react';
 
 import { SchoolMetrics } from '@/api/userApi';
@@ -51,7 +51,7 @@ const MetricItem: React.FC<MetricItemProps> = ({
       {trend && (
         <HStack space="xs" className="items-center">
           <Icon
-            as={trend.isPositive ? TrendingUpIcon : TrendingDownIcon}
+            as={trend.isPositive ? TrendingUp : TrendingDown}
             size="xs"
             className={trend.isPositive ? 'text-green-600' : 'text-red-600'}
           />
@@ -79,7 +79,7 @@ const MetricItemSkeleton: React.FC = () => (
   </VStack>
 );
 
-export const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) => {
+const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) => {
   if (isLoading) {
     return (
       <Card variant="elevated" className="bg-white shadow-sm">
@@ -107,7 +107,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) 
       <Card variant="elevated" className="bg-white shadow-sm">
         <CardBody>
           <VStack space="md" className="items-center py-8">
-            <Icon as={ActivityIcon} size="xl" className="text-gray-300" />
+            <Icon as={Activity} size="xl" className="text-gray-300" />
             <Text className="text-lg font-medium text-gray-600">
               Métricas indisponíveis
             </Text>
@@ -150,7 +150,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) 
               value={metrics.student_count.total}
               subtitle={`${metrics.student_count.active} ativos`}
               trend={studentTrend}
-              icon={UsersIcon}
+              icon={Users}
               color="blue"
             />
             
@@ -159,7 +159,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) 
               value={metrics.teacher_count.total}
               subtitle={`${metrics.teacher_count.active} ativos`}
               trend={teacherTrend}
-              icon={GraduationCapIcon}
+              icon={GraduationCap}
               color="green"
             />
           </HStack>
@@ -171,7 +171,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) 
               value={metrics.class_metrics.active_classes}
               subtitle={`${metrics.class_metrics.completed_today} hoje`}
               trend={classTrend}
-              icon={BookOpenIcon}
+              icon={BookOpen}
               color="purple"
             />
             
@@ -184,7 +184,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) 
                   ? { value: Math.round(metrics.engagement_metrics.acceptance_rate * 100), isPositive: true }
                   : { value: Math.round((1 - metrics.engagement_metrics.acceptance_rate) * 100), isPositive: false }
               }
-              icon={ActivityIcon}
+              icon={Activity}
               color="orange"
             />
           </HStack>
@@ -214,4 +214,5 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) 
   );
 };
 
+export { MetricsCard };
 export default MetricsCard;

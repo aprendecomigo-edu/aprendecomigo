@@ -5,9 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/api/authContext';
 import { getUserAdminSchools, SchoolMembership } from '@/api/userApi';
-import ActivityFeed from '@/components/dashboard/ActivityFeed';
-import MetricsCard from '@/components/dashboard/MetricsCard';
-import QuickActionsPanel from '@/components/dashboard/QuickActionsPanel';
+import { ActivityFeed, MetricsCard, QuickActionsPanel } from '@/components/dashboard';
 import SchoolInfoCard from '@/components/dashboard/SchoolInfoCard';
 import MainLayout from '@/components/layouts/main-layout';
 import { Box } from '@/components/ui/box';

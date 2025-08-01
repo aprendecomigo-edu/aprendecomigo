@@ -1,0 +1,2 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250731-212322,2025-07-31T21:23:22Z,FAIL,0,9,Playwright Chrome,macOS development,Critical React errors prevent app loading - all acceptance criteria fail

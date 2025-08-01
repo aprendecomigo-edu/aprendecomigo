@@ -1,0 +1,166 @@
+QA Test Case: Teacher Invitation Experience Test
+
+Test ID: TCOMM-004
+Test Name: Teacher Invitation Experience Test
+Purpose: Verify enhanced teacher invitation acceptance flow integrates with communication features, FAQ system, and onboarding support
+Expected Result: Teachers receive professional invitations with clear instructions and have access to comprehensive onboarding support
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Enhanced teacher invitation flow with communication integration
+- Focus: Teacher Invitation and Onboarding Experience (GitHub Issue #102)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/backend
+2. Frontend UI: /Users/anapmc/Code/aprendecomigo/frontend-ui  
+3. Email service configured for invitation delivery
+4. FAQ system populated with teacher-specific content
+
+Test Data:
+- Test School Owner Email: anapmc.carvalho@gmail.com
+- Test Teacher Email: newteacher.test@example.com
+- School: Test School with communication system configured
+- FAQ Content: Teacher onboarding questions and answers
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Send Professional Teacher Invitation
+1. Login as school owner: anapmc.carvalho@gmail.com
+2. Navigate to teacher management
+3. Send invitation to: newteacher.test@example.com
+4. Verify invitation email includes:
+   - Professional school branding
+   - Clear next steps instructions
+   - School contact information
+   - FAQ link or embedded help
+5. Check email content quality and formatting
+
+Expected: Professional invitation email with comprehensive information
+Screenshot: 01_professional_invitation_sent.png
+
+Step 2: Teacher Invitation Email Reception
+1. Check email received by test teacher
+2. Verify email branding matches school identity
+3. Review invitation content quality:
+   - Welcome message tone
+   - Clear action items
+   - Support contact information
+   - FAQ access
+4. Test email links and functionality
+
+Expected: High-quality invitation email with professional presentation
+Screenshot: 02_invitation_email_received.png
+
+Step 3: Invitation Acceptance with Enhanced Support
+1. Click invitation acceptance link
+2. Access invitation acceptance page
+3. Verify enhanced onboarding features:
+   - Welcome message from school
+   - Step-by-step guidance
+   - Progress indicators
+   - Help and FAQ integration
+4. Check contextual help availability
+
+Expected: Enhanced invitation acceptance with comprehensive support
+Screenshot: 03_enhanced_invitation_acceptance.png
+
+Step 4: FAQ System Integration
+1. Access FAQ section during onboarding
+2. Test FAQ search functionality
+3. Verify teacher-specific FAQ content:
+   - Profile setup questions
+   - School policies and procedures
+   - Technical support information
+   - Contact information for assistance
+4. Test FAQ category filtering
+
+Expected: Comprehensive FAQ system with teacher-focused content
+Screenshot: 04_faq_system_integration.png
+
+Step 5: Profile Setup with Communication Support
+1. Begin teacher profile setup process
+2. Verify communication support features:
+   - Step-by-step instructions
+   - Help tooltips and guidance
+   - Progress tracking with celebrations
+   - Support contact options
+3. Test profile wizard with communication integration
+
+Expected: Profile setup with integrated communication and support
+Screenshot: 05_profile_setup_communication_support.png
+
+Step 6: Welcome Messages and Milestone Celebrations
+1. Complete profile setup milestones
+2. Verify welcome messages appear:
+   - 25% completion celebration
+   - 50% completion encouragement
+   - 75% completion near-finish message
+   - 100% completion celebration
+3. Check message quality and school branding
+4. Test milestone email notifications
+
+Expected: Engaging milestone messages with proper celebration timing
+Screenshot: 06_milestone_celebrations.png
+
+Step 7: Onboarding Email Sequence
+1. Monitor automated onboarding emails:
+   - Welcome to the team email
+   - Getting started guide
+   - Resource compilation
+   - First week tips
+2. Verify email timing and sequencing
+3. Check email content relevance and quality
+4. Test unsubscribe and preference management
+
+Expected: Well-timed onboarding email sequence with valuable content
+Screenshot: 07_onboarding_email_sequence.png
+
+Step 8: School Contact Information and Support
+1. Verify school contact information accessibility
+2. Test support request functionality
+3. Check emergency contact information
+4. Verify school-specific resource links
+5. Test integration with school communication preferences
+
+Expected: Clear access to school support and contact information
+Screenshot: 08_school_support_integration.png
+
+Step 9: Cross-Platform Invitation Experience
+1. Test invitation acceptance on mobile device
+2. Verify responsive design of invitation flow
+3. Test FAQ system on tablet device
+4. Check cross-platform consistency
+5. Verify touch interactions work properly
+
+Expected: Consistent invitation experience across all devices
+Screenshot: 09_cross_platform_experience.png
+
+Step 10: Communication Preferences Setup
+1. Access teacher communication preferences
+2. Configure notification settings
+3. Set email frequency preferences
+4. Test opt-out mechanisms
+5. Verify preference persistence
+
+Expected: Comprehensive communication preference management
+Screenshot: 10_communication_preferences_setup.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete AND:
+- Professional invitation emails with school branding
+- Clear instructions and next steps in invitations
+- Enhanced invitation acceptance with integrated support
+- Functional FAQ system with teacher-specific content
+- Profile setup includes communication support features
+- Welcome messages and milestone celebrations work
+- Onboarding email sequence delivers valuable content
+- School contact information easily accessible
+- Cross-platform experience is consistent
+- Communication preferences management functions
+
+FAIL: Any step fails OR invitation experience lacks professionalism, support features missing, or communication integration broken
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

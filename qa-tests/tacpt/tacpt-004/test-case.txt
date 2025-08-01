@@ -1,0 +1,197 @@
+QA Test Case: Expired Token Error Handling
+
+Test ID: TACPT-004
+Test Name: Expired Token Error Handling
+Purpose: Verify that expired invitation tokens are handled gracefully with clear error messages and recovery options
+Expected Result: User sees clear error message for expired token with appropriate recovery actions
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django backend (localhost:8000) + React Native frontend (localhost:8081)
+- GitHub Issue: #52 - Error handling for expired invitation tokens (Issue #75)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev`
+4. Database: PostgreSQL with test data
+
+Test Data:
+- Expired invitation token (either naturally expired or manually set)
+- Associated teacher email: expired.test@aprendecomigo.com
+- School: Test School
+- Invitation should be in database but past expiration date
+
+Pre-test Database State:
+- Teacher invitation exists with status 'pending' but expires_at < now()
+- School exists and is active
+- No existing teacher profile for test email (optional)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup
+1. Start development servers
+2. Verify servers are running correctly
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Both servers start without errors
+Screenshot: 01_servers_started.png
+
+Step 2: Prepare Expired Token
+1. Access Django admin or database to find/create expired invitation
+2. Note the expired invitation token
+3. Verify expiration date is in the past
+Commands (via Django shell):
+  cd backend
+  python manage.py shell
+  from accounts.models import TeacherInvitation
+  from django.utils import timezone
+  # Find or create expired invitation
+
+Expected: Expired invitation token identified and ready for testing
+Screenshot: 02_expired_token_prepared.png
+
+Step 3: Navigate to Expired Invitation URL
+1. Open browser to localhost:8081
+2. Navigate to /accept-invitation/[EXPIRED_TOKEN]
+URL: http://localhost:8081/accept-invitation/[EXPIRED_TOKEN_HERE]
+
+Expected: Page loads (should not immediately show 404)
+Screenshot: 03_expired_invitation_url_accessed.png
+
+Step 4: Verify Error Message Display
+1. Confirm that an error message appears for expired invitation
+2. Check that error message is clear and user-friendly
+3. Verify error message is in Portuguese (user's language)
+4. Confirm no accept/decline buttons are shown
+
+Expected: Clear, user-friendly error message about expired invitation
+Screenshot: 04_expired_error_message_display.png
+
+Step 5: Check Error Message Content
+1. Verify error explains that invitation has expired
+2. Check if expiration date is mentioned
+3. Confirm explanation of what this means for the user
+4. Verify language is professional and helpful
+
+Expected: Error message includes:
+- Clear statement that invitation has expired
+- Helpful explanation of next steps
+- Professional, non-technical language
+
+Screenshot: 05_error_message_content_verification.png
+
+Step 6: Verify Recovery Options
+1. Check for "Contact Support" or "Contact School" option
+2. Look for "Go Home" or "Return to Home" button
+3. Verify any retry mechanisms are NOT available (token is expired)
+4. Check if school contact information is provided
+
+Expected: Appropriate recovery options without false hope of retry
+Screenshot: 06_recovery_options_display.png
+
+Step 7: Test Contact Support Functionality
+1. Click "Contact Support" if available
+2. Verify contact methods are presented (email, phone, etc.)
+3. Test that contact information is accurate and working
+4. Confirm user can easily reach support
+
+Expected: Support contact works properly with accurate information
+Screenshot: 07_contact_support_test.png
+
+Step 8: Test Navigation Options
+1. Click "Go Home" or similar navigation button
+2. Verify user is taken to appropriate landing page
+3. Test browser back button behavior
+4. Confirm user can navigate away cleanly
+
+Expected: Navigation works properly without breaking user flow
+Screenshot: 08_navigation_options_test.png
+
+Step 9: Verify No False Retries
+1. Confirm there is no "Retry" button for expired tokens
+2. Verify refresh doesn't change error state
+3. Check that URL parameters don't affect expired token handling
+4. Ensure user cannot accidentally accept expired invitation
+
+Expected: No false retry options that would fail
+Screenshot: 09_no_false_retries_verification.png
+
+Step 10: School Information Display (if available)
+1. Check if school name/information is still displayed despite expiration
+2. Verify user can see what opportunity they missed
+3. Confirm school contact information for re-invitation
+4. Test that school details don't imply invitation is still valid
+
+Expected: School information helps user understand opportunity without confusion
+Screenshot: 10_school_info_despite_expiration.png
+
+Step 11: Mobile Responsiveness of Error
+1. Resize browser to mobile width
+2. Verify error message displays properly on mobile
+3. Check that recovery buttons are touch-friendly
+4. Confirm mobile layout is clean and readable
+
+Expected: Error handling is fully responsive and mobile-friendly
+Screenshot: 11_mobile_error_responsiveness.png
+
+Step 12: Console and Network Verification
+1. Check browser console for any JavaScript errors
+2. Verify network requests are handled properly
+3. Confirm no infinite loading states or retries
+4. Check that error is logged appropriately
+
+Expected: Clean technical handling with no console errors
+Screenshot: 12_console_network_verification.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND:
+- Expired token is detected and handled gracefully
+- Error message is clear, user-friendly, and in correct language
+- Error content explains situation and provides helpful guidance
+- Recovery options are appropriate (no false retries)
+- Contact support functionality works properly
+- Navigation options work without breaking user flow
+- No retry mechanisms are offered for expired tokens
+- School information (if shown) doesn't create confusion
+- Mobile responsiveness is maintained for error states
+- Technical handling is clean with no console errors
+
+FAIL: Any step fails OR:
+- Expired token causes application crash or 500 error
+- Error message is unclear, technical, or in wrong language
+- Error content doesn't explain situation or next steps
+- Inappropriate recovery options (false retries offered)
+- Contact support doesn't work or has wrong information
+- Navigation is broken or causes errors
+- Retry mechanisms are available when they shouldn't be
+- School information creates confusion about invitation status
+- Mobile error display is broken or unusable
+- Console shows errors or network requests fail
+
+Individual Step Criteria:
+- Step 1: PASS if servers start, FAIL if startup errors
+- Step 2: PASS if expired token identified, FAIL if token issues
+- Step 3: PASS if page loads, FAIL if immediate failure
+- Step 4: PASS if error displays, FAIL if no error handling
+- Step 5: PASS if content clear, FAIL if unclear message
+- Step 6: PASS if options appropriate, FAIL if false options
+- Step 7: PASS if support works, FAIL if contact broken
+- Step 8: PASS if navigation works, FAIL if nav broken
+- Step 9: PASS if no false retries, FAIL if retry available
+- Step 10: PASS if info helpful, FAIL if confusing
+- Step 11: PASS if mobile works, FAIL if responsive issues
+- Step 12: PASS if technical clean, FAIL if console errors
+
+Business Requirements:
+- Expired invitations don't damage user experience or brand trust
+- Users receive helpful guidance when invitations expire
+- Support channels are accessible for re-invitation requests
+- Error handling maintains professional appearance
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

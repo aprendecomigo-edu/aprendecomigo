@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt {{ receipt.receipt_number }}</title>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">{{ company_info.name }}</div>
+        <div class="company-details">
+            {{ company_info.address }}<br>
+            Email: {{ company_info.email }}<br>
+            Website: {{ company_info.website }}
+        </div>
+    </div>
+
+    <div class="receipt-title">RECIBO / RECEIPT</div>
+    <div class="receipt-number">Nº {{ receipt.receipt_number }}</div>
+
+    <div class="info-section">
+        <h3>Informações do Cliente / Customer Information</h3>
+        <table class="info-table">
+            <tr>
+                <th>Nome / Name:</th>
+                <td>{{ student.name }}</td>
+            </tr>
+            <tr>
+                <th>Email:</th>
+                <td>{{ student.email }}</td>
+            </tr>
+            <tr>
+                <th>Data de Emissão / Issue Date:</th>
+                <td>{{ generated_date }} às {{ generated_time }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="info-section">
+        <h3>Detalhes da Compra / Purchase Details</h3>
+        <table class="info-table">
+            <tr>
+                <th>Tipo de Transação / Transaction Type:</th>
+                <td>{{ transaction.get_transaction_type_display }}</td>
+            </tr>
+            <tr>
+                <th>Plano / Plan:</th>
+                <td>{{ plan_details.name }}</td>
+            </tr>
+            {% if plan_details.hours_included %}
+            <tr>
+                <th>Horas Incluídas / Hours Included:</th>
+                <td>{{ plan_details.hours_included }}h</td>
+            </tr>
+            {% endif %}
+            {% if plan_details.validity_days %}
+            <tr>
+                <th>Validade / Validity:</th>
+                <td>{{ plan_details.validity_days }} dias / days</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <th>Data da Transação / Transaction Date:</th>
+                <td>{{ transaction.created_at|date:"d/m/Y H:i" }}</td>
+            </tr>
+            <tr>
+                <th>Status do Pagamento / Payment Status:</th>
+                <td>{{ transaction.get_payment_status_display }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="amount-section">
+        <table class="info-table" style="width: 100%;">
+            <tr>
+                <th>Descrição / Description</th>
+                <th style="text-align: right;">Valor / Amount</th>
+            </tr>
+            <tr>
+                <td>{{ plan_details.name }}
+                    {% if plan_details.hours_included %}
+                    <br><small>{{ plan_details.hours_included }} horas de tutoria / tutoring hours</small>
+                    {% endif %}
+                </td>
+                <td class="total-amount">€{{ receipt.amount }}</td>
+            </tr>
+            <tr style="border-top: 2px solid #007bff;">
+                <th>Total</th>
+                <th class="total-amount">€{{ receipt.amount }}</th>
+            </tr>
+        </table>
+    </div>
+
+    {% if transaction.stripe_payment_intent_id %}
+    <div class="info-section">
+        <h3>Informações de Pagamento / Payment Information</h3>
+        <table class="info-table">
+            <tr>
+                <th>ID da Transação Stripe / Stripe Transaction ID:</th>
+                <td>{{ transaction.stripe_payment_intent_id }}</td>
+            </tr>
+            <tr>
+                <th>Método de Pagamento / Payment Method:</th>
+                <td>Cartão de Crédito / Credit Card</td>
+            </tr>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p><strong>Aprende Comigo - Plataforma de Tutoria Online</strong></p>
+        <p>Este recibo confirma o pagamento bem-sucedido da sua compra de horas de tutoria.</p>
+        <p>This receipt confirms the successful payment of your tutoring hours purchase.</p>
+        <p>Para suporte, contacte-nos em {{ company_info.email }} / For support, contact us at {{ company_info.email }}</p>
+        <br>
+        <p><small>Recibo gerado automaticamente em {{ generated_date }} às {{ generated_time }}</small></p>
+        <p><small>Receipt automatically generated on {{ generated_date }} at {{ generated_time }}</small></p>
+    </div>
+</body>
+</html>

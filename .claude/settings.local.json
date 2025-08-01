@@ -37,7 +37,8 @@
       "mcp__sequential-thinking__sequentialthinking",
       "mcp__playwright__browser_press_key",
       "mcp__memory__create_entities",
-      "mcp__playwright__browser_console_messages"
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_tab_select"
     ],
     "deny": []
   }

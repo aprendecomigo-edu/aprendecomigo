@@ -11,14 +11,22 @@ from .models import (
     Course,
     EducationalSystem,
     EmailDeliveryStatus,
+    EmailSequence,
+    EmailSequenceStep, 
+    EmailCommunication,
+    EmailTemplateType,
+    EmailCommunicationType,
     InvitationStatus,
     School,
     SchoolActivity,
+    SchoolEmailTemplate,
     SchoolInvitation,
     SchoolMembership,
     SchoolRole,
     SchoolSettings,
     StudentProfile,
+    StudentProgress,
+    ProgressAssessment,
     TeacherCourse,
     TeacherInvitation,
     TeacherProfile,
@@ -531,6 +539,55 @@ class UserWithRolesSerializer(UserSerializer):
             )
 
         return roles_data
+
+
+class AuthenticationResponseSerializer(UserWithRolesSerializer):
+    """
+    Enhanced User serializer for authentication responses.
+    Includes user_type for frontend routing decisions.
+    """
+
+    user_type = serializers.SerializerMethodField()
+    is_admin = serializers.SerializerMethodField()
+
+    class Meta(UserWithRolesSerializer.Meta):
+        fields: ClassVar[list[str]] = [*list(UserWithRolesSerializer.Meta.fields), "user_type", "is_admin"]
+
+    def get_user_type(self, obj):
+        """
+        Determine user_type from SchoolMembership records.
+        Uses the same logic as dashboard_info endpoint.
+        """
+        from .db_queries import list_school_ids_owned_or_managed
+        
+        # Check if user is a school owner or admin in any school
+        admin_school_ids = list_school_ids_owned_or_managed(obj)
+        if len(admin_school_ids) > 0:
+            return "admin"
+        
+        # Check if user is a teacher in any school
+        elif SchoolMembership.objects.filter(
+            user=obj, role=SchoolRole.TEACHER, is_active=True
+        ).exists():
+            return "teacher"
+        
+        # Check if user is a student in any school
+        elif SchoolMembership.objects.filter(
+            user=obj, role=SchoolRole.STUDENT, is_active=True
+        ).exists():
+            return "student"
+        
+        # Default fallback
+        return "student"
+
+    def get_is_admin(self, obj):
+        """
+        Check if user has admin privileges (school owner or admin).
+        """
+        from .db_queries import list_school_ids_owned_or_managed
+        
+        admin_school_ids = list_school_ids_owned_or_managed(obj)
+        return len(admin_school_ids) > 0
 
 
 class RequestCodeSerializer(serializers.Serializer):
@@ -2267,3 +2324,332 @@ class StepValidationResponseSerializer(serializers.Serializer):
     is_valid = serializers.BooleanField()
     validated_data = serializers.JSONField(required=False)
     errors = serializers.DictField(required=False)
+
+
+# Dashboard Serializers for Teacher Dashboard API
+
+class ProgressAssessmentSerializer(serializers.ModelSerializer):
+    """Serializer for progress assessments in dashboard context."""
+    
+    percentage = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
+    grade_letter = serializers.CharField(read_only=True)
+    
+    class Meta:
+        model = ProgressAssessment
+        fields = [
+            'id', 'assessment_type', 'title', 'score', 'max_score',
+            'percentage', 'grade_letter', 'assessment_date', 
+            'skills_assessed', 'teacher_notes', 'is_graded'
+        ]
+
+
+class StudentProgressDashboardSerializer(serializers.ModelSerializer):
+    """Serializer for student progress in dashboard context."""
+    
+    student_name = serializers.CharField(source='student.name', read_only=True)
+    student_email = serializers.CharField(source='student.email', read_only=True)
+    course_name = serializers.CharField(source='course.name', read_only=True)
+    recent_assessments = ProgressAssessmentSerializer(many=True, read_only=True)
+    average_assessment_score = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
+    
+    class Meta:
+        model = StudentProgress
+        fields = [
+            'id', 'student_name', 'student_email', 'course_name',
+            'current_level', 'completion_percentage', 'skills_mastered',
+            'current_topics', 'notes', 'last_assessment_date',
+            'recent_assessments', 'average_assessment_score', 'updated_at'
+        ]
+
+
+class DashboardSessionSerializer(serializers.Serializer):
+    """Serializer for class sessions in dashboard context."""
+    
+    id = serializers.IntegerField()
+    date = serializers.DateField()
+    start_time = serializers.TimeField()
+    end_time = serializers.TimeField()
+    session_type = serializers.CharField()
+    grade_level = serializers.CharField()
+    student_count = serializers.IntegerField()
+    student_names = serializers.ListField(child=serializers.CharField())
+    status = serializers.CharField()
+    notes = serializers.CharField()
+    duration_hours = serializers.DecimalField(max_digits=4, decimal_places=2)
+
+
+class DashboardEarningsSerializer(serializers.Serializer):
+    """Serializer for earnings data in dashboard context."""
+    
+    current_month_total = serializers.DecimalField(max_digits=8, decimal_places=2)
+    last_month_total = serializers.DecimalField(max_digits=8, decimal_places=2)
+    pending_amount = serializers.DecimalField(max_digits=8, decimal_places=2)
+    total_hours_taught = serializers.DecimalField(max_digits=6, decimal_places=2)
+    recent_payments = serializers.ListField(child=serializers.DictField())
+
+
+class DashboardQuickStatsSerializer(serializers.Serializer):
+    """Serializer for quick stats in dashboard."""
+    
+    total_students = serializers.IntegerField()
+    sessions_today = serializers.IntegerField()
+    sessions_this_week = serializers.IntegerField()
+    completion_rate = serializers.DecimalField(max_digits=5, decimal_places=2)
+    average_rating = serializers.DecimalField(max_digits=3, decimal_places=2, allow_null=True)
+
+
+class DashboardProgressMetricsSerializer(serializers.Serializer):
+    """Serializer for progress metrics in dashboard."""
+    
+    average_student_progress = serializers.DecimalField(max_digits=5, decimal_places=2)
+    total_assessments_given = serializers.IntegerField()
+    students_improved_this_month = serializers.IntegerField()
+    completion_rate_trend = serializers.DecimalField(max_digits=5, decimal_places=2)
+
+
+class DashboardTeacherInfoSerializer(serializers.Serializer):
+    """Serializer for teacher info in dashboard context."""
+    
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    email = serializers.CharField()
+    specialty = serializers.CharField()
+    hourly_rate = serializers.DecimalField(max_digits=6, decimal_places=2)
+    profile_completion_score = serializers.DecimalField(max_digits=5, decimal_places=2)
+    schools = serializers.ListField(child=serializers.DictField())
+    courses_taught = serializers.ListField(child=serializers.DictField())
+
+
+class TeacherConsolidatedDashboardSerializer(serializers.Serializer):
+    """Main serializer for consolidated teacher dashboard response."""
+    
+    teacher_info = DashboardTeacherInfoSerializer()
+    students = StudentProgressDashboardSerializer(many=True)
+    sessions = serializers.DictField()  # Contains 'today', 'upcoming', 'recent_completed'
+    progress_metrics = DashboardProgressMetricsSerializer()
+    recent_activities = serializers.ListField(child=serializers.DictField())
+    earnings = DashboardEarningsSerializer()
+    quick_stats = DashboardQuickStatsSerializer()
+    
+    def to_representation(self, instance):
+        """Custom representation to ensure proper data structure."""
+        return {
+            'teacher_info': instance.get('teacher_info', {}),
+            'students': instance.get('students', []),
+            'sessions': instance.get('sessions', {}),
+            'progress_metrics': instance.get('progress_metrics', {}),
+            'recent_activities': instance.get('recent_activities', []),
+            'earnings': instance.get('earnings', {}),
+            'quick_stats': instance.get('quick_stats', {}),
+        }
+
+
+# Communication System Serializers
+
+class SchoolEmailTemplateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for SchoolEmailTemplate model.
+    Handles CRUD operations for email templates with school-level permissions.
+    """
+    
+    created_by_name = serializers.SerializerMethodField()
+    school_name = serializers.SerializerMethodField()
+    template_variables = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SchoolEmailTemplate
+        fields = [
+            'id', 'school', 'template_type', 'name',
+            'subject_template', 'html_content', 'text_content',
+            'use_school_branding', 'custom_css', 'is_active', 
+            'is_default', 'created_by', 'created_by_name', 
+            'school_name', 'template_variables', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_by', 'created_by_name', 'school_name', 
+                           'template_variables', 'created_at', 'updated_at']
+    
+    def get_created_by_name(self, obj):
+        """Get the name of the user who created this template."""
+        if obj.created_by:
+            return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
+        return None
+    
+    def get_school_name(self, obj):
+        """Get the school name."""
+        return obj.school.name
+    
+    def get_template_variables(self, obj):
+        """Extract template variables from content."""
+        import re
+        variables = set()
+        # Find variables in subject, html, and text content
+        for content in [obj.subject_template, obj.html_content, obj.text_content]:
+            if content:
+                variables.update(re.findall(r'\{\{(\w+)\}\}', content))
+        return sorted(list(variables))
+    
+    def create(self, validated_data):
+        """Create a new email template."""
+        # Set the creating user
+        request = self.context.get('request')
+        if request and request.user:
+            validated_data['created_by'] = request.user
+        
+        return super().create(validated_data)
+
+
+class EmailSequenceStepSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EmailSequenceStep model.
+    """
+    
+    template_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = EmailSequenceStep
+        fields = [
+            'id', 'sequence', 'template', 'template_name',
+            'step_number', 'delay_hours', 'send_condition',
+            'is_active', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'template_name', 'created_at', 'updated_at']
+    
+    def get_template_name(self, obj):
+        """Get the name of the email template."""
+        return obj.template.name if obj.template else None
+
+
+class EmailSequenceSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EmailSequence model.
+    """
+    
+    steps = EmailSequenceStepSerializer(many=True, read_only=True)
+    steps_count = serializers.SerializerMethodField()
+    school_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = EmailSequence
+        fields = [
+            'id', 'school', 'school_name', 'name', 'description',
+            'trigger_event', 'is_active', 'max_emails', 'steps',
+            'steps_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'school_name', 'steps', 'steps_count', 
+                           'created_at', 'updated_at']
+    
+    def get_steps_count(self, obj):
+        """Get the number of steps in this sequence."""
+        return obj.steps.count()
+    
+    def get_school_name(self, obj):
+        """Get the school name."""
+        return obj.school.name
+
+
+class EmailCommunicationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EmailCommunication model.
+    Tracks email communications sent through the system.
+    """
+    
+    sent_by_name = serializers.SerializerMethodField()
+    school_name = serializers.SerializerMethodField()
+    template_name = serializers.SerializerMethodField()
+    sequence_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = EmailCommunication
+        fields = [
+            'id', 'school', 'school_name', 'recipient_email',
+            'communication_type', 'template', 'template_name',
+            'sequence', 'sequence_name', 'subject', 'html_content',
+            'text_content', 'delivery_status', 'sent_at', 'delivered_at',
+            'opened_at', 'clicked_at', 'bounce_reason', 'sent_by',
+            'sent_by_name', 'metadata', 'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'school_name', 'template_name', 'sequence_name',
+            'sent_by_name', 'delivery_status', 'sent_at', 'delivered_at',
+            'opened_at', 'clicked_at', 'bounce_reason', 'created_at', 'updated_at'
+        ]
+    
+    def get_sent_by_name(self, obj):
+        """Get the name of the user who sent this communication."""
+        if obj.sent_by:
+            return f"{obj.sent_by.first_name} {obj.sent_by.last_name}".strip()
+        return None
+    
+    def get_school_name(self, obj):
+        """Get the school name."""
+        return obj.school.name
+    
+    def get_template_name(self, obj):
+        """Get the template name if used."""
+        return obj.template.name if obj.template else None
+    
+    def get_sequence_name(self, obj):
+        """Get the sequence name if part of a sequence."""
+        return obj.sequence.name if obj.sequence else None
+
+
+class EmailTemplatePreviewSerializer(serializers.Serializer):
+    """
+    Serializer for email template preview functionality.
+    """
+    
+    template_variables = serializers.DictField(
+        child=serializers.CharField(),
+        help_text="Variables to substitute in the template"
+    )
+    
+    def validate_template_variables(self, value):
+        """Validate template variables."""
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Template variables must be a dictionary")
+        
+        # Check for common required variables
+        template = self.context.get('template')
+        if template:
+            # Extract variables from template content
+            import re
+            required_vars = set()
+            for content in [template.subject_template, template.html_content, template.text_content]:
+                if content:
+                    required_vars.update(re.findall(r'\{\{(\w+)\}\}', content))
+            
+            # Check if all required variables are provided
+            missing_vars = required_vars - set(value.keys())
+            if missing_vars:
+                raise serializers.ValidationError(
+                    f"Missing required template variables: {', '.join(missing_vars)}"
+                )
+        
+        return value
+
+
+class EmailAnalyticsSerializer(serializers.Serializer):
+    """
+    Serializer for email analytics data.
+    """
+    
+    total_sent = serializers.IntegerField()
+    total_delivered = serializers.IntegerField()
+    total_opened = serializers.IntegerField()
+    total_clicked = serializers.IntegerField()
+    total_bounced = serializers.IntegerField()
+    
+    delivery_rate = serializers.FloatField()
+    open_rate = serializers.FloatField()
+    click_rate = serializers.FloatField()
+    bounce_rate = serializers.FloatField()
+    
+    recent_communications = EmailCommunicationSerializer(many=True, read_only=True)
+    
+    # Communication breakdown by type
+    by_type = serializers.DictField(child=serializers.IntegerField())
+    
+    # Communication trend data
+    daily_stats = serializers.ListField(
+        child=serializers.DictField()
+    )

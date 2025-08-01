@@ -1,0 +1,407 @@
+QA Test Case: Student Balance Display Updates UI Testing
+
+Test ID: PURCHASE-UI-006
+Test Name: Student Balance Display Updates and Real-Time Balance Management UI Testing
+Purpose: Verify student balance displays update immediately after purchases, show accurate balance information, and provide excellent user feedback about balance changes
+Expected Result: Student balance information is always accurate, updates in real-time, and provides clear visual feedback about balance changes
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform frontend UI
+- Component: StudentBalanceCard, PurchaseFlow, Dashboard balance displays
+- Architecture: React Native + Expo with real-time balance management
+- Focus: Balance accuracy, real-time updates, visual feedback, package management
+- Critical: Zero tolerance for balance inaccuracies or delayed updates
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: .venv/ in project root (for backend)
+3. Environment Variables:
+   - EXPO_PUBLIC_ENV=development
+   - EXPO_PUBLIC_STRIPE_PUBLIC_KEY=pk_test_... (test mode)
+   - EXPO_PUBLIC_API_URL=http://localhost:8000/api
+4. Multiple browser tabs for testing real-time updates
+
+Test Data:
+- Authenticated User: anapmc.carvalho@gmail.com
+- Test Plans: Various pricing plans (different hour amounts)
+- Starting Balance: Record initial balance before testing
+- Stripe Test Card: 4242 4242 4242 4242 (expires: any future, CVC: 123)
+
+Balance Testing Matrix:
+- Initial balance (before purchase)
+- Post-purchase balance (immediate update)
+- Balance persistence (after refresh)
+- Multiple purchase balance accumulation
+- Balance display across different UI components
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Initial Balance State Documentation
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+1. Start development servers and navigate to application
+2. Complete authentication for anapmc.carvalho@gmail.com
+3. Navigate to dashboard or balance display area
+4. Document current student balance state:
+   - Current hour balance
+   - Any existing packages
+   - Package expiration dates
+   - Visual presentation of balance information
+5. Take comprehensive screenshots of all balance displays
+6. Record balance numbers for comparison after purchase
+
+Expected: Clear documentation of initial balance state
+- All balance displays are visible and accessible
+- Balance information is clearly presented
+- Package information (if any) is accurate
+- No balance display errors or inconsistencies
+- Professional presentation of balance data
+Screenshot: 01_initial_balance_state.png
+
+Step 2: Balance Display Component Testing
+1. Locate and test all balance display components:
+   - Dashboard balance card/widget
+   - Navigation balance indicator (if present)
+   - Profile/account balance section
+   - Purchase flow balance reference (if shown)
+2. Verify balance display quality:
+   - Numbers are clearly formatted and readable
+   - Currency/hours are properly labeled
+   - Expiration dates are clearly shown
+   - Visual hierarchy is professional
+3. Test balance display responsiveness:
+   - Balance displays work on desktop
+   - Balance displays work on mobile
+   - Balance information scales appropriately
+   - No layout issues with balance components
+
+Expected: Professional balance displays throughout application
+- Balance information is prominently and clearly displayed
+- All balance components render properly
+- Information is well-formatted and easy to understand
+- Consistent presentation across all balance displays
+- Responsive design works for all screen sizes
+Screenshot: 02_balance_display_components.png
+
+Step 3: Pre-Purchase Balance Verification
+1. Open multiple browser tabs:
+   - Tab 1: Dashboard/balance display
+   - Tab 2: Purchase flow page
+2. In Tab 1, verify current balance display:
+   - Record exact balance numbers
+   - Note any packages and expiration dates
+   - Screenshot current balance state
+3. In Tab 2, navigate to purchase flow:
+   - Verify any balance reference in purchase flow
+   - Select a pricing plan (note exact hours/price)
+   - Proceed to student information step
+4. Cross-reference balance information:
+   - Balance shown in purchase flow matches dashboard
+   - All balance information is consistent
+
+Expected: Consistent balance display across application
+- Balance information matches across all locations
+- No discrepancies between different balance displays
+- Purchase flow shows current balance appropriately
+- All balance information is current and accurate
+Screenshot: 03_pre_purchase_balance_verification.png
+
+Step 4: Real-Time Balance Update Testing
+1. Complete purchase transaction in Tab 2:
+   - Complete student information form
+   - Process payment with test card (4242 4242 4242 4242)
+   - Reach purchase success screen
+2. Immediately check Tab 1 (dashboard) WITHOUT refreshing:
+   - Verify balance updates in real-time
+   - Check if new package appears immediately
+   - Verify new expiration dates are shown
+   - Confirm visual feedback of balance change
+3. Test real-time update timing:
+   - How quickly does balance update after purchase?
+   - Are updates smooth or do they cause UI jumps?
+   - Does new balance information integrate seamlessly?
+
+Expected: Immediate real-time balance updates
+- Balance updates within seconds of purchase completion
+- New package information appears immediately
+- Updates are smooth without UI jumping or flashing
+- Real-time updates work without page refresh
+- Visual feedback indicates balance has changed
+Screenshot: 04_real_time_balance_update.png
+
+Step 5: Purchase Success Balance Integration
+1. On purchase success screen, verify balance integration:
+   - Success screen shows updated balance
+   - New package information is displayed
+   - Purchase details match balance changes
+   - Balance changes are celebrated or highlighted
+2. Test success screen balance accuracy:
+   - Balance change matches purchased plan
+   - New expiration date is calculated correctly
+   - Package details are accurate and complete
+   - Visual presentation is professional and clear
+3. Test success screen navigation:
+   - "View Balance" or similar buttons work correctly
+   - Navigation to balance/dashboard maintains accuracy
+   - User can easily see their new balance
+
+Expected: Success screen perfectly integrates balance updates
+- Purchase success screen shows accurate new balance
+- Balance changes are highlighted and celebrated
+- New package information is clearly presented
+- Easy navigation to view updated balance details
+- Professional presentation of balance success
+Screenshot: 05_success_screen_balance_integration.png
+
+Step 6: Balance Persistence and Refresh Testing
+1. Test balance persistence across browser refresh:
+   - Refresh dashboard tab (Tab 1)
+   - Verify balance remains accurate after refresh
+   - Check that package information persists
+   - Confirm expiration dates remain correct
+2. Test balance persistence across navigation:
+   - Navigate to different sections of application
+   - Return to dashboard/balance area
+   - Verify balance information remains consistent
+   - Check for any balance data loss
+3. Test balance persistence across new sessions:
+   - Close and reopen browser
+   - Log in again
+   - Verify balance reflects recent purchase
+   - Confirm no balance data loss
+
+Expected: Perfect balance persistence across sessions
+- Balance information persists across browser refresh
+- Navigation doesn't affect balance accuracy
+- New sessions show correct updated balance
+- No loss of package or balance information
+- Consistent balance data across all interactions
+Screenshot: 06_balance_persistence_testing.png
+
+Step 7: Multiple Purchase Balance Accumulation
+1. Perform second purchase transaction:
+   - Navigate back to purchase flow
+   - Select different pricing plan
+   - Complete entire purchase process
+2. Verify balance accumulation:
+   - New hours are added to existing balance
+   - Multiple packages are displayed properly
+   - Expiration dates for multiple packages are correct
+   - Balance totals are calculated accurately
+3. Test multiple package display:
+   - All packages are shown clearly
+   - Package information doesn't overlap or crowd
+   - Each package has distinct, accurate information
+   - Visual hierarchy works with multiple packages
+
+Expected: Perfect handling of multiple purchases and packages
+- Balance correctly accumulates from multiple purchases
+- Multiple packages are displayed clearly and accurately
+- No confusion between different packages
+- Balance totals are mathematically correct
+- Professional presentation of multiple packages
+Screenshot: 07_multiple_purchase_accumulation.png
+
+Step 8: Balance Display Mathematical Accuracy
+1. Verify mathematical accuracy of all balance calculations:
+   - Calculate expected balance from initial + purchases
+   - Compare with displayed balance
+   - Verify individual package hour amounts
+   - Check that totals match sum of packages
+2. Test edge cases in balance calculation:
+   - Purchase same plan multiple times
+   - Mix different plans
+   - Verify fractional hours (if applicable)
+   - Check for rounding errors or discrepancies
+3. Test balance precision:
+   - Hours are displayed with appropriate precision
+   - No unnecessary decimal places
+   - Currency amounts are properly formatted
+   - All numbers are professional and clear
+
+Expected: Perfect mathematical accuracy in all balance displays
+- All balance calculations are mathematically correct
+- No rounding errors or calculation mistakes
+- Numbers are displayed with appropriate precision
+- Balance totals match sum of individual packages
+- Professional number formatting throughout
+Screenshot: 08_balance_mathematical_accuracy.png
+
+Step 9: Package Expiration and Time-Based Testing
+1. Test package expiration display:
+   - Verify expiration dates are calculated correctly
+   - Check expiration date formatting
+   - Verify relative time displays (if present)
+   - Test expiration warning indicators (if applicable)
+2. Test time-based balance features:
+   - How are packages prioritized (first expires first used?)
+   - Are expiration warnings clear and helpful?
+   - Do expired packages show differently?
+   - Is package usage order clear to users?
+3. Test expiration edge cases:
+   - Packages expiring soon
+   - Packages with same expiration dates
+   - Very long-term packages
+   - Mix of short and long-term packages
+
+Expected: Clear and accurate package expiration management
+- Expiration dates are calculated and displayed correctly
+- Time-based displays are accurate and user-friendly
+- Package usage order is clear to users
+- Expiration warnings (if applicable) are helpful
+- Professional presentation of time-based information
+Screenshot: 09_package_expiration_testing.png
+
+Step 10: Balance Display Visual Design and UX
+1. Test balance display visual design:
+   - Balance information is visually prominent
+   - Color coding is helpful and consistent
+   - Typography is clear and readable
+   - Visual hierarchy guides user attention appropriately
+2. Test balance display UX:
+   - Users can easily find their balance
+   - Balance information is always accessible
+   - Balance displays enhance rather than clutter UI
+   - Information density is appropriate
+3. Test balance display interaction:
+   - Hover states (if applicable)
+   - Click interactions for more details
+   - Expandable sections work properly
+   - Tooltips or help text is helpful
+
+Expected: Outstanding visual design and user experience
+- Balance displays are visually appealing and professional
+- Information is easy to find and understand
+- Visual design enhances user confidence
+- Balance displays integrate seamlessly with overall UI
+- Excellent user experience for balance management
+Screenshot: 10_balance_visual_design_ux.png
+
+Step 11: Cross-Platform Balance Display Testing
+1. Test balance displays on different screen sizes:
+   - Desktop balance displays (1920x1080)
+   - Laptop balance displays (1366x768)
+   - Tablet balance displays (768x1024)
+   - Mobile balance displays (375x667)
+2. Verify responsive balance design:
+   - Balance information adapts to screen size
+   - No information is cut off or hidden
+   - Touch targets are appropriate on mobile
+   - Balance displays remain readable and professional
+3. Test cross-platform balance consistency:
+   - Balance information is identical across devices
+   - Visual presentation is consistent
+   - All features work on all platforms
+
+Expected: Excellent balance displays across all platforms
+- Balance information displays perfectly on all screen sizes
+- Responsive design maintains functionality and readability
+- Consistent experience across all platforms
+- Mobile-optimized balance displays
+- No platform-specific balance display issues
+Screenshot: 11_cross_platform_balance_testing.png
+
+Step 12: Balance API and Data Synchronization Testing
+1. Test balance data synchronization:
+   - Monitor network requests during balance updates
+   - Verify API calls are made appropriately
+   - Check for any data synchronization delays
+   - Test handling of API failures during balance updates
+2. Test balance caching and performance:
+   - Are balance updates cached appropriately?
+   - Does balance data load quickly?
+   - Are unnecessary API calls avoided?
+   - Is balance data efficiently managed?
+3. Test balance data consistency:
+   - Balance shown matches backend data
+   - No discrepancies between frontend and backend
+   - All balance operations are properly recorded
+   - Data integrity is maintained
+
+Expected: Excellent balance data management and synchronization
+- Balance data is synchronized efficiently with backend
+- API calls are optimized and appropriate
+- No data consistency issues between frontend and backend
+- Excellent performance for balance operations
+- Proper error handling for balance data issues
+Screenshot: 12_balance_api_synchronization.png
+
+Step 13: Balance Edge Cases and Stress Testing
+1. Test balance edge cases:
+   - Zero balance scenarios
+   - Very high balance amounts
+   - Many small packages vs few large packages
+   - Packages with identical expiration dates
+2. Test balance stress scenarios:
+   - Multiple rapid purchases
+   - Purchase during balance display updates
+   - Concurrent sessions making purchases
+   - Network issues during balance updates
+3. Test balance error recovery:
+   - How does system handle balance update failures?
+   - Can users retry balance operations?
+   - Is balance data recovered properly after errors?
+   - Are users informed of balance update issues?
+
+Expected: Robust handling of all balance edge cases and stress scenarios
+- System handles unusual balance scenarios gracefully
+- Performance remains excellent under stress
+- Error recovery for balance operations is smooth
+- No data loss or corruption under any circumstances
+- Professional behavior in all edge cases
+Screenshot: 13_balance_edge_case_stress_testing.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Student balance displays are always accurate, update in real-time, and provide excellent user experience
+FAIL: Any balance inaccuracies, delayed updates, poor visual presentation, or confusing balance information
+
+Individual Step Criteria:
+- Step 1: PASS if initial balance state properly documented, FAIL if balance display issues
+- Step 2: PASS if balance components are professional and accessible, FAIL if poor balance presentation
+- Step 3: PASS if balance information is consistent across application, FAIL if balance discrepancies
+- Step 4: PASS if balance updates in real-time immediately, FAIL if delayed or missing updates
+- Step 5: PASS if success screen integrates balance perfectly, FAIL if balance integration issues
+- Step 6: PASS if balance persists across sessions and navigation, FAIL if balance data loss
+- Step 7: PASS if multiple purchases accumulate properly, FAIL if accumulation errors
+- Step 8: PASS if all balance calculations are mathematically perfect, FAIL if any calculation errors
+- Step 9: PASS if package expiration is managed clearly, FAIL if expiration confusion
+- Step 10: PASS if balance displays have outstanding visual design, FAIL if poor balance UX
+- Step 11: PASS if balance displays work excellently across platforms, FAIL if platform issues
+- Step 12: PASS if balance data synchronization is efficient, FAIL if synchronization problems
+- Step 13: PASS if edge cases handled robustly, FAIL if system instability or edge case failures
+
+Balance Accuracy Requirements (Critical):
+- ALL balance calculations must be mathematically perfect
+- NO delays in balance updates after purchase
+- ZERO tolerance for balance inaccuracies or discrepancies
+- IMMEDIATE real-time updates across all balance displays
+- PERFECT persistence across sessions and navigation
+
+User Experience Requirements:
+- Balance information is prominently displayed and easy to find
+- Visual presentation is professional and confidence-inspiring
+- Balance changes are celebrated and clearly communicated
+- Package management is clear and user-friendly
+- Consistent experience across all platforms and screen sizes
+
+Performance Requirements:
+- Balance updates occur within 2-3 seconds of purchase
+- Balance displays load quickly and efficiently
+- No performance degradation with multiple packages
+- Efficient API usage for balance operations
+- Smooth animations and transitions for balance updates
+
+Data Integrity Requirements:
+- Balance data matches backend records perfectly
+- No data loss under any circumstances
+- Proper error handling for balance operations
+- Consistent data across all balance displays
+- Robust handling of concurrent balance operations
+
+Overall Result: PASS only if student balance displays provide perfect accuracy, immediate updates, and outstanding user experience across ALL scenarios with ZERO tolerance for balance inaccuracies

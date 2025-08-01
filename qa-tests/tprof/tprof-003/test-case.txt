@@ -1,0 +1,271 @@
+QA Test Case: Auto-Save and Progress Persistence
+
+Test ID: TPROF-003
+Test Name: Auto-Save and Progress Persistence Testing
+Purpose: Verify auto-save functionality works correctly and user progress is preserved across sessions
+Expected Result: Auto-save functions reliably, progress persists through interruptions, and users can resume seamlessly
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Architecture: React Native + Expo frontend with Django REST backend
+- Feature: Teacher Profile Wizard auto-save and persistence system
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Development servers: `make dev`
+3. Browser dev tools for monitoring network requests
+4. Access wizard at: http://localhost:8081/onboarding/teacher-profile
+
+Test Data:
+- Test email: autosave.test@aprendecomigo.com
+- Progressive form data for testing save states
+- Network monitoring capabilities
+
+Pre-Conditions:
+- User authenticated with clean profile state
+- Browser developer tools open to monitor network activity
+- Clear any existing cached wizard data
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Auto-Save Functionality Testing
+1. Navigate to Basic Information step
+2. Open browser dev tools, go to Network tab
+3. Fill in basic information partially:
+   - First Name: "João"
+   - Last Name: "Santos"
+   - Professional Title: "Physics Teacher"
+
+4. Wait and observe auto-save behavior:
+   - Watch for save indicators in UI
+   - Monitor network requests in dev tools
+   - Look for save progress API calls
+   - Verify 30-second auto-save interval
+
+5. Continue filling form:
+   - Add phone number: "+351913456789"
+   - Select location: "Porto, Portugal"
+   - Select languages: "Portuguese", "English"
+
+6. Observe save status changes:
+   - "Saving..." indicator appears
+   - Save completion confirmation
+   - "Unsaved changes" indicator behavior
+
+Expected: Auto-save triggers every 30 seconds with visual feedback
+Screenshot: 01_autosave_functionality.png
+
+Step 2: Manual Save Testing
+1. Make additional changes to form
+2. Click manual "Save" button (if available)
+3. Verify immediate save occurs:
+   - Save indicator shows immediately
+   - Network request sent
+   - Save status updates
+
+4. Test save button states:
+   - Disabled when no unsaved changes
+   - Enabled when changes detected
+   - Loading state during save
+
+Expected: Manual save works immediately when triggered
+Screenshot: 02_manual_save.png
+
+Step 3: Progress Persistence - Browser Refresh
+1. Continue to Step 2 (Biography)
+2. Fill in biography information:
+   - Professional Bio: "Experienced physics teacher with passion for making science accessible to all students."
+   - Teaching Philosophy: "Learning through experimentation and discovery"
+
+3. Wait for auto-save to complete
+4. Refresh the browser page (F5 or Ctrl+R)
+5. Verify wizard recovery:
+   - Returns to correct step (Step 2)
+   - All previously entered data preserved
+   - Form fields pre-populated correctly
+   - Progress indicator shows correct completion
+
+Expected: All data preserved after browser refresh
+Screenshot: 03_browser_refresh_recovery.png
+
+Step 4: Progress Persistence - Tab Close/Reopen
+1. Continue filling biography form
+2. Add specializations: "Mechanics", "Thermodynamics"
+3. Wait for auto-save
+4. Close browser tab completely
+5. Reopen new tab and navigate to wizard URL
+6. Verify complete recovery:
+   - Wizard resumes from correct step
+   - All data from all steps preserved
+   - Can continue from where left off
+
+Expected: Complete recovery after tab close/reopen
+Screenshot: 04_tab_recovery.png
+
+Step 5: Progress Persistence - Session Interruption
+1. Continue to Step 3 (Education)
+2. Add degree information:
+   - Degree Type: "Bachelor's Degree"
+   - Field: "Physics"
+   - Institution: "University of Porto"
+   - Graduation Year: "2018"
+
+3. Simulate session interruption:
+   - Close browser completely
+   - Wait 5 minutes
+   - Restart browser
+   - Navigate back to application
+
+4. Login if required and navigate to wizard
+5. Verify session recovery:
+   - Can resume from Step 3
+   - Education data preserved
+   - All previous steps' data intact
+
+Expected: Session recovery works after complete browser restart
+Screenshot: 05_session_recovery.png
+
+Step 6: Network Failure Handling
+1. Continue to Step 4 (Subjects)
+2. Open browser dev tools, go to Network tab
+3. Add subject information:
+   - Subject: "Physics"
+   - Grade Levels: "11th Grade", "12th Grade"
+   - Expertise: "Advanced"
+
+4. Simulate network failure:
+   - In dev tools, set Network to "Offline"
+   - Continue making changes to form
+   - Observe error handling
+
+5. Restore network connection:
+   - Set Network back to "Online"
+   - Verify automatic retry of failed saves
+   - Check that no data was lost
+
+Expected: Graceful network failure handling with data preservation
+Screenshot: 06_network_failure_handling.png
+
+Step 7: Data Consistency Testing
+1. Navigate between different steps
+2. Verify data consistency:
+   - Go back to Step 1, check basic info preserved
+   - Go to Step 2, verify biography data intact
+   - Go to Step 3, confirm education data saved
+   - Go to Step 4, verify subjects preserved
+
+3. Make changes in earlier steps:
+   - Change years of experience in Step 1
+   - Verify this doesn't affect other steps inappropriately
+   - Check that related validations update
+
+4. Verify cross-step data relationships maintained
+
+Expected: Data consistency maintained across all steps
+Screenshot: 07_data_consistency.png
+
+Step 8: Cache Management Testing
+1. Complete several steps with auto-save
+2. Check browser local storage:
+   - Open dev tools > Application > Local Storage
+   - Find wizard cache key
+   - Verify data structure looks correct
+
+3. Test cache behavior:
+   - Clear cache manually
+   - Refresh page
+   - Verify wizard restarts from beginning
+   - Verify server data is reloaded if available
+
+Expected: Cache management works correctly
+Screenshot: 08_cache_management.png
+
+Step 9: Multi-Device Consistency
+1. Start wizard on desktop browser
+2. Fill first 3 steps with auto-save
+3. Open same account on mobile device (if available) or different browser
+4. Navigate to wizard
+5. Verify cross-device sync:
+   - Same progress shown on both devices
+   - Data entered on desktop appears on mobile
+   - Can continue seamlessly on either device
+
+Expected: Multi-device sync works (if implemented)
+Screenshot: 09_multi_device_sync.png
+
+Step 10: Auto-Save Performance Testing
+1. Create large form entries:
+   - Long biography (approaching 500 word limit)
+   - Multiple degrees and certifications
+   - Multiple subjects with detailed descriptions
+
+2. Monitor auto-save performance:
+   - Time from trigger to completion
+   - Network request size and speed
+   - UI responsiveness during save
+
+3. Test concurrent changes:
+   - Make rapid changes across multiple fields
+   - Verify saves don't conflict
+   - Check that latest changes are preserved
+
+Expected: Auto-save performs well even with large data sets
+Screenshot: 10_performance_testing.png
+
+Step 11: Error Recovery Testing
+1. Force save errors:
+   - Disconnect network during save
+   - Submit invalid data that server rejects
+   - Cause server timeout scenario
+
+2. Verify error handling:
+   - Clear error messages shown to user
+   - Retry mechanism works automatically
+   - Data preserved during error states
+   - User can manually retry if needed
+
+Expected: Robust error recovery preserves user work
+Screenshot: 11_error_recovery.png
+
+Step 12: Exit and Resume Flow Testing
+1. Fill wizard partially (2-3 steps)
+2. Use "Exit" button with unsaved changes
+3. Test exit dialog:
+   - "Save & Exit" option works
+   - "Exit Without Saving" option works
+   - Cancel option returns to wizard
+
+4. If saved and exited, verify resume:
+   - Can return to wizard later
+   - Progress restored correctly
+   - Can complete remaining steps
+
+Expected: Exit/resume flow preserves user choice about saving
+Screenshot: 12_exit_resume_flow.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Auto-save works reliably AND progress persists through all interruptions AND recovery is seamless
+FAIL: Auto-save fails OR data is lost OR recovery doesn't work properly
+
+Individual Criteria:
+- Auto-Save Timing: PASS if saves occur every 30 seconds automatically, FAIL if timing is inconsistent
+- Manual Save: PASS if manual save works immediately, FAIL if manual save fails or is slow
+- Browser Refresh: PASS if all data preserved after refresh, FAIL if any data lost
+- Session Recovery: PASS if complete recovery after browser restart, FAIL if session data lost
+- Network Handling: PASS if network failures handled gracefully, FAIL if data lost during network issues
+- Data Consistency: PASS if data consistent across all steps, FAIL if data corruption occurs
+- Cache Management: PASS if caching works properly, FAIL if cache issues cause problems
+- Performance: PASS if saves complete within 2 seconds, FAIL if saves are too slow or impact UI
+- Error Recovery: PASS if errors handled without data loss, FAIL if errors cause data corruption
+- Exit/Resume: PASS if exit/resume flow works correctly, FAIL if resume functionality broken
+
+Performance Requirements:
+- Auto-save should complete within 2 seconds
+- UI should remain responsive during save operations
+- Recovery should complete within 3 seconds of page load
+- No data should be lost during any tested scenario
+
+Overall Result: PASS only if ALL persistence mechanisms work correctly, FAIL if ANY data loss occurs or recovery fails

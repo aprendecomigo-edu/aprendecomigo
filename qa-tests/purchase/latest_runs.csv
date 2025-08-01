@@ -1,0 +1,13 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+purchase-001,Authenticated User Purchase Flow,Backend API purchase flow testing,,,,0,0,0
+purchase-002,Guest User Purchase and Registration,Backend API guest purchase testing,,,,0,0,0
+purchase-003,Validation and Error Handling,Backend API validation Testing,,,,0,0,0
+purchase-004,Stripe Integration and Payment Processing,Backend API Stripe integration testing,,,,0,0,0
+purchase-005,Security and Input Sanitization,Backend API security testing,,,,0,0,0
+purchase-006,Performance and Load Testing,Backend API performance testing,,,,0,0,0
+purchase-ui-001,Complete Purchase Flow - Authenticated Users,Full UI testing for authenticated user purchase flow,,,,0,0,0
+purchase-ui-002,Guest User Purchase Flow,UI testing for guest user purchase and registration,,,,0,0,0
+purchase-ui-003,Cross-Platform Responsive Design,UI testing across all devices and screen sizes,,,,0,0,0
+purchase-ui-004,Stripe Payment Integration,UI testing for Stripe payment integration and security,,,,0,0,0
+purchase-ui-005,Error Handling and User Feedback,UI testing for error states and user feedback,,,,0,0,0
+purchase-ui-006,Student Balance Display Updates,UI testing for real-time balance updates and display,,,,0,0,0

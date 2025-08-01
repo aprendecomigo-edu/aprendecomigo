@@ -1,0 +1,411 @@
+QA Test Case: Performance Analytics, Earnings Tracking and Teacher Metrics Dashboard
+
+Test ID: TEACHDASH-004
+Test Name: Performance Analytics, Earnings Tracking and Teacher Metrics Dashboard
+Purpose: Verify teacher analytics dashboard displays comprehensive performance metrics, earnings tracking, student feedback analysis, and business intelligence for teaching effectiveness
+Expected Result: Teacher successfully accesses detailed analytics with accurate metrics, earnings data, and actionable insights for improving teaching performance
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform (EdTech tutoring platform)
+- Architecture: Django REST Framework backend + React Native + Expo frontend 
+- GitHub Issue: #51 - Teacher Dashboard Implementation (Backend: #90, Frontend: #91)
+- Backend APIs: /api/teachers/analytics/, TutorAnalyticsService, earnings tracking
+- Frontend Routes: /app/(teacher)/analytics/index.tsx
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` (starts both backend and frontend)
+4. Browser: Chrome or Firefox for web testing
+
+Test Data:
+- Test Teacher Email: anapmc.carvalho@gmail.com (must have completed teacher profile)
+- Historical Data: Teacher should have completed sessions, student interactions, and earnings
+- Analytics Data: Various metrics across different time periods (week, month, year)
+- Student Feedback: Some student feedback and ratings for comprehensive testing
+
+Prerequisites:
+- Teacher must be authenticated (complete TEACHDASH-001 first)
+- Teacher should have historical teaching data for meaningful analytics
+- Teacher should have completed sessions with students
+- Earnings data should be available (completed paid sessions)
+- Student feedback and ratings should exist for performance metrics
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Navigate to Analytics Dashboard
+1. From teacher dashboard, navigate to analytics section:
+   - Click "Analytics" in navigation menu
+   - Or use direct route to /(teacher)/analytics
+2. Verify analytics page loads completely
+3. Check page title and header indicate analytics section
+4. Verify loading states during initial data fetch
+5. Check for any console errors during navigation
+
+Expected: 
+- Navigation to analytics page works smoothly
+- Page loads within 2 seconds with proper loading indicators
+- URL shows /(teacher)/analytics route structure
+- No console errors during analytics page load
+Screenshot: 01_analytics_navigation.png
+
+Step 2: Key Metrics Grid Overview Validation
+1. Locate the Key Metrics Grid section
+2. Verify comprehensive performance overview displays:
+   - Total Students (current student count)
+   - Active Students (currently engaged students)
+   - Average Progress (overall student progress percentage)
+   - Session Completion Rate (percentage of completed vs scheduled)
+3. Check metrics display numerical values (not placeholders)
+4. Verify metrics are realistic and match expected teacher data
+5. Check responsive grid layout on current screen size
+
+Expected:
+- All key metrics display meaningful numerical values
+- Metrics grid has proper responsive layout
+- Numbers reflect actual teacher performance data
+- Visual presentation is clear and professional
+Screenshot: 02_key_metrics_overview.png
+
+Step 3: Student Analytics Deep Dive
+1. Locate Student Metrics section within analytics
+2. Verify detailed student analytics display:
+   - Total Students count with trend indicators
+   - Active Students with engagement levels
+   - Average Student Progress with distribution
+   - Student Retention Rates over time
+3. Check for time period filtering (week, month, year)
+4. Verify student progress distribution visualization
+5. Test filtering by different time periods
+
+Expected:
+- Student analytics provide detailed insights
+- Progress distribution shows meaningful data patterns
+- Time period filtering works correctly
+- Trend indicators show positive/negative changes
+Screenshot: 03_student_analytics_detail.png
+
+Step 4: Session Analytics and Performance Metrics
+1. Locate Session Analytics section
+2. Verify comprehensive session metrics display:
+   - Weekly Sessions count and trends
+   - Total Hours Taught (cumulative and period-specific)
+   - Session Completion Rate (completed vs scheduled)
+   - Average Session Duration
+   - Total Assessments Conducted
+3. Check session performance trends over time
+4. Verify assessment metrics include grading data
+5. Test time period filtering for session data
+
+Expected:
+- Session analytics show complete teaching activity
+- Hours taught calculations are accurate
+- Completion rates reflect actual session outcomes
+- Assessment data provides meaningful insights
+Screenshot: 04_session_analytics_performance.png
+
+Step 5: Earnings Tracking and Financial Analytics
+1. Locate Earnings Analytics section
+2. Verify comprehensive earnings tracking displays:
+   - Monthly Earnings (current month and trends)
+   - Total Earnings (lifetime and period totals)
+   - Pending Amounts (unpaid/processing payments)
+   - Average Hourly Rate (calculated from sessions)
+   - Earnings per Student metrics
+3. Check earnings breakdown by time periods
+4. Verify currency formatting (Euros) and Portuguese localization
+5. Test filtering earnings by different time ranges
+
+Expected:
+- Earnings data displays accurate financial information
+- Currency formatting follows Portuguese/European standards
+- Pending amounts are clearly distinguished from completed payments
+- Earnings trends provide business insights
+Screenshot: 05_earnings_tracking_analytics.png
+
+Step 6: Student Feedback and Rating Analysis
+1. Locate Student Feedback/Performance section
+2. Verify student feedback analytics display:
+   - Overall Teacher Rating (average from student feedback)
+   - Student Satisfaction Scores
+   - Feedback Comments and Sentiment Analysis
+   - Student Improvement Rates
+   - Teaching Effectiveness Metrics
+3. Check feedback trends over time
+4. Verify rating calculations are accurate
+5. Test feedback filtering by student or time period
+
+Expected:
+- Student feedback provides meaningful performance insights
+- Rating calculations reflect actual student feedback
+- Sentiment analysis provides actionable insights
+- Improvement rates show teaching effectiveness
+Screenshot: 06_student_feedback_analysis.png
+
+Step 7: Performance Overview and Improvement Metrics
+1. Locate Performance Overview section
+2. Verify comprehensive performance metrics:
+   - Student Retention Rates (students continuing with teacher)
+   - Improvement Rates (student progress over time)
+   - Success Metrics (students reaching goals)
+   - Teaching Effectiveness Scores
+3. Check performance comparisons over time
+4. Verify improvement tracking methodologies
+5. Test performance filtering by different criteria
+
+Expected:
+- Performance metrics provide actionable teaching insights
+- Retention rates reflect actual student engagement
+- Improvement metrics show teaching effectiveness
+- Success metrics align with educational outcomes
+Screenshot: 07_performance_improvement_metrics.png
+
+Step 8: Recent Payments and Transaction History
+1. Locate Recent Payments section
+2. Verify payment history displays:
+   - Recent payment transactions with dates
+   - Payment amounts and status (completed, pending, processing)
+   - Payment methods and transaction IDs
+   - Student-specific payment breakdowns
+3. Check payment history pagination or scrolling
+4. Verify payment status accuracy
+5. Test payment history filtering and searching
+
+Expected:
+- Payment history provides complete financial record
+- Payment status is accurate and up-to-date
+- Transaction details are comprehensive
+- History navigation is smooth and efficient
+Screenshot: 08_payment_history_transactions.png
+
+Step 9: Time-based Analytics Filtering
+1. Test time-based filtering controls:
+   - Week view (last 7 days)
+   - Month view (current month)
+   - Year view (last 12 months)
+   - Custom date range if available
+2. Verify all analytics sections update correctly with filter changes
+3. Check data consistency across different time periods
+4. Test filter performance and loading states
+5. Verify date formatting follows Portuguese standards
+
+Expected:
+- Time filtering works across all analytics sections
+- Data updates consistently with filter changes
+- Loading states indicate when data is being refreshed
+- Date formatting is properly localized
+Screenshot: 09_time_filtering_analytics.png
+
+Step 10: Visual Data Representation and Charts
+1. Identify visual data representations (charts, graphs, progress bars)
+2. Verify chart functionality:
+   - Progress bars with proper color coding
+   - Trend indicators showing increases/decreases
+   - Data visualization accuracy
+   - Interactive elements if available
+3. Check chart responsiveness on different screen sizes
+4. Verify accessibility of visual elements
+5. Test chart interactions (hover, click if available)
+
+Expected:
+- Visual elements accurately represent underlying data
+- Charts and graphs are clear and professional
+- Color coding follows established UX patterns
+- Visual elements are accessible and responsive
+Screenshot: 10_visual_data_representation.png
+
+Step 11: Export and Reporting Functionality
+1. Look for data export options:
+   - Export analytics data to CSV/Excel
+   - Generate PDF reports
+   - Print-friendly views
+   - Share analytics with administrators
+2. Test available export functionality
+3. Verify exported data accuracy and formatting
+4. Check report generation performance
+5. Test sharing or notification features if available
+
+Expected:
+- Export functionality works correctly if available
+- Exported data matches displayed analytics
+- Report generation completes without errors
+- Sharing features maintain data privacy and security
+Screenshot: 11_export_reporting_functionality.png
+
+Step 12: Analytics Responsive Design Testing
+1. Test analytics dashboard on different screen sizes:
+   - Desktop view (verify full metrics layout)
+   - Tablet view (check grid adaptation)
+   - Mobile view (verify scrollable analytics)
+2. Use browser developer tools to simulate devices
+3. Check all metrics remain accessible on smaller screens
+4. Verify touch interactions for mobile analytics
+5. Test horizontal scrolling if needed on mobile
+
+Expected:
+- Analytics layout adapts gracefully to all screen sizes
+- All metrics remain accessible and readable on mobile
+- Grid systems respond appropriately to screen constraints
+- Touch interactions work smoothly on mobile devices
+Screenshot: 12_analytics_responsive_design.png
+
+Step 13: Data Accuracy and Integrity Validation
+1. Cross-reference analytics data with source data:
+   - Compare student counts with student roster
+   - Verify session counts with session history
+   - Check earnings data against payment records
+   - Validate completion rates with actual session outcomes
+2. Test data consistency across different analytics sections
+3. Verify calculated metrics accuracy (percentages, averages, totals)
+4. Check for data anomalies or inconsistencies
+5. Test data refresh and real-time updates if available
+
+Expected:
+- Analytics data matches source data accurately
+- Calculated metrics are mathematically correct
+- Data consistency is maintained across all sections
+- No significant anomalies or data corruption
+Screenshot: 13_data_accuracy_validation.png
+
+Step 14: Performance with Large Datasets
+1. Test analytics performance with extensive historical data:
+   - Navigate between different time periods with lots of data
+   - Load analytics with many students and sessions
+   - Test filtering performance with large datasets
+2. Monitor loading times and responsiveness
+3. Check memory usage during analytics operations
+4. Verify pagination or data virtualization if needed
+5. Test concurrent analytics operations
+
+Expected:
+- Analytics performance remains good with large datasets
+- Loading times stay within acceptable limits (< 3 seconds)
+- Memory usage remains stable during extended use
+- Data virtualization prevents browser memory issues
+Screenshot: 14_large_dataset_performance.png
+
+Step 15: Real-time Data Updates and Synchronization
+1. Test real-time data synchronization:
+   - Complete a session and check if analytics update
+   - Schedule new sessions and verify metrics refresh
+   - Check if earnings data updates after payments
+2. Verify automatic data refresh intervals
+3. Test manual refresh functionality
+4. Check data synchronization across multiple browser tabs
+5. Verify WebSocket integration if available
+
+Expected:
+- Analytics data updates in real-time or near real-time
+- Manual refresh provides latest data accurately
+- Data synchronization works across browser tabs
+- WebSocket integration provides seamless updates
+Screenshot: 15_realtime_data_updates.png
+
+Step 16: Analytics Error Handling and Edge Cases
+1. Test error scenarios:
+   - Network interruption during analytics loading
+   - Backend API failures for analytics data
+   - Missing or incomplete data scenarios
+   - Invalid date range selections
+2. Verify error handling provides helpful feedback
+3. Test analytics with edge case data:
+   - Teacher with no students
+   - Teacher with no completed sessions
+   - Teacher with no earnings data
+4. Check graceful degradation for missing data
+
+Expected:
+- Error handling is robust and user-friendly
+- Missing data scenarios are handled gracefully
+- Edge cases don't crash the analytics interface
+- Helpful messages guide teachers during error conditions
+Screenshot: 16_analytics_error_handling.png
+
+Step 17: API Integration and Security Validation
+1. Monitor API calls during analytics operations:
+   - Analytics data API calls
+   - Earnings data API calls
+   - Student feedback API calls
+   - Performance metrics API calls
+2. Verify proper authentication and authorization
+3. Check data security and privacy compliance
+4. Test API rate limiting and caching behavior
+5. Verify analytics data is teacher-specific and secure
+
+Expected:
+- API calls are efficient and properly authenticated
+- Analytics data is properly secured and teacher-specific
+- Caching reduces unnecessary API calls appropriately
+- Rate limiting doesn't interfere with normal usage
+Screenshot: 17_api_security_validation.png
+
+Step 18: Business Intelligence and Actionable Insights
+1. Evaluate the business value of analytics:
+   - Identify actionable insights for teaching improvement
+   - Check if analytics help identify struggling students
+   - Verify earnings insights help with business planning
+   - Assess whether metrics support teaching decisions
+2. Test alert or notification functionality for important metrics
+3. Verify recommendation systems if available
+4. Check integration with other dashboard sections for action items
+5. Evaluate overall analytics usefulness for teacher success
+
+Expected:
+- Analytics provide meaningful insights for teaching improvement
+- Metrics help identify areas needing attention
+- Business intelligence supports teacher decision-making
+- Integration with other dashboard sections enables action
+Screenshot: 18_business_intelligence_value.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: ALL of the following conditions must be met:
+- Teacher can successfully access and load analytics dashboard
+- Key metrics grid displays accurate and meaningful data
+- Student, session, and earnings analytics show comprehensive insights
+- Time-based filtering works correctly across all analytics sections
+- Visual data representation is accurate and professional
+- Responsive design maintains functionality across all screen sizes
+- Data accuracy matches source data and calculations are correct
+- Performance remains good with large datasets
+- Real-time updates and data synchronization work properly
+- Error handling provides helpful guidance and graceful degradation
+- API integration is secure and efficient
+- Analytics provide actionable business intelligence for teachers
+
+FAIL: ANY of the following conditions occur:
+- Cannot access or load analytics dashboard
+- Key metrics show placeholder data or incorrect calculations
+- Analytics sections are missing or show no data
+- Time filtering doesn't work or shows inconsistent data
+- Visual elements are broken or show wrong information
+- Responsive design breaks on any screen size
+- Data accuracy issues or significant calculation errors
+- Performance issues make analytics unusable
+- Real-time updates fail or show stale data
+- Error handling crashes or provides no guidance
+- API integration fails or shows unauthorized data
+- Analytics provide no meaningful insights for teacher improvement
+
+Individual Step Criteria:
+- Steps 1-2: PASS if navigation and key metrics work, FAIL if broken or no data
+- Steps 3-8: PASS if all analytics sections show accurate data, FAIL if missing/wrong
+- Steps 9-11: PASS if filtering, visualization, and export work, FAIL if broken
+- Steps 12-14: PASS if responsive design and performance are good, FAIL if unusable
+- Steps 15-18: PASS if real-time updates, error handling, and insights work, FAIL if broken
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Analytics dashboard should provide immediate insights upon loading
+- Key metrics should be prominently displayed with clear visual hierarchy
+- Time filtering should be intuitive and update all sections consistently
+- Visual data representation should follow established data visualization best practices
+- Earnings data should be clearly formatted with proper currency display
+- Student feedback analysis should provide actionable insights for improvement
+- Performance metrics should help teachers identify areas for growth
+- Mobile analytics should maintain full desktop functionality
+- Error states should guide teachers to successful data access
+- All analytics should support teacher decision-making and business planning

@@ -1,0 +1,575 @@
+QA Test Case: Validation and Error Handling
+
+Test ID: PURCHASE-003
+Test Name: API Input Validation and Comprehensive Error Handling
+Purpose: Verify that the Purchase Initiation API properly validates all inputs and returns appropriate error messages for invalid requests
+Expected Result: Invalid inputs are rejected with clear error messages, and valid edge cases are handled correctly
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- API Endpoint: POST /finances/api/purchase/initiate/
+- Validation: Comprehensive input validation using Django REST serializers
+- Error Format: Consistent error response structure with field-specific details
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - STRIPE_SECRET_KEY=sk_test_... (test mode)
+
+Test Focus Areas:
+- Request format validation (JSON structure)
+- Plan ID validation (existence, active status)
+- Student info validation (name, email format)
+- Field requirement validation (missing fields)
+- Data type validation (strings, integers)
+- Boundary condition testing (min/max values)
+- Security validation (injection attempts)
+
+Error Response Format:
+{
+  "success": false,
+  "error_type": "validation_error|internal_error",
+  "message": "Human-readable error description",
+  "field_errors": {"field": ["error message"]},  // optional
+  "details": {}  // optional
+}
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Service Verification
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Service Health Check:
+  curl -X GET http://localhost:8000/api/ -v
+  curl -X GET http://localhost:8000/finances/api/pricing-plans/ -v
+
+Expected:
+- Backend API responds (401 for protected endpoints is normal)
+- Pricing plans endpoint returns plan data
+- Services ready for validation testing
+
+Screenshot: 01_services_ready_validation_test.png
+
+Step 2: Missing Required Fields Validation
+Test 2.1: Missing plan_id field
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "student_info": {
+        "name": "Test User",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400 Bad Request):
+{
+  "success": false,
+  "error_type": "validation_error",
+  "message": "plan_id: This field is required.",
+  "field_errors": {
+    "plan_id": ["This field is required."]
+  }
+}
+
+Test 2.2: Missing student_info field
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+{
+  "success": false,
+  "error_type": "validation_error",
+  "message": "student_info: This field is required.",
+  "field_errors": {
+    "student_info": ["This field is required."]
+  }
+}
+
+Test 2.3: Missing student name
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+{
+  "success": false,
+  "error_type": "validation_error",
+  "message": "student_info.name: This field is required.",
+  "field_errors": {
+    "student_info": {
+      "name": ["This field is required."]
+    }
+  }
+}
+
+Test 2.4: Missing student email
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test User"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+Field error for missing email field
+
+Screenshot: 02_missing_fields_validation.png
+
+Step 3: Invalid Data Type Validation
+Test 3.1: Invalid plan_id data type (string instead of integer)
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": "invalid",
+      "student_info": {
+        "name": "Test User",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+{
+  "success": false,
+  "error_type": "validation_error",
+  "message": "plan_id: A valid integer is required.",
+  "field_errors": {
+    "plan_id": ["A valid integer is required."]
+  }
+}
+
+Test 3.2: Invalid plan_id (negative number)
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": -1,
+      "student_info": {
+        "name": "Test User",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+{
+  "success": false,
+  "error_type": "validation_error",
+  "message": "plan_id: Ensure this value is greater than or equal to 1.",
+  "field_errors": {
+    "plan_id": ["Ensure this value is greater than or equal to 1."]
+  }
+}
+
+Test 3.3: Invalid plan_id (zero)
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 0,
+      "student_info": {
+        "name": "Test User",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: Similar validation error for minimum value
+
+Screenshot: 03_invalid_data_types.png
+
+Step 4: Plan ID Business Logic Validation
+Test 4.1: Non-existent plan ID
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 99999,
+      "student_info": {
+        "name": "Test User",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+{
+  "success": false,
+  "error_type": "validation_error",
+  "message": "plan_id: Pricing plan with ID 99999 not found",
+  "field_errors": {
+    "plan_id": ["Pricing plan with ID 99999 not found"]
+  }
+}
+
+Test 4.2: Inactive plan ID (if inactive plans exist)
+First, check for inactive plans:
+
+Database Query:
+  cd backend
+  python manage.py shell
+  
+  from finances.models import PricingPlan
+  inactive_plans = PricingPlan.objects.filter(is_active=False)
+  if inactive_plans.exists():
+      inactive_plan = inactive_plans.first()
+      print(f"Testing with inactive plan ID: {inactive_plan.id}")
+  else:
+      print("No inactive plans found - create one for testing")
+
+If inactive plan exists, test with it:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": <inactive_plan_id>,
+      "student_info": {
+        "name": "Test User",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+{
+  "success": false,
+  "error_type": "validation_error",
+  "message": "plan_id: Pricing plan '...' is not currently active",
+  "field_errors": {
+    "plan_id": ["Pricing plan '...' is not currently active"]
+  }
+}
+
+Screenshot: 04_plan_id_business_validation.png
+
+Step 5: Email Validation Testing
+Test 5.1: Invalid email format
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test User",
+        "email": "invalid-email"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+{
+  "success": false,
+  "error_type": "validation_error",
+  "message": "student_info.email: Please provide a valid email address",
+  "field_errors": {
+    "student_info": {
+      "email": ["Please provide a valid email address"]
+    }
+  }
+}
+
+Test 5.2: Empty email
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test User",
+        "email": ""
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+Email required validation error
+
+Test 5.3: Email too long (beyond max length)
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test User",
+        "email": "'$(printf '%0.s' {1..300})'very.long.email@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: Email length validation error
+
+Screenshot: 05_email_validation_tests.png
+
+Step 6: Name Validation Testing
+Test 6.1: Empty name
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+{
+  "success": false,
+  "error_type": "validation_error",
+  "message": "student_info.name: Name cannot be empty",
+  "field_errors": {
+    "student_info": {
+      "name": ["Name cannot be empty"]
+    }
+  }
+}
+
+Test 6.2: Name with invalid characters
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test User <script>alert(\"xss\")</script>",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+Name validation error for invalid characters
+
+Test 6.3: Name too long (beyond 150 characters)
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "'$(printf 'A%.0s' {1..200})'",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: Name length validation error
+
+Screenshot: 06_name_validation_tests.png
+
+Step 7: Malformed JSON and Content-Type Testing
+Test 7.1: Malformed JSON
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test User",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+JSON parsing error response
+
+Test 7.2: Missing Content-Type header
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test User",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: Request should still work (DRF handles this)
+
+Test 7.3: Wrong Content-Type
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: text/plain" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test User",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: Unsupported media type error
+
+Screenshot: 07_malformed_requests.png
+
+Step 8: Edge Cases and Boundary Testing
+Test 8.1: Valid minimal request
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "A",
+        "email": "a@b.co"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 201 Created (should succeed with minimal valid data)
+
+Test 8.2: Maximum valid name length
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "'$(printf 'A%.0s' {1..150})'",
+        "email": "long.name@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 201 Created (should accept exactly 150 characters)
+
+Test 8.3: Special characters in name (valid)
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "José María O'\''Connor-Smith Jr.",
+        "email": "special.chars@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 201 Created (should accept valid special characters)
+
+Screenshot: 08_edge_cases_boundary_testing.png
+
+Step 9: Multiple Validation Errors
+Test 9.1: Multiple field errors simultaneously
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": -1,
+      "student_info": {
+        "name": "",
+        "email": "invalid-email"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+{
+  "success": false,
+  "error_type": "validation_error",
+  "message": "Multiple validation errors",
+  "field_errors": {
+    "plan_id": ["Ensure this value is greater than or equal to 1."],
+    "student_info": {
+      "name": ["Name cannot be empty"],
+      "email": ["Please provide a valid email address"]
+    }
+  }
+}
+
+The API should return all validation errors at once, not just the first one found.
+
+Screenshot: 09_multiple_validation_errors.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All validation scenarios return appropriate error messages AND valid edge cases succeed
+FAIL: Any validation bypass OR incorrect error messages OR valid requests rejected
+
+Individual Step Criteria:
+- Step 1: PASS if services respond correctly, FAIL if setup issues
+- Step 2: PASS if all missing field tests return 400 with correct messages, FAIL otherwise
+- Step 3: PASS if all data type tests return appropriate errors, FAIL if bypassed
+- Step 4: PASS if business logic validation works, FAIL if invalid plans accepted
+- Step 5: PASS if email validation comprehensive, FAIL if invalid emails accepted
+- Step 6: PASS if name validation works correctly, FAIL if dangerous input accepted
+- Step 7: PASS if malformed requests handled properly, FAIL if causes server errors
+- Step 8: PASS if valid edge cases succeed, FAIL if legitimate requests rejected
+- Step 9: PASS if multiple errors returned together, FAIL if incomplete error reporting
+
+Validation Requirements:
+- All required fields must be validated
+- Data types must be enforced
+- Business rules must be checked
+- Security validation must prevent attacks
+- Error messages must be clear and specific
+- Valid edge cases must be accepted
+
+Error Response Requirements:
+- Consistent error format across all validation failures
+- HTTP status codes appropriate (400 for validation, 500 for server errors)
+- No sensitive information exposed in error messages
+- Field-specific error details included
+- Human-readable error messages
+
+Security Requirements:
+- XSS prevention in name fields
+- SQL injection prevention (parameterized queries)
+- Input length limits enforced
+- Invalid characters rejected where appropriate
+- No buffer overflow possibilities
+
+Overall Result: PASS only if ALL validation working correctly AND no security bypasses possible

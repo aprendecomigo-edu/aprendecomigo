@@ -288,3 +288,118 @@ class StripeService:
             str: Safe string representation
         """
         return self.__str__()
+    
+    def retrieve_payment_method(self, payment_method_id: str) -> Dict[str, Any]:
+        """
+        Retrieve a payment method from Stripe.
+        
+        Args:
+            payment_method_id: Stripe PaymentMethod ID to retrieve
+            
+        Returns:
+            Dict containing success status and payment method data or error information
+        """
+        try:
+            payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
+            
+            return {
+                'success': True,
+                'payment_method': payment_method,
+                'message': 'Payment method retrieved successfully'
+            }
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Error retrieving payment method {payment_method_id}: {e}")
+            return self.handle_stripe_error(e)
+        except Exception as e:
+            logger.error(f"Unexpected error retrieving payment method {payment_method_id}: {e}")
+            return self.handle_stripe_error(e)
+    
+    def detach_payment_method(self, payment_method_id: str) -> Dict[str, Any]:
+        """
+        Detach a payment method from its customer in Stripe.
+        
+        Args:
+            payment_method_id: Stripe PaymentMethod ID to detach
+            
+        Returns:
+            Dict containing success status or error information
+        """
+        try:
+            payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
+            payment_method.detach()
+            
+            logger.info(f"Successfully detached payment method {payment_method_id}")
+            
+            return {
+                'success': True,
+                'message': 'Payment method detached successfully'
+            }
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Error detaching payment method {payment_method_id}: {e}")
+            return self.handle_stripe_error(e)
+        except Exception as e:
+            logger.error(f"Unexpected error detaching payment method {payment_method_id}: {e}")
+            return self.handle_stripe_error(e)
+    
+    def attach_payment_method_to_customer(self, payment_method_id: str, customer_id: str) -> Dict[str, Any]:
+        """
+        Attach a payment method to a customer in Stripe.
+        
+        Args:
+            payment_method_id: Stripe PaymentMethod ID to attach
+            customer_id: Stripe Customer ID to attach to
+            
+        Returns:
+            Dict containing success status or error information
+        """
+        try:
+            payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
+            payment_method.attach(customer=customer_id)
+            
+            logger.info(f"Successfully attached payment method {payment_method_id} to customer {customer_id}")
+            
+            return {
+                'success': True,
+                'payment_method': payment_method,
+                'message': 'Payment method attached successfully'
+            }
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Error attaching payment method {payment_method_id} to customer {customer_id}: {e}")
+            return self.handle_stripe_error(e)
+        except Exception as e:
+            logger.error(f"Unexpected error attaching payment method {payment_method_id} to customer {customer_id}: {e}")
+            return self.handle_stripe_error(e)
+    
+    def list_customer_payment_methods(self, customer_id: str, payment_method_type: str = 'card') -> Dict[str, Any]:
+        """
+        List all payment methods for a customer in Stripe.
+        
+        Args:
+            customer_id: Stripe Customer ID to list payment methods for
+            payment_method_type: Type of payment methods to list (default: 'card')
+            
+        Returns:
+            Dict containing success status and payment methods list or error information
+        """
+        try:
+            payment_methods = stripe.PaymentMethod.list(
+                customer=customer_id,
+                type=payment_method_type
+            )
+            
+            return {
+                'success': True,
+                'payment_methods': payment_methods.data,
+                'count': len(payment_methods.data),
+                'message': 'Payment methods retrieved successfully'
+            }
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Error listing payment methods for customer {customer_id}: {e}")
+            return self.handle_stripe_error(e)
+        except Exception as e:
+            logger.error(f"Unexpected error listing payment methods for customer {customer_id}: {e}")
+            return self.handle_stripe_error(e)

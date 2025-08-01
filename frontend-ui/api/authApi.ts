@@ -1,7 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 import apiClient from './apiClient';
+import { storage } from '@/utils/storage';
 
 export interface RequestEmailCodeParams {
   email: string;
@@ -87,18 +87,18 @@ export interface OnboardingResponse {
 }
 
 const storeToken = async (token: string) => {
-  await AsyncStorage.setItem('auth_token', token);
+  await storage.setItem('auth_token', token);
 };
 
 const getToken = async (): Promise<string | null> => {
-  return await AsyncStorage.getItem('auth_token');
+  return await storage.getItem('auth_token');
 };
 
 const removeToken = async () => {
-  await AsyncStorage.removeItem('auth_token');
+  await storage.removeItem('auth_token');
   // Clean up old tokens (if any)
-  await AsyncStorage.removeItem('access_token');
-  await AsyncStorage.removeItem('refresh_token');
+  await storage.removeItem('access_token');
+  await storage.removeItem('refresh_token');
 };
 
 /**

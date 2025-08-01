@@ -1,0 +1,417 @@
+QA Test Case: Session Management, Calendar Integration and Schedule Operations
+
+Test ID: TEACHDASH-003
+Test Name: Session Management, Calendar Integration and Schedule Operations
+Purpose: Verify teacher can effectively schedule sessions, view upcoming sessions, manage session lifecycle, and integrate with calendar functionality
+Expected Result: Teacher successfully manages complete session workflow from scheduling to completion with proper calendar integration
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform (EdTech tutoring platform)
+- Architecture: Django REST Framework backend + React Native + Expo frontend 
+- GitHub Issue: #51 - Teacher Dashboard Implementation (Backend: #90, Frontend: #91)
+- Backend APIs: /api/sessions/, /api/teachers/analytics/, ClassSession model
+- Frontend Routes: Calendar integration, session management from dashboard
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` (starts both backend and frontend)
+4. Browser: Chrome or Firefox for web testing
+
+Test Data:
+- Test Teacher Email: anapmc.carvalho@gmail.com (must have completed teacher profile)
+- Test Students: Multiple students available for session scheduling
+- Time Slots: Various time slots (morning, afternoon, evening) for testing
+- Session Types: Different session types (individual, group, assessment)
+
+Prerequisites:
+- Teacher must be authenticated (complete TEACHDASH-001 first)
+- Teacher must have assigned students available for scheduling
+- Calendar integration APIs must be functional
+- Session management backend services must be running
+- Teacher should have some existing sessions for comprehensive testing
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Access Session Management from Dashboard
+1. Start from teacher dashboard (/(teacher)/dashboard)
+2. Locate "Today's Sessions" section
+3. Check for session management interface elements:
+   - Today's scheduled sessions list
+   - "Schedule New Session" button or quick action
+   - Session status indicators (upcoming, in progress, completed)
+4. Verify session times display in Portuguese format
+5. Check if "No sessions today" message appears when appropriate
+
+Expected: 
+- Today's sessions section loads with current session information
+- Session times display correctly in Portuguese format
+- Session management controls are visible and accessible
+- Status indicators reflect actual session states
+Screenshot: 01_session_management_access.png
+
+Step 2: Schedule New Session Functionality
+1. Click "Schedule Session" button from dashboard or quick actions
+2. Verify session scheduling interface opens:
+   - Modal, new page, or calendar view
+   - Student selection dropdown/list
+   - Date and time picker
+   - Session type selection (individual, group, assessment)
+   - Duration options
+3. Check all form elements are functional
+4. Verify proper validation is in place
+
+Expected:
+- Session scheduling interface opens smoothly
+- All form elements are properly labeled and functional
+- Student list populates with assigned students
+- Date/time pickers work correctly with proper constraints
+Screenshot: 02_schedule_session_interface.png
+
+Step 3: Session Scheduling Form Validation
+1. Test form validation with various scenarios:
+   - Try to schedule without selecting student (should show error)
+   - Try to schedule in the past (should prevent/warn)
+   - Try to schedule during already booked time (conflict detection)
+   - Test with invalid time formats
+2. Verify error messages are helpful and in Portuguese
+3. Check form prevents submission with invalid data
+4. Test form auto-save or data preservation
+
+Expected:
+- Form validation works correctly for all edge cases
+- Error messages are clear, helpful, and localized
+- Conflicts are detected and properly communicated
+- Form provides good user feedback during validation
+Screenshot: 03_session_form_validation.png
+
+Step 4: Complete Session Scheduling Workflow
+1. Fill out session scheduling form with valid data:
+   - Select an available student
+   - Choose future date and time
+   - Select appropriate session type
+   - Set reasonable duration (30min, 60min, 90min)
+   - Add session notes or objectives if available
+2. Submit the form
+3. Verify success confirmation
+4. Check if new session appears in today's sessions (if scheduled for today)
+
+Expected:
+- Session creation completes successfully
+- Success confirmation is clear and informative
+- New session appears in appropriate dashboard sections
+- Session data is accurate and properly saved
+Screenshot: 04_session_creation_success.png
+
+Step 5: Upcoming Sessions Display and Management
+1. Navigate to see upcoming sessions (next 7 days):
+   - From dashboard upcoming sessions section
+   - Or dedicated calendar/schedule view
+2. Verify upcoming sessions display includes:
+   - Student name and contact information
+   - Session date, time, and duration
+   - Session type and objectives
+   - Session status and preparation notes
+3. Check chronological ordering of sessions
+4. Verify responsive display on different screen sizes
+
+Expected:
+- Upcoming sessions display complete information clearly
+- Sessions are ordered chronologically (next first)
+- All session details are accurate and up-to-date
+- Interface adapts well to different screen sizes
+Screenshot: 05_upcoming_sessions_display.png
+
+Step 6: Session Status Management and Updates
+1. Locate sessions with different status possibilities:
+   - Upcoming sessions (not yet started)
+   - In-progress sessions (if any exist)
+   - Recently completed sessions
+2. Test session status update functionality:
+   - Mark session as "Started" if upcoming
+   - Mark session as "Completed" if in progress
+   - Add completion notes and outcomes
+3. Verify status changes reflect immediately in UI
+4. Check if status changes trigger any notifications
+
+Expected:
+- Session status updates work smoothly and immediately
+- Status changes are reflected across all dashboard sections
+- Completion notes can be added and saved properly
+- UI provides clear feedback for status changes
+Screenshot: 06_session_status_management.png
+
+Step 7: Calendar Integration Testing
+1. Access calendar view/integration (if available):
+   - Look for calendar icon or "Calendar" navigation
+   - Check if sessions appear in calendar format
+   - Verify monthly, weekly, and daily calendar views
+2. Test calendar functionality:
+   - Navigate between different months/weeks
+   - Click on session entries in calendar
+   - Check if scheduling can be done directly from calendar
+3. Verify calendar displays Portuguese dates and formatting
+4. Test calendar responsive behavior
+
+Expected:
+- Calendar integration displays sessions in clear format
+- Navigation between time periods works smoothly
+- Session entries are clickable and informative
+- Calendar follows Portuguese localization standards
+Screenshot: 07_calendar_integration.png
+
+Step 8: Session Rescheduling and Modification
+1. Find an upcoming session to reschedule
+2. Look for reschedule/edit options:
+   - Edit button on session card
+   - Context menu or dropdown actions
+   - Calendar drag-and-drop (if available)
+3. Test rescheduling workflow:
+   - Change session date/time
+   - Modify session duration
+   - Update session notes or objectives
+4. Verify rescheduling preserves student assignment
+5. Check for conflict detection during rescheduling
+
+Expected:
+- Rescheduling options are easily discoverable
+- Rescheduling workflow is intuitive and complete
+- Changes are saved properly without data loss
+- Conflict detection works during modifications
+Screenshot: 08_session_rescheduling.png
+
+Step 9: Session Completion and Notes Management
+1. Find a session that can be marked as completed:
+   - Use recently ended session or create test session
+2. Complete the session workflow:
+   - Mark session as "Completed"
+   - Add session completion notes
+   - Record student attendance (present/absent/late)
+   - Add assessment or progress updates if available
+3. Verify completion data is saved properly
+4. Check if completion triggers any follow-up actions
+
+Expected:
+- Session completion workflow is comprehensive
+- All completion data is captured and saved
+- Completed sessions move to appropriate history section
+- Follow-up actions or notifications work as expected
+Screenshot: 09_session_completion_workflow.png
+
+Step 10: Session History and Analytics
+1. Navigate to session history view:
+   - From analytics section
+   - Or dedicated session history page
+2. Verify comprehensive session history displays:
+   - All past sessions with complete details
+   - Session outcomes and completion notes
+   - Student attendance patterns
+   - Session duration and effectiveness metrics
+3. Test filtering/searching historical sessions:
+   - Filter by student
+   - Filter by date range
+   - Filter by session type or outcome
+4. Check data export functionality if available
+
+Expected:
+- Session history provides complete teaching record
+- Historical data is accurate and well-organized
+- Filtering and search help find specific sessions
+- Analytics provide insights into teaching effectiveness
+Screenshot: 10_session_history_analytics.png
+
+Step 11: Bulk Session Operations and Management
+1. Test bulk operations if available:
+   - Select multiple upcoming sessions
+   - Bulk reschedule operations
+   - Bulk cancellation if needed
+   - Bulk note updates
+2. Verify batch operations work correctly
+3. Check performance with multiple session operations
+4. Test undo functionality if available
+
+Expected:
+- Bulk operations are efficient and reliable
+- Multiple sessions can be managed simultaneously
+- Performance remains good with bulk operations
+- Changes can be undone if mistakes are made
+Screenshot: 11_bulk_session_operations.png
+
+Step 12: Session Notifications and Reminders
+1. Check for notification/reminder functionality:
+   - Upcoming session notifications
+   - Session start reminders
+   - Missed session alerts
+   - Student no-show notifications
+2. Verify notification settings and preferences
+3. Test notification display and interaction
+4. Check if notifications integrate with browser/system
+
+Expected:
+- Notifications provide timely and relevant information
+- Notification settings are customizable
+- Notifications appear at appropriate times
+- Integration with browser/system notifications works
+Screenshot: 12_session_notifications.png
+
+Step 13: Mobile Session Management Testing
+1. Test session management on mobile screen sizes:
+   - Use browser developer tools to simulate mobile
+   - Test session scheduling on mobile interface
+   - Verify calendar integration on mobile
+   - Check quick actions accessibility
+2. Test touch interactions for session management:
+   - Swipe actions on session cards
+   - Touch-friendly scheduling interface
+   - Mobile calendar navigation
+3. Verify all functionality remains accessible on mobile
+
+Expected:
+- Mobile interface maintains full session management functionality
+- Touch interactions are smooth and intuitive
+- Calendar remains usable on smaller screens
+- Quick actions are easily accessible on mobile
+Screenshot: 13_mobile_session_management.png
+
+Step 14: Session Data Integration with Student Progress
+1. Complete a session and verify data integration:
+   - Session completion updates student progress
+   - Assessment data from session flows to student records
+   - Session notes appear in student history
+2. Check consistency between session data and student profiles
+3. Verify progress tracking reflects completed sessions
+4. Test how session outcomes impact student analytics
+
+Expected:
+- Session data integrates seamlessly with student records
+- Progress tracking reflects session outcomes accurately
+- Student profiles show updated information from sessions
+- Analytics properly account for session activities
+Screenshot: 14_session_student_integration.png
+
+Step 15: Performance and Scalability Testing
+1. Test session management with large datasets:
+   - Many upcoming sessions
+   - Extensive session history
+   - Multiple students with frequent sessions
+2. Monitor performance during:
+   - Calendar navigation with many sessions
+   - Session history loading and filtering
+   - Bulk operations on multiple sessions
+3. Check memory usage and loading times
+4. Verify pagination or virtualization if needed
+
+Expected:
+- Performance remains good with large amounts of session data
+- Calendar loads quickly even with many sessions
+- History and filtering operations are responsive
+- Memory usage stays reasonable during extended use
+Screenshot: 15_session_performance_testing.png
+
+Step 16: Error Handling and Recovery
+1. Test error scenarios:
+   - Network interruption during session scheduling
+   - Backend API failures during session operations
+   - Invalid data submission attempts
+   - Concurrent modification conflicts
+2. Verify error handling provides helpful feedback
+3. Test recovery mechanisms:
+   - Retry failed operations
+   - Restore unsaved session data
+   - Handle conflicts gracefully
+4. Check error logging and debugging information
+
+Expected:
+- Error handling is robust and user-friendly
+- Recovery mechanisms help complete interrupted operations
+- Users receive clear guidance during error conditions
+- System maintains data integrity during failures
+Screenshot: 16_error_handling_recovery.png
+
+Step 17: API Integration and Data Consistency
+1. Monitor API calls during session management:
+   - Session creation API calls
+   - Session update and status change calls
+   - Calendar data retrieval
+   - Analytics and history API calls
+2. Verify proper authentication and authorization
+3. Check data consistency between API responses and UI
+4. Test API rate limiting and caching behavior
+
+Expected:
+- API calls are efficient and properly authenticated
+- Data displayed matches API responses exactly
+- Caching reduces unnecessary API calls
+- Rate limiting doesn't interfere with normal usage
+Screenshot: 17_api_integration_consistency.png
+
+Step 18: Cross-Platform Calendar Integration
+1. Test calendar integration across different platforms:
+   - Web browser calendar functionality
+   - Mobile calendar interface
+   - Integration with external calendar systems (if available)
+2. Verify data synchronization:
+   - Changes reflect across platforms
+   - External calendar sync works properly
+   - Timezone handling is correct
+3. Test import/export functionality if available
+
+Expected:
+- Calendar functionality works consistently across platforms
+- Data synchronization maintains consistency
+- Timezone handling prevents scheduling conflicts
+- External integrations work reliably
+Screenshot: 18_cross_platform_calendar.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: ALL of the following conditions must be met:
+- Teacher can successfully schedule new sessions with proper validation
+- Session status management (upcoming, in progress, completed) works correctly
+- Calendar integration displays sessions properly with navigation
+- Session rescheduling and modification preserve data integrity
+- Session completion workflow captures all necessary information
+- Session history and analytics provide comprehensive teaching records
+- Mobile session management maintains full functionality
+- Session data integrates properly with student progress tracking
+- Performance remains good with large datasets
+- Error handling provides helpful feedback and recovery options
+- API integration is efficient with proper authentication
+- Cross-platform functionality works consistently
+
+FAIL: ANY of the following conditions occur:
+- Cannot schedule new sessions or scheduling workflow is broken
+- Session status updates fail or don't reflect in UI
+- Calendar integration is missing or non-functional
+- Rescheduling causes data loss or corruption
+- Session completion workflow is incomplete or doesn't save data
+- Session history is inaccessible or shows incorrect data
+- Mobile interface breaks or loses functionality
+- Session data doesn't integrate with student records
+- Performance issues make session management unusable
+- Error handling crashes or provides no guidance
+- API calls fail consistently or show wrong data
+- Cross-platform inconsistencies break user workflow
+
+Individual Step Criteria:
+- Steps 1-4: PASS if session scheduling workflow completes successfully, FAIL if broken
+- Steps 5-9: PASS if session management and status updates work, FAIL if data loss/corruption
+- Steps 10-12: PASS if history, bulk operations, and notifications work, FAIL if broken/missing
+- Steps 13-15: PASS if mobile and performance are good, FAIL if unusable/slow
+- Steps 16-18: PASS if error handling and integration work, FAIL if crashes/inconsistent
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Session scheduling should be quick and intuitive for teachers
+- Calendar integration provides clear overview of teaching schedule
+- Status updates should be immediate and reflect across all views
+- Session completion should capture meaningful data for progress tracking
+- Mobile interface should maintain full desktop functionality
+- Error states should guide teachers to successful completion
+- Performance should remain smooth even with extensive session history
+- Integration with student progress should be seamless and automatic
+- Notifications should be timely and contextually relevant
+- Cross-platform consistency should provide reliable user experience

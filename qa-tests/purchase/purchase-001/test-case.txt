@@ -1,0 +1,303 @@
+QA Test Case: Authenticated User Purchase Flow
+
+Test ID: PURCHASE-001
+Test Name: Authenticated User Purchase Initiation and Payment Flow
+Purpose: Verify that authenticated users can successfully initiate tutoring hour purchases using the Purchase Initiation API
+Expected Result: Purchase request creates payment intent, transaction record, and returns proper client secret
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- API Endpoint: POST /finances/api/purchase/initiate/
+- Architecture: Django REST backend + Stripe integration
+- Authentication: JWT tokens for authenticated requests
+- Database: Purchase transactions and student account balances
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - STRIPE_SECRET_KEY=sk_test_... (test mode)
+   - STRIPE_PUBLISHABLE_KEY=pk_test_... (test mode)
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com
+- User Role: student (confirmed in database)
+- User Name: Test Student
+- Plan Type: Package (10 hours, €150)
+
+API Authentication:
+- JWT Token obtained via email verification flow
+- Authorization: Bearer <jwt_token>
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Service Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Both services start successfully
+- Backend: http://localhost:8000 responds with 401 for /api/
+- Frontend: http://localhost:8081 shows loading screen
+
+Verification Commands:
+  curl -X GET http://localhost:8000/api/ -v
+  curl -X GET http://localhost:8081 -v
+
+Expected Responses:
+- Backend: HTTP 401 Unauthorized (indicates API is running)
+- Frontend: HTTP 200 OK with React app
+
+Screenshot: 01_services_started.png
+
+Step 2: User Authentication Setup
+1. Navigate to http://localhost:8081
+2. Complete email verification flow for anapmc.carvalho@gmail.com
+3. Extract JWT token from browser developer tools (localStorage or network tab)
+4. Verify authentication status
+
+Authentication Test Command:
+  curl -X GET http://localhost:8000/api/accounts/users/me/ \
+    -H "Authorization: Bearer <jwt_token>" \
+    -H "Content-Type: application/json"
+
+Expected Response:
+- HTTP 200 OK
+- User data with id, email, name fields
+- Authenticated user status confirmed
+
+Screenshot: 02_user_authenticated.png
+
+Step 3: Fetch Available Pricing Plans
+1. Test pricing plans endpoint to get plan data
+2. Identify a valid plan ID for purchase testing
+
+Command:
+  curl -X GET http://localhost:8000/finances/api/pricing-plans/ \
+    -H "Content-Type: application/json" \
+    -v
+
+Expected Response:
+- HTTP 200 OK
+- Array of pricing plans with fields:
+  - id, name, description
+  - plan_type (package/subscription)
+  - hours_included, price_eur
+  - is_featured, validity_days
+
+Sample Expected Plan:
+{
+  "id": 1,
+  "name": "Starter Package",
+  "plan_type": "package",
+  "hours_included": "10.00",
+  "price_eur": "150.00",
+  "validity_days": 90
+}
+
+Screenshot: 03_pricing_plans_fetched.png
+
+Step 4: Purchase Initiation API Test - Valid Request
+1. Use valid plan ID from Step 3
+2. Execute purchase initiation with authenticated user data
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Authorization: Bearer <jwt_token>" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test Student",
+        "email": "anapmc.carvalho@gmail.com"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 201 Created):
+{
+  "success": true,
+  "client_secret": "pi_<payment_intent_id>_secret_<secret>",
+  "transaction_id": <integer>,
+  "payment_intent_id": "pi_<stripe_payment_intent_id>",
+  "plan_details": {
+    "id": 1,
+    "name": "Starter Package",
+    "description": "...",
+    "plan_type": "package",
+    "hours_included": "10.00",
+    "price_eur": "150.00",
+    "validity_days": 90,
+    "price_per_hour": "15.00"
+  },
+  "message": "Purchase of Starter Package initiated successfully"
+}
+
+Response Validation:
+- success field is true
+- client_secret starts with "pi_" and contains "_secret_"
+- transaction_id is positive integer
+- payment_intent_id starts with "pi_"
+- plan_details contains all required fields
+- message confirms purchase initiation
+
+Screenshot: 04_purchase_initiated_successfully.png
+
+Step 5: Database Transaction Verification
+1. Verify transaction record was created in database
+2. Check student account balance creation/update
+
+Database Query Commands:
+  cd /Users/anapmc/Code/aprendecomigo/backend
+  python manage.py shell
+  
+  from finances.models import PurchaseTransaction, StudentAccountBalance
+  from accounts.models import CustomUser
+  
+  # Check transaction creation
+  user = CustomUser.objects.get(email="anapmc.carvalho@gmail.com")
+  latest_transaction = PurchaseTransaction.objects.filter(student=user).order_by('-created_at').first()
+  print(f"Transaction ID: {latest_transaction.id}")
+  print(f"Payment Status: {latest_transaction.payment_status}")
+  print(f"Amount: {latest_transaction.amount}")
+  print(f"Stripe Payment Intent: {latest_transaction.stripe_payment_intent_id}")
+  
+  # Check student account balance
+  balance, created = StudentAccountBalance.objects.get_or_create(student=user)
+  print(f"Balance exists: {not created}")
+  print(f"Current balance: {balance.balance_amount}")
+
+Expected Database State:
+- PurchaseTransaction record exists with:
+  - payment_status = "PENDING"
+  - amount = 150.00
+  - stripe_payment_intent_id matches API response
+  - metadata contains plan details
+- StudentAccountBalance record exists for user
+
+Screenshot: 05_database_transaction_verified.png
+
+Step 6: Stripe Payment Intent Verification
+1. Verify payment intent was created in Stripe
+2. Check payment intent metadata and amount
+
+Stripe Verification Command:
+  curl -X GET https://api.stripe.com/v1/payment_intents/<payment_intent_id> \
+    -H "Authorization: Bearer <STRIPE_SECRET_KEY>" \
+    -v
+
+Expected Stripe Response:
+- amount: 15000 (€150.00 in cents)
+- currency: "eur"
+- status: "requires_payment_method"
+- metadata contains user and plan information
+
+Alternative Verification (Django Admin):
+Navigate to http://localhost:8000/admin and check:
+- Recent PurchaseTransaction entries
+- Stripe payment intent logs
+
+Screenshot: 06_stripe_payment_intent_verified.png
+
+Step 7: API Response Time and Performance
+1. Measure API response time
+2. Test multiple concurrent requests
+3. Verify no performance degradation
+
+Performance Test Command:
+  time curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Authorization: Bearer <jwt_token>" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test Student Performance",
+        "email": "anapmc.carvalho@gmail.com"
+      }
+    }' \
+    -v
+
+Expected Performance:
+- Response time < 2 seconds
+- No database connection errors
+- Consistent response format
+
+Concurrent Request Test:
+Run 3-5 simultaneous requests and verify:
+- All requests succeed
+- No race conditions
+- Unique transaction IDs generated
+
+Screenshot: 07_performance_metrics.png
+
+Step 8: Error Handling Verification
+1. Test with invalid plan ID
+2. Test with missing authentication
+3. Verify error response format
+
+Invalid Plan Test Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Authorization: Bearer <jwt_token>" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 99999,
+      "student_info": {
+        "name": "Test Student",
+        "email": "anapmc.carvalho@gmail.com"
+      }
+    }' \
+    -v
+
+Expected Error Response (HTTP 400):
+{
+  "success": false,
+  "error_type": "validation_error",
+  "message": "Pricing plan with ID 99999 not found or inactive"
+}
+
+Unauthenticated Test Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test Student",
+        "email": "test@example.com"
+      }
+    }' \
+    -v
+
+Expected: Request should still succeed (endpoint allows unauthenticated access)
+
+Screenshot: 08_error_handling_verified.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND API returns valid payment intent data
+FAIL: Any step fails OR invalid response format OR database inconsistency
+
+Individual Step Criteria:
+- Step 1: PASS if both services start and respond, FAIL if either service fails
+- Step 2: PASS if authentication successful and JWT token valid, FAIL if auth fails
+- Step 3: PASS if pricing plans endpoint returns valid data, FAIL if endpoint error
+- Step 4: PASS if purchase API returns 201 with valid client_secret, FAIL if any error
+- Step 5: PASS if database transaction and balance records created, FAIL if missing
+- Step 6: PASS if Stripe payment intent exists with correct data, FAIL if not found
+- Step 7: PASS if response time < 2s and concurrent requests work, FAIL if slow/errors
+- Step 8: PASS if error cases return proper error format, FAIL if unexpected responses
+
+Performance Requirements:
+- API response time: < 2 seconds
+- Concurrent request handling: 3-5 simultaneous requests
+- Database query efficiency: No N+1 queries or timeouts
+
+Security Requirements:
+- JWT token validation working correctly
+- Input sanitization preventing injection
+- Proper error messages (no sensitive data exposed)
+
+Overall Result: PASS only if ALL steps pass AND performance/security requirements met

@@ -1,7 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 import { API_URL } from '@/constants/api';
+import { storage } from '@/utils/storage';
 
 // Authentication error callback - will be set by auth context
 let authErrorCallback: (() => void) | null = null;
@@ -13,12 +13,12 @@ export const setAuthErrorCallback = (callback: (() => void) | null) => {
 
 // Helper to get token from storage
 const getToken = async (): Promise<string | null> => {
-  return await AsyncStorage.getItem('auth_token');
+  return await storage.getItem('auth_token');
 };
 
 // Helper to remove token from storage
 const removeToken = async () => {
-  await AsyncStorage.removeItem('auth_token');
+  await storage.removeItem('auth_token');
 };
 
 // Create axios instance

@@ -1,0 +1,625 @@
+QA Test Case: Security and Input Sanitization
+
+Test ID: PURCHASE-005
+Test Name: Security Testing and Input Sanitization for Purchase API
+Purpose: Verify that the Purchase Initiation API is secure against common attacks and properly sanitizes all user inputs
+Expected Result: All malicious inputs are blocked, and the API is protected against injection attacks, XSS, and data manipulation
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- API Endpoint: POST /finances/api/purchase/initiate/
+- Security Focus: Input sanitization, injection prevention, authentication bypass
+- Attack Vectors: XSS, SQL injection, CSRF, parameter pollution, rate limiting
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - Security middleware enabled
+   - CSRF protection (though API uses token auth)
+
+Security Test Categories:
+1. Cross-Site Scripting (XSS) Prevention
+2. SQL Injection Prevention
+3. Command Injection Prevention
+4. Parameter Pollution
+5. Authentication and Authorization
+6. Rate Limiting and DoS Protection
+7. Data Validation and Sanitization
+8. Error Information Disclosure
+
+Test Methodology:
+- Black box testing approach
+- Common attack payload testing
+- Boundary condition exploitation
+- Information disclosure probing
+- Rate limiting verification
+
+Security Tools:
+- curl for crafted requests
+- Python scripts for automation
+- Browser developer tools
+- Log analysis for detection
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Security Baseline
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Security Configuration Check:
+  curl -X GET http://localhost:8000/api/ \
+    -H "Content-Type: application/json" \
+    -v
+
+Verify security headers in response:
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: DENY or SAMEORIGIN
+- X-XSS-Protection: 1; mode=block
+
+Security Middleware Verification:
+Check for CORS, CSRF, and content type restrictions
+
+Screenshot: 01_security_baseline_established.png
+
+Step 2: Cross-Site Scripting (XSS) Prevention Testing
+Test 2.1: Basic XSS payload in name field
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "<script>alert(\"XSS\")</script>",
+        "email": "xss.test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response (HTTP 400):
+{
+  "success": false,
+  "error_type": "validation_error",
+  "message": "student_info.name: Name contains invalid characters...",
+  "field_errors": {
+    "student_info": {
+      "name": ["Name contains invalid characters. Only letters, spaces, hyphens, apostrophes, and dots are allowed."]
+    }
+  }
+}
+
+Test 2.2: HTML injection in name field
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "<img src=x onerror=alert(1)>",
+        "email": "html.injection@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 400 with validation error
+
+Test 2.3: JavaScript event handler injection
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "John\" onmouseover=\"alert(1)\" \"",
+        "email": "event.handler@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 400 with validation error
+
+Test 2.4: XSS in email field (though email validation should prevent)
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test User",
+        "email": "<script>alert(1)</script>@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 400 email validation error
+
+Screenshot: 02_xss_prevention_verified.png
+
+Step 3: SQL Injection Prevention Testing
+Test 3.1: Basic SQL injection in plan_id
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": "1; DROP TABLE finances_pricingplan; --",
+      "student_info": {
+        "name": "SQL Injection Test",
+        "email": "sql.injection@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 400 data type validation error (plan_id must be integer)
+
+Test 3.2: SQL injection in email field
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test User",
+        "email": "test@example.com'\'' OR 1=1 --"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 400 email validation error
+
+Test 3.3: Time-based SQL injection attempt
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test'\''; WAITFOR DELAY '\''00:00:05'\''--",
+        "email": "timing.attack@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 400 name validation error
+Response Time: Should be < 1 second (no delay executed)
+
+Database Integrity Check:
+  cd backend
+  python manage.py shell
+  
+  from finances.models import PricingPlan
+  from accounts.models import CustomUser
+  
+  # Verify database integrity after injection attempts
+  print(f"PricingPlan table exists: {PricingPlan.objects.exists()}")
+  print(f"CustomUser table exists: {CustomUser.objects.exists()}")
+  print("Database integrity maintained")
+
+Screenshot: 03_sql_injection_prevention_verified.png
+
+Step 4: Command Injection and Path Traversal Testing
+Test 4.1: Command injection in name field
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test; cat /etc/passwd; echo User",
+        "email": "command.injection@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 400 name validation error
+
+Test 4.2: Path traversal attempt in name
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "../../../etc/passwd",
+        "email": "path.traversal@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 400 name validation error
+
+Test 4.3: Null byte injection
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test\u0000User",
+        "email": "null.byte@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 400 name validation error or proper handling
+
+Screenshot: 04_command_injection_prevention.png
+
+Step 5: Parameter Pollution and Manipulation Testing
+Test 5.1: JSON parameter pollution
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "plan_id": 999,
+      "student_info": {
+        "name": "Pollution Test",
+        "email": "pollution@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: Should use one value consistently (typically the last one)
+
+Test 5.2: Nested parameter manipulation
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Test User",
+        "email": "normal@example.com",
+        "admin": true,
+        "is_staff": true,
+        "balance": 1000000
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 201 (extra fields should be ignored by serializer)
+Verification: Extra fields should not affect user creation or permissions
+
+Test 5.3: Type confusion attack
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": ["array", "instead", "of", "string"],
+        "email": "type.confusion@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 400 validation error for incorrect data type
+
+Screenshot: 05_parameter_manipulation_prevention.png
+
+Step 6: Authentication and Authorization Testing
+Test 6.1: Attempt to bypass authentication (API should allow unauthenticated)
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer invalid_token" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Auth Test",
+        "email": "auth.test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 201 (API allows unauthenticated access for guest purchases)
+
+Test 6.2: Malformed Authorization header
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Malformed Token Here" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "Malformed Auth",
+        "email": "malformed.auth@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 201 (should continue as guest user)
+
+Test 6.3: JWT manipulation attempt
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjk5OTk5OTk5OTl9.invalid" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "JWT Manipulation",
+        "email": "jwt.manipulation@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 201 (invalid JWT should be ignored, proceed as guest)
+
+Screenshot: 06_authentication_security_verified.png
+
+Step 7: Rate Limiting and DoS Protection Testing
+Test 7.1: Rapid successive requests (rate limiting)
+
+Create script for rapid requests:
+```bash
+#!/bin/bash
+echo "Testing rate limiting..."
+for i in {1..20}; do
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"plan_id\": 1,
+      \"student_info\": {
+        \"name\": \"Rate Test $i\",
+        \"email\": \"rate$i@example.com\"
+      }
+    }" \
+    -w "Request $i: %{http_code}\n" \
+    -s -o /dev/null &
+  sleep 0.1
+done
+wait
+```
+
+Execute:
+  chmod +x rate_limit_test.sh
+  ./rate_limit_test.sh
+
+Expected Behavior:
+- First several requests: HTTP 201
+- If rate limiting enabled: HTTP 429 (Too Many Requests) for excess requests
+- If no rate limiting: All requests succeed (note for security recommendation)
+
+Test 7.2: Large payload attack
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"plan_id\": 1,
+      \"student_info\": {
+        \"name\": \"$(printf 'A%.0s' {1..10000})\",
+        \"email\": \"large.payload@example.com\"
+      }
+    }" \
+    -v
+
+Expected Response: HTTP 400 (payload too large or name too long)
+
+Test 7.3: Request flooding from single IP
+
+Simulate 100 requests in 1 second:
+```bash
+for i in {1..100}; do
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d "{\"plan_id\": 1, \"student_info\": {\"name\": \"Flood $i\", \"email\": \"flood$i@example.com\"}}" \
+    -s -o /dev/null &
+done
+wait
+```
+
+Monitor server response and resource usage during test
+
+Screenshot: 07_rate_limiting_dos_protection.png
+
+Step 8: Information Disclosure Prevention
+Test 8.1: Error message information leakage
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 999999,
+      "student_info": {
+        "name": "Error Test",
+        "email": "error.test@example.com"
+      }
+    }' \
+    -v
+
+Error Message Security Check:
+- Should NOT reveal database schema details
+- Should NOT reveal file paths or server information
+- Should NOT reveal internal variable names
+- Should provide generic, user-friendly messages
+
+Test 8.2: Server fingerprinting prevention
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -H "User-Agent: SecurityScanner/1.0" \
+    -d '{}' \
+    -v
+
+Check response headers for information disclosure:
+- Server header should be minimal
+- No version information exposed
+- No framework details in headers
+
+Test 8.3: Debug information leakage
+
+Command with malformed JSON:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{invalid json}' \
+    -v
+
+Expected Response: Generic JSON parsing error, no debug information
+
+Screenshot: 08_information_disclosure_prevention.png
+
+Step 9: Business Logic Security Testing
+Test 9.1: Price manipulation attempt
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "amount": 0.01,
+      "price": 1,
+      "student_info": {
+        "name": "Price Manipulation",
+        "email": "price.manipulation@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 201 (extra fields ignored, price from database plan)
+
+Verification: Check payment intent amount matches plan price, not provided amount
+
+Test 9.2: Plan ID enumeration
+
+Commands:
+  for id in {-10..10} {990..1010}; do
+    curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+      -H "Content-Type: application/json" \
+      -d "{
+        \"plan_id\": $id,
+        \"student_info\": {
+          \"name\": \"Enum Test\",
+          \"email\": \"enum$id@example.com\"
+        }
+      }" \
+      -w "Plan ID $id: %{http_code}\n" \
+      -s -o /dev/null
+  done
+
+Expected Behavior:
+- Invalid IDs: HTTP 400 with appropriate error message
+- Valid IDs: HTTP 201 with purchase initiated
+- No information leakage about existing vs non-existing plans
+
+Screenshot: 09_business_logic_security.png
+
+Step 10: Input Encoding and Character Set Testing
+Test 10.1: Unicode and UTF-8 handling
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json; charset=utf-8" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "José María Ñoño 测试 🎓",
+        "email": "unicode.test@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 201 (valid Unicode characters should be accepted)
+
+Test 10.2: Character encoding attacks
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "\u003cscript\u003ealert(1)\u003c/script\u003e",
+        "email": "encoding.attack@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 400 (Unicode-encoded script tags should be blocked)
+
+Test 10.3: Double encoding attack
+
+Command:
+  curl -X POST http://localhost:8000/finances/api/purchase/initiate/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "plan_id": 1,
+      "student_info": {
+        "name": "%253Cscript%253E",
+        "email": "double.encoding@example.com"
+      }
+    }' \
+    -v
+
+Expected Response: HTTP 400 or HTTP 201 with proper sanitization
+
+Screenshot: 10_encoding_security_verified.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All security tests block malicious inputs AND no vulnerabilities found
+FAIL: Any security bypass OR data compromise OR system vulnerability
+
+Individual Step Criteria:
+- Step 1: PASS if security headers present and baseline secure, FAIL if missing protections
+- Step 2: PASS if all XSS attempts blocked, FAIL if any XSS possible
+- Step 3: PASS if SQL injection prevented, FAIL if database compromise possible
+- Step 4: PASS if command injection blocked, FAIL if system commands executable
+- Step 5: PASS if parameter manipulation handled safely, FAIL if data manipulation possible
+- Step 6: PASS if authentication secure, FAIL if auth bypass or privilege escalation
+- Step 7: PASS if rate limiting working (or noted missing), FAIL if DoS possible
+- Step 8: PASS if no sensitive information disclosed, FAIL if info leakage found
+- Step 9: PASS if business logic secure, FAIL if price/logic manipulation possible
+- Step 10: PASS if encoding attacks blocked, FAIL if encoding bypass possible
+
+Critical Security Requirements:
+- XSS prevention: All script injection attempts blocked
+- SQL injection prevention: Database queries parameterized, no SQL execution
+- Command injection prevention: No system command execution possible
+- Input validation: All malicious inputs rejected with appropriate errors
+- Information disclosure: No sensitive data leaked in error messages
+- Authentication security: No auth bypass or privilege escalation
+
+Input Sanitization Requirements:
+- Name field: Only allow letters, spaces, hyphens, apostrophes, dots
+- Email field: Strict email format validation
+- Plan ID: Integer validation with existence check
+- JSON structure: Proper parsing with error handling
+- Character encoding: Unicode support with security filtering
+
+Business Logic Security:
+- Plan prices cannot be manipulated by user input
+- User permissions cannot be elevated through API calls
+- Payment amounts determined by server-side plan data only
+- Transaction integrity maintained under all conditions
+
+Performance Security:
+- Rate limiting prevents abuse (if implemented)
+- Large payload rejection prevents resource exhaustion
+- Request flooding protection (if implemented)
+- Proper resource cleanup after requests
+
+Overall Result: PASS only if ALL security tests pass AND no vulnerabilities identified

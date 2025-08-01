@@ -6,10 +6,13 @@ from .views import (
     BulkTeacherActionsView,
     CourseViewSet,
     EducationalSystemViewSet,
+    EmailCommunicationViewSet,
+    EmailSequenceViewSet,
     GlobalSearchView,
     InvitationViewSet,
     RequestCodeView,
     SchoolDashboardViewSet,
+    SchoolEmailTemplateViewSet,
     SchoolInvitationLinkView,
     SchoolMembershipViewSet,
     SchoolViewSet,
@@ -44,6 +47,11 @@ router.register(r"teacher-courses", TeacherCourseViewSet, basename="teacher_cour
 router.register(r"invitations", InvitationViewSet, basename="invitation")
 router.register(r"teacher-invitations", TeacherInvitationViewSet, basename="teacher-invitation")
 router.register(r"school-dashboard", SchoolDashboardViewSet, basename="school-dashboard")
+
+# Communication system endpoints
+router.register(r"email-templates", SchoolEmailTemplateViewSet, basename="email-templates")
+router.register(r"email-sequences", EmailSequenceViewSet, basename="email-sequences")
+router.register(r"email-communications", EmailCommunicationViewSet, basename="email-communications")
 
 # URL patterns for the accounts app
 urlpatterns = [

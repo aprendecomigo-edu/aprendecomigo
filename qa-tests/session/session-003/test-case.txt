@@ -1,0 +1,645 @@
+QA Test Case: Balance Validation and Insufficient Funds Handling
+
+Test ID: SESSION-003
+Test Name: Balance Validation and Insufficient Funds Handling
+Purpose: Verify that session booking properly validates student balances and gracefully handles insufficient funds scenarios with appropriate error messages and transaction rollback
+Expected Result: System correctly prevents bookings when insufficient balance and provides clear error messaging
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend
+- Feature: Balance Validation in Session Booking (GitHub Issue #32)
+- Integration: Pre-booking balance checks and transaction validation
+- APIs: /scheduler/api/book-session/ with balance validation
+- Authentication: JWT token authentication required
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root (NOT in backend folder)
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+
+Test Data Requirements:
+- Low Balance Student: low.balance@test.com with 0.5 hours remaining
+- Zero Balance Student: zero.balance@test.com with 0.0 hours remaining
+- Negative Balance Student: negative.balance@test.com with -2.0 hours
+- Expired Package Student: expired.package@test.com with expired hour packages
+- Sufficient Balance Student: sufficient.balance@test.com with 10.0 hours
+- Teacher Account: teacher.validation@test.com with available slots
+- Session Duration Tests: 1.0 hour, 1.5 hour, 2.0 hour sessions
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Service Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Both services start successfully
+Screenshot: 01_servers_started.png
+
+Step 2: Create Test Users with Various Balance Scenarios
+1. Open browser to http://localhost:8000/admin/
+2. Login with admin credentials
+3. Create test users and balances:
+
+   Low Balance Student:
+   - Email: low.balance@test.com
+   - Name: "Low Balance Student"
+   - Hours purchased: 1.00
+   - Hours consumed: 0.50
+   - Remaining: 0.50 hours
+   - Balance amount: 5.00
+
+   Zero Balance Student:
+   - Email: zero.balance@test.com
+   - Name: "Zero Balance Student"
+   - Hours purchased: 5.00
+   - Hours consumed: 5.00
+   - Remaining: 0.00 hours
+   - Balance amount: 0.00
+
+   Negative Balance Student:
+   - Email: negative.balance@test.com
+   - Name: "Negative Balance Student"
+   - Hours purchased: 3.00
+   - Hours consumed: 5.00
+   - Remaining: -2.00 hours
+   - Balance amount: -20.00
+
+   Expired Package Student:
+   - Email: expired.package@test.com
+   - Name: "Expired Package Student"
+   - Create expired hour package with 5.00 hours
+
+   Sufficient Balance Student:
+   - Email: sufficient.balance@test.com
+   - Name: "Sufficient Balance Student"
+   - Hours purchased: 10.00
+   - Hours consumed: 0.00
+   - Remaining: 10.00 hours
+   - Balance amount: 100.00
+
+   Teacher:
+   - Email: teacher.validation@test.com
+   - Name: "Validation Teacher"
+
+Expected: All test users and balance scenarios created
+Screenshot: 02_balance_test_data_created.png
+
+Step 3: Verify Initial Balance States for All Test Users
+1. For each student, login and check balance via API:
+```javascript
+// Function to check student balance
+function checkStudentBalance(email, token) {
+  return fetch('http://localhost:8000/finances/api/student-balance/', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log(`=== ${email.toUpperCase()} BALANCE ===`);
+    console.log('Hours purchased:', data.balance_summary.hours_purchased);
+    console.log('Hours consumed:', data.balance_summary.hours_consumed);
+    console.log('Remaining hours:', data.balance_summary.remaining_hours);
+    console.log('Balance amount:', data.balance_summary.balance_amount);
+    return data;
+  });
+}
+
+// Check each student (login to each and get token first)
+```
+
+Expected: All balance scenarios correctly set up and verified
+Screenshot: 03_all_balance_states_verified.png
+
+Step 4: Test Insufficient Balance - Low Balance Student (0.5 hours)
+1. Login as low.balance@test.com
+2. Navigate to session booking interface
+3. Attempt to book 1.0-hour session:
+```javascript
+const lowBalanceToken = 'LOW_BALANCE_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${lowBalanceToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.validation@test.com',
+    date: '2025-07-28',
+    time: '10:00',
+    duration: 1.0,
+    session_type: 'individual',
+    title: 'Insufficient Balance Test'
+  })
+})
+  .then(response => {
+    console.log('Low balance booking status:', response.status);
+    console.log('Response headers:', [...response.headers.entries()]);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== LOW BALANCE BOOKING RESULT ===');
+    console.log('Error message:', data.error || data.message);
+    console.log('Details:', data.details || data);
+  })
+  .catch(error => console.error('Request error:', error));
+```
+
+Expected:
+- HTTP 400 Bad Request or 422 Unprocessable Entity
+- Clear error message: "Insufficient balance. You have 0.5 hours but need 1.0 hours for this session."
+- No session created
+- No hour deduction
+
+Screenshot: 04_low_balance_booking_denied.png
+
+Step 5: Test Zero Balance Student Booking
+1. Login as zero.balance@test.com
+2. Attempt to book any session:
+```javascript
+const zeroBalanceToken = 'ZERO_BALANCE_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${zeroBalanceToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.validation@test.com',
+    date: '2025-07-28',
+    time: '11:00',
+    duration: 1.0,
+    session_type: 'individual',
+    title: 'Zero Balance Test'
+  })
+})
+  .then(response => {
+    console.log('Zero balance booking status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== ZERO BALANCE BOOKING RESULT ===');
+    console.log('Error message:', data.error || data.message);
+    console.log('Suggested action:', data.suggested_action);
+  });
+```
+
+Expected:
+- HTTP 400 Bad Request
+- Error message: "No available hours. Please purchase additional hours to book sessions."
+- Suggested action to purchase hours
+- No session created
+
+Screenshot: 05_zero_balance_booking_denied.png
+
+Step 6: Test Negative Balance Student Booking
+1. Login as negative.balance@test.com
+2. Attempt to book session:
+```javascript
+const negativeBalanceToken = 'NEGATIVE_BALANCE_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${negativeBalanceToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.validation@test.com',
+    date: '2025-07-28',
+    time: '12:00',
+    duration: 1.0,
+    session_type: 'individual',
+    title: 'Negative Balance Test'
+  })
+})
+  .then(response => {
+    console.log('Negative balance booking status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== NEGATIVE BALANCE BOOKING RESULT ===');
+    console.log('Error message:', data.error || data.message);
+    console.log('Balance status:', data.balance_status);
+    console.log('Required action:', data.required_action);
+  });
+```
+
+Expected:
+- HTTP 400 Bad Request
+- Error message: "Account has negative balance (-2.0 hours). Please resolve balance before booking."
+- Required action to add funds
+- No session created
+
+Screenshot: 06_negative_balance_booking_denied.png
+
+Step 7: Test Expired Package Student Booking
+1. Login as expired.package@test.com
+2. Attempt to book session:
+```javascript
+const expiredPackageToken = 'EXPIRED_PACKAGE_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${expiredPackageToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.validation@test.com',
+    date: '2025-07-28',
+    time: '13:00',
+    duration: 1.0,
+    session_type: 'individual',
+    title: 'Expired Package Test'
+  })
+})
+  .then(response => {
+    console.log('Expired package booking status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== EXPIRED PACKAGE BOOKING RESULT ===');
+    console.log('Error message:', data.error || data.message);
+    console.log('Package status:', data.package_status);
+    console.log('Expiration info:', data.expiration_info);
+  });
+```
+
+Expected:
+- HTTP 400 Bad Request
+- Error message: "Hour package expired. Please purchase a new hour package."
+- Package expiration details
+- No session created
+
+Screenshot: 07_expired_package_booking_denied.png
+
+Step 8: Test Exact Balance Match (Edge Case)
+1. Update low.balance@test.com to have exactly 1.0 hour remaining
+2. Attempt to book exactly 1.0-hour session:
+```javascript
+const exactBalanceToken = 'LOW_BALANCE_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${exactBalanceToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.validation@test.com',
+    date: '2025-07-28',
+    time: '14:00',
+    duration: 1.0,
+    session_type: 'individual',
+    title: 'Exact Balance Test'
+  })
+})
+  .then(response => {
+    console.log('Exact balance booking status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('=== EXACT BALANCE BOOKING RESULT ===');
+    console.log('Success:', response.status === 201);
+    console.log('Session created:', data.session_id || data.id);
+  });
+```
+
+Expected:
+- HTTP 201 Created (should succeed)
+- Session successfully created
+- Student balance becomes 0.0 after booking
+
+Screenshot: 08_exact_balance_booking_success.png
+
+Step 9: Test Balance Validation with Different Session Durations
+1. Login as sufficient.balance@test.com (10.0 hours available)
+2. Test various session durations:
+
+```javascript
+const sufficientToken = 'SUFFICIENT_BALANCE_JWT_TOKEN';
+
+// Test 1.5-hour session
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${sufficientToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.validation@test.com',
+    date: '2025-07-28',
+    time: '15:00',
+    duration: 1.5,
+    session_type: 'individual',
+    title: '1.5 Hour Duration Test'
+  })
+})
+  .then(response => {
+    console.log('1.5-hour session status:', response.status);
+    return response.json();
+  })
+  .then(data => console.log('1.5-hour booking result:', data));
+
+// Test 2.0-hour session  
+setTimeout(() => {
+  fetch('http://localhost:8000/scheduler/api/book-session/', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${sufficientToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      teacher_email: 'teacher.validation@test.com',
+      date: '2025-07-28',
+      time: '16:30',
+      duration: 2.0,
+      session_type: 'individual',
+      title: '2.0 Hour Duration Test'
+    })
+  })
+    .then(response => {
+      console.log('2.0-hour session status:', response.status);
+      return response.json();
+    })
+    .then(data => console.log('2.0-hour booking result:', data));
+}, 1000);
+```
+
+Expected: Both sessions should succeed and hours deducted correctly
+Screenshot: 09_duration_validation_tests.png
+
+Step 10: Test Frontend Balance Validation Messages
+1. Navigate to booking form in UI as low.balance@test.com
+2. Attempt to book session through UI interface
+3. Verify frontend shows balance validation:
+   - Warning message before submission
+   - Clear error message after failed submission
+   - User-friendly explanation of required action
+   - Links or buttons to purchase additional hours
+
+Expected: Frontend provides clear balance validation and user guidance
+Screenshot: 10_frontend_balance_validation.png
+
+Step 11: Test API Balance Validation Response Structure
+1. Verify error response structure is consistent:
+```javascript
+const lowBalanceToken = 'LOW_BALANCE_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${lowBalanceToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.validation@test.com',
+    date: '2025-07-29',
+    time: '10:00',
+    duration: 2.0,
+    session_type: 'individual',
+    title: 'API Structure Test'
+  })
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== API ERROR RESPONSE STRUCTURE ===');
+    console.log('Error field present:', 'error' in data);
+    console.log('Code field present:', 'code' in data);
+    console.log('Details field present:', 'details' in data);
+    console.log('User message field:', 'user_message' in data);
+    console.log('Suggested action field:', 'suggested_action' in data);
+    console.log('Balance info field:', 'balance_info' in data);
+    
+    // Validate structure
+    console.log('Response structure valid:', 
+      data.error && 
+      data.code && 
+      data.user_message &&
+      data.balance_info
+    );
+  });
+```
+
+Expected: Consistent, well-structured error responses with all required fields
+Screenshot: 11_api_error_structure.png
+
+Step 12: Test Pre-Booking Balance Check Endpoint
+1. Test dedicated balance validation endpoint (if exists):
+```javascript
+const lowBalanceToken = 'LOW_BALANCE_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/validate-booking/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${lowBalanceToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    duration: 1.5,
+    session_type: 'individual'
+  })
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== PRE-BOOKING VALIDATION ===');
+    console.log('Can book:', data.can_book);
+    console.log('Current balance:', data.current_balance);
+    console.log('Required hours:', data.required_hours);
+    console.log('Shortfall:', data.shortfall);
+    console.log('Validation message:', data.message);
+  });
+```
+
+Expected: Pre-booking validation provides balance check without creating session
+Screenshot: 12_pre_booking_validation.png
+
+Step 13: Test Balance Validation with Package Expiration Warnings
+1. Create student with package expiring soon (within 24 hours)
+2. Test booking with warning scenarios:
+```javascript
+const soonExpiringToken = 'SOON_EXPIRING_JWT_TOKEN';
+fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${soonExpiringToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.validation@test.com',
+    date: '2025-07-28',
+    time: '17:00',
+    duration: 1.0,
+    session_type: 'individual',
+    title: 'Expiration Warning Test'
+  })
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('=== EXPIRATION WARNING TEST ===');
+    console.log('Booking allowed:', response.status === 201);
+    console.log('Warning message:', data.warning);
+    console.log('Expiration info:', data.package_expiration);
+    console.log('Recommended action:', data.recommended_action);
+  });
+```
+
+Expected: Booking succeeds but includes expiration warnings
+Screenshot: 13_expiration_warning_test.png
+
+Step 14: Test Concurrent Booking Attempts with Low Balance
+1. Simulate concurrent booking attempts by same student:
+```javascript
+const lowBalanceToken = 'LOW_BALANCE_JWT_TOKEN';
+
+// First booking attempt
+const booking1 = fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${lowBalanceToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.validation@test.com',
+    date: '2025-07-29',
+    time: '10:00',
+    duration: 0.5,
+    session_type: 'individual',
+    title: 'Concurrent Test 1'
+  })
+});
+
+// Second booking attempt (simultaneous)
+const booking2 = fetch('http://localhost:8000/scheduler/api/book-session/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${lowBalanceToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    teacher_email: 'teacher.validation@test.com',
+    date: '2025-07-29',
+    time: '11:00',
+    duration: 0.5,
+    session_type: 'individual',
+    title: 'Concurrent Test 2'
+  })
+});
+
+Promise.all([booking1, booking2])
+  .then(responses => {
+    console.log('=== CONCURRENT BOOKING RESULTS ===');
+    console.log('Booking 1 status:', responses[0].status);
+    console.log('Booking 2 status:', responses[1].status);
+    console.log('Exactly one should succeed:', 
+      (responses[0].status === 201) !== (responses[1].status === 201)
+    );
+  });
+```
+
+Expected: Only one booking succeeds, proper race condition handling
+Screenshot: 14_concurrent_booking_test.png
+
+Step 15: Verify No Session Creation on Balance Failure
+1. Check database for any incorrectly created sessions:
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/backend
+  python manage.py shell -c "
+  from scheduler.models import ClassSession
+  from accounts.models import CustomUser
+  from finances.models import HourConsumption
+  
+  # Check for sessions by students with insufficient balance
+  test_emails = [
+      'zero.balance@test.com',
+      'negative.balance@test.com',
+      'expired.package@test.com'
+  ]
+  
+  print('=== FAILED BOOKING SESSION CHECK ===')
+  for email in test_emails:
+      try:
+          student = CustomUser.objects.get(email=email)
+          sessions = ClassSession.objects.filter(student=student)
+          consumptions = HourConsumption.objects.filter(student=student)
+          
+          print(f'Student: {email}')
+          print(f'  Sessions created: {sessions.count()}')
+          print(f'  Hour consumptions: {consumptions.count()}')
+          print(f'  Should be zero for failed bookings')
+      except CustomUser.DoesNotExist:
+          print(f'Student {email} not found')
+  "
+
+Expected: No sessions or consumptions created for failed balance validations
+Screenshot: 15_no_failed_sessions_created.png
+
+Step 16: Test Error Logging and Monitoring
+1. Check server logs for balance validation events:
+Command: tail -50 /tmp/django_server.log | grep -i "balance\|insufficient\|validation"
+
+2. Verify proper error logging includes:
+   - Student email (non-sensitive)
+   - Attempted session duration
+   - Current balance status
+   - Validation failure reason
+   - Timestamp of attempt
+
+Expected: Comprehensive error logging for monitoring and debugging
+Screenshot: 16_balance_validation_logging.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All balance validation scenarios work correctly AND proper error messages displayed AND no sessions created on failure AND transaction integrity maintained
+
+FAIL: Balance validation bypassed OR sessions created with insufficient funds OR poor error messages OR data inconsistencies
+
+Individual Step Criteria:
+- Step 1-2: PASS if environment and balance scenarios set up correctly, FAIL if setup issues
+- Step 3: PASS if all balance states verified via API, FAIL if balance API issues
+- Step 4-7: PASS if all insufficient balance scenarios properly rejected, FAIL if any booking succeeds inappropriately
+- Step 8: PASS if exact balance match works correctly, FAIL if edge case fails
+- Step 9: PASS if different durations validated correctly, FAIL if duration validation issues
+- Step 10: PASS if frontend validation clear and helpful, FAIL if poor user experience
+- Step 11: PASS if API error structure consistent, FAIL if inconsistent error responses
+- Step 12: PASS if pre-booking validation works, FAIL if validation endpoint issues
+- Step 13: PASS if expiration warnings work properly, FAIL if warning system fails
+- Step 14: PASS if concurrent booking race conditions handled, FAIL if race condition issues
+- Step 15: PASS if no sessions created on failure, FAIL if phantom sessions exist
+- Step 16: PASS if error logging comprehensive, FAIL if poor logging
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== ADDITIONAL VERIFICATION POINTS ===
+
+Balance Validation Requirements:
+- Pre-booking balance checks prevent insufficient fund bookings
+- Clear, user-friendly error messages for all failure scenarios
+- No sessions or hour consumptions created on validation failure
+- Proper handling of edge cases (exact balance, negative balance)
+- Transaction atomicity maintained
+
+Error Handling Standards:
+- Consistent error response structure across all scenarios
+- Appropriate HTTP status codes for different error types
+- User-actionable error messages with suggested next steps
+- Security considerations (no sensitive data in error messages)
+- Comprehensive logging for monitoring and debugging
+
+User Experience Requirements:
+- Frontend validation provides immediate feedback
+- Clear guidance on how to resolve balance issues
+- Links or flows to purchase additional hours
+- Warning messages for upcoming package expirations
+- Graceful degradation when validation services unavailable
+
+Technical Requirements:
+- Race condition handling for concurrent booking attempts
+- Database transaction integrity maintained
+- Performance impact of balance checks minimized
+- Proper error propagation through application layers
+- Monitoring and alerting for validation failures

@@ -1,0 +1,334 @@
+QA Test Case: Edge Case and Boundary Testing
+
+Test ID: TPROF-005
+Test Name: Edge Case and Boundary Testing
+Purpose: Verify Teacher Profile Wizard handles extreme values, special characters, and edge cases gracefully
+Expected Result: System handles all edge cases without crashing and provides appropriate feedback for boundary conditions
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Architecture: React Native + Expo frontend with Django REST backend
+- Feature: Teacher Profile Wizard edge case handling
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Development servers: `make dev`
+3. Browser dev tools for console monitoring
+4. Access wizard at: http://localhost:8081/onboarding/teacher-profile
+
+Test Data:
+- Test email: edgecase.test@aprendecomigo.com
+- Extreme values for all field types
+- Special character strings and Unicode
+- Boundary condition test cases
+
+Pre-Conditions:
+- User authenticated with clean profile state
+- Browser console open to monitor for errors
+- Network tab available for monitoring requests
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Text Field Boundary Testing
+1. Navigate to Basic Information step
+2. Test name fields with extreme values:
+
+   a) Minimum Length Testing:
+   - First Name: "" (empty)
+   - First Name: "A" (single character)
+   - Last Name: "B" (single character)
+   - Professional Title: "T" (single character)
+
+   b) Maximum Length Testing:
+   - First Name: String of 100 characters
+   - Last Name: String of 100 characters
+   - Professional Title: String of 200 characters
+   - Introduction: Maximum allowed length
+
+   c) Special Characters Testing:
+   - Names with: "José María", "François", "李明", "محمد", "Señora"
+   - Names with numbers: "John2", "Smith123"
+   - Names with symbols: "O'Connor", "Van-Der-Berg", "Smith Jr."
+   - Professional Title: "Math & Science Teacher (K-12)"
+
+   d) Unicode and International Characters:
+   - Arabic: "محمد الأحمد"
+   - Chinese: "李小明"
+   - Japanese: "田中太郎"
+   - Emoji: "Maria 😊"
+   - Accented characters: "José António"
+
+Expected: System handles all character types gracefully or provides clear validation
+Screenshot: 01_text_boundary_testing.png
+
+Step 2: Numeric Field Boundary Testing
+1. Test years of experience:
+   - Minimum: 0 years
+   - Negative: -5 years
+   - Maximum reasonable: 50 years
+   - Extreme: 999 years
+   - Decimal: 2.5 years
+   - Non-numeric: "five years"
+
+2. Test phone number edge cases:
+   - Very short: "123"
+   - Very long: "+1234567890123456789"
+   - International formats: "+351912345678", "+1-555-123-4567"
+   - With extensions: "+351912345678 ext 123"
+   - Special chars: "(555) 123-4567"
+
+Expected: Numeric validation handles boundary values appropriately
+Screenshot: 02_numeric_boundary_testing.png
+
+Step 3: Rich Text Editor Edge Cases
+1. Navigate to Biography step
+2. Test rich text editor with extreme content:
+
+   a) Character Limit Testing:
+   - Exactly 500 words
+   - 501+ words (should be prevented)
+   - Paste very long text (test limit enforcement)
+   - Rich text formatting doesn't count toward limit
+
+   b) Special Content Testing:
+   - Copy/paste from Microsoft Word (formatting)
+   - HTML tags: "<script>alert('test')</script>"
+   - Special characters: "These are quotes: "smart quotes""
+   - URLs: "Visit https://example.com for more info"
+   - Line breaks and paragraphs: Multiple paragraph formatting
+
+   c) Rich Text Features:
+   - Bold, italic, underline combinations
+   - Lists (bulleted and numbered)
+   - Very long single words: "supercalifragilisticexpialidocious"
+   - Mixed languages in same text
+
+Expected: Rich text editor sanitizes content and enforces limits properly
+Screenshot: 03_richtext_edge_cases.png
+
+Step 4: Date and Time Boundary Testing
+1. Navigate to Education step
+2. Test graduation year edge cases:
+   - Minimum reasonable: 1950
+   - Maximum reasonable: Current year + 5
+   - Invalid: 1800, 2100
+   - Non-numeric: "twenty twenty"
+   - Current year: 2024
+
+3. Test certification dates:
+   - Issue date in future
+   - Expiration date before issue date
+   - Dates with different formats
+   - Invalid dates: February 30th
+
+4. Navigate to Availability step
+5. Test time boundaries:
+   - 00:00 (midnight)
+   - 23:59 (one minute before midnight)
+   - Invalid times: 25:00, 12:70
+   - Overlapping time slots same day
+   - Time slots spanning midnight
+
+Expected: Date/time validation prevents impossible values
+Screenshot: 04_datetime_boundary_testing.png
+
+Step 5: Collection Field Edge Cases
+1. Test languages selection:
+   - No languages selected
+   - All available languages selected
+   - Very rare languages if available
+   - Custom language entry (if supported)
+
+2. Test specializations (tags):
+   - Very long specialization names
+   - Special characters in tags
+   - Duplicate specializations
+   - Maximum number of tags (if limit exists)
+
+3. Test subjects:
+   - No subjects (should be prevented)
+   - Maximum number of subjects
+   - Subjects with very long names
+   - Duplicate subjects
+   - Subjects with special characters
+
+Expected: Collection fields handle extreme quantities and content
+Screenshot: 05_collection_edge_cases.png
+
+Step 6: File Upload Edge Cases
+1. Test profile photo upload:
+   - Very large image files (10MB+)
+   - Very small image files (1KB)
+   - Non-image files (PDF, TXT, etc.)
+   - Corrupted image files
+   - Images with unusual dimensions (very wide, very tall)
+   - Images with special character filenames
+
+2. Test upload behavior:
+   - Multiple rapid uploads
+   - Upload during network interruption
+   - Upload cancellation
+   - Upload retry after failure
+
+Expected: File upload handles edge cases without crashing
+Screenshot: 06_file_upload_edge_cases.png
+
+Step 7: Rate and Pricing Edge Cases
+1. Navigate to Rates step
+2. Test extreme pricing values:
+   - Rate: €0 (free lessons)
+   - Rate: €0.01 (minimum)
+   - Rate: €999.99 (very high)
+   - Rate: €10000+ (extremely high)
+   - Negative rates: -€10
+   - Very precise decimals: €25.999
+
+3. Test package deals:
+   - 0 sessions package
+   - 1000+ sessions package
+   - Package more expensive than individual rate
+   - Package with negative discount
+   - Package with 100%+ discount
+
+4. Test currency edge cases:
+   - Switching currency with existing rates
+   - Unsupported currency codes
+   - Currency symbols in rate fields
+
+Expected: Pricing logic prevents illogical values and business rule violations
+Screenshot: 07_pricing_edge_cases.png
+
+Step 8: Availability Schedule Edge Cases
+1. Test extreme availability:
+   - 24/7 availability (all days, all hours)
+   - No availability (no time slots)
+   - 1-minute time slots
+   - 12+ hour continuous slots
+   - Availability in multiple timezones
+
+2. Test booking preferences:
+   - 0 hours minimum notice
+   - 365+ days maximum advance booking
+   - Minimum notice > maximum advance
+   - Session durations: 1 minute, 8 hours
+
+3. Test schedule conflicts:
+   - Overlapping slots same day
+   - Slots ending after they start (next day)
+   - Multiple overlapping slots
+
+Expected: Schedule validation prevents conflicts and unreasonable values
+Screenshot: 08_availability_edge_cases.png
+
+Step 9: Network and Performance Edge Cases
+1. Test with extremely slow network:
+   - Enable "Slow 3G" in dev tools
+   - Complete wizard steps
+   - Test timeout handling
+   - Verify auto-save works
+
+2. Test with network interruptions:
+   - Disconnect network mid-save
+   - Reconnect and verify retry
+   - Test during form submission
+
+3. Test rapid interactions:
+   - Click buttons very rapidly
+   - Navigate between steps quickly
+   - Make rapid form changes
+
+Expected: System handles network issues and rapid interactions gracefully
+Screenshot: 09_network_edge_cases.png
+
+Step 10: Browser and Platform Edge Cases
+1. Test browser compatibility edge cases:
+   - Very old browser versions (if accessible)
+   - Browsers with JavaScript disabled
+   - Browsers with cookies disabled
+   - Private/incognito mode
+
+2. Test with browser limitations:
+   - Very small browser window (320x240)
+   - Very large browser window (4K resolution)
+   - Browser zoom at 200%
+   - Browser zoom at 50%
+
+Expected: Wizard degrades gracefully on limited browsers/platforms
+Screenshot: 10_browser_edge_cases.png
+
+Step 11: Data Corruption and Recovery
+1. Test data corruption scenarios:
+   - Corrupt local storage data
+   - Invalid cached wizard state
+   - Malformed server responses
+   - Missing required API endpoints
+
+2. Test recovery mechanisms:
+   - Reset wizard state
+   - Reload from server
+   - Graceful fallback behavior
+
+Expected: System recovers from data corruption without losing user work
+Screenshot: 11_data_corruption_recovery.png
+
+Step 12: Security Edge Cases
+1. Test security boundaries:
+   - XSS attempts in text fields
+   - SQL injection patterns in inputs
+   - CSRF token handling
+   - Session timeout during wizard
+
+2. Test malicious input:
+   - JavaScript code in biography
+   - HTML injection attempts
+   - Very long malicious strings
+   - Binary data in text fields
+
+Expected: Security measures prevent malicious input without breaking UX
+Screenshot: 12_security_edge_cases.png
+
+Step 13: Memory and Resource Edge Cases
+1. Test resource consumption:
+   - Complete wizard with maximum data in all fields
+   - Monitor memory usage in browser
+   - Test with many browser tabs open
+   - Test on device with limited memory
+
+2. Test performance with large data:
+   - Maximum character biography
+   - Many degrees and certifications
+   - Complex availability schedules
+   - Large profile images
+
+Expected: System performs well even with maximum data loads
+Screenshot: 13_resource_edge_cases.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: System handles ALL edge cases gracefully AND provides appropriate feedback AND never crashes
+FAIL: Any edge case causes crash OR inappropriate error handling OR data corruption
+
+Individual Criteria:
+- Text Boundaries: PASS if all text limits enforced properly, FAIL if crashes or allows invalid data
+- Numeric Boundaries: PASS if numeric validation prevents impossible values, FAIL if accepts invalid numbers
+- Rich Text: PASS if editor handles all content safely, FAIL if editor breaks or allows unsafe content
+- Date/Time: PASS if date validation works correctly, FAIL if allows impossible dates
+- Collections: PASS if collection fields handle extreme cases, FAIL if breaks with many items
+- File Upload: PASS if upload handles all file types safely, FAIL if crashes or security issues
+- Pricing: PASS if pricing logic prevents illogical values, FAIL if allows business rule violations
+- Availability: PASS if schedule validation prevents conflicts, FAIL if allows impossible schedules
+- Network: PASS if network issues handled gracefully, FAIL if network problems cause data loss
+- Browser: PASS if works across browser limitations, FAIL if breaks on supported browsers
+- Data Recovery: PASS if recovers from corruption, FAIL if corruption causes permanent data loss
+- Security: PASS if prevents malicious input safely, FAIL if security vulnerabilities exist
+- Performance: PASS if performs well with maximum data, FAIL if performance degrades unacceptably
+
+Error Handling Requirements:
+- All edge cases should show appropriate error messages
+- System should never crash or show white screen
+- User should be able to recover from any error state
+- No data should be lost due to edge cases
+
+Overall Result: PASS only if ALL edge cases handled appropriately, FAIL if ANY edge case causes system failure or security issue

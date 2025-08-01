@@ -5,3 +5,6 @@ tprof-003,Auto-Save & Persistence,Verify auto-save functionality and data persis
 tprof-004,Mobile Responsive Design,Test wizard functionality on mobile devices and responsive layouts,,,0,0,0
 tprof-005,Edge Case & Boundary Testing,Test with extreme values and edge cases,,,0,0,0
 tprof-006,Step Navigation & Flow Control,Test wizard navigation between steps and flow control,,,0,0,0
+tprof-007,Course Catalog Selection Interface,Course selection interface for tutors (GitHub Issue #44),,,0,0,0
+tprof-008,Tutor Student Invitation System,Comprehensive student invitation system testing (GitHub Issue #48),20250731-212322,FAIL,1,0,1
+tprof-009,Complete Teacher Profile Wizard,Complete teacher profile creation during invitation acceptance (GitHub Issue #50),20250801-100135,FAIL,1,0,1

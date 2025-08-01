@@ -1,0 +1,234 @@
+QA Test Case: Multi-Course Selection with Rate Configuration
+
+Test ID: TPROF-010
+Test Name: Multi-Course Selection with Grade Level Specification and Course-Specific Rate Configuration
+Purpose: Verify CourseSelectionManager and RateConfigurationManager components enable multi-select functionality and individual rate setting per course
+Expected Result: Tutors can select multiple courses, specify grade levels for each, and configure different rates per subject
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Architecture: React Native + Expo frontend with Django REST backend
+- Components: CourseSelectionManager, RateConfigurationManager from GitHub issue #44
+- Location: frontend-ui/components/onboarding/course-selection-manager.tsx and rate-configuration-manager.tsx
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Development servers: `make dev-open`
+3. Tutor onboarding flow progressed to course selection step
+
+Test Data:
+- Educational System: Portugal
+- Test Courses: Mathematics, Physics, Chemistry, Biology, Portuguese Language, English
+- Test Grade Levels: Various combinations (10º-12º ano for high school subjects)
+- Test Rates: €20-40/hour range with different rates per subject
+- Expected Rate Validation: Minimum €10/hour, maximum €100/hour
+
+Component Requirements (GitHub Issue #44):
+- Multi-select functionality for choosing multiple courses to teach
+- Grade level specification for each selected course
+- Course-specific rate configuration allowing different prices per subject
+- Visual confirmation of selected courses with easy removal options
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Access Course Selection Interface
+1. Navigate to course selection step in tutor onboarding
+2. Verify CourseSelectionManager component loads
+3. Check that course catalog is displayed for selection
+4. Verify multi-select interface is clear and intuitive
+
+Expected: Course selection interface loads with clear multi-select capability
+Screenshot: 01_course_selection_loaded.png
+
+Step 2: Test First Course Selection
+1. Select "Mathematics" course:
+   - Click on Mathematics course card/checkbox
+   - Verify immediate visual feedback (selected state)
+   - Check that course appears in selected courses list
+2. Specify grade levels for Mathematics:
+   - Check boxes for "10º ano", "11º ano", "12º ano"
+   - Verify multiple grade levels can be selected
+   - Check that grade level selection is saved per course
+
+Expected: Mathematics selected with visual confirmation, grade levels specified
+Screenshot: 02_first_course_selected.png
+
+Step 3: Test Multi-Course Selection
+1. Add "Physics" course:
+   - Select Physics from catalog
+   - Verify it's added to selected courses list
+   - Specify grade levels: "11º ano", "12º ano"
+2. Add "Chemistry" course:
+   - Select Chemistry from catalog
+   - Add to selected courses
+   - Specify grade levels: "12º ano"
+3. Verify multiple courses can be selected simultaneously
+4. Check that each course maintains its own grade level configuration
+
+Expected: Multiple courses selected with individual grade level configurations
+Screenshot: 03_multi_course_selection.png
+
+Step 4: Test Course Selection Validation
+1. Attempt to proceed without selecting any courses
+2. Verify validation message appears
+3. Select at least one course
+4. Attempt to proceed without specifying grade levels
+5. Verify grade level validation works
+6. Complete proper selection to pass validation
+
+Expected: Validation prevents invalid selections, proper error messages displayed
+Screenshot: 04_selection_validation.png
+
+Step 5: Test Course Removal Functionality
+1. Remove Chemistry from selected courses:
+   - Click remove/delete button or X icon
+   - Verify Chemistry is removed from selected list
+   - Check that its grade level configuration is cleared
+2. Re-add Chemistry and verify it starts with clean state
+3. Test removing multiple courses
+4. Verify removal is intuitive and works reliably
+
+Expected: Course removal works smoothly, configurations cleared properly
+Screenshot: 05_course_removal.png
+
+Step 6: Access Rate Configuration Interface
+1. Proceed to rate configuration step
+2. Verify RateConfigurationManager component loads
+3. Check that all selected courses appear in rate configuration
+4. Verify each course has individual rate input field
+5. Check currency display (EUR for Portugal)
+
+Expected: Rate configuration displays with individual rate fields per selected course
+Screenshot: 06_rate_configuration_loaded.png
+
+Step 7: Test Individual Rate Configuration
+1. Set rates for each selected course:
+   - Mathematics: €25/hour
+   - Physics: €30/hour
+   - Chemistry: €35/hour
+2. Verify each course can have a different rate
+3. Check that rate inputs accept decimal values (e.g., €25.50)
+4. Verify currency symbol displays properly
+5. Check that rates are saved per course
+
+Expected: Individual rates set successfully for each course
+Screenshot: 07_individual_rates_set.png
+
+Step 8: Test Rate Validation
+1. Test minimum rate validation:
+   - Enter €5 for Mathematics (below minimum)
+   - Verify validation error appears
+   - Correct to €25
+2. Test maximum rate validation:
+   - Enter €150 for Physics (above maximum)
+   - Verify validation error appears
+   - Correct to €30
+3. Test invalid input handling:
+   - Enter non-numeric text
+   - Verify proper error handling
+   - Enter negative numbers
+
+Expected: Rate validation works correctly with appropriate error messages
+Screenshot: 08_rate_validation.png
+
+Step 9: Test Rate Configuration Persistence
+1. Navigate back to course selection
+2. Add another course (Biology) with grade levels
+3. Return to rate configuration
+4. Verify previously set rates are preserved
+5. Set rate for new course (Biology: €28/hour)
+6. Check all rates persist during navigation
+
+Expected: Rate configurations persist correctly during navigation
+Screenshot: 09_rate_persistence.png
+
+Step 10: Test Complex Multi-Course Scenario
+1. Select 5+ courses across different subject areas:
+   - Mathematics (10º-12º ano): €25/hour
+   - Physics (11º-12º ano): €30/hour
+   - Chemistry (12º ano): €35/hour
+   - Biology (10º-12º ano): €28/hour
+   - Portuguese Language (10º-12º ano): €22/hour
+   - English (10º-12º ano): €20/hour
+2. Verify each course maintains individual configuration
+3. Check that interface handles multiple courses without performance issues
+4. Verify all data is managed correctly
+
+Expected: Complex multi-course scenario works without issues
+Screenshot: 10_complex_scenario.png
+
+Step 11: Test Visual Confirmation and Summary
+1. Verify selected courses display clearly:
+   - Course names visible
+   - Grade levels shown for each course
+   - Rates displayed per course
+   - Total number of courses indicated
+2. Check visual confirmation is comprehensive
+3. Verify summary information is accurate
+4. Check that display is professional and clear
+
+Expected: Visual confirmation comprehensive and professional
+Screenshot: 11_visual_confirmation.png
+
+Step 12: Test Data Integration and API Calls
+1. Complete course selection and rate configuration
+2. Proceed to next onboarding step
+3. Verify data is properly sent to backend:
+   - Course selections saved
+   - Grade levels associated with each course
+   - Rates configured per course
+4. Check API calls are efficient and error-free
+5. Verify TeacherCourse models created correctly
+
+Expected: Data integration works correctly, all information persisted
+Screenshot: 12_data_integration.png
+API Check: Verify course relationships and rates saved in backend
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Multi-course selection works smoothly AND grade levels configurable per course AND individual rates set successfully AND all data persists correctly
+FAIL: Selection functionality broken OR grade level configuration fails OR rate configuration issues OR data not persisted
+
+Individual Step Criteria:
+- Step 1: PASS if course selection interface loads properly, FAIL if loading issues
+- Step 2: PASS if first course selection with grade levels works, FAIL if selection broken
+- Step 3: PASS if multi-course selection functions correctly, FAIL if multi-select fails
+- Step 4: PASS if validation prevents invalid selections, FAIL if validation inadequate
+- Step 5: PASS if course removal works smoothly, FAIL if removal functionality broken
+- Step 6: PASS if rate configuration interface loads with all courses, FAIL if interface issues
+- Step 7: PASS if individual rates can be set per course, FAIL if rate setting broken
+- Step 8: PASS if rate validation works correctly, FAIL if validation inadequate
+- Step 9: PASS if configurations persist during navigation, FAIL if data lost
+- Step 10: PASS if complex scenarios work without issues, FAIL if performance/functionality problems
+- Step 11: PASS if visual confirmation clear and professional, FAIL if display inadequate
+- Step 12: PASS if data integration works and persists, FAIL if backend integration broken
+
+GitHub Issue #44 Acceptance Criteria Validation:
+✓ Multi-select functionality for choosing multiple courses to teach
+✓ Grade level specification for each selected course
+✓ Course-specific rate configuration allowing different prices per subject
+✓ Visual confirmation of selected courses with easy removal options
+✓ Efficient multi-selection process
+
+User Experience Requirements:
+- Multi-selection should feel intuitive and responsive
+- Grade level specification should be clear and logical
+- Rate configuration should be straightforward with helpful validation
+- Visual feedback should be immediate and clear
+- Removal functionality should be easily accessible
+
+Performance Requirements:
+- Course selection should be immediate (<100ms response time)
+- Multi-course interface should handle 10+ courses without performance degradation
+- Rate configuration should update smoothly
+- Navigation between steps should preserve all data
+
+Data Integrity Requirements:
+- All course selections must be properly saved
+- Grade level associations must be accurate
+- Rates must be stored per course correctly
+- No data should be lost during navigation
+
+Overall Result: PASS only if multi-course selection with grade levels and individual rate configuration works completely, FAIL if any critical functionality is broken or data integrity compromised

@@ -1,4 +1,4 @@
-import { ActivityIcon, CalendarIcon, CheckCircleIcon, MailIcon, UserCheckIcon, UserPlusIcon, XCircleIcon } from 'lucide-react-native';
+import { ActivityIcon, CalendarIcon, CheckCircleIcon, MailIcon, UserIcon, UserPlusIcon, XCircleIcon } from 'lucide-react-native';
 import React from 'react';
 import { FlatList, RefreshControl } from 'react-native';
 
@@ -167,7 +167,7 @@ const LoadMoreButton: React.FC<{ onPress: () => void; isLoading: boolean }> = ({
   </Pressable>
 );
 
-export const ActivityFeed: React.FC<ActivityFeedProps> = ({
+const ActivityFeed: React.FC<ActivityFeedProps> = ({
   activities,
   isLoading,
   isLoadingMore,
@@ -241,4 +241,5 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   );
 };
 
+export { ActivityFeed };
 export default ActivityFeed;

@@ -1637,6 +1637,71 @@ class StudentBalanceViewSet(viewsets.ViewSet):
         
         return result
     
+    def _get_subscription_info(self, student_user):
+        """Get subscription information for the student."""
+        from django.utils import timezone
+        
+        # Look for active subscription transactions
+        subscription_transactions = PurchaseTransaction.objects.filter(
+            student=student_user,
+            transaction_type=TransactionType.SUBSCRIPTION,
+            payment_status=TransactionPaymentStatus.COMPLETED
+        ).order_by('-created_at')
+        
+        if not subscription_transactions.exists():
+            return {
+                'is_active': False,
+                'next_billing_date': None,
+                'billing_cycle': None,
+                'subscription_status': 'inactive',
+                'cancel_at_period_end': False,
+                'current_period_start': None,
+                'current_period_end': None,
+            }
+        
+        # For simplicity, take the most recent subscription
+        # In a real implementation, you'd integrate with Stripe subscriptions
+        latest_subscription = subscription_transactions.first()
+        
+        # Basic subscription info (in a real implementation, this would come from Stripe)
+        subscription_info = {
+            'is_active': True,
+            'subscription_status': 'active',
+            'cancel_at_period_end': False,
+        }
+        
+        # Calculate billing cycle information
+        # This is a simplified implementation - in reality, you'd get this from Stripe
+        creation_date = latest_subscription.created_at.date()
+        current_date = timezone.now().date()
+        
+        # Assume monthly billing cycle
+        from datetime import timedelta
+        from dateutil.relativedelta import relativedelta
+        
+        months_since_creation = (current_date.year - creation_date.year) * 12 + (current_date.month - creation_date.month)
+        
+        # Calculate current period
+        current_period_start = creation_date + relativedelta(months=months_since_creation)
+        current_period_end = current_period_start + relativedelta(months=1) - timedelta(days=1)
+        next_billing_date = current_period_end + timedelta(days=1)
+        
+        # If current date is past the current period end, adjust
+        if current_date > current_period_end:
+            months_since_creation += 1
+            current_period_start = creation_date + relativedelta(months=months_since_creation)
+            current_period_end = current_period_start + relativedelta(months=1) - timedelta(days=1)
+            next_billing_date = current_period_end + timedelta(days=1)
+        
+        subscription_info.update({
+            'billing_cycle': 'monthly',
+            'next_billing_date': next_billing_date,
+            'current_period_start': current_period_start,
+            'current_period_end': current_period_end,
+        })
+        
+        return subscription_info
+    
     @action(detail=False, methods=['get'], url_path='')
     def summary(self, request):
         """
@@ -1661,6 +1726,9 @@ class StudentBalanceViewSet(viewsets.ViewSet):
         # Get upcoming expirations
         upcoming_expirations = self._get_upcoming_expirations(student_user, days_ahead=7)
         
+        # Get subscription information
+        subscription_info = self._get_subscription_info(student_user)
+        
         # Prepare response data
         response_data = {
             'student_info': {
@@ -1676,6 +1744,7 @@ class StudentBalanceViewSet(viewsets.ViewSet):
             },
             'package_status': package_status,
             'upcoming_expirations': upcoming_expirations,
+            'subscription_info': subscription_info,
         }
         
         serializer = StudentBalanceSummarySerializer(response_data)
@@ -1825,6 +1894,319 @@ class StudentBalanceViewSet(viewsets.ViewSet):
         eligibility = HourDeductionService.check_booking_eligibility(student_user, duration_hours)
         
         return Response(eligibility)
+    
+    @action(detail=False, methods=['get'], url_path='receipts')
+    def receipts(self, request):
+        """
+        List all receipts for the authenticated student.
+        
+        Supports filtering by:
+        - is_valid: true/false - only show valid receipts
+        - start_date: YYYY-MM-DD - receipts generated after this date
+        - end_date: YYYY-MM-DD - receipts generated before this date
+        """
+        from finances.services.receipt_service import ReceiptGenerationService
+        
+        student_user, error_response = self._get_target_student(request)
+        if error_response:
+            return error_response
+        
+        # Parse filters
+        filters = {}
+        if request.query_params.get('is_valid'):
+            filters['is_valid'] = request.query_params.get('is_valid').lower() == 'true'
+        
+        if request.query_params.get('start_date'):
+            try:
+                from datetime import datetime
+                filters['start_date'] = datetime.strptime(
+                    request.query_params['start_date'], '%Y-%m-%d'
+                ).date()
+            except ValueError:
+                return Response(
+                    {'error': 'Invalid start_date format. Use YYYY-MM-DD'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        if request.query_params.get('end_date'):
+            try:
+                from datetime import datetime
+                filters['end_date'] = datetime.strptime(
+                    request.query_params['end_date'], '%Y-%m-%d'
+                ).date()
+            except ValueError:
+                return Response(
+                    {'error': 'Invalid end_date format. Use YYYY-MM-DD'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Get receipts using service
+        result = ReceiptGenerationService.list_student_receipts(student_user, filters)
+        
+        if result['success']:
+            return Response(result)
+        else:
+            return Response(
+                {'error': result['message']},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'], url_path='receipts/generate')
+    def generate_receipt(self, request):
+        """
+        Generate a new receipt for a completed transaction.
+        
+        Request body:
+        {
+            "transaction_id": 123
+        }
+        """
+        from finances.services.receipt_service import ReceiptGenerationService
+        from finances.serializers import ReceiptGenerationRequestSerializer
+        
+        student_user, error_response = self._get_target_student(request)
+        if error_response:
+            return error_response
+        
+        # Validate request data
+        serializer = ReceiptGenerationRequestSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        transaction_id = serializer.validated_data['transaction_id']
+        
+        # Generate receipt using service
+        result = ReceiptGenerationService.generate_receipt(
+            transaction_id=transaction_id,
+            force_regenerate=request.data.get('force_regenerate', False)
+        )
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_201_CREATED)
+        else:
+            error_status_map = {
+                'not_found': status.HTTP_404_NOT_FOUND,
+                'invalid_status': status.HTTP_400_BAD_REQUEST,
+                'generation_error': status.HTTP_500_INTERNAL_SERVER_ERROR
+            }
+            
+            http_status = error_status_map.get(
+                result.get('error_type'), 
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+            return Response(
+                {'error': result['message']},
+                status=http_status
+            )
+    
+    @action(detail=True, methods=['get'], url_path='download')
+    def download_receipt(self, request, pk=None):
+        """
+        Get download URL for a specific receipt.
+        
+        URL: /api/student-balance/receipts/{receipt_id}/download/
+        """
+        from finances.services.receipt_service import ReceiptGenerationService
+        
+        student_user, error_response = self._get_target_student(request)
+        if error_response:
+            return error_response
+        
+        receipt_id = pk
+        
+        # Get download URL using service
+        result = ReceiptGenerationService.get_receipt_download_url(
+            receipt_id=receipt_id,
+            student_user=student_user
+        )
+        
+        if result['success']:
+            return Response(result)
+        else:
+            error_status_map = {
+                'not_found': status.HTTP_404_NOT_FOUND,
+                'permission_denied': status.HTTP_403_FORBIDDEN,
+                'invalid_receipt': status.HTTP_400_BAD_REQUEST,
+                'file_missing': status.HTTP_404_NOT_FOUND,
+                'download_error': status.HTTP_500_INTERNAL_SERVER_ERROR
+            }
+            
+            http_status = error_status_map.get(
+                result.get('error_type'), 
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+            return Response(
+                {'error': result['message']},
+                status=http_status
+            )
+    
+    @action(detail=False, methods=['get'], url_path='payment-methods')
+    def payment_methods(self, request):
+        """
+        List all stored payment methods for the authenticated student.
+        
+        Query parameters:
+        - include_expired: true/false - include expired payment methods
+        """
+        from finances.services.payment_method_service import PaymentMethodService
+        
+        student_user, error_response = self._get_target_student(request)
+        if error_response:
+            return error_response
+        
+        include_expired = request.query_params.get('include_expired', 'false').lower() == 'true'
+        
+        # Get payment methods using service
+        payment_service = PaymentMethodService()
+        result = payment_service.list_payment_methods(student_user, include_expired)
+        
+        if result['success']:
+            return Response(result)
+        else:
+            return Response(
+                {'error': result['message']},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'], url_path='payment-methods')
+    def add_payment_method(self, request):
+        """
+        Add a new stored payment method using Stripe tokenization.
+        
+        Request body:
+        {
+            "stripe_payment_method_id": "pm_1234567890",
+            "is_default": false
+        }
+        """
+        from finances.services.payment_method_service import PaymentMethodService
+        from finances.serializers import PaymentMethodCreationRequestSerializer
+        
+        student_user, error_response = self._get_target_student(request)
+        if error_response:
+            return error_response
+        
+        # Validate request data
+        serializer = PaymentMethodCreationRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        stripe_payment_method_id = serializer.validated_data['stripe_payment_method_id']
+        is_default = serializer.validated_data.get('is_default', False)
+        
+        # Add payment method using service
+        payment_service = PaymentMethodService()
+        result = payment_service.add_payment_method(
+            student_user=student_user,
+            stripe_payment_method_id=stripe_payment_method_id,
+            is_default=is_default
+        )
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_201_CREATED)
+        else:
+            error_status_map = {
+                'already_exists': status.HTTP_400_BAD_REQUEST,
+                'stripe_error': status.HTTP_400_BAD_REQUEST,
+                'validation_error': status.HTTP_400_BAD_REQUEST,
+                'creation_error': status.HTTP_500_INTERNAL_SERVER_ERROR
+            }
+            
+            http_status = error_status_map.get(
+                result.get('error_type'), 
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+            return Response(
+                {'error': result['message']},
+                status=http_status
+            )
+    
+    @action(detail=True, methods=['delete'], url_path='')
+    def remove_payment_method(self, request, pk=None):
+        """
+        Remove a stored payment method.
+        
+        URL: /api/student-balance/payment-methods/{payment_method_id}/
+        """
+        from finances.services.payment_method_service import PaymentMethodService
+        
+        student_user, error_response = self._get_target_student(request)
+        if error_response:
+            return error_response
+        
+        payment_method_id = pk
+        
+        # Remove payment method using service
+        payment_service = PaymentMethodService()
+        result = payment_service.remove_payment_method(
+            student_user=student_user,
+            payment_method_id=payment_method_id
+        )
+        
+        if result['success']:
+            return Response(result)
+        else:
+            error_status_map = {
+                'not_found': status.HTTP_404_NOT_FOUND,
+                'removal_error': status.HTTP_500_INTERNAL_SERVER_ERROR
+            }
+            
+            http_status = error_status_map.get(
+                result.get('error_type'), 
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+            return Response(
+                {'error': result['message']},
+                status=http_status
+            )
+    
+    @action(detail=True, methods=['post'], url_path='set-default')
+    def set_default_payment_method(self, request, pk=None):
+        """
+        Set a payment method as the default for the student.
+        
+        URL: /api/student-balance/payment-methods/{payment_method_id}/set-default/
+        """
+        from finances.services.payment_method_service import PaymentMethodService
+        
+        student_user, error_response = self._get_target_student(request)
+        if error_response:
+            return error_response
+        
+        payment_method_id = pk
+        
+        # Set default payment method using service
+        payment_service = PaymentMethodService()
+        result = payment_service.set_default_payment_method(
+            student_user=student_user,
+            payment_method_id=payment_method_id
+        )
+        
+        if result['success']:
+            return Response(result)
+        else:
+            error_status_map = {
+                'not_found': status.HTTP_404_NOT_FOUND,
+                'expired': status.HTTP_400_BAD_REQUEST,
+                'update_error': status.HTTP_500_INTERNAL_SERVER_ERROR
+            }
+            
+            http_status = error_status_map.get(
+                result.get('error_type'), 
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+            return Response(
+                {'error': result['message']},
+                status=http_status
+            )
 
 
 class TutorAnalyticsView(APIView):

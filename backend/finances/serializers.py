@@ -14,7 +14,9 @@ from .models import (
     HourConsumption,
     PricingPlan,
     PurchaseTransaction,
+    Receipt,
     SchoolBillingSettings,
+    StoredPaymentMethod,
     StudentAccountBalance,
     TeacherCompensationRule,
     TeacherPaymentEntry,
@@ -725,3 +727,169 @@ class PurchaseHistorySerializer(serializers.ModelSerializer):
             consumptions = obj.hour_consumptions.select_related('class_session').order_by('-consumed_at')
             return HourConsumptionSerializer(consumptions, many=True).data
         return []
+
+
+class ReceiptSerializer(serializers.ModelSerializer):
+    """Serializer for Receipt model."""
+    
+    student_name = serializers.CharField(source="student.name", read_only=True)
+    transaction_amount = serializers.DecimalField(
+        source="transaction.amount", 
+        max_digits=8, 
+        decimal_places=2, 
+        read_only=True
+    )
+    transaction_type = serializers.CharField(
+        source="transaction.get_transaction_type_display", 
+        read_only=True
+    )
+    plan_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Receipt
+        fields = [
+            "id",
+            "receipt_number",
+            "amount",
+            "generated_at",
+            "is_valid",
+            "student_name",
+            "transaction_amount",
+            "transaction_type",
+            "plan_name",
+            "pdf_file",
+            "metadata",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "receipt_number",
+            "generated_at",
+            "student_name",
+            "transaction_amount",
+            "transaction_type",
+            "plan_name",
+            "created_at",
+            "updated_at",
+        ]
+    
+    def get_plan_name(self, obj):
+        """Get plan name from transaction metadata."""
+        if obj.transaction and obj.transaction.metadata:
+            return obj.transaction.metadata.get("plan_name", "Unknown Plan")
+        return "Unknown Plan"
+
+
+class ReceiptGenerationRequestSerializer(serializers.Serializer):
+    """Serializer for receipt generation requests."""
+    
+    transaction_id = serializers.IntegerField(
+        help_text="ID of the transaction to generate receipt for"
+    )
+    
+    def validate_transaction_id(self, value):
+        """Validate that transaction exists and belongs to the requesting user."""
+        from .models import PurchaseTransaction, TransactionPaymentStatus
+        
+        request = self.context.get('request')
+        if not request or not request.user:
+            raise serializers.ValidationError("Authentication required")
+        
+        try:
+            transaction = PurchaseTransaction.objects.get(id=value)
+        except PurchaseTransaction.DoesNotExist:
+            raise serializers.ValidationError("Transaction not found")
+        
+        # Check if transaction belongs to the requesting user
+        if transaction.student != request.user:
+            raise serializers.ValidationError("You can only generate receipts for your own transactions")
+        
+        # Check if transaction is completed
+        if transaction.payment_status != TransactionPaymentStatus.COMPLETED:
+            raise serializers.ValidationError("Can only generate receipts for completed transactions")
+        
+        return value
+
+
+class StoredPaymentMethodSerializer(serializers.ModelSerializer):
+    """Serializer for StoredPaymentMethod model."""
+    
+    student_name = serializers.CharField(source="student.name", read_only=True)
+    card_display = serializers.SerializerMethodField()
+    is_expired = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = StoredPaymentMethod
+        fields = [
+            "id",
+            "card_brand",
+            "card_last4",
+            "card_exp_month",
+            "card_exp_year",
+            "is_default",
+            "is_active",
+            "is_expired",
+            "student_name",
+            "card_display",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "student_name",
+            "card_display",
+            "is_expired",
+            "created_at",
+            "updated_at",
+        ]
+    
+    def get_card_display(self, obj):
+        """Get formatted card display string."""
+        if obj.card_brand and obj.card_last4:
+            return f"{obj.card_brand.title()} ****{obj.card_last4}"
+        return "Unknown Card"
+
+
+class PaymentMethodCreationRequestSerializer(serializers.Serializer):
+    """Serializer for payment method creation requests."""
+    
+    stripe_payment_method_id = serializers.CharField(
+        max_length=255,
+        help_text="Stripe PaymentMethod ID from frontend tokenization"
+    )
+    
+    is_default = serializers.BooleanField(
+        default=False,
+        help_text="Whether to set this as the default payment method"
+    )
+    
+    def validate_stripe_payment_method_id(self, value):
+        """Validate Stripe payment method ID format."""
+        if not value.startswith('pm_'):
+            raise serializers.ValidationError("Invalid Stripe payment method ID format")
+        
+        # Check if payment method already exists
+        from .models import StoredPaymentMethod
+        if StoredPaymentMethod.objects.filter(stripe_payment_method_id=value).exists():
+            raise serializers.ValidationError("This payment method is already stored")
+        
+        return value
+
+
+class EnhancedSubscriptionInfoSerializer(serializers.Serializer):
+    """Serializer for enhanced subscription information."""
+    
+    is_active = serializers.BooleanField()
+    next_billing_date = serializers.DateField(allow_null=True)
+    billing_cycle = serializers.CharField(allow_null=True)
+    subscription_status = serializers.CharField(allow_null=True)
+    cancel_at_period_end = serializers.BooleanField()
+    current_period_start = serializers.DateField(allow_null=True)
+    current_period_end = serializers.DateField(allow_null=True)
+
+
+class EnhancedStudentBalanceSummarySerializer(StudentBalanceSummarySerializer):
+    """Enhanced student balance summary with subscription information."""
+    
+    subscription_info = EnhancedSubscriptionInfoSerializer(allow_null=True)

@@ -1,0 +1,163 @@
+QA Test Case: Tutor Student Invitation System
+
+Test ID: TPROF-008
+Test Name: Tutor Student Invitation System - GitHub Issue #48
+Purpose: Verify comprehensive student invitation functionality for tutors including multiple invitation methods, tracking, analytics, and bulk operations
+Expected Result: All invitation features work seamlessly with proper tracking and analytics
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST Framework backend + React Native frontend
+- GitHub Issue: #48 - Student invitation system for tutors
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev-open`
+4. Browser: Playwright automation
+5. Real-time logging: `make logs` in separate terminal
+
+Test Data:
+- Tutor Email: anapmc.carvalho@gmail.com (should be onboarded as tutor)
+- Test Student Emails: student1@test.com, student2@test.com, student3@test.com
+- Bulk Test Emails: bulk1@test.com, bulk2@test.com, bulk3@test.com
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev-open
+  # Wait for servers to start completely
+
+Expected: Both backend and frontend servers start without errors
+Screenshot: 01_servers_started.png
+Debug: Use 'make logs' to monitor server status
+
+Step 2: Navigate to Tutor Dashboard
+1. Open browser to http://localhost:8081
+2. Complete login flow for anapmc.carvalho@gmail.com
+3. Navigate to tutor dashboard
+4. Verify dashboard loads without React errors
+
+Expected: Dashboard loads completely with all components rendered
+Screenshot: 02_tutor_dashboard_loaded.png
+Debug: Check browser console for React errors
+
+Step 3: Access Student Invitation Interface
+1. Look for "Invite Students" or "Student Management" section in dashboard
+2. Click on student invitation interface
+3. Verify invitation page/modal loads
+
+Expected: Student invitation interface is accessible and loads properly
+Screenshot: 03_invitation_interface_access.png
+
+=== ACCEPTANCE CRITERIA TESTING ===
+
+Criterion 1: Tutor can access student invitation interface from dashboard
+1. From tutor dashboard, locate invitation interface
+2. Verify interface is prominently displayed and accessible
+3. Test navigation to invitation features
+
+Expected: PASS if interface is easily accessible, FAIL if hidden or broken
+Screenshot: 04_criterion_1_interface_access.png
+
+Criterion 2: Multiple invitation methods (email + shareable links)
+1. Verify email invitation form is available
+2. Verify shareable link generation option exists
+3. Test both methods are functional
+
+Expected: PASS if both methods available and working, FAIL if either missing
+Screenshot: 05_criterion_2_multiple_methods.png
+
+Criterion 3: Email invitation form with custom message capability
+1. Access email invitation form
+2. Enter student email address
+3. Find custom message field
+4. Enter personalized message
+5. Send invitation
+
+Expected: PASS if custom message field works, FAIL if not available or broken
+Screenshot: 06_criterion_3_custom_message.png
+
+Criterion 4: Generic invitation link generation for social sharing
+1. Access link generation feature
+2. Generate shareable invitation link
+3. Verify link is generic (not email-specific)
+4. Test link functionality
+
+Expected: PASS if generic link generates and works, FAIL if link is broken
+Screenshot: 07_criterion_4_generic_link.png
+
+Criterion 5: Invitation tracking (sent, pending, accepted, expired)
+1. Send test invitations
+2. Access invitation tracking dashboard/list
+3. Verify status tracking for different states
+4. Check status updates work properly
+
+Expected: PASS if all statuses track correctly, FAIL if tracking incomplete
+Screenshot: 08_criterion_5_invitation_tracking.png
+
+Criterion 6: Bulk invitation capability for multiple students
+1. Access bulk invitation feature
+2. Enter multiple email addresses
+3. Send bulk invitations
+4. Verify all invitations are sent
+
+Expected: PASS if bulk feature works properly, FAIL if limited to single invites
+Screenshot: 09_criterion_6_bulk_invitations.png
+
+Criterion 7: Invitation link customization (optional custom URLs)
+1. Access link customization options
+2. Attempt to create custom URL slug
+3. Verify custom link works
+4. Test customization features
+
+Expected: PASS if customization available, FAIL if not implemented
+Screenshot: 10_criterion_7_link_customization.png
+
+Criterion 8: Automated follow-up reminders for pending invitations
+1. Send invitation
+2. Look for reminder configuration options
+3. Check if automated reminders are set up
+4. Verify reminder functionality exists
+
+Expected: PASS if reminder system exists, FAIL if no automated follow-ups
+Screenshot: 11_criterion_8_follow_up_reminders.png
+
+Criterion 9: Invitation analytics (acceptance rates, time to acceptance)
+1. Access analytics dashboard/section
+2. Look for acceptance rate statistics
+3. Check time-to-acceptance metrics
+4. Verify analytics data accuracy
+
+Expected: PASS if comprehensive analytics available, FAIL if analytics missing
+Screenshot: 12_criterion_9_invitation_analytics.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All 9 acceptance criteria must achieve individual PASS status
+FAIL: Any single acceptance criterion fails results in overall FAIL
+
+Individual Criterion Scoring:
+- Criterion 1 (Dashboard Access): PASS/FAIL
+- Criterion 2 (Multiple Methods): PASS/FAIL  
+- Criterion 3 (Custom Messages): PASS/FAIL
+- Criterion 4 (Generic Links): PASS/FAIL
+- Criterion 5 (Invitation Tracking): PASS/FAIL
+- Criterion 6 (Bulk Invitations): PASS/FAIL
+- Criterion 7 (Link Customization): PASS/FAIL
+- Criterion 8 (Follow-up Reminders): PASS/FAIL
+- Criterion 9 (Invitation Analytics): PASS/FAIL
+
+Overall Result: PASS only if ALL 9 criteria pass, FAIL if ANY criterion fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Invitation interface should be intuitive and user-friendly
+- Form validation should provide clear error messages
+- Loading states should be shown during invitation sending
+- Success confirmations should be clear and actionable
+- Invitation tracking should be real-time and accurate
+- Analytics should be visually clear and meaningful

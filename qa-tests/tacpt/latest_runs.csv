@@ -1,0 +1,14 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+tacpt-001,Email Invitation Acceptance Happy Path,Test complete email-based invitation acceptance flow with profile wizard,20250801-133226,CRITICAL_FAILURE,1,0,1
+tacpt-002,Generic Invitation Link Acceptance,Test generic school invitation link acceptance for teachers,,,0,0,0
+tacpt-003,Multi-School Dashboard Functionality,Test teacher multi-school dashboard viewing and switching,,,0,0,0
+tacpt-004,Expired Token Error Handling,Test handling of expired invitation tokens with clear error messages,,,0,0,0
+tacpt-005,Invalid Token Error Handling,Test handling of malformed or invalid invitation tokens,,,0,0,0
+tacpt-006,Authentication Mismatch Handling,Test error handling when invitation email doesn't match logged-in user,,,0,0,0
+tacpt-007,Mobile Responsive Design,Test invitation acceptance on mobile devices with touch interactions,,,0,0,0
+tacpt-008,School Preview and Details,Test school information display and preview functionality,,,0,0,0
+tacpt-009,Invitation Decline Flow,Test declining invitations with confirmation and proper feedback,,,0,0,0
+tacpt-010,Duplicate Membership Handling,Test graceful handling of attempts to join schools user is already member of,,,0,0,0
+tacpt-011,Network Failure Recovery,Test retry mechanisms and error recovery from network failures,,,0,0,0
+tacpt-012,Profile Wizard Integration,Test seamless integration with teacher profile wizard after acceptance,,,0,0,0
+tacpt-013,Simplified Teacher Invitation System Validation,Validate simplified system loads and functions without crashes or import errors,20250801-143717,PASS,1,1,0

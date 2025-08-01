@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "finances",
     "scheduler",
     "tasks",
+    "notifications",
 ]
 
 MIDDLEWARE = [
@@ -243,6 +244,9 @@ REST_FRAMEWORK = {
         "auth_code_verify": "10/hour",  # Limit verification attempts to 10 per hour per IP
         "purchase_initiation": "10/hour",  # Limit purchase attempts to 10 per hour per IP
         "purchase_initiation_email": "5/hour",  # Limit purchase attempts to 5 per hour per email
+        "profile_wizard": "10/min",  # Profile wizard rate limiting
+        "file_upload": "5/min",  # File upload rate limiting
+        "security_event": "3/min",  # Security event throttling
     },
 }
 

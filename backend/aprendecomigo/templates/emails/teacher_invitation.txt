@@ -1,0 +1,65 @@
+==========================================
+📚 APRENDE COMIGO - TEACHER INVITATION
+==========================================
+
+You're Invited to Join as a Teacher!
+
+Hello,
+
+We're excited to invite you to join {{ school_name }} as a teacher on the Aprende Comigo platform. This is a wonderful opportunity to share your knowledge and help students achieve their educational goals.
+
+------------------------------------------
+SCHOOL INFORMATION
+------------------------------------------
+School: {{ school_name|escape }}
+Role: {{ role_display }}
+{% if school_description %}
+Description: {{ school_description|escape }}
+{% endif %}
+
+{% if custom_message %}
+------------------------------------------
+PERSONAL MESSAGE FROM {{ invited_by_name|escape|upper }}
+------------------------------------------
+{{ custom_message|escape }}
+
+{% endif %}
+------------------------------------------
+INVITATION DETAILS
+------------------------------------------
+School: {{ school_name|escape }}
+Role: {{ role_display }}
+Invited by: {{ invited_by_name|escape }} ({{ invited_by_email|escape }})
+Expires: {{ expires_at|date:"F j, Y \a\t g:i A" }}
+
+⏰ TIME SENSITIVE: This invitation expires on {{ expires_at|date:"F j, Y" }}. Please accept it soon to avoid missing this opportunity.
+
+------------------------------------------
+ACCEPT YOUR INVITATION
+------------------------------------------
+To accept this invitation, please visit:
+{{ invitation_link }}
+
+------------------------------------------
+WHAT HAPPENS NEXT?
+------------------------------------------
+1. Click the invitation link above
+2. Complete your teacher profile setup  
+3. Start teaching and helping students learn
+
+If you have any questions about this invitation or the platform, please don't hesitate to contact {{ invited_by_name|escape }} at {{ invited_by_email|escape }}.
+
+Welcome to the Aprende Comigo community!
+
+------------------------------------------
+APRENDE COMIGO TEAM
+------------------------------------------
+Website: https://aprendecomigo.com
+Support: https://aprendecomigo.com/support
+Privacy Policy: https://aprendecomigo.com/privacy
+
+This email was sent to {{ recipient_email|escape }} regarding an invitation to join {{ school_name|escape }}.
+
+If you didn't expect this invitation, you can safely ignore this email.
+
+© {{ current_year }} Aprende Comigo. All rights reserved.

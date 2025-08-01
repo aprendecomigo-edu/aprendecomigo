@@ -1,4 +1,4 @@
-import { CheckIcon, EditIcon, GlobeIcon, MailIcon, MapPinIcon, PhoneIcon, SaveIcon, SchoolIcon, XIcon } from 'lucide-react-native';
+import { Check, Edit, Globe, Mail, MapPin, Phone, Save, School, X } from 'lucide-react-native';
 import React, { useState } from 'react';
 
 import { SchoolInfo } from '@/api/userApi';
@@ -57,7 +57,7 @@ const InfoRowSkeleton: React.FC = () => (
   </HStack>
 );
 
-export const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
+const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
   schoolInfo,
   isLoading,
   onUpdate,
@@ -146,7 +146,7 @@ export const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
       <Card variant="elevated" className="bg-white shadow-sm">
         <CardBody>
           <VStack space="md" className="items-center py-8">
-            <Icon as={SchoolIcon} size="xl" className="text-gray-300" />
+            <Icon as={School} size="xl" className="text-gray-300" />
             <Text className="text-lg font-medium text-gray-600">
               Informações indisponíveis
             </Text>
@@ -172,7 +172,7 @@ export const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
               onPress={handleEdit}
               className="p-2 rounded-md bg-blue-50 hover:bg-blue-100"
             >
-              <Icon as={EditIcon} size="sm" className="text-blue-600" />
+              <Icon as={Edit} size="sm" className="text-blue-600" />
             </Pressable>
           ) : (
             <HStack space="xs">
@@ -181,14 +181,14 @@ export const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
                 disabled={isSaving}
                 className="p-2 rounded-md bg-gray-50 hover:bg-gray-100"
               >
-                <Icon as={XIcon} size="sm" className="text-gray-600" />
+                <Icon as={X} size="sm" className="text-gray-600" />
               </Pressable>
               <Pressable
                 onPress={handleSave}
                 disabled={isSaving}
                 className="p-2 rounded-md bg-green-50 hover:bg-green-100"
               >
-                <Icon as={isSaving ? SaveIcon : CheckIcon} size="sm" className="text-green-600" />
+                <Icon as={isSaving ? Save : Check} size="sm" className="text-green-600" />
               </Pressable>
             </HStack>
           )}
@@ -292,7 +292,7 @@ export const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
         ) : (
           <VStack space="lg">
             <InfoRow
-              icon={SchoolIcon}
+              icon={School}
               label="Nome"
               value={schoolInfo.name}
               placeholder="Nome da escola não informado"
@@ -300,14 +300,14 @@ export const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
             
             {schoolInfo.description && (
               <InfoRow
-                icon={SchoolIcon}
+                icon={School}
                 label="Descrição"
                 value={schoolInfo.description}
               />
             )}
 
             <InfoRow
-              icon={MapPinIcon}
+              icon={MapPin}
               label="Endereço"
               value={schoolInfo.address}
               placeholder="Endereço não informado"
@@ -316,7 +316,7 @@ export const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
             <HStack space="lg" className="flex-wrap">
               <VStack className="flex-1 min-w-0">
                 <InfoRow
-                  icon={MailIcon}
+                  icon={Mail}
                   label="Email"
                   value={schoolInfo.contact_email}
                   placeholder="Email não informado"
@@ -325,7 +325,7 @@ export const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
 
               <VStack className="flex-1 min-w-0">
                 <InfoRow
-                  icon={PhoneIcon}
+                  icon={Phone}
                   label="Telefone"
                   value={schoolInfo.phone_number}
                   placeholder="Telefone não informado"
@@ -335,7 +335,7 @@ export const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
 
             {schoolInfo.website && (
               <InfoRow
-                icon={GlobeIcon}
+                icon={Globe}
                 label="Website"
                 value={schoolInfo.website}
               />
@@ -371,4 +371,5 @@ export const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
   );
 };
 
+export { SchoolInfoCard };
 export default SchoolInfoCard;

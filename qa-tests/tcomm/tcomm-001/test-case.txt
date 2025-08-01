@@ -1,0 +1,185 @@
+QA Test Case: Email Template System Test
+
+Test ID: TCOMM-001
+Test Name: Email Template System Test
+Purpose: Verify that school administrators can create, edit, and manage email templates with school branding integration for teacher communications
+Expected Result: Complete email template management system with branding customization functions properly
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST Framework backend + React Native frontend with Expo Router
+- Focus: Teacher Communication System (GitHub Issue #53)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/backend
+2. Python Virtual Environment: .venv/ in project root
+3. `make dev` to start development servers
+4. `make logs` to monitor server logs during testing
+
+Test Data:
+- Test School Owner Email: anapmc.carvalho@gmail.com
+- School: Test School with existing branding setup
+- Template Types: teacher_invitation, welcome_message, onboarding_tips
+- Expected Database Models: SchoolEmailTemplate, EmailCommunication
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+1. Navigate to project root directory
+2. Activate Python virtual environment
+3. Start development servers
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/backend
+  source .venv/bin/activate || python -m venv .venv && source .venv/bin/activate
+  make dev
+
+Expected: Both Django backend and Expo frontend servers start successfully
+Screenshot: 01_servers_started.png
+Debug: Use 'make logs' to view server logs if issues occur
+
+Step 2: School Owner Login
+1. Open browser to http://localhost:8081
+2. Navigate to sign-in page
+3. Enter test school owner email: anapmc.carvalho@gmail.com
+4. Complete passwordless authentication flow
+5. Verify successful login and redirect to school dashboard
+
+Expected: Successful login and access to school admin features
+Screenshot: 02_school_owner_logged_in.png
+
+Step 3: Navigate to Communication Dashboard
+1. From school dashboard, locate Communication or Templates section
+2. Navigate to communication management dashboard
+3. Verify the communication dashboard loads with template management interface
+4. Check for existing email templates and analytics display
+
+Expected: Communication dashboard loads with template management UI
+Screenshot: 03_communication_dashboard_loaded.png
+URL Expected: /(school-admin)/communication or similar
+
+Step 4: Create New Email Template
+1. Click "Create Template" or "New Template" button
+2. Select template type: "teacher_invitation"
+3. Enter template name: "Custom Teacher Invitation Template"
+4. Fill in subject template: "Welcome to {{school_name}} - Join Our Teaching Team!"
+5. Add HTML content with template variables:
+   ```html
+   <h1>Welcome {{teacher_name}}!</h1>
+   <p>You've been invited to join {{school_name}} as a teacher.</p>
+   <p>School Contact: {{school_email}}</p>
+   ```
+6. Add plain text version of the content
+7. Enable "Use School Branding" option
+8. Save the template
+
+Expected: Template creation form works and template saves successfully
+Screenshot: 04_template_creation_form.png
+Screenshot: 05_template_saved_successfully.png
+
+Step 5: Test Template Branding Integration
+1. In template creation/edit form, verify school branding options
+2. Check that school colors, logo, and styling are available
+3. Test template preview with school branding applied
+4. Verify custom CSS field is available for additional styling
+
+Expected: School branding integration works in template system
+Screenshot: 06_template_branding_options.png
+Screenshot: 07_template_preview_with_branding.png
+
+Step 6: Template Management Interface
+1. Return to templates list/management page
+2. Verify newly created template appears in the list
+3. Test template editing functionality
+4. Test template activation/deactivation
+5. Test setting template as default for template type
+6. Verify template filtering and search functionality
+
+Expected: Complete template management interface functions properly
+Screenshot: 08_template_management_interface.png
+
+Step 7: Template Variables and Preview
+1. Open template editor
+2. Test available template variables (teacher_name, school_name, etc.)
+3. Use template preview functionality
+4. Verify variables are properly substituted in preview
+5. Test both HTML and text versions of template
+
+Expected: Template variables work correctly and preview shows proper substitution
+Screenshot: 09_template_variables_preview.png
+
+Step 8: Test Email Template API Integration
+1. Open browser developer tools or use API testing tool
+2. Check API endpoints for template management:
+   - GET /api/communication/templates/
+   - POST /api/communication/templates/
+   - PUT /api/communication/templates/{id}/
+   - DELETE /api/communication/templates/{id}/
+3. Verify API responses contain proper template data
+4. Test template creation via API
+
+Expected: API endpoints work correctly and return proper JSON responses
+Screenshot: 10_api_endpoints_working.png
+
+Step 9: Error Handling and Validation
+1. Test template creation with missing required fields
+2. Test invalid template variable syntax
+3. Test template with malformed HTML/CSS
+4. Verify proper error messages are displayed
+5. Test template character limits and validation
+
+Expected: Proper error handling and validation messages
+Screenshot: 11_error_handling_validation.png
+
+Step 10: Cross-Template Type Testing
+1. Create templates for different types:
+   - welcome_message
+   - onboarding_tips  
+   - profile_completion
+2. Verify each template type has appropriate fields
+3. Test template type-specific features and variables
+4. Verify templates can be organized by type
+
+Expected: Multiple template types work correctly with type-specific features
+Screenshot: 12_multiple_template_types.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete AND all of the following conditions are met:
+- Communication dashboard loads and displays properly
+- Template creation form works with all fields
+- School branding integration functions correctly  
+- Template management interface (list, edit, delete, activate) works
+- Template variables and preview system functions properly
+- API endpoints respond correctly with proper data
+- Error handling and validation work as expected
+- Multiple template types can be created and managed
+- No console errors or UI glitches occur
+- All screenshots capture successful functionality
+
+FAIL: Any step fails OR any of the following occurs:
+- Communication dashboard fails to load or displays errors
+- Template creation/editing functionality doesn't work
+- School branding integration is broken or missing
+- Template management features are non-functional
+- Template variables don't substitute properly
+- API endpoints return errors or malformed responses
+- Error handling is inadequate or missing
+- UI shows errors, blank screens, or broken layouts
+- Any console errors related to communication features
+- Server errors occur during template operations
+
+Individual Step Criteria:
+- Step 1: PASS if servers start without errors, FAIL if startup fails
+- Step 2: PASS if login successful, FAIL if authentication issues
+- Step 3: PASS if dashboard loads properly, FAIL if navigation/loading issues
+- Step 4: PASS if template creation works, FAIL if form errors or save failures
+- Step 5: PASS if branding integration works, FAIL if branding features missing
+- Step 6: PASS if management interface works, FAIL if CRUD operations fail
+- Step 7: PASS if variables and preview work, FAIL if substitution broken
+- Step 8: PASS if API endpoints work, FAIL if API errors or malformed responses
+- Step 9: PASS if error handling works, FAIL if poor validation or error messages
+- Step 10: PASS if multiple template types work, FAIL if type-specific issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

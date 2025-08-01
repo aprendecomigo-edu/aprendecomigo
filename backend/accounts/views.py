@@ -22,6 +22,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from .throttles import ProfileWizardThrottle, FileUploadThrottle, IPBasedThrottle as LocalIPBasedThrottle
 from .db_queries import (
@@ -41,6 +43,10 @@ from .models import (
     CustomUser,
     EducationalSystem,
     EmailDeliveryStatus,
+    EmailSequence,
+    EmailSequenceStep,
+    EmailCommunication,
+    SchoolEmailTemplate,
     InvitationStatus,
     School,
     SchoolActivity,
@@ -62,11 +68,16 @@ from .permissions import (
 )
 from .serializers import (
     AcceptInvitationSerializer,
+    AuthenticationResponseSerializer,
     ComprehensiveSchoolSettingsSerializer,
     CourseSerializer,
     CreateStudentSerializer,
     CreateUserSerializer,
     EducationalSystemSerializer,
+    EmailAnalyticsSerializer,
+    EmailCommunicationSerializer,
+    EmailSequenceSerializer,
+    EmailTemplatePreviewSerializer,
     EnhancedSchoolSerializer,
     InviteExistingTeacherSerializer,
     ProfileWizardDataSerializer,
@@ -74,6 +85,7 @@ from .serializers import (
     ProfilePhotoUploadSerializer,
     RequestCodeSerializer,
     SchoolActivitySerializer,
+    SchoolEmailTemplateSerializer,
     SchoolInvitationSerializer,
     SchoolMembershipSerializer,
     SchoolMetricsSerializer,
@@ -81,6 +93,7 @@ from .serializers import (
     SchoolSerializer,
     SchoolSettingsSerializer,
     SchoolWithMembersSerializer,
+    TeacherConsolidatedDashboardSerializer,
     StudentSerializer,
     TeacherCourseSerializer,
     TeacherInvitationSerializer,
@@ -827,10 +840,10 @@ class VerifyCodeView(APIView):
         if hasattr(request, "_request") and hasattr(request._request, "session"):
             login(request._request, user)
 
-        # Return the token and user info
+        # Return the token and user info with enhanced data for frontend routing
         response_data = {
             "token": token,
-            "user": UserSerializer(user).data,
+            "user": AuthenticationResponseSerializer(user).data,
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
@@ -1791,6 +1804,63 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
                     "error_code": "BULK_INVITATION_FAILED"
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated, IsTeacherInAnySchool])
+    def consolidated_dashboard(self, request):
+        """
+        Get consolidated dashboard data for the authenticated teacher.
+        
+        Returns comprehensive dashboard data including:
+        - Teacher profile information
+        - Students with progress data
+        - Sessions (today, upcoming, recent completed)
+        - Progress metrics and analytics
+        - Recent activities
+        - Earnings data
+        - Quick stats for widgets
+        
+        Optimized for performance with query optimization and caching.
+        Response time target: < 500ms
+        """
+        try:
+            # Ensure user has a teacher profile
+            if not hasattr(request.user, 'teacher_profile') or not request.user.teacher_profile:
+                return Response(
+                    {
+                        "error": "Teacher profile not found",
+                        "detail": "User must have a teacher profile to access dashboard"
+                    },
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            teacher_profile = request.user.teacher_profile
+            
+            # Use the dashboard service for data aggregation
+            from .services.teacher_dashboard_service import TeacherDashboardService
+            
+            dashboard_service = TeacherDashboardService(teacher_profile)
+            dashboard_data = dashboard_service.get_consolidated_dashboard_data()
+            
+            # Serialize the response
+            serializer = TeacherConsolidatedDashboardSerializer(dashboard_data)
+            
+            # Add cache control headers for client-side caching
+            response = Response(serializer.data, status=status.HTTP_200_OK)
+            response['Cache-Control'] = 'private, max-age=300'  # 5 minutes cache
+            response['X-Dashboard-Generated'] = timezone.now().isoformat()
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error generating consolidated dashboard for teacher {request.user.id}: {e}", exc_info=True)
+            
+            return Response(
+                {
+                    "error": "Unable to load dashboard data",
+                    "detail": "Please try again in a few moments"
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
 
@@ -3458,71 +3528,315 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
     
+    @swagger_auto_schema(
+        method='post',
+        operation_summary="Accept Teacher Invitation",
+        operation_description="Accept a teacher invitation and create/update teacher profile",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'bio': openapi.Schema(type=openapi.TYPE_STRING, description='Teacher bio (max 1000 chars)', maxLength=1000),
+                'specialty': openapi.Schema(type=openapi.TYPE_STRING, description='Teaching specialty'),
+                'hourly_rate': openapi.Schema(type=openapi.TYPE_NUMBER, description='Hourly rate (5.00-200.00)', minimum=5.0, maximum=200.0),
+                'phone_number': openapi.Schema(type=openapi.TYPE_STRING, description='Phone number in international format'),
+                'address': openapi.Schema(type=openapi.TYPE_STRING, description='Physical address'),
+                'teaching_subjects': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(type=openapi.TYPE_STRING),
+                    description='Array of teaching subjects (max 10)'
+                ),
+                'education_background': openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    description='Education background information',
+                    properties={
+                        'degree': openapi.Schema(type=openapi.TYPE_STRING),
+                        'university': openapi.Schema(type=openapi.TYPE_STRING),
+                        'graduation_year': openapi.Schema(type=openapi.TYPE_INTEGER),
+                    }
+                ),
+                'teaching_experience': openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    description='Teaching experience details',
+                    properties={
+                        'years': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        'description': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                ),
+            },
+            example={
+                'bio': 'Experienced mathematics teacher with passion for helping students',
+                'specialty': 'Mathematics, Physics',
+                'hourly_rate': 45.00,
+                'phone_number': '+1234567890',
+                'teaching_subjects': ['Mathematics', 'Physics'],
+                'education_background': {
+                    'degree': 'Masters in Mathematics',
+                    'university': 'University Name'
+                },
+                'teaching_experience': {
+                    'years': 5,
+                    'description': '5 years teaching high school mathematics'
+                }
+            }
+        ),
+        responses={
+            200: openapi.Response(
+                description="Invitation accepted successfully",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'success': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                        'invitation_accepted': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                        'teacher_profile': openapi.Schema(type=openapi.TYPE_OBJECT),
+                        'school_membership': openapi.Schema(type=openapi.TYPE_OBJECT),
+                    }
+                )
+            ),
+            400: openapi.Response(
+                description="Bad request - validation errors, invitation expired/accepted/declined",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'error': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'code': openapi.Schema(type=openapi.TYPE_STRING),
+                                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                                'details': openapi.Schema(type=openapi.TYPE_OBJECT),
+                            }
+                        ),
+                        'timestamp': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                        'path': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            401: openapi.Response(
+                description="Authentication required",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'error': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'code': openapi.Schema(type=openapi.TYPE_STRING, example='AUTHENTICATION_REQUIRED'),
+                                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                                'details': openapi.Schema(
+                                    type=openapi.TYPE_OBJECT,
+                                    properties={
+                                        'invitation_details': openapi.Schema(type=openapi.TYPE_OBJECT)
+                                    }
+                                ),
+                            }
+                        ),
+                        'timestamp': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                        'path': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            403: openapi.Response(
+                description="Forbidden - invitation not for authenticated user",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'error': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'code': openapi.Schema(type=openapi.TYPE_STRING, example='INVITATION_INVALID_RECIPIENT'),
+                                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                            }
+                        ),
+                        'timestamp': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                        'path': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            404: openapi.Response(
+                description="Invitation not found",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'error': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'code': openapi.Schema(type=openapi.TYPE_STRING, example='INVITATION_NOT_FOUND'),
+                                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                            }
+                        ),
+                        'timestamp': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                        'path': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            500: openapi.Response(
+                description="Internal server error",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'error': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'code': openapi.Schema(type=openapi.TYPE_STRING, example='PROFILE_CREATION_FAILED'),
+                                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                                'details': openapi.Schema(type=openapi.TYPE_OBJECT),
+                            }
+                        ),
+                        'timestamp': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                        'path': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+        },
+        manual_parameters=[
+            openapi.Parameter(
+                'token',
+                openapi.IN_PATH,
+                description="Unique invitation token",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        tags=['Teacher Invitations'],
+    )
     @action(detail=True, methods=["post"], permission_classes=[AllowAny])
     def accept(self, request, token=None):
         """
         Accept a teacher invitation with comprehensive profile creation support.
         
-        POST /api/accounts/invitations/{token}/accept/
+        This endpoint allows teachers to accept invitations from schools and simultaneously
+        create or update their teacher profile with comprehensive information.
+        
+        **Authentication:** Not required for invitation acceptance (token-based)
+        **Rate Limiting:** Applied per IP and per user
+        **HTTPS Required:** Yes, for token security
+        
+        **Request Format:**
+        ```
+        POST /api/accounts/teacher-invitations/{token}/accept/
+        Content-Type: application/json
+        
+        {
+            "bio": "Experienced mathematics teacher...",
+            "specialty": "Mathematics, Physics",
+            "hourly_rate": 45.00,
+            "phone_number": "+1234567890",
+            "teaching_subjects": ["Mathematics", "Physics"],
+            "education_background": {
+                "degree": "Masters in Mathematics",
+                "university": "University Name"
+            },
+            "teaching_experience": {
+                "years": 5,
+                "description": "5 years teaching high school"
+            }
+        }
+        ```
+        
+        **Success Response (201 Created):**
+        ```json
+        {
+            "success": true,
+            "invitation_accepted": true,
+            "teacher_profile": {
+                "id": 123,
+                "bio": "Experienced mathematics teacher...",
+                "profile_completion_score": 85.5
+            },
+            "school_membership": {
+                "school_id": 456,
+                "school_name": "Test School",
+                "role": "teacher"
+            }
+        }
+        ```
+        
+        **Error Responses:**
+        - `404 NOT_FOUND`: Invitation token not found
+        - `400 BAD_REQUEST`: Invitation expired/already accepted/declined
+        - `401 UNAUTHORIZED`: Authentication required
+        - `403 FORBIDDEN`: Invitation not for authenticated user
+        - `400 BAD_REQUEST`: Validation errors in profile data
+        - `500 INTERNAL_SERVER_ERROR`: Server error during processing
+        
+        **Validation Rules:**
+        - `hourly_rate`: 5.00 - 200.00 USD/hour
+        - `phone_number`: Valid international format
+        - `bio`: Maximum 1000 characters
+        - `teaching_subjects`: Array of strings, max 10 subjects
         
         Enhanced to support comprehensive teacher profile creation during invitation acceptance.
         Supports file uploads, structured data validation, and maintains backward compatibility.
         
         GitHub issue #50: [Flow C] Teacher Acceptance Workflow - Complete Profile Creation During Invitation Acceptance
+        GitHub issue #80: [Flow C] Backend API Documentation and Error Message Standardization
         """
+        
+        from common.error_handling import (
+            create_invitation_not_found_response,
+            create_invitation_expired_response,
+            create_invitation_already_accepted_response,
+            create_invitation_already_declined_response,
+            create_authentication_error_response,
+            create_invitation_invalid_recipient_response,
+            create_validation_error_response,
+            create_error_response,
+            APIErrorCode
+        )
+        
+        # Get invitation with proper error handling
         try:
             invitation = TeacherInvitation.objects.select_related('school', 'invited_by').get(token=token)
         except TeacherInvitation.DoesNotExist:
-            return Response(
-                {"error": "Invalid invitation token"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            return create_invitation_not_found_response(request_path=request.path)
         
-        # Check if invitation is valid
+        # Check if invitation is valid with specific error responses
         if not invitation.is_valid():
             if invitation.is_accepted:
-                return Response(
-                    {"error": "This invitation has already been accepted"},
-                    status=status.HTTP_400_BAD_REQUEST,
+                return create_invitation_already_accepted_response(
+                    request_path=request.path,
+                    accepted_at=invitation.accepted_at
+                )
+            elif hasattr(invitation, 'declined_at') and invitation.declined_at:
+                return create_invitation_already_declined_response(
+                    request_path=request.path,
+                    declined_at=invitation.declined_at
                 )
             else:
-                return Response(
-                    {"error": "This invitation has expired or is no longer valid"},
-                    status=status.HTTP_400_BAD_REQUEST,
+                return create_invitation_expired_response(
+                    request_path=request.path,
+                    expires_at=invitation.expires_at
                 )
         
-        # Check if user is authenticated
+        # Check authentication with invitation context
         if not request.user.is_authenticated:
-            return Response(
-                {
-                    "error": "Authentication required to accept invitation",
+            return create_authentication_error_response(
+                message="Authentication required to accept invitation",
+                request_path=request.path,
+                details={
                     "invitation_details": {
                         "school_name": invitation.school.name,
                         "email": invitation.email,
-                        "expires_at": invitation.expires_at,
+                        "expires_at": invitation.expires_at.isoformat(),
+                        "role": invitation.get_role_display()
                     }
-                },
-                status=status.HTTP_401_UNAUTHORIZED,
+                }
             )
         
-        # Verify the current user is the intended recipient
+        # Verify recipient with standardized error
         if invitation.email != request.user.email:
-            return Response(
-                {"error": "This invitation is not for your account"},
-                status=status.HTTP_403_FORBIDDEN,
+            return create_invitation_invalid_recipient_response(
+                expected_email=invitation.email,
+                request_path=request.path
             )
         
-        # Validate comprehensive profile data using the new serializer
+        # Validate profile data with improved error handling
         from .serializers import ComprehensiveTeacherProfileCreationSerializer
         profile_serializer = ComprehensiveTeacherProfileCreationSerializer(data=request.data)
         
         if not profile_serializer.is_valid():
-            return Response(
-                {
-                    "error": "Invalid profile data provided",
-                    "errors": profile_serializer.errors
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+            return create_validation_error_response(
+                serializer_errors=profile_serializer.errors,
+                message="Invalid teacher profile data provided",
+                request_path=request.path
             )
         
         validated_profile_data = profile_serializer.validated_data
@@ -3687,55 +4001,210 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
                 
         except Exception as e:
             logger.error(f"Accept invitation failed for token {token}: {e}")
-            return Response(
-                {"error": "Failed to accept invitation. Please try again."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            return create_error_response(
+                error_code=APIErrorCode.PROFILE_CREATION_FAILED,
+                message="Failed to accept invitation and create teacher profile. Please try again.",
+                details={"error_type": type(e).__name__},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                request_path=request.path
             )
     
+    @swagger_auto_schema(
+        method='post',
+        operation_summary="Decline Teacher Invitation",
+        operation_description="Decline a teacher invitation using the token",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'reason': openapi.Schema(
+                    type=openapi.TYPE_STRING, 
+                    description='Optional decline reason (max 500 chars)', 
+                    maxLength=500,
+                    example='Not interested at this time'
+                ),
+            },
+            required=[],
+        ),
+        responses={
+            200: openapi.Response(
+                description="Invitation declined successfully",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
+                        'invitation_declined': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING, example='Invitation declined successfully'),
+                        'invitation_details': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'school_name': openapi.Schema(type=openapi.TYPE_STRING),
+                                'role': openapi.Schema(type=openapi.TYPE_STRING),
+                                'declined_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                            }
+                        ),
+                    }
+                )
+            ),
+            400: openapi.Response(
+                description="Bad request - invitation already processed or expired",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'error': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'code': openapi.Schema(type=openapi.TYPE_STRING, example='INVITATION_ALREADY_ACCEPTED'),
+                                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                                'details': openapi.Schema(type=openapi.TYPE_OBJECT),
+                            }
+                        ),
+                        'timestamp': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                        'path': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            404: openapi.Response(
+                description="Invitation not found",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'error': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'code': openapi.Schema(type=openapi.TYPE_STRING, example='INVITATION_NOT_FOUND'),
+                                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                            }
+                        ),
+                        'timestamp': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                        'path': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            500: openapi.Response(
+                description="Internal server error",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'error': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'code': openapi.Schema(type=openapi.TYPE_STRING),
+                                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                                'details': openapi.Schema(type=openapi.TYPE_OBJECT),
+                            }
+                        ),
+                        'timestamp': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                        'path': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+        },
+        manual_parameters=[
+            openapi.Parameter(
+                'token',
+                openapi.IN_PATH,
+                description="Unique invitation token",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        tags=['Teacher Invitations'],
+    )
     @action(detail=True, methods=["post"], permission_classes=[AllowAny])
     def decline(self, request, token=None):
         """
         Decline a teacher invitation.
         
+        This endpoint allows anyone to decline a teacher invitation using the token.
+        No authentication is required as the token provides authorization.
+        
+        **Authentication:** Not required (token-based authorization)
+        **Rate Limiting:** Applied per IP
+        **HTTPS Required:** Yes, for token security
+        
+        **Request Format:**
+        ```
         POST /api/accounts/teacher-invitations/{token}/decline/
+        Content-Type: application/json
+        
+        {
+            "reason": "Not interested at this time"  // Optional decline reason
+        }
+        ```
+        
+        **Success Response (200 OK):**
+        ```json
+        {
+            "success": true,
+            "invitation_declined": true,
+            "message": "Invitation declined successfully",
+            "invitation_details": {
+                "school_name": "Test School",
+                "role": "teacher",
+                "declined_at": "2025-08-01T10:30:00Z"
+            }
+        }
+        ```
+        
+        **Error Responses:**
+        - `404 NOT_FOUND`: Invitation token not found
+        - `400 BAD_REQUEST`: Invitation already accepted/declined or expired
+        - `500 INTERNAL_SERVER_ERROR`: Server error during processing
+        
+        **Validation Rules:**
+        - `reason`: Optional string, maximum 500 characters
         
         Allows anyone to decline an invitation using the token.
         Maintains AllowAny permissions for public access.
         
         GitHub Issue #86: Implement Teacher Invitation Decline Endpoint
+        GitHub Issue #80: Backend API Documentation and Error Message Standardization
         """
+        
+        from common.error_handling import (
+            create_invitation_not_found_response,
+            create_invitation_expired_response,
+            create_invitation_already_accepted_response,
+            create_invitation_already_declined_response,
+            create_error_response,
+            APIErrorCode
+        )
+        
+        # Get invitation with proper error handling
         try:
             invitation = TeacherInvitation.objects.select_related('school', 'invited_by').get(token=token)
         except TeacherInvitation.DoesNotExist:
-            return Response(
-                {"error": "Invalid invitation token"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            return create_invitation_not_found_response(request_path=request.path)
         
-        # Check if invitation can be declined
+        # Check if invitation can be declined with specific error responses
         if invitation.is_accepted:
-            return Response(
-                {"error": "This invitation has already been processed and cannot be declined"},
-                status=status.HTTP_400_BAD_REQUEST,
+            return create_invitation_already_accepted_response(
+                request_path=request.path,
+                accepted_at=invitation.accepted_at
             )
         
-        if invitation.status == InvitationStatus.DECLINED:
-            return Response(
-                {"error": "This invitation has already been declined"},
-                status=status.HTTP_400_BAD_REQUEST,
+        if hasattr(invitation, 'declined_at') and invitation.declined_at:
+            return create_invitation_already_declined_response(
+                request_path=request.path,
+                declined_at=invitation.declined_at
             )
         
-        if not invitation.is_valid():
-            if timezone.now() > invitation.expires_at:
-                return Response(
-                    {"error": "This invitation has expired and cannot be declined"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            else:
-                return Response(
-                    {"error": "This invitation is no longer valid"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        # Check if invitation is expired
+        if invitation.is_expired():
+            return create_invitation_expired_response(
+                request_path=request.path,
+                expires_at=invitation.expires_at
+            )
+        
+        # Validate optional decline reason
+        decline_reason = request.data.get('reason', '') if request.data else ''
+        if decline_reason and len(decline_reason) > 500:
+            from common.error_handling import create_validation_error_response
+            return create_validation_error_response(
+                serializer_errors={'reason': ['Decline reason must be 500 characters or less']},
+                message="Invalid decline reason provided",
+                request_path=request.path
+            )
         
         try:
             # Mark invitation as declined
@@ -3786,87 +4255,284 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
             )
             
         except ValidationError as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST,
+            return create_error_response(
+                error_code=APIErrorCode.VALIDATION_FAILED,
+                message=str(e),
+                status_code=status.HTTP_400_BAD_REQUEST,
+                request_path=request.path
             )
         except Exception as e:
             logger.error(f"Decline invitation failed for token {token}: {e}")
-            return Response(
-                {"error": "Failed to decline invitation. Please try again."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            return create_error_response(
+                error_code=APIErrorCode.INVITATION_EMAIL_SEND_FAILED,
+                message="Failed to decline invitation. Please try again.",
+                details={"error_type": type(e).__name__},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                request_path=request.path
             )
     
+    @swagger_auto_schema(
+        method='get',
+        operation_summary="Get Teacher Invitation Status",
+        operation_description="Check the current status of a teacher invitation",
+        responses={
+            200: openapi.Response(
+                description="Invitation status retrieved successfully",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(
+                            type=openapi.TYPE_STRING, 
+                            enum=['pending', 'sent', 'delivered', 'viewed', 'accepted', 'declined', 'expired', 'cancelled'],
+                            example='pending'
+                        ),
+                        'status_display': openapi.Schema(type=openapi.TYPE_STRING, example='Pending'),
+                        'invitation_details': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'email': openapi.Schema(type=openapi.TYPE_STRING),
+                                'school_name': openapi.Schema(type=openapi.TYPE_STRING),
+                                'role': openapi.Schema(type=openapi.TYPE_STRING),
+                                'role_display': openapi.Schema(type=openapi.TYPE_STRING),
+                                'created_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                                'expires_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                                'is_valid': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                                'is_expired': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                                'is_accepted': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                                'accepted_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, nullable=True),
+                                'declined_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, nullable=True),
+                                'viewed_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, nullable=True),
+                                'custom_message': openapi.Schema(type=openapi.TYPE_STRING, nullable=True),
+                            }
+                        ),
+                        'email_delivery': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'status': openapi.Schema(type=openapi.TYPE_STRING),
+                                'status_display': openapi.Schema(type=openapi.TYPE_STRING),
+                                'sent_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, nullable=True),
+                                'delivered_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME, nullable=True),
+                                'failure_reason': openapi.Schema(type=openapi.TYPE_STRING, nullable=True),
+                                'retry_count': openapi.Schema(type=openapi.TYPE_INTEGER),
+                            }
+                        ),
+                        'user_context': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'is_authenticated': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                                'is_intended_recipient': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                                'can_accept': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                                'can_decline': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                            }
+                        ),
+                    }
+                )
+            ),
+            404: openapi.Response(
+                description="Invitation not found",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'error': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'code': openapi.Schema(type=openapi.TYPE_STRING, example='INVITATION_NOT_FOUND'),
+                                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                            }
+                        ),
+                        'timestamp': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                        'path': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            500: openapi.Response(
+                description="Internal server error",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'error': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'code': openapi.Schema(type=openapi.TYPE_STRING),
+                                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                                'details': openapi.Schema(type=openapi.TYPE_OBJECT),
+                            }
+                        ),
+                        'timestamp': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                        'path': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+        },
+        manual_parameters=[
+            openapi.Parameter(
+                'token',
+                openapi.IN_PATH,
+                description="Unique invitation token",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        tags=['Teacher Invitations'],
+    )
     @action(detail=True, methods=["get"], permission_classes=[AllowAny])
     def status(self, request, token=None):
         """
-        Check invitation status (GET /api/accounts/invitations/{token}/status/).
+        Check teacher invitation status.
+        
+        This endpoint allows anyone to check the current status of a teacher invitation
+        using the token. No authentication is required for transparency.
+        
+        **Authentication:** Not required (public endpoint)
+        **Rate Limiting:** Applied per IP
+        **HTTPS Required:** Yes, for token security
+        
+        **Request Format:**
+        ```
+        GET /api/accounts/teacher-invitations/{token}/status/
+        ```
+        
+        **Success Response (200 OK):**
+        ```json
+        {
+            "status": "pending",
+            "status_display": "Pending",
+            "invitation_details": {
+                "email": "teacher@example.com",
+                "school_name": "Test School",
+                "role": "teacher",
+                "role_display": "Teacher",
+                "created_at": "2025-08-01T09:00:00Z",
+                "expires_at": "2025-08-08T09:00:00Z",
+                "is_valid": true,
+                "is_expired": false,
+                "custom_message": "Welcome to our school!"
+            }
+        }
+        ```
+        
+        **Error Responses:**
+        - `404 NOT_FOUND`: Invitation token not found
+        - `500 INTERNAL_SERVER_ERROR`: Server error during processing
+        
+        **Status Values:**
+        - `pending`: Invitation created but not yet sent
+        - `sent`: Email successfully sent to recipient
+        - `delivered`: Email confirmed delivered
+        - `viewed`: Recipient has viewed the invitation
+        - `accepted`: Invitation accepted by recipient
+        - `declined`: Invitation declined by recipient
+        - `expired`: Invitation has expired
+        - `cancelled`: Invitation cancelled by sender
         
         Returns current status and details without requiring authentication.
+        Useful for frontend status checking and invitation link previews.
+        
+        GitHub Issue #80: Backend API Documentation and Error Message Standardization
         """
+        
+        from common.error_handling import (
+            create_invitation_not_found_response,
+            create_error_response,
+            APIErrorCode
+        )
+        
+        # Get invitation with proper error handling
         try:
             invitation = TeacherInvitation.objects.select_related('school', 'invited_by').get(token=token)
         except TeacherInvitation.DoesNotExist:
-            return Response(
-                {"error": "Invalid invitation token"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            return create_invitation_not_found_response(request_path=request.path)
         
         # Mark as viewed if not already
         if not invitation.viewed_at:
             invitation.mark_viewed()
         
-        # Build response data
-        response_data = {
-            "invitation": {
-                "id": invitation.id,
+        # Build response data to match frontend TypeScript interface expectations
+        try:
+            # Build invitation object that matches frontend TeacherInvitation interface
+            invitation_data = {
+                "id": str(invitation.id),  # Convert UUID to string for JSON
                 "email": invitation.email,
-                "status": invitation.status,
-                "is_accepted": invitation.is_accepted,
-                "is_valid": invitation.is_valid(),
                 "school": {
                     "id": invitation.school.id,
                     "name": invitation.school.name,
-                    "description": invitation.school.description or "",
                 },
-                "role": invitation.role,
-                "role_display": invitation.get_role_display(),
                 "invited_by": {
+                    "id": invitation.invited_by.id,
                     "name": invitation.invited_by.name,
                     "email": invitation.invited_by.email,
                 },
-                "created_at": invitation.created_at,
-                "expires_at": invitation.expires_at,
-                "accepted_at": invitation.accepted_at,
-                "viewed_at": invitation.viewed_at,
-            },
-            "email_delivery": {
-                "status": invitation.email_delivery_status,
-                "sent_at": invitation.email_sent_at,
-                "delivered_at": invitation.email_delivered_at,
-                "failure_reason": invitation.email_failure_reason,
-                "retry_count": invitation.retry_count,
-                "can_retry": invitation.can_retry(),
-            },
-            "user_context": {
-                "is_authenticated": request.user.is_authenticated,
-                "is_correct_user": (
-                    request.user.is_authenticated and 
-                    request.user.email == invitation.email
-                ),
-                "can_accept": (
-                    invitation.is_valid() and 
-                    request.user.is_authenticated and 
-                    request.user.email == invitation.email
-                ),
+                "role": invitation.role,
+                "status": invitation.status,
+                "email_delivery_status": invitation.email_delivery_status,
+                "token": invitation.token,
+                "custom_message": invitation.custom_message,
+                "batch_id": str(invitation.batch_id),
+                "created_at": invitation.created_at.isoformat(),
+                "expires_at": invitation.expires_at.isoformat(),
+                "accepted_at": invitation.accepted_at.isoformat() if invitation.accepted_at else None,
+                "viewed_at": invitation.viewed_at.isoformat() if invitation.viewed_at else None,
+                "declined_at": invitation.declined_at.isoformat() if hasattr(invitation, 'declined_at') and invitation.declined_at else None,
             }
-        }
-        
-        # Add custom message if present
-        if invitation.custom_message:
-            response_data["invitation"]["custom_message"] = invitation.custom_message
-        
-        return Response(response_data, status=status.HTTP_200_OK)
+            
+            # Determine if user can accept invitation
+            can_accept = (
+                invitation.is_valid() and 
+                not invitation.is_accepted and
+                request.user.is_authenticated and 
+                request.user.email == invitation.email
+            )
+            
+            # Determine if profile wizard is needed
+            needs_profile_wizard = False
+            wizard_metadata = None
+            
+            # For authenticated users who can accept, check if they need profile wizard
+            if can_accept:
+                # Check if user already has a complete teacher profile
+                try:
+                    teacher_profile = request.user.teacher_profile
+                    # Basic profile completion check - can be expanded
+                    needs_profile_wizard = not all([
+                        teacher_profile.bio,
+                        teacher_profile.hourly_rate,
+                        teacher_profile.subjects.exists(),
+                    ])
+                    if needs_profile_wizard:
+                        wizard_metadata = {
+                            "requires_profile_completion": True,
+                            "completed_steps": [],
+                            "current_step": 1,
+                        }
+                except:
+                    # User doesn't have a teacher profile yet
+                    needs_profile_wizard = True
+                    wizard_metadata = {
+                        "requires_profile_completion": True,
+                        "completed_steps": [],
+                        "current_step": 1,
+                    }
+            
+            # Build final response structure matching frontend InvitationStatusResponse interface
+            response_data = {
+                "invitation": invitation_data,
+                "can_accept": can_accept,
+                "reason": None,  # Can be used for explaining why invitation can't be accepted
+                "needs_profile_wizard": needs_profile_wizard,
+                "wizard_metadata": wizard_metadata,
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Failed to get invitation status for token {token}: {e}")
+            return create_error_response(
+                error_code=APIErrorCode.INVITATION_NOT_FOUND,
+                message="Failed to retrieve invitation status",
+                details={"error_type": type(e).__name__},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                request_path=request.path
+            )
     
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated, IsSchoolOwnerOrAdmin])
     def list_for_school(self, request):
@@ -6512,3 +7178,267 @@ class TeacherProfileCompletionStatusView(KnoxAuthenticatedAPIView):
                 {"error": "Failed to retrieve completion status"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+# Communication System ViewSets
+
+class SchoolEmailTemplateViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing school email templates.
+    Provides CRUD operations with school-level permissions.
+    """
+    
+    serializer_class = SchoolEmailTemplateSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    
+    def get_queryset(self):
+        """Filter templates by user's schools."""
+        user = self.request.user
+        # Get schools where user is owner or admin
+        school_ids = list_school_ids_owned_or_managed(user)
+        return SchoolEmailTemplate.objects.filter(
+            school_id__in=school_ids
+        ).select_related('school', 'created_by').order_by('-created_at')
+    
+    def perform_create(self, serializer):
+        """Set the school and created_by fields when creating a template."""
+        # Determine the school - use the school from request data or user's default school
+        school_id = self.request.data.get('school')
+        if school_id:
+            # Verify user can manage this school
+            school_ids = list_school_ids_owned_or_managed(self.request.user)
+            if int(school_id) not in school_ids:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("You don't have permission to create templates for this school")
+            school = School.objects.get(id=school_id)
+        else:
+            # Use user's first manageable school
+            school_ids = list_school_ids_owned_or_managed(self.request.user)
+            if not school_ids:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("You don't manage any schools")
+            school = School.objects.get(id=school_ids[0])
+        
+        serializer.save(school=school, created_by=self.request.user)
+    
+    @action(detail=True, methods=['post'])
+    def preview(self, request, pk=None):
+        """
+        Preview an email template with provided variables.
+        """
+        template = self.get_object()
+        
+        serializer = EmailTemplatePreviewSerializer(
+            data=request.data,
+            context={'template': template}
+        )
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        variables = serializer.validated_data['template_variables']
+        
+        # Render the template with variables
+        from .services.email_template_service import EmailTemplateRenderingService
+        
+        try:
+            rendering_service = EmailTemplateRenderingService()
+            rendered_content = rendering_service.render_template(template, variables)
+            
+            return Response({
+                'rendered_subject': rendered_content['subject'],
+                'rendered_html': rendered_content['html_content'],
+                'rendered_text': rendered_content['text_content'],
+                'template_variables': variables,
+                'template_id': template.id
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Failed to preview template {template.id}: {e}")
+            return Response(
+                {"error": "Failed to render template preview"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'], url_path='filter-options')
+    def filter_options(self, request):
+        """
+        Get available filter options for templates.
+        """
+        from .models import EmailTemplateType
+        
+        return Response({
+            'template_types': [
+                {'value': choice[0], 'label': choice[1]}
+                for choice in EmailTemplateType.choices
+            ]
+        }, status=status.HTTP_200_OK)
+
+
+class EmailSequenceViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing email sequences.
+    Provides CRUD operations with school-level permissions.
+    """
+    
+    serializer_class = EmailSequenceSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    
+    def get_queryset(self):
+        """Filter sequences by user's schools."""
+        user = self.request.user
+        school_ids = list_school_ids_owned_or_managed(user)
+        return EmailSequence.objects.filter(
+            school_id__in=school_ids
+        ).select_related('school').prefetch_related('steps__template').order_by('-created_at')
+    
+    def perform_create(self, serializer):
+        """Set the school field when creating a sequence."""
+        school_id = self.request.data.get('school')
+        if school_id:
+            school_ids = list_school_ids_owned_or_managed(self.request.user)
+            if int(school_id) not in school_ids:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("You don't have permission to create sequences for this school")
+            school = School.objects.get(id=school_id)
+        else:
+            school_ids = list_school_ids_owned_or_managed(self.request.user)
+            if not school_ids:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("You don't manage any schools")
+            school = School.objects.get(id=school_ids[0])
+        
+        serializer.save(school=school)
+    
+    @action(detail=True, methods=['post'])
+    def activate(self, request, pk=None):
+        """
+        Activate or deactivate an email sequence.
+        """
+        sequence = self.get_object()
+        is_active = request.data.get('is_active', True)
+        
+        sequence.is_active = is_active
+        sequence.save(update_fields=['is_active', 'updated_at'])
+        
+        serializer = self.get_serializer(sequence)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'], url_path='trigger-events')
+    def trigger_events(self, request):
+        """
+        Get available trigger events for sequences.
+        """
+        trigger_choices = [
+            ("invitation_sent", "Invitation Sent"),
+            ("invitation_viewed", "Invitation Viewed"),
+            ("invitation_accepted", "Invitation Accepted"),
+            ("profile_incomplete", "Profile Incomplete"),
+            ("profile_completed", "Profile Completed"),
+        ]
+        
+        return Response({
+            'trigger_events': [
+                {'value': choice[0], 'label': choice[1]}
+                for choice in trigger_choices
+            ]
+        }, status=status.HTTP_200_OK)
+
+
+class EmailCommunicationViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for viewing email communications.
+    Read-only access to communication history with analytics.
+    """
+    
+    serializer_class = EmailCommunicationSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    
+    def get_queryset(self):
+        """Filter communications by user's schools."""
+        user = self.request.user
+        school_ids = list_school_ids_owned_or_managed(user)
+        queryset = EmailCommunication.objects.filter(
+            school_id__in=school_ids
+        ).select_related('school', 'template', 'sequence', 'sent_by').order_by('-created_at')
+        
+        # Filter by date range if provided
+        sent_after = self.request.query_params.get('sent_after')
+        sent_before = self.request.query_params.get('sent_before')
+        
+        if sent_after:
+            queryset = queryset.filter(sent_at__gte=sent_after)
+        if sent_before:
+            queryset = queryset.filter(sent_at__lte=sent_before)
+        
+        # Filter by communication type
+        comm_type = self.request.query_params.get('communication_type')
+        if comm_type:
+            queryset = queryset.filter(communication_type=comm_type)
+        
+        # Filter by recipient email
+        recipient = self.request.query_params.get('recipient_email')
+        if recipient:
+            queryset = queryset.filter(recipient_email__icontains=recipient)
+        
+        return queryset
+    
+    @action(detail=False, methods=['get'])
+    def analytics(self, request):
+        """
+        Get email communication analytics for the user's schools.
+        """
+        from .services.enhanced_email_service import EmailAnalyticsService
+        
+        user = request.user
+        school_ids = list_school_ids_owned_or_managed(user)
+        
+        if not school_ids:
+            return Response(
+                {"error": "You don't manage any schools"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            analytics_service = EmailAnalyticsService()
+            
+            # Get analytics for all user's schools
+            analytics_data = {}
+            for school_id in school_ids:
+                school = School.objects.get(id=school_id)
+                school_analytics = analytics_service.get_school_analytics(school)
+                analytics_data[school.name] = school_analytics
+            
+            # Aggregate analytics across all schools
+            total_analytics = analytics_service.aggregate_school_analytics(school_ids)
+            
+            serializer = EmailAnalyticsSerializer(total_analytics)
+            
+            return Response({
+                'total_analytics': serializer.data,
+                'by_school': analytics_data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Failed to get analytics for user {user.id}: {e}")
+            return Response(
+                {"error": "Failed to retrieve analytics"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'], url_path='communication-types')
+    def communication_types(self, request):
+        """
+        Get available communication types.
+        """
+        from .models import EmailCommunicationType
+        
+        return Response({
+            'communication_types': [
+                {'value': choice[0], 'label': choice[1]}
+                for choice in EmailCommunicationType.choices
+            ]
+        }, status=status.HTTP_200_OK)

@@ -1,0 +1,371 @@
+QA Test Case: Teacher Dashboard Access and Core Functionality Validation
+
+Test ID: TEACHDASH-001
+Test Name: Teacher Dashboard Access and Core Functionality Validation
+Purpose: Verify that teachers with completed profiles can access their dashboard and all core functionality works correctly after GitHub issue #51 implementation
+Expected Result: Teacher successfully accesses dashboard with all sections loading correctly, showing personalized data and functional quick actions
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform (EdTech tutoring platform)
+- Architecture: Django REST Framework backend + React Native + Expo frontend 
+- GitHub Issue: #51 - Teacher Dashboard Implementation (Backend: #90, Frontend: #91)
+- Backend API: /api/teachers/consolidated_dashboard/
+- Frontend Routes: /app/(teacher)/dashboard/index.tsx
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev` (starts both backend and frontend)
+4. Browser: Chrome or Firefox for web testing
+
+Test Data:
+- Test Teacher Email: anapmc.carvalho@gmail.com (must have completed teacher profile)
+- Alternative Teacher Email: teacher@test.com (backup teacher account)
+- User Role: teacher (with completed profile wizard)
+- Expected Schools: Should have at least one school association
+- Expected Students: Should have assigned students for full testing
+
+Prerequisites:
+- Teacher must have completed profile wizard (all steps)
+- Teacher must be associated with at least one school
+- School should have some students assigned to teacher
+- Backend APIs must be running and accessible
+- Frontend application must be deployed and accessible
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate  # If virtual environment exists
+  make dev
+  
+Wait for servers to start completely (both backend and frontend)
+Check logs with: make logs
+
+Expected: 
+- Backend server starts on port (usually 8000)
+- Frontend server starts on port (usually 8081)
+- No startup errors in logs
+- Both servers responding to health checks
+Screenshot: 01_servers_started_successfully.png
+
+Step 2: Navigate to Application and Initial Load
+1. Open browser to http://localhost:8081
+2. Verify landing page loads without errors
+3. Check browser console for any JavaScript errors
+4. Verify page responsive layout
+
+Expected: Application loads cleanly without errors
+Debug: Use browser Developer Tools to check for console errors
+Screenshot: 02_application_initial_load.png
+
+Step 3: Teacher Authentication
+1. Navigate to sign-in page (click sign-in or go to /auth/signin)
+2. Enter teacher email: anapmc.carvalho@gmail.com
+3. Click "Send Verification Code" button
+4. Check browser network tab for API calls
+5. Wait for verification code email (or check logs for test codes)
+6. Enter verification code in form
+7. Click "Verify Code" button
+
+Expected: 
+- Email verification process completes successfully
+- Teacher is authenticated and redirected
+- Authentication token is stored properly
+Screenshot: 03_teacher_authentication_successful.png
+
+Step 4: Teacher Dashboard Access
+1. Verify automatic redirect to teacher dashboard at /(teacher)/dashboard
+2. Check URL shows correct teacher route structure  
+3. Verify page loads without infinite loading states
+4. Check browser console for any errors during load
+5. Verify authentication guard is working (protected route)
+
+Expected: 
+- Dashboard loads within 2 seconds
+- URL shows /(teacher)/dashboard route
+- No console errors during page load
+- Teacher-specific content displays
+Screenshot: 04_teacher_dashboard_accessed.png
+
+Step 5: Dashboard Header and Welcome Section Validation
+1. Verify personalized welcome message displays teacher name
+2. Check time-based greeting (Good morning/afternoon/evening)
+3. Verify teacher profile information displays correctly
+4. Check if school association information is shown
+5. Verify header navigation is present and functional
+
+Expected:
+- Welcome message shows "Olá, [Teacher Name]" or similar Portuguese greeting
+- Time-based greeting appears correctly
+- Teacher profile data loads from consolidated API
+- Navigation shows teacher-specific options
+Screenshot: 05_dashboard_header_validation.png
+
+Step 6: Quick Stats Overview Card Validation
+1. Locate the Quick Stats section with gradient card design
+2. Verify key metrics are displayed:
+   - Total Students count
+   - Active Students count  
+   - Sessions This Week count
+   - Average Progress percentage
+3. Check that numbers are realistic and not placeholder values
+4. Verify responsive design on different screen sizes
+
+Expected:
+- All metrics display numerical values (not "0" or "loading")
+- Card has proper gradient styling
+- Responsive layout works correctly
+- Data comes from consolidated dashboard API
+Screenshot: 06_quick_stats_validation.png
+
+Step 7: Quick Actions Panel Testing
+1. Locate Quick Actions panel on dashboard
+2. Verify presence of common teacher actions:
+   - "Schedule Session" button/link
+   - "View Students" button/link
+   - "Message Student" or communication option
+   - "Update Availability" option
+3. Test one quick action (click Schedule Session)
+4. Verify proper navigation occurs
+
+Expected:
+- All quick action buttons are visible and clickable
+- Buttons lead to appropriate screens/modals
+- No broken links or 404 errors
+- Actions are contextually relevant
+Screenshot: 07_quick_actions_panel_testing.png
+
+Step 8: Today's Sessions Section Validation
+1. Locate "Today's Sessions" section on dashboard
+2. Verify session management functionality:
+   - Shows scheduled sessions for today
+   - Displays session times and student information
+   - Shows session status (upcoming, in progress, completed)
+3. Check if "No sessions today" message appears when appropriate
+4. Verify session actions are available (start, complete, reschedule)
+
+Expected:
+- Sessions display correctly with proper formatting
+- Time displays in Portuguese format
+- Student names and details show correctly
+- Session management actions are functional
+Screenshot: 08_todays_sessions_validation.png
+
+Step 9: Student Roster Preview Testing
+1. Locate Student Roster Preview section
+2. Verify search functionality:
+   - Search box is present and functional
+   - Search works with debounced input (300ms delay)
+   - Results filter correctly by name/email
+3. Test student list display:
+   - Shows student cards with progress visualization
+   - Progress bars display with color coding
+   - Status badges show correctly (Active/Inactive/New)
+4. Test "View All Students" link functionality
+
+Expected:
+- Search functionality works smoothly with proper debouncing
+- Student data displays with progress bars
+- Color coding reflects progress levels correctly
+- "View All Students" navigates to students index page
+Screenshot: 09_student_roster_preview_testing.png
+
+Step 10: Progress Metrics Section Validation
+1. Locate Progress Metrics/Analytics section
+2. Verify comprehensive analytics display:
+   - Student progress overview
+   - Session completion rates
+   - Assessment metrics
+   - Retention rates
+3. Check data visualization quality
+4. Verify metrics are calculated correctly
+
+Expected:
+- Analytics display meaningful data (not placeholder)
+- Metrics are properly formatted (percentages, counts)
+- Visual representations are clear and accurate
+- Data matches what would be expected from API
+Screenshot: 10_progress_metrics_validation.png
+
+Step 11: Recent Activities Feed Testing
+1. Locate Recent Activities section
+2. Verify activity feed displays:
+   - Latest teacher actions
+   - Student progress updates
+   - Session completions
+   - System notifications
+3. Check activity timestamps and formatting
+4. Verify activities are relevant to the teacher
+
+Expected:
+- Activities display in chronological order
+- Timestamps show in Portuguese format
+- Activities are teacher-specific and relevant
+- Feed updates appropriately
+Screenshot: 11_recent_activities_validation.png
+
+Step 12: Dashboard Loading States and Error Handling
+1. Refresh the page and observe loading states
+2. Verify skeleton screens appear during data loading
+3. Test error scenarios:
+   - Disconnect internet briefly and check error handling
+   - Check retry functionality if available
+4. Verify graceful degradation when data is missing
+
+Expected:  
+- Loading states show proper skeleton screens
+- Error states display helpful messages
+- Retry mechanisms work correctly
+- No crashes during error conditions
+Screenshot: 12_loading_error_handling.png
+
+Step 13: Responsive Design Cross-Platform Testing
+1. Test dashboard on different screen sizes:
+   - Desktop (1920x1080)
+   - Tablet (768x1024)
+   - Mobile (375x667)
+2. Use browser developer tools to simulate device sizes
+3. Verify all sections adapt properly to different screen sizes
+4. Check touch interactions on mobile simulation
+
+Expected:
+- Layout adapts gracefully to all screen sizes
+- Content remains accessible and readable
+- Touch targets are appropriately sized for mobile
+- No horizontal scrolling or layout breaks
+Screenshot: 13_responsive_design_testing.png
+
+Step 14: Performance Validation
+1. Open browser Developer Tools -> Network tab
+2. Refresh dashboard page and monitor:
+   - Initial page load time (should be < 2 seconds)
+   - API response times (should be < 500ms)
+   - Total number of network requests
+3. Check Console tab for performance warnings
+4. Use Lighthouse tool if available for performance audit
+
+Expected:
+- Page loads within 2 seconds as per requirements
+- API calls complete within 500ms as per requirements  
+- No memory leaks or performance warnings
+- Lighthouse performance score > 80 if available
+Screenshot: 14_performance_validation.png
+
+Step 15: API Integration Validation
+1. Open browser Developer Tools -> Network tab
+2. Filter for XHR/Fetch requests
+3. Verify consolidated dashboard API call:
+   - Request to /api/teachers/consolidated_dashboard/
+   - Proper authentication headers (Knox token)
+   - Correct response structure with all required sections
+4. Check response data matches what's displayed in UI
+5. Verify no unnecessary duplicate API calls
+
+Expected:
+- Single consolidated API call loads all dashboard data
+- Response includes all required sections (teacher_info, students, sessions, etc.)
+- Authentication works correctly with proper headers
+- Data integrity between API response and UI display
+Screenshot: 15_api_integration_validation.png
+
+Step 16: Navigation and Route Structure Testing
+1. Verify teacher dashboard navigation structure:
+   - Dashboard (current page)
+   - Students section access
+   - Analytics section access
+   - Profile/Settings access
+2. Test navigation between sections
+3. Verify URL structure follows /(teacher)/ pattern
+4. Test browser back/forward navigation
+
+Expected:
+- Navigation works smoothly between all sections
+- URLs follow proper routing structure
+- Browser navigation history works correctly
+- No broken links or navigation issues
+Screenshot: 16_navigation_testing.png
+
+Step 17: Security and Authorization Validation
+1. Verify teacher-only access (route protection)
+2. Test that dashboard data is teacher-specific
+3. Check that unauthorized users cannot access teacher routes
+4. Verify no sensitive information is exposed in browser storage
+5. Check that API calls include proper authentication
+
+Expected:
+- Dashboard shows only data relevant to logged-in teacher
+- Unauthorized access is properly blocked
+- Authentication tokens are handled securely
+- No sensitive data in browser console or storage
+Screenshot: 17_security_validation.png
+
+Step 18: Cross-Browser Compatibility Testing (Optional but Recommended)
+1. Test dashboard in different browsers:
+   - Chrome (primary)
+   - Firefox
+   - Safari (if on macOS)
+   - Edge
+2. Verify consistent functionality across browsers
+3. Check for browser-specific issues
+
+Expected:
+- Consistent functionality across all tested browsers
+- No browser-specific errors or layout issues
+- Performance remains within acceptable ranges
+Screenshot: 18_cross_browser_testing.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: ALL of the following conditions must be met:
+- Teacher can successfully authenticate and access dashboard
+- Dashboard loads within 2 seconds with all sections displaying correctly
+- Consolidated API (/api/teachers/consolidated_dashboard/) responds within 500ms
+- All dashboard sections show relevant data (not placeholder/empty)
+- Quick actions panel is functional with working navigation
+- Student roster preview shows students with search functionality
+- Progress metrics display meaningful analytics data
+- Responsive design works correctly on desktop, tablet, and mobile
+- No console errors or JavaScript exceptions during normal usage
+- Loading states and error handling work gracefully
+- Security: Only teacher-specific data is shown, proper authorization
+- Navigation between dashboard sections works smoothly
+
+FAIL: ANY of the following conditions occur:
+- Authentication fails or teacher cannot access dashboard
+- Dashboard takes longer than 2 seconds to load initially
+- API calls take longer than 500ms consistently  
+- Any section shows only placeholder data or fails to load
+- Console errors or JavaScript exceptions during normal usage
+- Responsive design breaks on any screen size
+- Security issues: wrong data shown or unauthorized access possible
+- Critical functionality (quick actions, navigation) is broken
+- Loading states never resolve or error handling crashes app
+- Major UX issues that prevent normal teacher workflow
+
+Individual Step Criteria:
+- Step 1-2: PASS if servers start and application loads, FAIL if startup errors
+- Step 3: PASS if authentication completes successfully, FAIL if login fails
+- Step 4: PASS if dashboard loads within time limit, FAIL if timeout/errors
+- Step 5-11: PASS if each section displays correctly with real data, FAIL if broken/empty
+- Step 12: PASS if loading/error states work, FAIL if crashes or infinite loading
+- Step 13: PASS if responsive on all sizes, FAIL if layout breaks
+- Step 14: PASS if performance meets requirements, FAIL if too slow
+- Step 15: PASS if API integration works correctly, FAIL if API errors/wrong data
+- Step 16-17: PASS if navigation and security work, FAIL if broken links/unauthorized access
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Dashboard provides immediate value on first load (personalized data visible)
+- Quick actions are contextually relevant and easily discoverable
+- Loading states prevent user confusion during data fetching
+- Error messages are helpful and provide recovery options
+- Responsive design maintains usability across all device sizes  
+- Performance feels snappy and responsive (no lag or delays)
+- Navigation is intuitive and follows expected patterns
+- Content is properly localized in Portuguese
+- Accessibility standards are met for screen readers and keyboard navigation

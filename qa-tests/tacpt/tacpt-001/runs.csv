@@ -1,0 +1,2 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250801-133226,2025-08-01T13:32:26Z,CRITICAL_FAILURE,2,1,Playwright Chrome,macOS development,Component crash blocks all testing - InvitationErrorDisplay undefined imports

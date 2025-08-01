@@ -63,13 +63,56 @@ const UserTypeCard: React.FC<{
   onSelect: (type: UserTypeOption) => void;
 }> = ({ option, onSelect }) => {
   return (
-    <Box className="p-4 border rounded">
-      <Text>{option.title}</Text>
-      <Text>{option.description}</Text>
-      <Text onPress={() => onSelect(option.type)}>
-        Select {option.type}
-      </Text>
-    </Box>
+    <Pressable
+      onPress={() => onSelect(option.type)}
+      className={`p-6 border-2 rounded-xl transition-colors ${option.borderColor} ${option.backgroundColor} ${option.hoverColor} active:scale-[0.98]`}
+    >
+      <VStack space="md" className="items-center text-center">
+        {/* Icon */}
+        <Box className="w-16 h-16 bg-white rounded-full items-center justify-center shadow-sm">
+          <Text className="text-3xl">{option.icon}</Text>
+        </Box>
+        
+        {/* Title and Subtitle */}
+        <VStack space="xs" className="items-center">
+          <Heading size="lg" className="text-gray-900 font-bold">
+            {option.title}
+          </Heading>
+          <Text className={`text-sm font-medium ${option.iconColor}`}>
+            {option.subtitle}
+          </Text>
+        </VStack>
+        
+        {/* Description */}
+        <Text className="text-gray-600 text-center max-w-xs leading-relaxed">
+          {option.description}
+        </Text>
+        
+        {/* Features List */}
+        <VStack space="xs" className="w-full">
+          {option.features.map((feature, index) => (
+            <HStack key={index} space="sm" className="items-center">
+              <Box className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
+              <Text className="text-gray-600 text-sm flex-1">
+                {feature}
+              </Text>
+            </HStack>
+          ))}
+        </VStack>
+        
+        {/* CTA Button */}
+        <Box className="w-full pt-2">
+          <Button
+            className={`bg-white border-2 ${option.borderColor} ${option.hoverColor}`}
+            size="md"
+          >
+            <ButtonText className={`${option.iconColor} font-semibold`}>
+              {option.ctaText}
+            </ButtonText>
+          </Button>
+        </Box>
+      </VStack>
+    </Pressable>
   );
 };
 
