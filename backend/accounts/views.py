@@ -83,6 +83,7 @@ from .serializers import (
     SchoolWithMembersSerializer,
     StudentSerializer,
     TeacherCourseSerializer,
+    TeacherInvitationSerializer,
     TeacherOnboardingSerializer,
     TeacherSerializer,
     UserSerializer,
@@ -3421,6 +3422,7 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
     """
     
     queryset = TeacherInvitation.objects.all()
+    serializer_class = TeacherInvitationSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     lookup_field = "token"  # Use token instead of id for lookups
