@@ -247,7 +247,7 @@ export class InvitationApi {
    * Get invitation status by token
    */
   static async getInvitationStatus(token: string): Promise<InvitationStatusResponse> {
-    const response = await apiClient.get(`/accounts/invitations/${token}/details/`);
+    const response = await apiClient.get(`/accounts/teacher-invitations/${token}/`);
     return response.data;
   }
 
@@ -267,7 +267,7 @@ export class InvitationApi {
       name: string;
     };
   }> {
-    const response = await apiClient.post(`/accounts/invitations/${token}/accept/`, profileData || {});
+    const response = await apiClient.post(`/accounts/teacher-invitations/${token}/accept/`, profileData || {});
     return response.data;
   }
 
@@ -277,7 +277,7 @@ export class InvitationApi {
   static async declineInvitation(token: string): Promise<{
     message: string;
   }> {
-    const response = await apiClient.post(`/accounts/invitations/${token}/decline/`);
+    const response = await apiClient.post(`/accounts/teacher-invitations/${token}/decline/`);
     return response.data;
   }
 
