@@ -1,0 +1,11 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+tinvite-001,Invitation Acceptance Page Load,Test invitation acceptance page loads correctly with school details,,,0,0,0
+tinvite-002,Accept Invitation Flow,Test accept invitation functionality and profile wizard integration,,,0,0,0
+tinvite-003,Decline Invitation Flow,Test decline invitation functionality (Issue #86),,,0,0,0
+tinvite-004,API Endpoint Integration,Test API endpoint fixes for 404 errors (Issue #85),,,0,0,0
+tinvite-005,Wizard Orchestration API,Test wizard orchestration API integration (Issues #95 and #97),,,0,0,0
+tinvite-006,Teacher Profile Completion,Test complete teacher profile setup after invitation acceptance,,,0,0,0
+tinvite-007,Email Confirmation Flow,Test email confirmation after successful invitation acceptance,,,0,0,0
+tinvite-008,Role Assignment Verification,Test proper TEACHER role assignment after acceptance,,,0,0,0
+tinvite-009,Error Handling Edge Cases,Test expired tokens and invalid invitations,,,0,0,0
+tinvite-010,End-to-End Complete Flow,Test complete teacher invitation flow with all GitHub #49 fixes,,,0,0,0

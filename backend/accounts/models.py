@@ -139,6 +139,15 @@ class CustomUser(AbstractUser):
     email: models.EmailField = models.EmailField(_("email address"), unique=True)
     name: models.CharField = models.CharField(_("name"), max_length=150)
     phone_number: models.CharField = models.CharField(_("phone number"), max_length=20, blank=True)
+    
+    # Profile information
+    profile_photo: models.ImageField = models.ImageField(
+        _("profile photo"),
+        upload_to="profile_photos/",
+        blank=True,
+        null=True,
+        help_text=_("User profile photo")
+    )
 
     # Contact verification fields
     primary_contact: models.CharField = models.CharField(
@@ -508,6 +517,32 @@ class TeacherProfile(models.Model):
         default=dict,
         blank=True,
         help_text=_("Structured weekly availability schedule")
+    )
+    
+    # Enhanced profile fields for comprehensive teacher profile creation
+    grade_level_preferences: models.JSONField = models.JSONField(
+        _("grade level preferences"),
+        default=list,
+        blank=True,
+        help_text=_("List of preferred grade levels (elementary, middle, high school, university)")
+    )
+    teaching_experience: models.JSONField = models.JSONField(
+        _("teaching experience"),
+        default=dict,
+        blank=True,
+        help_text=_("Structured teaching experience data (years, institutions, specializations)")
+    )
+    credentials_documents: models.JSONField = models.JSONField(
+        _("credentials documents"),
+        default=list,
+        blank=True,
+        help_text=_("List of uploaded credential document references")
+    )
+    availability_schedule: models.JSONField = models.JSONField(
+        _("availability schedule"),
+        default=dict,
+        blank=True,
+        help_text=_("Detailed availability schedule with time slots and preferences")
     )
     
     # Profile completion tracking fields
@@ -1314,6 +1349,12 @@ class TeacherInvitation(models.Model):
         null=True,
         blank=True
     )
+    declined_at = models.DateTimeField(
+        _("declined at"),
+        null=True,
+        blank=True,
+        help_text=_("When the invitation was declined")
+    )
     
     # Performance fields
     viewed_at = models.DateTimeField(
@@ -1414,6 +1455,18 @@ class TeacherInvitation(models.Model):
             self.accepted_at = timezone.now()
             self.save(update_fields=["is_accepted", "status", "accepted_at", "updated_at"])
     
+    def decline(self):
+        """Mark invitation as declined."""
+        if self.is_accepted:
+            raise ValidationError("Cannot decline an already accepted invitation")
+        
+        if self.status == InvitationStatus.DECLINED:
+            raise ValidationError("This invitation has already been declined")
+        
+        self.status = InvitationStatus.DECLINED
+        self.declined_at = timezone.now()
+        self.save(update_fields=["status", "declined_at", "updated_at"])
+    
     def cancel(self):
         """Cancel the invitation."""
         if self.is_accepted:
@@ -1466,5 +1519,7 @@ class TeacherInvitation(models.Model):
         """Mark invitation as viewed."""
         if not self.viewed_at:
             self.viewed_at = timezone.now()
-            self.status = InvitationStatus.VIEWED
+            # Only update status to VIEWED if not already accepted
+            if not self.is_accepted:
+                self.status = InvitationStatus.VIEWED
             self.save(update_fields=["viewed_at", "status", "updated_at"])

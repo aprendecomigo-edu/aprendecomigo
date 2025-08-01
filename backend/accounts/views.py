@@ -2998,27 +2998,44 @@ class InvitationViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        # Return invitation details
+        # Check if user can accept this invitation
+        can_accept = True
+        reason = None
+        
+        if not request.user.is_authenticated:
+            can_accept = False
+            reason = "Authentication required"
+        elif request.user.email != invitation.email:
+            can_accept = False
+            reason = "This invitation is not for your account"
+
+        # Return invitation details in the format expected by frontend
         return Response(
             {
                 "invitation": {
+                    "id": str(invitation.id),
+                    "email": invitation.email,
                     "school": {
                         "id": invitation.school.id,
                         "name": invitation.school.name,
                         "description": invitation.school.description,
                     },
-                    "role": invitation.role,
-                    "role_display": invitation.get_role_display(),
                     "invited_by": {
+                        "id": invitation.invited_by.id,
                         "name": invitation.invited_by.name,
                         "email": invitation.invited_by.email,
                     },
-                    "expires_at": invitation.expires_at,
+                    "role": invitation.role,
+                    "status": "pending",  # SchoolInvitation doesn't have status field
+                    "token": invitation.token,
+                    "custom_message": getattr(invitation, 'custom_message', None),
+                    "created_at": invitation.created_at.isoformat(),
+                    "expires_at": invitation.expires_at.isoformat(),
+                    "is_accepted": invitation.is_accepted,
+                    "invitation_link": f"https://aprendecomigo.com/accept-invitation/{invitation.token}"
                 },
-                "target_email": invitation.email,
-                "requires_authentication": not request.user.is_authenticated,
-                "is_correct_user": request.user.is_authenticated
-                and request.user.email == invitation.email,
+                "can_accept": can_accept,
+                "reason": reason,
             },
             status=status.HTTP_200_OK,
         )
@@ -3180,6 +3197,91 @@ class SchoolInvitationLinkView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+    @action(detail=True, methods=["post"])
+    def decline(self, request, token=None):
+        """
+        Decline a school invitation
+        """
+        from django.db import transaction
+
+        # Get the invitation
+        try:
+            invitation = SchoolInvitation.objects.get(token=token)
+        except SchoolInvitation.DoesNotExist:
+            return Response(
+                {"error": "Invalid invitation token"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate invitation
+        if not invitation.is_valid():
+            if invitation.is_accepted:
+                return Response(
+                    {"error": "This invitation has already been accepted"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                return Response(
+                    {"error": "This invitation has expired"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # Check if the user is authenticated (optional for decline)
+        if request.user.is_authenticated:
+            # Verify the current user is the intended recipient
+            if invitation.email != request.user.email:
+                return Response(
+                    {"error": "This invitation is not for your account"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        try:
+            with transaction.atomic():
+                # Mark invitation as declined (for both SchoolInvitation models)
+                invitation.is_accepted = False  # Keep as False but we'll track status differently
+                invitation.save()
+
+                # If this is actually a TeacherInvitation, update its status too
+                try:
+                    teacher_invitation = TeacherInvitation.objects.get(token=token)
+                    teacher_invitation.status = InvitationStatus.DECLINED
+                    teacher_invitation.save()
+                except TeacherInvitation.DoesNotExist:
+                    pass  # Not a teacher invitation
+
+                # Log the activity
+                from .models import SchoolActivity, ActivityType
+                SchoolActivity.objects.create(
+                    school=invitation.school,
+                    activity_type=ActivityType.INVITATION_DECLINED,
+                    actor=request.user if request.user.is_authenticated else None,
+                    target_invitation=invitation,
+                    description=f"Invitation to {invitation.email} was declined"
+                )
+
+                return Response(
+                    {
+                        "message": "Invitation declined successfully",
+                        "invitation": {
+                            "token": invitation.token,
+                            "email": invitation.email,
+                            "school": {
+                                "id": invitation.school.id,
+                                "name": invitation.school.name,
+                            },
+                            "status": "declined"
+                        }
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+        except Exception as e:
+            logger.error(f"Decline invitation failed for token {token}: {e!s}")
+            return Response(
+                {"error": "Failed to decline invitation. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 # School Dashboard Views
@@ -3343,8 +3445,8 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         """Different permissions for different actions."""
-        if self.action in ["accept", "status"]:
-            # Anyone can check status or accept (with token validation)
+        if self.action in ["accept", "decline", "status"]:
+            # Anyone can check status, accept, or decline (with token validation)
             permission_classes = [AllowAny]
         elif self.action == "list":
             # Only admins can list invitations
@@ -3357,9 +3459,14 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], permission_classes=[AllowAny])
     def accept(self, request, token=None):
         """
-        Accept a teacher invitation (POST /api/accounts/invitations/{token}/accept/).
+        Accept a teacher invitation with comprehensive profile creation support.
         
-        This simplified endpoint allows teachers to accept invitations without WebSocket complexity.
+        POST /api/accounts/invitations/{token}/accept/
+        
+        Enhanced to support comprehensive teacher profile creation during invitation acceptance.
+        Supports file uploads, structured data validation, and maintains backward compatibility.
+        
+        GitHub issue #50: [Flow C] Teacher Acceptance Workflow - Complete Profile Creation During Invitation Acceptance
         """
         try:
             invitation = TeacherInvitation.objects.select_related('school', 'invited_by').get(token=token)
@@ -3403,31 +3510,95 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
         
-        # Process the acceptance
+        # Validate comprehensive profile data using the new serializer
+        from .serializers import ComprehensiveTeacherProfileCreationSerializer
+        profile_serializer = ComprehensiveTeacherProfileCreationSerializer(data=request.data)
+        
+        if not profile_serializer.is_valid():
+            return Response(
+                {
+                    "error": "Invalid profile data provided",
+                    "errors": profile_serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        validated_profile_data = profile_serializer.validated_data
+        
+        # Process the acceptance with comprehensive profile creation
         from django.db import transaction
         
         try:
             with transaction.atomic():
+                profile_created = False
+                
                 # Check if user already has a teacher profile
                 if hasattr(request.user, "teacher_profile"):
                     teacher_profile = request.user.teacher_profile
                 else:
-                    # Create minimal teacher profile
+                    # Create teacher profile with comprehensive data or minimal defaults
                     teacher_profile = TeacherProfile.objects.create(
                         user=request.user,
-                        bio="",
-                        specialty="",
+                        bio=validated_profile_data.get('bio', ''),
+                        specialty=validated_profile_data.get('specialty', ''),
+                        hourly_rate=validated_profile_data.get('hourly_rate'),
+                        availability=validated_profile_data.get('availability', ''),
+                        phone_number=validated_profile_data.get('phone_number', ''),
+                        address=validated_profile_data.get('address', ''),
+                        education_background=validated_profile_data.get('education_background', {}),
+                        teaching_subjects=validated_profile_data.get('teaching_subjects', []),
+                        rate_structure=validated_profile_data.get('rate_structure', {}),
+                        weekly_availability=validated_profile_data.get('weekly_availability', {}),
+                        grade_level_preferences=validated_profile_data.get('grade_level_preferences', []),
+                        teaching_experience=validated_profile_data.get('teaching_experience', {}),
+                        credentials_documents=validated_profile_data.get('credentials_documents', []),
+                        availability_schedule=validated_profile_data.get('availability_schedule', {}),
                     )
+                    profile_created = True
+                
+                # Update existing profile with new data if provided
+                if not profile_created and validated_profile_data:
+                    for field, value in validated_profile_data.items():
+                        if field != 'profile_photo' and field != 'course_ids':  # Handle these separately
+                            if value is not None:  # Only update if value is provided
+                                setattr(teacher_profile, field, value)
+                    teacher_profile.save()
+                
+                # Handle profile photo upload for CustomUser
+                if 'profile_photo' in validated_profile_data and validated_profile_data['profile_photo']:
+                    request.user.profile_photo = validated_profile_data['profile_photo']
+                    request.user.save(update_fields=['profile_photo'])
+                
+                # Handle course associations if provided
+                if 'course_ids' in validated_profile_data and validated_profile_data['course_ids']:
+                    from .models import Course, TeacherCourse
+                    # Remove existing associations first
+                    TeacherCourse.objects.filter(teacher=teacher_profile).delete()
+                    
+                    # Create new associations
+                    course_objects = Course.objects.filter(id__in=validated_profile_data['course_ids'])
+                    for course in course_objects:
+                        TeacherCourse.objects.create(
+                            teacher=teacher_profile,
+                            course=course,
+                            is_active=True
+                        )
+                
+                # Update profile completion score
+                try:
+                    teacher_profile.update_completion_score()
+                except Exception as completion_error:
+                    logger.warning(f"Failed to update completion score for teacher {teacher_profile.id}: {completion_error}")
                 
                 # Create school membership if it doesn't exist
-                membership, created = SchoolMembership.objects.get_or_create(
+                membership, membership_created = SchoolMembership.objects.get_or_create(
                     user=request.user,
                     school=invitation.school,
                     role=invitation.role,
                     defaults={"is_active": True},
                 )
                 
-                if not created and not membership.is_active:
+                if not membership_created and not membership.is_active:
                     # Reactivate if was previously inactive
                     membership.is_active = True
                     membership.save()
@@ -3436,27 +3607,61 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
                 invitation.accept()
                 invitation.mark_viewed()  # Also mark as viewed
                 
-                # Create activity log
+                # Create enhanced activity log
                 from .services.metrics_service import SchoolActivityService
                 from .models import ActivityType
                 
+                profile_details = "with comprehensive profile" if validated_profile_data else "with basic profile"
                 SchoolActivityService.create_activity(
                     school=invitation.school,
                     activity_type=ActivityType.INVITATION_ACCEPTED,
                     actor=request.user,
                     target_user=request.user,
-                    target_invitation=invitation,
-                    description=f"{request.user.name} accepted teacher invitation",
+                    # Don't pass target_invitation for TeacherInvitation - SchoolActivity expects SchoolInvitation
+                    # target_invitation=invitation,  
+                    description=f"{request.user.name} accepted teacher invitation {profile_details}",
                     metadata={
                         'invitation_id': str(invitation.id),
+                        'invitation_token': invitation.token,
                         'batch_id': str(invitation.batch_id),
-                        'role': invitation.role
+                        'role': invitation.role,
+                        'profile_created': profile_created,
+                        'profile_fields_provided': list(validated_profile_data.keys()) if validated_profile_data else [],
+                        'profile_completion_score': float(teacher_profile.profile_completion_score)
                     }
                 )
                 
-                # Return success response
+                # Prepare comprehensive response with teacher profile data
+                from .serializers import TeacherSerializer
+                teacher_serializer = TeacherSerializer(teacher_profile)
+                
+                # Generate wizard orchestration metadata (GitHub Issue #95)
+                from .services.wizard_orchestration import WizardOrchestrationService
+                try:
+                    wizard_metadata = WizardOrchestrationService.generate_wizard_metadata(
+                        teacher_profile, invitation.school
+                    )
+                except Exception as wizard_error:
+                    logger.warning(f"Failed to generate wizard metadata: {wizard_error}")
+                    wizard_metadata = WizardOrchestrationService._get_fallback_metadata()
+                
+                # Return enhanced success response with wizard metadata
                 return Response(
                     {
+                        # Wizard orchestration fields (GitHub Issue #95)
+                        "success": True,
+                        "invitation_accepted": True,
+                        "teacher_profile": teacher_serializer.data,
+                        "wizard_metadata": wizard_metadata,
+                        
+                        # Backward compatibility fields
+                        "teacher_profile_created": profile_created,
+                        "profile_completion": {
+                            "score": float(teacher_profile.profile_completion_score),
+                            "is_complete": teacher_profile.is_profile_complete
+                        },
+                        
+                        # Legacy fields for existing clients
                         "message": "Invitation accepted successfully! You are now a teacher at this school.",
                         "invitation": {
                             "id": invitation.id,
@@ -3474,7 +3679,6 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
                             "joined_at": membership.joined_at,
                             "is_active": membership.is_active,
                         },
-                        "teacher_profile_created": not hasattr(request.user, "teacher_profile"),
                     },
                     status=status.HTTP_200_OK,
                 )
@@ -3483,6 +3687,111 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
             logger.error(f"Accept invitation failed for token {token}: {e}")
             return Response(
                 {"error": "Failed to accept invitation. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    
+    @action(detail=True, methods=["post"], permission_classes=[AllowAny])
+    def decline(self, request, token=None):
+        """
+        Decline a teacher invitation.
+        
+        POST /api/accounts/teacher-invitations/{token}/decline/
+        
+        Allows anyone to decline an invitation using the token.
+        Maintains AllowAny permissions for public access.
+        
+        GitHub Issue #86: Implement Teacher Invitation Decline Endpoint
+        """
+        try:
+            invitation = TeacherInvitation.objects.select_related('school', 'invited_by').get(token=token)
+        except TeacherInvitation.DoesNotExist:
+            return Response(
+                {"error": "Invalid invitation token"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        
+        # Check if invitation can be declined
+        if invitation.is_accepted:
+            return Response(
+                {"error": "This invitation has already been processed and cannot be declined"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        if invitation.status == InvitationStatus.DECLINED:
+            return Response(
+                {"error": "This invitation has already been declined"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        if not invitation.is_valid():
+            if timezone.now() > invitation.expires_at:
+                return Response(
+                    {"error": "This invitation has expired and cannot be declined"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                return Response(
+                    {"error": "This invitation is no longer valid"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        
+        try:
+            # Mark invitation as declined
+            invitation.decline()
+            
+            # Create activity log
+            from .services.metrics_service import SchoolActivityService
+            from .models import ActivityType
+            
+            SchoolActivityService.create_activity(
+                school=invitation.school,
+                activity_type=ActivityType.INVITATION_DECLINED,
+                actor=request.user if request.user.is_authenticated else None,
+                target_invitation=None,  # SchoolActivity expects SchoolInvitation, not TeacherInvitation
+                description=f"Teacher invitation to {invitation.email} was declined",
+                metadata={
+                    'invitation_id': str(invitation.id),
+                    'invitation_token': invitation.token,
+                    'batch_id': str(invitation.batch_id),
+                    'role': invitation.role,
+                    'declined_by_authenticated_user': request.user.is_authenticated,
+                    'declined_by_intended_recipient': (
+                        request.user.is_authenticated and request.user.email == invitation.email
+                    )
+                }
+            )
+            
+            # Return success response consistent with accept endpoint
+            return Response(
+                {
+                    "message": "Invitation declined successfully.",
+                    "invitation": {
+                        "id": invitation.id,
+                        "email": invitation.email,
+                        "status": invitation.status,
+                        "declined_at": invitation.declined_at,
+                        "school": {
+                            "id": invitation.school.id,
+                            "name": invitation.school.name,
+                        },
+                        "role": invitation.role,
+                        "role_display": invitation.get_role_display(),
+                        "custom_message": invitation.custom_message,
+                    },
+                    "status": "declined",
+                },
+                status=status.HTTP_200_OK,
+            )
+            
+        except ValidationError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            logger.error(f"Decline invitation failed for token {token}: {e}")
+            return Response(
+                {"error": "Failed to decline invitation. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
     
@@ -3636,6 +3945,7 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
                 "created_at": invitation.created_at,
                 "expires_at": invitation.expires_at,
                 "accepted_at": invitation.accepted_at,
+                "declined_at": invitation.declined_at,
                 "viewed_at": invitation.viewed_at,
                 "email_delivery": {
                     "status": invitation.email_delivery_status,
@@ -3665,6 +3975,7 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
             "pending_invitations": queryset.filter(status=InvitationStatus.PENDING).count(),
             "sent_invitations": queryset.filter(status=InvitationStatus.SENT).count(),
             "accepted_invitations": queryset.filter(status=InvitationStatus.ACCEPTED).count(),
+            "declined_invitations": queryset.filter(status=InvitationStatus.DECLINED).count(),
             "expired_invitations": queryset.filter(expires_at__lt=timezone.now(), is_accepted=False).count(),
         }
         
@@ -6108,3 +6419,94 @@ class TutorOnboardingSaveProgressView(TutorOnboardingAPIView):
     
     def post(self, request):
         return self.save_progress(request)
+
+
+# =======================
+# WIZARD ORCHESTRATION API VIEWS (GitHub Issue #95)
+# =======================
+
+class TeacherProfileStepValidationView(KnoxAuthenticatedAPIView):
+    """
+    API endpoint for real-time step validation during teacher profile creation.
+    
+    POST /api/accounts/teacher-profile/validate-step/
+    
+    GitHub Issue #95: Backend wizard orchestration API for guided profile creation.
+    """
+    
+    throttle_classes = [ProfileWizardThrottle]
+    
+    def post(self, request):
+        """Validate data for a specific wizard step."""
+        from .serializers import StepValidationRequestSerializer, StepValidationResponseSerializer
+        from .services.wizard_orchestration import WizardOrchestrationService
+        
+        # Validate request data
+        request_serializer = StepValidationRequestSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            return Response(
+                {
+                    "is_valid": False,
+                    "errors": request_serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        validated_data = request_serializer.validated_data
+        step = validated_data['step']
+        step_data = validated_data['data']
+        
+        # Validate the step data using wizard orchestration service
+        validation_result = WizardOrchestrationService.validate_step_data(step, step_data)
+        
+        # Return validation result
+        response_serializer = StepValidationResponseSerializer(data=validation_result)
+        if response_serializer.is_valid():
+            if validation_result['is_valid']:
+                return Response(response_serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(response_serializer.data, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Fallback error response
+            return Response(
+                {
+                    "is_valid": False,
+                    "errors": {"general": ["Validation processing failed"]}
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class TeacherProfileCompletionStatusView(KnoxAuthenticatedAPIView):
+    """
+    API endpoint for tracking teacher profile completion progress.
+    
+    GET /api/accounts/teacher-profile/completion-status/
+    
+    GitHub Issue #95: Backend wizard orchestration API for guided profile creation.
+    """
+    
+    def get(self, request):
+        """Get completion status for the current user's teacher profile."""
+        try:
+            # Check if user has a teacher profile
+            if not hasattr(request.user, 'teacher_profile'):
+                return Response(
+                    {"error": "No teacher profile found for this user"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            teacher_profile = request.user.teacher_profile
+            
+            # Get completion status using wizard orchestration service
+            from .services.wizard_orchestration import WizardOrchestrationService
+            completion_status = WizardOrchestrationService._get_completion_status(teacher_profile)
+            
+            return Response(completion_status, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Failed to get completion status for user {request.user.id}: {e}")
+            return Response(
+                {"error": "Failed to retrieve completion status"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

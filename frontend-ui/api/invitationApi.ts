@@ -175,6 +175,12 @@ export interface InvitationStatusResponse {
   invitation: TeacherInvitation;
   can_accept: boolean;
   reason?: string;
+  needs_profile_wizard?: boolean;
+  wizard_metadata?: {
+    requires_profile_completion: boolean;
+    completed_steps?: string[];
+    current_step?: number;
+  };
 }
 
 // Enums based on backend models

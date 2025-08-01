@@ -1,0 +1,327 @@
+QA Test Case: Wizard Orchestration API Integration
+
+Test ID: TINVITE-005
+Test Name: Wizard Orchestration API for Teacher Profile Creation
+Purpose: Verify that the wizard orchestration API (Issues #95 and #97) is properly integrated with the teacher invitation flow and provides seamless profile setup experience
+Expected Result: Wizard orchestration API initializes correctly after invitation acceptance and guides teachers through complete profile setup
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native/Expo frontend
+- GitHub Issue: #49 - Teacher Invitation Acceptance Routes - Frontend Infrastructure
+- Key Implementations: Issue #95 (Wizard orchestration API), Issue #97 (Invitation flow integration)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: `make dev-open`
+4. Backend logs: `make logs` (CRITICAL for wizard API monitoring)
+5. Network monitoring via browser developer tools
+
+Test Data:
+- School Admin Email: anapmc.carvalho@gmail.com (school_owner role)
+- Teacher Email for Wizard Test: tinvite005.wizard@example.com
+- School Name: Default School or Test School
+- Teacher Profile Data: Complete profile information for all wizard steps
+
+Pre-requisites:
+1. Wizard orchestration API implemented and accessible (Issue #95)
+2. Invitation-wizard integration complete (Issue #97)
+3. Teacher profile wizard components functional
+4. Backend wizard service operational
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Wizard API Preparation
+1. Navigate to project root and activate environment
+2. Start development servers with make dev-open
+3. Open backend logs for wizard API monitoring: make logs
+4. Open browser developer tools and prepare network monitoring
+5. Clear browser cache and prepare for fresh session
+6. Verify wizard orchestration service is running
+
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev-open
+  # Separate terminal:
+  make logs
+
+Expected: Environment ready with wizard orchestration service active
+Screenshot: 01_wizard_environment_setup.png
+
+Step 2: Create Invitation and Prepare Wizard Test
+1. Authenticate as school admin (anapmc.carvalho@gmail.com)
+2. Create teacher invitation for tinvite005.wizard@example.com
+3. Verify invitation creation successful
+4. Note invitation token for wizard integration testing
+5. Confirm invitation status is PENDING
+
+Expected: Fresh invitation created for wizard orchestration testing
+Screenshot: 02_invitation_for_wizard_test.png
+
+Step 3: Test Wizard Orchestration API Initialization
+1. Access invitation acceptance page with valid token
+2. Complete invitation acceptance process
+3. Monitor network tab for wizard orchestration API calls
+4. Verify wizard initialization API call is made after acceptance
+5. Check API request includes proper context data
+6. Verify API response contains wizard configuration
+
+Expected API Calls:
+- POST /api/accounts/wizard-orchestration/initialize/
+- Request: invitation_token, user_id, context: "teacher_profile"
+- Response: 200 OK with wizard_session_id and step configuration
+
+Expected: Wizard orchestration API initializes correctly after invitation acceptance
+Screenshot: 03_wizard_initialization_api.png
+
+Step 4: Verify Wizard Session Management
+1. Check wizard session creation in API response
+2. Verify wizard_session_id is provided and valid
+3. Test wizard session persistence across page reloads
+4. Check session expiration handling
+5. Verify session cleanup after completion
+6. Monitor backend logs for session management
+
+Expected: Wizard session properly created and managed throughout process
+Screenshot: 04_wizard_session_management.png
+
+Step 5: Test Wizard Step Configuration API
+1. Monitor API calls for wizard step configuration
+2. Verify wizard returns correct steps for teacher profile
+3. Check step configuration includes:
+   - Step order and dependencies
+   - Required fields for each step
+   - Validation rules
+   - Progress tracking information
+4. Test step configuration API responses
+
+Expected API Calls:
+- GET /api/accounts/wizard-orchestration/steps/[session_id]/
+- Response: Complete step configuration with validation rules
+
+Expected: Wizard step configuration provides complete teacher profile steps
+Screenshot: 05_wizard_step_configuration.png
+
+Step 6: Test Wizard Progress Tracking API
+1. Navigate through wizard steps
+2. Monitor API calls for progress updates
+3. Verify progress tracking API calls are made
+4. Check progress data includes:
+   - Current step
+   - Completed steps
+   - Total steps
+   - Completion percentage
+5. Test progress persistence
+
+Expected API Calls:
+- PUT /api/accounts/wizard-orchestration/progress/[session_id]/
+- Request: current_step, completed_steps, step_data
+- Response: Updated progress information
+
+Expected: Wizard progress accurately tracked via API
+Screenshot: 06_wizard_progress_tracking.png
+
+Step 7: Test Wizard Data Validation API
+1. Submit invalid data in wizard steps
+2. Monitor validation API calls
+3. Verify server-side validation responses
+4. Check validation error format and content
+5. Test field-level validation messages
+6. Verify validation rules match step requirements
+
+Expected API Calls:
+- POST /api/accounts/wizard-orchestration/validate/[session_id]/
+- Request: step_name, step_data
+- Response: validation_errors or validation_success
+
+Expected: Wizard validation API provides proper error handling
+Screenshot: 07_wizard_validation_api.png
+
+Step 8: Test Wizard Data Persistence API
+1. Complete wizard steps and monitor data saving
+2. Verify wizard data persistence API calls
+3. Check data is saved incrementally after each step
+4. Test data retrieval for step navigation
+5. Verify data consistency across wizard session
+6. Monitor backend logs for data storage operations
+
+Expected API Calls:
+- POST /api/accounts/wizard-orchestration/save-step/[session_id]/
+- Request: step_name, step_data, is_complete
+- Response: Save confirmation and next step info
+
+Expected: Wizard data properly persisted via API throughout process
+Screenshot: 08_wizard_data_persistence.png
+
+Step 9: Test Basic Profile Information Step API
+1. Navigate to basic profile information step
+2. Complete basic profile fields:
+   - Full name
+   - Phone number
+   - Bio/description
+   - Profile photo (optional)
+3. Monitor API calls for profile data submission
+4. Verify data validation and storage
+5. Test step completion API
+
+Expected: Basic profile step integrates correctly with wizard API
+Screenshot: 09_basic_profile_step_api.png
+
+Step 10: Test Teaching Subjects Selection API
+1. Navigate to teaching subjects step
+2. Monitor API calls for subjects data loading
+3. Verify subjects are loaded from backend
+4. Test subject selection and storage
+5. Check multi-select functionality via API
+6. Verify subject validation rules
+
+Expected API Calls:
+- GET /api/accounts/courses/ (load available subjects)
+- POST /api/accounts/wizard-orchestration/save-step/ (save selections)
+
+Expected: Teaching subjects step properly integrated with course API
+Screenshot: 10_teaching_subjects_api.png
+
+Step 11: Test Grade Levels Configuration API
+1. Navigate to grade levels step
+2. Monitor grade levels data loading API
+3. Verify Portuguese education system integration
+4. Test grade level selection and validation
+5. Check grade level grouping via API
+6. Verify educational system consistency
+
+Expected API Calls:
+- GET /api/accounts/educational-systems/ (load grade levels)
+- POST /api/accounts/wizard-orchestration/save-step/ (save selections)
+
+Expected: Grade levels step properly integrated with education system API
+Screenshot: 11_grade_levels_api.png
+
+Step 12: Test Availability Setup API
+1. Navigate to availability preferences step
+2. Monitor availability data handling
+3. Test schedule configuration via API
+4. Verify time zone handling in API requests
+5. Check availability validation rules
+6. Test schedule persistence
+
+Expected: Availability setup properly handled via wizard API
+Screenshot: 12_availability_setup_api.png
+
+Step 13: Test Compensation Preferences API
+1. Navigate to compensation setup step
+2. Monitor financial data handling APIs
+3. Test payment preference storage
+4. Verify currency and rate validation
+5. Check financial data security in API
+6. Test compensation calculation APIs if applicable
+
+Expected: Compensation setup properly secured and validated via API
+Screenshot: 13_compensation_api.png
+
+Step 14: Test Wizard Completion API
+1. Complete all wizard steps
+2. Monitor wizard completion API call
+3. Verify final data submission and processing
+4. Check wizard session closure
+5. Test post-completion data validation
+6. Verify teacher profile creation completion
+
+Expected API Calls:
+- POST /api/accounts/wizard-orchestration/complete/[session_id]/
+- Request: final_validation, complete_profile_data
+- Response: completion_status, teacher_profile_id, next_steps
+
+Expected: Wizard completion API properly finalizes teacher profile creation
+Screenshot: 14_wizard_completion_api.png
+
+Step 15: Test Teacher Profile Integration API
+1. After wizard completion, verify profile integration
+2. Monitor teacher profile creation API calls
+3. Check profile data transfer from wizard to profile
+4. Verify profile activation and permissions
+5. Test profile accessibility via teacher dashboard
+6. Check profile data consistency
+
+Expected API Calls:
+- POST /api/accounts/teacher-profiles/ (create profile from wizard data)
+- GET /api/accounts/teacher-profiles/[id]/ (verify created profile)
+
+Expected: Teacher profile correctly created from wizard data via API
+Screenshot: 15_teacher_profile_integration.png
+
+Step 16: Test Wizard Error Recovery API
+1. Test wizard behavior with API failures
+2. Simulate network interruptions during wizard
+3. Verify wizard session recovery mechanisms
+4. Test data persistence during errors
+5. Check error handling and user feedback
+6. Test wizard restart capabilities
+
+Expected: Wizard gracefully handles API errors with proper recovery mechanisms
+Screenshot: 16_wizard_error_recovery.png
+
+Step 17: Test Wizard API Security and Authorization
+1. Test wizard API access control
+2. Verify only authorized users can access wizard
+3. Check wizard session security
+4. Test API authentication throughout wizard
+5. Verify data protection during wizard process
+6. Check for any security vulnerabilities
+
+Expected: Wizard API properly secured with appropriate authorization checks
+Screenshot: 17_wizard_api_security.png
+
+Step 18: Test Wizard API Performance and Scalability
+1. Monitor wizard API response times
+2. Test wizard performance with complete data sets
+3. Check API efficiency during step transitions
+4. Verify minimal API calls for optimal performance
+5. Test wizard behavior under load
+6. Monitor backend resource usage
+
+Expected: Wizard API performs efficiently with acceptable response times
+Screenshot: 18_wizard_api_performance.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Wizard orchestration API integrates seamlessly with invitation flow and provides complete teacher profile setup
+FAIL: Wizard API fails to initialize, function correctly, or complete teacher profile creation
+
+Individual Step Criteria:
+- Step 1: PASS if wizard service active, FAIL if service unavailable
+- Step 2: PASS if invitation ready, FAIL if invitation creation issues
+- Step 3: PASS if wizard initializes, FAIL if initialization API fails
+- Step 4: PASS if session managed properly, FAIL if session issues
+- Step 5: PASS if step configuration correct, FAIL if configuration problems
+- Step 6: PASS if progress tracked, FAIL if progress tracking broken
+- Step 7: PASS if validation works, FAIL if validation API issues
+- Step 8: PASS if data persisted, FAIL if data persistence problems
+- Step 9: PASS if basic profile step works, FAIL if profile step issues
+- Step 10: PASS if subjects API integrated, FAIL if subjects loading problems
+- Step 11: PASS if grade levels work, FAIL if education system integration issues
+- Step 12: PASS if availability API works, FAIL if schedule API problems
+- Step 13: PASS if compensation API secure, FAIL if financial API issues
+- Step 14: PASS if completion API works, FAIL if completion problems
+- Step 15: PASS if profile integration works, FAIL if profile creation issues
+- Step 16: PASS if error recovery works, FAIL if poor error handling
+- Step 17: PASS if security proper, FAIL if security vulnerabilities
+- Step 18: PASS if performance acceptable, FAIL if performance issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Wizard should initialize within 1 second after invitation acceptance
+- Step transitions should be smooth with minimal loading time
+- Progress should be visually clear and accurate
+- Validation errors should be immediate and helpful
+- Data persistence should be seamless and reliable
+- Wizard completion should provide clear success confirmation
+- Error states should be recoverable with clear guidance
+- API failures should not cause data loss
+- Loading states should be informative throughout wizard
+- Final profile should be immediately accessible after completion

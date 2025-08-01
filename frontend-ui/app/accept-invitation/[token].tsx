@@ -1,11 +1,12 @@
-import { CheckCircle, AlertCircle, Clock, X } from 'lucide-react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { CheckCircle, AlertCircle, Clock, X, UserCheck, UserX } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { useInvitationActions } from '@/hooks/useInvitations';
 import InvitationApi, { TeacherInvitation, InvitationStatusResponse } from '@/api/invitationApi';
 import MainLayout from '@/components/layouts/main-layout';
+import { useAuth } from '@/api/authContext';
 
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -20,13 +21,19 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card';
 
 const AcceptInvitationPage = () => {
   const { token } = useLocalSearchParams<{ token: string }>();
+  const router = useRouter();
+  const { userProfile, isLoggedIn } = useAuth();
+  
   const [invitationData, setInvitationData] = useState<InvitationStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
+  const [declining, setDeclining] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [declined, setDeclined] = useState(false);
+  const [needsAuth, setNeedsAuth] = useState(false);
 
-  const { acceptInvitation } = useInvitationActions();
+  const { acceptInvitation, declineInvitation } = useInvitationActions();
 
   useEffect(() => {
     if (token) {
@@ -40,8 +47,16 @@ const AcceptInvitationPage = () => {
       setError(null);
       const response = await InvitationApi.getInvitationStatus(token!);
       setInvitationData(response);
+      
+      // Check if user needs to authenticate and if invitation email matches current user
+      if (isLoggedIn && userProfile && response.invitation.email !== userProfile.email) {
+        setError('Este convite não é para o usuário atualmente autenticado. Por favor, faça login com o email correto.');
+      } else if (!isLoggedIn) {
+        setNeedsAuth(true);
+      }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 
+      const errorMessage = err.response?.data?.error || 
+                          err.response?.data?.detail || 
                           err.message || 
                           'Falha ao carregar informações do convite';
       setError(errorMessage);
@@ -51,21 +66,93 @@ const AcceptInvitationPage = () => {
   };
 
   const handleAcceptInvitation = async () => {
+    if (!isLoggedIn) {
+      Alert.alert(
+        'Autenticação Necessária',
+        'Você precisa estar logado para aceitar este convite.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { 
+            text: 'Fazer Login', 
+            onPress: () => router.push(`/auth/signin?redirect=/accept-invitation/${token}`)
+          }
+        ]
+      );
+      return;
+    }
+
     if (!invitationData?.can_accept) {
       Alert.alert('Erro', invitationData?.reason || 'Não é possível aceitar este convite');
       return;
     }
 
+    // For teacher invitations, check if we need to go through profile wizard
+    const invitation = invitationData.invitation;
+    if (invitation.role === 'teacher') {
+      // Check if teacher profile needs to be created/completed
+      const needsProfileWizard = invitationData.needs_profile_wizard || 
+                               invitationData.wizard_metadata?.requires_profile_completion;
+      
+      if (needsProfileWizard) {
+        // Navigate to profile wizard instead of accepting directly
+        router.push(`/accept-invitation/profile-wizard?token=${token}` as any);
+        return;
+      }
+    }
+
     try {
       setAccepting(true);
-      await acceptInvitation(token!);
+      const result = await acceptInvitation(token!);
       setAccepted(true);
-      Alert.alert('Sucesso!', 'Convite aceito com sucesso! Você já faz parte da escola.');
+      
+      Alert.alert(
+        'Sucesso!', 
+        'Convite aceito com sucesso! Você já faz parte da escola.',
+        [
+          {
+            text: 'Ir para Dashboard',
+            onPress: () => {
+              // Navigate to appropriate dashboard based on role
+              if (result.school_membership.role === 'teacher') {
+                router.push('/(tutor)/dashboard');
+              } else {
+                router.push('/(school-admin)/dashboard');
+              }
+            }
+          }
+        ]
+      );
     } catch (err) {
       // Error handling is done in the hook
     } finally {
       setAccepting(false);
     }
+  };
+
+  const handleDeclineInvitation = async () => {
+    Alert.alert(
+      'Declinar Convite',
+      'Tem certeza de que deseja declinar este convite? Esta ação não pode ser desfeita.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Declinar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setDeclining(true);
+              await declineInvitation(token!);
+              setDeclined(true);
+              Alert.alert('Convite Declinado', 'O convite foi declinado com sucesso.');
+            } catch (err) {
+              // Error handling is done in the hook
+            } finally {
+              setDeclining(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const getStatusIcon = (status: string) => {
@@ -138,9 +225,76 @@ const AcceptInvitationPage = () => {
               Você já faz parte da escola {invitation.school.name}.
             </Text>
           </VStack>
-          <Button variant="solid">
+          <Button 
+            variant="solid"
+            onPress={() => {
+              // Navigate to dashboard based on role
+              if (invitation.role === 'teacher') {
+                router.push('/(tutor)/dashboard');
+              } else {
+                router.push('/(school-admin)/dashboard');
+              }
+            }}
+          >
             <ButtonText>Ir para Dashboard</ButtonText>
           </Button>
+        </VStack>
+      </Center>
+    );
+  }
+
+  if (declined || invitation.status === 'declined') {
+    return (
+      <Center className="flex-1 p-6">
+        <VStack space="lg" className="items-center max-w-md">
+          <Icon as={UserX} size="xl" className="text-red-500" />
+          <VStack space="sm" className="items-center">
+            <Heading size="lg" className="text-center text-gray-900">
+              Convite Declinado
+            </Heading>
+            <Text className="text-center text-gray-600">
+              Você declinou o convite para se juntar à escola {invitation.school.name}.
+            </Text>
+          </VStack>
+          <Button 
+            variant="outline"
+            onPress={() => router.push('/')}
+          >
+            <ButtonText>Voltar ao Início</ButtonText>
+          </Button>
+        </VStack>
+      </Center>
+    );
+  }
+
+  // Show authentication prompt if user needs to log in
+  if (needsAuth) {
+    return (
+      <Center className="flex-1 p-6">
+        <VStack space="lg" className="items-center max-w-md">
+          <Icon as={UserCheck} size="xl" className="text-blue-500" />
+          <VStack space="sm" className="items-center">
+            <Heading size="lg" className="text-center text-gray-900">
+              Autenticação Necessária
+            </Heading>
+            <Text className="text-center text-gray-600">
+              Para aceitar este convite, você precisa fazer login com o email {invitation?.email}.
+            </Text>
+          </VStack>
+          <VStack space="sm" className="w-full">
+            <Button 
+              variant="solid"
+              onPress={() => router.push(`/auth/signin?redirect=/accept-invitation/${token}`)}
+            >
+              <ButtonText>Fazer Login</ButtonText>
+            </Button>
+            <Button 
+              variant="outline"
+              onPress={() => router.push(`/auth/signup?email=${invitation?.email}&redirect=/accept-invitation/${token}`)}
+            >
+              <ButtonText>Criar Conta</ButtonText>
+            </Button>
+          </VStack>
         </VStack>
       </Center>
     );
@@ -156,7 +310,7 @@ const AcceptInvitationPage = () => {
                 <Icon 
                   as={statusConfig.icon} 
                   size="xl" 
-                  style={{ color: statusConfig.color }} 
+                  className={`text-[${statusConfig.color}]`}
                 />
                 <VStack space="xs" className="items-center">
                   <Heading size="lg" className="text-gray-900">
@@ -230,20 +384,42 @@ const AcceptInvitationPage = () => {
                 {/* Action Buttons */}
                 <VStack space="sm">
                   {invitationData.can_accept ? (
-                    <Button 
-                      onPress={handleAcceptInvitation}
-                      disabled={accepting}
-                      className="bg-green-600"
-                    >
-                      {accepting ? (
-                        <HStack space="xs" className="items-center">
-                          <Spinner size="small" />
-                          <ButtonText className="text-white">Aceitando...</ButtonText>
-                        </HStack>
-                      ) : (
-                        <ButtonText className="text-white">Aceitar Convite</ButtonText>
-                      )}
-                    </Button>
+                    <>
+                      <Button 
+                        onPress={handleAcceptInvitation}
+                        disabled={accepting || declining}
+                        className="bg-green-600"
+                      >
+                        {accepting ? (
+                          <HStack space="xs" className="items-center">
+                            <Spinner size="small" />
+                            <ButtonText className="text-white">Processando...</ButtonText>
+                          </HStack>
+                        ) : (
+                          <ButtonText className="text-white">
+                            {invitation.role === 'teacher' && (invitationData.needs_profile_wizard || invitationData.wizard_metadata?.requires_profile_completion) 
+                              ? 'Configurar Perfil' 
+                              : 'Aceitar Convite'}
+                          </ButtonText>
+                        )}
+                      </Button>
+                      
+                      <Button 
+                        variant="outline"
+                        onPress={handleDeclineInvitation}
+                        disabled={accepting || declining}
+                        className="border-red-300"
+                      >
+                        {declining ? (
+                          <HStack space="xs" className="items-center">
+                            <Spinner size="small" />
+                            <ButtonText className="text-red-600">Declinando...</ButtonText>
+                          </HStack>
+                        ) : (
+                          <ButtonText className="text-red-600">Declinar Convite</ButtonText>
+                        )}
+                      </Button>
+                    </>
                   ) : (
                     <Box className="p-3 bg-red-50 rounded border border-red-200">
                       <Text className="text-sm text-red-700 text-center">
@@ -252,8 +428,11 @@ const AcceptInvitationPage = () => {
                     </Box>
                   )}
                   
-                  <Button variant="outline">
-                    <ButtonText>Voltar</ButtonText>
+                  <Button 
+                    variant="outline"
+                    onPress={() => router.push('/')}
+                  >
+                    <ButtonText>Voltar ao Início</ButtonText>
                   </Button>
                 </VStack>
               </VStack>

@@ -1,0 +1,264 @@
+QA Test Case: Teacher Invitation Decline Flow
+
+Test ID: TINVITE-003
+Test Name: Teacher Invitation Decline Functionality
+Purpose: Verify that teachers can successfully decline invitations using the new decline endpoint and that the system properly handles declined invitations
+Expected Result: Teachers can decline invitations with proper confirmation, status updates, and admin notifications
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native/Expo frontend
+- GitHub Issue: #49 - Teacher Invitation Acceptance Routes - Frontend Infrastructure
+- Related Fix: Issue #86 - Teacher invitation decline endpoint implementation
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: `make dev-open`
+4. Backend logs: `make logs` (essential for monitoring decline API calls)
+
+Test Data:
+- School Admin Email: anapmc.carvalho@gmail.com (school_owner role)
+- Teacher Email for Decline Test: tinvite003.decline@example.com
+- School Name: Default School or Test School
+- Invitation Role: teacher
+
+Pre-requisites:
+1. Valid teacher invitation exists in system with PENDING status
+2. Decline endpoint implemented and functional (Issue #86)
+3. Both frontend and backend servers running
+4. Admin dashboard can display invitation status updates
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Fresh Invitation Creation
+1. Navigate to project root and activate environment
+2. Start development servers with make dev-open
+3. Open backend logs for API monitoring: make logs
+4. Create new teacher invitation for tinvite003.decline@example.com
+5. Verify invitation status is PENDING in admin dashboard
+6. Note invitation token for testing
+
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev-open
+  # Separate terminal:
+  make logs
+
+Expected: Environment ready with fresh PENDING invitation created
+Screenshot: 01_invitation_created_for_decline.png
+
+Step 2: Access Invitation Page and Verify Decline Option
+1. Open browser to invitation URL: http://localhost:8081/accept-invitation/[TOKEN]
+2. Verify invitation acceptance page loads correctly
+3. Confirm both Accept and Decline buttons are present
+4. Check Decline button styling and positioning
+5. Verify Decline button is enabled and clickable
+6. Test hover states on Decline button
+
+Expected: Invitation page displays with functional Decline button
+Screenshot: 02_decline_button_available.png
+
+Step 3: Initiate Decline Process
+1. Click "Decline Invitation" button
+2. Verify decline confirmation dialog/modal appears
+3. Check modal contains:
+   - Clear decline confirmation message
+   - School name and invitation details
+   - Confirmation question ("Are you sure you want to decline?")
+   - Cancel and Confirm decline options
+4. Test modal can be cancelled/closed
+5. Verify no API calls made until confirmation
+
+Expected: Decline confirmation modal appears with proper content and options
+Screenshot: 03_decline_confirmation_modal.png
+
+Step 4: Test Decline Cancellation
+1. With decline modal open, click Cancel or close modal
+2. Verify modal closes properly
+3. Check page returns to normal invitation state
+4. Confirm invitation still shows as available for acceptance
+5. Verify no backend API calls were made for decline
+6. Test that Accept button still works after cancellation
+
+Expected: Decline can be cancelled without affecting invitation status
+Screenshot: 04_decline_cancelled.png
+
+Step 5: Complete Decline Process
+1. Click "Decline Invitation" button again
+2. In confirmation modal, click "Confirm Decline" or "Yes, Decline"
+3. Monitor loading states during decline processing
+4. Watch backend logs for decline API call
+5. Verify decline API endpoint is called correctly
+6. Check for proper API response handling
+
+Expected: Decline process initiates with proper API call to decline endpoint
+Screenshot: 05_decline_processing.png
+
+Step 6: Verify Decline Success Response
+1. After decline API call, verify success response
+2. Check for success message or confirmation
+3. Verify page updates to show declined status
+4. Look for proper "Invitation Declined" message
+5. Check that Accept/Decline buttons are no longer available
+6. Verify page shows appropriate next steps or thank you message
+
+Expected: Decline completes successfully with clear confirmation message
+Screenshot: 06_decline_success.png
+
+Step 7: Test Declined Invitation State
+1. Refresh the invitation page to verify state persistence
+2. Confirm page shows "Already Declined" or similar status
+3. Verify Accept button is no longer available
+4. Check that decline action cannot be repeated
+5. Test appropriate messaging for declined state
+6. Verify invitation token is still valid but invitation unusable
+
+Expected: Declined invitation shows proper status and prevents further actions
+Screenshot: 07_declined_invitation_state.png
+
+Step 8: Verify Backend Database Updates
+1. Monitor backend logs for database update operations
+2. Check invitation record status changed to DECLINED
+3. Verify declined_at timestamp is recorded
+4. Confirm no teacher account/membership created
+5. Check that invitation cannot be accepted after decline
+6. Verify referential integrity maintained
+
+Expected: Backend correctly updates invitation status to DECLINED with timestamp
+Screenshot: 08_backend_decline_logged.png
+
+Step 9: Verify Admin Dashboard Updates
+1. Switch to admin browser tab/window
+2. Refresh invitation status dashboard
+3. Verify invitation status shows as DECLINED
+4. Check declined timestamp is displayed
+5. Confirm teacher not added to school member list
+6. Verify admin can see decline status and timing
+
+Expected: Admin dashboard reflects declined invitation status immediately
+Screenshot: 09_admin_dashboard_decline_status.png
+
+Step 10: Test Decline Notification (If Implemented)
+1. Check if admin receives notification of invitation decline
+2. Verify notification contains:
+   - Teacher email who declined
+   - School name
+   - Decline timestamp
+   - Optional reason (if collected)
+3. Test notification delivery method (email, in-app, etc.)
+4. Verify notification accuracy and formatting
+
+Expected: Admin receives proper notification of invitation decline
+Screenshot: 10_decline_notification.png
+
+Step 11: Test Decline with Reason (If Available)
+1. Create new invitation for testing decline with reason
+2. Access invitation page and click Decline
+3. If decline reason field is available:
+   - Enter optional decline reason
+   - Test reason field validation
+   - Submit decline with reason
+4. Verify reason is stored and displayed to admin
+5. Test reason field character limits and formatting
+
+Expected: Decline reason functionality works if implemented
+Screenshot: 11_decline_with_reason.png
+
+Step 12: Test Multiple Decline Attempts
+1. With declined invitation, try to access invitation URL again
+2. Verify consistent "Already Declined" messaging
+3. Test that decline cannot be undone through UI
+4. Confirm proper handling of already-declined invitations
+5. Check for appropriate user guidance or next steps
+
+Expected: Multiple decline attempts handled gracefully with consistent messaging
+Screenshot: 12_multiple_decline_attempts.png
+
+Step 13: Verify API Endpoint Security (Issue #86)
+1. Test decline API endpoint directly (if accessible)
+2. Verify proper authentication/authorization for decline
+3. Check that only invitation recipient can decline
+4. Test API responds correctly to invalid tokens
+5. Verify proper error handling for unauthorized decline attempts
+6. Monitor logs for security-related errors
+
+Expected: Decline API endpoint properly secured with appropriate authorization
+Screenshot: 13_api_security_verification.png
+
+Step 14: Test Decline Email Confirmation
+1. Check if decline confirmation email is sent
+2. Verify email sent to teacher who declined
+3. Check email contains:
+   - Decline confirmation
+   - School contact information
+   - Future opportunity messaging
+   - Professional closing
+4. Test email formatting and deliverability
+5. Verify no sensitive information leaked in email
+
+Expected: Decline confirmation email sent with appropriate professional content
+Screenshot: 14_decline_email_confirmation.png
+
+Step 15: Test Admin Decline Management
+1. As admin, verify decline management features
+2. Check if admin can:
+   - View decline reasons
+   - See decline timestamps
+   - Export decline reports
+   - Create new invitations after decline
+3. Test admin workflows for handling declined invitations
+4. Verify admin cannot override decline status
+
+Expected: Admin has appropriate tools for managing declined invitations
+Screenshot: 15_admin_decline_management.png
+
+Step 16: Test Edge Cases and Error Handling
+1. Test decline with network interruption
+2. Verify handling of decline API timeout
+3. Test decline with expired invitation token
+4. Check decline behavior with invalid/malformed tokens
+5. Verify proper error messages for all failure scenarios
+6. Test recovery from partial decline operations
+
+Expected: All edge cases handled gracefully with proper error messages
+Screenshot: 16_edge_case_handling.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Teachers can successfully decline invitations with proper confirmation, status updates, and admin visibility
+FAIL: Decline functionality fails, status not updated, or system inconsistencies occur
+
+Individual Step Criteria:
+- Step 1: PASS if environment ready with invitation, FAIL if setup issues
+- Step 2: PASS if Decline button available, FAIL if button missing/broken
+- Step 3: PASS if confirmation modal works, FAIL if modal issues
+- Step 4: PASS if decline can be cancelled, FAIL if cancellation broken
+- Step 5: PASS if decline processes correctly, FAIL if API call fails
+- Step 6: PASS if success response proper, FAIL if response handling broken
+- Step 7: PASS if declined state persists, FAIL if state inconsistent
+- Step 8: PASS if backend updates correctly, FAIL if database issues
+- Step 9: PASS if admin dashboard updates, FAIL if status not reflected
+- Step 10: PASS if notifications work, FAIL if notification issues
+- Step 11: PASS if reason functionality works, FAIL if reason handling broken
+- Step 12: PASS if multiple attempts handled, FAIL if inconsistent behavior
+- Step 13: PASS if API security proper, FAIL if security vulnerabilities
+- Step 14: PASS if email confirmation works, FAIL if email issues
+- Step 15: PASS if admin tools work, FAIL if admin functionality broken
+- Step 16: PASS if edge cases handled, FAIL if poor error handling
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Decline process should require confirmation to prevent accidental declines
+- Confirmation modal should be clear and professional
+- Declined status should be immediately visible and persistent
+- Admin should be promptly notified of declines
+- Error messages should be helpful and actionable
+- Decline should be final but not hostile (leave door open for future)
+- UI should be respectful and professional throughout decline process
+- Loading states should be clear during decline processing
+- Success confirmation should be reassuring and polite

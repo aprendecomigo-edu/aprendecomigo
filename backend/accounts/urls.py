@@ -17,6 +17,8 @@ from .views import (
     TeacherAnalyticsView,
     TeacherCourseViewSet,
     TeacherInvitationViewSet,
+    TeacherProfileCompletionStatusView,
+    TeacherProfileStepValidationView,
     TeacherProfileWizardViewSet,
     TeacherViewSet,
     TutorDiscoveryAPIView,
@@ -126,6 +128,17 @@ urlpatterns = [
         "tutors/onboarding/save-progress/",
         TutorOnboardingSaveProgressView.as_view(),
         name="tutor-onboarding-save-progress",
+    ),
+    # Wizard Orchestration endpoints (GitHub Issue #95)
+    path(
+        "teacher-profile/validate-step/",
+        TeacherProfileStepValidationView.as_view(),
+        name="teacher-profile-validate-step",
+    ),
+    path(
+        "teacher-profile/completion-status/",
+        TeacherProfileCompletionStatusView.as_view(),
+        name="teacher-profile-completion-status",
     ),
     # Knox authentication URLs
     path("auth/logout/", knox_views.LogoutView.as_view(), name="knox_logout"),

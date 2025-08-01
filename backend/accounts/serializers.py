@@ -303,6 +303,12 @@ class TeacherSerializer(serializers.ModelSerializer):
     rate_structure = serializers.JSONField(required=False)
     weekly_availability = serializers.JSONField(required=False)
     
+    # Enhanced profile fields
+    grade_level_preferences = serializers.JSONField(required=False)
+    teaching_experience = serializers.JSONField(required=False)
+    credentials_documents = serializers.JSONField(required=False)
+    availability_schedule = serializers.JSONField(required=False)
+    
     # Profile tracking fields
     profile_completion_score = serializers.DecimalField(
         max_digits=5, decimal_places=2, read_only=True
@@ -327,6 +333,10 @@ class TeacherSerializer(serializers.ModelSerializer):
             "teaching_subjects",
             "rate_structure", 
             "weekly_availability",
+            "grade_level_preferences",
+            "teaching_experience",
+            "credentials_documents",
+            "availability_schedule",
             "profile_completion_score",
             "is_profile_complete",
             "last_profile_update",
@@ -872,6 +882,220 @@ class AcceptInvitationSerializer(serializers.Serializer):
         return value
 
 
+class ComprehensiveTeacherProfileCreationSerializer(serializers.Serializer):
+    """
+    Comprehensive serializer for teacher profile creation during invitation acceptance.
+    
+    Supports all profile fields, file uploads, and validation for GitHub issue #50.
+    """
+    
+    # Basic Information (existing fields)
+    bio = serializers.CharField(required=False, allow_blank=True, max_length=5000)
+    specialty = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    hourly_rate = serializers.DecimalField(max_digits=6, decimal_places=2, required=False, allow_null=True)
+    
+    # Contact and Location
+    phone_number = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    address = serializers.CharField(required=False, allow_blank=True, max_length=500)
+    
+    # File Uploads
+    profile_photo = serializers.ImageField(required=False, allow_null=True)
+    
+    # Teaching Subjects with structured data
+    teaching_subjects = serializers.JSONField(required=False, allow_null=True)
+    
+    # Grade Level Preferences
+    grade_level_preferences = serializers.JSONField(required=False, allow_null=True)
+    
+    # Availability and Schedule
+    availability = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+    weekly_availability = serializers.JSONField(required=False, allow_null=True)
+    availability_schedule = serializers.JSONField(required=False, allow_null=True)
+    
+    # Rates and Compensation
+    rate_structure = serializers.JSONField(required=False, allow_null=True)
+    
+    # Credentials and Education
+    education_background = serializers.JSONField(required=False, allow_null=True)
+    teaching_experience = serializers.JSONField(required=False, allow_null=True)
+    credentials_documents = serializers.JSONField(required=False, allow_null=True)
+    
+    # Course associations (backward compatibility)
+    course_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        allow_empty=True,
+        help_text="List of course IDs the teacher wants to teach",
+    )
+    
+    def validate_profile_photo(self, value):
+        """Validate profile photo upload."""
+        if not value:
+            return value
+        
+        # Check file size (max 5MB)
+        max_size = 5 * 1024 * 1024  # 5MB
+        if value.size > max_size:
+            raise serializers.ValidationError("Profile photo must be less than 5MB.")
+        
+        # Check file type
+        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if value.content_type not in allowed_types:
+            raise serializers.ValidationError(
+                "Profile photo must be a JPEG, PNG, GIF, or WebP image."
+            )
+        
+        return value
+    
+    def validate_teaching_subjects(self, value):
+        """Validate teaching subjects structure."""
+        if not value:
+            return value
+        
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Teaching subjects must be a list.")
+        
+        valid_levels = ['beginner', 'intermediate', 'advanced', 'expert']
+        
+        for subject_data in value:
+            if not isinstance(subject_data, dict):
+                raise serializers.ValidationError("Each teaching subject must be an object.")
+            
+            if 'subject' not in subject_data:
+                raise serializers.ValidationError("Each teaching subject must have a 'subject' field.")
+            
+            if 'level' in subject_data and subject_data['level'] not in valid_levels:
+                raise serializers.ValidationError(
+                    f"Subject level must be one of: {', '.join(valid_levels)}"
+                )
+        
+        return value
+    
+    def validate_grade_level_preferences(self, value):
+        """Validate grade level preferences."""
+        if not value:
+            return value
+        
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Grade level preferences must be a list.")
+        
+        valid_levels = [
+            'elementary', 'middle', 'high_school', 'university', 'university_prep',
+            'professional', 'adult_education'
+        ]
+        
+        for level in value:
+            if level not in valid_levels:
+                raise serializers.ValidationError(
+                    f"Invalid grade level: {level}. Must be one of: {', '.join(valid_levels)}"
+                )
+        
+        return value
+    
+    def validate_hourly_rate(self, value):
+        """Validate hourly rate."""
+        if value is None:
+            return value
+        
+        if value < 0:
+            raise serializers.ValidationError("Hourly rate cannot be negative.")
+        
+        if value > 500:  # Reasonable maximum
+            raise serializers.ValidationError("Hourly rate seems unusually high. Please verify.")
+        
+        return value
+    
+    def validate_education_background(self, value):
+        """Validate education background structure."""
+        if not value:
+            return value
+        
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Education background must be an object.")
+        
+        # Validate degrees structure if present
+        if 'degrees' in value:
+            if not isinstance(value['degrees'], list):
+                raise serializers.ValidationError("Degrees must be a list.")
+            
+            for degree in value['degrees']:
+                if not isinstance(degree, dict):
+                    raise serializers.ValidationError("Each degree must be an object.")
+                
+                required_fields = ['degree', 'institution']
+                for field in required_fields:
+                    if field not in degree or not degree[field]:
+                        raise serializers.ValidationError(f"Each degree must have a '{field}' field.")
+        
+        return value
+    
+    def validate_teaching_experience(self, value):
+        """Validate teaching experience structure."""
+        if not value:
+            return value
+        
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Teaching experience must be an object.")
+        
+        # Validate total_years if present
+        if 'total_years' in value:
+            total_years = value['total_years']
+            if not isinstance(total_years, (int, float)) or total_years < 0:
+                raise serializers.ValidationError("Total years must be a non-negative number.")
+            
+            if total_years > 80:  # Reasonable maximum
+                raise serializers.ValidationError("Total years seems unusually high.")
+        
+        # Validate positions structure if present
+        if 'positions' in value:
+            if not isinstance(value['positions'], list):
+                raise serializers.ValidationError("Positions must be a list.")
+            
+            for position in value['positions']:
+                if not isinstance(position, dict):
+                    raise serializers.ValidationError("Each position must be an object.")
+        
+        return value
+    
+    def validate_weekly_availability(self, value):
+        """Validate weekly availability structure."""
+        if not value:
+            return value
+        
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Weekly availability must be an object.")
+        
+        valid_days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        
+        for day, slots in value.items():
+            if day not in valid_days:
+                raise serializers.ValidationError(f"Invalid day: {day}")
+            
+            if not isinstance(slots, list):
+                raise serializers.ValidationError(f"Availability for {day} must be a list of time slots.")
+            
+            for slot in slots:
+                if not isinstance(slot, dict) or 'start' not in slot or 'end' not in slot:
+                    raise serializers.ValidationError(
+                        f"Each time slot for {day} must have 'start' and 'end' times."
+                    )
+        
+        return value
+    
+    def validate_course_ids(self, value):
+        """Validate that all course IDs exist."""
+        if not value:
+            return value
+
+        existing_ids = set(Course.objects.filter(id__in=value).values_list("id", flat=True))
+        invalid_ids = set(value) - existing_ids
+
+        if invalid_ids:
+            raise serializers.ValidationError(f"Invalid course IDs: {list(invalid_ids)}")
+
+        return value
+
+
 class CreateStudentSerializer(serializers.Serializer):
     """
     Serializer for creating a complete student record (user + profile + school membership) in one request.
@@ -1393,6 +1617,7 @@ class TeacherInvitationSerializer(BaseNestedModelSerializer):
             "expires_at",
             "is_accepted",
             "accepted_at",
+            "declined_at",
             "viewed_at",
         ]
         read_only_fields = [
@@ -1409,6 +1634,7 @@ class TeacherInvitationSerializer(BaseNestedModelSerializer):
             "updated_at",
             "is_accepted",
             "accepted_at",
+            "declined_at",
             "viewed_at",
         ]
 
@@ -1969,3 +2195,75 @@ class ProfilePhotoUploadSerializer(serializers.Serializer):
         value.seek(0)
         
         return value
+
+
+# =======================
+# WIZARD ORCHESTRATION SERIALIZERS
+# =======================
+
+class WizardStepSerializer(serializers.Serializer):
+    """Serializer for wizard step metadata."""
+    
+    step_number = serializers.IntegerField()
+    title = serializers.CharField()
+    description = serializers.CharField()
+    fields = serializers.ListField(child=serializers.CharField())
+    is_required = serializers.BooleanField()
+    estimated_time_minutes = serializers.IntegerField(required=False)
+
+
+class WizardCompletionStatusSerializer(serializers.Serializer):
+    """Serializer for wizard completion status."""
+    
+    completion_percentage = serializers.FloatField()
+    missing_critical = serializers.ListField(child=serializers.CharField())
+    missing_optional = serializers.ListField(child=serializers.CharField())
+    is_complete = serializers.BooleanField()
+    scores_breakdown = serializers.DictField()
+    recommendations = serializers.ListField(child=serializers.DictField())
+
+
+class SchoolPolicySerializer(serializers.Serializer):
+    """Serializer for school policies relevant to wizard."""
+    
+    currency_code = serializers.CharField()
+    rate_constraints = serializers.DictField()
+    working_hours = serializers.DictField()
+    timezone = serializers.CharField()
+    trial_cost_absorption = serializers.CharField()
+
+
+class WizardMetadataSerializer(serializers.Serializer):
+    """Serializer for wizard orchestration metadata."""
+    
+    steps = WizardStepSerializer(many=True)
+    current_step = serializers.IntegerField()
+    completion_status = WizardCompletionStatusSerializer()
+    school_policies = SchoolPolicySerializer()
+
+
+class EnhancedInvitationAcceptanceResponseSerializer(serializers.Serializer):
+    """Serializer for enhanced invitation acceptance response with wizard metadata."""
+    
+    success = serializers.BooleanField()
+    invitation_accepted = serializers.BooleanField()
+    teacher_profile = TeacherSerializer()
+    wizard_metadata = WizardMetadataSerializer()
+    # Backward compatibility fields
+    teacher_profile_created = serializers.BooleanField()
+    profile_completion = serializers.DictField()
+
+
+class StepValidationRequestSerializer(serializers.Serializer):
+    """Serializer for step validation requests."""
+    
+    step = serializers.IntegerField(min_value=0, max_value=10)
+    data = serializers.JSONField()
+
+
+class StepValidationResponseSerializer(serializers.Serializer):
+    """Serializer for step validation responses."""
+    
+    is_valid = serializers.BooleanField()
+    validated_data = serializers.JSONField(required=False)
+    errors = serializers.DictField(required=False)
