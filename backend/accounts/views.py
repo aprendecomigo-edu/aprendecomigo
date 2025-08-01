@@ -48,6 +48,8 @@ from .models import (
     EmailCommunication,
     SchoolEmailTemplate,
     InvitationStatus,
+    ParentChildRelationship,
+    ParentProfile,
     School,
     SchoolActivity,
     SchoolInvitation,
@@ -80,6 +82,8 @@ from .serializers import (
     EmailTemplatePreviewSerializer,
     EnhancedSchoolSerializer,
     InviteExistingTeacherSerializer,
+    ParentChildRelationshipSerializer,
+    ParentProfileSerializer,
     ProfileWizardDataSerializer,
     ProfileWizardStepValidationSerializer,
     ProfilePhotoUploadSerializer,
@@ -7442,3 +7446,198 @@ class EmailCommunicationViewSet(viewsets.ReadOnlyModelViewSet):
                 for choice in EmailCommunicationType.choices
             ]
         }, status=status.HTTP_200_OK)
+
+
+class ParentProfileViewSet(KnoxAuthenticatedViewSet):
+    """
+    ViewSet for managing parent profiles.
+    Allows parents to manage their profile settings and preferences.
+    """
+    
+    serializer_class = ParentProfileSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """Return only the current user's parent profile."""
+        return ParentProfile.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        """Ensure parent profile is created for the current user."""
+        serializer.save(user=self.request.user)
+    
+    @action(detail=True, methods=['patch'])
+    def update_notification_preferences(self, request, pk=None):
+        """Update notification preferences for parent."""
+        parent_profile = self.get_object()
+        
+        # Get current preferences and update with provided data
+        current_prefs = parent_profile.notification_preferences or {}
+        new_prefs = request.data.get('notification_preferences', {})
+        current_prefs.update(new_prefs)
+        
+        parent_profile.notification_preferences = current_prefs
+        parent_profile.save()
+        
+        serializer = self.get_serializer(parent_profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['patch'])
+    def update_approval_settings(self, request, pk=None):
+        """Update default approval settings for parent."""
+        parent_profile = self.get_object()
+        
+        # Get current settings and update with provided data
+        current_settings = parent_profile.default_approval_settings or {}
+        new_settings = request.data.get('default_approval_settings', {})
+        current_settings.update(new_settings)
+        
+        parent_profile.default_approval_settings = current_settings
+        parent_profile.save()
+        
+        serializer = self.get_serializer(parent_profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ParentChildRelationshipViewSet(KnoxAuthenticatedViewSet):
+    """
+    ViewSet for managing parent-child relationships.
+    Allows parents to manage their children and school administrators to oversee relationships.
+    """
+    
+    serializer_class = ParentChildRelationshipSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """Filter relationships based on user role and permissions."""
+        user = self.request.user
+        
+        # School administrators can see all relationships in their schools
+        if user.school_memberships.filter(
+            role__in=['school_owner', 'school_admin'], 
+            is_active=True
+        ).exists():
+            admin_school_ids = list(user.school_memberships.filter(
+                role__in=['school_owner', 'school_admin'], 
+                is_active=True
+            ).values_list('school_id', flat=True))
+            
+            return ParentChildRelationship.objects.filter(
+                school_id__in=admin_school_ids
+            ).select_related('parent', 'child', 'school')
+        
+        # Parents can see their own relationships
+        return ParentChildRelationship.objects.filter(
+            parent=user,
+            is_active=True
+        ).select_related('parent', 'child', 'school')
+    
+    def perform_create(self, serializer):
+        """Create parent-child relationship with validation."""
+        # Ensure the requesting user is the parent
+        serializer.save(parent=self.request.user)
+    
+    @action(detail=False, methods=['get'])
+    def my_children(self, request):
+        """Get all children for the current parent user."""
+        user = request.user
+        
+        relationships = ParentChildRelationship.objects.filter(
+            parent=user,
+            is_active=True
+        ).select_related('child', 'school')
+        
+        children_data = []
+        for relationship in relationships:
+            child_data = {
+                'relationship_id': relationship.id,
+                'child': {
+                    'id': relationship.child.id,
+                    'name': relationship.child.name,
+                    'email': relationship.child.email
+                },
+                'school': {
+                    'id': relationship.school.id,
+                    'name': relationship.school.name
+                },
+                'relationship_type': relationship.relationship_type,
+                'permissions': relationship.permissions,
+                'requires_purchase_approval': relationship.requires_purchase_approval,
+                'requires_session_approval': relationship.requires_session_approval
+            }
+            children_data.append(child_data)
+        
+        return Response({'children': children_data}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['patch'])
+    def update_permissions(self, request, pk=None):
+        """Update permissions for a specific parent-child relationship."""
+        relationship = self.get_object()
+        
+        # Ensure the requesting user is the parent or school admin
+        if (relationship.parent != request.user and 
+            not request.user.school_memberships.filter(
+                school=relationship.school,
+                role__in=['school_owner', 'school_admin'],
+                is_active=True
+            ).exists()):
+            return Response(
+                {'error': 'You do not have permission to modify this relationship'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Update permissions
+        new_permissions = request.data.get('permissions', {})
+        if new_permissions:
+            current_permissions = relationship.permissions or {}
+            current_permissions.update(new_permissions)
+            relationship.permissions = current_permissions
+        
+        # Update approval settings
+        if 'requires_purchase_approval' in request.data:
+            relationship.requires_purchase_approval = request.data['requires_purchase_approval']
+        
+        if 'requires_session_approval' in request.data:
+            relationship.requires_session_approval = request.data['requires_session_approval']
+        
+        relationship.save()
+        
+        serializer = self.get_serializer(relationship)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['post'])
+    def create_relationship(self, request):
+        """Create a new parent-child relationship."""
+        serializer = self.get_serializer(data=request.data)
+        
+        if serializer.is_valid():
+            # Validate that the parent user has PARENT role in the school
+            school_id = serializer.validated_data['school'].id
+            child_user = serializer.validated_data['child']
+            
+            # Check parent membership
+            if not request.user.school_memberships.filter(
+                school_id=school_id,
+                role='parent',
+                is_active=True
+            ).exists():
+                return Response(
+                    {'error': 'You must have PARENT role in this school to create relationships'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check child membership
+            if not child_user.school_memberships.filter(
+                school_id=school_id,
+                role='student',
+                is_active=True
+            ).exists():
+                return Response(
+                    {'error': 'Child must be a student in this school'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create the relationship
+            serializer.save(parent=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

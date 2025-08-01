@@ -11,7 +11,8 @@ from accounts.models import School, TeacherProfile, TeacherCourse
 from accounts.permissions import SchoolPermissionMixin, IsTeacherInAnySchool
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Q
+from django.db import models
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -2903,5 +2904,513 @@ class TutorAnalyticsAPIView(APIView):
             logger.error(f"Error getting tutor analytics: {str(e)}")
             return Response(
                 {"error": "An error occurred while generating analytics"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+# =======================
+# PARENT-CHILD PURCHASE APPROVAL VIEWS (Issues #111 & #112)
+# =======================
+
+class FamilyBudgetControlViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing family budget controls.
+    
+    Allows parents to set and manage spending limits and approval settings
+    for their children's purchases.
+    """
+    
+    serializer_class = 'FamilyBudgetControlSerializer'  # Set in get_serializer_class
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """Filter budget controls by user permissions."""
+        from .models import FamilyBudgetControl
+        
+        # Parents can access controls for their children
+        # Children can read controls that apply to them (read-only)
+        return FamilyBudgetControl.objects.filter(
+            Q(parent_child_relationship__parent=self.request.user) |
+            Q(parent_child_relationship__child=self.request.user)
+        ).select_related(
+            'parent_child_relationship__parent',
+            'parent_child_relationship__child',
+            'parent_child_relationship__school'
+        )
+    
+    def get_serializer_class(self):
+        """Return appropriate serializer class."""
+        from .serializers import FamilyBudgetControlSerializer
+        return FamilyBudgetControlSerializer
+    
+    def perform_create(self, serializer):
+        """Ensure user has permission to create budget control."""
+        relationship = serializer.validated_data['parent_child_relationship']
+        
+        # Only parents can create budget controls
+        if relationship.parent != self.request.user:
+            raise PermissionError("Only parents can create budget controls for their children")
+        
+        serializer.save()
+    
+    def perform_update(self, serializer):
+        """Ensure user has permission to update budget control."""
+        instance = self.get_object()
+        
+        # Only parents can update budget controls
+        if instance.parent_child_relationship.parent != self.request.user:
+            raise PermissionError("Only parents can update budget controls for their children")
+        
+        serializer.save()
+    
+    @action(detail=True, methods=['post'])
+    def check_budget_limits(self, request, pk=None):
+        """
+        Check if a purchase amount would exceed budget limits.
+        
+        Request body:
+        {
+            "amount": "50.00"
+        }
+        """
+        budget_control = self.get_object()
+        
+        try:
+            amount = Decimal(request.data.get('amount', '0'))
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid amount provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if amount <= 0:
+            return Response(
+                {'error': 'Amount must be greater than 0'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check budget limits
+        result = budget_control.check_budget_limits(amount)
+        
+        return Response(result)
+
+
+class PurchaseApprovalRequestViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing purchase approval requests.
+    
+    Handles the approval workflow between parents and children for purchases.
+    """
+    
+    serializer_class = 'PurchaseApprovalRequestSerializer'  # Set in get_serializer_class
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['status', 'request_type']
+    ordering = ['-requested_at']
+    
+    def get_queryset(self):
+        """Filter approval requests by user permissions."""
+        from .models import PurchaseApprovalRequest
+        
+        # Parents see requests they need to approve
+        # Children see their own requests
+        return PurchaseApprovalRequest.objects.filter(
+            Q(parent=self.request.user) |
+            Q(student=self.request.user)
+        ).select_related(
+            'student', 'parent', 'parent_child_relationship',
+            'pricing_plan', 'class_session'
+        )
+    
+    def get_serializer_class(self):
+        """Return appropriate serializer class."""
+        from .serializers import PurchaseApprovalRequestSerializer
+        return PurchaseApprovalRequestSerializer
+    
+    def perform_create(self, serializer):
+        """Ensure user has permission to create approval request."""
+        student = serializer.validated_data['student']
+        
+        # Only students can create their own requests
+        if student != self.request.user:
+            raise PermissionError("You can only create approval requests for yourself")
+        
+        serializer.save()
+    
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        """
+        Approve or deny a purchase request.
+        
+        Request body:
+        {
+            "action": "approve|deny",
+            "parent_notes": "Optional notes from parent"
+        }
+        """
+        from .serializers import PurchaseApprovalActionSerializer
+        
+        approval_request = self.get_object()
+        
+        # Only parents can approve/deny requests
+        if approval_request.parent != request.user:
+            return Response(
+                {'error': 'Only the parent can approve or deny this request'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Validate action data
+        serializer = PurchaseApprovalActionSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        action = serializer.validated_data['action']
+        parent_notes = serializer.validated_data.get('parent_notes', '')
+        
+        try:
+            if action == 'approve':
+                approval_request.approve(parent_notes)
+                
+                # TODO: Integrate with payment processing here
+                # If approved, initiate the actual purchase transaction
+                
+                return Response({
+                    'success': True,
+                    'message': 'Purchase request approved successfully',
+                    'status': approval_request.status
+                })
+            else:  # deny
+                approval_request.deny(parent_notes)
+                return Response({
+                    'success': True,
+                    'message': 'Purchase request denied',
+                    'status': approval_request.status
+                })
+                
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """Cancel a purchase request (student-initiated)."""
+        approval_request = self.get_object()
+        
+        # Only students can cancel their own requests
+        if approval_request.student != request.user:
+            return Response(
+                {'error': 'You can only cancel your own requests'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            approval_request.cancel()
+            return Response({
+                'success': True,
+                'message': 'Purchase request cancelled successfully',
+                'status': approval_request.status
+            })
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class StudentPurchaseRequestView(APIView):
+    """
+    API endpoint for students to initiate purchase requests.
+    
+    Handles budget limit checking, auto-approval logic, and parent notification.
+    """
+    
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """
+        Create a new purchase request.
+        
+        Request body:
+        {
+            "amount": "100.00",
+            "description": "10-hour tutoring package",
+            "request_type": "hours|session|subscription",
+            "pricing_plan_id": 123,  // optional
+            "class_session_id": 456,  // optional
+            "parent_id": 789
+        }
+        """
+        from .serializers import StudentPurchaseRequestSerializer
+        from .models import FamilyBudgetControl, PurchaseApprovalRequest
+        from accounts.models import ParentChildRelationship
+        
+        # Validate input data
+        serializer = StudentPurchaseRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        data = serializer.validated_data
+        student = request.user
+        parent_id = data['parent_id']
+        amount = data['amount']
+        
+        try:
+            # Find parent-child relationship
+            try:
+                parent_child_relationship = ParentChildRelationship.objects.get(
+                    parent_id=parent_id,
+                    child=student,
+                    is_active=True
+                )
+            except ParentChildRelationship.DoesNotExist:
+                return Response(
+                    {'error': 'Invalid parent or no active relationship found'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get budget control
+            try:
+                budget_control = FamilyBudgetControl.objects.get(
+                    parent_child_relationship=parent_child_relationship,
+                    is_active=True
+                )
+            except FamilyBudgetControl.DoesNotExist:
+                # No budget control means no restrictions
+                budget_control = None
+            
+            # Check budget limits
+            if budget_control:
+                budget_check = budget_control.check_budget_limits(amount)
+                
+                if not budget_check['allowed']:
+                    return Response({
+                        'success': False,
+                        'error': 'Budget limit exceeded',
+                        'message': '; '.join(budget_check['reasons'])
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                can_auto_approve = budget_check['can_auto_approve']
+            else:
+                can_auto_approve = False  # No budget control means manual approval required
+            
+            # Create approval request
+            approval_request_data = {
+                'student': student,
+                'parent_id': parent_id,
+                'parent_child_relationship': parent_child_relationship,
+                'amount': amount,
+                'description': data['description'],
+                'request_type': data['request_type'],
+            }
+            
+            # Add optional fields
+            if data.get('pricing_plan_id'):
+                approval_request_data['pricing_plan_id'] = data['pricing_plan_id']
+            if data.get('class_session_id'):
+                approval_request_data['class_session_id'] = data['class_session_id']
+            
+            approval_request = PurchaseApprovalRequest.objects.create(**approval_request_data)
+            
+            # Auto-approve if within threshold
+            if can_auto_approve:
+                approval_request.approve("Auto-approved based on budget settings")
+                
+                # TODO: Integrate with payment processing here
+                # Auto-approved requests should trigger immediate payment
+                
+                return Response({
+                    'success': True,
+                    'auto_approved': True,
+                    'approval_request_id': approval_request.id,
+                    'message': 'Purchase approved automatically'
+                }, status=status.HTTP_201_CREATED)
+            else:
+                # TODO: Send notification to parent
+                
+                return Response({
+                    'success': True,
+                    'auto_approved': False,
+                    'approval_request_id': approval_request.id,
+                    'message': 'Purchase request sent to parent for approval'
+                }, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            logger.error(f"Error creating purchase request: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while processing your request'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ParentApprovalDashboardView(APIView):
+    """
+    API endpoint for parents to view aggregated approval dashboard data.
+    
+    Provides pending requests, children spending summaries, recent transactions,
+    and budget alerts in a single comprehensive response.
+    """
+    
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get comprehensive parent dashboard data.
+        
+        Returns:
+        {
+            "pending_requests": [...],
+            "children_summary": [...],
+            "recent_transactions": [...],
+            "budget_alerts": [...],
+            "monthly_spending_total": "250.00"
+        }
+        """
+        from .serializers import ParentDashboardSerializer
+        from .models import PurchaseApprovalRequest, FamilyBudgetControl, PurchaseTransaction
+        from accounts.models import ParentChildRelationship
+        from django.utils import timezone
+        from datetime import datetime
+        
+        parent = request.user
+        
+        try:
+            # Get all parent-child relationships
+            relationships = ParentChildRelationship.objects.filter(
+                parent=parent,
+                is_active=True
+            ).select_related('child', 'school')
+            
+            children = [rel.child for rel in relationships]
+            
+            if not children:
+                # No children found
+                empty_data = {
+                    'pending_requests': [],
+                    'children_summary': [],
+                    'recent_transactions': [],
+                    'budget_alerts': [],
+                    'monthly_spending_total': Decimal('0.00')
+                }
+                serializer = ParentDashboardSerializer(empty_data)
+                return Response(serializer.data)
+            
+            # Get pending approval requests
+            pending_requests = PurchaseApprovalRequest.objects.filter(
+                parent=parent,
+                status='pending'
+            ).order_by('-requested_at')
+            
+            # Get recent transactions (last 30 days)
+            thirty_days_ago = timezone.now() - timedelta(days=30)
+            recent_transactions = PurchaseTransaction.objects.filter(
+                student__in=children,
+                payment_status='completed',
+                created_at__gte=thirty_days_ago
+            ).order_by('-created_at')[:10]
+            
+            # Calculate current month spending
+            now = timezone.now()
+            start_of_month = datetime(now.year, now.month, 1, tzinfo=now.tzinfo)
+            
+            monthly_spending = PurchaseTransaction.objects.filter(
+                student__in=children,
+                payment_status='completed',
+                created_at__gte=start_of_month
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            # Build children summary
+            children_summary = []
+            budget_alerts = []
+            
+            for child in children:
+                # Get child's monthly spending
+                child_monthly_spending = PurchaseTransaction.objects.filter(
+                    student=child,
+                    payment_status='completed',
+                    created_at__gte=start_of_month
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                
+                # Get budget control
+                try:
+                    relationship = relationships.get(child=child)
+                    budget_control = FamilyBudgetControl.objects.get(
+                        parent_child_relationship=relationship,
+                        is_active=True
+                    )
+                    
+                    # Check for budget alerts
+                    if budget_control.monthly_budget_limit:
+                        usage_percent = (child_monthly_spending / budget_control.monthly_budget_limit) * 100
+                        
+                        if usage_percent >= 90:
+                            budget_alerts.append({
+                                'type': 'budget_high',
+                                'child_name': child.name,
+                                'message': f'{child.name} has used {usage_percent:.0f}% of their monthly budget',
+                                'severity': 'high' if usage_percent >= 95 else 'medium'
+                            })
+                        elif usage_percent >= 75:
+                            budget_alerts.append({
+                                'type': 'budget_warning',
+                                'child_name': child.name,
+                                'message': f'{child.name} has used {usage_percent:.0f}% of their monthly budget',
+                                'severity': 'low'
+                            })
+                    
+                    monthly_limit = budget_control.monthly_budget_limit
+                    auto_approval_threshold = budget_control.auto_approval_threshold
+                    
+                except FamilyBudgetControl.DoesNotExist:
+                    monthly_limit = None
+                    auto_approval_threshold = None
+                
+                children_summary.append({
+                    'id': child.id,
+                    'name': child.name,
+                    'monthly_spending': child_monthly_spending,
+                    'monthly_limit': monthly_limit,
+                    'auto_approval_threshold': auto_approval_threshold,
+                    'pending_requests_count': pending_requests.filter(student=child).count()
+                })
+            
+            # Format recent transactions
+            recent_transactions_data = []
+            for transaction in recent_transactions:
+                recent_transactions_data.append({
+                    'id': transaction.id,
+                    'student_name': transaction.student.name,
+                    'amount': str(transaction.amount),
+                    'transaction_type': transaction.get_transaction_type_display(),
+                    'created_at': transaction.created_at.isoformat()
+                })
+            
+            # Build response data
+            dashboard_data = {
+                'pending_requests': [
+                    {
+                        'id': req.id,
+                        'student_name': req.student.name,
+                        'amount': str(req.amount),
+                        'description': req.description,
+                        'request_type': req.get_request_type_display(),
+                        'requested_at': req.requested_at.isoformat(),
+                        'time_remaining_hours': round(req.time_remaining.total_seconds() / 3600, 1) if not req.is_expired else 0
+                    }
+                    for req in pending_requests
+                ],
+                'children_summary': children_summary,
+                'recent_transactions': recent_transactions_data,
+                'budget_alerts': budget_alerts,
+                'monthly_spending_total': monthly_spending
+            }
+            
+            serializer = ParentDashboardSerializer(dashboard_data)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger.error(f"Error getting parent dashboard: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while loading dashboard data'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

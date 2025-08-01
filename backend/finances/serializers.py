@@ -11,8 +11,10 @@ from rest_framework import serializers
 
 from .models import (
     ClassSession,
+    FamilyBudgetControl,
     HourConsumption,
     PricingPlan,
+    PurchaseApprovalRequest,
     PurchaseTransaction,
     Receipt,
     SchoolBillingSettings,
@@ -1013,3 +1015,266 @@ class PaymentMethodResponseSerializer(serializers.Serializer):
         required=False,
         help_text="Whether the removed payment method was default (for removal responses)"
     )
+
+
+# =======================
+# PARENT-CHILD PURCHASE APPROVAL SERIALIZERS (Issues #111 & #112)
+# =======================
+
+class FamilyBudgetControlSerializer(serializers.ModelSerializer):
+    """
+    Serializer for FamilyBudgetControl model.
+    Handles budget limits and approval settings for parent-child relationships.
+    """
+    
+    parent_name = serializers.CharField(source='parent_child_relationship.parent.name', read_only=True)
+    child_name = serializers.CharField(source='parent_child_relationship.child.name', read_only=True)
+    school_name = serializers.CharField(source='parent_child_relationship.school.name', read_only=True)
+    current_monthly_spending = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    current_weekly_spending = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    
+    class Meta:
+        model = FamilyBudgetControl
+        fields = [
+            'id', 'parent_child_relationship', 'parent_name', 'child_name', 'school_name',
+            'monthly_budget_limit', 'weekly_budget_limit', 'auto_approval_threshold',
+            'require_approval_for_sessions', 'require_approval_for_packages',
+            'current_monthly_spending', 'current_weekly_spending', 'is_active',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'parent_name', 'child_name', 'school_name',
+            'current_monthly_spending', 'current_weekly_spending',
+            'created_at', 'updated_at'
+        ]
+    
+    def check_budget_limits(self, amount):
+        """Check if a purchase amount would exceed budget limits."""
+        if self.instance:
+            return self.instance.check_budget_limits(amount)
+        return {'allowed': True, 'can_auto_approve': True, 'reasons': []}
+
+
+class PurchaseApprovalRequestSerializer(serializers.ModelSerializer):
+    """
+    Serializer for PurchaseApprovalRequest model.
+    Handles purchase approval workflow between parents and children.
+    """
+    
+    student_name = serializers.CharField(source='student.name', read_only=True)
+    parent_name = serializers.CharField(source='parent.name', read_only=True)
+    pricing_plan_name = serializers.CharField(source='pricing_plan.name', read_only=True)
+    class_session_info = serializers.SerializerMethodField()
+    time_remaining_hours = serializers.SerializerMethodField()
+    is_expired = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = PurchaseApprovalRequest
+        fields = [
+            'id', 'student', 'student_name', 'parent', 'parent_name',
+            'parent_child_relationship', 'amount', 'description', 'request_type',
+            'status', 'pricing_plan', 'pricing_plan_name', 'class_session',
+            'class_session_info', 'request_metadata', 'requested_at', 'responded_at',
+            'expires_at', 'time_remaining_hours', 'is_expired', 'parent_notes',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'student_name', 'parent_name', 'pricing_plan_name',
+            'class_session_info', 'time_remaining_hours', 'is_expired',
+            'requested_at', 'responded_at', 'created_at', 'updated_at'
+        ]
+    
+    def get_class_session_info(self, obj):
+        """Get basic info about the class session if applicable."""
+        if obj.class_session:
+            return {
+                'id': obj.class_session.id,
+                'date': obj.class_session.date,
+                'start_time': obj.class_session.start_time,
+                'duration_hours': float(obj.class_session.duration_hours),
+                'teacher_name': obj.class_session.teacher.user.name
+            }
+        return None
+    
+    def get_time_remaining_hours(self, obj):
+        """Get time remaining until expiration in hours."""
+        if obj.is_expired:
+            return 0
+        
+        remaining = obj.time_remaining
+        return round(remaining.total_seconds() / 3600, 1)
+    
+    def validate(self, data):
+        """Validate the approval request data."""
+        # Ensure student and parent are different users
+        if data.get('student') == data.get('parent'):
+            raise serializers.ValidationError("Student and parent cannot be the same user")
+        
+        # Validate parent-child relationship matches
+        relationship = data.get('parent_child_relationship')
+        if relationship:
+            if (data.get('parent') and relationship.parent != data['parent']):
+                raise serializers.ValidationError("Parent must match the parent-child relationship")
+            
+            if (data.get('student') and relationship.child != data['student']):
+                raise serializers.ValidationError("Student must match the parent-child relationship")
+        
+        return data
+
+
+class PurchaseApprovalActionSerializer(serializers.Serializer):
+    """
+    Serializer for parent approval actions (approve/deny).
+    """
+    
+    action = serializers.ChoiceField(
+        choices=['approve', 'deny'],
+        help_text="Action to take on the approval request"
+    )
+    parent_notes = serializers.CharField(
+        max_length=1000,
+        required=False,  
+        allow_blank=True,
+        help_text="Optional notes from the parent about their decision"
+    )
+    
+    def validate_parent_notes(self, value):
+        """Validate and sanitize parent notes."""
+        if not value:
+            return value
+        
+        # Basic HTML sanitization
+        import bleach
+        clean_value = bleach.clean(value, tags=[], strip=True).strip()
+        
+        # Check for suspicious patterns
+        suspicious_patterns = ['<script', 'javascript:', 'data:', 'vbscript:']
+        clean_lower = clean_value.lower()
+        
+        for pattern in suspicious_patterns:
+            if pattern in clean_lower:
+                raise serializers.ValidationError("Notes contain invalid characters.")
+        
+        return clean_value
+
+
+class StudentPurchaseRequestSerializer(serializers.Serializer):
+    """
+    Serializer for student-initiated purchase requests.
+    """
+    
+    amount = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        min_value=Decimal('0.01'),
+        help_text="Amount of the purchase request"
+    )
+    description = serializers.CharField(
+        max_length=500,
+        help_text="Description of what the student wants to purchase"
+    )
+    request_type = serializers.ChoiceField(
+        choices=['hours', 'session', 'subscription'],
+        help_text="Type of purchase being requested"
+    )
+    pricing_plan_id = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        help_text="ID of the pricing plan being requested (if applicable)"
+    )
+    class_session_id = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        help_text="ID of the class session being requested (if applicable)" 
+    )
+    parent_id = serializers.IntegerField(
+        help_text="ID of the parent who should approve this request"
+    )
+    
+    def validate_description(self, value):
+        """Validate and sanitize description."""
+        # Basic HTML sanitization
+        import bleach
+        clean_value = bleach.clean(value, tags=[], strip=True).strip()
+        
+        # Check for suspicious patterns
+        suspicious_patterns = ['<script', 'javascript:', 'data:', 'vbscript:']
+        clean_lower = clean_value.lower()
+        
+        for pattern in suspicious_patterns:
+            if pattern in clean_lower:
+                raise serializers.ValidationError("Description contains invalid characters.")
+        
+        return clean_value
+    
+    def validate(self, data):
+        """Validate the request data."""
+        request_type = data.get('request_type')
+        pricing_plan_id = data.get('pricing_plan_id')
+        class_session_id = data.get('class_session_id')
+        
+        # Validate that required fields are provided based on request type
+        if request_type == 'hours' and not pricing_plan_id:
+            raise serializers.ValidationError("pricing_plan_id is required for hour package requests")
+        
+        if request_type == 'session' and not class_session_id:
+            raise serializers.ValidationError("class_session_id is required for session requests")
+        
+        # Validate pricing plan exists if provided
+        if pricing_plan_id:
+            try:
+                pricing_plan = PricingPlan.objects.get(id=pricing_plan_id, is_active=True)
+                # Validate amount matches pricing plan
+                if data['amount'] != pricing_plan.price_eur:
+                    raise serializers.ValidationError("Amount must match the pricing plan price")
+            except PricingPlan.DoesNotExist:
+                raise serializers.ValidationError("Invalid or inactive pricing plan")
+        
+        # Validate class session exists if provided
+        if class_session_id:
+            try:
+                from .models import ClassSession
+                ClassSession.objects.get(id=class_session_id)
+            except ClassSession.DoesNotExist:
+                raise serializers.ValidationError("Invalid class session")
+        
+        return data
+
+
+class ParentDashboardSerializer(serializers.Serializer):
+    """
+    Serializer for parent approval dashboard data.
+    """
+    
+    pending_requests = PurchaseApprovalRequestSerializer(many=True, read_only=True)
+    children_summary = serializers.ListField(
+        child=serializers.DictField(),
+        read_only=True,
+        help_text="Summary of spending for each child"
+    )
+    recent_transactions = serializers.ListField(
+        child=serializers.DictField(),
+        read_only=True,
+        help_text="Recent approved transactions"
+    )
+    budget_alerts = serializers.ListField(
+        child=serializers.DictField(),
+        read_only=True,
+        help_text="Budget alerts and warnings"
+    )
+    monthly_spending_total = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
+        help_text="Total spending across all children this month"
+    )
+    
+    def to_representation(self, instance):
+        """Custom representation to ensure proper data structure."""
+        return {
+            'pending_requests': instance.get('pending_requests', []),
+            'children_summary': instance.get('children_summary', []),
+            'recent_transactions': instance.get('recent_transactions', []),
+            'budget_alerts': instance.get('budget_alerts', []),
+            'monthly_spending_total': instance.get('monthly_spending_total', Decimal('0.00')),
+        }

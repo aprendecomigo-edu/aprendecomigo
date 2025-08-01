@@ -10,6 +10,8 @@ from .views import (
     EmailSequenceViewSet,
     GlobalSearchView,
     InvitationViewSet,
+    ParentChildRelationshipViewSet,
+    ParentProfileViewSet,
     RequestCodeView,
     SchoolDashboardViewSet,
     SchoolEmailTemplateViewSet,
@@ -52,6 +54,10 @@ router.register(r"school-dashboard", SchoolDashboardViewSet, basename="school-da
 router.register(r"email-templates", SchoolEmailTemplateViewSet, basename="email-templates")
 router.register(r"email-sequences", EmailSequenceViewSet, basename="email-sequences")
 router.register(r"email-communications", EmailCommunicationViewSet, basename="email-communications")
+
+# Parent-child account management endpoints
+router.register(r"parent-profiles", ParentProfileViewSet, basename="parent-profiles")
+router.register(r"parent-child-relationships", ParentChildRelationshipViewSet, basename="parent-child-relationships")
 
 # URL patterns for the accounts app
 urlpatterns = [

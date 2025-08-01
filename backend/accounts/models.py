@@ -202,6 +202,7 @@ class SchoolRole(models.TextChoices):
         _("School Staff"),
     )  # Limited access for administrative tasks
     STUDENT = "student", _("Student")  # Access to assigned classes
+    PARENT = "parent", _("Parent")  # Can manage child accounts and approve purchases
 
 
 class SchoolMembership(models.Model):
@@ -2080,6 +2081,180 @@ class EmailSequence(models.Model):
     
     def __str__(self):
         return f"{self.school.name} - {self.name}"
+
+
+class ParentProfile(models.Model):
+    """
+    Parent profile with additional information for managing child accounts.
+    A user can have this profile regardless of which schools they belong to as a parent.
+    """
+
+    user: models.OneToOneField = models.OneToOneField(
+        CustomUser, on_delete=models.CASCADE, related_name="parent_profile"
+    )
+    
+    # Notification preferences for parent communications
+    notification_preferences: models.JSONField = models.JSONField(
+        _("notification preferences"),
+        default=dict,
+        blank=True,
+        help_text=_("Parent notification preferences (email, SMS, in-app)")
+    )
+    
+    # Default approval settings for all children
+    default_approval_settings: models.JSONField = models.JSONField(
+        _("default approval settings"),
+        default=dict,
+        blank=True,
+        help_text=_("Default purchase approval settings for all children")
+    )
+    
+    # Communication preferences
+    email_notifications_enabled: models.BooleanField = models.BooleanField(
+        _("email notifications enabled"),
+        default=True,
+        help_text=_("Enable email notifications for parent alerts")
+    )
+    
+    sms_notifications_enabled: models.BooleanField = models.BooleanField(
+        _("SMS notifications enabled"),
+        default=False,
+        help_text=_("Enable SMS notifications for parent alerts")
+    )
+    
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Parent Profile")
+        verbose_name_plural = _("Parent Profiles") 
+        indexes = [
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["email_notifications_enabled"]),
+        ]
+
+    def __str__(self) -> str:
+        user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
+        return f"Parent Profile: {user_name}"
+
+
+class RelationshipType(models.TextChoices):
+    """Types of parent-child relationships."""
+    
+    PARENT = "parent", _("Parent")
+    GUARDIAN = "guardian", _("Guardian")
+    OTHER = "other", _("Other")
+
+
+class ParentChildRelationship(models.Model):
+    """
+    Model to represent parent-child relationships within the school system.
+    Allows parents to manage their children's accounts with appropriate permissions.
+    """
+    
+    parent: models.ForeignKey = models.ForeignKey(
+        CustomUser, 
+        on_delete=models.CASCADE, 
+        related_name='children_relationships',
+        verbose_name=_("parent"),
+        help_text=_("Parent user who manages the child account")
+    )
+    
+    child: models.ForeignKey = models.ForeignKey(
+        CustomUser, 
+        on_delete=models.CASCADE, 
+        related_name='parent_relationships',
+        verbose_name=_("child"),
+        help_text=_("Child user whose account is managed by the parent")
+    )
+    
+    relationship_type: models.CharField = models.CharField(
+        _("relationship type"),
+        max_length=20,
+        choices=RelationshipType.choices,
+        default=RelationshipType.PARENT,
+        help_text=_("Type of relationship (parent, guardian, etc.)")
+    )
+    
+    school: models.ForeignKey = models.ForeignKey(
+        School, 
+        on_delete=models.CASCADE,
+        verbose_name=_("school"),
+        help_text=_("School where this relationship is established")
+    )
+    
+    # Permissions that the parent has for this child
+    permissions: models.JSONField = models.JSONField(
+        _("permissions"),
+        default=dict,
+        blank=True,
+        help_text=_("Specific permissions the parent has for this child")
+    )
+    
+    is_active: models.BooleanField = models.BooleanField(
+        _("is active"),
+        default=True,
+        help_text=_("Whether this relationship is currently active")
+    )
+    
+    # Approval settings specific to this parent-child relationship
+    requires_purchase_approval: models.BooleanField = models.BooleanField(
+        _("requires purchase approval"),
+        default=True,
+        help_text=_("Whether parent approval is required for purchases")
+    )
+    
+    requires_session_approval: models.BooleanField = models.BooleanField(
+        _("requires session approval"), 
+        default=True,
+        help_text=_("Whether parent approval is required for booking sessions")
+    )
+    
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Parent-Child Relationship")
+        verbose_name_plural = _("Parent-Child Relationships")
+        unique_together = [["parent", "child", "school"]]
+        indexes = [
+            models.Index(fields=["parent", "is_active"]),
+            models.Index(fields=["child", "is_active"]), 
+            models.Index(fields=["school", "is_active"]),
+            models.Index(fields=["relationship_type"]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(parent=models.F('child')),
+                name='parent_cannot_be_child'
+            )
+        ]
+
+    def __str__(self) -> str:
+        parent_name = self.parent.name if hasattr(self.parent, "name") else str(self.parent)
+        child_name = self.child.name if hasattr(self.child, "name") else str(self.child)
+        return f"{parent_name} -> {child_name} ({self.get_relationship_type_display()})"
+
+    def clean(self):
+        """Validate the relationship data."""
+        super().clean()
+        
+        # Ensure parent and child are different users
+        if self.parent == self.child:
+            raise ValidationError(_("Parent and child cannot be the same user"))
+        
+        # Ensure both parent and child have memberships at the school
+        if not SchoolMembership.objects.filter(
+            user=self.parent, school=self.school, is_active=True
+        ).exists():
+            raise ValidationError(_("Parent must be a member of the school"))
+            
+        if not SchoolMembership.objects.filter(
+            user=self.child, school=self.school, is_active=True
+        ).exists():
+            raise ValidationError(_("Child must be a member of the school"))
 
 
 class EmailSequenceStep(models.Model):

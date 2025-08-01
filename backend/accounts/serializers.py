@@ -17,6 +17,9 @@ from .models import (
     EmailTemplateType,
     EmailCommunicationType,
     InvitationStatus,
+    ParentProfile,
+    ParentChildRelationship,
+    RelationshipType,
     School,
     SchoolActivity,
     SchoolEmailTemplate,
@@ -2653,3 +2656,91 @@ class EmailAnalyticsSerializer(serializers.Serializer):
     daily_stats = serializers.ListField(
         child=serializers.DictField()
     )
+
+
+# =======================
+# PARENT-CHILD MANAGEMENT SERIALIZERS (Issues #111 & #112)
+# =======================
+
+class ParentProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for ParentProfile model.
+    Handles parent-specific settings and preferences.
+    """
+    
+    user_name = serializers.CharField(source='user.name', read_only=True)
+    user_email = serializers.CharField(source='user.email', read_only=True)
+    children_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ParentProfile
+        fields = [
+            'id', 'user', 'user_name', 'user_email',
+            'notification_preferences', 'default_approval_settings',
+            'email_notifications_enabled', 'sms_notifications_enabled',
+            'children_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'user', 'user_name', 'user_email', 'children_count', 'created_at', 'updated_at']
+    
+    def get_children_count(self, obj):
+        """Get the number of children this parent manages."""
+        return obj.user.children_relationships.filter(is_active=True).count()
+
+
+class ParentChildRelationshipSerializer(serializers.ModelSerializer):
+    """
+    Serializer for ParentChildRelationship model.
+    Handles parent-child relationships within schools.
+    """
+    
+    parent_name = serializers.CharField(source='parent.name', read_only=True)
+    parent_email = serializers.CharField(source='parent.email', read_only=True)
+    child_name = serializers.CharField(source='child.name', read_only=True)
+    child_email = serializers.CharField(source='child.email', read_only=True)
+    school_name = serializers.CharField(source='school.name', read_only=True)
+    has_budget_control = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ParentChildRelationship
+        fields = [
+            'id', 'parent', 'parent_name', 'parent_email',
+            'child', 'child_name', 'child_email',
+            'school', 'school_name', 'relationship_type',
+            'permissions', 'is_active', 'requires_purchase_approval',
+            'requires_session_approval', 'has_budget_control',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'parent_name', 'parent_email', 'child_name', 'child_email',
+            'school_name', 'has_budget_control', 'created_at', 'updated_at'
+        ]
+    
+    def get_has_budget_control(self, obj):
+        """Check if this relationship has budget control settings."""
+        return hasattr(obj, 'budget_control') and obj.budget_control is not None
+    
+    def validate(self, data):
+        """Validate the parent-child relationship data."""
+        # Ensure parent and child are different users
+        if data.get('parent') == data.get('child'):
+            raise serializers.ValidationError("Parent and child cannot be the same user")
+        
+        # Check for existing relationship
+        if not self.instance:  # Only on creation
+            parent = data.get('parent')
+            child = data.get('child')
+            school = data.get('school')
+            
+            if parent and child and school:
+                existing = ParentChildRelationship.objects.filter(
+                    parent=parent,
+                    child=child,
+                    school=school
+                ).exists()
+                
+                if existing:
+                    raise serializers.ValidationError(
+                        "A relationship between this parent and child already exists in this school"
+                    )
+        
+        return data

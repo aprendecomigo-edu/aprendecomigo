@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import timedelta
 
 from accounts.models import CustomUser, School, TeacherProfile
 from django.core.exceptions import ValidationError
@@ -640,6 +641,17 @@ class PurchaseTransaction(models.Model):
         default=dict,
         blank=True,
         help_text=_("Additional transaction data in JSON format"),
+    )
+    
+    # Parent approval integration
+    approval_request: models.ForeignKey = models.ForeignKey(
+        'PurchaseApprovalRequest',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="purchase_transactions",
+        verbose_name=_("approval request"),
+        help_text=_("Approval request that authorized this transaction (if applicable)")
     )
 
     # Audit timestamps
@@ -1311,4 +1323,413 @@ class StoredPaymentMethod(models.Model):
         if self.card_last4 and not self.card_last4.isdigit():
             raise ValidationError(
                 _("Card last 4 digits must contain only numbers")
+            )
+
+
+class FamilyBudgetControl(models.Model):
+    """
+    Budget control settings for parent-child relationships.
+    Defines spending limits and automatic approval thresholds.
+    """
+    
+    parent_child_relationship: models.OneToOneField = models.OneToOneField(
+        'accounts.ParentChildRelationship',
+        on_delete=models.CASCADE,
+        related_name="budget_control",
+        verbose_name=_("parent-child relationship"),
+        help_text=_("The parent-child relationship this budget control applies to")
+    )
+    
+    # Budget limits
+    monthly_budget_limit: models.DecimalField = models.DecimalField(
+        _("monthly budget limit"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text=_("Maximum amount child can spend per month (null for no limit)")
+    )
+    
+    weekly_budget_limit: models.DecimalField = models.DecimalField(
+        _("weekly budget limit"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text=_("Maximum amount child can spend per week (null for no limit)")
+    )
+    
+    # Automatic approval threshold
+    auto_approval_threshold: models.DecimalField = models.DecimalField(
+        _("auto approval threshold"),
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text=_("Maximum amount that can be automatically approved without parent intervention")
+    )
+    
+    # Session-specific controls
+    require_approval_for_sessions: models.BooleanField = models.BooleanField(
+        _("require approval for sessions"),
+        default=True,
+        help_text=_("Whether parent approval is required for booking individual sessions")
+    )
+    
+    require_approval_for_packages: models.BooleanField = models.BooleanField(
+        _("require approval for packages"),
+        default=True,
+        help_text=_("Whether parent approval is required for purchasing hour packages")
+    )
+    
+    # Activity tracking
+    is_active: models.BooleanField = models.BooleanField(
+        _("is active"),
+        default=True,
+        help_text=_("Whether budget controls are currently active")
+    )
+    
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _("Family Budget Control")
+        verbose_name_plural = _("Family Budget Controls")
+        indexes = [
+            models.Index(fields=["parent_child_relationship", "is_active"]),
+            models.Index(fields=["auto_approval_threshold"]),
+        ]
+    
+    def __str__(self) -> str:
+        parent_name = self.parent_child_relationship.parent.name
+        child_name = self.parent_child_relationship.child.name
+        return f"Budget Control: {parent_name} -> {child_name}"
+    
+    @property
+    def current_monthly_spending(self) -> Decimal:
+        """Calculate current month spending for this child."""
+        from django.utils import timezone
+        from datetime import datetime
+        
+        now = timezone.now()
+        start_of_month = datetime(now.year, now.month, 1, tzinfo=now.tzinfo)
+        
+        return PurchaseTransaction.objects.filter(
+            student=self.parent_child_relationship.child,
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            created_at__gte=start_of_month
+        ).aggregate(
+            total=models.Sum('amount')
+        )['total'] or Decimal('0.00')
+    
+    @property 
+    def current_weekly_spending(self) -> Decimal:
+        """Calculate current week spending for this child."""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        now = timezone.now()
+        start_of_week = now - timedelta(days=now.weekday())
+        start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        return PurchaseTransaction.objects.filter(
+            student=self.parent_child_relationship.child,
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            created_at__gte=start_of_week
+        ).aggregate(
+            total=models.Sum('amount')
+        )['total'] or Decimal('0.00')
+    
+    def check_budget_limits(self, amount: Decimal) -> dict:
+        """
+        Check if a purchase amount would exceed budget limits.
+        
+        Args:
+            amount: The purchase amount to check
+            
+        Returns:
+            dict: Dictionary with 'allowed', 'reasons' keys indicating if purchase is allowed
+        """
+        reasons = []
+        
+        # Check monthly limit
+        if self.monthly_budget_limit is not None:
+            if self.current_monthly_spending + amount > self.monthly_budget_limit:
+                reasons.append(f"Would exceed monthly budget limit of €{self.monthly_budget_limit}")
+        
+        # Check weekly limit
+        if self.weekly_budget_limit is not None:
+            if self.current_weekly_spending + amount > self.weekly_budget_limit:
+                reasons.append(f"Would exceed weekly budget limit of €{self.weekly_budget_limit}")
+        
+        return {
+            'allowed': len(reasons) == 0,
+            'can_auto_approve': amount <= self.auto_approval_threshold,
+            'reasons': reasons
+        }
+    
+    def clean(self):
+        """Validate budget control settings."""
+        super().clean()
+        
+        # Ensure auto approval threshold is not greater than budget limits
+        if self.monthly_budget_limit and self.auto_approval_threshold > self.monthly_budget_limit:
+            raise ValidationError(
+                _("Auto approval threshold cannot be greater than monthly budget limit")  
+            )
+        
+        if self.weekly_budget_limit and self.auto_approval_threshold > self.weekly_budget_limit:
+            raise ValidationError(
+                _("Auto approval threshold cannot be greater than weekly budget limit")
+            )
+
+
+class PurchaseRequestType(models.TextChoices):
+    """Types of purchase requests that require approval."""
+    
+    HOURS = "hours", _("Hour Package")
+    SESSION = "session", _("Individual Session") 
+    SUBSCRIPTION = "subscription", _("Subscription")
+
+
+class PurchaseApprovalStatus(models.TextChoices):
+    """Status of purchase approval requests."""
+    
+    PENDING = "pending", _("Pending")
+    APPROVED = "approved", _("Approved")
+    DENIED = "denied", _("Denied")
+    EXPIRED = "expired", _("Expired")
+    CANCELLED = "cancelled", _("Cancelled")
+
+
+class PurchaseApprovalRequest(models.Model):
+    """
+    Purchase approval requests from students to parents.
+    Handles the approval workflow for purchases that exceed auto-approval thresholds.
+    """
+    
+    student: models.ForeignKey = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="purchase_requests",
+        verbose_name=_("student"),
+        help_text=_("Student requesting the purchase")
+    )
+    
+    parent: models.ForeignKey = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="pending_approvals",
+        verbose_name=_("parent"),
+        help_text=_("Parent who needs to approve the purchase")
+    )
+    
+    parent_child_relationship: models.ForeignKey = models.ForeignKey(
+        'accounts.ParentChildRelationship',
+        on_delete=models.CASCADE,
+        related_name="purchase_requests",
+        verbose_name=_("parent-child relationship"),
+        help_text=_("The parent-child relationship this request is under")
+    )
+    
+    # Purchase details
+    amount: models.DecimalField = models.DecimalField(
+        _("amount"),
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text=_("Amount of the purchase request")
+    )
+    
+    description: models.TextField = models.TextField(
+        _("description"),
+        help_text=_("Description of what the student wants to purchase")
+    )
+    
+    request_type: models.CharField = models.CharField(
+        _("request type"),
+        max_length=20,
+        choices=PurchaseRequestType.choices,
+        help_text=_("Type of purchase being requested")
+    )
+    
+    # Approval status and workflow
+    status: models.CharField = models.CharField(
+        _("status"),
+        max_length=20,
+        choices=PurchaseApprovalStatus.choices,
+        default=PurchaseApprovalStatus.PENDING,
+        help_text=_("Current status of the approval request")
+    )
+    
+    # Metadata about the requested purchase
+    pricing_plan: models.ForeignKey = models.ForeignKey(
+        PricingPlan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approval_requests",
+        verbose_name=_("pricing plan"),
+        help_text=_("Pricing plan being requested (if applicable)")
+    )
+    
+    class_session: models.ForeignKey = models.ForeignKey(
+        ClassSession,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approval_requests",
+        verbose_name=_("class session"),
+        help_text=_("Class session being requested (if applicable)")
+    )
+    
+    # Additional request data
+    request_metadata: models.JSONField = models.JSONField(
+        _("request metadata"),
+        default=dict,
+        blank=True,
+        help_text=_("Additional data about the purchase request")
+    )
+    
+    # Timestamps
+    requested_at: models.DateTimeField = models.DateTimeField(
+        _("requested at"),
+        auto_now_add=True,
+        help_text=_("When the request was made")
+    )
+    
+    responded_at: models.DateTimeField = models.DateTimeField(
+        _("responded at"),
+        null=True,
+        blank=True,
+        help_text=_("When the parent responded to the request")
+    )
+    
+    expires_at: models.DateTimeField = models.DateTimeField(
+        _("expires at"),
+        help_text=_("When this request expires if not responded to")
+    )
+    
+    # Parent response
+    parent_notes: models.TextField = models.TextField(
+        _("parent notes"),
+        blank=True,
+        help_text=_("Optional notes from the parent about their decision")
+    )
+    
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _("Purchase Approval Request")
+        verbose_name_plural = _("Purchase Approval Requests")
+        ordering = ["-requested_at"]
+        indexes = [
+            models.Index(fields=["student", "status", "-requested_at"]),
+            models.Index(fields=["parent", "status", "-requested_at"]),
+            models.Index(fields=["parent_child_relationship", "-requested_at"]),
+            models.Index(fields=["status", "expires_at"]),
+            models.Index(fields=["request_type", "status"]),
+        ]
+    
+    def __str__(self) -> str:
+        return f"Purchase Request: {self.student.name} -> {self.parent.name} (€{self.amount})"
+    
+    def save(self, *args, **kwargs):
+        """Override save to set expiration time if not provided."""
+        if not self.expires_at:
+            from django.utils import timezone
+            from datetime import timedelta
+            # Default to 24 hours expiration
+            self.expires_at = timezone.now() + timedelta(hours=24)
+        
+        super().save(*args, **kwargs)
+    
+    @property
+    def is_expired(self) -> bool:
+        """Check if the request has expired."""
+        from django.utils import timezone
+        return timezone.now() > self.expires_at
+    
+    @property 
+    def time_remaining(self) -> timedelta:
+        """Get time remaining before expiration."""
+        from django.utils import timezone
+        if self.is_expired:
+            return timedelta(0)
+        return self.expires_at - timezone.now()
+    
+    def approve(self, parent_notes: str = "") -> None:
+        """
+        Approve the purchase request.
+        
+        Args:
+            parent_notes: Optional notes from the parent
+        """
+        if self.status != PurchaseApprovalStatus.PENDING:
+            raise ValidationError(_("Only pending requests can be approved"))
+        
+        if self.is_expired:
+            raise ValidationError(_("Cannot approve an expired request"))
+        
+        from django.utils import timezone
+        self.status = PurchaseApprovalStatus.APPROVED
+        self.responded_at = timezone.now()
+        self.parent_notes = parent_notes
+        self.save(update_fields=["status", "responded_at", "parent_notes", "updated_at"])
+    
+    def deny(self, parent_notes: str = "") -> None:
+        """
+        Deny the purchase request.
+        
+        Args:
+            parent_notes: Optional notes from the parent explaining denial
+        """
+        if self.status != PurchaseApprovalStatus.PENDING:
+            raise ValidationError(_("Only pending requests can be denied"))
+        
+        from django.utils import timezone
+        self.status = PurchaseApprovalStatus.DENIED
+        self.responded_at = timezone.now()
+        self.parent_notes = parent_notes
+        self.save(update_fields=["status", "responded_at", "parent_notes", "updated_at"])
+    
+    def cancel(self) -> None:
+        """Cancel the purchase request (student-initiated)."""
+        if self.status not in [PurchaseApprovalStatus.PENDING]:
+            raise ValidationError(_("Only pending requests can be cancelled"))
+        
+        from django.utils import timezone
+        self.status = PurchaseApprovalStatus.CANCELLED
+        self.responded_at = timezone.now()
+        self.save(update_fields=["status", "responded_at", "updated_at"])
+    
+    def mark_expired(self) -> None:
+        """Mark the request as expired (system-initiated)."""
+        if self.status != PurchaseApprovalStatus.PENDING:
+            return  # Already processed
+        
+        from django.utils import timezone
+        self.status = PurchaseApprovalStatus.EXPIRED
+        self.responded_at = timezone.now()
+        self.save(update_fields=["status", "responded_at", "updated_at"])
+    
+    def clean(self):
+        """Validate the approval request."""
+        super().clean()
+        
+        # Ensure student and parent are different users
+        if self.student == self.parent:
+            raise ValidationError(_("Student and parent cannot be the same user"))
+        
+        # Ensure the parent-child relationship matches the student and parent
+        if (self.parent_child_relationship and 
+            (self.parent_child_relationship.parent != self.parent or 
+             self.parent_child_relationship.child != self.student)):
+            raise ValidationError(
+                _("Parent-child relationship must match the student and parent")
             )
