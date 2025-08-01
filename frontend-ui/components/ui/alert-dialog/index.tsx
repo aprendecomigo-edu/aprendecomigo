@@ -4,12 +4,12 @@ import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import { withStyleContext, useStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
 import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
-import { Motion, AnimatePresence, createMotionAnimatedComponent } from '@legendapp/motion';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 import React from 'react';
 import { View, Pressable, ScrollView, Platform } from 'react-native';
 
-const AnimatedPressable = createMotionAnimatedComponent(Pressable);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const SCOPE = 'ALERT_DIALOG';
 
@@ -17,12 +17,11 @@ const UIAccessibleAlertDialog = createAlertDialog({
   Root:
     Platform.OS === 'web' ? withStyleContext(View, SCOPE) : withStyleContextAndStates(View, SCOPE),
   Body: ScrollView,
-  Content: Motion.View,
+  Content: Animated.View,
   CloseButton: Pressable,
   Header: View,
   Footer: View,
   Backdrop: AnimatedPressable,
-  AnimatePresence: AnimatePresence,
 });
 
 cssInterop(UIAccessibleAlertDialog, { className: 'style' });

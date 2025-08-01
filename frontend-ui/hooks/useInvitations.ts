@@ -8,6 +8,7 @@ import InvitationApi, {
   BulkInvitationResponse,
   InvitationStatus,
   SchoolRole,
+  TeacherProfileData,
 } from '@/api/invitationApi';
 
 // Hook for managing teacher invitations (admin view)
@@ -201,18 +202,34 @@ export const useInvitationActions = () => {
     }
   }, []);
 
-  const acceptInvitation = useCallback(async (token: string) => {
+  const acceptInvitation = useCallback(async (token: string, profileData?: TeacherProfileData) => {
     try {
       setLoading(true);
       setError(null);
       
-      const result = await InvitationApi.acceptInvitation(token);
-      Alert.alert('Success', 'Invitation accepted successfully');
+      const result = await InvitationApi.acceptInvitation(token, profileData);
       return result;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to accept invitation';
+      const errorMessage = err.response?.data?.error || err.response?.data?.detail || err.message || 'Failed to accept invitation';
       setError(errorMessage);
-      Alert.alert('Error', errorMessage);
+      Alert.alert('Erro', errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const declineInvitation = useCallback(async (token: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const result = await InvitationApi.declineInvitation(token);
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.response?.data?.detail || err.message || 'Failed to decline invitation';
+      setError(errorMessage);
+      Alert.alert('Erro', errorMessage);
       throw err;
     } finally {
       setLoading(false);
@@ -239,6 +256,7 @@ export const useInvitationActions = () => {
     cancelInvitation,
     resendInvitation,
     acceptInvitation,
+    declineInvitation,
     getInvitationStatus,
     loading,
     error,

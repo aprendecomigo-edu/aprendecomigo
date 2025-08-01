@@ -4,7 +4,7 @@ import { createActionsheet } from '@gluestack-ui/actionsheet';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import { withStates } from '@gluestack-ui/nativewind-utils/withStates';
-import { Motion, AnimatePresence, createMotionAnimatedComponent } from '@legendapp/motion';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 import React, { useMemo } from 'react';
 import {
@@ -56,11 +56,11 @@ const ItemWrapper = React.forwardRef<React.ElementRef<typeof Pressable>, Pressab
   }
 );
 
-const AnimatedPressable = createMotionAnimatedComponent(Pressable);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export const UIActionsheet = createActionsheet({
   Root: View,
-  Content: Motion.View,
+  Content: Animated.View,
   Item: Platform.OS === 'web' ? ItemWrapper : withStates(ItemWrapper),
   ItemText: Text,
   DragIndicator: View,
@@ -72,7 +72,6 @@ export const UIActionsheet = createActionsheet({
   SectionList: SectionList,
   SectionHeaderText: H4,
   Icon: PrimitiveIcon,
-  AnimatePresence: AnimatePresence,
 });
 
 cssInterop(UIActionsheet, { className: 'style' });

@@ -303,8 +303,8 @@ export interface ProfilePublishingResponse {
  */
 export const getTutorAnalytics = async (tutorId?: number): Promise<TutorAnalytics> => {
   const endpoint = tutorId 
-    ? `/api/finances/tutor-analytics/${tutorId}/`
-    : '/api/finances/tutor-analytics/';
+    ? `/finances/tutor-analytics/${tutorId}/`
+    : '/finances/tutor-analytics/';
   
   const response = await apiClient.get<TutorAnalytics>(endpoint);
   return response.data;
@@ -325,7 +325,7 @@ export const getCourseCatalog = async (filters?: CourseFilters): Promise<CourseL
   if (filters?.page) queryParams.append('page', filters.page.toString());
   if (filters?.page_size) queryParams.append('page_size', filters.page_size.toString());
 
-  const url = `/api/accounts/courses/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const url = `/accounts/courses/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   const response = await apiClient.get<CourseListResponse>(url);
   return response.data;
 };
@@ -334,7 +334,7 @@ export const getCourseCatalog = async (filters?: CourseFilters): Promise<CourseL
  * Get educational systems
  */
 export const getEducationalSystems = async (): Promise<EducationalSystem[]> => {
-  const response = await apiClient.get<EducationalSystem[]>('/api/accounts/educational-systems/');
+  const response = await apiClient.get<EducationalSystem[]>('/accounts/educational-systems/');
   return Array.isArray(response.data) ? response.data : response.data.results || [];
 };
 
@@ -343,7 +343,7 @@ export const getEducationalSystems = async (): Promise<EducationalSystem[]> => {
  */
 export const createTutorSchool = async (data: TutorSchoolData): Promise<TutorSchoolCreationResponse> => {
   const response = await apiClient.post<TutorSchoolCreationResponse>(
-    '/api/accounts/schools/create-tutor-school/',
+    '/accounts/schools/create-tutor-school/',
     data
   );
   return response.data;
@@ -354,7 +354,7 @@ export const createTutorSchool = async (data: TutorSchoolData): Promise<TutorSch
  */
 export const startTutorOnboarding = async (): Promise<{ onboarding_id: string; initial_progress: OnboardingProgress }> => {
   const response = await apiClient.post<{ onboarding_id: string; initial_progress: OnboardingProgress }>(
-    '/api/accounts/tutors/onboarding/start/'
+    '/accounts/tutors/onboarding/start/'
   );
   return response.data;
 };
@@ -369,7 +369,7 @@ export const saveTutorOnboardingProgress = async (data: {
   current_step_index: number;
 }): Promise<{ success: boolean; progress: OnboardingProgress }> => {
   const response = await apiClient.post<{ success: boolean; progress: OnboardingProgress }>(
-    '/api/accounts/tutors/onboarding/save-progress/',
+    '/accounts/tutors/onboarding/save-progress/',
     data
   );
   return response.data;
@@ -383,7 +383,7 @@ export const validateTutorOnboardingStep = async (data: {
   data: Partial<TutorOnboardingData>;
 }): Promise<OnboardingStepValidation> => {
   const response = await apiClient.post<OnboardingStepValidation>(
-    '/api/accounts/tutors/onboarding/validate-step/',
+    '/accounts/tutors/onboarding/validate-step/',
     data
   );
   return response.data;
@@ -394,8 +394,8 @@ export const validateTutorOnboardingStep = async (data: {
  */
 export const getTutorOnboardingProgress = async (onboardingId?: string): Promise<OnboardingProgress> => {
   const endpoint = onboardingId 
-    ? `/api/accounts/tutors/onboarding/progress/${onboardingId}/`
-    : '/api/accounts/tutors/onboarding/progress/';
+    ? `/accounts/tutors/onboarding/progress/${onboardingId}/`
+    : '/accounts/tutors/onboarding/progress/';
   
   const response = await apiClient.get<OnboardingProgress>(endpoint);
   return response.data;
@@ -410,7 +410,7 @@ export const completeTutorOnboarding = async (data: {
   publishing_options: ProfilePublishingOptions;
 }): Promise<ProfilePublishingResponse> => {
   const response = await apiClient.post<ProfilePublishingResponse>(
-    '/api/accounts/tutors/onboarding/complete/',
+    '/accounts/tutors/onboarding/complete/',
     data
   );
   return response.data;
@@ -435,7 +435,7 @@ export const discoverTutors = async (filters?: TutorDiscoveryFilters): Promise<T
   if (filters?.page_size) queryParams.append('page_size', filters.page_size.toString());
   if (filters?.ordering) queryParams.append('ordering', filters.ordering);
 
-  const url = `/api/accounts/tutors/discover/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const url = `/accounts/tutors/discover/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   const response = await apiClient.get<TutorDiscoveryResponse>(url);
   return response.data;
 };
@@ -462,7 +462,7 @@ export const getCourseRateSuggestions = async (params: {
   };
 }>> => {
   const response = await apiClient.post(
-    '/api/accounts/courses/rate-suggestions/',
+    '/accounts/courses/rate-suggestions/',
     params
   );
   return response.data;
@@ -476,7 +476,7 @@ export const uploadTutorProfilePhoto = async (file: File | Blob): Promise<{ phot
   formData.append('photo', file);
 
   const response = await apiClient.post<{ photo_url: string }>(
-    '/api/accounts/tutors/profile-photo/',
+    '/accounts/tutors/profile-photo/',
     formData,
     {
       headers: {
@@ -509,7 +509,7 @@ export const searchCourseSuggestions = async (params: {
   if (params.max_results) queryParams.append('limit', params.max_results.toString());
 
   const response = await apiClient.get(
-    `/api/accounts/courses/suggestions/?${queryParams.toString()}`
+    `/accounts/courses/suggestions/?${queryParams.toString()}`
   );
   return response.data.suggestions || [];
 };
@@ -522,7 +522,7 @@ export const validateTutorBusinessName = async (name: string): Promise<{
   suggestions?: string[];
   message: string;
 }> => {
-  const response = await apiClient.post('/api/accounts/tutors/validate-business-name/', {
+  const response = await apiClient.post('/accounts/tutors/validate-business-name/', {
     business_name: name
   });
   return response.data;
@@ -549,7 +549,7 @@ export const getOnboardingGuidance = async (stepId: string, context?: Record<str
   }>;
   estimated_time: number; // in minutes
 }> => {
-  const response = await apiClient.post('/api/accounts/tutors/onboarding/guidance/', {
+  const response = await apiClient.post('/accounts/tutors/onboarding/guidance/', {
     step_id: stepId,
     context: context || {}
   });

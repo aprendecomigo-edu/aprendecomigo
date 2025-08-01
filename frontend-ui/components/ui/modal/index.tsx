@@ -4,12 +4,19 @@ import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import { withStyleContext, useStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
 import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
-import { Motion, AnimatePresence, createMotionAnimatedComponent } from '@legendapp/motion';
+import Animated, {
+  FadeIn,
+  FadeOut,
+  withSpring,
+  withTiming,
+  SharedValue,
+  interpolate,
+} from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 import React from 'react';
 import { Pressable, View, ScrollView, Platform } from 'react-native';
 
-const AnimatedPressable = createMotionAnimatedComponent(Pressable);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const SCOPE = 'MODAL';
 
@@ -17,12 +24,11 @@ const UIModal = createModal({
   Root:
     Platform.OS === 'web' ? withStyleContext(View, SCOPE) : withStyleContextAndStates(View, SCOPE),
   Backdrop: AnimatedPressable,
-  Content: Motion.View,
+  Content: Animated.View,
   Body: ScrollView,
   CloseButton: Pressable,
   Footer: View,
   Header: View,
-  AnimatePresence: AnimatePresence,
 });
 cssInterop(UIModal, { className: 'style' });
 cssInterop(UIModal.Backdrop, { className: 'style' });
@@ -122,24 +128,8 @@ const ModalBackdrop = React.forwardRef<
   return (
     <UIModal.Backdrop
       ref={ref}
-      initial={{
-        opacity: 0,
-      }}
-      animate={{
-        opacity: 0.5,
-      }}
-      exit={{
-        opacity: 0,
-      }}
-      transition={{
-        type: 'spring',
-        damping: 18,
-        stiffness: 250,
-        opacity: {
-          type: 'timing',
-          duration: 250,
-        },
-      }}
+      entering={FadeIn.duration(250)}
+      exiting={FadeOut.duration(250)}
       {...props}
       className={modalBackdropStyle({
         class: className,
@@ -155,26 +145,8 @@ const ModalContent = React.forwardRef<React.ElementRef<typeof UIModal.Content>, 
     return (
       <UIModal.Content
         ref={ref}
-        initial={{
-          opacity: 0,
-          scale: 0.9,
-        }}
-        animate={{
-          opacity: 1,
-          scale: 1,
-        }}
-        exit={{
-          opacity: 0,
-        }}
-        transition={{
-          type: 'spring',
-          damping: 18,
-          stiffness: 250,
-          opacity: {
-            type: 'timing',
-            duration: 250,
-          },
-        }}
+        entering={FadeIn.duration(250).springify().damping(18).stiffness(250)}
+        exiting={FadeOut.duration(250)}
         {...props}
         className={modalContentStyle({
           parentVariants: {

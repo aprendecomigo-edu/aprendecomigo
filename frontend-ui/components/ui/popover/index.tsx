@@ -5,30 +5,29 @@ import { withStates } from '@gluestack-ui/nativewind-utils/withStates';
 import { withStyleContext, useStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
 import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
 import { createPopover } from '@gluestack-ui/popover';
-import { Motion, createMotionAnimatedComponent, AnimatePresence } from '@legendapp/motion';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 import React from 'react';
 import { View, Pressable, Platform, ScrollView } from 'react-native';
 
-const AnimatedPressable = createMotionAnimatedComponent(Pressable);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const SCOPE = 'POPOVER';
 const ArrowWrapper = React.forwardRef(({ ...props }, ref) => {
-  return <Motion.View {...props} ref={ref} />;
+  return <Animated.View {...props} ref={ref} />;
 }) as React.ForwardRefExoticComponent<
-  React.ElementRef<typeof Motion.View> & React.ComponentProps<typeof Motion.View>
+  React.ElementRef<typeof Animated.View> & React.ComponentProps<typeof Animated.View>
 >;
 const UIPopover = createPopover({
   Root: (Platform.OS === 'web'
     ? withStyleContext(View, SCOPE)
     : withStyleContextAndStates(View, SCOPE)) as ReturnType<typeof withStyleContext<typeof View>>,
-  Arrow: Platform.OS === 'web' ? Motion.View : withStates(ArrowWrapper),
+  Arrow: Platform.OS === 'web' ? Animated.View : withStates(ArrowWrapper),
   Backdrop: AnimatedPressable,
   Body: ScrollView,
   CloseButton: Pressable,
-  Content: Motion.View,
+  Content: Animated.View,
   Footer: View,
   Header: View,
-  AnimatePresence: AnimatePresence,
 });
 
 cssInterop(UIPopover, { className: 'style' });

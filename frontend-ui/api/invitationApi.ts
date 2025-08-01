@@ -1,5 +1,113 @@
 import apiClient from './apiClient';
 
+// TypeScript interfaces for comprehensive teacher profile data
+export interface ContactPreferences {
+  email_notifications: boolean;
+  sms_notifications: boolean;
+  call_notifications: boolean;
+  preferred_contact_method: 'email' | 'sms' | 'call';
+}
+
+export interface SubjectExpertise {
+  subject: string;
+  level: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  years_experience?: number;
+}
+
+export enum GradeLevel {
+  ELEMENTARY = 'elementary',
+  MIDDLE_SCHOOL = 'middle_school',
+  HIGH_SCHOOL = 'high_school',
+  UNIVERSITY = 'university',
+}
+
+export interface WeeklySchedule {
+  monday: TimeSlot[];
+  tuesday: TimeSlot[];
+  wednesday: TimeSlot[];
+  thursday: TimeSlot[];
+  friday: TimeSlot[];
+  saturday: TimeSlot[];
+  sunday: TimeSlot[];
+}
+
+export interface TimeSlot {
+  start_time: string; // HH:MM format
+  end_time: string;   // HH:MM format
+  available: boolean;
+}
+
+export interface PaymentPreferences {
+  preferred_payment_method: 'bank_transfer' | 'paypal' | 'stripe';
+  invoice_frequency: 'weekly' | 'biweekly' | 'monthly';
+  tax_information_provided: boolean;
+}
+
+export interface EducationEntry {
+  degree: string;
+  field_of_study: string;
+  institution: string;
+  graduation_year: number;
+  is_highest_degree: boolean;
+}
+
+export interface ExperienceEntry {
+  role: string;
+  institution: string;
+  start_date: string; // YYYY-MM-DD
+  end_date?: string;  // YYYY-MM-DD, null if current
+  description: string;
+  is_current: boolean;
+}
+
+export interface CertificationFile {
+  name: string;
+  file: File | string; // File object or URL for uploaded files
+  expiry_date?: string; // YYYY-MM-DD
+  issuing_organization: string;
+}
+
+// Comprehensive teacher profile data for invitation acceptance
+export interface TeacherProfileData {
+  // Step 1: Basic Information
+  profile_photo?: File | string;
+  contact_preferences?: ContactPreferences;
+  introduction?: string;
+  
+  // Step 2: Teaching Subjects
+  teaching_subjects: SubjectExpertise[];
+  custom_subjects?: string[];
+  
+  // Step 3: Grade Level Preferences
+  grade_levels: GradeLevel[];
+  
+  // Step 4: Availability & Scheduling
+  availability_schedule?: WeeklySchedule;
+  timezone: string;
+  availability_notes?: string;
+  
+  // Step 5: Rates & Compensation
+  hourly_rate: number;
+  rate_negotiable: boolean;
+  payment_preferences?: PaymentPreferences;
+  
+  // Step 6: Credentials & Experience
+  education_background: EducationEntry[];
+  teaching_experience: ExperienceEntry[];
+  certifications: CertificationFile[];
+  
+  // Step 7: Profile Marketing
+  teaching_philosophy: string;
+  teaching_approach: string;
+  specializations: string[];
+  achievements?: string[];
+  
+  // Legacy fields for backward compatibility
+  bio?: string;
+  specialty?: string;
+  course_ids?: number[];
+}
+
 // TypeScript interfaces for invitation management
 export interface TeacherInvitation {
   id: string;
@@ -139,23 +247,37 @@ export class InvitationApi {
    * Get invitation status by token
    */
   static async getInvitationStatus(token: string): Promise<InvitationStatusResponse> {
-    const response = await apiClient.get(`/accounts/teacher-invitations/${token}/status/`);
+    const response = await apiClient.get(`/accounts/invitations/${token}/details/`);
     return response.data;
   }
 
   /**
-   * Accept invitation by token
+   * Accept invitation by token with comprehensive profile data
    */
-  static async acceptInvitation(token: string): Promise<{
+  static async acceptInvitation(token: string, profileData?: TeacherProfileData): Promise<{
     message: string;
-    invitation: TeacherInvitation;
+    teacher: any;
     school_membership: {
       id: number;
       role: SchoolRole;
       is_active: boolean;
     };
+    school: {
+      id: number;
+      name: string;
+    };
   }> {
-    const response = await apiClient.post(`/accounts/teacher-invitations/${token}/accept/`);
+    const response = await apiClient.post(`/accounts/invitations/${token}/accept/`, profileData || {});
+    return response.data;
+  }
+
+  /**
+   * Decline invitation by token
+   */
+  static async declineInvitation(token: string): Promise<{
+    message: string;
+  }> {
+    const response = await apiClient.post(`/accounts/invitations/${token}/decline/`);
     return response.data;
   }
 

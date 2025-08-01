@@ -4,12 +4,12 @@ import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import { withStyleContext, useStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
 import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
 import { createToast, createToastHook } from '@gluestack-ui/toast';
-import { Motion, AnimatePresence } from '@legendapp/motion';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 import React from 'react';
 import { Text, View, Platform } from 'react-native';
 
-export const useToast = createToastHook(Motion.View, AnimatePresence);
+export const useToast = createToastHook(Animated.View);
 const SCOPE = 'TOAST';
 export const UIToast = createToast({
   Root:

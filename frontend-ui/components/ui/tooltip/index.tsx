@@ -4,16 +4,15 @@ import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import { withStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
 import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
 import { createTooltip } from '@gluestack-ui/tooltip';
-import { Motion, AnimatePresence } from '@legendapp/motion';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 import React from 'react';
 import { View, Text, Platform } from 'react-native';
 
 export const UITooltip = createTooltip({
   Root: Platform.OS === 'web' ? withStyleContext(View) : withStyleContextAndStates(View),
-  Content: Motion.View,
+  Content: Animated.View,
   Text: Text,
-  AnimatePresence: AnimatePresence,
 });
 
 const tooltipStyle = tva({

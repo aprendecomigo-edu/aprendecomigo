@@ -4,7 +4,7 @@ import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import { withStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
 import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
-import { Motion, AnimatePresence, createMotionAnimatedComponent } from '@legendapp/motion';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 import React, { useMemo } from 'react';
 import {
@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import { Svg } from 'react-native-svg';
 
-const AnimatedPressable = createMotionAnimatedComponent(Pressable);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type IPrimitiveIcon = {
   height?: number | string;
@@ -61,7 +61,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
 
 export const UIActionsheet = createActionsheet({
   Root: View,
-  Content: withStyleContext(Motion.View),
+  Content: withStyleContext(Animated.View),
   Item: Platform.OS === 'web' ? withStyleContext(Pressable) : withStyleContextAndStates(Pressable),
   ItemText: Text,
   DragIndicator: View,
@@ -73,7 +73,6 @@ export const UIActionsheet = createActionsheet({
   SectionList: SectionList,
   SectionHeaderText: H4,
   Icon: PrimitiveIcon,
-  AnimatePresence: AnimatePresence,
 });
 
 cssInterop(UIActionsheet, { className: 'style' });
