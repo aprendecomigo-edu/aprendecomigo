@@ -43,6 +43,9 @@ import type {
   PurchaseFilterOptions,
   ConsumptionRecord
 } from '@/types/purchase';
+import { ReceiptDownloadButton } from '@/components/student/receipts/ReceiptDownloadButton';
+import { ReceiptPreviewModal } from '@/components/student/receipts/ReceiptPreviewModal';
+import { useReceipts } from '@/hooks/useReceipts';
 
 interface PurchaseHistoryProps {
   purchases: PaginatedPurchaseHistory | null;
@@ -136,7 +139,12 @@ function PurchaseItem({
 }: { 
   purchase: PurchaseHistoryItem 
 }) {
+  const { receipts } = useReceipts();
   const [showConsumption, setShowConsumption] = useState(false);
+  const [previewReceiptId, setPreviewReceiptId] = useState<string | null>(null);
+  
+  // Find existing receipt for this purchase
+  const existingReceipt = receipts.find(r => r.transaction_id === purchase.transaction_id);
   
   const statusConfig = PAYMENT_STATUS_CONFIG[purchase.payment_status] || PAYMENT_STATUS_CONFIG.pending;
   const hoursRemaining = parseFloat(purchase.hours_remaining);
@@ -160,6 +168,7 @@ function PurchaseItem({
   };
 
   return (
+    <>
     <Card className="p-4">
       <VStack space="sm">
         {/* Header */}
@@ -317,24 +326,51 @@ function PurchaseItem({
           </VStack>
         )}
 
-        {/* Footer */}
-        <HStack className="items-center justify-between">
-          <Text className="text-xs text-typography-500">
-            Purchased: {new Date(purchase.purchase_date).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric'
-            })}
-          </Text>
-          
-          {purchase.consumption_history && purchase.consumption_history.length === 0 && (
+        {/* Footer with Receipt */}
+        <VStack space="sm">
+          <HStack className="items-center justify-between">
             <Text className="text-xs text-typography-500">
-              No usage yet
+              Purchased: {new Date(purchase.purchase_date).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              })}
             </Text>
+            
+            {purchase.consumption_history && purchase.consumption_history.length === 0 && (
+              <Text className="text-xs text-typography-500">
+                No usage yet
+              </Text>
+            )}
+          </HStack>
+
+          {/* Receipt Download Section */}
+          {purchase.payment_status === 'succeeded' && (
+            <ReceiptDownloadButton
+              transactionId={purchase.transaction_id}
+              existingReceipt={existingReceipt}
+              planName={purchase.plan_name}
+              amount={purchase.amount_paid}
+              size="sm"
+              variant="outline"
+              onPreview={(receiptId) => setPreviewReceiptId(receiptId)}
+              className="self-start"
+            />
           )}
-        </HStack>
+        </VStack>
       </VStack>
     </Card>
+    
+    {/* Receipt Preview Modal */}
+    {previewReceiptId && existingReceipt && (
+      <ReceiptPreviewModal
+        isOpen={!!previewReceiptId}
+        receiptId={previewReceiptId}
+        receiptNumber={existingReceipt.receipt_number}
+        onClose={() => setPreviewReceiptId(null)}
+      />
+    )}
+  </>
   );
 }
 

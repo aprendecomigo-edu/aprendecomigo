@@ -280,3 +280,125 @@ export interface UserProfile {
     timezone: string;
   };
 }
+
+// Receipt types
+export interface Receipt {
+  id: string;
+  transaction_id: string;
+  purchase_date: string;
+  amount: string;
+  plan_name: string;
+  receipt_number: string;
+  status: 'pending' | 'generated' | 'failed';
+  download_url?: string;
+  generated_at?: string;
+}
+
+export interface ReceiptGenerationResponse {
+  success: boolean;
+  receipt_id: string;
+  message: string;
+  status: 'pending' | 'generated' | 'failed';
+}
+
+// Payment method types
+export interface PaymentMethod {
+  id: string;
+  type: 'card';
+  card: {
+    brand: string;
+    last4: string;
+    exp_month: number;
+    exp_year: number;
+    funding: string;
+  };
+  billing_details: {
+    name?: string;
+    email?: string;
+    address?: {
+      line1?: string;
+      line2?: string;
+      city?: string;
+      state?: string;
+      postal_code?: string;
+      country?: string;
+    };
+  };
+  is_default: boolean;
+  created_at: string;
+}
+
+export interface AddPaymentMethodRequest {
+  payment_method_id: string;
+  set_as_default?: boolean;
+}
+
+export interface AddPaymentMethodResponse {
+  success: boolean;
+  payment_method: PaymentMethod;
+  message: string;
+}
+
+// Analytics types
+export interface UsageStatistics {
+  total_sessions: number;
+  total_hours_consumed: number;
+  average_session_duration: number;
+  sessions_this_month: number;
+  hours_this_month: number;
+  most_active_subject?: string;
+  preferred_time_slot?: string;
+  streak_days: number;
+}
+
+export interface LearningInsight {
+  id: string;
+  type: 'achievement' | 'suggestion' | 'milestone' | 'warning';
+  title: string;
+  description: string;
+  icon: string;
+  created_at: string;
+  is_read: boolean;
+}
+
+export interface UsagePattern {
+  hour: number;
+  day_of_week: number;
+  session_count: number;
+  average_duration: number;
+  subjects: {
+    [subject: string]: {
+      session_count: number;
+      total_hours: number;
+    };
+  };
+}
+
+export interface AnalyticsTimeRange {
+  start_date: string;
+  end_date: string;
+}
+
+// Notification types
+export interface NotificationPreferences {
+  low_balance_alerts: boolean;
+  session_reminders: boolean;
+  package_expiration: boolean;
+  weekly_reports: boolean;
+  learning_insights: boolean;
+  renewal_prompts: boolean;
+  email_notifications: boolean;
+  in_app_notifications: boolean;
+}
+
+export interface Notification {
+  id: string;
+  type: 'low_balance' | 'renewal_prompt' | 'package_expiry' | 'session_reminder' | 'insight';
+  title: string;
+  message: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  timestamp: Date;
+  isRead: boolean;
+  actionLabel?: string;
+  actionUrl?: string;
+}

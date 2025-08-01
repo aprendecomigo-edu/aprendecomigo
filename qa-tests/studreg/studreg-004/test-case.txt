@@ -1,0 +1,232 @@
+QA Test Case: Subscription Status and Billing Date Management
+
+Test ID: STUDREG-004
+Test Name: Subscription Status Management
+Purpose: Verify subscription status display, next billing date functionality, and subscription management features
+Expected Result: Students can view and manage their subscription status with accurate billing information and controls
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST Framework backend + React Native frontend + Stripe subscriptions
+- Features: Subscription management, billing cycle tracking, subscription status updates
+- Target APIs: /api/student-balance/ (enhanced with subscription_info), subscription management endpoints
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Start servers: make dev
+4. Stripe Subscriptions: Ensure test subscription data exists
+5. View logs: make logs
+
+Test Data:
+- Test Student Email: student.test@aprendecomigo.com
+- User Role: student
+- Required Subscription States:
+  - Active subscription with next billing date
+  - Subscription with past due status
+  - Canceled subscription
+  - Subscription with trial period
+  - Subscription with payment method issues
+
+Subscription Types to Test:
+- Monthly hour packages
+- Quarterly subscriptions
+- Annual subscriptions
+- Custom hour bundles
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Login
+1. Start development servers with 'make dev'
+2. Navigate to http://localhost:8081
+3. Login as student user (student.test@aprendecomigo.com)
+4. Verify student dashboard loads with subscription section
+Commands:
+  make dev
+  # Wait for servers to start
+Expected: Application loads, student dashboard displays with subscription status section
+Screenshot: 01_dashboard_subscription_section.png
+Debug: Use 'make logs' to check for any subscription service errors
+
+Step 2: Test Subscription Status Display
+1. Navigate to subscription or billing section
+2. Verify subscription status displays clearly:
+   - Current status (Active, Past Due, Canceled, Trial)
+   - Subscription plan name and details
+   - Current billing cycle
+   - Visual status indicators (colors, icons)
+3. Check that status is prominently displayed
+Expected: Subscription status is clearly visible with appropriate visual indicators
+Screenshot: 02_subscription_status_display.png
+
+Step 3: Test Next Billing Date Information
+1. Locate next billing date information
+2. Verify accurate display of:
+   - Next billing date
+   - Billing amount
+   - Payment method to be charged
+   - Days until next billing
+3. Check countdown or time remaining display
+Expected: Next billing date is accurate and prominently displayed with relevant details
+Screenshot: 03_next_billing_date_info.png
+
+Step 4: Test Enhanced API Response Structure
+1. Open browser developer tools (F12)
+2. Navigate to Network tab
+3. Refresh subscription page
+4. Verify API call to GET /api/student-balance/
+5. Check response includes subscription_info with:
+   - subscription_status
+   - next_billing_date
+   - billing_amount
+   - subscription_plan_details
+Expected: API returns enhanced data structure with complete subscription information
+Screenshot: 04_enhanced_api_response.png
+
+Step 5: Test Active Subscription Management
+1. For active subscription, verify available actions:
+   - View plan details
+   - Change payment method
+   - Update billing information
+   - Pause/cancel subscription options
+2. Test each available action works properly
+3. Verify appropriate confirmations for destructive actions
+Expected: Active subscription management features work correctly with proper safeguards
+Screenshot: 05_active_subscription_management.png
+
+Step 6: Test Subscription Plan Details
+1. Click on subscription plan details or "View Plan" button
+2. Verify detailed plan information displays:
+   - Plan name and description
+   - Included hours per billing cycle
+   - Pricing breakdown
+   - Plan benefits and features
+   - Subscription start date
+3. Check for plan comparison or upgrade options
+Expected: Comprehensive plan details are displayed with clear information
+Screenshot: 06_subscription_plan_details.png
+
+Step 7: Test Past Due Subscription Handling
+1. If possible, simulate past due subscription state
+2. Verify past due status displays with:
+   - Clear warning indicators
+   - Amount past due
+   - Grace period information
+   - Action buttons for payment retry
+3. Test payment retry functionality
+Expected: Past due subscriptions are clearly indicated with actionable recovery options
+Screenshot: 07_past_due_subscription.png
+
+Step 8: Test Subscription Cancellation Flow
+1. Click "Cancel Subscription" or similar option
+2. Verify cancellation flow includes:
+   - Confirmation dialogs
+   - Cancellation reason collection
+   - Information about what happens after cancellation
+   - Option to pause instead of cancel
+3. Test both immediate and end-of-cycle cancellation
+Expected: Cancellation flow is clear, provides options, and includes appropriate warnings
+Screenshot: 08_subscription_cancellation.png
+
+Step 9: Test Billing History Integration
+1. Navigate to billing history from subscription section
+2. Verify billing history shows:
+   - Past billing dates and amounts
+   - Payment method used
+   - Invoice/receipt links
+   - Payment status for each billing cycle
+3. Test integration with receipt download functionality
+Expected: Billing history is comprehensive and integrates well with other features
+Screenshot: 09_billing_history_integration.png
+
+Step 10: Test Subscription Renewal Notifications
+1. Check for renewal notifications/reminders
+2. Verify notifications appear at appropriate times:
+   - 7 days before renewal
+   - 1 day before renewal
+   - On renewal day
+3. Test notification content includes:
+   - Renewal date and amount
+   - Payment method to be charged
+   - Option to update payment details
+Expected: Renewal notifications are timely and include all necessary information
+Screenshot: 10_renewal_notifications.png
+
+Step 11: Test Trial Period Management
+1. If account has trial period, verify trial information:
+   - Trial status and remaining days
+   - Trial benefits vs paid plan
+   - Conversion options
+   - Clear indication of trial end
+2. Test trial conversion flow
+Expected: Trial period information is clear and conversion process is smooth
+Screenshot: 11_trial_period_management.png
+
+Step 12: Test Subscription Upgrade/Downgrade
+1. Test subscription plan changes:
+   - Upgrade to higher tier
+   - Downgrade to lower tier
+   - Change billing frequency
+2. Verify prorated billing calculations
+3. Check confirmation and effective date information
+4. Test immediate vs end-of-cycle changes
+Expected: Plan changes work correctly with proper billing calculations and clear communication
+Screenshot: 12_subscription_changes.png
+
+Step 13: Test Payment Method Integration
+1. Test updating payment method from subscription section
+2. Verify integration with payment method management
+3. Check that subscription uses updated payment method
+4. Test handling of failed payment methods
+Expected: Payment method updates integrate seamlessly with subscription management
+Screenshot: 13_payment_method_integration.png
+
+Step 14: Test Mobile Subscription Management
+1. Switch to mobile view (DevTools responsive mode)
+2. Test all subscription management features on mobile
+3. Verify subscription status displays properly on small screens
+4. Check that all action buttons are accessible and functional
+Expected: Mobile subscription management experience is fully functional and user-friendly
+Screenshot: 14_mobile_subscription_management.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All subscription information displays correctly AND management features work properly AND API integration is solid AND mobile experience is complete
+
+FAIL: Any subscription information is incorrect OR management features fail OR API issues OR poor mobile experience
+
+Individual Step Criteria:
+- Step 1: PASS if dashboard loads with subscription section, FAIL if loading or display issues
+- Step 2: PASS if subscription status displays clearly with proper indicators, FAIL if status unclear or missing
+- Step 3: PASS if next billing date information is accurate and complete, FAIL if billing info incorrect
+- Step 4: PASS if API returns enhanced subscription data structure, FAIL if API missing data or errors
+- Step 5: PASS if active subscription management features work, FAIL if management features fail
+- Step 6: PASS if plan details are comprehensive and clear, FAIL if plan information incomplete
+- Step 7: PASS if past due handling is clear and actionable, FAIL if past due status poorly handled
+- Step 8: PASS if cancellation flow is clear with proper safeguards, FAIL if cancellation process unclear
+- Step 9: PASS if billing history integrates well, FAIL if billing history missing or disconnected
+- Step 10: PASS if renewal notifications are timely and complete, FAIL if notifications missing or poor
+- Step 11: PASS if trial period management is clear, FAIL if trial information confusing or missing
+- Step 12: PASS if subscription changes work with proper calculations, FAIL if upgrade/downgrade fails
+- Step 13: PASS if payment method integration works seamlessly, FAIL if payment integration broken
+- Step 14: PASS if mobile experience is fully functional, FAIL if mobile compatibility issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== BUSINESS REQUIREMENTS VALIDATION ===
+
+This test validates GitHub Issue #103 acceptance criteria:
+- Subscription status display with visual indicators
+- Next billing date and amount information
+- Subscription plan details and management
+- Enhanced API response structure with subscription_info
+- Past due and cancellation handling
+- Billing history integration
+- Renewal notifications and reminders
+- Trial period management
+- Subscription upgrade/downgrade functionality
+- Mobile-responsive subscription management
+
+Revenue Impact: Ensures students have full visibility and control over their subscriptions, supporting retention and reducing churn through clear communication and easy management

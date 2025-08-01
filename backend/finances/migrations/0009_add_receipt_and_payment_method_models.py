@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('finances', '0007_add_session_tracking_fields'),
+        ('finances', '0008_add_analytics_indexes'),
     ]
 
     operations = [

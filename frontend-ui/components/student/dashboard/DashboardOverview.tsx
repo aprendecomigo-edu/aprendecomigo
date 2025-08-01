@@ -33,6 +33,8 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { StudentBalanceCard } from '@/components/purchase';
 import type { StudentBalanceResponse } from '@/types/purchase';
+import { UsageAnalyticsSection } from '@/components/student/analytics/UsageAnalyticsSection';
+import { NotificationSystem } from '@/components/student/notifications/NotificationSystem';
 
 interface DashboardOverviewProps {
   balance: StudentBalanceResponse | null;
@@ -375,6 +377,12 @@ export function DashboardOverview({
           </Card>
         </VStack>
       )}
+
+      {/* Analytics Section */}
+      <UsageAnalyticsSection />
+
+      {/* Notification System */}
+      <NotificationSystem />
     </VStack>
   );
 }

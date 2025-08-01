@@ -48,6 +48,7 @@ import { Text } from '@/components/ui/text';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
 import type { StudentBalanceResponse, UserProfile } from '@/types/purchase';
+import { PaymentMethodsSection } from '@/components/student/payment-methods/PaymentMethodsSection';
 
 interface AccountSettingsProps {
   userProfile: UserProfile | null;
@@ -648,6 +649,9 @@ export function AccountSettings({
         userProfile={userProfile}
         onRefresh={onRefresh}
       />
+
+      {/* Payment Methods */}
+      <PaymentMethodsSection />
 
       {/* Notification Settings */}
       <NotificationSettings />

@@ -296,6 +296,110 @@ export class PurchaseApiClient {
       }
     }
   }
+
+  /**
+   * Get student receipts.
+   * 
+   * @param email Optional email parameter for admin access
+   * @returns Promise resolving to array of receipts
+   * @throws Error with descriptive message if request fails
+   */
+  static async getReceipts(email?: string): Promise<any[]> {
+    try {
+      const params = email ? { email } : {};
+      const response = await apiClient.get('/api/student-balance/receipts/', { params });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching receipts:', error);
+      throw new Error('Failed to load receipts. Please try again.');
+    }
+  }
+
+  /**
+   * Generate a receipt for a transaction.
+   * 
+   * @param transactionId Transaction ID to generate receipt for
+   * @param email Optional email parameter for admin access
+   * @returns Promise resolving to receipt generation response
+   * @throws Error with descriptive message if request fails
+   */
+  static async generateReceipt(transactionId: string, email?: string): Promise<any> {
+    try {
+      const data = email ? { transaction_id: transactionId, email } : { transaction_id: transactionId };
+      const response = await apiClient.post('/api/student-balance/receipts/generate/', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error generating receipt:', error);
+      throw new Error('Failed to generate receipt. Please try again.');
+    }
+  }
+
+  /**
+   * Get student payment methods.
+   * 
+   * @param email Optional email parameter for admin access
+   * @returns Promise resolving to array of payment methods
+   * @throws Error with descriptive message if request fails
+   */
+  static async getPaymentMethods(email?: string): Promise<any[]> {
+    try {
+      const params = email ? { email } : {};
+      const response = await apiClient.get('/api/student-balance/payment-methods/', { params });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching payment methods:', error);
+      throw new Error('Failed to load payment methods. Please try again.');
+    }
+  }
+
+  /**
+   * Add a new payment method.
+   * 
+   * @param paymentMethodId Stripe payment method ID
+   * @param setAsDefault Whether to set as default payment method
+   * @param email Optional email parameter for admin access
+   * @returns Promise resolving to payment method addition response
+   * @throws Error with descriptive message if request fails
+   */
+  static async addPaymentMethod(paymentMethodId: string, setAsDefault: boolean = false, email?: string): Promise<any> {
+    try {
+      const data = { 
+        payment_method_id: paymentMethodId, 
+        set_as_default: setAsDefault,
+        ...(email && { email })
+      };
+      const response = await apiClient.post('/api/student-balance/payment-methods/', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error adding payment method:', error);
+      throw new Error('Failed to add payment method. Please try again.');
+    }
+  }
+
+  /**
+   * Get usage analytics.
+   * 
+   * @param timeRange Optional time range for analytics
+   * @param email Optional email parameter for admin access
+   * @returns Promise resolving to usage analytics
+   * @throws Error with descriptive message if request fails
+   */
+  static async getUsageAnalytics(timeRange?: { start_date: string; end_date: string }, email?: string): Promise<any> {
+    try {
+      const params: any = {};
+      if (email) params.email = email;
+      if (timeRange) {
+        params.start_date = timeRange.start_date;
+        params.end_date = timeRange.end_date;
+      }
+      
+      const response = await apiClient.get('/api/student-balance/analytics/usage/', { params });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching usage analytics:', error);
+      throw new Error('Failed to load usage analytics. Please try again.');
+    }
+  }
 }
 
 // Convenience exports for direct function access
@@ -307,4 +411,9 @@ export const {
   checkBookingEligibility,
   getTransactionHistory,
   getPurchaseHistory,
+  getReceipts,
+  generateReceipt,
+  getPaymentMethods,
+  addPaymentMethod,
+  getUsageAnalytics,
 } = PurchaseApiClient;

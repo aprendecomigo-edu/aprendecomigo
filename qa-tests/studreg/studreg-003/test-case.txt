@@ -1,0 +1,203 @@
+QA Test Case: Enhanced Notifications and Analytics Testing
+
+Test ID: STUDREG-003
+Test Name: Enhanced Notifications and Analytics
+Purpose: Verify low balance notifications, usage analytics, renewal prompts, and learning insights functionality
+Expected Result: Students receive appropriate notifications and can access meaningful usage analytics and learning insights
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST Framework backend + React Native frontend
+- Features: Real-time notifications, analytics dashboard, learning insights
+- Target APIs: /api/student-balance/, notification endpoints, analytics endpoints
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Start servers: make dev
+4. View logs: make logs
+
+Test Data:
+- Test Student Email: student.test@aprendecomigo.com
+- User Role: student
+- Required Data States:
+  - Low balance account (< 5 hours remaining)
+  - Account with usage history (multiple sessions)
+  - Account with varying session types and durations
+  - Account near expiration dates
+
+Notification Testing:
+- Test both in-app notifications and email notifications
+- Verify notification preferences can be managed
+- Test notification timing and triggers
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Login
+1. Start development servers with 'make dev' 
+2. Navigate to http://localhost:8081
+3. Login as student user (student.test@aprendecomigo.com)
+4. Verify student dashboard loads with analytics section
+Commands:
+  make dev
+  # Wait for servers to start
+Expected: Application loads, student dashboard displays with analytics/insights section visible
+Screenshot: 01_dashboard_with_analytics_section.png
+Debug: Use 'make logs' to check for any analytics service errors
+
+Step 2: Test Low Balance Notification Triggers
+1. Navigate to student balance/account section
+2. If balance is not low, simulate low balance scenario (< 5 hours)
+3. Verify low balance warning appears in dashboard
+4. Check that notification includes:
+   - Current remaining hours
+   - Estimated time until depletion
+   - Call-to-action for purchasing more hours
+5. Verify visual indicators (warning colors, icons)
+Expected: Low balance notification displays prominently with actionable information
+Screenshot: 02_low_balance_notification.png
+
+Step 3: Test Usage Analytics Dashboard
+1. Navigate to "Usage Analytics" or "Learning Insights" section
+2. Verify analytics dashboard loads with visualizations
+3. Check for presence of:
+   - Hours consumed over time (chart/graph)
+   - Session frequency analysis
+   - Subject/topic breakdown
+   - Peak usage times
+   - Progress trends
+Expected: Analytics dashboard displays comprehensive usage data with clear visualizations
+Screenshot: 03_usage_analytics_dashboard.png
+
+Step 4: Test Learning Insights Accuracy
+1. Compare displayed analytics with actual usage data
+2. Verify session counts match historical data
+3. Check that hour consumption calculations are accurate
+4. Validate subject/topic categorization
+5. Test date range filtering for analytics
+Expected: All analytics data is accurate and matches actual usage patterns
+Screenshot: 04_learning_insights_accuracy.png
+
+Step 5: Test Renewal Prompt Logic
+1. Check for renewal prompts based on usage patterns
+2. Verify prompts appear at appropriate times:
+   - When balance drops below threshold
+   - Before package expiration
+   - Based on usage velocity (rapid consumption)
+3. Check that renewal prompts include:
+   - Recommended package size
+   - Pricing information
+   - Direct link to purchase flow
+Expected: Renewal prompts are contextual, timely, and include actionable information
+Screenshot: 05_renewal_prompt_logic.png
+
+Step 6: Test Notification Preference Settings
+1. Navigate to notification settings or preferences
+2. Test toggling different notification types:
+   - Low balance alerts
+   - Renewal reminders
+   - Usage milestones
+   - Learning insights summaries
+3. Verify preferences are saved and respected
+4. Test both in-app and email notification preferences
+Expected: Notification preferences can be customized and are properly saved/applied
+Screenshot: 06_notification_preferences.png
+
+Step 7: Test Usage Pattern Recognition
+1. Check if system recognizes usage patterns:
+   - Regular vs irregular usage
+   - Peak usage days/times
+   - Subject preferences
+   - Session length patterns
+2. Verify insights are generated based on patterns:
+   - Recommended study times
+   - Suggested package sizes
+   - Learning efficiency insights
+Expected: System provides intelligent insights based on individual usage patterns
+Screenshot: 07_usage_pattern_recognition.png
+
+Step 8: Test Expiration Date Warnings
+1. Navigate to packages/hours with upcoming expiration dates
+2. Verify expiration warnings appear with adequate notice:
+   - 30 days before expiration
+   - 7 days before expiration
+   - 24 hours before expiration
+3. Check that warnings include:
+   - Exact expiration date
+   - Hours that will expire
+   - Suggestion to use or extend
+Expected: Expiration warnings are timely and provide clear information about impending losses
+Screenshot: 08_expiration_warnings.png
+
+Step 9: Test Analytics Performance and Loading
+1. Test analytics loading times with various data volumes
+2. Verify charts and graphs render properly
+3. Check responsive behavior on different screen sizes
+4. Test data export functionality if available
+5. Verify proper loading states and error handling
+Expected: Analytics load efficiently, display properly across devices, handle errors gracefully
+Screenshot: 09_analytics_performance.png
+
+Step 10: Test Real-time Notification Updates
+1. Simulate low balance condition
+2. Verify notifications appear in real-time without page refresh
+3. Test notification dismissal and persistence
+4. Check notification badge counts and updates
+5. Verify notifications across multiple browser tabs/sessions
+Expected: Real-time notifications work properly, update dynamically, maintain consistency
+Screenshot: 10_realtime_notifications.png
+
+Step 11: Test Email Notification Integration
+1. Trigger conditions that should send email notifications
+2. Check that emails are sent to correct address
+3. Verify email content includes relevant information
+4. Test email unsubscribe functionality
+5. Check email frequency limits (no spam)
+Expected: Email notifications are sent appropriately with relevant content and proper controls
+Screenshot: 11_email_notifications.png
+
+Step 12: Test Analytics Data Privacy and Security
+1. Verify analytics data is properly scoped to logged-in user
+2. Test that users cannot access other users' analytics
+3. Check data anonymization in aggregated views
+4. Verify proper authentication for analytics endpoints
+Expected: Analytics data is secure, properly scoped, and maintains user privacy
+Screenshot: 12_analytics_security.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All notification triggers work correctly AND analytics are accurate AND learning insights are meaningful AND privacy/security is maintained
+
+FAIL: Any notification system fails OR analytics are inaccurate OR poor user experience OR security/privacy issues
+
+Individual Step Criteria:
+- Step 1: PASS if dashboard loads with analytics section, FAIL if loading issues or missing features
+- Step 2: PASS if low balance notifications trigger and display properly, FAIL if notifications don't work
+- Step 3: PASS if usage analytics dashboard displays comprehensive data, FAIL if missing data or display issues
+- Step 4: PASS if analytics data is accurate and matches actual usage, FAIL if data inconsistencies
+- Step 5: PASS if renewal prompts are contextual and timely, FAIL if prompts are inappropriate or missing
+- Step 6: PASS if notification preferences can be customized and saved, FAIL if preferences don't work
+- Step 7: PASS if system recognizes patterns and provides insights, FAIL if pattern recognition fails
+- Step 8: PASS if expiration warnings are timely and informative, FAIL if warnings are missing or unclear
+- Step 9: PASS if analytics perform well and display properly, FAIL if performance or display issues
+- Step 10: PASS if real-time notifications work across sessions, FAIL if real-time functionality fails
+- Step 11: PASS if email notifications work properly with controls, FAIL if email system doesn't work
+- Step 12: PASS if analytics data is secure and properly scoped, FAIL if security or privacy issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== BUSINESS REQUIREMENTS VALIDATION ===
+
+This test validates GitHub Issue #106 acceptance criteria:
+- Low balance notification triggers and display
+- Usage analytics charts and visualizations  
+- Renewal prompt timing and logic
+- Learning insights accuracy and usefulness
+- Notification preference management
+- Email integration for notifications
+- Real-time notification updates
+- Data privacy and security compliance
+
+Revenue Impact: Ensures students are appropriately notified about renewals and usage, supporting subscription retention and customer satisfaction
