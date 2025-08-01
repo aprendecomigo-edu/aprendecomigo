@@ -37,6 +37,7 @@ from .models import (
     TeacherCompensationRule,
     TeacherPaymentEntry,
     TransactionPaymentStatus,
+    TransactionType,
 )
 from .serializers import (
     BulkPaymentProcessorSerializer,
@@ -1463,6 +1464,12 @@ class StudentBalanceViewSet(viewsets.ViewSet):
     
     permission_classes = [IsAuthenticated]
     
+    def list(self, request):
+        """
+        Main endpoint for student balance - delegates to summary.
+        """
+        return self.summary(request)
+    
     def _get_target_student(self, request):
         """
         Get the target student based on authentication and email parameter.
@@ -2127,7 +2134,7 @@ class StudentBalanceViewSet(viewsets.ViewSet):
                 status=http_status
             )
     
-    @action(detail=True, methods=['delete'], url_path='')
+    @action(detail=True, methods=['delete'])
     def remove_payment_method(self, request, pk=None):
         """
         Remove a stored payment method.
@@ -2205,6 +2212,179 @@ class StudentBalanceViewSet(viewsets.ViewSet):
             
             return Response(
                 {'error': result['message']},
+                status=http_status
+            )
+    
+    @action(detail=False, methods=['get'], url_path='topup-packages')
+    def get_topup_packages(self, request):
+        """
+        Get available quick top-up packages.
+        
+        Returns list of available hour packages with pricing information.
+        """
+        from finances.services.renewal_payment_service import RenewalPaymentService
+        from finances.serializers import QuickTopupPackageSerializer
+        
+        service = RenewalPaymentService()
+        packages = service.get_available_topup_packages()
+        
+        serializer = QuickTopupPackageSerializer(packages, many=True)
+        return Response({
+            'success': True,
+            'packages': serializer.data
+        })
+    
+    @action(detail=False, methods=['post'], url_path='renew-subscription')
+    def renew_subscription(self, request):
+        """
+        Renew an expired subscription using saved payment method.
+        
+        Request body:
+        {
+            "original_transaction_id": 123,
+            "payment_method_id": 456  // optional, uses default if not provided
+        }
+        """
+        from finances.services.renewal_payment_service import RenewalPaymentService
+        from finances.serializers import SubscriptionRenewalRequestSerializer, RenewalResponseSerializer
+        
+        student_user, error_response = self._get_target_student(request)
+        if error_response:
+            return error_response
+        
+        # Validate request data
+        serializer = SubscriptionRenewalRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        original_transaction_id = serializer.validated_data['original_transaction_id']
+        payment_method_id = serializer.validated_data.get('payment_method_id')
+        
+        # Additional validation for payment method ownership
+        if payment_method_id:
+            from finances.models import StoredPaymentMethod
+            try:
+                payment_method = StoredPaymentMethod.objects.get(
+                    id=payment_method_id,
+                    student=student_user,
+                    is_active=True
+                )
+            except StoredPaymentMethod.DoesNotExist:
+                return Response(
+                    {'error': 'Payment method not found or not accessible'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        
+        # Process renewal using service
+        service = RenewalPaymentService()
+        result = service.renew_subscription(
+            student_user=student_user,
+            original_transaction_id=original_transaction_id,
+            payment_method_id=payment_method_id
+        )
+        
+        # Map service result to proper HTTP status
+        if result['success']:
+            response_serializer = RenewalResponseSerializer(data=result)
+            if response_serializer.is_valid():
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(result, status=status.HTTP_201_CREATED)
+        else:
+            error_status_map = {
+                'transaction_not_found': status.HTTP_404_NOT_FOUND,
+                'invalid_transaction_status': status.HTTP_400_BAD_REQUEST,
+                'invalid_transaction_type': status.HTTP_400_BAD_REQUEST,
+                'no_default_payment_method': status.HTTP_400_BAD_REQUEST,
+                'payment_method_not_found': status.HTTP_404_NOT_FOUND,
+                'payment_method_expired': status.HTTP_400_BAD_REQUEST,
+                'stripe_error': status.HTTP_400_BAD_REQUEST,
+                'renewal_error': status.HTTP_500_INTERNAL_SERVER_ERROR
+            }
+            
+            http_status = error_status_map.get(
+                result.get('error_type'),
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+            return Response(
+                {'error': result['message'], 'error_type': result.get('error_type')},
+                status=http_status
+            )
+    
+    @action(detail=False, methods=['post'], url_path='quick-topup')
+    def quick_topup(self, request):
+        """
+        Purchase additional hours using quick top-up packages.
+        
+        Request body:
+        {
+            "hours": 5.00,
+            "payment_method_id": 456  // optional, uses default if not provided
+        }
+        """
+        from finances.services.renewal_payment_service import RenewalPaymentService
+        from finances.serializers import QuickTopupRequestSerializer, RenewalResponseSerializer
+        
+        student_user, error_response = self._get_target_student(request)
+        if error_response:
+            return error_response
+        
+        # Validate request data
+        serializer = QuickTopupRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        hours = serializer.validated_data['hours']
+        payment_method_id = serializer.validated_data.get('payment_method_id')
+        
+        # Additional validation for payment method ownership
+        if payment_method_id:
+            from finances.models import StoredPaymentMethod
+            try:
+                payment_method = StoredPaymentMethod.objects.get(
+                    id=payment_method_id,
+                    student=student_user,
+                    is_active=True
+                )
+            except StoredPaymentMethod.DoesNotExist:
+                return Response(
+                    {'error': 'Payment method not found or not accessible'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        
+        # Process quick top-up using service
+        service = RenewalPaymentService()
+        result = service.quick_topup(
+            student_user=student_user,
+            hours=hours,
+            payment_method_id=payment_method_id
+        )
+        
+        # Map service result to proper HTTP status
+        if result['success']:
+            response_serializer = RenewalResponseSerializer(data=result)
+            if response_serializer.is_valid():
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(result, status=status.HTTP_201_CREATED)
+        else:
+            error_status_map = {
+                'invalid_package': status.HTTP_400_BAD_REQUEST,
+                'no_default_payment_method': status.HTTP_400_BAD_REQUEST,
+                'payment_method_not_found': status.HTTP_404_NOT_FOUND,
+                'payment_method_expired': status.HTTP_400_BAD_REQUEST,
+                'stripe_error': status.HTTP_400_BAD_REQUEST,
+                'topup_error': status.HTTP_500_INTERNAL_SERVER_ERROR
+            }
+            
+            http_status = error_status_map.get(
+                result.get('error_type'),
+                status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+            return Response(
+                {'error': result['message'], 'error_type': result.get('error_type')},
                 status=http_status
             )
 

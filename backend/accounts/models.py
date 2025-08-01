@@ -1881,7 +1881,7 @@ class ProgressAssessment(models.Model):
 
 class EmailTemplateType(models.TextChoices):
     """
-    Types of email templates for teacher communications.
+    Types of email templates for teacher communications and student notifications.
     """
     INVITATION = "invitation", _("Invitation")
     REMINDER = "reminder", _("Reminder")
@@ -1889,6 +1889,10 @@ class EmailTemplateType(models.TextChoices):
     PROFILE_REMINDER = "profile_reminder", _("Profile Reminder")
     COMPLETION_CELEBRATION = "completion_celebration", _("Completion Celebration")
     ONGOING_SUPPORT = "ongoing_support", _("Ongoing Support")
+    
+    # Student balance monitoring templates (Issue #107)
+    LOW_BALANCE_ALERT = "low_balance_alert", _("Low Balance Alert")
+    PACKAGE_EXPIRING_ALERT = "package_expiring_alert", _("Package Expiring Alert")
 
 
 class EmailCommunicationType(models.TextChoices):

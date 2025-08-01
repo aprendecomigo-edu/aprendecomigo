@@ -403,3 +403,97 @@ class StripeService:
         except Exception as e:
             logger.error(f"Unexpected error listing payment methods for customer {customer_id}: {e}")
             return self.handle_stripe_error(e)
+    
+    def create_customer(self, email: str, name: str, metadata: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """
+        Create a new customer in Stripe.
+        
+        Args:
+            email: Customer email address
+            name: Customer name
+            metadata: Optional metadata to attach to the customer
+            
+        Returns:
+            Dict containing success status and customer data or error information
+        """
+        try:
+            customer_data = {
+                'email': email,
+                'name': name,
+            }
+            
+            if metadata:
+                customer_data['metadata'] = metadata
+            
+            customer = stripe.Customer.create(**customer_data)
+            
+            logger.info(f"Successfully created Stripe customer {customer.id} for {email}")
+            
+            return {
+                'success': True,
+                'customer': customer,
+                'customer_id': customer.id,
+                'message': 'Customer created successfully'
+            }
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Error creating customer for {email}: {e}")
+            return self.handle_stripe_error(e)
+        except Exception as e:
+            logger.error(f"Unexpected error creating customer for {email}: {e}")
+            return self.handle_stripe_error(e)
+    
+    def retrieve_customer(self, customer_id: str) -> Dict[str, Any]:
+        """
+        Retrieve a customer from Stripe.
+        
+        Args:
+            customer_id: Stripe Customer ID to retrieve
+            
+        Returns:
+            Dict containing success status and customer data or error information
+        """
+        try:
+            customer = stripe.Customer.retrieve(customer_id)
+            
+            return {
+                'success': True,
+                'customer': customer,
+                'message': 'Customer retrieved successfully'
+            }
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Error retrieving customer {customer_id}: {e}")
+            return self.handle_stripe_error(e)
+        except Exception as e:
+            logger.error(f"Unexpected error retrieving customer {customer_id}: {e}")
+            return self.handle_stripe_error(e)
+    
+    def update_customer(self, customer_id: str, **kwargs) -> Dict[str, Any]:
+        """
+        Update a customer in Stripe.
+        
+        Args:
+            customer_id: Stripe Customer ID to update
+            **kwargs: Fields to update
+            
+        Returns:
+            Dict containing success status and updated customer data or error information
+        """
+        try:
+            customer = stripe.Customer.modify(customer_id, **kwargs)
+            
+            logger.info(f"Successfully updated Stripe customer {customer_id}")
+            
+            return {
+                'success': True,
+                'customer': customer,
+                'message': 'Customer updated successfully'
+            }
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Error updating customer {customer_id}: {e}")
+            return self.handle_stripe_error(e)
+        except Exception as e:
+            logger.error(f"Unexpected error updating customer {customer_id}: {e}")
+            return self.handle_stripe_error(e)

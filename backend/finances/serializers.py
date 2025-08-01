@@ -832,6 +832,7 @@ class StoredPaymentMethodSerializer(serializers.ModelSerializer):
             "is_expired",
             "student_name",
             "card_display",
+            "stripe_customer_id",
             "created_at",
             "updated_at",
         ]
@@ -840,6 +841,7 @@ class StoredPaymentMethodSerializer(serializers.ModelSerializer):
             "student_name",
             "card_display",
             "is_expired",
+            "stripe_customer_id",
             "created_at",
             "updated_at",
         ]
@@ -893,3 +895,121 @@ class EnhancedStudentBalanceSummarySerializer(StudentBalanceSummarySerializer):
     """Enhanced student balance summary with subscription information."""
     
     subscription_info = EnhancedSubscriptionInfoSerializer(allow_null=True)
+
+
+class SubscriptionRenewalRequestSerializer(serializers.Serializer):
+    """Serializer for subscription renewal requests."""
+    
+    original_transaction_id = serializers.IntegerField(
+        min_value=1,
+        help_text="ID of the original transaction to renew"
+    )
+    payment_method_id = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        help_text="Optional payment method ID (uses default if not provided)"
+    )
+    
+    def validate_original_transaction_id(self, value):
+        """Validate that the original transaction exists and can be renewed."""
+        from .models import PurchaseTransaction, TransactionType, TransactionPaymentStatus
+        
+        try:
+            transaction = PurchaseTransaction.objects.get(id=value)
+        except PurchaseTransaction.DoesNotExist:
+            raise serializers.ValidationError("Original transaction not found")
+        
+        # Validate transaction is renewable
+        if transaction.payment_status != TransactionPaymentStatus.COMPLETED:
+            raise serializers.ValidationError("Only completed transactions can be renewed")
+        
+        if transaction.transaction_type != TransactionType.SUBSCRIPTION:
+            raise serializers.ValidationError("Only subscription transactions can be renewed")
+        
+        return value
+    
+    def validate_payment_method_id(self, value):
+        """Validate that the payment method exists and belongs to the user."""
+        if value is None:
+            return value
+            
+        # This validation will be performed in the view with user context
+        return value
+
+
+class QuickTopupRequestSerializer(serializers.Serializer):
+    """Serializer for quick top-up purchase requests."""
+    
+    hours = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        min_value=Decimal('0.01'),
+        help_text="Number of hours to purchase"
+    )
+    payment_method_id = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        help_text="Optional payment method ID (uses default if not provided)"
+    )
+    
+    def validate_hours(self, value):
+        """Validate that the hours value matches available packages."""
+        from .services.renewal_payment_service import RenewalPaymentService
+        
+        service = RenewalPaymentService()
+        available_packages = service.QUICK_TOPUP_PACKAGES
+        
+        if value not in available_packages:
+            available_hours = list(available_packages.keys())
+            raise serializers.ValidationError(
+                f"Invalid hours package. Available options: {[float(h) for h in available_hours]}"
+            )
+        
+        return value
+
+
+class QuickTopupPackageSerializer(serializers.Serializer):
+    """Serializer for quick top-up package information."""
+    
+    hours = serializers.DecimalField(max_digits=5, decimal_places=2)
+    price = serializers.DecimalField(max_digits=6, decimal_places=2)
+    price_per_hour = serializers.DecimalField(max_digits=6, decimal_places=2)
+    savings_percent = serializers.FloatField()
+
+
+class RenewalResponseSerializer(serializers.Serializer):
+    """Serializer for renewal operation responses."""
+    
+    success = serializers.BooleanField()
+    transaction_id = serializers.IntegerField(required=False)
+    payment_intent_id = serializers.CharField(required=False)
+    hours_purchased = serializers.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        required=False,
+        help_text="Hours purchased (for quick top-ups)"
+    )
+    amount_paid = serializers.DecimalField(
+        max_digits=6, 
+        decimal_places=2, 
+        required=False,
+        help_text="Amount paid for the transaction"
+    )
+    message = serializers.CharField()
+    error_type = serializers.CharField(required=False)
+
+
+class PaymentMethodResponseSerializer(serializers.Serializer):
+    """Serializer for payment method operation responses."""
+    
+    success = serializers.BooleanField()
+    payment_method_id = serializers.IntegerField(required=False)
+    card_display = serializers.CharField(required=False)
+    is_default = serializers.BooleanField(required=False)
+    stripe_customer_id = serializers.CharField(required=False)
+    message = serializers.CharField()
+    error_type = serializers.CharField(required=False)
+    was_default = serializers.BooleanField(
+        required=False,
+        help_text="Whether the removed payment method was default (for removal responses)"
+    )

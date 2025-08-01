@@ -48,26 +48,26 @@ router.register(r"student-balance", StudentBalanceViewSet, basename="student-bal
 
 # URL patterns
 urlpatterns = [
-    path("api/", include(router.urls)),
+    path("", include(router.urls)),
     # Pricing plans endpoint
-    path("api/pricing-plans/", active_pricing_plans, name="pricing-plans-list"),
+    path("pricing-plans/", active_pricing_plans, name="pricing-plans-list"),
     # Purchase initiation endpoint
-    path("api/purchase/initiate/", purchase_initiate, name="purchase-initiate"),
+    path("purchase/initiate/", purchase_initiate, name="purchase-initiate"),
     # Tutor analytics endpoint
-    path("api/tutor-analytics/<int:school_id>/", TutorAnalyticsAPIView.as_view(), name="tutor-analytics"),
+    path("tutor-analytics/<int:school_id>/", TutorAnalyticsAPIView.as_view(), name="tutor-analytics"),
     # Stripe integration endpoints
-    path("api/stripe/config/", stripe_config, name="stripe-config"),
-    path("api/stripe/test-connection/", stripe_connection_test, name="stripe-connection-test"),
+    path("stripe/config/", stripe_config, name="stripe-config"),
+    path("stripe/test-connection/", stripe_connection_test, name="stripe-connection-test"),
     path("webhooks/stripe/", stripe_webhook, name="stripe-webhook"),
     
     # Package Expiration Management Admin Endpoints
-    path("api/admin/expired-packages/", get_expired_packages, name="admin-expired-packages"),
-    path("api/admin/process-expired-packages/", process_expired_packages, name="admin-process-expired"),
-    path("api/admin/packages/<int:package_id>/extend/", extend_package, name="admin-extend-package"),
-    path("api/admin/expiration-analytics/", get_expiration_analytics, name="admin-expiration-analytics"),
-    path("api/admin/send-expiration-notifications/", send_expiration_notifications, name="admin-send-notifications"),
-    path("api/admin/packages-expiring-soon/", get_packages_expiring_soon, name="admin-packages-expiring-soon"),
-    path("api/admin/bulk-extend-packages/", bulk_extend_packages, name="admin-bulk-extend-packages"),
+    path("admin/expired-packages/", get_expired_packages, name="admin-expired-packages"),
+    path("admin/process-expired-packages/", process_expired_packages, name="admin-process-expired"),
+    path("admin/packages/<int:package_id>/extend/", extend_package, name="admin-extend-package"),
+    path("admin/expiration-analytics/", get_expiration_analytics, name="admin-expiration-analytics"),
+    path("admin/send-expiration-notifications/", send_expiration_notifications, name="admin-send-notifications"),
+    path("admin/packages-expiring-soon/", get_packages_expiring_soon, name="admin-packages-expiring-soon"),
+    path("admin/bulk-extend-packages/", bulk_extend_packages, name="admin-bulk-extend-packages"),
     
     # TODO: Add subscription webhook endpoint when subscription features are implemented
     # path("webhooks/stripe/subscriptions/", subscription_webhook, name="subscription-webhook"),

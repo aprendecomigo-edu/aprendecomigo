@@ -1180,6 +1180,14 @@ class StoredPaymentMethod(models.Model):
         help_text=_("Stripe PaymentMethod ID for secure storage"),
     )
     
+    stripe_customer_id: models.CharField = models.CharField(
+        _("Stripe customer ID"),
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_("Stripe Customer ID associated with this payment method"),
+    )
+    
     card_brand: models.CharField = models.CharField(
         _("card brand"),
         max_length=20,
@@ -1242,6 +1250,7 @@ class StoredPaymentMethod(models.Model):
         indexes = [
             models.Index(fields=["student", "is_active"]),
             models.Index(fields=["stripe_payment_method_id"]),
+            models.Index(fields=["stripe_customer_id"]),
         ]
     
     def __str__(self) -> str:
@@ -1264,6 +1273,18 @@ class StoredPaymentMethod(models.Model):
             return True
         
         return False
+    
+    @property
+    def card_display(self) -> str:
+        """
+        Get a user-friendly display string for the payment method.
+        
+        Returns:
+            str: Formatted display string (e.g., "Visa ****1234")
+        """
+        if not self.card_brand or not self.card_last4:
+            return "Payment Method"
+        return f"{self.card_brand.title()} ****{self.card_last4}"
     
     def save(self, *args, **kwargs):
         """Override save to handle default payment method logic."""

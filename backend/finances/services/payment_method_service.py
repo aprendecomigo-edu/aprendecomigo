@@ -34,14 +34,15 @@ class PaymentMethodService:
         self.stripe_service = StripeService()
     
     def add_payment_method(self, student_user: CustomUser, stripe_payment_method_id: str, 
-                          is_default: bool = False) -> Dict[str, Any]:
+                          is_default: bool = False, auto_create_customer: bool = True) -> Dict[str, Any]:
         """
-        Add a new payment method for a student using Stripe tokenization.
+        Add a new payment method for a student using Stripe tokenization with Customer support.
         
         Args:
             student_user: Student user to add payment method for
             stripe_payment_method_id: Stripe PaymentMethod ID from frontend
             is_default: Whether to set as default payment method
+            auto_create_customer: Whether to auto-create Stripe Customer if needed
             
         Returns:
             Dict containing success status, payment method data, or error information
@@ -64,6 +65,21 @@ class PaymentMethodService:
                     'message': 'This payment method is already stored'
                 }
             
+            # Get or create Stripe Customer
+            customer_result = self._get_or_create_stripe_customer(student_user, auto_create_customer)
+            if not customer_result['success']:
+                return customer_result
+            
+            stripe_customer_id = customer_result['customer_id']
+            
+            # Attach payment method to customer
+            attach_result = self.stripe_service.attach_payment_method_to_customer(
+                stripe_payment_method_id, 
+                stripe_customer_id
+            )
+            if not attach_result['success']:
+                return attach_result
+            
             # Create payment method record with atomic transaction
             with transaction.atomic():
                 # If setting as default, unset other defaults
@@ -77,6 +93,7 @@ class PaymentMethodService:
                 stored_payment_method = StoredPaymentMethod.objects.create(
                     student=student_user,
                     stripe_payment_method_id=stripe_payment_method_id,
+                    stripe_customer_id=stripe_customer_id,
                     card_brand=stripe_pm_data.get('brand', ''),
                     card_last4=stripe_pm_data.get('last4', ''),
                     card_exp_month=stripe_pm_data.get('exp_month'),
@@ -87,7 +104,7 @@ class PaymentMethodService:
             
             logger.info(
                 f"Added payment method {stored_payment_method.id} "
-                f"for student {student_user.id} (Stripe PM: {stripe_payment_method_id})"
+                f"for student {student_user.id} (Stripe PM: {stripe_payment_method_id}, Customer: {stripe_customer_id})"
             )
             
             return {
@@ -95,6 +112,7 @@ class PaymentMethodService:
                 'payment_method_id': stored_payment_method.id,
                 'card_display': stored_payment_method.card_display,
                 'is_default': stored_payment_method.is_default,
+                'stripe_customer_id': stripe_customer_id,
                 'message': 'Payment method added successfully'
             }
             
@@ -401,6 +419,92 @@ class PaymentMethodService:
                 'success': False,
                 'error_type': 'validation_error',
                 'message': f'Failed to validate payment method: {str(e)}'
+            }
+    
+    def _get_or_create_stripe_customer(self, student_user: CustomUser, auto_create: bool = True) -> Dict[str, Any]:
+        """
+        Get or create a Stripe Customer for the student user.
+        
+        Args:
+            student_user: Student user to get/create customer for
+            auto_create: Whether to auto-create customer if not found
+            
+        Returns:
+            Dict containing success status and customer_id or error information
+        """
+        # Check if student already has a stored payment method with customer_id
+        existing_payment_method = StoredPaymentMethod.objects.filter(
+            student=student_user,
+            stripe_customer_id__isnull=False,
+            is_active=True
+        ).first()
+        
+        if existing_payment_method and existing_payment_method.stripe_customer_id:
+            # Verify customer exists in Stripe
+            customer_check = self.stripe_service.retrieve_customer(existing_payment_method.stripe_customer_id)
+            if customer_check['success']:
+                return {
+                    'success': True,
+                    'customer_id': existing_payment_method.stripe_customer_id,
+                    'existing': True
+                }
+            else:
+                logger.warning(
+                    f"Stripe customer {existing_payment_method.stripe_customer_id} "
+                    f"for student {student_user.id} not found in Stripe. Will create new one."
+                )
+        
+        # Check existing transactions for customer_id
+        existing_transaction = student_user.purchase_transactions.filter(
+            stripe_customer_id__isnull=False
+        ).first()
+        
+        if existing_transaction and existing_transaction.stripe_customer_id:
+            # Verify customer exists in Stripe
+            customer_check = self.stripe_service.retrieve_customer(existing_transaction.stripe_customer_id)
+            if customer_check['success']:
+                return {
+                    'success': True,
+                    'customer_id': existing_transaction.stripe_customer_id,
+                    'existing': True
+                }
+            else:
+                logger.warning(
+                    f"Stripe customer {existing_transaction.stripe_customer_id} "
+                    f"for student {student_user.id} not found in Stripe. Will create new one."
+                )
+        
+        # Create new customer if auto_create is enabled
+        if auto_create:
+            customer_metadata = {
+                'student_id': str(student_user.id),
+                'platform': 'aprende_comigo',
+                'created_via': 'payment_method_service'
+            }
+            
+            customer_result = self.stripe_service.create_customer(
+                email=student_user.email,
+                name=student_user.name,
+                metadata=customer_metadata
+            )
+            
+            if customer_result['success']:
+                logger.info(
+                    f"Created new Stripe customer {customer_result['customer_id']} "
+                    f"for student {student_user.id}"
+                )
+                return {
+                    'success': True,
+                    'customer_id': customer_result['customer_id'],
+                    'existing': False
+                }
+            else:
+                return customer_result
+        else:
+            return {
+                'success': False,
+                'error_type': 'no_customer',
+                'message': 'No Stripe customer found and auto-creation is disabled'
             }
 
 
