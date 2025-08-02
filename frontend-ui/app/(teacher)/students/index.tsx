@@ -16,7 +16,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl } from 'react-native';
 
 import type { StudentProgress } from '@/api/teacherApi';
-import MainLayout from '@/components/layouts/main-layout';
+import MainLayout from '@/components/layouts/MainLayout';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';

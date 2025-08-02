@@ -1,7 +1,7 @@
 import apiClient from './apiClient';
 import { EducationalSystem } from './userApi';
 
-import { Course } from '@/components/onboarding/course-catalog-browser';
+import { Course } from '@/components/onboarding/CourseCatalogBrowser';
 
 // Tutor Discovery and Analytics Types
 export interface TutorAnalytics {

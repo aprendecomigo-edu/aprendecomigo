@@ -14,14 +14,14 @@ import {
 import React, { useEffect, useState } from 'react';
 import { Platform, Dimensions } from 'react-native';
 
-import { TutorSchoolCreationModal } from '@/components/modals/tutor-school-creation-modal';
-import { CourseSelectionManager } from '@/components/onboarding/course-selection-manager';
-import { EducationalSystemSelector } from '@/components/onboarding/educational-system-selector';
-import { AvailabilityStep } from '@/components/profile-wizard/availability-step';
-import { BasicInfoStep } from '@/components/profile-wizard/basic-info-step';
-import { BiographyStep } from '@/components/profile-wizard/biography-step';
-import { EducationStep } from '@/components/profile-wizard/education-step';
-import { ProfilePreviewStep } from '@/components/profile-wizard/profile-preview-step';
+import { TutorSchoolCreationModal } from '@/components/modals/TutorSchoolCreationModal';
+import { CourseSelectionManager } from '@/components/onboarding/CourseSelectionManager';
+import { EducationalSystemSelector } from '@/components/onboarding/EducationalSystemSelector';
+import { AvailabilityStep } from '@/components/profile-wizard/AvailabilityStep';
+import { BasicInfoStep } from '@/components/profile-wizard/BasicInfoStep';
+import { BiographyStep } from '@/components/profile-wizard/BiographyStep';
+import { EducationStep } from '@/components/profile-wizard/EducationStep';
+import { ProfilePreviewStep } from '@/components/profile-wizard/ProfilePreviewStep';
 import {
   AlertDialog,
   AlertDialogBackdrop,

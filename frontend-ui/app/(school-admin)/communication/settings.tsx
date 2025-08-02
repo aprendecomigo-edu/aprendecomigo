@@ -12,7 +12,7 @@ import {
 import React, { useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 
-import MainLayout from '@/components/layouts/main-layout';
+import MainLayout from '@/components/layouts/MainLayout';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

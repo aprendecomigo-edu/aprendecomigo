@@ -18,7 +18,7 @@ import { Progress, ProgressFilledTrack } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import WizardErrorBoundary from '@/components/wizard/wizard-error-boundary';
+import WizardErrorBoundary from '@/components/wizard/WizardErrorBoundary';
 
 import {
   TeacherProfileWizardProps,

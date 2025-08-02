@@ -10,7 +10,7 @@ import {
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 
-import { BioEditor } from '@/components/editors/bio-editor';
+import { BioEditor } from '@/components/editors/BioEditor';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';

@@ -5,7 +5,7 @@ import { Alert } from 'react-native';
 
 import { useAuth } from '@/api/authContext';
 import InvitationApi, { InvitationStatusResponse } from '@/api/invitationApi';
-import MainLayout from '@/components/layouts/main-layout';
+import MainLayout from '@/components/layouts/MainLayout';
 import ProfileWizard from '@/components/profile-wizard/ProfileWizard';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';

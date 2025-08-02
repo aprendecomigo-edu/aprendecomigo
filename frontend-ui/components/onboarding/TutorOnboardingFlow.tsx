@@ -3,11 +3,11 @@ import { AlertCircle, ArrowLeft } from 'lucide-react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Platform } from 'react-native';
 
-import { CourseCatalogBrowser, Course } from './course-catalog-browser';
-import { CourseSelectionManager } from './course-selection-manager';
-import { EducationalSystemSelector, EducationalSystem } from './educational-system-selector';
-import { OnboardingSuccessScreen } from './onboarding-success-screen';
-import { RateConfigurationManager } from './rate-configuration-manager';
+import { CourseCatalogBrowser, Course } from './CourseCatalogBrowser';
+import { CourseSelectionManager } from './CourseSelectionManager';
+import { EducationalSystemSelector, EducationalSystem } from './EducationalSystemSelector';
+import { OnboardingSuccessScreen } from './OnboardingSuccessScreen';
+import { RateConfigurationManager } from './RateConfigurationManager';
 import {
   TutorOnboardingProgress,
   TutorOnboardingData,
@@ -25,7 +25,7 @@ import {
   type TutorOnboardingData as ApiTutorOnboardingData,
   type ProfilePublishingOptions,
 } from '@/api/tutorApi';
-import { TutorSchoolCreationModal } from '@/components/modals/tutor-school-creation-modal';
+import { TutorSchoolCreationModal } from '@/components/modals/TutorSchoolCreationModal';
 import {
   AlertDialog,
   AlertDialogBackdrop,

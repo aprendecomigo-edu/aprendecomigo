@@ -10,6 +10,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ClassSessionViewSet,
     FamilyBudgetControlViewSet,
+    FamilyMetricsView,
     ParentApprovalDashboardView,
     PurchaseApprovalRequestViewSet,
     SchoolBillingSettingsViewSet,
@@ -91,6 +92,7 @@ urlpatterns = [
     # Parent-child approval system endpoints (Issues #111 & #112)
     path("student-purchase-request/", StudentPurchaseRequestView.as_view(), name="student-purchase-request"),
     path("parent-approval-dashboard/", ParentApprovalDashboardView.as_view(), name="parent-approval-dashboard"),
+    path("family-metrics/", FamilyMetricsView.as_view(), name="family-metrics"),
     # Stripe integration endpoints
     path("stripe/config/", stripe_config, name="stripe-config"),
     path("stripe/test-connection/", stripe_connection_test, name="stripe-connection-test"),

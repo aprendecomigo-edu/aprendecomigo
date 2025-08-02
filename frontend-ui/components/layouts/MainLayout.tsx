@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { AuthGuard } from '@/components/auth/auth-guard';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import {
   MobileNavigation,
   SideNavigation,

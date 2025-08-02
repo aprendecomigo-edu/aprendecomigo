@@ -3,7 +3,7 @@ import React from 'react';
 
 import { render, throwError, expectErrorBoundary } from '../../utils/test-utils';
 
-import { WizardErrorBoundary } from '@/components/wizard/wizard-error-boundary';
+import WizardErrorBoundary from '@/components/wizard/WizardErrorBoundary';
 
 // Test component that throws errors
 const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {

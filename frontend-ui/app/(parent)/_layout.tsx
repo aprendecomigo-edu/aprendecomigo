@@ -9,7 +9,7 @@ import { Tabs } from 'expo-router';
 import { Home, User, Settings, Users } from 'lucide-react-native';
 import React from 'react';
 
-import { AuthGuard } from '@/components/auth/auth-guard';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { Icon } from '@/components/ui/icon';
 
 export default function ParentLayout() {

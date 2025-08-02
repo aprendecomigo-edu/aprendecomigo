@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import React from 'react';
 
 import { useAuth } from '@/api/authContext';
-import { AuthGuard } from '@/components/auth/auth-guard';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { Center } from '@/components/ui/center';
 import { Text } from '@/components/ui/text';
 

@@ -7,7 +7,7 @@ import apiClient from '@/api/apiClient';
 import { useAuth } from '@/api/authContext';
 import schedulerApi, { ClassSchedule } from '@/api/schedulerApi';
 import { tasksApi, Task } from '@/api/tasksApi';
-import MainLayout from '@/components/layouts/main-layout';
+import MainLayout from '@/components/layouts/MainLayout';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';

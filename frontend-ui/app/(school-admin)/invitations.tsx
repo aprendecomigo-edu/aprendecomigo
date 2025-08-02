@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
 import { InvitationStatusDashboard } from '@/components/invitations';
-import MainLayout from '@/components/layouts/main-layout';
-import { InviteTeacherModal } from '@/components/modals/invite-teacher-modal';
+import MainLayout from '@/components/layouts/MainLayout';
+import { InviteTeacherModal } from '@/components/modals/InviteTeacherModal';
 
 const InvitationsPage = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);

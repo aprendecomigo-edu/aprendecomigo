@@ -1,8 +1,8 @@
 // Export all navigation components for easy importing
-export { MobileNavigation } from './mobile-navigation';
-export { SideNavigation } from './side-navigation';
-export { TopNavigation } from './top-navigation';
-export { QuickActions } from './quick-actions';
+export { MobileNavigation } from './MobileNavigation';
+export { SideNavigation } from './SideNavigation';
+export { TopNavigation } from './TopNavigation';
+export { QuickActions } from './QuickActions';
 
 // Export navigation configuration and types
 export {

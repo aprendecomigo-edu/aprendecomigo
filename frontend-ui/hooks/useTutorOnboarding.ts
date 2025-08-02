@@ -16,7 +16,7 @@ import {
   getOnboardingGuidance,
 } from '@/api/tutorApi';
 import { EducationalSystem } from '@/api/userApi';
-import { SelectedCourse, CustomSubject } from '@/components/onboarding/course-selection-manager';
+import { SelectedCourse, CustomSubject } from '@/components/onboarding/CourseSelectionManager';
 
 export interface TutorOnboardingStep {
   id: string;

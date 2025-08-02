@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 
-import MainLayout from '@/components/layouts/main-layout';
+import MainLayout from '@/components/layouts/MainLayout';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 

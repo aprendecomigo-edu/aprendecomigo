@@ -10,10 +10,10 @@ import React, { useState } from 'react';
 import { Platform, Alert } from 'react-native';
 
 import { NAVIGATION_COLORS } from './navigation-config';
-import { QuickActions } from './quick-actions';
+import { QuickActions } from './QuickActions';
 
 import { useAuth, UserSchool } from '@/api/authContext';
-import { GlobalSearch } from '@/components/search/global-search';
+import { GlobalSearch } from '@/components/search/GlobalSearch';
 import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';

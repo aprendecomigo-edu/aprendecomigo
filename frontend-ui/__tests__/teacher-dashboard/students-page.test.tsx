@@ -22,7 +22,7 @@ jest.mock('@/hooks/useDebounce', () => ({
   useDebounce: jest.fn(value => value),
 }));
 
-jest.mock('@/components/layouts/main-layout', () => {
+jest.mock('@/components/layouts/MainLayout', () => {
   return function MockMainLayout({ children, _title }: any) {
     return (
       <div data-testid="main-layout" data-title={_title}>

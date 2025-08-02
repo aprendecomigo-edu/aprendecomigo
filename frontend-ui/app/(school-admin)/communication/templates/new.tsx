@@ -6,7 +6,7 @@ import { Alert } from 'react-native';
 
 import { EmailTemplateType, CreateTemplateRequest } from '@/api/communicationApi';
 import RichTextTemplateEditor from '@/components/communication/RichTextTemplateEditor';
-import MainLayout from '@/components/layouts/main-layout';
+import MainLayout from '@/components/layouts/MainLayout';
 import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';

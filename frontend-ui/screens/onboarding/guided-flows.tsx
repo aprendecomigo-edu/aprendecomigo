@@ -9,8 +9,8 @@ import {
 import React, { useState } from 'react';
 import { Platform, Dimensions } from 'react-native';
 
-import { AddStudentModal } from '@/components/modals/add-student-modal';
-import { InviteTeacherModal } from '@/components/modals/invite-teacher-modal';
+import { AddStudentModal } from '@/components/modals/AddStudentModal';
+import { InviteTeacherModal } from '@/components/modals/InviteTeacherModal';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';

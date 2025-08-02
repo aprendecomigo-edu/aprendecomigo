@@ -15,15 +15,15 @@ import {
 } from 'lucide-react-native';
 import React, { useState, useEffect, useRef } from 'react';
 
-import { AvailabilityStep } from '@/components/profile-wizard/availability-step';
-import { BasicInfoStep } from '@/components/profile-wizard/basic-info-step';
-import { BiographyStep } from '@/components/profile-wizard/biography-step';
-import { EducationStep } from '@/components/profile-wizard/education-step';
-import { ProfileCompletionTracker } from '@/components/profile-wizard/profile-completion-tracker';
-import { ProfilePreviewStep } from '@/components/profile-wizard/profile-preview-step';
-import { RatesStep } from '@/components/profile-wizard/rates-step';
-import { SubjectsStep } from '@/components/profile-wizard/subjects-step';
-import WizardErrorBoundary from '@/components/wizard/wizard-error-boundary';
+import { AvailabilityStep } from '@/components/profile-wizard/AvailabilityStep';
+import { BasicInfoStep } from '@/components/profile-wizard/BasicInfoStep';
+import { BiographyStep } from '@/components/profile-wizard/BiographyStep';
+import { EducationStep } from '@/components/profile-wizard/EducationStep';
+import { ProfileCompletionTracker } from '@/components/profile-wizard/ProfileCompletionTracker';
+import { ProfilePreviewStep } from '@/components/profile-wizard/ProfilePreviewStep';
+import { RatesStep } from '@/components/profile-wizard/RatesStep';
+import { SubjectsStep } from '@/components/profile-wizard/SubjectsStep';
+import WizardErrorBoundary from '@/components/wizard/WizardErrorBoundary';
 import { useProfileWizard } from '@/hooks/useProfileWizard';
 
 // Wizard step configuration

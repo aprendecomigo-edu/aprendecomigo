@@ -18,7 +18,7 @@ import {
 } from 'lucide-react-native';
 import React from 'react';
 
-import { AuthGuard } from '@/components/auth/auth-guard';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { Box } from '@/components/ui/box';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';

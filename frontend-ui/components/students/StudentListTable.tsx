@@ -18,7 +18,7 @@ import {
 import React, { useState, useMemo } from 'react';
 
 import { StudentProfile, EducationalSystem } from '@/api/userApi';
-import { AuthGuard } from '@/components/auth/auth-guard';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import {
   Actionsheet,

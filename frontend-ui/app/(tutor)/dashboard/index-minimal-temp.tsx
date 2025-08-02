@@ -9,7 +9,7 @@ import {
 import React, { useCallback } from 'react';
 
 import { useAuth } from '@/api/authContext';
-import MainLayout from '@/components/layouts/main-layout';
+import MainLayout from '@/components/layouts/MainLayout';
 import StudentAcquisitionHub from '@/components/tutor-dashboard/StudentAcquisitionHub';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';

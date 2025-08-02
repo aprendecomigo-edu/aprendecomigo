@@ -16,7 +16,7 @@ import {
 import React, { useState, useEffect, useMemo } from 'react';
 import { Platform } from 'react-native';
 
-import { CourseCatalogBrowser } from './course-catalog-browser';
+import { CourseCatalogBrowser } from './CourseCatalogBrowser';
 
 import { EnhancedCourse } from '@/api/tutorApi';
 import {

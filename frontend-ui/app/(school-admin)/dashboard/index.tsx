@@ -140,7 +140,7 @@ const SchoolInfoCard = ({ schoolInfo, isLoading, onUpdate }: any) => (
     </VStack>
   </Box>
 );
-import MainLayout from '@/components/layouts/main-layout';
+import MainLayout from '@/components/layouts/MainLayout';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';

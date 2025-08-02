@@ -2,7 +2,7 @@ import useRouter from '@unitools/router';
 import React from 'react';
 import { Platform } from 'react-native';
 
-import { AuthGuard } from '@/components/auth/auth-guard';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { TeacherProfileWizard } from '@/screens/onboarding/teacher-profile-wizard';
 
 export default function TeacherProfileOnboardingPage() {

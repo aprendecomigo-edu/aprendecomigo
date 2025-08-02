@@ -3,7 +3,7 @@ import React from 'react';
 
 import { render, createMockCompletionData } from '../../utils/test-utils';
 
-import { WizardNavigation } from '@/components/wizard/wizard-navigation';
+import { WizardNavigation } from '@/components/wizard/WizardNavigation';
 import { WIZARD_STEPS } from '@/screens/onboarding/teacher-profile-wizard';
 
 describe('WizardNavigation', () => {

@@ -19,7 +19,7 @@ import {
 import React, { useState, useCallback, useMemo } from 'react';
 import { Linking } from 'react-native';
 
-import MainLayout from '@/components/layouts/main-layout';
+import MainLayout from '@/components/layouts/MainLayout';
 import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';

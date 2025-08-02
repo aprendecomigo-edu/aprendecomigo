@@ -3414,3 +3414,74 @@ class ParentApprovalDashboardView(APIView):
                 {'error': 'An error occurred while loading dashboard data'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class FamilyMetricsView(APIView):
+    """
+    API endpoint for family financial metrics data.
+    
+    Provides spending summaries, budget tracking, and financial insights
+    for family accounts across different timeframes.
+    """
+    
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get family financial metrics for the specified timeframe.
+        
+        Query Parameters:
+        - timeframe: 'week', 'month', or 'quarter' (default: 'month')
+        
+        Returns:
+        {
+            "timeframe": "month",
+            "total_spending": "450.00",
+            "budget_remaining": "550.00", 
+            "children_count": 2,
+            "transactions_count": 15,
+            "avg_session_cost": "30.00",
+            "spending_by_subject": {...},
+            "spending_trend": [...]
+        }
+        """
+        try:
+            timeframe = request.query_params.get('timeframe', 'month')
+            
+            # Validate timeframe parameter
+            if timeframe not in ['week', 'month', 'quarter']:
+                return Response(
+                    {'error': 'Invalid timeframe. Must be week, month, or quarter.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # For now, return mock data since the parent dashboard features are being developed
+            # TODO: Implement actual family metrics calculation
+            mock_data = {
+                "timeframe": timeframe,
+                "total_spending": "450.00",
+                "budget_remaining": "550.00",
+                "children_count": 2,
+                "transactions_count": 15,
+                "avg_session_cost": "30.00",
+                "spending_by_subject": {
+                    "Mathematics": "180.00",
+                    "Portuguese": "120.00", 
+                    "Sciences": "90.00",
+                    "English": "60.00"
+                },
+                "spending_trend": [
+                    {"date": "2025-01-01", "amount": "120.00"},
+                    {"date": "2025-01-15", "amount": "180.00"},
+                    {"date": "2025-02-01", "amount": "150.00"}
+                ]
+            }
+            
+            return Response(mock_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error getting family metrics: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while loading family metrics'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

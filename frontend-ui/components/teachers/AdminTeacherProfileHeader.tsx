@@ -10,7 +10,7 @@ import {
 } from 'lucide-react-native';
 import React from 'react';
 
-import { CircularProgress } from './profile-completion-indicator';
+import { CircularProgress } from './ProfileCompletionIndicator';
 
 import { TeacherProfile } from '@/api/userApi';
 import { Avatar } from '@/components/ui/avatar';

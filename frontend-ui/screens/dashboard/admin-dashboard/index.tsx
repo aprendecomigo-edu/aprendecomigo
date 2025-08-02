@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/api/authContext';
 import { tasksApi, Task } from '@/api/tasksApi';
 import { getDashboardInfo, DashboardInfo } from '@/api/userApi';
-import MainLayout from '@/components/layouts/main-layout';
+import MainLayout from '@/components/layouts/MainLayout';
 import TasksTable from '@/components/tasks/TasksTable';
 import { useTutorial, TutorialHighlight, TutorialTrigger } from '@/components/tutorial';
 import { dashboardTutorial } from '@/components/tutorial/configs/dashboardTutorial';

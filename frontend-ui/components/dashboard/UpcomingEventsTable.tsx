@@ -190,8 +190,8 @@ const StatusBadge: React.FC<{ status: EventStatus['type'] }> = ({ status }) => {
 };
 
 const EventRow: React.FC<{ event: UpcomingEvent; isLast: boolean }> = ({ event, isLast }) => (
-  <VStack className={`p-4 ${!isLast ? 'border-b border-gray-100' : ''}`}>
-    <HStack space="sm" className="items-start">
+  <VStack className={`p-4 w-full ${!isLast ? 'border-b border-gray-100' : ''}`}>
+    <HStack space="sm" className="items-start w-full">
       {/* Date/Time Column */}
       <VStack space="xs" className="min-w-0 flex-shrink-0" style={{ width: 80 }}>
         <Text className="text-sm font-semibold font-primary text-gray-900">
@@ -298,10 +298,10 @@ const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({
   }, [events, activeFilter]);
 
   return (
-    <Box className="glass-container p-6 rounded-xl">
-      <VStack space="md">
+    <Box className="glass-container p-6 rounded-xl w-full">
+      <VStack space="md" className="w-full">
         {/* Header */}
-        <HStack className="justify-between items-start">
+        <HStack className="justify-between items-start w-full">
           <VStack space="xs">
             <Heading size="md" className="font-primary text-gray-900">
               <Text className="bg-gradient-accent">Próximas Aulas</Text>
@@ -320,7 +320,7 @@ const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({
         <FilterButtons activeFilter={activeFilter} onFilterChange={setActiveFilter} />
 
         {/* Events List */}
-        <Box className="bg-white rounded-xl border border-gray-100">
+        <Box className="bg-white rounded-xl border border-gray-100 w-full">
           {isLoading ? (
             <VStack space="md" className="p-8">
               <Text className="text-center font-body text-gray-500">Carregando aulas...</Text>
@@ -328,8 +328,8 @@ const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({
           ) : filteredEvents.length === 0 ? (
             <EmptyState filter={activeFilter} />
           ) : (
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
-              <VStack>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }} className="w-full">
+              <VStack className="w-full">
                 {filteredEvents.map((event, index) => (
                   <EventRow
                     key={event.id}

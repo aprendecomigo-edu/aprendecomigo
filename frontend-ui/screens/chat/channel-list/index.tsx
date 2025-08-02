@@ -10,7 +10,7 @@ import { ChannelListItem } from '../components/ChannelListItem';
 
 import { useAuth } from '@/api/authContext';
 import { Channel, fetchChannels } from '@/api/channelApi';
-import MainLayout from '@/components/layouts/main-layout';
+import MainLayout from '@/components/layouts/MainLayout';
 import { Box } from '@/components/ui/box';
 import { Center } from '@/components/ui/center';
 import { Icon } from '@/components/ui/icon';

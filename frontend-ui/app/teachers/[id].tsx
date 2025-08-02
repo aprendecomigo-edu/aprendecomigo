@@ -16,13 +16,13 @@ import {
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 
-import { MainLayout } from '@/components/layouts/main-layout';
-import { AdminEditTeacherModal } from '@/components/modals/admin-edit-teacher-modal';
-import { AdminTeacherProfileHeader } from '@/components/teachers/admin-teacher-profile-header';
+import { MainLayout } from '@/components/layouts/MainLayout';
+import { AdminEditTeacherModal } from '@/components/modals/AdminEditTeacherModal';
+import { AdminTeacherProfileHeader } from '@/components/teachers/AdminTeacherProfileHeader';
 import {
   ProfileCompletionIndicator,
   CircularProgress,
-} from '@/components/teachers/profile-completion-indicator';
+} from '@/components/teachers/ProfileCompletionIndicator';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react-native';
 import React, { useState, useMemo } from 'react';
 
-import { CircularProgress } from './profile-completion-indicator';
+import { CircularProgress } from './ProfileCompletionIndicator';
 
 import { TeacherAnalytics } from '@/api/userApi';
 import { Badge } from '@/components/ui/badge';

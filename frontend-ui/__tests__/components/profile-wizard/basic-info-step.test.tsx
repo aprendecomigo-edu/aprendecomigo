@@ -12,7 +12,7 @@ import {
   expectNoValidationErrors,
 } from '../../utils/test-utils';
 
-import { BasicInfoStep } from '@/components/profile-wizard/basic-info-step';
+import { BasicInfoStep } from '@/components/profile-wizard/BasicInfoStep';
 
 // Mock image picker
 jest.mock('expo-image-picker', () => ({

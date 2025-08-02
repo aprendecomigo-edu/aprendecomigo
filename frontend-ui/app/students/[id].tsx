@@ -22,7 +22,7 @@ import {
   UpdateStudentData,
   EducationalSystem,
 } from '@/api/userApi';
-import { MainLayout } from '@/components/layouts/main-layout';
+import { MainLayout } from '@/components/layouts/MainLayout';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
