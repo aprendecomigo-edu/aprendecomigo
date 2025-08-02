@@ -1,13 +1,13 @@
 /**
- * Image Upload Component - Fallback Implementation
+ * Image Upload Component - Native Implementation
  *
- * Main entry point with Platform.OS fallback.
- * Platform-specific files should override this implementation.
+ * Native-specific implementation using Expo ImagePicker with camera and gallery access.
+ * Includes proper permission handling for iOS and Android.
  */
 
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
-import { Platform, Alert } from 'react-native';
+import { Alert } from 'react-native';
 
 import {
   ImageUploadComponentProps,
@@ -16,9 +16,6 @@ import {
   CurrentImageView,
   UploadAreaView,
 } from './image-upload-common';
-
-// Export types for external usage
-export type { ImageUploadComponentProps };
 
 const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
   onImageSelected,
@@ -38,19 +35,17 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
   const [isSelecting, setIsSelecting] = useState(false);
 
   const requestPermissions = async (): Promise<boolean> => {
-    if (Platform.OS !== 'web') {
-      const { status: mediaLibraryStatus } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status: mediaLibraryStatus } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
 
-      if (mediaLibraryStatus !== 'granted' || cameraStatus !== 'granted') {
-        Alert.alert(
-          'Permissions Required',
-          'We need camera and photo library permissions to upload profile photos.',
-          [{ text: 'OK', style: 'default' }]
-        );
-        return false;
-      }
+    if (mediaLibraryStatus !== 'granted' || cameraStatus !== 'granted') {
+      Alert.alert(
+        'Permissions Required',
+        'We need camera and photo library permissions to upload profile photos.',
+        [{ text: 'OK', style: 'default' }]
+      );
+      return false;
     }
     return true;
   };
@@ -61,12 +56,6 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
 
       const hasPermissions = await requestPermissions();
       if (!hasPermissions) {
-        return;
-      }
-
-      if (Platform.OS === 'web') {
-        // Web implementation - fallback for when platform-specific files don't load
-        alert('Please use the web-specific implementation for file selection.');
         return;
       }
 
@@ -132,11 +121,6 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
   };
 
   const showImagePickerOptions = () => {
-    if (Platform.OS === 'web') {
-      selectImageFromLibrary();
-      return;
-    }
-
     Alert.alert('Select Image', 'Choose how you would like to select your profile photo:', [
       { text: 'Camera', onPress: takePhoto },
       { text: 'Photo Library', onPress: selectImageFromLibrary },
@@ -145,20 +129,14 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
   };
 
   const handleRemoveImage = () => {
-    if (Platform.OS === 'web') {
-      if (window.confirm('Are you sure you want to remove this profile photo?')) {
-        onImageRemoved?.();
-      }
-    } else {
-      Alert.alert('Remove Image', 'Are you sure you want to remove this profile photo?', [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: onImageRemoved,
-        },
-      ]);
-    }
+    Alert.alert('Remove Image', 'Are you sure you want to remove this profile photo?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: onImageRemoved,
+      },
+    ]);
   };
 
   // Show upload progress if uploading

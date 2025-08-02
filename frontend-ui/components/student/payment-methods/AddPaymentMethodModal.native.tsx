@@ -1,19 +1,18 @@
 /**
- * Add Payment Method Modal Component - Fallback Implementation
+ * Add Payment Method Modal - Native Implementation
  *
- * Main entry point with Platform.OS fallback.
- * Platform-specific files should override this implementation.
+ * Native-specific implementation that shows platform not supported message
+ * and directs users to the web version for payment method management.
+ * Future enhancement: Could integrate with native payment sheets.
  */
 
 import React from 'react';
-import { Platform } from 'react-native';
 
 import {
   AddPaymentMethodModalProps,
   PaymentMethodModalHeader,
   PlatformNotSupportedContent,
   CloseButtonFooter,
-  LoadingContent,
 } from './add-payment-method-common';
 
 import {
@@ -23,12 +22,8 @@ import {
   ModalContent,
 } from '@/components/ui/modal';
 
-// Export types for external usage
-export type { AddPaymentMethodModalProps };
-
 /**
- * Fallback Add Payment Method Modal Component.
- * Platform-specific implementations should override this.
+ * Add Payment Method Modal Component - Native Implementation
  */
 export function AddPaymentMethodModal({ isOpen, onClose }: AddPaymentMethodModalProps) {
   return (
@@ -38,16 +33,10 @@ export function AddPaymentMethodModal({ isOpen, onClose }: AddPaymentMethodModal
         <PaymentMethodModalHeader onClose={onClose} />
 
         <ModalBody>
-          {Platform.OS === 'web' ? (
-            <LoadingContent />
-          ) : (
-            <PlatformNotSupportedContent />
-          )}
+          <PlatformNotSupportedContent />
         </ModalBody>
 
-        {Platform.OS !== 'web' && (
-          <CloseButtonFooter onClose={onClose} />
-        )}
+        <CloseButtonFooter onClose={onClose} />
       </ModalContent>
     </Modal>
   );
