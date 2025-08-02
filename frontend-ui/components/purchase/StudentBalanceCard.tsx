@@ -6,7 +6,9 @@
  */
 
 import React from 'react';
-import { Clock, Package, AlertTriangle, RefreshCw, User } from 'lucide-react-native';
+import { Clock, Package, AlertTriangle, RefreshCw, User, ShoppingCart } from 'lucide-react-native';
+import useRouter from '@unitools/router';
+
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,6 +20,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useStudentBalance } from '@/hooks/useStudentBalance';
+import { BalanceStatusBar, CompactBalanceStatusBar } from '@/components/student/balance/BalanceStatusBar';
 import type { StudentBalanceResponse, PackageInfo } from '@/types/purchase';
 
 interface StudentBalanceCardProps {
@@ -25,6 +28,10 @@ interface StudentBalanceCardProps {
   onRefresh?: () => void;
   className?: string;
   showStudentInfo?: boolean;
+  /** Show visual balance status bar */
+  showStatusBar?: boolean;
+  /** Use compact layout */
+  compact?: boolean;
 }
 
 /**
@@ -35,12 +42,19 @@ export function StudentBalanceCard({
   onRefresh,
   className = '',
   showStudentInfo = true,
+  showStatusBar = true,
+  compact = false,
 }: StudentBalanceCardProps) {
+  const router = useRouter();
   const { balance, loading, error, refetch } = useStudentBalance(email);
 
   const handleRefresh = () => {
     refetch();
     onRefresh?.();
+  };
+
+  const handlePurchaseHours = () => {
+    router.push('/purchase');
   };
 
   if (loading) {
@@ -128,15 +142,45 @@ export function StudentBalanceCard({
           </Button>
         </HStack>
 
+        {/* Balance Status Bar */}
+        {showStatusBar && (
+          <BalanceStatusBar
+            remainingHours={parseFloat(balance.balance_summary.remaining_hours)}
+            totalHours={parseFloat(balance.balance_summary.hours_purchased)}
+            daysUntilExpiry={balance.upcoming_expirations[0]?.days_until_expiry || null}
+            showDetails={!compact}
+            className="mb-2"
+          />
+        )}
+
         {/* Balance summary */}
         <VStack space="md">
-          <Heading size="md" className="text-typography-800">
-            Hours Summary
-          </Heading>
+          <HStack className="items-center justify-between">
+            <Heading size="md" className="text-typography-800">
+              Hours Summary
+            </Heading>
+            {parseFloat(balance.balance_summary.remaining_hours) <= 2 && (
+              <Button
+                action="primary"
+                variant="solid"
+                size="sm"
+                onPress={handlePurchaseHours}
+              >
+                <ButtonIcon as={ShoppingCart} />
+                <ButtonText>Buy Hours</ButtonText>
+              </Button>
+            )}
+          </HStack>
           
           <HStack className="justify-between">
             <VStack space="xs" className="items-center flex-1">
-              <Text className="text-2xl font-bold text-primary-600">
+              <Text className={`text-2xl font-bold ${
+                parseFloat(balance.balance_summary.remaining_hours) <= 2 
+                  ? 'text-error-600' 
+                  : parseFloat(balance.balance_summary.remaining_hours) <= 5 
+                  ? 'text-warning-600' 
+                  : 'text-primary-600'
+              }`}>
                 {parseFloat(balance.balance_summary.remaining_hours).toFixed(1)}
               </Text>
               <Text className="text-xs text-typography-500 text-center">

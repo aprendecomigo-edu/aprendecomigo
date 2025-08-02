@@ -1,0 +1,263 @@
+QA Test Case: Purchase Approval Workflow for Parent-Child Accounts
+
+Test ID: PARENTS-005
+Test Name: Purchase Approval Workflow and Parent Decision Management
+Purpose: Verify complete purchase approval workflow from child request to parent approval/rejection with proper notifications and processing
+Expected Result: Child can request purchases, parent receives notifications, can approve/reject requests, and purchases process correctly
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend with Expo Router
+- Implementation: Purchase approval system (GitHub Issue #58, #111, #112)
+- Models: PurchaseApprovalRequest, FamilyBudgetControl in finances/models.py
+- API: parentApi.ts with approval workflow endpoints
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+4. Backend Server: Django running on http://localhost:8000
+5. Frontend Server: Expo dev server on http://localhost:8081
+
+Test Data:
+- Parent Email: approval.parent@example.com
+- Child Email: approval.child@example.com
+- Parent Name: Approval Parent
+- Child Name: Approval Child
+- Pricing Plan: Test pricing plan (€25 for 5 hours)
+- Approval Threshold: €20 (requests above this require approval)
+- Auto-Approve Amount: €15 (requests below this auto-approve)
+
+Prerequisites:
+- Parent-child relationship already established (use PARENTS-004 test first)
+- Budget controls configured for the child
+- Pricing plans available in system
+- Payment system integration active
+- Notification system functional
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Test Data Preparation
+1. Ensure servers are running (see PARENTS-004 Step 1)
+2. Create test parent-child relationship with budget controls
+Commands:
+  # Create parent and child accounts if not exists
+  curl -X POST http://localhost:8000/api/v1/accounts/register/ \
+    -H "Content-Type: application/json" \
+    -d '{"email": "approval.parent@example.com", "name": "Approval Parent"}'
+  
+  curl -X POST http://localhost:8000/api/v1/accounts/register/ \
+    -H "Content-Type: application/json" \
+    -d '{"email": "approval.child@example.com", "name": "Approval Child", "role": "student"}'
+
+3. Establish parent-child relationship and set budget controls
+4. Configure approval threshold at €20
+
+Expected: Test accounts created with parent-child relationship and budget controls
+Screenshot: 01_approval_test_setup.png
+
+Step 2: Child Login and Purchase Request Initiation
+1. Sign in as child user (approval.child@example.com)
+2. Navigate to purchase/subscription page
+3. Select a pricing plan that requires approval (€25 for 5 hours)
+4. Proceed to checkout process
+5. Verify system detects need for parent approval
+
+Expected: Child reaches approval request screen instead of direct payment
+Screenshot: 02_child_approval_request_triggered.png
+
+Step 3: Child Submit Purchase Approval Request
+1. On approval request screen, add request details:
+   - Reason for purchase: "Need extra hours for math tutoring"
+   - Confirm selected pricing plan
+   - Add any additional notes
+2. Submit approval request to parent
+3. Verify confirmation screen shows request submitted
+
+Expected: Approval request successfully submitted with confirmation message
+Screenshot: 03_approval_request_submitted.png
+
+Step 4: Verify Approval Request in Database/API
+1. Check approval request was created via API
+Commands:
+  curl -H "Authorization: Bearer {parent_token}" \
+    http://localhost:8000/api/v1/finances/approval-requests/ | jq .
+
+2. Verify request contains correct information:
+   - Child profile ID
+   - Parent profile ID
+   - Pricing plan details
+   - Amount (€25)
+   - Status: "pending"
+   - Request description
+   - Expiration date
+
+Expected: Approval request exists in database with correct data
+Screenshot: 04_approval_request_api_verified.png
+
+Step 5: Parent Login and Notification Check
+1. Sign in as parent user (approval.parent@example.com)
+2. Navigate to parent dashboard
+3. Verify notification appears for pending approval request
+4. Check notification count/badge on approval section
+5. Verify child's request appears in pending approvals list
+
+Expected: Parent sees notification and pending approval request in dashboard
+Screenshot: 05_parent_approval_notification.png
+
+Step 6: Parent Review Purchase Request Details
+1. Click on the pending approval request
+2. Review all request details:
+   - Child name and relationship
+   - Requested pricing plan and amount
+   - Child's reason/notes
+   - Purchase details (hours, validity period)
+   - Current child account balance
+   - Budget impact analysis
+3. Verify all information is accurate and complete
+
+Expected: Complete request details displayed for parent review
+Screenshot: 06_approval_request_details.png
+
+Step 7: Parent Approve Purchase Request
+1. From request details, click "Approve" button
+2. Optionally add approval notes: "Approved for math tutoring progress"
+3. Confirm approval decision
+4. Verify approval confirmation message appears
+5. Check that request status updates to "approved"
+
+Expected: Purchase request successfully approved with parent confirmation
+Screenshot: 07_purchase_request_approved.png
+
+Step 8: Verify Purchase Processing After Approval
+1. Check that approved purchase triggers payment process
+2. Verify child account receives purchased hours
+3. Check transaction history shows purchase completion
+4. Verify child can now access purchased services
+5. Confirm parent dashboard reflects completed transaction
+
+Expected: Purchase processes successfully after parent approval
+Screenshot: 08_purchase_completed_post_approval.png
+
+Step 9: Test Purchase Request Rejection Workflow  
+1. Have child submit another purchase request (different plan)
+2. Parent logs in and reviews the new request
+3. Click "Reject" button instead of approve
+4. Add rejection reason: "Budget limit reached for this month"
+5. Confirm rejection decision
+6. Verify rejection confirmation and status update
+
+Expected: Purchase request successfully rejected with parent reason
+Screenshot: 09_purchase_request_rejected.png
+
+Step 10: Test Auto-Approval for Small Purchases
+1. Configure auto-approval threshold (€15)
+2. Child attempts purchase below threshold (€10 plan)
+3. Verify purchase processes automatically without parent approval
+4. Check parent receives notification of auto-approved purchase
+5. Verify transaction completes successfully
+
+Expected: Small purchases auto-approve and process without manual parent intervention
+Screenshot: 10_auto_approval_verified.png
+
+Step 11: Test Approval Request Expiration
+1. Have child submit purchase request
+2. Configure short expiration time (for testing)
+3. Allow request to expire without parent action
+4. Verify request status changes to "expired"
+5. Check that child receives expiration notification
+6. Verify expired request cannot be approved
+
+Expected: Approval requests expire correctly and prevent late approvals
+Screenshot: 11_approval_expiration_tested.png
+
+Step 12: Test Approval Workflow Edge Cases
+1. Test multiple simultaneous approval requests
+2. Test parent approving while child is offline
+3. Test network interruption during approval process
+4. Test approval of request for child with insufficient funds
+5. Test approval system with concurrent parent accounts
+6. Verify error handling and recovery
+
+Expected: All edge cases handled gracefully with appropriate error messages
+Screenshot: 12_approval_edge_cases_tested.png
+
+Step 13: Real-time Notification Testing
+1. Open child dashboard in one browser
+2. Open parent dashboard in another browser
+3. Submit approval request from child
+4. Verify real-time notification appears on parent dashboard
+5. Approve request from parent
+6. Verify real-time approval notification on child dashboard
+
+Expected: Real-time notifications work bidirectionally for approval workflow
+Screenshot: 13_realtime_notifications_verified.png
+
+Step 14: Purchase History and Audit Trail
+1. Navigate to parent purchase history view
+2. Verify all approval decisions are logged with timestamps
+3. Check child's purchase history shows approved transactions
+4. Verify approval notes and rejection reasons are stored
+5. Test filtering and searching approval history
+6. Verify export functionality for approval records
+
+Expected: Complete audit trail of all approval decisions and purchase history
+Screenshot: 14_approval_audit_trail_verified.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND:
+- Child can initiate purchase requests that require approval
+- Parent receives timely notifications of pending requests
+- Parent can review complete request details before deciding
+- Approval and rejection workflows function correctly
+- Approved purchases process and deliver services to child
+- Auto-approval works for amounts below threshold
+- Request expiration prevents stale approvals
+- Real-time notifications work bidirectionally
+- Complete audit trail maintained for all decisions
+- Edge cases handled appropriately
+- All approval data persists correctly in database
+
+FAIL: Any step fails OR:
+- Purchase approval workflow breaks at any point
+- Parent doesn't receive notifications of child requests
+- Approval/rejection decisions don't process correctly
+- Auto-approval fails or approves incorrect amounts
+- Request expiration doesn't work properly
+- Real-time notifications missing or delayed
+- Purchase processing fails after approval
+- Audit trail incomplete or inaccurate
+- Edge cases cause system errors or data corruption
+
+Individual Step Criteria:
+- Step 1: PASS if test data setup completes, FAIL if relationship/budget setup fails
+- Step 2: PASS if approval request triggered correctly, FAIL if direct payment attempted
+- Step 3: PASS if request submission succeeds, FAIL if submission fails
+- Step 4: PASS if API shows correct request data, FAIL if data missing/incorrect
+- Step 5: PASS if parent receives notifications, FAIL if notifications missing
+- Step 6: PASS if request details complete, FAIL if information missing/incorrect
+- Step 7: PASS if approval processes correctly, FAIL if approval fails
+- Step 8: PASS if purchase completes after approval, FAIL if processing fails
+- Step 9: PASS if rejection workflow works, FAIL if rejection fails/unclear
+- Step 10: PASS if auto-approval functions, FAIL if manual approval required for small amounts
+- Step 11: PASS if expiration works correctly, FAIL if expired requests still processable
+- Step 12: PASS if edge cases handled well, FAIL if system breaks under edge conditions
+- Step 13: PASS if real-time notifications work, FAIL if notifications delayed/missing
+- Step 14: PASS if audit trail complete, FAIL if approval history missing/incorrect
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Purchase approval should be seamless from child perspective
+- Parent approval interface should provide all necessary information for decisions
+- Notifications should be timely and actionable
+- Auto-approval should work transparently for small amounts
+- Rejection should provide clear feedback to child
+- Approval process should maintain family trust and communication
+- System should prevent budget overruns and unauthorized spending
+- All approval decisions should be transparent and auditable

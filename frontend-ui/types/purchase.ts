@@ -402,3 +402,80 @@ export interface Notification {
   actionLabel?: string;
   actionUrl?: string;
 }
+
+// One-Click Renewal & Quick Top-Up Types
+export interface TopUpPackage {
+  id: number;
+  name: string;
+  hours: number;
+  price_eur: string;
+  price_per_hour: string;
+  is_popular: boolean;
+  discount_percentage?: number;
+  display_order: number;
+}
+
+export interface RenewalRequest {
+  payment_method_id?: string;
+  use_default_payment_method?: boolean;
+  plan_id?: number;
+  confirm_immediately?: boolean;
+}
+
+export interface RenewalResponse {
+  success: boolean;
+  transaction_id?: number;
+  payment_intent_id?: string;
+  renewal_details?: {
+    plan_name: string;
+    hours_included: string;
+    amount_paid: string;
+    expires_at: string;
+  };
+  message?: string;
+  client_secret?: string;
+  // Error fields
+  error_type?: string;
+  field_errors?: Record<string, string[]>;
+}
+
+export interface QuickTopUpRequest {
+  package_id: number;
+  payment_method_id?: string;
+  use_default_payment_method?: boolean;
+  confirm_immediately?: boolean;
+}
+
+export interface QuickTopUpResponse {
+  success: boolean;
+  transaction_id?: number;
+  payment_intent_id?: string;
+  package_details?: {
+    package_name: string;
+    hours_purchased: number;
+    amount_paid: string;
+  };
+  message?: string;
+  client_secret?: string;
+  // Error fields
+  error_type?: string;
+  field_errors?: Record<string, string[]>;
+}
+
+// Quick actions and UI state types
+export interface QuickActionState {
+  isVisible: boolean;
+  actionType: 'renewal' | 'topup' | null;
+  isProcessing: boolean;
+  error: string | null;
+  selectedPackage?: TopUpPackage;
+  selectedPaymentMethod?: PaymentMethod;
+  confirmationStep: 'select' | 'confirm' | 'processing' | 'success' | 'error';
+}
+
+export interface BiometricAuthState {
+  isSupported: boolean;
+  isEnabled: boolean;
+  isAuthenticating: boolean;
+  error: string | null;
+}

@@ -2,3 +2,8 @@ test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail
 parents-001,Parent Subscription Page Load,Verify parent subscription page loads at /parents route with subscription options,,,0,0,0
 parents-002,Navigation from Parent Page,Test navigation from parent subscription page to auth pages,,,0,0,0
 parents-003,Subscription Selection UI,Verify subscription cards display correctly and handle parent interactions,,,0,0,0
+parents-004,Parent Account Setup and Child Linking,Verify parent can create profile and link child accounts for management,20250801-224500,PASS,1,1,0
+parents-005,Purchase Approval Workflow,Verify complete purchase approval workflow from child request to parent decision,20250801-224500,PASS,1,1,0
+parents-006,Budget Control and Spending Limits,Verify parent can set and manage spending limits with budget enforcement,20250801-224500,PASS,1,1,0
+parents-007,Parent Dashboard and Child Switching,Verify parent dashboard interface with seamless child account management,20250801-224500,PASS,1,1,0
+parents-008,Real-time Notifications and WebSocket,Verify real-time notifications work for parent-child interactions and approvals,20250801-224500,PASS,1,1,0

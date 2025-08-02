@@ -11,6 +11,7 @@ from typing import Dict, Any, Optional
 
 import stripe
 from django.conf import settings
+from .rate_limiter import stripe_rate_limit
 
 
 logger = logging.getLogger(__name__)
@@ -289,6 +290,7 @@ class StripeService:
         """
         return self.__str__()
     
+    @stripe_rate_limit('read_operations')
     def retrieve_payment_method(self, payment_method_id: str) -> Dict[str, Any]:
         """
         Retrieve a payment method from Stripe.
@@ -315,6 +317,7 @@ class StripeService:
             logger.error(f"Unexpected error retrieving payment method {payment_method_id}: {e}")
             return self.handle_stripe_error(e)
     
+    @stripe_rate_limit('write_operations')
     def detach_payment_method(self, payment_method_id: str) -> Dict[str, Any]:
         """
         Detach a payment method from its customer in Stripe.
@@ -343,6 +346,7 @@ class StripeService:
             logger.error(f"Unexpected error detaching payment method {payment_method_id}: {e}")
             return self.handle_stripe_error(e)
     
+    @stripe_rate_limit('write_operations')
     def attach_payment_method_to_customer(self, payment_method_id: str, customer_id: str) -> Dict[str, Any]:
         """
         Attach a payment method to a customer in Stripe.
@@ -373,6 +377,7 @@ class StripeService:
             logger.error(f"Unexpected error attaching payment method {payment_method_id} to customer {customer_id}: {e}")
             return self.handle_stripe_error(e)
     
+    @stripe_rate_limit('read_operations')
     def list_customer_payment_methods(self, customer_id: str, payment_method_type: str = 'card') -> Dict[str, Any]:
         """
         List all payment methods for a customer in Stripe.
@@ -404,6 +409,7 @@ class StripeService:
             logger.error(f"Unexpected error listing payment methods for customer {customer_id}: {e}")
             return self.handle_stripe_error(e)
     
+    @stripe_rate_limit('write_operations')
     def create_customer(self, email: str, name: str, metadata: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         """
         Create a new customer in Stripe.
@@ -443,6 +449,7 @@ class StripeService:
             logger.error(f"Unexpected error creating customer for {email}: {e}")
             return self.handle_stripe_error(e)
     
+    @stripe_rate_limit('read_operations')
     def retrieve_customer(self, customer_id: str) -> Dict[str, Any]:
         """
         Retrieve a customer from Stripe.
@@ -469,6 +476,7 @@ class StripeService:
             logger.error(f"Unexpected error retrieving customer {customer_id}: {e}")
             return self.handle_stripe_error(e)
     
+    @stripe_rate_limit('write_operations')
     def update_customer(self, customer_id: str, **kwargs) -> Dict[str, Any]:
         """
         Update a customer in Stripe.

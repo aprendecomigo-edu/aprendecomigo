@@ -1,14 +1,15 @@
 """
-Admin API views for package expiration management.
+Admin API views for comprehensive payment system management.
 
 These views provide administrative interfaces for:
-- Viewing and processing expired packages
-- Extending package expiration dates
-- Sending expiration notifications
-- Viewing expiration analytics and reports
-- Managing bulk expiration operations
+- Package expiration management
+- Payment refund processing
+- Dispute management and evidence submission
+- Fraud detection and alert management
+- Payment retry functionality
+- Comprehensive audit logging
 
-Following GitHub Issue #33: "Create Package Expiration Management"
+Following GitHub Issues #33 and #116
 """
 
 import logging
@@ -422,5 +423,738 @@ def bulk_extend_packages(request):
         logger.error(f"Error bulk extending packages: {e}")
         return Response(
             {'error': 'Failed to bulk extend packages'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+# ============================================================================
+# ADMINISTRATIVE PAYMENT ACTION APIs (GitHub Issue #116)
+# ============================================================================
+
+from finances.services.refund_service import RefundService
+from finances.services.dispute_service import DisputeService
+from finances.services.fraud_detection_service import FraudDetectionService
+from finances.models import PaymentDispute, FraudAlert, AdminAction
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def process_refund(request):
+    """
+    Process a refund for a purchase transaction.
+    
+    Body Parameters:
+    - transaction_id: ID of the transaction to refund (required)
+    - refund_amount: Amount to refund (optional, defaults to full refund)
+    - reason: Reason for the refund (optional)
+    - metadata: Additional refund metadata (optional)
+    """
+    try:
+        transaction_id = request.data.get('transaction_id')
+        if not transaction_id:
+            return Response(
+                {'error': 'transaction_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        refund_amount = request.data.get('refund_amount')
+        if refund_amount:
+            refund_amount = Decimal(str(refund_amount))
+        
+        reason = request.data.get('reason', '')
+        metadata = request.data.get('metadata', {})
+        
+        # Get client IP for audit logging
+        ip_address = request.META.get('REMOTE_ADDR')
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        
+        refund_service = RefundService()
+        result = refund_service.process_refund(
+            transaction_id=int(transaction_id),
+            refund_amount=refund_amount,
+            reason=reason,
+            admin_user=request.user,
+            metadata={
+                **metadata,
+                'ip_address': ip_address,
+                'user_agent': user_agent
+            }
+        )
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except ValueError as e:
+        return Response(
+            {'error': f'Invalid input: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error processing refund: {e}")
+        return Response(
+            {'error': 'Failed to process refund'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_refund_status(request, refund_id):
+    """
+    Get the status of a Stripe refund.
+    
+    Path Parameters:
+    - refund_id: Stripe refund ID
+    """
+    try:
+        refund_service = RefundService()
+        result = refund_service.get_refund_status(refund_id)
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except Exception as e:
+        logger.error(f"Error getting refund status: {e}")
+        return Response(
+            {'error': 'Failed to get refund status'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def list_transaction_refunds(request, transaction_id):
+    """
+    List all refunds for a specific transaction.
+    
+    Path Parameters:
+    - transaction_id: ID of the transaction
+    """
+    try:
+        refund_service = RefundService()
+        result = refund_service.list_transaction_refunds(int(transaction_id))
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except ValueError as e:
+        return Response(
+            {'error': f'Invalid transaction ID: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error listing transaction refunds: {e}")
+        return Response(
+            {'error': 'Failed to list transaction refunds'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def sync_dispute_from_stripe(request):
+    """
+    Sync a dispute from Stripe and create/update local record.
+    
+    Body Parameters:
+    - stripe_dispute_id: Stripe dispute ID to sync (required)
+    """
+    try:
+        stripe_dispute_id = request.data.get('stripe_dispute_id')
+        if not stripe_dispute_id:
+            return Response(
+                {'error': 'stripe_dispute_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        dispute_service = DisputeService()
+        result = dispute_service.sync_dispute_from_stripe(
+            stripe_dispute_id=stripe_dispute_id,
+            admin_user=request.user
+        )
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except Exception as e:
+        logger.error(f"Error syncing dispute from Stripe: {e}")
+        return Response(
+            {'error': 'Failed to sync dispute from Stripe'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def submit_dispute_evidence(request, dispute_id):
+    """
+    Submit evidence for a dispute to Stripe.
+    
+    Path Parameters:
+    - dispute_id: Local dispute ID
+    
+    Body Parameters:
+    - evidence_data: Evidence data to submit (required)
+    """
+    try:
+        evidence_data = request.data.get('evidence_data')
+        if not evidence_data:
+            return Response(
+                {'error': 'evidence_data is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        dispute_service = DisputeService()
+        result = dispute_service.submit_dispute_evidence(
+            dispute_id=int(dispute_id),
+            evidence_data=evidence_data,
+            admin_user=request.user
+        )
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except ValueError as e:
+        return Response(
+            {'error': f'Invalid dispute ID: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error submitting dispute evidence: {e}")
+        return Response(
+            {'error': 'Failed to submit dispute evidence'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_dispute_details(request, stripe_dispute_id):
+    """
+    Get detailed dispute information from Stripe.
+    
+    Path Parameters:
+    - stripe_dispute_id: Stripe dispute ID
+    """
+    try:
+        dispute_service = DisputeService()
+        result = dispute_service.get_dispute_details(stripe_dispute_id)
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except Exception as e:
+        logger.error(f"Error getting dispute details: {e}")
+        return Response(
+            {'error': 'Failed to get dispute details'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def list_disputes(request):
+    """
+    List disputes from Stripe with optional filtering.
+    
+    Query Parameters:
+    - status: Filter by dispute status (optional)
+    - limit: Maximum number of disputes to return (default: 50)
+    - created_after: Filter disputes created after this timestamp (optional)
+    """
+    try:
+        status_filter = request.GET.get('status')
+        limit = int(request.GET.get('limit', 50))
+        created_after = request.GET.get('created_after')
+        
+        if created_after:
+            created_after = int(created_after)
+        
+        dispute_service = DisputeService()
+        result = dispute_service.list_disputes(
+            status=status_filter,
+            limit=limit,
+            created_after=created_after
+        )
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except ValueError as e:
+        return Response(
+            {'error': f'Invalid parameter: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error listing disputes: {e}")
+        return Response(
+            {'error': 'Failed to list disputes'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['PUT'])
+@permission_classes([IsAdminUser])
+def update_dispute_notes(request, dispute_id):
+    """
+    Update internal notes for a dispute.
+    
+    Path Parameters:
+    - dispute_id: Local dispute ID
+    
+    Body Parameters:
+    - internal_notes: Internal notes to update (required)
+    """
+    try:
+        internal_notes = request.data.get('internal_notes')
+        if internal_notes is None:
+            return Response(
+                {'error': 'internal_notes is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        dispute_service = DisputeService()
+        result = dispute_service.update_dispute_notes(
+            dispute_id=int(dispute_id),
+            internal_notes=internal_notes,
+            admin_user=request.user
+        )
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except ValueError as e:
+        return Response(
+            {'error': f'Invalid dispute ID: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error updating dispute notes: {e}")
+        return Response(
+            {'error': 'Failed to update dispute notes'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_overdue_disputes(request):
+    """
+    Get disputes with overdue evidence submission.
+    """
+    try:
+        dispute_service = DisputeService()
+        result = dispute_service.get_overdue_disputes()
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except Exception as e:
+        logger.error(f"Error getting overdue disputes: {e}")
+        return Response(
+            {'error': 'Failed to get overdue disputes'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def analyze_transaction_fraud(request, transaction_id):
+    """
+    Analyze a single transaction for fraud indicators.
+    
+    Path Parameters:
+    - transaction_id: ID of the transaction to analyze
+    """
+    try:
+        from finances.models import PurchaseTransaction
+        
+        try:
+            transaction = PurchaseTransaction.objects.get(id=int(transaction_id))
+        except PurchaseTransaction.DoesNotExist:
+            return Response(
+                {'error': 'Transaction not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        fraud_service = FraudDetectionService()
+        result = fraud_service.analyze_transaction(
+            transaction=transaction,
+            admin_user=request.user
+        )
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except ValueError as e:
+        return Response(
+            {'error': f'Invalid transaction ID: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error analyzing transaction for fraud: {e}")
+        return Response(
+            {'error': 'Failed to analyze transaction for fraud'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def analyze_user_fraud(request, user_id):
+    """
+    Analyze a user's activity for fraud patterns.
+    
+    Path Parameters:
+    - user_id: ID of the user to analyze
+    
+    Body Parameters:
+    - days_back: Number of days to look back (default: 30)
+    """
+    try:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        try:
+            user = User.objects.get(id=int(user_id))
+        except User.DoesNotExist:
+            return Response(
+                {'error': 'User not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        days_back = int(request.data.get('days_back', 30))
+        
+        fraud_service = FraudDetectionService()
+        result = fraud_service.analyze_user_activity(
+            user=user,
+            days_back=days_back,
+            admin_user=request.user
+        )
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except ValueError as e:
+        return Response(
+            {'error': f'Invalid input: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error analyzing user for fraud: {e}")
+        return Response(
+            {'error': 'Failed to analyze user for fraud'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def run_batch_fraud_analysis(request):
+    """
+    Run batch fraud analysis on recent transactions.
+    
+    Body Parameters:
+    - hours_back: Number of hours to look back (default: 24)
+    """
+    try:
+        hours_back = int(request.data.get('hours_back', 24))
+        
+        fraud_service = FraudDetectionService()
+        result = fraud_service.run_batch_analysis(
+            hours_back=hours_back,
+            admin_user=request.user
+        )
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except ValueError as e:
+        return Response(
+            {'error': f'Invalid input: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error running batch fraud analysis: {e}")
+        return Response(
+            {'error': 'Failed to run batch fraud analysis'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_active_fraud_alerts(request):
+    """
+    Get active fraud alerts with optional filtering.
+    
+    Query Parameters:
+    - severity: Filter by alert severity (optional)
+    - limit: Maximum number of alerts to return (default: 50)
+    """
+    try:
+        severity = request.GET.get('severity')
+        limit = int(request.GET.get('limit', 50))
+        
+        fraud_service = FraudDetectionService()
+        result = fraud_service.get_active_alerts(
+            severity=severity,
+            limit=limit
+        )
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+    except ValueError as e:
+        return Response(
+            {'error': f'Invalid parameter: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error getting active fraud alerts: {e}")
+        return Response(
+            {'error': 'Failed to get active fraud alerts'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def retry_failed_payment(request):
+    """
+    Retry a failed payment with new payment method.
+    
+    Body Parameters:
+    - transaction_id: ID of the failed transaction (required)
+    - payment_method_id: New Stripe payment method ID (required)
+    - metadata: Additional metadata for the retry (optional)
+    """
+    try:
+        transaction_id = request.data.get('transaction_id')
+        payment_method_id = request.data.get('payment_method_id')
+        
+        if not transaction_id:
+            return Response(
+                {'error': 'transaction_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not payment_method_id:
+            return Response(
+                {'error': 'payment_method_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        metadata = request.data.get('metadata', {})
+        
+        # Get the failed transaction
+        from finances.models import PurchaseTransaction, TransactionPaymentStatus
+        
+        try:
+            transaction = PurchaseTransaction.objects.get(
+                id=int(transaction_id),
+                payment_status=TransactionPaymentStatus.FAILED
+            )
+        except PurchaseTransaction.DoesNotExist:
+            return Response(
+                {'error': 'Failed transaction not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Use PaymentService to retry the payment
+        from finances.services.payment_service import PaymentService
+        import stripe
+        
+        try:
+            # Create new payment intent with the new payment method
+            stripe.PaymentIntent.modify(
+                transaction.stripe_payment_intent_id,
+                payment_method=payment_method_id
+            )
+            
+            # Confirm the payment intent
+            payment_intent = stripe.PaymentIntent.confirm(
+                transaction.stripe_payment_intent_id
+            )
+            
+            # Update transaction if successful
+            if payment_intent.status == 'succeeded':
+                payment_service = PaymentService()
+                result = payment_service.confirm_payment_completion(
+                    payment_intent.id
+                )
+                
+                # Log admin action
+                AdminAction.objects.create(
+                    action_type=AdminActionType.PAYMENT_RETRY,
+                    action_description=f"Payment retry for transaction {transaction_id}",
+                    admin_user=request.user,
+                    target_user=transaction.student,
+                    target_transaction=transaction,
+                    success=result['success'],
+                    result_message=f"Payment retry {'successful' if result['success'] else 'failed'}",
+                    stripe_reference_id=payment_intent.id,
+                    action_data={
+                        'payment_method_id': payment_method_id,
+                        'retry_metadata': metadata
+                    }
+                )
+                
+                return Response({
+                    'success': True,
+                    'transaction_id': transaction_id,
+                    'payment_intent_id': payment_intent.id,
+                    'status': payment_intent.status,
+                    'message': 'Payment retry successful'
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'transaction_id': transaction_id,
+                    'payment_intent_id': payment_intent.id,
+                    'status': payment_intent.status,
+                    'message': f'Payment retry failed with status: {payment_intent.status}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except stripe.error.StripeError as e:
+            # Log failed admin action
+            AdminAction.objects.create(
+                action_type=AdminActionType.PAYMENT_RETRY,
+                action_description=f"Payment retry for transaction {transaction_id}",
+                admin_user=request.user,
+                target_user=transaction.student,
+                target_transaction=transaction,
+                success=False,
+                result_message=f"Stripe error during retry: {str(e)}",
+                stripe_reference_id=transaction.stripe_payment_intent_id,
+                action_data={
+                    'payment_method_id': payment_method_id,
+                    'error': str(e)
+                }
+            )
+            
+            return Response({
+                'success': False,
+                'error_type': 'stripe_error',
+                'message': f'Stripe error: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+    except ValueError as e:
+        return Response(
+            {'error': f'Invalid input: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error retrying failed payment: {e}")
+        return Response(
+            {'error': 'Failed to retry payment'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_admin_action_log(request):
+    """
+    Get administrative action audit log.
+    
+    Query Parameters:
+    - limit: Maximum number of actions to return (default: 100)
+    - action_type: Filter by action type (optional)
+    - admin_user_id: Filter by admin user ID (optional)
+    - success: Filter by success status (optional)
+    - days_back: Number of days to look back (default: 30)
+    """
+    try:
+        limit = int(request.GET.get('limit', 100))
+        action_type = request.GET.get('action_type')
+        admin_user_id = request.GET.get('admin_user_id')
+        success = request.GET.get('success')
+        days_back = int(request.GET.get('days_back', 30))
+        
+        # Build query
+        cutoff_date = timezone.now() - timedelta(days=days_back)
+        actions = AdminAction.objects.filter(
+            created_at__gte=cutoff_date
+        ).select_related('admin_user', 'target_user', 'target_transaction', 'target_dispute')
+        
+        if action_type:
+            actions = actions.filter(action_type=action_type)
+        
+        if admin_user_id:
+            actions = actions.filter(admin_user_id=int(admin_user_id))
+        
+        if success is not None:
+            actions = actions.filter(success=success.lower() == 'true')
+        
+        actions = actions.order_by('-created_at')[:limit]
+        
+        action_data = []
+        for action in actions:
+            action_data.append({
+                'id': action.id,
+                'action_type': action.action_type,
+                'action_description': action.action_description,
+                'admin_user': {
+                    'id': action.admin_user.id,
+                    'email': action.admin_user.email,
+                    'name': action.admin_user.name
+                },
+                'target_user': {
+                    'id': action.target_user.id,
+                    'email': action.target_user.email,
+                    'name': action.target_user.name
+                } if action.target_user else None,
+                'success': action.success,
+                'result_message': action.result_message,
+                'amount_impacted': action.amount_impacted,
+                'stripe_reference_id': action.stripe_reference_id,
+                'two_factor_verified': action.two_factor_verified,
+                'created_at': action.created_at,
+                'action_data': action.action_data
+            })
+        
+        return Response({
+            'actions': action_data,
+            'count': len(action_data),
+            'total_actions': AdminAction.objects.filter(created_at__gte=cutoff_date).count(),
+            'days_back': days_back
+        }, status=status.HTTP_200_OK)
+        
+    except ValueError as e:
+        return Response(
+            {'error': f'Invalid parameter: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error getting admin action log: {e}")
+        return Response(
+            {'error': 'Failed to get admin action log'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

@@ -16,6 +16,11 @@ import type {
   PaginatedPurchaseHistory,
   TransactionFilterOptions,
   PurchaseFilterOptions,
+  TopUpPackage,
+  RenewalRequest,
+  RenewalResponse,
+  QuickTopUpRequest,
+  QuickTopUpResponse,
 } from '@/types/purchase';
 
 /**
@@ -307,7 +312,7 @@ export class PurchaseApiClient {
   static async getReceipts(email?: string): Promise<any[]> {
     try {
       const params = email ? { email } : {};
-      const response = await apiClient.get('/api/student-balance/receipts/', { params });
+      const response = await apiClient.get('/finances/student-balance/receipts/', { params });
       return response.data;
     } catch (error: any) {
       console.error('Error fetching receipts:', error);
@@ -326,7 +331,7 @@ export class PurchaseApiClient {
   static async generateReceipt(transactionId: string, email?: string): Promise<any> {
     try {
       const data = email ? { transaction_id: transactionId, email } : { transaction_id: transactionId };
-      const response = await apiClient.post('/api/student-balance/receipts/generate/', data);
+      const response = await apiClient.post('/finances/student-balance/receipts/generate/', data);
       return response.data;
     } catch (error: any) {
       console.error('Error generating receipt:', error);
@@ -344,7 +349,7 @@ export class PurchaseApiClient {
   static async getPaymentMethods(email?: string): Promise<any[]> {
     try {
       const params = email ? { email } : {};
-      const response = await apiClient.get('/api/student-balance/payment-methods/', { params });
+      const response = await apiClient.get('/finances/student-balance/payment-methods/', { params });
       return response.data;
     } catch (error: any) {
       console.error('Error fetching payment methods:', error);
@@ -368,7 +373,7 @@ export class PurchaseApiClient {
         set_as_default: setAsDefault,
         ...(email && { email })
       };
-      const response = await apiClient.post('/api/student-balance/payment-methods/', data);
+      const response = await apiClient.post('/finances/student-balance/payment-methods/', data);
       return response.data;
     } catch (error: any) {
       console.error('Error adding payment method:', error);
@@ -393,11 +398,184 @@ export class PurchaseApiClient {
         params.end_date = timeRange.end_date;
       }
       
-      const response = await apiClient.get('/api/student-balance/analytics/usage/', { params });
+      const response = await apiClient.get('/finances/student-balance/analytics/usage/', { params });
       return response.data;
     } catch (error: any) {
       console.error('Error fetching usage analytics:', error);
       throw new Error('Failed to load usage analytics. Please try again.');
+    }
+  }
+
+  /**
+   * Get available top-up packages for quick purchase.
+   * 
+   * @param email Optional email parameter for admin access
+   * @returns Promise resolving to array of top-up packages
+   * @throws Error with descriptive message if request fails
+   */
+  static async getTopUpPackages(email?: string): Promise<TopUpPackage[]> {
+    try {
+      const params = email ? { email } : {};
+      const response = await apiClient.get('/finances/student-balance/topup-packages/', { params });
+      
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid response format: expected array of top-up packages');
+      }
+      
+      return response.data.map((pkg: any) => ({
+        id: pkg.id,
+        name: pkg.name,
+        hours: pkg.hours,
+        price_eur: pkg.price_eur,
+        price_per_hour: pkg.price_per_hour,
+        is_popular: pkg.is_popular,
+        discount_percentage: pkg.discount_percentage,
+        display_order: pkg.display_order,
+      }));
+    } catch (error: any) {
+      console.error('Error fetching top-up packages:', error);
+      
+      if (error.response?.status === 503) {
+        throw new Error('Top-up service temporarily unavailable. Please try again later.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error occurred while loading top-up packages');
+      } else if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        throw new Error('Network connection error. Please check your internet connection.');
+      } else {
+        throw new Error('Failed to load top-up packages. Please try again.');
+      }
+    }
+  }
+
+  /**
+   * Renew expired subscription with saved payment method.
+   * 
+   * @param request Renewal request data
+   * @param email Optional email parameter for admin access
+   * @returns Promise resolving to renewal response
+   * @throws Error with descriptive message if request fails
+   */
+  static async renewSubscription(request: RenewalRequest, email?: string): Promise<RenewalResponse> {
+    try {
+      const data = email ? { ...request, email } : request;
+      const response = await apiClient.post('/finances/student-balance/renew-subscription/', data);
+      
+      return {
+        success: response.data.success,
+        transaction_id: response.data.transaction_id,
+        payment_intent_id: response.data.payment_intent_id,
+        renewal_details: response.data.renewal_details,
+        message: response.data.message,
+        client_secret: response.data.client_secret,
+      };
+    } catch (error: any) {
+      console.error('Error renewing subscription:', error);
+      
+      // Handle validation errors with detailed field information
+      if (error.response?.status === 400 && error.response.data) {
+        const errorData = error.response.data;
+        return {
+          success: false,
+          error_type: errorData.error_type || 'validation_error',
+          message: errorData.message || 'Invalid renewal request',
+          field_errors: errorData.field_errors || {},
+        };
+      }
+      
+      // Handle payment errors
+      if (error.response?.status === 402) {
+        throw new Error('Payment could not be processed. Please check your payment method.');
+      }
+      
+      // Handle rate limiting
+      if (error.response?.status === 429) {
+        throw new Error('Too many renewal attempts. Please try again later.');
+      }
+      
+      // Handle server errors
+      if (error.response?.status >= 500) {
+        throw new Error('Server error occurred during subscription renewal');
+      }
+      
+      // Handle network errors
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        throw new Error('Network connection error. Please check your internet connection.');
+      }
+      
+      // Handle payment service errors
+      if (error.response?.data?.error_type === 'api_connection_error') {
+        throw new Error('Payment service temporarily unavailable. Please try again later.');
+      }
+      
+      // Generic error fallback
+      const errorMessage = error.response?.data?.message || 'Failed to renew subscription';
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Purchase additional hours quickly with saved payment method.
+   * 
+   * @param request Quick top-up request data
+   * @param email Optional email parameter for admin access
+   * @returns Promise resolving to top-up response
+   * @throws Error with descriptive message if request fails
+   */
+  static async quickTopUp(request: QuickTopUpRequest, email?: string): Promise<QuickTopUpResponse> {
+    try {
+      const data = email ? { ...request, email } : request;
+      const response = await apiClient.post('/finances/student-balance/quick-topup/', data);
+      
+      return {
+        success: response.data.success,
+        transaction_id: response.data.transaction_id,
+        payment_intent_id: response.data.payment_intent_id,
+        package_details: response.data.package_details,
+        message: response.data.message,
+        client_secret: response.data.client_secret,
+      };
+    } catch (error: any) {
+      console.error('Error processing quick top-up:', error);
+      
+      // Handle validation errors with detailed field information
+      if (error.response?.status === 400 && error.response.data) {
+        const errorData = error.response.data;
+        return {
+          success: false,
+          error_type: errorData.error_type || 'validation_error',
+          message: errorData.message || 'Invalid top-up request',
+          field_errors: errorData.field_errors || {},
+        };
+      }
+      
+      // Handle payment errors
+      if (error.response?.status === 402) {
+        throw new Error('Payment could not be processed. Please check your payment method.');
+      }
+      
+      // Handle rate limiting
+      if (error.response?.status === 429) {
+        throw new Error('Too many purchase attempts. Please try again later.');
+      }
+      
+      // Handle server errors
+      if (error.response?.status >= 500) {
+        throw new Error('Server error occurred during top-up purchase');
+      }
+      
+      // Handle network errors
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        throw new Error('Network connection error. Please check your internet connection.');
+      }
+      
+      // Handle payment service errors
+      if (error.response?.data?.error_type === 'api_connection_error') {
+        throw new Error('Payment service temporarily unavailable. Please try again later.');
+      }
+      
+      // Generic error fallback
+      const errorMessage = error.response?.data?.message || 'Failed to process top-up purchase';
+      throw new Error(errorMessage);
     }
   }
 }
@@ -416,4 +594,7 @@ export const {
   getPaymentMethods,
   addPaymentMethod,
   getUsageAnalytics,
+  getTopUpPackages,
+  renewSubscription,
+  quickTopUp,
 } = PurchaseApiClient;

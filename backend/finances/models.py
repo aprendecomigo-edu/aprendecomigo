@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from accounts.models import CustomUser, School, TeacherProfile
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -56,6 +56,16 @@ class PaymentFrequency(models.TextChoices):
     WEEKLY = "weekly", _("Weekly")
     BIWEEKLY = "biweekly", _("Bi-weekly")
     MONTHLY = "monthly", _("Monthly")
+
+
+class WebhookEventStatus(models.TextChoices):
+    """Status of webhook event processing."""
+
+    RECEIVED = "received", _("Received")
+    PROCESSING = "processing", _("Processing") 
+    PROCESSED = "processed", _("Processed")
+    FAILED = "failed", _("Failed")
+    RETRYING = "retrying", _("Retrying")
 
 
 class PlanType(models.TextChoices):
@@ -1733,3 +1743,715 @@ class PurchaseApprovalRequest(models.Model):
             raise ValidationError(
                 _("Parent-child relationship must match the student and parent")
             )
+
+
+class WebhookEventLogManager(models.Manager):
+    """Manager for WebhookEventLog model."""
+    
+    def get_queryset(self):
+        """Return queryset ordered by creation date."""
+        return super().get_queryset().order_by('-created_at')
+
+
+class FailedWebhookEventManager(models.Manager):
+    """Manager for failed webhook events only."""
+    
+    def get_queryset(self):
+        """Return only failed webhook events."""
+        return super().get_queryset().filter(
+            status=WebhookEventStatus.FAILED
+        ).order_by('-created_at')
+
+
+class RetryableWebhookEventManager(models.Manager):
+    """Manager for webhook events that can be retried."""
+    
+    def get_queryset(self):
+        """Return only retryable webhook events."""
+        return super().get_queryset().filter(
+            status__in=[WebhookEventStatus.FAILED, WebhookEventStatus.RETRYING],
+            retry_count__lt=5  # Max 5 retries
+        ).order_by('-created_at')
+
+
+class RecentWebhookEventManager(models.Manager):
+    """Manager for recent webhook events (last 24 hours)."""
+    
+    def get_queryset(self):
+        """Return webhook events from the last 24 hours."""
+        from datetime import timedelta
+        cutoff_time = timezone.now() - timedelta(hours=24)
+        return super().get_queryset().filter(
+            created_at__gte=cutoff_time
+        ).order_by('-created_at')
+
+
+class WebhookEventLog(models.Model):
+    """
+    Webhook event log model for tracking Stripe webhook processing.
+    
+    This model provides comprehensive logging and monitoring of webhook events
+    including processing status, retry logic, and error tracking for administrative
+    oversight of the payment system.
+    """
+    
+    stripe_event_id: models.CharField = models.CharField(
+        _("Stripe event ID"),
+        max_length=255,
+        unique=True,
+        help_text=_("Unique Stripe event identifier")
+    )
+    
+    event_type: models.CharField = models.CharField(
+        _("event type"),
+        max_length=100,
+        help_text=_("Type of Stripe webhook event (e.g., payment_intent.succeeded)")
+    )
+    
+    status: models.CharField = models.CharField(
+        _("status"),
+        max_length=20,
+        choices=WebhookEventStatus.choices,
+        default=WebhookEventStatus.RECEIVED,
+        help_text=_("Current processing status of the webhook event")
+    )
+    
+    payload: models.JSONField = models.JSONField(
+        _("payload"),
+        help_text=_("Complete webhook event payload from Stripe")
+    )
+    
+    processed_at: models.DateTimeField = models.DateTimeField(
+        _("processed at"),
+        null=True,
+        blank=True,
+        help_text=_("Timestamp when the event was successfully processed")
+    )
+    
+    error_message: models.TextField = models.TextField(
+        _("error message"),
+        blank=True,
+        help_text=_("Error message if processing failed")
+    )
+    
+    retry_count: models.PositiveIntegerField = models.PositiveIntegerField(
+        _("retry count"),
+        default=0,
+        help_text=_("Number of times processing has been retried")
+    )
+    
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(
+        _("created at"), auto_now_add=True
+    )
+    updated_at: models.DateTimeField = models.DateTimeField(
+        _("updated at"), auto_now=True
+    )
+    
+    # Managers
+    objects = WebhookEventLogManager()
+    failed = FailedWebhookEventManager()
+    retryable = RetryableWebhookEventManager()
+    recent = RecentWebhookEventManager()
+    
+    class Meta:
+        verbose_name = _("Webhook Event Log")
+        verbose_name_plural = _("Webhook Event Logs")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["stripe_event_id"]),
+            models.Index(fields=["event_type", "status"]),
+            models.Index(fields=["status", "retry_count"]),
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["processed_at"]),
+        ]
+    
+    def __str__(self) -> str:
+        return f"Webhook Event: {self.stripe_event_id} ({self.event_type}) - {self.get_status_display()}"
+    
+    def mark_as_processing(self) -> None:
+        """Mark the webhook event as currently being processed."""
+        self.status = WebhookEventStatus.PROCESSING
+        self.processed_at = timezone.now()
+        self.save(update_fields=["status", "processed_at", "updated_at"])
+    
+    def mark_as_processed(self) -> None:
+        """Mark the webhook event as successfully processed."""
+        self.status = WebhookEventStatus.PROCESSED
+        self.processed_at = timezone.now()
+        self.save(update_fields=["status", "processed_at", "updated_at"])
+    
+    def mark_as_failed(self, error_message: str) -> None:
+        """
+        Mark the webhook event as failed with error message.
+        
+        Args:
+            error_message: Description of the error that occurred
+        """
+        self.status = WebhookEventStatus.FAILED
+        self.error_message = error_message
+        self.processed_at = timezone.now()
+        self.save(update_fields=["status", "error_message", "processed_at", "updated_at"])
+    
+    def increment_retry_count(self) -> None:
+        """Increment the retry count and mark as retrying."""
+        self.retry_count += 1
+        self.status = WebhookEventStatus.RETRYING
+        self.save(update_fields=["retry_count", "status", "updated_at"])
+    
+    def is_retryable(self) -> bool:
+        """
+        Check if the webhook event can be retried.
+        
+        Returns:
+            bool: True if the event can be retried, False otherwise
+        """
+        # Don't retry if already processed
+        if self.status == WebhookEventStatus.PROCESSED:
+            return False
+        
+        # Don't retry if exceeded max retry count
+        if self.retry_count >= 5:
+            return False
+        
+        return True
+    
+    def get_processing_duration(self) -> timedelta | None:
+        """
+        Calculate the processing duration if event has been processed.
+        
+        Returns:
+            timedelta: Duration between creation and processing, or None if not processed
+        """
+        if not self.processed_at:
+            return None
+        
+        return self.processed_at - self.created_at
+    
+    @property
+    def is_recent(self) -> bool:
+        """Check if the event was created in the last 24 hours."""
+        cutoff_time = timezone.now() - timedelta(hours=24)
+        return self.created_at >= cutoff_time
+    
+    @property
+    def processing_time_seconds(self) -> float | None:
+        """Get processing time in seconds, or None if not processed."""
+        duration = self.get_processing_duration()
+        return duration.total_seconds() if duration else None
+
+
+class DisputeStatus(models.TextChoices):
+    """Status choices for payment disputes."""
+    
+    WARNING_NEEDS_RESPONSE = "warning_needs_response", _("Warning - Needs Response")
+    WARNING_UNDER_REVIEW = "warning_under_review", _("Warning - Under Review")
+    WARNING_CLOSED = "warning_closed", _("Warning - Closed")
+    NEEDS_RESPONSE = "needs_response", _("Needs Response")
+    UNDER_REVIEW = "under_review", _("Under Review")
+    CHARGE_REFUNDED = "charge_refunded", _("Charge Refunded")
+    WON = "won", _("Won")
+    LOST = "lost", _("Lost")
+
+
+class DisputeReason(models.TextChoices):
+    """Reason choices for payment disputes."""
+    
+    DUPLICATE = "duplicate", _("Duplicate")
+    FRAUDULENT = "fraudulent", _("Fraudulent")
+    SUBSCRIPTION_CANCELED = "subscription_canceled", _("Subscription Canceled")
+    PRODUCT_UNACCEPTABLE = "product_unacceptable", _("Product Unacceptable")
+    PRODUCT_NOT_RECEIVED = "product_not_received", _("Product Not Received")
+    UNRECOGNIZED = "unrecognized", _("Unrecognized")
+    CREDIT_NOT_PROCESSED = "credit_not_processed", _("Credit Not Processed")
+    GENERAL = "general", _("General")
+
+
+class AdminActionType(models.TextChoices):
+    """Types of administrative actions."""
+    
+    REFUND_CREATED = "refund_created", _("Refund Created")
+    REFUND_FAILED = "refund_failed", _("Refund Failed")
+    DISPUTE_RESPONSE = "dispute_response", _("Dispute Response")
+    FRAUD_ALERT = "fraud_alert", _("Fraud Alert")
+    PAYMENT_RETRY = "payment_retry", _("Payment Retry")
+    USER_ACCOUNT_ACTION = "user_account_action", _("User Account Action")
+    SYSTEM_OVERRIDE = "system_override", _("System Override")
+
+
+class FraudAlertSeverity(models.TextChoices):
+    """Severity levels for fraud alerts."""
+    
+    LOW = "low", _("Low")
+    MEDIUM = "medium", _("Medium")
+    HIGH = "high", _("High")
+    CRITICAL = "critical", _("Critical")
+
+
+class FraudAlertStatus(models.TextChoices):
+    """Status choices for fraud alerts."""
+    
+    ACTIVE = "active", _("Active")
+    INVESTIGATING = "investigating", _("Investigating")
+    RESOLVED = "resolved", _("Resolved")
+    FALSE_POSITIVE = "false_positive", _("False Positive")
+
+
+class PaymentDispute(models.Model):
+    """
+    Local tracking of payment disputes from Stripe.
+    
+    This model maintains dispute information locally for faster access
+    and provides additional metadata and processing status tracking.
+    """
+    
+    # Stripe dispute information
+    stripe_dispute_id: models.CharField = models.CharField(
+        _("Stripe dispute ID"),
+        max_length=255,
+        unique=True,
+        help_text=_("Unique Stripe dispute identifier")
+    )
+    
+    # Related transaction
+    purchase_transaction: models.ForeignKey = models.ForeignKey(
+        PurchaseTransaction,
+        on_delete=models.CASCADE,
+        related_name="disputes",
+        verbose_name=_("purchase transaction"),
+        help_text=_("The purchase transaction being disputed")
+    )
+    
+    # Dispute details
+    amount: models.DecimalField = models.DecimalField(
+        _("dispute amount"),
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text=_("Amount being disputed in euros")
+    )
+    
+    currency: models.CharField = models.CharField(
+        _("currency"),
+        max_length=3,
+        default="eur",
+        help_text=_("Currency of the disputed amount")
+    )
+    
+    reason: models.CharField = models.CharField(
+        _("dispute reason"),
+        max_length=50,
+        choices=DisputeReason.choices,
+        help_text=_("Reason for the dispute")
+    )
+    
+    status: models.CharField = models.CharField(
+        _("status"),
+        max_length=50,
+        choices=DisputeStatus.choices,
+        help_text=_("Current status of the dispute")
+    )
+    
+    # Evidence and response
+    evidence_details: models.JSONField = models.JSONField(
+        _("evidence details"),
+        default=dict,
+        blank=True,
+        help_text=_("Evidence details and documentation")
+    )
+    
+    evidence_due_by: models.DateTimeField = models.DateTimeField(
+        _("evidence due by"),
+        null=True,
+        blank=True,
+        help_text=_("Deadline for submitting evidence")
+    )
+    
+    # Internal tracking
+    is_responded: models.BooleanField = models.BooleanField(
+        _("is responded"),
+        default=False,
+        help_text=_("Whether we have responded to this dispute")
+    )
+    
+    response_submitted_at: models.DateTimeField = models.DateTimeField(
+        _("response submitted at"),
+        null=True,
+        blank=True,
+        help_text=_("When our response was submitted")
+    )
+    
+    internal_notes: models.TextField = models.TextField(
+        _("internal notes"),
+        blank=True,
+        help_text=_("Internal notes about this dispute")
+    )
+    
+    # Metadata from Stripe
+    stripe_metadata: models.JSONField = models.JSONField(
+        _("Stripe metadata"),
+        default=dict,
+        blank=True,
+        help_text=_("Complete metadata from Stripe dispute object")
+    )
+    
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _("Payment Dispute")
+        verbose_name_plural = _("Payment Disputes")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["stripe_dispute_id"]),
+            models.Index(fields=["purchase_transaction"]),
+            models.Index(fields=["status", "evidence_due_by"]),
+            models.Index(fields=["reason", "status"]),
+            models.Index(fields=["is_responded", "evidence_due_by"]),
+        ]
+    
+    def __str__(self) -> str:
+        return f"Dispute {self.stripe_dispute_id} - €{self.amount} ({self.get_status_display()})"
+    
+    @property
+    def is_evidence_overdue(self) -> bool:
+        """Check if evidence submission is overdue."""
+        if not self.evidence_due_by:
+            return False
+        return timezone.now() > self.evidence_due_by
+    
+    @property
+    def days_until_evidence_due(self) -> int:
+        """Calculate days remaining until evidence is due."""
+        if not self.evidence_due_by:
+            return 0
+        delta = self.evidence_due_by - timezone.now()
+        return max(0, delta.days)
+    
+    def mark_responded(self) -> None:
+        """Mark the dispute as responded to."""
+        self.is_responded = True
+        self.response_submitted_at = timezone.now()
+        self.save(update_fields=["is_responded", "response_submitted_at", "updated_at"])
+
+
+class AdminAction(models.Model):
+    """
+    Comprehensive audit trail for all administrative actions.
+    
+    This model provides complete tracking of administrative operations
+    for compliance, security, and operational monitoring.
+    """
+    
+    # Action identification
+    action_type: models.CharField = models.CharField(
+        _("action type"),
+        max_length=50,
+        choices=AdminActionType.choices,
+        help_text=_("Type of administrative action performed")
+    )
+    
+    action_description: models.TextField = models.TextField(
+        _("action description"),
+        help_text=_("Detailed description of the action performed")
+    )
+    
+    # User who performed the action
+    admin_user: models.ForeignKey = models.ForeignKey(
+        CustomUser,
+        on_delete=models.PROTECT,
+        related_name="admin_actions",
+        verbose_name=_("admin user"),
+        help_text=_("Administrator who performed this action")
+    )
+    
+    # Target entities (optional, depends on action type)
+    target_user: models.ForeignKey = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="admin_actions_targeting_me",
+        verbose_name=_("target user"),
+        help_text=_("User affected by this action (if applicable)")
+    )
+    
+    target_transaction: models.ForeignKey = models.ForeignKey(
+        PurchaseTransaction,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="admin_actions",
+        verbose_name=_("target transaction"),
+        help_text=_("Transaction affected by this action (if applicable)")
+    )
+    
+    target_dispute: models.ForeignKey = models.ForeignKey(
+        PaymentDispute,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="admin_actions",
+        verbose_name=_("target dispute"),
+        help_text=_("Dispute affected by this action (if applicable)")
+    )
+    
+    # Action results
+    success: models.BooleanField = models.BooleanField(
+        _("success"),
+        help_text=_("Whether the action was successful")
+    )
+    
+    result_message: models.TextField = models.TextField(
+        _("result message"),
+        blank=True,
+        help_text=_("Result message or error details")
+    )
+    
+    # Financial impact
+    amount_impacted: models.DecimalField = models.DecimalField(
+        _("amount impacted"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Financial amount impacted by this action")
+    )
+    
+    # Detailed action data
+    action_data: models.JSONField = models.JSONField(
+        _("action data"),
+        default=dict,
+        blank=True,
+        help_text=_("Detailed data about the action performed")
+    )
+    
+    # External system references
+    stripe_reference_id: models.CharField = models.CharField(
+        _("Stripe reference ID"),
+        max_length=255,
+        blank=True,
+        help_text=_("Related Stripe object ID (if applicable)")
+    )
+    
+    # Security and compliance
+    ip_address: models.GenericIPAddressField = models.GenericIPAddressField(
+        _("IP address"),
+        null=True,
+        blank=True,
+        help_text=_("IP address from which the action was performed")
+    )
+    
+    user_agent: models.TextField = models.TextField(
+        _("user agent"),
+        blank=True,
+        help_text=_("User agent of the client that performed the action")
+    )
+    
+    two_factor_verified: models.BooleanField = models.BooleanField(
+        _("two factor verified"),
+        default=False,
+        help_text=_("Whether two-factor authentication was verified")
+    )
+    
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = _("Admin Action")
+        verbose_name_plural = _("Admin Actions")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["admin_user", "-created_at"]),
+            models.Index(fields=["action_type", "-created_at"]),
+            models.Index(fields=["target_user", "-created_at"]),
+            models.Index(fields=["target_transaction"]),
+            models.Index(fields=["success", "-created_at"]),
+            models.Index(fields=["stripe_reference_id"]),
+            models.Index(fields=["two_factor_verified", "-created_at"]),
+        ]
+    
+    def __str__(self) -> str:
+        status = "✓" if self.success else "✗"
+        return f"{status} {self.get_action_type_display()} by {self.admin_user.name} at {self.created_at}"
+
+
+class FraudAlert(models.Model):
+    """
+    Fraud detection alerts for suspicious payment patterns.
+    
+    This model tracks potentially fraudulent activities and provides
+    a system for investigating and resolving security concerns.
+    """
+    
+    # Alert identification
+    alert_id: models.CharField = models.CharField(
+        _("alert ID"),
+        max_length=50,
+        unique=True,
+        help_text=_("Unique identifier for this fraud alert")
+    )
+    
+    # Alert details
+    severity: models.CharField = models.CharField(
+        _("severity"),
+        max_length=20,
+        choices=FraudAlertSeverity.choices,
+        help_text=_("Severity level of the fraud alert")
+    )
+    
+    status: models.CharField = models.CharField(
+        _("status"),
+        max_length=20,
+        choices=FraudAlertStatus.choices,
+        default=FraudAlertStatus.ACTIVE,
+        help_text=_("Current status of the fraud alert")
+    )
+    
+    alert_type: models.CharField = models.CharField(
+        _("alert type"),
+        max_length=100,
+        help_text=_("Type of fraud pattern detected")
+    )
+    
+    description: models.TextField = models.TextField(
+        _("description"),
+        help_text=_("Detailed description of the suspicious activity")
+    )
+    
+    # Related entities
+    target_user: models.ForeignKey = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="fraud_alerts",
+        verbose_name=_("target user"),
+        help_text=_("User associated with this fraud alert")
+    )
+    
+    related_transactions: models.ManyToManyField = models.ManyToManyField(
+        PurchaseTransaction,
+        blank=True,
+        related_name="fraud_alerts",
+        verbose_name=_("related transactions"),
+        help_text=_("Transactions that triggered this alert")
+    )
+    
+    # Detection data
+    detection_data: models.JSONField = models.JSONField(
+        _("detection data"),
+        default=dict,
+        blank=True,
+        help_text=_("Data used to detect this fraud pattern")
+    )
+    
+    risk_score: models.DecimalField = models.DecimalField(
+        _("risk score"),
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.00")), MaxValueValidator(Decimal("100.00"))],
+        help_text=_("Risk assessment score (0-100)")
+    )
+    
+    # Investigation tracking
+    assigned_to: models.ForeignKey = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_fraud_alerts",
+        verbose_name=_("assigned to"),
+        help_text=_("Administrator assigned to investigate this alert")
+    )
+    
+    investigated_at: models.DateTimeField = models.DateTimeField(
+        _("investigated at"),
+        null=True,
+        blank=True,
+        help_text=_("When the alert was investigated")
+    )
+    
+    resolution_notes: models.TextField = models.TextField(
+        _("resolution notes"),
+        blank=True,
+        help_text=_("Notes about how this alert was resolved")
+    )
+    
+    # Actions taken
+    actions_taken: models.JSONField = models.JSONField(
+        _("actions taken"),
+        default=list,
+        blank=True,
+        help_text=_("List of actions taken in response to this alert")
+    )
+    
+    # Audit timestamps
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _("Fraud Alert")
+        verbose_name_plural = _("Fraud Alerts")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["alert_id"]),
+            models.Index(fields=["severity", "status", "-created_at"]),
+            models.Index(fields=["target_user", "-created_at"]),
+            models.Index(fields=["assigned_to", "status"]),
+            models.Index(fields=["risk_score", "-created_at"]),
+            models.Index(fields=["alert_type", "status"]),
+        ]
+    
+    def __str__(self) -> str:
+        return f"Fraud Alert {self.alert_id} - {self.get_severity_display()} ({self.get_status_display()})"
+    
+    def save(self, *args, **kwargs):
+        """Override save to auto-generate alert ID if not provided."""
+        if not self.alert_id:
+            self.alert_id = self._generate_alert_id()
+        super().save(*args, **kwargs)
+    
+    def _generate_alert_id(self) -> str:
+        """Generate unique alert ID."""
+        import uuid
+        from django.utils import timezone
+        
+        # Format: FA-YYYY-XXXXXXXX (e.g., FA-2025-A1B2C3D4)
+        year = timezone.now().year
+        unique_id = str(uuid.uuid4()).replace('-', '').upper()[:8]
+        return f"FA-{year}-{unique_id}"
+    
+    @property
+    def is_high_priority(self) -> bool:
+        """Check if this is a high priority alert."""
+        return self.severity in [FraudAlertSeverity.HIGH, FraudAlertSeverity.CRITICAL]
+    
+    @property
+    def days_since_created(self) -> int:
+        """Calculate days since the alert was created."""
+        delta = timezone.now() - self.created_at
+        return delta.days
+    
+    def assign_to_investigator(self, admin_user: CustomUser) -> None:
+        """Assign the alert to an investigator."""
+        self.assigned_to = admin_user
+        self.status = FraudAlertStatus.INVESTIGATING
+        self.save(update_fields=["assigned_to", "status", "updated_at"])
+    
+    def mark_resolved(self, resolution_notes: str, actions_taken: list = None) -> None:
+        """Mark the alert as resolved."""
+        self.status = FraudAlertStatus.RESOLVED
+        self.investigated_at = timezone.now()
+        self.resolution_notes = resolution_notes
+        if actions_taken:
+            self.actions_taken = actions_taken
+        self.save(update_fields=["status", "investigated_at", "resolution_notes", "actions_taken", "updated_at"])
+    
+    def mark_false_positive(self, resolution_notes: str) -> None:
+        """Mark the alert as a false positive."""
+        self.status = FraudAlertStatus.FALSE_POSITIVE
+        self.investigated_at = timezone.now()
+        self.resolution_notes = resolution_notes
+        self.save(update_fields=["status", "investigated_at", "resolution_notes", "updated_at"])

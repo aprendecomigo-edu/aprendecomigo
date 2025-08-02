@@ -1,0 +1,294 @@
+QA Test Case: Parent Dashboard and Child Account Context Switching
+
+Test ID: PARENTS-007
+Test Name: Parent Dashboard Interface and Child Account Management
+Purpose: Verify parent dashboard provides comprehensive family overview, child account switching, quick actions, and real-time data updates
+Expected Result: Parent dashboard is fully functional with seamless child account switching and comprehensive family management capabilities
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend with Expo Router
+- Implementation: Parent dashboard interface (GitHub Issue #58, #113, #114)
+- Components: ParentDashboard.tsx, ChildAccountSelector, FamilyMetricsOverview
+- API: parentApi.ts with dashboard aggregation endpoints
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+4. Backend Server: Django running on http://localhost:8000
+5. Frontend Server: Expo dev server on http://localhost:8081
+
+Test Data:
+- Parent Email: dashboard.parent@example.com
+- Child 1 Email: dashboard.child1@example.com
+- Child 2 Email: dashboard.child2@example.com
+- Child 3 Email: dashboard.child3@example.com
+- Parent Name: Dashboard Parent
+- Multiple children with different activity levels and account states
+- Various transaction histories and spending patterns
+- Mixed approval requests (pending, approved, rejected)
+
+Prerequisites:
+- Parent account with multiple children (3+ for comprehensive testing)
+- Budget controls configured for all children
+- Transaction histories available
+- Some pending approval requests for testing
+- WebSocket connections functional for real-time updates
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Multi-Child Family Data
+1. Ensure servers running and create comprehensive test family
+2. Create parent with 3 children accounts with varied data:
+   - Child 1: Active with recent transactions, pending approval
+   - Child 2: Moderate activity with budget near limit
+   - Child 3: Low activity with clean spending record
+3. Generate realistic transaction and approval history
+4. Configure different budget controls for each child
+
+Expected: Complex family scenario ready for comprehensive dashboard testing
+Screenshot: 01_dashboard_family_setup.png
+
+Step 2: Parent Dashboard Initial Load and Overview
+1. Sign in as parent user (dashboard.parent@example.com)
+2. Navigate to parent dashboard (should be default landing page)
+3. Verify dashboard loads completely with all sections:
+   - Family overview metrics
+   - Children account cards
+   - Pending approval notifications
+   - Quick action buttons
+   - Recent activity feed
+4. Check loading states and error handling
+
+Expected: Parent dashboard loads completely with all family data visible
+Screenshot: 02_dashboard_initial_load.png
+
+Step 3: Family Metrics Overview Verification
+1. Verify family metrics section shows accurate data:
+   - Total children count
+   - Active children count
+   - Total family spending this month
+   - Total hours consumed across all children
+   - Pending approvals count
+2. Check that metrics update in real-time
+3. Verify clickable elements navigate to detailed views
+
+Expected: Family metrics accurate and provide high-level family overview
+Screenshot: 03_family_metrics_overview.png
+
+Step 4: Child Account Cards Display and Information
+1. Verify each child appears as individual account card
+2. Check each card displays:
+   - Child name and profile image (if available)
+   - Current account balance
+   - Recent activity status
+   - Budget utilization (progress bar or indicator)
+   - Quick action buttons (view details, add funds, settings)
+3. Verify cards are visually distinct and well-organized
+
+Expected: All children display as comprehensive account cards with key information
+Screenshot: 04_child_account_cards.png
+
+Step 5: Child Account Selection and Context Switching
+1. Click on first child's account card
+2. Verify interface switches to child-specific view showing:
+   - Child's detailed account information
+   - Child's transaction history
+   - Child's budget status and spending analytics
+   - Child-specific quick actions
+3. Switch to second child and verify context changes completely
+4. Test switching between multiple children rapidly
+
+Expected: Seamless context switching between child accounts with complete data updates
+Screenshot: 05_child_context_switching.png
+
+Step 6: Pending Approval Requests Dashboard Section
+1. Verify pending approvals section shows all outstanding requests
+2. Check each approval request displays:
+   - Child name making request
+   - Requested amount and description
+   - Time since request made
+   - Quick approve/reject buttons
+   - View details link
+3. Test sorting and filtering approval requests
+4. Verify approval count badges update correctly
+
+Expected: Complete pending approvals overview with quick action capabilities
+Screenshot: 06_pending_approvals_section.png
+
+Step 7: Quick Actions and Parent Controls
+1. Test quick action buttons available on dashboard:
+   - Add funds to child account
+   - Set/modify budget controls
+   - View detailed reports
+   - Manage notifications
+   - Access family settings
+2. Verify quick actions work from dashboard without full navigation
+3. Test bulk actions (if available) for multiple children
+
+Expected: Quick actions provide efficient parent management capabilities
+Screenshot: 07_parent_quick_actions.png
+
+Step 8: Recent Activity Feed and Timeline
+1. Verify recent activity section shows chronological family activity:
+   - Recent purchases by all children
+   - Approval decisions made
+   - Budget alerts triggered
+   - Account balance changes
+2. Test activity filtering by child, activity type, or date range
+3. Verify activity updates in real-time as new events occur
+
+Expected: Comprehensive activity feed with filtering and real-time updates
+Screenshot: 08_recent_activity_feed.png
+
+Step 9: Responsive Design and Mobile Interface
+1. Test dashboard on different screen sizes:
+   - Desktop/laptop view
+   - Tablet portrait and landscape
+   - Mobile phone portrait and landscape
+2. Verify all dashboard elements remain functional and accessible
+3. Check that child switching works on mobile devices
+4. Test touch interactions and swipe gestures (if applicable)
+
+Expected: Dashboard fully responsive and functional across all device sizes
+Screenshot: 09_responsive_dashboard_design.png
+
+Step 10: Dashboard Search and Navigation
+1. Test search functionality for finding specific children or transactions
+2. Use navigation breadcrumbs (if available) to move between views
+3. Test deep-linking to specific child accounts or approval requests
+4. Verify browser back/forward buttons work correctly with dashboard navigation
+5. Test bookmarking specific dashboard views
+
+Expected: Complete navigation and search capabilities within dashboard
+Screenshot: 10_dashboard_navigation_search.png
+
+Step 11: Real-time Data Updates and WebSocket Integration
+1. Open dashboard in browser
+2. In separate session/device, make changes as child:
+   - Submit new purchase request
+   - Complete a transaction
+   - Update account information
+3. Verify dashboard updates in real-time without page refresh
+4. Test WebSocket connection resilience during network interruptions
+
+Expected: Real-time dashboard updates via WebSocket connections
+Screenshot: 11_realtime_dashboard_updates.png
+
+Step 12: Dashboard Performance and Load Testing
+1. Test dashboard with large amounts of data:
+   - Many children (5+)
+   - Extensive transaction histories
+   - Multiple pending approvals
+2. Measure dashboard load times and responsiveness
+3. Test pagination or virtualization for large data sets
+4. Verify dashboard remains responsive during heavy use
+
+Expected: Dashboard performs well with large data sets and maintains responsiveness
+Screenshot: 12_dashboard_performance_test.png
+
+Step 13: Dashboard Error Handling and Offline Behavior
+1. Test dashboard behavior with API errors:
+   - Server connection lost
+   - Individual endpoint failures
+   - Partial data loading failures
+2. Test offline behavior and data caching
+3. Verify error messages are user-friendly and actionable
+4. Test recovery when connection restored
+
+Expected: Graceful error handling with appropriate user feedback and recovery
+Screenshot: 13_dashboard_error_handling.png
+
+Step 14: Dashboard Settings and Customization
+1. Access dashboard settings/preferences
+2. Test customization options:
+   - Dashboard layout preferences
+   - Notification settings
+   - Display preferences (currency, language, time zone)
+   - Child visibility settings
+3. Verify settings persist across sessions
+4. Test restoring default settings
+
+Expected: Dashboard customization works correctly and persists preferences
+Screenshot: 14_dashboard_customization.png
+
+Step 15: Dashboard Export and Reporting Features
+1. Test export capabilities for dashboard data:
+   - Family spending reports
+   - Individual child reports
+   - Approval decision history
+   - Budget utilization reports
+2. Verify export formats (PDF, CSV, etc.)
+3. Test scheduled report generation (if available)
+4. Check report accuracy and completeness
+
+Expected: Complete reporting and export functionality for family financial data
+Screenshot: 15_dashboard_reporting_export.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND:
+- Parent dashboard loads completely with all family data
+- Family metrics provide accurate high-level overview
+- Child account cards display comprehensive information
+- Context switching between children works seamlessly
+- Pending approvals section shows all requests with quick actions
+- Quick actions provide efficient parent management tools
+- Recent activity feed displays chronological family events
+- Dashboard is fully responsive across all device sizes
+- Search and navigation work correctly throughout dashboard
+- Real-time updates function via WebSocket connections
+- Dashboard performs well with large data sets
+- Error handling provides appropriate user feedback
+- Dashboard settings and customization work correctly
+- Export and reporting features function accurately
+
+FAIL: Any step fails OR:
+- Dashboard fails to load or shows incomplete data
+- Family metrics display incorrect or missing information
+- Child account cards missing information or broken
+- Context switching doesn't work or shows wrong data
+- Approval requests missing or non-functional
+- Quick actions broken or don't provide expected functionality
+- Activity feed missing events or not updating
+- Dashboard broken or unusable on mobile devices
+- Navigation or search functionality not working
+- Real-time updates not functioning or delayed significantly
+- Performance issues with normal amounts of data
+- Poor error handling or system crashes on errors
+- Settings don't persist or customization broken
+- Export features non-functional or produce incorrect reports
+
+Individual Step Criteria:
+- Step 1: PASS if complex family data ready, FAIL if setup incomplete
+- Step 2: PASS if dashboard loads completely, FAIL if sections missing/broken
+- Step 3: PASS if metrics accurate and functional, FAIL if wrong data displayed
+- Step 4: PASS if child cards comprehensive, FAIL if information missing
+- Step 5: PASS if context switching seamless, FAIL if data doesn't update correctly
+- Step 6: PASS if approvals section complete, FAIL if requests missing/non-functional
+- Step 7: PASS if quick actions work efficiently, FAIL if actions broken/slow
+- Step 8: PASS if activity feed comprehensive, FAIL if events missing/not updating
+- Step 9: PASS if fully responsive, FAIL if broken on any device size
+- Step 10: PASS if navigation complete, FAIL if search/navigation broken
+- Step 11: PASS if real-time updates work, FAIL if updates delayed/missing
+- Step 12: PASS if good performance, FAIL if slow/unresponsive with normal data
+- Step 13: PASS if graceful error handling, FAIL if crashes or poor error messages
+- Step 14: PASS if settings work and persist, FAIL if customization broken
+- Step 15: PASS if export accurate and complete, FAIL if reports wrong/broken
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Dashboard should be the central hub for all parent family management
+- Child account switching should be intuitive and maintain context
+- Information should be well-organized and easy to scan quickly
+- Quick actions should reduce the need for deep navigation
+- Real-time updates should keep parents informed without being overwhelming
+- Mobile experience should be as rich as desktop experience
+- Error states should be helpful and guide parents toward resolution
+- Dashboard should promote confidence in family financial management

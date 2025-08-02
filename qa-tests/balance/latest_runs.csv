@@ -5,3 +5,6 @@ balance-003,Purchase History API Testing with Consumption Analytics,,,NOT_RUN,Te
 balance-004,Authentication and Authorization Security for Student Balance API,,,NOT_RUN,Test case created - ready for execution
 balance-005,Data Accuracy and Balance Calculations Testing,,,NOT_RUN,Test case created - ready for execution
 balance-006,Performance and Load Testing for Student Balance API,,,NOT_RUN,Test case created - ready for execution
+balance-007,Complete Flow E - Student Hour Balance Dashboard End-to-End Journey,2025-08-01,19:33:00,PARTIAL_PASS,Backend notifications working perfectly but API config issues prevent full testing
+balance-008,Student Balance Notification System - Backend API and Email Testing,,,NOT_RUN,Backend notification system testing (Issue #107)
+balance-009,Student Balance Payment System - Renewal and Quick Top-Up Testing,,,NOT_RUN,Backend payment system testing (Issue #108)

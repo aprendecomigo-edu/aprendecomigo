@@ -19,7 +19,8 @@ import {
   Clock,
   RefreshCw,
   Search,
-  Plus
+  Plus,
+  Bell
 } from 'lucide-react-native';
 import useRouter from '@unitools/router';
 
@@ -46,6 +47,8 @@ import { DashboardOverview } from './dashboard/DashboardOverview';
 import { TransactionHistory } from './dashboard/TransactionHistory';
 import { PurchaseHistory } from './dashboard/PurchaseHistory';
 import { AccountSettings } from './dashboard/AccountSettings';
+import { NotificationCenter } from './balance/NotificationCenter';
+import { BalanceAlertProvider } from './balance/BalanceAlertProvider';
 
 interface StudentAccountDashboardProps {
   email?: string;
@@ -73,6 +76,12 @@ const DASHBOARD_TABS = [
     label: 'Purchases',
     icon: Package,
     description: 'Purchase history and consumption'
+  },
+  {
+    id: 'notifications' as const,
+    label: 'Notifications',
+    icon: Bell,
+    description: 'Balance alerts and important updates'
   },
   {
     id: 'settings' as const,
@@ -163,6 +172,15 @@ export function StudentAccountDashboard({
             />
           );
         
+        case 'notifications':
+          return (
+            <NotificationCenter
+              showSettings={true}
+              showFilters={true}
+              maxNotifications={50}
+            />
+          );
+        
         case 'settings':
           return (
             <AccountSettings
@@ -205,7 +223,8 @@ export function StudentAccountDashboard({
   };
 
   return (
-    <SafeAreaView className={`flex-1 bg-background-50 ${className}`}>
+    <BalanceAlertProvider enableMonitoring={true} pollingInterval={30000}>
+      <SafeAreaView className={`flex-1 bg-background-50 ${className}`}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <VStack className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full" space="lg">
           {/* Header */}
@@ -352,6 +371,7 @@ export function StudentAccountDashboard({
           </VStack>
         </VStack>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </BalanceAlertProvider>
   );
 }

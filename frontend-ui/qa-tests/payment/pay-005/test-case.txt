@@ -1,0 +1,236 @@
+QA Test Case: WebSocket Integration and Real-time Updates
+
+Test ID: PAY-005
+Test Name: WebSocket Integration and Real-time Updates
+Purpose: Verify WebSocket connectivity and real-time payment data updates across the payment monitoring system for GitHub issue #59
+Expected Result: Payment monitoring dashboard receives real-time updates via WebSocket with reliable connectivity and data synchronization
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform - WebSocket Payment Updates
+- Architecture: Django Channels WebSocket backend + React Native Expo frontend
+- WebSocket: Django Channels for real-time payment monitoring
+- Database: PostgreSQL with live payment transaction data
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: make dev-open
+4. Backend: http://localhost:8000
+5. Frontend: http://localhost:8081
+6. WebSocket: ws://localhost:8000/ws/payment-monitoring/
+
+Test Data:
+- Admin User: admin@test.com (superuser with payment monitoring access)
+- Test Payment Data: Transactions that can be modified to trigger updates
+- WebSocket Consumer: Payment monitoring WebSocket consumer active
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: WebSocket Connection Establishment
+1. Login as admin and navigate to payment dashboard
+2. Open browser developer tools and check Network tab
+3. Verify WebSocket connection established:
+   - Look for WebSocket connection in Network tab
+   - Check connection status (connected/disconnected)
+   - Verify connection URL and protocol
+4. Check console for WebSocket connection logs
+5. Verify connection handshake successful
+
+Expected: WebSocket connection establishes successfully
+Screenshot: 01-websocket-connection.png
+PASS if: WebSocket connects successfully with proper handshake
+FAIL if: WebSocket connection fails, handshake issues, or connection errors
+
+Step 2: Real-time Payment Metrics Updates
+1. Note current payment metrics on dashboard
+2. Create a test payment transaction (using test student account)
+3. Monitor dashboard for real-time metric updates:
+   - Transaction count should increment
+   - Success rate should update
+   - Revenue totals should increase
+   - Recent transactions should show new entry
+4. Verify updates occur within 30 seconds
+5. Check WebSocket message traffic in developer tools
+
+Expected: Payment metrics update in real-time when new transactions occur
+Screenshot: 02-metrics-realtime-updates.png
+PASS if: Metrics update automatically within 30 seconds
+FAIL if: No real-time updates, delayed updates, or incorrect metric changes
+
+Step 3: Transaction List Real-time Updates
+1. Open transaction management page (/admin/payments/transactions)
+2. Keep transaction list visible
+3. Create new test transaction
+4. Verify new transaction appears in list without manual refresh
+5. Check transaction status updates in real-time
+6. Verify sorting and filtering persist during updates
+
+Expected: Transaction list updates automatically with new transactions
+Screenshot: 03-transaction-list-updates.png
+PASS if: New transactions appear in list automatically
+FAIL if: Transaction list doesn't update or requires manual refresh
+
+Step 4: WebSocket Message Format Validation
+1. Monitor WebSocket messages in browser developer tools
+2. Trigger various payment events:
+   - New transaction creation
+   - Transaction status changes
+   - Refund processing
+   - Webhook events
+3. Verify WebSocket message structure:
+   - Proper JSON format
+   - Required fields present
+   - Data types correct
+   - Message type identification
+4. Check message payload completeness
+
+Expected: WebSocket messages properly formatted with complete data
+Screenshot: 04-websocket-message-format.png
+PASS if: All WebSocket messages properly formatted and complete
+FAIL if: Malformed messages, missing data, or incorrect structure
+
+Step 5: WebSocket Reconnection Testing
+1. Establish WebSocket connection and verify functionality
+2. Disable network connection briefly (simulate network interruption)
+3. Re-enable network connection
+4. Verify WebSocket automatically reconnects
+5. Check that real-time updates resume after reconnection
+6. Test multiple disconnect/reconnect cycles
+
+Expected: WebSocket automatically reconnects after network interruptions
+Screenshot: 05-websocket-reconnection.png
+PASS if: WebSocket reconnects automatically and updates resume
+FAIL if: No auto-reconnection, manual refresh required, or persistent connection issues
+
+Step 6: Multiple Browser Tab Synchronization
+1. Open payment dashboard in multiple browser tabs
+2. Keep both tabs visible (side by side if possible)
+3. Trigger payment events from one tab or backend
+4. Verify both tabs receive real-time updates simultaneously
+5. Check data consistency across tabs
+6. Test tab-specific WebSocket connections
+
+Expected: Multiple tabs receive synchronized real-time updates
+Screenshot: 06-multi-tab-sync.png
+PASS if: All tabs update simultaneously with consistent data
+FAIL if: Tabs don't sync, data inconsistencies, or connection conflicts
+
+Step 7: WebSocket Performance Under Load
+1. Monitor WebSocket performance with normal load
+2. If possible, simulate multiple simultaneous payment events
+3. Check WebSocket message delivery speed
+4. Verify UI responsiveness during high message volume
+5. Monitor memory usage and connection stability
+6. Test message queuing and delivery order
+
+Expected: WebSocket performs well under normal and high load conditions
+Screenshot: 07-websocket-performance.png
+PASS if: Good performance with stable connections under load
+FAIL if: Performance degrades, connection drops, or UI becomes unresponsive
+
+Step 8: Error Handling and Message Validation
+1. Test WebSocket error scenarios:
+   - Invalid message formats
+   - Server-side WebSocket errors
+   - Authentication token expiration
+2. Verify error handling:
+   - Graceful error handling
+   - User-friendly error messages
+   - Automatic error recovery
+3. Check WebSocket connection status indicators
+4. Test manual reconnection if automatic fails
+
+Expected: WebSocket errors handled gracefully with proper recovery
+Screenshot: 08-error-handling.png
+PASS if: Errors handled well with good user feedback and recovery
+FAIL if: Poor error handling, unclear messages, or no recovery mechanisms
+
+Step 9: Authentication and Security for WebSocket
+1. Verify WebSocket requires admin authentication
+2. Test WebSocket access with non-admin users
+3. Check WebSocket authentication token validation
+4. Test authentication token refresh/renewal
+5. Verify secure WebSocket protocol (WSS in production)
+6. Check that sensitive data in WebSocket messages is properly protected
+
+Expected: WebSocket connections properly authenticated and secured
+Screenshot: 09-websocket-security.png
+PASS if: WebSocket authentication robust and data protected
+FAIL if: Authentication bypassed, insecure connections, or data exposure
+
+Step 10: Cross-platform WebSocket Compatibility
+1. Test WebSocket functionality on different platforms:
+   - Desktop web browser (Chrome, Firefox, Safari)
+   - Mobile web browser (if applicable)
+   - React Native mobile app (if WebSocket used)
+2. Verify consistent behavior across platforms
+3. Check platform-specific WebSocket implementations
+4. Test fallback mechanisms for unsupported platforms
+
+Expected: WebSocket works consistently across all supported platforms
+Screenshot: 10-cross-platform-websocket.png
+PASS if: WebSocket functions properly on all tested platforms
+FAIL if: Platform-specific issues, inconsistent behavior, or missing fallbacks
+
+Step 11: WebSocket Data Filtering and Subscriptions
+1. Test WebSocket subscription to specific data types:
+   - Payment transactions only
+   - Webhook events only
+   - Fraud alerts only
+2. Verify data filtering works correctly
+3. Check that irrelevant messages are not sent
+4. Test subscription management (subscribe/unsubscribe)
+5. Verify admin-specific data filtering
+
+Expected: WebSocket data filtering and subscriptions work correctly
+Screenshot: 11-websocket-filtering.png
+PASS if: Data filtering and subscriptions function properly
+FAIL if: Incorrect data filtering, subscription issues, or irrelevant messages
+
+Step 12: Integration with Payment Processing Webhooks
+1. Monitor WebSocket during webhook processing:
+   - Stripe webhook events
+   - Payment status changes
+   - Refund confirmations
+2. Verify WebSocket messages triggered by webhook events
+3. Check timing between webhook processing and WebSocket updates
+4. Test webhook failure scenarios and WebSocket notification
+5. Verify webhook-to-WebSocket data consistency
+
+Expected: WebSocket integrates properly with webhook processing
+Screenshot: 12-webhook-websocket-integration.png
+PASS if: WebSocket updates properly reflect webhook processing
+FAIL if: Webhook integration issues, data inconsistencies, or timing problems
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: WebSocket connection establishes reliably, real-time updates function correctly, reconnection works, multi-tab sync operates, performance is good, errors are handled gracefully, security is proper, and webhook integration works
+
+FAIL: Any step fails, WebSocket connection issues, no real-time updates, reconnection problems, sync issues, poor performance, bad error handling, security problems, or webhook integration failures
+
+Individual Step Criteria:
+- Step 1: PASS if WebSocket connects successfully, FAIL if connection issues
+- Step 2: PASS if metrics update in real-time, FAIL if no real-time metric updates
+- Step 3: PASS if transaction list updates automatically, FAIL if list doesn't update
+- Step 4: PASS if WebSocket messages properly formatted, FAIL if message format issues
+- Step 5: PASS if WebSocket reconnects automatically, FAIL if reconnection problems
+- Step 6: PASS if multi-tab sync works, FAIL if synchronization issues
+- Step 7: PASS if performance good under load, FAIL if performance problems
+- Step 8: PASS if error handling graceful, FAIL if poor error handling
+- Step 9: PASS if WebSocket security proper, FAIL if security issues
+- Step 10: PASS if cross-platform compatibility, FAIL if platform-specific issues
+- Step 11: PASS if data filtering works, FAIL if filtering problems
+- Step 12: PASS if webhook integration proper, FAIL if webhook integration issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== GITHUB ISSUE #59 ACCEPTANCE CRITERIA MAPPING ===
+
+This test verifies:
+✓ Real-time payment processing dashboard with live updates
+✓ WebSocket integration for live transaction monitoring
+✓ Real-time webhook status and processing updates
+✓ Live revenue analytics and reporting
+✓ Real-time fraud detection alerts and notifications

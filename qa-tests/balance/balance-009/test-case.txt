@@ -1,0 +1,350 @@
+QA Test Case: Backend Payment System Testing (Issue #108)
+
+Test ID: BALANCE-009
+Test Name: Student Balance Payment System - Renewal and Quick Top-Up Testing
+Purpose: Verify saved payment methods, one-click renewal, and quick top-up functionality work correctly
+Expected Result: Payment methods stored securely, renewals process successfully, top-up packages available and functional
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Payment System (Issue #108)
+- Architecture: Django backend with Stripe integration for payment processing
+- Focus: Payment method storage, renewal APIs, quick top-up functionality
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Django development server: `make dev`
+3. Backend at http://localhost:8000
+4. Stripe test keys configured in environment
+5. Test Stripe payment methods available
+
+Test Data Requirements:
+- Student user: payment.test@aprendecomigo.com
+- Stripe test payment method ID: pm_card_visa
+- Student with existing subscription to renew
+- Valid JWT token for API authentication
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+  # Verify Stripe test keys are configured
+  grep STRIPE_TEST backend/.env || echo "Stripe keys needed"
+
+Expected: Django server running with Stripe test configuration
+Screenshot: 01_environment_setup.png
+
+Step 2: Create Test Student with Payment Data
+1. Create student user: payment.test@aprendecomigo.com
+2. Create existing subscription transaction for renewal testing
+3. Set up student account balance
+4. Verify student has active school membership
+
+Commands:
+  python manage.py shell
+  >>> from accounts.models import CustomUser
+  >>> from finances.models import *
+  >>> from django.utils import timezone
+  >>> from datetime import timedelta
+  >>> from decimal import Decimal
+  
+  # Create or get student
+  >>> student, created = CustomUser.objects.get_or_create(
+  ...     email='payment.test@aprendecomigo.com',
+  ...     defaults={'name': 'Payment Test Student'}
+  ... )
+  >>> print(f"Student {'created' if created else 'found'}: {student.email}")
+
+Expected: Test student created with payment test data
+Screenshot: 02_test_student_setup.png
+
+Step 3: Test Saved Payment Method Storage
+Commands:
+  # Test payment method storage
+  >>> from finances.models import StoredPaymentMethod
+  >>> payment_method = StoredPaymentMethod.objects.create(
+  ...     user=student,
+  ...     stripe_payment_method_id='pm_card_visa',
+  ...     card_last_four='4242',
+  ...     card_brand='visa',
+  ...     card_exp_month=12,
+  ...     card_exp_year=2025,
+  ...     is_default=True
+  ... )
+  >>> print(f"Payment method stored: {payment_method}")
+
+Expected:
+- Payment method stored successfully
+- No raw payment data stored (only Stripe PM ID)
+- Proper user association
+Screenshot: 03_payment_method_stored.png
+
+Step 4: Test Payment Method API Retrieval
+Commands:
+  # Get JWT token for student
+  curl -X POST http://localhost:8000/api/accounts/auth/signin/ \
+       -H "Content-Type: application/json" \
+       -d '{"email": "payment.test@aprendecomigo.com"}'
+  
+  # Complete authentication with verification code
+  # Then test payment methods API
+  curl -H "Authorization: Token [student_token]" \
+       http://localhost:8000/api/finances/payment-methods/
+
+Expected:
+- API returns stored payment methods for user
+- Only shows card metadata (last 4 digits, brand, expiry)
+- Does not expose sensitive payment data
+Screenshot: 04_payment_methods_api.png
+
+Step 5: Test Quick Top-Up Packages API
+Commands:
+  # Get available top-up packages
+  curl -H "Authorization: Token [student_token]" \
+       http://localhost:8000/api/finances/student-balance/topup-packages/
+
+Expected:
+- Returns 3 packages: 5, 10, 20 hours
+- Each package has correct pricing calculation
+- Includes package descriptions and benefits
+- Response format matches API specification
+Screenshot: 05_topup_packages_api.png
+
+Step 6: Create Existing Subscription for Renewal Testing
+Commands:
+  # Create existing subscription transaction
+  >>> expires_at = timezone.now() + timedelta(days=30)
+  >>> subscription = PurchaseTransaction.objects.create(
+  ...     student=student,
+  ...     transaction_type=TransactionType.PACKAGE,
+  ...     payment_status=TransactionPaymentStatus.COMPLETED,
+  ...     amount=Decimal('100.00'),
+  ...     hours_included=Decimal('20.0'),
+  ...     expires_at=expires_at,
+  ...     stripe_payment_intent_id='pi_test_subscription'
+  ... )
+  >>> print(f"Subscription created: {subscription.id}")
+
+Expected: Active subscription created for renewal testing
+Screenshot: 06_subscription_created.png
+
+Step 7: Test Quick Top-Up Processing
+Commands:
+  # Test 5-hour quick top-up
+  curl -X POST -H "Authorization: Token [student_token]" \
+       -H "Content-Type: application/json" \
+       -d '{
+         "hours": "5.00",
+         "payment_method_id": "pm_card_visa"
+       }' \
+       http://localhost:8000/api/finances/student-balance/quick-topup/
+
+Expected:
+- Payment processes successfully
+- New transaction created with type "top_up"
+- Student balance increases by 5 hours
+- Response includes transaction details
+- Stripe payment intent created
+Screenshot: 07_quick_topup_success.png
+
+Step 8: Test Subscription Renewal Processing
+Commands:
+  # Test subscription renewal
+  curl -X POST -H "Authorization: Token [student_token]" \
+       -H "Content-Type: application/json" \
+       -d '{
+         "original_transaction_id": [subscription_id],
+         "payment_method_id": "pm_card_visa"
+       }' \
+       http://localhost:8000/api/finances/student-balance/renew-subscription/
+
+Expected:
+- Renewal processes successfully
+- New transaction created based on original
+- Package expiry date extended
+- Response includes renewal details
+- Original transaction referenced correctly
+Screenshot: 08_subscription_renewal.png
+
+Step 9: Test Payment Method Security
+Commands:
+  # Verify payment method isolation between users
+  # Create second user and try to use first user's payment method
+  >>> other_user = CustomUser.objects.create(
+  ...     email='other.test@aprendecomigo.com',
+  ...     name='Other Test User'
+  ... )
+  
+  # Try to access payment methods as other user
+  curl -H "Authorization: Token [other_user_token]" \
+       http://localhost:8000/api/finances/payment-methods/
+
+Expected:
+- Users can only see their own payment methods
+- No cross-user data leakage
+- Proper user isolation enforced
+Screenshot: 09_payment_security.png
+
+Step 10: Test Invalid Payment Method Handling
+Commands:
+  # Test with invalid payment method ID
+  curl -X POST -H "Authorization: Token [student_token]" \
+       -H "Content-Type: application/json" \
+       -d '{
+         "hours": "5.00",
+         "payment_method_id": "pm_invalid_card"
+       }' \
+       http://localhost:8000/api/finances/student-balance/quick-topup/
+
+Expected:
+- API returns appropriate error message
+- No transaction created with invalid payment method
+- Error handling graceful and informative
+Screenshot: 10_invalid_payment_method.png
+
+Step 11: Test Renewal with Invalid Transaction
+Commands:
+  # Test renewal with non-existent transaction ID
+  curl -X POST -H "Authorization: Token [student_token]" \
+       -H "Content-Type: application/json" \
+       -d '{
+         "original_transaction_id": 99999,
+         "payment_method_id": "pm_card_visa"
+       }' \
+       http://localhost:8000/api/finances/student-balance/renew-subscription/
+
+Expected:
+- API returns 404 or appropriate error
+- No renewal transaction created
+- Error message explains invalid transaction
+Screenshot: 11_invalid_renewal.png
+
+Step 12: Test Top-Up with Invalid Hours
+Commands:
+  # Test with invalid hour amounts
+  curl -X POST -H "Authorization: Token [student_token]" \
+       -H "Content-Type: application/json" \
+       -d '{
+         "hours": "0.5",
+         "payment_method_id": "pm_card_visa"
+       }' \
+       http://localhost:8000/api/finances/student-balance/quick-topup/
+  
+  # Test with too many hours
+  curl -X POST -H "Authorization: Token [student_token]" \
+       -H "Content-Type: application/json" \
+       -d '{
+         "hours": "100.0",
+         "payment_method_id": "pm_card_visa"
+       }' \
+       http://localhost:8000/api/finances/student-balance/quick-topup/
+
+Expected:
+- Invalid hour amounts rejected
+- Only 5, 10, 20 hour packages allowed
+- Appropriate validation error messages
+Screenshot: 12_invalid_hours.png
+
+Step 13: Test Balance Updates After Transactions
+Commands:
+  # Check student balance after transactions
+  >>> from finances.models import StudentAccountBalance
+  >>> balance = StudentAccountBalance.objects.get(student=student)
+  >>> print(f"Current balance: {balance.remaining_hours} hours")
+  >>> print(f"Balance amount: ${balance.balance_amount}")
+  
+  # Verify transaction history
+  >>> transactions = PurchaseTransaction.objects.filter(student=student).order_by('-created_at')
+  >>> for t in transactions:
+  ...     print(f"{t.transaction_type}: {t.hours_included} hours, ${t.amount}")
+
+Expected:
+- Balance reflects all completed transactions
+- Transaction history shows quick top-up and renewal
+- Calculations are accurate
+Screenshot: 13_balance_verification.png
+
+Step 14: Test API Rate Limiting and Security
+Commands:
+  # Test API rate limiting (make multiple rapid requests)
+  for i in range(10):
+    curl -X POST -H "Authorization: Token [student_token]" \
+         -H "Content-Type: application/json" \
+         -d '{"hours": "5.00", "payment_method_id": "pm_card_visa"}' \
+         http://localhost:8000/api/finances/student-balance/quick-topup/
+  done
+
+Expected:
+- Rate limiting prevents abuse
+- Throttling kicks in after several requests
+- Proper rate limit error messages
+Screenshot: 14_rate_limiting.png
+
+Step 15: Test Webhook Handling (if applicable)
+Commands:
+  # Test Stripe webhook processing
+  # Simulate payment success webhook
+  curl -X POST http://localhost:8000/api/finances/webhooks/stripe/ \
+       -H "Content-Type: application/json" \
+       -d '{
+         "type": "payment_intent.succeeded",
+         "data": {
+           "object": {
+             "id": "pi_test_payment",
+             "status": "succeeded"
+           }
+         }
+       }'
+
+Expected:
+- Webhook processed successfully
+- Payment status updated in database
+- Transaction status reflects webhook data
+Screenshot: 15_webhook_processing.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: ALL of the following conditions must be met:
+1. Payment methods stored securely (no raw data, only Stripe IDs)
+2. Quick top-up packages API returns correct 5, 10, 20 hour options
+3. Quick top-up processing completes successfully with balance update
+4. Subscription renewal processes and extends package expiry
+5. Payment method APIs properly isolated by user
+6. Invalid payment methods handled gracefully
+7. Invalid transaction IDs for renewal handled properly
+8. Invalid hour amounts rejected with proper validation
+9. Balance calculations accurate after all transactions
+10. API rate limiting prevents abuse
+11. Error handling provides clear, actionable messages
+12. Security prevents cross-user data access
+
+FAIL: ANY of the following conditions:
+- Raw payment data stored in database (security violation)
+- Top-up packages missing or incorrectly priced
+- Payment processing fails or creates incorrect transactions
+- Balance calculations incorrect after transactions
+- Users can access other users' payment methods
+- Invalid inputs not properly validated or handled
+- Rate limiting not working or too restrictive
+- Error messages unclear or system crashes
+- Security vulnerabilities in payment handling
+- Webhook processing fails or updates wrong records
+
+Individual Step Criteria:
+- Steps 1-2: PASS if environment and test data setup correctly
+- Step 3: PASS if payment method stored securely
+- Step 4: PASS if payment method API returns safe data only
+- Step 5: PASS if top-up packages API works correctly
+- Step 6: PASS if test subscription created successfully
+- Step 7: PASS if quick top-up processes and updates balance
+- Step 8: PASS if subscription renewal works end-to-end
+- Step 9: PASS if payment method security prevents cross-user access
+- Steps 10-12: PASS if error handling works for invalid inputs
+- Step 13: PASS if balance calculations are accurate
+- Step 14: PASS if rate limiting works appropriately
+- Step 15: PASS if webhook processing works correctly
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

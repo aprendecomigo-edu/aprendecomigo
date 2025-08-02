@@ -34,6 +34,30 @@ from .admin_views import (
     send_expiration_notifications,
     get_packages_expiring_soon,
     bulk_extend_packages,
+    # Administrative Payment Action APIs (Issue #116)
+    process_refund,
+    get_refund_status,
+    list_transaction_refunds,
+    sync_dispute_from_stripe,
+    submit_dispute_evidence,
+    get_dispute_details,
+    list_disputes,
+    update_dispute_notes,
+    get_overdue_disputes,
+    analyze_transaction_fraud,
+    analyze_user_fraud,
+    run_batch_fraud_analysis,
+    get_active_fraud_alerts,
+    retry_failed_payment,
+    get_admin_action_log,
+)
+
+from .views_admin import (
+    payment_metrics,
+    TransactionHistoryView,
+    WebhookStatusView,
+    student_analytics,
+    system_health,
 )
 
 # Create a router and register our viewsets
@@ -80,6 +104,33 @@ urlpatterns = [
     path("admin/send-expiration-notifications/", send_expiration_notifications, name="admin-send-notifications"),
     path("admin/packages-expiring-soon/", get_packages_expiring_soon, name="admin-packages-expiring-soon"),
     path("admin/bulk-extend-packages/", bulk_extend_packages, name="admin-bulk-extend-packages"),
+    
+    # Payment Analytics and Monitoring Admin Endpoints (Issues #115 & #116)
+    path("admin/payments/metrics/", payment_metrics, name="admin-payment-metrics"),
+    path("admin/payments/transactions/", TransactionHistoryView.as_view(), name="admin-transaction-history"),
+    path("admin/webhooks/status/", WebhookStatusView.as_view(), name="admin-webhook-status"),
+    path("admin/students/<int:student_id>/analytics/", student_analytics, name="admin-student-analytics"),
+    path("admin/system/health/", system_health, name="admin-system-health"),
+    
+    # Administrative Payment Action APIs (Issue #116)
+    path("admin/payments/refunds/", process_refund, name="admin-process-refund"),
+    path("admin/payments/refunds/<str:refund_id>/status/", get_refund_status, name="admin-refund-status"),
+    path("admin/payments/transactions/<int:transaction_id>/refunds/", list_transaction_refunds, name="admin-transaction-refunds"),
+    
+    path("admin/payments/disputes/sync/", sync_dispute_from_stripe, name="admin-sync-dispute"),
+    path("admin/payments/disputes/<int:dispute_id>/evidence/", submit_dispute_evidence, name="admin-submit-evidence"),
+    path("admin/payments/disputes/<str:stripe_dispute_id>/details/", get_dispute_details, name="admin-dispute-details"),
+    path("admin/payments/disputes/", list_disputes, name="admin-list-disputes"),
+    path("admin/payments/disputes/<int:dispute_id>/notes/", update_dispute_notes, name="admin-update-dispute-notes"),
+    path("admin/payments/disputes/overdue/", get_overdue_disputes, name="admin-overdue-disputes"),
+    
+    path("admin/payments/fraud/transactions/<int:transaction_id>/analyze/", analyze_transaction_fraud, name="admin-analyze-transaction-fraud"),
+    path("admin/payments/fraud/users/<int:user_id>/analyze/", analyze_user_fraud, name="admin-analyze-user-fraud"),
+    path("admin/payments/fraud/batch-analysis/", run_batch_fraud_analysis, name="admin-batch-fraud-analysis"),
+    path("admin/payments/fraud/alerts/", get_active_fraud_alerts, name="admin-fraud-alerts"),
+    
+    path("admin/payments/retries/", retry_failed_payment, name="admin-retry-payment"),
+    path("admin/payments/audit-log/", get_admin_action_log, name="admin-action-log"),
     
     # TODO: Add subscription webhook endpoint when subscription features are implemented
     # path("webhooks/stripe/subscriptions/", subscription_webhook, name="subscription-webhook"),

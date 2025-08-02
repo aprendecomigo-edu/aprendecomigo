@@ -1,0 +1,249 @@
+QA Test Case: Payment Dashboard Metrics and Real-time Updates
+
+Test ID: PAY-001
+Test Name: Payment Dashboard Metrics and Real-time Updates
+Purpose: Verify payment analytics dashboard displays correctly with real-time metrics, charts, and monitoring data for GitHub issue #59
+Expected Result: Admin successfully accesses payment dashboard with all metrics displayed correctly and real-time updates functioning
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform - Payment Monitoring System
+- Architecture: Django REST Framework backend + React Native Expo frontend
+- Database: PostgreSQL with payment transaction test data
+- WebSocket: Django Channels for real-time updates
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: make dev-open
+4. Backend: http://localhost:8000
+5. Frontend: http://localhost:8081
+
+Test Data:
+- Admin User Email: admin@test.com (must be superuser)
+- Admin Role: superuser with payment monitoring access
+- Required Data: Payment transaction history with various statuses
+- Stripe Integration: Test webhook events and payment processing data
+- Required Models: PurchaseTransaction, WebhookEventLog records
+- Time Range Data: Transactions spanning last 30 days for trend analysis
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  source ../.venv/bin/activate
+  make dev-open
+
+Expected: Both Django and Expo servers start successfully, browser opens to localhost:8081
+Screenshot: 01-servers-started.png
+Debug: Use 'make logs' if servers fail to start or check payment monitoring API endpoints
+
+Step 2: Admin Authentication and Dashboard Access
+1. Navigate to http://localhost:8081/admin
+2. Enter admin credentials: admin@test.com
+3. Complete email verification process
+4. Verify successful admin authentication
+5. Navigate to payment monitoring dashboard at /admin/payments/dashboard
+
+Expected: Admin authentication works and payment dashboard is accessible
+Screenshot: 02-admin-login-success.png
+PASS if: Admin login completes and payment dashboard loads
+FAIL if: Login fails, verification issues, or dashboard not accessible
+
+Step 3: Payment Dashboard Initial Load and Layout
+1. Verify payment dashboard page loads at /admin/payments/dashboard
+2. Check page title shows "Payment Monitoring Dashboard" or similar
+3. Verify loading states complete within 5 seconds
+4. Check for any error messages or broken components
+5. Verify admin-only permission enforcement
+
+Expected: Payment dashboard loads completely without errors
+Screenshot: 03-payment-dashboard-landing.png
+PASS if: Dashboard loads with all components visible, no error messages
+FAIL if: Page doesn't load, shows errors, permission denied, or takes longer than 10 seconds
+
+Step 4: Payment Metrics Grid Verification
+1. Locate PaymentMetricsGrid component with key metrics
+2. Verify the following metrics are displayed:
+   - Total Transaction Volume (last 24h, 7d, 30d)
+   - Payment Success Rate percentage
+   - Failed Transaction Count
+   - Total Revenue (properly formatted currency)
+   - Average Transaction Value
+   - Webhook Processing Status
+3. Check that all metrics show actual data (not zeros/placeholders)
+4. Verify proper currency formatting (€ symbols)
+5. Check metric card layout and responsiveness
+
+Expected: All payment metrics display with correct values and formatting
+Screenshot: 04-payment-metrics-grid.png
+PASS if: All metrics display correct data with proper formatting
+FAIL if: Missing metrics, incorrect values, formatting issues, or display errors
+
+Step 5: Time-based Filtering Testing
+1. Locate time filter controls (24h, 7d, 30d buttons or dropdown)
+2. Test clicking 24h filter:
+   - Verify metrics update to show last 24 hours data
+   - Check that chart data updates accordingly
+   - Verify loading state during data fetch
+3. Test clicking 7d filter:
+   - Verify metrics update to show last 7 days data
+   - Check chart updates
+4. Test clicking 30d filter:
+   - Verify metrics update to show last 30 days data
+   - Check chart updates
+5. Verify URL parameters update with selected time range
+
+Expected: Time filtering works correctly and updates all dashboard components
+Screenshot: 05-time-filtering.png
+PASS if: All time filters work and update metrics/charts correctly
+FAIL if: Filters don't work, incorrect data shown, or loading errors
+
+Step 6: Payment Trend Chart Verification
+1. Locate PaymentTrendChart component
+2. Verify chart displays payment trends over time
+3. Check chart elements:
+   - X-axis shows time periods correctly
+   - Y-axis shows transaction values/counts
+   - Chart line/bars display properly
+   - Hover interactions work (tooltips)
+   - Legend displays correctly
+4. Test chart responsiveness on different screen sizes
+5. Verify chart updates when time filters change
+
+Expected: Payment trend chart displays correctly with interactive features
+Screenshot: 06-payment-trend-chart.png
+PASS if: Chart displays properly with correct data and interactions
+FAIL if: Chart doesn't load, incorrect data, broken interactions, or display issues
+
+Step 7: Webhook Status Monitoring
+1. Locate WebhookStatusIndicator component
+2. Verify webhook health status display:
+   - Overall webhook system status (healthy/degraded/error)
+   - Recent webhook processing statistics
+   - Failed webhook count and alerts
+   - Average processing time metrics
+3. Check status color coding (green/yellow/red)
+4. Verify webhook event log summary
+5. Test navigation to detailed webhook status page
+
+Expected: Webhook status displays accurately with proper health indicators
+Screenshot: 07-webhook-status.png
+PASS if: Webhook status shows correct health and processing data
+FAIL if: Status incorrect, missing data, or broken navigation
+
+Step 8: Recent Transactions Table
+1. Locate RecentTransactionsTable component
+2. Verify table displays recent payment transactions:
+   - Transaction ID/reference
+   - Student name/email
+   - Amount and currency
+   - Payment status (success/failed/pending)
+   - Transaction date/time
+   - Transaction type
+3. Check table pagination (if applicable)
+4. Verify table sorting functionality
+5. Test clicking rows for transaction details
+
+Expected: Recent transactions table displays current payment data
+Screenshot: 08-recent-transactions.png
+PASS if: Table shows accurate transaction data with proper formatting
+FAIL if: Table empty, incorrect data, broken sorting, or display issues
+
+Step 9: Real-time Updates via WebSocket
+1. Note current dashboard metrics and transaction counts
+2. Verify WebSocket connection status (check browser dev tools)
+3. If possible, trigger a test payment transaction:
+   - Use test student account to make a purchase
+   - Or use backend admin to create test transaction
+4. Verify dashboard metrics update automatically (within 30 seconds)
+5. Check that new transactions appear in recent transactions table
+6. Verify metric counters increment appropriately
+
+Expected: Dashboard updates in real-time when new payment events occur
+Screenshot: 09-realtime-updates.png
+PASS if: Dashboard updates automatically with new payment data
+FAIL if: No real-time updates, WebSocket connection issues, or delayed updates
+
+Step 10: Admin Navigation and Deep Links
+1. Test navigation to other admin payment sections:
+   - /admin/payments/transactions (transaction management)
+   - /admin/payments/webhooks (webhook monitoring)
+   - /admin/payments/refunds (refund management)
+   - /admin/payments/disputes (dispute management)
+   - /admin/payments/fraud (fraud detection)
+2. Verify navigation links work correctly
+3. Test browser back button to return to dashboard
+4. Verify deep linking to specific dashboard views
+5. Test navigation breadcrumb (if available)
+
+Expected: All admin payment navigation works correctly
+Screenshot: 10-admin-navigation.png
+PASS if: All navigation links work and maintain admin context
+FAIL if: Broken navigation, permission errors, or routing issues
+
+Step 11: Error Handling and Edge Cases
+1. Test dashboard behavior with no payment data:
+   - Clear test data temporarily if possible
+   - Verify empty states display appropriately
+2. Test with network interruption:
+   - Disconnect internet briefly
+   - Verify error messages are user-friendly
+   - Check auto-reconnection behavior
+3. Test with slow API responses:
+   - Verify loading states work properly
+   - Check timeout handling
+4. Test invalid time range parameters in URL
+
+Expected: Dashboard handles errors gracefully with appropriate feedback
+Screenshot: 11-error-handling.png
+PASS if: Error handling works well with clear user feedback
+FAIL if: Poor error messages, crashes, or confusing user experience
+
+Step 12: Performance and Security Verification
+1. Check browser network tab for API call performance:
+   - Payment metrics API (/api/admin/payments/metrics/)
+   - Transaction history API calls
+   - Webhook status API calls
+2. Verify API responses are under 2 seconds
+3. Check that admin-only endpoints reject non-admin users
+4. Verify sensitive payment data is properly masked/protected
+5. Check for any console errors or security warnings
+
+Expected: Dashboard performs well with proper security measures
+Screenshot: 12-performance-security.png
+PASS if: Good performance and proper security controls
+FAIL if: Slow loading, security issues, or performance problems
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Payment dashboard loads completely, all metrics display correctly, time filtering works, charts render properly, real-time updates function, and admin security is enforced
+
+FAIL: Any step fails, dashboard doesn't load, missing metrics, broken filtering, chart issues, no real-time updates, or security problems
+
+Individual Step Criteria:
+- Step 1: PASS if servers start successfully, FAIL if startup errors
+- Step 2: PASS if admin authentication and dashboard access works, FAIL if login/access issues
+- Step 3: PASS if dashboard loads within 10 seconds without errors, FAIL if loading issues
+- Step 4: PASS if all payment metrics display with correct data, FAIL if missing/incorrect metrics
+- Step 5: PASS if time filtering updates all components correctly, FAIL if filtering broken
+- Step 6: PASS if payment trend chart displays and functions properly, FAIL if chart issues
+- Step 7: PASS if webhook status shows accurate health data, FAIL if status incorrect
+- Step 8: PASS if transactions table displays current data properly, FAIL if table issues
+- Step 9: PASS if real-time updates work via WebSocket, FAIL if no real-time functionality
+- Step 10: PASS if all admin navigation works correctly, FAIL if navigation broken
+- Step 11: PASS if error handling is appropriate, FAIL if poor error handling
+- Step 12: PASS if performance good and security proper, FAIL if performance/security issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== GITHUB ISSUE #59 ACCEPTANCE CRITERIA MAPPING ===
+
+This test verifies:
+✓ Real-time payment processing dashboard with key metrics
+✓ Transaction monitoring and failure analysis
+✓ Webhook status and error log viewing
+✓ Revenue analytics and reporting
+✓ Integration with payment monitoring APIs

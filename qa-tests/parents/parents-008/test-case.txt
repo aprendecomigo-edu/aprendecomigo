@@ -1,0 +1,276 @@
+QA Test Case: Real-time Notifications and WebSocket Integration
+
+Test ID: PARENTS-008
+Test Name: Real-time Notifications and WebSocket Communication for Parent-Child Features
+Purpose: Verify real-time notifications work correctly for parent-child interactions, purchase approvals, budget alerts, and family activity updates
+Expected Result: All parent-child communications happen in real-time with reliable WebSocket connections and proper notification handling
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Educational platform
+- Architecture: Django REST backend + React Native frontend with Expo Router
+- Implementation: Real-time notification system (GitHub Issue #58, #113, #114)
+- WebSocket: Django Channels with WebSocket consumers
+- Hooks: useBalanceWebSocket.ts, useNotifications.ts, useWebSocket.ts
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables:
+   - DJANGO_ENV=development
+   - EXPO_PUBLIC_ENV=development
+4. Backend Server: Django running on http://localhost:8000
+5. Frontend Server: Expo dev server on http://localhost:8081
+6. WebSocket Server: Django Channels WebSocket server
+
+Test Data:
+- Parent Email: websocket.parent@example.com
+- Child Email: websocket.child@example.com
+- Parent Name: WebSocket Parent
+- Child Name: WebSocket Child
+- Multiple browsers/tabs for testing simultaneous connections
+- Various notification types and scenarios
+
+Prerequisites:
+- Parent-child relationship established
+- Budget controls configured
+- WebSocket infrastructure functional
+- Notification system enabled
+- Multiple browser support for testing concurrent sessions
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and WebSocket Service Verification
+1. Ensure all servers running including WebSocket support
+2. Verify WebSocket endpoints are accessible
+Commands:
+  # Check WebSocket endpoint availability
+  curl -i -N -H "Connection: Upgrade" \
+    -H "Upgrade: websocket" \
+    -H "Sec-WebSocket-Version: 13" \
+    -H "Sec-WebSocket-Key: test" \
+    http://localhost:8000/ws/notifications/
+
+3. Create parent-child test accounts with established relationship
+4. Verify notification infrastructure is functional
+
+Expected: WebSocket services running and test accounts ready for real-time testing
+Screenshot: 01_websocket_infrastructure_ready.png
+
+Step 2: Initial WebSocket Connection Testing
+1. Open parent dashboard in Browser A (websocket.parent@example.com)
+2. Open child dashboard in Browser B (websocket.child@example.com)
+3. Open browser developer tools in both browsers
+4. Verify WebSocket connections established in Network tab
+5. Check for any WebSocket connection errors or failures
+6. Verify connection heartbeat/ping-pong messages
+
+Expected: WebSocket connections established successfully for both parent and child
+Screenshot: 02_websocket_connections_established.png
+
+Step 3: Purchase Request Real-time Notification
+1. In Browser B (child), initiate a purchase request requiring approval
+2. Submit the purchase request
+3. In Browser A (parent), verify immediate notification appears:
+   - Notification badge updates
+   - Toast/popup notification shows
+   - Dashboard pending approvals count updates
+   - Real-time sound notification (if enabled)
+4. Verify notification contains correct purchase details
+
+Expected: Parent receives immediate real-time notification of child's purchase request
+Screenshot: 03_purchase_request_realtime_notification.png
+
+Step 4: Purchase Approval Real-time Response
+1. In Browser A (parent), approve the pending purchase request
+2. In Browser B (child), verify immediate notification of approval:
+   - Notification that request was approved
+   - Account balance updates in real-time
+   - Purchase confirmation appears
+   - Any UI state changes reflect approval
+3. Check that approval notification includes parent's response notes
+
+Expected: Child receives immediate real-time notification of parent's approval decision
+Screenshot: 04_approval_response_realtime.png
+
+Step 5: Budget Alert Real-time Notifications
+1. Configure budget alerts for the child account (75% threshold)
+2. In Browser B (child), make purchases to approach budget limit
+3. In Browser A (parent), verify real-time budget alerts:
+   - Alert when child approaches 75% of budget
+   - Alert when child reaches 90% of budget  
+   - Alert when child reaches 100% of budget
+4. Check alert timing and accuracy of budget calculations
+
+Expected: Parent receives timely real-time budget alerts as child approaches limits
+Screenshot: 05_budget_alerts_realtime.png
+
+Step 6: Multi-child Notification Testing
+1. Add second child account to parent
+2. Have both children perform actions simultaneously:
+   - Child 1 submits purchase request
+   - Child 2 makes auto-approved purchase
+   - Both actions happen within seconds
+3. Verify parent receives distinct notifications for each child
+4. Check notification ordering and priority handling
+
+Expected: Parent receives separate, identifiable notifications for multiple children
+Screenshot: 06_multi_child_notifications.png
+
+Step 7: WebSocket Connection Resilience Testing
+1. With active WebSocket connections, simulate network interruption:
+   - Temporarily disconnect network
+   - Wait 30 seconds
+   - Reconnect network
+2. Verify WebSocket connections auto-reconnect
+3. Test that queued notifications are delivered after reconnection
+4. Check for duplicate notifications or missing notifications
+
+Expected: WebSocket connections recover gracefully with no message loss
+Screenshot: 07_websocket_connection_recovery.png
+
+Step 8: Notification Persistence and History
+1. Generate several notifications across different types
+2. Close and reopen parent dashboard
+3. Verify unread notifications persist and display correctly
+4. Check notification history/log functionality
+5. Test marking notifications as read/unread
+6. Verify notification cleanup for old notifications
+
+Expected: Notifications persist correctly and provide complete history management
+Screenshot: 08_notification_persistence.png
+
+Step 9: Cross-platform Real-time Sync
+1. Open parent dashboard on desktop browser
+2. Open parent mobile app (or mobile browser)
+3. Generate notification trigger from child account
+4. Verify notification appears on both desktop and mobile simultaneously
+5. Mark notification as read on one device
+6. Verify read status syncs to other device in real-time
+
+Expected: Real-time notifications sync perfectly across all parent devices
+Screenshot: 09_cross_platform_sync.png
+
+Step 10: Notification Settings and Preferences
+1. Access parent notification settings
+2. Configure notification preferences:
+   - Disable purchase request notifications
+   - Enable only budget alert notifications
+   - Set quiet hours for notifications
+3. Test that configured preferences are respected in real-time
+4. Verify preference changes take effect immediately
+
+Expected: Notification preferences control real-time notification behavior correctly
+Screenshot: 10_notification_preferences.png
+
+Step 11: High-volume Notification Testing
+1. Generate multiple rapid notifications:
+   - Multiple purchase requests in quick succession
+   - Budget alerts and account updates
+   - System notifications and announcements
+2. Verify notification system handles high volume without:
+   - Performance degradation
+   - Notification loss
+   - UI freezing or crashes
+3. Test notification rate limiting and batching (if implemented)
+
+Expected: System handles high-volume notifications gracefully without performance issues
+Screenshot: 11_high_volume_notification_test.png
+
+Step 12: Error Handling and Fallback Mechanisms
+1. Test WebSocket failure scenarios:
+   - Server-side WebSocket crash
+   - Client-side connection error
+   - Invalid message format
+2. Verify fallback mechanisms work:
+   - Polling for notifications when WebSocket fails
+   - Error messages for connection issues
+   - Retry logic for failed connections
+3. Test graceful degradation of real-time features
+
+Expected: Robust error handling with appropriate fallback mechanisms
+Screenshot: 12_websocket_error_handling.png
+
+Step 13: Performance and Memory Testing
+1. Keep WebSocket connections open for extended period (30+ minutes)
+2. Generate periodic notifications to maintain activity
+3. Monitor memory usage and performance metrics
+4. Check for memory leaks in WebSocket connections
+5. Verify long-running connection stability
+
+Expected: WebSocket connections remain stable and performant over extended periods
+Screenshot: 13_websocket_performance_test.png
+
+Step 14: Security and Authentication Testing
+1. Test WebSocket authentication requirements:
+   - Attempt WebSocket connection without valid token
+   - Test token expiration during active connection
+   - Verify user can only receive their own notifications
+2. Test notification privacy and isolation:
+   - Verify parent can't receive other family's notifications
+   - Test child account isolation
+3. Check for any information leakage in notifications
+
+Expected: WebSocket connections properly authenticated with complete privacy isolation
+Screenshot: 14_websocket_security_test.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND:
+- WebSocket connections establish reliably for parent and child
+- Purchase request notifications arrive in real-time
+- Purchase approval responses are immediate
+- Budget alerts trigger at correct thresholds in real-time
+- Multi-child notifications work independently and correctly
+- WebSocket connections recover gracefully from interruptions
+- Notifications persist correctly and provide complete history
+- Cross-platform sync works perfectly for all notification types
+- Notification preferences are respected in real-time
+- System handles high-volume notifications without performance issues
+- Error handling provides appropriate fallbacks and recovery
+- WebSocket connections remain stable over extended periods
+- Security and authentication work properly with complete privacy
+
+FAIL: Any step fails OR:
+- WebSocket connections fail to establish or frequently disconnect
+- Notifications delayed significantly or don't arrive at all
+- Real-time sync doesn't work between parent and child interfaces
+- Budget alerts missing, late, or triggering at wrong thresholds
+- Multi-child notifications interfere with each other or get mixed up
+- Connection recovery fails leaving users without notifications
+- Notification persistence broken or history incomplete
+- Cross-platform sync delayed or inconsistent
+- Notification preferences ignored or don't take effect immediately
+- Performance degrades under normal notification volumes
+- Poor error handling leads to connection failures or crashes
+- Memory leaks or instability in long-running connections
+- Security vulnerabilities or privacy leaks in notification system
+
+Individual Step Criteria:
+- Step 1: PASS if WebSocket infrastructure functional, FAIL if services not running
+- Step 2: PASS if connections establish cleanly, FAIL if connection errors
+- Step 3: PASS if purchase notifications immediate, FAIL if delayed/missing notifications
+- Step 4: PASS if approval responses real-time, FAIL if response delays
+- Step 5: PASS if budget alerts timely and accurate, FAIL if alerts wrong/missing
+- Step 6: PASS if multi-child notifications distinct, FAIL if notifications mixed up
+- Step 7: PASS if connection recovery works, FAIL if reconnection fails
+- Step 8: PASS if persistence and history complete, FAIL if data loss
+- Step 9: PASS if cross-platform sync perfect, FAIL if sync delays/failures
+- Step 10: PASS if preferences respected immediately, FAIL if settings ignored
+- Step 11: PASS if high-volume handled well, FAIL if performance degrades
+- Step 12: PASS if error handling robust, FAIL if poor error recovery
+- Step 13: PASS if long-running stability, FAIL if memory leaks/crashes
+- Step 14: PASS if security and privacy complete, FAIL if vulnerabilities found
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Real-time notifications should feel instant and natural
+- Notifications should be informative but not overwhelming
+- Connection issues should be transparent with clear recovery indication
+- Cross-platform experience should be seamless and consistent
+- Notification preferences should provide fine-grained control
+- System should gracefully handle network instability
+- Privacy and security should be completely transparent to users
+- Performance should remain excellent even with active real-time features
