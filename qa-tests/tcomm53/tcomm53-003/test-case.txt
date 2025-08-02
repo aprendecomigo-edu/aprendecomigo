@@ -1,0 +1,230 @@
+QA Test Case: Welcome Message System
+
+Test ID: TCOMM53-003
+Test Name: Welcome Messages Upon Invitation Acceptance
+Purpose: Verify that teachers receive appropriate welcome messages upon invitation acceptance as specified in GitHub Issue #53
+Expected Result: Teachers receive timely, personalized welcome messages immediately after accepting invitations with relevant next steps and resources
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST Framework backend + React Native frontend
+- Focus: GitHub Issue #53 - Welcome messages upon invitation acceptance
+- Dependencies: Email template system and automated workflows
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. `make dev` to start development servers
+4. Prerequisites: Email templates configured, invitation system functional
+
+Test Data:
+- Test School Owner Email: anapmc.carvalho@gmail.com
+- Test Teacher Email: teacher.welcome@example.com
+- School: Test School with configured welcome message templates
+- Test Invitation Token: Generated during test execution
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Preparation
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Development servers start and email system is ready
+Screenshot: 01_welcome_system_ready.png
+
+Step 2: School Owner Configuration
+1. Sign in as school owner: anapmc.carvalho@gmail.com
+2. Navigate to Communication Management dashboard
+3. Access Welcome Message Templates section
+4. Verify existing welcome message templates or create new ones
+
+Expected: Welcome message configuration interface accessible
+Screenshot: 02_welcome_config_access.png
+
+Step 3: Configure Welcome Message Template
+1. Create or edit "Teacher Welcome" template
+2. Set subject: "Welcome to {{school_name}} - Let's Get Started!"
+3. Design welcome message content:
+   - Enthusiastic greeting with teacher name
+   - Brief school welcome and mission statement
+   - Next steps for profile completion
+   - Resource links and helpful materials
+   - Contact information for immediate questions
+   - Celebration of joining the team
+4. Include template variables: {{teacher_name}}, {{school_name}}, {{profile_link}}
+5. Set timing: "Send immediately upon invitation acceptance"
+6. Enable automatic sending
+7. Save template configuration
+
+Expected: Welcome message template configured successfully
+Screenshot: 03_welcome_template_configured.png
+
+Step 4: Create Teacher Invitation for Testing
+1. Navigate to Teacher Invitation section
+2. Create invitation for: teacher.welcome@example.com
+3. Use professional invitation template
+4. Send invitation and note the invitation token/link
+5. Verify invitation is sent successfully
+
+Expected: Test invitation created and sent
+Screenshot: 04_test_invitation_sent.png
+
+Step 5: Simulate Teacher Invitation Acceptance
+1. Open new browser tab/incognito window
+2. Navigate to invitation acceptance URL
+3. Complete teacher invitation acceptance process:
+   - Click invitation link
+   - Accept the invitation
+   - Begin profile setup process
+4. Monitor for immediate welcome message trigger
+
+Expected: Invitation acceptance process completes successfully
+Screenshot: 05_invitation_accepted.png
+
+Step 6: Verify Welcome Message Trigger
+1. Check server logs immediately after invitation acceptance
+2. Look for welcome message email generation
+3. Verify welcome message is triggered automatically
+4. Check email content in logs matches template configuration
+5. Verify timing is immediate (within seconds of acceptance)
+
+Expected: Welcome message triggers automatically upon acceptance
+Screenshot: 06_welcome_message_triggered.png
+
+Step 7: Validate Welcome Message Content
+1. Examine welcome message content in server logs
+2. Verify welcome message includes:
+   - Personalized greeting with teacher's name
+   - Enthusiastic tone and school welcome
+   - Clear next steps for profile completion
+   - Resource links and helpful information
+   - Contact details for support
+   - Professional school branding
+3. Check both HTML and plain text versions
+4. Verify all template variables are properly substituted
+
+Expected: Welcome message content is complete and personalized
+Screenshot: 07_welcome_content_validation.png
+
+Step 8: Test Welcome Message Timing
+1. Create multiple test invitations with different teachers
+2. Accept invitations at different times
+3. Verify welcome messages are sent immediately for each acceptance
+4. Check that there are no delays or batch processing issues
+5. Verify messages are not duplicated
+
+Expected: Welcome messages are sent immediately without delays
+Screenshot: 08_welcome_timing_test.png
+
+Step 9: Welcome Message Customization Testing
+1. Test different welcome message templates for different roles:
+   - Full-time teacher welcome
+   - Part-time teacher welcome
+   - Substitute teacher welcome
+   - Specialist teacher welcome
+2. Verify each template has appropriate content
+3. Test custom welcome messages for specific schools
+4. Verify role-based customization works properly
+
+Expected: Welcome messages adapt to different teacher roles and contexts
+Screenshot: 09_welcome_customization.png
+
+Step 10: In-App Welcome Experience
+1. After invitation acceptance, continue with onboarding flow
+2. Verify in-app welcome messages appear
+3. Check for welcome notifications or banners
+4. Verify welcome tour or guided experience (if implemented)
+5. Test welcome message consistency between email and app
+
+Expected: In-app welcome experience complements email welcome
+Screenshot: 10_inapp_welcome_experience.png
+
+Step 11: Welcome Message Analytics
+1. Access communication analytics dashboard
+2. Check welcome message delivery rates
+3. Verify open rates and engagement metrics (if available)
+4. Test welcome message tracking and reporting
+5. Verify analytics data is accurate and up-to-date
+
+Expected: Welcome message analytics provide useful insights
+Screenshot: 11_welcome_analytics.png
+
+Step 12: Error Handling for Welcome Messages
+1. Test invitation acceptance with missing welcome template
+2. Verify fallback welcome message is used
+3. Test welcome message sending failures
+4. Check error logging and notification systems
+5. Verify recovery mechanisms for failed welcome messages
+
+Expected: System handles welcome message errors gracefully
+Screenshot: 12_welcome_error_handling.png
+
+Step 13: Multi-Platform Welcome Experience
+1. Test welcome message rendering on desktop
+2. Test welcome message on mobile devices
+3. Test welcome message in different email clients
+4. Verify responsive design and readability
+5. Check cross-platform consistency
+
+Expected: Welcome messages work consistently across all platforms
+Screenshot: 13_multiplatform_welcome.png
+
+Step 14: Welcome Message Workflow Integration
+1. Verify welcome message integrates with onboarding workflow
+2. Check that welcome message links lead to correct onboarding steps
+3. Test progress tracking after welcome message
+4. Verify welcome message doesn't interfere with other communications
+5. Test welcome message in complete end-to-end teacher onboarding
+
+Expected: Welcome messages integrate seamlessly with full onboarding workflow
+Screenshot: 14_welcome_workflow_integration.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND all of the following conditions are met:
+- Welcome messages are triggered immediately upon invitation acceptance
+- Welcome message content is personalized and professional
+- Messages include clear next steps and helpful resources
+- Template system allows customization for different teacher roles
+- In-app welcome experience complements email welcome messages
+- Analytics provide accurate tracking of welcome message effectiveness
+- Error handling ensures fallback messages are available
+- Multi-platform rendering is consistent and professional
+- Welcome messages integrate properly with onboarding workflow
+- No duplicate or missed welcome messages occur
+- All welcome message features work reliably
+
+FAIL: Any step fails OR any of the following occurs:
+- Welcome messages are not triggered upon invitation acceptance
+- Messages lack personalization or contain template errors
+- Content is unprofessional or missing key information
+- Template customization doesn't work for different roles
+- In-app and email welcome experiences are inconsistent
+- Analytics are missing or provide inaccurate data
+- Error handling fails to provide fallback messages
+- Multi-platform rendering issues affect readability
+- Welcome messages interfere with onboarding workflow
+- Duplicate messages are sent or messages are missed
+- System shows errors during welcome message processing
+
+Individual Step Criteria:
+- Step 1: PASS if environment ready, FAIL if setup issues
+- Step 2: PASS if configuration accessible, FAIL if access problems
+- Step 3: PASS if template configuration works, FAIL if config issues
+- Step 4: PASS if invitation sent successfully, FAIL if sending problems
+- Step 5: PASS if acceptance process works, FAIL if acceptance issues
+- Step 6: PASS if welcome message triggers, FAIL if no trigger
+- Step 7: PASS if content is complete, FAIL if missing elements
+- Step 8: PASS if timing is immediate, FAIL if delays occur
+- Step 9: PASS if customization works, FAIL if adaptation issues
+- Step 10: PASS if in-app experience works, FAIL if inconsistencies
+- Step 11: PASS if analytics work, FAIL if tracking issues
+- Step 12: PASS if error handling works, FAIL if poor error management
+- Step 13: PASS if multi-platform works, FAIL if rendering issues
+- Step 14: PASS if workflow integration works, FAIL if integration problems
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

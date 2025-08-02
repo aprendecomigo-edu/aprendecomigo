@@ -47,6 +47,8 @@ from .models import (
     EmailSequenceStep,
     EmailCommunication,
     SchoolEmailTemplate,
+    EmailTemplateType,
+    EmailCommunicationType,
     InvitationStatus,
     ParentChildRelationship,
     ParentProfile,
@@ -7373,7 +7375,7 @@ class SchoolEmailTemplateViewSet(viewsets.ModelViewSet):
         ).select_related('school', 'created_by').order_by('-created_at')
     
     def perform_create(self, serializer):
-        """Set the school and created_by fields when creating a template."""
+        """Set the school and created_by fields when creating a template with security validation."""
         # Determine the school - use the school from request data or user's default school
         school_id = self.request.data.get('school')
         if school_id:
@@ -7391,7 +7393,91 @@ class SchoolEmailTemplateViewSet(viewsets.ModelViewSet):
                 raise PermissionDenied("You don't manage any schools")
             school = School.objects.get(id=school_ids[0])
         
+        # Additional security validation for template content
+        self._validate_template_content_security(serializer.validated_data)
+        
         serializer.save(school=school, created_by=self.request.user)
+    
+    def perform_update(self, serializer):
+        """Update template with security validation."""
+        # Additional security validation for template content
+        self._validate_template_content_security(serializer.validated_data)
+        serializer.save()
+    
+    def _validate_template_content_security(self, validated_data):
+        """
+        Validate template content for security vulnerabilities.
+        
+        Args:
+            validated_data: Dictionary of validated data from serializer
+            
+        Raises:
+            ValidationError: If template content contains security vulnerabilities
+        """
+        from .services.secure_template_engine import SecureTemplateEngine
+        from django.core.exceptions import ValidationError
+        from rest_framework.exceptions import ValidationError as DRFValidationError
+        
+        try:
+            # Validate subject template
+            if 'subject_template' in validated_data:
+                SecureTemplateEngine.validate_template_content(validated_data['subject_template'])
+            
+            # Validate HTML content
+            if 'html_content' in validated_data:
+                SecureTemplateEngine.validate_template_content(validated_data['html_content'])
+            
+            # Validate text content
+            if 'text_content' in validated_data:
+                SecureTemplateEngine.validate_template_content(validated_data['text_content'])
+            
+            # Validate custom CSS
+            if 'custom_css' in validated_data and validated_data['custom_css']:
+                self._validate_custom_css_security(validated_data['custom_css'])
+                
+        except ValidationError as e:
+            raise DRFValidationError(f"Template security validation failed: {str(e)}")
+    
+    def _validate_custom_css_security(self, css_content):
+        """
+        Validate custom CSS for security vulnerabilities.
+        
+        Args:
+            css_content: CSS content to validate
+            
+        Raises:
+            ValidationError: If CSS contains dangerous patterns
+        """
+        import re
+        from django.core.exceptions import ValidationError
+        
+        if not css_content:
+            return
+        
+        # Check for dangerous CSS patterns
+        dangerous_patterns = [
+            r'@import\s+url\s*\(',
+            r'javascript\s*:',
+            r'expression\s*\(',
+            r'behavior\s*:',
+            r'-moz-binding\s*:',
+            r'binding\s*:',
+            r'<script',
+            r'</script>',
+            r'alert\s*\(',
+            r'eval\s*\(',
+            r'document\.',
+            r'window\.',
+        ]
+        
+        css_lower = css_content.lower()
+        for pattern in dangerous_patterns:
+            if re.search(pattern, css_lower):
+                raise ValidationError(f"Custom CSS contains dangerous pattern: {pattern}")
+        
+        # Check CSS size
+        if len(css_content) > 10000:  # 10KB limit
+            raise ValidationError("Custom CSS too large. Maximum size is 10KB")
     
     @action(detail=True, methods=['post'])
     def preview(self, request, pk=None):
@@ -7410,17 +7496,30 @@ class SchoolEmailTemplateViewSet(viewsets.ModelViewSet):
         
         variables = serializer.validated_data['template_variables']
         
-        # Render the template with variables
+        # Validate template variables for security
+        from .services.secure_template_engine import TemplateVariableValidator
+        from django.core.exceptions import ValidationError
+        
+        try:
+            TemplateVariableValidator.validate_context(variables)
+        except ValidationError as e:
+            return Response(
+                {"error": f"Template variables validation failed: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Render the template with variables using secure service
         from .services.email_template_service import EmailTemplateRenderingService
         
         try:
-            rendering_service = EmailTemplateRenderingService()
-            rendered_content = rendering_service.render_template(template, variables)
+            subject, html_content, text_content = EmailTemplateRenderingService.render_template(
+                template, variables, request=self.request
+            )
             
             return Response({
-                'rendered_subject': rendered_content['subject'],
-                'rendered_html': rendered_content['html_content'],
-                'rendered_text': rendered_content['text_content'],
+                'rendered_subject': subject,
+                'rendered_html': html_content,
+                'rendered_text': text_content,
                 'template_variables': variables,
                 'template_id': template.id
             }, status=status.HTTP_200_OK)
@@ -7428,7 +7527,7 @@ class SchoolEmailTemplateViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Failed to preview template {template.id}: {e}")
             return Response(
-                {"error": "Failed to render template preview"},
+                {"error": f"Failed to render template preview: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
@@ -7808,3 +7907,386 @@ class ParentChildRelationshipViewSet(KnoxAuthenticatedViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ============================
+# Enhanced Communication API Views
+# ============================
+
+class EnhancedSchoolEmailTemplateViewSet(viewsets.ModelViewSet):
+    """
+    Enhanced ViewSet for managing school email templates with additional frontend features.
+    Extends the existing SchoolEmailTemplateViewSet with preview and testing capabilities.
+    """
+    
+    serializer_class = SchoolEmailTemplateSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    
+    def get_queryset(self):
+        """Filter templates by user's schools."""
+        user = self.request.user
+        school_ids = list_school_ids_owned_or_managed(user)
+        return SchoolEmailTemplate.objects.filter(
+            school_id__in=school_ids
+        ).select_related('school', 'created_by').order_by('-created_at')
+    
+    @action(detail=True, methods=['post'])
+    def preview(self, request, pk=None):
+        """Generate template preview with provided variables."""
+        from .services.email_template_service import EmailTemplateRenderingService
+        from rest_framework.exceptions import ValidationError as DRFValidationError
+        
+        template = self.get_object()
+        variables = request.data.get('variables', {})
+        
+        try:
+            # Merge with default variables
+            rendering_service = EmailTemplateRenderingService()
+            context_variables = {**rendering_service.DEFAULT_VARIABLES, **variables}
+            
+            # Add school-specific variables
+            context_variables.update({
+                'school_name': template.school.name,
+                'school_email': template.school.contact_email,
+                'school_primary_color': template.school.primary_color,
+                'school_secondary_color': template.school.secondary_color,
+            })
+            
+            # Render the template
+            rendered = rendering_service.render_template(template, context_variables)
+            
+            return Response({
+                'subject': rendered['subject'],
+                'html_content': rendered['html_content'],
+                'text_content': rendered['text_content'],
+                'variables_used': list(context_variables.keys())
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Template preview error for template {pk}: {str(e)}")
+            return Response({
+                'error': 'Failed to generate preview',
+                'details': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'])
+    def send_test(self, request, pk=None):
+        """Send test email with template."""
+        from .services.enhanced_email_service import EnhancedEmailService
+        from django.core.validators import validate_email
+        from django.core.exceptions import ValidationError
+        
+        template = self.get_object()
+        test_email = request.data.get('test_email')
+        variables = request.data.get('variables', {})
+        
+        # Validate test email
+        if not test_email:
+            return Response({
+                'error': 'test_email is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            validate_email(test_email)
+        except ValidationError:
+            return Response({
+                'error': 'Invalid email address'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Prepare context variables
+            context_variables = {
+                'teacher_name': 'Test User',
+                'school_name': template.school.name,
+                'school_email': template.school.contact_email,
+                **variables
+            }
+            
+            # Send test email
+            email_service = EnhancedEmailService()
+            success = email_service.send_template_email(
+                template=template,
+                recipient_email=test_email,
+                context_variables=context_variables,
+                sender_user=request.user
+            )
+            
+            if success:
+                return Response({
+                    'success': True,
+                    'message': 'Test email sent successfully'
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'message': 'Failed to send test email'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        except Exception as e:
+            logger.error(f"Test email send error for template {pk}: {str(e)}")
+            return Response({
+                'success': False,
+                'error': 'Failed to send test email',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SchoolBrandingAPIView(APIView):
+    """
+    API for managing school branding settings for email templates.
+    """
+    
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    
+    def get(self, request, *args, **kwargs):
+        """Get school branding settings."""
+        # Get user's primary school
+        school_ids = list_school_ids_owned_or_managed(request.user)
+        if not school_ids:
+            return Response({
+                'error': 'No managed schools found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        school = School.objects.get(id=school_ids[0])
+        
+        return Response({
+            'school_id': school.id,
+            'school_name': school.name,
+            'primary_color': school.primary_color,
+            'secondary_color': school.secondary_color,
+            'text_color': school.text_color,
+            'background_color': school.background_color,
+            'logo_url': school.logo.url if school.logo else None,
+        }, status=status.HTTP_200_OK)
+    
+    def put(self, request, *args, **kwargs):
+        """Update school branding settings."""
+        from .serializers import SchoolBrandingSerializer
+        
+        # Get user's primary school
+        school_ids = list_school_ids_owned_or_managed(request.user)
+        if not school_ids:
+            return Response({
+                'error': 'No managed schools found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        school = School.objects.get(id=school_ids[0])
+        
+        serializer = SchoolBrandingSerializer(school, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CommunicationAnalyticsAPIView(APIView):
+    """
+    API for communication analytics and performance metrics.
+    """
+    
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    
+    def get(self, request, *args, **kwargs):
+        """Get email performance metrics for user's schools."""
+        from django.db.models import Count, Q, Avg
+        from datetime import datetime, timedelta
+        
+        school_ids = list_school_ids_owned_or_managed(request.user)
+        if not school_ids:
+            return Response({
+                'error': 'No managed schools found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Calculate date range (last 30 days)
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=30)
+        
+        # Get communications for user's schools
+        communications = EmailCommunication.objects.filter(
+            school_id__in=school_ids,
+            sent_at__gte=start_date,
+            sent_at__lte=end_date
+        )
+        
+        # Calculate metrics
+        total_sent = communications.count()
+        delivered_count = communications.filter(
+            delivery_status=EmailDeliveryStatus.DELIVERED
+        ).count()
+        opened_count = communications.filter(opened_at__isnull=False).count()
+        clicked_count = communications.filter(clicked_at__isnull=False).count()
+        
+        # Calculate rates
+        delivery_rate = (delivered_count / total_sent * 100) if total_sent > 0 else 0
+        open_rate = (opened_count / delivered_count * 100) if delivered_count > 0 else 0
+        click_rate = (clicked_count / opened_count * 100) if opened_count > 0 else 0
+        
+        # Get recent communications
+        recent_communications = communications.order_by('-sent_at')[:10].values(
+            'id', 'recipient_email', 'subject', 'delivery_status', 'sent_at'
+        )
+        
+        return Response({
+            'period': {
+                'start_date': start_date.date(),
+                'end_date': end_date.date(),
+                'days': 30
+            },
+            'total_sent': total_sent,
+            'delivery_rate': round(delivery_rate, 2),
+            'open_rate': round(open_rate, 2),
+            'click_rate': round(click_rate, 2),
+            'recent_communications': list(recent_communications)
+        }, status=status.HTTP_200_OK)
+
+
+class TemplateAnalyticsAPIView(APIView):
+    """
+    API for template-specific analytics and usage statistics.
+    """
+    
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    
+    def get(self, request, *args, **kwargs):
+        """Get template usage and performance statistics."""
+        from django.db.models import Count, Q, Avg
+        from datetime import datetime, timedelta
+        
+        school_ids = list_school_ids_owned_or_managed(request.user)
+        if not school_ids:
+            return Response({
+                'error': 'No managed schools found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get templates for user's schools
+        templates = SchoolEmailTemplate.objects.filter(school_id__in=school_ids)
+        
+        # Calculate analytics for each template
+        template_stats = []
+        for template in templates:
+            communications = template.email_communications.all()
+            
+            total_uses = communications.count()
+            successful_deliveries = communications.filter(
+                delivery_status=EmailDeliveryStatus.DELIVERED
+            ).count()
+            
+            success_rate = (successful_deliveries / total_uses * 100) if total_uses > 0 else 0
+            
+            template_stats.append({
+                'template_id': template.id,
+                'template_name': template.name,
+                'template_type': template.template_type,
+                'usage_count': total_uses,
+                'success_rate': round(success_rate, 2),
+                'last_used': communications.order_by('-sent_at').first().sent_at if total_uses > 0 else None
+            })
+        
+        # Sort by usage count
+        template_stats.sort(key=lambda x: x['usage_count'], reverse=True)
+        
+        return Response(template_stats, status=status.HTTP_200_OK)
+
+
+class CommunicationSettingsAPIView(APIView):
+    """
+    API for managing communication settings and preferences.
+    """
+    
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    
+    def get(self, request, *args, **kwargs):
+        """Get communication settings for user's school."""
+        school_ids = list_school_ids_owned_or_managed(request.user)
+        if not school_ids:
+            return Response({
+                'error': 'No managed schools found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        school = School.objects.get(id=school_ids[0])
+        
+        # Get or create school settings
+        settings, created = SchoolSettings.objects.get_or_create(
+            school=school,
+            defaults={
+                'communication_settings': {
+                    'default_from_email': school.contact_email,
+                    'email_signature': f'Best regards,\n{school.name} Team',
+                    'auto_sequence_enabled': True,
+                    'notification_preferences': {
+                        'email_delivery_notifications': True,
+                        'bounce_notifications': True
+                    }
+                }
+            }
+        )
+        
+        comm_settings = settings.communication_settings or {}
+        
+        return Response({
+            'default_from_email': comm_settings.get('default_from_email', school.contact_email),
+            'email_signature': comm_settings.get('email_signature', f'Best regards,\n{school.name} Team'),
+            'auto_sequence_enabled': comm_settings.get('auto_sequence_enabled', True),
+            'notification_preferences': comm_settings.get('notification_preferences', {
+                'email_delivery_notifications': True,
+                'bounce_notifications': True
+            })
+        }, status=status.HTTP_200_OK)
+    
+    def put(self, request, *args, **kwargs):
+        """Update communication settings."""
+        from django.core.validators import validate_email
+        from django.core.exceptions import ValidationError
+        
+        school_ids = list_school_ids_owned_or_managed(request.user)
+        if not school_ids:
+            return Response({
+                'error': 'No managed schools found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        school = School.objects.get(id=school_ids[0])
+        
+        # Validate email if provided
+        default_from_email = request.data.get('default_from_email')
+        if default_from_email:
+            try:
+                validate_email(default_from_email)
+            except ValidationError:
+                return Response({
+                    'error': 'Invalid default_from_email format'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get or create school settings
+        settings, created = SchoolSettings.objects.get_or_create(
+            school=school,
+            defaults={'communication_settings': {}}
+        )
+        
+        # Update communication settings
+        comm_settings = settings.communication_settings or {}
+        
+        if 'default_from_email' in request.data:
+            comm_settings['default_from_email'] = request.data['default_from_email']
+        
+        if 'email_signature' in request.data:
+            comm_settings['email_signature'] = request.data['email_signature']
+        
+        if 'auto_sequence_enabled' in request.data:
+            comm_settings['auto_sequence_enabled'] = request.data['auto_sequence_enabled']
+        
+        if 'notification_preferences' in request.data:
+            comm_settings['notification_preferences'] = request.data['notification_preferences']
+        
+        settings.communication_settings = comm_settings
+        settings.save()
+        
+        return Response({
+            'message': 'Communication settings updated successfully',
+            'settings': comm_settings
+        }, status=status.HTTP_200_OK)

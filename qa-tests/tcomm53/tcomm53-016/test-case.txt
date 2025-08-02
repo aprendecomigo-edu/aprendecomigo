@@ -1,0 +1,205 @@
+QA Test Case: GitHub Issue #53 - API Endpoint Fix Verification
+
+Test ID: TCOMM53-016
+Test Name: Teacher Communication System - API Integration Fix Verification
+Purpose: Verify that the frontend-backend integration is working after API endpoint path fixes
+Expected Result: All communication system features work end-to-end with successful data persistence
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - EdTech Platform
+- Architecture: Django REST Framework Backend + React Native Web Frontend
+- Issue: GitHub Issue #53 - Teacher Invitation Communication System
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: Use `make dev` command
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com
+- User Role: school_owner
+- Test School: Pre-existing school with administrative access
+
+Prerequisites:
+- Previous test showed frontend UI was complete but backend APIs returned 404 errors
+- API endpoint paths have been reportedly fixed from `/communication/` to `/accounts/communication/`
+- Backend communication models and services exist
+- Frontend UI components are fully implemented
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Verification
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Both Django backend and Expo frontend servers start successfully
+Screenshot: 01_servers_started.png
+Verification: Check that both servers report "ready" status
+
+Step 2: Authentication and Dashboard Access
+1. Open browser to http://localhost:8081
+2. Navigate to signin page
+3. Enter email: anapmc.carvalho@gmail.com
+4. Complete passwordless authentication flow
+5. Verify successful login and dashboard access
+
+Expected: User successfully authenticates and reaches school admin dashboard
+Screenshot: 02_dashboard_authenticated.png
+Debug: Use 'make logs' to view server logs if authentication fails
+
+Step 3: Email Communications Access Verification
+1. From dashboard, locate and click "Email Communications" section
+2. Verify navigation to communication dashboard
+3. Check for any console errors
+
+Expected: Email Communications section accessible without 404 errors
+Screenshot: 03_email_communications_accessible.png
+Debug: Monitor browser console for errors
+
+Step 4: Template Management API Integration Test
+1. In Email Communications, click "Create New Template"
+2. Navigate to template creation form
+3. Fill out template form:
+   - Template Name: "Test Teacher Invitation"
+   - Template Type: "Teacher Invitation" 
+   - Email Subject: "Welcome to {{school_name}}"
+   - Content: "Hello {{teacher_name}}, welcome to our school!"
+4. Attempt to save template
+
+Expected: Template saves successfully without 404 errors
+Screenshot: 04_template_creation_success.png
+API Call: POST /accounts/communication/templates/ should return 200/201
+Debug: Check network tab for API response codes
+
+Step 5: Template List Retrieval Test
+1. Navigate back to template management
+2. Verify template list loads
+3. Check that previously created template appears
+
+Expected: Template list loads and shows created template
+Screenshot: 05_template_list_loaded.png
+API Call: GET /accounts/communication/templates/ should return 200
+Debug: Verify API returns template data
+
+Step 6: School Branding Configuration Test
+1. Navigate to School Branding section
+2. Verify branding page loads
+3. Attempt to load current branding settings
+4. Try to update branding (colors, logo, etc.)
+
+Expected: School branding interface loads and functions properly
+Screenshot: 06_school_branding_loaded.png
+API Call: GET /accounts/communication/branding/ should return 200
+Debug: Check that branding data loads without errors
+
+Step 7: Template Preview and Variables Test
+1. Return to template creation/editing
+2. Click "Preview" button to test template preview
+3. Click "Variables" button to load available template variables
+4. Verify both features work without API errors
+
+Expected: Preview and variables features work without 404 errors
+Screenshot: 07_template_features_working.png
+API Calls: 
+- GET /accounts/communication/template-variables/ should return 200
+- POST /accounts/communication/templates/validate/ should return 200
+
+Step 8: Analytics Dashboard Test
+1. Navigate to Analytics/Performance section
+2. Verify analytics dashboard loads
+3. Check for email performance metrics
+
+Expected: Analytics section loads without 404 errors
+Screenshot: 08_analytics_dashboard_loaded.png
+API Call: GET /accounts/communication/analytics/ should return 200
+Debug: Verify analytics data loads properly
+
+Step 9: Template Editing and Update Test
+1. Select previously created template
+2. Click edit button
+3. Modify template content
+4. Save changes
+5. Verify updates persist
+
+Expected: Template editing and updating works successfully
+Screenshot: 09_template_edit_success.png
+API Call: PUT /accounts/communication/templates/{id}/ should return 200
+Debug: Verify changes are saved and persistent
+
+Step 10: End-to-End Workflow Test
+1. Create a complete teacher invitation template
+2. Configure school branding
+3. Preview the final template with branding applied
+4. Verify all components work together
+
+Expected: Complete workflow functions without any API errors
+Screenshot: 10_complete_workflow_success.png
+API Integration: All APIs work together seamlessly
+Debug: Monitor full workflow for any failures
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: 
+- ALL API endpoints return successful HTTP status codes (200, 201, 204)
+- NO 404 errors from /accounts/communication/* endpoints
+- Template creation, editing, and deletion work properly
+- School branding configuration loads and saves
+- Template preview and variables features function
+- Analytics dashboard loads without errors
+- Data persistence works (templates save and reload correctly)
+- Complete end-to-end workflow functions
+
+FAIL:
+- ANY 404 errors from communication API endpoints
+- Unable to save or retrieve template data
+- School branding cannot be loaded or saved
+- Template preview or variables return errors
+- Analytics dashboard fails to load
+- Data does not persist between sessions
+- Any critical functionality breaks
+
+Individual Step Criteria:
+- Step 1: PASS if both servers start, FAIL if server startup fails
+- Step 2: PASS if authentication works, FAIL if login fails
+- Step 3: PASS if communications section accessible, FAIL if 404 or errors
+- Step 4: PASS if template creation works, FAIL if 404 or save fails
+- Step 5: PASS if template list loads, FAIL if 404 or no templates shown
+- Step 6: PASS if branding loads/saves, FAIL if 404 or errors
+- Step 7: PASS if preview/variables work, FAIL if 404 or errors  
+- Step 8: PASS if analytics loads, FAIL if 404 or errors
+- Step 9: PASS if template editing works, FAIL if 404 or save fails
+- Step 10: PASS if complete workflow functions, FAIL if any component fails
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== CRITICAL SUCCESS INDICATORS ===
+
+1. **API Endpoint Resolution**: All /accounts/communication/* endpoints return successful responses
+2. **Data Persistence**: Templates and branding settings save and reload correctly
+3. **Frontend-Backend Integration**: No 404 errors, data flows properly between UI and API
+4. **Complete Functionality**: All major features (templates, branding, analytics) work end-to-end
+5. **User Experience**: Smooth workflow without errors or interruptions
+
+=== DEBUGGING GUIDANCE ===
+
+If tests fail:
+1. Check backend logs: `make logs` 
+2. Verify API endpoint URLs in browser network tab
+3. Confirm Django URL routing includes communication endpoints
+4. Check that backend communication views are properly configured
+5. Verify database migrations are applied for communication models
+6. Test API endpoints directly with curl or Postman if needed
+
+Expected API Endpoints (should all return 200/201):
+- GET /accounts/communication/templates/
+- POST /accounts/communication/templates/
+- PUT /accounts/communication/templates/{id}/
+- DELETE /accounts/communication/templates/{id}/
+- GET /accounts/communication/branding/
+- POST /accounts/communication/branding/
+- GET /accounts/communication/analytics/
+- GET /accounts/communication/template-variables/
+- POST /accounts/communication/templates/validate/

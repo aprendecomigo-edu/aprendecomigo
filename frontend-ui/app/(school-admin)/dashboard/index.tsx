@@ -6,6 +6,9 @@ import {
   WifiOffIcon,
   SchoolIcon,
   ChevronDownIcon,
+  MailIcon,
+  UsersIcon,
+  SettingsIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -21,9 +24,104 @@ const MetricsCard = ({ metrics, isLoading }: any) => (
   </Box>
 );
 
-const QuickActionsPanel = ({ school, onAction }: any) => (
-  <Box className="p-4 bg-white rounded-lg border">
-    <Text>QuickActionsPanel Placeholder</Text>
+const QuickActionsPanel = ({ 
+  onInviteTeacher, 
+  onAddStudent, 
+  onScheduleClass, 
+  onViewMessages, 
+  onManageUsers, 
+  onManageInvitations, 
+  onSettings,
+  onCommunication 
+}: any) => (
+  <Box className="p-6 bg-white rounded-lg border shadow-sm">
+    <VStack space="md">
+      <Heading size="md" className="text-gray-900">
+        Quick Actions
+      </Heading>
+      
+      <VStack space="sm" className={isWeb ? 'lg:grid lg:grid-cols-2 lg:gap-3' : ''}>
+        {/* Communication System */}
+        <Pressable
+          onPress={onCommunication}
+          className="flex-row items-center p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 active:bg-purple-100"
+        >
+          <Box className="mr-3 p-2 bg-purple-500 rounded-full">
+            <Icon as={MailIcon} size="sm" className="text-white" />
+          </Box>
+          <VStack className="flex-1">
+            <Text className="font-semibold text-gray-900">Email Communications</Text>
+            <Text className="text-sm text-gray-600">
+              Manage email templates and teacher communications
+            </Text>
+          </VStack>
+        </Pressable>
+
+        {/* Invite Teacher */}
+        <Pressable
+          onPress={onInviteTeacher}
+          className="flex-row items-center p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 active:bg-blue-100"
+        >
+          <Box className="mr-3 p-2 bg-blue-500 rounded-full">
+            <Icon as={UsersIcon} size="sm" className="text-white" />
+          </Box>
+          <VStack className="flex-1">
+            <Text className="font-semibold text-gray-900">Invite Teacher</Text>
+            <Text className="text-sm text-gray-600">
+              Send invitations to new teachers
+            </Text>
+          </VStack>
+        </Pressable>
+
+        {/* Add Student */}
+        <Pressable
+          onPress={onAddStudent}
+          className="flex-row items-center p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 active:bg-green-100"
+        >
+          <Box className="mr-3 p-2 bg-green-500 rounded-full">
+            <Icon as={SchoolIcon} size="sm" className="text-white" />
+          </Box>
+          <VStack className="flex-1">
+            <Text className="font-semibold text-gray-900">Add Student</Text>
+            <Text className="text-sm text-gray-600">
+              Register new students to your school
+            </Text>
+          </VStack>
+        </Pressable>
+
+        {/* Manage Invitations */}
+        <Pressable
+          onPress={onManageInvitations}
+          className="flex-row items-center p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 active:bg-orange-100"
+        >
+          <Box className="mr-3 p-2 bg-orange-500 rounded-full">
+            <Icon as={AlertTriangleIcon} size="sm" className="text-white" />
+          </Box>
+          <VStack className="flex-1">
+            <Text className="font-semibold text-gray-900">Manage Invitations</Text>
+            <Text className="text-sm text-gray-600">
+              Track and manage teacher invitations
+            </Text>
+          </VStack>
+        </Pressable>
+
+        {/* Settings */}
+        <Pressable
+          onPress={onSettings}
+          className="flex-row items-center p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 active:bg-gray-100"
+        >
+          <Box className="mr-3 p-2 bg-gray-500 rounded-full">
+            <Icon as={SettingsIcon} size="sm" className="text-white" />
+          </Box>
+          <VStack className="flex-1">
+            <Text className="font-semibold text-gray-900">School Settings</Text>
+            <Text className="text-sm text-gray-600">
+              Configure school preferences and details
+            </Text>
+          </VStack>
+        </Pressable>
+      </VStack>
+    </VStack>
   </Box>
 );
 
@@ -150,6 +248,10 @@ const SchoolAdminDashboard = () => {
 
   const handleSettings = useCallback(() => {
     router.push('/(school-admin)/settings');
+  }, []);
+
+  const handleCommunication = useCallback(() => {
+    router.push('/(school-admin)/communication');
   }, []);
 
   const handleUpdateSchool = useCallback(
@@ -433,6 +535,7 @@ const SchoolAdminDashboard = () => {
               onManageUsers={handleManageUsers}
               onManageInvitations={handleManageInvitations}
               onSettings={handleSettings}
+              onCommunication={handleCommunication}
             />
           </VStack>
 

@@ -2744,3 +2744,45 @@ class ParentChildRelationshipSerializer(serializers.ModelSerializer):
                     )
         
         return data
+
+
+class SchoolBrandingSerializer(serializers.ModelSerializer):
+    """
+    Serializer for School branding settings used in communication templates.
+    """
+    
+    class Meta:
+        model = School
+        fields = [
+            'id', 'name', 'primary_color', 'secondary_color', 
+            'text_color', 'background_color', 'logo'
+        ]
+        read_only_fields = ['id', 'name']
+    
+    def validate_primary_color(self, value):
+        """Validate primary color format."""
+        import re
+        if value and not re.match(r'^#[0-9A-Fa-f]{6}$', value):
+            raise serializers.ValidationError('Primary color must be a valid hex color (e.g., #3B82F6)')
+        return value
+    
+    def validate_secondary_color(self, value):
+        """Validate secondary color format."""
+        import re
+        if value and not re.match(r'^#[0-9A-Fa-f]{6}$', value):
+            raise serializers.ValidationError('Secondary color must be a valid hex color (e.g., #10B981)')
+        return value
+    
+    def validate_text_color(self, value):
+        """Validate text color format."""
+        import re
+        if value and not re.match(r'^#[0-9A-Fa-f]{6}$', value):
+            raise serializers.ValidationError('Text color must be a valid hex color (e.g., #1F2937)')
+        return value
+    
+    def validate_background_color(self, value):
+        """Validate background color format."""
+        import re
+        if value and not re.match(r'^#[0-9A-Fa-f]{6}$', value):
+            raise serializers.ValidationError('Background color must be a valid hex color (e.g., #F9FAFB)')
+        return value

@@ -1,0 +1,2 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250802-064859,2025-08-02T06:48:59Z,PARTIAL_PASS,10,5,Playwright Chrome,macOS development,Frontend UI 100% complete - Backend API endpoints missing (404 errors)

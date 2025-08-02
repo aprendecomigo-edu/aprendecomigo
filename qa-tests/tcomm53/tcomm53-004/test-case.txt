@@ -1,0 +1,258 @@
+QA Test Case: Automated Communication Workflow
+
+Test ID: TCOMM53-004
+Test Name: Onboarding Email Sequence with Helpful Tips and Resources
+Purpose: Verify automated email sequences with helpful tips and resources work as specified in GitHub Issue #53 and Issue #100
+Expected Result: Teachers receive timely, relevant email sequences throughout onboarding with helpful tips, resources, and progress encouragement
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST Framework backend with email automation
+- Focus: GitHub Issue #53 - Onboarding email sequence with helpful tips and resources
+- Sub-Issue: GitHub Issue #100 - Automated communication workflow
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. `make dev` to start development servers
+4. Prerequisites: Email template system, automated workflow engine
+
+Test Data:
+- Test School Owner Email: anapmc.carvalho@gmail.com
+- Test Teacher Email: teacher.sequence@example.com
+- School: Test School with configured email sequences
+- Expected Models: EmailSequence, EmailSequenceStep, SequenceEnrollment
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Workflow Engine Check
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Development servers start with email automation system active
+Screenshot: 01_workflow_engine_ready.png
+Debug: Check for celery/background task services running
+
+Step 2: Access Email Sequence Configuration
+1. Sign in as school owner: anapmc.carvalho@gmail.com
+2. Navigate to Communication Management dashboard
+3. Access Email Sequences or Automated Workflows section
+4. Verify sequence management interface loads
+
+Expected: Email sequence configuration interface accessible
+Screenshot: 02_sequence_config_interface.png
+
+Step 3: Create Teacher Onboarding Email Sequence
+1. Click "Create New Sequence" button
+2. Set sequence name: "Teacher Onboarding Journey"
+3. Set sequence type: "Teacher Onboarding"
+4. Configure sequence settings:
+   - Target audience: New teacher invitees
+   - Trigger: Upon invitation acceptance
+   - Duration: 14 days
+   - Frequency: Strategic intervals
+5. Save sequence configuration
+
+Expected: Email sequence creation successful
+Screenshot: 03_sequence_created.png
+
+Step 4: Configure Sequence Steps with Helpful Content
+Create the following sequence steps:
+
+Step 1 (Day 0 - Immediate):
+- Subject: "Welcome! Your First Steps at {{school_name}}"
+- Content: Welcome message, profile completion guide, what to expect
+- Resources: Profile setup video, document checklist
+
+Step 2 (Day 1):
+- Subject: "Getting Started - Essential Resources for New Teachers"
+- Content: School policies, curriculum overview, helpful tips
+- Resources: Teacher handbook PDF, curriculum guide links
+
+Step 3 (Day 3):
+- Subject: "Profile Progress Check - You're Doing Great!"
+- Content: Progress encouragement, remaining tasks, quick tips
+- Resources: FAQ section, contact information
+
+Step 4 (Day 7):
+- Subject: "Week 1 Complete - Advanced Resources & Tips"
+- Content: Advanced features, teaching tools, community access
+- Resources: Teaching tool tutorials, community links
+
+Step 5 (Day 14):
+- Subject: "Welcome to the Team - You're All Set!"
+- Content: Completion celebration, ongoing support, next steps
+- Resources: Ongoing training calendar, support contacts
+
+Expected: All sequence steps configured with helpful content and resources
+Screenshot: 04_sequence_steps_configured.png
+
+Step 5: Test Sequence Preview and Validation
+1. Use sequence preview functionality
+2. Preview each email in the sequence
+3. Verify content quality and helpfulness:
+   - Tips are practical and actionable
+   - Resources are relevant and accessible
+   - Tone is encouraging and supportive
+   - Information is accurate and up-to-date
+4. Check template variable substitution
+5. Verify timing intervals are appropriate
+
+Expected: Sequence preview shows high-quality, helpful content
+Screenshot: 05_sequence_preview_validated.png
+
+Step 6: Activate Automated Sequence
+1. Review sequence configuration
+2. Set sequence status to "Active"
+3. Configure sequence triggers and conditions
+4. Test sequence activation settings
+5. Save and activate the sequence
+
+Expected: Automated sequence activated successfully
+Screenshot: 06_sequence_activated.png
+
+Step 7: Trigger Sequence with Test Teacher
+1. Create teacher invitation for: teacher.sequence@example.com
+2. Send invitation using standard process
+3. Accept invitation to trigger sequence enrollment
+4. Verify teacher is enrolled in onboarding sequence
+5. Check sequence status and scheduling
+
+Expected: Teacher enrollment in sequence successful
+Screenshot: 07_sequence_triggered.png
+
+Step 8: Validate First Email Delivery
+1. Check server logs for immediate email (Day 0)
+2. Verify first email in sequence is generated and sent
+3. Validate email content matches configured template
+4. Check that helpful resources are included
+5. Verify personalization and school branding
+
+Expected: First sequence email delivered with quality content
+Screenshot: 08_first_email_delivered.png
+
+Step 9: Test Sequence Timing and Automation
+1. Monitor sequence progression over test period
+2. Check that subsequent emails are scheduled correctly
+3. Verify timing intervals match configuration (Days 1, 3, 7, 14)
+4. Test that automation continues without manual intervention
+5. Validate sequence step progression tracking
+
+Expected: Automated timing works correctly with proper intervals
+Screenshot: 09_sequence_timing_validated.png
+
+Step 10: Verify Helpful Tips and Resources Quality
+1. Review all emails in the sequence for:
+   - Practical, actionable teaching tips
+   - Relevant educational resources
+   - School-specific information and policies
+   - Technical guidance for platform use
+   - Encouraging and supportive messaging
+2. Check resource links are functional and helpful
+3. Verify tips are appropriate for new teachers
+
+Expected: All content provides genuine value and practical help
+Screenshot: 10_content_quality_verified.png
+
+Step 11: Test Sequence Personalization
+1. Verify emails include teacher's name and school details
+2. Check that content adapts to teacher's role and subject area
+3. Test sequence customization for different teacher types
+4. Verify school-specific resources and information
+5. Check that personalization variables work correctly
+
+Expected: Sequence emails are properly personalized and relevant
+Screenshot: 11_personalization_tested.png
+
+Step 12: Progress Tracking and Analytics
+1. Access sequence analytics dashboard
+2. Monitor teacher engagement with sequence emails
+3. Check open rates, click-through rates for resources
+4. Verify progress tracking through sequence steps
+5. Test sequence completion metrics
+
+Expected: Analytics provide insights into sequence effectiveness
+Screenshot: 12_sequence_analytics.png
+
+Step 13: Test Sequence Interruption Handling
+1. Test what happens if teacher completes profile early
+2. Verify sequence adaptation to teacher progress
+3. Test sequence pausing/resuming functionality
+4. Check handling of teacher who becomes inactive
+5. Verify sequence cleanup for completed teachers
+
+Expected: Sequence handles various teacher scenarios appropriately
+Screenshot: 13_sequence_interruption_handling.png
+
+Step 14: Multi-Template Sequence Testing
+1. Create additional sequence templates for different scenarios:
+   - Part-time teacher onboarding
+   - Substitute teacher orientation
+   - Specialist teacher sequence
+2. Test multiple sequences running simultaneously
+3. Verify sequence templates can be shared between schools
+4. Test sequence template versioning and updates
+
+Expected: Multiple sequence templates work independently and effectively
+Screenshot: 14_multi_template_sequences.png
+
+Step 15: Error Handling and Reliability
+1. Test sequence behavior during email delivery failures
+2. Verify retry mechanisms for failed emails
+3. Test sequence continuation after system downtime
+4. Check error logging and notification systems
+5. Verify sequence data integrity and recovery
+
+Expected: Sequence system is reliable with proper error handling
+Screenshot: 15_sequence_reliability_tested.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND all of the following conditions are met:
+- Email sequence configuration interface works completely
+- Sequence steps can be created with helpful tips and resources
+- Automated timing works correctly with proper intervals
+- Content quality is high with practical, actionable tips
+- Sequence personalization works for teachers and schools
+- Progress tracking and analytics provide useful insights
+- System handles various teacher scenarios appropriately
+- Multiple sequence templates work independently
+- Error handling ensures sequence reliability and recovery
+- All automated workflows function without manual intervention
+- Resource links are functional and genuinely helpful
+
+FAIL: Any step fails OR any of the following occurs:
+- Sequence configuration interface doesn't work properly
+- Sequence steps cannot be created or contain poor content
+- Automated timing fails or emails are sent at wrong intervals
+- Content lacks practical value or contains unhelpful information
+- Personalization doesn't work or contains template errors
+- Analytics are missing or provide inaccurate data
+- System cannot handle teacher progress variations
+- Multiple sequences interfere with each other
+- Error handling is inadequate or sequences fail to recover
+- Manual intervention is required for sequence operation
+- Resource links are broken or lead to irrelevant content
+
+Individual Step Criteria:
+- Step 1: PASS if workflow engine ready, FAIL if automation issues
+- Step 2: PASS if interface accessible, FAIL if navigation problems
+- Step 3: PASS if sequence creation works, FAIL if configuration issues
+- Step 4: PASS if steps configured with quality content, FAIL if poor content
+- Step 5: PASS if preview validates content, FAIL if content issues
+- Step 6: PASS if sequence activates properly, FAIL if activation problems
+- Step 7: PASS if sequence triggers correctly, FAIL if enrollment issues
+- Step 8: PASS if first email delivers with quality, FAIL if delivery/content issues
+- Step 9: PASS if timing automation works, FAIL if timing problems
+- Step 10: PASS if content provides value, FAIL if unhelpful content
+- Step 11: PASS if personalization works, FAIL if template errors
+- Step 12: PASS if analytics work properly, FAIL if tracking issues
+- Step 13: PASS if interruption handling works, FAIL if scenario failures
+- Step 14: PASS if multi-template system works, FAIL if template conflicts
+- Step 15: PASS if error handling works, FAIL if reliability issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

@@ -169,38 +169,38 @@ class CommunicationApi {
     is_active?: boolean;
     page?: number;
   }): Promise<TemplateListResponse> {
-    const response = await apiClient.get('/api/communication/templates/', { params });
+    const response = await apiClient.get('/accounts/communication/templates/', { params });
     return response.data;
   }
 
   async getTemplate(id: number): Promise<SchoolEmailTemplate> {
-    const response = await apiClient.get(`/api/communication/templates/${id}/`);
+    const response = await apiClient.get(`/accounts/communication/templates/${id}/`);
     return response.data;
   }
 
   async createTemplate(data: CreateTemplateRequest): Promise<SchoolEmailTemplate> {
-    const response = await apiClient.post('/api/communication/templates/', data);
+    const response = await apiClient.post('/accounts/communication/templates/', data);
     return response.data;
   }
 
   async updateTemplate(id: number, data: UpdateTemplateRequest): Promise<SchoolEmailTemplate> {
-    const response = await apiClient.patch(`/api/communication/templates/${id}/`, data);
+    const response = await apiClient.patch(`/accounts/communication/templates/${id}/`, data);
     return response.data;
   }
 
   async deleteTemplate(id: number): Promise<void> {
-    await apiClient.delete(`/api/communication/templates/${id}/`);
+    await apiClient.delete(`/accounts/communication/templates/${id}/`);
   }
 
   async duplicateTemplate(id: number, newName?: string): Promise<SchoolEmailTemplate> {
-    const response = await apiClient.post(`/api/communication/templates/${id}/duplicate/`, {
+    const response = await apiClient.post(`/accounts/communication/templates/${id}/duplicate/`, {
       name: newName,
     });
     return response.data;
   }
 
   async previewTemplate(data: PreviewTemplateRequest): Promise<PreviewTemplateResponse> {
-    const response = await apiClient.post('/api/communication/templates/preview/', data);
+    const response = await apiClient.post('/accounts/communication/templates/preview/', data);
     return response.data;
   }
 
@@ -208,7 +208,7 @@ class CommunicationApi {
     templateId: number,
     testEmail: string
   ): Promise<{ success: boolean; message: string }> {
-    const response = await apiClient.post(`/api/communication/templates/${templateId}/test/`, {
+    const response = await apiClient.post(`/accounts/communication/templates/${templateId}/test/`, {
       test_email: testEmail,
     });
     return response.data;
@@ -216,12 +216,12 @@ class CommunicationApi {
 
   // School Branding Management
   async getSchoolBranding(): Promise<SchoolBranding> {
-    const response = await apiClient.get('/api/communication/branding/');
+    const response = await apiClient.get('/accounts/communication/branding/');
     return response.data;
   }
 
   async updateSchoolBranding(data: UpdateBrandingRequest): Promise<SchoolBranding> {
-    const response = await apiClient.patch('/api/communication/branding/', data);
+    const response = await apiClient.patch('/accounts/communication/branding/', data);
     return response.data;
   }
 
@@ -229,7 +229,7 @@ class CommunicationApi {
     const formData = new FormData();
     formData.append('logo', logoFile);
 
-    const response = await apiClient.patch('/api/communication/branding/', formData, {
+    const response = await apiClient.patch('/accounts/communication/branding/', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -239,7 +239,7 @@ class CommunicationApi {
 
   // Email Analytics
   async getEmailAnalytics(filters?: AnalyticsFilters): Promise<EmailAnalytics> {
-    const response = await apiClient.get('/api/communication/analytics/', { params: filters });
+    const response = await apiClient.get('/accounts/communication/analytics/', { params: filters });
     return response.data;
   }
 
@@ -255,15 +255,15 @@ class CommunicationApi {
     previous?: string;
     results: EmailCommunication[];
   }> {
-    const response = await apiClient.get('/api/communication/emails/', { params });
+    const response = await apiClient.get('/accounts/communication/emails/', { params });
     return response.data;
   }
 
   // Teacher Onboarding Progress
   async getOnboardingProgress(teacherId?: number): Promise<TeacherOnboardingProgress> {
     const endpoint = teacherId
-      ? `/api/communication/onboarding/${teacherId}/`
-      : '/api/communication/onboarding/me/';
+      ? `/communication/onboarding/${teacherId}/`
+      : '/communication/onboarding/me/';
     const response = await apiClient.get(endpoint);
     return response.data;
   }
@@ -272,7 +272,7 @@ class CommunicationApi {
     step: number,
     data?: Record<string, any>
   ): Promise<TeacherOnboardingProgress> {
-    const response = await apiClient.patch('/api/communication/onboarding/me/', {
+    const response = await apiClient.patch('/communication/onboarding/me/', {
       current_step: step,
       step_data: data,
     });
@@ -280,7 +280,7 @@ class CommunicationApi {
   }
 
   async markMilestoneAchieved(milestone: string): Promise<TeacherOnboardingProgress> {
-    const response = await apiClient.post('/api/communication/onboarding/milestone/', {
+    const response = await apiClient.post('/communication/onboarding/milestone/', {
       milestone,
     });
     return response.data;
@@ -292,31 +292,31 @@ class CommunicationApi {
     search?: string;
     is_active?: boolean;
   }): Promise<FAQ[]> {
-    const response = await apiClient.get('/api/communication/faqs/', { params });
+    const response = await apiClient.get('/communication/faqs/', { params });
     return response.data;
   }
 
   async getFAQCategories(): Promise<FAQCategory[]> {
-    const response = await apiClient.get('/api/communication/faq-categories/');
+    const response = await apiClient.get('/communication/faq-categories/');
     return response.data;
   }
 
   async searchFAQs(query: string): Promise<FAQ[]> {
-    const response = await apiClient.get('/api/communication/faqs/search/', {
+    const response = await apiClient.get('/communication/faqs/search/', {
       params: { q: query },
     });
     return response.data;
   }
 
   async markFAQHelpful(faqId: number, helpful: boolean): Promise<{ success: boolean }> {
-    const response = await apiClient.post(`/api/communication/faqs/${faqId}/helpful/`, {
+    const response = await apiClient.post(`/communication/faqs/${faqId}/helpful/`, {
       helpful,
     });
     return response.data;
   }
 
   async getContextualFAQs(context: string, step?: number): Promise<FAQ[]> {
-    const response = await apiClient.get('/api/communication/faqs/contextual/', {
+    const response = await apiClient.get('/communication/faqs/contextual/', {
       params: { context, step },
     });
     return response.data;
@@ -330,7 +330,7 @@ class CommunicationApi {
     tags?: string[];
     order?: number;
   }): Promise<FAQ> {
-    const response = await apiClient.post('/api/communication/admin/faqs/', data);
+    const response = await apiClient.post('/communication/admin/faqs/', data);
     return response.data;
   }
 
@@ -345,12 +345,12 @@ class CommunicationApi {
       is_active: boolean;
     }>
   ): Promise<FAQ> {
-    const response = await apiClient.patch(`/api/communication/admin/faqs/${id}/`, data);
+    const response = await apiClient.patch(`/communication/admin/faqs/${id}/`, data);
     return response.data;
   }
 
   async deleteFAQ(id: number): Promise<void> {
-    await apiClient.delete(`/api/communication/admin/faqs/${id}/`);
+    await apiClient.delete(`/communication/admin/faqs/${id}/`);
   }
 
   // Template Variables
@@ -360,7 +360,7 @@ class CommunicationApi {
     teacher_variables: Record<string, string>;
     invitation_variables: Record<string, string>;
   }> {
-    const response = await apiClient.get('/api/communication/template-variables/');
+    const response = await apiClient.get('/accounts/communication/template-variables/');
     return response.data;
   }
 
@@ -376,7 +376,7 @@ class CommunicationApi {
     missing_variables: string[];
   }> {
     const response = await apiClient.post(
-      '/api/communication/templates/validate/',
+      '/accounts/communication/templates/validate/',
       templateContent
     );
     return response.data;

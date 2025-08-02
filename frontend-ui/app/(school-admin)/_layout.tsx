@@ -72,6 +72,8 @@ export default function SchoolAdminLayout() {
       <Stack.Screen name="dashboard/index" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="invitations" />
+      <Stack.Screen name="communication" />
+      <Stack.Screen name="analytics" />
     </Stack>
   );
 }

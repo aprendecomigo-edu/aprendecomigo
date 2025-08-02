@@ -2001,7 +2001,7 @@ class SchoolEmailTemplate(models.Model):
         return f"{self.school.name} - {self.get_template_type_display()}: {self.name}"
     
     def clean(self):
-        """Validate template constraints."""
+        """Validate template constraints and security."""
         super().clean()
         
         # Ensure only one default template per school and type
@@ -2016,6 +2016,79 @@ class SchoolEmailTemplate(models.Model):
                 raise ValidationError(
                     _("Only one default template per school and type is allowed")
                 )
+        
+        # Security validation for template content
+        self._validate_template_security()
+    
+    def _validate_template_security(self):
+        """
+        Validate template content for security vulnerabilities.
+        
+        Raises:
+            ValidationError: If template contains security vulnerabilities
+        """
+        from .services.secure_template_engine import SecureTemplateEngine
+        
+        try:
+            # Validate subject template
+            if self.subject_template:
+                SecureTemplateEngine.validate_template_content(self.subject_template)
+                
+            # Validate HTML content
+            if self.html_content:
+                SecureTemplateEngine.validate_template_content(self.html_content)
+                
+            # Validate text content  
+            if self.text_content:
+                SecureTemplateEngine.validate_template_content(self.text_content)
+                
+            # Validate custom CSS if present
+            if self.custom_css:
+                self._validate_custom_css_security()
+                
+        except Exception as e:
+            raise ValidationError(
+                _("Template security validation failed: %(error)s") % {'error': str(e)}
+            )
+    
+    def _validate_custom_css_security(self):
+        """
+        Validate custom CSS for security vulnerabilities.
+        
+        Raises:
+            ValidationError: If CSS contains dangerous patterns
+        """
+        import re
+        
+        if not self.custom_css:
+            return
+        
+        # Check for dangerous CSS patterns
+        dangerous_patterns = [
+            r'@import\s+url\s*\(',
+            r'javascript\s*:',
+            r'expression\s*\(',
+            r'behavior\s*:',
+            r'-moz-binding\s*:',
+            r'binding\s*:',
+            r'<script',
+            r'</script>',
+            r'alert\s*\(',
+            r'eval\s*\(',
+            r'document\.',
+            r'window\.',
+        ]
+        
+        css_lower = self.custom_css.lower()
+        for pattern in dangerous_patterns:
+            if re.search(pattern, css_lower):
+                raise ValidationError(
+                    _("Custom CSS contains dangerous pattern: %(pattern)s") % {'pattern': pattern}
+                )
+        
+        # Check CSS size
+        if len(self.custom_css) > 10000:  # 10KB limit
+            raise ValidationError(_("Custom CSS too large. Maximum size is 10KB"))
 
 
 class EmailSequence(models.Model):

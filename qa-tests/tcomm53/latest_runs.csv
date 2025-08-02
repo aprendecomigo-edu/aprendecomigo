@@ -1,0 +1,17 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+tcomm53-001,Professional Email Templates,Professional invitation email templates with school branding,20250802-101847,FAIL,1,0,1
+tcomm53-002,Clear Invitation Instructions,Clear instructions in invitation emails about next steps,,,0,0,0
+tcomm53-003,Welcome Message System,Welcome messages upon invitation acceptance,,,0,0,0
+tcomm53-004,Onboarding Email Sequence,Onboarding email sequence with helpful tips and resources,,,0,0,0
+tcomm53-005,Milestone Confirmations,Confirmation emails for profile completion milestones,,,0,0,0
+tcomm53-006,School Contact Information,School contact information and support resources integration,,,0,0,0
+tcomm53-007,FAQ System Integration,FAQ section addressing common teacher questions,,,0,0,0
+tcomm53-008,Progress Tracking Notifications,Progress tracking notifications during profile setup,,,0,0,0
+tcomm53-009,Communication Preferences,Integration with school's communication preferences,,,0,0,0
+tcomm53-010,Email Analytics,Email metrics and performance tracking system,,,0,0,0
+tcomm53-011,Security Testing,Template injection protection and XSS prevention,,,0,0,0
+tcomm53-012,Cross-Platform Interface,Web mobile and tablet interface functionality,,,0,0,0
+tcomm53-013,Backend API Integration,Backend/frontend API integration verification,,,0,0,0
+tcomm53-014,End-to-End Workflow,Complete teacher invitation communication workflow,,,0,0,0
+tcomm53-015,GitHub Issue #53 Final Verification,Comprehensive end-to-end verification of all Teacher Invitation Communication System components after recent frontend implementation,20250802-064859,PARTIAL_PASS,1,0,1
+tcomm53-016,API Integration Fix Verification,Verify frontend-backend integration after API endpoint path fixes from /communication/ to /accounts/communication/,20250802-105348,MAJOR_PROGRESS,1,1,0

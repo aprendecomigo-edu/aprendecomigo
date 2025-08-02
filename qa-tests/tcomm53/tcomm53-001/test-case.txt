@@ -1,0 +1,232 @@
+QA Test Case: Professional Email Templates with School Branding
+
+Test ID: TCOMM53-001
+Test Name: Professional Email Templates with School Branding
+Purpose: Verify that professional invitation email templates with school branding functionality works as specified in GitHub Issue #53 and Issue #99
+Expected Result: School admins can create professional email templates with full school branding integration that render correctly
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: Django REST Framework backend + React Native frontend
+- Focus: GitHub Issue #53 - Teacher Invitation Communication System
+- Sub-Issue: GitHub Issue #99 - Email template system functionality
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Environment Variables: DJANGO_ENV=development, EXPO_PUBLIC_ENV=development
+4. `make dev` to start development servers
+5. `make logs` to monitor server logs during testing
+
+Test Data:
+- Test School Owner Email: anapmc.carvalho@gmail.com
+- School: Test School with existing setup
+- Template Types: teacher_invitation, welcome_message, onboarding_sequence
+- Required Backend Models: SchoolEmailTemplate, EmailCommunication, SchoolBranding
+- Expected API Endpoints: /api/communication/templates/, /api/communication/branding/
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev
+
+Expected: Both Django backend (port 8000) and Expo frontend (port 8081) start successfully
+Screenshot: 01_servers_started.png
+Debug: Use 'make logs' to view server logs if issues occur
+
+Step 2: School Owner Authentication
+1. Open browser to http://localhost:8081
+2. Navigate to sign-in page (/auth/signin)
+3. Enter email: anapmc.carvalho@gmail.com
+4. Complete passwordless authentication flow using verification code from logs
+5. Verify successful login and redirect to school dashboard
+
+Expected: Successful authentication and access to school admin features
+Screenshot: 02_school_owner_authenticated.png
+
+Step 3: Navigate to Communication Management
+1. From school dashboard, locate Communication or Templates section
+2. Navigate to communication management dashboard
+3. Verify the page loads with template management interface
+4. Check for school branding configuration section
+
+Expected: Communication management dashboard loads successfully
+Screenshot: 03_communication_dashboard.png
+URL Expected: /school-admin/communication or similar pattern
+
+Step 4: School Branding Configuration
+1. Locate School Branding settings section
+2. Upload school logo (test with a sample image file)
+3. Set school primary color: #2E86AB (blue)
+4. Set school secondary color: #A23B72 (purple)  
+5. Set school contact email: contact@testschool.edu
+6. Set school website: https://testschool.edu
+7. Add school address and phone number
+8. Save branding configuration
+
+Expected: School branding saves successfully and preview updates
+Screenshot: 04_school_branding_configured.png
+
+Step 5: Create Professional Invitation Template
+1. Click "Create New Template" button
+2. Select template type: "Teacher Invitation"
+3. Enter template name: "Professional Teacher Invitation"
+4. Configure subject line: "Welcome to {{school_name}} - Teaching Opportunity"
+5. Design professional HTML template with:
+   - School logo placement
+   - Professional greeting with teacher name
+   - School information and mission
+   - Clear call-to-action button
+   - Contact information
+   - School branding colors
+6. Add template variables: {{teacher_name}}, {{school_name}}, {{invitation_link}}, {{school_contact}}
+7. Create corresponding plain text version
+8. Enable "Use School Branding" option
+9. Save template
+
+Expected: Professional template creation successful with branding integration
+Screenshot: 05_professional_template_created.png
+
+Step 6: Template Preview and Validation
+1. Use template preview functionality
+2. Enter sample data for template variables:
+   - Teacher Name: "Maria Silva"
+   - School Name: "Test School"
+   - Invitation Link: sample URL
+3. Verify HTML rendering with:
+   - Correct logo placement
+   - Proper color scheme application
+   - Professional layout and typography
+   - Working invitation link button
+   - Complete contact information
+4. Verify plain text version renders correctly
+5. Test template on different screen sizes (responsive design)
+
+Expected: Template preview renders professionally with all branding elements
+Screenshot: 06_template_preview_html.png
+Screenshot: 07_template_preview_text.png
+Screenshot: 08_template_responsive.png
+
+Step 7: Template Management Interface Testing
+1. Return to templates list view
+2. Verify newly created template appears with correct metadata
+3. Test template editing functionality
+4. Test template duplicate/copy functionality
+5. Test template activation/deactivation toggle
+6. Set template as default for "Teacher Invitation" type
+7. Test template filtering by type and status
+8. Test template search functionality
+
+Expected: Complete template management interface functions properly
+Screenshot: 09_template_management.png
+
+Step 8: Multiple Template Types Creation
+1. Create "Welcome Message" template with branding
+2. Create "Onboarding Sequence" template with branding
+3. Create "Profile Completion" reminder template
+4. Verify each template type has appropriate fields and variables
+5. Test bulk template operations (if available)
+6. Verify templates are organized properly by type
+
+Expected: Multiple professional template types work with consistent branding
+Screenshot: 10_multiple_template_types.png
+
+Step 9: API Integration Verification
+1. Open browser developer tools (Network tab)
+2. Test API endpoints:
+   - GET /api/communication/templates/ (list templates)
+   - POST /api/communication/templates/ (create template)
+   - PUT /api/communication/templates/{id}/ (update template)
+   - GET /api/communication/branding/ (get school branding)
+   - PUT /api/communication/branding/ (update branding)
+3. Verify API responses contain proper template and branding data
+4. Test API authentication and permissions
+5. Verify error handling for invalid requests
+
+Expected: All API endpoints work correctly with proper JSON responses
+Screenshot: 11_api_endpoints_working.png
+
+Step 10: Security and Validation Testing
+1. Test template creation with malicious HTML/JavaScript
+2. Verify XSS protection in template variables
+3. Test template injection attacks
+4. Verify HTML sanitization for user inputs
+5. Test file upload security for logos
+6. Verify permission controls (only school owners can edit)
+7. Test template character limits and validation rules
+
+Expected: Robust security measures protect against malicious content
+Screenshot: 12_security_validation.png
+
+Step 11: Email Rendering Test
+1. Create a test teacher invitation using the professional template
+2. Trigger email sending (if possible in development)
+3. Check email output in server logs
+4. Verify email HTML structure is correct
+5. Verify all template variables are properly substituted
+6. Check email headers and metadata
+7. Verify both HTML and plain text versions
+
+Expected: Email renders correctly with professional appearance
+Screenshot: 13_email_rendering_output.png
+
+Step 12: Error Handling and Edge Cases
+1. Test template creation with missing required fields
+2. Test invalid template variable syntax
+3. Test template with oversized images
+4. Test branding configuration with invalid file formats
+5. Test network failures during save operations
+6. Verify proper error messages and user feedback
+7. Test recovery from validation errors
+
+Expected: Proper error handling with clear user feedback
+Screenshot: 14_error_handling.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND all of the following conditions are met:
+- School branding configuration works completely
+- Professional email templates can be created with full branding integration
+- Template preview renders correctly with professional appearance
+- Template management interface provides full CRUD functionality
+- Multiple template types can be created and managed effectively
+- API endpoints work correctly with proper authentication
+- Security measures protect against XSS and injection attacks
+- Email rendering produces professional-quality output
+- Error handling provides clear feedback for all edge cases
+- No console errors or UI glitches occur during any operations
+- All screenshots demonstrate successful professional functionality
+
+FAIL: Any step fails OR any of the following occurs:
+- School branding configuration doesn't work or save properly
+- Template creation fails or produces unprofessional results
+- Template preview doesn't render correctly or missing branding elements
+- Template management features are non-functional or buggy
+- API endpoints return errors or malformed responses
+- Security vulnerabilities allow XSS or injection attacks
+- Email rendering produces broken or unprofessional output
+- Error handling is inadequate or confusing
+- UI shows errors, blank screens, or broken layouts
+- Any console errors related to communication or branding features
+- Server errors occur during template operations
+
+Individual Step Criteria:
+- Step 1: PASS if servers start without errors, FAIL if startup issues
+- Step 2: PASS if authentication successful, FAIL if login problems
+- Step 3: PASS if dashboard loads properly, FAIL if navigation issues
+- Step 4: PASS if branding configuration works, FAIL if save/display issues
+- Step 5: PASS if professional template creation works, FAIL if creation problems
+- Step 6: PASS if preview renders professionally, FAIL if rendering issues
+- Step 7: PASS if management interface works, FAIL if CRUD operation failures
+- Step 8: PASS if multiple template types work, FAIL if type-specific issues
+- Step 9: PASS if API integration works, FAIL if API errors or authentication issues
+- Step 10: PASS if security measures work, FAIL if vulnerabilities found
+- Step 11: PASS if email rendering works, FAIL if broken email output
+- Step 12: PASS if error handling works, FAIL if poor error management
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

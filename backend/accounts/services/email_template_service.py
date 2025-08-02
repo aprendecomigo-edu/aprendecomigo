@@ -15,8 +15,10 @@ from django.template import Context, Template
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
+from django.core.exceptions import ValidationError
 
 from ..models import SchoolEmailTemplate, School, EmailTemplateType
+from .secure_template_engine import SecureTemplateEngine, HTMLSanitizer, TemplateVariableValidator
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +78,7 @@ class EmailTemplateRenderingService:
         request=None
     ) -> Tuple[str, str, str]:
         """
-        Render an email template with school branding and variable substitution.
+        Securely render an email template with school branding and variable substitution.
         
         Args:
             template: SchoolEmailTemplate instance
@@ -88,25 +90,34 @@ class EmailTemplateRenderingService:
             
         Raises:
             ValueError: If template rendering fails
-            Template.DoesNotExist: If template is not found
+            ValidationError: If template or context is unsafe
         """
         try:
+            # Validate template content for security
+            EmailTemplateSecurityService.validate_template_security(template)
+            
+            # Validate context variables
+            TemplateVariableValidator.validate_context(context_variables)
+            
             # Prepare rendering context
             context = cls._prepare_context(template.school, context_variables, request)
             
-            # Render subject
-            subject = cls._render_subject(template.subject_template, context)
+            # Render subject with secure engine
+            subject = cls._render_subject_secure(template.subject_template, context)
             
-            # Render HTML content with branding
-            html_content = cls._render_html_content(template, context)
+            # Render HTML content with branding and security
+            html_content = cls._render_html_content_secure(template, context)
             
-            # Render text content
-            text_content = cls._render_text_content(template.text_content, context)
+            # Render text content with secure engine
+            text_content = cls._render_text_content_secure(template.text_content, context)
             
             logger.info(f"Successfully rendered template {template.id} for school {template.school.name}")
             
             return subject, html_content, text_content
             
+        except ValidationError as e:
+            logger.error(f"Security validation failed for template {template.id}: {str(e)}")
+            raise ValueError(f"Template security validation failed: {str(e)}")
         except Exception as e:
             logger.error(f"Error rendering template {template.id}: {str(e)}")
             raise ValueError(f"Template rendering failed: {str(e)}")
@@ -179,9 +190,9 @@ class EmailTemplateRenderingService:
         }
     
     @classmethod
-    def _render_subject(cls, subject_template: str, context: Dict[str, Any]) -> str:
+    def _render_subject_secure(cls, subject_template: str, context: Dict[str, Any]) -> str:
         """
-        Render email subject with variable substitution.
+        Securely render email subject with variable substitution.
         
         Args:
             subject_template: Subject template string
@@ -191,35 +202,42 @@ class EmailTemplateRenderingService:
             Rendered subject string
         """
         try:
-            template = Template(subject_template)
-            django_context = Context(context)
-            rendered_subject = template.render(django_context)
+            # Use secure template engine
+            rendered_subject = SecureTemplateEngine.render_template(
+                subject_template, context, auto_escape=True
+            )
             
-            # Clean up subject (remove newlines, extra spaces)
+            # Clean up subject (remove newlines, extra spaces, strip HTML)
+            rendered_subject = strip_tags(rendered_subject)
             rendered_subject = ' '.join(rendered_subject.split())
+            
+            # Ensure reasonable length
+            if len(rendered_subject) > 300:
+                rendered_subject = rendered_subject[:297] + "..."
             
             return rendered_subject
             
         except Exception as e:
-            logger.error(f"Error rendering subject: {str(e)}")
+            logger.error(f"Error rendering subject securely: {str(e)}")
             # Fallback to a safe subject
-            return f"Message from {context.get('school_name', 'Aprende Comigo')}"
+            school_name = context.get('school_name', 'Aprende Comigo')
+            return f"Message from {strip_tags(str(school_name))}"
     
     @classmethod
-    def _render_html_content(
+    def _render_html_content_secure(
         cls,
         template: SchoolEmailTemplate,
         context: Dict[str, Any]
     ) -> str:
         """
-        Render HTML email content with school branding.
+        Securely render HTML email content with school branding.
         
         Args:
             template: SchoolEmailTemplate instance
             context: Context variables
             
         Returns:
-            Rendered HTML content
+            Rendered and sanitized HTML content
         """
         try:
             # Start with the base HTML content
@@ -227,12 +245,15 @@ class EmailTemplateRenderingService:
             
             # Apply school branding if enabled
             if template.use_school_branding:
-                html_content = cls._apply_school_branding(html_content, template, context)
+                html_content = cls._apply_school_branding_secure(html_content, template, context)
             
-            # Render template with Django template engine
-            django_template = Template(html_content)
-            django_context = Context(context)
-            rendered_content = django_template.render(django_context)
+            # Render template with secure engine
+            rendered_content = SecureTemplateEngine.render_template(
+                html_content, context, auto_escape=True
+            )
+            
+            # Sanitize HTML content to prevent XSS
+            rendered_content = HTMLSanitizer.sanitize_html(rendered_content)
             
             # Ensure proper HTML structure
             rendered_content = cls._ensure_html_structure(rendered_content)
@@ -240,14 +261,14 @@ class EmailTemplateRenderingService:
             return rendered_content
             
         except Exception as e:
-            logger.error(f"Error rendering HTML content: {str(e)}")
+            logger.error(f"Error rendering HTML content securely: {str(e)}")
             # Fallback to basic HTML
             return cls._get_fallback_html_content(context)
     
     @classmethod
-    def _render_text_content(cls, text_template: str, context: Dict[str, Any]) -> str:
+    def _render_text_content_secure(cls, text_template: str, context: Dict[str, Any]) -> str:
         """
-        Render plain text email content.
+        Securely render plain text email content.
         
         Args:
             text_template: Text template string
@@ -257,9 +278,13 @@ class EmailTemplateRenderingService:
             Rendered text content
         """
         try:
-            template = Template(text_template)
-            django_context = Context(context)
-            rendered_content = template.render(django_context)
+            # Use secure template engine (auto_escape=False for plain text)
+            rendered_content = SecureTemplateEngine.render_template(
+                text_template, context, auto_escape=False
+            )
+            
+            # Strip any HTML tags that might have been included
+            rendered_content = strip_tags(rendered_content)
             
             # Clean up text content
             rendered_content = cls._clean_text_content(rendered_content)
@@ -267,19 +292,20 @@ class EmailTemplateRenderingService:
             return rendered_content
             
         except Exception as e:
-            logger.error(f"Error rendering text content: {str(e)}")
+            logger.error(f"Error rendering text content securely: {str(e)}")
             # Fallback to basic text
-            return f"Message from {context.get('school_name', 'Aprende Comigo')}"
+            school_name = context.get('school_name', 'Aprende Comigo')
+            return f"Message from {strip_tags(str(school_name))}"
     
     @classmethod
-    def _apply_school_branding(
+    def _apply_school_branding_secure(
         cls,
         html_content: str,
         template: SchoolEmailTemplate,
         context: Dict[str, Any]
     ) -> str:
         """
-        Apply school branding to HTML content.
+        Securely apply school branding to HTML content.
         
         Args:
             html_content: Original HTML content
@@ -289,14 +315,17 @@ class EmailTemplateRenderingService:
         Returns:
             HTML content with school branding applied
         """
-        # Render branding CSS
-        branding_css_template = Template(cls.BRANDING_CSS_TEMPLATE)
-        branding_css_context = Context(context)
-        branding_css = branding_css_template.render(branding_css_context)
+        # Render branding CSS with secure engine
+        branding_css = SecureTemplateEngine.render_template(
+            cls.BRANDING_CSS_TEMPLATE, context, auto_escape=True
+        )
         
-        # Add custom CSS if provided
+        # Add custom CSS if provided (sanitized)
         if template.custom_css:
-            branding_css += f"\n<style>\n{template.custom_css}\n</style>"
+            # Validate and sanitize custom CSS
+            sanitized_css = cls._sanitize_custom_css(template.custom_css)
+            if sanitized_css:
+                branding_css += f"\n<style>\n{sanitized_css}\n</style>"
         
         # Insert branding CSS into HTML
         # Look for </head> tag, if not found, add at the beginning
@@ -550,3 +579,115 @@ class SchoolEmailTemplateManager:
                 logger.error(f"Error creating default {template_type} template for school {school.id}: {str(e)}")
         
         return created_templates
+
+
+class EmailTemplateSecurityService:
+    """
+    Security validation service for email templates.
+    """
+    
+    @classmethod
+    def validate_template_security(cls, template: SchoolEmailTemplate) -> None:
+        """
+        Validate template content for security vulnerabilities.
+        
+        Args:
+            template: SchoolEmailTemplate instance to validate
+            
+        Raises:
+            ValidationError: If template contains security vulnerabilities
+        """
+        # Validate subject template
+        SecureTemplateEngine.validate_template_content(template.subject_template)
+        
+        # Validate HTML content
+        SecureTemplateEngine.validate_template_content(template.html_content)
+        
+        # Validate text content
+        SecureTemplateEngine.validate_template_content(template.text_content)
+        
+        # Validate custom CSS if present
+        if template.custom_css:
+            cls._validate_custom_css(template.custom_css)
+    
+    @classmethod
+    def _validate_custom_css(cls, css_content: str) -> None:
+        """
+        Validate custom CSS for security vulnerabilities.
+        
+        Args:
+            css_content: CSS content to validate
+            
+        Raises:
+            ValidationError: If CSS contains dangerous patterns
+        """
+        if not css_content:
+            return
+        
+        # Check for dangerous CSS patterns
+        dangerous_patterns = [
+            r'@import\s+url\s*\(',
+            r'javascript\s*:',
+            r'expression\s*\(',
+            r'behavior\s*:',
+            r'-moz-binding\s*:',
+            r'binding\s*:',
+            r'<script',
+            r'</script>',
+            r'alert\s*\(',
+            r'eval\s*\(',
+            r'document\.',
+            r'window\.',
+        ]
+        
+        css_lower = css_content.lower()
+        for pattern in dangerous_patterns:
+            if re.search(pattern, css_lower):
+                raise ValidationError(f"Custom CSS contains dangerous pattern: {pattern}")
+        
+        # Check CSS size
+        if len(css_content) > 10000:  # 10KB limit
+            raise ValidationError("Custom CSS too large. Maximum size is 10KB")
+    
+    @classmethod
+    def _sanitize_custom_css(cls, css_content: str) -> str:
+        """
+        Sanitize custom CSS content.
+        
+        Args:
+            css_content: CSS content to sanitize
+            
+        Returns:
+            Sanitized CSS content
+        """
+        if not css_content:
+            return ""
+        
+        try:
+            # Validate first
+            cls._validate_custom_css(css_content)
+            
+            # Remove dangerous patterns
+            sanitized = css_content
+            
+            # Remove @import statements
+            sanitized = re.sub(r'@import[^;]*;', '', sanitized, flags=re.IGNORECASE)
+            
+            # Remove javascript: URLs
+            sanitized = re.sub(r'javascript\s*:', '', sanitized, flags=re.IGNORECASE)
+            
+            # Remove expression() calls
+            sanitized = re.sub(r'expression\s*\([^)]*\)', '', sanitized, flags=re.IGNORECASE)
+            
+            # Remove behavior properties
+            sanitized = re.sub(r'behavior\s*:[^;]*;', '', sanitized, flags=re.IGNORECASE)
+            
+            # Remove binding properties
+            sanitized = re.sub(r'-?moz-binding\s*:[^;]*;', '', sanitized, flags=re.IGNORECASE)
+            sanitized = re.sub(r'binding\s*:[^;]*;', '', sanitized, flags=re.IGNORECASE)
+            
+            return sanitized.strip()
+            
+        except ValidationError:
+            logger.warning("Custom CSS failed validation, removing it")
+            return ""
