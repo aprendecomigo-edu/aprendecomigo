@@ -61,6 +61,21 @@ module.exports = {
     'text-warning-600', 'text-warning-700',
     'text-info-600', 'text-info-700',
     
+    // Landing page accent colors
+    'text-accent-600', 'text-accent-700', 'bg-accent-600', 'border-accent-600',
+    'text-accent-dark-600', 'text-accent-dark-700', 'bg-accent-dark-600', 'border-accent-dark-600',
+    'text-accent-pink-600', 'text-accent-pink-700', 'bg-accent-pink-600', 'border-accent-pink-600',
+    
+    // Design System Patterns - Gradients
+    'bg-gradient-primary', 'bg-gradient-accent', 'bg-gradient-accent-dark', 'bg-gradient-subtle',
+    'bg-gradient-page', 'bg-gradient-section-light', 'bg-gradient-dark',
+    
+    // Design System Patterns - Glass Effects
+    'glass-nav', 'glass-container', 'glass-light', 'glass-strong', 'glass-card',
+    
+    // Design System Patterns - Cards
+    'hero-card', 'feature-card', 'feature-card-gradient',
+    
     // Progress and status indicators
     'bg-primary-600', 'bg-secondary-600', 'bg-tertiary-600',
     'bg-success-600', 'bg-error-600', 'bg-warning-600', 'bg-info-600',
@@ -254,13 +269,74 @@ module.exports = {
           light: '#FBFBFB',
           dark: '#181719',
         },
+        accent: {
+          0: 'var(--color-accent-0)',
+          50: 'var(--color-accent-50)',
+          100: 'var(--color-accent-100)',
+          200: 'var(--color-accent-200)',
+          300: 'var(--color-accent-300)',
+          400: 'var(--color-accent-400)',
+          500: 'var(--color-accent-500)',
+          600: 'var(--color-accent-600)',
+          700: 'var(--color-accent-700)',
+          800: 'var(--color-accent-800)',
+          900: 'var(--color-accent-900)',
+          950: 'var(--color-accent-950)',
+        },
+        'accent-dark': {
+          0: 'var(--color-accent-dark-0)',
+          50: 'var(--color-accent-dark-50)',
+          100: 'var(--color-accent-dark-100)',
+          200: 'var(--color-accent-dark-200)',
+          300: 'var(--color-accent-dark-300)',
+          400: 'var(--color-accent-dark-400)',
+          500: 'var(--color-accent-dark-500)',
+          600: 'var(--color-accent-dark-600)',
+          700: 'var(--color-accent-dark-700)',
+          800: 'var(--color-accent-dark-800)',
+          900: 'var(--color-accent-dark-900)',
+          950: 'var(--color-accent-dark-950)',
+        },
+        'accent-pink': {
+          0: 'var(--color-accent-pink-0)',
+          50: 'var(--color-accent-pink-50)',
+          100: 'var(--color-accent-pink-100)',
+          200: 'var(--color-accent-pink-200)',
+          300: 'var(--color-accent-pink-300)',
+          400: 'var(--color-accent-pink-400)',
+          500: 'var(--color-accent-pink-500)',
+          600: 'var(--color-accent-pink-600)',
+          700: 'var(--color-accent-pink-700)',
+          800: 'var(--color-accent-pink-800)',
+          900: 'var(--color-accent-pink-900)',
+          950: 'var(--color-accent-pink-950)',
+        },
       },
       fontFamily: {
         roboto: ['Roboto', 'sans-serif'],
+        brand: ['Kirang Haerang', 'system-ui'],
+        primary: ['Work Sans', 'sans-serif'],
+        body: ['Poppins', 'sans-serif'],
+        mono: ['SF Mono', 'Monaco', 'Cascadia Code', 'monospace'],
       },
       fontWeight: {
         hairline: '100',
         extraBlack: '950',
+      },
+      backgroundImage: {
+        'gradient-primary': 'var(--gradient-primary)',
+        'gradient-accent': 'var(--gradient-accent)',
+        'gradient-accent-dark': 'var(--gradient-accent-dark)',
+        'gradient-subtle': 'var(--gradient-subtle)',
+        'gradient-page': 'var(--gradient-page)',
+        'gradient-section-light': 'var(--gradient-section-light)',
+        'gradient-dark': 'var(--gradient-dark)',
+      },
+      backdropBlur: {
+        'glass-nav': 'var(--glass-nav-blur)',
+        'glass-container': 'var(--glass-container-blur)',
+        'glass-light': 'var(--glass-light-blur)',
+        'glass-strong': 'var(--glass-strong-blur)',
       },
       fontSize: {
         '2xs': '10px',
@@ -270,5 +346,86 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addUtilities }) {
+      const newUtilities = {
+        // Glass Effect Utilities
+        '.glass-nav': {
+          'background': 'var(--glass-nav-bg)',
+          'backdrop-filter': 'var(--glass-nav-blur)',
+          '-webkit-backdrop-filter': 'var(--glass-nav-blur)',
+          'border': '1px solid var(--glass-nav-border)',
+          'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.1)',
+        },
+        '.glass-container': {
+          'background': 'var(--glass-container-bg)',
+          'backdrop-filter': 'var(--glass-container-blur)',
+          '-webkit-backdrop-filter': 'var(--glass-container-blur)',
+          'border': '1px solid var(--glass-container-border)',
+          'box-shadow': '0 4px 16px rgba(0, 0, 0, 0.05)',
+        },
+        '.glass-light': {
+          'background': 'var(--glass-light-bg)',
+          'backdrop-filter': 'var(--glass-light-blur)',
+          '-webkit-backdrop-filter': 'var(--glass-light-blur)',
+          'border': '1px solid var(--glass-light-border)',
+        },
+        '.glass-strong': {
+          'background': 'var(--glass-strong-bg)',
+          'backdrop-filter': 'var(--glass-strong-blur)',
+          '-webkit-backdrop-filter': 'var(--glass-strong-blur)',
+          'border': '1px solid var(--glass-strong-border)',
+          'box-shadow': '0 12px 40px rgba(0, 0, 0, 0.15)',
+        },
+        
+        // Card Effect Utilities
+        '.hero-card': {
+          'background': 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
+          'border': '1px solid #e5e7eb',
+          'border-radius': '1.5rem',
+          'box-shadow': '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+          'transition': 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        },
+        '.hero-card:hover': {
+          'transform': 'translateY(-6px) scale(1.02)',
+          'box-shadow': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        },
+        
+        '.feature-card': {
+          'background': '#ffffff',
+          'border': '1px solid #e5e7eb',
+          'border-radius': '1.5rem',
+          'box-shadow': '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        },
+        '.feature-card:hover': {
+          'transform': 'translateY(-4px)',
+          'box-shadow': '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+        },
+        
+        '.feature-card-gradient': {
+          'background': 'var(--gradient-subtle)',
+          'border': '1px solid #e2e8f0',
+          'border-radius': '1.5rem',
+          'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        },
+        '.feature-card-gradient:hover': {
+          'transform': 'translateY(-4px)',
+          'box-shadow': '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+          'border-color': '#10b981',
+        },
+        
+        '.glass-card': {
+          'background': 'var(--glass-container-bg)',
+          'backdrop-filter': 'var(--glass-container-blur)',
+          '-webkit-backdrop-filter': 'var(--glass-container-blur)',
+          'border': '1px solid var(--glass-container-border)',
+          'border-radius': '1.5rem',
+          'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.1)',
+        },
+      };
+      
+      addUtilities(newUtilities, ['responsive', 'hover']);
+    }
+  ],
 };
