@@ -27,6 +27,6 @@ export default function Index() {
     return <Redirect href={'home' as Href} />;
   }
 
-  // If not authenticated, redirect to landing page
-  return <Redirect href={"/landing" as Href} />;
+  // If not authenticated, redirect to signup page
+  return <Redirect href={"/auth/signup" as Href} />;
 }
