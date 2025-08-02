@@ -5,7 +5,6 @@ import {
   MobileNavigation,
   SideNavigation,
   TopNavigation,
-  Breadcrumb,
   schools,
   type School,
 } from '@/components/navigation';
@@ -20,8 +19,6 @@ interface MainLayoutProps {
   _title?: string;
   showSidebar?: boolean;
   requireAuth?: boolean;
-  showBreadcrumbs?: boolean;
-  showSearch?: boolean;
   showQuickActions?: boolean;
 }
 
@@ -33,8 +30,6 @@ interface MainLayoutProps {
  * @param _title Optional page title (used for internal tracking, school name shown in header)
  * @param showSidebar Whether to show the sidebar (defaults to true)
  * @param requireAuth Whether to require authentication (defaults to true)
- * @param showBreadcrumbs Whether to show breadcrumb navigation (defaults to true)
- * @param showSearch Whether to show global search in header (defaults to true)
  * @param showQuickActions Whether to show quick actions (defaults to true)
  */
 const MainLayout = ({
@@ -42,8 +37,6 @@ const MainLayout = ({
   _title = 'Dashboard',
   showSidebar = true,
   requireAuth = true,
-  showBreadcrumbs = true,
-  showSearch = true,
   showQuickActions = true,
 }: MainLayoutProps) => {
   const [selectedSchool, setSelectedSchool] = useState<School>(schools[0]);
@@ -62,13 +55,12 @@ const MainLayout = ({
 
   const layoutContent = (
     <SafeAreaView className="min-h-screen w-full">
-      <VStack className="min-h-screen w-full bg-background-0">
+      <VStack className="min-h-screen h-screen w-full bg-background-0">
         {/* Mobile Header */}
         <Box className="md:hidden">
           <TopNavigation
             variant="mobile"
             onSchoolChange={handleSchoolChange}
-            showSearch={showSearch}
             showQuickActions={showQuickActions}
           />
         </Box>
@@ -79,16 +71,15 @@ const MainLayout = ({
             variant="web"
             onToggleSidebar={toggleSidebar}
             onSchoolChange={handleSchoolChange}
-            showSearch={showSearch}
             showQuickActions={showQuickActions}
           />
         </Box>
 
         {/* Main Content Area */}
-        <VStack className="flex-1 w-full">
-          <HStack className="flex-1 w-full">
+        <VStack className="flex-1 w-full min-h-0">
+          <HStack className="flex-1 w-full min-h-0">
             {/* Desktop Sidebar */}
-            <Box className="hidden md:flex flex-shrink-0">
+            <Box className="hidden md:flex flex-shrink-0 h-full">
               {isSidebarVisible && (
                 <TutorialHighlight
                   id="navigation"
@@ -103,12 +94,6 @@ const MainLayout = ({
 
             {/* Main Content with bottom padding for mobile navigation */}
             <VStack className="flex-1 w-full pb-20 md:pb-0">
-              {/* Breadcrumb Navigation */}
-              {showBreadcrumbs && (
-                <Box className="px-4 py-2 border-b border-border-100 bg-background-0">
-                  <Breadcrumb />
-                </Box>
-              )}
 
               {children}
             </VStack>

@@ -411,14 +411,8 @@ const MainContent = () => {
         }}
       >
         <VStack className="h-full w-full pb-8" space="2xl">
-          <Box className="relative w-full md:h-[478px] h-[380px]">
-            <Image
-              source={require('@/assets/profile-screens/profile/image2.png')}
-              height={'100%'}
-              width={'100%'}
-              alt="Banner Image"
-              contentFit="cover"
-            />
+          <Box className="relative w-full md:h-[478px] h-[380px] bg-gray-200">
+            {/* Banner placeholder */}
           </Box>
           <HStack className="absolute pt-6 px-10 hidden md:flex">
             <Text className="text-typography-900 font-roboto">home &gt; {` `}</Text>
@@ -489,13 +483,8 @@ const MainContent = () => {
               space="2xl"
             >
               <HStack space="2xl" className="items-center">
-                <Box className="md:h-20 md:w-20 h-10 w-10">
-                  <Image
-                    source={require('@/assets/profile-screens/profile/image1.png')}
-                    height={'100%'}
-                    width={'100%'}
-                    alt="Promo Image"
-                  />
+                <Box className="md:h-20 md:w-20 h-10 w-10 bg-green-500 rounded">
+                  {/* Promo image placeholder */}
                 </Box>
                 <VStack>
                   <Text className="text-typography-900 text-lg" size="lg">
@@ -582,20 +571,15 @@ const MobileScreen = () => {
 
   return (
     <VStack className="md:hidden mb-5">
-      <Box className="w-full h-[188px]">
-        <Image
-          source={require('@/assets/profile-screens/profile/image2.png')}
-          height={'100%'}
-          width={'100%'}
-          alt="Banner Image"
-        />
+      <Box className="w-full h-[188px] bg-gray-200">
+        {/* Banner placeholder */}
       </Box>
       <Pressable className="absolute bg-background-950 rounded-full items-center justify-center h-8 w-8 right-6 top-[172px]">
         <Icon as={CameraSparklesIcon} />
       </Pressable>
       <Center className="w-full absolute top-10">
         <Avatar size="2xl">
-          <AvatarImage source={require('@/assets/profile-screens/profile/image.png')} />
+          <Box className="w-full h-full bg-blue-500 rounded-full" />
           <AvatarBadge className="justify-center items-center bg-background-950">
             <Icon as={EditPhotoIcon} />
           </AvatarBadge>
@@ -992,13 +976,8 @@ const ModalComponent = ({ showModal, setShowModal }: { showModal: boolean; setSh
     >
       <ModalBackdrop />
       <ModalContent>
-        <Box className={'w-full h-[215px] '}>
-          <Image
-            source={require('@/assets/profile-screens/profile/image2.png')}
-            height={'100%'}
-            width={'100%'}
-            alt="Banner Image"
-          />
+        <Box className="w-full h-[215px] bg-gray-200">
+          {/* Banner placeholder */}
         </Box>
         <Pressable className="absolute bg-background-500 rounded-full items-center justify-center h-8 w-8 right-6 top-44">
           <Icon as={CameraSparklesIcon} />
@@ -1017,7 +996,7 @@ const ModalComponent = ({ showModal, setShowModal }: { showModal: boolean; setSh
         </ModalHeader>
         <Center className="w-full absolute top-16">
           <Avatar size="2xl">
-            <AvatarImage source={require('@/assets/profile-screens/profile/image.png')} />
+            <Box className="w-full h-full bg-blue-500 rounded-full" />
             <AvatarBadge className="justify-center items-center bg-background-500">
               <Icon as={EditPhotoIcon} />
             </AvatarBadge>

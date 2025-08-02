@@ -2,17 +2,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from '@unitools/link';
 import useRouter from '@unitools/router';
 import { AlertTriangle } from 'lucide-react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Keyboard, Platform } from 'react-native';
+import { Keyboard } from 'react-native';
 import { z } from 'zod';
 
 import { AuthLayout } from '../layout';
 
 import { requestEmailCode } from '@/api/authApi';
 import { useAuth } from '@/api/authContext';
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
-import { Divider } from '@/components/ui/divider';
 import {
   FormControl,
   FormControlError,
@@ -22,10 +20,8 @@ import {
   FormControlLabelText,
 } from '@/components/ui/form-control';
 import { Heading } from '@/components/ui/heading';
-import { HStack } from '@/components/ui/hstack';
 import { ArrowLeftIcon, Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
-import { LinkText } from '@/components/ui/link';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { useToast } from '@/components/ui/toast';
@@ -72,77 +68,101 @@ const LoginForm = () => {
   };
 
   return (
-    <VStack className="max-w-[440px] w-full" space="md">
-      <VStack className="md:items-center" space="md">
+    <VStack className="w-full" space="lg">
+      {/* Header with modern typography and gradient text */}
+      <VStack className="items-center" space="md">
         <Pressable
           onPress={() => {
             router.back();
           }}
+          className="md:hidden self-start mb-4"
         >
-          <Icon as={ArrowLeftIcon} className="md:hidden text-background-800" size="xl" />
+          <Icon as={ArrowLeftIcon} className="text-typography-700" size="xl" />
         </Pressable>
-        <VStack>
-          <Heading className="md:text-center" size="3xl">
-            Log in
+        
+        {/* Brand logo */}
+        <VStack className="items-center mb-2">
+          <Text className="text-center text-gradient-primary font-brand text-md">
+          aprendecomigo
+        </Text>          
+        </VStack>
+        
+        <VStack className="items-center" space="sm">
+          <Heading className="text-center font-primary" size="3xl">
+            <Text className="color-primary font-primary">Login</Text>
           </Heading>
-          <Text>Enter your email to receive a login code</Text>
+          <Text className="text-center text-typography-600 font-body text-base leading-relaxed">
+            
+          </Text>
         </VStack>
       </VStack>
-      <VStack className="w-full">
-        <VStack space="xl" className="w-full">
-          <FormControl isInvalid={!!requestCodeForm.formState.errors?.email} className="w-full">
-            <FormControlLabel>
-              <FormControlLabelText>Email</FormControlLabelText>
-            </FormControlLabel>
-            <Controller
-              defaultValue=""
-              name="email"
-              control={requestCodeForm.control}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input>
+
+      {/* Form with glass inputs */}
+      <VStack className="w-full" space="xl">
+        <FormControl isInvalid={!!requestCodeForm.formState.errors?.email} className="w-full">
+          <FormControlLabel className="mb-2">
+            <FormControlLabelText className="font-primary font-medium text-typography-700">
+              Email
+            </FormControlLabelText>
+          </FormControlLabel>
+          <Controller
+            defaultValue=""
+            name="email"
+            control={requestCodeForm.control}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <VStack className="glass-light rounded-xl p-4">
+                <Input className="border-0">
                   <InputField
                     type="email"
                     testID="email-input"
-                    placeholder="Enter email"
+                    placeholder="your_email@example.com"
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
                     onSubmitEditing={handleRequestKeyPress}
                     returnKeyType="done"
+                    className="bg-transparent font-body text-base"
+                    placeholderTextColor="#94A3B8"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
                   />
                 </Input>
-              )}
-            />
-            <FormControlError>
-              <FormControlErrorIcon as={AlertTriangle} />
-              <FormControlErrorText>
-                {requestCodeForm.formState.errors?.email?.message}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-          <VStack className="w-full my-7" space="lg">
-            <Button
-              className="w-full"
-              onPress={requestCodeForm.handleSubmit(onRequestCode)}
-              isDisabled={isRequesting}
-            >
-              <ButtonText className="font-medium">
-                {isRequesting ? 'Sending Code...' : 'Request Login Code'}
-              </ButtonText>
-            </Button>
-          </VStack>
+              </VStack>
+            )}
+          />
+          <FormControlError>
+            <FormControlErrorIcon as={AlertTriangle} />
+            <FormControlErrorText className="font-body">
+              {requestCodeForm.formState.errors?.email?.message}
+            </FormControlErrorText>
+          </FormControlError>
+        </FormControl>
+
+        {/* Actions with generous spacing */}
+        <VStack className="w-full mt-8" space="lg">
+          <Pressable
+            className="w-full bg-gradient-primary py-4 rounded-xl active:scale-98 transition-all shadow-lg"
+            onPress={requestCodeForm.handleSubmit(onRequestCode)}
+            disabled={isRequesting}
+          >
+            <Text className="text-white text-center font-bold font-primary text-base">
+              {isRequesting ? 'Sending Code...' : 'Send Login Code'}
+            </Text>
+          </Pressable>
         </VStack>
-        <HStack className="self-center" space="sm">
-          <Text size="md">Don't have an account?</Text>
-          <Link href="/auth/user-type-selection">
-            <LinkText
-              className="font-medium text-primary-700 group-hover/link:text-primary-600 group-hover/pressed:text-primary-700"
-              size="md"
-            >
-              Sign up
-            </LinkText>
-          </Link>
-        </HStack>
+      </VStack>
+
+      {/* Footer with clean typography */}
+      <VStack className="items-center mt-8" space="sm">
+        <Text className="text-center text-typography-600 font-body text-sm">
+          Don't have an account?
+        </Text>
+        <Link href="/auth/signup">
+          <Text className="text-white text-sm font-bold py-1 px-1 rounded-xl font-primary bg-black">
+            Create your account
+          </Text>
+        </Link>
       </VStack>
     </VStack>
   );

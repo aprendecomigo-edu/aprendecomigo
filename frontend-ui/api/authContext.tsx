@@ -5,6 +5,13 @@ import { setAuthErrorCallback } from './apiClient';
 import { isAuthenticated, logout, UserProfile } from './authApi';
 import { getDashboardInfo } from './userApi';
 
+export interface UserSchool {
+  id: number;
+  name: string;
+  role: string;
+  role_display: string;
+}
+
 // Global flag to prevent multiple simultaneous auth checks
 let isAuthCheckInProgress = false;
 
@@ -12,6 +19,9 @@ interface AuthContextType {
   isLoggedIn: boolean;
   isLoading: boolean;
   userProfile: UserProfile | null;
+  userSchools: UserSchool[];
+  currentSchool: UserSchool | null;
+  setCurrentSchool: (school: UserSchool) => void;
   serverError: string | null;
   serverAlert: { type: 'error' | 'warning'; message: string } | null;
   clearServerAlert: () => void;
@@ -29,6 +39,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userProfileCached, setUserProfileCached] = useState<boolean>(false);
+  const [userSchools, setUserSchools] = useState<UserSchool[]>([]);
+  const [currentSchool, setCurrentSchoolState] = useState<UserSchool | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [serverAlert, setServerAlert] = useState<{
     type: 'error' | 'warning';
@@ -53,8 +65,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         is_admin: dashboardData.user_info.is_admin,
         created_at: dashboardData.user_info.date_joined,
         updated_at: dashboardData.user_info.date_joined, // Using date_joined as fallback
-        roles: [], // Would need to map from dashboard roles if needed
+        roles: dashboardData.user_info.roles || [], // Map from dashboard roles
       };
+
+      // Extract schools from roles
+      const schools: UserSchool[] = (dashboardData.user_info.roles || []).map((role: any) => ({
+        id: role.school.id,
+        name: role.school.name,
+        role: role.role,
+        role_display: role.role_display,
+      }));
+
+      setUserSchools(schools);
+      
+      // Set current school to first admin school, or first school if no admin schools
+      const adminSchools = schools.filter(s => s.role === 'school_owner' || s.role === 'school_admin');
+      const defaultSchool = adminSchools.length > 0 ? adminSchools[0] : schools[0];
+      if (defaultSchool && !currentSchool) {
+        setCurrentSchoolState(defaultSchool);
+      }
 
       setUserProfile(userProfile);
       setUserProfileCached(true);
@@ -97,6 +126,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Clear cached profile if not authenticated
         setUserProfile(null);
         setUserProfileCached(false);
+        setUserSchools([]);
+        setCurrentSchoolState(null);
+      } else if (authenticated && !userProfileCached) {
+        // Automatically fetch user profile after successful authentication
+        console.log('🔑 User authenticated, fetching profile...');
+        await fetchUserProfile();
       }
 
       return authenticated;
@@ -118,6 +153,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoggedIn(false);
         setUserProfile(null);
         setUserProfileCached(false);
+        setUserSchools([]);
+        setCurrentSchoolState(null);
         return false;
       }
 
@@ -136,6 +173,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoggedIn(false);
       setUserProfile(null);
       setUserProfileCached(false);
+      setUserSchools([]);
+      setCurrentSchoolState(null);
       return false;
     } finally {
       isAuthCheckInProgress = false;
@@ -161,6 +200,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoggedIn(false);
       setUserProfile(null);
       setUserProfileCached(false);
+      setUserSchools([]);
+      setCurrentSchoolState(null);
       router.replace('/auth/signin');
     } catch (error) {
       console.error('Error during logout:', error);
@@ -173,6 +214,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoggedIn(false);
     setUserProfile(null);
     setUserProfileCached(false);
+    setUserSchools([]);
+    setCurrentSchoolState(null);
   };
 
   // Check auth status and biometric status on mount
@@ -203,10 +246,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  const setCurrentSchool = (school: UserSchool) => {
+    setCurrentSchoolState(school);
+  };
+
   const value = {
     isLoggedIn,
     isLoading,
     userProfile,
+    userSchools,
+    currentSchool,
+    setCurrentSchool,
     serverError,
     serverAlert,
     clearServerAlert: () => setServerAlert(null),

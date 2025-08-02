@@ -7,7 +7,7 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 
 export default function Index() {
-  const { isLoggedIn, isLoading } = useAuth();
+  const { isLoggedIn, isLoading, userProfile } = useAuth();
 
   // AuthContext already handles auth check on initialization
   // No need to call checkAuthStatus() again here
@@ -22,11 +22,23 @@ export default function Index() {
     );
   }
 
-  // If authenticated, redirect to dashboard
-  if (isLoggedIn) {
-    return <Redirect href={'home' as Href} />;
+  // If authenticated, redirect to appropriate dashboard based on user type
+  if (isLoggedIn && userProfile) {
+    // For now, most users go to school admin dashboard
+    // TODO: Add logic for different user types (student, parent, etc.)
+    return <Redirect href={'/(school-admin)/dashboard' as Href} />;
   }
 
-  // If not authenticated, redirect to signup page
-  return <Redirect href={"/auth/signup" as Href} />;
+  // If authenticated but no profile yet, wait for profile to load
+  if (isLoggedIn && !userProfile) {
+    return (
+      <VStack className="flex-1 justify-center items-center p-4 bg-background-50">
+        <Spinner size="large" />
+        <Text className="mt-4">Loading profile...</Text>
+      </VStack>
+    );
+  }
+
+  // If not authenticated, redirect to signin page
+  return <Redirect href={"/auth/signin" as Href} />;
 }

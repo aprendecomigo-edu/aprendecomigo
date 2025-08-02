@@ -81,7 +81,7 @@ Our gradient system provides consistent, beautiful color transitions that work a
 
 // React Native
 <Text className="text-4xl font-bold">
-  <Text className="bg-gradient-primary">Aprende Comigo</Text>
+  <Text className="text-gradient-primary">Aprende Comigo</Text>
 </Text>
 ```
 

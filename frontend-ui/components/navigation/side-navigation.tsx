@@ -123,9 +123,8 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
 
   return (
     <VStack
-      className={`w-64 pt-6 h-full border-r border-border-300 pb-5 ${className}`}
+      className={`w-64 pt-6 min-h-screen h-full glass-nav ${className}`}
       space="sm"
-      style={{ backgroundColor: NAVIGATION_COLORS.primary }}
       data-testid="side-navigation"
     >
       <VStack className="flex-1 px-4" space="xs">
@@ -136,18 +135,20 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
           return (
             <Box key={`nav-item-${item.id}`} className="relative">
               <Pressable
-                className={`flex-row items-center px-3 py-3 rounded-lg ${
-                  isSelected ? 'bg-orange-400' : 'hover:bg-white/10'
+                className={`flex-row items-center px-3 py-3 rounded-lg active:scale-98 transition-transform ${
+                  isSelected ? 'bg-gradient-primary' : 'glass-light'
                 }`}
                 onPress={() => handlePress(index)}
                 accessibilityRole="button"
                 accessibilityLabel={`Navigate to ${item.label}`}
                 accessibilityState={{ selected: isSelected }}
               >
-                <Icon as={item.icon} size="md" className="text-white mr-3" />
+                <Icon as={item.icon} size="md" className={`mr-3 ${
+                  isSelected ? 'text-white' : 'text-gray-700'
+                }`} />
                 <Text 
-                  className={`flex-1 font-medium ${
-                    isSelected ? 'text-white' : 'text-white/90'
+                  className={`flex-1 font-primary font-medium ${
+                    isSelected ? 'text-white' : 'text-gray-700'
                   }`}
                   numberOfLines={1}
                 >

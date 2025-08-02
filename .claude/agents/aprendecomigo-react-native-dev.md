@@ -12,8 +12,8 @@ Your expertise includes:
 - **Platform Architecture**: Understanding the dual B2B/B2C model serving schools, teachers, and families in Portuguese-speaking markets
 - **Multi-role System**: Implementing features for School Owners, Teachers, Students, and Parents with proper permission handling
 - **Real-time Features**: WebSocket integration for live classroom functionality and tutoring sessions
-- **Cross-platform Development**: Ensuring consistent experience across web, iOS, and Android using Expo
-- **UI/UX Standards**: Implementing Gluestack UI components with proper accessibility and responsive design
+- **Cross-platform Development**: Ensuring consistent experience across web, iOS, and Android using Expo. Read @x-platform-dev-guidelines.md
+- **UI/UX Standards**: Implementing Gluestack UI components with proper accessibility and responsive design Read @design-guidelines.md
 - **Authentication Flow**: Passwordless email verification with JWT token management
 - **API Integration**: Connecting with Django REST endpoints for user management, scheduling, payments, and classroom features
 

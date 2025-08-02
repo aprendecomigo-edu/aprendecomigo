@@ -42,7 +42,7 @@ export default function SchoolAdminLayout() {
   }, [isLoggedIn, userProfile]);
 
   // Show loading state while checking authentication
-  if (isLoading || checkingAccess) {
+  if (isLoading) {
     return (
       <Center className="flex-1">
         <Text className="text-gray-600">Verificando autenticação...</Text>
@@ -53,6 +53,15 @@ export default function SchoolAdminLayout() {
   // Redirect to login if not authenticated
   if (!isLoggedIn) {
     return <Redirect href="/auth/signin" />;
+  }
+
+  // Show loading only while checking school access (but not auth)
+  if (checkingAccess) {
+    return (
+      <Center className="flex-1">
+        <Text className="text-gray-600">Carregando escola...</Text>
+      </Center>
+    );
   }
 
   // Temporarily bypass admin check for testing - GitHub Issue #42

@@ -8,7 +8,7 @@ import {
   getEducationalSystems,
   EducationalSystem,
 } from '@/api/userApi';
-import AuthGuard from '@/components/common/AuthGuard';
+import { AuthGuard } from '@/components/auth/auth-guard';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';

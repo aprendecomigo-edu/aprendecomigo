@@ -9,11 +9,10 @@ import {
 import React, { useState } from 'react';
 import { Platform, Alert } from 'react-native';
 
-import type { School } from './navigation-config';
-import { schools, NAVIGATION_COLORS } from './navigation-config';
+import { NAVIGATION_COLORS } from './navigation-config';
 import { QuickActions } from './quick-actions';
 
-import { useAuth } from '@/api/authContext';
+import { useAuth, UserSchool } from '@/api/authContext';
 import { GlobalSearch } from '@/components/search/global-search';
 import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
@@ -38,7 +37,7 @@ import { VStack } from '@/components/ui/vstack';
 interface TopNavigationProps {
   variant?: 'web' | 'mobile';
   onToggleSidebar?: () => void;
-  onSchoolChange?: (school: School) => void;
+  onSchoolChange?: (school: UserSchool) => void;
   className?: string;
   showSearch?: boolean;
   showQuickActions?: boolean;
@@ -60,11 +59,10 @@ export const TopNavigation = ({
   onToggleSidebar,
   onSchoolChange,
   className = '',
-  showSearch = true,
+  showSearch = false,
   showQuickActions = true,
 }: TopNavigationProps) => {
-  const { logout, userProfile } = useAuth();
-  const [selectedSchool, setSelectedSchool] = useState<School>(schools[2]); // Default to 3ponto14
+  const { logout, userProfile, userSchools, currentSchool, setCurrentSchool } = useAuth();
   const [showSchoolMenu, setShowSchoolMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -72,8 +70,8 @@ export const TopNavigation = ({
   const isAdmin = userProfile?.user_type === 'admin' || userProfile?.is_admin;
 
   // School selector handlers
-  const handleSelectSchool = (school: School) => {
-    setSelectedSchool(school);
+  const handleSelectSchool = (school: UserSchool) => {
+    setCurrentSchool(school);
     setShowSchoolMenu(false);
     if (onSchoolChange) {
       onSchoolChange(school);
@@ -107,7 +105,11 @@ export const TopNavigation = ({
 
   // School selector component
   const SchoolSelector = () => {
-    const modalPosition = Platform.OS === 'web' ? { top: 60, left: 50 } : { top: 70, left: 10 };
+    if (!currentSchool && userSchools.length === 0) {
+      return (
+        <Text className="text-2xl font-medium text-white">Loading...</Text>
+      );
+    }
 
     return (
       <Box className="relative">
@@ -115,37 +117,34 @@ export const TopNavigation = ({
           onPress={() => setShowSchoolMenu(!showSchoolMenu)}
           className="flex-row items-center"
         >
-          <Text className="text-2xl font-medium text-white">{selectedSchool.name}</Text>
+          <Text className="text-2xl font-medium text-white">{currentSchool?.name || 'Select School'}</Text>
           <Icon as={ChevronDownIcon} size="sm" className="ml-2 mt-1 text-white" />
         </Pressable>
 
-        <Modal isOpen={showSchoolMenu} onClose={() => setShowSchoolMenu(false)}>
-          <ModalBackdrop />
-          <ModalContent
+        {showSchoolMenu && (
+          <Box 
+            className="absolute top-full left-0 mt-2 w-64 bg-background-0 border border-border-200 rounded-md shadow-lg z-50"
             style={{
-              position: 'absolute',
-              top: modalPosition.top,
-              left: modalPosition.left,
-              margin: 0,
-              width: 250,
-              backgroundColor: 'transparent',
-              borderWidth: 0,
-              zIndex: 9999,
+              minWidth: 250,
+              maxHeight: 300,
             }}
           >
-            <Box className="bg-background-0 border border-border-200 rounded-md shadow-md w-full">
-              <VStack>
-                {schools.map(school => (
-                  <Pressable
-                    key={school.id}
-                    className={`p-3 hover:bg-background-50 ${
-                      selectedSchool.id === school.id ? 'bg-background-50' : ''
-                    }`}
-                    onPress={() => handleSelectSchool(school)}
-                  >
-                    <Text>{school.name}</Text>
-                  </Pressable>
-                ))}
+            <VStack className="max-h-60 overflow-y-auto">
+              {userSchools.map(school => (
+                <Pressable
+                  key={school.id}
+                  className={`p-3 hover:bg-background-50 ${
+                    currentSchool?.id === school.id ? 'bg-background-50' : ''
+                  }`}
+                  onPress={() => handleSelectSchool(school)}
+                >
+                  <VStack>
+                    <Text className="font-medium">{school.name}</Text>
+                    <Text className="text-sm text-typography-500">{school.role_display}</Text>
+                  </VStack>
+                </Pressable>
+              ))}
+              {userProfile?.is_admin && (
                 <Pressable
                   className="p-3 flex-row items-center border-t border-border-200 hover:bg-background-50"
                   onPress={handleAddNewSchool}
@@ -153,10 +152,18 @@ export const TopNavigation = ({
                   <Icon as={PlusIcon} size="sm" className="mr-2" />
                   <Text className="text-primary-600">Add new school</Text>
                 </Pressable>
-              </VStack>
-            </Box>
-          </ModalContent>
-        </Modal>
+              )}
+            </VStack>
+          </Box>
+        )}
+
+        {/* Backdrop to close dropdown when clicking outside */}
+        {showSchoolMenu && (
+          <Pressable
+            className="fixed inset-0 z-40"
+            onPress={() => setShowSchoolMenu(false)}
+          />
+        )}
       </Box>
     );
   };

@@ -2,10 +2,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from '@unitools/link';
 import useRouter from '@unitools/router';
 import { useLocalSearchParams } from 'expo-router';
-import { AlertTriangle, Check } from 'lucide-react-native';
+import { AlertTriangle } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Keyboard, Platform } from 'react-native';
+import { Keyboard } from 'react-native';
 import { z } from 'zod';
 
 import { AuthLayout } from '../layout';
@@ -13,8 +13,7 @@ import { AuthLayout } from '../layout';
 import { verifyEmailCode, requestEmailCode, AuthResponse } from '@/api/authApi';
 import { useAuth } from '@/api/authContext';
 import { onboardingApi } from '@/api/onboardingApi';
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
-import { Checkbox, CheckboxIcon, CheckboxIndicator, CheckboxLabel } from '@/components/ui/checkbox';
+import { Button, ButtonText } from '@/components/ui/button';
 import {
   FormControl,
   FormControlError,

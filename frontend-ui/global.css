@@ -1,6 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Kirang+Haerang&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* CSS Variables for gradients and glass effects */
+:root {
+  /* Gradient Patterns - Design System */
+  --gradient-primary: linear-gradient(135deg, #f59e0b, #38bdf8);
+  --gradient-accent: linear-gradient(135deg, #0ea5e9, #d946ef);
+  --gradient-accent-dark: linear-gradient(135deg, #f97316, #38bdf8);
+  --gradient-subtle: linear-gradient(135deg, #f3f4f6 60%, #f59e0b 100%);
+  --gradient-page: linear-gradient(135deg, #f97316 0%, #d946ef 35%, #f97316 100%);
+  --gradient-section-light: linear-gradient(to bottom right, #f9fafb, #dbeafe);
+  --gradient-dark: linear-gradient(to bottom right, #111827, #000000, #111827);
+
+  /* Glass Effect Patterns */
+  --glass-nav-bg: rgba(255, 255, 255, 0.9);
+  --glass-nav-blur: blur(20px);
+  --glass-nav-border: rgba(255, 255, 255, 0.3);
+  --glass-container-bg: rgba(255, 255, 255, 0.8);
+  --glass-container-blur: blur(20px);
+  --glass-container-border: rgba(255, 255, 255, 0.2);
+  --glass-light-bg: rgba(255, 255, 255, 0.6);
+  --glass-light-blur: blur(8px);
+  --glass-light-border: rgba(255, 255, 255, 0.15);
+  --glass-strong-bg: rgba(255, 255, 255, 0.95);
+  --glass-strong-blur: blur(25px);
+  --glass-strong-border: rgba(255, 255, 255, 0.4);
+}
+
+/* Dark mode variables */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Gradient Patterns - Design System (Dark Mode) */
+    --gradient-primary: linear-gradient(135deg, #f59e0b, #38bdf8);
+    --gradient-accent: linear-gradient(135deg, #0ea5e9, #d946ef);
+    --gradient-accent-dark: linear-gradient(135deg, #f97316, #38bdf8);
+    --gradient-subtle: linear-gradient(135deg, #374151 60%, #f59e0b 100%);
+    --gradient-page: linear-gradient(135deg, #581c87 0%, #be185d 35%, #581c87 100%);
+    --gradient-section-light: linear-gradient(to bottom right, #1f2937, #1e40af);
+    --gradient-dark: linear-gradient(to bottom right, #000000, #111827, #000000);
+
+    /* Glass Effect Patterns (Dark Mode) */
+    --glass-nav-bg: rgba(17, 24, 39, 0.9);
+    --glass-nav-border: rgba(255, 255, 255, 0.1);
+    --glass-container-bg: rgba(17, 24, 39, 0.8);
+    --glass-container-border: rgba(255, 255, 255, 0.05);
+    --glass-light-bg: rgba(17, 24, 39, 0.6);
+    --glass-light-border: rgba(255, 255, 255, 0.05);
+    --glass-strong-bg: rgba(17, 24, 39, 0.95);
+    --glass-strong-border: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Text Gradient Utilities */
+.text-gradient-primary {
+  background-image: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.text-gradient-accent {
+  background-image: var(--gradient-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.text-gradient-accent-dark {
+  background-image: var(--gradient-accent-dark);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
 
 html, body, #__next {
   height: 100%;

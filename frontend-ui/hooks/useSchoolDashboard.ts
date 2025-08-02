@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import useWebSocket from './useWebSocket';
-
 import { useAuth } from '@/api/authContext';
 import {
   getSchoolActivity,
@@ -102,18 +100,12 @@ const createDashboardError = (error: any, context: string): DashboardError => {
 
 interface UseSchoolDashboardProps {
   schoolId: number;
-  enableRealtime?: boolean;
   refreshInterval?: number;
 }
 
-interface SchoolDashboardWebSocketMessage {
-  type: 'metrics_update' | 'activity_new' | 'invitation_status_update';
-  data: any;
-}
 
 export const useSchoolDashboard = ({
   schoolId,
-  enableRealtime = true,
   refreshInterval = 30000, // 30 seconds
 }: UseSchoolDashboardProps) => {
   const { userProfile } = useAuth();
@@ -131,59 +123,6 @@ export const useSchoolDashboard = ({
   const [hasNextPage, setHasNextPage] = useState(false);
   const [totalActivities, setTotalActivities] = useState(0);
 
-  // WebSocket URL configuration
-  const wsUrl =
-    API_URL.replace('http', 'ws').replace('/api', '') + `/ws/schools/${schoolId}/dashboard/`;
-
-  // WebSocket message handler
-  const handleWebSocketMessage = useCallback((message: any) => {
-    console.log('Dashboard WebSocket message:', message);
-
-    switch (message.type) {
-      case 'metrics_update':
-        setMetrics(prev => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            student_count: {
-              ...prev.student_count,
-              total: message.data.student_count?.total ?? prev.student_count.total,
-            },
-            teacher_count: {
-              ...prev.teacher_count,
-              total: message.data.teacher_count?.total ?? prev.teacher_count.total,
-            },
-            class_metrics: {
-              ...prev.class_metrics,
-              active_classes:
-                message.data.active_classes?.total ?? prev.class_metrics.active_classes,
-            },
-          };
-        });
-        break;
-
-      case 'activity_new':
-        setActivities(prev => [message.data, ...prev]);
-        setTotalActivities(prev => prev + 1);
-        break;
-
-      case 'invitation_status_update':
-        // Refresh metrics when invitation status changes
-        fetchMetrics();
-        break;
-
-      default:
-        console.log('Unknown WebSocket message type:', message.type);
-    }
-  }, []);
-
-  // WebSocket connection
-  const { isConnected, error: wsError } = useWebSocket({
-    url: wsUrl,
-    channelName: `school_dashboard_${schoolId}`,
-    onMessage: handleWebSocketMessage,
-    shouldConnect: enableRealtime && !!userProfile && !!schoolId,
-  });
 
   // API functions
   const fetchMetrics = useCallback(async () => {
@@ -291,7 +230,7 @@ export const useSchoolDashboard = ({
 
   // Auto-refresh functionality
   useEffect(() => {
-    if (!enableRealtime && refreshInterval > 0) {
+    if (refreshInterval > 0) {
       const interval = setInterval(() => {
         fetchMetrics();
         fetchActivities(1, false);
@@ -299,7 +238,7 @@ export const useSchoolDashboard = ({
 
       return () => clearInterval(interval);
     }
-  }, [enableRealtime, refreshInterval, fetchMetrics, fetchActivities]);
+  }, [refreshInterval, fetchMetrics, fetchActivities]);
 
   // Initial data load and school change handling
   useEffect(() => {
@@ -383,10 +322,6 @@ export const useSchoolDashboard = ({
 
     // Error handling
     error,
-    wsError,
-
-    // WebSocket connection status
-    isConnected,
 
     // Actions
     refreshAll,

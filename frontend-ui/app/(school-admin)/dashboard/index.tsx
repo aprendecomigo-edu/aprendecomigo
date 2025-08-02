@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import {
   AlertTriangleIcon,
   RefreshCwIcon,
-  WifiOffIcon,
   SchoolIcon,
   ChevronDownIcon,
   MailIcon,
@@ -13,45 +12,38 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/api/authContext';
-import { getUserAdminSchools, SchoolMembership } from '@/api/userApi';
-// Temporarily comment out problematic imports to debug
-// import { ActivityFeed, MetricsCard, QuickActionsPanel } from '@/components/dashboard';
+import { getSchoolInfo, SchoolInfo } from '@/api/userApi';
+import { ToDoTaskList } from '@/components/dashboard/ToDoTaskList';
+import { UpcomingEventsTable } from '@/components/dashboard/UpcomingEventsTable';
 
-// Temporary placeholder components for debugging
-const MetricsCard = ({ metrics, isLoading }: any) => (
-  <Box className="p-4 bg-white rounded-lg border">
-    <Text>MetricsCard Placeholder - {isLoading ? 'Loading...' : 'Loaded'}</Text>
-  </Box>
-);
-
-const QuickActionsPanel = ({ 
-  onInviteTeacher, 
-  onAddStudent, 
-  onScheduleClass, 
-  onViewMessages, 
-  onManageUsers, 
-  onManageInvitations, 
+const QuickActionsPanel = ({
+  onInviteTeacher,
+  onAddStudent,
+  onScheduleClass,
+  onViewMessages,
+  onManageUsers,
+  onManageInvitations,
   onSettings,
-  onCommunication 
+  onCommunication,
 }: any) => (
-  <Box className="p-6 bg-white rounded-lg border shadow-sm">
+  <Box className="glass-container p-6 rounded-xl">
     <VStack space="md">
-      <Heading size="md" className="text-gray-900">
-        Quick Actions
+      <Heading size="md" className="font-primary text-gray-900">
+        <Text className="bg-gradient-accent">Quick Actions</Text>
       </Heading>
-      
+
       <VStack space="sm" className={isWeb ? 'lg:grid lg:grid-cols-2 lg:gap-3' : ''}>
         {/* Communication System */}
         <Pressable
           onPress={onCommunication}
-          className="flex-row items-center p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 active:bg-purple-100"
+          className="feature-card-gradient flex-row items-center p-4 rounded-lg active:scale-98 transition-transform"
         >
-          <Box className="mr-3 p-2 bg-purple-500 rounded-full">
+          <Box className="mr-3 p-2 bg-primary-600 rounded-full">
             <Icon as={MailIcon} size="sm" className="text-white" />
           </Box>
           <VStack className="flex-1">
-            <Text className="font-semibold text-gray-900">Email Communications</Text>
-            <Text className="text-sm text-gray-600">
+            <Text className="font-semibold font-primary text-gray-900">Email Communications</Text>
+            <Text className="text-sm font-body text-gray-600">
               Manage email templates and teacher communications
             </Text>
           </VStack>
@@ -60,14 +52,14 @@ const QuickActionsPanel = ({
         {/* Invite Teacher */}
         <Pressable
           onPress={onInviteTeacher}
-          className="flex-row items-center p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 active:bg-blue-100"
+          className="feature-card-gradient flex-row items-center p-4 rounded-lg active:scale-98 transition-transform"
         >
-          <Box className="mr-3 p-2 bg-blue-500 rounded-full">
+          <Box className="mr-3 p-2 bg-accent-600 rounded-full">
             <Icon as={UsersIcon} size="sm" className="text-white" />
           </Box>
           <VStack className="flex-1">
-            <Text className="font-semibold text-gray-900">Invite Teacher</Text>
-            <Text className="text-sm text-gray-600">
+            <Text className="font-semibold font-primary text-gray-900">Invite Teacher</Text>
+            <Text className="text-sm font-body text-gray-600">
               Send invitations to new teachers
             </Text>
           </VStack>
@@ -76,14 +68,14 @@ const QuickActionsPanel = ({
         {/* Add Student */}
         <Pressable
           onPress={onAddStudent}
-          className="flex-row items-center p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 active:bg-green-100"
+          className="feature-card-gradient flex-row items-center p-4 rounded-lg active:scale-98 transition-transform"
         >
-          <Box className="mr-3 p-2 bg-green-500 rounded-full">
+          <Box className="mr-3 p-2 bg-success-600 rounded-full">
             <Icon as={SchoolIcon} size="sm" className="text-white" />
           </Box>
           <VStack className="flex-1">
-            <Text className="font-semibold text-gray-900">Add Student</Text>
-            <Text className="text-sm text-gray-600">
+            <Text className="font-semibold font-primary text-gray-900">Add Student</Text>
+            <Text className="text-sm font-body text-gray-600">
               Register new students to your school
             </Text>
           </VStack>
@@ -92,14 +84,14 @@ const QuickActionsPanel = ({
         {/* Manage Invitations */}
         <Pressable
           onPress={onManageInvitations}
-          className="flex-row items-center p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 active:bg-orange-100"
+          className="feature-card-gradient flex-row items-center p-4 rounded-lg active:scale-98 transition-transform"
         >
-          <Box className="mr-3 p-2 bg-orange-500 rounded-full">
+          <Box className="mr-3 p-2 bg-accent-600 rounded-full">
             <Icon as={AlertTriangleIcon} size="sm" className="text-white" />
           </Box>
           <VStack className="flex-1">
-            <Text className="font-semibold text-gray-900">Manage Invitations</Text>
-            <Text className="text-sm text-gray-600">
+            <Text className="font-semibold font-primary text-gray-900">Manage Invitations</Text>
+            <Text className="text-sm font-body text-gray-600">
               Track and manage teacher invitations
             </Text>
           </VStack>
@@ -108,14 +100,14 @@ const QuickActionsPanel = ({
         {/* Settings */}
         <Pressable
           onPress={onSettings}
-          className="flex-row items-center p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 active:bg-gray-100"
+          className="feature-card-gradient flex-row items-center p-4 rounded-lg active:scale-98 transition-transform"
         >
-          <Box className="mr-3 p-2 bg-gray-500 rounded-full">
+          <Box className="mr-3 p-2 bg-gray-600 rounded-full">
             <Icon as={SettingsIcon} size="sm" className="text-white" />
           </Box>
           <VStack className="flex-1">
-            <Text className="font-semibold text-gray-900">School Settings</Text>
-            <Text className="text-sm text-gray-600">
+            <Text className="font-semibold font-primary text-gray-900">School Settings</Text>
+            <Text className="text-sm font-body text-gray-600">
               Configure school preferences and details
             </Text>
           </VStack>
@@ -125,19 +117,27 @@ const QuickActionsPanel = ({
   </Box>
 );
 
-const ActivityFeed = ({ activities, isLoading, onLoadMore }: any) => (
-  <Box className="p-4 bg-white rounded-lg border">
-    <Text>ActivityFeed Placeholder - {isLoading ? 'Loading...' : 'Loaded'}</Text>
-  </Box>
-);
-// Temporarily comment out problematic SchoolInfoCard import
-// import SchoolInfoCard from '@/components/dashboard/SchoolInfoCard';
-
-// Temporary placeholder for SchoolInfoCard
-const SchoolInfoCard = ({ school, isLoading, onSave }: any) => (
-  <Box className="p-4 bg-white rounded-lg border">
-    <Text>SchoolInfoCard Placeholder - {isLoading ? 'Loading...' : 'Loaded'}</Text>
-    {school && <Text className="text-sm text-gray-600">School: {school.name}</Text>}
+// SchoolInfoCard component
+const SchoolInfoCard = ({ schoolInfo, isLoading, onUpdate }: any) => (
+  <Box className="glass-container p-6 rounded-xl">
+    <VStack space="md">
+      <Heading size="md" className="font-primary text-gray-900">
+        <Text className="bg-gradient-accent">School Information</Text>
+      </Heading>
+      <Box className="bg-gradient-subtle p-6 rounded-xl">
+        <VStack space="sm">
+          <Text className="font-semibold font-primary text-gray-900">
+            {schoolInfo?.name || 'School Name'}
+          </Text>
+          <Text className="font-body text-gray-600">
+            {schoolInfo?.description || 'School description and details will appear here.'}
+          </Text>
+          {isLoading && (
+            <Text className="text-sm font-body text-gray-500">Loading school information...</Text>
+          )}
+        </VStack>
+      </Box>
+    </VStack>
   </Box>
 );
 import MainLayout from '@/components/layouts/main-layout';
@@ -151,75 +151,62 @@ import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import useSchoolDashboard, { DashboardError } from '@/hooks/useSchoolDashboard';
 
 const SchoolAdminDashboard = () => {
-  const { userProfile } = useAuth();
+  const { userProfile, userSchools, currentSchool } = useAuth();
 
-  // State for school management
-  const [adminSchools, setAdminSchools] = useState<SchoolMembership[]>([]);
-  const [selectedSchoolId, setSelectedSchoolId] = useState<number | null>(null);
-  const [schoolsLoading, setSchoolsLoading] = useState(true);
-  const [schoolsError, setSchoolsError] = useState<string | null>(null);
+  // Filter admin schools from user schools
+  const adminSchools = useMemo(() => {
+    return userSchools.filter(
+      school => school.role === 'school_owner' || school.role === 'school_admin'
+    );
+  }, [userSchools]);
 
-  // Load user's admin schools on mount
+  // State for school info only (no metrics or activities)
+  const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
+  const [schoolInfoLoading, setSchoolInfoLoading] = useState(false);
+  const [schoolInfoError, setSchoolInfoError] = useState<string | null>(null);
+
+  // Check if user has admin access to any schools
+  const hasAdminAccess = adminSchools.length > 0;
+  const schoolsLoading = false; // No loading needed since schools come from auth context
+  const schoolsError =
+    !hasAdminAccess && userSchools.length > 0
+      ? 'Você não tem permissões de administrador em nenhuma escola.'
+      : null;
+
+  // Get current selected school info
+  const selectedSchool = useMemo(() => {
+    if (!currentSchool) return null;
+    return adminSchools.find(school => school.id === currentSchool.id);
+  }, [adminSchools, currentSchool]);
+
+  // Get selected school ID
+  const selectedSchoolId = currentSchool?.id;
+
+  // Fetch school info when school changes
   useEffect(() => {
-    const loadAdminSchools = async () => {
-      try {
-        setSchoolsLoading(true);
-        setSchoolsError(null);
-        const schools = await getUserAdminSchools();
-        setAdminSchools(schools);
+    const fetchSchoolInfo = async () => {
+      if (!selectedSchoolId || selectedSchoolId <= 0) {
+        setSchoolInfo(null);
+        return;
+      }
 
-        // Auto-select the first school if only one, or the last selected one
-        if (schools.length === 1) {
-          setSelectedSchoolId(schools[0].school.id);
-        } else if (schools.length > 1) {
-          // For now, default to the first school - in a real app, you might want to
-          // save the user's last selected school in localStorage
-          setSelectedSchoolId(schools[0].school.id);
-        }
+      try {
+        setSchoolInfoLoading(true);
+        setSchoolInfoError(null);
+        const data = await getSchoolInfo(selectedSchoolId);
+        setSchoolInfo(data);
       } catch (error) {
-        console.error('Error loading admin schools:', error);
-        setSchoolsError(
-          'Falha ao carregar escolas. Você pode não ter permissões de administrador.'
-        );
+        console.error('Error fetching school info:', error);
+        setSchoolInfoError('Falha ao carregar informações da escola');
       } finally {
-        setSchoolsLoading(false);
+        setSchoolInfoLoading(false);
       }
     };
 
-    if (userProfile) {
-      loadAdminSchools();
-    }
-  }, [userProfile]);
-
-  // Get selected school info
-  const selectedSchool = useMemo(() => {
-    return adminSchools.find(school => school.school.id === selectedSchoolId);
-  }, [adminSchools, selectedSchoolId]);
-
-  const {
-    metrics,
-    schoolInfo,
-    activities,
-    isLoading,
-    isLoadingMore,
-    hasNextPage,
-    totalActivities,
-    error,
-    wsError,
-    isConnected,
-    refreshAll,
-    refreshAllWithRetry,
-    loadMoreActivities,
-    updateSchool,
-    clearError,
-  } = useSchoolDashboard({
-    schoolId: selectedSchoolId || 0,
-    enableRealtime: true,
-    refreshInterval: 30000,
-  });
+    fetchSchoolInfo();
+  }, [selectedSchoolId]);
 
   // Quick action handlers
   const handleInviteTeacher = useCallback(() => {
@@ -256,14 +243,27 @@ const SchoolAdminDashboard = () => {
 
   const handleUpdateSchool = useCallback(
     async (data: any) => {
+      if (!selectedSchoolId) return;
+
       try {
-        await updateSchool(data);
-      } catch (err) {
-        // Error handling is done in the hook
-        throw err;
+        setSchoolInfoLoading(true);
+        setSchoolInfoError(null);
+        // Note: updateSchoolInfo is imported from userApi
+        // const updatedSchool = await updateSchoolInfo(selectedSchoolId, data);
+        // setSchoolInfo(updatedSchool);
+
+        // For now, just refetch the school info
+        const updatedData = await getSchoolInfo(selectedSchoolId);
+        setSchoolInfo(updatedData);
+      } catch (error) {
+        console.error('Error updating school:', error);
+        setSchoolInfoError('Falha ao atualizar escola');
+        throw error;
+      } finally {
+        setSchoolInfoLoading(false);
       }
     },
-    [updateSchool]
+    [selectedSchoolId]
   );
 
   // Welcome message
@@ -286,7 +286,7 @@ const SchoolAdminDashboard = () => {
       <Center className="flex-1 p-6">
         <VStack space="md" className="items-center">
           <Icon as={SchoolIcon} size="xl" className="text-blue-500" />
-          <Text className="text-gray-600">Carregando suas escolas...</Text>
+          <Text className="font-body text-gray-600">Carregando suas escolas...</Text>
         </VStack>
       </Center>
     );
@@ -299,10 +299,10 @@ const SchoolAdminDashboard = () => {
         <VStack space="lg" className="items-center max-w-md">
           <Icon as={SchoolIcon} size="xl" className="text-gray-400" />
           <VStack space="sm" className="items-center">
-            <Heading size="lg" className="text-center text-gray-900">
-              Nenhuma escola encontrada
+            <Heading size="lg" className="font-primary text-center text-gray-900">
+              <Text className="bg-gradient-accent">Nenhuma escola encontrada</Text>
             </Heading>
-            <Text className="text-center text-gray-600">
+            <Text className="font-body text-center text-gray-600">
               {schoolsError || 'Você não possui permissões de administrador em nenhuma escola.'}
             </Text>
           </VStack>
@@ -320,40 +320,43 @@ const SchoolAdminDashboard = () => {
       <Center className="flex-1 p-6">
         <VStack space="md" className="items-center">
           <Icon as={SchoolIcon} size="xl" className="text-blue-500" />
-          <Text className="text-gray-600">Selecionando escola...</Text>
+          <Text className="font-body text-gray-600">Selecionando escola...</Text>
         </VStack>
       </Center>
     );
   }
 
-  // Dashboard error state
-  if (error && !isLoading) {
-    const dashboardError = error as DashboardError;
+  // Dashboard error state (for critical school info errors)
+  if (schoolInfoError && !schoolInfoLoading && selectedSchoolId) {
     return (
       <Center className="flex-1 p-6">
         <VStack space="lg" className="items-center max-w-md">
           <Icon as={AlertTriangleIcon} size="xl" className="text-red-500" />
           <VStack space="sm" className="items-center">
-            <Heading size="lg" className="text-center text-gray-900">
-              {dashboardError.type === 'permission'
-                ? 'Acesso negado'
-                : 'Erro ao carregar dashboard'}
+            <Heading size="lg" className="font-primary text-center text-gray-900">
+              <Text className="bg-gradient-accent">Erro ao carregar dashboard</Text>
             </Heading>
-            <Text className="text-center text-gray-600">{dashboardError.message}</Text>
-            {dashboardError.details && (
-              <Text className="text-center text-gray-500 text-sm">{dashboardError.details}</Text>
-            )}
+            <Text className="font-body text-center text-gray-600">{schoolInfoError}</Text>
           </VStack>
-          {dashboardError.canRetry && (
-            <Button onPress={refreshAllWithRetry} variant="solid">
-              <ButtonText>Tentar novamente</ButtonText>
-            </Button>
-          )}
-          {!dashboardError.canRetry && (
-            <Button onPress={() => router.push('/')} variant="outline">
-              <ButtonText>Voltar ao início</ButtonText>
-            </Button>
-          )}
+          <Button
+            onPress={() => {
+              setSchoolInfoError(null);
+              // Retry fetching school info
+              if (selectedSchoolId) {
+                setSchoolInfoLoading(true);
+                getSchoolInfo(selectedSchoolId)
+                  .then(setSchoolInfo)
+                  .catch(() => setSchoolInfoError('Falha ao carregar informações da escola'))
+                  .finally(() => setSchoolInfoLoading(false));
+              }
+            }}
+            variant="solid"
+          >
+            <ButtonText>Tentar novamente</ButtonText>
+          </Button>
+          <Button onPress={() => router.push('/')} variant="outline">
+            <ButtonText>Voltar ao início</ButtonText>
+          </Button>
         </VStack>
       </Center>
     );
@@ -366,15 +369,15 @@ const SchoolAdminDashboard = () => {
         paddingBottom: isWeb ? 0 : 100,
         flexGrow: 1,
       }}
-      className="flex-1 bg-gray-50"
+      className="flex-1 bg-gradient-page"
     >
       <VStack className="p-6" space="lg">
         {/* Header Section */}
         <VStack space="sm">
           <HStack className="justify-between items-start">
             <VStack space="xs" className="flex-1">
-              <Heading size="xl" className="text-gray-900">
-                {welcomeMessage}
+              <Heading size="xl" className="font-primary text-gray-900">
+                <Text className="bg-gradient-accent">{welcomeMessage}</Text>
               </Heading>
 
               {/* School Selector */}
@@ -383,49 +386,53 @@ const SchoolAdminDashboard = () => {
                   onPress={() => {
                     // In a real app, you might want to show a modal or dropdown
                     // For now, cycle through schools
-                    const currentIndex = adminSchools.findIndex(
-                      s => s.school.id === selectedSchoolId
-                    );
+                    const currentIndex = adminSchools.findIndex(s => s.id === selectedSchoolId);
                     const nextIndex = (currentIndex + 1) % adminSchools.length;
-                    setSelectedSchoolId(adminSchools[nextIndex].school.id);
+                    // In a real implementation, you would update currentSchool in the auth context
+                    // For now, this is just a placeholder - school switching needs proper implementation
                   }}
                   className="flex-row items-center space-x-2"
                 >
-                  <Text className="text-gray-600 font-medium">
-                    {selectedSchool?.school.name || 'Carregando...'}
+                  <Text className="font-body text-gray-600 font-medium">
+                    {selectedSchool?.name || 'Carregando...'}
                   </Text>
                   <Icon as={ChevronDownIcon} size="sm" className="text-gray-400" />
                 </Pressable>
               )}
 
               {adminSchools.length === 1 && (
-                <Text className="text-gray-600">
-                  {selectedSchool?.school.name || schoolInfo?.name || 'Carregando...'}
+                <Text className="font-body text-gray-600">
+                  {selectedSchool?.name || schoolInfo?.name || 'Carregando...'}
                 </Text>
               )}
             </VStack>
 
             <HStack space="xs" className="items-center">
-              {/* WebSocket Connection Status */}
-              {!isConnected && <Icon as={WifiOffIcon} size="sm" className="text-orange-500" />}
-
               {/* Refresh Button */}
               <Pressable
-                onPress={refreshAll}
-                disabled={isLoading}
-                className="p-2 rounded-md bg-gray-100 hover:bg-gray-200"
+                onPress={() => {
+                  if (selectedSchoolId) {
+                    setSchoolInfoLoading(true);
+                    getSchoolInfo(selectedSchoolId)
+                      .then(setSchoolInfo)
+                      .catch(() => setSchoolInfoError('Falha ao carregar informações da escola'))
+                      .finally(() => setSchoolInfoLoading(false));
+                  }
+                }}
+                disabled={schoolInfoLoading}
+                className="glass-light p-2 rounded-md active:scale-98"
               >
                 <Icon
                   as={RefreshCwIcon}
                   size="sm"
-                  className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`}
+                  className={`text-gray-600 ${schoolInfoLoading ? 'animate-spin' : ''}`}
                 />
               </Pressable>
             </HStack>
           </HStack>
 
           {/* Date */}
-          <Text className="text-sm text-gray-500">
+          <Text className="text-sm font-body text-gray-500">
             {new Date().toLocaleDateString('pt-PT', {
               weekday: 'long',
               day: '2-digit',
@@ -435,48 +442,17 @@ const SchoolAdminDashboard = () => {
           </Text>
         </VStack>
 
-        {/* Connection Warning */}
-        {wsError && (
-          <Box className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <HStack space="sm" className="items-start">
-              <Icon as={WifiOffIcon} size="sm" className="text-orange-600 mt-0.5" />
-              <VStack className="flex-1">
-                <Text className="font-medium text-orange-900">
-                  Atualizações em tempo real indisponíveis
-                </Text>
-                <Text className="text-sm text-orange-700">
-                  Os dados serão atualizados automaticamente a cada 30 segundos
-                </Text>
-              </VStack>
-            </HStack>
-          </Box>
-        )}
-
         {/* Error Alert */}
-        {error && (
+        {schoolInfoError && (
           <Box className="bg-red-50 border border-red-200 rounded-lg p-4">
             <HStack space="sm" className="items-start">
               <Icon as={AlertTriangleIcon} size="sm" className="text-red-600 mt-0.5" />
               <VStack className="flex-1">
-                <Text className="font-medium text-red-900">
-                  {(error as DashboardError).type === 'permission'
-                    ? 'Acesso negado'
-                    : 'Erro no carregamento'}
-                </Text>
-                <Text className="text-sm text-red-700">{(error as DashboardError).message}</Text>
-                {(error as DashboardError).details && (
-                  <Text className="text-xs text-red-600 mt-1">
-                    {(error as DashboardError).details}
-                  </Text>
-                )}
+                <Text className="font-medium text-red-900">Erro no carregamento</Text>
+                <Text className="text-sm text-red-700">{schoolInfoError}</Text>
               </VStack>
               <VStack space="xs">
-                {(error as DashboardError).canRetry && (
-                  <Pressable onPress={refreshAllWithRetry}>
-                    <Text className="text-sm font-medium text-red-600">Tentar novamente</Text>
-                  </Pressable>
-                )}
-                <Pressable onPress={clearError}>
+                <Pressable onPress={() => setSchoolInfoError(null)}>
                   <Text className="text-sm font-medium text-red-600">Dispensar</Text>
                 </Pressable>
               </VStack>
@@ -484,48 +460,10 @@ const SchoolAdminDashboard = () => {
           </Box>
         )}
 
-        {/* Quick Stats Overview */}
-        {metrics && !isLoading && (
-          <Box className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 shadow-lg">
-            <VStack space="md">
-              <Text className="text-white font-semibold text-lg">Resumo Rápido</Text>
-              <HStack space="lg" className="flex-wrap">
-                <VStack className="items-center">
-                  <Text className="text-2xl font-bold text-white">
-                    {metrics.student_count.total}
-                  </Text>
-                  <Text className="text-blue-100 text-sm">Estudantes</Text>
-                </VStack>
-                <VStack className="items-center">
-                  <Text className="text-2xl font-bold text-white">
-                    {metrics.teacher_count.total}
-                  </Text>
-                  <Text className="text-blue-100 text-sm">Professores</Text>
-                </VStack>
-                <VStack className="items-center">
-                  <Text className="text-2xl font-bold text-white">
-                    {metrics.class_metrics.active_classes}
-                  </Text>
-                  <Text className="text-blue-100 text-sm">Aulas Ativas</Text>
-                </VStack>
-                <VStack className="items-center">
-                  <Text className="text-2xl font-bold text-white">
-                    {Math.round(metrics.engagement_metrics.acceptance_rate * 100)}%
-                  </Text>
-                  <Text className="text-blue-100 text-sm">Taxa Aceitação</Text>
-                </VStack>
-              </HStack>
-            </VStack>
-          </Box>
-        )}
-
         {/* Main Dashboard Content */}
         <VStack space="lg" className={isWeb ? 'lg:grid lg:grid-cols-2 lg:gap-6' : ''}>
           {/* Left Column */}
           <VStack space="lg">
-            {/* Metrics Card */}
-            <MetricsCard metrics={metrics} isLoading={isLoading} />
-
             {/* Quick Actions Panel */}
             <QuickActionsPanel
               onInviteTeacher={handleInviteTeacher}
@@ -537,6 +475,9 @@ const SchoolAdminDashboard = () => {
               onSettings={handleSettings}
               onCommunication={handleCommunication}
             />
+
+            {/* To-Do Task List */}
+            <ToDoTaskList />
           </VStack>
 
           {/* Right Column */}
@@ -544,47 +485,44 @@ const SchoolAdminDashboard = () => {
             {/* School Info Card */}
             <SchoolInfoCard
               schoolInfo={schoolInfo}
-              isLoading={isLoading}
+              isLoading={schoolInfoLoading}
               onUpdate={handleUpdateSchool}
             />
 
-            {/* Activity Feed */}
-            <ActivityFeed
-              activities={activities}
-              isLoading={isLoading}
-              isLoadingMore={isLoadingMore}
-              hasNextPage={hasNextPage}
-              totalCount={totalActivities}
-              onLoadMore={loadMoreActivities}
-              onRefresh={refreshAll}
-            />
+            {/* Upcoming Events Table */}
+            <UpcomingEventsTable />
           </VStack>
         </VStack>
 
-        {/* Empty State for New Schools */}
-        {!isLoading &&
-          metrics &&
-          metrics.student_count.total === 0 &&
-          metrics.teacher_count.total === 0 && (
-            <Box className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-dashed border-green-200 rounded-xl p-8 text-center">
-              <VStack space="md" className="items-center">
-                <Text className="text-xl font-bold text-gray-900">Bem-vindo à sua escola! 🎉</Text>
-                <Text className="text-gray-600 max-w-md">
-                  Comece convidando professores e adicionando estudantes para ativar totalmente sua
-                  conta. Este é o primeiro passo para reduzir a taxa de abandono e criar um ambiente
-                  de aprendizagem ativo.
-                </Text>
-                <HStack space="md" className="flex-wrap justify-center">
-                  <Button onPress={handleInviteTeacher} variant="solid">
-                    <ButtonText>Convidar Professor</ButtonText>
-                  </Button>
-                  <Button onPress={handleAddStudent} variant="outline">
-                    <ButtonText>Adicionar Estudante</ButtonText>
-                  </Button>
-                </HStack>
-              </VStack>
-            </Box>
-          )}
+        {/* Welcome State for New Schools - Always visible as a helpful guide */}
+        {!schoolInfoLoading && (
+          <Box className="hero-card p-8 text-center">
+            <VStack space="md" className="items-center">
+              <Text className="text-xl font-bold font-primary text-gray-900">
+                <Text className="bg-gradient-primary">Bem-vindo à sua escola! 🎉</Text>
+              </Text>
+              <Text className="font-body text-gray-600 max-w-md">
+                Comece convidando professores e adicionando estudantes para ativar totalmente sua
+                conta. Este é o primeiro passo para reduzir a taxa de abandono e criar um ambiente
+                de aprendizagem ativo.
+              </Text>
+              <HStack space="md" className="flex-wrap justify-center">
+                <Pressable
+                  onPress={handleInviteTeacher}
+                  className="bg-gradient-primary px-6 py-3 rounded-xl active:scale-98 transition-transform"
+                >
+                  <Text className="text-white font-bold font-primary">Convidar Professor</Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleAddStudent}
+                  className="glass-nav px-6 py-3 rounded-xl active:scale-98 transition-transform"
+                >
+                  <Text className="text-gray-800 font-bold font-primary">Adicionar Estudante</Text>
+                </Pressable>
+              </HStack>
+            </VStack>
+          </Box>
+        )}
       </VStack>
     </ScrollView>
   );
