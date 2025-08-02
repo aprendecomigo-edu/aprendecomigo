@@ -1,0 +1,52 @@
+QA Test Case: Real-time Updates Test
+
+Test ID: DASH-005
+Test Name: WebSocket Connections and Live Updates
+Purpose: Verify WebSocket connections work and dashboard updates in real-time
+Expected Result: Real-time updates function correctly with stable WebSocket connections
+
+=== CONTEXT (Pre-test Requirements) ===
+
+Required Environment Setup:
+1. Development servers running: `make dev`
+2. Authenticated user session
+3. WebSocket support via Django Channels
+
+Test Data:
+- Test Email: test.manager@example.com (authenticated)
+- WebSocket endpoint: ws://localhost:8000/ws/dashboard/
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Verify WebSocket Connection
+1. Open browser developer tools
+2. Go to Network tab, filter for WS (WebSocket)
+3. Refresh dashboard page
+4. Verify WebSocket connection establishes
+
+Expected: WebSocket connection shows as established
+Screenshot: 01_websocket_connection.png
+
+Step 2: Test Real-time Activity Updates
+1. Keep dashboard open
+2. If possible, trigger new activity from another source
+3. Monitor for real-time updates in activity feed
+4. Check update timing and accuracy
+
+Expected: New activities appear without page refresh
+Screenshot: 02_realtime_activities.png
+
+Step 3: Test Metrics Real-time Updates
+1. Monitor metrics for real-time changes
+2. Test if metrics update automatically
+3. Verify update frequency is appropriate
+
+Expected: Metrics update in real-time when data changes
+Screenshot: 03_realtime_metrics.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: WebSocket connects AND real-time updates work correctly
+FAIL: WebSocket fails OR no real-time updates OR connection unstable
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

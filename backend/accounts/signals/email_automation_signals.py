@@ -21,7 +21,7 @@ from ..services.email_sequence_service import EmailSequenceOrchestrationService
 logger = logging.getLogger(__name__)
 
 
-@receiver(post_save, sender=TeacherInvitation)
+# @receiver(post_save, sender=TeacherInvitation)  # TEMPORARILY DISABLED - Conflicts with legacy email service
 def handle_teacher_invitation_created(sender, instance, created, **kwargs):
     """
     Handle automated emails when a teacher invitation is created.
@@ -73,7 +73,7 @@ def handle_teacher_invitation_created(sender, instance, created, **kwargs):
             instance.mark_email_failed(f"Signal processing error: {str(e)}")
 
 
-@receiver(post_save, sender=TeacherInvitation)
+# @receiver(post_save, sender=TeacherInvitation)  # TEMPORARILY DISABLED - Conflicts with legacy email service
 def handle_teacher_invitation_accepted(sender, instance, **kwargs):
     """
     Handle automated emails when a teacher invitation is accepted.

@@ -1,0 +1,103 @@
+QA Test Case: Authentication Flow Test
+
+Test ID: DASH-009
+Test Name: Complete Authentication Flow with Test User
+Purpose: Verify the complete authentication process works seamlessly with the provided test credentials
+Expected Result: User successfully authenticates and reaches dashboard with proper session management
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Authentication: Passwordless email verification with JWT tokens
+- Backend Auth API: /api/v1/auth/
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/backend
+2. Development servers running: `make dev`
+3. Clean browser session (no cached authentication)
+
+Test Data:
+- Test Email: test.manager@example.com
+- Verification Code: 187956
+- Expected Role: School Owner of "Test School"
+- Target Dashboard: http://localhost:8081/dashboard
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Clear Browser Session
+1. Open new incognito/private browser window
+2. Navigate to http://localhost:8081
+3. Verify no existing authentication (should see login interface)
+
+Expected: Clean session with login prompt
+Screenshot: 01_clean_session.png
+
+Step 2: Navigate to Authentication
+1. Look for sign-in/login button or form
+2. Click to start authentication process
+3. Verify email input field is available
+
+Expected: Authentication interface is accessible and functional
+Screenshot: 02_auth_interface.png
+
+Step 3: Enter Email Address
+1. Enter test email: test.manager@example.com
+2. Submit email form
+3. Verify proper form validation
+4. Check for loading states during submission
+
+Expected: Email accepted and proceeds to verification step
+Screenshot: 03_email_submitted.png
+
+Step 4: Enter Verification Code
+1. Look for verification code input field
+2. Enter code: 187956
+3. Submit verification form
+4. Monitor network requests in developer tools
+
+Expected: Verification code accepted and authentication completes
+Screenshot: 04_verification_submitted.png
+
+Step 5: Verify Authentication Success
+1. Check that user is redirected appropriately
+2. Verify JWT token is stored (localStorage/sessionStorage)
+3. Confirm user role and school information
+4. Ensure dashboard is accessible
+
+Expected: User authenticated with proper role and school assignment
+Screenshot: 05_auth_success.png
+
+Step 6: Test Session Persistence
+1. Refresh the page
+2. Navigate to different routes
+3. Verify authentication persists
+4. Check that dashboard remains accessible
+
+Expected: Session persists across page refreshes and navigation
+Screenshot: 06_session_persistence.png
+
+Step 7: Verify Protected Routes
+1. Try accessing /dashboard directly
+2. Verify user has appropriate permissions
+3. Check that protected content is visible
+4. Ensure no unauthorized access errors
+
+Expected: Protected routes accessible with proper permissions
+Screenshot: 07_protected_access.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Complete authentication flow works AND user reaches dashboard AND session persists AND proper permissions
+FAIL: Any step in authentication fails OR session doesn't persist OR permission errors
+
+Individual Step Criteria:
+- Step 1: PASS if clean session confirmed, FAIL if cached auth interferes
+- Step 2: PASS if auth interface accessible, FAIL if UI broken or missing
+- Step 3: PASS if email accepted and proceeds, FAIL if validation errors or submission fails
+- Step 4: PASS if verification code accepted, FAIL if code rejected or API errors
+- Step 5: PASS if authentication completes successfully, FAIL if auth fails or no redirect
+- Step 6: PASS if session persists across refreshes, FAIL if session lost
+- Step 7: PASS if protected routes accessible, FAIL if permission errors
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

@@ -1,0 +1,78 @@
+QA Test Case: Quick Actions Functionality
+
+Test ID: DASH-004
+Test Name: Dashboard Quick Actions and Modals Test
+Purpose: Verify all quick action buttons work correctly and modals function properly
+Expected Result: All quick actions are functional with proper UX feedback and modal behavior
+
+=== CONTEXT (Pre-test Requirements) ===
+
+Required Environment Setup:
+1. Development servers running: `make dev`
+2. Authenticated user session on dashboard
+
+Test Data:
+- Test Email: test.manager@example.com (authenticated)
+- Expected Quick Actions: Add Student, Invite Teacher, Create Class, etc.
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Locate Quick Action Buttons
+1. Navigate to dashboard
+2. Identify all quick action buttons/widgets
+3. Verify buttons are visible and properly styled
+
+Expected: Quick action buttons are clearly visible and accessible
+Screenshot: 01_quick_actions.png
+
+Step 2: Test Button States
+1. Hover over each quick action button
+2. Verify hover effects and cursor changes
+3. Check button states (enabled/disabled)
+4. Test button accessibility
+
+Expected: Buttons show proper hover states and are interactive
+Screenshot: 02_button_states.png
+
+Step 3: Test Modal Opening
+1. Click each quick action button
+2. Verify modals open correctly
+3. Check modal positioning and styling
+4. Ensure modals are properly centered and visible
+
+Expected: Modals open without issues and display correctly
+Screenshot: 03_modals_opening.png
+
+Step 4: Test Modal Content
+1. Verify each modal has proper content
+2. Check form fields are present and labeled
+3. Ensure all required elements are visible
+4. Test form validation on required fields
+
+Expected: Modal content is complete and forms are functional
+Screenshot: 04_modal_content.png
+
+Step 5: Test Modal Closing
+1. Test closing modals with X button
+2. Test closing with ESC key
+3. Test closing by clicking outside modal
+4. Verify modals close properly without errors
+
+Expected: All modal closing methods work correctly
+Screenshot: 05_modal_closing.png
+
+Step 6: Test Form Submissions
+1. Fill out modal forms with valid data
+2. Submit forms and check responses
+3. Verify success messages appear
+4. Check that modals close after successful submission
+
+Expected: Form submissions work and provide proper feedback
+Screenshot: 06_form_submissions.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All quick actions work AND modals function properly AND forms submit successfully
+FAIL: Any button broken OR modal issues OR form failures
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

@@ -1,0 +1,53 @@
+QA Test Case: Empty State Display
+
+Test ID: DASH-008
+Test Name: Dashboard Empty States and No Data Scenarios
+Purpose: Verify proper empty state displays when no data is available
+Expected Result: Clear and helpful empty states are shown when data is not available
+
+=== CONTEXT (Pre-test Requirements) ===
+
+Required Environment Setup:
+1. Development servers running: `make dev`
+2. Authenticated user session
+3. Test environment with minimal or no data
+
+Test Data:
+- Test Email: test.manager@example.com (authenticated)
+- Scenarios: No students, no teachers, no activities, no metrics data
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Test Empty Metrics States
+1. Navigate to dashboard
+2. Check metrics cards when no data available
+3. Verify empty states show appropriate messages
+4. Check for helpful call-to-action buttons
+
+Expected: Meaningful empty state messages for metrics
+Screenshot: 01_empty_metrics.png
+
+Step 2: Test Empty Activity Feed
+1. Check activity feed when no activities exist
+2. Verify empty state message is clear
+3. Look for helpful guidance or actions
+4. Check styling is consistent
+
+Expected: Clear empty state for activity feed
+Screenshot: 02_empty_activities.png
+
+Step 3: Test Empty Lists and Tables
+1. Check any student/teacher lists when empty
+2. Verify empty state messages are helpful
+3. Look for "Add" or "Invite" buttons in empty states
+4. Test that empty states are visually appealing
+
+Expected: All empty states are user-friendly and actionable
+Screenshot: 03_empty_lists.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All empty states display properly AND provide helpful guidance AND maintain good UX
+FAIL: Missing empty states OR poor messaging OR confusing empty states
+
+Overall Result: PASS only if ALL empty states are well-designed, FAIL if ANY poor empty states

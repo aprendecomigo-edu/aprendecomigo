@@ -1,0 +1,105 @@
+QA Test Case: Dashboard Load Test
+
+Test ID: DASH-001
+Test Name: School Admin Dashboard Load Test
+Purpose: Verify that the school admin dashboard loads successfully with all components and proper authentication
+Expected Result: Dashboard loads within 2 seconds, all components render correctly, and user can interact with the interface
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Architecture: Django REST + React Native (Expo) with WebSocket support
+- Testing Environment: Local development environment
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/backend
+2. Python Virtual Environment: .venv/ in project root
+3. Development server: `make dev` (starts both backend and frontend)
+4. Backend URL: http://localhost:8000
+5. Frontend URL: http://localhost:8081
+
+Test Data:
+- Test Email: test.manager@example.com
+- Verification Code: 187956
+- User Role: School Owner of "Test School"
+- Dashboard URL: http://localhost:8081/dashboard
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+1. Navigate to project directory: /Users/anapmc/Code/aprendecomigo/backend
+2. Ensure virtual environment is activated
+3. Start development servers
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/backend
+  make dev
+
+Expected: Both backend (port 8000) and frontend (port 8081) servers start successfully
+Debug: Use 'make logs' to view server logs if issues occur
+Screenshot: 01_servers_started.png
+
+Step 2: Navigate to Application
+1. Open browser to http://localhost:8081
+2. Verify the login/landing page loads correctly
+3. Check that the page is responsive and styled correctly
+
+Expected: Application loads with proper styling and login interface
+Screenshot: 02_landing_page.png
+
+Step 3: Authentication Process
+1. Click on login/sign-in button if present
+2. Enter test email: test.manager@example.com
+3. Submit email form
+4. Enter verification code: 187956
+5. Submit verification code
+
+Expected: Authentication successful, redirected to dashboard or appropriate next step
+Screenshot: 03_email_entry.png, 04_verification_code.png
+
+Step 4: Dashboard Access
+1. Navigate to http://localhost:8081/dashboard (or be redirected automatically)
+2. Wait for dashboard to load completely
+3. Verify all main components are visible:
+   - Header/navigation
+   - Metrics cards/widgets
+   - Activity feed
+   - Quick action buttons
+   - Any charts or graphs
+
+Expected: Complete dashboard loads with all expected components
+Screenshot: 05_dashboard_loaded.png
+
+Step 5: Component Functionality Check
+1. Verify header navigation is functional
+2. Check that metrics cards display data (not loading states)
+3. Scroll through activity feed
+4. Hover over quick action buttons
+5. Check for any JavaScript errors in console
+
+Expected: All components are interactive and functional, no console errors
+Screenshot: 06_dashboard_components.png
+
+Step 6: Performance Verification
+1. Refresh the dashboard page
+2. Measure load time from navigation to fully rendered dashboard
+3. Check that all API calls complete successfully
+4. Verify no infinite loading states
+
+Expected: Dashboard loads within 2 seconds, all data loads successfully
+Screenshot: 07_performance_check.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Dashboard loads successfully AND all components render AND user is authenticated AND load time < 2 seconds
+FAIL: Any step fails OR dashboard doesn't load OR authentication fails OR load time > 2 seconds
+
+Individual Step Criteria:
+- Step 1: PASS if both servers start without errors, FAIL if any server fails to start
+- Step 2: PASS if landing page loads with proper styling, FAIL if page is broken or unstyled
+- Step 3: PASS if authentication completes successfully, FAIL if auth fails or errors occur
+- Step 4: PASS if dashboard loads with all components visible, FAIL if components missing or broken
+- Step 5: PASS if all components are functional without errors, FAIL if any component broken or console errors
+- Step 6: PASS if dashboard loads within 2 seconds, FAIL if slower or infinite loading
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

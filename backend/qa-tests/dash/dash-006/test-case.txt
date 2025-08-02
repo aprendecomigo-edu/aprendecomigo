@@ -1,0 +1,53 @@
+QA Test Case: Responsive Design Test
+
+Test ID: DASH-006
+Test Name: Dashboard Responsive Design Across Screen Sizes
+Purpose: Verify dashboard works correctly across different screen sizes and devices
+Expected Result: Dashboard is fully functional and well-designed on mobile, tablet, and desktop
+
+=== CONTEXT (Pre-test Requirements) ===
+
+Required Environment Setup:
+1. Development servers running: `make dev`
+2. Authenticated user session
+3. Browser with responsive design testing capabilities
+
+Test Data:
+- Test Email: test.manager@example.com (authenticated)
+- Screen sizes to test: Mobile (375px), Tablet (768px), Desktop (1200px+)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Test Desktop View (1200px+)
+1. Set browser to desktop size
+2. Verify all dashboard components are visible
+3. Check layout and spacing
+4. Test all interactive elements
+
+Expected: Dashboard looks professional and all features accessible
+Screenshot: 01_desktop_view.png
+
+Step 2: Test Tablet View (768px)
+1. Resize browser to tablet width
+2. Verify layout adapts appropriately
+3. Check that navigation collapses if needed
+4. Test touch interactions
+
+Expected: Dashboard adapts well to tablet size
+Screenshot: 02_tablet_view.png
+
+Step 3: Test Mobile View (375px)
+1. Resize browser to mobile width
+2. Verify mobile-friendly layout
+3. Check navigation menu (hamburger menu if applicable)
+4. Test touch targets are appropriately sized
+
+Expected: Dashboard is fully functional on mobile
+Screenshot: 03_mobile_view.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Dashboard works well on ALL screen sizes AND all features accessible
+FAIL: Poor responsive design OR features inaccessible on any screen size
+
+Overall Result: PASS only if ALL screen sizes pass, FAIL if ANY size fails

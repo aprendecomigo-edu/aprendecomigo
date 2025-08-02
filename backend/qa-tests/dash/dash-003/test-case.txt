@@ -1,0 +1,99 @@
+QA Test Case: Activity Feed Functionality
+
+Test ID: DASH-003
+Test Name: Activity Feed Data and Updates Test
+Purpose: Verify activity feed shows proper data, updates correctly, and handles different activity types
+Expected Result: Activity feed displays recent school activities with proper formatting and real-time updates
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Backend API: /api/v1/schools/dashboard/activities/
+- WebSocket: Activity updates via Django Channels
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/backend
+2. Development servers running: `make dev`
+3. Authenticated user session from previous tests
+
+Test Data:
+- Test Email: test.manager@example.com (authenticated)
+- Expected Activities: User registrations, teacher invitations, class bookings, system events
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Access Activity Feed
+1. Navigate to dashboard if not already there
+2. Locate the activity feed section
+3. Verify the feed is visible and properly styled
+
+Expected: Activity feed section is clearly visible and styled
+Screenshot: 01_activity_feed_location.png
+
+Step 2: Verify Activity API Response
+1. Open browser developer tools (F12)
+2. Check Network tab for /api/v1/schools/dashboard/activities/ calls
+3. Examine response structure and data
+4. Verify proper pagination if implemented
+
+Expected: API returns 200 with activity data in proper format
+Screenshot: 02_activity_api_response.png
+
+Step 3: Check Activity List Display
+1. Verify activities are displayed in chronological order (newest first)
+2. Check that each activity shows:
+   - Activity type/category
+   - Description/message
+   - Timestamp
+   - User/actor information (if applicable)
+3. Verify proper formatting and readability
+
+Expected: Activities display with all required information in proper format
+Screenshot: 03_activity_list.png
+
+Step 4: Test Activity Types
+1. Look for different types of activities:
+   - Student registrations
+   - Teacher invitations
+   - Class bookings
+   - Payment events
+   - System settings changes
+2. Verify each type has appropriate icons/styling
+3. Check activity descriptions are clear and informative
+
+Expected: Different activity types are distinguishable and properly described
+Screenshot: 04_activity_types.png
+
+Step 5: Test Activity Feed Scrolling/Pagination
+1. Scroll down in activity feed
+2. Test if more activities load (infinite scroll or pagination)
+3. Verify loading states during fetch
+4. Check for "end of list" state if applicable
+
+Expected: Activity feed handles scrolling/pagination correctly
+Screenshot: 05_activity_pagination.png
+
+Step 6: Test Real-time Updates (if applicable)
+1. Keep dashboard open
+2. If possible, trigger a new activity (e.g., from another browser/tab)
+3. Verify if new activity appears without refresh
+4. Check WebSocket connection in developer tools
+
+Expected: New activities appear automatically or with minimal delay
+Screenshot: 06_realtime_updates.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Activity feed loads AND displays proper data AND shows different activity types AND handles pagination/scrolling
+FAIL: Feed doesn't load OR no activities shown OR poor formatting OR pagination fails
+
+Individual Step Criteria:
+- Step 1: PASS if activity feed is visible and styled, FAIL if missing or broken layout
+- Step 2: PASS if API returns valid activity data, FAIL if API errors or invalid data
+- Step 3: PASS if activities display with all required fields, FAIL if missing info or poor formatting
+- Step 4: PASS if different activity types are distinguishable, FAIL if all activities look the same
+- Step 5: PASS if scrolling/pagination works correctly, FAIL if loading fails or infinite loops
+- Step 6: PASS if real-time updates work (or N/A if not implemented), FAIL if WebSocket errors
+
+Overall Result: PASS only if ALL applicable steps pass, FAIL if ANY step fails
