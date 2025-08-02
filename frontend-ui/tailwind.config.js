@@ -10,7 +10,69 @@ module.exports = {
     './screens/**/*.{js,jsx,ts,tsx}',
   ],
   presets: [nativewind],
-  safelist: ['gap-x-2', 'gap-y-6', 'pl-4', 'flex-wrap', 'mb-12', 'basis-[10%]'],
+  safelist: [
+    // Existing classes
+    'gap-x-2', 'gap-y-6', 'pl-4', 'flex-wrap', 'mb-12', 'basis-[10%]',
+    
+    // Dynamic color patterns - Background classes
+    'bg-red-50', 'bg-red-100', 'bg-red-200', 'bg-red-600',
+    'bg-green-50', 'bg-green-100', 'bg-green-200', 'bg-green-600',
+    'bg-blue-50', 'bg-blue-100', 'bg-blue-200', 'bg-blue-600',
+    'bg-yellow-50', 'bg-yellow-100', 'bg-yellow-200', 'bg-yellow-600',
+    'bg-orange-50', 'bg-orange-100', 'bg-orange-200', 'bg-orange-600',
+    'bg-purple-50', 'bg-purple-100', 'bg-purple-200', 'bg-purple-600',
+    'bg-indigo-50', 'bg-indigo-100', 'bg-indigo-200', 'bg-indigo-600',
+    'bg-teal-50', 'bg-teal-100', 'bg-teal-200', 'bg-teal-600',
+    'bg-gray-50', 'bg-gray-100', 'bg-gray-200', 'bg-gray-600',
+    
+    // Dynamic color patterns - Text classes
+    'text-red-600', 'text-red-700',
+    'text-green-600', 'text-green-700',
+    'text-blue-600', 'text-blue-700',
+    'text-yellow-600', 'text-yellow-700',
+    'text-orange-600', 'text-orange-700',
+    'text-purple-600', 'text-purple-700',
+    'text-indigo-600', 'text-indigo-700',
+    'text-teal-600', 'text-teal-700',
+    'text-gray-600', 'text-gray-700',
+    
+    // Dynamic color patterns - Border classes
+    'border-red-200', 'border-red-300',
+    'border-green-200', 'border-green-300',
+    'border-blue-200', 'border-blue-300',
+    'border-yellow-200', 'border-yellow-300',
+    'border-orange-200', 'border-orange-300',
+    'border-purple-200', 'border-purple-300',
+    'border-indigo-200', 'border-indigo-300',
+    'border-teal-200', 'border-teal-300',
+    'border-gray-200', 'border-gray-300',
+    
+    // Dynamic color patterns - Hover states
+    'hover:bg-red-100', 'hover:bg-green-100', 'hover:bg-blue-100',
+    'hover:bg-yellow-100', 'hover:bg-orange-100', 'hover:bg-purple-100',
+    'hover:bg-indigo-100', 'hover:bg-teal-100', 'hover:bg-gray-100',
+    
+    // Custom theme colors with dynamic usage
+    'text-primary-600', 'text-primary-700',
+    'text-secondary-600', 'text-secondary-700',
+    'text-tertiary-600', 'text-tertiary-700',
+    'text-success-600', 'text-success-700',
+    'text-error-600', 'text-error-700',
+    'text-warning-600', 'text-warning-700',
+    'text-info-600', 'text-info-700',
+    
+    // Progress and status indicators
+    'bg-primary-600', 'bg-secondary-600', 'bg-tertiary-600',
+    'bg-success-600', 'bg-error-600', 'bg-warning-600', 'bg-info-600',
+    
+    // Animation classes that might be dynamic
+    'animate-spin', 'animate-pulse',
+    
+    // Common dynamic utility classes
+    'opacity-50', 'opacity-75', 'opacity-100',
+    'w-1/2', 'w-1/3', 'w-2/3', 'w-1/4', 'w-3/4',
+    'h-1/2', 'h-1/3', 'h-2/3', 'h-1/4', 'h-3/4',
+  ],
   theme: {
     screens: {
       base: '0',
