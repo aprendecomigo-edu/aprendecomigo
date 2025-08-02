@@ -1,5 +1,5 @@
-import React from 'react';
 import { Slot } from 'expo-router';
+import React from 'react';
 
 import { Box } from '@/components/ui/box';
 

@@ -1,35 +1,34 @@
 /**
  * PurchaseApprovalCard Component
- * 
+ *
  * Individual purchase approval request card with approve/reject actions
  * and detailed information about the purchase request.
  */
 
-import React, { useState } from 'react';
-import { 
-  CreditCard, 
-  Clock, 
-  User, 
-  CheckCircle, 
+import {
+  CreditCard,
+  Clock,
+  User,
+  CheckCircle,
   XCircle,
   AlertCircle,
   MessageSquare,
-  Calendar
+  Calendar,
 } from 'lucide-react-native';
+import React, { useState } from 'react';
 
+import { PurchaseApprovalRequest } from '@/api/parentApi';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Divider } from '@/components/ui/divider';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
-
-import { PurchaseApprovalRequest } from '@/api/parentApi';
+import { VStack } from '@/components/ui/vstack';
 
 interface PurchaseApprovalCardProps {
   approval: PurchaseApprovalRequest;
@@ -66,7 +65,7 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
     const expiry = new Date(expiryString);
     const now = new Date();
     const diffInHours = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours <= 0) return 'Expired';
     if (diffInHours < 24) return `${diffInHours}h remaining`;
     return `${Math.floor(diffInHours / 24)}d remaining`;
@@ -77,7 +76,7 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
     const expiry = new Date(expiryString);
     const now = new Date();
     const diffInHours = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours <= 0) return 'expired';
     if (diffInHours <= 24) return 'urgent';
     if (diffInHours <= 72) return 'soon';
@@ -117,36 +116,40 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
   return (
     <Card className="bg-white border border-gray-200">
       <CardContent className="p-4">
-        <Pressable 
+        <Pressable
           onPress={() => !compact && setIsExpanded(!isExpanded)}
           className="active:opacity-70"
         >
           {/* Header */}
           <HStack className="justify-between items-start mb-3">
             <HStack className="flex-1 space-x-3">
-              <VStack 
+              <VStack
                 className={`
                   items-center justify-center w-10 h-10 rounded-full
-                  ${urgencyLevel === 'expired' ? 'bg-red-100' : 
-                    urgencyLevel === 'urgent' ? 'bg-orange-100' : 
-                    'bg-blue-100'}
+                  ${
+                    urgencyLevel === 'expired'
+                      ? 'bg-red-100'
+                      : urgencyLevel === 'urgent'
+                      ? 'bg-orange-100'
+                      : 'bg-blue-100'
+                  }
                 `}
               >
-                <Icon 
+                <Icon
                   as={urgencyLevel === 'expired' ? AlertCircle : CreditCard}
                   size={20}
                   className={
-                    urgencyLevel === 'expired' ? 'text-red-600' : 
-                    urgencyLevel === 'urgent' ? 'text-orange-600' : 
-                    'text-blue-600'
+                    urgencyLevel === 'expired'
+                      ? 'text-red-600'
+                      : urgencyLevel === 'urgent'
+                      ? 'text-orange-600'
+                      : 'text-blue-600'
                   }
                 />
               </VStack>
-              
+
               <VStack className="flex-1">
-                <Text className="text-gray-900 font-semibold">
-                  {approval.pricing_plan.name}
-                </Text>
+                <Text className="text-gray-900 font-semibold">{approval.pricing_plan.name}</Text>
                 <Text className="text-sm text-gray-600">
                   {approval.pricing_plan.hours} hours • €{approval.amount}
                 </Text>
@@ -154,12 +157,14 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
             </HStack>
 
             <VStack className="items-end space-y-1">
-              <Badge 
-                variant="solid" 
+              <Badge
+                variant="solid"
                 action={
-                  urgencyLevel === 'expired' ? 'error' : 
-                  urgencyLevel === 'urgent' ? 'warning' : 
-                  'info'
+                  urgencyLevel === 'expired'
+                    ? 'error'
+                    : urgencyLevel === 'urgent'
+                    ? 'warning'
+                    : 'info'
                 }
                 size="sm"
               >
@@ -167,10 +172,8 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
                   {getTimeUntilExpiry(approval.expires_at)}
                 </Text>
               </Badge>
-              
-              <Text className="text-xs text-gray-500">
-                {formatDate(approval.requested_at)}
-              </Text>
+
+              <Text className="text-xs text-gray-500">{formatDate(approval.requested_at)}</Text>
             </VStack>
           </HStack>
 
@@ -178,7 +181,7 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
           {(isExpanded || compact) && (
             <VStack className="space-y-3">
               <Divider />
-              
+
               {/* Request Details */}
               <VStack className="space-y-2">
                 <HStack className="justify-between items-center">
@@ -187,14 +190,12 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
                     {approval.pricing_plan.hours} tutoring hours
                   </Text>
                 </HStack>
-                
+
                 <HStack className="justify-between items-center">
                   <Text className="text-sm text-gray-600">Total Cost</Text>
-                  <Text className="text-sm font-medium text-gray-900">
-                    €{approval.amount}
-                  </Text>
+                  <Text className="text-sm font-medium text-gray-900">€{approval.amount}</Text>
                 </HStack>
-                
+
                 <HStack className="justify-between items-center">
                   <Text className="text-sm text-gray-600">Expires</Text>
                   <Text className="text-sm font-medium text-gray-900">
@@ -206,9 +207,7 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
               {/* Response Notes Input */}
               {showActions && (
                 <VStack className="space-y-2">
-                  <Text className="text-sm font-medium text-gray-700">
-                    Add a note (optional)
-                  </Text>
+                  <Text className="text-sm font-medium text-gray-700">Add a note (optional)</Text>
                   <Textarea className="min-h-20">
                     <TextareaInput
                       placeholder="Any comments for your child..."
@@ -227,7 +226,7 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
         {showActions && (isExpanded || compact) && (
           <>
             <Divider className="my-3" />
-            
+
             <HStack className="space-x-3">
               <Button
                 action="secondary"
@@ -240,7 +239,7 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
                 <ButtonIcon as={XCircle} size={16} />
                 <ButtonText className="ml-1">Reject</ButtonText>
               </Button>
-              
+
               <Button
                 action="primary"
                 size="sm"
@@ -261,18 +260,12 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
         {showActions && !isExpanded && !compact && (
           <>
             <Divider className="my-3" />
-            
+
             <HStack className="justify-between items-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                onPress={() => setIsExpanded(true)}
-              >
-                <ButtonText className="text-blue-600">
-                  View Details
-                </ButtonText>
+              <Button variant="ghost" size="sm" onPress={() => setIsExpanded(true)}>
+                <ButtonText className="text-blue-600">View Details</ButtonText>
               </Button>
-              
+
               <HStack className="space-x-2">
                 <Button
                   action="secondary"
@@ -283,7 +276,7 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
                 >
                   <ButtonIcon as={XCircle} size={14} />
                 </Button>
-                
+
                 <Button
                   action="primary"
                   size="sm"
@@ -302,9 +295,7 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
           <VStack className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
             <HStack className="items-center space-x-2">
               <Icon as={AlertCircle} size={16} className="text-red-600" />
-              <Text className="text-sm text-red-800 font-medium">
-                This request has expired
-              </Text>
+              <Text className="text-sm text-red-800 font-medium">This request has expired</Text>
             </HStack>
             <Text className="text-xs text-red-700 mt-1">
               The child will need to submit a new purchase request.

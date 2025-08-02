@@ -15,21 +15,17 @@ import {
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Platform, Keyboard } from 'react-native';
 
+import { navigationApi, type SearchResult, type GlobalSearchResponse } from '@/api/navigationApi';
 import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
-import {
-  Modal,
-  ModalBackdrop,
-  ModalContent,
-} from '@/components/ui/modal';
+import { Modal, ModalBackdrop, ModalContent } from '@/components/ui/modal';
 import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { navigationApi, type SearchResult, type GlobalSearchResponse } from '@/api/navigationApi';
 import type { SearchCategory, SearchSuggestion, EnhancedSearchResult } from '@/types/navigation';
 
 interface GlobalSearchProps {
@@ -122,31 +118,34 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
   }, [results, categories]);
 
   // Perform search
-  const performSearch = useCallback(async (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      setResults([]);
-      setIsLoading(false);
-      return;
-    }
+  const performSearch = useCallback(
+    async (searchQuery: string) => {
+      if (!searchQuery.trim()) {
+        setResults([]);
+        setIsLoading(false);
+        return;
+      }
 
-    setIsLoading(true);
-    setError(null);
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const response: GlobalSearchResponse = await navigationApi.globalSearch(
-        searchQuery,
-        categories.flatMap(cat => cat.searchTypes),
-        maxResults
-      );
-      setResults(response.results);
-    } catch (err) {
-      console.error('Search error:', err);
-      setError('Search failed. Please try again.');
-      setResults([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [categories, maxResults]);
+      try {
+        const response: GlobalSearchResponse = await navigationApi.globalSearch(
+          searchQuery,
+          categories.flatMap(cat => cat.searchTypes),
+          maxResults
+        );
+        setResults(response.results);
+      } catch (err) {
+        console.error('Search error:', err);
+        setError('Search failed. Please try again.');
+        setResults([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [categories, maxResults]
+  );
 
   // Effect for debounced search
   useEffect(() => {
@@ -169,55 +168,62 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
   }, [isOpen]);
 
   // Handle result selection
-  const handleResultSelect = useCallback((result: SearchResult) => {
-    // Save to recent searches
-    navigationApi.saveRecentSearch(query).catch(console.error);
-    
-    // Close modal
-    setIsOpen(false);
-    setQuery('');
-    setSelectedIndex(-1);
+  const handleResultSelect = useCallback(
+    (result: SearchResult) => {
+      // Save to recent searches
+      navigationApi.saveRecentSearch(query).catch(console.error);
 
-    // Navigate to result
-    if (result.route) {
-      router.push(result.route as Href<string>);
-    }
+      // Close modal
+      setIsOpen(false);
+      setQuery('');
+      setSelectedIndex(-1);
 
-    // Call custom handler
-    if (onResultSelect) {
-      onResultSelect(result);
-    }
-  }, [query, onResultSelect]);
+      // Navigate to result
+      if (result.route) {
+        router.push(result.route as Href<string>);
+      }
+
+      // Call custom handler
+      if (onResultSelect) {
+        onResultSelect(result);
+      }
+    },
+    [query, onResultSelect]
+  );
 
   // Handle recent search selection
-  const handleRecentSearchSelect = useCallback((suggestion: SearchSuggestion) => {
-    setQuery(suggestion.query);
-    performSearch(suggestion.query);
-  }, [performSearch]);
+  const handleRecentSearchSelect = useCallback(
+    (suggestion: SearchSuggestion) => {
+      setQuery(suggestion.query);
+      performSearch(suggestion.query);
+    },
+    [performSearch]
+  );
 
   // Keyboard navigation
-  const handleKeyPress = useCallback((key: string) => {
-    if (!isOpen) return;
+  const handleKeyPress = useCallback(
+    (key: string) => {
+      if (!isOpen) return;
 
-    switch (key) {
-      case 'ArrowDown':
-        setSelectedIndex(prev => 
-          prev < enhancedResults.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case 'ArrowUp':
-        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
-        break;
-      case 'Enter':
-        if (selectedIndex >= 0 && enhancedResults[selectedIndex]) {
-          handleResultSelect(enhancedResults[selectedIndex]);
-        }
-        break;
-      case 'Escape':
-        setIsOpen(false);
-        break;
-    }
-  }, [isOpen, enhancedResults, selectedIndex, handleResultSelect]);
+      switch (key) {
+        case 'ArrowDown':
+          setSelectedIndex(prev => (prev < enhancedResults.length - 1 ? prev + 1 : prev));
+          break;
+        case 'ArrowUp':
+          setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
+          break;
+        case 'Enter':
+          if (selectedIndex >= 0 && enhancedResults[selectedIndex]) {
+            handleResultSelect(enhancedResults[selectedIndex]);
+          }
+          break;
+        case 'Escape':
+          setIsOpen(false);
+          break;
+      }
+    },
+    [isOpen, enhancedResults, selectedIndex, handleResultSelect]
+  );
 
   // Clear search
   const clearSearch = useCallback(() => {
@@ -239,15 +245,10 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
         )}
       >
         <Icon as={SearchIcon} size="sm" className="text-typography-400 mr-2" />
-        <Text
-          className="flex-1 text-typography-500"
-          numberOfLines={1}
-        >
+        <Text className="flex-1 text-typography-500" numberOfLines={1}>
           {query || placeholder}
         </Text>
-        {Platform.OS === 'web' && (
-          <Text className="text-xs text-typography-400 ml-2">⌘K</Text>
-        )}
+        {Platform.OS === 'web' && <Text className="text-xs text-typography-400 ml-2">⌘K</Text>}
       </Pressable>
 
       {/* Search Modal */}
@@ -305,7 +306,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
                   <Text className="text-sm font-semibold text-typography-700 px-2">
                     Recent Searches
                   </Text>
-                  {recentSearches.map((suggestion) => (
+                  {recentSearches.map(suggestion => (
                     <SearchSuggestionItem
                       key={suggestion.id}
                       suggestion={suggestion}
@@ -318,9 +319,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
               {query && !isLoading && enhancedResults.length === 0 && (
                 <Box className="p-8 text-center">
                   <Icon as={SearchIcon} size="xl" className="text-typography-300 mb-2" />
-                  <Text className="text-typography-500">
-                    No results found for "{query}"
-                  </Text>
+                  <Text className="text-typography-500">No results found for "{query}"</Text>
                   <Text className="text-sm text-typography-400 mt-1">
                     Try a different search term
                   </Text>
@@ -343,7 +342,10 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
 
             {/* Footer */}
             {Platform.OS === 'web' && (
-              <HStack space="md" className="justify-between items-center pt-2 border-t border-border-200">
+              <HStack
+                space="md"
+                className="justify-between items-center pt-2 border-t border-border-200"
+              >
                 <HStack space="sm" className="items-center">
                   <Text className="text-xs text-typography-400">↑↓ Navigate</Text>
                   <Text className="text-xs text-typography-400">↵ Select</Text>
@@ -368,11 +370,7 @@ interface SearchResultItemProps {
   onSelect: (result: SearchResult) => void;
 }
 
-const SearchResultItem: React.FC<SearchResultItemProps> = ({
-  result,
-  isSelected,
-  onSelect,
-}) => {
+const SearchResultItem: React.FC<SearchResultItemProps> = ({ result, isSelected, onSelect }) => {
   return (
     <Pressable
       onPress={() => onSelect(result)}
@@ -389,11 +387,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
           </Avatar>
         ) : (
           <Box className="w-8 h-8 bg-primary-100 rounded-full items-center justify-center">
-            <Icon
-              as={result.category?.icon || SearchIcon}
-              size="sm"
-              className="text-primary-600"
-            />
+            <Icon as={result.category?.icon || SearchIcon} size="sm" className="text-primary-600" />
           </Box>
         )}
       </Box>
@@ -413,9 +407,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
       {/* Category Badge */}
       {result.category && (
         <Box className="px-2 py-1 bg-background-100 rounded">
-          <Text className="text-xs text-typography-600">
-            {result.category.label}
-          </Text>
+          <Text className="text-xs text-typography-600">{result.category.label}</Text>
         </Box>
       )}
     </Pressable>
@@ -428,10 +420,7 @@ interface SearchSuggestionItemProps {
   onSelect: (suggestion: SearchSuggestion) => void;
 }
 
-const SearchSuggestionItem: React.FC<SearchSuggestionItemProps> = ({
-  suggestion,
-  onSelect,
-}) => {
+const SearchSuggestionItem: React.FC<SearchSuggestionItemProps> = ({ suggestion, onSelect }) => {
   const IconComponent = suggestion.type === 'recent' ? ClockIcon : TrendingUpIcon;
 
   return (

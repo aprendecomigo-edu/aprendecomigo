@@ -1,7 +1,14 @@
+import {
+  X,
+  Upload,
+  Download,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  AlertTriangle,
+} from 'lucide-react-native';
 import React, { useState, useCallback } from 'react';
-import { X, Upload, Download, FileText, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react-native';
 
-import { useStudents } from '@/hooks/useStudents';
 import { BulkImportResult } from '@/api/userApi';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -17,12 +24,13 @@ import {
   ModalBody,
   ModalFooter,
 } from '@/components/ui/modal';
+import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
-import { Pressable } from '@/components/ui/pressable';
+import { useStudents } from '@/hooks/useStudents';
 
 // Color constants
 const COLORS = {
@@ -83,20 +91,12 @@ const DropZone: React.FC<DropZoneProps> = ({
       onDrop={onDrop}
     >
       <VStack className="items-center" space="md">
-        <Icon 
-          as={Upload} 
-          size="xl" 
-          className={isDragOver ? 'text-primary-500' : 'text-gray-400'} 
-        />
+        <Icon as={Upload} size="xl" className={isDragOver ? 'text-primary-500' : 'text-gray-400'} />
         <VStack className="items-center" space="sm">
-          <Text className="text-lg font-medium text-gray-900">
-            Arraste o arquivo CSV aqui
-          </Text>
-          <Text className="text-gray-500">
-            ou clique para selecionar um arquivo
-          </Text>
+          <Text className="text-lg font-medium text-gray-900">Arraste o arquivo CSV aqui</Text>
+          <Text className="text-gray-500">ou clique para selecionar um arquivo</Text>
         </VStack>
-        
+
         <input
           type="file"
           accept=".csv"
@@ -104,7 +104,7 @@ const DropZone: React.FC<DropZoneProps> = ({
           style={{ display: 'none' }}
           id="csv-file-input"
         />
-        
+
         <Button
           variant="outline"
           onPress={() => document.getElementById('csv-file-input')?.click()}
@@ -114,10 +114,8 @@ const DropZone: React.FC<DropZoneProps> = ({
             <ButtonText>Selecionar Arquivo CSV</ButtonText>
           </HStack>
         </Button>
-        
-        <Text className="text-xs text-gray-400">
-          Apenas arquivos .csv são aceitos
-        </Text>
+
+        <Text className="text-xs text-gray-400">Apenas arquivos .csv são aceitos</Text>
       </VStack>
     </Box>
   );
@@ -228,19 +226,23 @@ export const BulkImportStudentsModal: React.FC<BulkImportStudentsModalProps> = (
   };
 
   // Handle file selection
-  const handleFileSelect = useCallback((file: File) => {
-    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
-      showToast('error', 'Por favor, selecione um arquivo CSV válido');
-      return;
-    }
+  const handleFileSelect = useCallback(
+    (file: File) => {
+      if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+        showToast('error', 'Por favor, selecione um arquivo CSV válido');
+        return;
+      }
 
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      showToast('error', 'O arquivo é muito grande. Máximo 5MB permitido');
-      return;
-    }
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
+        showToast('error', 'O arquivo é muito grande. Máximo 5MB permitido');
+        return;
+      }
 
-    setSelectedFile(file);
-  }, [showToast]);
+      setSelectedFile(file);
+    },
+    [showToast]
+  );
 
   // Drag and drop handlers
   const handleDragOver = useCallback((event: React.DragEvent) => {
@@ -253,15 +255,18 @@ export const BulkImportStudentsModal: React.FC<BulkImportStudentsModalProps> = (
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    setIsDragOver(false);
-    
-    const files = event.dataTransfer.files;
-    if (files.length > 0) {
-      handleFileSelect(files[0]);
-    }
-  }, [handleFileSelect]);
+  const handleDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      setIsDragOver(false);
+
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    },
+    [handleFileSelect]
+  );
 
   // Handle import
   const handleImport = async () => {
@@ -272,13 +277,16 @@ export const BulkImportStudentsModal: React.FC<BulkImportStudentsModalProps> = (
       const result = await bulkImportStudentsFromCSV(selectedFile);
       setImportResult(result);
       setStep('result');
-      
+
       if (result.success) {
         onSuccess();
         if (result.failed_count === 0) {
           showToast('success', `${result.created_count} alunos importados com sucesso!`);
         } else {
-          showToast('warning', `${result.created_count} alunos importados, ${result.failed_count} com falhas`);
+          showToast(
+            'warning',
+            `${result.created_count} alunos importados, ${result.failed_count} com falhas`
+          );
         }
       } else {
         showToast('error', 'Falha na importação. Verifique os detalhes.');
@@ -323,10 +331,10 @@ export const BulkImportStudentsModal: React.FC<BulkImportStudentsModalProps> = (
             {/* Instructions */}
             <VStack space="md">
               <Text className="text-gray-600">
-                Importe múltiplos alunos de uma só vez usando um arquivo CSV. 
-                Certifique-se de que o arquivo contém as colunas obrigatórias.
+                Importe múltiplos alunos de uma só vez usando um arquivo CSV. Certifique-se de que o
+                arquivo contém as colunas obrigatórias.
               </Text>
-              
+
               <Button variant="outline" onPress={downloadTemplate}>
                 <HStack space="xs" className="items-center">
                   <Icon as={Download} size="sm" />
@@ -356,11 +364,7 @@ export const BulkImportStudentsModal: React.FC<BulkImportStudentsModalProps> = (
                       </Text>
                     </VStack>
                   </HStack>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onPress={() => setSelectedFile(null)}
-                  >
+                  <Button variant="outline" size="sm" onPress={() => setSelectedFile(null)}>
                     <Icon as={X} size="sm" />
                   </Button>
                 </HStack>
@@ -372,9 +376,15 @@ export const BulkImportStudentsModal: React.FC<BulkImportStudentsModalProps> = (
               <VStack space="sm">
                 <Text className="font-medium text-blue-900">Requisitos do arquivo CSV:</Text>
                 <VStack space="xs">
-                  <Text className="text-sm text-blue-700">• Colunas obrigatórias: name, email, school_year, birth_date</Text>
-                  <Text className="text-sm text-blue-700">• Formato da data: AAAA-MM-DD (ex: 2005-06-15)</Text>
-                  <Text className="text-sm text-blue-700">• educational_system_id: 1 para Portugal (padrão)</Text>
+                  <Text className="text-sm text-blue-700">
+                    • Colunas obrigatórias: name, email, school_year, birth_date
+                  </Text>
+                  <Text className="text-sm text-blue-700">
+                    • Formato da data: AAAA-MM-DD (ex: 2005-06-15)
+                  </Text>
+                  <Text className="text-sm text-blue-700">
+                    • educational_system_id: 1 para Portugal (padrão)
+                  </Text>
                   <Text className="text-sm text-blue-700">• Máximo 5MB por arquivo</Text>
                 </VStack>
               </VStack>
@@ -389,9 +399,7 @@ export const BulkImportStudentsModal: React.FC<BulkImportStudentsModalProps> = (
               <VStack className="items-center" space="lg">
                 <Spinner size="large" />
                 <VStack className="items-center" space="sm">
-                  <Text className="text-lg font-medium text-gray-900">
-                    Importando alunos...
-                  </Text>
+                  <Text className="text-lg font-medium text-gray-900">Importando alunos...</Text>
                   <Text className="text-gray-600 text-center">
                     Processando arquivo {selectedFile?.name}
                   </Text>
@@ -430,9 +438,7 @@ export const BulkImportStudentsModal: React.FC<BulkImportStudentsModalProps> = (
         </ModalHeader>
 
         <ModalBody>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {renderContent()}
-          </ScrollView>
+          <ScrollView showsVerticalScrollIndicator={false}>{renderContent()}</ScrollView>
         </ModalBody>
 
         {step === 'upload' && (

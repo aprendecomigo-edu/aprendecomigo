@@ -1,14 +1,14 @@
 import { router } from 'expo-router';
-import { 
-  SearchIcon, 
-  FilterIcon, 
+import {
+  SearchIcon,
+  FilterIcon,
   MoreVerticalIcon,
   UserIcon,
   CalendarIcon,
   TrendingUpIcon,
   MessageCircleIcon,
   PhoneIcon,
-  MailIcon
+  MailIcon,
 } from 'lucide-react-native';
 import React, { useState, useMemo, useCallback } from 'react';
 import { Alert } from 'react-native';
@@ -36,18 +36,12 @@ const TutorStudentsPage = () => {
   const { userProfile } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
-  
+
   // For now, using a mock school ID - in real app, get from tutor context
   const mockSchoolId = 1;
-  
-  const { 
-    students, 
-    totalStudents, 
-    activeStudents,
-    isLoading, 
-    error, 
-    refresh 
-  } = useTutorStudents(mockSchoolId);
+
+  const { students, totalStudents, activeStudents, isLoading, error, refresh } =
+    useTutorStudents(mockSchoolId);
 
   // Filter students based on search and status
   const filteredStudents = useMemo(() => {
@@ -55,17 +49,21 @@ const TutorStudentsPage = () => {
 
     // Apply search filter
     if (searchQuery.trim()) {
-      filtered = filtered.filter(student =>
-        student.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        student =>
+          student.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          student.user.email.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     // Apply status filter
     if (filterStatus !== 'all') {
       filtered = filtered.filter(student => {
-        const isActive = student.progress?.lastSessionDate && 
-          (Date.now() - new Date(student.progress.lastSessionDate).getTime()) / (1000 * 60 * 60 * 24) <= 7;
+        const isActive =
+          student.progress?.lastSessionDate &&
+          (Date.now() - new Date(student.progress.lastSessionDate).getTime()) /
+            (1000 * 60 * 60 * 24) <=
+            7;
         return filterStatus === 'active' ? isActive : !isActive;
       });
     }
@@ -77,33 +75,28 @@ const TutorStudentsPage = () => {
     router.push(`/(tutor)/students/${studentId}`);
   }, []);
 
-  const handleContactStudent = useCallback((student: any, method: 'email' | 'phone' | 'message') => {
-    switch (method) {
-      case 'email':
-        Alert.alert(
-          'Enviar Email',
-          `Abrir cliente de email para ${student.user.email}?`,
-          [
+  const handleContactStudent = useCallback(
+    (student: any, method: 'email' | 'phone' | 'message') => {
+      switch (method) {
+        case 'email':
+          Alert.alert('Enviar Email', `Abrir cliente de email para ${student.user.email}?`, [
             { text: 'Cancelar', style: 'cancel' },
-            { text: 'Abrir', onPress: () => console.log('Open email client') }
-          ]
-        );
-        break;
-      case 'phone':
-        Alert.alert(
-          'Ligar',
-          `Ligar para ${student.user.name}?`,
-          [
+            { text: 'Abrir', onPress: () => console.log('Open email client') },
+          ]);
+          break;
+        case 'phone':
+          Alert.alert('Ligar', `Ligar para ${student.user.name}?`, [
             { text: 'Cancelar', style: 'cancel' },
-            { text: 'Ligar', onPress: () => console.log('Make phone call') }
-          ]
-        );
-        break;
-      case 'message':
-        router.push(`/chat?student=${student.id}`);
-        break;
-    }
-  }, []);
+            { text: 'Ligar', onPress: () => console.log('Make phone call') },
+          ]);
+          break;
+        case 'message':
+          router.push(`/chat?student=${student.id}`);
+          break;
+      }
+    },
+    []
+  );
 
   const handleScheduleSession = useCallback((student: any) => {
     router.push(`/calendar/book?student=${student.id}`);
@@ -132,9 +125,7 @@ const TutorStudentsPage = () => {
               <Heading size="lg" className="text-center text-gray-900">
                 Erro ao Carregar
               </Heading>
-              <Text className="text-center text-gray-600">
-                {error}
-              </Text>
+              <Text className="text-center text-gray-600">{error}</Text>
             </VStack>
             <Button onPress={refresh} variant="solid">
               <ButtonText>Tentar Novamente</ButtonText>
@@ -147,10 +138,7 @@ const TutorStudentsPage = () => {
 
   return (
     <MainLayout _title="Meus Estudantes">
-      <ScrollView 
-        className="flex-1 bg-gray-50"
-        contentContainerStyle={{ paddingBottom: 100 }}
-      >
+      <ScrollView className="flex-1 bg-gray-50" contentContainerStyle={{ paddingBottom: 100 }}>
         <VStack className="p-6" space="lg">
           {/* Header */}
           <VStack space="sm">
@@ -163,10 +151,7 @@ const TutorStudentsPage = () => {
                   {totalStudents} estudantes • {activeStudents} ativos
                 </Text>
               </VStack>
-              <Button 
-                variant="solid" 
-                onPress={() => router.push('/(tutor)/acquisition')}
-              >
+              <Button variant="solid" onPress={() => router.push('/(tutor)/acquisition')}>
                 <ButtonText>Convidar +</ButtonText>
               </Button>
             </HStack>
@@ -187,7 +172,10 @@ const TutorStudentsPage = () => {
               </VStack>
               <Menu
                 trigger={({ ...triggerProps }) => (
-                  <Pressable {...triggerProps} className="p-3 bg-white border border-gray-300 rounded-lg">
+                  <Pressable
+                    {...triggerProps}
+                    className="p-3 bg-white border border-gray-300 rounded-lg"
+                  >
                     <Icon as={FilterIcon} size="sm" className="text-gray-600" />
                   </Pressable>
                 )}
@@ -203,14 +191,12 @@ const TutorStudentsPage = () => {
                 </MenuItem>
               </Menu>
             </HStack>
-            
+
             {/* Filter indicator */}
             {filterStatus !== 'all' && (
               <HStack space="xs" className="items-center">
                 <Badge variant="outline">
-                  <BadgeText>
-                    Filtro: {filterStatus === 'active' ? 'Ativos' : 'Inativos'}
-                  </BadgeText>
+                  <BadgeText>Filtro: {filterStatus === 'active' ? 'Ativos' : 'Inativos'}</BadgeText>
                 </Badge>
                 <Pressable onPress={() => setFilterStatus('all')}>
                   <Text className="text-xs text-blue-600">Limpar</Text>
@@ -229,16 +215,12 @@ const TutorStudentsPage = () => {
                     {searchQuery ? 'Nenhum estudante encontrado' : 'Nenhum estudante ainda'}
                   </Text>
                   <Text className="text-sm text-gray-500 text-center max-w-sm">
-                    {searchQuery 
+                    {searchQuery
                       ? 'Tente ajustar os termos de pesquisa ou filtros'
-                      : 'Comece convidando estudantes para fazer crescer o seu negócio de tutoria'
-                    }
+                      : 'Comece convidando estudantes para fazer crescer o seu negócio de tutoria'}
                   </Text>
                   {!searchQuery && (
-                    <Button 
-                      onPress={() => router.push('/(tutor)/acquisition')}
-                      variant="solid"
-                    >
+                    <Button onPress={() => router.push('/(tutor)/acquisition')} variant="solid">
                       <ButtonText>Convidar Estudantes</ButtonText>
                     </Button>
                   )}
@@ -247,10 +229,13 @@ const TutorStudentsPage = () => {
             </Card>
           ) : (
             <VStack space="sm">
-              {filteredStudents.map((student) => {
-                const isActive = student.progress?.lastSessionDate && 
-                  (Date.now() - new Date(student.progress.lastSessionDate).getTime()) / (1000 * 60 * 60 * 24) <= 7;
-                
+              {filteredStudents.map(student => {
+                const isActive =
+                  student.progress?.lastSessionDate &&
+                  (Date.now() - new Date(student.progress.lastSessionDate).getTime()) /
+                    (1000 * 60 * 60 * 24) <=
+                    7;
+
                 return (
                   <Card key={student.id} variant="elevated" className="bg-white shadow-sm">
                     <CardBody>
@@ -267,15 +252,15 @@ const TutorStudentsPage = () => {
                                 <Text className="text-lg font-semibold text-gray-900">
                                   {student.user.name}
                                 </Text>
-                                <Text className="text-sm text-gray-600">
-                                  {student.user.email}
-                                </Text>
+                                <Text className="text-sm text-gray-600">{student.user.email}</Text>
                                 <HStack space="xs" className="items-center mt-1">
-                                  <Badge 
-                                    variant={isActive ? "solid" : "outline"}
-                                    className={isActive ? "bg-green-100" : ""}
+                                  <Badge
+                                    variant={isActive ? 'solid' : 'outline'}
+                                    className={isActive ? 'bg-green-100' : ''}
                                   >
-                                    <BadgeText className={isActive ? "text-green-700" : "text-gray-600"}>
+                                    <BadgeText
+                                      className={isActive ? 'text-green-700' : 'text-gray-600'}
+                                    >
                                       {isActive ? 'Ativo' : 'Inativo'}
                                     </BadgeText>
                                   </Badge>
@@ -289,7 +274,7 @@ const TutorStudentsPage = () => {
                                 </HStack>
                               </VStack>
                             </HStack>
-                            
+
                             <Menu
                               trigger={({ ...triggerProps }) => (
                                 <Pressable {...triggerProps} className="p-2">
@@ -298,7 +283,11 @@ const TutorStudentsPage = () => {
                               )}
                             >
                               <MenuItem onPress={() => handleContactStudent(student, 'message')}>
-                                <Icon as={MessageCircleIcon} size="sm" className="text-gray-600 mr-2" />
+                                <Icon
+                                  as={MessageCircleIcon}
+                                  size="sm"
+                                  className="text-gray-600 mr-2"
+                                />
                                 <MenuItemLabel>Enviar Mensagem</MenuItemLabel>
                               </MenuItem>
                               <MenuItem onPress={() => handleContactStudent(student, 'email')}>
@@ -316,35 +305,38 @@ const TutorStudentsPage = () => {
                           {student.progress && (
                             <VStack space="xs">
                               <HStack className="justify-between items-center">
-                                <Text className="text-sm text-gray-600">
-                                  Progresso das Aulas
-                                </Text>
+                                <Text className="text-sm text-gray-600">Progresso das Aulas</Text>
                                 <Text className="text-sm font-semibold text-gray-900">
-                                  {student.progress.completedSessions}/{student.progress.totalPlannedSessions}
+                                  {student.progress.completedSessions}/
+                                  {student.progress.totalPlannedSessions}
                                 </Text>
                               </HStack>
                               <VStack className="w-full bg-gray-200 rounded-full h-2">
                                 <VStack
                                   className="bg-blue-500 h-2 rounded-full"
-                                  style={{ 
+                                  style={{
                                     width: `${Math.round(
-                                      (student.progress.completedSessions / student.progress.totalPlannedSessions) * 100
-                                    )}%` 
+                                      (student.progress.completedSessions /
+                                        student.progress.totalPlannedSessions) *
+                                        100
+                                    )}%`,
                                   }}
                                 />
                               </VStack>
                               <HStack className="justify-between items-center">
                                 <Text className="text-xs text-gray-500">
-                                  {student.progress.lastSessionDate 
-                                    ? `Última: ${new Date(student.progress.lastSessionDate).toLocaleDateString('pt-PT')}`
-                                    : 'Primeira aula pendente'
-                                  }
+                                  {student.progress.lastSessionDate
+                                    ? `Última: ${new Date(
+                                        student.progress.lastSessionDate
+                                      ).toLocaleDateString('pt-PT')}`
+                                    : 'Primeira aula pendente'}
                                 </Text>
                                 <Text className="text-xs text-gray-500">
-                                  {student.progress.nextSessionDate 
-                                    ? `Próxima: ${new Date(student.progress.nextSessionDate).toLocaleDateString('pt-PT')}`
-                                    : ''
-                                  }
+                                  {student.progress.nextSessionDate
+                                    ? `Próxima: ${new Date(
+                                        student.progress.nextSessionDate
+                                      ).toLocaleDateString('pt-PT')}`
+                                    : ''}
                                 </Text>
                               </HStack>
                             </VStack>
@@ -352,32 +344,42 @@ const TutorStudentsPage = () => {
 
                           {/* Quick Actions */}
                           <HStack space="xs" className="pt-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
+                            <Button
+                              size="sm"
+                              variant="outline"
                               className="flex-1"
                               onPress={() => handleScheduleSession(student)}
                             >
                               <Icon as={CalendarIcon} size="xs" className="text-blue-600 mr-1" />
                               <ButtonText className="text-blue-600 text-xs">Agendar</ButtonText>
                             </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
+                            <Button
+                              size="sm"
+                              variant="outline"
                               className="flex-1"
                               onPress={() => handleContactStudent(student, 'message')}
                             >
-                              <Icon as={MessageCircleIcon} size="xs" className="text-green-600 mr-1" />
+                              <Icon
+                                as={MessageCircleIcon}
+                                size="xs"
+                                className="text-green-600 mr-1"
+                              />
                               <ButtonText className="text-green-600 text-xs">Mensagem</ButtonText>
                             </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
+                            <Button
+                              size="sm"
+                              variant="outline"
                               className="flex-1"
                               onPress={() => handleStudentPress(student.id)}
                             >
-                              <Icon as={TrendingUpIcon} size="xs" className="text-purple-600 mr-1" />
-                              <ButtonText className="text-purple-600 text-xs">Ver Detalhes</ButtonText>
+                              <Icon
+                                as={TrendingUpIcon}
+                                size="xs"
+                                className="text-purple-600 mr-1"
+                              />
+                              <ButtonText className="text-purple-600 text-xs">
+                                Ver Detalhes
+                              </ButtonText>
                             </Button>
                           </HStack>
                         </VStack>
@@ -396,16 +398,19 @@ const TutorStudentsPage = () => {
                 <HStack className="justify-between items-center">
                   <VStack>
                     <Text className="text-sm text-blue-700">
-                      Estudantes {filterStatus === 'all' ? 'Totais' : filterStatus === 'active' ? 'Ativos' : 'Inativos'}
+                      Estudantes{' '}
+                      {filterStatus === 'all'
+                        ? 'Totais'
+                        : filterStatus === 'active'
+                        ? 'Ativos'
+                        : 'Inativos'}
                     </Text>
                     <Text className="text-2xl font-bold text-blue-900">
                       {filteredStudents.length}
                     </Text>
                   </VStack>
                   <VStack className="items-end">
-                    <Text className="text-sm text-blue-700">
-                      Taxa de Retenção
-                    </Text>
+                    <Text className="text-sm text-blue-700">Taxa de Retenção</Text>
                     <Text className="text-2xl font-bold text-blue-900">
                       {Math.round((activeStudents / totalStudents) * 100) || 0}%
                     </Text>

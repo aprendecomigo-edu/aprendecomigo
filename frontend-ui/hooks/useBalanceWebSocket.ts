@@ -1,15 +1,16 @@
 /**
  * Balance WebSocket Hook
- * 
+ *
  * Real-time balance updates via WebSocket infrastructure for immediate
  * balance notifications and live updates.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+
 import { useAuth } from '@/api/authContext';
 import { useWebSocketEnhanced } from '@/hooks/useWebSocket';
-import type { StudentBalanceResponse } from '@/types/purchase';
 import type { NotificationResponse } from '@/types/notification';
+import type { StudentBalanceResponse } from '@/types/purchase';
 
 interface BalanceWebSocketMessage {
   type: 'balance_update' | 'balance_notification' | 'low_balance_alert' | 'package_expiring';
@@ -54,19 +55,15 @@ interface UseBalanceWebSocketResult {
 export function useBalanceWebSocket(
   options: UseBalanceWebSocketOptions = {}
 ): UseBalanceWebSocketResult {
-  const {
-    enabled = true,
-    reconnectInterval = 5000,
-    maxReconnectAttempts = 5
-  } = options;
+  const { enabled = true, reconnectInterval = 5000, maxReconnectAttempts = 5 } = options;
 
   const { userProfile, token } = useAuth();
-  
+
   // State
   const [latestBalance, setLatestBalance] = useState<StudentBalanceResponse | null>(null);
   const [latestNotification, setLatestNotification] = useState<NotificationResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Refs
   const reconnectAttempts = useRef(0);
   const balanceCallbacks = useRef<((balance: StudentBalanceResponse) => void)[]>([]);
@@ -75,7 +72,7 @@ export function useBalanceWebSocket(
   // WebSocket URL - currently no balance consumer in backend, fallback to polling
   // TODO: Implement balance WebSocket consumer in backend and enable this
   const wsUrl = null; // Temporarily disabled until backend consumer is implemented
-  
+
   // Future WebSocket URL when backend consumer is available:
   // const wsUrl = userProfile && token && enabled
   //   ? `ws://localhost:8000/ws/balance/${userProfile.id}/?token=${token}`
@@ -86,26 +83,26 @@ export function useBalanceWebSocket(
     lastMessage,
     sendMessage,
     connect,
-    disconnect
+    disconnect,
   } = useWebSocketEnhanced(wsUrl, {
     onOpen: () => {
       console.log('Balance WebSocket connected');
       setError(null);
       reconnectAttempts.current = 0;
-      
+
       // Send initial subscription message
       sendMessage({
         type: 'subscribe',
         data: {
           user_id: userProfile?.id,
-          subscription_types: ['balance_updates', 'balance_notifications']
-        }
+          subscription_types: ['balance_updates', 'balance_notifications'],
+        },
       });
     },
-    
+
     onClose: () => {
       console.log('Balance WebSocket disconnected');
-      
+
       // Attempt reconnection if enabled and under limit
       if (enabled && reconnectAttempts.current < maxReconnectAttempts) {
         setTimeout(() => {
@@ -114,62 +111,65 @@ export function useBalanceWebSocket(
         }, reconnectInterval);
       }
     },
-    
-    onError: (error) => {
+
+    onError: error => {
       console.error('Balance WebSocket error:', error);
       setError(error.message || 'WebSocket connection error');
     },
-    
+
     shouldReconnect: enabled && reconnectAttempts.current < maxReconnectAttempts,
   });
 
   /**
    * Handle incoming WebSocket messages
    */
-  const handleMessage = useCallback((message: BalanceWebSocketMessage) => {
-    if (!message || message.user_id !== userProfile?.id) {
-      return;
-    }
+  const handleMessage = useCallback(
+    (message: BalanceWebSocketMessage) => {
+      if (!message || message.user_id !== userProfile?.id) {
+        return;
+      }
 
-    switch (message.type) {
-      case 'balance_update':
-        if (message.data.balance) {
-          console.log('Received balance update:', message.data.balance);
-          setLatestBalance(message.data.balance);
-          
-          // Notify registered callbacks
-          balanceCallbacks.current.forEach(callback => {
-            try {
-              callback(message.data.balance!);
-            } catch (err) {
-              console.error('Error in balance callback:', err);
-            }
-          });
-        }
-        break;
+      switch (message.type) {
+        case 'balance_update':
+          if (message.data.balance) {
+            console.log('Received balance update:', message.data.balance);
+            setLatestBalance(message.data.balance);
 
-      case 'balance_notification':
-      case 'low_balance_alert':
-      case 'package_expiring':
-        if (message.data.notification) {
-          console.log('Received balance notification:', message.data.notification);
-          setLatestNotification(message.data.notification);
-          
-          // Notify registered callbacks
-          notificationCallbacks.current.forEach(callback => {
-            try {
-              callback(message.data.notification!);
-            } catch (err) {
-              console.error('Error in notification callback:', err);
-            }
-          });
-        }
-        break;
+            // Notify registered callbacks
+            balanceCallbacks.current.forEach(callback => {
+              try {
+                callback(message.data.balance!);
+              } catch (err) {
+                console.error('Error in balance callback:', err);
+              }
+            });
+          }
+          break;
 
-      default:
-        console.log('Unknown WebSocket message type:', message.type);
-    }
-  }, [userProfile?.id]);
+        case 'balance_notification':
+        case 'low_balance_alert':
+        case 'package_expiring':
+          if (message.data.notification) {
+            console.log('Received balance notification:', message.data.notification);
+            setLatestNotification(message.data.notification);
+
+            // Notify registered callbacks
+            notificationCallbacks.current.forEach(callback => {
+              try {
+                callback(message.data.notification!);
+              } catch (err) {
+                console.error('Error in notification callback:', err);
+              }
+            });
+          }
+          break;
+
+        default:
+          console.log('Unknown WebSocket message type:', message.type);
+      }
+    },
+    [userProfile?.id]
+  );
 
   /**
    * Process WebSocket messages
@@ -192,7 +192,7 @@ export function useBalanceWebSocket(
     reconnectAttempts.current = 0;
     setError(null);
     disconnect();
-    
+
     setTimeout(() => {
       connect();
     }, 1000);
@@ -216,21 +216,21 @@ export function useBalanceUpdates(
   onNotification?: (notification: NotificationResponse) => void
 ) {
   const { connected, latestBalance, latestNotification } = useBalanceWebSocket();
-  
+
   // Handle balance updates
   useEffect(() => {
     if (latestBalance && onBalanceUpdate) {
       onBalanceUpdate(latestBalance);
     }
   }, [latestBalance, onBalanceUpdate]);
-  
+
   // Handle notifications
   useEffect(() => {
     if (latestNotification && onNotification) {
       onNotification(latestNotification);
     }
   }, [latestNotification, onNotification]);
-  
+
   return {
     connected,
     latestBalance,
@@ -245,12 +245,12 @@ function getWebSocketClass() {
   if (typeof WebSocket !== 'undefined') {
     return WebSocket;
   }
-  
+
   // React Native
   if (typeof global !== 'undefined' && global.WebSocket) {
     return global.WebSocket;
   }
-  
+
   // Node.js (for testing)
   try {
     const ws = require('ws');
@@ -269,12 +269,12 @@ export function createBalanceWebSocket(
   protocols?: string | string[]
 ): WebSocket | null {
   const WebSocketClass = getWebSocketClass();
-  
+
   if (!WebSocketClass) {
     console.error('WebSocket not supported in this environment');
     return null;
   }
-  
+
   try {
     return new WebSocketClass(url, protocols);
   } catch (err) {

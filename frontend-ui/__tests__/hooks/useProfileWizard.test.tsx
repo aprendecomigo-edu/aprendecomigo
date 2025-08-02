@@ -1,9 +1,7 @@
-import { renderHook, act, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { renderHook, act, waitFor } from '@testing-library/react-native';
 import axios from 'axios';
 
-import { useProfileWizard } from '@/hooks/useProfileWizard';
-import apiClient from '@/api/apiClient';
 import {
   createMockProfileData,
   createMockCompletionData,
@@ -11,6 +9,9 @@ import {
   flushPromises,
   advanceTimersByTime,
 } from '../utils/test-utils';
+
+import apiClient from '@/api/apiClient';
+import { useProfileWizard } from '@/hooks/useProfileWizard';
 
 // Mock dependencies
 jest.mock('@/api/apiClient');
@@ -88,7 +89,9 @@ describe('useProfileWizard', () => {
       const mockCompletionData = createMockCompletionData();
 
       mockApiClient.get
-        .mockResolvedValueOnce(mockApiResponse({ user: { name: 'John Doe', email: 'john@example.com' } }))
+        .mockResolvedValueOnce(
+          mockApiResponse({ user: { name: 'John Doe', email: 'john@example.com' } })
+        )
         .mockResolvedValueOnce(mockApiResponse(mockCompletionData));
 
       const { result } = renderHook(() => useProfileWizard());
@@ -121,7 +124,7 @@ describe('useProfileWizard', () => {
     it('should cancel ongoing requests when component unmounts', async () => {
       const cancelSpy = jest.fn();
       const mockCancelToken = { cancel: cancelSpy };
-      
+
       // Mock axios cancel token
       (axios.CancelToken.source as jest.Mock) = jest.fn(() => ({
         token: 'mock-token',
@@ -195,10 +198,12 @@ describe('useProfileWizard', () => {
         result.current.validateStep(0);
       });
 
-      mockApiClient.post.mockResolvedValue(mockApiResponse({
-        is_valid: false,
-        errors: { first_name: ['Required'] },
-      }));
+      mockApiClient.post.mockResolvedValue(
+        mockApiResponse({
+          is_valid: false,
+          errors: { first_name: ['Required'] },
+        })
+      );
 
       await act(async () => {
         await result.current.validateStep(0);
@@ -261,9 +266,11 @@ describe('useProfileWizard', () => {
 
   describe('Validation', () => {
     it('should validate step successfully', async () => {
-      mockApiClient.post.mockResolvedValue(mockApiResponse({
-        is_valid: true,
-      }));
+      mockApiClient.post.mockResolvedValue(
+        mockApiResponse({
+          is_valid: true,
+        })
+      );
 
       const { result } = renderHook(() => useProfileWizard());
 
@@ -289,10 +296,12 @@ describe('useProfileWizard', () => {
         email: ['Invalid email format'],
       };
 
-      mockApiClient.post.mockResolvedValue(mockApiResponse({
-        is_valid: false,
-        errors: validationErrors,
-      }));
+      mockApiClient.post.mockResolvedValue(
+        mockApiResponse({
+          is_valid: false,
+          errors: validationErrors,
+        })
+      );
 
       const { result } = renderHook(() => useProfileWizard());
 
@@ -316,7 +325,9 @@ describe('useProfileWizard', () => {
       });
 
       expect(isValid).toBe(false);
-      expect(result.current.error).toBe('Validation failed. Please check your input and try again.');
+      expect(result.current.error).toBe(
+        'Validation failed. Please check your input and try again.'
+      );
     });
   });
 
@@ -420,9 +431,11 @@ describe('useProfileWizard', () => {
   describe('Photo Upload', () => {
     it('should upload profile photo successfully', async () => {
       const mockPhotoUrl = 'https://example.com/photo.jpg';
-      mockApiClient.post.mockResolvedValue(mockApiResponse({
-        photo_url: mockPhotoUrl,
-      }));
+      mockApiClient.post.mockResolvedValue(
+        mockApiResponse({
+          photo_url: mockPhotoUrl,
+        })
+      );
 
       const { result } = renderHook(() => useProfileWizard());
 
@@ -450,8 +463,9 @@ describe('useProfileWizard', () => {
       const { result } = renderHook(() => useProfileWizard());
 
       await act(async () => {
-        await expect(result.current.uploadProfilePhoto('file://photo.jpg'))
-          .rejects.toThrow('Upload failed');
+        await expect(result.current.uploadProfilePhoto('file://photo.jpg')).rejects.toThrow(
+          'Upload failed'
+        );
       });
     });
   });
@@ -474,12 +488,9 @@ describe('useProfileWizard', () => {
       });
 
       expect(suggestions).toEqual(mockSuggestions);
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/accounts/teachers/rate-suggestions/',
-        {
-          params: { subject: 'Mathematics', location: 'Lisbon' },
-        }
-      );
+      expect(mockApiClient.get).toHaveBeenCalledWith('/accounts/teachers/rate-suggestions/', {
+        params: { subject: 'Mathematics', location: 'Lisbon' },
+      });
     });
 
     it('should handle rate suggestions errors gracefully', async () => {
@@ -535,10 +546,8 @@ describe('useProfileWizard', () => {
     });
 
     it('should not update state after component unmounts', async () => {
-      mockApiClient.get.mockImplementation(() => 
-        new Promise(resolve => 
-          setTimeout(() => resolve(mockApiResponse({})), 100)
-        )
+      mockApiClient.get.mockImplementation(
+        () => new Promise(resolve => setTimeout(() => resolve(mockApiResponse({})), 100))
       );
 
       const { result, unmount } = renderHook(() => useProfileWizard());
@@ -621,9 +630,9 @@ describe('useProfileWizard', () => {
     it('should handle network cancellation errors', async () => {
       const cancelError = new Error('Request cancelled');
       (cancelError as any).isCancel = true;
-      
+
       mockApiClient.get.mockRejectedValue(cancelError);
-      
+
       // Mock axios.isCancel
       (axios.isCancel as jest.Mock) = jest.fn(() => true);
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
  * Custom hook for debouncing function calls
  * Delays the execution of a function until after a specified delay has passed
  * since the last time it was invoked.
- * 
+ *
  * @param callback - The function to debounce
  * @param delay - The delay in milliseconds
  * @param dependencies - Dependencies that should trigger a reset of the debounced function
@@ -45,7 +45,7 @@ export function useDebounce<T extends (...args: any[]) => any>(
     ((...args: Parameters<T>) => {
       argsRef.current = args;
       cancel();
-      
+
       timeoutRef.current = setTimeout(() => {
         callbackRef.current(...args);
         timeoutRef.current = null;
@@ -67,7 +67,7 @@ export function useDebounce<T extends (...args: any[]) => any>(
 /**
  * Hook for debouncing state values
  * Returns a debounced version of the value that only updates after the delay
- * 
+ *
  * @param value - The value to debounce
  * @param delay - The delay in milliseconds
  * @returns The debounced value
@@ -98,7 +98,7 @@ export function useDebouncedValue<T>(value: T, delay: number): T {
 /**
  * Hook for debouncing API calls with loading state
  * Provides loading state and error handling for debounced async operations
- * 
+ *
  * @param asyncCallback - The async function to debounce
  * @param delay - The delay in milliseconds
  * @param dependencies - Dependencies that should trigger a reset
@@ -128,18 +128,18 @@ export function useDebouncedAsync<T extends (...args: any[]) => Promise<any>>(
 
       // Create new abort controller
       abortControllerRef.current = new AbortController();
-      
+
       setIsLoading(true);
       setError(null);
 
       try {
         const result = await asyncCallback(...args);
-        
+
         // Only update state if not aborted
         if (!abortControllerRef.current.signal.aborted) {
           setIsLoading(false);
         }
-        
+
         return result;
       } catch (err) {
         // Only update state if not aborted
@@ -195,7 +195,7 @@ export function useDebouncedAsync<T extends (...args: any[]) => Promise<any>>(
 /**
  * Hook for smart auto-save functionality
  * Only triggers save when data actually changes and user stops editing
- * 
+ *
  * @param saveFunction - The function to call for saving
  * @param data - The data to save
  * @param options - Configuration options
@@ -240,7 +240,7 @@ export function useSmartAutoSave<T>(
 
       try {
         await saveFunction(dataToSave);
-        
+
         if (isMountedRef.current) {
           lastSavedDataRef.current = dataToSave;
           setHasUnsavedChanges(false);
@@ -266,7 +266,7 @@ export function useSmartAutoSave<T>(
   // Check if data has changed
   useEffect(() => {
     const hasChanged = JSON.stringify(data) !== JSON.stringify(lastSavedDataRef.current);
-    
+
     if (hasChanged && enabled) {
       setHasUnsavedChanges(true);
       debouncedFn(data);
@@ -276,7 +276,7 @@ export function useSmartAutoSave<T>(
   // Cleanup on unmount
   useEffect(() => {
     isMountedRef.current = true;
-    
+
     return () => {
       isMountedRef.current = false;
       cancel();

@@ -1,14 +1,14 @@
-import React from 'react';
 import { CheckCircle2, Circle, AlertCircle } from 'lucide-react-native';
+import React from 'react';
 
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Divider } from '@/components/ui/divider';
 
 interface WizardStep {
   id: string;
@@ -24,11 +24,14 @@ interface CompletionData {
   missing_critical: string[];
   missing_optional: string[];
   is_complete: boolean;
-  step_completion: Record<string, {
-    is_complete: boolean;
-    completion_percentage: number;
-    missing_fields: string[];
-  }>;
+  step_completion: Record<
+    string,
+    {
+      is_complete: boolean;
+      completion_percentage: number;
+      missing_fields: string[];
+    }
+  >;
 }
 
 interface WizardNavigationProps {
@@ -53,30 +56,30 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
   const getStepStatus = (stepIndex: number) => {
     const step = steps[stepIndex];
     const stepCompletion = completionData?.step_completion?.[step.id];
-    
+
     if (stepCompletion?.is_complete) {
       return 'completed';
     }
-    
+
     if (stepIndex < currentStep) {
       return 'visited';
     }
-    
+
     if (stepIndex === currentStep) {
       return 'current';
     }
-    
+
     if (stepCompletion && stepCompletion.completion_percentage > 0) {
       return 'in-progress';
     }
-    
+
     return 'pending';
   };
 
   const getStepIcon = (stepIndex: number) => {
     const status = getStepStatus(stepIndex);
     const step = steps[stepIndex];
-    
+
     switch (status) {
       case 'completed':
         return <Icon as={CheckCircle2} size={20} className="text-green-600" />;
@@ -93,7 +96,7 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
 
   const getStepStyles = (stepIndex: number) => {
     const status = getStepStatus(stepIndex);
-    
+
     switch (status) {
       case 'completed':
         return {
@@ -145,15 +148,13 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
   return (
     <Box className={`bg-white border-r border-gray-200 ${className}`}>
       <VStack space="xs" className="p-4 max-w-xs">
-        <Text className="text-sm font-semibold text-gray-900 mb-2">
-          Profile Setup Progress
-        </Text>
-        
+        <Text className="text-sm font-semibold text-gray-900 mb-2">Profile Setup Progress</Text>
+
         {steps.map((step, index) => {
           const styles = getStepStyles(index);
           const isClickable = isStepClickable(index);
           const completionPercentage = getStepCompletionPercentage(index);
-          
+
           return (
             <Box key={step.id}>
               <Button
@@ -166,29 +167,21 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
               >
                 <HStack space="sm" className="items-start w-full">
                   {/* Step Icon */}
-                  <Box className="mt-0.5">
-                    {getStepIcon(index)}
-                  </Box>
-                  
+                  <Box className="mt-0.5">{getStepIcon(index)}</Box>
+
                   {/* Step Content */}
                   <VStack className="flex-1" space="xs">
                     <HStack className="items-center justify-between w-full">
-                      <Text className={`text-sm font-medium ${styles.title}`}>
-                        {step.title}
-                      </Text>
-                      {step.isRequired && (
-                        <Box className="w-2 h-2 bg-red-400 rounded-full" />
-                      )}
+                      <Text className={`text-sm font-medium ${styles.title}`}>{step.title}</Text>
+                      {step.isRequired && <Box className="w-2 h-2 bg-red-400 rounded-full" />}
                     </HStack>
-                    
-                    <Text className={`text-xs ${styles.description}`}>
-                      {step.description}
-                    </Text>
-                    
+
+                    <Text className={`text-xs ${styles.description}`}>{step.description}</Text>
+
                     {/* Progress Bar for In-Progress Steps */}
                     {completionPercentage > 0 && completionPercentage < 100 && (
                       <Box className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                        <Box 
+                        <Box
                           className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
                           style={{ width: `${completionPercentage}%` }}
                         />
@@ -197,47 +190,43 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
                   </VStack>
                 </HStack>
               </Button>
-              
+
               {/* Connector Line */}
               {index < steps.length - 1 && (
                 <Box className="ml-8 my-1">
-                  <Divider 
-                    orientation="vertical" 
+                  <Divider
+                    orientation="vertical"
                     className={`h-6 w-px ${
                       getStepStatus(index) === 'completed' ? 'bg-green-300' : 'bg-gray-300'
-                    }`} 
+                    }`}
                   />
                 </Box>
               )}
             </Box>
           );
         })}
-        
+
         {/* Overall Progress Summary */}
         {completionData && (
           <Box className="mt-4 p-3 bg-gray-50 rounded-lg">
             <VStack space="xs">
               <HStack className="items-center justify-between">
-                <Text className="text-sm font-medium text-gray-900">
-                  Overall Progress
-                </Text>
+                <Text className="text-sm font-medium text-gray-900">Overall Progress</Text>
                 <Text className="text-sm text-gray-600">
                   {Math.round(completionData.completion_percentage)}%
                 </Text>
               </HStack>
-              
+
               <Box className="w-full bg-gray-200 rounded-full h-2">
-                <Box 
+                <Box
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${completionData.completion_percentage}%` }}
                 />
               </Box>
-              
+
               {completionData.missing_critical.length > 0 && (
                 <VStack space="xs" className="mt-2">
-                  <Text className="text-xs font-medium text-red-700">
-                    Missing Required Fields:
-                  </Text>
+                  <Text className="text-xs font-medium text-red-700">Missing Required Fields:</Text>
                   {completionData.missing_critical.slice(0, 3).map((field, index) => (
                     <Text key={index} className="text-xs text-red-600">
                       • {field}

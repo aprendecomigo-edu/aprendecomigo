@@ -1,9 +1,9 @@
+import useRouter from '@unitools/router';
 import React from 'react';
 import { Platform } from 'react-native';
-import useRouter from '@unitools/router';
 
-import { TeacherProfileWizard } from '@/screens/onboarding/teacher-profile-wizard';
 import { AuthGuard } from '@/components/auth/auth-guard';
+import { TeacherProfileWizard } from '@/screens/onboarding/teacher-profile-wizard';
 
 export default function TeacherProfileOnboardingPage() {
   const router = useRouter();
@@ -20,10 +20,7 @@ export default function TeacherProfileOnboardingPage() {
 
   return (
     <AuthGuard>
-      <TeacherProfileWizard
-        onComplete={handleComplete}
-        onExit={handleExit}
-      />
+      <TeacherProfileWizard onComplete={handleComplete} onExit={handleExit} />
     </AuthGuard>
   );
 }

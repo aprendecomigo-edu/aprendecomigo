@@ -1,24 +1,14 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useState, useEffect } from 'react';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { View, ScrollView, Alert } from 'react-native';
+import { z } from 'zod';
+
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
-import { Input, InputField } from '@/components/ui/input';
-import { Textarea, TextareaInput } from '@/components/ui/textarea';
-import { 
-  Select, 
-  SelectTrigger, 
-  SelectInput, 
-  SelectPortal, 
-  SelectBackdrop, 
-  SelectContent, 
-  SelectDragIndicatorWrapper, 
-  SelectDragIndicator, 
-  SelectItem 
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import { Center } from '@/components/ui/center';
+import { Divider } from '@/components/ui/divider';
 import {
   FormControl,
   FormControlLabel,
@@ -27,15 +17,26 @@ import {
   FormControlErrorIcon,
   FormControlErrorText,
 } from '@/components/ui/form-control';
-import { Icon, AlertCircleIcon } from '@/components/ui/icon';
-import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Center } from '@/components/ui/center';
+import { HStack } from '@/components/ui/hstack';
+import { Icon, AlertCircleIcon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicatorWrapper,
+  SelectDragIndicator,
+  SelectItem,
+} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
+import { Textarea, TextareaInput } from '@/components/ui/textarea';
+import { VStack } from '@/components/ui/vstack';
 
 // Types for school settings
 interface SchoolProfile {
@@ -59,12 +60,12 @@ interface SchoolSettings {
   educational_system_name?: string;
   grade_levels: string[];
   grade_levels_display?: string[];
-  
+
   // Operational settings
   trial_cost_absorption: 'school' | 'teacher' | 'split';
   default_session_duration: number;
   timezone: string;
-  
+
   // Billing configuration
   billing_contact_name: string;
   billing_contact_email: string;
@@ -72,39 +73,39 @@ interface SchoolSettings {
   tax_id: string;
   currency_code: 'EUR' | 'USD' | 'BRL' | 'GBP';
   currency_display?: string;
-  
+
   // Localization
   language: 'pt' | 'en' | 'es' | 'fr';
   language_display?: string;
-  
+
   // Schedule and availability
   working_hours_start: string;
   working_hours_end: string;
   working_days: number[];
   working_days_display?: string[];
-  
+
   // Communication preferences
   email_notifications_enabled: boolean;
   sms_notifications_enabled: boolean;
-  
+
   // User permissions and access control
   allow_student_self_enrollment: boolean;
   require_parent_approval: boolean;
   auto_assign_teachers: boolean;
   class_reminder_hours: number;
-  
+
   // Integration settings
   enable_calendar_integration: boolean;
   calendar_integration_type: 'google' | 'outlook' | 'caldav' | '';
   enable_email_integration: boolean;
   email_integration_provider: 'gmail' | 'outlook' | 'custom' | '';
-  
+
   // Privacy and data handling
   data_retention_policy: '1_year' | '2_years' | '5_years' | 'indefinite';
   gdpr_compliance_enabled: boolean;
   allow_data_export: boolean;
   require_data_processing_consent: boolean;
-  
+
   // Dashboard preferences
   dashboard_refresh_interval: number;
   activity_retention_days: number;
@@ -134,74 +135,99 @@ const schoolSettingsSchema = z.object({
     contact_email: z.string().email('Invalid email address').or(z.literal('')),
     phone_number: z.string(),
     website: z.string().url('Invalid URL').or(z.literal('')),
-    primary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').or(z.literal('')),
-    secondary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').or(z.literal('')),
+    primary_color: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color')
+      .or(z.literal('')),
+    secondary_color: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color')
+      .or(z.literal('')),
     email_domain: z.string(),
   }),
-  
+
   // Settings
-  settings: z.object({
-    educational_system: z.number().min(1, 'Educational system is required'),
-    grade_levels: z.array(z.string()),
-    trial_cost_absorption: z.enum(['school', 'teacher', 'split']),
-    default_session_duration: z.number().min(15, 'Minimum 15 minutes').max(480, 'Maximum 8 hours'),
-    timezone: z.string().min(1, 'Timezone is required'),
-    
-    // Billing
-    billing_contact_name: z.string(),
-    billing_contact_email: z.string().email('Invalid email').or(z.literal('')),
-    billing_address: z.string(),
-    tax_id: z.string(),
-    currency_code: z.enum(['EUR', 'USD', 'BRL', 'GBP']),
-    language: z.enum(['pt', 'en', 'es', 'fr']),
-    
-    // Schedule
-    working_hours_start: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
-    working_hours_end: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
-    working_days: z.array(z.number().min(0).max(6)),
-    
-    // Booleans
-    email_notifications_enabled: z.boolean(),
-    sms_notifications_enabled: z.boolean(),
-    allow_student_self_enrollment: z.boolean(),
-    require_parent_approval: z.boolean(),
-    auto_assign_teachers: z.boolean(),
-    enable_calendar_integration: z.boolean(),
-    calendar_integration_type: z.enum(['google', 'outlook', 'caldav', '']),
-    enable_email_integration: z.boolean(),
-    email_integration_provider: z.enum(['gmail', 'outlook', 'custom', '']),
-    gdpr_compliance_enabled: z.boolean(),
-    allow_data_export: z.boolean(),
-    require_data_processing_consent: z.boolean(),
-    
-    // Numbers
-    class_reminder_hours: z.number().min(1, 'Minimum 1 hour').max(168, 'Maximum 1 week'),
-    dashboard_refresh_interval: z.number().min(5, 'Minimum 5 seconds').max(300, 'Maximum 5 minutes'),
-    activity_retention_days: z.number().min(30, 'Minimum 30 days').max(365, 'Maximum 1 year'),
-    
-    data_retention_policy: z.enum(['1_year', '2_years', '5_years', 'indefinite']),
-  }).refine((data) => {
-    // Validate working hours
-    if (data.working_hours_start >= data.working_hours_end) {
-      return false;
-    }
-    return true;
-  }, {
-    message: "End time must be after start time",
-    path: ["working_hours_end"]
-  }).refine((data) => {
-    // Validate integration settings
-    if (data.enable_calendar_integration && !data.calendar_integration_type) {
-      return false;
-    }
-    if (data.enable_email_integration && !data.email_integration_provider) {
-      return false;
-    }
-    return true;
-  }, {
-    message: "Integration type is required when integration is enabled",
-    path: ["calendar_integration_type"]
-  }),
+  settings: z
+    .object({
+      educational_system: z.number().min(1, 'Educational system is required'),
+      grade_levels: z.array(z.string()),
+      trial_cost_absorption: z.enum(['school', 'teacher', 'split']),
+      default_session_duration: z
+        .number()
+        .min(15, 'Minimum 15 minutes')
+        .max(480, 'Maximum 8 hours'),
+      timezone: z.string().min(1, 'Timezone is required'),
+
+      // Billing
+      billing_contact_name: z.string(),
+      billing_contact_email: z.string().email('Invalid email').or(z.literal('')),
+      billing_address: z.string(),
+      tax_id: z.string(),
+      currency_code: z.enum(['EUR', 'USD', 'BRL', 'GBP']),
+      language: z.enum(['pt', 'en', 'es', 'fr']),
+
+      // Schedule
+      working_hours_start: z
+        .string()
+        .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
+      working_hours_end: z
+        .string()
+        .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
+      working_days: z.array(z.number().min(0).max(6)),
+
+      // Booleans
+      email_notifications_enabled: z.boolean(),
+      sms_notifications_enabled: z.boolean(),
+      allow_student_self_enrollment: z.boolean(),
+      require_parent_approval: z.boolean(),
+      auto_assign_teachers: z.boolean(),
+      enable_calendar_integration: z.boolean(),
+      calendar_integration_type: z.enum(['google', 'outlook', 'caldav', '']),
+      enable_email_integration: z.boolean(),
+      email_integration_provider: z.enum(['gmail', 'outlook', 'custom', '']),
+      gdpr_compliance_enabled: z.boolean(),
+      allow_data_export: z.boolean(),
+      require_data_processing_consent: z.boolean(),
+
+      // Numbers
+      class_reminder_hours: z.number().min(1, 'Minimum 1 hour').max(168, 'Maximum 1 week'),
+      dashboard_refresh_interval: z
+        .number()
+        .min(5, 'Minimum 5 seconds')
+        .max(300, 'Maximum 5 minutes'),
+      activity_retention_days: z.number().min(30, 'Minimum 30 days').max(365, 'Maximum 1 year'),
+
+      data_retention_policy: z.enum(['1_year', '2_years', '5_years', 'indefinite']),
+    })
+    .refine(
+      data => {
+        // Validate working hours
+        if (data.working_hours_start >= data.working_hours_end) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: 'End time must be after start time',
+        path: ['working_hours_end'],
+      }
+    )
+    .refine(
+      data => {
+        // Validate integration settings
+        if (data.enable_calendar_integration && !data.calendar_integration_type) {
+          return false;
+        }
+        if (data.enable_email_integration && !data.email_integration_provider) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: 'Integration type is required when integration is enabled',
+        path: ['calendar_integration_type'],
+      }
+    ),
 });
 
 type SchoolSettingsFormData = z.infer<typeof schoolSettingsSchema>;
@@ -261,9 +287,16 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
   loading = false,
 }) => {
   const [activeSection, setActiveSection] = useState<string>('profile');
-  const [selectedEducationalSystem, setSelectedEducationalSystem] = useState<EducationalSystem | null>(null);
+  const [selectedEducationalSystem, setSelectedEducationalSystem] =
+    useState<EducationalSystem | null>(null);
 
-  const { control, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<SchoolSettingsFormData>({
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<SchoolSettingsFormData>({
     resolver: zodResolver(schoolSettingsSchema),
     defaultValues: {
       school_profile: {
@@ -294,7 +327,8 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
         working_days: initialData?.settings?.working_days || [0, 1, 2, 3, 4],
         email_notifications_enabled: initialData?.settings?.email_notifications_enabled ?? true,
         sms_notifications_enabled: initialData?.settings?.sms_notifications_enabled ?? false,
-        allow_student_self_enrollment: initialData?.settings?.allow_student_self_enrollment ?? false,
+        allow_student_self_enrollment:
+          initialData?.settings?.allow_student_self_enrollment ?? false,
         require_parent_approval: initialData?.settings?.require_parent_approval ?? true,
         auto_assign_teachers: initialData?.settings?.auto_assign_teachers ?? false,
         class_reminder_hours: initialData?.settings?.class_reminder_hours || 24,
@@ -305,7 +339,8 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
         data_retention_policy: initialData?.settings?.data_retention_policy || '2_years',
         gdpr_compliance_enabled: initialData?.settings?.gdpr_compliance_enabled ?? true,
         allow_data_export: initialData?.settings?.allow_data_export ?? true,
-        require_data_processing_consent: initialData?.settings?.require_data_processing_consent ?? true,
+        require_data_processing_consent:
+          initialData?.settings?.require_data_processing_consent ?? true,
         dashboard_refresh_interval: initialData?.settings?.dashboard_refresh_interval || 30,
         activity_retention_days: initialData?.settings?.activity_retention_days || 90,
       },
@@ -332,7 +367,9 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
 
   const renderSectionButtons = () => (
     <VStack space="sm" className="mb-4">
-      <Text size="sm" className="text-typography-600 font-medium">Configuration Sections</Text>
+      <Text size="sm" className="text-typography-600 font-medium">
+        Configuration Sections
+      </Text>
       <HStack space="sm" flexWrap="wrap">
         {[
           { key: 'profile', label: 'Profile' },
@@ -344,10 +381,10 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
           { key: 'permissions', label: 'Permissions' },
           { key: 'integrations', label: 'Integrations' },
           { key: 'privacy', label: 'Privacy' },
-        ].map((section) => (
+        ].map(section => (
           <Button
             key={section.key}
-            size="sm" 
+            size="sm"
             variant={activeSection === section.key ? 'solid' : 'outline'}
             action={activeSection === section.key ? 'primary' : 'secondary'}
             onPress={() => setActiveSection(section.key)}
@@ -363,7 +400,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
   const renderProfileSection = () => (
     <VStack space="md">
       <Heading size="lg">School Profile</Heading>
-      
+
       <Controller
         control={control}
         name="school_profile.name"
@@ -382,9 +419,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
             </Input>
             <FormControlError>
               <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText>
-                {errors.school_profile?.name?.message}
-              </FormControlErrorText>
+              <FormControlErrorText>{errors.school_profile?.name?.message}</FormControlErrorText>
             </FormControlError>
           </FormControl>
         )}
@@ -503,9 +538,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
             </Input>
             <FormControlError>
               <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText>
-                {errors.school_profile?.website?.message}
-              </FormControlErrorText>
+              <FormControlErrorText>{errors.school_profile?.website?.message}</FormControlErrorText>
             </FormControlError>
           </FormControl>
         )}
@@ -580,7 +613,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
   const renderEducationalSection = () => (
     <VStack space="md">
       <Heading size="lg">Educational System</Heading>
-      
+
       <Controller
         control={control}
         name="settings.educational_system"
@@ -589,7 +622,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
             <FormControlLabel>
               <Text>Educational System *</Text>
             </FormControlLabel>
-            <Select onValueChange={(val) => onChange(parseInt(val))} selectedValue={value.toString()}>
+            <Select onValueChange={val => onChange(parseInt(val))} selectedValue={value.toString()}>
               <SelectTrigger>
                 <SelectInput placeholder="Select educational system" />
               </SelectTrigger>
@@ -599,7 +632,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
                   <SelectDragIndicatorWrapper>
                     <SelectDragIndicator />
                   </SelectDragIndicatorWrapper>
-                  {educationalSystems.map((system) => (
+                  {educationalSystems.map(system => (
                     <SelectItem key={system.id} label={system.name} value={system.id.toString()} />
                   ))}
                 </SelectContent>
@@ -607,7 +640,8 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
             </Select>
             <FormControlHelper>
               <Text size="sm">
-                {selectedEducationalSystem?.description || 'Choose the educational system used by your school'}
+                {selectedEducationalSystem?.description ||
+                  'Choose the educational system used by your school'}
               </Text>
             </FormControlHelper>
             <FormControlError>
@@ -634,7 +668,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
                   <HStack key={key} space="sm" alignItems="center">
                     <Switch
                       value={value.includes(key)}
-                      onValueChange={(checked) => {
+                      onValueChange={checked => {
                         if (checked) {
                           onChange([...value, key]);
                         } else {
@@ -659,7 +693,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
   const renderOperationalSection = () => (
     <VStack space="md">
       <Heading size="lg">Operational Settings</Heading>
-      
+
       <Controller
         control={control}
         name="settings.trial_cost_absorption"
@@ -678,14 +712,16 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
                   <SelectDragIndicatorWrapper>
                     <SelectDragIndicator />
                   </SelectDragIndicatorWrapper>
-                  {TRIAL_COST_OPTIONS.map((option) => (
+                  {TRIAL_COST_OPTIONS.map(option => (
                     <SelectItem key={option.value} label={option.label} value={option.value} />
                   ))}
                 </SelectContent>
               </SelectPortal>
             </Select>
             <FormControlHelper>
-              <Text size="sm">Determines who pays for trial sessions when students try the platform</Text>
+              <Text size="sm">
+                Determines who pays for trial sessions when students try the platform
+              </Text>
             </FormControlHelper>
           </FormControl>
         )}
@@ -705,7 +741,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
                   <InputField
                     placeholder="60"
                     onBlur={onBlur}
-                    onChangeText={(text) => onChange(parseInt(text) || 60)}
+                    onChangeText={text => onChange(parseInt(text) || 60)}
                     value={value.toString()}
                     keyboardType="numeric"
                   />
@@ -746,9 +782,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
                 </FormControlHelper>
                 <FormControlError>
                   <FormControlErrorIcon as={AlertCircleIcon} />
-                  <FormControlErrorText>
-                    {errors.settings?.timezone?.message}
-                  </FormControlErrorText>
+                  <FormControlErrorText>{errors.settings?.timezone?.message}</FormControlErrorText>
                 </FormControlError>
               </FormControl>
             )}
@@ -776,7 +810,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
                       <SelectDragIndicatorWrapper>
                         <SelectDragIndicator />
                       </SelectDragIndicatorWrapper>
-                      {CURRENCY_OPTIONS.map((option) => (
+                      {CURRENCY_OPTIONS.map(option => (
                         <SelectItem key={option.value} label={option.label} value={option.value} />
                       ))}
                     </SelectContent>
@@ -806,7 +840,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
                       <SelectDragIndicatorWrapper>
                         <SelectDragIndicator />
                       </SelectDragIndicatorWrapper>
-                      {LANGUAGE_OPTIONS.map((option) => (
+                      {LANGUAGE_OPTIONS.map(option => (
                         <SelectItem key={option.value} label={option.label} value={option.value} />
                       ))}
                     </SelectContent>
@@ -823,7 +857,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
   const renderBillingSection = () => (
     <VStack space="md">
       <Heading size="lg">Billing Configuration</Heading>
-      
+
       <VStack space="md" className="md:flex-row md:space-x-4 md:space-y-0">
         <Box className="flex-1">
           <Controller
@@ -925,7 +959,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
   const renderScheduleSection = () => (
     <VStack space="md">
       <Heading size="lg">Schedule & Availability</Heading>
-      
+
       <VStack space="md" className="md:flex-row md:space-x-4 md:space-y-0">
         <Box className="flex-1">
           <Controller
@@ -999,11 +1033,11 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
               <Text>Working Days</Text>
             </FormControlLabel>
             <VStack space="sm">
-              {WEEKDAYS.map((day) => (
+              {WEEKDAYS.map(day => (
                 <HStack key={day.value} space="sm" alignItems="center">
                   <Switch
                     value={value.includes(day.value)}
-                    onValueChange={(checked) => {
+                    onValueChange={checked => {
                       if (checked) {
                         onChange([...value, day.value]);
                       } else {
@@ -1034,7 +1068,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
               <InputField
                 placeholder="24"
                 onBlur={onBlur}
-                onChangeText={(text) => onChange(parseInt(text) || 24)}
+                onChangeText={text => onChange(parseInt(text) || 24)}
                 value={value.toString()}
                 keyboardType="numeric"
               />
@@ -1057,7 +1091,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
   const renderCommunicationSection = () => (
     <VStack space="md">
       <Heading size="lg">Communication Preferences</Heading>
-      
+
       <Controller
         control={control}
         name="settings.email_notifications_enabled"
@@ -1095,7 +1129,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
   const renderPermissionsSection = () => (
     <VStack space="md">
       <Heading size="lg">Permissions & Access Control</Heading>
-      
+
       <Controller
         control={control}
         name="settings.allow_student_self_enrollment"
@@ -1149,7 +1183,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
   const renderIntegrationsSection = () => (
     <VStack space="md">
       <Heading size="lg">Integrations</Heading>
-      
+
       <VStack space="md">
         <Controller
           control={control}
@@ -1263,7 +1297,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
   const renderPrivacySection = () => (
     <VStack space="md">
       <Heading size="lg">Privacy & Compliance</Heading>
-      
+
       <Controller
         control={control}
         name="settings.data_retention_policy"
@@ -1282,7 +1316,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
                   <SelectDragIndicatorWrapper>
                     <SelectDragIndicator />
                   </SelectDragIndicatorWrapper>
-                  {DATA_RETENTION_OPTIONS.map((option) => (
+                  {DATA_RETENTION_OPTIONS.map(option => (
                     <SelectItem key={option.value} label={option.label} value={option.value} />
                   ))}
                 </SelectContent>
@@ -1357,7 +1391,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
                   <InputField
                     placeholder="30"
                     onBlur={onBlur}
-                    onChangeText={(text) => onChange(parseInt(text) || 30)}
+                    onChangeText={text => onChange(parseInt(text) || 30)}
                     value={value.toString()}
                     keyboardType="numeric"
                   />
@@ -1389,7 +1423,7 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
                   <InputField
                     placeholder="90"
                     onBlur={onBlur}
-                    onChangeText={(text) => onChange(parseInt(text) || 90)}
+                    onChangeText={text => onChange(parseInt(text) || 90)}
                     value={value.toString()}
                     keyboardType="numeric"
                   />
@@ -1426,7 +1460,9 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
         <VStack space="lg">
           <VStack space="sm" className="mb-4">
             <HStack justifyContent="space-between" alignItems="center" className="flex-wrap">
-              <Heading size="xl" className="flex-1 mb-2 md:mb-0">School Settings</Heading>
+              <Heading size="xl" className="flex-1 mb-2 md:mb-0">
+                School Settings
+              </Heading>
               <Badge variant="outline" action="muted">
                 <BadgeText size="sm">Configuration</BadgeText>
               </Badge>
@@ -1453,23 +1489,21 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
           <Divider />
 
           <HStack space="md" className="justify-end flex-wrap">
-            <Button 
-              variant="outline" 
-              onPress={onCancel} 
+            <Button
+              variant="outline"
+              onPress={onCancel}
               disabled={isSubmitting}
               className="mb-2 md:mb-0 min-w-[120px]"
             >
               <ButtonText>Cancel</ButtonText>
             </Button>
-            <Button 
-              onPress={handleSubmit(onSubmit)} 
+            <Button
+              onPress={handleSubmit(onSubmit)}
               disabled={isSubmitting}
               action="primary"
               className="min-w-[140px]"
             >
-              <ButtonText>
-                {isSubmitting ? 'Saving...' : 'Save Settings'}
-              </ButtonText>
+              <ButtonText>{isSubmitting ? 'Saving...' : 'Save Settings'}</ButtonText>
             </Button>
           </HStack>
         </VStack>

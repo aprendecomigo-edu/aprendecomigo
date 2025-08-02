@@ -1,14 +1,21 @@
+import {
+  Plus,
+  CheckCircle,
+  Circle,
+  Calendar,
+  Clock,
+  AlertTriangle,
+  Edit3,
+  Trash2,
+  ChevronDown,
+  Filter,
+  SortAsc,
+  SortDesc,
+} from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Box } from '@/components/ui/box';
-import { Text } from '@/components/ui/text';
-import { Heading } from '@/components/ui/heading';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Icon } from '@/components/ui/icon';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Pressable } from '@/components/ui/pressable';
-import { Spinner } from '@/components/ui/spinner';
+
+import { Task, CreateTaskData, UpdateTaskData, tasksApi } from '../../api/tasksApi';
+
 import {
   AlertDialog,
   AlertDialogBody,
@@ -18,8 +25,21 @@ import {
   AlertDialogBackdrop,
   AlertDialogCloseButton,
 } from '@/components/ui/alert-dialog';
+import { Badge, BadgeText } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+  FormControlError,
+  FormControlErrorText,
+} from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
-import { Textarea, TextareaInput } from '@/components/ui/textarea';
+import { Pressable } from '@/components/ui/pressable';
 import {
   Select,
   SelectTrigger,
@@ -30,17 +50,12 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-import {
-  FormControl,
-  FormControlLabel,
-  FormControlLabelText,
-  FormControlError,
-  FormControlErrorText,
-} from '@/components/ui/form-control';
+import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
+import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
-import { Plus, CheckCircle, Circle, Calendar, Clock, AlertTriangle, Edit3, Trash2, ChevronDown, Filter, SortAsc, SortDesc } from 'lucide-react-native';
-import { Task, CreateTaskData, UpdateTaskData, tasksApi } from '../../api/tasksApi';
+import { VStack } from '@/components/ui/vstack';
 
 interface TasksTableProps {
   tasks: Task[];
@@ -131,7 +146,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ task, isOpen, onClose, onSave }
               <Input>
                 <InputField
                   value={formData.title}
-                  onChangeText={(value) => setFormData({ ...formData, title: value })}
+                  onChangeText={value => setFormData({ ...formData, title: value })}
                   placeholder="Enter task title"
                 />
               </Input>
@@ -144,7 +159,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ task, isOpen, onClose, onSave }
               <Textarea>
                 <TextareaInput
                   value={formData.description}
-                  onChangeText={(value) => setFormData({ ...formData, description: value })}
+                  onChangeText={value => setFormData({ ...formData, description: value })}
                   placeholder="Enter task description"
                 />
               </Textarea>
@@ -157,7 +172,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ task, isOpen, onClose, onSave }
                 </FormControlLabel>
                 <Select
                   selectedValue={formData.priority}
-                  onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                  onValueChange={value => setFormData({ ...formData, priority: value })}
                 >
                   <SelectTrigger>
                     <SelectInput placeholder="Select priority" />
@@ -180,7 +195,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ task, isOpen, onClose, onSave }
                 </FormControlLabel>
                 <Select
                   selectedValue={formData.task_type}
-                  onValueChange={(value) => setFormData({ ...formData, task_type: value })}
+                  onValueChange={value => setFormData({ ...formData, task_type: value })}
                 >
                   <SelectTrigger>
                     <SelectInput placeholder="Select type" />
@@ -206,7 +221,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ task, isOpen, onClose, onSave }
               <Input>
                 <InputField
                   value={formData.due_date}
-                  onChangeText={(value) => setFormData({ ...formData, due_date: value })}
+                  onChangeText={value => setFormData({ ...formData, due_date: value })}
                   placeholder="YYYY-MM-DD"
                 />
               </Input>
@@ -216,7 +231,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ task, isOpen, onClose, onSave }
               <FormControlLabelText>Mark as urgent</FormControlLabelText>
               <Switch
                 value={formData.is_urgent}
-                onValueChange={(value) => setFormData({ ...formData, is_urgent: value })}
+                onValueChange={value => setFormData({ ...formData, is_urgent: value })}
               />
             </HStack>
           </VStack>
@@ -243,7 +258,9 @@ const TasksTable: React.FC<TasksTableProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [isLoading, setIsLoading] = useState(false);
-  const [sortBy, setSortBy] = useState<'due_date' | 'priority' | 'created_at' | 'title'>('due_date');
+  const [sortBy, setSortBy] = useState<'due_date' | 'priority' | 'created_at' | 'title'>(
+    'due_date'
+  );
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
   const [filterPriority, setFilterPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
@@ -257,7 +274,9 @@ const TasksTable: React.FC<TasksTableProps> = ({
     // Apply status filter
     if (filterStatus !== 'all') {
       if (filterStatus === 'pending') {
-        filteredTasks = filteredTasks.filter(task => task.status === 'pending' || task.status === 'in_progress');
+        filteredTasks = filteredTasks.filter(
+          task => task.status === 'pending' || task.status === 'in_progress'
+        );
       } else {
         filteredTasks = filteredTasks.filter(task => task.status === filterStatus);
       }
@@ -280,7 +299,9 @@ const TasksTable: React.FC<TasksTableProps> = ({
           break;
         case 'priority':
           const priorityOrder = { high: 3, medium: 2, low: 1 };
-          comparison = priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder];
+          comparison =
+            priorityOrder[a.priority as keyof typeof priorityOrder] -
+            priorityOrder[b.priority as keyof typeof priorityOrder];
           break;
         case 'created_at':
           comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -307,28 +328,40 @@ const TasksTable: React.FC<TasksTableProps> = ({
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-500';
-      case 'medium': return 'bg-yellow-500';
-      case 'low': return 'bg-green-500';
-      default: return 'bg-gray-500';
+      case 'high':
+        return 'bg-red-500';
+      case 'medium':
+        return 'bg-yellow-500';
+      case 'low':
+        return 'bg-green-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
   const getPriorityBorderColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'border-l-red-500';
-      case 'medium': return 'border-l-yellow-500';
-      case 'low': return 'border-l-green-500';
-      default: return 'border-l-gray-500';
+      case 'high':
+        return 'border-l-red-500';
+      case 'medium':
+        return 'border-l-yellow-500';
+      case 'low':
+        return 'border-l-green-500';
+      default:
+        return 'border-l-gray-500';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-50 border-green-200';
-      case 'in_progress': return 'bg-blue-50 border-blue-200';
-      case 'pending': return 'bg-gray-50 border-gray-200';
-      default: return 'bg-gray-50 border-gray-200';
+      case 'completed':
+        return 'bg-green-50 border-green-200';
+      case 'in_progress':
+        return 'bg-blue-50 border-blue-200';
+      case 'pending':
+        return 'bg-gray-50 border-gray-200';
+      default:
+        return 'bg-gray-50 border-gray-200';
     }
   };
 
@@ -464,7 +497,7 @@ const TasksTable: React.FC<TasksTableProps> = ({
               <Text className="font-medium text-gray-700 text-sm">Status:</Text>
               <Select
                 selectedValue={filterStatus}
-                onValueChange={(value) => setFilterStatus(value as any)}
+                onValueChange={value => setFilterStatus(value as any)}
               >
                 <SelectTrigger size="sm">
                   <SelectInput placeholder="Filter by status" />
@@ -485,7 +518,7 @@ const TasksTable: React.FC<TasksTableProps> = ({
               <Text className="font-medium text-gray-700 text-sm">Priority:</Text>
               <Select
                 selectedValue={filterPriority}
-                onValueChange={(value) => setFilterPriority(value as any)}
+                onValueChange={value => setFilterPriority(value as any)}
               >
                 <SelectTrigger size="sm">
                   <SelectInput placeholder="Filter by priority" />
@@ -527,10 +560,12 @@ const TasksTable: React.FC<TasksTableProps> = ({
       </HStack>
 
       <VStack space="xs">
-        {sortedAndFilteredTasks.map((task) => (
+        {sortedAndFilteredTasks.map(task => (
           <Box
             key={task.id}
-            className={`rounded-lg p-4 border-l-4 ${getPriorityBorderColor(task.priority)} ${getStatusColor(task.status)}`}
+            className={`rounded-lg p-4 border-l-4 ${getPriorityBorderColor(
+              task.priority
+            )} ${getStatusColor(task.status)}`}
           >
             <HStack className="justify-between items-start">
               <HStack space="md" className="flex-1">
@@ -545,16 +580,17 @@ const TasksTable: React.FC<TasksTableProps> = ({
                 <VStack space="xs" className="flex-1">
                   <HStack className="justify-between items-start">
                     <Text
-                      className={`font-semibold ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                      className={`font-semibold ${
+                        task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900'
+                      }`}
                     >
                       {task.title}
                     </Text>
                     <HStack space="xs">
-                      <Badge
-                        variant="solid"
-                        className={getPriorityColor(task.priority)}
-                      >
-                        <BadgeText className="text-white text-xs">{task.priority.toUpperCase()}</BadgeText>
+                      <Badge variant="solid" className={getPriorityColor(task.priority)}>
+                        <BadgeText className="text-white text-xs">
+                          {task.priority.toUpperCase()}
+                        </BadgeText>
                       </Badge>
                       {task.is_urgent && (
                         <Badge variant="solid" className="bg-red-600">
@@ -582,7 +618,9 @@ const TasksTable: React.FC<TasksTableProps> = ({
                           className={task.is_overdue ? 'text-red-500' : 'text-gray-500'}
                         />
                         <Text
-                          className={`text-xs ${task.is_overdue ? 'text-red-500' : 'text-gray-500'}`}
+                          className={`text-xs ${
+                            task.is_overdue ? 'text-red-500' : 'text-gray-500'
+                          }`}
                         >
                           {formatDueDate(task.due_date)}
                         </Text>
@@ -617,8 +655,7 @@ const TasksTable: React.FC<TasksTableProps> = ({
                 <Text className="text-gray-500 text-center max-w-xs">
                   {tasks.length === 0
                     ? 'Click "Add Task" to create your first task and start organizing your work.'
-                    : 'Try adjusting your filters or add a new task.'
-                  }
+                    : 'Try adjusting your filters or add a new task.'}
                 </Text>
               </VStack>
               {showAddButton && (

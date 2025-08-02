@@ -2,19 +2,26 @@ import { X, ChevronLeft, ChevronRight, Play } from 'lucide-react-native';
 import React from 'react';
 import { Dimensions, Platform } from 'react-native';
 
+import { useTutorial } from './TutorialContext';
+
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import { Modal, ModalBackdrop, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal';
+import {
+  Modal,
+  ModalBackdrop,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from '@/components/ui/modal';
 import { Pressable } from '@/components/ui/pressable';
 import { Progress, ProgressFilledTrack } from '@/components/ui/progress';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
-import { useTutorial } from './TutorialContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -58,15 +65,10 @@ export const TutorialOverlay: React.FC = () => {
         <ModalHeader className="px-6 py-4 border-b border-gray-100">
           <HStack className="items-center justify-between w-full">
             <VStack className="flex-1">
-              <Heading className="text-lg font-bold text-gray-900">
-                {currentStep.title}
-              </Heading>
+              <Heading className="text-lg font-bold text-gray-900">{currentStep.title}</Heading>
               {state.config.showProgress !== false && (
                 <HStack className="items-center mt-2" space="sm">
-                  <Progress
-                    value={progress}
-                    className="flex-1 h-2 bg-gray-200 rounded-full"
-                  >
+                  <Progress value={progress} className="flex-1 h-2 bg-gray-200 rounded-full">
                     <ProgressFilledTrack className="bg-blue-600 rounded-full" />
                   </Progress>
                   <Badge variant="outline" className="border-gray-300">
@@ -87,17 +89,13 @@ export const TutorialOverlay: React.FC = () => {
 
         <ModalBody className="px-6 py-4">
           <VStack space="md">
-            <Text className="text-gray-700 text-base leading-relaxed">
-              {currentStep.content}
-            </Text>
+            <Text className="text-gray-700 text-base leading-relaxed">{currentStep.content}</Text>
 
             {currentStep.highlight && (
               <Box className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <HStack className="items-center" space="sm">
                   <Icon as={Play} size="sm" className="text-blue-600" />
-                  <Text className="text-blue-800 font-medium text-sm">
-                    Destaque interativo
-                  </Text>
+                  <Text className="text-blue-800 font-medium text-sm">Destaque interativo</Text>
                 </HStack>
               </Box>
             )}

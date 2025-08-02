@@ -1,13 +1,12 @@
-import { CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
+import { useAuth } from '@/api/authContext';
 import InvitationApi, { InvitationStatusResponse } from '@/api/invitationApi';
 import MainLayout from '@/components/layouts/main-layout';
 import ProfileWizard from '@/components/profile-wizard/ProfileWizard';
-import { useAuth } from '@/api/authContext';
-
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
@@ -22,7 +21,7 @@ const AcceptInvitationProfileWizardPage = () => {
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
   const { isLoggedIn, userProfile } = useAuth();
-  
+
   const [invitationData, setInvitationData] = useState<InvitationStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +41,7 @@ const AcceptInvitationProfileWizardPage = () => {
       setError(null);
       const response = await InvitationApi.getInvitationStatus(token!);
       setInvitationData(response);
-      
+
       // Validate invitation is for a teacher and requires profile wizard
       const invitation = response.invitation;
       if (invitation.role !== 'teacher') {
@@ -55,7 +54,9 @@ const AcceptInvitationProfileWizardPage = () => {
 
       // Check if user needs to authenticate and if invitation email matches current user
       if (isLoggedIn && userProfile && invitation.email !== userProfile.email) {
-        setError('Este convite não é para o usuário atualmente autenticado. Por favor, faça login com o email correto.');
+        setError(
+          'Este convite não é para o usuário atualmente autenticado. Por favor, faça login com o email correto.'
+        );
         return;
       }
 
@@ -65,10 +66,13 @@ const AcceptInvitationProfileWizardPage = () => {
           'Você precisa estar logado para configurar seu perfil.',
           [
             { text: 'Cancelar', onPress: () => router.back() },
-            { 
-              text: 'Fazer Login', 
-              onPress: () => router.push(`/auth/signin?redirect=/accept-invitation/profile-wizard?token=${token}`)
-            }
+            {
+              text: 'Fazer Login',
+              onPress: () =>
+                router.push(
+                  `/auth/signin?redirect=/accept-invitation/profile-wizard?token=${token}`
+                ),
+            },
           ]
         );
         return;
@@ -79,12 +83,12 @@ const AcceptInvitationProfileWizardPage = () => {
         setError(response.reason || 'Este convite não pode ser aceito');
         return;
       }
-
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 
-                          err.response?.data?.detail || 
-                          err.message || 
-                          'Falha ao carregar informações do convite';
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.detail ||
+        err.message ||
+        'Falha ao carregar informações do convite';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -109,8 +113,8 @@ const AcceptInvitationProfileWizardPage = () => {
           onPress: () => {
             // Navigate back to invitation page
             router.back();
-          }
-        }
+          },
+        },
       ]
     );
   };
@@ -164,8 +168,9 @@ const AcceptInvitationProfileWizardPage = () => {
   }
 
   // Check if this invitation actually needs profile wizard
-  const needsProfileWizard = invitationData.needs_profile_wizard || 
-                           invitationData.wizard_metadata?.requires_profile_completion;
+  const needsProfileWizard =
+    invitationData.needs_profile_wizard ||
+    invitationData.wizard_metadata?.requires_profile_completion;
 
   if (!needsProfileWizard) {
     // Auto-redirect to regular invitation acceptance
@@ -173,7 +178,7 @@ const AcceptInvitationProfileWizardPage = () => {
       const timer = setTimeout(() => {
         router.replace(`/accept-invitation/${token}`);
       }, 2000);
-      
+
       return () => clearTimeout(timer);
     }, []);
 

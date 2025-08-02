@@ -1,22 +1,36 @@
+import * as DocumentPicker from 'expo-document-picker';
+import {
+  Plus,
+  X,
+  GraduationCap,
+  Briefcase,
+  Award,
+  Upload,
+  Calendar,
+  FileText,
+} from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Heading } from '@/components/ui/heading';
-import { Input, InputField } from '@/components/ui/input';
-import { Textarea, TextareaInput } from '@/components/ui/textarea';
-import { Button, ButtonText } from '@/components/ui/button';
-import { FormControl } from '@/components/ui/form-control';
-import { Switch } from '@/components/ui/switch';
-import { Icon } from '@/components/ui/icon';
-import { Plus, X, GraduationCap, Briefcase, Award, Upload, Calendar, FileText } from 'lucide-react-native';
-import { DocumentUploadComponent } from '@/components/ui/file-upload';
-import FileUploadService from '@/services/FileUploadService';
 
-import { TeacherProfileData, EducationEntry, ExperienceEntry, CertificationFile } from '@/api/invitationApi';
+import {
+  TeacherProfileData,
+  EducationEntry,
+  ExperienceEntry,
+  CertificationFile,
+} from '@/api/invitationApi';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { DocumentUploadComponent } from '@/components/ui/file-upload';
+import { FormControl } from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
+import { Textarea, TextareaInput } from '@/components/ui/textarea';
+import { VStack } from '@/components/ui/vstack';
+import FileUploadService from '@/services/FileUploadService';
 
 interface CredentialsStepProps {
   profileData: TeacherProfileData;
@@ -46,7 +60,7 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
   const [showEducationForm, setShowEducationForm] = useState(false);
   const [showExperienceForm, setShowExperienceForm] = useState(false);
   const [showCertificationForm, setShowCertificationForm] = useState(false);
-  
+
   // Education form state
   const [newEducation, setNewEducation] = useState<EducationEntry>({
     degree: '',
@@ -80,11 +94,15 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
       progress: number;
       status: 'idle' | 'uploading' | 'success' | 'error';
       error: string;
-    }
+    };
   }>({});
 
   const handleAddEducation = () => {
-    if (!newEducation.degree.trim() || !newEducation.field_of_study.trim() || !newEducation.institution.trim()) {
+    if (
+      !newEducation.degree.trim() ||
+      !newEducation.field_of_study.trim() ||
+      !newEducation.institution.trim()
+    ) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos obrigatórios da formação');
       return;
     }
@@ -101,7 +119,11 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
   };
 
   const handleAddExperience = () => {
-    if (!newExperience.role.trim() || !newExperience.institution.trim() || !newExperience.start_date) {
+    if (
+      !newExperience.role.trim() ||
+      !newExperience.institution.trim() ||
+      !newExperience.start_date
+    ) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos obrigatórios da experiência');
       return;
     }
@@ -151,7 +173,8 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
             Credenciais e Experiência
           </Heading>
           <Text className="text-gray-600">
-            Adicione sua formação acadêmica, experiência profissional e certificações para demonstrar suas qualificações.
+            Adicione sua formação acadêmica, experiência profissional e certificações para
+            demonstrar suas qualificações.
           </Text>
         </VStack>
 
@@ -175,9 +198,7 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
           </HStack>
 
           {validationErrors.education_background && (
-            <Text className="text-red-600 text-sm">
-              {validationErrors.education_background}
-            </Text>
+            <Text className="text-red-600 text-sm">{validationErrors.education_background}</Text>
           )}
 
           {/* Education Form */}
@@ -191,7 +212,7 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                       <InputField
                         placeholder="Ex: Licenciatura, Mestrado, Doutoramento"
                         value={newEducation.degree}
-                        onChangeText={(value) => setNewEducation({ ...newEducation, degree: value })}
+                        onChangeText={value => setNewEducation({ ...newEducation, degree: value })}
                       />
                     </Input>
                   </VStack>
@@ -204,7 +225,9 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                       <InputField
                         placeholder="Ex: Matemática, Engenharia, História"
                         value={newEducation.field_of_study}
-                        onChangeText={(value) => setNewEducation({ ...newEducation, field_of_study: value })}
+                        onChangeText={value =>
+                          setNewEducation({ ...newEducation, field_of_study: value })
+                        }
                       />
                     </Input>
                   </VStack>
@@ -217,7 +240,9 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                       <InputField
                         placeholder="Ex: Universidade de Lisboa"
                         value={newEducation.institution}
-                        onChangeText={(value) => setNewEducation({ ...newEducation, institution: value })}
+                        onChangeText={value =>
+                          setNewEducation({ ...newEducation, institution: value })
+                        }
                       />
                     </Input>
                   </VStack>
@@ -230,7 +255,12 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                       <InputField
                         placeholder="2020"
                         value={newEducation.graduation_year.toString()}
-                        onChangeText={(value) => setNewEducation({ ...newEducation, graduation_year: parseInt(value) || new Date().getFullYear() })}
+                        onChangeText={value =>
+                          setNewEducation({
+                            ...newEducation,
+                            graduation_year: parseInt(value) || new Date().getFullYear(),
+                          })
+                        }
                         keyboardType="numeric"
                       />
                     </Input>
@@ -241,7 +271,9 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                   <Text className="text-sm font-medium">É sua maior formação?</Text>
                   <Switch
                     value={newEducation.is_highest_degree}
-                    onValueChange={(value) => setNewEducation({ ...newEducation, is_highest_degree: value })}
+                    onValueChange={value =>
+                      setNewEducation({ ...newEducation, is_highest_degree: value })
+                    }
                   />
                 </HStack>
 
@@ -282,11 +314,7 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                         )}
                       </HStack>
                     </VStack>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onPress={() => onRemoveEducation(index)}
-                    >
+                    <Button variant="outline" size="sm" onPress={() => onRemoveEducation(index)}>
                       <Icon as={X} size="sm" className="text-red-600" />
                     </Button>
                   </HStack>
@@ -326,7 +354,7 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                       <InputField
                         placeholder="Ex: Professor de Matemática"
                         value={newExperience.role}
-                        onChangeText={(value) => setNewExperience({ ...newExperience, role: value })}
+                        onChangeText={value => setNewExperience({ ...newExperience, role: value })}
                       />
                     </Input>
                   </VStack>
@@ -339,7 +367,9 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                       <InputField
                         placeholder="Ex: Escola Secundária XYZ"
                         value={newExperience.institution}
-                        onChangeText={(value) => setNewExperience({ ...newExperience, institution: value })}
+                        onChangeText={value =>
+                          setNewExperience({ ...newExperience, institution: value })
+                        }
                       />
                     </Input>
                   </VStack>
@@ -353,7 +383,9 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                         <InputField
                           placeholder="YYYY-MM-DD"
                           value={newExperience.start_date}
-                          onChangeText={(value) => setNewExperience({ ...newExperience, start_date: value })}
+                          onChangeText={value =>
+                            setNewExperience({ ...newExperience, start_date: value })
+                          }
                         />
                       </Input>
                     </VStack>
@@ -367,7 +399,9 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                           <InputField
                             placeholder="YYYY-MM-DD"
                             value={newExperience.end_date || ''}
-                            onChangeText={(value) => setNewExperience({ ...newExperience, end_date: value })}
+                            onChangeText={value =>
+                              setNewExperience({ ...newExperience, end_date: value })
+                            }
                           />
                         </Input>
                       </VStack>
@@ -379,7 +413,13 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                   <Text className="text-sm font-medium">Cargo atual?</Text>
                   <Switch
                     value={newExperience.is_current}
-                    onValueChange={(value) => setNewExperience({ ...newExperience, is_current: value, end_date: value ? undefined : newExperience.end_date })}
+                    onValueChange={value =>
+                      setNewExperience({
+                        ...newExperience,
+                        is_current: value,
+                        end_date: value ? undefined : newExperience.end_date,
+                      })
+                    }
                   />
                 </HStack>
 
@@ -390,7 +430,9 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                       <TextareaInput
                         placeholder="Descreva suas responsabilidades e conquistas..."
                         value={newExperience.description}
-                        onChangeText={(value) => setNewExperience({ ...newExperience, description: value })}
+                        onChangeText={value =>
+                          setNewExperience({ ...newExperience, description: value })
+                        }
                         multiline
                         textAlignVertical="top"
                       />
@@ -428,7 +470,10 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                       <HStack className="items-center" space="sm">
                         <Icon as={Calendar} size="xs" className="text-gray-500" />
                         <Text className="text-sm text-gray-600">
-                          {formatDate(experience.start_date)} - {experience.is_current ? 'Presente' : formatDate(experience.end_date || '')}
+                          {formatDate(experience.start_date)} -{' '}
+                          {experience.is_current
+                            ? 'Presente'
+                            : formatDate(experience.end_date || '')}
                         </Text>
                         {experience.is_current && (
                           <Text className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
@@ -440,11 +485,7 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                         <Text className="text-sm text-gray-600 mt-2">{experience.description}</Text>
                       )}
                     </VStack>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onPress={() => onRemoveExperience(index)}
-                    >
+                    <Button variant="outline" size="sm" onPress={() => onRemoveExperience(index)}>
                       <Icon as={X} size="sm" className="text-red-600" />
                     </Button>
                   </HStack>
@@ -484,7 +525,9 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                       <InputField
                         placeholder="Ex: Certificação em Ensino Online"
                         value={newCertification.name}
-                        onChangeText={(value) => setNewCertification({ ...newCertification, name: value })}
+                        onChangeText={value =>
+                          setNewCertification({ ...newCertification, name: value })
+                        }
                       />
                     </Input>
                   </VStack>
@@ -497,7 +540,9 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                       <InputField
                         placeholder="Ex: Microsoft, Google, Cambridge"
                         value={newCertification.issuing_organization}
-                        onChangeText={(value) => setNewCertification({ ...newCertification, issuing_organization: value })}
+                        onChangeText={value =>
+                          setNewCertification({ ...newCertification, issuing_organization: value })
+                        }
                       />
                     </Input>
                   </VStack>
@@ -510,29 +555,38 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                       <InputField
                         placeholder="YYYY-MM-DD"
                         value={newCertification.expiry_date || ''}
-                        onChangeText={(value) => setNewCertification({ ...newCertification, expiry_date: value })}
+                        onChangeText={value =>
+                          setNewCertification({ ...newCertification, expiry_date: value })
+                        }
                       />
                     </Input>
                   </VStack>
                 </FormControl>
 
                 <DocumentUploadComponent
-                  onDocumentSelected={(document) => {
-                    setNewCertification({ 
-                      ...newCertification, 
+                  onDocumentSelected={document => {
+                    setNewCertification({
+                      ...newCertification,
                       file: document.uri,
-                      name: newCertification.name || document.name || 'Certificado'
+                      name: newCertification.name || document.name || 'Certificado',
                     });
                   }}
                   onDocumentRemoved={() => {
                     setNewCertification({ ...newCertification, file: '' });
                   }}
-                  currentDocument={newCertification.file ? {
-                    name: typeof newCertification.file === 'string' && newCertification.file.includes('/') 
-                      ? newCertification.file.split('/').pop() || 'Document'
-                      : 'Document',
-                    uri: typeof newCertification.file === 'string' ? newCertification.file : ''
-                  } : undefined}
+                  currentDocument={
+                    newCertification.file
+                      ? {
+                          name:
+                            typeof newCertification.file === 'string' &&
+                            newCertification.file.includes('/')
+                              ? newCertification.file.split('/').pop() || 'Document'
+                              : 'Document',
+                          uri:
+                            typeof newCertification.file === 'string' ? newCertification.file : '',
+                        }
+                      : undefined
+                  }
                   acceptedTypes={FileUploadService.getAllowedDocumentTypes()}
                   maxSizeInMB={10}
                   label="Certificado"
@@ -541,7 +595,11 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                 />
 
                 <HStack space="sm">
-                  <Button variant="outline" size="sm" onPress={() => setShowCertificationForm(false)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onPress={() => setShowCertificationForm(false)}
+                  >
                     <ButtonText>Cancelar</ButtonText>
                   </Button>
                   <Button size="sm" onPress={handleAddCertification}>
@@ -575,9 +633,7 @@ const CredentialsStep: React.FC<CredentialsStepProps> = ({
                       {certification.file && (
                         <HStack className="items-center mt-1" space="xs">
                           <Icon as={FileText} size="xs" className="text-blue-600" />
-                          <Text className="text-xs text-blue-600">
-                            Documento anexado
-                          </Text>
+                          <Text className="text-xs text-blue-600">Documento anexado</Text>
                         </HStack>
                       )}
                     </VStack>

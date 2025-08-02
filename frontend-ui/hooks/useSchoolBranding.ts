@@ -14,12 +14,13 @@ export const useSchoolBranding = (autoFetch = true) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const brandingData = await CommunicationApi.getSchoolBranding();
       setBranding(brandingData);
       setHasUnsavedChanges(false);
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to fetch school branding';
+      const errorMessage =
+        err.response?.data?.detail || err.message || 'Failed to fetch school branding';
       setError(errorMessage);
       console.error('Error fetching school branding:', err);
     } finally {
@@ -31,15 +32,16 @@ export const useSchoolBranding = (autoFetch = true) => {
     try {
       setSaving(true);
       setError(null);
-      
+
       const updatedBranding = await CommunicationApi.updateSchoolBranding(data);
       setBranding(updatedBranding);
       setHasUnsavedChanges(false);
-      
+
       Alert.alert('Success', 'School branding updated successfully');
       return updatedBranding;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to update school branding';
+      const errorMessage =
+        err.response?.data?.detail || err.message || 'Failed to update school branding';
       setError(errorMessage);
       Alert.alert('Error', errorMessage);
       throw err;
@@ -52,11 +54,11 @@ export const useSchoolBranding = (autoFetch = true) => {
     try {
       setSaving(true);
       setError(null);
-      
+
       const updatedBranding = await CommunicationApi.uploadLogo(logoFile);
       setBranding(updatedBranding);
       setHasUnsavedChanges(false);
-      
+
       Alert.alert('Success', 'School logo uploaded successfully');
       return updatedBranding;
     } catch (err: any) {
@@ -69,15 +71,18 @@ export const useSchoolBranding = (autoFetch = true) => {
     }
   }, []);
 
-  const updateBrandingField = useCallback((field: keyof SchoolBranding, value: any) => {
-    if (branding) {
-      setBranding({
-        ...branding,
-        [field]: value,
-      });
-      setHasUnsavedChanges(true);
-    }
-  }, [branding]);
+  const updateBrandingField = useCallback(
+    (field: keyof SchoolBranding, value: any) => {
+      if (branding) {
+        setBranding({
+          ...branding,
+          [field]: value,
+        });
+        setHasUnsavedChanges(true);
+      }
+    },
+    [branding]
+  );
 
   const resetChanges = useCallback(() => {
     if (branding) {
@@ -87,14 +92,14 @@ export const useSchoolBranding = (autoFetch = true) => {
 
   const saveBranding = useCallback(async () => {
     if (!branding || !hasUnsavedChanges) return;
-    
+
     const updateData: UpdateBrandingRequest = {
       primary_color: branding.primary_color,
       secondary_color: branding.secondary_color,
       custom_messaging: branding.custom_messaging,
       email_footer: branding.email_footer,
     };
-    
+
     return updateBranding(updateData);
   }, [branding, hasUnsavedChanges, updateBranding]);
 
@@ -170,8 +175,9 @@ export const useBrandingPreview = () => {
   const [previewMode, setPreviewMode] = useState<'email' | 'template' | null>(null);
   const [previewData, setPreviewData] = useState<any>(null);
 
-  const generateBrandingPreview = useCallback((branding: SchoolBranding, templateContent?: string) => {
-    const previewHtml = `
+  const generateBrandingPreview = useCallback(
+    (branding: SchoolBranding, templateContent?: string) => {
+      const previewHtml = `
       <div style="
         font-family: Arial, sans-serif;
         max-width: 600px;
@@ -187,13 +193,19 @@ export const useBrandingPreview = () => {
           padding: 20px;
           text-align: center;
         ">
-          ${branding.logo ? `<img src="${branding.logo}" alt="School Logo" style="max-height: 60px; margin-bottom: 10px;">` : ''}
+          ${
+            branding.logo
+              ? `<img src="${branding.logo}" alt="School Logo" style="max-height: 60px; margin-bottom: 10px;">`
+              : ''
+          }
           <h1 style="margin: 0; font-size: 24px;">Your School Name</h1>
         </div>
         
         <!-- Content area -->
         <div style="padding: 30px; background-color: white;">
-          ${templateContent || `
+          ${
+            templateContent ||
+            `
             <h2 style="color: ${branding.primary_color}; margin-top: 0;">Welcome to Our School!</h2>
             <p>This is a preview of how your emails will look with your school branding.</p>
             <div style="
@@ -202,7 +214,9 @@ export const useBrandingPreview = () => {
               padding: 15px;
               margin: 20px 0;
             ">
-              <p style="margin: 0;"><strong>Custom messaging:</strong> ${branding.custom_messaging || 'Your custom message will appear here.'}</p>
+              <p style="margin: 0;"><strong>Custom messaging:</strong> ${
+                branding.custom_messaging || 'Your custom message will appear here.'
+              }</p>
             </div>
             <a href="#" style="
               display: inline-block;
@@ -213,7 +227,8 @@ export const useBrandingPreview = () => {
               border-radius: 6px;
               font-weight: bold;
             ">Get Started</a>
-          `}
+          `
+          }
         </div>
         
         <!-- Footer -->
@@ -230,11 +245,13 @@ export const useBrandingPreview = () => {
       </div>
     `;
 
-    setPreviewData(previewHtml);
-    setPreviewMode('email');
+      setPreviewData(previewHtml);
+      setPreviewMode('email');
 
-    return previewHtml;
-  }, []);
+      return previewHtml;
+    },
+    []
+  );
 
   const closePreview = useCallback(() => {
     setPreviewMode(null);

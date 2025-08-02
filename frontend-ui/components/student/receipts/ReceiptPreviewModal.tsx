@@ -1,30 +1,30 @@
 /**
  * Receipt Preview Modal Component
- * 
+ *
  * Displays a receipt preview in a modal with download functionality
  * and proper loading/error states.
  */
 
+import { Download, X, AlertTriangle, FileText } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
-import { Download, X, AlertTriangle, FileText } from 'lucide-react-native';
 
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
-import { 
-  Modal, 
-  ModalBackdrop, 
-  ModalBody, 
-  ModalCloseButton, 
-  ModalContent, 
-  ModalFooter, 
-  ModalHeader 
-} from '@/components/ui/modal';
 import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+} from '@/components/ui/modal';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
 import { useReceipts } from '@/hooks/useReceipts';
 
 interface ReceiptPreviewModalProps {
@@ -92,9 +92,7 @@ export function ReceiptPreviewModal({
         <ModalHeader className="pb-4">
           <VStack space="xs" className="flex-1">
             <Heading size="lg">Receipt Preview</Heading>
-            <Text className="text-sm text-typography-600">
-              Receipt #{receiptNumber}
-            </Text>
+            <Text className="text-sm text-typography-600">Receipt #{receiptNumber}</Text>
           </VStack>
           <ModalCloseButton />
         </ModalHeader>
@@ -114,16 +112,9 @@ export function ReceiptPreviewModal({
                 <Heading size="sm" className="text-error-900">
                   Preview Not Available
                 </Heading>
-                <Text className="text-error-700 text-sm text-center">
-                  {error}
-                </Text>
+                <Text className="text-error-700 text-sm text-center">{error}</Text>
               </VStack>
-              <Button
-                action="secondary"
-                variant="outline"
-                size="sm"
-                onPress={loadPreview}
-              >
+              <Button action="secondary" variant="outline" size="sm" onPress={loadPreview}>
                 <ButtonText>Try Again</ButtonText>
               </Button>
             </VStack>
@@ -158,15 +149,10 @@ export function ReceiptPreviewModal({
 
         <ModalFooter className="pt-4">
           <HStack space="md" className="w-full justify-end">
-            <Button
-              action="secondary"
-              variant="outline"
-              size="md"
-              onPress={onClose}
-            >
+            <Button action="secondary" variant="outline" size="md" onPress={onClose}>
               <ButtonText>Close</ButtonText>
             </Button>
-            
+
             <Button
               action="primary"
               variant="solid"

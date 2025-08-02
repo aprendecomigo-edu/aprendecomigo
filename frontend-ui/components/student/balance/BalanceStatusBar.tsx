@@ -1,12 +1,12 @@
 /**
  * Balance Status Bar Component
- * 
+ *
  * Visual balance indicator with color-coded status (green/yellow/red)
  * and progress bar representation of remaining hours.
  */
 
-import React from 'react';
 import { AlertTriangle, Clock, TrendingUp, CheckCircle } from 'lucide-react-native';
+import React from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
@@ -45,7 +45,7 @@ export interface BalanceStatus {
  */
 export function getBalanceStatus(remainingHours: number, totalHours: number): BalanceStatus {
   const percentage = totalHours > 0 ? (remainingHours / totalHours) * 100 : 0;
-  
+
   if (remainingHours <= 0) {
     return {
       level: 'critical',
@@ -54,10 +54,10 @@ export function getBalanceStatus(remainingHours: number, totalHours: number): Ba
       progressColor: 'text-error-500',
       icon: AlertTriangle,
       message: 'Balance depleted',
-      urgency: 'urgent'
+      urgency: 'urgent',
     };
   }
-  
+
   if (remainingHours <= 2 || percentage <= 10) {
     return {
       level: 'critical',
@@ -66,10 +66,10 @@ export function getBalanceStatus(remainingHours: number, totalHours: number): Ba
       progressColor: 'text-error-500',
       icon: AlertTriangle,
       message: 'Critical balance',
-      urgency: 'urgent'
+      urgency: 'urgent',
     };
   }
-  
+
   if (remainingHours <= 5 || percentage <= 25) {
     return {
       level: 'low',
@@ -78,10 +78,10 @@ export function getBalanceStatus(remainingHours: number, totalHours: number): Ba
       progressColor: 'text-warning-500',
       icon: Clock,
       message: 'Low balance',
-      urgency: 'warning'
+      urgency: 'warning',
     };
   }
-  
+
   if (percentage <= 50) {
     return {
       level: 'medium',
@@ -90,10 +90,10 @@ export function getBalanceStatus(remainingHours: number, totalHours: number): Ba
       progressColor: 'text-primary-500',
       icon: TrendingUp,
       message: 'Moderate balance',
-      urgency: 'info'
+      urgency: 'info',
     };
   }
-  
+
   return {
     level: 'healthy',
     color: 'text-success-700',
@@ -101,7 +101,7 @@ export function getBalanceStatus(remainingHours: number, totalHours: number): Ba
     progressColor: 'text-success-500',
     icon: CheckCircle,
     message: 'Healthy balance',
-    urgency: 'success'
+    urgency: 'success',
   };
 }
 
@@ -113,16 +113,26 @@ export function BalanceStatusBar({
   totalHours,
   daysUntilExpiry,
   showDetails = true,
-  className = ''
+  className = '',
 }: BalanceStatusBarProps) {
   const status = getBalanceStatus(remainingHours, totalHours);
   const percentage = totalHours > 0 ? Math.min((remainingHours / totalHours) * 100, 100) : 0;
-  
+
   // Convert to progress value (0-100)
   const progressValue = Math.max(0, percentage);
 
   return (
-    <Card className={`p-4 border-l-4 border-l-${status.level === 'critical' ? 'error' : status.level === 'low' ? 'warning' : status.level === 'medium' ? 'primary' : 'success'}-500 ${status.bgColor} ${className}`}>
+    <Card
+      className={`p-4 border-l-4 border-l-${
+        status.level === 'critical'
+          ? 'error'
+          : status.level === 'low'
+          ? 'warning'
+          : status.level === 'medium'
+          ? 'primary'
+          : 'success'
+      }-500 ${status.bgColor} ${className}`}
+    >
       <VStack space="sm">
         {/* Header with status icon and message */}
         <HStack className="items-center justify-between">
@@ -130,20 +140,12 @@ export function BalanceStatusBar({
             <Icon as={status.icon} size="sm" className={status.color} />
             <VStack space="xs" className="flex-1">
               <HStack className="items-center justify-between">
-                <Text className={`font-semibold ${status.color}`}>
-                  {status.message}
-                </Text>
-                <Badge
-                  variant="solid"
-                  action={status.urgency}
-                  size="sm"
-                >
-                  <Text className="text-xs">
-                    {remainingHours.toFixed(1)}h
-                  </Text>
+                <Text className={`font-semibold ${status.color}`}>{status.message}</Text>
+                <Badge variant="solid" action={status.urgency} size="sm">
+                  <Text className="text-xs">{remainingHours.toFixed(1)}h</Text>
                 </Badge>
               </HStack>
-              
+
               {showDetails && (
                 <Text className="text-xs text-typography-600">
                   {percentage.toFixed(0)}% of {totalHours.toFixed(1)} hours remaining
@@ -155,20 +157,12 @@ export function BalanceStatusBar({
 
         {/* Progress Bar */}
         <VStack space="xs">
-          <Progress 
-            value={progressValue} 
-            className="h-2 w-full"
-            size="sm"
-          />
-          
+          <Progress value={progressValue} className="h-2 w-full" size="sm" />
+
           {showDetails && (
             <HStack className="items-center justify-between">
-              <Text className="text-xs text-typography-500">
-                0h
-              </Text>
-              <Text className="text-xs text-typography-500">
-                {totalHours.toFixed(1)}h
-              </Text>
+              <Text className="text-xs text-typography-500">0h</Text>
+              <Text className="text-xs text-typography-500">{totalHours.toFixed(1)}h</Text>
             </HStack>
           )}
         </VStack>
@@ -178,10 +172,9 @@ export function BalanceStatusBar({
           <HStack space="xs" className="items-center">
             <Icon as={Clock} size="xs" className="text-warning-600" />
             <Text className="text-xs text-warning-700">
-              {daysUntilExpiry <= 0 
+              {daysUntilExpiry <= 0
                 ? 'Hours expire today'
-                : `${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'} until expiry`
-              }
+                : `${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'} until expiry`}
             </Text>
           </HStack>
         )}
@@ -196,7 +189,7 @@ export function BalanceStatusBar({
 export function CompactBalanceStatusBar({
   remainingHours,
   totalHours,
-  className = ''
+  className = '',
 }: Pick<BalanceStatusBarProps, 'remainingHours' | 'totalHours' | 'className'>) {
   const status = getBalanceStatus(remainingHours, totalHours);
   const percentage = totalHours > 0 ? (remainingHours / totalHours) * 100 : 0;
@@ -209,15 +202,9 @@ export function CompactBalanceStatusBar({
           <Text className={`text-sm font-medium ${status.color}`}>
             {remainingHours.toFixed(1)}h
           </Text>
-          <Text className="text-xs text-typography-500">
-            {percentage.toFixed(0)}%
-          </Text>
+          <Text className="text-xs text-typography-500">{percentage.toFixed(0)}%</Text>
         </HStack>
-        <Progress 
-          value={Math.max(0, percentage)} 
-          className="h-1 w-full"
-          size="xs"
-        />
+        <Progress value={Math.max(0, percentage)} className="h-1 w-full" size="xs" />
       </VStack>
     </HStack>
   );

@@ -12,4 +12,4 @@ export const iconStyle = tva({
       xl: 'h-6 w-6',
     },
   },
-}); 
+});

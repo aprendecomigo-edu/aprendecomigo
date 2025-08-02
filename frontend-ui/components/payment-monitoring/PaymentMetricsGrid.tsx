@@ -1,29 +1,30 @@
 /**
  * Payment Metrics Grid Component - GitHub Issue #117
- * 
+ *
  * Displays key payment metrics in a responsive grid layout with
  * real-time updates and trend indicators.
  */
 
-import React from 'react';
-import { HStack } from '@/components/ui/hstack';
-import { VStack } from '@/components/ui/vstack';
-import { Text } from '@/components/ui/text';
-import { Box } from '@/components/ui/box';
-import { Card } from '@/components/ui/card';
-import { Icon } from '@/components/ui/icon';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  CreditCard, 
-  AlertTriangle, 
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  CreditCard,
+  AlertTriangle,
   CheckCircle,
   Clock,
-  Shield
+  Shield,
 } from 'lucide-react-native';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Card } from '@/components/ui/card';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 import type { PaymentMetrics, PaymentMonitoringState } from '@/types/paymentMonitoring';
 
 interface PaymentMetricsGridProps {
@@ -50,15 +51,15 @@ interface MetricCardProps {
   loading?: boolean;
 }
 
-function MetricCard({ 
-  title, 
-  value, 
-  subtitle, 
-  trend, 
-  icon: IconComponent, 
-  iconColor, 
+function MetricCard({
+  title,
+  value,
+  subtitle,
+  trend,
+  icon: IconComponent,
+  iconColor,
   badge,
-  loading 
+  loading,
 }: MetricCardProps) {
   if (loading) {
     return (
@@ -84,14 +85,17 @@ function MetricCard({
     // Handle currency values
     if (val.includes('.')) {
       const num = parseFloat(val);
-      return `€${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      return `€${num.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
     }
     return val;
   };
 
   const getTrendIcon = () => {
     if (!trend) return null;
-    
+
     switch (trend.direction) {
       case 'up':
         return <Icon as={TrendingUp} size="xs" className="text-success-600" />;
@@ -104,7 +108,7 @@ function MetricCard({
 
   const getTrendColor = () => {
     if (!trend) return 'text-typography-500';
-    
+
     switch (trend.direction) {
       case 'up':
         return 'text-success-600';
@@ -133,7 +137,7 @@ function MetricCard({
               </Text>
             )}
           </VStack>
-          
+
           <Box className={`p-2 rounded-full ${iconColor}`}>
             <Icon as={IconComponent} size="sm" className="text-white" />
           </Box>
@@ -152,7 +156,7 @@ function MetricCard({
           ) : (
             <Box />
           )}
-          
+
           {badge && (
             <Badge variant={badge.variant} size="sm">
               <Text size="xs">{badge.text}</Text>
@@ -164,7 +168,11 @@ function MetricCard({
   );
 }
 
-export default function PaymentMetricsGrid({ metrics, timeRange, loading }: PaymentMetricsGridProps) {
+export default function PaymentMetricsGrid({
+  metrics,
+  timeRange,
+  loading,
+}: PaymentMetricsGridProps) {
   const getTimeframeSuffix = () => {
     switch (timeRange) {
       case 'last_24h':
@@ -181,15 +189,19 @@ export default function PaymentMetricsGrid({ metrics, timeRange, loading }: Paym
   const calculateSuccessRateTrend = () => {
     // Calculate trend based on current vs previous period
     const current = metrics.success_rate_24h;
-    const previous = timeRange === 'last_24h' ? metrics.success_rate_7d / 7 : 
-                    timeRange === 'last_7d' ? metrics.success_rate_30d / 4 : 
-                    95; // Fallback average
+    const previous =
+      timeRange === 'last_24h'
+        ? metrics.success_rate_7d / 7
+        : timeRange === 'last_7d'
+        ? metrics.success_rate_30d / 4
+        : 95; // Fallback average
 
     const change = ((current - previous) / previous) * 100;
     return {
       value: Math.abs(change),
-      direction: change > 0 ? 'up' as const : change < 0 ? 'down' as const : 'stable' as const,
-      timeframe: 'vs prev period'
+      direction:
+        change > 0 ? ('up' as const) : change < 0 ? ('down' as const) : ('stable' as const),
+      timeframe: 'vs prev period',
     };
   };
 
@@ -240,11 +252,12 @@ export default function PaymentMetricsGrid({ metrics, timeRange, loading }: Paym
       trend: calculateSuccessRateTrend(),
       icon: CheckCircle,
       iconColor: 'bg-success-500',
-      badge: metrics.success_rate_24h >= 95 ? 
-        { text: 'Excellent', variant: 'success' as const } :
-        metrics.success_rate_24h >= 90 ? 
-        { text: 'Good', variant: 'info' as const } :
-        { text: 'Needs Attention', variant: 'warning' as const }
+      badge:
+        metrics.success_rate_24h >= 95
+          ? { text: 'Excellent', variant: 'success' as const }
+          : metrics.success_rate_24h >= 90
+          ? { text: 'Good', variant: 'info' as const }
+          : { text: 'Needs Attention', variant: 'warning' as const },
     },
     {
       title: 'Transaction Volume',
@@ -273,9 +286,10 @@ export default function PaymentMetricsGrid({ metrics, timeRange, loading }: Paym
       subtitle: 'Failed in last 24h',
       icon: AlertTriangle,
       iconColor: 'bg-error-500',
-      badge: metrics.failed_transactions_24h > 0 ? 
-        { text: 'Attention Required', variant: 'error' as const } :
-        { text: 'All Good', variant: 'success' as const }
+      badge:
+        metrics.failed_transactions_24h > 0
+          ? { text: 'Attention Required', variant: 'error' as const }
+          : { text: 'All Good', variant: 'success' as const },
     },
     {
       title: 'Pending Transactions',
@@ -283,9 +297,10 @@ export default function PaymentMetricsGrid({ metrics, timeRange, loading }: Paym
       subtitle: 'Currently pending',
       icon: Clock,
       iconColor: 'bg-warning-500',
-      badge: metrics.pending_transactions > 10 ? 
-        { text: 'High Volume', variant: 'warning' as const } :
-        { text: 'Normal', variant: 'info' as const }
+      badge:
+        metrics.pending_transactions > 10
+          ? { text: 'High Volume', variant: 'warning' as const }
+          : { text: 'Normal', variant: 'info' as const },
     },
     {
       title: 'Active Disputes',
@@ -293,9 +308,10 @@ export default function PaymentMetricsGrid({ metrics, timeRange, loading }: Paym
       subtitle: 'Requiring attention',
       icon: Shield,
       iconColor: 'bg-warning-600',
-      badge: metrics.active_disputes > 0 ? 
-        { text: 'Action Needed', variant: 'warning' as const } :
-        { text: 'None', variant: 'success' as const }
+      badge:
+        metrics.active_disputes > 0
+          ? { text: 'Action Needed', variant: 'warning' as const }
+          : { text: 'None', variant: 'success' as const },
     },
     {
       title: 'Fraud Alerts',
@@ -303,9 +319,10 @@ export default function PaymentMetricsGrid({ metrics, timeRange, loading }: Paym
       subtitle: 'Active alerts',
       icon: AlertTriangle,
       iconColor: 'bg-error-600',
-      badge: metrics.fraud_alerts > 0 ? 
-        { text: 'Investigate', variant: 'error' as const } :
-        { text: 'Clean', variant: 'success' as const }
+      badge:
+        metrics.fraud_alerts > 0
+          ? { text: 'Investigate', variant: 'error' as const }
+          : { text: 'Clean', variant: 'success' as const },
     },
   ];
 

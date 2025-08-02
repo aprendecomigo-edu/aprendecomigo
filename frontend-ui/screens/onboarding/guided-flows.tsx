@@ -1,18 +1,24 @@
-import { UserPlus, GraduationCap, Building2, X, CheckCircle, AlertCircle } from 'lucide-react-native';
+import {
+  UserPlus,
+  GraduationCap,
+  Building2,
+  X,
+  CheckCircle,
+  AlertCircle,
+} from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Platform, Dimensions } from 'react-native';
 
-import { useOnboarding } from '@/hooks/useOnboarding';
-import { InviteTeacherModal } from '@/components/modals/invite-teacher-modal';
 import { AddStudentModal } from '@/components/modals/add-student-modal';
+import { InviteTeacherModal } from '@/components/modals/invite-teacher-modal';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
 import {
   Modal,
   ModalBackdrop,
@@ -22,8 +28,9 @@ import {
   ModalBody,
   ModalFooter,
 } from '@/components/ui/modal';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Divider } from '@/components/ui/divider';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isMobile = Platform.OS !== 'web' || screenWidth < 768;
@@ -35,11 +42,7 @@ interface GuidedFlowProps {
 }
 
 // Guided flow for adding first teacher
-export const AddFirstTeacherFlow: React.FC<GuidedFlowProps> = ({
-  isOpen,
-  onClose,
-  onComplete,
-}) => {
+export const AddFirstTeacherFlow: React.FC<GuidedFlowProps> = ({ isOpen, onClose, onComplete }) => {
   const { completeStep } = useOnboarding();
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -77,14 +80,15 @@ export const AddFirstTeacherFlow: React.FC<GuidedFlowProps> = ({
               </Heading>
             </VStack>
           </ModalHeader>
-          
+
           <ModalBody>
             <VStack space="lg">
               {!isCompleted ? (
                 <>
                   <VStack space="sm">
                     <Text className="text-gray-700">
-                      Teachers are the backbone of your educational platform. Let's start by inviting your first teacher to join.
+                      Teachers are the backbone of your educational platform. Let's start by
+                      inviting your first teacher to join.
                     </Text>
                     <Text className="text-gray-600 text-sm">
                       They'll receive an email invitation with instructions to set up their account.
@@ -98,7 +102,9 @@ export const AddFirstTeacherFlow: React.FC<GuidedFlowProps> = ({
                       </Heading>
                       <VStack space="xs">
                         <Text className="text-blue-800 text-sm">• Teacher's email address</Text>
-                        <Text className="text-blue-800 text-sm">• Their role (Teacher, Head Teacher, etc.)</Text>
+                        <Text className="text-blue-800 text-sm">
+                          • Their role (Teacher, Head Teacher, etc.)
+                        </Text>
                         <Text className="text-blue-800 text-sm">• Optional: Personal message</Text>
                       </VStack>
                     </VStack>
@@ -112,38 +118,29 @@ export const AddFirstTeacherFlow: React.FC<GuidedFlowProps> = ({
                       Teacher Invited Successfully!
                     </Heading>
                     <Text className="text-gray-600">
-                      Your teacher invitation has been sent. They'll receive an email with instructions to join your school.
+                      Your teacher invitation has been sent. They'll receive an email with
+                      instructions to join your school.
                     </Text>
                   </VStack>
                 </VStack>
               )}
             </VStack>
           </ModalBody>
-          
+
           <ModalFooter>
             <HStack space="sm" className="w-full">
               {!isCompleted ? (
                 <>
-                  <Button
-                    variant="outline"
-                    onPress={handleClose}
-                    className="flex-1"
-                  >
+                  <Button variant="outline" onPress={handleClose} className="flex-1">
                     <ButtonText>Cancel</ButtonText>
                   </Button>
-                  <Button
-                    onPress={() => setShowInviteModal(true)}
-                    className="flex-1 bg-blue-600"
-                  >
+                  <Button onPress={() => setShowInviteModal(true)} className="flex-1 bg-blue-600">
                     <ButtonIcon as={UserPlus} className="text-white mr-2" />
                     <ButtonText className="text-white">Send Invitation</ButtonText>
                   </Button>
                 </>
               ) : (
-                <Button
-                  onPress={handleClose}
-                  className="w-full bg-green-600"
-                >
+                <Button onPress={handleClose} className="w-full bg-green-600">
                   <ButtonText className="text-white">Continue</ButtonText>
                 </Button>
               )}
@@ -163,11 +160,7 @@ export const AddFirstTeacherFlow: React.FC<GuidedFlowProps> = ({
 };
 
 // Guided flow for adding first student
-export const AddFirstStudentFlow: React.FC<GuidedFlowProps> = ({
-  isOpen,
-  onClose,
-  onComplete,
-}) => {
+export const AddFirstStudentFlow: React.FC<GuidedFlowProps> = ({ isOpen, onClose, onComplete }) => {
   const { completeStep } = useOnboarding();
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -205,14 +198,15 @@ export const AddFirstStudentFlow: React.FC<GuidedFlowProps> = ({
               </Heading>
             </VStack>
           </ModalHeader>
-          
+
           <ModalBody>
             <VStack space="lg">
               {!isCompleted ? (
                 <>
                   <VStack space="sm">
                     <Text className="text-gray-700">
-                      Students are at the heart of your educational mission. Let's add your first student to get started with enrollment management.
+                      Students are at the heart of your educational mission. Let's add your first
+                      student to get started with enrollment management.
                     </Text>
                     <Text className="text-gray-600 text-sm">
                       You can add students individually or import them in bulk later.
@@ -225,10 +219,16 @@ export const AddFirstStudentFlow: React.FC<GuidedFlowProps> = ({
                         Student information needed:
                       </Heading>
                       <VStack space="xs">
-                        <Text className="text-green-800 text-sm">• Full name and contact details</Text>
+                        <Text className="text-green-800 text-sm">
+                          • Full name and contact details
+                        </Text>
                         <Text className="text-green-800 text-sm">• Grade level and subjects</Text>
-                        <Text className="text-green-800 text-sm">• Parent/guardian information</Text>
-                        <Text className="text-green-800 text-sm">• Optional: Special requirements</Text>
+                        <Text className="text-green-800 text-sm">
+                          • Parent/guardian information
+                        </Text>
+                        <Text className="text-green-800 text-sm">
+                          • Optional: Special requirements
+                        </Text>
                       </VStack>
                     </VStack>
                   </Card>
@@ -241,38 +241,29 @@ export const AddFirstStudentFlow: React.FC<GuidedFlowProps> = ({
                       Student Added Successfully!
                     </Heading>
                     <Text className="text-gray-600">
-                      Your first student has been added to your school. You can now manage their enrollment and schedule classes.
+                      Your first student has been added to your school. You can now manage their
+                      enrollment and schedule classes.
                     </Text>
                   </VStack>
                 </VStack>
               )}
             </VStack>
           </ModalBody>
-          
+
           <ModalFooter>
             <HStack space="sm" className="w-full">
               {!isCompleted ? (
                 <>
-                  <Button
-                    variant="outline"
-                    onPress={handleClose}
-                    className="flex-1"
-                  >
+                  <Button variant="outline" onPress={handleClose} className="flex-1">
                     <ButtonText>Cancel</ButtonText>
                   </Button>
-                  <Button
-                    onPress={() => setShowStudentModal(true)}
-                    className="flex-1 bg-green-600"
-                  >
+                  <Button onPress={() => setShowStudentModal(true)} className="flex-1 bg-green-600">
                     <ButtonIcon as={GraduationCap} className="text-white mr-2" />
                     <ButtonText className="text-white">Add Student</ButtonText>
                   </Button>
                 </>
               ) : (
-                <Button
-                  onPress={handleClose}
-                  className="w-full bg-green-600"
-                >
+                <Button onPress={handleClose} className="w-full bg-green-600">
                   <ButtonText className="text-white">Continue</ButtonText>
                 </Button>
               )}
@@ -292,11 +283,7 @@ export const AddFirstStudentFlow: React.FC<GuidedFlowProps> = ({
 };
 
 // Guided flow for school profile setup
-export const SchoolProfileFlow: React.FC<GuidedFlowProps> = ({
-  isOpen,
-  onClose,
-  onComplete,
-}) => {
+export const SchoolProfileFlow: React.FC<GuidedFlowProps> = ({ isOpen, onClose, onComplete }) => {
   const { completeStep } = useOnboarding();
   const [currentStep, setCurrentStep] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -304,20 +291,20 @@ export const SchoolProfileFlow: React.FC<GuidedFlowProps> = ({
   const profileSteps = [
     {
       title: 'Basic Information',
-      description: 'Add your school name, description, and contact information'
+      description: 'Add your school name, description, and contact information',
     },
     {
       title: 'School Logo & Branding',
-      description: 'Upload your school logo and customize the appearance'
+      description: 'Upload your school logo and customize the appearance',
     },
     {
       title: 'Contact & Location',
-      description: 'Add address, phone numbers, and website information'
+      description: 'Add address, phone numbers, and website information',
     },
     {
       title: 'Educational Settings',
-      description: 'Configure grade levels, subjects, and academic year settings'
-    }
+      description: 'Configure grade levels, subjects, and academic year settings',
+    },
   ];
 
   const handleComplete = async () => {
@@ -351,14 +338,15 @@ export const SchoolProfileFlow: React.FC<GuidedFlowProps> = ({
             </Heading>
           </VStack>
         </ModalHeader>
-        
+
         <ModalBody>
           <VStack space="lg">
             {!isCompleted ? (
               <>
                 <VStack space="sm">
                   <Text className="text-gray-700">
-                    Let's set up your school profile to personalize the platform and provide essential information to teachers, students, and parents.
+                    Let's set up your school profile to personalize the platform and provide
+                    essential information to teachers, students, and parents.
                   </Text>
                 </VStack>
 
@@ -371,19 +359,15 @@ export const SchoolProfileFlow: React.FC<GuidedFlowProps> = ({
                       {profileSteps.map((step, index) => (
                         <HStack key={index} space="sm" className="items-start">
                           <Box className="mt-1">
-                            <Icon 
-                              as={currentStep > index ? CheckCircle : AlertCircle} 
-                              size={16} 
+                            <Icon
+                              as={currentStep > index ? CheckCircle : AlertCircle}
+                              size={16}
                               className={currentStep > index ? 'text-green-500' : 'text-blue-500'}
                             />
                           </Box>
                           <VStack className="flex-1" space="xs">
-                            <Text className="text-blue-900 text-sm font-medium">
-                              {step.title}
-                            </Text>
-                            <Text className="text-blue-700 text-xs">
-                              {step.description}
-                            </Text>
+                            <Text className="text-blue-900 text-sm font-medium">{step.title}</Text>
+                            <Text className="text-blue-700 text-xs">{step.description}</Text>
                           </VStack>
                         </HStack>
                       ))}
@@ -395,7 +379,8 @@ export const SchoolProfileFlow: React.FC<GuidedFlowProps> = ({
                   <HStack space="sm" className="p-4 items-start">
                     <Icon as={AlertCircle} size={16} className="text-yellow-600 mt-0.5" />
                     <Text className="text-yellow-800 text-sm">
-                      Don't worry if you don't have all information ready. You can always update your profile later from the settings page.
+                      Don't worry if you don't have all information ready. You can always update
+                      your profile later from the settings page.
                     </Text>
                   </HStack>
                 </Card>
@@ -408,38 +393,29 @@ export const SchoolProfileFlow: React.FC<GuidedFlowProps> = ({
                     School Profile Updated!
                   </Heading>
                   <Text className="text-gray-600">
-                    Your school profile has been set up successfully. This information will be visible to your teachers, students, and parents.
+                    Your school profile has been set up successfully. This information will be
+                    visible to your teachers, students, and parents.
                   </Text>
                 </VStack>
               </VStack>
             )}
           </VStack>
         </ModalBody>
-        
+
         <ModalFooter>
           <HStack space="sm" className="w-full">
             {!isCompleted ? (
               <>
-                <Button
-                  variant="outline"
-                  onPress={handleClose}
-                  className="flex-1"
-                >
+                <Button variant="outline" onPress={handleClose} className="flex-1">
                   <ButtonText>Skip for Now</ButtonText>
                 </Button>
-                <Button
-                  onPress={handleComplete}
-                  className="flex-1 bg-blue-600"
-                >
+                <Button onPress={handleComplete} className="flex-1 bg-blue-600">
                   <ButtonIcon as={Building2} className="text-white mr-2" />
                   <ButtonText className="text-white">Open Settings</ButtonText>
                 </Button>
               </>
             ) : (
-              <Button
-                onPress={handleClose}
-                className="w-full bg-green-600"
-              >
+              <Button onPress={handleClose} className="w-full bg-green-600">
                 <ButtonText className="text-white">Continue</ButtonText>
               </Button>
             )}

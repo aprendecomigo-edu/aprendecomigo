@@ -1,15 +1,16 @@
 /**
  * FamilyOverview Component
- * 
+ *
  * Comprehensive family-wide view showing aggregate metrics,
  * spending summaries, and overall family account status.
  */
 
 import React from 'react';
+
+import { Heading } from '@/components/ui/heading';
+import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { SafeAreaView } from '@/components/ui/safe-area-view';
-import { Heading } from '@/components/ui/heading';
 
 export const FamilyOverview: React.FC = () => {
   return (

@@ -1,8 +1,8 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router, useLocalSearchParams } from 'expo-router';
-import { 
-  ArrowLeftIcon, 
-  CalendarIcon, 
+import {
+  ArrowLeftIcon,
+  CalendarIcon,
   MessageSquareIcon,
   TrendingUpIcon,
   ClockIcon,
@@ -14,12 +14,13 @@ import {
   BarChart3Icon,
   UserIcon,
   MailIcon,
-  PhoneIcon
+  PhoneIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
 
 import MainLayout from '@/components/layouts/main-layout';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -27,18 +28,16 @@ import { Center } from '@/components/ui/center';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { Progress } from '@/components/ui/progress';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-
 import { useStudentDetail } from '@/hooks/useTeacherDashboard';
 
 const StudentDetailPage = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const studentId = parseInt(id as string, 10);
-  
+
   const { student, isLoading, error, refresh } = useStudentDetail(studentId);
 
   const handleGoBack = useCallback(() => {
@@ -55,15 +54,18 @@ const StudentDetailPage = () => {
 
   // Calculate student status
   const studentStatus = useMemo(() => {
-    if (!student) return { label: 'Desconhecido', color: 'bg-gray-100', textColor: 'text-gray-800' };
-    
+    if (!student)
+      return { label: 'Desconhecido', color: 'bg-gray-100', textColor: 'text-gray-800' };
+
     if (!student.last_session_date) {
       return { label: 'Novo', color: 'bg-blue-100', textColor: 'text-blue-800' };
     }
-    
+
     const lastSessionDate = new Date(student.last_session_date);
-    const daysSinceLastSession = Math.floor((Date.now() - lastSessionDate.getTime()) / (1000 * 60 * 60 * 24));
-    
+    const daysSinceLastSession = Math.floor(
+      (Date.now() - lastSessionDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
     if (daysSinceLastSession <= 7) {
       return { label: 'Ativo', color: 'bg-green-100', textColor: 'text-green-800' };
     } else if (daysSinceLastSession <= 14) {
@@ -129,9 +131,7 @@ const StudentDetailPage = () => {
     <MainLayout _title={student.name}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refresh} />
-        }
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} />}
         contentContainerStyle={{
           paddingBottom: isWeb ? 0 : 100,
           flexGrow: 1,
@@ -141,7 +141,7 @@ const StudentDetailPage = () => {
         <VStack className="p-6" space="lg">
           {/* Header */}
           <HStack className="justify-between items-center">
-            <Pressable 
+            <Pressable
               onPress={handleGoBack}
               className="p-2 rounded-md bg-gray-100 hover:bg-gray-200"
               accessibilityLabel="Voltar"
@@ -149,7 +149,7 @@ const StudentDetailPage = () => {
             >
               <Icon as={ArrowLeftIcon} size="sm" className="text-gray-600" />
             </Pressable>
-            
+
             <Pressable
               onPress={refresh}
               disabled={isLoading}
@@ -157,10 +157,10 @@ const StudentDetailPage = () => {
               accessibilityLabel="Atualizar dados"
               accessibilityRole="button"
             >
-              <Icon 
-                as={RefreshCwIcon} 
-                size="sm" 
-                className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`} 
+              <Icon
+                as={RefreshCwIcon}
+                size="sm"
+                className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`}
               />
             </Pressable>
           </HStack>
@@ -176,7 +176,7 @@ const StudentDetailPage = () => {
                       {student.name.charAt(0).toUpperCase()}
                     </Text>
                   </VStack>
-                  
+
                   {/* Basic Info */}
                   <VStack className="flex-1" space="xs">
                     <HStack className="justify-between items-start">
@@ -186,19 +186,17 @@ const StudentDetailPage = () => {
                         </Heading>
                         <HStack space="sm" className="items-center">
                           <Icon as={MailIcon} size="xs" className="text-gray-500" />
-                          <Text className="text-sm text-gray-600">
-                            {student.email}
-                          </Text>
+                          <Text className="text-sm text-gray-600">{student.email}</Text>
                         </HStack>
                       </VStack>
-                      
+
                       <Badge className={studentStatus.color}>
                         <BadgeText className={studentStatus.textColor}>
                           {studentStatus.label}
                         </BadgeText>
                       </Badge>
                     </HStack>
-                    
+
                     {/* Level and Progress */}
                     <VStack space="xs">
                       <HStack className="justify-between items-center">
@@ -210,28 +208,30 @@ const StudentDetailPage = () => {
                         </Text>
                       </HStack>
                       <Box className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <Box 
-                          className={`h-full rounded-full ${getProgressColor(student.completion_percentage)}`}
+                        <Box
+                          className={`h-full rounded-full ${getProgressColor(
+                            student.completion_percentage
+                          )}`}
                           style={{ width: `${Math.min(student.completion_percentage, 100)}%` }}
                         />
                       </Box>
                     </VStack>
                   </VStack>
                 </HStack>
-                
+
                 {/* Quick Actions */}
                 <HStack space="sm">
-                  <Button 
-                    className="flex-1 bg-blue-600" 
+                  <Button
+                    className="flex-1 bg-blue-600"
                     onPress={handleScheduleSession}
                     accessibilityLabel="Agendar sessão com este estudante"
                   >
                     <Icon as={CalendarIcon} size="sm" className="text-white mr-2" />
                     <ButtonText>Agendar Sessão</ButtonText>
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    className="flex-1" 
+                  <Button
+                    variant="outline"
+                    className="flex-1"
                     onPress={handleSendMessage}
                     accessibilityLabel="Enviar mensagem para este estudante"
                   >
@@ -260,9 +260,7 @@ const StudentDetailPage = () => {
                     <Text className="text-2xl font-bold text-gray-900">
                       {Math.round(student.completion_percentage)}%
                     </Text>
-                    <Text className="text-xs text-gray-500 text-center">
-                      Progresso Geral
-                    </Text>
+                    <Text className="text-xs text-gray-500 text-center">Progresso Geral</Text>
                   </VStack>
                   <VStack className="items-center">
                     <Text className="text-2xl font-bold text-gray-900">
@@ -276,9 +274,7 @@ const StudentDetailPage = () => {
                     <Text className="text-2xl font-bold text-gray-900">
                       {student.recent_assessments?.length || 0}
                     </Text>
-                    <Text className="text-xs text-gray-500 text-center">
-                      Avaliações Recentes
-                    </Text>
+                    <Text className="text-xs text-gray-500 text-center">Avaliações Recentes</Text>
                   </VStack>
                 </HStack>
 
@@ -287,19 +283,16 @@ const StudentDetailPage = () => {
                   <HStack space="sm" className="items-center">
                     <Icon as={ClockIcon} size="sm" className="text-gray-600" />
                     <VStack className="flex-1">
-                      <Text className="text-sm font-medium text-gray-900">
-                        Última Sessão
-                      </Text>
+                      <Text className="text-sm font-medium text-gray-900">Última Sessão</Text>
                       <Text className="text-xs text-gray-600">
-                        {student.last_session_date 
+                        {student.last_session_date
                           ? new Date(student.last_session_date).toLocaleDateString('pt-PT', {
                               weekday: 'long',
                               day: '2-digit',
                               month: 'long',
-                              year: 'numeric'
+                              year: 'numeric',
                             })
-                          : 'Nenhuma sessão ainda'
-                        }
+                          : 'Nenhuma sessão ainda'}
                       </Text>
                     </VStack>
                   </HStack>
@@ -322,11 +315,13 @@ const StudentDetailPage = () => {
               <CardBody>
                 <VStack space="sm">
                   {student.skills_mastered.map((skill, index) => (
-                    <HStack key={index} space="sm" className="items-center py-2 border-b border-gray-100 last:border-b-0">
+                    <HStack
+                      key={index}
+                      space="sm"
+                      className="items-center py-2 border-b border-gray-100 last:border-b-0"
+                    >
                       <Icon as={TargetIcon} size="xs" className="text-green-600" />
-                      <Text className="text-sm text-gray-900 flex-1">
-                        {skill}
-                      </Text>
+                      <Text className="text-sm text-gray-900 flex-1">{skill}</Text>
                       <Badge className="bg-green-100">
                         <BadgeText className="text-green-800">Dominada</BadgeText>
                       </Badge>
@@ -350,8 +345,12 @@ const StudentDetailPage = () => {
               </CardHeader>
               <CardBody>
                 <VStack space="sm">
-                  {student.recent_assessments.map((assessment) => (
-                    <HStack key={assessment.id} space="sm" className="items-center py-3 border-b border-gray-100 last:border-b-0">
+                  {student.recent_assessments.map(assessment => (
+                    <HStack
+                      key={assessment.id}
+                      space="sm"
+                      className="items-center py-3 border-b border-gray-100 last:border-b-0"
+                    >
                       <VStack className="w-12 h-12 bg-blue-100 rounded-lg items-center justify-center">
                         <Text className="text-xs font-bold text-blue-600">
                           {Math.round(assessment.percentage)}%
@@ -362,43 +361,55 @@ const StudentDetailPage = () => {
                           {assessment.title}
                         </Text>
                         <HStack space="md" className="items-center">
-                          <Badge 
+                          <Badge
                             className={
-                              assessment.assessment_type === 'quiz' ? 'bg-blue-100' :
-                              assessment.assessment_type === 'test' ? 'bg-purple-100' :
-                              assessment.assessment_type === 'homework' ? 'bg-orange-100' :
-                              'bg-gray-100'
+                              assessment.assessment_type === 'quiz'
+                                ? 'bg-blue-100'
+                                : assessment.assessment_type === 'test'
+                                ? 'bg-purple-100'
+                                : assessment.assessment_type === 'homework'
+                                ? 'bg-orange-100'
+                                : 'bg-gray-100'
                             }
                           >
-                            <BadgeText 
+                            <BadgeText
                               className={
-                                assessment.assessment_type === 'quiz' ? 'text-blue-800' :
-                                assessment.assessment_type === 'test' ? 'text-purple-800' :
-                                assessment.assessment_type === 'homework' ? 'text-orange-800' :
-                                'text-gray-800'
+                                assessment.assessment_type === 'quiz'
+                                  ? 'text-blue-800'
+                                  : assessment.assessment_type === 'test'
+                                  ? 'text-purple-800'
+                                  : assessment.assessment_type === 'homework'
+                                  ? 'text-orange-800'
+                                  : 'text-gray-800'
                               }
                             >
-                              {assessment.assessment_type === 'quiz' ? 'Quiz' :
-                               assessment.assessment_type === 'test' ? 'Teste' :
-                               assessment.assessment_type === 'homework' ? 'TPC' :
-                               assessment.assessment_type}
+                              {assessment.assessment_type === 'quiz'
+                                ? 'Quiz'
+                                : assessment.assessment_type === 'test'
+                                ? 'Teste'
+                                : assessment.assessment_type === 'homework'
+                                ? 'TPC'
+                                : assessment.assessment_type}
                             </BadgeText>
                           </Badge>
                           <Text className="text-xs text-gray-500">
                             {new Date(assessment.assessment_date).toLocaleDateString('pt-PT', {
                               day: '2-digit',
-                              month: 'short'
+                              month: 'short',
                             })}
                           </Text>
                         </HStack>
                       </VStack>
                       <VStack className="items-end">
-                        <Box 
+                        <Box
                           className={`w-2 h-2 rounded-full ${
-                            assessment.percentage >= 80 ? 'bg-green-500' :
-                            assessment.percentage >= 60 ? 'bg-yellow-500' :
-                            assessment.percentage >= 40 ? 'bg-orange-500' :
-                            'bg-red-500'
+                            assessment.percentage >= 80
+                              ? 'bg-green-500'
+                              : assessment.percentage >= 60
+                              ? 'bg-yellow-500'
+                              : assessment.percentage >= 40
+                              ? 'bg-orange-500'
+                              : 'bg-red-500'
                           }`}
                         />
                       </VStack>
@@ -411,29 +422,29 @@ const StudentDetailPage = () => {
 
           {/* Empty States */}
           {(!student.skills_mastered || student.skills_mastered.length === 0) &&
-           (!student.recent_assessments || student.recent_assessments.length === 0) && (
-            <Card variant="elevated" className="bg-white shadow-sm">
-              <CardBody>
-                <Center className="py-8">
-                  <VStack space="md" className="items-center">
-                    <Icon as={BookOpenIcon} size="xl" className="text-gray-400" />
-                    <VStack space="sm" className="items-center">
-                      <Heading size="md" className="text-center text-gray-900">
-                        Ainda não há dados de progresso
-                      </Heading>
-                      <Text className="text-center text-gray-600 max-w-md">
-                        Este estudante ainda não tem competências dominadas ou avaliações registadas. 
-                        Agende uma sessão para começar a acompanhar o progresso.
-                      </Text>
+            (!student.recent_assessments || student.recent_assessments.length === 0) && (
+              <Card variant="elevated" className="bg-white shadow-sm">
+                <CardBody>
+                  <Center className="py-8">
+                    <VStack space="md" className="items-center">
+                      <Icon as={BookOpenIcon} size="xl" className="text-gray-400" />
+                      <VStack space="sm" className="items-center">
+                        <Heading size="md" className="text-center text-gray-900">
+                          Ainda não há dados de progresso
+                        </Heading>
+                        <Text className="text-center text-gray-600 max-w-md">
+                          Este estudante ainda não tem competências dominadas ou avaliações
+                          registadas. Agende uma sessão para começar a acompanhar o progresso.
+                        </Text>
+                      </VStack>
+                      <Button onPress={handleScheduleSession} variant="solid">
+                        <ButtonText>Agendar Primeira Sessão</ButtonText>
+                      </Button>
                     </VStack>
-                    <Button onPress={handleScheduleSession} variant="solid">
-                      <ButtonText>Agendar Primeira Sessão</ButtonText>
-                    </Button>
-                  </VStack>
-                </Center>
-              </CardBody>
-            </Card>
-          )}
+                  </Center>
+                </CardBody>
+              </Card>
+            )}
         </VStack>
       </ScrollView>
     </MainLayout>

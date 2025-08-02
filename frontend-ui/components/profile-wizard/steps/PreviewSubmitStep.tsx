@@ -1,33 +1,33 @@
-import React from 'react';
-import { Alert } from 'react-native';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Heading } from '@/components/ui/heading';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Divider } from '@/components/ui/divider';
-import { ScrollView } from '@/components/ui/scroll-view';
-import { Spinner } from '@/components/ui/spinner';
-import { Icon } from '@/components/ui/icon';
-import { 
-  User, 
-  BookOpen, 
-  GraduationCap, 
-  Clock, 
-  Euro, 
-  Award, 
-  Star, 
-  Lightbulb, 
+import {
+  User,
+  BookOpen,
+  GraduationCap,
+  Clock,
+  Euro,
+  Award,
+  Star,
+  Lightbulb,
   Target,
   Check,
   Edit,
   Send,
-  Globe
+  Globe,
 } from 'lucide-react-native';
+import React from 'react';
+import { Alert } from 'react-native';
 
 import { TeacherProfileData, GradeLevel } from '@/api/invitationApi';
+import { Badge } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Divider } from '@/components/ui/divider';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { ScrollView } from '@/components/ui/scroll-view';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 interface PreviewSubmitStepProps {
   profileData: TeacherProfileData;
@@ -97,7 +97,7 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
 
     const completed = requiredFields.filter(Boolean).length;
     const total = requiredFields.length;
-    
+
     return { completed, total, percentage: Math.round((completed / total) * 100) };
   };
 
@@ -113,25 +113,42 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
               Revisão e Submissão
             </Heading>
             <Text className="text-gray-600">
-              Revise todas as informações do seu perfil antes de finalizar. Você poderá editar qualquer seção.
+              Revise todas as informações do seu perfil antes de finalizar. Você poderá editar
+              qualquer seção.
             </Text>
           </VStack>
 
           {/* Completion Status */}
-          <Box className={`p-4 rounded-lg border ${completionStatus.percentage === 100 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+          <Box
+            className={`p-4 rounded-lg border ${
+              completionStatus.percentage === 100
+                ? 'bg-green-50 border-green-200'
+                : 'bg-yellow-50 border-yellow-200'
+            }`}
+          >
             <HStack className="justify-between items-center">
               <VStack>
-                <Text className={`font-medium ${completionStatus.percentage === 100 ? 'text-green-800' : 'text-yellow-800'}`}>
+                <Text
+                  className={`font-medium ${
+                    completionStatus.percentage === 100 ? 'text-green-800' : 'text-yellow-800'
+                  }`}
+                >
                   Perfil {completionStatus.percentage}% Completo
                 </Text>
-                <Text className={`text-sm ${completionStatus.percentage === 100 ? 'text-green-700' : 'text-yellow-700'}`}>
+                <Text
+                  className={`text-sm ${
+                    completionStatus.percentage === 100 ? 'text-green-700' : 'text-yellow-700'
+                  }`}
+                >
                   {completionStatus.completed} de {completionStatus.total} seções preenchidas
                 </Text>
               </VStack>
-              <Icon 
-                as={completionStatus.percentage === 100 ? Check : Edit} 
-                size="lg" 
-                className={completionStatus.percentage === 100 ? 'text-green-600' : 'text-yellow-600'} 
+              <Icon
+                as={completionStatus.percentage === 100 ? Check : Edit}
+                size="lg"
+                className={
+                  completionStatus.percentage === 100 ? 'text-green-600' : 'text-yellow-600'
+                }
               />
             </HStack>
           </Box>
@@ -140,9 +157,7 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
           <Box className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <VStack space="sm">
               <Text className="font-medium text-blue-800">Escola de Destino</Text>
-              <Text className="text-blue-700">
-                {invitationData?.invitation?.school?.name}
-              </Text>
+              <Text className="text-blue-700">{invitationData?.invitation?.school?.name}</Text>
               <Text className="text-sm text-blue-600">
                 Convidado por: {invitationData?.invitation?.invited_by?.name}
               </Text>
@@ -150,13 +165,15 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
           </Box>
 
           {/* Profile Sections */}
-          
+
           {/* 1. Basic Information */}
           <Box className="bg-white p-4 rounded-lg border border-gray-200">
             <HStack className="justify-between items-start mb-3">
               <HStack className="items-center" space="sm">
                 <Icon as={User} size="md" className="text-blue-600" />
-                <Heading size="md" className="text-gray-800">Informações Básicas</Heading>
+                <Heading size="md" className="text-gray-800">
+                  Informações Básicas
+                </Heading>
               </HStack>
               <Button variant="outline" size="sm" onPress={() => onEditStep(1)}>
                 <Icon as={Edit} size="sm" />
@@ -165,10 +182,12 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
             </HStack>
             <VStack space="sm">
               <Text className="text-gray-600">
-                <Text className="font-medium">Apresentação:</Text> {profileData.introduction || 'Não preenchido'}
+                <Text className="font-medium">Apresentação:</Text>{' '}
+                {profileData.introduction || 'Não preenchido'}
               </Text>
               <Text className="text-gray-600">
-                <Text className="font-medium">Contato preferido:</Text> {profileData.contact_preferences?.preferred_contact_method || 'Email'}
+                <Text className="font-medium">Contato preferido:</Text>{' '}
+                {profileData.contact_preferences?.preferred_contact_method || 'Email'}
               </Text>
             </VStack>
           </Box>
@@ -178,7 +197,9 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
             <HStack className="justify-between items-start mb-3">
               <HStack className="items-center" space="sm">
                 <Icon as={BookOpen} size="md" className="text-green-600" />
-                <Heading size="md" className="text-gray-800">Matérias de Ensino</Heading>
+                <Heading size="md" className="text-gray-800">
+                  Matérias de Ensino
+                </Heading>
               </HStack>
               <Button variant="outline" size="sm" onPress={() => onEditStep(2)}>
                 <Icon as={Edit} size="sm" />
@@ -187,7 +208,8 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
             </HStack>
             <VStack space="sm">
               <Text className="text-gray-600">
-                <Text className="font-medium">Total:</Text> {profileData.teaching_subjects.length} matérias
+                <Text className="font-medium">Total:</Text> {profileData.teaching_subjects.length}{' '}
+                matérias
               </Text>
               <Box className="flex-row flex-wrap">
                 {profileData.teaching_subjects.slice(0, 6).map((subject, index) => (
@@ -197,7 +219,9 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
                 ))}
                 {profileData.teaching_subjects.length > 6 && (
                   <Badge className="bg-gray-100 text-gray-800 m-1">
-                    <Text className="text-sm">+{profileData.teaching_subjects.length - 6} mais</Text>
+                    <Text className="text-sm">
+                      +{profileData.teaching_subjects.length - 6} mais
+                    </Text>
                   </Badge>
                 )}
               </Box>
@@ -209,7 +233,9 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
             <HStack className="justify-between items-start mb-3">
               <HStack className="items-center" space="sm">
                 <Icon as={GraduationCap} size="md" className="text-purple-600" />
-                <Heading size="md" className="text-gray-800">Níveis de Ensino</Heading>
+                <Heading size="md" className="text-gray-800">
+                  Níveis de Ensino
+                </Heading>
               </HStack>
               <Button variant="outline" size="sm" onPress={() => onEditStep(3)}>
                 <Icon as={Edit} size="sm" />
@@ -218,7 +244,8 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
             </HStack>
             <VStack space="sm">
               <Text className="text-gray-600">
-                <Text className="font-medium">Níveis:</Text> {profileData.grade_levels.length} selecionados
+                <Text className="font-medium">Níveis:</Text> {profileData.grade_levels.length}{' '}
+                selecionados
               </Text>
               <Box className="flex-row flex-wrap">
                 {profileData.grade_levels.map((level, index) => (
@@ -235,7 +262,9 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
             <HStack className="justify-between items-start mb-3">
               <HStack className="items-center" space="sm">
                 <Icon as={Clock} size="md" className="text-orange-600" />
-                <Heading size="md" className="text-gray-800">Disponibilidade</Heading>
+                <Heading size="md" className="text-gray-800">
+                  Disponibilidade
+                </Heading>
               </HStack>
               <Button variant="outline" size="sm" onPress={() => onEditStep(4)}>
                 <Icon as={Edit} size="sm" />
@@ -250,7 +279,8 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
                 </Text>
               </HStack>
               <Text className="text-gray-600">
-                <Text className="font-medium">Disponibilidade:</Text> ~{getAvailabilityHours()} horas/semana
+                <Text className="font-medium">Disponibilidade:</Text> ~{getAvailabilityHours()}{' '}
+                horas/semana
               </Text>
               {profileData.availability_notes && (
                 <Text className="text-gray-600 text-sm italic">
@@ -265,7 +295,9 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
             <HStack className="justify-between items-start mb-3">
               <HStack className="items-center" space="sm">
                 <Icon as={Euro} size="md" className="text-green-600" />
-                <Heading size="md" className="text-gray-800">Taxas</Heading>
+                <Heading size="md" className="text-gray-800">
+                  Taxas
+                </Heading>
               </HStack>
               <Button variant="outline" size="sm" onPress={() => onEditStep(5)}>
                 <Icon as={Edit} size="sm" />
@@ -277,10 +309,13 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
                 <Text className="font-medium">Taxa por hora:</Text> €{profileData.hourly_rate}/hora
               </Text>
               <Text className="text-gray-600">
-                <Text className="font-medium">Negociável:</Text> {profileData.rate_negotiable ? 'Sim' : 'Não'}
+                <Text className="font-medium">Negociável:</Text>{' '}
+                {profileData.rate_negotiable ? 'Sim' : 'Não'}
               </Text>
               <Text className="text-gray-600">
-                <Text className="font-medium">Método de pagamento:</Text> {profileData.payment_preferences?.preferred_payment_method || 'Transferência bancária'}
+                <Text className="font-medium">Método de pagamento:</Text>{' '}
+                {profileData.payment_preferences?.preferred_payment_method ||
+                  'Transferência bancária'}
               </Text>
             </VStack>
           </Box>
@@ -290,7 +325,9 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
             <HStack className="justify-between items-start mb-3">
               <HStack className="items-center" space="sm">
                 <Icon as={Award} size="md" className="text-blue-600" />
-                <Heading size="md" className="text-gray-800">Credenciais</Heading>
+                <Heading size="md" className="text-gray-800">
+                  Credenciais
+                </Heading>
               </HStack>
               <Button variant="outline" size="sm" onPress={() => onEditStep(6)}>
                 <Icon as={Edit} size="sm" />
@@ -299,17 +336,21 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
             </HStack>
             <VStack space="sm">
               <Text className="text-gray-600">
-                <Text className="font-medium">Formação:</Text> {profileData.education_background.length} entrada(s)
+                <Text className="font-medium">Formação:</Text>{' '}
+                {profileData.education_background.length} entrada(s)
               </Text>
               <Text className="text-gray-600">
-                <Text className="font-medium">Experiência:</Text> {profileData.teaching_experience.length} entrada(s)
+                <Text className="font-medium">Experiência:</Text>{' '}
+                {profileData.teaching_experience.length} entrada(s)
               </Text>
               <Text className="text-gray-600">
-                <Text className="font-medium">Certificações:</Text> {profileData.certifications.length} certificação(ões)
+                <Text className="font-medium">Certificações:</Text>{' '}
+                {profileData.certifications.length} certificação(ões)
               </Text>
               {profileData.education_background.length > 0 && (
                 <Text className="text-sm text-gray-600 italic">
-                  Última formação: {profileData.education_background[0]?.degree} em {profileData.education_background[0]?.field_of_study}
+                  Última formação: {profileData.education_background[0]?.degree} em{' '}
+                  {profileData.education_background[0]?.field_of_study}
                 </Text>
               )}
             </VStack>
@@ -320,7 +361,9 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
             <HStack className="justify-between items-start mb-3">
               <HStack className="items-center" space="sm">
                 <Icon as={Target} size="md" className="text-purple-600" />
-                <Heading size="md" className="text-gray-800">Marketing</Heading>
+                <Heading size="md" className="text-gray-800">
+                  Marketing
+                </Heading>
               </HStack>
               <Button variant="outline" size="sm" onPress={() => onEditStep(7)}>
                 <Icon as={Edit} size="sm" />
@@ -329,17 +372,25 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
             </HStack>
             <VStack space="sm">
               <Text className="text-gray-600">
-                <Text className="font-medium">Filosofia:</Text> {profileData.teaching_philosophy ? `${profileData.teaching_philosophy.substring(0, 80)}...` : 'Não preenchido'}
+                <Text className="font-medium">Filosofia:</Text>{' '}
+                {profileData.teaching_philosophy
+                  ? `${profileData.teaching_philosophy.substring(0, 80)}...`
+                  : 'Não preenchido'}
               </Text>
               <Text className="text-gray-600">
-                <Text className="font-medium">Abordagem:</Text> {profileData.teaching_approach ? `${profileData.teaching_approach.substring(0, 80)}...` : 'Não preenchido'}
+                <Text className="font-medium">Abordagem:</Text>{' '}
+                {profileData.teaching_approach
+                  ? `${profileData.teaching_approach.substring(0, 80)}...`
+                  : 'Não preenchido'}
               </Text>
               <Text className="text-gray-600">
-                <Text className="font-medium">Especializações:</Text> {(profileData.specializations || []).length} especialização(ões)
+                <Text className="font-medium">Especializações:</Text>{' '}
+                {(profileData.specializations || []).length} especialização(ões)
               </Text>
               {profileData.achievements && profileData.achievements.length > 0 && (
                 <Text className="text-gray-600">
-                  <Text className="font-medium">Conquistas:</Text> {profileData.achievements.length} conquista(s)
+                  <Text className="font-medium">Conquistas:</Text> {profileData.achievements.length}{' '}
+                  conquista(s)
                 </Text>
               )}
             </VStack>
@@ -354,7 +405,7 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
                 <VStack space="sm">
                   <Text className="font-medium text-yellow-800">Atenção</Text>
                   <Text className="text-sm text-yellow-700">
-                    Seu perfil ainda não está 100% completo. Recomendamos preencher todas as seções 
+                    Seu perfil ainda não está 100% completo. Recomendamos preencher todas as seções
                     para aumentar suas chances de ser escolhido pelos alunos.
                   </Text>
                 </VStack>
@@ -381,12 +432,7 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
               </VStack>
             </Box>
 
-            <Button
-              onPress={onSubmit}
-              disabled={isSubmitting}
-              className="bg-green-600"
-              size="lg"
-            >
+            <Button onPress={onSubmit} disabled={isSubmitting} className="bg-green-600" size="lg">
               {isSubmitting ? (
                 <HStack space="sm" className="items-center">
                   <Spinner size="small" />
@@ -395,9 +441,7 @@ const PreviewSubmitStep: React.FC<PreviewSubmitStepProps> = ({
               ) : (
                 <HStack space="sm" className="items-center">
                   <Icon as={Send} size="sm" className="text-white" />
-                  <ButtonText className="text-white">
-                    Finalizar e Aceitar Convite
-                  </ButtonText>
+                  <ButtonText className="text-white">Finalizar e Aceitar Convite</ButtonText>
                 </HStack>
               )}
             </Button>

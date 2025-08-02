@@ -1,17 +1,17 @@
 /**
  * Notification API Client
- * 
+ *
  * Handles communication with the backend notification system for balance alerts
  * and other student notifications.
  */
 
 import apiClient from '@/api/apiClient';
-import type { 
-  NotificationResponse, 
-  NotificationListResponse, 
+import type {
+  NotificationResponse,
+  NotificationListResponse,
   NotificationUnreadCountResponse,
   NotificationMarkReadResponse,
-  NotificationFilters 
+  NotificationFilters,
 } from '@/types/notification';
 
 export class NotificationApiClient {
@@ -33,7 +33,7 @@ export class NotificationApiClient {
     if (filters?.notification_type) {
       params.append('notification_type', filters.notification_type);
     }
-    
+
     if (filters?.is_read !== undefined) {
       params.append('is_read', filters.is_read.toString());
     }
@@ -53,7 +53,9 @@ export class NotificationApiClient {
   /**
    * Mark a notification as read
    */
-  static async markNotificationAsRead(notificationId: number): Promise<NotificationMarkReadResponse> {
+  static async markNotificationAsRead(
+    notificationId: number
+  ): Promise<NotificationMarkReadResponse> {
     const response = await apiClient.post(`${this.baseUrl}/${notificationId}/read/`);
     return response.data;
   }
@@ -72,12 +74,12 @@ export class NotificationApiClient {
   static async markAllAsRead(): Promise<void> {
     // Get all unread notifications and mark them as read
     const notifications = await this.getNotifications({ is_read: false }, 1, 100);
-    
+
     // Mark each notification as read
-    const promises = notifications.results.map(notification => 
+    const promises = notifications.results.map(notification =>
       this.markNotificationAsRead(notification.id)
     );
-    
+
     await Promise.all(promises);
   }
 
@@ -89,15 +91,15 @@ export class NotificationApiClient {
     filters?: NotificationFilters
   ): Promise<NotificationListResponse> {
     const params = new URLSearchParams();
-    
+
     if (lastCheckTimestamp) {
       params.append('since', lastCheckTimestamp);
     }
-    
+
     if (filters?.notification_type) {
       params.append('notification_type', filters.notification_type);
     }
-    
+
     if (filters?.is_read !== undefined) {
       params.append('is_read', filters.is_read.toString());
     }

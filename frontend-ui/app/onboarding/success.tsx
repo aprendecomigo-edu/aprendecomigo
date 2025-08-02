@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
-import { useLocalSearchParams } from 'expo-router';
 import useRouter from '@unitools/router';
+import { useLocalSearchParams } from 'expo-router';
 import {
   CheckCircle2,
   ExternalLink,
@@ -10,7 +9,9 @@ import {
   Calendar,
   DollarSign,
 } from 'lucide-react-native';
+import React, { useEffect } from 'react';
 
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -20,7 +21,6 @@ import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
 
 interface NextStep {
   title: string;
@@ -33,7 +33,8 @@ interface NextStep {
 const TUTOR_NEXT_STEPS: NextStep[] = [
   {
     title: 'Attract Your First Students',
-    description: 'Share your profile link with potential students and start building your tutoring business.',
+    description:
+      'Share your profile link with potential students and start building your tutoring business.',
     icon: Users,
     priority: 'high',
   },
@@ -56,7 +57,8 @@ const TUTOR_NEXT_STEPS: NextStep[] = [
 const SCHOOL_NEXT_STEPS: NextStep[] = [
   {
     title: 'Invite Teachers',
-    description: 'Start building your teaching team by inviting qualified educators to join your school.',
+    description:
+      'Start building your teaching team by inviting qualified educators to join your school.',
     action_url: '/admin/invitations',
     icon: Users,
     priority: 'high',
@@ -138,16 +140,15 @@ export default function OnboardingSuccessScreen() {
           <Box className="w-20 h-20 rounded-full bg-green-100 items-center justify-center">
             <Icon as={CheckCircle2} className="text-green-600" size="xl" />
           </Box>
-          
+
           <VStack space="sm">
             <Heading size="2xl" className="text-gray-900 text-center">
               {isTutor ? 'Your Tutoring Profile is Live!' : 'School Registration Complete!'}
             </Heading>
             <Text className="text-gray-600 text-center text-lg max-w-md">
-              {isTutor 
+              {isTutor
                 ? 'Congratulations! Your professional tutoring profile is now active and ready to attract students.'
-                : 'Your school has been successfully registered and is ready to manage teachers and students.'
-              }
+                : 'Your school has been successfully registered and is ready to manage teachers and students.'}
             </Text>
           </VStack>
 
@@ -157,7 +158,10 @@ export default function OnboardingSuccessScreen() {
               <Text className="text-gray-700 font-medium">Your Profile Links:</Text>
               <VStack space="sm" className="w-full">
                 {profileUrl && (
-                  <HStack space="sm" className="items-center justify-between p-3 bg-white rounded-lg border">
+                  <HStack
+                    space="sm"
+                    className="items-center justify-between p-3 bg-white rounded-lg border"
+                  >
                     <VStack className="flex-1" space="xs">
                       <Text className="text-gray-900 font-medium text-sm">Profile Page</Text>
                       <Text className="text-gray-600 text-xs" numberOfLines={1}>
@@ -174,9 +178,12 @@ export default function OnboardingSuccessScreen() {
                     </HStack>
                   </HStack>
                 )}
-                
+
                 {bookingUrl && (
-                  <HStack space="sm" className="items-center justify-between p-3 bg-white rounded-lg border">
+                  <HStack
+                    space="sm"
+                    className="items-center justify-between p-3 bg-white rounded-lg border"
+                  >
                     <VStack className="flex-1" space="xs">
                       <Text className="text-gray-900 font-medium text-sm">Booking Page</Text>
                       <Text className="text-gray-600 text-xs" numberOfLines={1}>
@@ -198,32 +205,34 @@ export default function OnboardingSuccessScreen() {
           <Heading size="lg" className="text-gray-900">
             Recommended Next Steps
           </Heading>
-          
+
           <VStack space="sm">
             {nextSteps.map((step, index) => (
               <Card key={index} className="border shadow-sm">
                 <CardContent className="p-4">
                   <HStack space="md" className="items-start">
-                    <Box className={`w-10 h-10 rounded-full items-center justify-center ${
-                      step.priority === 'high' 
-                        ? 'bg-blue-100' 
-                        : step.priority === 'medium'
+                    <Box
+                      className={`w-10 h-10 rounded-full items-center justify-center ${
+                        step.priority === 'high'
+                          ? 'bg-blue-100'
+                          : step.priority === 'medium'
                           ? 'bg-yellow-100'
                           : 'bg-gray-100'
-                    }`}>
-                      <Icon 
-                        as={step.icon} 
+                      }`}
+                    >
+                      <Icon
+                        as={step.icon}
                         className={
-                          step.priority === 'high' 
-                            ? 'text-blue-600' 
+                          step.priority === 'high'
+                            ? 'text-blue-600'
                             : step.priority === 'medium'
-                              ? 'text-yellow-600'
-                              : 'text-gray-600'
-                        } 
-                        size="lg" 
+                            ? 'text-yellow-600'
+                            : 'text-gray-600'
+                        }
+                        size="lg"
                       />
                     </Box>
-                    
+
                     <VStack className="flex-1" space="xs">
                       <HStack className="items-center justify-between">
                         <Heading size="sm" className="text-gray-900">
@@ -235,10 +244,8 @@ export default function OnboardingSuccessScreen() {
                           </Badge>
                         )}
                       </HStack>
-                      <Text className="text-gray-600 text-sm">
-                        {step.description}
-                      </Text>
-                      
+                      <Text className="text-gray-600 text-sm">{step.description}</Text>
+
                       {step.action_url && (
                         <Button
                           variant="outline"
@@ -260,16 +267,11 @@ export default function OnboardingSuccessScreen() {
 
         {/* Action Buttons */}
         <VStack space="sm" className="mt-auto">
-          <Button
-            onPress={handleGoToDashboard}
-            className="w-full bg-blue-600 hover:bg-blue-700"
-          >
-            <ButtonText className="text-white font-medium">
-              Go to Dashboard
-            </ButtonText>
+          <Button onPress={handleGoToDashboard} className="w-full bg-blue-600 hover:bg-blue-700">
+            <ButtonText className="text-white font-medium">Go to Dashboard</ButtonText>
             <ButtonIcon as={ArrowRight} className="text-white ml-2" />
           </Button>
-          
+
           {isTutor && profileUrl && (
             <Button
               variant="outline"

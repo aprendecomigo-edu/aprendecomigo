@@ -3,8 +3,8 @@ import { Plus, CalendarDays, Clock, User, MapPin } from 'lucide-react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 
-import { useAuth } from '@/api/authContext';
 import apiClient from '@/api/apiClient';
+import { useAuth } from '@/api/authContext';
 import schedulerApi, { ClassSchedule } from '@/api/schedulerApi';
 import { tasksApi, Task } from '@/api/tasksApi';
 import MainLayout from '@/components/layouts/main-layout';
@@ -127,9 +127,10 @@ const TaskCard: React.FC<{
             <HStack space="xs" className="items-center">
               <Icon as={Clock} size="sm" className="text-gray-500" />
               <Text className="text-sm text-gray-600">
-                Due: {new Date(task.due_date).toLocaleTimeString('pt-PT', {
+                Due:{' '}
+                {new Date(task.due_date).toLocaleTimeString('pt-PT', {
                   hour: '2-digit',
-                  minute: '2-digit'
+                  minute: '2-digit',
                 })}
               </Text>
             </HStack>
@@ -137,9 +138,7 @@ const TaskCard: React.FC<{
         </HStack>
 
         {/* Description */}
-        {task.description && (
-          <Text className="text-sm text-gray-600">{task.description}</Text>
-        )}
+        {task.description && <Text className="text-sm text-gray-600">{task.description}</Text>}
       </VStack>
     </Box>
   );
@@ -233,8 +232,8 @@ const WeekView: React.FC<{
           {weekDates.map((date, index) => {
             const dateStr = date.toISOString().split('T')[0];
             const dayClasses = safeClasses.filter(c => c.scheduled_date === dateStr);
-            const dayTasks = safeTasks.filter(t =>
-              t.due_date && t.due_date.split('T')[0] === dateStr
+            const dayTasks = safeTasks.filter(
+              t => t.due_date && t.due_date.split('T')[0] === dateStr
             );
 
             const hasContent = dayClasses.length > 0 || dayTasks.length > 0;
@@ -258,10 +257,7 @@ const WeekView: React.FC<{
                       />
                     ))}
                     {dayTasks.map(task => (
-                      <TaskCard
-                        key={`task-${task.id}`}
-                        task={task}
-                      />
+                      <TaskCard key={`task-${task.id}`} task={task} />
                     ))}
                   </VStack>
                 ) : (
@@ -294,7 +290,9 @@ const ListView: React.FC<{
     return (
       <Center className="flex-1 py-12">
         <Icon as={CalendarDays} size="xl" className="text-gray-300 mb-4" />
-        <Text className="text-lg font-medium text-gray-600 mb-2">No classes or tasks scheduled</Text>
+        <Text className="text-lg font-medium text-gray-600 mb-2">
+          No classes or tasks scheduled
+        </Text>
         <Text className="text-gray-500 text-center max-w-sm">
           Your upcoming classes and tasks will appear here
         </Text>
@@ -314,11 +312,7 @@ const ListView: React.FC<{
           />
         ))}
         {safeTasks.map(task => (
-          <TaskCard
-            key={`task-${task.id}`}
-            task={task}
-            showDate={true}
-          />
+          <TaskCard key={`task-${task.id}`} task={task} showDate={true} />
         ))}
       </VStack>
     </ScrollView>
@@ -378,7 +372,9 @@ const CalendarScreen: React.FC = () => {
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
 
-      const response = await apiClient.get(`/tasks/calendar/${params.toString() ? '?' + params.toString() : ''}`);
+      const response = await apiClient.get(
+        `/tasks/calendar/${params.toString() ? '?' + params.toString() : ''}`
+      );
       const calendarTasks = response.data;
 
       setTasks(calendarTasks || []);

@@ -1,6 +1,6 @@
 /**
  * Purchase Components Export Index
- * 
+ *
  * Centralized exports for all purchase-related components.
  */
 

@@ -1,10 +1,10 @@
-import React from 'react';
+import { jest } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { jest } from '@jest/globals';
+import React from 'react';
 
-import TeacherDashboard from '@/app/(teacher)/dashboard/index';
 import { useAuth } from '@/api/authContext';
+import TeacherDashboard from '@/app/(teacher)/dashboard/index';
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 
 // Mock dependencies
@@ -25,7 +25,11 @@ jest.mock('@/hooks/useTeacherDashboard', () => ({
 
 jest.mock('@/components/layouts/main-layout', () => {
   return function MockMainLayout({ children, _title }: any) {
-    return <div data-testid="main-layout" data-title={_title}>{children}</div>;
+    return (
+      <div data-testid="main-layout" data-title={_title}>
+        {children}
+      </div>
+    );
   };
 });
 
@@ -169,7 +173,10 @@ describe('TeacherDashboard', () => {
       render(<TeacherDashboard />);
 
       expect(screen.getByText('Carregando dashboard...')).toBeTruthy();
-      expect(screen.getByTestId('main-layout')).toHaveAttribute('data-title', 'Dashboard do Professor');
+      expect(screen.getByTestId('main-layout')).toHaveAttribute(
+        'data-title',
+        'Dashboard do Professor'
+      );
     });
   });
 
@@ -267,7 +274,7 @@ describe('TeacherDashboard', () => {
       expect(router.push).toHaveBeenCalledWith('/(teacher)/sessions');
     });
 
-    it('should display today\'s sessions', () => {
+    it("should display today's sessions", () => {
       render(<TeacherDashboard />);
 
       expect(screen.getByText('Sessões de Hoje')).toBeTruthy();
@@ -281,11 +288,11 @@ describe('TeacherDashboard', () => {
 
       expect(screen.getByText('Estudantes')).toBeTruthy();
       expect(screen.getByPlaceholderText('Pesquisar estudante...')).toBeTruthy();
-      
+
       // Should display students
       expect(screen.getByText('Ana Costa')).toBeTruthy();
       expect(screen.getByText('Pedro Santos')).toBeTruthy();
-      
+
       // Should display progress percentages
       expect(screen.getByText('76%')).toBeTruthy(); // Ana's progress
       expect(screen.getByText('60%')).toBeTruthy(); // Pedro's progress

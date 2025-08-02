@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 
 import { markFirstLoginCompleted } from '../../api/authApi';
+
 import { TutorialConfig, TutorialState, TutorialContextType } from './types';
 
 const initialState: TutorialState = {
@@ -111,7 +112,6 @@ interface TutorialProviderProps {
 export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(tutorialReducer, initialState);
 
-
   const startTutorial = (config: TutorialConfig) => {
     dispatch({ type: 'START_TUTORIAL', config });
   };
@@ -168,9 +168,5 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
     isTutorialSkipped,
   };
 
-  return (
-    <TutorialContext.Provider value={contextValue}>
-      {children}
-    </TutorialContext.Provider>
-  );
+  return <TutorialContext.Provider value={contextValue}>{children}</TutorialContext.Provider>;
 };

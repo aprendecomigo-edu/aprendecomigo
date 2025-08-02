@@ -1,6 +1,7 @@
 import apiClient from './apiClient';
-import { Course } from '@/components/onboarding/course-catalog-browser';
 import { EducationalSystem } from './userApi';
+
+import { Course } from '@/components/onboarding/course-catalog-browser';
 
 // Tutor Discovery and Analytics Types
 export interface TutorAnalytics {
@@ -302,10 +303,8 @@ export interface ProfilePublishingResponse {
  * Get tutor business analytics
  */
 export const getTutorAnalytics = async (tutorId?: number): Promise<TutorAnalytics> => {
-  const endpoint = tutorId 
-    ? `/finances/tutor-analytics/${tutorId}/`
-    : '/finances/tutor-analytics/';
-  
+  const endpoint = tutorId ? `/finances/tutor-analytics/${tutorId}/` : '/finances/tutor-analytics/';
+
   const response = await apiClient.get<TutorAnalytics>(endpoint);
   return response.data;
 };
@@ -315,8 +314,9 @@ export const getTutorAnalytics = async (tutorId?: number): Promise<TutorAnalytic
  */
 export const getCourseCatalog = async (filters?: CourseFilters): Promise<CourseListResponse> => {
   const queryParams = new URLSearchParams();
-  
-  if (filters?.educational_system) queryParams.append('educational_system', filters.educational_system.toString());
+
+  if (filters?.educational_system)
+    queryParams.append('educational_system', filters.educational_system.toString());
   if (filters?.education_level) queryParams.append('education_level', filters.education_level);
   if (filters?.subject_area) queryParams.append('subject_area', filters.subject_area);
   if (filters?.difficulty_level) queryParams.append('difficulty_level', filters.difficulty_level);
@@ -341,7 +341,9 @@ export const getEducationalSystems = async (): Promise<EducationalSystem[]> => {
 /**
  * Create tutor school (individual tutoring practice)
  */
-export const createTutorSchool = async (data: TutorSchoolData): Promise<TutorSchoolCreationResponse> => {
+export const createTutorSchool = async (
+  data: TutorSchoolData
+): Promise<TutorSchoolCreationResponse> => {
   const response = await apiClient.post<TutorSchoolCreationResponse>(
     '/accounts/schools/create-tutor-school/',
     data
@@ -352,10 +354,14 @@ export const createTutorSchool = async (data: TutorSchoolData): Promise<TutorSch
 /**
  * Start tutor onboarding process
  */
-export const startTutorOnboarding = async (): Promise<{ onboarding_id: string; initial_progress: OnboardingProgress }> => {
-  const response = await apiClient.post<{ onboarding_id: string; initial_progress: OnboardingProgress }>(
-    '/accounts/tutors/onboarding/start/'
-  );
+export const startTutorOnboarding = async (): Promise<{
+  onboarding_id: string;
+  initial_progress: OnboardingProgress;
+}> => {
+  const response = await apiClient.post<{
+    onboarding_id: string;
+    initial_progress: OnboardingProgress;
+  }>('/accounts/tutors/onboarding/start/');
   return response.data;
 };
 
@@ -392,11 +398,13 @@ export const validateTutorOnboardingStep = async (data: {
 /**
  * Get tutor onboarding progress
  */
-export const getTutorOnboardingProgress = async (onboardingId?: string): Promise<OnboardingProgress> => {
-  const endpoint = onboardingId 
+export const getTutorOnboardingProgress = async (
+  onboardingId?: string
+): Promise<OnboardingProgress> => {
+  const endpoint = onboardingId
     ? `/accounts/tutors/onboarding/progress/${onboardingId}/`
     : '/accounts/tutors/onboarding/progress/';
-  
+
   const response = await apiClient.get<OnboardingProgress>(endpoint);
   return response.data;
 };
@@ -419,23 +427,29 @@ export const completeTutorOnboarding = async (data: {
 /**
  * Get tutor discovery profiles (public endpoint)
  */
-export const discoverTutors = async (filters?: TutorDiscoveryFilters): Promise<TutorDiscoveryResponse> => {
+export const discoverTutors = async (
+  filters?: TutorDiscoveryFilters
+): Promise<TutorDiscoveryResponse> => {
   const queryParams = new URLSearchParams();
-  
+
   if (filters?.subjects?.length) queryParams.append('subjects', filters.subjects.join(','));
   if (filters?.min_rate) queryParams.append('min_rate', filters.min_rate.toString());
   if (filters?.max_rate) queryParams.append('max_rate', filters.max_rate.toString());
   if (filters?.languages?.length) queryParams.append('languages', filters.languages.join(','));
-  if (filters?.experience_min) queryParams.append('experience_min', filters.experience_min.toString());
+  if (filters?.experience_min)
+    queryParams.append('experience_min', filters.experience_min.toString());
   if (filters?.location) queryParams.append('location', filters.location);
   if (filters?.availability) queryParams.append('availability', filters.availability);
   if (filters?.rating_min) queryParams.append('rating_min', filters.rating_min.toString());
-  if (filters?.educational_system) queryParams.append('educational_system', filters.educational_system.toString());
+  if (filters?.educational_system)
+    queryParams.append('educational_system', filters.educational_system.toString());
   if (filters?.page) queryParams.append('page', filters.page.toString());
   if (filters?.page_size) queryParams.append('page_size', filters.page_size.toString());
   if (filters?.ordering) queryParams.append('ordering', filters.ordering);
 
-  const url = `/accounts/tutors/discover/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const url = `/accounts/tutors/discover/${
+    queryParams.toString() ? `?${queryParams.toString()}` : ''
+  }`;
   const response = await apiClient.get<TutorDiscoveryResponse>(url);
   return response.data;
 };
@@ -447,31 +461,32 @@ export const getCourseRateSuggestions = async (params: {
   course_ids: number[];
   location?: string;
   experience_level?: string;
-}): Promise<Array<{
-  course_id: number;
-  suggested_rates: {
-    min: number;
-    max: number;
-    average: number;
-    currency: string;
-  };
-  market_data: {
-    demand_level: 'low' | 'medium' | 'high';
-    competition_level: 'low' | 'medium' | 'high';
-    tutor_count: number;
-  };
-}>> => {
-  const response = await apiClient.post(
-    '/accounts/courses/rate-suggestions/',
-    params
-  );
+}): Promise<
+  Array<{
+    course_id: number;
+    suggested_rates: {
+      min: number;
+      max: number;
+      average: number;
+      currency: string;
+    };
+    market_data: {
+      demand_level: 'low' | 'medium' | 'high';
+      competition_level: 'low' | 'medium' | 'high';
+      tutor_count: number;
+    };
+  }>
+> => {
+  const response = await apiClient.post('/accounts/courses/rate-suggestions/', params);
   return response.data;
 };
 
 /**
  * Upload tutor profile photo
  */
-export const uploadTutorProfilePhoto = async (file: File | Blob): Promise<{ photo_url: string }> => {
+export const uploadTutorProfilePhoto = async (
+  file: File | Blob
+): Promise<{ photo_url: string }> => {
   const formData = new FormData();
   formData.append('photo', file);
 
@@ -494,36 +509,39 @@ export const searchCourseSuggestions = async (params: {
   query: string;
   educational_system_id?: number;
   max_results?: number;
-}): Promise<Array<{
-  id: number;
-  name: string;
-  code: string;
-  education_level: string;
-  subject_area: string;
-  description?: string;
-  relevance_score: number;
-}>> => {
+}): Promise<
+  Array<{
+    id: number;
+    name: string;
+    code: string;
+    education_level: string;
+    subject_area: string;
+    description?: string;
+    relevance_score: number;
+  }>
+> => {
   const queryParams = new URLSearchParams();
   queryParams.append('q', params.query);
-  if (params.educational_system_id) queryParams.append('educational_system', params.educational_system_id.toString());
+  if (params.educational_system_id)
+    queryParams.append('educational_system', params.educational_system_id.toString());
   if (params.max_results) queryParams.append('limit', params.max_results.toString());
 
-  const response = await apiClient.get(
-    `/accounts/courses/suggestions/?${queryParams.toString()}`
-  );
+  const response = await apiClient.get(`/accounts/courses/suggestions/?${queryParams.toString()}`);
   return response.data.suggestions || [];
 };
 
 /**
  * Validate tutor business name availability
  */
-export const validateTutorBusinessName = async (name: string): Promise<{
+export const validateTutorBusinessName = async (
+  name: string
+): Promise<{
   is_available: boolean;
   suggestions?: string[];
   message: string;
 }> => {
   const response = await apiClient.post('/accounts/tutors/validate-business-name/', {
-    business_name: name
+    business_name: name,
   });
   return response.data;
 };
@@ -531,7 +549,10 @@ export const validateTutorBusinessName = async (name: string): Promise<{
 /**
  * Get onboarding guidance and tips for a specific step
  */
-export const getOnboardingGuidance = async (stepId: string, context?: Record<string, any>): Promise<{
+export const getOnboardingGuidance = async (
+  stepId: string,
+  context?: Record<string, any>
+): Promise<{
   tips: Array<{
     title: string;
     description: string;
@@ -551,7 +572,7 @@ export const getOnboardingGuidance = async (stepId: string, context?: Record<str
 }> => {
   const response = await apiClient.post('/accounts/tutors/onboarding/guidance/', {
     step_id: stepId,
-    context: context || {}
+    context: context || {},
   });
   return response.data;
 };

@@ -1,16 +1,18 @@
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import { Camera, Image as ImageIcon, Edit3, Trash2, Upload } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Platform, Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { Image } from 'expo-image';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Pressable } from '@/components/ui/pressable';
-import { Icon } from '@/components/ui/icon';
-import { Camera, Image as ImageIcon, Edit3, Trash2, Upload } from 'lucide-react-native';
+
 import FileUploadProgress from './FileUploadProgress';
+
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Pressable } from '@/components/ui/pressable';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 export interface ImageUploadComponentProps {
   onImageSelected: (image: ImagePicker.ImagePickerAsset) => void;
@@ -47,9 +49,10 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
 
   const requestPermissions = async (): Promise<boolean> => {
     if (Platform.OS !== 'web') {
-      const { status: mediaLibraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status: mediaLibraryStatus } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-      
+
       if (mediaLibraryStatus !== 'granted' || cameraStatus !== 'granted') {
         Alert.alert(
           'Permissions Required',
@@ -65,7 +68,10 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
   const validateImage = (image: ImagePicker.ImagePickerAsset): string | null => {
     // Check file size
     if (image.fileSize && image.fileSize > maxSizeInMB * 1024 * 1024) {
-      return `Image must be smaller than ${maxSizeInMB}MB. Current size: ${(image.fileSize / (1024 * 1024)).toFixed(2)}MB`;
+      return `Image must be smaller than ${maxSizeInMB}MB. Current size: ${(
+        image.fileSize /
+        (1024 * 1024)
+      ).toFixed(2)}MB`;
     }
 
     // Check dimensions (reasonable limits)
@@ -83,7 +89,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
   const selectImageFromLibrary = async () => {
     try {
       setIsSelecting(true);
-      
+
       const hasPermissions = await requestPermissions();
       if (!hasPermissions) {
         return;
@@ -99,7 +105,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const selectedImage = result.assets[0];
-        
+
         const validationError = validateImage(selectedImage);
         if (validationError) {
           Alert.alert('Invalid Image', validationError);
@@ -119,7 +125,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
   const takePhoto = async () => {
     try {
       setIsSelecting(true);
-      
+
       const hasPermissions = await requestPermissions();
       if (!hasPermissions) {
         return;
@@ -133,7 +139,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const capturedImage = result.assets[0];
-        
+
         const validationError = validateImage(capturedImage);
         if (validationError) {
           Alert.alert('Invalid Image', validationError);
@@ -157,30 +163,22 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
       return;
     }
 
-    Alert.alert(
-      'Select Image',
-      'Choose how you would like to select your profile photo:',
-      [
-        { text: 'Camera', onPress: takePhoto },
-        { text: 'Photo Library', onPress: selectImageFromLibrary },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    Alert.alert('Select Image', 'Choose how you would like to select your profile photo:', [
+      { text: 'Camera', onPress: takePhoto },
+      { text: 'Photo Library', onPress: selectImageFromLibrary },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   const handleRemoveImage = () => {
-    Alert.alert(
-      'Remove Image',
-      'Are you sure you want to remove this profile photo?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Remove', 
-          style: 'destructive',
-          onPress: onImageRemoved 
-        },
-      ]
-    );
+    Alert.alert('Remove Image', 'Are you sure you want to remove this profile photo?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: onImageRemoved,
+      },
+    ]);
   };
 
   // Show upload progress if uploading
@@ -189,7 +187,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
       <Box className={className}>
         <VStack space="md">
           <Text className="font-medium text-gray-800">Profile Photo</Text>
-          
+
           {/* Image preview with progress overlay */}
           <Box className="relative">
             <Box className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
@@ -228,7 +226,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
       <Box className={className}>
         <VStack space="md">
           <Text className="font-medium text-gray-800">Profile Photo</Text>
-          
+
           <HStack className="items-center" space="md">
             {/* Image preview */}
             <Box className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
@@ -250,7 +248,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
                 <Icon as={Edit3} size="sm" className="mr-2" />
                 <ButtonText>Change Photo</ButtonText>
               </Button>
-              
+
               {onImageRemoved && (
                 <Button
                   variant="outline"
@@ -269,9 +267,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
           {/* Upload status messages */}
           {uploadStatus === 'error' && uploadError && (
             <Box className="bg-red-50 p-3 rounded border border-red-200">
-              <Text className="text-red-800 text-sm">
-                Upload failed: {uploadError}
-              </Text>
+              <Text className="text-red-800 text-sm">Upload failed: {uploadError}</Text>
               {onRetryUpload && (
                 <Button
                   variant="outline"
@@ -287,9 +283,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
 
           {uploadStatus === 'success' && (
             <Box className="bg-green-50 p-3 rounded border border-green-200">
-              <Text className="text-green-800 text-sm">
-                Profile photo uploaded successfully!
-              </Text>
+              <Text className="text-green-800 text-sm">Profile photo uploaded successfully!</Text>
             </Box>
           )}
         </VStack>
@@ -304,7 +298,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
         <Text className="font-medium text-gray-800">
           Profile Photo <Text className="text-gray-500 font-normal">(optional)</Text>
         </Text>
-        
+
         <Pressable
           onPress={showImagePickerOptions}
           disabled={disabled || isSelecting}

@@ -270,7 +270,10 @@ export const schedulerApi = {
   },
 
   // Get available time slots
-  getAvailableTimeSlots: async (teacherId: number, date: string): Promise<AvailableTimeSlotsResponse> => {
+  getAvailableTimeSlots: async (
+    teacherId: number,
+    date: string
+  ): Promise<AvailableTimeSlotsResponse> => {
     const response = await apiClient.get('/scheduler/api/schedules/available_slots/', {
       params: { teacher_id: teacherId, date },
     });

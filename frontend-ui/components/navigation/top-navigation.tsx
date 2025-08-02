@@ -244,10 +244,8 @@ export const TopNavigation = ({
 
         <HStack space="md" className="items-center">
           {/* Quick Actions - Only for admins */}
-          {showQuickActions && isAdmin && (
-            <QuickActions variant="dropdown" />
-          )}
-          
+          {showQuickActions && isAdmin && <QuickActions variant="dropdown" />}
+
           <Button
             size="sm"
             variant="outline"
@@ -267,12 +265,10 @@ export const TopNavigation = ({
           </Avatar>
         </HStack>
       </HStack>
-      
+
       {/* Quick Actions FAB for mobile */}
-      {showQuickActions && isAdmin && variant === 'mobile' && (
-        <QuickActions variant="fab" />
-      )}
-      
+      {showQuickActions && isAdmin && variant === 'mobile' && <QuickActions variant="fab" />}
+
       <LogoutModal />
     </>
   );

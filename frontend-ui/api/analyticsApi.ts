@@ -1,6 +1,6 @@
 /**
  * API client functions for analytics and usage tracking operations.
- * 
+ *
  * Handles communication with the backend analytics APIs including
  * usage statistics, learning insights, and usage pattern analysis.
  */
@@ -63,13 +63,16 @@ export interface NotificationPreferences {
 export class AnalyticsApiClient {
   /**
    * Get usage statistics for the authenticated student.
-   * 
+   *
    * @param timeRange Optional time range for statistics
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to usage statistics
    * @throws Error with descriptive message if request fails
    */
-  static async getUsageStatistics(timeRange?: AnalyticsTimeRange, email?: string): Promise<UsageStatistics> {
+  static async getUsageStatistics(
+    timeRange?: AnalyticsTimeRange,
+    email?: string
+  ): Promise<UsageStatistics> {
     try {
       const params: any = {};
       if (email) params.email = email;
@@ -77,9 +80,9 @@ export class AnalyticsApiClient {
         params.start_date = timeRange.start_date;
         params.end_date = timeRange.end_date;
       }
-      
+
       const response = await apiClient.get('/api/student-balance/analytics/usage/', { params });
-      
+
       return {
         total_sessions: response.data.total_sessions,
         total_hours_consumed: response.data.total_hours_consumed,
@@ -92,7 +95,7 @@ export class AnalyticsApiClient {
       };
     } catch (error: any) {
       console.error('Error fetching usage statistics:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Student not found');
       } else if (error.response?.status === 403) {
@@ -109,7 +112,7 @@ export class AnalyticsApiClient {
 
   /**
    * Get learning insights for the authenticated student.
-   * 
+   *
    * @param limit Optional limit for number of insights
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to array of learning insights
@@ -120,13 +123,13 @@ export class AnalyticsApiClient {
       const params: any = {};
       if (email) params.email = email;
       if (limit) params.limit = limit.toString();
-      
+
       const response = await apiClient.get('/api/student-balance/analytics/insights/', { params });
-      
+
       if (!Array.isArray(response.data)) {
         throw new Error('Invalid response format: expected array of insights');
       }
-      
+
       return response.data.map((insight: any) => ({
         id: insight.id,
         type: insight.type,
@@ -138,7 +141,7 @@ export class AnalyticsApiClient {
       }));
     } catch (error: any) {
       console.error('Error fetching learning insights:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Student not found');
       } else if (error.response?.status === 403) {
@@ -155,13 +158,16 @@ export class AnalyticsApiClient {
 
   /**
    * Get usage patterns for the authenticated student.
-   * 
+   *
    * @param timeRange Optional time range for patterns
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to array of usage patterns
    * @throws Error with descriptive message if request fails
    */
-  static async getUsagePatterns(timeRange?: AnalyticsTimeRange, email?: string): Promise<UsagePattern[]> {
+  static async getUsagePatterns(
+    timeRange?: AnalyticsTimeRange,
+    email?: string
+  ): Promise<UsagePattern[]> {
     try {
       const params: any = {};
       if (email) params.email = email;
@@ -169,13 +175,13 @@ export class AnalyticsApiClient {
         params.start_date = timeRange.start_date;
         params.end_date = timeRange.end_date;
       }
-      
+
       const response = await apiClient.get('/api/student-balance/analytics/patterns/', { params });
-      
+
       if (!Array.isArray(response.data)) {
         throw new Error('Invalid response format: expected array of usage patterns');
       }
-      
+
       return response.data.map((pattern: any) => ({
         hour: pattern.hour,
         day_of_week: pattern.day_of_week,
@@ -185,7 +191,7 @@ export class AnalyticsApiClient {
       }));
     } catch (error: any) {
       console.error('Error fetching usage patterns:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Student not found');
       } else if (error.response?.status === 403) {
@@ -202,7 +208,7 @@ export class AnalyticsApiClient {
 
   /**
    * Get notification preferences for the authenticated student.
-   * 
+   *
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to notification preferences
    * @throws Error with descriptive message if request fails
@@ -210,8 +216,10 @@ export class AnalyticsApiClient {
   static async getNotificationPreferences(email?: string): Promise<NotificationPreferences> {
     try {
       const params = email ? { email } : {};
-      const response = await apiClient.get('/api/student-balance/notifications/preferences/', { params });
-      
+      const response = await apiClient.get('/api/student-balance/notifications/preferences/', {
+        params,
+      });
+
       return {
         low_balance_alerts: response.data.low_balance_alerts,
         session_reminders: response.data.session_reminders,
@@ -224,7 +232,7 @@ export class AnalyticsApiClient {
       };
     } catch (error: any) {
       console.error('Error fetching notification preferences:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Student not found');
       } else if (error.response?.status === 403) {
@@ -241,19 +249,22 @@ export class AnalyticsApiClient {
 
   /**
    * Update notification preferences for the authenticated student.
-   * 
+   *
    * @param preferences Updated notification preferences
    * @param email Optional email parameter for admin access
    * @returns Promise that resolves when preferences are updated
    * @throws Error with descriptive message if request fails
    */
-  static async updateNotificationPreferences(preferences: Partial<NotificationPreferences>, email?: string): Promise<void> {
+  static async updateNotificationPreferences(
+    preferences: Partial<NotificationPreferences>,
+    email?: string
+  ): Promise<void> {
     try {
       const data = email ? { ...preferences, email } : preferences;
       await apiClient.patch('/api/student-balance/notifications/preferences/', data);
     } catch (error: any) {
       console.error('Error updating notification preferences:', error);
-      
+
       if (error.response?.status === 400) {
         throw new Error(error.response.data?.message || 'Invalid notification preferences');
       } else if (error.response?.status === 404) {
@@ -272,7 +283,7 @@ export class AnalyticsApiClient {
 
   /**
    * Mark a learning insight as read.
-   * 
+   *
    * @param insightId The insight ID to mark as read
    * @param email Optional email parameter for admin access
    * @returns Promise that resolves when insight is marked as read
@@ -284,7 +295,7 @@ export class AnalyticsApiClient {
       await apiClient.post(`/api/student-balance/analytics/insights/${insightId}/read/`, data);
     } catch (error: any) {
       console.error('Error marking insight as read:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Insight not found');
       } else if (error.response?.status === 403) {

@@ -43,9 +43,7 @@ export class InvitationErrorBoundary extends Component<Props, State> {
 
     // If resetKeys have changed and we had an error, reset the boundary
     if (hasError && resetKeys && prevResetKeys) {
-      const hasResetKeyChanged = resetKeys.some((key, index) => 
-        prevResetKeys[index] !== key
-      );
+      const hasResetKeyChanged = resetKeys.some((key, index) => prevResetKeys[index] !== key);
 
       if (hasResetKeyChanged) {
         return {
@@ -76,7 +74,7 @@ export class InvitationErrorBoundary extends Component<Props, State> {
 
     // Log error details
     console.error('InvitationErrorBoundary caught an error:', error, errorInfo);
-    
+
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
 
@@ -106,7 +104,7 @@ export class InvitationErrorBoundary extends Component<Props, State> {
 
   handleContactSupport = () => {
     const { error, errorInfo } = this.state;
-    
+
     const errorReport = {
       message: error?.message || 'Unknown error',
       stack: error?.stack,
@@ -123,9 +121,7 @@ export class InvitationErrorBoundary extends Component<Props, State> {
     Alert.alert(
       'Relatório de Erro',
       'As informações do erro foram coletadas. Por favor, entre em contato com nosso suporte através do email suporte@aprendecomigo.com',
-      [
-        { text: 'OK', onPress: this.handleRetry }
-      ]
+      [{ text: 'OK', onPress: this.handleRetry }]
     );
   };
 
@@ -145,10 +141,12 @@ export class InvitationErrorBoundary extends Component<Props, State> {
           error={{
             code: 'REACT_ERROR_BOUNDARY',
             message: error?.message || 'Ocorreu um erro inesperado na aplicação',
-            details: __DEV__ ? {
-              stack: error?.stack,
-              componentStack: this.state.errorInfo?.componentStack,
-            } : undefined,
+            details: __DEV__
+              ? {
+                  stack: error?.stack,
+                  componentStack: this.state.errorInfo?.componentStack,
+                }
+              : undefined,
             timestamp: new Date().toISOString(),
           }}
           onRetry={this.handleRetry}

@@ -1,15 +1,17 @@
+import * as DocumentPicker from 'expo-document-picker';
+import { Upload, FileText, Trash2, AlertCircle, CheckCircle } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Platform, Alert } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Pressable } from '@/components/ui/pressable';
-import { Icon } from '@/components/ui/icon';
-import { Upload, FileText, Trash2, AlertCircle, CheckCircle } from 'lucide-react-native';
+
 import FileUploadProgress from './FileUploadProgress';
+
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Pressable } from '@/components/ui/pressable';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 export interface DocumentUploadComponentProps {
   onDocumentSelected: (document: DocumentPicker.DocumentPickerAsset) => void;
@@ -40,7 +42,11 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
   uploadStatus = 'idle',
   uploadError,
   onRetryUpload,
-  acceptedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  acceptedTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ],
   maxSizeInMB = 10,
   label = 'Document',
   description = 'Upload your credential document',
@@ -77,13 +83,22 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
   const validateDocument = (document: DocumentPicker.DocumentPickerAsset): string | null => {
     // Check file size
     if (document.size && document.size > maxSizeInMB * 1024 * 1024) {
-      return `Document must be smaller than ${maxSizeInMB}MB. Current size: ${(document.size / (1024 * 1024)).toFixed(2)}MB`;
+      return `Document must be smaller than ${maxSizeInMB}MB. Current size: ${(
+        document.size /
+        (1024 * 1024)
+      ).toFixed(2)}MB`;
     }
 
     // Check file type if specified
-    if (acceptedTypes.length > 0 && document.mimeType && !acceptedTypes.includes(document.mimeType)) {
+    if (
+      acceptedTypes.length > 0 &&
+      document.mimeType &&
+      !acceptedTypes.includes(document.mimeType)
+    ) {
       const allowedExtensions = getFileExtensionsFromMimeTypes(acceptedTypes);
-      return `Invalid file type. Allowed formats: ${allowedExtensions.map(ext => ext.toUpperCase()).join(', ')}`;
+      return `Invalid file type. Allowed formats: ${allowedExtensions
+        .map(ext => ext.toUpperCase())
+        .join(', ')}`;
     }
 
     return null;
@@ -92,7 +107,7 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
   const selectDocument = async () => {
     try {
       setIsSelecting(true);
-      
+
       const result = await DocumentPicker.getDocumentAsync({
         type: acceptedTypes.length > 0 ? acceptedTypes : '*/*',
         copyToCacheDirectory: true,
@@ -101,7 +116,7 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const selectedDocument = result.assets[0];
-        
+
         const validationError = validateDocument(selectedDocument);
         if (validationError) {
           Alert.alert('Invalid Document', validationError);
@@ -119,33 +134,29 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
   };
 
   const handleRemoveDocument = () => {
-    Alert.alert(
-      'Remove Document',
-      `Are you sure you want to remove this ${label.toLowerCase()}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Remove', 
-          style: 'destructive',
-          onPress: onDocumentRemoved 
-        },
-      ]
-    );
+    Alert.alert('Remove Document', `Are you sure you want to remove this ${label.toLowerCase()}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: onDocumentRemoved,
+      },
+    ]);
   };
 
   const formatFileSize = (bytes?: number): string => {
     if (!bytes) return '';
-    
+
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     const size = (bytes / Math.pow(1024, i)).toFixed(1);
-    
+
     return `${size} ${sizes[i]}`;
   };
 
   const getFileIcon = (fileName?: string) => {
     if (!fileName) return FileText;
-    
+
     const extension = fileName.split('.').pop()?.toLowerCase();
     switch (extension) {
       case 'pdf':
@@ -172,7 +183,7 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
           <Text className="font-medium text-gray-800">
             {label} {required && <Text className="text-red-500">*</Text>}
           </Text>
-          
+
           <FileUploadProgress
             fileName={currentDocument.name}
             progress={uploadProgress}
@@ -189,24 +200,24 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
   // Show current document with edit options
   if (currentDocument && uploadStatus !== 'uploading') {
     const FileIcon = getFileIcon(currentDocument.name);
-    
+
     return (
       <Box className={className}>
         <VStack space="md">
           <Text className="font-medium text-gray-800">
             {label} {required && <Text className="text-red-500">*</Text>}
           </Text>
-          
+
           <Box className="bg-white border rounded-lg p-4">
             <HStack className="justify-between items-start">
               <HStack className="items-center flex-1" space="sm">
                 <Box className="w-10 h-10 bg-blue-50 rounded items-center justify-center">
                   <Icon as={FileIcon} size="md" className="text-blue-600" />
                 </Box>
-                
+
                 <VStack className="flex-1">
-                  <Text 
-                    className="font-medium text-gray-900 text-sm" 
+                  <Text
+                    className="font-medium text-gray-900 text-sm"
                     numberOfLines={2}
                     ellipsizeMode="middle"
                   >
@@ -217,7 +228,7 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
                       {formatFileSize(currentDocument.size)}
                     </Text>
                   )}
-                  
+
                   {/* Upload status indicator */}
                   {uploadStatus === 'success' && (
                     <HStack className="items-center mt-1" space="xs">
@@ -225,7 +236,7 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
                       <Text className="text-xs text-green-600">Uploaded</Text>
                     </HStack>
                   )}
-                  
+
                   {uploadStatus === 'error' && (
                     <HStack className="items-center mt-1" space="xs">
                       <Icon as={AlertCircle} size="xs" className="text-red-600" />
@@ -234,7 +245,7 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
                   )}
                 </VStack>
               </HStack>
-              
+
               {/* Action buttons */}
               <VStack space="xs">
                 <Button
@@ -245,7 +256,7 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
                 >
                   <ButtonText className="text-xs">Replace</ButtonText>
                 </Button>
-                
+
                 {onDocumentRemoved && (
                   <Button
                     variant="outline"
@@ -264,9 +275,7 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
           {/* Upload status messages */}
           {uploadStatus === 'error' && uploadError && (
             <Box className="bg-red-50 p-3 rounded border border-red-200">
-              <Text className="text-red-800 text-sm">
-                Upload failed: {uploadError}
-              </Text>
+              <Text className="text-red-800 text-sm">Upload failed: {uploadError}</Text>
               {onRetryUpload && (
                 <Button
                   variant="outline"
@@ -282,9 +291,7 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
 
           {uploadStatus === 'success' && (
             <Box className="bg-green-50 p-3 rounded border border-green-200">
-              <Text className="text-green-800 text-sm">
-                Document uploaded successfully!
-              </Text>
+              <Text className="text-green-800 text-sm">Document uploaded successfully!</Text>
             </Box>
           )}
         </VStack>
@@ -294,7 +301,7 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
 
   // Show upload area for new document
   const allowedExtensions = getFileExtensionsFromMimeTypes(acceptedTypes);
-  
+
   return (
     <Box className={className}>
       <VStack space="md">
@@ -302,13 +309,9 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
           <Text className="font-medium text-gray-800">
             {label} {required && <Text className="text-red-500">*</Text>}
           </Text>
-          {description && (
-            <Text className="text-sm text-gray-600">
-              {description}
-            </Text>
-          )}
+          {description && <Text className="text-sm text-gray-600">{description}</Text>}
         </VStack>
-        
+
         <Pressable
           onPress={selectDocument}
           disabled={disabled || isSelecting}
@@ -336,10 +339,11 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
             {/* Format info */}
             <Box className="bg-gray-50 px-3 py-2 rounded border">
               <Text className="text-xs text-gray-600 text-center">
-                {allowedExtensions.length > 0 
-                  ? `${allowedExtensions.map(ext => ext.toUpperCase()).join(', ')} • Max ${maxSizeInMB}MB`
-                  : `Max ${maxSizeInMB}MB`
-                }
+                {allowedExtensions.length > 0
+                  ? `${allowedExtensions
+                      .map(ext => ext.toUpperCase())
+                      .join(', ')} • Max ${maxSizeInMB}MB`
+                  : `Max ${maxSizeInMB}MB`}
               </Text>
             </Box>
           </VStack>

@@ -1,17 +1,31 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Platform } from 'react-native';
 import useRouter from '@unitools/router';
 import { AlertCircle, ArrowLeft } from 'lucide-react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Platform } from 'react-native';
 
-import { Box } from '@/components/ui/box';
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
-import { Heading } from '@/components/ui/heading';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
-import { Pressable } from '@/components/ui/pressable';
-import { Spinner } from '@/components/ui/spinner';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
+import { CourseCatalogBrowser, Course } from './course-catalog-browser';
+import { CourseSelectionManager } from './course-selection-manager';
+import { EducationalSystemSelector, EducationalSystem } from './educational-system-selector';
+import { OnboardingSuccessScreen } from './onboarding-success-screen';
+import { RateConfigurationManager } from './rate-configuration-manager';
+import {
+  TutorOnboardingProgress,
+  TutorOnboardingData,
+  DEFAULT_TUTOR_ONBOARDING_STEPS,
+} from './tutor-onboarding-progress';
+
+import { useAuth } from '@/api/authContext';
+import {
+  createTutorSchool,
+  getCourseCatalog,
+  getEducationalSystems,
+  saveTutorOnboardingProgress,
+  completeTutorOnboarding,
+  type TutorSchoolData,
+  type TutorOnboardingData as ApiTutorOnboardingData,
+  type ProfilePublishingOptions,
+} from '@/api/tutorApi';
+import { TutorSchoolCreationModal } from '@/components/modals/tutor-school-creation-modal';
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -20,31 +34,21 @@ import {
   AlertDialogBody,
   AlertDialogFooter,
 } from '@/components/ui/alert-dialog';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Pressable } from '@/components/ui/pressable';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
 import { useToast } from '@/components/ui/toast';
-
-import { TutorSchoolCreationModal } from '@/components/modals/tutor-school-creation-modal';
-import { EducationalSystemSelector, EducationalSystem } from './educational-system-selector';
-import { CourseCatalogBrowser, Course } from './course-catalog-browser';
-import { CourseSelectionManager } from './course-selection-manager';
-import { RateConfigurationManager } from './rate-configuration-manager';
-import { TutorOnboardingProgress, TutorOnboardingData, DEFAULT_TUTOR_ONBOARDING_STEPS } from './tutor-onboarding-progress';
-import { OnboardingSuccessScreen } from './onboarding-success-screen';
-import { useAuth } from '@/api/authContext';
+import { VStack } from '@/components/ui/vstack';
 
 // API client imports
-import { 
-  createTutorSchool,
-  getCourseCatalog,
-  getEducationalSystems,
-  saveTutorOnboardingProgress,
-  completeTutorOnboarding,
-  type TutorSchoolData,
-  type TutorOnboardingData as ApiTutorOnboardingData,
-  type ProfilePublishingOptions
-} from '@/api/tutorApi';
 
 // Onboarding step IDs
-export type TutorOnboardingStep = 
+export type TutorOnboardingStep =
   | 'school-setup'
   | 'educational-system'
   | 'subject-selection'
@@ -135,11 +139,11 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
   const getStepIndex = (step: TutorOnboardingStep): number => {
     const stepOrder: TutorOnboardingStep[] = [
       'school-setup',
-      'educational-system', 
+      'educational-system',
       'subject-selection',
       'rate-configuration',
       'teacher-profile',
-      'success'
+      'success',
     ];
     return stepOrder.indexOf(step);
   };
@@ -151,7 +155,7 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
       'subject-selection': 'subject-selection',
       'rate-configuration': 'rate-configuration',
       'teacher-profile': 'teacher-profile',
-      'success': 'profile-review',
+      success: 'profile-review',
     };
     return mapping[step];
   };
@@ -160,16 +164,16 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
   useEffect(() => {
     const loadCourses = async () => {
       if (!state.selectedEducationalSystem) return;
-      
+
       try {
         setState(prev => ({ ...prev, isLoading: true, error: undefined }));
-        
+
         const coursesResponse = await getCourseCatalog({
           educational_system: state.selectedEducationalSystem.id,
           with_market_data: true,
           page_size: 100, // Load all courses for the system
         });
-        
+
         setState(prev => ({
           ...prev,
           availableCourses: coursesResponse.results,
@@ -183,7 +187,7 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
           isLoading: false,
           error: 'Failed to load courses. Please try again.',
         }));
-        
+
         toast.showToast('error', 'Failed to load courses. Please try again.');
       }
     };
@@ -196,12 +200,12 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
     const stepOrder: TutorOnboardingStep[] = [
       'school-setup',
       'educational-system',
-      'subject-selection', 
+      'subject-selection',
       'rate-configuration',
       'teacher-profile',
-      'success'
+      'success',
     ];
-    
+
     const currentIndex = stepOrder.indexOf(state.currentStep);
     if (currentIndex < stepOrder.length - 1) {
       setState(prev => ({
@@ -216,11 +220,11 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
       'school-setup',
       'educational-system',
       'subject-selection',
-      'rate-configuration', 
+      'rate-configuration',
       'teacher-profile',
-      'success'
+      'success',
     ];
-    
+
     const currentIndex = stepOrder.indexOf(state.currentStep);
     if (currentIndex > 0) {
       setState(prev => ({
@@ -239,7 +243,7 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
       'teacher-profile': 'teacher-profile',
       'profile-review': 'success',
     };
-    
+
     const step = stepMapping[stepId];
     if (step) {
       setState(prev => ({ ...prev, currentStep: step }));
@@ -250,30 +254,30 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
   const handleSchoolCreation = async (schoolData: TutorSchoolData) => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: undefined }));
-      
+
       const response = await createTutorSchool(schoolData);
-      
+
       if (response.success) {
-        setState(prev => ({ 
-          ...prev, 
+        setState(prev => ({
+          ...prev,
           schoolData,
-          isLoading: false 
+          isLoading: false,
         }));
-        
+
         setShowSchoolModal(false);
         handleNext();
-        
+
         toast.showToast('success', 'Tutoring practice created successfully!');
       } else {
         throw new Error(response.message || 'Failed to create practice');
       }
     } catch (error: any) {
-      setState(prev => ({ 
-        ...prev, 
+      setState(prev => ({
+        ...prev,
         isLoading: false,
-        error: error.message || 'Failed to create practice'
+        error: error.message || 'Failed to create practice',
       }));
-      
+
       toast.showToast('error', 'Failed to create tutoring practice. Please try again.');
     }
   };
@@ -311,7 +315,7 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
   const handleCompleteOnboarding = async () => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
-      
+
       // Prepare onboarding data in the format expected by the API
       const onboardingData: Partial<ApiTutorOnboardingData> = {
         business_profile: {
@@ -335,9 +339,11 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
           }),
         },
         pricing: {
-          default_rate: state.courseRates.length > 0 
-            ? state.courseRates.reduce((sum, rate) => sum + rate.rate, 0) / state.courseRates.length 
-            : 30,
+          default_rate:
+            state.courseRates.length > 0
+              ? state.courseRates.reduce((sum, rate) => sum + rate.rate, 0) /
+                state.courseRates.length
+              : 30,
           currency: state.courseRates.length > 0 ? state.courseRates[0].currency : 'EUR',
           payment_methods: ['stripe', 'paypal'], // Default
           cancellation_policy: 'Standard 24-hour cancellation policy', // Default
@@ -364,28 +370,28 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
         final_data: onboardingData as ApiTutorOnboardingData,
         publishing_options: publishingOptions,
       });
-      
+
       if (response.success) {
-        setState(prev => ({ 
-          ...prev, 
+        setState(prev => ({
+          ...prev,
           currentStep: 'success',
-          isLoading: false 
+          isLoading: false,
         }));
-        
+
         // Update auth status
         await checkAuthStatus();
-        
+
         toast.showToast('success', 'Tutor profile completed successfully!');
       } else {
         throw new Error('Failed to complete profile');
       }
     } catch (error: any) {
-      setState(prev => ({ 
-        ...prev, 
+      setState(prev => ({
+        ...prev,
         isLoading: false,
-        error: error.message || 'Failed to complete profile'
+        error: error.message || 'Failed to complete profile',
       }));
-      
+
       toast.showToast('error', 'Failed to complete profile. Please try again.');
     }
   };
@@ -420,7 +426,7 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
                 Create your professional tutoring business profile to get started
               </Text>
             </VStack>
-            
+
             <Button
               onPress={() => setShowSchoolModal(true)}
               className="bg-blue-600 hover:bg-blue-700"
@@ -456,7 +462,7 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
             </VStack>
           );
         }
-        
+
         return (
           <CourseSelectionManager
             educationalSystem={state.selectedEducationalSystem}
@@ -484,7 +490,7 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
             </VStack>
           );
         }
-        
+
         return (
           <RateConfigurationManager
             courses={state.selectedCourses}
@@ -506,7 +512,7 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
                 Add your professional details, experience, and teaching approach
               </Text>
             </VStack>
-            
+
             <VStack space="sm">
               <Button
                 onPress={handleCompleteOnboarding}
@@ -523,7 +529,7 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
                   <ButtonText className="text-white">Complete Teacher Profile</ButtonText>
                 )}
               </Button>
-              
+
               <Text className="text-center text-gray-500 text-sm">
                 This will integrate with the existing Teacher Profile Wizard
               </Text>
@@ -536,13 +542,15 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
           schoolName: state.schoolData?.schoolName || 'My Tutoring Practice',
           educationalSystem: state.selectedEducationalSystem?.name || 'Educational System',
           subjectCount: state.selectedCourses.length,
-          averageRate: state.courseRates.length > 0 
-            ? state.courseRates.reduce((sum, rate) => sum + rate.rate, 0) / state.courseRates.length 
-            : 30,
+          averageRate:
+            state.courseRates.length > 0
+              ? state.courseRates.reduce((sum, rate) => sum + rate.rate, 0) /
+                state.courseRates.length
+              : 30,
           currency: state.courseRates.length > 0 ? state.courseRates[0].currency : 'EUR',
           completionScore: 95,
         };
-        
+
         return (
           <OnboardingSuccessScreen
             profileSummary={profileSummary}
@@ -555,9 +563,7 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
         return (
           <VStack className="flex-1 items-center justify-center p-4" space="md">
             <Icon as={AlertCircle} className="text-red-500" size="xl" />
-            <Text className="text-gray-600 text-center">
-              Unknown step: {state.currentStep}
-            </Text>
+            <Text className="text-gray-600 text-center">Unknown step: {state.currentStep}</Text>
           </VStack>
         );
     }
@@ -584,10 +590,8 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
                 <Text className="text-gray-600">Exit Setup</Text>
               </HStack>
             </Pressable>
-            
-            <Text className="text-gray-600 text-sm">
-              Individual Tutor Onboarding
-            </Text>
+
+            <Text className="text-gray-600 text-sm">Individual Tutor Onboarding</Text>
           </HStack>
         </Box>
       )}
@@ -614,7 +618,7 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
             </HStack>
           </Box>
         )}
-        
+
         {renderCurrentStep()}
       </Box>
 
@@ -659,23 +663,16 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
           </AlertDialogHeader>
           <AlertDialogBody>
             <Text className="text-gray-600">
-              Your progress will be saved, but you'll need to complete the setup 
-              later to start teaching and accepting students.
+              Your progress will be saved, but you'll need to complete the setup later to start
+              teaching and accepting students.
             </Text>
           </AlertDialogBody>
           <AlertDialogFooter>
             <HStack space="sm" className="w-full">
-              <Button
-                variant="outline"
-                onPress={() => setShowExitDialog(false)}
-                className="flex-1"
-              >
+              <Button variant="outline" onPress={() => setShowExitDialog(false)} className="flex-1">
                 <ButtonText>Continue Setup</ButtonText>
               </Button>
-              <Button
-                onPress={handleExit}
-                className="flex-1 bg-gray-600"
-              >
+              <Button onPress={handleExit} className="flex-1 bg-gray-600">
                 <ButtonText className="text-white">Exit</ButtonText>
               </Button>
             </HStack>

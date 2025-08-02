@@ -1,6 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
   TeacherProfileData,
@@ -31,18 +31,18 @@ const getDefaultProfileData = (): TeacherProfileData => ({
     preferred_contact_method: 'email',
   },
   introduction: '',
-  
+
   // Step 2: Teaching Subjects
   teaching_subjects: [],
   custom_subjects: [],
-  
+
   // Step 3: Grade Level Preferences
   grade_levels: [],
-  
+
   // Step 4: Availability & Scheduling
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
   availability_notes: '',
-  
+
   // Step 5: Rates & Compensation
   hourly_rate: 25,
   rate_negotiable: true,
@@ -51,12 +51,12 @@ const getDefaultProfileData = (): TeacherProfileData => ({
     invoice_frequency: 'monthly',
     tax_information_provided: false,
   },
-  
+
   // Step 6: Credentials & Experience
   education_background: [],
   teaching_experience: [],
   certifications: [],
-  
+
   // Step 7: Profile Marketing
   teaching_philosophy: '',
   teaching_approach: '',
@@ -113,7 +113,7 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
       const timeoutId = setTimeout(() => {
         saveDataToStorage();
       }, 1000);
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [profileData, hasUnsavedChanges]);
@@ -160,7 +160,7 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
   const updateProfileData = useCallback((updates: Partial<TeacherProfileData>) => {
     setProfileData(prev => ({ ...prev, ...updates }));
     setHasUnsavedChanges(true);
-    
+
     // Clear validation errors for updated fields
     const updatedFields = Object.keys(updates);
     setValidationErrors(prev => {
@@ -178,98 +178,105 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
   }, []);
 
   // Validate current step
-  const validateStep = useCallback((stepNumber: number): boolean => {
-    const errors: { [key: string]: string } = {};
+  const validateStep = useCallback(
+    (stepNumber: number): boolean => {
+      const errors: { [key: string]: string } = {};
 
-    switch (stepNumber) {
-      case 1: // Basic Information
-        if (!profileData.introduction?.trim()) {
-          errors.introduction = 'Uma breve introdução é obrigatória';
-        }
-        break;
-
-      case 2: // Teaching Subjects
-        if (profileData.teaching_subjects.length === 0) {
-          errors.teaching_subjects = 'Selecione pelo menos uma matéria de ensino';
-        }
-        profileData.teaching_subjects.forEach((subject, index) => {
-          if (!subject.subject.trim()) {
-            errors[`teaching_subjects_${index}_subject`] = 'Nome da matéria é obrigatório';
+      switch (stepNumber) {
+        case 1: // Basic Information
+          if (!profileData.introduction?.trim()) {
+            errors.introduction = 'Uma breve introdução é obrigatória';
           }
-        });
-        break;
+          break;
 
-      case 3: // Grade Levels
-        if (profileData.grade_levels.length === 0) {
-          errors.grade_levels = 'Selecione pelo menos um nível de ensino';
-        }
-        break;
-
-      case 4: // Availability - optional for now
-        if (!profileData.timezone) {
-          errors.timezone = 'Selecione seu fuso horário';
-        }
-        break;
-
-      case 5: // Rates & Compensation
-        if (!profileData.hourly_rate || profileData.hourly_rate <= 0) {
-          errors.hourly_rate = 'Valor da hora/aula deve ser maior que zero';
-        }
-        if (profileData.hourly_rate > 1000) {
-          errors.hourly_rate = 'Valor da hora/aula muito alto (máximo €1000)';
-        }
-        break;
-
-      case 6: // Credentials
-        if (profileData.education_background.length === 0) {
-          errors.education_background = 'Adicione pelo menos uma formação acadêmica';
-        }
-        profileData.education_background.forEach((edu, index) => {
-          if (!edu.degree.trim()) {
-            errors[`education_${index}_degree`] = 'Grau/Título é obrigatório';
+        case 2: // Teaching Subjects
+          if (profileData.teaching_subjects.length === 0) {
+            errors.teaching_subjects = 'Selecione pelo menos uma matéria de ensino';
           }
-          if (!edu.field_of_study.trim()) {
-            errors[`education_${index}_field`] = 'Área de estudo é obrigatória';
-          }
-          if (!edu.institution.trim()) {
-            errors[`education_${index}_institution`] = 'Instituição é obrigatória';
-          }
-          if (!edu.graduation_year || edu.graduation_year < 1950 || edu.graduation_year > new Date().getFullYear()) {
-            errors[`education_${index}_year`] = 'Ano de formação inválido';
-          }
-        });
-        break;
+          profileData.teaching_subjects.forEach((subject, index) => {
+            if (!subject.subject.trim()) {
+              errors[`teaching_subjects_${index}_subject`] = 'Nome da matéria é obrigatório';
+            }
+          });
+          break;
 
-      case 7: // Profile Marketing
-        if (!profileData.teaching_philosophy?.trim()) {
-          errors.teaching_philosophy = 'Filosofia de ensino é obrigatória';
-        }
-        if (!profileData.teaching_approach?.trim()) {
-          errors.teaching_approach = 'Abordagem de ensino é obrigatória';
-        }
-        if (profileData.specializations.length === 0) {
-          errors.specializations = 'Adicione pelo menos uma especialização';
-        }
-        break;
-
-      case 8: // Preview & Submit - validate all previous steps
-        for (let i = 1; i < 8; i++) {
-          if (!validateStep(i)) {
-            errors.overall = `Por favor, complete todos os campos obrigatórios na Etapa ${i}`;
-            break;
+        case 3: // Grade Levels
+          if (profileData.grade_levels.length === 0) {
+            errors.grade_levels = 'Selecione pelo menos um nível de ensino';
           }
-        }
-        break;
-    }
+          break;
 
-    // Update validation errors
-    setValidationErrors(prev => ({
-      ...prev,
-      [stepNumber]: errors,
-    }));
+        case 4: // Availability - optional for now
+          if (!profileData.timezone) {
+            errors.timezone = 'Selecione seu fuso horário';
+          }
+          break;
 
-    return Object.keys(errors).length === 0;
-  }, [profileData]);
+        case 5: // Rates & Compensation
+          if (!profileData.hourly_rate || profileData.hourly_rate <= 0) {
+            errors.hourly_rate = 'Valor da hora/aula deve ser maior que zero';
+          }
+          if (profileData.hourly_rate > 1000) {
+            errors.hourly_rate = 'Valor da hora/aula muito alto (máximo €1000)';
+          }
+          break;
+
+        case 6: // Credentials
+          if (profileData.education_background.length === 0) {
+            errors.education_background = 'Adicione pelo menos uma formação acadêmica';
+          }
+          profileData.education_background.forEach((edu, index) => {
+            if (!edu.degree.trim()) {
+              errors[`education_${index}_degree`] = 'Grau/Título é obrigatório';
+            }
+            if (!edu.field_of_study.trim()) {
+              errors[`education_${index}_field`] = 'Área de estudo é obrigatória';
+            }
+            if (!edu.institution.trim()) {
+              errors[`education_${index}_institution`] = 'Instituição é obrigatória';
+            }
+            if (
+              !edu.graduation_year ||
+              edu.graduation_year < 1950 ||
+              edu.graduation_year > new Date().getFullYear()
+            ) {
+              errors[`education_${index}_year`] = 'Ano de formação inválido';
+            }
+          });
+          break;
+
+        case 7: // Profile Marketing
+          if (!profileData.teaching_philosophy?.trim()) {
+            errors.teaching_philosophy = 'Filosofia de ensino é obrigatória';
+          }
+          if (!profileData.teaching_approach?.trim()) {
+            errors.teaching_approach = 'Abordagem de ensino é obrigatória';
+          }
+          if (profileData.specializations.length === 0) {
+            errors.specializations = 'Adicione pelo menos uma especialização';
+          }
+          break;
+
+        case 8: // Preview & Submit - validate all previous steps
+          for (let i = 1; i < 8; i++) {
+            if (!validateStep(i)) {
+              errors.overall = `Por favor, complete todos os campos obrigatórios na Etapa ${i}`;
+              break;
+            }
+          }
+          break;
+      }
+
+      // Update validation errors
+      setValidationErrors(prev => ({
+        ...prev,
+        [stepNumber]: errors,
+      }));
+
+      return Object.keys(errors).length === 0;
+    },
+    [profileData]
+  );
 
   // Navigate to next step
   const nextStep = useCallback(() => {
@@ -305,9 +312,12 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
   }, [validationErrors, currentStep]);
 
   // Check if step is completed (has no validation errors)
-  const isStepCompleted = useCallback((stepNumber: number) => {
-    return validateStep(stepNumber);
-  }, [validateStep]);
+  const isStepCompleted = useCallback(
+    (stepNumber: number) => {
+      return validateStep(stepNumber);
+    },
+    [validateStep]
+  );
 
   // Get progress percentage
   const getProgress = useCallback(() => {
@@ -324,45 +334,69 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
   }, []);
 
   // Helper functions for specific data updates
-  const addTeachingSubject = useCallback((subject: Omit<SubjectExpertise, 'subject'> & { subject: string }) => {
-    const newSubjects = [...profileData.teaching_subjects, subject];
-    updateProfileData({ teaching_subjects: newSubjects });
-  }, [profileData.teaching_subjects, updateProfileData]);
+  const addTeachingSubject = useCallback(
+    (subject: Omit<SubjectExpertise, 'subject'> & { subject: string }) => {
+      const newSubjects = [...profileData.teaching_subjects, subject];
+      updateProfileData({ teaching_subjects: newSubjects });
+    },
+    [profileData.teaching_subjects, updateProfileData]
+  );
 
-  const removeTeachingSubject = useCallback((index: number) => {
-    const newSubjects = profileData.teaching_subjects.filter((_, i) => i !== index);
-    updateProfileData({ teaching_subjects: newSubjects });
-  }, [profileData.teaching_subjects, updateProfileData]);
+  const removeTeachingSubject = useCallback(
+    (index: number) => {
+      const newSubjects = profileData.teaching_subjects.filter((_, i) => i !== index);
+      updateProfileData({ teaching_subjects: newSubjects });
+    },
+    [profileData.teaching_subjects, updateProfileData]
+  );
 
-  const addEducationEntry = useCallback((education: EducationEntry) => {
-    const newEducation = [...profileData.education_background, education];
-    updateProfileData({ education_background: newEducation });
-  }, [profileData.education_background, updateProfileData]);
+  const addEducationEntry = useCallback(
+    (education: EducationEntry) => {
+      const newEducation = [...profileData.education_background, education];
+      updateProfileData({ education_background: newEducation });
+    },
+    [profileData.education_background, updateProfileData]
+  );
 
-  const removeEducationEntry = useCallback((index: number) => {
-    const newEducation = profileData.education_background.filter((_, i) => i !== index);
-    updateProfileData({ education_background: newEducation });
-  }, [profileData.education_background, updateProfileData]);
+  const removeEducationEntry = useCallback(
+    (index: number) => {
+      const newEducation = profileData.education_background.filter((_, i) => i !== index);
+      updateProfileData({ education_background: newEducation });
+    },
+    [profileData.education_background, updateProfileData]
+  );
 
-  const addExperienceEntry = useCallback((experience: ExperienceEntry) => {
-    const newExperience = [...profileData.teaching_experience, experience];
-    updateProfileData({ teaching_experience: newExperience });
-  }, [profileData.teaching_experience, updateProfileData]);
+  const addExperienceEntry = useCallback(
+    (experience: ExperienceEntry) => {
+      const newExperience = [...profileData.teaching_experience, experience];
+      updateProfileData({ teaching_experience: newExperience });
+    },
+    [profileData.teaching_experience, updateProfileData]
+  );
 
-  const removeExperienceEntry = useCallback((index: number) => {
-    const newExperience = profileData.teaching_experience.filter((_, i) => i !== index);
-    updateProfileData({ teaching_experience: newExperience });
-  }, [profileData.teaching_experience, updateProfileData]);
+  const removeExperienceEntry = useCallback(
+    (index: number) => {
+      const newExperience = profileData.teaching_experience.filter((_, i) => i !== index);
+      updateProfileData({ teaching_experience: newExperience });
+    },
+    [profileData.teaching_experience, updateProfileData]
+  );
 
-  const addCertification = useCallback((certification: CertificationFile) => {
-    const newCertifications = [...profileData.certifications, certification];
-    updateProfileData({ certifications: newCertifications });
-  }, [profileData.certifications, updateProfileData]);
+  const addCertification = useCallback(
+    (certification: CertificationFile) => {
+      const newCertifications = [...profileData.certifications, certification];
+      updateProfileData({ certifications: newCertifications });
+    },
+    [profileData.certifications, updateProfileData]
+  );
 
-  const removeCertification = useCallback((index: number) => {
-    const newCertifications = profileData.certifications.filter((_, i) => i !== index);
-    updateProfileData({ certifications: newCertifications });
-  }, [profileData.certifications, updateProfileData]);
+  const removeCertification = useCallback(
+    (index: number) => {
+      const newCertifications = profileData.certifications.filter((_, i) => i !== index);
+      updateProfileData({ certifications: newCertifications });
+    },
+    [profileData.certifications, updateProfileData]
+  );
 
   return {
     // State

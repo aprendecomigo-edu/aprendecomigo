@@ -1,18 +1,12 @@
-import React from 'react';
+import { router } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { Alert } from 'react-native';
+
 import { SchoolSettingsForm } from '../components/school-settings/SchoolSettingsForm';
 import { useSchoolSettings, SchoolSettingsFormData } from '../hooks/useSchoolSettings';
+
 import { useAuth } from '@/api/authContext';
-import { useState, useEffect } from 'react';
-import { Alert } from 'react-native';
-import { router } from 'expo-router';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Center } from '@/components/ui/center';
-import { Spinner } from '@/components/ui/spinner';
-import { 
+import {
   AlertDialog,
   AlertDialogBackdrop,
   AlertDialogContent,
@@ -21,9 +15,15 @@ import {
   AlertDialogFooter,
   AlertDialogCloseButton,
 } from '@/components/ui/alert-dialog';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Center } from '@/components/ui/center';
 import { Heading } from '@/components/ui/heading';
-import { Icon } from '@/components/ui/icon';
-import { CloseIcon } from '@/components/ui/icon';
+import { HStack } from '@/components/ui/hstack';
+import { Icon, CloseIcon } from '@/components/ui/icon';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 export default function SettingsPage() {
   const [showExitDialog, setShowExitDialog] = useState(false);
@@ -112,8 +112,8 @@ export default function SettingsPage() {
           </AlertDialogHeader>
           <AlertDialogBody>
             <Text>
-              You have unsaved changes that will be lost if you leave this page. 
-              Are you sure you want to continue?
+              You have unsaved changes that will be lost if you leave this page. Are you sure you
+              want to continue?
             </Text>
           </AlertDialogBody>
           <AlertDialogFooter>
@@ -121,11 +121,14 @@ export default function SettingsPage() {
               <Button variant="outline" onPress={() => setShowExitDialog(false)}>
                 <ButtonText>Cancel</ButtonText>
               </Button>
-              <Button action="negative" onPress={() => {
-                setShowExitDialog(false);
-                setHasUnsavedChanges(false);
-                router.back();
-              }}>
+              <Button
+                action="negative"
+                onPress={() => {
+                  setShowExitDialog(false);
+                  setHasUnsavedChanges(false);
+                  router.back();
+                }}
+              >
                 <ButtonText>Leave</ButtonText>
               </Button>
             </HStack>

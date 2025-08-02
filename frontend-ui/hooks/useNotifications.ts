@@ -1,18 +1,19 @@
 /**
  * Notifications Hook
- * 
+ *
  * Custom hook for managing student balance notifications and API integration.
  * Provides reactive access to notifications with filtering and pagination support.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { NotificationApiClient } from '@/api/notificationApi';
+
 import { useAuth } from '@/api/authContext';
-import type { 
-  NotificationResponse, 
+import { NotificationApiClient } from '@/api/notificationApi';
+import type {
+  NotificationResponse,
   NotificationFilters,
   NotificationListResponse,
-  NotificationSettings 
+  NotificationSettings,
 } from '@/types/notification';
 
 interface UseNotificationsOptions {
@@ -32,19 +33,19 @@ interface UseNotificationsResult {
   unreadCount: number;
   hasMore: boolean;
   currentPage: number;
-  
+
   // State
   loading: boolean;
   error: string | null;
   refreshing: boolean;
-  
+
   // Actions
   refresh: () => Promise<void>;
   loadMore: () => Promise<void>;
   markAsRead: (id: number) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   setFilters: (filters: NotificationFilters) => void;
-  
+
   // Current filters
   filters: NotificationFilters;
 }
@@ -57,11 +58,11 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     pollingInterval = 30000, // 30 seconds
     enablePolling = false,
     pageSize = 20,
-    initialFilters = {}
+    initialFilters = {},
   } = options;
 
   const { userProfile } = useAuth();
-  
+
   // State
   const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -71,7 +72,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [filters, setFilters] = useState<NotificationFilters>(initialFilters);
-  
+
   // Refs
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastFetchTimestamp = useRef<string | null>(null);
@@ -79,43 +80,45 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   /**
    * Fetch notifications from API
    */
-  const fetchNotifications = useCallback(async (
-    page: number = 1, 
-    append: boolean = false,
-    currentFilters: NotificationFilters = filters
-  ) => {
-    if (!userProfile) return;
+  const fetchNotifications = useCallback(
+    async (
+      page: number = 1,
+      append: boolean = false,
+      currentFilters: NotificationFilters = filters
+    ) => {
+      if (!userProfile) return;
 
-    try {
-      if (!append) {
-        setLoading(true);
+      try {
+        if (!append) {
+          setLoading(true);
+        }
+        setError(null);
+
+        const response = await NotificationApiClient.getNotifications(
+          currentFilters,
+          page,
+          pageSize
+        );
+
+        if (append) {
+          setNotifications(prev => [...prev, ...response.results]);
+        } else {
+          setNotifications(response.results);
+        }
+
+        setHasMore(response.next !== null);
+        setCurrentPage(page);
+        lastFetchTimestamp.current = new Date().toISOString();
+      } catch (err: any) {
+        console.error('Failed to fetch notifications:', err);
+        setError(err.message || 'Failed to load notifications');
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-      setError(null);
-
-      const response = await NotificationApiClient.getNotifications(
-        currentFilters,
-        page,
-        pageSize
-      );
-
-      if (append) {
-        setNotifications(prev => [...prev, ...response.results]);
-      } else {
-        setNotifications(response.results);
-      }
-
-      setHasMore(response.next !== null);
-      setCurrentPage(page);
-      lastFetchTimestamp.current = new Date().toISOString();
-
-    } catch (err: any) {
-      console.error('Failed to fetch notifications:', err);
-      setError(err.message || 'Failed to load notifications');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [userProfile, filters, pageSize]);
+    },
+    [userProfile, filters, pageSize]
+  );
 
   /**
    * Fetch unread count
@@ -137,10 +140,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   const refresh = useCallback(async () => {
     setRefreshing(true);
     setCurrentPage(1);
-    await Promise.all([
-      fetchNotifications(1, false),
-      fetchUnreadCount()
-    ]);
+    await Promise.all([fetchNotifications(1, false), fetchUnreadCount()]);
   }, [fetchNotifications, fetchUnreadCount]);
 
   /**
@@ -148,7 +148,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
    */
   const loadMore = useCallback(async () => {
     if (!hasMore || loading) return;
-    
+
     const nextPage = currentPage + 1;
     await fetchNotifications(nextPage, true);
   }, [hasMore, loading, currentPage, fetchNotifications]);
@@ -156,30 +156,32 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   /**
    * Mark notification as read
    */
-  const markAsRead = useCallback(async (id: number) => {
-    try {
-      await NotificationApiClient.markNotificationAsRead(id);
-      
-      // Update local state
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === id 
-            ? { ...notification, is_read: true, read_at: new Date().toISOString() }
-            : notification
-        )
-      );
-      
-      // Update unread count
-      const notification = notifications.find(n => n.id === id);
-      if (notification && !notification.is_read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
+  const markAsRead = useCallback(
+    async (id: number) => {
+      try {
+        await NotificationApiClient.markNotificationAsRead(id);
+
+        // Update local state
+        setNotifications(prev =>
+          prev.map(notification =>
+            notification.id === id
+              ? { ...notification, is_read: true, read_at: new Date().toISOString() }
+              : notification
+          )
+        );
+
+        // Update unread count
+        const notification = notifications.find(n => n.id === id);
+        if (notification && !notification.is_read) {
+          setUnreadCount(prev => Math.max(0, prev - 1));
+        }
+      } catch (err: any) {
+        console.error('Failed to mark notification as read:', err);
+        setError(err.message || 'Failed to update notification');
       }
-      
-    } catch (err: any) {
-      console.error('Failed to mark notification as read:', err);
-      setError(err.message || 'Failed to update notification');
-    }
-  }, [notifications]);
+    },
+    [notifications]
+  );
 
   /**
    * Mark all notifications as read
@@ -187,18 +189,17 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   const markAllAsRead = useCallback(async () => {
     try {
       await NotificationApiClient.markAllAsRead();
-      
+
       // Update local state
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(notification => ({
           ...notification,
           is_read: true,
-          read_at: notification.read_at || new Date().toISOString()
+          read_at: notification.read_at || new Date().toISOString(),
         }))
       );
-      
+
       setUnreadCount(0);
-      
     } catch (err: any) {
       console.error('Failed to mark all notifications as read:', err);
       setError(err.message || 'Failed to update notifications');
@@ -208,11 +209,14 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   /**
    * Update filters and refresh
    */
-  const updateFilters = useCallback((newFilters: NotificationFilters) => {
-    setFilters(newFilters);
-    setCurrentPage(1);
-    fetchNotifications(1, false, newFilters);
-  }, [fetchNotifications]);
+  const updateFilters = useCallback(
+    (newFilters: NotificationFilters) => {
+      setFilters(newFilters);
+      setCurrentPage(1);
+      fetchNotifications(1, false, newFilters);
+    },
+    [fetchNotifications]
+  );
 
   /**
    * Poll for new notifications
@@ -221,10 +225,9 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     if (!userProfile || !lastFetchTimestamp.current) return;
 
     try {
-      const response = await NotificationApiClient.pollNotifications(
-        lastFetchTimestamp.current,
-        { is_read: false }
-      );
+      const response = await NotificationApiClient.pollNotifications(lastFetchTimestamp.current, {
+        is_read: false,
+      });
 
       // If there are new notifications, refresh the list
       if (response.results.length > 0) {
@@ -270,19 +273,19 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     unreadCount,
     hasMore,
     currentPage,
-    
+
     // State
     loading,
     error,
     refreshing,
-    
+
     // Actions
     refresh,
     loadMore,
     markAsRead,
     markAllAsRead,
     setFilters: updateFilters,
-    
+
     // Current filters
     filters,
   };
@@ -313,10 +316,10 @@ export function useUnreadNotificationCount() {
 
   useEffect(() => {
     fetchUnreadCount();
-    
+
     // Set up polling for unread count
     const interval = setInterval(fetchUnreadCount, 60000); // Check every minute
-    
+
     return () => clearInterval(interval);
   }, [fetchUnreadCount]);
 

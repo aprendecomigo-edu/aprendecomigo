@@ -1,5 +1,3 @@
-import React, { useEffect, useState } from 'react';
-import { Platform, Dimensions } from 'react-native';
 import useRouter from '@unitools/router';
 import {
   ArrowLeft,
@@ -13,18 +11,17 @@ import {
   TrendingUp,
   ExternalLink,
 } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { Platform, Dimensions } from 'react-native';
 
-import { Box } from '@/components/ui/box';
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Heading } from '@/components/ui/heading';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
-import { Spinner } from '@/components/ui/spinner';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Progress, ProgressFilledTrack } from '@/components/ui/progress';
-import { Badge, BadgeText } from '@/components/ui/badge';
+import { TutorSchoolCreationModal } from '@/components/modals/tutor-school-creation-modal';
+import { CourseSelectionManager } from '@/components/onboarding/course-selection-manager';
+import { EducationalSystemSelector } from '@/components/onboarding/educational-system-selector';
+import { AvailabilityStep } from '@/components/profile-wizard/availability-step';
+import { BasicInfoStep } from '@/components/profile-wizard/basic-info-step';
+import { BiographyStep } from '@/components/profile-wizard/biography-step';
+import { EducationStep } from '@/components/profile-wizard/education-step';
+import { ProfilePreviewStep } from '@/components/profile-wizard/profile-preview-step';
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -33,16 +30,18 @@ import {
   AlertDialogBody,
   AlertDialogFooter,
 } from '@/components/ui/alert-dialog';
-
+import { Badge, BadgeText } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Progress, ProgressFilledTrack } from '@/components/ui/progress';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 import { useTutorOnboarding, TUTOR_ONBOARDING_STEPS } from '@/hooks/useTutorOnboarding';
-import { TutorSchoolCreationModal } from '@/components/modals/tutor-school-creation-modal';
-import { EducationalSystemSelector } from '@/components/onboarding/educational-system-selector';
-import { CourseSelectionManager } from '@/components/onboarding/course-selection-manager';
-import { BasicInfoStep } from '@/components/profile-wizard/basic-info-step';
-import { BiographyStep } from '@/components/profile-wizard/biography-step';
-import { EducationStep } from '@/components/profile-wizard/education-step';
-import { AvailabilityStep } from '@/components/profile-wizard/availability-step';
-import { ProfilePreviewStep } from '@/components/profile-wizard/profile-preview-step';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isMobile = Platform.OS !== 'web' || screenWidth < 768;
@@ -63,16 +62,14 @@ const StepProgressIndicator: React.FC<StepProgressIndicatorProps> = ({
   if (isMobile) {
     // Mobile: Show minimal progress bar
     const progressPercentage = ((currentStep + 1) / steps.length) * 100;
-    
+
     return (
       <VStack space="xs">
         <HStack className="items-center justify-between">
           <Text className="text-sm font-medium text-gray-700">
             Step {currentStep + 1} of {steps.length}
           </Text>
-          <Text className="text-sm text-gray-500">
-            {Math.round(progressPercentage)}% Complete
-          </Text>
+          <Text className="text-sm text-gray-500">{Math.round(progressPercentage)}% Complete</Text>
         </HStack>
         <Progress value={progressPercentage} className="h-2">
           <ProgressFilledTrack className="bg-blue-600" />
@@ -97,9 +94,10 @@ const StepProgressIndicator: React.FC<StepProgressIndicatorProps> = ({
             disabled={!canNavigate}
             className={`
               justify-start h-auto py-3 px-4 border rounded-lg
-              ${isCurrent 
-                ? 'border-blue-500 bg-blue-50' 
-                : isCompleted 
+              ${
+                isCurrent
+                  ? 'border-blue-500 bg-blue-50'
+                  : isCompleted
                   ? 'border-green-200 bg-green-50'
                   : 'border-gray-200 bg-white'
               }
@@ -110,32 +108,37 @@ const StepProgressIndicator: React.FC<StepProgressIndicatorProps> = ({
               <Box
                 className={`
                   w-8 h-8 rounded-full items-center justify-center
-                  ${isCompleted 
-                    ? 'bg-green-600' 
-                    : isCurrent 
-                      ? 'bg-blue-600' 
-                      : 'bg-gray-300'
-                  }
+                  ${isCompleted ? 'bg-green-600' : isCurrent ? 'bg-blue-600' : 'bg-gray-300'}
                 `}
               >
                 {isCompleted ? (
                   <Icon as={CheckCircle2} className="text-white" size="sm" />
                 ) : (
-                  <Text className={`text-sm font-semibold ${isCurrent ? 'text-white' : 'text-gray-600'}`}>
+                  <Text
+                    className={`text-sm font-semibold ${
+                      isCurrent ? 'text-white' : 'text-gray-600'
+                    }`}
+                  >
                     {index + 1}
                   </Text>
                 )}
               </Box>
-              
+
               <VStack className="flex-1" space="xs">
-                <Text className={`text-sm font-medium text-left ${isCurrent ? 'text-blue-900' : 'text-gray-900'}`}>
+                <Text
+                  className={`text-sm font-medium text-left ${
+                    isCurrent ? 'text-blue-900' : 'text-gray-900'
+                  }`}
+                >
                   {step.title}
                 </Text>
-                <Text className={`text-xs text-left ${isCurrent ? 'text-blue-700' : 'text-gray-600'}`}>
+                <Text
+                  className={`text-xs text-left ${isCurrent ? 'text-blue-700' : 'text-gray-600'}`}
+                >
                   {step.description}
                 </Text>
               </VStack>
-              
+
               <VStack space="xs" className="items-end">
                 {step.isRequired && (
                   <Badge className="bg-red-100">
@@ -171,7 +174,7 @@ const OnboardingGuidancePanel: React.FC<{
           </Heading>
         </HStack>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         <VStack space="md">
           {guidance.tips?.length > 0 && (
@@ -180,10 +183,12 @@ const OnboardingGuidancePanel: React.FC<{
               <VStack space="xs">
                 {guidance.tips.slice(0, 3).map((tip: any, index: number) => (
                   <HStack key={index} space="xs" className="items-start">
-                    <Icon 
-                      as={tip.priority === 'high' ? Target : TrendingUp} 
-                      className={`${tip.priority === 'high' ? 'text-red-500' : 'text-blue-500'} mt-0.5`} 
-                      size="xs" 
+                    <Icon
+                      as={tip.priority === 'high' ? Target : TrendingUp}
+                      className={`${
+                        tip.priority === 'high' ? 'text-red-500' : 'text-blue-500'
+                      } mt-0.5`}
+                      size="xs"
                     />
                     <VStack className="flex-1" space="xs">
                       <Text className="text-gray-900 text-sm font-medium">{tip.title}</Text>
@@ -203,9 +208,7 @@ const OnboardingGuidancePanel: React.FC<{
                   <HStack key={index} space="xs" className="items-start">
                     <Text className="text-blue-600 text-sm">→</Text>
                     <Text className="text-gray-600 text-sm flex-1">{rec.text}</Text>
-                    {rec.url && (
-                      <Icon as={ExternalLink} className="text-blue-500" size="xs" />
-                    )}
+                    {rec.url && <Icon as={ExternalLink} className="text-blue-500" size="xs" />}
                   </HStack>
                 ))}
               </VStack>
@@ -277,7 +280,7 @@ export default function TutorOnboardingScreen() {
     try {
       updateFormData('school-creation', data);
       setShowSchoolCreationModal(false);
-      
+
       // Move to next step
       await nextStep();
     } catch (error) {
@@ -326,7 +329,7 @@ export default function TutorOnboardingScreen() {
       };
 
       const result = await submitOnboarding(publishingOptions);
-      
+
       // Navigate to success screen or dashboard
       router.push({
         pathname: '/onboarding/success',
@@ -381,7 +384,8 @@ export default function TutorOnboardingScreen() {
                 Ready to Create Your Practice
               </Heading>
               <Text className="text-gray-600 text-center max-w-md">
-                Let's set up your tutoring business profile. This will help organize your services and make it easier for students to find you.
+                Let's set up your tutoring business profile. This will help organize your services
+                and make it easier for students to find you.
               </Text>
             </VStack>
             <Button onPress={() => setShowSchoolCreationModal(true)} className="bg-blue-600">
@@ -420,7 +424,7 @@ export default function TutorOnboardingScreen() {
         return (
           <BasicInfoStep
             formData={stepData['basic-info'] || formData.personal_info || {}}
-            onFormDataChange={(data) => updateFormData('basic-info', { personal_info: data })}
+            onFormDataChange={data => updateFormData('basic-info', { personal_info: data })}
             validationErrors={validationErrors}
             isLoading={isSaving}
           />
@@ -430,7 +434,7 @@ export default function TutorOnboardingScreen() {
         return (
           <BiographyStep
             formData={stepData['biography'] || formData.business_profile || {}}
-            onFormDataChange={(data) => updateFormData('biography', { business_profile: data })}
+            onFormDataChange={data => updateFormData('biography', { business_profile: data })}
             validationErrors={validationErrors}
             isLoading={isSaving}
           />
@@ -440,7 +444,7 @@ export default function TutorOnboardingScreen() {
         return (
           <EducationStep
             formData={stepData['education'] || formData.education || {}}
-            onFormDataChange={(data) => updateFormData('education', { education: data })}
+            onFormDataChange={data => updateFormData('education', { education: data })}
             validationErrors={validationErrors}
             isLoading={isSaving}
           />
@@ -450,7 +454,7 @@ export default function TutorOnboardingScreen() {
         return (
           <AvailabilityStep
             formData={stepData['availability'] || formData.availability || {}}
-            onFormDataChange={(data) => updateFormData('availability', { availability: data })}
+            onFormDataChange={data => updateFormData('availability', { availability: data })}
             validationErrors={validationErrors}
             isLoading={isSaving}
           />
@@ -460,7 +464,7 @@ export default function TutorOnboardingScreen() {
         return (
           <ProfilePreviewStep
             formData={formData}
-            onFormDataChange={(data) => updateFormData('preview', data)}
+            onFormDataChange={data => updateFormData('preview', data)}
             validationErrors={validationErrors}
             isLoading={isSaving}
           />
@@ -510,7 +514,7 @@ export default function TutorOnboardingScreen() {
                   <Text className="text-gray-500 text-sm">Saving...</Text>
                 </HStack>
               )}
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -544,9 +548,7 @@ export default function TutorOnboardingScreen() {
                 </Badge>
               )}
             </HStack>
-            <Text className="text-gray-600">
-              {currentStepConfig.description}
-            </Text>
+            <Text className="text-gray-600">{currentStepConfig.description}</Text>
           </VStack>
         </VStack>
       </Box>
@@ -642,7 +644,8 @@ export default function TutorOnboardingScreen() {
           <AlertDialogBody>
             <VStack space="sm">
               <Text className="text-gray-600">
-                You have made progress on your profile. Would you like to save your progress before leaving?
+                You have made progress on your profile. Would you like to save your progress before
+                leaving?
               </Text>
               <Text className="text-gray-500 text-sm">
                 You can return to complete your profile setup later.
@@ -651,17 +654,10 @@ export default function TutorOnboardingScreen() {
           </AlertDialogBody>
           <AlertDialogFooter>
             <HStack space="sm" className="w-full">
-              <Button
-                variant="outline"
-                onPress={confirmExit}
-                className="flex-1"
-              >
+              <Button variant="outline" onPress={confirmExit} className="flex-1">
                 <ButtonText>Exit Without Saving</ButtonText>
               </Button>
-              <Button
-                onPress={saveAndExit}
-                className="flex-1 bg-blue-600"
-              >
+              <Button onPress={saveAndExit} className="flex-1 bg-blue-600">
                 <ButtonText>Save & Exit</ButtonText>
               </Button>
             </HStack>

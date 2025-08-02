@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { 
+import {
   UserPlusIcon,
   MailIcon,
   LinkIcon,
@@ -12,7 +12,7 @@ import {
   MessageSquareIcon,
   InstagramIcon,
   FacebookIcon,
-  TwitterIcon
+  TwitterIcon,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 
@@ -35,7 +35,7 @@ import { VStack } from '@/components/ui/vstack';
 const TutorAcquisitionPage = () => {
   const [bulkEmails, setBulkEmails] = useState('');
   const [customMessage, setCustomMessage] = useState('');
-  
+
   // Mock data - in real app, fetch from API
   const acquisitionStats = {
     totalInvitations: 45,
@@ -65,10 +65,7 @@ const TutorAcquisitionPage = () => {
 
   return (
     <MainLayout _title="Aquisição de Estudantes">
-      <ScrollView 
-        className="flex-1 bg-gray-50"
-        contentContainerStyle={{ paddingBottom: 100 }}
-      >
+      <ScrollView className="flex-1 bg-gray-50" contentContainerStyle={{ paddingBottom: 100 }}>
         <VStack className="p-6" space="lg">
           {/* Header */}
           <VStack space="sm">
@@ -81,10 +78,7 @@ const TutorAcquisitionPage = () => {
                   Ferramentas para fazer crescer o seu negócio de tutoria
                 </Text>
               </VStack>
-              <Button 
-                variant="outline" 
-                onPress={() => router.push('/(tutor)/analytics')}
-              >
+              <Button variant="outline" onPress={() => router.push('/(tutor)/analytics')}>
                 <Icon as={TrendingUpIcon} size="sm" className="text-blue-600 mr-1" />
                 <ButtonText className="text-blue-600">Ver Analytics</ButtonText>
               </Button>
@@ -92,12 +86,13 @@ const TutorAcquisitionPage = () => {
           </VStack>
 
           {/* Acquisition Stats Overview */}
-          <Card variant="elevated" className="bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg">
+          <Card
+            variant="elevated"
+            className="bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg"
+          >
             <CardBody>
               <VStack space="md">
-                <Text className="text-white font-semibold text-lg">
-                  Resumo de Aquisição
-                </Text>
+                <Text className="text-white font-semibold text-lg">Resumo de Aquisição</Text>
                 <HStack space="lg" className="flex-wrap">
                   <VStack className="items-center">
                     <Text className="text-2xl font-bold text-white">
@@ -129,7 +124,7 @@ const TutorAcquisitionPage = () => {
           </Card>
 
           {/* Main Acquisition Hub */}
-          <StudentAcquisitionHub 
+          <StudentAcquisitionHub
             schoolId={1} // Mock school ID
             tutorName="Professor(a)"
           />
@@ -181,7 +176,7 @@ const TutorAcquisitionPage = () => {
                 </VStack>
 
                 {/* Send Button */}
-                <Button 
+                <Button
                   variant="solid"
                   onPress={handleBulkInvitation}
                   disabled={!bulkEmails.trim()}
@@ -226,12 +221,10 @@ const TutorAcquisitionPage = () => {
             </CardHeader>
             <CardBody>
               <VStack space="md">
-                <Text className="text-sm font-medium text-gray-700">
-                  Partilhar Perfil de Tutor
-                </Text>
-                
+                <Text className="text-sm font-medium text-gray-700">Partilhar Perfil de Tutor</Text>
+
                 <HStack space="sm" className="flex-wrap">
-                  <Pressable 
+                  <Pressable
                     onPress={() => handleSocialShare('instagram')}
                     className="flex-1 min-w-[120px] bg-pink-50 border border-pink-200 rounded-lg p-4 items-center"
                   >
@@ -239,8 +232,8 @@ const TutorAcquisitionPage = () => {
                     <Text className="text-sm font-medium text-pink-600">Instagram</Text>
                     <Text className="text-xs text-pink-500">Stories & Posts</Text>
                   </Pressable>
-                  
-                  <Pressable 
+
+                  <Pressable
                     onPress={() => handleSocialShare('facebook')}
                     className="flex-1 min-w-[120px] bg-blue-50 border border-blue-200 rounded-lg p-4 items-center"
                   >
@@ -248,8 +241,8 @@ const TutorAcquisitionPage = () => {
                     <Text className="text-sm font-medium text-blue-600">Facebook</Text>
                     <Text className="text-xs text-blue-500">Páginas & Grupos</Text>
                   </Pressable>
-                  
-                  <Pressable 
+
+                  <Pressable
                     onPress={() => handleSocialShare('twitter')}
                     className="flex-1 min-w-[120px] bg-sky-50 border border-sky-200 rounded-lg p-4 items-center"
                   >
@@ -257,8 +250,8 @@ const TutorAcquisitionPage = () => {
                     <Text className="text-sm font-medium text-sky-600">Twitter</Text>
                     <Text className="text-xs text-sky-500">Threads</Text>
                   </Pressable>
-                  
-                  <Pressable 
+
+                  <Pressable
                     onPress={() => handleSocialShare('whatsapp')}
                     className="flex-1 min-w-[120px] bg-green-50 border border-green-200 rounded-lg p-4 items-center"
                   >
@@ -301,25 +294,31 @@ const TutorAcquisitionPage = () => {
                   <VStack key={channel.name} space="xs">
                     <HStack className="justify-between items-center">
                       <VStack>
-                        <Text className="text-sm font-medium text-gray-900">
-                          {channel.name}
-                        </Text>
+                        <Text className="text-sm font-medium text-gray-900">{channel.name}</Text>
                         <Text className="text-xs text-gray-600">
                           {channel.sent} enviados • {channel.accepted} aceites
                         </Text>
                       </VStack>
                       <VStack className="items-end">
-                        <Badge 
+                        <Badge
                           variant="outline"
                           className={
-                            channel.rate >= 70 ? "bg-green-50" : 
-                            channel.rate >= 40 ? "bg-yellow-50" : "bg-red-50"
+                            channel.rate >= 70
+                              ? 'bg-green-50'
+                              : channel.rate >= 40
+                              ? 'bg-yellow-50'
+                              : 'bg-red-50'
                           }
                         >
-                          <BadgeText className={
-                            channel.rate >= 70 ? "text-green-700" : 
-                            channel.rate >= 40 ? "text-yellow-700" : "text-red-700"
-                          }>
+                          <BadgeText
+                            className={
+                              channel.rate >= 70
+                                ? 'text-green-700'
+                                : channel.rate >= 40
+                                ? 'text-yellow-700'
+                                : 'text-red-700'
+                            }
+                          >
                             {channel.rate}%
                           </BadgeText>
                         </Badge>
@@ -328,8 +327,11 @@ const TutorAcquisitionPage = () => {
                     <VStack className="w-full bg-gray-200 rounded-full h-2">
                       <VStack
                         className={`h-2 rounded-full ${
-                          channel.rate >= 70 ? 'bg-green-500' :
-                          channel.rate >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                          channel.rate >= 70
+                            ? 'bg-green-500'
+                            : channel.rate >= 40
+                            ? 'bg-yellow-500'
+                            : 'bg-red-500'
                         }`}
                         style={{ width: `${channel.rate}%` }}
                       />
@@ -341,7 +343,10 @@ const TutorAcquisitionPage = () => {
           </Card>
 
           {/* Call to Action */}
-          <Card variant="elevated" className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-dashed border-green-200 shadow-sm">
+          <Card
+            variant="elevated"
+            className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-dashed border-green-200 shadow-sm"
+          >
             <CardBody>
               <VStack space="md" className="items-center text-center">
                 <Icon as={TargetIcon} size="lg" className="text-green-600" />
@@ -350,20 +355,15 @@ const TutorAcquisitionPage = () => {
                     Objetivo: 50 Estudantes até Final do Ano
                   </Text>
                   <Text className="text-sm text-gray-600">
-                    Está a {Math.round((32/50) * 100)}% do seu objetivo. Continue convidando estudantes!
+                    Está a {Math.round((32 / 50) * 100)}% do seu objetivo. Continue convidando
+                    estudantes!
                   </Text>
                 </VStack>
                 <HStack space="sm">
-                  <Button 
-                    variant="solid"
-                    onPress={() => router.push('/(tutor)/dashboard')}
-                  >
+                  <Button variant="solid" onPress={() => router.push('/(tutor)/dashboard')}>
                     <ButtonText>Voltar ao Dashboard</ButtonText>
                   </Button>
-                  <Button 
-                    variant="outline"
-                    onPress={() => router.push('/(tutor)/analytics')}
-                  >
+                  <Button variant="outline" onPress={() => router.push('/(tutor)/analytics')}>
                     <ButtonText className="text-blue-600">Ver Progresso</ButtonText>
                   </Button>
                 </HStack>

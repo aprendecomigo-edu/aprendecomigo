@@ -2,9 +2,9 @@ import React from 'react';
 
 import { Box } from '@/components/ui/box';
 import { Card } from '@/components/ui/card';
-import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
 import { Skeleton } from '@/components/ui/skeleton';
+import { VStack } from '@/components/ui/vstack';
 
 interface StepLoadingSkeletonProps {
   variant?: 'form' | 'card' | 'list' | 'preview';
@@ -160,11 +160,7 @@ export const StepLoadingSkeleton: React.FC<StepLoadingSkeletonProps> = ({
     }
   };
 
-  return (
-    <Box className="flex-1 bg-gray-50">
-      {renderSkeleton()}
-    </Box>
-  );
+  return <Box className="flex-1 bg-gray-50">{renderSkeleton()}</Box>;
 };
 
 export default StepLoadingSkeleton;

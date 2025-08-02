@@ -1,7 +1,8 @@
-import React from 'react';
-import { RefreshCw, Plus, BarChart3 } from 'lucide-react-native';
 import useRouter from '@unitools/router';
+import { RefreshCw, Plus, BarChart3 } from 'lucide-react-native';
+import React from 'react';
 
+import { StudentBalanceCard } from '@/components/purchase';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
@@ -9,7 +10,6 @@ import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { StudentBalanceCard } from '@/components/purchase';
 
 export default function StudentBalancePage() {
   const router = useRouter();
@@ -48,7 +48,7 @@ export default function StudentBalancePage() {
             <Heading size="lg" className="text-typography-900">
               Quick Actions
             </Heading>
-            
+
             <HStack space="md" className="flex-wrap">
               <Button
                 action="primary"

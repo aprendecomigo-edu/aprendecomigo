@@ -2,9 +2,9 @@ import React from 'react';
 
 import { Box } from '@/components/ui/box';
 import { Card } from '@/components/ui/card';
-import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
 import { Skeleton } from '@/components/ui/skeleton';
+import { VStack } from '@/components/ui/vstack';
 
 interface WizardLoadingSkeletonProps {
   showNavigation?: boolean;
@@ -16,15 +16,17 @@ const NavigationSkeleton: React.FC<{ animated: boolean }> = ({ animated }) => (
     <VStack space="xs" className="p-4">
       {/* Header */}
       <Skeleton className={`h-4 w-32 mb-2 ${animated ? 'animate-pulse' : ''}`} />
-      
+
       {/* Navigation Steps */}
       {Array.from({ length: 7 }).map((_, index) => (
         <Box key={index} className="w-full">
           <Card className="p-3 border-gray-200">
             <HStack space="sm" className="items-start">
               {/* Step Icon */}
-              <Skeleton className={`h-5 w-5 rounded-full mt-0.5 ${animated ? 'animate-pulse' : ''}`} />
-              
+              <Skeleton
+                className={`h-5 w-5 rounded-full mt-0.5 ${animated ? 'animate-pulse' : ''}`}
+              />
+
               {/* Step Content */}
               <VStack space="xs" className="flex-1">
                 <HStack className="items-center justify-between w-full">
@@ -32,17 +34,19 @@ const NavigationSkeleton: React.FC<{ animated: boolean }> = ({ animated }) => (
                   <Skeleton className={`h-2 w-2 rounded-full ${animated ? 'animate-pulse' : ''}`} />
                 </HStack>
                 <Skeleton className={`h-3 w-full ${animated ? 'animate-pulse' : ''}`} />
-                
+
                 {/* Progress Bar */}
                 {index % 3 === 1 && (
                   <Box className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                    <Skeleton className={`h-1.5 rounded-full w-2/3 ${animated ? 'animate-pulse' : ''}`} />
+                    <Skeleton
+                      className={`h-1.5 rounded-full w-2/3 ${animated ? 'animate-pulse' : ''}`}
+                    />
                   </Box>
                 )}
               </VStack>
             </HStack>
           </Card>
-          
+
           {/* Connector Line */}
           {index < 6 && (
             <Box className="ml-8 my-1">
@@ -51,7 +55,7 @@ const NavigationSkeleton: React.FC<{ animated: boolean }> = ({ animated }) => (
           )}
         </Box>
       ))}
-      
+
       {/* Progress Summary */}
       <Card className="p-3 bg-gray-50 mt-4 w-full">
         <VStack space="xs">
@@ -75,7 +79,7 @@ const HeaderSkeleton: React.FC<{ animated: boolean }> = ({ animated }) => (
           <Skeleton className={`h-5 w-5 ${animated ? 'animate-pulse' : ''}`} />
           <Skeleton className={`h-4 w-12 ${animated ? 'animate-pulse' : ''}`} />
         </HStack>
-        
+
         <HStack space="sm" className="items-center">
           <Skeleton className={`h-8 w-20 rounded ${animated ? 'animate-pulse' : ''}`} />
           <Skeleton className={`h-8 w-8 rounded-full ${animated ? 'animate-pulse' : ''}`} />
@@ -165,15 +169,15 @@ export const WizardLoadingSkeleton: React.FC<WizardLoadingSkeletonProps> = ({
     <HStack className="flex-1">
       {/* Sidebar Navigation */}
       {showNavigation && <NavigationSkeleton animated={animated} />}
-      
+
       {/* Main Content */}
       <VStack className="flex-1">
         {/* Header */}
         <HeaderSkeleton animated={animated} />
-        
+
         {/* Content */}
         <ContentSkeleton animated={animated} />
-        
+
         {/* Footer */}
         <FooterSkeleton animated={animated} />
       </VStack>

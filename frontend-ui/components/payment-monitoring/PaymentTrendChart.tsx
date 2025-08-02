@@ -1,33 +1,35 @@
 /**
  * Payment Trend Chart Component - GitHub Issue #117
- * 
+ *
  * Displays payment trends using victory-native for cross-platform charts.
  * Shows transaction volume, revenue, and success rate trends over time.
  */
 
+import { TrendingUp, BarChart3, DollarSign, Percent } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { Dimensions } from 'react-native';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
+
 import { Box } from '@/components/ui/box';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, BarChart3, DollarSign, Percent } from 'lucide-react-native';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
-// Victory Native imports
-import {
-  VictoryChart,
-  VictoryLine,
-  VictoryArea,
-  VictoryAxis,
-  VictoryTheme,
-  VictoryTooltip,
-  VictoryLabel,
-  VictoryContainer,
-} from 'victory-native';
+// Victory Native imports - Placeholder for now
+// TODO: Install victory-native package for production charts
+// import {
+//   VictoryChart,
+//   VictoryLine,
+//   VictoryArea,
+//   VictoryAxis,
+//   VictoryTheme,
+//   VictoryTooltip,
+//   VictoryLabel,
+//   VictoryContainer,
+// } from 'victory-native';
 
 import type { PaymentTrendData, PaymentMonitoringState } from '@/types/paymentMonitoring';
 
@@ -54,7 +56,7 @@ const chartMetrics: Record<string, ChartMetric> = {
     icon: BarChart3,
     color: '#3B82F6', // blue-500
     unit: 'transactions',
-    format: (value) => value.toLocaleString(),
+    format: value => value.toLocaleString(),
   },
   revenue: {
     key: 'revenue',
@@ -62,7 +64,8 @@ const chartMetrics: Record<string, ChartMetric> = {
     icon: DollarSign,
     color: '#10B981', // emerald-500
     unit: 'EUR',
-    format: (value) => `€${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    format: value =>
+      `€${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
   },
   success_rate: {
     key: 'success_rate',
@@ -70,19 +73,19 @@ const chartMetrics: Record<string, ChartMetric> = {
     icon: Percent,
     color: '#8B5CF6', // violet-500
     unit: '%',
-    format: (value) => `${value.toFixed(1)}%`,
+    format: value => `${value.toFixed(1)}%`,
   },
 };
 
-export default function PaymentTrendChart({ 
-  data, 
-  metric, 
-  timeRange, 
-  height = 300 
+export default function PaymentTrendChart({
+  data,
+  metric,
+  timeRange,
+  height = 300,
 }: PaymentTrendChartProps) {
   const screenWidth = Dimensions.get('window').width;
   const chartWidth = Math.min(screenWidth - 48, 600); // Max width with padding
-  
+
   const currentMetric = chartMetrics[metric];
   const chartData = data[currentMetric.key];
 
@@ -109,14 +112,14 @@ export default function PaymentTrendChart({
     const min = Math.min(...values);
     const max = Math.max(...values);
     const average = values.reduce((sum, val) => sum + val, 0) / values.length;
-    
+
     // Calculate trend (simple linear regression slope)
     const n = values.length;
     const sumX = values.reduce((sum, _, i) => sum + i, 0);
     const sumY = values.reduce((sum, val) => sum + val, 0);
-    const sumXY = values.reduce((sum, val, i) => sum + (i * val), 0);
-    const sumXX = values.reduce((sum, _, i) => sum + (i * i), 0);
-    
+    const sumXY = values.reduce((sum, val, i) => sum + i * val, 0);
+    const sumXX = values.reduce((sum, _, i) => sum + i * i, 0);
+
     const trend = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
 
     return { min, max, average, trend };
@@ -139,9 +142,12 @@ export default function PaymentTrendChart({
   // Custom tooltip component
   const CustomTooltip = ({ datum }: any) => {
     if (!datum) return null;
-    
+
     return (
-      <VStack space="xs" className="bg-background-0 p-3 rounded-lg border border-border-200 shadow-lg">
+      <VStack
+        space="xs"
+        className="bg-background-0 p-3 rounded-lg border border-border-200 shadow-lg"
+      >
         <Text size="xs" className="text-typography-500">
           {new Date(datum.timestamp).toLocaleString()}
         </Text>
@@ -188,27 +194,34 @@ export default function PaymentTrendChart({
           <VStack space="xs" className="items-end">
             <HStack space="lg">
               <VStack space="xs" className="items-center">
-                <Text size="xs" className="text-typography-500">Average</Text>
+                <Text size="xs" className="text-typography-500">
+                  Average
+                </Text>
                 <Text size="sm" className="font-medium text-typography-700">
                   {currentMetric.format(stats.average)}
                 </Text>
               </VStack>
               <VStack space="xs" className="items-center">
-                <Text size="xs" className="text-typography-500">Trend</Text>
+                <Text size="xs" className="text-typography-500">
+                  Trend
+                </Text>
                 <HStack space="xs" className="items-center">
-                  <Icon 
-                    as={TrendingUp} 
-                    size="xs" 
+                  <Icon
+                    as={TrendingUp}
+                    size="xs"
                     className={stats.trend >= 0 ? 'text-success-600' : 'text-error-600'}
                     style={{
-                      transform: [{ rotate: stats.trend >= 0 ? '0deg' : '180deg' }]
+                      transform: [{ rotate: stats.trend >= 0 ? '0deg' : '180deg' }],
                     }}
                   />
-                  <Text 
-                    size="sm" 
-                    className={`font-medium ${stats.trend >= 0 ? 'text-success-600' : 'text-error-600'}`}
+                  <Text
+                    size="sm"
+                    className={`font-medium ${
+                      stats.trend >= 0 ? 'text-success-600' : 'text-error-600'
+                    }`}
                   >
-                    {stats.trend >= 0 ? '+' : ''}{stats.trend.toFixed(2)}
+                    {stats.trend >= 0 ? '+' : ''}
+                    {stats.trend.toFixed(2)}
                   </Text>
                 </HStack>
               </VStack>
@@ -216,73 +229,22 @@ export default function PaymentTrendChart({
           </VStack>
         </HStack>
 
-        {/* Chart Container */}
-        <Box className="items-center">
-          <VictoryChart
-            theme={VictoryTheme.material}
-            width={chartWidth}
-            height={height}
-            padding={{ left: 80, top: 20, right: 50, bottom: 60 }}
-            containerComponent={<VictoryContainer responsive={false} />}
-          >
-            {/* X Axis */}
-            <VictoryAxis
-              dependentAxis={false}
-              tickFormat={(date) => formatTick(date, 'x')}
-              style={{
-                axis: { stroke: '#E5E7EB' },
-                tickLabels: { 
-                  fontSize: 12, 
-                  fill: '#6B7280',
-                  angle: timeRange === 'last_24h' ? -45 : 0,
-                },
-                grid: { stroke: '#F3F4F6', strokeDasharray: '3,3' },
-              }}
-            />
-
-            {/* Y Axis */}
-            <VictoryAxis
-              dependentAxis
-              tickFormat={(value) => formatTick(value, 'y')}
-              style={{
-                axis: { stroke: '#E5E7EB' },
-                tickLabels: { fontSize: 12, fill: '#6B7280' },
-                grid: { stroke: '#F3F4F6', strokeDasharray: '3,3' },
-              }}
-            />
-
-            {/* Area Chart */}
-            <VictoryArea
-              data={transformedData}
-              style={{
-                data: { 
-                  fill: currentMetric.color,
-                  fillOpacity: 0.1,
-                  stroke: currentMetric.color,
-                  strokeWidth: 2,
-                },
-              }}
-              animate={{
-                duration: 1000,
-                onLoad: { duration: 500 },
-              }}
-            />
-
-            {/* Line Chart */}
-            <VictoryLine
-              data={transformedData}
-              style={{
-                data: { 
-                  stroke: currentMetric.color,
-                  strokeWidth: 3,
-                },
-              }}
-              animate={{
-                duration: 1000,
-                onLoad: { duration: 500 },
-              }}
-            />
-          </VictoryChart>
+        {/* Chart Container - Placeholder */}
+        <Box className="items-center justify-center bg-gray-100 rounded-lg" style={{ height }}>
+          <VStack space="md" className="items-center">
+            <Icon as={currentMetric.icon} size="xl" className="text-gray-400" />
+            <Text className="text-gray-600 font-medium">Chart Placeholder</Text>
+            <Text className="text-gray-500 text-sm text-center">
+              Victory Native charts will be rendered here
+            </Text>
+            <VStack space="xs" className="mt-4">
+              <Text className="text-xs text-gray-600">Current Data:</Text>
+              <Text className="text-sm font-medium">{transformedData.length} data points</Text>
+              <Text className="text-sm">
+                Latest: {transformedData[transformedData.length - 1]?.formattedValue || 'N/A'}
+              </Text>
+            </VStack>
+          </VStack>
         </Box>
 
         {/* Footer with additional info */}
@@ -292,13 +254,17 @@ export default function PaymentTrendChart({
           </Text>
           <HStack space="md">
             <HStack space="xs" className="items-center">
-              <Text size="xs" className="text-typography-500">Min:</Text>
+              <Text size="xs" className="text-typography-500">
+                Min:
+              </Text>
               <Text size="xs" className="font-medium text-typography-700">
                 {currentMetric.format(stats.min)}
               </Text>
             </HStack>
             <HStack space="xs" className="items-center">
-              <Text size="xs" className="text-typography-500">Max:</Text>
+              <Text size="xs" className="text-typography-500">
+                Max:
+              </Text>
               <Text size="xs" className="font-medium text-typography-700">
                 {currentMetric.format(stats.max)}
               </Text>

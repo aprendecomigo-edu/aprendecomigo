@@ -1,23 +1,31 @@
+import { Euro, TrendingUp, CreditCard, Calendar, ChevronDownIcon, Info } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Heading } from '@/components/ui/heading';
-import { Input, InputField } from '@/components/ui/input';
-import { Button, ButtonText } from '@/components/ui/button';
-import { FormControl } from '@/components/ui/form-control';
-import { Select, SelectTrigger, SelectInput, SelectIcon, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator, SelectItem } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
-import { SliderTrack } from '@/components/ui/slider';
-import { SliderFilledTrack } from '@/components/ui/slider';
-import { SliderThumb } from '@/components/ui/slider';
-import { Icon } from '@/components/ui/icon';
-import { Euro, TrendingUp, CreditCard, Calendar, ChevronDownIcon, Info } from 'lucide-react-native';
 
 import { TeacherProfileData, PaymentPreferences } from '@/api/invitationApi';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { FormControl } from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectIcon,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicatorWrapper,
+  SelectDragIndicator,
+  SelectItem,
+} from '@/components/ui/select';
+import { Slider, SliderTrack, SliderFilledTrack, SliderThumb } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 interface RatesCompensationStepProps {
   profileData: TeacherProfileData;
@@ -64,25 +72,25 @@ const RatesCompensationStep: React.FC<RatesCompensationStepProps> = ({
       return {
         label: 'Iniciante',
         color: 'text-green-600',
-        description: 'Ideal para professores começando ou com pouca experiência'
+        description: 'Ideal para professores começando ou com pouca experiência',
       };
     } else if (rate < 30) {
       return {
         label: 'Intermediário',
         color: 'text-blue-600',
-        description: 'Para professores com experiência moderada'
+        description: 'Para professores com experiência moderada',
       };
     } else if (rate < 50) {
       return {
         label: 'Avançado',
         color: 'text-purple-600',
-        description: 'Para professores experientes com especialização'
+        description: 'Para professores experientes com especialização',
       };
     } else {
       return {
         label: 'Especialista',
         color: 'text-orange-600',
-        description: 'Para especialistas altamente qualificados'
+        description: 'Para especialistas altamente qualificados',
       };
     }
   };
@@ -117,7 +125,7 @@ const RatesCompensationStep: React.FC<RatesCompensationStepProps> = ({
               <Text className="font-medium text-blue-800">Taxas de Mercado</Text>
             </HStack>
             <VStack space="xs">
-              {suggestedRates.map((rate) => (
+              {suggestedRates.map(rate => (
                 <HStack key={rate.label} className="justify-between items-center">
                   <Text className="text-sm text-blue-700">{rate.label}:</Text>
                   <HStack space="sm" className="items-center">
@@ -163,9 +171,7 @@ const RatesCompensationStep: React.FC<RatesCompensationStepProps> = ({
                     <Text className={`font-medium ${rateCategory.color}`}>
                       Categoria: {rateCategory.label}
                     </Text>
-                    <Text className="text-sm text-gray-600">
-                      {rateCategory.description}
-                    </Text>
+                    <Text className="text-sm text-gray-600">{rateCategory.description}</Text>
                   </VStack>
                 </HStack>
               </Box>
@@ -210,9 +216,7 @@ const RatesCompensationStep: React.FC<RatesCompensationStepProps> = ({
             </VStack>
 
             {validationErrors.hourly_rate && (
-              <Text className="text-red-600 text-sm">
-                {validationErrors.hourly_rate}
-              </Text>
+              <Text className="text-red-600 text-sm">{validationErrors.hourly_rate}</Text>
             )}
           </VStack>
         </FormControl>
@@ -227,7 +231,7 @@ const RatesCompensationStep: React.FC<RatesCompensationStepProps> = ({
           </VStack>
           <Switch
             value={profileData.rate_negotiable}
-            onValueChange={(value) => updateProfileData({ rate_negotiable: value })}
+            onValueChange={value => updateProfileData({ rate_negotiable: value })}
           />
         </HStack>
 
@@ -246,7 +250,7 @@ const RatesCompensationStep: React.FC<RatesCompensationStepProps> = ({
               </HStack>
               <Select
                 selectedValue={paymentPreferences.preferred_payment_method}
-                onValueChange={(value) => updatePaymentPreference('preferred_payment_method', value)}
+                onValueChange={value => updatePaymentPreference('preferred_payment_method', value)}
               >
                 <SelectTrigger variant="outline" size="md">
                   <SelectInput placeholder="Selecione o método de pagamento" />
@@ -276,7 +280,7 @@ const RatesCompensationStep: React.FC<RatesCompensationStepProps> = ({
               </HStack>
               <Select
                 selectedValue={paymentPreferences.invoice_frequency}
-                onValueChange={(value) => updatePaymentPreference('invoice_frequency', value)}
+                onValueChange={value => updatePaymentPreference('invoice_frequency', value)}
               >
                 <SelectTrigger variant="outline" size="md">
                   <SelectInput placeholder="Selecione a frequência" />
@@ -307,7 +311,7 @@ const RatesCompensationStep: React.FC<RatesCompensationStepProps> = ({
             </VStack>
             <Switch
               value={paymentPreferences.tax_information_provided}
-              onValueChange={(value) => updatePaymentPreference('tax_information_provided', value)}
+              onValueChange={value => updatePaymentPreference('tax_information_provided', value)}
             />
           </HStack>
         </VStack>

@@ -1,23 +1,29 @@
-import React, { useState, useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { 
-  ArrowLeft, 
-  Edit, 
-  Save, 
-  X, 
-  User, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  MapPin, 
+import {
+  ArrowLeft,
+  Edit,
+  Save,
+  X,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  MapPin,
   GraduationCap,
   Users,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
 
-import { StudentProfile, getStudentById, updateStudent, UpdateStudentData, EducationalSystem } from '@/api/userApi';
-import { useStudents } from '@/hooks/useStudents';
+import {
+  StudentProfile,
+  getStudentById,
+  updateStudent,
+  UpdateStudentData,
+  EducationalSystem,
+} from '@/api/userApi';
 import { MainLayout } from '@/components/layouts/main-layout';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
@@ -41,9 +47,9 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/toast';
+import { VStack } from '@/components/ui/vstack';
+import { useStudents } from '@/hooks/useStudents';
 
 // Color constants
 const COLORS = {
@@ -66,8 +72,18 @@ const COLORS = {
 } as const;
 
 const SCHOOL_YEARS = [
-  '1º ano', '2º ano', '3º ano', '4º ano', '5º ano', '6º ano',
-  '7º ano', '8º ano', '9º ano', '10º ano', '11º ano', '12º ano',
+  '1º ano',
+  '2º ano',
+  '3º ano',
+  '4º ano',
+  '5º ano',
+  '6º ano',
+  '7º ano',
+  '8º ano',
+  '9º ano',
+  '10º ano',
+  '11º ano',
+  '12º ano',
 ];
 
 interface StudentProfileHeaderProps {
@@ -154,7 +170,11 @@ const StudentProfileHeader: React.FC<StudentProfileHeaderProps> = ({
                   <ButtonText>Cancelar</ButtonText>
                 </HStack>
               </Button>
-              <Button onPress={onSave} disabled={isSaving} style={{ backgroundColor: COLORS.primary }}>
+              <Button
+                onPress={onSave}
+                disabled={isSaving}
+                style={{ backgroundColor: COLORS.primary }}
+              >
                 {isSaving ? (
                   <HStack space="xs" className="items-center">
                     <Spinner size="small" />
@@ -199,7 +219,10 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({
 }) => {
   if (isEditing) {
     return (
-      <Box className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: COLORS.white }}>
+      <Box
+        className="rounded-lg border border-gray-200 p-6"
+        style={{ backgroundColor: COLORS.white }}
+      >
         <VStack space="lg">
           <Heading size="lg" className="text-gray-900">
             Informações do Aluno
@@ -213,7 +236,7 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({
                 <Icon as={User} size="sm" className="text-gray-400" />
                 <InputField
                   value={formData.name}
-                  onChangeText={(text) => onFormDataChange('name', text)}
+                  onChangeText={text => onFormDataChange('name', text)}
                   className="flex-1 ml-2"
                 />
               </HStack>
@@ -228,7 +251,7 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({
                 <Icon as={Mail} size="sm" className="text-gray-400" />
                 <InputField
                   value={formData.email}
-                  onChangeText={(text) => onFormDataChange('email', text)}
+                  onChangeText={text => onFormDataChange('email', text)}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   className="flex-1 ml-2"
@@ -245,7 +268,7 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({
                 <Icon as={Phone} size="sm" className="text-gray-400" />
                 <InputField
                   value={formData.phone_number}
-                  onChangeText={(text) => onFormDataChange('phone_number', text)}
+                  onChangeText={text => onFormDataChange('phone_number', text)}
                   keyboardType="phone-pad"
                   className="flex-1 ml-2"
                 />
@@ -258,7 +281,7 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({
             <Text className="text-sm font-medium text-gray-700">Ano Escolar</Text>
             <Select
               selectedValue={formData.school_year}
-              onValueChange={(value) => onFormDataChange('school_year', value)}
+              onValueChange={value => onFormDataChange('school_year', value)}
             >
               <SelectTrigger>
                 <HStack className="items-center px-3">
@@ -285,7 +308,7 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({
             <Text className="text-sm font-medium text-gray-700">Sistema Educacional</Text>
             <Select
               selectedValue={formData.educational_system_id?.toString()}
-              onValueChange={(value) => onFormDataChange('educational_system_id', value)}
+              onValueChange={value => onFormDataChange('educational_system_id', value)}
             >
               <SelectTrigger>
                 <SelectInput placeholder="Selecione o sistema educacional" />
@@ -298,11 +321,7 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({
                     <SelectDragIndicator />
                   </SelectDragIndicatorWrapper>
                   {educationalSystems.map(system => (
-                    <SelectItem 
-                      key={system.id} 
-                      label={system.name} 
-                      value={system.id.toString()} 
-                    />
+                    <SelectItem key={system.id} label={system.name} value={system.id.toString()} />
                   ))}
                 </SelectContent>
               </SelectPortal>
@@ -317,7 +336,7 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({
                 <Icon as={Calendar} size="sm" className="text-gray-400" />
                 <InputField
                   value={formData.birth_date}
-                  onChangeText={(text) => onFormDataChange('birth_date', text)}
+                  onChangeText={text => onFormDataChange('birth_date', text)}
                   placeholder="AAAA-MM-DD"
                   className="flex-1 ml-2"
                 />
@@ -333,7 +352,7 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({
                 <Icon as={MapPin} size="sm" className="text-gray-400" />
                 <InputField
                   value={formData.address}
-                  onChangeText={(text) => onFormDataChange('address', text)}
+                  onChangeText={text => onFormDataChange('address', text)}
                   multiline
                   className="flex-1 ml-2"
                 />
@@ -346,7 +365,7 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({
             <Text className="text-sm font-medium text-gray-700">Status</Text>
             <Select
               selectedValue={formData.status}
-              onValueChange={(value) => onFormDataChange('status', value)}
+              onValueChange={value => onFormDataChange('status', value)}
             >
               <SelectTrigger>
                 <SelectInput placeholder="Selecione o status" />
@@ -371,7 +390,10 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({
   }
 
   return (
-    <Box className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: COLORS.white }}>
+    <Box
+      className="rounded-lg border border-gray-200 p-6"
+      style={{ backgroundColor: COLORS.white }}
+    >
       <VStack space="lg">
         <Heading size="lg" className="text-gray-900">
           Informações do Aluno
@@ -400,13 +422,17 @@ const StudentInfoCard: React.FC<StudentInfoCardProps> = ({
 
           <HStack className="justify-between">
             <Text className="text-gray-600">Sistema Educacional:</Text>
-            <Text className="font-medium text-gray-900">{student.educational_system?.name || 'N/A'}</Text>
+            <Text className="font-medium text-gray-900">
+              {student.educational_system?.name || 'N/A'}
+            </Text>
           </HStack>
 
           <HStack className="justify-between">
             <Text className="text-gray-600">Data de Nascimento:</Text>
             <Text className="font-medium text-gray-900">
-              {student.birth_date ? new Date(student.birth_date).toLocaleDateString('pt-PT') : 'N/A'}
+              {student.birth_date
+                ? new Date(student.birth_date).toLocaleDateString('pt-PT')
+                : 'N/A'}
             </Text>
           </HStack>
 
@@ -444,7 +470,10 @@ const ParentContactCard: React.FC<ParentContactCardProps> = ({
 
   if (isEditing) {
     return (
-      <Box className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: COLORS.white }}>
+      <Box
+        className="rounded-lg border border-gray-200 p-6"
+        style={{ backgroundColor: COLORS.white }}
+      >
         <VStack space="lg">
           <Heading size="lg" className="text-gray-900">
             Contato dos Pais/Responsáveis
@@ -457,7 +486,7 @@ const ParentContactCard: React.FC<ParentContactCardProps> = ({
               <Input>
                 <InputField
                   value={formData.parent_contact?.name || ''}
-                  onChangeText={(text) => updateParentContact('name', text)}
+                  onChangeText={text => updateParentContact('name', text)}
                   placeholder="Nome completo"
                 />
               </Input>
@@ -469,7 +498,7 @@ const ParentContactCard: React.FC<ParentContactCardProps> = ({
               <Input>
                 <InputField
                   value={formData.parent_contact?.email || ''}
-                  onChangeText={(text) => updateParentContact('email', text)}
+                  onChangeText={text => updateParentContact('email', text)}
                   placeholder="email@exemplo.com"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -483,7 +512,7 @@ const ParentContactCard: React.FC<ParentContactCardProps> = ({
               <Input>
                 <InputField
                   value={formData.parent_contact?.phone || ''}
-                  onChangeText={(text) => updateParentContact('phone', text)}
+                  onChangeText={text => updateParentContact('phone', text)}
                   placeholder="+351912345678"
                   keyboardType="phone-pad"
                 />
@@ -495,7 +524,7 @@ const ParentContactCard: React.FC<ParentContactCardProps> = ({
               <Text className="text-sm font-medium text-gray-700">Relação</Text>
               <Select
                 selectedValue={formData.parent_contact?.relationship || ''}
-                onValueChange={(value) => updateParentContact('relationship', value)}
+                onValueChange={value => updateParentContact('relationship', value)}
               >
                 <SelectTrigger>
                   <SelectInput placeholder="Selecione a relação" />
@@ -522,7 +551,10 @@ const ParentContactCard: React.FC<ParentContactCardProps> = ({
   }
 
   return (
-    <Box className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: COLORS.white }}>
+    <Box
+      className="rounded-lg border border-gray-200 p-6"
+      style={{ backgroundColor: COLORS.white }}
+    >
       <VStack space="lg">
         <Heading size="lg" className="text-gray-900">
           Contato dos Pais/Responsáveis
@@ -548,9 +580,13 @@ const ParentContactCard: React.FC<ParentContactCardProps> = ({
             <HStack className="justify-between">
               <Text className="text-gray-600">Relação:</Text>
               <Text className="font-medium text-gray-900">
-                {student.parent_contact.relationship === 'father' ? 'Pai' :
-                 student.parent_contact.relationship === 'mother' ? 'Mãe' :
-                 student.parent_contact.relationship === 'guardian' ? 'Responsável Legal' : 'Outro'}
+                {student.parent_contact.relationship === 'father'
+                  ? 'Pai'
+                  : student.parent_contact.relationship === 'mother'
+                  ? 'Mãe'
+                  : student.parent_contact.relationship === 'guardian'
+                  ? 'Responsável Legal'
+                  : 'Outro'}
               </Text>
             </HStack>
           </VStack>
@@ -593,7 +629,7 @@ export default function StudentProfilePage() {
         setError(null);
         const studentData = await getStudentById(parseInt(id));
         setStudent(studentData);
-        
+
         // Initialize form data
         setFormData({
           name: studentData.user.name,
@@ -662,7 +698,7 @@ export default function StudentProfilePage() {
 
     try {
       setIsSaving(true);
-      
+
       const updateData: UpdateStudentData = {
         name: formData.name,
         email: formData.email,
@@ -713,9 +749,7 @@ export default function StudentProfilePage() {
                 <Heading size="lg" className="text-gray-900 text-center">
                   Erro ao Carregar Perfil
                 </Heading>
-                <Text className="text-gray-600 text-center">
-                  {error || 'Aluno não encontrado'}
-                </Text>
+                <Text className="text-gray-600 text-center">{error || 'Aluno não encontrado'}</Text>
               </VStack>
               <Button onPress={() => router.back()}>
                 <ButtonText>Voltar</ButtonText>

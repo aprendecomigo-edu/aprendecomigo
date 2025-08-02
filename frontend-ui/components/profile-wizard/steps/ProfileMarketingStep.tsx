@@ -1,19 +1,19 @@
+import { Plus, X, Star, Target, Lightbulb, Trophy } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Heading } from '@/components/ui/heading';
-import { Input, InputField } from '@/components/ui/input';
-import { Textarea, TextareaInput } from '@/components/ui/textarea';
-import { Button, ButtonText } from '@/components/ui/button';
-import { FormControl } from '@/components/ui/form-control';
-import { Badge } from '@/components/ui/badge';
-import { Icon } from '@/components/ui/icon';
-import { Plus, X, Star, Target, Lightbulb, Trophy } from 'lucide-react-native';
 
 import { TeacherProfileData } from '@/api/invitationApi';
+import { Badge } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { FormControl } from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
+import { Text } from '@/components/ui/text';
+import { Textarea, TextareaInput } from '@/components/ui/textarea';
+import { VStack } from '@/components/ui/vstack';
 
 interface ProfileMarketingStepProps {
   profileData: TeacherProfileData;
@@ -32,28 +32,28 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
   const [newAchievement, setNewAchievement] = useState('');
 
   const philosophyExamples = [
-    "Acredito que cada aluno tem seu próprio ritmo de aprendizado e deve ser respeitado",
-    "O ensino deve ser prático e conectado com o mundo real",
-    "Aprender deve ser divertido e envolvente para ser eficaz",
-    "Cada erro é uma oportunidade de crescimento e aprendizado",
+    'Acredito que cada aluno tem seu próprio ritmo de aprendizado e deve ser respeitado',
+    'O ensino deve ser prático e conectado com o mundo real',
+    'Aprender deve ser divertido e envolvente para ser eficaz',
+    'Cada erro é uma oportunidade de crescimento e aprendizado',
   ];
 
   const approachExamples = [
-    "Uso métodos visuais e exemplos práticos para explicar conceitos abstratos",
-    "Adapto meu estilo de ensino às necessidades individuais de cada aluno",
-    "Incorporo tecnologia e ferramentas interativas nas minhas aulas",
-    "Foco em construir confiança antes de avançar para tópicos mais complexos",
+    'Uso métodos visuais e exemplos práticos para explicar conceitos abstratos',
+    'Adapto meu estilo de ensino às necessidades individuais de cada aluno',
+    'Incorporo tecnologia e ferramentas interativas nas minhas aulas',
+    'Foco em construir confiança antes de avançar para tópicos mais complexos',
   ];
 
   const commonSpecializations = [
-    "Preparação para Exames",
-    "Dificuldades de Aprendizagem",
-    "Ensino Online",
-    "Métodos Visuais",
-    "Gamificação",
-    "Educação Inclusiva",
-    "STEM",
-    "Línguas Estrangeiras",
+    'Preparação para Exames',
+    'Dificuldades de Aprendizagem',
+    'Ensino Online',
+    'Métodos Visuais',
+    'Gamificação',
+    'Educação Inclusiva',
+    'STEM',
+    'Línguas Estrangeiras',
   ];
 
   const handleAddSpecialization = () => {
@@ -69,7 +69,7 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
     }
 
     updateProfileData({
-      specializations: [...currentSpecializations, newSpecialization.trim()]
+      specializations: [...currentSpecializations, newSpecialization.trim()],
     });
     setNewSpecialization('');
   };
@@ -86,7 +86,7 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
       return;
     }
     updateProfileData({
-      specializations: [...currentSpecializations, specialization]
+      specializations: [...currentSpecializations, specialization],
     });
   };
 
@@ -98,7 +98,7 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
 
     const currentAchievements = profileData.achievements || [];
     updateProfileData({
-      achievements: [...currentAchievements, newAchievement.trim()]
+      achievements: [...currentAchievements, newAchievement.trim()],
     });
     setNewAchievement('');
   };
@@ -122,7 +122,8 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
             Marketing do Perfil
           </Heading>
           <Text className="text-gray-600">
-            Esta informação ajuda alunos e pais a entenderem seu estilo de ensino e escolherem você como professor.
+            Esta informação ajuda alunos e pais a entenderem seu estilo de ensino e escolherem você
+            como professor.
           </Text>
         </VStack>
 
@@ -134,23 +135,22 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
               <Text className="font-medium">Filosofia de Ensino *</Text>
             </HStack>
             <Text className="text-sm text-gray-600">
-              Descreva sua filosofia e crenças sobre educação. O que você acredita sobre o processo de aprendizagem?
+              Descreva sua filosofia e crenças sobre educação. O que você acredita sobre o processo
+              de aprendizagem?
             </Text>
             <Textarea className="min-h-[120px]">
               <TextareaInput
                 placeholder="Exemplo: Acredito que cada aluno é único e aprende de forma diferente. Meu papel é identificar o estilo de aprendizagem de cada um e adaptar minha metodologia..."
                 value={profileData.teaching_philosophy || ''}
-                onChangeText={(value) => updateProfileData({ teaching_philosophy: value })}
+                onChangeText={value => updateProfileData({ teaching_philosophy: value })}
                 multiline
                 textAlignVertical="top"
               />
             </Textarea>
             {validationErrors.teaching_philosophy && (
-              <Text className="text-red-600 text-sm">
-                {validationErrors.teaching_philosophy}
-              </Text>
+              <Text className="text-red-600 text-sm">{validationErrors.teaching_philosophy}</Text>
             )}
-            
+
             {/* Example Philosophy Buttons */}
             <VStack space="xs">
               <Text className="text-xs text-gray-500">Exemplos para inspiração:</Text>
@@ -185,15 +185,13 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
               <TextareaInput
                 placeholder="Exemplo: Utilizo uma abordagem prática e interativa, combinando explicações teóricas com exercícios práticos. Gosto de usar analogias do dia a dia para facilitar a compreensão..."
                 value={profileData.teaching_approach || ''}
-                onChangeText={(value) => updateProfileData({ teaching_approach: value })}
+                onChangeText={value => updateProfileData({ teaching_approach: value })}
                 multiline
                 textAlignVertical="top"
               />
             </Textarea>
             {validationErrors.teaching_approach && (
-              <Text className="text-red-600 text-sm">
-                {validationErrors.teaching_approach}
-              </Text>
+              <Text className="text-red-600 text-sm">{validationErrors.teaching_approach}</Text>
             )}
 
             {/* Example Approach Buttons */}
@@ -231,19 +229,19 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
             <VStack space="sm">
               <Text className="text-sm font-medium">Especializações Comuns:</Text>
               <Box className="flex-row flex-wrap">
-                {commonSpecializations.filter(spec => 
-                  !(profileData.specializations || []).includes(spec)
-                ).map((specialization) => (
-                  <Button
-                    key={specialization}
-                    variant="outline"
-                    size="sm"
-                    className="m-1"
-                    onPress={() => addQuickSpecialization(specialization)}
-                  >
-                    <ButtonText className="text-sm">{specialization}</ButtonText>
-                  </Button>
-                ))}
+                {commonSpecializations
+                  .filter(spec => !(profileData.specializations || []).includes(spec))
+                  .map(specialization => (
+                    <Button
+                      key={specialization}
+                      variant="outline"
+                      size="sm"
+                      className="m-1"
+                      onPress={() => addQuickSpecialization(specialization)}
+                    >
+                      <ButtonText className="text-sm">{specialization}</ButtonText>
+                    </Button>
+                  ))}
               </Box>
             </VStack>
 
@@ -265,7 +263,9 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
             {/* Current Specializations */}
             {profileData.specializations && profileData.specializations.length > 0 && (
               <VStack space="sm">
-                <Text className="text-sm font-medium">Suas Especializações ({profileData.specializations.length}):</Text>
+                <Text className="text-sm font-medium">
+                  Suas Especializações ({profileData.specializations.length}):
+                </Text>
                 <Box className="flex-row flex-wrap">
                   {profileData.specializations.map((specialization, index) => (
                     <HStack key={index} className="items-center m-1">
@@ -287,9 +287,7 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
             )}
 
             {validationErrors.specializations && (
-              <Text className="text-red-600 text-sm">
-                {validationErrors.specializations}
-              </Text>
+              <Text className="text-red-600 text-sm">{validationErrors.specializations}</Text>
             )}
           </VStack>
         </FormControl>
@@ -302,7 +300,8 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
               <Text className="font-medium">Conquistas e Reconhecimentos (opcional)</Text>
             </HStack>
             <Text className="text-sm text-gray-600">
-              Prêmios, reconhecimentos, resultados especiais de alunos, ou outras conquistas relevantes.
+              Prêmios, reconhecimentos, resultados especiais de alunos, ou outras conquistas
+              relevantes.
             </Text>
 
             <HStack space="sm">
@@ -325,13 +324,12 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
                 <Text className="text-sm font-medium">Suas Conquistas:</Text>
                 <VStack space="xs">
                   {profileData.achievements.map((achievement, index) => (
-                    <HStack key={index} className="justify-between items-start p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <HStack
+                      key={index}
+                      className="justify-between items-start p-3 bg-orange-50 rounded-lg border border-orange-200"
+                    >
                       <Text className="text-sm text-orange-800 flex-1">{achievement}</Text>
-                      <Button
-                        variant="outline"
-                        size="xs"
-                        onPress={() => removeAchievement(index)}
-                      >
+                      <Button variant="outline" size="xs" onPress={() => removeAchievement(index)}>
                         <Icon as={X} size="xs" className="text-red-600" />
                       </Button>
                     </HStack>
@@ -343,20 +341,25 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
         </FormControl>
 
         {/* Profile Summary Preview */}
-        {(profileData.teaching_philosophy || profileData.teaching_approach || (profileData.specializations && profileData.specializations.length > 0)) && (
+        {(profileData.teaching_philosophy ||
+          profileData.teaching_approach ||
+          (profileData.specializations && profileData.specializations.length > 0)) && (
           <Box className="bg-green-50 p-4 rounded-lg border border-green-200">
             <VStack space="sm">
               <Text className="font-medium text-green-800">Prévia do seu perfil:</Text>
               <VStack space="xs">
                 <Text className="text-sm text-green-700">
-                  <Text className="font-medium">Filosofia:</Text> {profileData.teaching_philosophy?.substring(0, 100)}...
+                  <Text className="font-medium">Filosofia:</Text>{' '}
+                  {profileData.teaching_philosophy?.substring(0, 100)}...
                 </Text>
                 <Text className="text-sm text-green-700">
-                  <Text className="font-medium">Abordagem:</Text> {profileData.teaching_approach?.substring(0, 100)}...
+                  <Text className="font-medium">Abordagem:</Text>{' '}
+                  {profileData.teaching_approach?.substring(0, 100)}...
                 </Text>
                 {profileData.specializations && profileData.specializations.length > 0 && (
                   <Text className="text-sm text-green-700">
-                    <Text className="font-medium">Especializações:</Text> {profileData.specializations.join(', ')}
+                    <Text className="font-medium">Especializações:</Text>{' '}
+                    {profileData.specializations.join(', ')}
                   </Text>
                 )}
               </VStack>

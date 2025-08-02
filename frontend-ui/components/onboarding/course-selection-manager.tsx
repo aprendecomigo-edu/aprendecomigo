@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Platform } from 'react-native';
-import { 
-  Plus, 
-  Minus, 
-  DollarSign, 
-  ChevronDown, 
+import {
+  Plus,
+  Minus,
+  DollarSign,
+  ChevronDown,
   ChevronUp,
   Star,
   TrendingUp,
@@ -13,21 +11,14 @@ import {
   Info,
   Trash2,
   GripVertical,
-  BookOpen
+  BookOpen,
 } from 'lucide-react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Platform } from 'react-native';
 
-import { Box } from '@/components/ui/box';
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Heading } from '@/components/ui/heading';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
-import { Input, InputField } from '@/components/ui/input';
-import { Pressable } from '@/components/ui/pressable';
-import { Spinner } from '@/components/ui/spinner';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
+import { CourseCatalogBrowser } from './course-catalog-browser';
+
+import { EnhancedCourse } from '@/api/tutorApi';
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -36,6 +27,10 @@ import {
   AlertDialogBody,
   AlertDialogFooter,
 } from '@/components/ui/alert-dialog';
+import { Badge, BadgeText } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import {
   FormControl,
   FormControlLabel,
@@ -45,9 +40,14 @@ import {
   FormControlHelper,
   FormControlHelperText,
 } from '@/components/ui/form-control';
-
-import { EnhancedCourse } from '@/api/tutorApi';
-import { CourseCatalogBrowser } from './course-catalog-browser';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
+import { Pressable } from '@/components/ui/pressable';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 // Selected course with tutor-specific configuration
 export interface SelectedCourse {
@@ -68,7 +68,7 @@ export interface CustomSubject {
   grade_levels: string[];
   hourly_rate: number;
   subject_area: string;
-  is_featured: boolean;  
+  is_featured: boolean;
   priority_order: number;
 }
 
@@ -92,21 +92,31 @@ interface CourseSelectionManagerProps {
 const ExpertiseLevelBadge: React.FC<{ level: string }> = ({ level }) => {
   const getExpertiseColor = (level: string) => {
     switch (level) {
-      case 'expert': return 'bg-purple-100 text-purple-700';
-      case 'advanced': return 'bg-blue-100 text-blue-700';
-      case 'intermediate': return 'bg-green-100 text-green-700';
-      case 'beginner': return 'bg-gray-100 text-gray-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'expert':
+        return 'bg-purple-100 text-purple-700';
+      case 'advanced':
+        return 'bg-blue-100 text-blue-700';
+      case 'intermediate':
+        return 'bg-green-100 text-green-700';
+      case 'beginner':
+        return 'bg-gray-100 text-gray-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
   };
 
   const getExpertiseIcon = (level: string) => {
     switch (level) {
-      case 'expert': return 4;
-      case 'advanced': return 3;
-      case 'intermediate': return 2;
-      case 'beginner': return 1;
-      default: return 1;
+      case 'expert':
+        return 4;
+      case 'advanced':
+        return 3;
+      case 'intermediate':
+        return 2;
+      case 'beginner':
+        return 1;
+      default:
+        return 1;
     }
   };
 
@@ -145,7 +155,7 @@ const RateInputField: React.FC<{
             <Input className={`flex-1 ${error ? 'border-red-300' : ''}`}>
               <InputField
                 value={value.toString()}
-                onChangeText={(text) => {
+                onChangeText={text => {
                   const numValue = parseFloat(text) || 0;
                   onChange(numValue);
                 }}
@@ -165,7 +175,9 @@ const RateInputField: React.FC<{
         <HStack space="xs" className="items-center">
           <Icon as={TrendingUp} className="text-blue-500" size="xs" />
           <Text className="text-blue-600 text-xs">
-            Market: {suggestedRate.min}-{suggestedRate.max}{currency} (avg. {suggestedRate.average}{currency})
+            Market: {suggestedRate.min}-{suggestedRate.max}
+            {currency} (avg. {suggestedRate.average}
+            {currency})
           </Text>
         </HStack>
       )}
@@ -201,7 +213,11 @@ const SelectedCourseCard: React.FC<{
       <Card
         className={`
           border transition-all duration-200 mb-3
-          ${item.is_featured ? 'ring-2 ring-blue-200 border-blue-300' : 'border-gray-200 hover:border-gray-300'}
+          ${
+            item.is_featured
+              ? 'ring-2 ring-blue-200 border-blue-300'
+              : 'border-gray-200 hover:border-gray-300'
+          }
         `}
       >
         <CardHeader className="pb-3">
@@ -221,7 +237,7 @@ const SelectedCourseCard: React.FC<{
                       <Heading size="sm" className="text-gray-900 flex-1">
                         {name}
                       </Heading>
-                      
+
                       {item.is_featured && (
                         <Badge className="bg-yellow-100">
                           <HStack space="xs" className="items-center">
@@ -239,7 +255,7 @@ const SelectedCourseCard: React.FC<{
                             {course.education_level}
                           </BadgeText>
                         </Badge>
-                        
+
                         {course.subject_area && (
                           <Badge className="bg-green-100">
                             <BadgeText className="text-green-700 text-xs">
@@ -255,7 +271,7 @@ const SelectedCourseCard: React.FC<{
                         <Badge className="bg-purple-100">
                           <BadgeText className="text-purple-700 text-xs">Custom</BadgeText>
                         </Badge>
-                        
+
                         <Badge className="bg-green-100">
                           <BadgeText className="text-green-700 text-xs">
                             {(item as CustomSubject).subject_area}
@@ -269,9 +285,10 @@ const SelectedCourseCard: React.FC<{
                 <HStack className="items-center justify-between">
                   <HStack space="sm" className="items-center">
                     <Text className="text-gray-600 text-sm font-medium">
-                      {item.hourly_rate}{currency}/hour
+                      {item.hourly_rate}
+                      {currency}/hour
                     </Text>
-                    
+
                     {!isCustomSubject && (
                       <ExpertiseLevelBadge level={(item as SelectedCourse).expertise_level} />
                     )}
@@ -283,13 +300,13 @@ const SelectedCourseCard: React.FC<{
                       className="p-1 hover:bg-gray-100 rounded"
                       accessibilityLabel={expanded ? 'Collapse' : 'Expand'}
                     >
-                      <Icon 
-                        as={expanded ? ChevronUp : ChevronDown} 
-                        className="text-gray-500" 
-                        size="sm" 
+                      <Icon
+                        as={expanded ? ChevronUp : ChevronDown}
+                        className="text-gray-500"
+                        size="sm"
                       />
                     </Pressable>
-                    
+
                     <Pressable
                       onPress={() => setShowRemoveDialog(true)}
                       className="p-1 hover:bg-red-100 rounded"
@@ -308,14 +325,14 @@ const SelectedCourseCard: React.FC<{
           <CardContent className="pt-0">
             <VStack space="md">
               {description && (
-                <Text className="text-gray-600 text-sm leading-relaxed">
-                  {description}
-                </Text>
+                <Text className="text-gray-600 text-sm leading-relaxed">{description}</Text>
               )}
 
               <VStack space="sm">
-                <Heading size="xs" className="text-gray-700">Configuration</Heading>
-                
+                <Heading size="xs" className="text-gray-700">
+                  Configuration
+                </Heading>
+
                 <HStack space="md" className="items-start">
                   <VStack space="xs" className="flex-1">
                     <FormControl>
@@ -324,7 +341,7 @@ const SelectedCourseCard: React.FC<{
                       </FormControlLabel>
                       <RateInputField
                         value={item.hourly_rate}
-                        onChange={(rate) => onUpdate({ hourly_rate: rate })}
+                        onChange={rate => onUpdate({ hourly_rate: rate })}
                         currency={currency}
                         suggestedRate={course?.rate_suggestions}
                       />
@@ -335,10 +352,12 @@ const SelectedCourseCard: React.FC<{
                     <VStack space="xs" className="flex-1">
                       <FormControl>
                         <FormControlLabel>
-                          <FormControlLabelText className="text-xs">Expertise Level</FormControlLabelText>
+                          <FormControlLabelText className="text-xs">
+                            Expertise Level
+                          </FormControlLabelText>
                         </FormControlLabel>
                         <HStack space="xs" className="flex-wrap">
-                          {['beginner', 'intermediate', 'advanced', 'expert'].map((level) => (
+                          {['beginner', 'intermediate', 'advanced', 'expert'].map(level => (
                             <Pressable
                               key={level}
                               onPress={() => onUpdate({ expertise_level: level as any })}
@@ -348,11 +367,13 @@ const SelectedCourseCard: React.FC<{
                                   : 'border-gray-200 bg-white'
                               }`}
                             >
-                              <Text className={`text-xs capitalize ${
-                                (item as SelectedCourse).expertise_level === level
-                                  ? 'text-blue-700'
-                                  : 'text-gray-600'
-                              }`}>
+                              <Text
+                                className={`text-xs capitalize ${
+                                  (item as SelectedCourse).expertise_level === level
+                                    ? 'text-blue-700'
+                                    : 'text-gray-600'
+                                }`}
+                              >
                                 {level}
                               </Text>
                             </Pressable>
@@ -367,18 +388,12 @@ const SelectedCourseCard: React.FC<{
                   <Pressable
                     onPress={() => onUpdate({ is_featured: !item.is_featured })}
                     className={`w-4 h-4 rounded border-2 items-center justify-center ${
-                      item.is_featured 
-                        ? 'bg-blue-600 border-blue-600' 
-                        : 'border-gray-300 bg-white'
+                      item.is_featured ? 'bg-blue-600 border-blue-600' : 'border-gray-300 bg-white'
                     }`}
                   >
-                    {item.is_featured && (
-                      <Icon as={Star} className="text-white" size="xs" />
-                    )}
+                    {item.is_featured && <Icon as={Star} className="text-white" size="xs" />}
                   </Pressable>
-                  <Text className="text-gray-700 text-sm">
-                    Feature this subject in my profile
-                  </Text>
+                  <Text className="text-gray-700 text-sm">Feature this subject in my profile</Text>
                   <Pressable className="p-1">
                     <Icon as={Info} className="text-gray-400" size="xs" />
                   </Pressable>
@@ -394,7 +409,9 @@ const SelectedCourseCard: React.FC<{
         <AlertDialogBackdrop />
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <Heading size="lg" className="text-gray-900">Remove Subject</Heading>
+            <Heading size="lg" className="text-gray-900">
+              Remove Subject
+            </Heading>
           </AlertDialogHeader>
           <AlertDialogBody>
             <Text className="text-gray-600">
@@ -403,10 +420,7 @@ const SelectedCourseCard: React.FC<{
           </AlertDialogBody>
           <AlertDialogFooter>
             <HStack space="sm" className="w-full justify-end">
-              <Button
-                variant="outline"
-                onPress={() => setShowRemoveDialog(false)}
-              >
+              <Button variant="outline" onPress={() => setShowRemoveDialog(false)}>
                 <ButtonText>Cancel</ButtonText>
               </Button>
               <Button
@@ -445,13 +459,25 @@ const CustomSubjectForm: React.FC<{
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const subjectAreas = [
-    'Mathematics', 'Sciences', 'Languages', 'Arts', 'Technology', 
-    'Social Studies', 'Music', 'Sports', 'Life Skills', 'Other'
+    'Mathematics',
+    'Sciences',
+    'Languages',
+    'Arts',
+    'Technology',
+    'Social Studies',
+    'Music',
+    'Sports',
+    'Life Skills',
+    'Other',
   ];
 
   const gradeLevels = [
-    'Elementary', 'Middle School', 'High School', 'University', 
-    'Adult Education', 'Professional Development'
+    'Elementary',
+    'Middle School',
+    'High School',
+    'University',
+    'Adult Education',
+    'Professional Development',
   ];
 
   const validateForm = () => {
@@ -510,7 +536,9 @@ const CustomSubjectForm: React.FC<{
       <AlertDialogBackdrop />
       <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader className="border-b border-gray-200">
-          <Heading size="lg" className="text-gray-900">Add Custom Subject</Heading>
+          <Heading size="lg" className="text-gray-900">
+            Add Custom Subject
+          </Heading>
         </AlertDialogHeader>
 
         <AlertDialogBody className="py-6">
@@ -522,7 +550,7 @@ const CustomSubjectForm: React.FC<{
               <Input>
                 <InputField
                   value={formData.name}
-                  onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
+                  onChangeText={text => setFormData(prev => ({ ...prev, name: text }))}
                   placeholder="e.g., Advanced Piano, Web Development, Creative Writing"
                 />
               </Input>
@@ -540,7 +568,7 @@ const CustomSubjectForm: React.FC<{
               <Input>
                 <InputField
                   value={formData.description}
-                  onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
+                  onChangeText={text => setFormData(prev => ({ ...prev, description: text }))}
                   placeholder="Brief description of what you'll teach"
                   multiline
                   numberOfLines={3}
@@ -554,7 +582,7 @@ const CustomSubjectForm: React.FC<{
               </FormControlLabel>
               <VStack space="sm">
                 <HStack space="xs" className="flex-wrap">
-                  {subjectAreas.map((area) => (
+                  {subjectAreas.map(area => (
                     <Pressable
                       key={area}
                       onPress={() => setFormData(prev => ({ ...prev, subject_area: area }))}
@@ -564,11 +592,11 @@ const CustomSubjectForm: React.FC<{
                           : 'border-gray-200 bg-white'
                       }`}
                     >
-                      <Text className={`text-sm ${
-                        formData.subject_area === area
-                          ? 'text-blue-700'
-                          : 'text-gray-600'
-                      }`}>
+                      <Text
+                        className={`text-sm ${
+                          formData.subject_area === area ? 'text-blue-700' : 'text-gray-600'
+                        }`}
+                      >
                         {area}
                       </Text>
                     </Pressable>
@@ -588,7 +616,7 @@ const CustomSubjectForm: React.FC<{
               </FormControlLabel>
               <VStack space="sm">
                 <HStack space="xs" className="flex-wrap">
-                  {gradeLevels.map((level) => (
+                  {gradeLevels.map(level => (
                     <Pressable
                       key={level}
                       onPress={() => {
@@ -596,7 +624,7 @@ const CustomSubjectForm: React.FC<{
                           ...prev,
                           grade_levels: prev.grade_levels.includes(level)
                             ? prev.grade_levels.filter(l => l !== level)
-                            : [...prev.grade_levels, level]
+                            : [...prev.grade_levels, level],
                         }));
                       }}
                       className={`px-3 py-2 rounded-md border ${
@@ -605,11 +633,11 @@ const CustomSubjectForm: React.FC<{
                           : 'border-gray-200 bg-white'
                       }`}
                     >
-                      <Text className={`text-sm ${
-                        formData.grade_levels.includes(level)
-                          ? 'text-blue-700'
-                          : 'text-gray-600'
-                      }`}>
+                      <Text
+                        className={`text-sm ${
+                          formData.grade_levels.includes(level) ? 'text-blue-700' : 'text-gray-600'
+                        }`}
+                      >
                         {level}
                       </Text>
                     </Pressable>
@@ -629,7 +657,7 @@ const CustomSubjectForm: React.FC<{
               </FormControlLabel>
               <RateInputField
                 value={formData.hourly_rate}
-                onChange={(rate) => setFormData(prev => ({ ...prev, hourly_rate: rate }))}
+                onChange={rate => setFormData(prev => ({ ...prev, hourly_rate: rate }))}
                 currency={currency}
                 error={errors.hourly_rate}
               />
@@ -663,8 +691,8 @@ export const CourseSelectionManager: React.FC<CourseSelectionManagerProps> = ({
   maxSelections = 20,
   defaultRate = 15,
   currency = '€',
-  title = "Configure Your Teaching Subjects",
-  subtitle = "Set rates and expertise levels for your selected courses",
+  title = 'Configure Your Teaching Subjects',
+  subtitle = 'Set rates and expertise levels for your selected courses',
   onContinue,
   showContinueButton = true,
 }) => {
@@ -674,18 +702,15 @@ export const CourseSelectionManager: React.FC<CourseSelectionManagerProps> = ({
   const allSelectedItems = useMemo(() => {
     const courseItems: (SelectedCourse | CustomSubject)[] = [...selectedCourses];
     const customItems: (SelectedCourse | CustomSubject)[] = [...customSubjects];
-    
+
     return [...courseItems, ...customItems].sort((a, b) => a.priority_order - b.priority_order);
   }, [selectedCourses, customSubjects]);
 
-  const selectedCourseIds = useMemo(() => 
-    selectedCourses.map(c => c.course.id), 
-    [selectedCourses]
-  );
+  const selectedCourseIds = useMemo(() => selectedCourses.map(c => c.course.id), [selectedCourses]);
 
   const handleCourseToggle = (course: EnhancedCourse) => {
     const isSelected = selectedCourseIds.includes(course.id);
-    
+
     if (isSelected) {
       // Remove course
       const updatedCourses = selectedCourses.filter(c => c.course.id !== course.id);
@@ -700,7 +725,7 @@ export const CourseSelectionManager: React.FC<CourseSelectionManagerProps> = ({
         is_featured: false,
         priority_order: allSelectedItems.length,
       };
-      
+
       onSelectionChange([...selectedCourses, newSelectedCourse], customSubjects);
     }
   };
@@ -711,13 +736,13 @@ export const CourseSelectionManager: React.FC<CourseSelectionManagerProps> = ({
       id: `custom-${Date.now()}`,
       priority_order: allSelectedItems.length,
     };
-    
+
     onSelectionChange(selectedCourses, [...customSubjects, newSubject]);
   };
 
   const handleItemUpdate = (itemId: string, updates: Partial<SelectedCourse | CustomSubject>) => {
     const isCustom = itemId.startsWith('custom-');
-    
+
     if (isCustom) {
       const updatedCustomSubjects = customSubjects.map(item =>
         item.id === itemId ? { ...item, ...updates } : item
@@ -733,7 +758,7 @@ export const CourseSelectionManager: React.FC<CourseSelectionManagerProps> = ({
 
   const handleItemRemove = (itemId: string) => {
     const isCustom = itemId.startsWith('custom-');
-    
+
     if (isCustom) {
       const updatedCustomSubjects = customSubjects.filter(item => item.id !== itemId);
       onSelectionChange(selectedCourses, updatedCustomSubjects);
@@ -755,23 +780,19 @@ export const CourseSelectionManager: React.FC<CourseSelectionManagerProps> = ({
           <Box className="w-16 h-16 rounded-full bg-blue-100 items-center justify-center">
             <Icon as={BookOpen} className="text-blue-600" size="xl" />
           </Box>
-          
+
           <VStack space="sm">
             <Heading size="xl" className="text-gray-900 text-center">
               {title}
             </Heading>
-            <Text className="text-gray-600 text-center max-w-md">
-              {subtitle}
-            </Text>
+            <Text className="text-gray-600 text-center max-w-md">{subtitle}</Text>
           </VStack>
 
           <HStack space="md" className="items-center">
             <Badge className="bg-blue-100">
-              <BadgeText className="text-blue-700">
-                {totalSelections} selected
-              </BadgeText>
+              <BadgeText className="text-blue-700">{totalSelections} selected</BadgeText>
             </Badge>
-            
+
             <Badge className="bg-gray-100">
               <BadgeText className="text-gray-700">
                 {maxSelections - totalSelections} remaining
@@ -793,11 +814,9 @@ export const CourseSelectionManager: React.FC<CourseSelectionManagerProps> = ({
               className="flex-1"
             >
               <ButtonIcon as={Plus} className="text-gray-600 mr-2" />
-              <ButtonText className="text-gray-700">
-                Add from {educationalSystemName}
-              </ButtonText>
+              <ButtonText className="text-gray-700">Add from {educationalSystemName}</ButtonText>
             </Button>
-            
+
             <Button
               variant="outline"
               onPress={() => setShowCustomForm(true)}
@@ -824,9 +843,7 @@ export const CourseSelectionManager: React.FC<CourseSelectionManagerProps> = ({
                   Your Teaching Subjects ({totalSelections})
                 </Heading>
                 {Platform.OS === 'web' && (
-                  <Text className="text-gray-500 text-xs">
-                    Drag to reorder priority
-                  </Text>
+                  <Text className="text-gray-500 text-xs">Drag to reorder priority</Text>
                 )}
               </HStack>
 
@@ -836,7 +853,7 @@ export const CourseSelectionManager: React.FC<CourseSelectionManagerProps> = ({
                     key={item.id}
                     item={item}
                     index={index}
-                    onUpdate={(updates) => handleItemUpdate(item.id, updates)}
+                    onUpdate={updates => handleItemUpdate(item.id, updates)}
                     onRemove={() => handleItemRemove(item.id)}
                     currency={currency}
                     isDragDisabled={Platform.OS !== 'web'}
@@ -864,8 +881,8 @@ export const CourseSelectionManager: React.FC<CourseSelectionManagerProps> = ({
       )}
 
       {/* Course Browser Modal */}
-      <AlertDialog 
-        isOpen={showCourseBrowser} 
+      <AlertDialog
+        isOpen={showCourseBrowser}
         onClose={() => setShowCourseBrowser(false)}
         size="full"
       >

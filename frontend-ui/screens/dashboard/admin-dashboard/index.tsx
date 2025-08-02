@@ -1,13 +1,10 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
-import {
-  AlertTriangleIcon,
-  CalendarIcon,
-} from 'lucide-react-native';
+import { AlertTriangleIcon, CalendarIcon } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 
 import { useAuth } from '@/api/authContext';
-import { getDashboardInfo, DashboardInfo } from '@/api/userApi';
 import { tasksApi, Task } from '@/api/tasksApi';
+import { getDashboardInfo, DashboardInfo } from '@/api/userApi';
 import MainLayout from '@/components/layouts/main-layout';
 import TasksTable from '@/components/tasks/TasksTable';
 import { useTutorial, TutorialHighlight, TutorialTrigger } from '@/components/tutorial';
@@ -59,7 +56,6 @@ const ActivityTable = () => {
     </VStack>
   );
 };
-
 
 // Main Admin Dashboard Component
 const AdminDashboard = () => {
@@ -140,7 +136,6 @@ const AdminDashboard = () => {
     autoStartTutorial();
   }, [isLoading, dashboardData, startTutorial]);
 
-
   const formatDate = () => {
     const now = new Date();
     return now.toLocaleDateString('pt-BR', {
@@ -181,7 +176,9 @@ const AdminDashboard = () => {
         {/* Welcome Header */}
         <TutorialHighlight
           id="profile-section"
-          isActive={state.isActive && state.config?.steps[state.currentStep]?.id === 'profile-section'}
+          isActive={
+            state.isActive && state.config?.steps[state.currentStep]?.id === 'profile-section'
+          }
         >
           <VStack space="sm">
             <HStack className="items-center justify-between">
@@ -212,7 +209,9 @@ const AdminDashboard = () => {
         {hasIncompleteOnboarding && (
           <TutorialHighlight
             id="warning-banner"
-            isActive={state.isActive && state.config?.steps[state.currentStep]?.id === 'warning-banner'}
+            isActive={
+              state.isActive && state.config?.steps[state.currentStep]?.id === 'warning-banner'
+            }
           >
             <Box
               className="bg-amber-50 border border-amber-200 rounded-xl p-4"
@@ -243,7 +242,9 @@ const AdminDashboard = () => {
         {/* Activities Section */}
         <TutorialHighlight
           id="activities-section"
-          isActive={state.isActive && state.config?.steps[state.currentStep]?.id === 'activities-section'}
+          isActive={
+            state.isActive && state.config?.steps[state.currentStep]?.id === 'activities-section'
+          }
         >
           <VStack space="md">
             <Heading className="text-xl font-bold text-gray-900">Próximas atividades</Heading>
@@ -251,7 +252,9 @@ const AdminDashboard = () => {
             {/* Filters and View Toggle */}
             <TutorialHighlight
               id="view-filters"
-              isActive={state.isActive && state.config?.steps[state.currentStep]?.id === 'view-filters'}
+              isActive={
+                state.isActive && state.config?.steps[state.currentStep]?.id === 'view-filters'
+              }
             >
               <HStack space="sm" className="flex-wrap items-center justify-between">
                 <HStack space="xs">
@@ -264,7 +267,9 @@ const AdminDashboard = () => {
                         }`}
                       >
                         <BadgeText
-                          className={`font-medium ${filter.active ? 'text-white' : 'text-gray-600'}`}
+                          className={`font-medium ${
+                            filter.active ? 'text-white' : 'text-gray-600'
+                          }`}
                         >
                           {filter.label}
                         </BadgeText>
@@ -315,13 +320,11 @@ const AdminDashboard = () => {
         {/* Tasks Section */}
         <TutorialHighlight
           id="tasks-section"
-          isActive={state.isActive && state.config?.steps[state.currentStep]?.id === 'tasks-section'}
+          isActive={
+            state.isActive && state.config?.steps[state.currentStep]?.id === 'tasks-section'
+          }
         >
-          <TasksTable
-            tasks={tasks}
-            onTasksChange={loadTasks}
-            title="Tarefas Pendentes"
-          />
+          <TasksTable tasks={tasks} onTasksChange={loadTasks} title="Tarefas Pendentes" />
         </TutorialHighlight>
       </VStack>
     </ScrollView>

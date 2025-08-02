@@ -1,17 +1,18 @@
-import React from 'react';
-import { 
-  Check, 
-  ChevronRight, 
-  Clock, 
-  User, 
-  School, 
-  BookOpen, 
-  DollarSign, 
+import {
+  Check,
+  ChevronRight,
+  Clock,
+  User,
+  School,
+  BookOpen,
+  DollarSign,
   FileText,
   Star,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react-native';
+import React from 'react';
 
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -19,10 +20,9 @@ import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
+import { Progress, ProgressFilledTrack } from '@/components/ui/progress';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Progress, ProgressFilledTrack } from '@/components/ui/progress';
 
 // Onboarding step configuration for individual tutors
 export interface OnboardingStep {
@@ -200,12 +200,8 @@ const StepCard: React.FC<{
             )}
           </Box>
           <VStack className="flex-1">
-            <Text className={`text-sm font-medium ${colors.text}`}>
-              {step.title}
-            </Text>
-            {isCurrent && (
-              <Text className="text-blue-600 text-xs">Current step</Text>
-            )}
+            <Text className={`text-sm font-medium ${colors.text}`}>{step.title}</Text>
+            {isCurrent && <Text className="text-blue-600 text-xs">Current step</Text>}
           </VStack>
           {step.canAccess && !step.isCompleted && (
             <Icon as={ChevronRight} className="text-gray-400" size="sm" />
@@ -235,14 +231,16 @@ const StepCard: React.FC<{
         <CardContent className="p-4">
           <HStack className="items-start justify-between">
             <HStack space="md" className="items-start flex-1">
-              <Box className={`w-12 h-12 rounded-full items-center justify-center ${colors.iconBg}`}>
+              <Box
+                className={`w-12 h-12 rounded-full items-center justify-center ${colors.iconBg}`}
+              >
                 {step.isCompleted ? (
                   <Icon as={Check} className="text-white" size="lg" />
                 ) : (
                   <Icon as={StepIcon} className={colors.iconText} size="lg" />
                 )}
               </Box>
-              
+
               <VStack className="flex-1" space="xs">
                 <VStack space="xs">
                   <HStack className="items-center justify-between">
@@ -255,28 +253,24 @@ const StepCard: React.FC<{
                       </Badge>
                     )}
                   </HStack>
-                  
-                  <Text className={`text-sm ${colors.text} opacity-80`}>
-                    {step.description}
-                  </Text>
+
+                  <Text className={`text-sm ${colors.text} opacity-80`}>{step.description}</Text>
                 </VStack>
 
                 <HStack space="md" className="items-center">
                   {showTimeEstimate && (
                     <HStack space="xs" className="items-center">
                       <Icon as={Clock} className={colors.text} size="xs" />
-                      <Text className={`text-xs ${colors.text}`}>
-                        ~{step.estimatedTime} min
-                      </Text>
+                      <Text className={`text-xs ${colors.text}`}>~{step.estimatedTime} min</Text>
                     </HStack>
                   )}
-                  
+
                   {step.completedAt && (
                     <Text className="text-green-600 text-xs">
                       Completed {step.completedAt.toLocaleDateString()}
                     </Text>
                   )}
-                  
+
                   {isCurrent && (
                     <Badge className="bg-blue-600">
                       <BadgeText className="text-white text-xs">Current</BadgeText>
@@ -306,8 +300,8 @@ export const TutorOnboardingProgress: React.FC<TutorOnboardingProgressProps> = (
   className = '',
 }) => {
   const currentStep = onboarding.steps.find(step => step.id === onboarding.currentStepId);
-  const nextStep = onboarding.steps.find(step => 
-    !step.isCompleted && step.canAccess && step.id !== onboarding.currentStepId
+  const nextStep = onboarding.steps.find(
+    step => !step.isCompleted && step.canAccess && step.id !== onboarding.currentStepId
   );
 
   const isCompleted = onboarding.overallProgress >= 100;
@@ -325,10 +319,9 @@ export const TutorOnboardingProgress: React.FC<TutorOnboardingProgressProps> = (
               {isCompleted ? 'Onboarding Complete!' : 'Complete Your Tutor Setup'}
             </Heading>
             <Text className="text-gray-600 text-center">
-              {isCompleted 
+              {isCompleted
                 ? 'Your tutoring profile is ready to attract students'
-                : 'Set up your professional tutoring profile to start teaching'
-              }
+                : 'Set up your professional tutoring profile to start teaching'}
             </Text>
           </VStack>
         </VStack>
@@ -336,18 +329,16 @@ export const TutorOnboardingProgress: React.FC<TutorOnboardingProgressProps> = (
         {/* Progress Overview */}
         <VStack space="md" className="bg-white p-4 rounded-lg border border-gray-200">
           <HStack className="items-center justify-between">
-            <Text className="text-gray-700 font-medium">
-              Overall Progress
-            </Text>
+            <Text className="text-gray-700 font-medium">Overall Progress</Text>
             <Text className="text-blue-600 font-bold">
               {Math.round(onboarding.overallProgress)}%
             </Text>
           </HStack>
-          
+
           <Progress value={onboarding.overallProgress} className="h-3">
             <ProgressFilledTrack className="bg-blue-600" />
           </Progress>
-          
+
           <HStack className="items-center justify-between text-sm">
             <Text className="text-gray-600">
               {onboarding.completedSteps} of {onboarding.totalSteps} steps completed
@@ -369,16 +360,12 @@ export const TutorOnboardingProgress: React.FC<TutorOnboardingProgressProps> = (
         <Box className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
           <VStack space="sm">
             <HStack className="items-center justify-between">
-              <Text className="text-blue-900 font-medium">
-                Current Step: {currentStep.title}
-              </Text>
+              <Text className="text-blue-900 font-medium">Current Step: {currentStep.title}</Text>
               <Badge className="bg-blue-600">
                 <BadgeText className="text-white text-xs">Active</BadgeText>
               </Badge>
             </HStack>
-            <Text className="text-blue-800 text-sm">
-              {currentStep.description}
-            </Text>
+            <Text className="text-blue-800 text-sm">{currentStep.description}</Text>
             {showTimeEstimates && (
               <HStack space="xs" className="items-center">
                 <Icon as={Clock} className="text-blue-600" size="xs" />
@@ -392,8 +379,8 @@ export const TutorOnboardingProgress: React.FC<TutorOnboardingProgressProps> = (
       )}
 
       {/* Steps List */}
-      <VStack space={compact ? "sm" : "md"}>
-        {onboarding.steps.map((step) => (
+      <VStack space={compact ? 'sm' : 'md'}>
+        {onboarding.steps.map(step => (
           <StepCard
             key={step.id}
             step={step}
@@ -410,26 +397,17 @@ export const TutorOnboardingProgress: React.FC<TutorOnboardingProgressProps> = (
       {!isCompleted && (
         <VStack space="sm">
           {onContinue && currentStep && (
-            <Button
-              onPress={onContinue}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
+            <Button onPress={onContinue} className="w-full bg-blue-600 hover:bg-blue-700">
               <ButtonText className="text-white font-medium">
                 Continue: {currentStep.title}
               </ButtonText>
               <ButtonIcon as={ChevronRight} className="text-white ml-2" />
             </Button>
           )}
-          
+
           {onSkipToNext && nextStep && nextStep.id !== onboarding.currentStepId && (
-            <Button
-              variant="outline"
-              onPress={onSkipToNext}
-              className="w-full"
-            >
-              <ButtonText className="text-gray-700">
-                Skip to: {nextStep.title}
-              </ButtonText>
+            <Button variant="outline" onPress={onSkipToNext} className="w-full">
+              <ButtonText className="text-gray-700">Skip to: {nextStep.title}</ButtonText>
             </Button>
           )}
         </VStack>
@@ -441,13 +419,10 @@ export const TutorOnboardingProgress: React.FC<TutorOnboardingProgressProps> = (
           <HStack space="sm" className="items-start">
             <Icon as={Check} className="text-green-600 mt-0.5" size="sm" />
             <VStack space="xs" className="flex-1">
-              <Text className="text-green-900 font-medium">
-                Profile Setup Complete!
-              </Text>
+              <Text className="text-green-900 font-medium">Profile Setup Complete!</Text>
               <Text className="text-green-800 text-sm">
-                Your tutoring profile was completed on{' '}
-                {onboarding.completedAt.toLocaleDateString()}. You're ready to start 
-                teaching and accepting students.
+                Your tutoring profile was completed on {onboarding.completedAt.toLocaleDateString()}
+                . You're ready to start teaching and accepting students.
               </Text>
             </VStack>
           </HStack>
@@ -459,13 +434,10 @@ export const TutorOnboardingProgress: React.FC<TutorOnboardingProgressProps> = (
         <HStack space="sm" className="items-start">
           <Icon as={AlertCircle} className="text-gray-500 mt-0.5" size="sm" />
           <VStack space="xs" className="flex-1">
-            <Text className="text-gray-700 font-medium text-sm">
-              Need Help?
-            </Text>
+            <Text className="text-gray-700 font-medium text-sm">Need Help?</Text>
             <Text className="text-gray-600 text-sm">
-              You can complete these steps in any order, but all required steps must be 
-              finished before your profile goes live. You can always return to modify 
-              your settings later.
+              You can complete these steps in any order, but all required steps must be finished
+              before your profile goes live. You can always return to modify your settings later.
             </Text>
           </VStack>
         </HStack>

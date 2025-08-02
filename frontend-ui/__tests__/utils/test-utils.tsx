@@ -1,5 +1,6 @@
-import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react-native';
+import React, { ReactElement } from 'react';
+
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { config } from '@/components/ui/gluestack-ui-provider/config';
 
@@ -25,62 +26,74 @@ export const createMockProfileData = (overrides = {}) => ({
   achievements: ['Best Teacher Award 2023'],
   teaching_approach: 'Interactive and engaging',
   student_outcomes: 'High success rates',
-  degrees: [{
-    id: '1',
-    degree_type: 'Bachelor',
-    field_of_study: 'Mathematics',
-    institution: 'University of Lisbon',
-    location: 'Lisbon, Portugal',
-    graduation_year: 2018,
-    gpa: '3.8',
-    honors: 'Magna Cum Laude',
-    description: 'Focus on pure mathematics',
-  }],
-  certifications: [{
-    id: '1',
-    name: 'Teaching Certification',
-    issuing_organization: 'Ministry of Education',
-    issue_date: '2019-06-01',
-    expiration_date: '2029-06-01',
-    credential_id: 'TC123456',
-    verification_url: 'https://example.com/verify',
-  }],
+  degrees: [
+    {
+      id: '1',
+      degree_type: 'Bachelor',
+      field_of_study: 'Mathematics',
+      institution: 'University of Lisbon',
+      location: 'Lisbon, Portugal',
+      graduation_year: 2018,
+      gpa: '3.8',
+      honors: 'Magna Cum Laude',
+      description: 'Focus on pure mathematics',
+    },
+  ],
+  certifications: [
+    {
+      id: '1',
+      name: 'Teaching Certification',
+      issuing_organization: 'Ministry of Education',
+      issue_date: '2019-06-01',
+      expiration_date: '2029-06-01',
+      credential_id: 'TC123456',
+      verification_url: 'https://example.com/verify',
+    },
+  ],
   additional_training: ['Online Teaching Methods', 'Child Psychology'],
-  teaching_subjects: [{
-    id: '1',
-    subject: 'Mathematics',
-    grade_levels: ['Grade 7', 'Grade 8', 'Grade 9'],
-    expertise_level: 'expert' as const,
-    years_teaching: 5,
-    description: 'Comprehensive math education',
-  }],
+  teaching_subjects: [
+    {
+      id: '1',
+      subject: 'Mathematics',
+      grade_levels: ['Grade 7', 'Grade 8', 'Grade 9'],
+      expertise_level: 'expert' as const,
+      years_teaching: 5,
+      description: 'Comprehensive math education',
+    },
+  ],
   subject_categories: ['STEM'],
   rate_structure: {
     individual_rate: 25,
     group_rate: 20,
     trial_lesson_rate: 15,
     currency: 'EUR',
-    package_deals: [{
-      id: '1',
-      name: '10-Lesson Package',
-      sessions: 10,
-      price: 200,
-      discount_percentage: 20,
-    }],
+    package_deals: [
+      {
+        id: '1',
+        name: '10-Lesson Package',
+        sessions: 10,
+        price: 200,
+        discount_percentage: 20,
+      },
+    ],
   },
   payment_methods: ['Credit Card', 'PayPal'],
   cancellation_policy: '24 hours notice required',
   weekly_availability: {
-    monday: [{
-      start_time: '09:00',
-      end_time: '17:00',
-      timezone: 'Europe/Lisbon',
-    }],
-    tuesday: [{
-      start_time: '09:00',
-      end_time: '17:00',
-      timezone: 'Europe/Lisbon',
-    }],
+    monday: [
+      {
+        start_time: '09:00',
+        end_time: '17:00',
+        timezone: 'Europe/Lisbon',
+      },
+    ],
+    tuesday: [
+      {
+        start_time: '09:00',
+        end_time: '17:00',
+        timezone: 'Europe/Lisbon',
+      },
+    ],
   },
   booking_preferences: {
     min_notice_hours: 24,
@@ -103,36 +116,38 @@ export const createMockCompletionData = (overrides = {}) => ({
       completion_percentage: 100,
       missing_fields: [],
     },
-    'biography': {
+    biography: {
       is_complete: true,
       completion_percentage: 100,
       missing_fields: [],
     },
-    'education': {
+    education: {
       is_complete: false,
       completion_percentage: 50,
       missing_fields: ['certifications'],
     },
-    'subjects': {
+    subjects: {
       is_complete: true,
       completion_percentage: 100,
       missing_fields: [],
     },
-    'rates': {
+    rates: {
       is_complete: false,
       completion_percentage: 60,
       missing_fields: ['payment_methods'],
     },
-    'availability': {
+    availability: {
       is_complete: true,
       completion_percentage: 100,
       missing_fields: [],
     },
   },
-  recommendations: [{
-    text: 'Add at least one certification to improve credibility',
-    priority: 'high' as const,
-  }],
+  recommendations: [
+    {
+      text: 'Add at least one certification to improve credibility',
+      priority: 'high' as const,
+    },
+  ],
   ...overrides,
 });
 
@@ -144,28 +159,20 @@ export const createMockValidationErrors = (overrides = {}) => ({
 
 // Custom render function with providers
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <GluestackUIProvider config={config}>
-      {children}
-    </GluestackUIProvider>
-  );
+  return <GluestackUIProvider config={config}>{children}</GluestackUIProvider>;
 };
 
-const customRender = (
-  ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
-) => render(ui, { wrapper: AllTheProviders, ...options });
+const customRender = (ui: ReactElement, options?: Omit<RenderOptions, 'wrapper'>) =>
+  render(ui, { wrapper: AllTheProviders, ...options });
 
 // Re-export everything
 export * from '@testing-library/react-native';
 export { customRender as render };
 
 // Test helper functions
-export const waitForAsyncUpdates = () => 
-  new Promise(resolve => setTimeout(resolve, 0));
+export const waitForAsyncUpdates = () => new Promise(resolve => setTimeout(resolve, 0));
 
-export const flushPromises = () => 
-  new Promise(resolve => setImmediate(resolve));
+export const flushPromises = () => new Promise(resolve => setImmediate(resolve));
 
 export const mockApiResponse = (data: any, isError = false) => {
   if (isError) {

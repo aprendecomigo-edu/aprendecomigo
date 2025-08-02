@@ -1,32 +1,33 @@
 /**
  * Recent Transactions Table Component - GitHub Issue #117
- * 
+ *
  * Displays recent transaction activity with status indicators,
  * quick actions, and real-time updates.
  */
 
+import {
+  Eye,
+  MoreHorizontal,
+  CreditCard,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  ExternalLink,
+} from 'lucide-react-native';
 import React from 'react';
 import { ScrollView } from 'react-native';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Box } from '@/components/ui/box';
-import { Card } from '@/components/ui/card';
+
 import { Badge } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { 
-  Eye, 
-  MoreHorizontal, 
-  CreditCard, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock,
-  ExternalLink
-} from 'lucide-react-native';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 import type { TransactionMonitoring } from '@/types/paymentMonitoring';
 
 interface RecentTransactionsTableProps {
@@ -52,7 +53,7 @@ function TransactionRow({ transaction, onView, onRefund }: TransactionRowProps) 
           color: 'text-success-600',
           bgColor: 'bg-success-50',
           variant: 'success' as const,
-          label: 'Success'
+          label: 'Success',
         };
       case 'processing':
         return {
@@ -60,7 +61,7 @@ function TransactionRow({ transaction, onView, onRefund }: TransactionRowProps) 
           color: 'text-warning-600',
           bgColor: 'bg-warning-50',
           variant: 'warning' as const,
-          label: 'Processing'
+          label: 'Processing',
         };
       case 'requires_action':
       case 'requires_confirmation':
@@ -70,7 +71,7 @@ function TransactionRow({ transaction, onView, onRefund }: TransactionRowProps) 
           color: 'text-warning-600',
           bgColor: 'bg-warning-50',
           variant: 'warning' as const,
-          label: 'Action Required'
+          label: 'Action Required',
         };
       case 'canceled':
         return {
@@ -78,7 +79,7 @@ function TransactionRow({ transaction, onView, onRefund }: TransactionRowProps) 
           color: 'text-error-600',
           bgColor: 'bg-error-50',
           variant: 'error' as const,
-          label: 'Canceled'
+          label: 'Canceled',
         };
       default:
         return {
@@ -86,7 +87,7 @@ function TransactionRow({ transaction, onView, onRefund }: TransactionRowProps) 
           color: 'text-typography-500',
           bgColor: 'bg-background-50',
           variant: 'info' as const,
-          label: transaction.status_display || transaction.status
+          label: transaction.status_display || transaction.status,
         };
     }
   };
@@ -96,9 +97,9 @@ function TransactionRow({ transaction, onView, onRefund }: TransactionRowProps) 
 
   const formatAmount = (amount: string, currency: string) => {
     const num = parseFloat(amount);
-    return `${currency === 'eur' ? '€' : currency.toUpperCase()}${num.toLocaleString(undefined, { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
+    return `${currency === 'eur' ? '€' : currency.toUpperCase()}${num.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     })}`;
   };
 
@@ -108,19 +109,31 @@ function TransactionRow({ transaction, onView, onRefund }: TransactionRowProps) 
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
   const getRiskBadge = () => {
     if (!transaction.risk_score) return null;
-    
+
     if (transaction.risk_score >= 80) {
-      return <Badge variant="error" size="sm"><Text size="xs">High Risk</Text></Badge>;
+      return (
+        <Badge variant="error" size="sm">
+          <Text size="xs">High Risk</Text>
+        </Badge>
+      );
     } else if (transaction.risk_score >= 50) {
-      return <Badge variant="warning" size="sm"><Text size="xs">Medium Risk</Text></Badge>;
+      return (
+        <Badge variant="warning" size="sm">
+          <Text size="xs">Medium Risk</Text>
+        </Badge>
+      );
     } else if (transaction.risk_score >= 30) {
-      return <Badge variant="info" size="sm"><Text size="xs">Low Risk</Text></Badge>;
+      return (
+        <Badge variant="info" size="sm">
+          <Text size="xs">Low Risk</Text>
+        </Badge>
+      );
     }
     return null;
   };
@@ -179,20 +192,12 @@ function TransactionRow({ transaction, onView, onRefund }: TransactionRowProps) 
       {/* Actions */}
       <Box className="p-4">
         <HStack space="xs">
-          <Button
-            variant="outline"
-            size="sm"
-            onPress={() => onView?.(transaction)}
-          >
+          <Button variant="outline" size="sm" onPress={() => onView?.(transaction)}>
             <Icon as={Eye} size="xs" />
           </Button>
-          
+
           {transaction.status === 'succeeded' && onRefund && (
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => onRefund(transaction)}
-            >
+            <Button variant="outline" size="sm" onPress={() => onRefund(transaction)}>
               <Text size="xs">Refund</Text>
             </Button>
           )}
@@ -214,12 +219,12 @@ function LoadingRow() {
   );
 }
 
-export default function RecentTransactionsTable({ 
-  transactions, 
-  loading, 
+export default function RecentTransactionsTable({
+  transactions,
+  loading,
   onViewTransaction,
   onRefundTransaction,
-  maxRows = 10 
+  maxRows = 10,
 }: RecentTransactionsTableProps) {
   const displayTransactions = transactions.slice(0, maxRows);
 
@@ -239,7 +244,9 @@ export default function RecentTransactionsTable({
 
           <Button variant="outline" size="sm">
             <Icon as={ExternalLink} size="xs" />
-            <Text size="sm" className="ml-1">View All</Text>
+            <Text size="sm" className="ml-1">
+              View All
+            </Text>
           </Button>
         </HStack>
 
@@ -280,7 +287,7 @@ export default function RecentTransactionsTable({
                 </TableHead>
               </TableRow>
             </TableHeader>
-            
+
             <TableBody>
               {loading ? (
                 [...Array(5)].map((_, i) => <LoadingRow key={i} />)
@@ -292,7 +299,7 @@ export default function RecentTransactionsTable({
                   </Box>
                 </TableRow>
               ) : (
-                displayTransactions.map((transaction) => (
+                displayTransactions.map(transaction => (
                   <TransactionRow
                     key={transaction.id}
                     transaction={transaction}

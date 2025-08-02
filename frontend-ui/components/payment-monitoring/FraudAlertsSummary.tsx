@@ -1,31 +1,32 @@
 /**
  * Fraud Alerts Summary Component - GitHub Issue #117
- * 
+ *
  * Displays a summary of active fraud alerts and disputes
  * with priority indicators and quick action buttons.
  */
 
+import {
+  Shield,
+  AlertTriangle,
+  Eye,
+  FileText,
+  Clock,
+  TrendingUp,
+  ExternalLink,
+  ChevronRight,
+} from 'lucide-react-native';
 import React from 'react';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Box } from '@/components/ui/box';
-import { Card } from '@/components/ui/card';
+
 import { Badge } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Shield, 
-  AlertTriangle, 
-  Eye, 
-  FileText, 
-  Clock, 
-  TrendingUp,
-  ExternalLink,
-  ChevronRight
-} from 'lucide-react-native';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 import type { FraudAlert, DisputeRecord } from '@/types/paymentMonitoring';
 
 interface FraudAlertsSummaryProps {
@@ -80,7 +81,7 @@ function AlertItem({ alert, onView }: AlertItemProps) {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Just now';
     if (diffInHours < 24) return `${diffInHours}h ago`;
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
@@ -104,7 +105,7 @@ function AlertItem({ alert, onView }: AlertItemProps) {
               {alert.customer_email}
             </Text>
           </VStack>
-          
+
           <Badge variant={riskBadge.variant} size="sm">
             <Text size="xs">{riskBadge.label}</Text>
           </Badge>
@@ -113,21 +114,27 @@ function AlertItem({ alert, onView }: AlertItemProps) {
         {/* Details */}
         <VStack space="xs">
           <HStack className="justify-between items-center">
-            <Text size="xs" className="text-typography-500">Risk Score:</Text>
+            <Text size="xs" className="text-typography-500">
+              Risk Score:
+            </Text>
             <Text size="xs" className={`font-medium ${getRiskColor(alert.risk_score)}`}>
               {alert.risk_score}/100
             </Text>
           </HStack>
-          
+
           <HStack className="justify-between items-center">
-            <Text size="xs" className="text-typography-500">Amount:</Text>
+            <Text size="xs" className="text-typography-500">
+              Amount:
+            </Text>
             <Text size="xs" className="font-medium text-typography-700">
               €{parseFloat(alert.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </Text>
           </HStack>
-          
+
           <HStack className="justify-between items-center">
-            <Text size="xs" className="text-typography-500">Status:</Text>
+            <Text size="xs" className="text-typography-500">
+              Status:
+            </Text>
             <Text size="xs" className={`font-medium ${getStatusColor(alert.status)}`}>
               {alert.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
             </Text>
@@ -169,11 +176,11 @@ function DisputeItem({ dispute, onView }: DisputeItemProps) {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'No deadline';
-    
+
     const date = new Date(dateString);
     const now = new Date();
     const diffInDays = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffInDays < 0) return 'Overdue';
     if (diffInDays === 0) return 'Due today';
     if (diffInDays === 1) return 'Due tomorrow';
@@ -198,7 +205,7 @@ function DisputeItem({ dispute, onView }: DisputeItemProps) {
               {dispute.customer_email}
             </Text>
           </VStack>
-          
+
           <Badge variant={statusInfo.variant} size="sm">
             <Text size="xs">{statusInfo.label}</Text>
           </Badge>
@@ -207,21 +214,25 @@ function DisputeItem({ dispute, onView }: DisputeItemProps) {
         {/* Details */}
         <VStack space="xs">
           <HStack className="justify-between items-center">
-            <Text size="xs" className="text-typography-500">Amount:</Text>
+            <Text size="xs" className="text-typography-500">
+              Amount:
+            </Text>
             <Text size="xs" className="font-medium text-typography-700">
               €{parseFloat(dispute.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </Text>
           </HStack>
-          
+
           {dispute.evidence_due_by && (
             <HStack className="justify-between items-center">
-              <Text size="xs" className="text-typography-500">Evidence Due:</Text>
-              <Text 
-                size="xs" 
+              <Text size="xs" className="text-typography-500">
+                Evidence Due:
+              </Text>
+              <Text
+                size="xs"
                 className={`font-medium ${
-                  formatDate(dispute.evidence_due_by).includes('Overdue') || 
-                  formatDate(dispute.evidence_due_by).includes('today') 
-                    ? 'text-error-600' 
+                  formatDate(dispute.evidence_due_by).includes('Overdue') ||
+                  formatDate(dispute.evidence_due_by).includes('today')
+                    ? 'text-error-600'
                     : 'text-warning-600'
                 }`}
               >
@@ -229,10 +240,17 @@ function DisputeItem({ dispute, onView }: DisputeItemProps) {
               </Text>
             </HStack>
           )}
-          
+
           <HStack className="justify-between items-center">
-            <Text size="xs" className="text-typography-500">Evidence:</Text>
-            <Text size="xs" className={`font-medium ${dispute.evidence_submitted ? 'text-success-600' : 'text-error-600'}`}>
+            <Text size="xs" className="text-typography-500">
+              Evidence:
+            </Text>
+            <Text
+              size="xs"
+              className={`font-medium ${
+                dispute.evidence_submitted ? 'text-success-600' : 'text-error-600'
+              }`}
+            >
               {dispute.evidence_submitted ? 'Submitted' : 'Not Submitted'}
             </Text>
           </HStack>
@@ -241,7 +259,10 @@ function DisputeItem({ dispute, onView }: DisputeItemProps) {
         {/* Footer */}
         <HStack className="justify-between items-center pt-2 border-t border-border-100">
           <Text size="xs" className="text-typography-500">
-            {new Date(dispute.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+            {new Date(dispute.created_at).toLocaleDateString([], {
+              month: 'short',
+              day: 'numeric',
+            })}
           </Text>
           <Icon as={ChevronRight} size="xs" className="text-typography-400" />
         </HStack>
@@ -268,19 +289,23 @@ function LoadingCard() {
   );
 }
 
-export default function FraudAlertsSummary({ 
-  alerts, 
-  disputes, 
+export default function FraudAlertsSummary({
+  alerts,
+  disputes,
   loading,
   onViewAlert,
   onViewDispute,
   onViewAllAlerts,
-  onViewAllDisputes
+  onViewAllDisputes,
 }: FraudAlertsSummaryProps) {
-  const activeAlerts = alerts.filter(alert => alert.status === 'active' || alert.status === 'investigating');
-  const urgentDisputes = disputes.filter(dispute => 
-    dispute.status.includes('needs_response') || 
-    (dispute.evidence_due_by && new Date(dispute.evidence_due_by) <= new Date(Date.now() + 24 * 60 * 60 * 1000))
+  const activeAlerts = alerts.filter(
+    alert => alert.status === 'active' || alert.status === 'investigating'
+  );
+  const urgentDisputes = disputes.filter(
+    dispute =>
+      dispute.status.includes('needs_response') ||
+      (dispute.evidence_due_by &&
+        new Date(dispute.evidence_due_by) <= new Date(Date.now() + 24 * 60 * 60 * 1000))
   );
 
   if (loading) {
@@ -317,25 +342,38 @@ export default function FraudAlertsSummary({
         {/* Summary Stats */}
         <HStack space="md" className="justify-between">
           <VStack space="xs" className="items-center flex-1">
-            <Text size="xl" className={`font-bold ${activeAlerts.length > 0 ? 'text-error-600' : 'text-success-600'}`}>
+            <Text
+              size="xl"
+              className={`font-bold ${
+                activeAlerts.length > 0 ? 'text-error-600' : 'text-success-600'
+              }`}
+            >
               {activeAlerts.length}
             </Text>
             <Text size="xs" className="text-typography-500 text-center">
               Active Fraud{'\n'}Alerts
             </Text>
           </VStack>
-          
+
           <VStack space="xs" className="items-center flex-1">
-            <Text size="xl" className={`font-bold ${urgentDisputes.length > 0 ? 'text-warning-600' : 'text-success-600'}`}>
+            <Text
+              size="xl"
+              className={`font-bold ${
+                urgentDisputes.length > 0 ? 'text-warning-600' : 'text-success-600'
+              }`}
+            >
               {urgentDisputes.length}
             </Text>
             <Text size="xs" className="text-typography-500 text-center">
               Urgent{'\n'}Disputes
             </Text>
           </VStack>
-          
+
           <VStack space="xs" className="items-center flex-1">
-            <Text size="xl" className={`font-bold ${disputes.length > 0 ? 'text-info-600' : 'text-success-600'}`}>
+            <Text
+              size="xl"
+              className={`font-bold ${disputes.length > 0 ? 'text-info-600' : 'text-success-600'}`}
+            >
               {disputes.length}
             </Text>
             <Text size="xs" className="text-typography-500 text-center">
@@ -358,14 +396,10 @@ export default function FraudAlertsSummary({
                 </Button>
               )}
             </HStack>
-            
+
             <VStack space="xs">
-              {activeAlerts.slice(0, 3).map((alert) => (
-                <AlertItem
-                  key={alert.id}
-                  alert={alert}
-                  onView={onViewAlert}
-                />
+              {activeAlerts.slice(0, 3).map(alert => (
+                <AlertItem key={alert.id} alert={alert} onView={onViewAlert} />
               ))}
               {activeAlerts.length > 3 && (
                 <Button variant="ghost" size="sm" onPress={onViewAllAlerts}>
@@ -390,14 +424,10 @@ export default function FraudAlertsSummary({
                 </Button>
               )}
             </HStack>
-            
+
             <VStack space="xs">
-              {urgentDisputes.slice(0, 2).map((dispute) => (
-                <DisputeItem
-                  key={dispute.id}
-                  dispute={dispute}
-                  onView={onViewDispute}
-                />
+              {urgentDisputes.slice(0, 2).map(dispute => (
+                <DisputeItem key={dispute.id} dispute={dispute} onView={onViewDispute} />
               ))}
               {urgentDisputes.length > 2 && (
                 <Button variant="ghost" size="sm" onPress={onViewAllDisputes}>
@@ -427,11 +457,15 @@ export default function FraudAlertsSummary({
         <HStack space="sm" className="pt-4 border-t border-border-100">
           <Button variant="outline" size="sm" className="flex-1" onPress={onViewAllAlerts}>
             <Icon as={AlertTriangle} size="xs" />
-            <Text size="sm" className="ml-1">All Alerts</Text>
+            <Text size="sm" className="ml-1">
+              All Alerts
+            </Text>
           </Button>
           <Button variant="outline" size="sm" className="flex-1" onPress={onViewAllDisputes}>
             <Icon as={FileText} size="xs" />
-            <Text size="sm" className="ml-1">All Disputes</Text>
+            <Text size="sm" className="ml-1">
+              All Disputes
+            </Text>
           </Button>
         </HStack>
       </VStack>

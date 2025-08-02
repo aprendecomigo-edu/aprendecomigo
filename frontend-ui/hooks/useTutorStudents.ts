@@ -35,13 +35,13 @@ const useTutorStudents = (schoolId?: number): UseTutorStudentsResult => {
 
   const fetchStudents = useCallback(async () => {
     if (!schoolId) return;
-    
+
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await getStudents();
-      
+
       // Enhance students with tutor-specific data
       const enhancedStudents: TutorStudent[] = response.results.map(student => ({
         ...student,
@@ -49,16 +49,22 @@ const useTutorStudents = (schoolId?: number): UseTutorStudentsResult => {
           completedSessions: Math.floor(Math.random() * 20), // Mock data
           totalPlannedSessions: Math.floor(Math.random() * 25) + 5,
           completionRate: Math.random() * 0.4 + 0.6, // 60-100%
-          lastSessionDate: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-          nextSessionDate: new Date(Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+          lastSessionDate: new Date(
+            Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+          nextSessionDate: new Date(
+            Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
         },
         acquisition: {
-          invitationDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+          invitationDate: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+          ).toISOString(),
           invitationMethod: ['email', 'link', 'referral'][Math.floor(Math.random() * 3)],
           conversionDays: Math.floor(Math.random() * 14) + 1,
         },
       }));
-      
+
       setStudents(enhancedStudents);
     } catch (err) {
       console.error('Error fetching tutor students:', err);
@@ -82,7 +88,8 @@ const useTutorStudents = (schoolId?: number): UseTutorStudentsResult => {
   const activeStudents = students.filter(student => {
     const lastSessionDate = student.progress?.lastSessionDate;
     if (!lastSessionDate) return false;
-    const daysSinceLastSession = (Date.now() - new Date(lastSessionDate).getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceLastSession =
+      (Date.now() - new Date(lastSessionDate).getTime()) / (1000 * 60 * 60 * 24);
     return daysSinceLastSession <= 7; // Active if had session in last 7 days
   }).length;
 

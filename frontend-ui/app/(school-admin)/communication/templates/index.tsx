@@ -1,20 +1,22 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router } from 'expo-router';
-import { 
-  PlusIcon, 
-  EditIcon, 
-  CopyIcon, 
-  TrashIcon, 
+import {
+  PlusIcon,
+  EditIcon,
+  CopyIcon,
+  TrashIcon,
   MailIcon,
   EyeIcon,
   SendIcon,
   FilterIcon,
-  SearchIcon
+  SearchIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useState, useMemo } from 'react';
 import { Alert } from 'react-native';
 
+import { SchoolEmailTemplate, EmailTemplateType } from '@/api/communicationApi';
 import MainLayout from '@/components/layouts/main-layout';
+import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -28,42 +30,32 @@ import { ScrollView } from '@/components/ui/scroll-view';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge } from '@/components/ui/badge';
 import { useCommunicationTemplates, useTemplateActions } from '@/hooks/useCommunicationTemplates';
-import { SchoolEmailTemplate, EmailTemplateType } from '@/api/communicationApi';
 
 const TemplateManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<keyof EmailTemplateType | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
-  const { 
-    templates, 
-    loading, 
-    error, 
-    pagination, 
-    fetchTemplates, 
-    refreshTemplates 
-  } = useCommunicationTemplates();
+  const { templates, loading, error, pagination, fetchTemplates, refreshTemplates } =
+    useCommunicationTemplates();
 
-  const { 
-    loading: actionLoading, 
-    confirmDelete, 
-    toggleTemplateStatus 
-  } = useTemplateActions();
+  const { loading: actionLoading, confirmDelete, toggleTemplateStatus } = useTemplateActions();
 
   // Filter templates based on search and filters
   const filteredTemplates = useMemo(() => {
     return templates.filter(template => {
-      const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           template.subject_template.toLowerCase().includes(searchQuery.toLowerCase());
-      
+      const matchesSearch =
+        template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        template.subject_template.toLowerCase().includes(searchQuery.toLowerCase());
+
       const matchesType = filterType === 'all' || template.template_type === filterType;
-      
-      const matchesStatus = filterStatus === 'all' || 
-                           (filterStatus === 'active' && template.is_active) ||
-                           (filterStatus === 'inactive' && !template.is_active);
-      
+
+      const matchesStatus =
+        filterStatus === 'all' ||
+        (filterStatus === 'active' && template.is_active) ||
+        (filterStatus === 'inactive' && !template.is_active);
+
       return matchesSearch && matchesType && matchesStatus;
     });
   }, [templates, searchQuery, filterType, filterStatus]);
@@ -93,35 +85,38 @@ const TemplateManagement = () => {
   }, []);
 
   const handleDuplicateTemplate = useCallback((template: SchoolEmailTemplate) => {
-    Alert.alert(
-      'Duplicate Template',
-      `Create a copy of "${template.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Duplicate',
-          onPress: () => router.push(`/(school-admin)/communication/templates/${template.id}/duplicate`),
-        },
-      ]
-    );
+    Alert.alert('Duplicate Template', `Create a copy of "${template.name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Duplicate',
+        onPress: () =>
+          router.push(`/(school-admin)/communication/templates/${template.id}/duplicate`),
+      },
+    ]);
   }, []);
 
-  const handleDeleteTemplate = useCallback((template: SchoolEmailTemplate) => {
-    confirmDelete(template.name, async () => {
-      try {
-        // This would be handled by the useTemplateActions hook
-        await refreshTemplates();
-      } catch (error) {
-        console.error('Error deleting template:', error);
-      }
-    });
-  }, [confirmDelete, refreshTemplates]);
+  const handleDeleteTemplate = useCallback(
+    (template: SchoolEmailTemplate) => {
+      confirmDelete(template.name, async () => {
+        try {
+          // This would be handled by the useTemplateActions hook
+          await refreshTemplates();
+        } catch (error) {
+          console.error('Error deleting template:', error);
+        }
+      });
+    },
+    [confirmDelete, refreshTemplates]
+  );
 
-  const handleToggleStatus = useCallback((template: SchoolEmailTemplate) => {
-    toggleTemplateStatus(template, () => {
-      refreshTemplates();
-    });
-  }, [toggleTemplateStatus, refreshTemplates]);
+  const handleToggleStatus = useCallback(
+    (template: SchoolEmailTemplate) => {
+      toggleTemplateStatus(template, () => {
+        refreshTemplates();
+      });
+    },
+    [toggleTemplateStatus, refreshTemplates]
+  );
 
   const handleSendTest = useCallback((template: SchoolEmailTemplate) => {
     router.push(`/(school-admin)/communication/templates/${template.id}/test`);
@@ -165,11 +160,9 @@ const TemplateManagement = () => {
             <Heading size="xl" className="text-gray-900">
               Email Templates
             </Heading>
-            <Text className="text-gray-600">
-              Create and manage your school's email templates
-            </Text>
+            <Text className="text-gray-600">Create and manage your school's email templates</Text>
           </VStack>
-          
+
           <Button onPress={handleCreateTemplate} className="bg-blue-600">
             <HStack space="xs" className="items-center">
               <Icon as={PlusIcon} size="sm" className="text-white" />
@@ -191,7 +184,7 @@ const TemplateManagement = () => {
                   />
                 </Input>
               </Box>
-              
+
               <Button variant="outline" size="sm" onPress={() => {}}>
                 <Icon as={SearchIcon} size="sm" className="text-gray-600" />
               </Button>
@@ -202,7 +195,8 @@ const TemplateManagement = () => {
                 <Select value={filterType} onValueChange={setFilterType}>
                   <SelectTrigger>
                     <Text className="text-sm">
-                      {templateTypeOptions.find(opt => opt.value === filterType)?.label || 'All Types'}
+                      {templateTypeOptions.find(opt => opt.value === filterType)?.label ||
+                        'All Types'}
                     </Text>
                   </SelectTrigger>
                   <SelectContent>
@@ -217,8 +211,11 @@ const TemplateManagement = () => {
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger>
                     <Text className="text-sm">
-                      {filterStatus === 'all' ? 'All Status' : 
-                       filterStatus === 'active' ? 'Active Only' : 'Inactive Only'}
+                      {filterStatus === 'all'
+                        ? 'All Status'
+                        : filterStatus === 'active'
+                        ? 'Active Only'
+                        : 'Inactive Only'}
                     </Text>
                   </SelectTrigger>
                   <SelectContent>
@@ -240,7 +237,7 @@ const TemplateManagement = () => {
               <Text className="text-sm text-gray-600">
                 {filteredTemplates.length} of {templates.length} templates
               </Text>
-              
+
               <Button variant="link" size="sm" onPress={refreshTemplates}>
                 <ButtonText>Refresh</ButtonText>
               </Button>
@@ -273,13 +270,14 @@ const TemplateManagement = () => {
               <VStack space="md" className="items-center">
                 <Icon as={MailIcon} size="xl" className="text-gray-400" />
                 <Heading size="md" className="text-gray-900 text-center">
-                  {templates.length === 0 ? 'No templates created yet' : 'No templates match your filters'}
+                  {templates.length === 0
+                    ? 'No templates created yet'
+                    : 'No templates match your filters'}
                 </Heading>
                 <Text className="text-gray-600 text-center max-w-md">
-                  {templates.length === 0 
+                  {templates.length === 0
                     ? 'Create your first email template to start communicating with teachers professionally.'
-                    : 'Try adjusting your search or filter criteria to find the templates you\'re looking for.'
-                  }
+                    : "Try adjusting your search or filter criteria to find the templates you're looking for."}
                 </Text>
                 {templates.length === 0 ? (
                   <Button onPress={handleCreateTemplate}>
@@ -295,7 +293,7 @@ const TemplateManagement = () => {
           </Card>
         ) : (
           <VStack space="md">
-            {filteredTemplates.map((template) => (
+            {filteredTemplates.map(template => (
               <Card key={template.id} className="p-4">
                 <VStack space="md">
                   {/* Template Header */}
@@ -310,17 +308,23 @@ const TemplateManagement = () => {
                             {getTemplateTypeLabel(template.template_type)}
                           </Text>
                         </Badge>
-                        <Badge className={template.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                        <Badge
+                          className={
+                            template.is_active
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }
+                        >
                           <Text className="text-xs font-medium">
                             {template.is_active ? 'Active' : 'Inactive'}
                           </Text>
                         </Badge>
                       </HStack>
-                      
+
                       <Text className="text-gray-600 text-sm">
                         Subject: {template.subject_template}
                       </Text>
-                      
+
                       <Text className="text-xs text-gray-500">
                         Updated {new Date(template.updated_at).toLocaleDateString()}
                       </Text>
@@ -362,11 +366,7 @@ const TemplateManagement = () => {
                       </HStack>
                     </Button>
 
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onPress={() => handleSendTest(template)}
-                    >
+                    <Button size="sm" variant="outline" onPress={() => handleSendTest(template)}>
                       <HStack space="xs" className="items-center">
                         <Icon as={SendIcon} size="xs" className="text-gray-600" />
                         <ButtonText>Send Test</ButtonText>
@@ -379,9 +379,7 @@ const TemplateManagement = () => {
                       onPress={() => handleToggleStatus(template)}
                       disabled={actionLoading}
                     >
-                      <ButtonText>
-                        {template.is_active ? 'Deactivate' : 'Activate'}
-                      </ButtonText>
+                      <ButtonText>{template.is_active ? 'Deactivate' : 'Activate'}</ButtonText>
                     </Button>
 
                     <Button

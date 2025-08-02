@@ -1,11 +1,11 @@
-import React from 'react';
 import { useRouter } from 'expo-router';
+import React from 'react';
 
+import { InvitationErrorBoundary } from '@/components/invitations';
 import MainLayout from '@/components/layouts/main-layout';
 import { MultiSchoolDashboard } from '@/components/multi-school';
-import { InvitationErrorBoundary } from '@/components/invitations';
-import { useMultiSchool, SchoolMembership, PendingInvitation } from '@/hooks/useMultiSchool';
 import { useInvitationActions } from '@/hooks/useInvitations';
+import { useMultiSchool, SchoolMembership, PendingInvitation } from '@/hooks/useMultiSchool';
 
 const TeacherSchoolsPage = () => {
   const router = useRouter();

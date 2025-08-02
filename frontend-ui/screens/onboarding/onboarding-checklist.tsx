@@ -1,33 +1,21 @@
-import { 
-  CheckCircle, 
-  Circle, 
-  Building2, 
-  UserPlus, 
-  GraduationCap, 
-  CreditCard, 
+import useRouter from '@unitools/router';
+import {
+  CheckCircle,
+  Circle,
+  Building2,
+  UserPlus,
+  GraduationCap,
+  CreditCard,
   Calendar,
   ArrowRight,
   HelpCircle,
-  ExternalLink
+  ExternalLink,
 } from 'lucide-react-native';
-import { ArrowRightIcon } from '@/components/ui/icon';
 import React, { useState } from 'react';
 import { Platform, Dimensions } from 'react-native';
-import useRouter from '@unitools/router';
 
-import { useOnboarding, ONBOARDING_STEPS } from '@/hooks/useOnboarding';
 import { OnboardingProgress } from './onboarding-progress';
-import { Box } from '@/components/ui/box';
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Heading } from '@/components/ui/heading';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
-import { Spinner } from '@/components/ui/spinner';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Divider } from '@/components/ui/divider';
+
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -37,6 +25,18 @@ import {
   AlertDialogFooter,
   AlertDialogBody,
 } from '@/components/ui/alert-dialog';
+import { Badge, BadgeText } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon, ArrowRightIcon } from '@/components/ui/icon';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
+import { useOnboarding, ONBOARDING_STEPS } from '@/hooks/useOnboarding';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isMobile = Platform.OS !== 'web' || screenWidth < 768;
@@ -62,14 +62,8 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
   className = '',
 }) => {
   const router = useRouter();
-  const { 
-    progress, 
-    completeStep, 
-    skipStep, 
-    createOnboardingTask,
-    isLoading 
-  } = useOnboarding();
-  
+  const { progress, completeStep, skipStep, createOnboardingTask, isLoading } = useOnboarding();
+
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
   const [showSkipDialog, setShowSkipDialog] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -88,7 +82,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
     if (actionLoading) return;
 
     setActionLoading(stepId);
-    
+
     try {
       // Create task for this step
       const step = ONBOARDING_STEPS.find(s => s.id === stepId);
@@ -146,10 +140,10 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
     if (!selectedStep || actionLoading) return;
 
     setActionLoading(selectedStep);
-    
+
     try {
       await skipStep(selectedStep);
-      
+
       if (onStepAction) {
         onStepAction(selectedStep, 'skip');
       }
@@ -171,20 +165,17 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
     }
 
     return (
-      <Icon 
-        as={IconComponent} 
-        size={24} 
-        className={
-          status === 'skipped' ? 'text-gray-400' :
-          'text-blue-600'
-        } 
+      <Icon
+        as={IconComponent}
+        size={24}
+        className={status === 'skipped' ? 'text-gray-400' : 'text-blue-600'}
       />
     );
   };
 
   const getStepCardStyle = (stepId: string) => {
     const status = getStepStatus(stepId);
-    
+
     switch (status) {
       case 'completed':
         return 'bg-green-50 border-green-200';
@@ -220,7 +211,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
 
       {/* Checklist Header */}
       <VStack space="sm">
-        <Heading size={isMobile ? "lg" : "xl"} className="text-gray-900">
+        <Heading size={isMobile ? 'lg' : 'xl'} className="text-gray-900">
           Setup Checklist
         </Heading>
         <Text className="text-gray-600">
@@ -233,45 +224,37 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
         {ONBOARDING_STEPS.map((step, index) => {
           const status = getStepStatus(step.id);
           const isLoading = actionLoading === step.id;
-          
+
           return (
-            <Card 
+            <Card
               key={step.id}
               className={`${getStepCardStyle(step.id)} transition-all duration-200`}
             >
               <VStack space="md" className="p-6">
                 {/* Step Header */}
                 <HStack space="md" className="items-start">
-                  <Box className="mt-1">
-                    {getStepIcon(step.id)}
-                  </Box>
-                  
+                  <Box className="mt-1">{getStepIcon(step.id)}</Box>
+
                   <VStack className="flex-1" space="xs">
                     <HStack className="items-center justify-between">
                       <Heading size="md" className="text-gray-900">
                         {step.name}
                       </Heading>
-                      
+
                       {status === 'completed' && (
                         <Badge className="bg-green-100">
-                          <BadgeText className="text-green-700">
-                            Completed
-                          </BadgeText>
+                          <BadgeText className="text-green-700">Completed</BadgeText>
                         </Badge>
                       )}
-                      
+
                       {status === 'skipped' && (
                         <Badge className="bg-gray-100">
-                          <BadgeText className="text-gray-600">
-                            Skipped
-                          </BadgeText>
+                          <BadgeText className="text-gray-600">Skipped</BadgeText>
                         </Badge>
                       )}
                     </HStack>
-                    
-                    <Text className="text-gray-600">
-                      {step.description}
-                    </Text>
+
+                    <Text className="text-gray-600">{step.description}</Text>
                   </VStack>
                 </HStack>
 
@@ -281,7 +264,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                     <Divider className="my-2" />
                     <HStack space="sm" className={isMobile ? 'flex-col space-y-2' : ''}>
                       <Button
-                        size={isMobile ? "md" : "sm"}
+                        size={isMobile ? 'md' : 'sm'}
                         onPress={() => handleStepStart(step.id)}
                         isDisabled={isLoading}
                         className={`bg-blue-600 hover:bg-blue-700 ${isMobile ? 'flex-1' : ''}`}
@@ -291,26 +274,22 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                           <Spinner size="small" color="white" />
                         ) : (
                           <>
-                            <ButtonText className="text-white">
-                              Start Step
-                            </ButtonText>
+                            <ButtonText className="text-white">Start Step</ButtonText>
                             <ButtonIcon as={ArrowRight} className="text-white ml-1" />
                           </>
                         )}
                       </Button>
-                      
+
                       <Button
                         variant="outline"
-                        size={isMobile ? "md" : "sm"}
+                        size={isMobile ? 'md' : 'sm'}
                         onPress={() => handleStepSkip(step.id)}
                         isDisabled={isLoading}
                         className={`border-gray-300 ${isMobile ? 'flex-1' : ''}`}
                         testID={`skip-step-${step.id}`}
                       >
                         <ButtonIcon as={ArrowRightIcon} className="text-gray-600 mr-1" />
-                        <ButtonText className="text-gray-600">
-                          Skip
-                        </ButtonText>
+                        <ButtonText className="text-gray-600">Skip</ButtonText>
                       </Button>
                     </HStack>
                   </>
@@ -328,9 +307,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                         className="border-green-300"
                       >
                         <ButtonIcon as={ExternalLink} className="text-green-600 mr-1" />
-                        <ButtonText className="text-green-600">
-                          Review
-                        </ButtonText>
+                        <ButtonText className="text-green-600">Review</ButtonText>
                       </Button>
                     </HStack>
                   </>
@@ -347,9 +324,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                         onPress={() => handleStepStart(step.id)}
                         className="border-gray-300"
                       >
-                        <ButtonText className="text-gray-600">
-                          Complete Now
-                        </ButtonText>
+                        <ButtonText className="text-gray-600">Complete Now</ButtonText>
                       </Button>
                     </HStack>
                   </>
@@ -370,16 +345,15 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                 Congratulations! 🎉
               </Heading>
               <Text className="text-gray-700">
-                You've completed all the onboarding steps. Your school is fully set up and ready to use!
+                You've completed all the onboarding steps. Your school is fully set up and ready to
+                use!
               </Text>
             </VStack>
             <Button
               onPress={() => router.push('/(school-admin)/dashboard')}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              <ButtonText className="text-white">
-                Go to Dashboard
-              </ButtonText>
+              <ButtonText className="text-white">Go to Dashboard</ButtonText>
               <ButtonIcon as={ArrowRight} className="text-white ml-2" />
             </Button>
           </VStack>
@@ -399,7 +373,8 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
             {selectedStep && (
               <VStack space="sm">
                 <Text className="text-gray-600">
-                  Are you sure you want to skip "{ONBOARDING_STEPS.find(s => s.id === selectedStep)?.name}"?
+                  Are you sure you want to skip "
+                  {ONBOARDING_STEPS.find(s => s.id === selectedStep)?.name}"?
                 </Text>
                 <Text className="text-gray-500 text-sm">
                   You can always complete this step later from your dashboard.
@@ -409,11 +384,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
           </AlertDialogBody>
           <AlertDialogFooter>
             <HStack space="sm" className="w-full">
-              <Button
-                variant="outline"
-                onPress={() => setShowSkipDialog(false)}
-                className="flex-1"
-              >
+              <Button variant="outline" onPress={() => setShowSkipDialog(false)} className="flex-1">
                 <ButtonText>Cancel</ButtonText>
               </Button>
               <Button
@@ -421,9 +392,7 @@ export const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                 isDisabled={!!actionLoading}
                 className="flex-1 bg-gray-600"
               >
-                <ButtonText>
-                  {actionLoading ? 'Skipping...' : 'Skip Step'}
-                </ButtonText>
+                <ButtonText>{actionLoading ? 'Skipping...' : 'Skip Step'}</ButtonText>
               </Button>
             </HStack>
           </AlertDialogFooter>

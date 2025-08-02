@@ -1,10 +1,33 @@
-import { Mail, MoreHorizontal, RefreshCw, X, Clock, CheckCircle, XCircle, Eye, Send } from 'lucide-react-native';
+import {
+  Mail,
+  MoreHorizontal,
+  RefreshCw,
+  X,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Eye,
+  Send,
+} from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
 
-import { TeacherInvitation, InvitationStatus, EmailDeliveryStatus, SchoolRole } from '@/api/invitationApi';
-import { useInvitationActions } from '@/hooks/useInvitations';
-
+import {
+  TeacherInvitation,
+  InvitationStatus,
+  EmailDeliveryStatus,
+  SchoolRole,
+} from '@/api/invitationApi';
+import {
+  Actionsheet,
+  ActionsheetBackdrop,
+  ActionsheetContent,
+  ActionsheetDragIndicatorWrapper,
+  ActionsheetDragIndicator,
+  ActionsheetItem,
+  ActionsheetItemText,
+} from '@/components/ui/actionsheet';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { HStack } from '@/components/ui/hstack';
@@ -12,8 +35,7 @@ import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Actionsheet, ActionsheetBackdrop, ActionsheetContent, ActionsheetDragIndicatorWrapper, ActionsheetDragIndicator, ActionsheetItem, ActionsheetItemText } from '@/components/ui/actionsheet';
+import { useInvitationActions } from '@/hooks/useInvitations';
 
 interface InvitationListItemProps {
   invitation: TeacherInvitation;
@@ -144,12 +166,14 @@ export const InvitationListItem: React.FC<InvitationListItemProps> = ({
   };
 
   const canResend = () => {
-    return [
-      InvitationStatus.PENDING,
-      InvitationStatus.SENT,
-      InvitationStatus.DELIVERED,
-      InvitationStatus.VIEWED,
-    ].includes(invitation.status) && !isExpired();
+    return (
+      [
+        InvitationStatus.PENDING,
+        InvitationStatus.SENT,
+        InvitationStatus.DELIVERED,
+        InvitationStatus.VIEWED,
+      ].includes(invitation.status) && !isExpired()
+    );
   };
 
   const canCancel = () => {
@@ -211,14 +235,10 @@ export const InvitationListItem: React.FC<InvitationListItemProps> = ({
             {/* Header */}
             <HStack className="justify-between items-start">
               <VStack className="flex-1">
-                <Text className="font-semibold text-gray-900 text-base">
-                  {invitation.email}
-                </Text>
-                <Text className="text-sm text-gray-600">
-                  {getRoleLabel(invitation.role)}
-                </Text>
+                <Text className="font-semibold text-gray-900 text-base">{invitation.email}</Text>
+                <Text className="text-sm text-gray-600">{getRoleLabel(invitation.role)}</Text>
               </VStack>
-              
+
               <HStack space="xs" className="items-center">
                 <Badge
                   variant="solid"
@@ -227,17 +247,13 @@ export const InvitationListItem: React.FC<InvitationListItemProps> = ({
                   }}
                 >
                   <HStack space="xs" className="items-center">
-                    <Icon
-                      as={statusConfig.icon}
-                      size="xs"
-                      style={{ color: statusConfig.color }}
-                    />
+                    <Icon as={statusConfig.icon} size="xs" style={{ color: statusConfig.color }} />
                     <BadgeText style={{ color: statusConfig.color }}>
                       {statusConfig.label}
                     </BadgeText>
                   </HStack>
                 </Badge>
-                
+
                 <Icon as={MoreHorizontal} size="sm" className="text-gray-400" />
               </HStack>
             </HStack>
@@ -246,25 +262,21 @@ export const InvitationListItem: React.FC<InvitationListItemProps> = ({
             <VStack space="xs">
               <HStack className="justify-between">
                 <Text className="text-xs text-gray-500">Convidado por:</Text>
-                <Text className="text-xs text-gray-700">
-                  {invitation.invited_by.name}
-                </Text>
+                <Text className="text-xs text-gray-700">{invitation.invited_by.name}</Text>
               </HStack>
-              
+
               <HStack className="justify-between">
                 <Text className="text-xs text-gray-500">Data:</Text>
-                <Text className="text-xs text-gray-700">
-                  {formatDate(invitation.created_at)}
-                </Text>
+                <Text className="text-xs text-gray-700">{formatDate(invitation.created_at)}</Text>
               </HStack>
-              
+
               <HStack className="justify-between">
                 <Text className="text-xs text-gray-500">Expira em:</Text>
                 <Text className={`text-xs ${isExpired() ? 'text-red-600' : 'text-gray-700'}`}>
                   {formatDate(invitation.expires_at)}
                 </Text>
               </HStack>
-              
+
               {invitation.accepted_at && (
                 <HStack className="justify-between">
                   <Text className="text-xs text-gray-500">Aceito em:</Text>
@@ -292,9 +304,7 @@ export const InvitationListItem: React.FC<InvitationListItemProps> = ({
             {/* Custom Message */}
             {invitation.custom_message && (
               <Box className="p-2 bg-gray-50 rounded border-l-2 border-gray-300">
-                <Text className="text-xs text-gray-600 italic">
-                  "{invitation.custom_message}"
-                </Text>
+                <Text className="text-xs text-gray-600 italic">"{invitation.custom_message}"</Text>
               </Box>
             )}
 
@@ -317,12 +327,10 @@ export const InvitationListItem: React.FC<InvitationListItemProps> = ({
           <ActionsheetDragIndicatorWrapper>
             <ActionsheetDragIndicator />
           </ActionsheetDragIndicatorWrapper>
-          
+
           <VStack className="w-full p-4">
-            <Text className="font-semibold text-lg mb-4">
-              Ações para {invitation.email}
-            </Text>
-            
+            <Text className="font-semibold text-lg mb-4">Ações para {invitation.email}</Text>
+
             {canResend() && (
               <ActionsheetItem onPress={handleResend} disabled={loading}>
                 <HStack space="md" className="items-center">
@@ -331,14 +339,14 @@ export const InvitationListItem: React.FC<InvitationListItemProps> = ({
                 </HStack>
               </ActionsheetItem>
             )}
-            
+
             <ActionsheetItem onPress={handleCopyLink}>
               <HStack space="md" className="items-center">
                 <Icon as={Mail} size="sm" className="text-gray-600" />
                 <ActionsheetItemText>Copiar link do convite</ActionsheetItemText>
               </HStack>
             </ActionsheetItem>
-            
+
             {canCancel() && (
               <ActionsheetItem onPress={handleCancel} disabled={loading}>
                 <HStack space="md" className="items-center">

@@ -1,35 +1,34 @@
 /**
  * ChildAccountCard Component
- * 
+ *
  * Individual child account summary card showing balance,
  * activity status, and quick access to child management features.
  */
 
-import React from 'react';
-import { 
-  User, 
-  Clock, 
-  CreditCard, 
-  Activity, 
+import useRouter from '@unitools/router';
+import {
+  User,
+  Clock,
+  CreditCard,
+  Activity,
   AlertTriangle,
   CheckCircle,
   ChevronRight,
   Settings,
-  Eye
+  Eye,
 } from 'lucide-react-native';
-import useRouter from '@unitools/router';
+import React from 'react';
 
+import { ChildProfile } from '@/api/parentApi';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Divider } from '@/components/ui/divider';
-
-import { ChildProfile } from '@/api/parentApi';
 
 interface ChildAccountCardProps {
   child: ChildProfile;
@@ -96,11 +95,11 @@ export const ChildAccountCard: React.FC<ChildAccountCardProps> = ({
   // Format last activity
   const formatLastActivity = (lastActivity: string | null) => {
     if (!lastActivity) return 'No recent activity';
-    
+
     const date = new Date(lastActivity);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Active now';
     if (diffInHours < 24) return `${diffInHours}h ago`;
     if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
@@ -113,7 +112,7 @@ export const ChildAccountCard: React.FC<ChildAccountCardProps> = ({
   };
 
   return (
-    <Card 
+    <Card
       className={`
         bg-white border
         ${isSelected ? 'border-blue-300 shadow-lg' : 'border-gray-200'}
@@ -124,24 +123,20 @@ export const ChildAccountCard: React.FC<ChildAccountCardProps> = ({
           {/* Header */}
           <HStack className="justify-between items-start mb-4">
             <HStack className="flex-1 space-x-3">
-              <VStack 
+              <VStack
                 className={`
                   items-center justify-center w-12 h-12 rounded-full
                   ${statusInfo.bgColor}
                 `}
               >
-                <Icon 
-                  as={statusInfo.icon} 
-                  size={20} 
-                  className={statusInfo.color}
-                />
+                <Icon as={statusInfo.icon} size={20} className={statusInfo.color} />
               </VStack>
-              
+
               <VStack className="flex-1">
                 <HStack className="items-center space-x-2">
                   <Text className="text-gray-900 font-semibold text-base">
-                    {child.child_user.name || 
-                     `${child.child_user.first_name} ${child.child_user.last_name}`.trim()}
+                    {child.child_user.name ||
+                      `${child.child_user.first_name} ${child.child_user.last_name}`.trim()}
                   </Text>
                   {child.is_primary_contact && (
                     <Badge variant="solid" action="info" size="sm">
@@ -149,22 +144,14 @@ export const ChildAccountCard: React.FC<ChildAccountCardProps> = ({
                     </Badge>
                   )}
                 </HStack>
-                
-                <Text className="text-sm text-gray-600">
-                  {child.child_user.email}
-                </Text>
-                
+
+                <Text className="text-sm text-gray-600">{child.child_user.email}</Text>
+
                 <HStack className="items-center space-x-2 mt-1">
-                  <Badge 
-                    variant="outline" 
-                    action={statusInfo.badgeAction}
-                    size="sm"
-                  >
-                    <Text className="text-xs font-medium">
-                      {statusInfo.label}
-                    </Text>
+                  <Badge variant="outline" action={statusInfo.badgeAction} size="sm">
+                    <Text className="text-xs font-medium">{statusInfo.label}</Text>
                   </Badge>
-                  
+
                   <Text className="text-xs text-gray-500">
                     {formatLastActivity(metrics?.last_activity || null)}
                   </Text>
@@ -183,15 +170,13 @@ export const ChildAccountCard: React.FC<ChildAccountCardProps> = ({
           {metrics && (
             <>
               <Divider className="my-3" />
-              
+
               <HStack className="justify-between items-center">
                 {/* Balance */}
                 <VStack className="items-center flex-1">
                   <HStack className="items-center space-x-1 mb-1">
                     <Icon as={CreditCard} size={14} className="text-gray-500" />
-                    <Text className="text-xs text-gray-600 font-medium">
-                      Balance
-                    </Text>
+                    <Text className="text-xs text-gray-600 font-medium">Balance</Text>
                   </HStack>
                   <Text className="text-lg font-bold text-gray-900">
                     {formatBalance(metrics.current_balance)}h
@@ -204,9 +189,7 @@ export const ChildAccountCard: React.FC<ChildAccountCardProps> = ({
                 <VStack className="items-center flex-1">
                   <HStack className="items-center space-x-1 mb-1">
                     <Icon as={Activity} size={14} className="text-gray-500" />
-                    <Text className="text-xs text-gray-600 font-medium">
-                      This Month
-                    </Text>
+                    <Text className="text-xs text-gray-600 font-medium">This Month</Text>
                   </HStack>
                   <Text className="text-lg font-bold text-gray-900">
                     {metrics.hours_consumed_this_month}h
@@ -219,13 +202,9 @@ export const ChildAccountCard: React.FC<ChildAccountCardProps> = ({
                 <VStack className="items-center flex-1">
                   <HStack className="items-center space-x-1 mb-1">
                     <Icon as={statusInfo.icon} size={14} className="text-gray-500" />
-                    <Text className="text-xs text-gray-600 font-medium">
-                      Status
-                    </Text>
+                    <Text className="text-xs text-gray-600 font-medium">Status</Text>
                   </HStack>
-                  <Text 
-                    className={`text-sm font-semibold ${statusInfo.color}`}
-                  >
+                  <Text className={`text-sm font-semibold ${statusInfo.color}`}>
                     {statusInfo.label}
                   </Text>
                 </VStack>
@@ -237,23 +216,14 @@ export const ChildAccountCard: React.FC<ChildAccountCardProps> = ({
           {showActions && (
             <>
               <Divider className="my-4" />
-              
+
               <HStack className="space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onPress={handleViewDetails}
-                >
+                <Button variant="outline" size="sm" className="flex-1" onPress={handleViewDetails}>
                   <ButtonIcon as={Eye} size={14} />
                   <ButtonText className="ml-1">View Details</ButtonText>
                 </Button>
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                >
+
+                <Button variant="outline" size="sm" className="flex-1">
                   <ButtonIcon as={Settings} size={14} />
                   <ButtonText className="ml-1">Settings</ButtonText>
                 </Button>

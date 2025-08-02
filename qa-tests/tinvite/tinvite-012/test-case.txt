@@ -1,0 +1,302 @@
+QA Test Case: Teacher Invitation Acceptance Flow - Complete End-to-End
+
+Test ID: TINVITE-012
+Test Name: Teacher Invitation Acceptance Complete Flow
+Purpose: Test complete teacher invitation acceptance workflow including authentication, accept/decline flows, and post-acceptance routing
+Expected Result: Teachers can successfully access invitation page, authenticate if needed, accept/decline invitations, and reach appropriate dashboard
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend + React Native/Expo frontend
+- Components: AcceptInvitationPage, authentication system, role-based routing
+- GitHub Issues: #49, #86 (decline endpoint), #85 (API fixes)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: `make dev-open`
+4. Backend logs: `make logs` (essential for API monitoring)
+
+Test Data:
+- Valid Invitation Token: [GENERATED_FROM_ADMIN_FLOW]
+- Teacher Email for Invitation: acceptance.test@example.com
+- Existing User Email: existing.user@example.com (if testing existing user)
+- Invalid Token: invalid-token-12345
+- Expired Token: [EXPIRED_TOKEN_IF_AVAILABLE]
+
+Pre-requisites:
+1. Valid teacher invitation created via admin flow (use TINVITE-011 if needed)
+2. Invitation token available and not expired
+3. Both frontend and backend servers running
+4. Clean authentication state for testing
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Invitation Preparation
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev-open
+  # In separate terminal for logs:
+  make logs
+
+1. Start development environment with both servers
+2. Create valid teacher invitation using admin flow
+3. Copy invitation token/URL for testing
+4. Verify invitation exists in system and is valid
+5. Clear browser authentication state (logout if needed)
+6. Prepare separate browser window/incognito mode
+
+Expected: Environment ready with valid invitation token available
+Screenshot: 01_environment_setup_invitation_ready.png
+
+Step 2: Access Invitation URL (Unauthenticated)
+1. Open browser in incognito/private mode
+2. Navigate to invitation URL: http://localhost:8081/accept-invitation/[TOKEN]
+3. Verify page loads without authentication
+4. Check invitation details are displayed correctly
+5. Monitor API call to /accounts/teacher-invitations/[token]/status/
+6. Verify school information, role, and invitation details shown
+
+Expected: Invitation page loads showing invitation details, authentication prompt
+Screenshot: 02_invitation_page_unauthenticated.png
+
+Step 3: Test Authentication Required Flow
+1. On invitation page, click "Accept Invitation" button
+2. Verify authentication required alert/dialog appears
+3. Check authentication options: "Login" and "Create Account"
+4. Verify redirect URLs include invitation token for return
+5. Test "Cancel" option returns to invitation page
+6. Check authentication messaging is clear and helpful
+
+Expected: Authentication required flow works with clear options
+Screenshot: 03_authentication_required_flow.png
+
+Step 4: Test User Registration Flow (New User)
+1. Click "Create Account" option from authentication dialog
+2. Verify redirect to signup page with invitation email pre-filled
+3. Complete registration form with invitation email
+4. Verify email verification process if required
+5. Check automatic redirect back to invitation page after registration
+6. Verify user is now authenticated
+
+Expected: New user registration works with auto-return to invitation
+Screenshot: 04_new_user_registration_flow.png
+
+Step 5: Test User Login Flow (Existing User)
+1. From invitation page, click "Login" option
+2. Verify redirect to signin page with proper return URL
+3. Login with existing user credentials (matching invitation email)
+4. Check automatic redirect back to invitation page
+5. Verify user is authenticated and can proceed
+6. Test login with wrong email shows appropriate error
+
+Expected: Existing user login works with proper redirect back
+Screenshot: 05_existing_user_login_flow.png
+
+Step 6: Test Invitation Acceptance (Authenticated User)
+1. Ensure user is authenticated on invitation page
+2. Verify invitation details still display correctly
+3. Check "Accept Invitation" button is enabled and prominent
+4. Click "Accept Invitation" button
+5. Monitor API call to /accounts/teacher-invitations/[token]/accept/
+6. Verify processing/loading state during acceptance
+7. Check success message appears
+
+Expected: Invitation acceptance succeeds with clear confirmation
+Screenshot: 06_invitation_acceptance_success.png
+
+Step 7: Test Post-Acceptance Routing (Teacher Role)
+1. After successful acceptance, verify routing dialog appears
+2. Check "Go to Dashboard" button is present
+3. Click "Go to Dashboard" button
+4. Verify redirect to appropriate teacher dashboard
+5. Check URL shows correct teacher/tutor dashboard route
+6. Verify user has proper teacher permissions in dashboard
+7. Test dashboard functionality is accessible
+
+Expected: Post-acceptance routing to teacher dashboard works correctly
+Screenshot: 07_teacher_dashboard_routing.png
+
+Step 8: Test Invitation Decline Flow
+1. Use fresh invitation token (create new invitation if needed)
+2. Access invitation page while authenticated
+3. Click "Decline Invitation" button
+4. Verify decline confirmation dialog appears
+5. Check confirmation message and options
+6. Click "Cancel" first to test cancellation
+7. Click "Decline" again and confirm decline
+
+Expected: Decline flow works with proper confirmation and processing
+Screenshot: 08_invitation_decline_flow.png
+
+Step 9: Test Post-Decline Handling
+1. After declining invitation, verify confirmation message
+2. Check page shows declined status
+3. Verify navigation options available
+4. Test "Back to Home" or similar navigation
+5. Monitor API call to /accounts/teacher-invitations/[token]/decline/
+6. Verify declined invitation appears correctly in admin dashboard
+
+Expected: Post-decline state handled properly with navigation options
+Screenshot: 09_post_decline_handling.png
+
+Step 10: Test Invalid Token Handling
+1. Navigate to URL with invalid token: /accept-invitation/invalid-token-12345
+2. Verify proper error page displays
+3. Check error message is clear and helpful
+4. Test navigation options from error page
+5. Verify no authentication prompts for invalid tokens
+6. Check backend logs show appropriate 404 handling
+
+Expected: Invalid tokens handled gracefully with helpful error messages
+Screenshot: 10_invalid_token_handling.png
+
+Step 11: Test Expired Invitation Handling
+1. If expired token available, navigate to expired invitation URL
+2. Verify appropriate error message for expired invitation
+3. Check expiration date is displayed
+4. Test navigation options from expired state
+5. Verify expired invitations cannot be accepted
+6. Check error messaging suggests contacting admin
+
+Expected: Expired invitations handled with clear messaging and options
+Screenshot: 11_expired_invitation_handling.png
+
+Step 12: Test Already Accepted Invitation
+1. Use token from previously accepted invitation
+2. Navigate to invitation URL
+3. Verify "already accepted" status is displayed
+4. Check appropriate messaging about current status
+5. Test navigation to dashboard from already-accepted state
+6. Verify user isn't prompted to accept again
+
+Expected: Already accepted invitations show appropriate status and navigation
+Screenshot: 12_already_accepted_invitation.png
+
+Step 13: Test Email Mismatch Handling
+1. Create invitation for email A
+2. Login with different user (email B)
+3. Access invitation URL
+4. Verify email mismatch error is displayed
+5. Check error message suggests logging in with correct email
+6. Test logout and login with correct email flow
+
+Expected: Email mismatch handled with clear guidance
+Screenshot: 13_email_mismatch_handling.png
+
+Step 14: Test Multiple School Role Assignment
+1. Accept invitation successfully
+2. Verify user receives teacher role in correct school
+3. Check user profile shows multiple school memberships if applicable
+4. Test switching between schools if multiple memberships exist
+5. Verify permissions are correct for each school context
+
+Expected: Multi-school role assignment works correctly
+Screenshot: 14_multiple_school_roles.png
+
+Step 15: Test Teacher Profile Completion (If Required)
+1. During acceptance flow, check if profile wizard appears
+2. If profile completion required, test wizard flow
+3. Verify profile completion before dashboard access
+4. Test required fields and validation in profile wizard
+5. Check integration between invitation and profile completion
+
+Expected: Profile completion flow (if required) works seamlessly
+Screenshot: 15_profile_completion_flow.png
+
+Step 16: Test Custom Message Display
+1. Use invitation with custom message from admin
+2. Verify custom message displays prominently
+3. Check message formatting and styling
+4. Test with different message lengths
+5. Verify custom message enhances invitation context
+
+Expected: Custom messages display correctly and enhance user experience
+Screenshot: 16_custom_message_display.png
+
+Step 17: Test Mobile Responsiveness
+1. Access invitation page on mobile-sized browser
+2. Verify all elements are properly sized and accessible
+3. Test touch interactions for accept/decline buttons
+4. Check modal dialogs work on mobile
+5. Verify authentication flows work on mobile
+6. Test post-acceptance navigation on mobile
+
+Expected: Complete flow fully functional and responsive on mobile
+Screenshot: 17_mobile_responsiveness.png
+
+Step 18: Test Network Error Handling
+1. Simulate network disconnection during acceptance
+2. Test error handling for failed API calls
+3. Verify retry mechanisms work properly
+4. Check error messages are helpful
+5. Test recovery after network restoration
+
+Expected: Network errors handled gracefully with recovery options
+Screenshot: 18_network_error_handling.png
+
+Step 19: Test Browser Back Button Behavior
+1. Navigate through invitation flow using browser
+2. Test back button behavior at each step
+3. Verify state preservation during navigation
+4. Test back button after authentication
+5. Check post-acceptance back button behavior
+
+Expected: Browser navigation works correctly without breaking flow
+Screenshot: 19_browser_navigation_behavior.png
+
+Step 20: Test Complete End-to-End Integration
+1. Complete full flow from invitation creation to dashboard access
+2. Verify all components integrate properly
+3. Test data consistency between frontend and backend
+4. Check real-time updates in admin dashboard
+5. Verify complete user journey is smooth and logical
+
+Expected: Complete end-to-end flow works seamlessly as integrated system
+Screenshot: 20_complete_e2e_integration.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Teachers can successfully access invitations, authenticate, accept/decline invitations, and reach appropriate dashboard with proper role assignment
+FAIL: Any critical step in acceptance flow fails, authentication issues, or incorrect role assignment
+
+Individual Step Criteria:
+- Step 1: PASS if environment ready with valid invitation, FAIL if setup issues
+- Step 2: PASS if invitation page loads correctly, FAIL if page broken or missing data
+- Step 3: PASS if authentication flow works, FAIL if auth prompt missing or broken
+- Step 4: PASS if registration flow works, FAIL if signup broken or no redirect
+- Step 5: PASS if login flow works, FAIL if signin broken or wrong redirect
+- Step 6: PASS if acceptance succeeds, FAIL if API call fails or no confirmation
+- Step 7: PASS if teacher routing works, FAIL if wrong dashboard or no access
+- Step 8: PASS if decline flow works, FAIL if decline broken or no confirmation
+- Step 9: PASS if post-decline handled, FAIL if poor decline handling
+- Step 10: PASS if invalid token handled, FAIL if poor error handling
+- Step 11: PASS if expired handled properly, FAIL if expires not detected
+- Step 12: PASS if accepted status shown, FAIL if status not recognized
+- Step 13: PASS if email mismatch caught, FAIL if wrong email accepted
+- Step 14: PASS if roles assigned correctly, FAIL if wrong permissions
+- Step 15: PASS if profile completion works, FAIL if wizard broken
+- Step 16: PASS if custom messages display, FAIL if messages missing
+- Step 17: PASS if mobile responsive, FAIL if mobile broken
+- Step 18: PASS if errors handled well, FAIL if poor error recovery
+- Step 19: PASS if navigation works, FAIL if back button breaks flow
+- Step 20: PASS if e2e integration smooth, FAIL if integration issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Invitation page loads within 2 seconds
+- Authentication flows are intuitive and clear
+- Accept/decline buttons provide immediate feedback
+- Loading states show during processing
+- Error messages are actionable and helpful
+- Success confirmations are clear and celebratory
+- Mobile experience is fully functional
+- Navigation flows feel natural and logical
+- Role assignment is immediate and correct
+- Dashboard access works immediately after acceptance
+- All text is clear and properly localized
+- Visual feedback confirms all actions taken

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  TutorOnboardingData, 
-  OnboardingProgress, 
+
+import {
+  TutorOnboardingData,
+  OnboardingProgress,
   ProfilePublishingOptions,
   startTutorOnboarding,
   saveTutorOnboardingProgress,
@@ -108,24 +109,24 @@ interface UseTutorOnboardingState {
   currentStep: number;
   onboardingId?: string;
   progress?: OnboardingProgress;
-  
+
   // Form data
   formData: Partial<TutorOnboardingData>;
   selectedEducationalSystem?: EducationalSystem;
   selectedCourses: SelectedCourse[];
   customSubjects: CustomSubject[];
-  
+
   // Available data
   availableSystems: EducationalSystem[];
   availableCourses: EnhancedCourse[];
-  
+
   // UI state
   isLoading: boolean;
   isSaving: boolean;
   isSubmitting: boolean;
   error?: string;
   validationErrors: Record<string, string[]>;
-  
+
   // Step-specific state
   stepData: Record<string, any>;
   completedSteps: Set<string>;
@@ -155,18 +156,18 @@ interface UseTutorOnboardingActions {
   nextStep: () => Promise<boolean>;
   previousStep: () => void;
   goToStep: (stepId: string) => void;
-  
+
   // Data management
   updateFormData: (stepId: string, data: any) => void;
   setSelectedEducationalSystem: (system: EducationalSystem | null) => void;
   setSelectedCourses: (courses: SelectedCourse[], customSubjects: CustomSubject[]) => void;
-  
+
   // API operations
   initializeOnboarding: () => Promise<void>;
   saveProgress: () => Promise<void>;
   validateCurrentStep: () => Promise<boolean>;
   submitOnboarding: (publishingOptions: ProfilePublishingOptions) => Promise<void>;
-  
+
   // Helper functions
   loadStepGuidance: (stepId: string) => Promise<void>;
   loadEducationalSystems: () => Promise<void>;
@@ -201,9 +202,9 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
   const initializeOnboarding = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: undefined }));
-      
+
       const { onboarding_id, initial_progress } = await startTutorOnboarding();
-      
+
       setState(prev => ({
         ...prev,
         onboardingId: onboarding_id,
@@ -213,7 +214,6 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
 
       // Load educational systems by default
       await loadEducationalSystems();
-      
     } catch (error) {
       console.error('Failed to initialize onboarding:', error);
       setState(prev => ({
@@ -241,13 +241,13 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
   const loadCourses = useCallback(async (systemId: number) => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
-      
+
       const response = await getCourseCatalog({
         educational_system: systemId,
         with_market_data: true,
         page_size: 100,
       });
-      
+
       setState(prev => ({
         ...prev,
         availableCourses: response.results,
@@ -264,20 +264,23 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
   }, []);
 
   // Load step guidance
-  const loadStepGuidance = useCallback(async (stepId: string) => {
-    try {
-      const guidance = await getOnboardingGuidance(stepId, {
-        currentStep: state.currentStep,
-        formData: state.formData,
-        selectedCourses: state.selectedCourses.length,
-        customSubjects: state.customSubjects.length,
-      });
-      
-      setState(prev => ({ ...prev, guidance }));
-    } catch (error) {
-      console.error('Failed to load guidance:', error);
-    }
-  }, [state.currentStep, state.formData, state.selectedCourses.length, state.customSubjects.length]);
+  const loadStepGuidance = useCallback(
+    async (stepId: string) => {
+      try {
+        const guidance = await getOnboardingGuidance(stepId, {
+          currentStep: state.currentStep,
+          formData: state.formData,
+          selectedCourses: state.selectedCourses.length,
+          customSubjects: state.customSubjects.length,
+        });
+
+        setState(prev => ({ ...prev, guidance }));
+      } catch (error) {
+        console.error('Failed to load guidance:', error);
+      }
+    },
+    [state.currentStep, state.formData, state.selectedCourses.length, state.customSubjects.length]
+  );
 
   // Update form data
   const updateFormData = useCallback((stepId: string, data: any) => {
@@ -297,90 +300,102 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
     if (autoSaveTimeout.current) {
       clearTimeout(autoSaveTimeout.current);
     }
-    
+
     autoSaveTimeout.current = setTimeout(() => {
       saveProgress();
     }, 30000); // Auto-save after 30 seconds
   }, []);
 
   // Set selected educational system
-  const setSelectedEducationalSystem = useCallback((system: EducationalSystem | null) => {
-    setState(prev => ({
-      ...prev,
-      selectedEducationalSystem: system || undefined,
-      selectedCourses: [], // Clear courses when system changes
-      customSubjects: [], // Clear custom subjects when system changes
-      availableCourses: [], // Clear available courses
-    }));
+  const setSelectedEducationalSystem = useCallback(
+    (system: EducationalSystem | null) => {
+      setState(prev => ({
+        ...prev,
+        selectedEducationalSystem: system || undefined,
+        selectedCourses: [], // Clear courses when system changes
+        customSubjects: [], // Clear custom subjects when system changes
+        availableCourses: [], // Clear available courses
+      }));
 
-    if (system) {
-      loadCourses(system.id);
-      
-      // Update form data
-      updateFormData('educational-system', {
-        course_selection: {
-          educational_system_id: system.id,
-          selected_courses: [],
-          custom_subjects: [],
-        },
-      });
-    }
-  }, [loadCourses, updateFormData]);
+      if (system) {
+        loadCourses(system.id);
+
+        // Update form data
+        updateFormData('educational-system', {
+          course_selection: {
+            educational_system_id: system.id,
+            selected_courses: [],
+            custom_subjects: [],
+          },
+        });
+      }
+    },
+    [loadCourses, updateFormData]
+  );
 
   // Set selected courses
-  const setSelectedCourses = useCallback((courses: SelectedCourse[], customSubjects: CustomSubject[]) => {
-    setState(prev => ({
-      ...prev,
-      selectedCourses: courses,
-      customSubjects: customSubjects,
-    }));
+  const setSelectedCourses = useCallback(
+    (courses: SelectedCourse[], customSubjects: CustomSubject[]) => {
+      setState(prev => ({
+        ...prev,
+        selectedCourses: courses,
+        customSubjects: customSubjects,
+      }));
 
-    // Update form data
-    updateFormData('course-selection', {
-      course_selection: {
-        educational_system_id: state.selectedEducationalSystem?.id,
-        selected_courses: courses.map(c => ({
-          course_id: c.course.id,
-          hourly_rate: c.hourly_rate,
-          expertise_level: c.expertise_level,
-          description: c.description,
-        })),
-        custom_subjects: customSubjects.map(s => ({
-          id: s.id,
-          name: s.name,
-          description: s.description,
-          grade_levels: s.grade_levels,
-          hourly_rate: s.hourly_rate,
-        })),
-      },
-    });
-  }, [state.selectedEducationalSystem?.id, updateFormData]);
+      // Update form data
+      updateFormData('course-selection', {
+        course_selection: {
+          educational_system_id: state.selectedEducationalSystem?.id,
+          selected_courses: courses.map(c => ({
+            course_id: c.course.id,
+            hourly_rate: c.hourly_rate,
+            expertise_level: c.expertise_level,
+            description: c.description,
+          })),
+          custom_subjects: customSubjects.map(s => ({
+            id: s.id,
+            name: s.name,
+            description: s.description,
+            grade_levels: s.grade_levels,
+            hourly_rate: s.hourly_rate,
+          })),
+        },
+      });
+    },
+    [state.selectedEducationalSystem?.id, updateFormData]
+  );
 
   // Navigation functions
-  const setCurrentStep = useCallback((step: number) => {
-    setState(prev => ({ ...prev, currentStep: step }));
-    
-    const stepConfig = TUTOR_ONBOARDING_STEPS[step];
-    if (stepConfig) {
-      loadStepGuidance(stepConfig.id);
-    }
-  }, [loadStepGuidance]);
+  const setCurrentStep = useCallback(
+    (step: number) => {
+      setState(prev => ({ ...prev, currentStep: step }));
 
-  const goToStep = useCallback((stepId: string) => {
-    const stepIndex = TUTOR_ONBOARDING_STEPS.findIndex(s => s.id === stepId);
-    if (stepIndex !== -1) {
-      setCurrentStep(stepIndex);
-    }
-  }, [setCurrentStep]);
+      const stepConfig = TUTOR_ONBOARDING_STEPS[step];
+      if (stepConfig) {
+        loadStepGuidance(stepConfig.id);
+      }
+    },
+    [loadStepGuidance]
+  );
+
+  const goToStep = useCallback(
+    (stepId: string) => {
+      const stepIndex = TUTOR_ONBOARDING_STEPS.findIndex(s => s.id === stepId);
+      if (stepIndex !== -1) {
+        setCurrentStep(stepIndex);
+      }
+    },
+    [setCurrentStep]
+  );
 
   // Validation
   const validateCurrentStep = useCallback(async (): Promise<boolean> => {
     try {
       setState(prev => ({ ...prev, validationErrors: {} }));
-      
+
       const stepId = currentStepConfig.id;
       const stepData = state.stepData[stepId] || {};
-      
+
       const validation = await validateTutorOnboardingStep({
         step: stepId,
         data: {
@@ -412,10 +427,10 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
   const saveProgress = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, isSaving: true }));
-      
+
       const stepId = currentStepConfig.id;
       const stepData = state.stepData[stepId] || {};
-      
+
       const { success, progress } = await saveTutorOnboardingProgress({
         onboarding_id: state.onboardingId,
         step: stepId,
@@ -449,7 +464,7 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
       if (!isValid) return false;
 
       await saveProgress();
-      
+
       setState(prev => ({
         ...prev,
         completedSteps: new Set([...prev.completedSteps, currentStepConfig.id]),
@@ -458,7 +473,7 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
       if (state.currentStep < TUTOR_ONBOARDING_STEPS.length - 1) {
         setCurrentStep(state.currentStep + 1);
       }
-      
+
       return true;
     } catch (error) {
       console.error('Error moving to next step:', error);
@@ -473,37 +488,40 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
   }, [state.currentStep, setCurrentStep]);
 
   // Submit onboarding
-  const submitOnboarding = useCallback(async (publishingOptions: ProfilePublishingOptions) => {
-    try {
-      setState(prev => ({ ...prev, isSubmitting: true }));
-      
-      // Create tutor school first if needed
-      if (state.stepData['school-creation']) {
-        await createTutorSchool(state.stepData['school-creation']);
+  const submitOnboarding = useCallback(
+    async (publishingOptions: ProfilePublishingOptions) => {
+      try {
+        setState(prev => ({ ...prev, isSubmitting: true }));
+
+        // Create tutor school first if needed
+        if (state.stepData['school-creation']) {
+          await createTutorSchool(state.stepData['school-creation']);
+        }
+
+        const result = await completeTutorOnboarding({
+          onboarding_id: state.onboardingId,
+          final_data: state.formData as TutorOnboardingData,
+          publishing_options: publishingOptions,
+        });
+
+        setState(prev => ({
+          ...prev,
+          isSubmitting: false,
+        }));
+
+        return result;
+      } catch (error) {
+        console.error('Submit onboarding error:', error);
+        setState(prev => ({
+          ...prev,
+          error: 'Failed to complete onboarding.',
+          isSubmitting: false,
+        }));
+        throw error;
       }
-      
-      const result = await completeTutorOnboarding({
-        onboarding_id: state.onboardingId,
-        final_data: state.formData as TutorOnboardingData,
-        publishing_options: publishingOptions,
-      });
-
-      setState(prev => ({
-        ...prev,
-        isSubmitting: false,
-      }));
-
-      return result;
-    } catch (error) {
-      console.error('Submit onboarding error:', error);
-      setState(prev => ({
-        ...prev,
-        error: 'Failed to complete onboarding.',
-        isSubmitting: false,
-      }));
-      throw error;
-    }
-  }, [state.stepData, state.onboardingId, state.formData]);
+    },
+    [state.stepData, state.onboardingId, state.formData]
+  );
 
   // Reset onboarding
   const resetOnboarding = useCallback(() => {
@@ -542,7 +560,7 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
   return {
     // State
     ...state,
-    
+
     // Actions
     setCurrentStep,
     nextStep,

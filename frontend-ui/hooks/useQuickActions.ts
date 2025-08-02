@@ -1,13 +1,14 @@
 /**
  * Custom hook for managing quick action operations (renewal and top-up).
- * 
+ *
  * Provides state management for top-up packages, quick renewal,
  * and orchestrates the quick action flows.
  */
 
 import { useState, useCallback, useEffect } from 'react';
+
 import { PurchaseApiClient } from '@/api/purchaseApi';
-import type { 
+import type {
   TopUpPackage,
   QuickActionState,
   RenewalRequest,
@@ -15,7 +16,7 @@ import type {
   RenewalResponse,
   QuickTopUpResponse,
   PackageInfo,
-  PaymentMethod
+  PaymentMethod,
 } from '@/types/purchase';
 
 interface UseQuickActionsResult {
@@ -23,10 +24,10 @@ interface UseQuickActionsResult {
   topUpPackages: TopUpPackage[];
   packagesLoading: boolean;
   packagesError: string | null;
-  
+
   // Quick action state
   actionState: QuickActionState;
-  
+
   // Actions
   loadTopUpPackages: () => Promise<void>;
   setActionType: (actionType: 'renewal' | 'topup' | null) => void;
@@ -36,10 +37,16 @@ interface UseQuickActionsResult {
   processQuickTopUp: (request: QuickTopUpRequest) => Promise<QuickTopUpResponse>;
   setError: (error: string | null) => void;
   resetState: () => void;
-  
+
   // Computed values
-  canRenew: (expiredPackage: PackageInfo | null, defaultPaymentMethod: PaymentMethod | null) => boolean;
-  canTopUp: (selectedPackage: TopUpPackage | null, defaultPaymentMethod: PaymentMethod | null) => boolean;
+  canRenew: (
+    expiredPackage: PackageInfo | null,
+    defaultPaymentMethod: PaymentMethod | null
+  ) => boolean;
+  canTopUp: (
+    selectedPackage: TopUpPackage | null,
+    defaultPaymentMethod: PaymentMethod | null
+  ) => boolean;
 }
 
 /**
@@ -109,88 +116,94 @@ export function useQuickActions(email?: string): UseQuickActionsResult {
   }, []);
 
   // Process renewal
-  const processRenewal = useCallback(async (request: RenewalRequest): Promise<RenewalResponse> => {
-    setActionState(prev => ({
-      ...prev,
-      isProcessing: true,
-      error: null,
-      confirmationStep: 'processing',
-    }));
+  const processRenewal = useCallback(
+    async (request: RenewalRequest): Promise<RenewalResponse> => {
+      setActionState(prev => ({
+        ...prev,
+        isProcessing: true,
+        error: null,
+        confirmationStep: 'processing',
+      }));
 
-    try {
-      const response = await PurchaseApiClient.renewSubscription(request, email);
-      
-      if (response.success) {
+      try {
+        const response = await PurchaseApiClient.renewSubscription(request, email);
+
+        if (response.success) {
+          setActionState(prev => ({
+            ...prev,
+            confirmationStep: 'success',
+          }));
+        } else {
+          setActionState(prev => ({
+            ...prev,
+            error: response.message || 'Renewal failed',
+            confirmationStep: 'error',
+          }));
+        }
+
+        return response;
+      } catch (error: any) {
+        const errorMessage = error.message || 'Failed to process renewal';
         setActionState(prev => ({
           ...prev,
-          confirmationStep: 'success',
-        }));
-      } else {
-        setActionState(prev => ({
-          ...prev,
-          error: response.message || 'Renewal failed',
+          error: errorMessage,
           confirmationStep: 'error',
         }));
+        throw error;
+      } finally {
+        setActionState(prev => ({
+          ...prev,
+          isProcessing: false,
+        }));
       }
-      
-      return response;
-    } catch (error: any) {
-      const errorMessage = error.message || 'Failed to process renewal';
-      setActionState(prev => ({
-        ...prev,
-        error: errorMessage,
-        confirmationStep: 'error',
-      }));
-      throw error;
-    } finally {
-      setActionState(prev => ({
-        ...prev,
-        isProcessing: false,
-      }));
-    }
-  }, [email]);
+    },
+    [email]
+  );
 
   // Process quick top-up
-  const processQuickTopUp = useCallback(async (request: QuickTopUpRequest): Promise<QuickTopUpResponse> => {
-    setActionState(prev => ({
-      ...prev,
-      isProcessing: true,
-      error: null,
-      confirmationStep: 'processing',
-    }));
+  const processQuickTopUp = useCallback(
+    async (request: QuickTopUpRequest): Promise<QuickTopUpResponse> => {
+      setActionState(prev => ({
+        ...prev,
+        isProcessing: true,
+        error: null,
+        confirmationStep: 'processing',
+      }));
 
-    try {
-      const response = await PurchaseApiClient.quickTopUp(request, email);
-      
-      if (response.success) {
+      try {
+        const response = await PurchaseApiClient.quickTopUp(request, email);
+
+        if (response.success) {
+          setActionState(prev => ({
+            ...prev,
+            confirmationStep: 'success',
+          }));
+        } else {
+          setActionState(prev => ({
+            ...prev,
+            error: response.message || 'Top-up failed',
+            confirmationStep: 'error',
+          }));
+        }
+
+        return response;
+      } catch (error: any) {
+        const errorMessage = error.message || 'Failed to process top-up';
         setActionState(prev => ({
           ...prev,
-          confirmationStep: 'success',
-        }));
-      } else {
-        setActionState(prev => ({
-          ...prev,
-          error: response.message || 'Top-up failed',
+          error: errorMessage,
           confirmationStep: 'error',
         }));
+        throw error;
+      } finally {
+        setActionState(prev => ({
+          ...prev,
+          isProcessing: false,
+        }));
       }
-      
-      return response;
-    } catch (error: any) {
-      const errorMessage = error.message || 'Failed to process top-up';
-      setActionState(prev => ({
-        ...prev,
-        error: errorMessage,
-        confirmationStep: 'error',
-      }));
-      throw error;
-    } finally {
-      setActionState(prev => ({
-        ...prev,
-        isProcessing: false,
-      }));
-    }
-  }, [email]);
+    },
+    [email]
+  );
 
   // Set error
   const setError = useCallback((error: string | null) => {
@@ -215,28 +228,20 @@ export function useQuickActions(email?: string): UseQuickActionsResult {
   }, []);
 
   // Check if renewal is possible
-  const canRenew = useCallback((
-    expiredPackage: PackageInfo | null, 
-    defaultPaymentMethod: PaymentMethod | null
-  ): boolean => {
-    return !!(
-      expiredPackage && 
-      defaultPaymentMethod && 
-      !actionState.isProcessing
-    );
-  }, [actionState.isProcessing]);
+  const canRenew = useCallback(
+    (expiredPackage: PackageInfo | null, defaultPaymentMethod: PaymentMethod | null): boolean => {
+      return !!(expiredPackage && defaultPaymentMethod && !actionState.isProcessing);
+    },
+    [actionState.isProcessing]
+  );
 
   // Check if top-up is possible
-  const canTopUp = useCallback((
-    selectedPackage: TopUpPackage | null, 
-    defaultPaymentMethod: PaymentMethod | null
-  ): boolean => {
-    return !!(
-      selectedPackage && 
-      defaultPaymentMethod && 
-      !actionState.isProcessing
-    );
-  }, [actionState.isProcessing]);
+  const canTopUp = useCallback(
+    (selectedPackage: TopUpPackage | null, defaultPaymentMethod: PaymentMethod | null): boolean => {
+      return !!(selectedPackage && defaultPaymentMethod && !actionState.isProcessing);
+    },
+    [actionState.isProcessing]
+  );
 
   // Load top-up packages on mount
   useEffect(() => {

@@ -1,14 +1,14 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router } from 'expo-router';
-import { 
-  AlertTriangleIcon, 
-  RefreshCwIcon, 
-  WifiOffIcon, 
-  GraduationCapIcon, 
+import {
+  AlertTriangleIcon,
+  RefreshCwIcon,
+  WifiOffIcon,
+  GraduationCapIcon,
   CalendarIcon,
   UsersIcon,
   TrendingUpIcon,
-  DollarSignIcon
+  DollarSignIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -33,13 +33,13 @@ import useTutorStudents from '@/hooks/useTutorStudents';
 
 const TutorDashboard = () => {
   const { userProfile } = useAuth();
-  
+
   // State for school management (tutors have their own schools)
   const [tutorSchools, setTutorSchools] = useState<SchoolMembership[]>([]);
   const [selectedSchoolId, setSelectedSchoolId] = useState<number | null>(null);
   const [schoolsLoading, setSchoolsLoading] = useState(true);
   const [schoolsError, setSchoolsError] = useState<string | null>(null);
-  
+
   // Load tutor's schools on mount
   useEffect(() => {
     const loadTutorSchools = async () => {
@@ -47,15 +47,16 @@ const TutorDashboard = () => {
         setSchoolsLoading(true);
         setSchoolsError(null);
         const schools = await getUserAdminSchools();
-        
+
         // Filter for tutor schools (individual tutoring practices)
-        const tutorSchools = schools.filter(school => 
-          school.school.name?.toLowerCase().includes(userProfile?.name?.toLowerCase() || '') ||
-          school.role === 'teacher' // Individual tutors are typically both admin and teacher
+        const tutorSchools = schools.filter(
+          school =>
+            school.school.name?.toLowerCase().includes(userProfile?.name?.toLowerCase() || '') ||
+            school.role === 'teacher' // Individual tutors are typically both admin and teacher
         );
-        
+
         setTutorSchools(tutorSchools);
-        
+
         // Auto-select the first tutor school
         if (tutorSchools.length > 0) {
           setSelectedSchoolId(tutorSchools[0].school.id);
@@ -67,7 +68,7 @@ const TutorDashboard = () => {
         setSchoolsLoading(false);
       }
     };
-    
+
     if (userProfile) {
       loadTutorSchools();
     }
@@ -79,20 +80,20 @@ const TutorDashboard = () => {
   }, [tutorSchools, selectedSchoolId]);
 
   // Hooks for data fetching
-  const { 
-    analytics, 
-    isLoading: analyticsLoading, 
-    error: analyticsError, 
-    refresh: refreshAnalytics 
+  const {
+    analytics,
+    isLoading: analyticsLoading,
+    error: analyticsError,
+    refresh: refreshAnalytics,
   } = useTutorAnalytics(selectedSchoolId || undefined);
 
-  const { 
-    students, 
-    totalStudents, 
+  const {
+    students,
+    totalStudents,
     activeStudents,
-    isLoading: studentsLoading, 
-    error: studentsError, 
-    refresh: refreshStudents 
+    isLoading: studentsLoading,
+    error: studentsError,
+    refresh: refreshStudents,
   } = useTutorStudents(selectedSchoolId || undefined);
 
   // Quick action handlers
@@ -117,17 +118,14 @@ const TutorDashboard = () => {
   }, []);
 
   const refreshAll = useCallback(async () => {
-    await Promise.all([
-      refreshAnalytics(),
-      refreshStudents(),
-    ]);
+    await Promise.all([refreshAnalytics(), refreshStudents()]);
   }, [refreshAnalytics, refreshStudents]);
 
   // Welcome message
   const welcomeMessage = useMemo(() => {
     const name = userProfile?.name?.split(' ')[0] || 'Tutor';
     const currentHour = new Date().getHours();
-    
+
     if (currentHour < 12) {
       return `Bom dia, ${name}!`;
     } else if (currentHour < 18) {
@@ -148,7 +146,7 @@ const TutorDashboard = () => {
       </Center>
     );
   }
-  
+
   // No tutor schools available
   if (!schoolsLoading && tutorSchools.length === 0) {
     return (
@@ -160,7 +158,8 @@ const TutorDashboard = () => {
               Negócio de Tutoria Não Encontrado
             </Heading>
             <Text className="text-center text-gray-600">
-              {schoolsError || 'Não foi possível encontrar seu negócio de tutoria. Complete o processo de configuração.'}
+              {schoolsError ||
+                'Não foi possível encontrar seu negócio de tutoria. Complete o processo de configuração.'}
             </Text>
           </VStack>
           <Button onPress={() => router.push('/onboarding/tutor-onboarding')} variant="solid">
@@ -203,12 +202,12 @@ const TutorDashboard = () => {
               <Heading size="xl" className="text-gray-900">
                 {welcomeMessage}
               </Heading>
-              
+
               <Text className="text-gray-600">
                 {selectedSchool?.school.name || 'Meu Negócio de Tutoria'}
               </Text>
             </VStack>
-            
+
             <HStack space="xs" className="items-center">
               {/* Refresh Button */}
               <Pressable
@@ -216,10 +215,10 @@ const TutorDashboard = () => {
                 disabled={isLoading}
                 className="p-2 rounded-md bg-gray-100 hover:bg-gray-200"
               >
-                <Icon 
-                  as={RefreshCwIcon} 
-                  size="sm" 
-                  className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`} 
+                <Icon
+                  as={RefreshCwIcon}
+                  size="sm"
+                  className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`}
                 />
               </Pressable>
             </HStack>
@@ -242,9 +241,7 @@ const TutorDashboard = () => {
             <HStack space="sm" className="items-start">
               <Icon as={AlertTriangleIcon} size="sm" className="text-red-600 mt-0.5" />
               <VStack className="flex-1">
-                <Text className="font-medium text-red-900">
-                  Erro no carregamento
-                </Text>
+                <Text className="font-medium text-red-900">Erro no carregamento</Text>
                 <Text className="text-sm text-red-700">
                   {analyticsError || studentsError || 'Erro desconhecido'}
                 </Text>
@@ -260,20 +257,14 @@ const TutorDashboard = () => {
         {analytics && !isLoading && (
           <Box className="bg-gradient-to-r from-purple-500 to-blue-600 rounded-xl p-6 shadow-lg">
             <VStack space="md">
-              <Text className="text-white font-semibold text-lg">
-                Resumo do Mês
-              </Text>
+              <Text className="text-white font-semibold text-lg">Resumo do Mês</Text>
               <HStack space="lg" className="flex-wrap">
                 <VStack className="items-center">
-                  <Text className="text-2xl font-bold text-white">
-                    {totalStudents}
-                  </Text>
+                  <Text className="text-2xl font-bold text-white">{totalStudents}</Text>
                   <Text className="text-purple-100 text-sm">Estudantes</Text>
                 </VStack>
                 <VStack className="items-center">
-                  <Text className="text-2xl font-bold text-white">
-                    {activeStudents}
-                  </Text>
+                  <Text className="text-2xl font-bold text-white">{activeStudents}</Text>
                   <Text className="text-purple-100 text-sm">Ativos</Text>
                 </VStack>
                 <VStack className="items-center">
@@ -303,35 +294,21 @@ const TutorDashboard = () => {
           <CardBody>
             <VStack space="sm">
               <HStack space="sm">
-                <Button 
-                  className="flex-1 bg-blue-600" 
-                  onPress={handleScheduleSession}
-                >
+                <Button className="flex-1 bg-blue-600" onPress={handleScheduleSession}>
                   <Icon as={CalendarIcon} size="sm" className="text-white mr-2" />
                   <ButtonText>Agendar Aula</ButtonText>
                 </Button>
-                <Button 
-                  className="flex-1 bg-green-600" 
-                  onPress={handleViewStudents}
-                >
+                <Button className="flex-1 bg-green-600" onPress={handleViewStudents}>
                   <Icon as={UsersIcon} size="sm" className="text-white mr-2" />
                   <ButtonText>Ver Estudantes</ButtonText>
                 </Button>
               </HStack>
               <HStack space="sm">
-                <Button 
-                  variant="outline" 
-                  className="flex-1" 
-                  onPress={handleViewAnalytics}
-                >
+                <Button variant="outline" className="flex-1" onPress={handleViewAnalytics}>
                   <Icon as={TrendingUpIcon} size="sm" className="text-blue-600 mr-2" />
                   <ButtonText className="text-blue-600">Analytics</ButtonText>
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-1" 
-                  onPress={handleManageSessions}
-                >
+                <Button variant="outline" className="flex-1" onPress={handleManageSessions}>
                   <Icon as={DollarSignIcon} size="sm" className="text-green-600 mr-2" />
                   <ButtonText className="text-green-600">Sessões</ButtonText>
                 </Button>
@@ -351,7 +328,7 @@ const TutorDashboard = () => {
           {/* Right Column */}
           <VStack space="lg">
             {/* Student Acquisition Hub */}
-            <StudentAcquisitionHub 
+            <StudentAcquisitionHub
               schoolId={selectedSchoolId}
               tutorName={userProfile?.name || 'Tutor'}
             />
@@ -359,17 +336,15 @@ const TutorDashboard = () => {
         </VStack>
 
         {/* Getting Started Guide for New Tutors */}
-        {!isLoading && 
-         analytics &&
-         totalStudents === 0 && (
+        {!isLoading && analytics && totalStudents === 0 && (
           <Box className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-dashed border-green-200 rounded-xl p-8 text-center">
             <VStack space="md" className="items-center">
               <Text className="text-xl font-bold text-gray-900">
                 Bem-vindo ao teu negócio de tutoria! 🎓
               </Text>
               <Text className="text-gray-600 max-w-md">
-                Comece convidando estudantes e configurando a disponibilidade para começar a lecionar.
-                O teu sucesso começa com o primeiro estudante!
+                Comece convidando estudantes e configurando a disponibilidade para começar a
+                lecionar. O teu sucesso começa com o primeiro estudante!
               </Text>
               <HStack space="md" className="flex-wrap justify-center">
                 <Button onPress={() => router.push('/(tutor)/acquisition')} variant="solid">
@@ -401,22 +376,20 @@ const TutorDashboard = () => {
                       </Text>
                     </VStack>
                     <VStack className="flex-1">
-                      <Text className="text-sm font-medium text-gray-900">
-                        {student.user.name}
-                      </Text>
+                      <Text className="text-sm font-medium text-gray-900">{student.user.name}</Text>
                       <Text className="text-xs text-gray-500">
-                        {student.progress?.lastSessionDate 
-                          ? `Última aula: ${new Date(student.progress.lastSessionDate).toLocaleDateString('pt-PT')}`
-                          : 'Primeira aula pendente'
-                        }
+                        {student.progress?.lastSessionDate
+                          ? `Última aula: ${new Date(
+                              student.progress.lastSessionDate
+                            ).toLocaleDateString('pt-PT')}`
+                          : 'Primeira aula pendente'}
                       </Text>
                     </VStack>
                     <VStack className="items-end">
                       <Text className="text-xs font-semibold text-green-600">
-                        {student.progress?.completionRate 
+                        {student.progress?.completionRate
                           ? `${Math.round(student.progress.completionRate * 100)}%`
-                          : '--'
-                        }
+                          : '--'}
                       </Text>
                     </VStack>
                   </HStack>

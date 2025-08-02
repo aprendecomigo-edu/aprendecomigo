@@ -1,5 +1,5 @@
-import React, { Component, ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react-native';
+import React, { Component, ReactNode } from 'react';
 
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -34,10 +34,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log the error to monitoring service
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
     this.setState({
       error,
-      errorInfo
+      errorInfo,
     });
 
     // In production, you would send this to your error monitoring service
@@ -61,13 +61,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <Center>
             <VStack className="items-center max-w-md" space="lg">
               <Icon as={AlertTriangle} size="xl" className="text-red-500" />
-              
+
               <VStack className="items-center" space="sm">
                 <Heading size="lg" className="text-gray-900 text-center">
                   Algo deu errado
                 </Heading>
                 <Text className="text-gray-600 text-center">
-                  Ocorreu um erro inesperado. Nossa equipe foi notificada e está trabalhando para resolver o problema.
+                  Ocorreu um erro inesperado. Nossa equipe foi notificada e está trabalhando para
+                  resolver o problema.
                 </Text>
               </VStack>
 
@@ -93,7 +94,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 >
                   <ButtonText>Tentar Novamente</ButtonText>
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   onPress={() => {
@@ -131,7 +132,7 @@ export function withErrorBoundary<P extends object>(
   );
 
   WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
-  
+
   return WrappedComponent;
 }
 

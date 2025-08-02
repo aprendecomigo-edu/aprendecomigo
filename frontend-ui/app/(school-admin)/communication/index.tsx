@@ -1,15 +1,15 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router } from 'expo-router';
-import { 
-  MailIcon, 
-  TemplateIcon, 
-  PaletteIcon, 
-  BarChart3Icon, 
+import {
+  MailIcon,
+  TemplateIcon,
+  PaletteIcon,
+  BarChart3Icon,
   SettingsIcon,
   PlusIcon,
   TrendingUpIcon,
   UsersIcon,
-  SendIcon
+  SendIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -26,8 +26,8 @@ import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { useEmailAnalytics } from '@/hooks/useEmailAnalytics';
 import { useCommunicationTemplates } from '@/hooks/useCommunicationTemplates';
+import { useEmailAnalytics } from '@/hooks/useEmailAnalytics';
 import { useSchoolBranding } from '@/hooks/useSchoolBranding';
 
 const CommunicationDashboard = () => {
@@ -63,11 +63,7 @@ const CommunicationDashboard = () => {
   const handleRefreshAll = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([
-        refreshAnalytics(),
-        refreshTemplates(),
-        fetchBranding(),
-      ]);
+      await Promise.all([refreshAnalytics(), refreshTemplates(), fetchBranding()]);
     } catch (error) {
       console.error('Error refreshing data:', error);
     } finally {
@@ -82,7 +78,7 @@ const CommunicationDashboard = () => {
   const welcomeMessage = React.useMemo(() => {
     const name = userProfile?.name?.split(' ')[0] || 'Admin';
     const currentHour = new Date().getHours();
-    
+
     if (currentHour < 12) {
       return `Good morning, ${name}!`;
     } else if (currentHour < 18) {
@@ -113,17 +109,17 @@ const CommunicationDashboard = () => {
                 Manage your school's teacher communication system
               </Text>
             </VStack>
-            
+
             <Button
               onPress={handleRefreshAll}
               disabled={refreshing}
               variant="outline"
               className="px-3 py-2"
             >
-              <Icon 
-                as={refreshing ? TrendingUpIcon : BarChart3Icon} 
-                size="sm" 
-                className={`text-gray-600 ${refreshing ? 'animate-spin' : ''}`} 
+              <Icon
+                as={refreshing ? TrendingUpIcon : BarChart3Icon}
+                size="sm"
+                className={`text-gray-600 ${refreshing ? 'animate-spin' : ''}`}
               />
             </Button>
           </HStack>
@@ -143,14 +139,10 @@ const CommunicationDashboard = () => {
         {analytics && !isLoading && (
           <Box className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 shadow-lg">
             <VStack space="md">
-              <Text className="text-white font-semibold text-lg">
-                Communication Overview
-              </Text>
+              <Text className="text-white font-semibold text-lg">Communication Overview</Text>
               <HStack space="lg" className="flex-wrap">
                 <VStack className="items-center">
-                  <Text className="text-2xl font-bold text-white">
-                    {analytics.total_sent}
-                  </Text>
+                  <Text className="text-2xl font-bold text-white">{analytics.total_sent}</Text>
                   <Text className="text-blue-100 text-sm">Emails Sent</Text>
                 </VStack>
                 <VStack className="items-center">
@@ -166,9 +158,7 @@ const CommunicationDashboard = () => {
                   <Text className="text-blue-100 text-sm">Open Rate</Text>
                 </VStack>
                 <VStack className="items-center">
-                  <Text className="text-2xl font-bold text-white">
-                    {templates.length}
-                  </Text>
+                  <Text className="text-2xl font-bold text-white">{templates.length}</Text>
                   <Text className="text-blue-100 text-sm">Templates</Text>
                 </VStack>
               </HStack>
@@ -182,7 +172,7 @@ const CommunicationDashboard = () => {
             <Heading size="md" className="text-gray-900">
               Quick Actions
             </Heading>
-            
+
             <VStack space="sm" className={isWeb ? 'lg:grid lg:grid-cols-2 lg:gap-4' : ''}>
               {/* Create New Template */}
               <Pressable
@@ -193,9 +183,7 @@ const CommunicationDashboard = () => {
                   <Icon as={PlusIcon} size="sm" className="text-white" />
                 </Box>
                 <VStack className="flex-1">
-                  <Text className="font-semibold text-gray-900">
-                    Create New Template
-                  </Text>
+                  <Text className="font-semibold text-gray-900">Create New Template</Text>
                   <Text className="text-sm text-gray-600">
                     Design custom email templates with your school branding
                   </Text>
@@ -211,9 +199,7 @@ const CommunicationDashboard = () => {
                   <Icon as={TemplateIcon} size="sm" className="text-white" />
                 </Box>
                 <VStack className="flex-1">
-                  <Text className="font-semibold text-gray-900">
-                    Manage Templates
-                  </Text>
+                  <Text className="font-semibold text-gray-900">Manage Templates</Text>
                   <Text className="text-sm text-gray-600">
                     Edit, duplicate, or organize your email templates
                   </Text>
@@ -229,9 +215,7 @@ const CommunicationDashboard = () => {
                   <Icon as={PaletteIcon} size="sm" className="text-white" />
                 </Box>
                 <VStack className="flex-1">
-                  <Text className="font-semibold text-gray-900">
-                    School Branding
-                  </Text>
+                  <Text className="font-semibold text-gray-900">School Branding</Text>
                   <Text className="text-sm text-gray-600">
                     Customize colors, logo, and messaging for your emails
                   </Text>
@@ -247,9 +231,7 @@ const CommunicationDashboard = () => {
                   <Icon as={BarChart3Icon} size="sm" className="text-white" />
                 </Box>
                 <VStack className="flex-1">
-                  <Text className="font-semibold text-gray-900">
-                    View Analytics
-                  </Text>
+                  <Text className="font-semibold text-gray-900">View Analytics</Text>
                   <Text className="text-sm text-gray-600">
                     Track email performance and engagement metrics
                   </Text>
@@ -268,37 +250,35 @@ const CommunicationDashboard = () => {
                 <Heading size="md" className="text-gray-900">
                   Recent Templates
                 </Heading>
-                <Button
-                  onPress={handleManageTemplates}
-                  variant="link"
-                  size="sm"
-                >
+                <Button onPress={handleManageTemplates} variant="link" size="sm">
                   <ButtonText>View All</ButtonText>
                 </Button>
               </HStack>
-              
+
               {templatesLoading ? (
                 <Center className="py-8">
                   <Text className="text-gray-500">Loading templates...</Text>
                 </Center>
               ) : templates.length > 0 ? (
                 <VStack space="sm">
-                  {templates.slice(0, 3).map((template) => (
+                  {templates.slice(0, 3).map(template => (
                     <Pressable
                       key={template.id}
-                      onPress={() => router.push(`/(school-admin)/communication/templates/${template.id}`)}
+                      onPress={() =>
+                        router.push(`/(school-admin)/communication/templates/${template.id}`)
+                      }
                       className="flex-row items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 active:bg-gray-100"
                     >
                       <Box className="mr-3 p-2 bg-blue-100 rounded-full">
                         <Icon as={MailIcon} size="xs" className="text-blue-600" />
                       </Box>
                       <VStack className="flex-1">
-                        <Text className="font-medium text-gray-900">
-                          {template.name}
-                        </Text>
+                        <Text className="font-medium text-gray-900">{template.name}</Text>
                         <Text className="text-xs text-gray-500">
-                          {template.template_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} • 
-                          {template.is_active ? ' Active' : ' Inactive'}
+                          {template.template_type
+                            .replace('_', ' ')
+                            .replace(/\b\w/g, l => l.toUpperCase())}{' '}
+                          •{template.is_active ? ' Active' : ' Inactive'}
                         </Text>
                       </VStack>
                     </Pressable>
@@ -308,9 +288,7 @@ const CommunicationDashboard = () => {
                 <Center className="py-8">
                   <VStack space="sm" className="items-center">
                     <Icon as={TemplateIcon} size="lg" className="text-gray-400" />
-                    <Text className="text-gray-500 text-center">
-                      No templates created yet
-                    </Text>
+                    <Text className="text-gray-500 text-center">No templates created yet</Text>
                     <Button onPress={handleCreateTemplate} size="sm">
                       <ButtonText>Create First Template</ButtonText>
                     </Button>
@@ -327,15 +305,11 @@ const CommunicationDashboard = () => {
                 <Heading size="md" className="text-gray-900">
                   Performance Stats
                 </Heading>
-                <Button
-                  onPress={handleViewAnalytics}
-                  variant="link"
-                  size="sm"
-                >
+                <Button onPress={handleViewAnalytics} variant="link" size="sm">
                   <ButtonText>View Details</ButtonText>
                 </Button>
               </HStack>
-              
+
               {analyticsLoading ? (
                 <Center className="py-8">
                   <Text className="text-gray-500">Loading analytics...</Text>
@@ -348,10 +322,15 @@ const CommunicationDashboard = () => {
                       <Icon as={SendIcon} size="sm" className="text-green-600" />
                       <Text className="text-gray-700">Delivery Rate</Text>
                     </HStack>
-                    <Text className={`font-semibold ${
-                      analytics.delivery_rate >= 0.95 ? 'text-green-600' : 
-                      analytics.delivery_rate >= 0.85 ? 'text-yellow-600' : 'text-red-600'
-                    }`}>
+                    <Text
+                      className={`font-semibold ${
+                        analytics.delivery_rate >= 0.95
+                          ? 'text-green-600'
+                          : analytics.delivery_rate >= 0.85
+                          ? 'text-yellow-600'
+                          : 'text-red-600'
+                      }`}
+                    >
                       {Math.round(analytics.delivery_rate * 100)}%
                     </Text>
                   </HStack>
@@ -362,10 +341,15 @@ const CommunicationDashboard = () => {
                       <Icon as={MailIcon} size="sm" className="text-blue-600" />
                       <Text className="text-gray-700">Open Rate</Text>
                     </HStack>
-                    <Text className={`font-semibold ${
-                      analytics.open_rate >= 0.25 ? 'text-green-600' : 
-                      analytics.open_rate >= 0.15 ? 'text-yellow-600' : 'text-red-600'
-                    }`}>
+                    <Text
+                      className={`font-semibold ${
+                        analytics.open_rate >= 0.25
+                          ? 'text-green-600'
+                          : analytics.open_rate >= 0.15
+                          ? 'text-yellow-600'
+                          : 'text-red-600'
+                      }`}
+                    >
                       {Math.round(analytics.open_rate * 100)}%
                     </Text>
                   </HStack>
@@ -376,10 +360,15 @@ const CommunicationDashboard = () => {
                       <Icon as={TrendingUpIcon} size="sm" className="text-purple-600" />
                       <Text className="text-gray-700">Click Rate</Text>
                     </HStack>
-                    <Text className={`font-semibold ${
-                      analytics.click_rate >= 0.05 ? 'text-green-600' : 
-                      analytics.click_rate >= 0.02 ? 'text-yellow-600' : 'text-red-600'
-                    }`}>
+                    <Text
+                      className={`font-semibold ${
+                        analytics.click_rate >= 0.05
+                          ? 'text-green-600'
+                          : analytics.click_rate >= 0.02
+                          ? 'text-yellow-600'
+                          : 'text-red-600'
+                      }`}
+                    >
                       {Math.round(analytics.click_rate * 100)}%
                     </Text>
                   </HStack>
@@ -399,9 +388,7 @@ const CommunicationDashboard = () => {
                 <Center className="py-8">
                   <VStack space="sm" className="items-center">
                     <Icon as={BarChart3Icon} size="lg" className="text-gray-400" />
-                    <Text className="text-gray-500 text-center">
-                      No data available yet
-                    </Text>
+                    <Text className="text-gray-500 text-center">No data available yet</Text>
                     <Text className="text-xs text-gray-400 text-center">
                       Start sending emails to see performance metrics
                     </Text>
@@ -418,7 +405,7 @@ const CommunicationDashboard = () => {
             <Heading size="md" className="text-gray-900">
               Settings & Support
             </Heading>
-            
+
             <HStack space="md" className="flex-wrap">
               <Button
                 onPress={handleCommunicationSettings}
@@ -430,7 +417,7 @@ const CommunicationDashboard = () => {
                   <ButtonText>Settings</ButtonText>
                 </HStack>
               </Button>
-              
+
               <Button
                 onPress={() => router.push('/(school-admin)/communication/help')}
                 variant="outline"
@@ -450,8 +437,9 @@ const CommunicationDashboard = () => {
                 Welcome to Teacher Communications! 🎉
               </Text>
               <Text className="text-gray-600 max-w-md">
-                Get started by creating your first email template and customizing your school's branding. 
-                This will help you maintain consistent, professional communication with your teachers.
+                Get started by creating your first email template and customizing your school's
+                branding. This will help you maintain consistent, professional communication with
+                your teachers.
               </Text>
               <HStack space="md" className="flex-wrap justify-center">
                 <Button onPress={handleCreateTemplate} variant="solid">

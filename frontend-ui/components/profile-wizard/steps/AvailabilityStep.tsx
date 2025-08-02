@@ -1,20 +1,31 @@
+import { Clock, Calendar, Globe, ChevronDownIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Heading } from '@/components/ui/heading';
-import { Input, InputField } from '@/components/ui/input';
-import { Textarea, TextareaInput } from '@/components/ui/textarea';
-import { Button, ButtonText } from '@/components/ui/button';
-import { FormControl } from '@/components/ui/form-control';
-import { Select, SelectTrigger, SelectInput, SelectIcon, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator, SelectItem } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Icon } from '@/components/ui/icon';
-import { Clock, Calendar, Globe, ChevronDownIcon } from 'lucide-react-native';
 
 import { TeacherProfileData, WeeklySchedule, TimeSlot } from '@/api/invitationApi';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { FormControl } from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectIcon,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicatorWrapper,
+  SelectDragIndicator,
+  SelectItem,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
+import { Textarea, TextareaInput } from '@/components/ui/textarea';
+import { VStack } from '@/components/ui/vstack';
 import { TIMEZONE_OPTIONS } from '@/hooks/useInvitationProfileWizard';
 
 interface AvailabilityStepProps {
@@ -67,7 +78,7 @@ const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
   const toggleTimeSlot = (day: keyof WeeklySchedule, period: string) => {
     const updatedSchedule = { ...currentSchedule };
     const daySchedule = [...(updatedSchedule[day] || [])];
-    
+
     let timeSlot: TimeSlot;
     switch (period) {
       case 'morning':
@@ -83,8 +94,8 @@ const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
         return;
     }
 
-    const existingIndex = daySchedule.findIndex(slot => 
-      slot.start_time === timeSlot.start_time && slot.end_time === timeSlot.end_time
+    const existingIndex = daySchedule.findIndex(
+      slot => slot.start_time === timeSlot.start_time && slot.end_time === timeSlot.end_time
     );
 
     if (existingIndex > -1) {
@@ -101,7 +112,7 @@ const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
 
   const isTimeSlotSelected = (day: keyof WeeklySchedule, period: string): boolean => {
     const daySchedule = currentSchedule[day] || [];
-    
+
     let targetSlot: { start_time: string; end_time: string };
     switch (period) {
       case 'morning':
@@ -117,14 +128,14 @@ const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
         return false;
     }
 
-    return daySchedule.some(slot => 
-      slot.start_time === targetSlot.start_time && slot.end_time === targetSlot.end_time
+    return daySchedule.some(
+      slot => slot.start_time === targetSlot.start_time && slot.end_time === targetSlot.end_time
     );
   };
 
   const quickSetAvailability = (type: 'weekdays' | 'weekend' | 'fulltime') => {
     const newSchedule = getDefaultSchedule();
-    
+
     const allPeriods: TimeSlot[] = [
       { start_time: '06:00', end_time: '12:00', available: true },
       { start_time: '12:00', end_time: '18:00', available: true },
@@ -190,7 +201,7 @@ const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
             </HStack>
             <Select
               selectedValue={profileData.timezone}
-              onValueChange={(value) => updateProfileData({ timezone: value })}
+              onValueChange={value => updateProfileData({ timezone: value })}
             >
               <SelectTrigger variant="outline" size="md">
                 <SelectInput placeholder="Selecione seu fuso horário" />
@@ -202,20 +213,14 @@ const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                   <SelectDragIndicatorWrapper>
                     <SelectDragIndicator />
                   </SelectDragIndicatorWrapper>
-                  {TIMEZONE_OPTIONS.map((option) => (
-                    <SelectItem
-                      key={option.value}
-                      label={option.label}
-                      value={option.value}
-                    />
+                  {TIMEZONE_OPTIONS.map(option => (
+                    <SelectItem key={option.value} label={option.label} value={option.value} />
                   ))}
                 </SelectContent>
               </SelectPortal>
             </Select>
             {validationErrors.timezone && (
-              <Text className="text-red-600 text-sm">
-                {validationErrors.timezone}
-              </Text>
+              <Text className="text-red-600 text-sm">{validationErrors.timezone}</Text>
             )}
           </VStack>
         </FormControl>
@@ -240,49 +245,48 @@ const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
         <HStack className="justify-between items-center">
           <VStack>
             <Text className="font-medium">Horário Detalhado</Text>
-            <Text className="text-sm text-gray-600">
-              Configure horários específicos por dia
-            </Text>
+            <Text className="text-sm text-gray-600">Configure horários específicos por dia</Text>
           </VStack>
-          <Switch
-            value={showDetailedSchedule}
-            onValueChange={setShowDetailedSchedule}
-          />
+          <Switch value={showDetailedSchedule} onValueChange={setShowDetailedSchedule} />
         </HStack>
 
         {/* Schedule Grid */}
         {showDetailedSchedule && (
           <VStack space="md">
             <Text className="font-medium">Selecione seus horários disponíveis:</Text>
-            
+
             <Box className="bg-white border border-gray-200 rounded-lg p-4">
               {/* Header */}
               <HStack className="mb-3">
                 <Box className="w-32">
                   <Text className="font-medium text-sm">Dia da Semana</Text>
                 </Box>
-                {timeSlots.map((slot) => (
+                {timeSlots.map(slot => (
                   <Box key={slot.value} className="flex-1 items-center">
-                    <Text className="font-medium text-xs text-center">
-                      {slot.label}
-                    </Text>
+                    <Text className="font-medium text-xs text-center">{slot.label}</Text>
                   </Box>
                 ))}
               </HStack>
 
               {/* Schedule Grid */}
               <VStack space="sm">
-                {weekDays.map((day) => (
+                {weekDays.map(day => (
                   <HStack key={day.key} className="items-center">
                     <Box className="w-32">
                       <Text className="text-sm">{day.label}</Text>
                     </Box>
-                    {timeSlots.map((slot) => (
+                    {timeSlots.map(slot => (
                       <Box key={slot.value} className="flex-1 items-center">
                         <Button
-                          variant={isTimeSlotSelected(day.key as keyof WeeklySchedule, slot.value) ? 'solid' : 'outline'}
+                          variant={
+                            isTimeSlotSelected(day.key as keyof WeeklySchedule, slot.value)
+                              ? 'solid'
+                              : 'outline'
+                          }
                           size="sm"
-                          onPress={() => toggleTimeSlot(day.key as keyof WeeklySchedule, slot.value)}
+                          onPress={() =>
+                            toggleTimeSlot(day.key as keyof WeeklySchedule, slot.value)
+                          }
                           className={`w-16 ${
                             isTimeSlotSelected(day.key as keyof WeeklySchedule, slot.value)
                               ? 'bg-green-500'
@@ -290,7 +294,9 @@ const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                           }`}
                         >
                           <ButtonText className="text-xs">
-                            {isTimeSlotSelected(day.key as keyof WeeklySchedule, slot.value) ? '✓' : '-'}
+                            {isTimeSlotSelected(day.key as keyof WeeklySchedule, slot.value)
+                              ? '✓'
+                              : '-'}
                           </ButtonText>
                         </Button>
                       </Box>
@@ -313,7 +319,8 @@ const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                 </Text>
               </HStack>
               <Text className="text-sm text-green-700">
-                Ótimo! Você tem uma boa disponibilidade para atender diferentes necessidades de alunos.
+                Ótimo! Você tem uma boa disponibilidade para atender diferentes necessidades de
+                alunos.
               </Text>
             </VStack>
           </Box>
@@ -324,13 +331,14 @@ const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
           <VStack space="sm">
             <Text className="font-medium">Observações sobre Disponibilidade (opcional)</Text>
             <Text className="text-sm text-gray-600">
-              Adicione informações extras sobre sua disponibilidade, preferências de horário, ou flexibilidade.
+              Adicione informações extras sobre sua disponibilidade, preferências de horário, ou
+              flexibilidade.
             </Text>
             <Textarea className="min-h-[80px]">
               <TextareaInput
                 placeholder="Ex: Posso ser flexível com horários em emergências, prefiro não dar aulas muito cedo de manhã nos finais de semana..."
                 value={profileData.availability_notes || ''}
-                onChangeText={(value) => updateProfileData({ availability_notes: value })}
+                onChangeText={value => updateProfileData({ availability_notes: value })}
                 multiline
                 textAlignVertical="top"
               />

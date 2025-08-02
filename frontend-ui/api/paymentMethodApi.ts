@@ -1,6 +1,6 @@
 /**
  * API client functions for payment method management operations.
- * 
+ *
  * Handles communication with the backend payment method APIs including
  * listing, adding, removing, and setting default payment methods.
  */
@@ -50,7 +50,7 @@ export interface AddPaymentMethodResponse {
 export class PaymentMethodApiClient {
   /**
    * Get all payment methods for the authenticated student.
-   * 
+   *
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to array of payment methods
    * @throws Error with descriptive message if request fails
@@ -59,11 +59,11 @@ export class PaymentMethodApiClient {
     try {
       const params = email ? { email } : {};
       const response = await apiClient.get('/api/student-balance/payment-methods/', { params });
-      
+
       if (!Array.isArray(response.data)) {
         throw new Error('Invalid response format: expected array of payment methods');
       }
-      
+
       return response.data.map((method: any) => ({
         id: method.id,
         type: method.type,
@@ -77,21 +77,23 @@ export class PaymentMethodApiClient {
         billing_details: {
           name: method.billing_details?.name,
           email: method.billing_details?.email,
-          address: method.billing_details?.address ? {
-            line1: method.billing_details.address.line1,
-            line2: method.billing_details.address.line2,
-            city: method.billing_details.address.city,
-            state: method.billing_details.address.state,
-            postal_code: method.billing_details.address.postal_code,
-            country: method.billing_details.address.country,
-          } : undefined,
+          address: method.billing_details?.address
+            ? {
+                line1: method.billing_details.address.line1,
+                line2: method.billing_details.address.line2,
+                city: method.billing_details.address.city,
+                state: method.billing_details.address.state,
+                postal_code: method.billing_details.address.postal_code,
+                country: method.billing_details.address.country,
+              }
+            : undefined,
         },
         is_default: method.is_default,
         created_at: method.created_at,
       }));
     } catch (error: any) {
       console.error('Error fetching payment methods:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Student not found');
       } else if (error.response?.status === 403) {
@@ -108,17 +110,20 @@ export class PaymentMethodApiClient {
 
   /**
    * Add a new payment method.
-   * 
+   *
    * @param request Payment method addition request data
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to payment method addition response
    * @throws Error with descriptive message if request fails
    */
-  static async addPaymentMethod(request: AddPaymentMethodRequest, email?: string): Promise<AddPaymentMethodResponse> {
+  static async addPaymentMethod(
+    request: AddPaymentMethodRequest,
+    email?: string
+  ): Promise<AddPaymentMethodResponse> {
     try {
       const data = email ? { ...request, email } : request;
       const response = await apiClient.post('/api/student-balance/payment-methods/', data);
-      
+
       return {
         success: response.data.success,
         payment_method: {
@@ -139,7 +144,7 @@ export class PaymentMethodApiClient {
       };
     } catch (error: any) {
       console.error('Error adding payment method:', error);
-      
+
       if (error.response?.status === 400) {
         throw new Error(error.response.data?.message || 'Invalid payment method data');
       } else if (error.response?.status === 402) {
@@ -158,7 +163,7 @@ export class PaymentMethodApiClient {
 
   /**
    * Remove a payment method by ID.
-   * 
+   *
    * @param paymentMethodId The payment method ID to remove
    * @param email Optional email parameter for admin access
    * @returns Promise that resolves when payment method is removed
@@ -170,9 +175,11 @@ export class PaymentMethodApiClient {
       await apiClient.delete(`/api/student-balance/payment-methods/${paymentMethodId}/`, { data });
     } catch (error: any) {
       console.error('Error removing payment method:', error);
-      
+
       if (error.response?.status === 400) {
-        throw new Error('Cannot remove the default payment method. Please set another method as default first.');
+        throw new Error(
+          'Cannot remove the default payment method. Please set another method as default first.'
+        );
       } else if (error.response?.status === 404) {
         throw new Error('Payment method not found');
       } else if (error.response?.status === 403) {
@@ -189,7 +196,7 @@ export class PaymentMethodApiClient {
 
   /**
    * Set a payment method as default.
-   * 
+   *
    * @param paymentMethodId The payment method ID to set as default
    * @param email Optional email parameter for admin access
    * @returns Promise that resolves when payment method is set as default
@@ -198,10 +205,13 @@ export class PaymentMethodApiClient {
   static async setDefaultPaymentMethod(paymentMethodId: string, email?: string): Promise<void> {
     try {
       const data = email ? { email } : {};
-      await apiClient.post(`/api/student-balance/payment-methods/${paymentMethodId}/set-default/`, data);
+      await apiClient.post(
+        `/api/student-balance/payment-methods/${paymentMethodId}/set-default/`,
+        data
+      );
     } catch (error: any) {
       console.error('Error setting default payment method:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Payment method not found');
       } else if (error.response?.status === 403) {
@@ -218,9 +228,5 @@ export class PaymentMethodApiClient {
 }
 
 // Convenience exports for direct function access
-export const {
-  getPaymentMethods,
-  addPaymentMethod,
-  removePaymentMethod,
-  setDefaultPaymentMethod,
-} = PaymentMethodApiClient;
+export const { getPaymentMethods, addPaymentMethod, removePaymentMethod, setDefaultPaymentMethod } =
+  PaymentMethodApiClient;

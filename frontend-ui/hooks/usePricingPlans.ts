@@ -1,17 +1,18 @@
 /**
  * Custom hook for fetching and managing pricing plans.
- * 
+ *
  * Provides reactive access to pricing plan data with loading states,
  * error handling, and automatic retries.
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import { PurchaseApiClient } from '@/api/purchaseApi';
 import type { PricingPlan, UsePricingPlansResult } from '@/types/purchase';
 
 /**
  * Hook for fetching and managing pricing plans data.
- * 
+ *
  * @returns Object containing plans data, loading state, error info, and refetch function
  */
 export function usePricingPlans(): UsePricingPlansResult {
@@ -32,14 +33,14 @@ export function usePricingPlans(): UsePricingPlansResult {
       if (__DEV__) {
         console.log(`Pricing plans fetched in ${fetchTime.toFixed(2)}ms`);
       }
-      
+
       // Sort plans by display_order, then by price
       const sortedPlans = plansData.sort((a, b) => {
         // First sort by display_order
         if (a.display_order !== b.display_order) {
           return a.display_order - b.display_order;
         }
-        
+
         // Then sort by price (ascending)
         const priceA = parseFloat(a.price_eur);
         const priceB = parseFloat(b.price_eur);

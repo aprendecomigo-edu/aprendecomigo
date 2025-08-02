@@ -1,6 +1,17 @@
-import React, { useState, useEffect } from 'react';
 import { Globe, School, Users, Check, ChevronRight, Info } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
 
+import { getEducationalSystems } from '@/api/tutorApi';
+import { EducationalSystem } from '@/api/userApi';
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogBody,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -11,18 +22,6 @@ import { Pressable } from '@/components/ui/pressable';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import {
-  AlertDialog,
-  AlertDialogBackdrop,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogBody,
-  AlertDialogFooter,
-} from '@/components/ui/alert-dialog';
-
-import { EducationalSystem } from '@/api/userApi';
-import { getEducationalSystems } from '@/api/tutorApi';
 
 // Pre-configured educational systems with enhanced metadata
 const FEATURED_SYSTEMS = {
@@ -39,14 +38,14 @@ const FEATURED_SYSTEMS = {
       demand: 'high' as const,
       tutors: 1250,
       avg_rate: 15,
-      currency: '€'
+      currency: '€',
     },
     benefits: [
       'Structured national curriculum',
       'High student demand',
       'Competitive rates',
-      'Established assessment methods'
-    ]
+      'Established assessment methods',
+    ],
   },
   brazil: {
     id: 'brazil',
@@ -61,14 +60,14 @@ const FEATURED_SYSTEMS = {
       demand: 'high' as const,
       tutors: 890,
       avg_rate: 25,
-      currency: 'R$'
+      currency: 'R$',
     },
     benefits: [
       'Large student population',
       'Growing online education market',
       'Diverse subject offerings',
-      'Strong demand for quality tutoring'
-    ]
+      'Strong demand for quality tutoring',
+    ],
   },
   custom: {
     id: 'custom',
@@ -83,15 +82,15 @@ const FEATURED_SYSTEMS = {
       demand: 'medium' as const,
       tutors: 340,
       avg_rate: 20,
-      currency: '€'
+      currency: '€',
     },
     benefits: [
       'Complete flexibility',
       'Unique value proposition',
       'Higher pricing potential',
-      'Less competition'
-    ]
-  }
+      'Less competition',
+    ],
+  },
 } as const;
 
 interface EducationalSystemSelectorProps {
@@ -115,10 +114,14 @@ const SystemCard: React.FC<{
 
   const getDemandColor = (demand: string) => {
     switch (demand) {
-      case 'high': return 'bg-green-100 text-green-700';
-      case 'medium': return 'bg-yellow-100 text-yellow-700';
-      case 'low': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'high':
+        return 'bg-green-100 text-green-700';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-700';
+      case 'low':
+        return 'bg-red-100 text-red-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -135,9 +138,10 @@ const SystemCard: React.FC<{
         <Card
           className={`
             border-2 transition-all duration-200 mb-4
-            ${isSelected 
-              ? 'border-blue-500 bg-blue-50 shadow-lg' 
-              : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
+            ${
+              isSelected
+                ? 'border-blue-500 bg-blue-50 shadow-lg'
+                : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
             }
           `}
         >
@@ -147,15 +151,13 @@ const SystemCard: React.FC<{
                 <Box className="w-12 h-12 rounded-full bg-gray-100 items-center justify-center">
                   <Text className="text-2xl">{system.flag}</Text>
                 </Box>
-                
+
                 <VStack className="flex-1" space="xs">
                   <VStack space="xs">
                     <Heading size="md" className="text-gray-900">
                       {system.name}
                     </Heading>
-                    <Text className="text-gray-600 text-sm">
-                      {system.description}
-                    </Text>
+                    <Text className="text-gray-600 text-sm">{system.description}</Text>
                   </VStack>
 
                   <HStack space="xs" className="flex-wrap">
@@ -164,16 +166,15 @@ const SystemCard: React.FC<{
                         {system.market_info.demand} Demand
                       </BadgeText>
                     </Badge>
-                    
+
                     <Badge className="bg-blue-100 text-blue-700">
-                      <BadgeText className="text-xs">
-                        {system.subjects_count} Subjects
-                      </BadgeText>
+                      <BadgeText className="text-xs">{system.subjects_count} Subjects</BadgeText>
                     </Badge>
-                    
+
                     <Badge className="bg-purple-100 text-purple-700">
                       <BadgeText className="text-xs">
-                        ~{system.market_info.avg_rate}{system.market_info.currency}/h
+                        ~{system.market_info.avg_rate}
+                        {system.market_info.currency}/h
                       </BadgeText>
                     </Badge>
                   </HStack>
@@ -190,7 +191,7 @@ const SystemCard: React.FC<{
                     <Icon as={Check} className="text-white" size="sm" />
                   </Box>
                 )}
-                
+
                 <Pressable
                   onPress={() => setShowDetails(true)}
                   className="p-1"
@@ -206,9 +207,7 @@ const SystemCard: React.FC<{
             <VStack space="sm">
               <VStack space="xs">
                 <Text className="text-gray-700 text-xs font-medium">Popular Subjects:</Text>
-                <Text className="text-gray-600 text-xs">
-                  {system.popular_subjects.join(' • ')}
-                </Text>
+                <Text className="text-gray-600 text-xs">{system.popular_subjects.join(' • ')}</Text>
               </VStack>
             </VStack>
           </CardContent>
@@ -234,7 +233,9 @@ const SystemCard: React.FC<{
           <AlertDialogBody className="py-6">
             <VStack space="lg">
               <VStack space="sm">
-                <Heading size="sm" className="text-gray-900">Market Overview</Heading>
+                <Heading size="sm" className="text-gray-900">
+                  Market Overview
+                </Heading>
                 <HStack space="lg" className="justify-between">
                   <VStack space="xs" className="items-center">
                     <Icon as={Users} className="text-blue-600" size="lg" />
@@ -243,7 +244,7 @@ const SystemCard: React.FC<{
                     </Text>
                     <Text className="text-gray-600 text-xs text-center">Active Tutors</Text>
                   </VStack>
-                  
+
                   <VStack space="xs" className="items-center">
                     <Icon as={School} className="text-green-600" size="lg" />
                     <Text className="text-lg font-semibold text-gray-900">
@@ -251,11 +252,12 @@ const SystemCard: React.FC<{
                     </Text>
                     <Text className="text-gray-600 text-xs text-center">Subjects</Text>
                   </VStack>
-                  
+
                   <VStack space="xs" className="items-center">
                     <Icon as={Globe} className="text-purple-600" size="lg" />
                     <Text className="text-lg font-semibold text-gray-900">
-                      {system.market_info.avg_rate}{system.market_info.currency}
+                      {system.market_info.avg_rate}
+                      {system.market_info.currency}
                     </Text>
                     <Text className="text-gray-600 text-xs text-center">Avg. Rate/Hour</Text>
                   </VStack>
@@ -263,7 +265,9 @@ const SystemCard: React.FC<{
               </VStack>
 
               <VStack space="sm">
-                <Heading size="sm" className="text-gray-900">Key Benefits</Heading>
+                <Heading size="sm" className="text-gray-900">
+                  Key Benefits
+                </Heading>
                 <VStack space="xs">
                   {system.benefits.map((benefit, index) => (
                     <HStack key={index} space="xs" className="items-start">
@@ -275,7 +279,9 @@ const SystemCard: React.FC<{
               </VStack>
 
               <VStack space="sm">
-                <Heading size="sm" className="text-gray-900">Grade Levels</Heading>
+                <Heading size="sm" className="text-gray-900">
+                  Grade Levels
+                </Heading>
                 <HStack space="xs" className="flex-wrap">
                   {system.grade_levels.map((level, index) => (
                     <Badge key={index} className="bg-gray-100">
@@ -303,7 +309,7 @@ export const EducationalSystemSelector: React.FC<EducationalSystemSelectorProps>
   onSystemSelect,
   onContinue,
   isLoading = false,
-  title = "Choose Your Educational System",
+  title = 'Choose Your Educational System',
   subtitle = "Select the curriculum and standards you'll be teaching",
   showContinueButton = true,
 }) => {
@@ -333,22 +339,22 @@ export const EducationalSystemSelector: React.FC<EducationalSystemSelectorProps>
 
     // Find the actual system from backend data
     let selectedSystem: EducationalSystem | null = null;
-    
+
     if (systemKey === 'portugal') {
-      selectedSystem = systems.find(s => 
-        s.country?.toLowerCase() === 'portugal' || 
-        s.name.toLowerCase().includes('portug')
-      ) || null;
+      selectedSystem =
+        systems.find(
+          s => s.country?.toLowerCase() === 'portugal' || s.name.toLowerCase().includes('portug')
+        ) || null;
     } else if (systemKey === 'brazil') {
-      selectedSystem = systems.find(s => 
-        s.country?.toLowerCase() === 'brazil' || 
-        s.name.toLowerCase().includes('brazil')
-      ) || null;
+      selectedSystem =
+        systems.find(
+          s => s.country?.toLowerCase() === 'brazil' || s.name.toLowerCase().includes('brazil')
+        ) || null;
     } else if (systemKey === 'custom') {
-      selectedSystem = systems.find(s => 
-        s.name.toLowerCase().includes('custom') || 
-        s.name.toLowerCase().includes('other')
-      ) || null;
+      selectedSystem =
+        systems.find(
+          s => s.name.toLowerCase().includes('custom') || s.name.toLowerCase().includes('other')
+        ) || null;
     }
 
     onSystemSelect(selectedSystem);
@@ -385,21 +391,17 @@ export const EducationalSystemSelector: React.FC<EducationalSystemSelectorProps>
           <Box className="w-16 h-16 rounded-full bg-blue-100 items-center justify-center">
             <Icon as={Globe} className="text-blue-600" size="xl" />
           </Box>
-          
+
           <VStack space="sm">
             <Heading size="xl" className="text-gray-900 text-center">
               {title}
             </Heading>
-            <Text className="text-gray-600 text-center max-w-md">
-              {subtitle}
-            </Text>
+            <Text className="text-gray-600 text-center max-w-md">{subtitle}</Text>
           </VStack>
 
           {selectedSystem && (
             <Badge className="bg-green-100">
-              <BadgeText className="text-green-700">
-                Selected: {selectedSystem.name}
-              </BadgeText>
+              <BadgeText className="text-green-700">Selected: {selectedSystem.name}</BadgeText>
             </Badge>
           )}
         </VStack>
@@ -410,9 +412,18 @@ export const EducationalSystemSelector: React.FC<EducationalSystemSelectorProps>
         <VStack space="md">
           {Object.entries(FEATURED_SYSTEMS).map(([key, system]) => {
             const actualSystem = systems.find(s => {
-              if (key === 'portugal') return s.country?.toLowerCase() === 'portugal' || s.name.toLowerCase().includes('portug');
-              if (key === 'brazil') return s.country?.toLowerCase() === 'brazil' || s.name.toLowerCase().includes('brazil');
-              if (key === 'custom') return s.name.toLowerCase().includes('custom') || s.name.toLowerCase().includes('other');
+              if (key === 'portugal')
+                return (
+                  s.country?.toLowerCase() === 'portugal' || s.name.toLowerCase().includes('portug')
+                );
+              if (key === 'brazil')
+                return (
+                  s.country?.toLowerCase() === 'brazil' || s.name.toLowerCase().includes('brazil')
+                );
+              if (key === 'custom')
+                return (
+                  s.name.toLowerCase().includes('custom') || s.name.toLowerCase().includes('other')
+                );
               return false;
             });
 
@@ -448,7 +459,10 @@ export const EducationalSystemSelector: React.FC<EducationalSystemSelectorProps>
                 <ButtonText className={canContinue ? 'text-white' : 'text-gray-500'}>
                   Continue to Course Selection
                 </ButtonText>
-                <ButtonIcon as={ChevronRight} className={canContinue ? 'text-white ml-1' : 'text-gray-500 ml-1'} />
+                <ButtonIcon
+                  as={ChevronRight}
+                  className={canContinue ? 'text-white ml-1' : 'text-gray-500 ml-1'}
+                />
               </>
             )}
           </Button>

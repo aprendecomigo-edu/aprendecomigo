@@ -194,7 +194,7 @@ export const scheduleSession = async (sessionData: {
 export const getTeacherAnalytics = async (timeframe: 'week' | 'month' | 'year' = 'month') => {
   try {
     const response = await apiClient.get(`/api/teachers/analytics/`, {
-      params: { timeframe }
+      params: { timeframe },
     });
     return response.data;
   } catch (error) {

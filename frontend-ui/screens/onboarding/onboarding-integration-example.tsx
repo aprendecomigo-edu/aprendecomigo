@@ -1,29 +1,29 @@
-import React, { useState, useEffect } from 'react';
 import useRouter from '@unitools/router';
+import { Rocket, Settings, ChevronRight } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
 
-import { 
-  OnboardingProgress, 
-  OnboardingChecklist, 
-  ContextualHelp,
-  useOnboarding,
-  useContextualHelp,
-  ONBOARDING_HELP_TIPS,
-  OnboardingTutorial
-} from '@/screens/onboarding';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
-import { VStack } from '@/components/ui/vstack';
-import { Text } from '@/components/ui/text';
-import { Badge, BadgeText } from '@/components/ui/badge';
 import { Icon } from '@/components/ui/icon';
-import { Rocket, Settings, ChevronRight } from 'lucide-react-native';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
+import {
+  OnboardingProgress,
+  OnboardingChecklist,
+  ContextualHelp,
+  useOnboarding,
+  useContextualHelp,
+  ONBOARDING_HELP_TIPS,
+  OnboardingTutorial,
+} from '@/screens/onboarding';
 
 /**
  * Example: How to integrate onboarding into the school admin dashboard
- * 
+ *
  * This component demonstrates how to:
  * 1. Show onboarding progress in the dashboard
  * 2. Provide contextual help
@@ -32,14 +32,9 @@ import { Rocket, Settings, ChevronRight } from 'lucide-react-native';
  */
 export const SchoolAdminDashboardWithOnboarding: React.FC = () => {
   const router = useRouter();
-  const { 
-    progress, 
-    shouldShowOnboarding, 
-    isCompleted, 
-    completionPercentage,
-    isLoading 
-  } = useOnboarding();
-  
+  const { progress, shouldShowOnboarding, isCompleted, completionPercentage, isLoading } =
+    useOnboarding();
+
   const { tips, addTip } = useContextualHelp('dashboard');
   const [showOnboardingPanel, setShowOnboardingPanel] = useState(false);
 
@@ -68,7 +63,6 @@ export const SchoolAdminDashboardWithOnboarding: React.FC = () => {
   return (
     <Box className="flex-1 bg-gray-50">
       <VStack space="lg" className="p-4 max-w-6xl mx-auto">
-        
         {/* Header with onboarding status */}
         <HStack className="items-center justify-between">
           <VStack>
@@ -97,11 +91,7 @@ export const SchoolAdminDashboardWithOnboarding: React.FC = () => {
 
           <HStack space="sm">
             {/* Contextual Help */}
-            <ContextualHelp 
-              tips={tips}
-              showBadge={true}
-              maxTips={3}
-            />
+            <ContextualHelp tips={tips} showBadge={true} maxTips={3} />
 
             {/* Settings */}
             <Button variant="outline" size="sm">
@@ -142,12 +132,8 @@ export const SchoolAdminDashboardWithOnboarding: React.FC = () => {
                   <ButtonText className="text-white">Continue Setup</ButtonText>
                   <ButtonIcon as={ChevronRight} className="text-white ml-1" />
                 </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={() => setShowOnboardingPanel(false)}
-                >
+
+                <Button variant="outline" size="sm" onPress={() => setShowOnboardingPanel(false)}>
                   <ButtonText>Later</ButtonText>
                 </Button>
               </HStack>
@@ -161,9 +147,7 @@ export const SchoolAdminDashboardWithOnboarding: React.FC = () => {
           <Card>
             <VStack space="md" className="p-6">
               <Heading size="lg">School Overview</Heading>
-              <Text className="text-gray-600">
-                Your main dashboard content goes here...
-              </Text>
+              <Text className="text-gray-600">Your main dashboard content goes here...</Text>
             </VStack>
           </Card>
 
@@ -172,7 +156,6 @@ export const SchoolAdminDashboardWithOnboarding: React.FC = () => {
             <VStack space="md" className="p-6">
               <Heading size="lg">Quick Actions</Heading>
               <VStack space="sm">
-                
                 {/* Show setup actions for incomplete onboarding */}
                 {shouldShowOnboarding && !isCompleted && (
                   <>
@@ -227,39 +210,38 @@ export const SchoolAdminDashboardWithOnboarding: React.FC = () => {
 };
 
 // Example of how to add onboarding to an existing dashboard component
-export const withOnboarding = <T extends object>(
-  WrappedComponent: React.ComponentType<T>
-) => {
+export const withOnboarding = <T extends object>(WrappedComponent: React.ComponentType<T>) => {
   return (props: T) => {
     const { shouldShowOnboarding, isCompleted, progress } = useOnboarding();
 
     return (
       <VStack space="md" className="flex-1">
         {/* Onboarding banner for incomplete setup */}
-        {shouldShowOnboarding && !isCompleted && progress && progress.completion_percentage < 50 && (
-          <Card className="bg-yellow-50 border-yellow-200 mx-4 mt-4">
-            <HStack space="sm" className="p-4 items-center">
-              <Icon as={Rocket} size={20} className="text-yellow-600" />
-              <VStack className="flex-1">
-                <Text className="font-medium text-yellow-800">
-                  Complete your school setup
-                </Text>
-                <Text className="text-yellow-700 text-sm">
-                  {progress.total_steps - progress.completed_steps.length} steps remaining
-                </Text>
-              </VStack>
-              <Button 
-                size="sm" 
-                className="bg-yellow-600"
-                onPress={() => {
-                  // Navigation handled by individual components
-                }}
-              >
-                <ButtonText className="text-white">Continue</ButtonText>
-              </Button>
-            </HStack>
-          </Card>
-        )}
+        {shouldShowOnboarding &&
+          !isCompleted &&
+          progress &&
+          progress.completion_percentage < 50 && (
+            <Card className="bg-yellow-50 border-yellow-200 mx-4 mt-4">
+              <HStack space="sm" className="p-4 items-center">
+                <Icon as={Rocket} size={20} className="text-yellow-600" />
+                <VStack className="flex-1">
+                  <Text className="font-medium text-yellow-800">Complete your school setup</Text>
+                  <Text className="text-yellow-700 text-sm">
+                    {progress.total_steps - progress.completed_steps.length} steps remaining
+                  </Text>
+                </VStack>
+                <Button
+                  size="sm"
+                  className="bg-yellow-600"
+                  onPress={() => {
+                    // Navigation handled by individual components
+                  }}
+                >
+                  <ButtonText className="text-white">Continue</ButtonText>
+                </Button>
+              </HStack>
+            </Card>
+          )}
 
         {/* Original component */}
         <WrappedComponent {...props} />

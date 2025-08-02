@@ -1,26 +1,26 @@
-import { 
-  MailIcon, 
-  LinkIcon, 
-  QrCodeIcon, 
-  ShareIcon, 
+import {
+  MailIcon,
+  LinkIcon,
+  QrCodeIcon,
+  ShareIcon,
   UserPlusIcon,
   SendIcon,
   CopyIcon,
-  CheckIcon
+  CheckIcon,
 } from 'lucide-react-native';
 import React, { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 
+import { Badge, BadgeText } from '@/components/ui/badge';
+import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
+import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Input, InputField } from '@/components/ui/input';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Pressable } from '@/components/ui/pressable';
 
 interface StudentAcquisitionHubProps {
   schoolId: number;
@@ -34,14 +34,11 @@ interface InvitationStats {
   conversionRate: number;
 }
 
-const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({
-  schoolId,
-  tutorName,
-}) => {
+const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({ schoolId, tutorName }) => {
   const [emailInput, setEmailInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  
+
   // Mock invitation stats - in real app, fetch from API
   const invitationStats: InvitationStats = {
     sent: 12,
@@ -61,15 +58,15 @@ const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({
 
     try {
       setIsLoading(true);
-      
+
       // TODO: Implement actual email invitation API call
       // await sendStudentInvitation({ email: emailInput, schoolId });
-      
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       Alert.alert(
-        'Convite Enviado!', 
+        'Convite Enviado!',
         `Convite enviado para ${emailInput}. O estudante receberá um email com instruções para se inscrever.`
       );
       setEmailInput('');
@@ -89,7 +86,7 @@ const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({
         // For mobile, you'd typically use expo-clipboard here
         console.log('Copy to clipboard:', discoveryLink);
       }
-      
+
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
     } catch (error) {
@@ -100,7 +97,7 @@ const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({
   const handleShareLink = useCallback(() => {
     // TODO: Implement native sharing (expo-sharing)
     const shareText = `Olá! Sou ${tutorName}, tutor(a) profissional. Convido-te a conhecer as minhas aulas personalizadas. Vê o meu perfil: ${discoveryLink}`;
-    
+
     if (typeof navigator !== 'undefined' && navigator.share) {
       navigator.share({
         title: `Aulas com ${tutorName}`,
@@ -108,14 +105,10 @@ const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({
         url: discoveryLink,
       });
     } else {
-      Alert.alert(
-        'Partilhar Perfil',
-        shareText,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Copiar', onPress: handleCopyLink },
-        ]
-      );
+      Alert.alert('Partilhar Perfil', shareText, [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Copiar', onPress: handleCopyLink },
+      ]);
     }
   }, [tutorName, discoveryLink, handleCopyLink]);
 
@@ -139,14 +132,12 @@ const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({
           </Text>
         </VStack>
       </CardHeader>
-      
+
       <CardBody>
         <VStack space="lg">
           {/* Invitation Stats */}
           <VStack space="sm">
-            <Text className="text-sm font-medium text-gray-700">
-              Estatísticas de Convites
-            </Text>
+            <Text className="text-sm font-medium text-gray-700">Estatísticas de Convites</Text>
             <HStack space="md" className="flex-wrap">
               <Badge variant="outline" className="flex-row items-center space-x-1">
                 <Icon as={SendIcon} size="xs" className="text-blue-600" />
@@ -157,16 +148,16 @@ const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({
                 <BadgeText className="text-green-600">{invitationStats.accepted} aceites</BadgeText>
               </Badge>
               <Badge variant="outline" className="flex-row items-center space-x-1">
-                <BadgeText className="text-purple-600">{invitationStats.conversionRate}% conversão</BadgeText>
+                <BadgeText className="text-purple-600">
+                  {invitationStats.conversionRate}% conversão
+                </BadgeText>
               </Badge>
             </HStack>
           </VStack>
 
           {/* Email Invitation */}
           <VStack space="sm">
-            <Text className="text-sm font-medium text-gray-700">
-              Convite por Email
-            </Text>
+            <Text className="text-sm font-medium text-gray-700">Convite por Email</Text>
             <VStack space="sm">
               <Input variant="outline">
                 <InputField
@@ -177,50 +168,36 @@ const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({
                   autoCapitalize="none"
                 />
               </Input>
-              <Button 
+              <Button
                 onPress={handleEmailInvitation}
                 disabled={isLoading || !emailInput.trim()}
                 className="bg-blue-600"
               >
                 <Icon as={MailIcon} size="sm" className="text-white mr-2" />
-                <ButtonText>
-                  {isLoading ? 'Enviando...' : 'Enviar Convite'}
-                </ButtonText>
+                <ButtonText>{isLoading ? 'Enviando...' : 'Enviar Convite'}</ButtonText>
               </Button>
             </VStack>
           </VStack>
 
           {/* Shareable Link */}
           <VStack space="sm">
-            <Text className="text-sm font-medium text-gray-700">
-              Link de Descoberta
-            </Text>
+            <Text className="text-sm font-medium text-gray-700">Link de Descoberta</Text>
             <VStack space="sm">
               <VStack className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                <Text className="text-sm text-gray-600 break-all">
-                  {discoveryLink}
-                </Text>
+                <Text className="text-sm text-gray-600 break-all">{discoveryLink}</Text>
               </VStack>
               <HStack space="sm">
-                <Button 
-                  variant="outline"
-                  className="flex-1"
-                  onPress={handleCopyLink}
-                >
-                  <Icon 
-                    as={copiedLink ? CheckIcon : CopyIcon} 
-                    size="sm" 
-                    className={copiedLink ? "text-green-600 mr-2" : "text-gray-600 mr-2"} 
+                <Button variant="outline" className="flex-1" onPress={handleCopyLink}>
+                  <Icon
+                    as={copiedLink ? CheckIcon : CopyIcon}
+                    size="sm"
+                    className={copiedLink ? 'text-green-600 mr-2' : 'text-gray-600 mr-2'}
                   />
-                  <ButtonText className={copiedLink ? "text-green-600" : "text-gray-600"}>
+                  <ButtonText className={copiedLink ? 'text-green-600' : 'text-gray-600'}>
                     {copiedLink ? 'Copiado!' : 'Copiar'}
                   </ButtonText>
                 </Button>
-                <Button 
-                  variant="outline"
-                  className="flex-1"
-                  onPress={handleShareLink}
-                >
+                <Button variant="outline" className="flex-1" onPress={handleShareLink}>
                   <Icon as={ShareIcon} size="sm" className="text-blue-600 mr-2" />
                   <ButtonText className="text-blue-600">Partilhar</ButtonText>
                 </Button>
@@ -230,22 +207,20 @@ const StudentAcquisitionHub: React.FC<StudentAcquisitionHubProps> = ({
 
           {/* Quick Actions */}
           <VStack space="sm">
-            <Text className="text-sm font-medium text-gray-700">
-              Ferramentas Adicionais
-            </Text>
+            <Text className="text-sm font-medium text-gray-700">Ferramentas Adicionais</Text>
             <HStack space="sm">
-              <Pressable 
+              <Pressable
                 onPress={handleQRCode}
                 className="flex-1 bg-purple-50 border border-purple-200 rounded-lg p-4 items-center"
               >
                 <Icon as={QrCodeIcon} size="sm" className="text-purple-600 mb-1" />
-                <Text className="text-xs font-medium text-purple-600 text-center">
-                  Código QR
-                </Text>
+                <Text className="text-xs font-medium text-purple-600 text-center">Código QR</Text>
               </Pressable>
-              
-              <Pressable 
-                onPress={() => Alert.alert('Em Breve', 'Funcionalidades de redes sociais em desenvolvimento')}
+
+              <Pressable
+                onPress={() =>
+                  Alert.alert('Em Breve', 'Funcionalidades de redes sociais em desenvolvimento')
+                }
                 className="flex-1 bg-orange-50 border border-orange-200 rounded-lg p-4 items-center"
               >
                 <Icon as={LinkIcon} size="sm" className="text-orange-600 mb-1" />

@@ -1,12 +1,9 @@
-import React from 'react';
 import { fireEvent } from '@testing-library/react-native';
+import React from 'react';
+
+import { render, throwError, expectErrorBoundary } from '../../utils/test-utils';
 
 import { WizardErrorBoundary } from '@/components/wizard/wizard-error-boundary';
-import {
-  render,
-  throwError,
-  expectErrorBoundary,
-} from '../../utils/test-utils';
 
 // Test component that throws errors
 const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
@@ -30,7 +27,7 @@ describe('WizardErrorBoundary', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Suppress console.error for error boundary tests
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -53,14 +50,11 @@ describe('WizardErrorBoundary', () => {
     it('should not interfere with normal component behavior', () => {
       const TestComponent = () => {
         const [count, setCount] = React.useState(0);
-        
+
         return (
           <div>
             <div data-testid="counter">{count}</div>
-            <button
-              data-testid="increment"
-              onPress={() => setCount(c => c + 1)}
-            />
+            <button data-testid="increment" onPress={() => setCount(c => c + 1)} />
           </div>
         );
       };
@@ -137,7 +131,7 @@ describe('WizardErrorBoundary', () => {
 
       // Reset and trigger error again
       fireEvent.press(getByTestId('retry-button'));
-      
+
       rerender(
         <WizardErrorBoundary {...defaultProps} maxRetries={2}>
           <ThrowError shouldThrow={true} />
@@ -149,7 +143,7 @@ describe('WizardErrorBoundary', () => {
 
       // Reset and trigger error third time
       fireEvent.press(getByTestId('retry-button'));
-      
+
       rerender(
         <WizardErrorBoundary {...defaultProps} maxRetries={2}>
           <ThrowError shouldThrow={true} />
@@ -221,10 +215,7 @@ describe('WizardErrorBoundary', () => {
         const [shouldThrow, setShouldThrow] = React.useState(true);
 
         return (
-          <WizardErrorBoundary
-            {...defaultProps}
-            onReset={() => setShouldThrow(false)}
-          >
+          <WizardErrorBoundary {...defaultProps} onReset={() => setShouldThrow(false)}>
             <ErrorComponent shouldThrow={shouldThrow} />
           </WizardErrorBoundary>
         );
@@ -252,7 +243,9 @@ describe('WizardErrorBoundary', () => {
       );
 
       expect(getByText('Something went wrong')).toBeTruthy();
-      expect(getByText(/We encountered an unexpected error while processing your profile/)).toBeTruthy();
+      expect(
+        getByText(/We encountered an unexpected error while processing your profile/)
+      ).toBeTruthy();
     });
 
     it('should show helpful suggestions for recovery', () => {
@@ -418,12 +411,12 @@ describe('WizardErrorBoundary', () => {
 
       // Pressing retry should not crash the app
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       fireEvent.press(getByTestId('retry-button'));
 
       // Should have logged the error but not crashed
       expect(consoleSpy).toHaveBeenCalled();
-      
+
       consoleSpy.mockRestore();
     });
 
@@ -456,7 +449,7 @@ describe('WizardErrorBoundary', () => {
   describe('Performance', () => {
     it('should not impact performance when no errors occur', () => {
       const renderSpy = jest.fn();
-      
+
       const TestComponent = () => {
         renderSpy();
         return <div data-testid="test">Test</div>;
@@ -528,12 +521,7 @@ describe('WizardErrorBoundary', () => {
           return 'Unexpected error occurred';
         };
 
-        return (
-          <WizardErrorBoundary
-            {...props}
-            getCustomMessage={getCustomMessage}
-          />
-        );
+        return <WizardErrorBoundary {...props} getCustomMessage={getCustomMessage} />;
       };
 
       const NetworkError = () => {

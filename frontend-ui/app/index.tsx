@@ -28,5 +28,5 @@ export default function Index() {
   }
 
   // If not authenticated, redirect to landing page
-  return <Redirect href={"/landing" as Href} />;
+  return <Redirect href={'/landing' as Href} />;
 }

@@ -1,24 +1,26 @@
 /**
  * Balance Alert Provider
- * 
+ *
  * React Context provider for app-wide balance monitoring and notification management.
  * Handles real-time balance updates, notification state, and alert preferences.
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { NotificationApiClient } from '@/api/notificationApi';
-import { useStudentBalance } from '@/hooks/useStudentBalance';
+
+import { getBalanceStatus } from './BalanceStatusBar';
+
 import { useAuth } from '@/api/authContext';
+import { NotificationApiClient } from '@/api/notificationApi';
 import { useToast } from '@/components/ui/toast';
 import { useBalanceUpdates } from '@/hooks/useBalanceWebSocket';
-import { getBalanceStatus } from './BalanceStatusBar';
-import type { 
-  BalanceAlertContextType, 
-  BalanceAlertState, 
+import { useStudentBalance } from '@/hooks/useStudentBalance';
+import type {
+  BalanceAlertContextType,
+  BalanceAlertState,
   BalanceAlertActions,
   NotificationResponse,
   NotificationSettings,
-  ToastNotificationData
+  ToastNotificationData,
 } from '@/types/notification';
 
 const BalanceAlertContext = createContext<BalanceAlertContextType | undefined>(undefined);
@@ -51,9 +53,14 @@ export function BalanceAlertProvider({
   enableMonitoring = true,
 }: BalanceAlertProviderProps) {
   const { userProfile } = useAuth();
-  const { balance, loading: balanceLoading, error: balanceError, refetch: refetchBalance } = useStudentBalance();
+  const {
+    balance,
+    loading: balanceLoading,
+    error: balanceError,
+    refetch: refetchBalance,
+  } = useStudentBalance();
   const { showToast } = useToast();
-  
+
   // State management (moved before hooks that depend on it)
   const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -61,78 +68,91 @@ export function BalanceAlertProvider({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastBalanceCheck, setLastBalanceCheck] = useState<Date | null>(null);
-  
+
   // Refs for polling and toast management
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastNotificationCheckRef = useRef<string | null>(null);
   const activeToastsRef = useRef<Set<string>>(new Set());
-  
+
   /**
    * Show a balance-related toast notification
    */
-  const showBalanceToast = useCallback((data: ToastNotificationData) => {
-    if (!settings?.in_app_notifications) return;
+  const showBalanceToast = useCallback(
+    (data: ToastNotificationData) => {
+      if (!settings?.in_app_notifications) return;
 
-    const toastType = data.type === 'low_balance' || data.type === 'balance_depleted' 
-      ? 'error' 
-      : data.type === 'package_expiring' 
-      ? 'error' 
-      : 'success';
+      const toastType =
+        data.type === 'low_balance' || data.type === 'balance_depleted'
+          ? 'error'
+          : data.type === 'package_expiring'
+          ? 'error'
+          : 'success';
 
-    showToast(toastType, `${data.title}: ${data.message}`, data.duration);
-    
-    // Remove from active toasts after duration
-    setTimeout(() => {
-      activeToastsRef.current.delete(data.id);
-    }, data.duration || 5000);
-  }, [settings, showToast]);
-  
+      showToast(toastType, `${data.title}: ${data.message}`, data.duration);
+
+      // Remove from active toasts after duration
+      setTimeout(() => {
+        activeToastsRef.current.delete(data.id);
+      }, data.duration || 5000);
+    },
+    [settings, showToast]
+  );
+
   // WebSocket integration for real-time updates
-  const { connected: wsConnected, latestBalance: wsBalance, latestNotification: wsNotification } = useBalanceUpdates(
+  const {
+    connected: wsConnected,
+    latestBalance: wsBalance,
+    latestNotification: wsNotification,
+  } = useBalanceUpdates(
     // Handle balance updates from WebSocket
-    useCallback((newBalance) => {
+    useCallback(newBalance => {
       console.log('Received real-time balance update:', newBalance);
       // The useStudentBalance hook will be updated automatically through WebSocket
     }, []),
-    
-    // Handle notifications from WebSocket
-    useCallback((notification) => {
-      console.log('Received real-time notification:', notification);
-      setNotifications(prev => [notification, ...prev]);
-      setUnreadCount(prev => prev + 1);
-      
-      // Show toast for high-priority notifications
-      if (
-        settings?.in_app_notifications &&
-        (notification.priority === 'high' || notification.priority === 'urgent')
-      ) {
-        const toastId = `ws-notification-${notification.id}`;
-        
-        if (!activeToastsRef.current.has(toastId)) {
-          activeToastsRef.current.add(toastId);
-          
-          const toastData: ToastNotificationData = {
-            id: toastId,
-            type: notification.notification_type as any,
-            title: notification.title,
-            message: notification.message,
-            priority: notification.priority,
-            duration: notification.priority === 'urgent' ? 8000 : 5000,
-            actionLabel: getActionLabel(notification.notification_type),
-            actionUrl: getActionUrl(notification.notification_type),
-          };
 
-          showBalanceToast(toastData);
+    // Handle notifications from WebSocket
+    useCallback(
+      notification => {
+        console.log('Received real-time notification:', notification);
+        setNotifications(prev => [notification, ...prev]);
+        setUnreadCount(prev => prev + 1);
+
+        // Show toast for high-priority notifications
+        if (
+          settings?.in_app_notifications &&
+          (notification.priority === 'high' || notification.priority === 'urgent')
+        ) {
+          const toastId = `ws-notification-${notification.id}`;
+
+          if (!activeToastsRef.current.has(toastId)) {
+            activeToastsRef.current.add(toastId);
+
+            const toastData: ToastNotificationData = {
+              id: toastId,
+              type: notification.notification_type as any,
+              title: notification.title,
+              message: notification.message,
+              priority: notification.priority,
+              duration: notification.priority === 'urgent' ? 8000 : 5000,
+              actionLabel: getActionLabel(notification.notification_type),
+              actionUrl: getActionUrl(notification.notification_type),
+            };
+
+            showBalanceToast(toastData);
+          }
         }
-      }
-    }, [settings, showBalanceToast])
+      },
+      [settings, showBalanceToast]
+    )
   );
 
   // Calculate balance status
-  const balanceStatus = balance ? getBalanceStatus(
-    parseFloat(balance.balance_summary.remaining_hours),
-    parseFloat(balance.balance_summary.hours_purchased)
-  ) : null;
+  const balanceStatus = balance
+    ? getBalanceStatus(
+        parseFloat(balance.balance_summary.remaining_hours),
+        parseFloat(balance.balance_summary.hours_purchased)
+      )
+    : null;
 
   const state: BalanceAlertState = {
     currentBalance: balance ? parseFloat(balance.balance_summary.remaining_hours) : 0,
@@ -185,17 +205,14 @@ export function BalanceAlertProvider({
       );
 
       // Show toasts for new high-priority notifications
-      response.results.forEach((notification) => {
-        if (
-          notification.priority === 'high' || 
-          notification.priority === 'urgent'
-        ) {
+      response.results.forEach(notification => {
+        if (notification.priority === 'high' || notification.priority === 'urgent') {
           const toastId = `notification-${notification.id}`;
-          
+
           // Avoid showing duplicate toasts
           if (!activeToastsRef.current.has(toastId)) {
             activeToastsRef.current.add(toastId);
-            
+
             const toastData: ToastNotificationData = {
               id: toastId,
               type: notification.notification_type as any,
@@ -239,9 +256,11 @@ export function BalanceAlertProvider({
   const markNotificationAsRead = useCallback(async (id: number) => {
     try {
       await NotificationApiClient.markNotificationAsRead(id);
-      
-      setNotifications(prev => 
-        prev.map(n => n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n)
+
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
+        )
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err: any) {
@@ -256,8 +275,8 @@ export function BalanceAlertProvider({
   const markAllAsRead = useCallback(async () => {
     try {
       await NotificationApiClient.markAllAsRead();
-      
-      setNotifications(prev => 
+
+      setNotifications(prev =>
         prev.map(n => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
       );
       setUnreadCount(0);
@@ -325,12 +344,15 @@ export function BalanceAlertProvider({
     if (!balance || !settings) return;
 
     const remainingHours = parseFloat(balance.balance_summary.remaining_hours);
-    const status = getBalanceStatus(remainingHours, parseFloat(balance.balance_summary.hours_purchased));
+    const status = getBalanceStatus(
+      remainingHours,
+      parseFloat(balance.balance_summary.hours_purchased)
+    );
 
     // Show toast for critical balance
     if (
-      status.level === 'critical' && 
-      settings.low_balance_alerts && 
+      status.level === 'critical' &&
+      settings.low_balance_alerts &&
       !activeToastsRef.current.has('critical-balance-alert')
     ) {
       const toastData: ToastNotificationData = {
@@ -357,9 +379,7 @@ export function BalanceAlertProvider({
   };
 
   return (
-    <BalanceAlertContext.Provider value={contextValue}>
-      {children}
-    </BalanceAlertContext.Provider>
+    <BalanceAlertContext.Provider value={contextValue}>{children}</BalanceAlertContext.Provider>
   );
 }
 

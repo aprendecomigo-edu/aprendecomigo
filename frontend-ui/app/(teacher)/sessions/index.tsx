@@ -1,20 +1,21 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router } from 'expo-router';
-import { 
-  CalendarIcon, 
-  ClockIcon, 
-  UsersIcon, 
+import {
+  CalendarIcon,
+  ClockIcon,
+  UsersIcon,
   RefreshCwIcon,
   AlertTriangleIcon,
   PlusIcon,
   FilterIcon,
   SearchIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useState, useMemo } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
 
 import MainLayout from '@/components/layouts/main-layout';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -24,11 +25,20 @@ import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
 import { ScrollView } from '@/components/ui/scroll-view';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectIcon,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicatorWrapper,
+  SelectDragIndicator,
+  SelectItem,
+} from '@/components/ui/select';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Select, SelectTrigger, SelectInput, SelectIcon, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator, SelectItem } from '@/components/ui/select';
-
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 
 const TeacherSessionsPage = () => {
@@ -39,11 +49,11 @@ const TeacherSessionsPage = () => {
   // Get all sessions from dashboard data
   const allSessions = useMemo(() => {
     if (!data?.sessions) return [];
-    
+
     return [
       ...(data.sessions.today || []).map(s => ({ ...s, category: 'today' })),
       ...(data.sessions.upcoming || []).map(s => ({ ...s, category: 'upcoming' })),
-      ...(data.sessions.recent_completed || []).map(s => ({ ...s, category: 'completed' }))
+      ...(data.sessions.recent_completed || []).map(s => ({ ...s, category: 'completed' })),
     ];
   }, [data?.sessions]);
 
@@ -54,13 +64,13 @@ const TeacherSessionsPage = () => {
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(session => 
-        session.session_type.toLowerCase().includes(query) ||
-        session.grade_level.toLowerCase().includes(query) ||
-        (session.student_names && session.student_names.some(name => 
-          name.toLowerCase().includes(query)
-        )) ||
-        session.notes.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        session =>
+          session.session_type.toLowerCase().includes(query) ||
+          session.grade_level.toLowerCase().includes(query) ||
+          (session.student_names &&
+            session.student_names.some(name => name.toLowerCase().includes(query))) ||
+          session.notes.toLowerCase().includes(query)
       );
     }
 
@@ -114,9 +124,7 @@ const TeacherSessionsPage = () => {
               <Heading size="lg" className="text-center text-gray-900">
                 Erro ao Carregar Sessões
               </Heading>
-              <Text className="text-center text-gray-600">
-                {error}
-              </Text>
+              <Text className="text-center text-gray-600">{error}</Text>
             </VStack>
             <Button onPress={refresh} variant="solid">
               <Icon as={RefreshCwIcon} size="sm" className="text-white mr-2" />
@@ -132,9 +140,7 @@ const TeacherSessionsPage = () => {
     <MainLayout _title="Sessões">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refresh} />
-        }
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} />}
         contentContainerStyle={{
           paddingBottom: isWeb ? 0 : 100,
           flexGrow: 1,
@@ -148,12 +154,10 @@ const TeacherSessionsPage = () => {
               <Heading size="xl" className="text-gray-900">
                 Sessões
               </Heading>
-              <Text className="text-gray-600">
-                Gerencie as suas sessões de ensino
-              </Text>
+              <Text className="text-gray-600">Gerencie as suas sessões de ensino</Text>
             </VStack>
-            
-            <Button 
+
+            <Button
               onPress={handleScheduleSession}
               className="bg-blue-600"
               accessibilityLabel="Agendar nova sessão"
@@ -172,9 +176,7 @@ const TeacherSessionsPage = () => {
                   <Text className="font-medium text-yellow-900">
                     Dados parcialmente desatualizados
                   </Text>
-                  <Text className="text-sm text-yellow-700">
-                    {error}
-                  </Text>
+                  <Text className="text-sm text-yellow-700">{error}</Text>
                 </VStack>
                 <Pressable onPress={refresh}>
                   <Text className="text-sm font-medium text-yellow-600">Atualizar</Text>
@@ -195,7 +197,7 @@ const TeacherSessionsPage = () => {
                   <Text className="text-sm text-gray-600">Hoje</Text>
                 </CardBody>
               </Card>
-              
+
               <Card variant="elevated" className="flex-1 bg-white shadow-sm">
                 <CardBody className="items-center">
                   <Icon as={ClockIcon} size="lg" className="text-green-600 mb-2" />
@@ -224,10 +226,10 @@ const TeacherSessionsPage = () => {
                   <Icon as={SearchIcon} size="sm" className="text-gray-400" />
                 </Box>
               </Box>
-              
+
               <Select
                 selectedValue={filterBy}
-                onValueChange={(value) => setFilterBy(value as typeof filterBy)}
+                onValueChange={value => setFilterBy(value as typeof filterBy)}
               >
                 <SelectTrigger variant="outline" size="md">
                   <SelectInput placeholder="Filtrar" />
@@ -252,9 +254,9 @@ const TeacherSessionsPage = () => {
           {/* Sessions List */}
           <VStack space="sm">
             {filteredSessions.length > 0 ? (
-              filteredSessions.map((session) => {
+              filteredSessions.map(session => {
                 const status = getStatusBadge(session);
-                
+
                 return (
                   <Card key={session.id} variant="elevated" className="bg-white shadow-sm">
                     <CardBody>
@@ -266,17 +268,13 @@ const TeacherSessionsPage = () => {
                                 {session.session_type}
                               </Text>
                               <Badge className={status.bg}>
-                                <BadgeText className={status.text}>
-                                  {status.label}
-                                </BadgeText>
+                                <BadgeText className={status.text}>{status.label}</BadgeText>
                               </Badge>
                             </HStack>
-                            
-                            <Text className="text-sm text-gray-600">
-                              {session.grade_level}
-                            </Text>
+
+                            <Text className="text-sm text-gray-600">{session.grade_level}</Text>
                           </VStack>
-                          
+
                           <VStack className="items-end">
                             <Text className="text-sm font-medium text-gray-900">
                               {new Date(session.date).toLocaleDateString('pt-PT')}
@@ -286,26 +284,27 @@ const TeacherSessionsPage = () => {
                             </Text>
                           </VStack>
                         </HStack>
-                        
+
                         <HStack space="sm" className="items-center">
                           <Icon as={UsersIcon} size="sm" className="text-gray-400" />
                           <Text className="text-sm text-gray-600">
-                            {session.student_names?.join(', ') || `${session.student_count} estudante(s)`}
+                            {session.student_names?.join(', ') ||
+                              `${session.student_count} estudante(s)`}
                           </Text>
                         </HStack>
-                        
+
                         {session.notes && (
                           <Text className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
                             {session.notes}
                           </Text>
                         )}
-                        
+
                         <HStack className="justify-between items-center">
                           <Text className="text-sm text-gray-500">
                             Duração: {session.duration_hours}h
                           </Text>
-                          
-                          <Pressable 
+
+                          <Pressable
                             className="flex-row items-center"
                             onPress={() => {
                               // Navigate to session details
@@ -329,16 +328,14 @@ const TeacherSessionsPage = () => {
                   <Icon as={CalendarIcon} size="xl" className="text-gray-400" />
                   <VStack space="sm" className="items-center">
                     <Heading size="lg" className="text-center text-gray-900">
-                      {searchQuery || filterBy !== 'all' 
-                        ? 'Nenhuma sessão encontrada' 
-                        : 'Nenhuma sessão agendada'
-                      }
+                      {searchQuery || filterBy !== 'all'
+                        ? 'Nenhuma sessão encontrada'
+                        : 'Nenhuma sessão agendada'}
                     </Heading>
                     <Text className="text-center text-gray-600">
                       {searchQuery || filterBy !== 'all'
                         ? 'Ajuste os filtros para ver mais resultados.'
-                        : 'Agende a sua primeira sessão de ensino.'
-                      }
+                        : 'Agende a sua primeira sessão de ensino.'}
                     </Text>
                   </VStack>
                   {!searchQuery && filterBy === 'all' && (

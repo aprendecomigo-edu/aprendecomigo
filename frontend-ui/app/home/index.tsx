@@ -18,7 +18,7 @@ const RoleBasedHome: React.FC = () => {
       await ensureUserProfile();
       setIsUserProfileLoaded(true);
     };
-    
+
     if (!isUserProfileLoaded && !isLoading) {
       loadProfile();
     }
@@ -45,28 +45,28 @@ const RoleBasedHome: React.FC = () => {
       // Individual tutors will be identified by additional logic if needed
       return '/(school-admin)/dashboard';
     }
-    
+
     // Teachers go to teacher dashboard
     if (userProfile.user_type === 'teacher') {
       return '/(teacher)/dashboard';
     }
-    
+
     // Students go to student dashboard
     if (userProfile.user_type === 'student') {
       return '/student/dashboard';
     }
-    
+
     // Parents go to parent dashboard
     if (userProfile.user_type === 'parent') {
       return '/parents';
     }
-    
+
     // Default fallback to admin dashboard
     return '/(school-admin)/dashboard';
   };
 
   const dashboardRoute = getUserDashboardRoute();
-  
+
   return <Redirect href={dashboardRoute as any} />;
 };
 

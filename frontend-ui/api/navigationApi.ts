@@ -42,15 +42,15 @@ export interface NavigationPreferences {
 export const navigationApi = {
   // Global search API
   async globalSearch(
-    query: string, 
-    types?: string[], 
+    query: string,
+    types?: string[],
     limit: number = 10
   ): Promise<GlobalSearchResponse> {
     const params = new URLSearchParams({
       q: query,
       limit: limit.toString(),
     });
-    
+
     if (types && types.length > 0) {
       params.append('types', types.join(','));
     }
@@ -72,7 +72,9 @@ export const navigationApi = {
   },
 
   // Update user navigation preferences
-  async updateNavigationPreferences(preferences: Partial<NavigationPreferences>): Promise<NavigationPreferences> {
+  async updateNavigationPreferences(
+    preferences: Partial<NavigationPreferences>
+  ): Promise<NavigationPreferences> {
     const response = await apiClient.post('accounts/users/navigation_preferences/', preferences);
     return response.data;
   },
@@ -80,16 +82,16 @@ export const navigationApi = {
   // Save recent search
   async saveRecentSearch(query: string): Promise<void> {
     await apiClient.post('accounts/users/navigation_preferences/', {
-      recent_searches_add: query
+      recent_searches_add: query,
     });
   },
 
   // Clear recent searches
   async clearRecentSearches(): Promise<void> {
     await apiClient.post('accounts/users/navigation_preferences/', {
-      recent_searches_clear: true
+      recent_searches_clear: true,
     });
-  }
+  },
 };
 
 export default navigationApi;

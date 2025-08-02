@@ -1,24 +1,24 @@
 /**
  * ParentQuickActions Component
- * 
+ *
  * Quick action buttons for common parent tasks including
  * purchase approvals, child management, and settings access.
  */
 
-import React from 'react';
-import { 
-  Bell, 
-  Plus, 
-  CreditCard, 
-  Settings, 
+import useRouter from '@unitools/router';
+import {
+  Bell,
+  Plus,
+  CreditCard,
+  Settings,
   Users,
   RefreshCw,
   BarChart3,
   Shield,
   MessageCircle,
-  Calendar
+  Calendar,
 } from 'lucide-react-native';
-import useRouter from '@unitools/router';
+import React from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
@@ -100,10 +100,13 @@ export const ParentQuickActions: React.FC<ParentQuickActionsProps> = ({
       icon: Bell,
       iconColor: 'text-orange-600',
       iconBgColor: 'bg-orange-100',
-      badge: pendingApprovalsCount > 0 ? {
-        count: pendingApprovalsCount,
-        variant: 'warning'
-      } : undefined,
+      badge:
+        pendingApprovalsCount > 0
+          ? {
+              count: pendingApprovalsCount,
+              variant: 'warning',
+            }
+          : undefined,
       onPress: handleApprovals,
       disabled: disabled,
     },
@@ -180,7 +183,7 @@ export const ParentQuickActions: React.FC<ParentQuickActionsProps> = ({
         <VStack className="space-y-4 mb-6">
           {/* Top row */}
           <HStack className="space-x-3">
-            {quickActions.slice(0, 2).map((action) => (
+            {quickActions.slice(0, 2).map(action => (
               <VStack key={action.id} className="flex-1">
                 <Pressable
                   className={`
@@ -192,23 +195,19 @@ export const ParentQuickActions: React.FC<ParentQuickActionsProps> = ({
                 >
                   <VStack className="items-center space-y-3">
                     <VStack className="relative">
-                      <VStack 
+                      <VStack
                         className={`
                           items-center justify-center w-12 h-12 rounded-full
                           ${action.iconBgColor}
                         `}
                       >
-                        <Icon 
-                          as={action.icon} 
-                          size={24} 
-                          className={action.iconColor}
-                        />
+                        <Icon as={action.icon} size={24} className={action.iconColor} />
                       </VStack>
-                      
+
                       {action.badge && (
-                        <Badge 
-                          size="sm" 
-                          variant="solid" 
+                        <Badge
+                          size="sm"
+                          variant="solid"
                           action={action.badge.variant}
                           className="absolute -top-1 -right-1 min-w-5 h-5"
                         >
@@ -218,14 +217,12 @@ export const ParentQuickActions: React.FC<ParentQuickActionsProps> = ({
                         </Badge>
                       )}
                     </VStack>
-                    
+
                     <VStack className="items-center space-y-1">
                       <Text className="text-sm font-medium text-gray-900 text-center">
                         {action.title}
                       </Text>
-                      <Text className="text-xs text-gray-600 text-center">
-                        {action.subtitle}
-                      </Text>
+                      <Text className="text-xs text-gray-600 text-center">{action.subtitle}</Text>
                     </VStack>
                   </VStack>
                 </Pressable>
@@ -235,7 +232,7 @@ export const ParentQuickActions: React.FC<ParentQuickActionsProps> = ({
 
           {/* Bottom row */}
           <HStack className="space-x-3">
-            {quickActions.slice(2, 4).map((action) => (
+            {quickActions.slice(2, 4).map(action => (
               <VStack key={action.id} className="flex-1">
                 <Pressable
                   className={`
@@ -246,26 +243,20 @@ export const ParentQuickActions: React.FC<ParentQuickActionsProps> = ({
                   disabled={action.disabled}
                 >
                   <VStack className="items-center space-y-3">
-                    <VStack 
+                    <VStack
                       className={`
                         items-center justify-center w-12 h-12 rounded-full
                         ${action.iconBgColor}
                       `}
                     >
-                      <Icon 
-                        as={action.icon} 
-                        size={24} 
-                        className={action.iconColor}
-                      />
+                      <Icon as={action.icon} size={24} className={action.iconColor} />
                     </VStack>
-                    
+
                     <VStack className="items-center space-y-1">
                       <Text className="text-sm font-medium text-gray-900 text-center">
                         {action.title}
                       </Text>
-                      <Text className="text-xs text-gray-600 text-center">
-                        {action.subtitle}
-                      </Text>
+                      <Text className="text-xs text-gray-600 text-center">{action.subtitle}</Text>
                     </VStack>
                   </VStack>
                 </Pressable>
@@ -276,7 +267,7 @@ export const ParentQuickActions: React.FC<ParentQuickActionsProps> = ({
 
         {/* Secondary Actions */}
         <HStack className="justify-between items-center pt-4 border-t border-gray-100">
-          {secondaryActions.map((action) => (
+          {secondaryActions.map(action => (
             <Button
               key={action.id}
               variant="ghost"
@@ -285,9 +276,7 @@ export const ParentQuickActions: React.FC<ParentQuickActionsProps> = ({
               className="flex-1 mx-1"
             >
               <ButtonIcon as={action.icon} size={16} />
-              <ButtonText className="ml-1 text-xs">
-                {action.title}
-              </ButtonText>
+              <ButtonText className="ml-1 text-xs">{action.title}</ButtonText>
             </Button>
           ))}
         </HStack>
@@ -295,23 +284,17 @@ export const ParentQuickActions: React.FC<ParentQuickActionsProps> = ({
         {/* Summary Info */}
         <VStack className="mt-4 pt-4 border-t border-gray-100">
           <HStack className="justify-between items-center">
-            <Text className="text-sm text-gray-600">
-              Family Status
-            </Text>
+            <Text className="text-sm text-gray-600">Family Status</Text>
             <HStack className="items-center space-x-4">
               <HStack className="items-center space-x-1">
                 <Icon as={Users} size={14} className="text-gray-500" />
-                <Text className="text-sm text-gray-700">
-                  {childrenCount} children
-                </Text>
+                <Text className="text-sm text-gray-700">{childrenCount} children</Text>
               </HStack>
-              
+
               {pendingApprovalsCount > 0 && (
                 <HStack className="items-center space-x-1">
                   <Icon as={Bell} size={14} className="text-orange-500" />
-                  <Text className="text-sm text-orange-700">
-                    {pendingApprovalsCount} pending
-                  </Text>
+                  <Text className="text-sm text-orange-700">{pendingApprovalsCount} pending</Text>
                 </HStack>
               )}
             </HStack>

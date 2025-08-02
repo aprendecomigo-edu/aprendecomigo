@@ -1,12 +1,13 @@
 /**
  * WebSocket hooks for real-time payment monitoring updates.
- * 
+ *
  * Provides real-time updates for dashboard metrics, transaction status changes,
  * webhook health, fraud alerts, and dispute notifications.
  */
 
-import { useEffect, useState, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState, useCallback, useRef } from 'react';
+
 import type {
   PaymentWebSocketMessage,
   PaymentMetrics,
@@ -29,7 +30,7 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastMessage, setLastMessage] = useState<PaymentWebSocketMessage | null>(null);
-  
+
   // Data state
   const [metrics, setMetrics] = useState<PaymentMetrics | null>(null);
   const [trendData, setTrendData] = useState<PaymentTrendData | null>(null);
@@ -51,10 +52,10 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
       case 'metrics_update':
         const metricsUpdate = message.data as MetricsUpdate;
         if (metricsUpdate.metrics) {
-          setMetrics(current => current ? { ...current, ...metricsUpdate.metrics } : null);
+          setMetrics(current => (current ? { ...current, ...metricsUpdate.metrics } : null));
         }
         if (metricsUpdate.trend_data) {
-          setTrendData(current => current ? { ...current, ...metricsUpdate.trend_data } : null);
+          setTrendData(current => (current ? { ...current, ...metricsUpdate.trend_data } : null));
         }
         break;
 
@@ -63,14 +64,17 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         setRecentTransactions(current => {
           const updated = [...current];
           const existingIndex = updated.findIndex(t => t.id === transactionUpdate.transaction.id);
-          
+
           if (transactionUpdate.action === 'created') {
             if (existingIndex === -1) {
               updated.unshift(transactionUpdate.transaction);
               // Keep only the most recent 50 transactions
               return updated.slice(0, 50);
             }
-          } else if (transactionUpdate.action === 'updated' || transactionUpdate.action === 'status_changed') {
+          } else if (
+            transactionUpdate.action === 'updated' ||
+            transactionUpdate.action === 'status_changed'
+          ) {
             if (existingIndex !== -1) {
               updated[existingIndex] = transactionUpdate.transaction;
             }
@@ -83,8 +87,10 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         const webhookUpdate = message.data as WebhookStatusUpdate;
         setWebhookStatus(current => {
           const updated = [...current];
-          const existingIndex = updated.findIndex(w => w.endpoint_url === webhookUpdate.webhook_status.endpoint_url);
-          
+          const existingIndex = updated.findIndex(
+            w => w.endpoint_url === webhookUpdate.webhook_status.endpoint_url
+          );
+
           if (existingIndex !== -1) {
             updated[existingIndex] = webhookUpdate.webhook_status;
           } else {
@@ -99,12 +105,14 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         setActiveFraudAlerts(current => {
           const updated = [...current];
           const existingIndex = updated.findIndex(f => f.id === fraudUpdate.alert.id);
-          
+
           if (fraudUpdate.action === 'created') {
             if (existingIndex === -1) {
               updated.unshift(fraudUpdate.alert);
               // Keep only active alerts
-              return updated.filter(alert => alert.status === 'active' || alert.status === 'investigating');
+              return updated.filter(
+                alert => alert.status === 'active' || alert.status === 'investigating'
+              );
             }
           } else if (fraudUpdate.action === 'updated') {
             if (existingIndex !== -1) {
@@ -124,12 +132,15 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         setActiveDisputes(current => {
           const updated = [...current];
           const existingIndex = updated.findIndex(d => d.id === disputeUpdate.dispute.id);
-          
+
           if (disputeUpdate.action === 'created') {
             if (existingIndex === -1) {
               updated.unshift(disputeUpdate.dispute);
             }
-          } else if (disputeUpdate.action === 'updated' || disputeUpdate.action === 'evidence_required') {
+          } else if (
+            disputeUpdate.action === 'updated' ||
+            disputeUpdate.action === 'evidence_required'
+          ) {
             if (existingIndex !== -1) {
               updated[existingIndex] = disputeUpdate.dispute;
             }
@@ -177,13 +188,15 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         reconnectAttemptsRef.current = 0;
 
         // Subscribe to real-time updates
-        ws.send(JSON.stringify({
-          type: 'subscribe',
-          channels: ['metrics', 'transactions', 'webhooks', 'fraud_alerts', 'disputes']
-        }));
+        ws.send(
+          JSON.stringify({
+            type: 'subscribe',
+            channels: ['metrics', 'transactions', 'webhooks', 'fraud_alerts', 'disputes'],
+          })
+        );
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = event => {
         try {
           const message = JSON.parse(event.data) as PaymentWebSocketMessage;
           handleWebSocketMessage(message);
@@ -192,7 +205,7 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         }
       };
 
-      ws.onclose = (event) => {
+      ws.onclose = event => {
         console.log('Payment monitoring WebSocket disconnected:', event.code, event.reason);
         setIsConnected(false);
         wsRef.current = null;
@@ -200,7 +213,11 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         // Attempt to reconnect if not a normal closure
         if (enabled && event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
           const timeout = Math.pow(2, reconnectAttemptsRef.current) * 1000; // Exponential backoff
-          console.log(`Reconnecting payment monitoring WebSocket in ${timeout}ms (attempt ${reconnectAttemptsRef.current + 1})`);
+          console.log(
+            `Reconnecting payment monitoring WebSocket in ${timeout}ms (attempt ${
+              reconnectAttemptsRef.current + 1
+            })`
+          );
 
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;
@@ -209,7 +226,7 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         }
       };
 
-      ws.onerror = (event) => {
+      ws.onerror = event => {
         console.error('Payment monitoring WebSocket error:', event);
         setError('WebSocket connection error');
       };
@@ -234,18 +251,21 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
     reconnectAttemptsRef.current = 0;
   }, []);
 
-  const sendMessage = useCallback((message: any) => {
-    if (wsRef.current && isConnected) {
-      try {
-        wsRef.current.send(JSON.stringify(message));
-        console.log('Payment monitoring WebSocket message sent:', message);
-      } catch (err) {
-        console.error('Error sending payment monitoring WebSocket message:', err);
+  const sendMessage = useCallback(
+    (message: any) => {
+      if (wsRef.current && isConnected) {
+        try {
+          wsRef.current.send(JSON.stringify(message));
+          console.log('Payment monitoring WebSocket message sent:', message);
+        } catch (err) {
+          console.error('Error sending payment monitoring WebSocket message:', err);
+        }
+      } else {
+        console.warn('Payment monitoring WebSocket not connected, cannot send message');
       }
-    } else {
-      console.warn('Payment monitoring WebSocket not connected, cannot send message');
-    }
-  }, [isConnected]);
+    },
+    [isConnected]
+  );
 
   // Initialize connection
   useEffect(() => {
@@ -265,7 +285,7 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
     isConnected,
     error,
     lastMessage,
-    
+
     // Data
     metrics,
     trendData,
@@ -273,12 +293,12 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
     recentTransactions,
     activeFraudAlerts,
     activeDisputes,
-    
+
     // Actions
     connect,
     disconnect,
     sendMessage,
-    
+
     // Data setters for initial data loading
     setMetrics,
     setTrendData,
@@ -330,7 +350,7 @@ export function useTransactionWebSocket(enabled: boolean = true) {
         reconnectAttemptsRef.current = 0;
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = event => {
         try {
           const message = JSON.parse(event.data) as PaymentWebSocketMessage;
           if (message.type === 'transaction_update') {
@@ -341,7 +361,7 @@ export function useTransactionWebSocket(enabled: boolean = true) {
         }
       };
 
-      ws.onclose = (event) => {
+      ws.onclose = event => {
         console.log('Transaction monitoring WebSocket disconnected:', event.code, event.reason);
         setIsConnected(false);
         wsRef.current = null;
@@ -355,7 +375,7 @@ export function useTransactionWebSocket(enabled: boolean = true) {
         }
       };
 
-      ws.onerror = (event) => {
+      ws.onerror = event => {
         console.error('Transaction monitoring WebSocket error:', event);
         setError('WebSocket connection error');
       };
@@ -433,15 +453,17 @@ export function useWebhookMonitoringWebSocket(enabled: boolean = true) {
         setError(null);
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = event => {
         try {
           const message = JSON.parse(event.data) as PaymentWebSocketMessage;
           if (message.type === 'webhook_status') {
             const update = message.data as WebhookStatusUpdate;
             setWebhookStatus(current => {
               const updated = [...current];
-              const existingIndex = updated.findIndex(w => w.endpoint_url === update.webhook_status.endpoint_url);
-              
+              const existingIndex = updated.findIndex(
+                w => w.endpoint_url === update.webhook_status.endpoint_url
+              );
+
               if (existingIndex !== -1) {
                 updated[existingIndex] = update.webhook_status;
               } else {
@@ -462,7 +484,7 @@ export function useWebhookMonitoringWebSocket(enabled: boolean = true) {
         wsRef.current = null;
       };
 
-      ws.onerror = (event) => {
+      ws.onerror = event => {
         console.error('Webhook monitoring WebSocket error:', event);
         setError('WebSocket connection error');
       };

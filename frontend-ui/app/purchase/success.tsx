@@ -1,6 +1,6 @@
 /**
  * Purchase Success Page
- * 
+ *
  * Thank you page shown after successful purchase completion.
  * Provides confirmation details and next steps for students.
  */
@@ -9,6 +9,7 @@ import useRouter from '@unitools/router';
 import { CheckCircle, Calendar, BookOpen, ArrowRight } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 
+import { StudentBalanceCard } from '@/components/purchase';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
@@ -18,7 +19,6 @@ import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { StudentBalanceCard } from '@/components/purchase';
 
 export default function PurchaseSuccessPage() {
   const router = useRouter();
@@ -52,14 +52,14 @@ export default function PurchaseSuccessPage() {
           <Card className="p-8 bg-success-50 border border-success-200">
             <VStack space="lg" className="items-center text-center">
               <Icon as={CheckCircle} size="xl" className="text-success-600" />
-              
+
               <VStack space="sm" className="items-center">
                 <Heading size="3xl" className="text-success-900">
                   Purchase Successful!
                 </Heading>
                 <Text className="text-lg text-success-800 max-w-2xl">
-                  Thank you for choosing Aprende Comigo! Your tutoring hours have been 
-                  added to your account and are ready to use.
+                  Thank you for choosing Aprende Comigo! Your tutoring hours have been added to your
+                  account and are ready to use.
                 </Text>
               </VStack>
             </VStack>
@@ -84,11 +84,7 @@ export default function PurchaseSuccessPage() {
                       Browse available tutors and book your first tutoring session.
                     </Text>
                   </VStack>
-                  <Button
-                    action="primary"
-                    variant="solid"
-                    onPress={handleScheduleSession}
-                  >
+                  <Button action="primary" variant="solid" onPress={handleScheduleSession}>
                     <ButtonIcon as={ArrowRight} />
                     <ButtonText>Schedule</ButtonText>
                   </Button>
@@ -107,11 +103,7 @@ export default function PurchaseSuccessPage() {
                       Check your available hours and track your learning progress.
                     </Text>
                   </VStack>
-                  <Button
-                    action="secondary"
-                    variant="outline"
-                    onPress={handleViewBalance}
-                  >
+                  <Button action="secondary" variant="outline" onPress={handleViewBalance}>
                     <ButtonIcon as={ArrowRight} />
                     <ButtonText>View Balance</ButtonText>
                   </Button>
@@ -139,7 +131,7 @@ export default function PurchaseSuccessPage() {
             >
               <ButtonText>Go to Dashboard</ButtonText>
             </Button>
-            
+
             <Text className="text-sm text-typography-500 text-center">
               You'll be automatically redirected to your dashboard in a few moments.
             </Text>
@@ -152,9 +144,9 @@ export default function PurchaseSuccessPage() {
                 Need Help Getting Started?
               </Heading>
               <Text className="text-info-800">
-                Check your email for a welcome message with detailed instructions on how to 
-                make the most of your tutoring hours. Our support team is also available 
-                if you have any questions.
+                Check your email for a welcome message with detailed instructions on how to make the
+                most of your tutoring hours. Our support team is also available if you have any
+                questions.
               </Text>
             </VStack>
           </Card>

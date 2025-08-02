@@ -1,6 +1,6 @@
 /**
  * PurchaseApprovalQueue Component
- * 
+ *
  * List component for managing pending purchase approval requests with:
  * - Quick approve/reject actions
  * - Batch operations
@@ -8,11 +8,10 @@
  * - Mobile-optimized touch interactions
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
+import {
+  CheckCircle2,
+  XCircle,
+  Clock,
   Filter,
   ChevronDown,
   ChevronRight,
@@ -21,13 +20,18 @@ import {
   CreditCard,
   Users,
   Eye,
-  MoreHorizontal
+  MoreHorizontal,
 } from 'lucide-react-native';
+import React, { useState, useCallback, useMemo } from 'react';
 
+import { PurchaseApprovalCard } from './PurchaseApprovalCard';
+
+import { PurchaseApprovalRequest } from '@/api/parentApi';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
@@ -35,10 +39,6 @@ import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Divider } from '@/components/ui/divider';
-
-import { PurchaseApprovalRequest } from '@/api/parentApi';
-import { PurchaseApprovalCard } from './PurchaseApprovalCard';
 
 interface PurchaseApprovalQueueProps {
   approvals: PurchaseApprovalRequest[];
@@ -74,7 +74,7 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
     const expiry = new Date(expiryString);
     const now = new Date();
     const diffInHours = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours <= 0) return 'expired';
     if (diffInHours <= 24) return 'urgent';
     if (diffInHours <= 72) return 'soon';
@@ -83,7 +83,7 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
 
   // Filter and sort approvals
   const filteredApprovals = useMemo(() => {
-    let filtered = approvals.filter(approval => {
+    const filtered = approvals.filter(approval => {
       if (currentFilter === 'all') return true;
       const urgency = getUrgencyLevel(approval.expires_at);
       return urgency === currentFilter;
@@ -93,13 +93,13 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
     return filtered.sort((a, b) => {
       const urgencyA = getUrgencyLevel(a.expires_at);
       const urgencyB = getUrgencyLevel(b.expires_at);
-      
+
       const urgencyOrder = { expired: 0, urgent: 1, soon: 2, normal: 3 };
       const orderA = urgencyOrder[urgencyA as keyof typeof urgencyOrder];
       const orderB = urgencyOrder[urgencyB as keyof typeof urgencyOrder];
-      
+
       if (orderA !== orderB) return orderA - orderB;
-      
+
       // Sort by request time (newest first)
       return new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime();
     });
@@ -139,7 +139,7 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
   // Handle batch operations
   const handleBatchApprove = async () => {
     if (selectedRequests.size === 0) return;
-    
+
     try {
       setIsProcessing(true);
       await onBatchApprove(Array.from(selectedRequests));
@@ -153,7 +153,7 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
 
   const handleBatchReject = async () => {
     if (selectedRequests.size === 0) return;
-    
+
     try {
       setIsProcessing(true);
       await onBatchReject(Array.from(selectedRequests));
@@ -187,7 +187,7 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
     const expiry = new Date(expiryString);
     const now = new Date();
     const diffInHours = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours <= 0) return 'Expired';
     if (diffInHours < 24) return `${diffInHours}h`;
     return `${Math.floor(diffInHours / 24)}d`;
@@ -234,9 +234,7 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
               Purchase Approvals
             </Heading>
             <Badge variant="solid" action="info" size="sm">
-              <Text className="text-xs font-medium">
-                {filteredApprovals.length}
-              </Text>
+              <Text className="text-xs font-medium">{filteredApprovals.length}</Text>
             </Badge>
           </HStack>
 
@@ -296,7 +294,7 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
                 {selectedRequests.size} selected
               </Text>
             </HStack>
-            
+
             <HStack className="space-x-2">
               <Button
                 action="secondary"
@@ -308,7 +306,7 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
                 <ButtonIcon as={XCircle} size={14} />
                 <ButtonText className="ml-1 text-xs">Reject All</ButtonText>
               </Button>
-              
+
               <Button
                 action="primary"
                 size="sm"
@@ -343,107 +341,118 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
           )}
 
           {/* Approval List */}
-          {viewMode === 'cards' ? (
-            // Card View
-            filteredApprovals.map((approval) => (
-              <VStack key={approval.id} className="space-y-2">
-                {filteredApprovals.length > 1 && (
-                  <HStack className="items-center space-x-2">
-                    <Checkbox
-                      value={selectedRequests.has(approval.id.toString())}
-                      onValueChange={() => handleSelectRequest(approval.id.toString())}
-                    />
-                  </HStack>
-                )}
-                <PurchaseApprovalCard
-                  approval={approval}
-                  onApprove={(notes) => handleIndividualApprove(approval.id.toString(), notes)}
-                  onReject={(notes) => handleIndividualReject(approval.id.toString(), notes)}
-                  compact={false}
-                />
-              </VStack>
-            ))
-          ) : (
-            // List/Compact View
-            filteredApprovals.map((approval) => {
-              const urgency = getUrgencyLevel(approval.expires_at);
-              const urgencyColor = urgency === 'urgent' ? 'text-red-600' : 
-                                 urgency === 'soon' ? 'text-orange-600' : 
-                                 'text-blue-600';
-              
-              return (
-                <Pressable
-                  key={approval.id}
-                  className="active:opacity-70"
-                  onPress={() => onViewDetails(approval)}
-                >
-                  <HStack className="p-3 bg-gray-50 rounded-lg space-x-3 items-center">
-                    {/* Selection Checkbox */}
-                    <Checkbox
-                      value={selectedRequests.has(approval.id.toString())}
-                      onValueChange={() => handleSelectRequest(approval.id.toString())}
-                    />
-
-                    {/* Urgency Indicator */}
-                    <VStack className={`w-1 h-12 rounded-full ${
-                      urgency === 'urgent' ? 'bg-red-500' : 
-                      urgency === 'soon' ? 'bg-orange-500' : 
-                      'bg-blue-500'
-                    }`} />
-
-                    {/* Request Info */}
-                    <VStack className="flex-1 space-y-1">
-                      <HStack className="justify-between items-start">
-                        <Text className="text-sm font-medium text-gray-900">
-                          {approval.pricing_plan.name}
-                        </Text>
-                        <Text className="text-sm font-bold text-gray-900">
-                          €{approval.amount}
-                        </Text>
-                      </HStack>
-                      
-                      <HStack className="justify-between items-center">
-                        <Text className="text-xs text-gray-600">
-                          {approval.pricing_plan.hours} hours
-                        </Text>
-                        <Badge
-                          variant="outline"
-                          action={urgency === 'urgent' ? 'error' : urgency === 'soon' ? 'warning' : 'info'}
-                          size="sm"
-                        >
-                          <Text className="text-xs">
-                            {formatTimeUntilExpiry(approval.expires_at)}
-                          </Text>
-                        </Badge>
-                      </HStack>
-                    </VStack>
-
-                    {/* Quick Actions */}
-                    <HStack className="space-x-1">
-                      <Button
-                        action="secondary"
-                        variant="outline"
-                        size="sm"
-                        onPress={() => handleIndividualReject(approval.id.toString())}
-                        disabled={isProcessing || urgency === 'expired'}
-                      >
-                        <ButtonIcon as={XCircle} size={16} />
-                      </Button>
-                      
-                      <Button
-                        action="primary"
-                        size="sm"
-                        onPress={() => handleIndividualApprove(approval.id.toString())}
-                        disabled={isProcessing || urgency === 'expired'}
-                      >
-                        <ButtonIcon as={CheckCircle2} size={16} />
-                      </Button>
+          {viewMode === 'cards'
+            ? // Card View
+              filteredApprovals.map(approval => (
+                <VStack key={approval.id} className="space-y-2">
+                  {filteredApprovals.length > 1 && (
+                    <HStack className="items-center space-x-2">
+                      <Checkbox
+                        value={selectedRequests.has(approval.id.toString())}
+                        onValueChange={() => handleSelectRequest(approval.id.toString())}
+                      />
                     </HStack>
-                  </HStack>
-                </Pressable>
-              );
-            })
-          )}
+                  )}
+                  <PurchaseApprovalCard
+                    approval={approval}
+                    onApprove={notes => handleIndividualApprove(approval.id.toString(), notes)}
+                    onReject={notes => handleIndividualReject(approval.id.toString(), notes)}
+                    compact={false}
+                  />
+                </VStack>
+              ))
+            : // List/Compact View
+              filteredApprovals.map(approval => {
+                const urgency = getUrgencyLevel(approval.expires_at);
+                const urgencyColor =
+                  urgency === 'urgent'
+                    ? 'text-red-600'
+                    : urgency === 'soon'
+                    ? 'text-orange-600'
+                    : 'text-blue-600';
+
+                return (
+                  <Pressable
+                    key={approval.id}
+                    className="active:opacity-70"
+                    onPress={() => onViewDetails(approval)}
+                  >
+                    <HStack className="p-3 bg-gray-50 rounded-lg space-x-3 items-center">
+                      {/* Selection Checkbox */}
+                      <Checkbox
+                        value={selectedRequests.has(approval.id.toString())}
+                        onValueChange={() => handleSelectRequest(approval.id.toString())}
+                      />
+
+                      {/* Urgency Indicator */}
+                      <VStack
+                        className={`w-1 h-12 rounded-full ${
+                          urgency === 'urgent'
+                            ? 'bg-red-500'
+                            : urgency === 'soon'
+                            ? 'bg-orange-500'
+                            : 'bg-blue-500'
+                        }`}
+                      />
+
+                      {/* Request Info */}
+                      <VStack className="flex-1 space-y-1">
+                        <HStack className="justify-between items-start">
+                          <Text className="text-sm font-medium text-gray-900">
+                            {approval.pricing_plan.name}
+                          </Text>
+                          <Text className="text-sm font-bold text-gray-900">
+                            €{approval.amount}
+                          </Text>
+                        </HStack>
+
+                        <HStack className="justify-between items-center">
+                          <Text className="text-xs text-gray-600">
+                            {approval.pricing_plan.hours} hours
+                          </Text>
+                          <Badge
+                            variant="outline"
+                            action={
+                              urgency === 'urgent'
+                                ? 'error'
+                                : urgency === 'soon'
+                                ? 'warning'
+                                : 'info'
+                            }
+                            size="sm"
+                          >
+                            <Text className="text-xs">
+                              {formatTimeUntilExpiry(approval.expires_at)}
+                            </Text>
+                          </Badge>
+                        </HStack>
+                      </VStack>
+
+                      {/* Quick Actions */}
+                      <HStack className="space-x-1">
+                        <Button
+                          action="secondary"
+                          variant="outline"
+                          size="sm"
+                          onPress={() => handleIndividualReject(approval.id.toString())}
+                          disabled={isProcessing || urgency === 'expired'}
+                        >
+                          <ButtonIcon as={XCircle} size={16} />
+                        </Button>
+
+                        <Button
+                          action="primary"
+                          size="sm"
+                          onPress={() => handleIndividualApprove(approval.id.toString())}
+                          disabled={isProcessing || urgency === 'expired'}
+                        >
+                          <ButtonIcon as={CheckCircle2} size={16} />
+                        </Button>
+                      </HStack>
+                    </HStack>
+                  </Pressable>
+                );
+              })}
         </VStack>
       </CardContent>
     </Card>

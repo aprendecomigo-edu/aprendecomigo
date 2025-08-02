@@ -1,31 +1,25 @@
 /**
  * One-Click Renewal Button Component
- * 
+ *
  * Smart renewal button that detects expired subscriptions and provides
  * one-click renewal functionality using saved payment methods.
  */
 
-import React, { useState, useEffect } from 'react';
 import { RotateCcw, CreditCard, AlertCircle, CheckCircle } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
 
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
-import { HStack } from '@/components/ui/hstack';
-import { VStack } from '@/components/ui/vstack';
-import { Text } from '@/components/ui/text';
-import { Icon } from '@/components/ui/icon';
-import { Alert, AlertIcon, AlertText } from '@/components/ui/alert';
-import { useToast } from '@/components/ui/toast';
-
-import { useStudentBalance } from '@/hooks/useStudentBalance';
-import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 import { PurchaseApiClient } from '@/api/purchaseApi';
-import type { 
-  PackageInfo, 
-  PaymentMethod, 
-  RenewalRequest,
-  RenewalResponse 
-} from '@/types/purchase';
+import { Alert, AlertIcon, AlertText } from '@/components/ui/alert';
+import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { useToast } from '@/components/ui/toast';
+import { VStack } from '@/components/ui/vstack';
+import { usePaymentMethods } from '@/hooks/usePaymentMethods';
+import { useStudentBalance } from '@/hooks/useStudentBalance';
+import type { PackageInfo, PaymentMethod, RenewalRequest, RenewalResponse } from '@/types/purchase';
 
 interface OneClickRenewalButtonProps {
   /** Optional email for admin access */
@@ -44,7 +38,7 @@ interface OneClickRenewalButtonProps {
 
 /**
  * One-Click Renewal Button Component
- * 
+ *
  * Automatically detects expired subscriptions and provides quick renewal
  * functionality using the default payment method.
  */
@@ -70,8 +64,9 @@ export function OneClickRenewalButton({
     if (!balance || !paymentMethods.length) return;
 
     // Find the most recently expired package
-    const mostRecentExpired = balance.package_status.expired_packages
-      .sort((a, b) => new Date(b.expires_at || '').getTime() - new Date(a.expires_at || '').getTime())[0];
+    const mostRecentExpired = balance.package_status.expired_packages.sort(
+      (a, b) => new Date(b.expires_at || '').getTime() - new Date(a.expires_at || '').getTime()
+    )[0];
 
     setExpiredPackage(mostRecentExpired || null);
 
@@ -82,9 +77,9 @@ export function OneClickRenewalButton({
 
   // Check if renewal is possible
   const canRenew = !!(
-    expiredPackage && 
-    defaultPaymentMethod && 
-    !balanceLoading && 
+    expiredPackage &&
+    defaultPaymentMethod &&
+    !balanceLoading &&
     !paymentMethodsLoading &&
     !isRenewing
   );
@@ -137,15 +132,13 @@ export function OneClickRenewalButton({
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to renew subscription';
       setRenewalError(errorMessage);
-      
+
       toast.show({
         placement: 'top',
         render: ({ id }) => (
           <Alert mx="$3" action="error" variant="solid">
             <AlertIcon as={AlertCircle} />
-            <AlertText>
-              Renewal failed: {errorMessage}
-            </AlertText>
+            <AlertText>Renewal failed: {errorMessage}</AlertText>
           </Alert>
         ),
       });
@@ -159,12 +152,7 @@ export function OneClickRenewalButton({
   // Don't render if no expired packages or loading
   if (balanceLoading || paymentMethodsLoading) {
     return (
-      <Button
-        action="secondary"
-        variant="outline"
-        size={size}
-        disabled={true}
-      >
+      <Button action="secondary" variant="outline" size={size} disabled={true}>
         <Spinner size="sm" />
         <ButtonText className="ml-2">Loading...</ButtonText>
       </Button>
@@ -183,9 +171,7 @@ export function OneClickRenewalButton({
         <Alert action="warning" variant="outline">
           <AlertIcon as={AlertCircle} />
           <VStack space="xs" className="flex-1">
-            <AlertText className="font-medium">
-              Subscription Expired
-            </AlertText>
+            <AlertText className="font-medium">Subscription Expired</AlertText>
             <AlertText className="text-sm">
               Add a payment method to enable one-click renewal
             </AlertText>
@@ -202,12 +188,8 @@ export function OneClickRenewalButton({
         <Alert action="error" variant="outline">
           <AlertIcon as={AlertCircle} />
           <VStack space="xs" className="flex-1">
-            <AlertText className="font-medium">
-              Renewal Failed
-            </AlertText>
-            <AlertText className="text-sm">
-              {renewalError}
-            </AlertText>
+            <AlertText className="font-medium">Renewal Failed</AlertText>
+            <AlertText className="text-sm">{renewalError}</AlertText>
           </VStack>
         </Alert>
       )}
@@ -219,8 +201,10 @@ export function OneClickRenewalButton({
             Expired: {expiredPackage.plan_name}
           </Text>
           <Text className="text-xs text-warning-700">
-            {expiredPackage.hours_included} hours • 
-            Expired {expiredPackage.expires_at ? new Date(expiredPackage.expires_at).toLocaleDateString() : 'recently'}
+            {expiredPackage.hours_included} hours • Expired{' '}
+            {expiredPackage.expires_at
+              ? new Date(expiredPackage.expires_at).toLocaleDateString()
+              : 'recently'}
           </Text>
         </VStack>
       )}

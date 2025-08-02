@@ -11,7 +11,7 @@ export default function SchoolAdminLayout() {
   const { isLoggedIn, isLoading, userProfile } = useAuth();
   const [hasAdminAccess, setHasAdminAccess] = useState<boolean | null>(null);
   const [checkingAccess, setCheckingAccess] = useState(true);
-  
+
   console.log('🔧 Auth state:', { isLoggedIn, isLoading, hasProfile: !!userProfile });
 
   // Check if user has admin access to any schools

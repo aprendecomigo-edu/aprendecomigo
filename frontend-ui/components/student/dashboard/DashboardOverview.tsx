@@ -1,12 +1,12 @@
 /**
  * Dashboard Overview Component
- * 
+ *
  * Displays comprehensive account overview including balance summary,
  * active packages, expiration warnings, and quick action buttons.
  */
 
-import React from 'react';
-import { 
+import useRouter from '@unitools/router';
+import {
   Calendar,
   Clock,
   CreditCard,
@@ -16,10 +16,13 @@ import {
   TrendingUp,
   AlertTriangle,
   ShoppingCart,
-  BookOpen
+  BookOpen,
 } from 'lucide-react-native';
-import useRouter from '@unitools/router';
+import React from 'react';
 
+import { StudentBalanceCard } from '@/components/purchase';
+import { UsageAnalyticsSection } from '@/components/student/analytics/UsageAnalyticsSection';
+import { NotificationSystem } from '@/components/student/notifications/NotificationSystem';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -31,10 +34,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { StudentBalanceCard } from '@/components/purchase';
 import type { StudentBalanceResponse } from '@/types/purchase';
-import { UsageAnalyticsSection } from '@/components/student/analytics/UsageAnalyticsSection';
-import { NotificationSystem } from '@/components/student/notifications/NotificationSystem';
 
 interface DashboardOverviewProps {
   balance: StudentBalanceResponse | null;
@@ -96,7 +96,7 @@ export function DashboardOverview({
 }: DashboardOverviewProps) {
   const router = useRouter();
 
-  const handleQuickAction = (action: typeof QUICK_ACTIONS[0]) => {
+  const handleQuickAction = (action: (typeof QUICK_ACTIONS)[0]) => {
     if (action.route) {
       router.push(action.route);
     } else if (action.action === 'transactions' && onTabChange) {
@@ -128,16 +128,9 @@ export function DashboardOverview({
             <Heading size="sm" className="text-error-900">
               Unable to Load Overview
             </Heading>
-            <Text className="text-error-700 text-sm text-center">
-              {error}
-            </Text>
+            <Text className="text-error-700 text-sm text-center">{error}</Text>
           </VStack>
-          <Button
-            action="secondary"
-            variant="outline"
-            size="sm"
-            onPress={onRefresh}
-          >
+          <Button action="secondary" variant="outline" size="sm" onPress={onRefresh}>
             <ButtonIcon as={RefreshCw} />
             <ButtonText>Try Again</ButtonText>
           </Button>
@@ -149,20 +142,16 @@ export function DashboardOverview({
   return (
     <VStack space="lg">
       {/* Balance Overview Card */}
-      <StudentBalanceCard 
-        email={undefined}
-        onRefresh={onRefresh}
-        showStudentInfo={true}
-      />
+      <StudentBalanceCard email={undefined} onRefresh={onRefresh} showStudentInfo={true} />
 
       {/* Quick Actions */}
       <VStack space="md">
         <Heading size="lg" className="text-typography-900">
           Quick Actions
         </Heading>
-        
+
         <HStack space="md" className="flex-wrap">
-          {QUICK_ACTIONS.map((action) => (
+          {QUICK_ACTIONS.map(action => (
             <Pressable
               key={action.id}
               className="flex-1 min-w-40"
@@ -170,11 +159,7 @@ export function DashboardOverview({
             >
               <Card className="p-4 hover:shadow-md transition-shadow">
                 <VStack space="sm" className="items-center">
-                  <Icon 
-                    as={action.icon} 
-                    size="lg" 
-                    className={`text-${action.color}-600`} 
-                  />
+                  <Icon as={action.icon} size="lg" className={`text-${action.color}-600`} />
                   <VStack space="xs" className="items-center">
                     <Text className="font-semibold text-center text-typography-900">
                       {action.label}
@@ -196,44 +181,41 @@ export function DashboardOverview({
           <Heading size="lg" className="text-typography-900">
             Account Summary
           </Heading>
-          
+
           <Card className="p-6">
             <VStack space="lg">
               {/* Usage Statistics */}
               <VStack space="md">
                 <HStack className="items-center justify-between">
-                  <Text className="font-semibold text-typography-800">
-                    Usage Statistics
-                  </Text>
+                  <Text className="font-semibold text-typography-800">Usage Statistics</Text>
                   <Icon as={TrendingUp} size="sm" className="text-success-600" />
                 </HStack>
-                
+
                 <HStack className="justify-between">
                   <VStack space="xs" className="items-center flex-1">
                     <Text className="text-lg font-semibold text-typography-700">
                       {parseFloat(balance.balance_summary.hours_purchased).toFixed(1)}
                     </Text>
-                    <Text className="text-xs text-typography-500 text-center">
-                      Total Purchased
-                    </Text>
+                    <Text className="text-xs text-typography-500 text-center">Total Purchased</Text>
                   </VStack>
-                  
+
                   <VStack space="xs" className="items-center flex-1">
                     <Text className="text-lg font-semibold text-typography-700">
                       {parseFloat(balance.balance_summary.hours_consumed).toFixed(1)}
                     </Text>
-                    <Text className="text-xs text-typography-500 text-center">
-                      Hours Used
-                    </Text>
+                    <Text className="text-xs text-typography-500 text-center">Hours Used</Text>
                   </VStack>
-                  
+
                   <VStack space="xs" className="items-center flex-1">
                     <Text className="text-lg font-semibold text-primary-600">
-                      {(parseFloat(balance.balance_summary.hours_consumed) / parseFloat(balance.balance_summary.hours_purchased) * 100).toFixed(0)}%
+                      {(
+                        (parseFloat(balance.balance_summary.hours_consumed) /
+                          parseFloat(balance.balance_summary.hours_purchased)) *
+                        100
+                      ).toFixed(0)}
+                      %
                     </Text>
-                    <Text className="text-xs text-typography-500 text-center">
-                      Utilization
-                    </Text>
+                    <Text className="text-xs text-typography-500 text-center">Utilization</Text>
                   </VStack>
                 </HStack>
               </VStack>
@@ -244,19 +226,20 @@ export function DashboardOverview({
                   <Divider />
                   <VStack space="sm">
                     <HStack className="items-center justify-between">
-                      <Text className="font-semibold text-typography-800">
-                        Active Packages
-                      </Text>
+                      <Text className="font-semibold text-typography-800">Active Packages</Text>
                       <Badge variant="solid" action="success" size="sm">
                         <Text className="text-xs">
                           {balance.package_status.active_packages.length} Active
                         </Text>
                       </Badge>
                     </HStack>
-                    
+
                     <VStack space="xs">
                       {balance.package_status.active_packages.slice(0, 3).map((pkg, index) => (
-                        <HStack key={pkg.transaction_id} className="items-center justify-between p-2 bg-background-50 rounded-md">
+                        <HStack
+                          key={pkg.transaction_id}
+                          className="items-center justify-between p-2 bg-background-50 rounded-md"
+                        >
                           <HStack space="sm" className="items-center flex-1">
                             <Icon as={Package} size="sm" className="text-success-600" />
                             <VStack space="0" className="flex-1">
@@ -268,21 +251,19 @@ export function DashboardOverview({
                               </Text>
                             </VStack>
                           </HStack>
-                          
+
                           {pkg.days_until_expiry && pkg.days_until_expiry <= 7 && (
                             <Badge
                               variant="solid"
-                              action={pkg.days_until_expiry <= 3 ? "error" : "warning"}
+                              action={pkg.days_until_expiry <= 3 ? 'error' : 'warning'}
                               size="sm"
                             >
-                              <Text className="text-xs">
-                                {pkg.days_until_expiry}d left
-                              </Text>
+                              <Text className="text-xs">{pkg.days_until_expiry}d left</Text>
                             </Badge>
                           )}
                         </HStack>
                       ))}
-                      
+
                       {balance.package_status.active_packages.length > 3 && (
                         <Text className="text-xs text-typography-500 text-center mt-2">
                           And {balance.package_status.active_packages.length - 3} more packages...
@@ -300,14 +281,15 @@ export function DashboardOverview({
                   <VStack space="sm">
                     <HStack className="items-center">
                       <Icon as={AlertTriangle} size="sm" className="text-warning-600" />
-                      <Text className="font-semibold text-typography-800 ml-2">
-                        Expiring Soon
-                      </Text>
+                      <Text className="font-semibold text-typography-800 ml-2">Expiring Soon</Text>
                     </HStack>
-                    
+
                     <VStack space="xs">
                       {balance.upcoming_expirations.slice(0, 2).map((expiration, index) => (
-                        <HStack key={expiration.transaction_id} className="items-center justify-between p-2 bg-warning-50 rounded-md">
+                        <HStack
+                          key={expiration.transaction_id}
+                          className="items-center justify-between p-2 bg-warning-50 rounded-md"
+                        >
                           <VStack space="0" className="flex-1">
                             <Text className="text-sm font-medium text-typography-800">
                               {expiration.plan_name}
@@ -316,10 +298,14 @@ export function DashboardOverview({
                               {parseFloat(expiration.hours_remaining).toFixed(1)} hours remaining
                             </Text>
                           </VStack>
-                          
-                          <Badge 
-                            variant="solid" 
-                            action={expiration.days_until_expiry && expiration.days_until_expiry <= 3 ? "error" : "warning"} 
+
+                          <Badge
+                            variant="solid"
+                            action={
+                              expiration.days_until_expiry && expiration.days_until_expiry <= 3
+                                ? 'error'
+                                : 'warning'
+                            }
                             size="sm"
                           >
                             <Text className="text-xs">
@@ -329,7 +315,7 @@ export function DashboardOverview({
                         </HStack>
                       ))}
                     </VStack>
-                    
+
                     <Button
                       action="primary"
                       variant="solid"
@@ -345,34 +331,32 @@ export function DashboardOverview({
               )}
 
               {/* Empty State */}
-              {balance.package_status.active_packages.length === 0 && 
-               balance.upcoming_expirations.length === 0 && 
-               parseFloat(balance.balance_summary.remaining_hours) === 0 && (
-                <>
-                  <Divider />
-                  <VStack space="sm" className="items-center py-6">
-                    <Icon as={Package} size="xl" className="text-typography-300" />
-                    <VStack space="xs" className="items-center">
-                      <Text className="text-typography-600 font-medium">
-                        No Active Packages
-                      </Text>
-                      <Text className="text-sm text-typography-500 text-center">
-                        Purchase a tutoring package to get started with your learning journey.
-                      </Text>
+              {balance.package_status.active_packages.length === 0 &&
+                balance.upcoming_expirations.length === 0 &&
+                parseFloat(balance.balance_summary.remaining_hours) === 0 && (
+                  <>
+                    <Divider />
+                    <VStack space="sm" className="items-center py-6">
+                      <Icon as={Package} size="xl" className="text-typography-300" />
+                      <VStack space="xs" className="items-center">
+                        <Text className="text-typography-600 font-medium">No Active Packages</Text>
+                        <Text className="text-sm text-typography-500 text-center">
+                          Purchase a tutoring package to get started with your learning journey.
+                        </Text>
+                      </VStack>
+                      <Button
+                        action="primary"
+                        variant="solid"
+                        size="md"
+                        onPress={onPurchase}
+                        className="mt-4"
+                      >
+                        <ButtonIcon as={ShoppingCart} />
+                        <ButtonText>Browse Packages</ButtonText>
+                      </Button>
                     </VStack>
-                    <Button
-                      action="primary"
-                      variant="solid"
-                      size="md"
-                      onPress={onPurchase}
-                      className="mt-4"
-                    >
-                      <ButtonIcon as={ShoppingCart} />
-                      <ButtonText>Browse Packages</ButtonText>
-                    </Button>
-                  </VStack>
-                </>
-              )}
+                  </>
+                )}
             </VStack>
           </Card>
         </VStack>

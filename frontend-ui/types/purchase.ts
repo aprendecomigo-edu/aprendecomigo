@@ -1,6 +1,6 @@
 /**
  * TypeScript interfaces for purchase-related functionality.
- * 
+ *
  * These interfaces define the data structures used throughout
  * the purchase flow, from pricing plans to payment processing.
  */

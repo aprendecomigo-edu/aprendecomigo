@@ -1,8 +1,6 @@
-import React from 'react';
 import { fireEvent, waitFor, act } from '@testing-library/react-native';
+import React from 'react';
 
-import { TeacherProfileWizard, WIZARD_STEPS } from '@/screens/onboarding/teacher-profile-wizard';
-import { useProfileWizard } from '@/hooks/useProfileWizard';
 import {
   render,
   createMockUseProfileWizard,
@@ -13,6 +11,9 @@ import {
   waitForAsyncUpdates,
   advanceTimersByTime,
 } from '../../utils/test-utils';
+
+import { useProfileWizard } from '@/hooks/useProfileWizard';
+import { TeacherProfileWizard, WIZARD_STEPS } from '@/screens/onboarding/teacher-profile-wizard';
 
 // Mock the hook
 jest.mock('@/hooks/useProfileWizard');
@@ -30,7 +31,7 @@ describe('TeacherProfileWizard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    
+
     mockHookReturn = createMockUseProfileWizard();
     mockUseProfileWizard.mockReturnValue(mockHookReturn);
     mockProps = createMockProps();
@@ -43,13 +44,9 @@ describe('TeacherProfileWizard', () => {
 
   describe('Initialization and Loading', () => {
     it('should render loading state initially', () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ isLoading: true })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ isLoading: true }));
 
-      const { getByText, getByTestId } = render(
-        <TeacherProfileWizard {...mockProps} />
-      );
+      const { getByText, getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
 
       expect(getByTestId('loading-spinner')).toBeTruthy();
       expect(getByText('Loading your profile...')).toBeTruthy();
@@ -57,7 +54,7 @@ describe('TeacherProfileWizard', () => {
 
     it('should initialize wizard with resumeFromStep prop', async () => {
       const propsWithResumeStep = createMockProps({ resumeFromStep: 3 });
-      
+
       render(<TeacherProfileWizard {...propsWithResumeStep} />);
 
       await waitForAsyncUpdates();
@@ -77,9 +74,7 @@ describe('TeacherProfileWizard', () => {
 
   describe('Header and Navigation', () => {
     it('should display current step information correctly', () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ currentStep: 2 })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ currentStep: 2 }));
 
       const { getByText } = render(<TeacherProfileWizard {...mockProps} />);
 
@@ -89,9 +84,7 @@ describe('TeacherProfileWizard', () => {
     });
 
     it('should show progress percentage correctly', () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ currentStep: 3 })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ currentStep: 3 }));
 
       const { getByText } = render(<TeacherProfileWizard {...mockProps} />);
 
@@ -118,13 +111,9 @@ describe('TeacherProfileWizard', () => {
 
   describe('Auto-save Functionality', () => {
     it('should show saving indicator when saving', () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ isSaving: true })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ isSaving: true }));
 
-      const { getByText, getByTestId } = render(
-        <TeacherProfileWizard {...mockProps} />
-      );
+      const { getByText, getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
 
       expect(getByTestId('saving-spinner')).toBeTruthy();
       expect(getByText('Saving...')).toBeTruthy();
@@ -132,7 +121,7 @@ describe('TeacherProfileWizard', () => {
 
     it('should show save button when there are unsaved changes', () => {
       mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ 
+        createMockUseProfileWizard({
           hasUnsavedChanges: true,
           isSaving: false,
         })
@@ -145,7 +134,7 @@ describe('TeacherProfileWizard', () => {
 
     it('should trigger manual save when save button is pressed', async () => {
       mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ 
+        createMockUseProfileWizard({
           hasUnsavedChanges: true,
           isSaving: false,
         })
@@ -161,9 +150,7 @@ describe('TeacherProfileWizard', () => {
     });
 
     it('should trigger auto-save after 30 seconds of inactivity', async () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ hasUnsavedChanges: true })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ hasUnsavedChanges: true }));
 
       render(<TeacherProfileWizard {...mockProps} />);
 
@@ -214,9 +201,7 @@ describe('TeacherProfileWizard', () => {
     });
 
     it('should navigate to previous step', async () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ currentStep: 2 })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ currentStep: 2 }));
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
 
@@ -228,9 +213,7 @@ describe('TeacherProfileWizard', () => {
     });
 
     it('should disable previous button on first step', () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ currentStep: 0 })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ currentStep: 0 }));
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
 
@@ -240,7 +223,7 @@ describe('TeacherProfileWizard', () => {
 
     it('should save progress before navigating to previous step', async () => {
       mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ 
+        createMockUseProfileWizard({
           currentStep: 2,
           hasUnsavedChanges: true,
         })
@@ -259,9 +242,7 @@ describe('TeacherProfileWizard', () => {
 
   describe('Profile Completion', () => {
     it('should show complete profile button on final step', () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ currentStep: 6 })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ currentStep: 6 }));
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
 
@@ -269,9 +250,7 @@ describe('TeacherProfileWizard', () => {
     });
 
     it('should submit profile when complete button is pressed', async () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ currentStep: 6 })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ currentStep: 6 }));
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
 
@@ -285,7 +264,7 @@ describe('TeacherProfileWizard', () => {
 
     it('should show spinner on complete button when saving', () => {
       mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ 
+        createMockUseProfileWizard({
           currentStep: 6,
           isSaving: true,
         })
@@ -297,9 +276,7 @@ describe('TeacherProfileWizard', () => {
     });
 
     it('should disable buttons when saving', () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ isSaving: true })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ isSaving: true }));
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
 
@@ -314,7 +291,7 @@ describe('TeacherProfileWizard', () => {
   describe('Error Handling', () => {
     it('should display error messages', () => {
       mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ 
+        createMockUseProfileWizard({
           error: 'Something went wrong',
         })
       );
@@ -334,10 +311,7 @@ describe('TeacherProfileWizard', () => {
         fireEvent.press(getByTestId('next-button'));
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Error moving to next step:',
-        expect.any(Error)
-      );
+      expect(consoleSpy).toHaveBeenCalledWith('Error moving to next step:', expect.any(Error));
 
       consoleSpy.mockRestore();
     });
@@ -346,9 +320,7 @@ describe('TeacherProfileWizard', () => {
       mockHookReturn.submitProfile.mockRejectedValue(new Error('Submission error'));
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ currentStep: 6 })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ currentStep: 6 }));
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
 
@@ -367,20 +339,20 @@ describe('TeacherProfileWizard', () => {
 
   describe('Exit Confirmation Dialog', () => {
     it('should show exit confirmation when there are unsaved changes', async () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ hasUnsavedChanges: true })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ hasUnsavedChanges: true }));
 
-      const { getByTestId, getByText } = render(
-        <TeacherProfileWizard {...mockProps} />
-      );
+      const { getByTestId, getByText } = render(<TeacherProfileWizard {...mockProps} />);
 
       await act(async () => {
         fireEvent.press(getByTestId('exit-button'));
       });
 
       expect(getByText('Save Your Progress?')).toBeTruthy();
-      expect(getByText('You have unsaved changes to your profile. Would you like to save your progress before leaving?')).toBeTruthy();
+      expect(
+        getByText(
+          'You have unsaved changes to your profile. Would you like to save your progress before leaving?'
+        )
+      ).toBeTruthy();
     });
 
     it('should exit without confirmation when no unsaved changes', async () => {
@@ -398,13 +370,9 @@ describe('TeacherProfileWizard', () => {
     });
 
     it('should exit without saving when confirmed', async () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ hasUnsavedChanges: true })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ hasUnsavedChanges: true }));
 
-      const { getByTestId, getByText } = render(
-        <TeacherProfileWizard {...mockProps} />
-      );
+      const { getByTestId, getByText } = render(<TeacherProfileWizard {...mockProps} />);
 
       // Open dialog
       await act(async () => {
@@ -420,13 +388,9 @@ describe('TeacherProfileWizard', () => {
     });
 
     it('should save and exit when requested', async () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ hasUnsavedChanges: true })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ hasUnsavedChanges: true }));
 
-      const { getByTestId, getByText } = render(
-        <TeacherProfileWizard {...mockProps} />
-      );
+      const { getByTestId, getByText } = render(<TeacherProfileWizard {...mockProps} />);
 
       // Open dialog
       await act(async () => {
@@ -446,9 +410,7 @@ describe('TeacherProfileWizard', () => {
   describe('Profile Completion Tracker', () => {
     it('should render profile completion tracker', () => {
       const completionData = createMockCompletionData();
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ completionData })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ completionData }));
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
 
@@ -468,9 +430,7 @@ describe('TeacherProfileWizard', () => {
       }));
 
       const completionData = createMockCompletionData();
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ completionData })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ completionData }));
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
 
@@ -485,7 +445,7 @@ describe('TeacherProfileWizard', () => {
       const validationErrors = { first_name: ['Required'] };
 
       mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ 
+        createMockUseProfileWizard({
           formData,
           validationErrors,
           isSaving: true,
@@ -536,7 +496,7 @@ describe('TeacherProfileWizard', () => {
     it('should pass correct props to wizard navigation', () => {
       const completionData = createMockCompletionData();
       mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ 
+        createMockUseProfileWizard({
           currentStep: 2,
           completionData,
         })
@@ -600,9 +560,7 @@ describe('TeacherProfileWizard', () => {
     });
 
     it('should announce step changes to screen readers', () => {
-      mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ currentStep: 2 })
-      );
+      mockUseProfileWizard.mockReturnValue(createMockUseProfileWizard({ currentStep: 2 }));
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
 
@@ -615,7 +573,7 @@ describe('TeacherProfileWizard', () => {
   describe('Performance', () => {
     it('should not cause unnecessary re-renders', () => {
       const renderSpy = jest.fn();
-      
+
       const TestComponent = () => {
         renderSpy();
         return <TeacherProfileWizard {...mockProps} />;

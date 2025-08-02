@@ -19,25 +19,31 @@ export const TutorialHighlight: React.FC<TutorialHighlightProps> = ({
   onPress,
   className = '',
 }) => {
-  const highlightStyles = isActive ? {
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 2,
-    borderColor: '#3B82F6',
-  } : {};
+  const highlightStyles = isActive
+    ? {
+        shadowColor: '#3B82F6',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+        borderWidth: 2,
+        borderColor: '#3B82F6',
+      }
+    : {};
 
-  const animationStyles = isActive ? {
-    transform: Platform.OS === 'web' ? 'scale(1.05)' : undefined,
-  } : {};
+  const animationStyles = isActive
+    ? {
+        transform: Platform.OS === 'web' ? 'scale(1.05)' : undefined,
+      }
+    : {};
 
   if (onPress) {
     return (
       <Pressable
         onPress={onPress}
-        className={`${className} ${isActive ? 'bg-blue-50' : ''} rounded-lg transition-all duration-200`}
+        className={`${className} ${
+          isActive ? 'bg-blue-50' : ''
+        } rounded-lg transition-all duration-200`}
         style={[highlightStyles, animationStyles]}
         testID={`tutorial-highlight-${id}`}
       >
@@ -56,7 +62,9 @@ export const TutorialHighlight: React.FC<TutorialHighlightProps> = ({
 
   return (
     <Box
-      className={`${className} ${isActive ? 'bg-blue-50' : ''} rounded-lg transition-all duration-200`}
+      className={`${className} ${
+        isActive ? 'bg-blue-50' : ''
+      } rounded-lg transition-all duration-200`}
       style={[highlightStyles, animationStyles]}
       testID={`tutorial-highlight-${id}`}
     >

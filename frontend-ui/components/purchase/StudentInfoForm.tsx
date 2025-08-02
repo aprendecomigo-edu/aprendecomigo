@@ -1,12 +1,14 @@
 /**
  * Student Information Form Component
- * 
+ *
  * Collects and validates student information for purchase process.
  * Supports both authenticated and guest user flows with comprehensive validation.
  */
 
-import React, { useState, useEffect } from 'react';
 import { User, Mail, AlertCircle, CheckCircle } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+
+import { useAuthContext } from '@/api/authContext';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -17,7 +19,6 @@ import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { useAuthContext } from '@/api/authContext';
 import type { PricingPlan } from '@/types/purchase';
 
 interface StudentInfoFormProps {
@@ -115,7 +116,7 @@ export function StudentInfoForm({
               Student Information
             </Heading>
           </HStack>
-          
+
           <Text className="text-typography-600">
             Please provide the student information for this tutoring package.
           </Text>
@@ -155,9 +156,7 @@ export function StudentInfoForm({
           <Alert action="info" variant="outline">
             <Icon as={User} className="text-info-600" />
             <VStack space="xs" className="flex-1">
-              <Text className="text-info-800 font-medium">
-                Guest Purchase
-              </Text>
+              <Text className="text-info-800 font-medium">Guest Purchase</Text>
               <Text className="text-info-700 text-sm">
                 You're purchasing as a guest. An account will be created for you.
               </Text>
@@ -168,19 +167,10 @@ export function StudentInfoForm({
         {/* Form fields */}
         <VStack space="md">
           {/* Name field */}
-          <FormControl 
-            isInvalid={!!errors.name}
-            isRequired
-          >
+          <FormControl isInvalid={!!errors.name} isRequired>
             <VStack space="xs">
-              <Text className="font-medium text-typography-800">
-                Student Name *
-              </Text>
-              <Input
-                variant="outline"
-                size="lg"
-                className={errors.name ? 'border-error-300' : ''}
-              >
+              <Text className="font-medium text-typography-800">Student Name *</Text>
+              <Input variant="outline" size="lg" className={errors.name ? 'border-error-300' : ''}>
                 <InputField
                   placeholder="Enter student's full name"
                   value={localName}
@@ -194,28 +184,17 @@ export function StudentInfoForm({
               {errors.name && (
                 <HStack space="xs" className="items-center">
                   <Icon as={AlertCircle} size="xs" className="text-error-500" />
-                  <Text className="text-sm text-error-600">
-                    {errors.name}
-                  </Text>
+                  <Text className="text-sm text-error-600">{errors.name}</Text>
                 </HStack>
               )}
             </VStack>
           </FormControl>
 
           {/* Email field */}
-          <FormControl 
-            isInvalid={!!errors.email}
-            isRequired
-          >
+          <FormControl isInvalid={!!errors.email} isRequired>
             <VStack space="xs">
-              <Text className="font-medium text-typography-800">
-                Email Address *
-              </Text>
-              <Input
-                variant="outline"
-                size="lg"
-                className={errors.email ? 'border-error-300' : ''}
-              >
+              <Text className="font-medium text-typography-800">Email Address *</Text>
+              <Input variant="outline" size="lg" className={errors.email ? 'border-error-300' : ''}>
                 <InputField
                   placeholder="Enter email address"
                   value={localEmail}
@@ -230,9 +209,7 @@ export function StudentInfoForm({
               {errors.email && (
                 <HStack space="xs" className="items-center">
                   <Icon as={AlertCircle} size="xs" className="text-error-500" />
-                  <Text className="text-sm text-error-600">
-                    {errors.email}
-                  </Text>
+                  <Text className="text-sm text-error-600">{errors.email}</Text>
                 </HStack>
               )}
               {!errors.email && localEmail && (
@@ -273,9 +250,7 @@ export function StudentInfoForm({
             onPress={handleSubmit}
             disabled={disabled || !isFormValid()}
           >
-            <ButtonText>
-              Continue to Payment
-            </ButtonText>
+            <ButtonText>Continue to Payment</ButtonText>
           </Button>
 
           <Button
@@ -286,9 +261,7 @@ export function StudentInfoForm({
             onPress={onBack}
             disabled={disabled}
           >
-            <ButtonText>
-              Back to Plan Selection
-            </ButtonText>
+            <ButtonText>Back to Plan Selection</ButtonText>
           </Button>
         </VStack>
 

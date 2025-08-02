@@ -1,14 +1,13 @@
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { View, Alert } from 'react-native';
-import { router } from 'expo-router';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Center } from '@/components/ui/center';
-import { Spinner } from '@/components/ui/spinner';
-import { 
+
+import { SchoolSettingsForm } from '../../components/school-settings/SchoolSettingsForm';
+import { useSchoolSettings, SchoolSettingsFormData } from '../../hooks/useSchoolSettings';
+
+import { useAuth } from '@/api/authContext';
+import { getUserAdminSchools, SchoolMembership } from '@/api/userApi';
+import {
   AlertDialog,
   AlertDialogBackdrop,
   AlertDialogContent,
@@ -17,14 +16,16 @@ import {
   AlertDialogFooter,
   AlertDialogCloseButton,
 } from '@/components/ui/alert-dialog';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Center } from '@/components/ui/center';
 import { Heading } from '@/components/ui/heading';
-import { Icon } from '@/components/ui/icon';
-import { CloseIcon } from '@/components/ui/icon';
+import { HStack } from '@/components/ui/hstack';
+import { Icon, CloseIcon } from '@/components/ui/icon';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
 import { useToast } from '@/components/ui/toast';
-import { getUserAdminSchools, SchoolMembership } from '@/api/userApi';
-import { useAuth } from '@/api/authContext';
-import { SchoolSettingsForm } from '../../components/school-settings/SchoolSettingsForm';
-import { useSchoolSettings, SchoolSettingsFormData } from '../../hooks/useSchoolSettings';
+import { VStack } from '@/components/ui/vstack';
 
 export default function SchoolSettingsPage() {
   const [showExitDialog, setShowExitDialog] = useState(false);
@@ -54,19 +55,23 @@ export default function SchoolSettingsPage() {
         setSchoolsLoading(true);
         const schools = await getUserAdminSchools();
         setAdminSchools(schools);
-        
+
         if (schools.length > 0) {
           // Auto-select the first school
           setSelectedSchoolId(schools[0].school.id);
           setAuthorizationError(null);
         } else {
           // User has no admin schools - this is a legitimate authorization issue
-          setAuthorizationError('You do not have administrative access to any schools. Please contact your system administrator.');
+          setAuthorizationError(
+            'You do not have administrative access to any schools. Please contact your system administrator.'
+          );
           setSelectedSchoolId(null);
         }
       } catch (error) {
         // Handle API errors properly without bypassing authorization
-        setAuthorizationError('Failed to load school information. Please try again or contact support.');
+        setAuthorizationError(
+          'Failed to load school information. Please try again or contact support.'
+        );
         setSelectedSchoolId(null);
         setAdminSchools([]);
       } finally {
@@ -105,7 +110,7 @@ export default function SchoolSettingsPage() {
     try {
       await updateSchoolSettings(selectedSchoolId, data);
       setHasUnsavedChanges(false);
-      
+
       // Simple alert for now
       Alert.alert('Success', 'School settings updated successfully');
     } catch (err) {
@@ -155,14 +160,11 @@ export default function SchoolSettingsPage() {
             </Text>
           </VStack>
           <VStack space="sm" className="w-full">
-            <Button 
-              onPress={() => router.replace('/(school-admin)/dashboard')}
-              className="w-full"
-            >
+            <Button onPress={() => router.replace('/(school-admin)/dashboard')} className="w-full">
               <ButtonText>Go to Dashboard</ButtonText>
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onPress={() => router.push('/auth/login' as any)}
               className="w-full"
             >
@@ -200,8 +202,8 @@ export default function SchoolSettingsPage() {
             </AlertDialogHeader>
             <AlertDialogBody>
               <Text>
-                You have unsaved changes that will be lost if you leave this page. 
-                Are you sure you want to continue?
+                You have unsaved changes that will be lost if you leave this page. Are you sure you
+                want to continue?
               </Text>
             </AlertDialogBody>
             <AlertDialogFooter>

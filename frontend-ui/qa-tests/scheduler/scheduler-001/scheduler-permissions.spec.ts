@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
+
 import { loginAs, logout, waitForPageLoad } from '../../utils/test-helpers';
 
 test.describe('Scheduler Role-Based Permissions', () => {
-
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await waitForPageLoad(page);

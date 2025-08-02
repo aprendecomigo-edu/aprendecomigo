@@ -1,19 +1,30 @@
+import { Plus, X, ChevronDownIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Heading } from '@/components/ui/heading';
-import { Input, InputField } from '@/components/ui/input';
-import { Button, ButtonText } from '@/components/ui/button';
-import { FormControl } from '@/components/ui/form-control';
-import { Select, SelectTrigger, SelectInput, SelectIcon, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator, SelectItem } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Icon } from '@/components/ui/icon';
-import { Plus, X, ChevronDownIcon } from 'lucide-react-native';
 
 import { TeacherProfileData, SubjectExpertise } from '@/api/invitationApi';
+import { Badge } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { FormControl } from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectIcon,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicatorWrapper,
+  SelectDragIndicator,
+  SelectItem,
+} from '@/components/ui/select';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 import { COMMON_SUBJECTS } from '@/hooks/useInvitationProfileWizard';
 
 interface TeachingSubjectsStepProps {
@@ -34,7 +45,9 @@ const TeachingSubjectsStep: React.FC<TeachingSubjectsStepProps> = ({
   onRemoveSubject,
 }) => {
   const [newSubject, setNewSubject] = useState('');
-  const [newSubjectLevel, setNewSubjectLevel] = useState<'beginner' | 'intermediate' | 'advanced' | 'expert'>('intermediate');
+  const [newSubjectLevel, setNewSubjectLevel] = useState<
+    'beginner' | 'intermediate' | 'advanced' | 'expert'
+  >('intermediate');
   const [newSubjectExperience, setNewSubjectExperience] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
 
@@ -45,7 +58,7 @@ const TeachingSubjectsStep: React.FC<TeachingSubjectsStepProps> = ({
     }
 
     const experienceYears = newSubjectExperience ? parseInt(newSubjectExperience) : undefined;
-    
+
     const subjectToAdd: SubjectExpertise = {
       subject: newSubject.trim(),
       level: newSubjectLevel,
@@ -53,7 +66,7 @@ const TeachingSubjectsStep: React.FC<TeachingSubjectsStepProps> = ({
     };
 
     onAddSubject(subjectToAdd);
-    
+
     // Reset form
     setNewSubject('');
     setNewSubjectLevel('intermediate');
@@ -115,23 +128,23 @@ const TeachingSubjectsStep: React.FC<TeachingSubjectsStepProps> = ({
         {/* Quick Add Popular Subjects */}
         <VStack space="sm">
           <Text className="font-medium">Matérias Populares</Text>
-          <Text className="text-sm text-gray-600">
-            Toque para adicionar rapidamente:
-          </Text>
+          <Text className="text-sm text-gray-600">Toque para adicionar rapidamente:</Text>
           <Box className="flex-row flex-wrap">
-            {COMMON_SUBJECTS.filter(subject => 
-              !profileData.teaching_subjects.some(ts => ts.subject === subject)
-            ).slice(0, 8).map((subject) => (
-              <Button
-                key={subject}
-                variant="outline"
-                size="sm"
-                className="m-1"
-                onPress={() => handleQuickAddSubject(subject)}
-              >
-                <ButtonText className="text-sm">{subject}</ButtonText>
-              </Button>
-            ))}
+            {COMMON_SUBJECTS.filter(
+              subject => !profileData.teaching_subjects.some(ts => ts.subject === subject)
+            )
+              .slice(0, 8)
+              .map(subject => (
+                <Button
+                  key={subject}
+                  variant="outline"
+                  size="sm"
+                  className="m-1"
+                  onPress={() => handleQuickAddSubject(subject)}
+                >
+                  <ButtonText className="text-sm">{subject}</ButtonText>
+                </Button>
+              ))}
           </Box>
         </VStack>
 
@@ -169,7 +182,7 @@ const TeachingSubjectsStep: React.FC<TeachingSubjectsStepProps> = ({
                   <Text className="text-sm font-medium">Nível de Experiência</Text>
                   <Select
                     selectedValue={newSubjectLevel}
-                    onValueChange={(value) => setNewSubjectLevel(value as any)}
+                    onValueChange={value => setNewSubjectLevel(value as any)}
                   >
                     <SelectTrigger variant="outline" size="md">
                       <SelectInput placeholder="Selecione o nível" />
@@ -219,13 +232,13 @@ const TeachingSubjectsStep: React.FC<TeachingSubjectsStepProps> = ({
 
         {/* Current Subjects */}
         <VStack space="sm">
-          <Text className="font-medium">Suas Matérias ({profileData.teaching_subjects.length})</Text>
+          <Text className="font-medium">
+            Suas Matérias ({profileData.teaching_subjects.length})
+          </Text>
           {validationErrors.teaching_subjects && (
-            <Text className="text-red-600 text-sm">
-              {validationErrors.teaching_subjects}
-            </Text>
+            <Text className="text-red-600 text-sm">{validationErrors.teaching_subjects}</Text>
           )}
-          
+
           {profileData.teaching_subjects.length === 0 ? (
             <Box className="bg-gray-50 p-4 rounded-lg border border-dashed border-gray-300">
               <Text className="text-gray-600 text-center">
@@ -235,15 +248,10 @@ const TeachingSubjectsStep: React.FC<TeachingSubjectsStepProps> = ({
           ) : (
             <VStack space="sm">
               {profileData.teaching_subjects.map((subject, index) => (
-                <Box
-                  key={index}
-                  className="bg-white p-3 rounded-lg border border-gray-200"
-                >
+                <Box key={index} className="bg-white p-3 rounded-lg border border-gray-200">
                   <HStack className="justify-between items-start">
                     <VStack space="xs" className="flex-1">
-                      <Text className="font-medium text-gray-900">
-                        {subject.subject}
-                      </Text>
+                      <Text className="font-medium text-gray-900">{subject.subject}</Text>
                       <HStack space="sm" className="items-center">
                         <Badge className={getLevelColor(subject.level)}>
                           <Text className="text-xs font-medium">
@@ -257,11 +265,7 @@ const TeachingSubjectsStep: React.FC<TeachingSubjectsStepProps> = ({
                         )}
                       </HStack>
                     </VStack>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onPress={() => onRemoveSubject(index)}
-                    >
+                    <Button variant="outline" size="sm" onPress={() => onRemoveSubject(index)}>
                       <Icon as={X} size="sm" className="text-red-600" />
                     </Button>
                   </HStack>
@@ -276,9 +280,9 @@ const TeachingSubjectsStep: React.FC<TeachingSubjectsStepProps> = ({
           <VStack space="sm">
             <Text className="font-medium text-blue-800">Dica:</Text>
             <Text className="text-sm text-blue-700">
-              Seja específico sobre suas matérias. Por exemplo, ao invés de "Ciências", 
-              considere "Física", "Química" ou "Biologia" separadamente. Isso ajuda os 
-              alunos a encontrarem exatamente o que precisam.
+              Seja específico sobre suas matérias. Por exemplo, ao invés de "Ciências", considere
+              "Física", "Química" ou "Biologia" separadamente. Isso ajuda os alunos a encontrarem
+              exatamente o que precisam.
             </Text>
           </VStack>
         </Box>

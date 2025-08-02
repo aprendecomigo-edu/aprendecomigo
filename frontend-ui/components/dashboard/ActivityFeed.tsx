@@ -1,4 +1,12 @@
-import { ActivityIcon, CalendarIcon, CheckCircleIcon, MailIcon, UserIcon, UserPlusIcon, XCircleIcon } from 'lucide-react-native';
+import {
+  ActivityIcon,
+  CalendarIcon,
+  CheckCircleIcon,
+  MailIcon,
+  UserIcon,
+  UserPlusIcon,
+  XCircleIcon,
+} from 'lucide-react-native';
 import React from 'react';
 import { FlatList, RefreshControl } from 'react-native';
 
@@ -97,28 +105,24 @@ const ActivityItem: React.FC<{ activity: SchoolActivity; isLast: boolean }> = ({
   const color = getActivityColor(activity.activity_type);
 
   return (
-    <VStack className={`${!isLast ? 'border-b border-gray-100' : ''} pb-4 ${!isLast ? 'mb-4' : ''}`}>
+    <VStack
+      className={`${!isLast ? 'border-b border-gray-100' : ''} pb-4 ${!isLast ? 'mb-4' : ''}`}
+    >
       <HStack space="sm" className="items-start">
         <VStack className={`bg-${color}-100 p-2 rounded-full mt-1`}>
           <Icon as={IconComponent} size="xs" className={`text-${color}-600`} />
         </VStack>
-        
+
         <VStack space="xs" className="flex-1 min-w-0">
-          <Text className="text-sm text-gray-900 leading-5">
-            {activity.description}
-          </Text>
-          
+          <Text className="text-sm text-gray-900 leading-5">{activity.description}</Text>
+
           <HStack space="sm" className="items-center">
-            <Text className="text-xs text-gray-500">
-              {formatRelativeTime(activity.timestamp)}
-            </Text>
-            
+            <Text className="text-xs text-gray-500">{formatRelativeTime(activity.timestamp)}</Text>
+
             {activity.actor && (
               <>
                 <Text className="text-xs text-gray-300">•</Text>
-                <Text className="text-xs text-gray-500">
-                  por {activity.actor.name}
-                </Text>
+                <Text className="text-xs text-gray-500">por {activity.actor.name}</Text>
               </>
             )}
           </HStack>
@@ -143,9 +147,7 @@ const ActivityItemSkeleton: React.FC<{ isLast: boolean }> = ({ isLast }) => (
 const EmptyState: React.FC = () => (
   <VStack space="md" className="items-center py-12">
     <Icon as={ActivityIcon} size="xl" className="text-gray-300" />
-    <Text className="text-lg font-medium text-gray-600">
-      Nenhuma atividade recente
-    </Text>
+    <Text className="text-lg font-medium text-gray-600">Nenhuma atividade recente</Text>
     <Text className="text-sm text-gray-500 text-center max-w-sm">
       As atividades da escola aparecerão aqui quando professores e estudantes começarem a interagir
     </Text>
@@ -227,9 +229,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             renderItem={renderActivity}
             keyExtractor={item => item.id}
             showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl refreshing={isLoading} onRefresh={onRefresh} />
-            }
+            refreshControl={<RefreshControl refreshing={isLoading} onRefresh={onRefresh} />}
             ListFooterComponent={renderFooter}
             onEndReached={hasNextPage ? onLoadMore : undefined}
             onEndReachedThreshold={0.5}

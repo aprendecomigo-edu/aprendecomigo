@@ -1,5 +1,5 @@
-import React, { ReactNode } from 'react';
 import { Shield, AlertTriangle } from 'lucide-react-native';
+import React, { ReactNode } from 'react';
 
 import { useAuth } from '@/api/authContext';
 import { Box } from '@/components/ui/box';
@@ -51,7 +51,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
         <Center>
           <VStack className="items-center max-w-md" space="lg">
             <Icon as={Shield} size="xl" className="text-red-500" />
-            
+
             <VStack className="items-center" space="sm">
               <Heading size="lg" className="text-gray-900 text-center">
                 Acesso Negado
@@ -80,12 +80,11 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
 
   // Check if user has required roles
   if (requiredRoles.length > 0) {
-    const userRoles = userProfile.school_memberships?.map(
-      (membership: any) => membership.role
-    ) || [];
-    
+    const userRoles =
+      userProfile.school_memberships?.map((membership: any) => membership.role) || [];
+
     const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role));
-    
+
     if (!hasRequiredRole) {
       if (fallback) {
         return <>{fallback}</>;
@@ -96,7 +95,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
           <Center>
             <VStack className="items-center max-w-md" space="lg">
               <Icon as={AlertTriangle} size="xl" className="text-orange-500" />
-              
+
               <VStack className="items-center" space="sm">
                 <Heading size="lg" className="text-gray-900 text-center">
                   Permissão Insuficiente
@@ -142,8 +141,8 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
 
   // Check if user has active school membership for admin features
   const hasActiveSchoolMembership = userProfile.school_memberships?.some(
-    (membership: any) => 
-      membership.is_active && 
+    (membership: any) =>
+      membership.is_active &&
       (membership.role === 'school_owner' || membership.role === 'school_admin')
   );
 
@@ -157,13 +156,14 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
         <Center>
           <VStack className="items-center max-w-md" space="lg">
             <Icon as={AlertTriangle} size="xl" className="text-orange-500" />
-            
+
             <VStack className="items-center" space="sm">
               <Heading size="lg" className="text-gray-900 text-center">
                 Escola Não Configurada
               </Heading>
               <Text className="text-gray-600 text-center">
-                Você precisa estar associado a uma escola ativa para acessar o gerenciamento de alunos.
+                Você precisa estar associado a uma escola ativa para acessar o gerenciamento de
+                alunos.
               </Text>
             </VStack>
 
@@ -202,7 +202,7 @@ export function withAuthGuard<P extends object>(
   );
 
   WrappedComponent.displayName = `withAuthGuard(${Component.displayName || Component.name})`;
-  
+
   return WrappedComponent;
 }
 

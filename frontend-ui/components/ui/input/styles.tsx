@@ -43,4 +43,4 @@ export const inputStyle = tva({
       rounded: 'web:outline-0 web:outline-none px-4',
     },
   },
-}); 
+});

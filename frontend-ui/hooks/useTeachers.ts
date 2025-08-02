@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  TeacherProfile, 
-  TeacherFilters, 
+
+import {
+  TeacherProfile,
+  TeacherFilters,
   TeacherListResponse,
   getTeachersEnhanced,
-  getTeachers
+  getTeachers,
 } from '@/api/userApi';
 
 interface UseTeachersOptions {
@@ -25,13 +26,13 @@ interface UseTeachersReturn {
     currentPage: number;
     totalPages: number;
   };
-  
+
   // Actions
   fetchTeachers: () => Promise<void>;
   setFilters: (filters: Partial<TeacherFilters>) => void;
   clearFilters: () => void;
   refresh: () => Promise<void>;
-  
+
   // Filtering helpers
   filteredTeachers: TeacherProfile[];
   getTeachersByCompletion: (status: 'complete' | 'incomplete' | 'critical') => TeacherProfile[];
@@ -40,11 +41,7 @@ interface UseTeachersReturn {
 }
 
 export const useTeachers = (options: UseTeachersOptions = {}): UseTeachersReturn => {
-  const {
-    useEnhanced = true,
-    initialFilters = {},
-    autoFetch = true
-  } = options;
+  const { useEnhanced = true, initialFilters = {}, autoFetch = true } = options;
 
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,14 +50,14 @@ export const useTeachers = (options: UseTeachersOptions = {}): UseTeachersReturn
     page: 1,
     page_size: 20,
     ordering: '-profile_completion_score',
-    ...initialFilters
+    ...initialFilters,
   });
   const [pagination, setPagination] = useState({
     count: 0,
     next: null as string | null,
     previous: null as string | null,
     currentPage: 1,
-    totalPages: 1
+    totalPages: 1,
   });
 
   const fetchTeachers = useCallback(async () => {
@@ -76,7 +73,7 @@ export const useTeachers = (options: UseTeachersOptions = {}): UseTeachersReturn
           next: response.next,
           previous: response.previous,
           currentPage: filters.page || 1,
-          totalPages: Math.ceil(response.count / (filters.page_size || 20))
+          totalPages: Math.ceil(response.count / (filters.page_size || 20)),
         });
       } else {
         // Fallback to legacy API
@@ -87,7 +84,7 @@ export const useTeachers = (options: UseTeachersOptions = {}): UseTeachersReturn
           next: null,
           previous: null,
           currentPage: 1,
-          totalPages: 1
+          totalPages: 1,
         });
       }
     } catch (err: any) {
@@ -102,7 +99,7 @@ export const useTeachers = (options: UseTeachersOptions = {}): UseTeachersReturn
     setFiltersState(prev => ({
       ...prev,
       ...newFilters,
-      page: newFilters.page || 1 // Reset to first page when filters change
+      page: newFilters.page || 1, // Reset to first page when filters change
     }));
   }, []);
 
@@ -110,7 +107,7 @@ export const useTeachers = (options: UseTeachersOptions = {}): UseTeachersReturn
     setFiltersState({
       page: 1,
       page_size: 20,
-      ordering: '-profile_completion_score'
+      ordering: '-profile_completion_score',
     });
   }, []);
 
@@ -132,55 +129,68 @@ export const useTeachers = (options: UseTeachersOptions = {}): UseTeachersReturn
     // Local filtering for immediate feedback (server-side filtering is primary)
     if (filters.search) {
       const query = filters.search.toLowerCase();
-      result = result.filter(teacher => 
-        teacher.user.name.toLowerCase().includes(query) ||
-        teacher.user.email.toLowerCase().includes(query) ||
-        teacher.specialty?.toLowerCase().includes(query) ||
-        teacher.bio?.toLowerCase().includes(query)
+      result = result.filter(
+        teacher =>
+          teacher.user.name.toLowerCase().includes(query) ||
+          teacher.user.email.toLowerCase().includes(query) ||
+          teacher.specialty?.toLowerCase().includes(query) ||
+          teacher.bio?.toLowerCase().includes(query)
       );
     }
 
     return result;
   }, [teachers, filters.search]);
 
-  const getTeachersByCompletion = useCallback((status: 'complete' | 'incomplete' | 'critical') => {
-    return teachers.filter(teacher => {
-      const completionScore = teacher.profile_completion_score || 0;
-      const hasProfileCompletion = teacher.profile_completion;
-      const hasCriticalMissing = hasProfileCompletion && teacher.profile_completion!.missing_critical.length > 0;
+  const getTeachersByCompletion = useCallback(
+    (status: 'complete' | 'incomplete' | 'critical') => {
+      return teachers.filter(teacher => {
+        const completionScore = teacher.profile_completion_score || 0;
+        const hasProfileCompletion = teacher.profile_completion;
+        const hasCriticalMissing =
+          hasProfileCompletion && teacher.profile_completion!.missing_critical.length > 0;
 
-      switch (status) {
-        case 'complete':
-          return teacher.is_profile_complete && completionScore >= 80;
-        case 'critical':
-          return hasCriticalMissing || completionScore < 30;
-        case 'incomplete':
-          return !teacher.is_profile_complete && completionScore < 80 && !hasCriticalMissing;
-        default:
-          return false;
-      }
-    });
-  }, [teachers]);
+        switch (status) {
+          case 'complete':
+            return teacher.is_profile_complete && completionScore >= 80;
+          case 'critical':
+            return hasCriticalMissing || completionScore < 30;
+          case 'incomplete':
+            return !teacher.is_profile_complete && completionScore < 80 && !hasCriticalMissing;
+          default:
+            return false;
+        }
+      });
+    },
+    [teachers]
+  );
 
-  const getTeachersByStatus = useCallback((status: 'active' | 'inactive' | 'pending') => {
-    return teachers.filter(teacher => teacher.status === status);
-  }, [teachers]);
+  const getTeachersByStatus = useCallback(
+    (status: 'active' | 'inactive' | 'pending') => {
+      return teachers.filter(teacher => teacher.status === status);
+    },
+    [teachers]
+  );
 
-  const searchTeachers = useCallback((query: string) => {
-    if (!query.trim()) return teachers;
-    
-    const searchQuery = query.toLowerCase();
-    return teachers.filter(teacher => 
-      teacher.user.name.toLowerCase().includes(searchQuery) ||
-      teacher.user.email.toLowerCase().includes(searchQuery) ||
-      teacher.specialty?.toLowerCase().includes(searchQuery) ||
-      teacher.bio?.toLowerCase().includes(searchQuery) ||
-      teacher.teacher_courses?.some(course => 
-        course.course_name.toLowerCase().includes(searchQuery) ||
-        course.subject_area.toLowerCase().includes(searchQuery)
-      )
-    );
-  }, [teachers]);
+  const searchTeachers = useCallback(
+    (query: string) => {
+      if (!query.trim()) return teachers;
+
+      const searchQuery = query.toLowerCase();
+      return teachers.filter(
+        teacher =>
+          teacher.user.name.toLowerCase().includes(searchQuery) ||
+          teacher.user.email.toLowerCase().includes(searchQuery) ||
+          teacher.specialty?.toLowerCase().includes(searchQuery) ||
+          teacher.bio?.toLowerCase().includes(searchQuery) ||
+          teacher.teacher_courses?.some(
+            course =>
+              course.course_name.toLowerCase().includes(searchQuery) ||
+              course.subject_area.toLowerCase().includes(searchQuery)
+          )
+      );
+    },
+    [teachers]
+  );
 
   return {
     teachers,
@@ -188,18 +198,18 @@ export const useTeachers = (options: UseTeachersOptions = {}): UseTeachersReturn
     error,
     filters,
     pagination,
-    
+
     // Actions
     fetchTeachers,
     setFilters,
     clearFilters,
     refresh,
-    
+
     // Filtering helpers
     filteredTeachers,
     getTeachersByCompletion,
     getTeachersByStatus,
-    searchTeachers
+    searchTeachers,
   };
 };
 

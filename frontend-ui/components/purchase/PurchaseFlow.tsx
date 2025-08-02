@@ -1,12 +1,17 @@
 /**
  * Purchase Flow Orchestrator Component
- * 
+ *
  * Manages the complete purchase process from plan selection to payment completion.
  * Handles state transitions, error handling, and provides a seamless user experience.
  */
 
-import React, { useEffect, useCallback, useMemo } from 'react';
 import { CheckCircle, XCircle, ArrowLeft, ShoppingCart } from 'lucide-react-native';
+import React, { useEffect, useCallback, useMemo } from 'react';
+
+import { PricingPlanSelector } from './PricingPlanSelector';
+import { StripePaymentForm } from './StripePaymentForm';
+import { StudentInfoForm } from './StudentInfoForm';
+
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,9 +23,6 @@ import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { PricingPlanSelector } from './PricingPlanSelector';
-import { StudentInfoForm } from './StudentInfoForm';
-import { StripePaymentForm } from './StripePaymentForm';
 import { usePurchaseFlow } from '@/hooks/usePurchaseFlow';
 
 interface PurchaseFlowProps {
@@ -32,11 +34,7 @@ interface PurchaseFlowProps {
 /**
  * Main purchase flow component that orchestrates the entire purchase process.
  */
-export function PurchaseFlow({
-  onPurchaseComplete,
-  onCancel,
-  className = '',
-}: PurchaseFlowProps) {
+export function PurchaseFlow({ onPurchaseComplete, onCancel, className = '' }: PurchaseFlowProps) {
   const { state, actions, isLoading, canProceed } = usePurchaseFlow();
 
   // Handle successful purchase completion
@@ -89,9 +87,12 @@ export function PurchaseFlow({
     // The state will automatically transition to 'success'
   }, []);
 
-  const handlePaymentError = useCallback((error: string) => {
-    actions.setError(error);
-  }, [actions]);
+  const handlePaymentError = useCallback(
+    (error: string) => {
+      actions.setError(error);
+    },
+    [actions]
+  );
 
   return (
     <SafeAreaView className={`flex-1 bg-background-50 ${className}`}>
@@ -108,14 +109,9 @@ export function PurchaseFlow({
                   Step {Math.ceil(progressPercentage / 25)} of 4
                 </Text>
               </VStack>
-              
+
               {onCancel && state.step !== 'success' && (
-                <Button
-                  action="secondary"
-                  variant="outline"
-                  size="sm"
-                  onPress={onCancel}
-                >
+                <Button action="secondary" variant="outline" size="sm" onPress={onCancel}>
                   <ButtonIcon as={XCircle} />
                   <ButtonText>Cancel</ButtonText>
                 </Button>
@@ -123,11 +119,7 @@ export function PurchaseFlow({
             </HStack>
 
             {/* Progress bar */}
-            <Progress 
-              value={progressPercentage} 
-              className="w-full"
-              size="sm"
-            />
+            <Progress value={progressPercentage} className="w-full" size="sm" />
           </VStack>
 
           {/* Main content based on current step */}
@@ -152,16 +144,19 @@ export function PurchaseFlow({
             />
           )}
 
-          {state.step === 'payment' && state.stripeConfig && state.paymentIntentSecret && state.formData.selectedPlan && (
-            <StripePaymentForm
-              stripeConfig={state.stripeConfig}
-              clientSecret={state.paymentIntentSecret}
-              selectedPlan={state.formData.selectedPlan}
-              onPaymentSuccess={handlePaymentSuccess}
-              onPaymentError={handlePaymentError}
-              disabled={isLoading}
-            />
-          )}
+          {state.step === 'payment' &&
+            state.stripeConfig &&
+            state.paymentIntentSecret &&
+            state.formData.selectedPlan && (
+              <StripePaymentForm
+                stripeConfig={state.stripeConfig}
+                clientSecret={state.paymentIntentSecret}
+                selectedPlan={state.formData.selectedPlan}
+                onPaymentSuccess={handlePaymentSuccess}
+                onPaymentError={handlePaymentError}
+                disabled={isLoading}
+              />
+            )}
 
           {state.step === 'success' && (
             <PurchaseSuccessCard
@@ -193,9 +188,7 @@ export function PurchaseFlow({
                 <Heading size="sm" className="text-error-900">
                   Error
                 </Heading>
-                <Text className="text-error-800 text-sm">
-                  {state.errorMessage}
-                </Text>
+                <Text className="text-error-800 text-sm">{state.errorMessage}</Text>
               </VStack>
             </Alert>
           )}
@@ -221,7 +214,7 @@ function PurchaseSuccessCard({
     <Card className="p-8 border-success-200 bg-success-50">
       <VStack space="lg" className="items-center text-center">
         <Icon as={CheckCircle} size="3xl" className="text-success-600" />
-        
+
         <VStack space="sm" className="items-center">
           <Heading size="2xl" className="text-success-900">
             Purchase Successful!
@@ -239,9 +232,7 @@ function PurchaseSuccessCard({
               </Heading>
               <HStack className="items-center justify-between">
                 <Text className="text-typography-700">Plan:</Text>
-                <Text className="font-semibold text-typography-900">
-                  {selectedPlan.name}
-                </Text>
+                <Text className="font-semibold text-typography-900">{selectedPlan.name}</Text>
               </HStack>
               <HStack className="items-center justify-between">
                 <Text className="text-typography-700">Hours:</Text>
@@ -252,9 +243,7 @@ function PurchaseSuccessCard({
               {transactionId && (
                 <HStack className="items-center justify-between">
                   <Text className="text-typography-700">Transaction ID:</Text>
-                  <Text className="font-mono text-sm text-typography-900">
-                    #{transactionId}
-                  </Text>
+                  <Text className="font-mono text-sm text-typography-900">#{transactionId}</Text>
                 </HStack>
               )}
             </VStack>
@@ -263,10 +252,10 @@ function PurchaseSuccessCard({
 
         <VStack space="sm" className="w-full max-w-md">
           <Text className="text-sm text-success-700 text-center">
-            A confirmation email has been sent with your purchase details and 
-            instructions on how to schedule your first tutoring session.
+            A confirmation email has been sent with your purchase details and instructions on how to
+            schedule your first tutoring session.
           </Text>
-          
+
           <Button
             action="primary"
             variant="solid"
@@ -299,7 +288,7 @@ function PurchaseErrorCard({
     <Card className="p-8 border-error-200 bg-error-50">
       <VStack space="lg" className="items-center text-center">
         <Icon as={XCircle} size="3xl" className="text-error-600" />
-        
+
         <VStack space="sm" className="items-center">
           <Heading size="2xl" className="text-error-900">
             Purchase Failed
@@ -315,24 +304,16 @@ function PurchaseErrorCard({
               <Heading size="sm" className="text-error-900">
                 Error Details
               </Heading>
-              <Text className="text-sm text-error-700">
-                {errorMessage}
-              </Text>
+              <Text className="text-sm text-error-700">{errorMessage}</Text>
             </VStack>
           </Card>
         )}
 
         <VStack space="sm" className="w-full max-w-md">
-          <Button
-            action="primary"
-            variant="solid"
-            size="lg"
-            className="w-full"
-            onPress={onRetry}
-          >
+          <Button action="primary" variant="solid" size="lg" className="w-full" onPress={onRetry}>
             <ButtonText>Try Again</ButtonText>
           </Button>
-          
+
           <Button
             action="secondary"
             variant="outline"

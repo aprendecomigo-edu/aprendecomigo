@@ -1,31 +1,32 @@
 /**
  * Webhook Status Indicator Component - GitHub Issue #117
- * 
+ *
  * Displays real-time webhook health monitoring with status indicators,
  * response times, and failure alerts.
  */
 
-import React from 'react';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Box } from '@/components/ui/box';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Icon } from '@/components/ui/icon';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  CheckCircle, 
-  AlertTriangle, 
-  XCircle, 
-  Clock, 
-  Zap, 
+import {
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Clock,
+  Zap,
   Activity,
   ExternalLink,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react-native';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 import type { WebhookStatus } from '@/types/paymentMonitoring';
 
 interface WebhookStatusIndicatorProps {
@@ -92,7 +93,10 @@ function WebhookStatusCard({ webhook, compact }: WebhookStatusCardProps) {
 
   if (compact) {
     return (
-      <HStack space="sm" className={`p-3 rounded-lg border ${statusInfo.borderColor} ${statusInfo.bgColor}`}>
+      <HStack
+        space="sm"
+        className={`p-3 rounded-lg border ${statusInfo.borderColor} ${statusInfo.bgColor}`}
+      >
         <Icon as={IconComponent} size="sm" className={statusInfo.color} />
         <VStack space="xs" flex={1}>
           <Text size="sm" className="font-medium text-typography-900">
@@ -127,7 +131,7 @@ function WebhookStatusCard({ webhook, compact }: WebhookStatusCardProps) {
               {webhook.endpoint_url}
             </Text>
           </VStack>
-          
+
           <Badge variant={statusInfo.variant} size="sm">
             <Text size="xs">{statusInfo.status}</Text>
           </Badge>
@@ -139,7 +143,9 @@ function WebhookStatusCard({ webhook, compact }: WebhookStatusCardProps) {
           <HStack className="justify-between items-center">
             <HStack space="xs" className="items-center">
               <Icon as={Clock} size="xs" className="text-typography-500" />
-              <Text size="sm" className="text-typography-600">Response Time</Text>
+              <Text size="sm" className="text-typography-600">
+                Response Time
+              </Text>
             </HStack>
             <Text size="sm" className="font-medium text-typography-900">
               {webhook.response_time_avg}ms
@@ -147,13 +153,17 @@ function WebhookStatusCard({ webhook, compact }: WebhookStatusCardProps) {
           </HStack>
 
           {/* Response Time Progress Bar */}
-          <Progress 
+          <Progress
             value={Math.min((webhook.response_time_avg / 1000) * 100, 100)}
             className="h-2"
             // Color based on response time: green < 200ms, yellow < 500ms, red >= 500ms
             style={{
-              backgroundColor: webhook.response_time_avg < 200 ? '#10B981' :
-                             webhook.response_time_avg < 500 ? '#F59E0B' : '#EF4444'
+              backgroundColor:
+                webhook.response_time_avg < 200
+                  ? '#10B981'
+                  : webhook.response_time_avg < 500
+                  ? '#F59E0B'
+                  : '#EF4444',
             }}
           />
 
@@ -161,13 +171,18 @@ function WebhookStatusCard({ webhook, compact }: WebhookStatusCardProps) {
           <HStack className="justify-between items-center">
             <HStack space="xs" className="items-center">
               <Icon as={AlertTriangle} size="xs" className="text-typography-500" />
-              <Text size="sm" className="text-typography-600">Failures (24h)</Text>
+              <Text size="sm" className="text-typography-600">
+                Failures (24h)
+              </Text>
             </HStack>
-            <Text 
-              size="sm" 
+            <Text
+              size="sm"
               className={`font-medium ${
-                webhook.failure_count_24h === 0 ? 'text-success-600' :
-                webhook.failure_count_24h < 5 ? 'text-warning-600' : 'text-error-600'
+                webhook.failure_count_24h === 0
+                  ? 'text-success-600'
+                  : webhook.failure_count_24h < 5
+                  ? 'text-warning-600'
+                  : 'text-error-600'
               }`}
             >
               {webhook.failure_count_24h}
@@ -179,10 +194,16 @@ function WebhookStatusCard({ webhook, compact }: WebhookStatusCardProps) {
             <HStack className="justify-between items-center">
               <HStack space="xs" className="items-center">
                 <Icon as={Activity} size="xs" className="text-typography-500" />
-                <Text size="sm" className="text-typography-600">Last Status</Text>
+                <Text size="sm" className="text-typography-600">
+                  Last Status
+                </Text>
               </HStack>
-              <Badge 
-                variant={webhook.status_code_last >= 200 && webhook.status_code_last < 300 ? 'success' : 'error'}
+              <Badge
+                variant={
+                  webhook.status_code_last >= 200 && webhook.status_code_last < 300
+                    ? 'success'
+                    : 'error'
+                }
                 size="sm"
               >
                 <Text size="xs">{webhook.status_code_last}</Text>
@@ -194,15 +215,19 @@ function WebhookStatusCard({ webhook, compact }: WebhookStatusCardProps) {
         {/* Timestamps */}
         <VStack space="xs" className="pt-2 border-t border-border-100">
           <HStack className="justify-between">
-            <Text size="xs" className="text-typography-500">Last Success:</Text>
+            <Text size="xs" className="text-typography-500">
+              Last Success:
+            </Text>
             <Text size="xs" className="text-success-600 font-medium">
               {formatDate(webhook.last_success)}
             </Text>
           </HStack>
-          
+
           {webhook.last_failure && (
             <HStack className="justify-between">
-              <Text size="xs" className="text-typography-500">Last Failure:</Text>
+              <Text size="xs" className="text-typography-500">
+                Last Failure:
+              </Text>
               <Text size="xs" className="text-error-600 font-medium">
                 {formatDate(webhook.last_failure)}
               </Text>
@@ -223,11 +248,11 @@ function WebhookStatusCard({ webhook, compact }: WebhookStatusCardProps) {
   );
 }
 
-export default function WebhookStatusIndicator({ 
-  status, 
-  compact = false, 
+export default function WebhookStatusIndicator({
+  status,
+  compact = false,
   onRefresh,
-  loading 
+  loading,
 }: WebhookStatusIndicatorProps) {
   if (loading) {
     return (
@@ -249,10 +274,10 @@ export default function WebhookStatusIndicator({
 
   const getOverallStatus = () => {
     if (status.length === 0) return { status: 'Unknown', color: 'text-typography-500', count: 0 };
-    
+
     const healthy = status.filter(w => w.is_healthy).length;
     const total = status.length;
-    
+
     if (healthy === total) {
       return { status: 'All Healthy', color: 'text-success-600', count: healthy };
     } else if (healthy > total / 2) {
@@ -300,7 +325,7 @@ export default function WebhookStatusIndicator({
             <Text className="text-typography-500">No webhooks configured</Text>
           </Box>
         ) : (
-          <VStack space={compact ? "xs" : "sm"}>
+          <VStack space={compact ? 'xs' : 'sm'}>
             {status.map((webhook, index) => (
               <WebhookStatusCard
                 key={webhook.endpoint_url || index}
@@ -316,11 +341,15 @@ export default function WebhookStatusIndicator({
           <HStack space="sm" className="pt-4 border-t border-border-100">
             <Button variant="outline" size="sm" className="flex-1">
               <Icon as={ExternalLink} size="xs" />
-              <Text size="sm" className="ml-1">View Logs</Text>
+              <Text size="sm" className="ml-1">
+                View Logs
+              </Text>
             </Button>
             <Button variant="outline" size="sm" className="flex-1">
               <Icon as={Activity} size="xs" />
-              <Text size="sm" className="ml-1">Test Webhooks</Text>
+              <Text size="sm" className="ml-1">
+                Test Webhooks
+              </Text>
             </Button>
           </HStack>
         )}

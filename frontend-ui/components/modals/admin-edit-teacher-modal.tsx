@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Save, 
-  AlertTriangle, 
+import {
+  X,
+  Save,
+  AlertTriangle,
   Info,
   User,
   Mail,
@@ -10,28 +9,28 @@ import {
   MapPin,
   DollarSign,
   Clock,
-  BookOpen
+  BookOpen,
 } from 'lucide-react-native';
-
-import { Box } from '@/components/ui/box';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Pressable } from '@/components/ui/pressable';
-import { Modal } from '@/components/ui/modal';
-import { Heading } from '@/components/ui/heading';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
-import { FormControl } from '@/components/ui/form-control';
-import { Spinner } from '@/components/ui/spinner';
-import { ScrollView } from '@/components/ui/scroll-view';
-import { Badge } from '@/components/ui/badge';
-import { Divider } from '@/components/ui/divider';
+import React, { useState, useEffect } from 'react';
 
 import { TeacherProfile, UpdateTeacherData } from '@/api/userApi';
+import { Badge } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Divider } from '@/components/ui/divider';
+import { FormControl } from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
+import { Pressable } from '@/components/ui/pressable';
+import { ScrollView } from '@/components/ui/scroll-view';
+import { Select } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { Textarea } from '@/components/ui/textarea';
+import { VStack } from '@/components/ui/vstack';
 import { useTeacherProfile } from '@/hooks/useTeacherProfile';
 
 interface AdminEditTeacherModalProps {
@@ -60,28 +59,28 @@ interface ValidationErrors {
 // Admin-editable fields (respecting teacher autonomy)
 const ADMIN_EDITABLE_FIELDS = [
   'bio',
-  'specialty', 
+  'specialty',
   'education',
   'address',
   'phone_number',
   'calendar_iframe',
-  'status'
+  'status',
 ];
 
 // Fields that require special permission or are critical
 const SENSITIVE_FIELDS = [
   'hourly_rate', // Rates should typically be set by teachers
-  'availability' // Availability is teacher's personal schedule
+  'availability', // Availability is teacher's personal schedule
 ];
 
 export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
   isOpen,
   onClose,
   teacher,
-  onSuccess
+  onSuccess,
 }) => {
   const { updateProfile, updating } = useTeacherProfile({ teacherId: teacher.id });
-  
+
   const [formData, setFormData] = useState<FormData>({
     bio: teacher.bio || '',
     specialty: teacher.specialty || '',
@@ -91,7 +90,7 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
     address: teacher.address || '',
     phone_number: teacher.phone_number || '',
     calendar_iframe: teacher.calendar_iframe || '',
-    status: teacher.status || 'active'
+    status: teacher.status || 'active',
   });
 
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -110,7 +109,7 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
         address: teacher.address || '',
         phone_number: teacher.phone_number || '',
         calendar_iframe: teacher.calendar_iframe || '',
-        status: teacher.status || 'active'
+        status: teacher.status || 'active',
       });
       setChangedFields(new Set());
       setErrors({});
@@ -119,7 +118,7 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
 
   const handleFieldChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Track changed fields
     const originalValue = getOriginalValue(field);
     if (value !== originalValue) {
@@ -149,16 +148,26 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
 
   const getOriginalValue = (field: keyof FormData): string => {
     switch (field) {
-      case 'bio': return teacher.bio || '';
-      case 'specialty': return teacher.specialty || '';
-      case 'education': return teacher.education || '';
-      case 'hourly_rate': return teacher.hourly_rate?.toString() || '';
-      case 'availability': return teacher.availability || '';
-      case 'address': return teacher.address || '';
-      case 'phone_number': return teacher.phone_number || '';
-      case 'calendar_iframe': return teacher.calendar_iframe || '';
-      case 'status': return teacher.status || 'active';
-      default: return '';
+      case 'bio':
+        return teacher.bio || '';
+      case 'specialty':
+        return teacher.specialty || '';
+      case 'education':
+        return teacher.education || '';
+      case 'hourly_rate':
+        return teacher.hourly_rate?.toString() || '';
+      case 'availability':
+        return teacher.availability || '';
+      case 'address':
+        return teacher.address || '';
+      case 'phone_number':
+        return teacher.phone_number || '';
+      case 'calendar_iframe':
+        return teacher.calendar_iframe || '';
+      case 'status':
+        return teacher.status || 'active';
+      default:
+        return '';
     }
   };
 
@@ -205,10 +214,10 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
     try {
       // Only send changed fields to API
       const updateData: Partial<UpdateTeacherData> = {};
-      
+
       changedFields.forEach(field => {
         const value = formData[field as keyof FormData];
-        
+
         if (field === 'hourly_rate') {
           updateData.hourly_rate = value ? parseFloat(value) : undefined;
         } else {
@@ -217,11 +226,11 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
       });
 
       const updatedTeacher = await updateProfile(updateData);
-      
+
       if (onSuccess) {
         onSuccess(updatedTeacher);
       }
-      
+
       onClose();
     } catch (error: any) {
       console.error('Error updating teacher:', error);
@@ -238,7 +247,7 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
   };
 
   const hasChanges = changedFields.size > 0;
-  const hasSensitiveChanges = Array.from(changedFields).some(field => 
+  const hasSensitiveChanges = Array.from(changedFields).some(field =>
     SENSITIVE_FIELDS.includes(field)
   );
 
@@ -257,7 +266,7 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
                   {teacher.user.name} • {teacher.user.email}
                 </Text>
               </VStack>
-              
+
               <Pressable onPress={handleClose} className="p-2 -mr-2">
                 <Icon as={X} size="md" className="text-gray-500" />
               </Pressable>
@@ -273,8 +282,8 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
                       Atenção: Campos sensíveis
                     </Text>
                     <Text className="text-xs text-amber-700">
-                      Você está modificando campos que normalmente são gerenciados pelo próprio professor.
-                      Considere entrar em contato antes de fazer alterações.
+                      Você está modificando campos que normalmente são gerenciados pelo próprio
+                      professor. Considere entrar em contato antes de fazer alterações.
                     </Text>
                   </VStack>
                 </HStack>
@@ -302,40 +311,50 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
                 <FormControl isInvalid={!!errors.bio}>
                   <Text className="text-sm font-medium text-gray-700 mb-2">
                     Biografia
-                    {changedFields.has('bio') && <Badge variant="secondary" size="sm" className="ml-2">Modificado</Badge>}
+                    {changedFields.has('bio') && (
+                      <Badge variant="secondary" size="sm" className="ml-2">
+                        Modificado
+                      </Badge>
+                    )}
                   </Text>
                   <Textarea
                     placeholder="Biografia profissional do professor..."
                     value={formData.bio}
-                    onChangeText={(value) => handleFieldChange('bio', value)}
+                    onChangeText={value => handleFieldChange('bio', value)}
                     numberOfLines={4}
                   />
-                  {errors.bio && (
-                    <Text className="text-xs text-red-600 mt-1">{errors.bio}</Text>
-                  )}
+                  {errors.bio && <Text className="text-xs text-red-600 mt-1">{errors.bio}</Text>}
                 </FormControl>
 
                 <FormControl>
                   <Text className="text-sm font-medium text-gray-700 mb-2">
                     Especialidade
-                    {changedFields.has('specialty') && <Badge variant="secondary" size="sm" className="ml-2">Modificado</Badge>}
+                    {changedFields.has('specialty') && (
+                      <Badge variant="secondary" size="sm" className="ml-2">
+                        Modificado
+                      </Badge>
+                    )}
                   </Text>
                   <Input
                     placeholder="Ex: Matemática, Física, Inglês"
                     value={formData.specialty}
-                    onChangeText={(value) => handleFieldChange('specialty', value)}
+                    onChangeText={value => handleFieldChange('specialty', value)}
                   />
                 </FormControl>
 
                 <FormControl>
                   <Text className="text-sm font-medium text-gray-700 mb-2">
                     Formação
-                    {changedFields.has('education') && <Badge variant="secondary" size="sm" className="ml-2">Modificado</Badge>}
+                    {changedFields.has('education') && (
+                      <Badge variant="secondary" size="sm" className="ml-2">
+                        Modificado
+                      </Badge>
+                    )}
                   </Text>
                   <Input
                     placeholder="Formação acadêmica e qualificações"
                     value={formData.education}
-                    onChangeText={(value) => handleFieldChange('education', value)}
+                    onChangeText={value => handleFieldChange('education', value)}
                   />
                 </FormControl>
               </VStack>
@@ -354,12 +373,16 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
                 <FormControl isInvalid={!!errors.phone_number}>
                   <Text className="text-sm font-medium text-gray-700 mb-2">
                     Telefone
-                    {changedFields.has('phone_number') && <Badge variant="secondary" size="sm" className="ml-2">Modificado</Badge>}
+                    {changedFields.has('phone_number') && (
+                      <Badge variant="secondary" size="sm" className="ml-2">
+                        Modificado
+                      </Badge>
+                    )}
                   </Text>
                   <Input
                     placeholder="+351 xxx xxx xxx"
                     value={formData.phone_number}
-                    onChangeText={(value) => handleFieldChange('phone_number', value)}
+                    onChangeText={value => handleFieldChange('phone_number', value)}
                   />
                   {errors.phone_number && (
                     <Text className="text-xs text-red-600 mt-1">{errors.phone_number}</Text>
@@ -369,12 +392,16 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
                 <FormControl>
                   <Text className="text-sm font-medium text-gray-700 mb-2">
                     Endereço
-                    {changedFields.has('address') && <Badge variant="secondary" size="sm" className="ml-2">Modificado</Badge>}
+                    {changedFields.has('address') && (
+                      <Badge variant="secondary" size="sm" className="ml-2">
+                        Modificado
+                      </Badge>
+                    )}
                   </Text>
                   <Input
                     placeholder="Endereço para aulas presenciais"
                     value={formData.address}
-                    onChangeText={(value) => handleFieldChange('address', value)}
+                    onChangeText={value => handleFieldChange('address', value)}
                   />
                 </FormControl>
               </VStack>
@@ -394,16 +421,22 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
                   <HStack className="items-center justify-between mb-2">
                     <Text className="text-sm font-medium text-gray-700">
                       Taxa Horária (€)
-                      {changedFields.has('hourly_rate') && <Badge variant="secondary" size="sm" className="ml-2">Modificado</Badge>}
+                      {changedFields.has('hourly_rate') && (
+                        <Badge variant="secondary" size="sm" className="ml-2">
+                          Modificado
+                        </Badge>
+                      )}
                     </Text>
                     {SENSITIVE_FIELDS.includes('hourly_rate') && (
-                      <Badge variant="outline" size="sm">Sensível</Badge>
+                      <Badge variant="outline" size="sm">
+                        Sensível
+                      </Badge>
                     )}
                   </HStack>
                   <Input
                     placeholder="25.00"
                     value={formData.hourly_rate}
-                    onChangeText={(value) => handleFieldChange('hourly_rate', value)}
+                    onChangeText={value => handleFieldChange('hourly_rate', value)}
                     keyboardType="numeric"
                   />
                   {errors.hourly_rate && (
@@ -415,16 +448,22 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
                   <HStack className="items-center justify-between mb-2">
                     <Text className="text-sm font-medium text-gray-700">
                       Disponibilidade
-                      {changedFields.has('availability') && <Badge variant="secondary" size="sm" className="ml-2">Modificado</Badge>}
+                      {changedFields.has('availability') && (
+                        <Badge variant="secondary" size="sm" className="ml-2">
+                          Modificado
+                        </Badge>
+                      )}
                     </Text>
                     {SENSITIVE_FIELDS.includes('availability') && (
-                      <Badge variant="outline" size="sm">Sensível</Badge>
+                      <Badge variant="outline" size="sm">
+                        Sensível
+                      </Badge>
                     )}
                   </HStack>
                   <Textarea
                     placeholder="Horários disponíveis para aulas"
                     value={formData.availability}
-                    onChangeText={(value) => handleFieldChange('availability', value)}
+                    onChangeText={value => handleFieldChange('availability', value)}
                     numberOfLines={3}
                   />
                 </FormControl>
@@ -432,12 +471,16 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
                 <FormControl>
                   <Text className="text-sm font-medium text-gray-700 mb-2">
                     Calendário (iframe)
-                    {changedFields.has('calendar_iframe') && <Badge variant="secondary" size="sm" className="ml-2">Modificado</Badge>}
+                    {changedFields.has('calendar_iframe') && (
+                      <Badge variant="secondary" size="sm" className="ml-2">
+                        Modificado
+                      </Badge>
+                    )}
                   </Text>
                   <Input
                     placeholder="URL do iframe do calendário"
                     value={formData.calendar_iframe}
-                    onChangeText={(value) => handleFieldChange('calendar_iframe', value)}
+                    onChangeText={value => handleFieldChange('calendar_iframe', value)}
                   />
                 </FormControl>
               </VStack>
@@ -456,11 +499,15 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
                 <FormControl>
                   <Text className="text-sm font-medium text-gray-700 mb-2">
                     Status
-                    {changedFields.has('status') && <Badge variant="secondary" size="sm" className="ml-2">Modificado</Badge>}
+                    {changedFields.has('status') && (
+                      <Badge variant="secondary" size="sm" className="ml-2">
+                        Modificado
+                      </Badge>
+                    )}
                   </Text>
                   <Select
                     selectedValue={formData.status}
-                    onValueChange={(value) => handleFieldChange('status', value)}
+                    onValueChange={value => handleFieldChange('status', value)}
                   >
                     <Select.Item value="active" label="Ativo" />
                     <Select.Item value="inactive" label="Inativo" />
@@ -478,25 +525,20 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
             <VStack>
               {hasChanges && (
                 <Text className="text-xs text-gray-600">
-                  {changedFields.size} campo{changedFields.size > 1 ? 's' : ''} modificado{changedFields.size > 1 ? 's' : ''}
+                  {changedFields.size} campo{changedFields.size > 1 ? 's' : ''} modificado
+                  {changedFields.size > 1 ? 's' : ''}
                 </Text>
               )}
               {hasSensitiveChanges && (
-                <Text className="text-xs text-amber-600">
-                  Inclui campos sensíveis
-                </Text>
+                <Text className="text-xs text-amber-600">Inclui campos sensíveis</Text>
               )}
             </VStack>
 
             <HStack space="sm">
-              <Button
-                variant="outline"
-                onPress={handleClose}
-                disabled={updating}
-              >
+              <Button variant="outline" onPress={handleClose} disabled={updating}>
                 <ButtonText>Cancelar</ButtonText>
               </Button>
-              
+
               <Button
                 onPress={handleSave}
                 disabled={updating || !hasChanges}

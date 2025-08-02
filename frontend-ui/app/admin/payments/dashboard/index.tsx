@@ -1,34 +1,42 @@
 /**
  * Payment Monitoring Dashboard Screen - GitHub Issue #117
- * 
+ *
  * Main payment monitoring dashboard that provides administrators with
  * real-time visibility into payment system health, metrics, and monitoring.
  */
 
+import {
+  RefreshCw,
+  TrendingUp,
+  AlertCircle,
+  CheckCircle,
+  DollarSign,
+  Activity,
+} from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Heading } from '@/components/ui/heading';
-import { Text } from '@/components/ui/text';
-import { Box } from '@/components/ui/box';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Icon } from '@/components/ui/icon';
-import { Spinner } from '@/components/ui/spinner';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RefreshCw, TrendingUp, AlertCircle, CheckCircle, DollarSign, Activity } from 'lucide-react-native';
 
-// Import custom components (to be created)
+import { PaymentMonitoringApiClient } from '@/api/paymentMonitoringApi';
+import FraudAlertsSummary from '@/components/payment-monitoring/FraudAlertsSummary';
 import PaymentMetricsGrid from '@/components/payment-monitoring/PaymentMetricsGrid';
 import PaymentTrendChart from '@/components/payment-monitoring/PaymentTrendChart';
-import WebhookStatusIndicator from '@/components/payment-monitoring/WebhookStatusIndicator';
 import RecentTransactionsTable from '@/components/payment-monitoring/RecentTransactionsTable';
-import FraudAlertsSummary from '@/components/payment-monitoring/FraudAlertsSummary';
+import WebhookStatusIndicator from '@/components/payment-monitoring/WebhookStatusIndicator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
+
+// Import custom components (to be created)
 
 // Import API and hooks
-import { PaymentMonitoringApiClient } from '@/api/paymentMonitoringApi';
 import { usePaymentMonitoringWebSocket } from '@/hooks/usePaymentMonitoringWebSocket';
 import type { PaymentMetrics, PaymentTrendData } from '@/types/paymentMonitoring';
 
@@ -45,7 +53,7 @@ export default function PaymentMonitoringDashboard() {
     autoRefresh: true,
     refreshInterval: 30,
   });
-  
+
   const [metrics, setMetrics] = useState<PaymentMetrics | null>(null);
   const [trendData, setTrendData] = useState<PaymentTrendData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -179,19 +187,21 @@ export default function PaymentMonitoringDashboard() {
               Payment Monitoring Dashboard
             </Heading>
             <HStack space="md" className="items-center">
-              <Badge 
-                variant={connectionStatus.color as any}
-                className="flex-row items-center"
-              >
+              <Badge variant={connectionStatus.color as any} className="flex-row items-center">
                 <Icon
-                  as={connectionStatus.status === 'connected' ? CheckCircle : 
-                      connectionStatus.status === 'error' ? AlertCircle : Activity}
+                  as={
+                    connectionStatus.status === 'connected'
+                      ? CheckCircle
+                      : connectionStatus.status === 'error'
+                      ? AlertCircle
+                      : Activity
+                  }
                   size="xs"
                   className="mr-1"
                 />
                 <Text size="xs">{connectionStatus.text}</Text>
               </Badge>
-              
+
               {lastUpdated && (
                 <Text size="sm" className="text-typography-500">
                   Last updated: {lastUpdated.toLocaleTimeString()}
@@ -203,7 +213,7 @@ export default function PaymentMonitoringDashboard() {
           <HStack space="sm" className="items-center">
             {/* Time Range Selector */}
             <HStack space="xs">
-              {(['last_24h', 'last_7d', 'last_30d'] as const).map((range) => (
+              {(['last_24h', 'last_7d', 'last_30d'] as const).map(range => (
                 <Button
                   key={range}
                   variant={state.timeRange === range ? 'solid' : 'outline'}
@@ -211,8 +221,7 @@ export default function PaymentMonitoringDashboard() {
                   onPress={() => handleTimeRangeChange(range)}
                 >
                   <Text size="sm">
-                    {range === 'last_24h' ? '24h' : 
-                     range === 'last_7d' ? '7d' : '30d'}
+                    {range === 'last_24h' ? '24h' : range === 'last_7d' ? '7d' : '30d'}
                   </Text>
                 </Button>
               ))}
@@ -231,12 +240,7 @@ export default function PaymentMonitoringDashboard() {
             </Button>
 
             {/* Manual refresh */}
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={handleRefresh}
-              disabled={loading}
-            >
+            <Button variant="outline" size="sm" onPress={handleRefresh} disabled={loading}>
               <Icon as={RefreshCw} size="xs" className={loading ? 'animate-spin' : ''} />
             </Button>
           </HStack>
@@ -252,7 +256,7 @@ export default function PaymentMonitoringDashboard() {
       </VStack>
 
       {/* Dashboard Content */}
-      <ScrollView 
+      <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 24 }}
@@ -260,11 +264,7 @@ export default function PaymentMonitoringDashboard() {
         <VStack space="lg">
           {/* Metrics Grid */}
           {metrics && (
-            <PaymentMetricsGrid
-              metrics={metrics}
-              timeRange={state.timeRange}
-              loading={loading}
-            />
+            <PaymentMetricsGrid metrics={metrics} timeRange={state.timeRange} loading={loading} />
           )}
 
           {/* Charts and Status Row */}
@@ -283,10 +283,7 @@ export default function PaymentMonitoringDashboard() {
 
             {/* Webhook Status */}
             <Box flex={1}>
-              <WebhookStatusIndicator
-                status={webhookStatus}
-                compact={false}
-              />
+              <WebhookStatusIndicator status={webhookStatus} compact={false} />
             </Box>
           </HStack>
 
@@ -294,18 +291,12 @@ export default function PaymentMonitoringDashboard() {
           <HStack space="lg" className="items-start">
             {/* Recent Transactions */}
             <Box flex={2}>
-              <RecentTransactionsTable
-                transactions={recentTransactions}
-                loading={loading}
-              />
+              <RecentTransactionsTable transactions={recentTransactions} loading={loading} />
             </Box>
 
             {/* Fraud Alerts Summary */}
             <Box flex={1}>
-              <FraudAlertsSummary
-                alerts={activeFraudAlerts}
-                disputes={activeDisputes}
-              />
+              <FraudAlertsSummary alerts={activeFraudAlerts} disputes={activeDisputes} />
             </Box>
           </HStack>
         </VStack>

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import useWebSocket from './useWebSocket';
+
 import { useAuth } from '@/api/authContext';
 import {
   getSchoolActivity,
@@ -11,7 +13,6 @@ import {
   updateSchoolInfo,
 } from '@/api/userApi';
 import { API_URL } from '@/constants/api';
-import useWebSocket from './useWebSocket';
 
 // Error types for better error handling
 export interface DashboardError {
@@ -24,17 +25,18 @@ export interface DashboardError {
 // Helper function to categorize and format errors
 const createDashboardError = (error: any, context: string): DashboardError => {
   console.error(`Dashboard error in ${context}:`, error);
-  
+
   // Network errors
   if (!error.response || error.code === 'ERR_NETWORK' || error.code === 'ERR_CONNECTION_REFUSED') {
     return {
       type: 'network',
       message: 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet.',
-      details: 'Tente novamente em alguns momentos ou entre em contato com o suporte se o problema persistir.',
+      details:
+        'Tente novamente em alguns momentos ou entre em contato com o suporte se o problema persistir.',
       canRetry: true,
     };
   }
-  
+
   // Permission errors
   if (error.response?.status === 403) {
     return {
@@ -44,7 +46,7 @@ const createDashboardError = (error: any, context: string): DashboardError => {
       canRetry: false,
     };
   }
-  
+
   // Not found errors
   if (error.response?.status === 404) {
     return {
@@ -54,7 +56,7 @@ const createDashboardError = (error: any, context: string): DashboardError => {
       canRetry: false,
     };
   }
-  
+
   // Authentication errors
   if (error.response?.status === 401) {
     return {
@@ -64,7 +66,7 @@ const createDashboardError = (error: any, context: string): DashboardError => {
       canRetry: false,
     };
   }
-  
+
   // Server errors
   if (error.response?.status >= 500) {
     return {
@@ -74,12 +76,13 @@ const createDashboardError = (error: any, context: string): DashboardError => {
       canRetry: true,
     };
   }
-  
+
   // Validation errors
   if (error.response?.status >= 400 && error.response?.status < 500) {
-    const errorMessage = error.response?.data?.detail || 
-                        error.response?.data?.message || 
-                        'Dados inválidos fornecidos.';
+    const errorMessage =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      'Dados inválidos fornecidos.';
     return {
       type: 'validation',
       message: errorMessage,
@@ -87,7 +90,7 @@ const createDashboardError = (error: any, context: string): DashboardError => {
       canRetry: true,
     };
   }
-  
+
   // Unknown errors
   return {
     type: 'unknown',
@@ -114,7 +117,7 @@ export const useSchoolDashboard = ({
   refreshInterval = 30000, // 30 seconds
 }: UseSchoolDashboardProps) => {
   const { userProfile } = useAuth();
-  
+
   // State management
   const [metrics, setMetrics] = useState<SchoolMetrics | null>(null);
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
@@ -122,19 +125,20 @@ export const useSchoolDashboard = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<DashboardError | null>(null);
-  
+
   // Pagination state for activities
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [totalActivities, setTotalActivities] = useState(0);
 
   // WebSocket URL configuration
-  const wsUrl = API_URL.replace('http', 'ws').replace('/api', '') + `/ws/schools/${schoolId}/dashboard/`;
+  const wsUrl =
+    API_URL.replace('http', 'ws').replace('/api', '') + `/ws/schools/${schoolId}/dashboard/`;
 
   // WebSocket message handler
   const handleWebSocketMessage = useCallback((message: any) => {
     console.log('Dashboard WebSocket message:', message);
-    
+
     switch (message.type) {
       case 'metrics_update':
         setMetrics(prev => {
@@ -151,22 +155,23 @@ export const useSchoolDashboard = ({
             },
             class_metrics: {
               ...prev.class_metrics,
-              active_classes: message.data.active_classes?.total ?? prev.class_metrics.active_classes,
+              active_classes:
+                message.data.active_classes?.total ?? prev.class_metrics.active_classes,
             },
           };
         });
         break;
-        
+
       case 'activity_new':
         setActivities(prev => [message.data, ...prev]);
         setTotalActivities(prev => prev + 1);
         break;
-        
+
       case 'invitation_status_update':
         // Refresh metrics when invitation status changes
         fetchMetrics();
         break;
-        
+
       default:
         console.log('Unknown WebSocket message type:', message.type);
     }
@@ -209,41 +214,44 @@ export const useSchoolDashboard = ({
     }
   }, [schoolId, error?.type]);
 
-  const fetchActivities = useCallback(async (page = 1, append = false) => {
-    try {
-      if (!append) {
-        setIsLoading(page === 1);
-      } else {
-        setIsLoadingMore(true);
-      }
+  const fetchActivities = useCallback(
+    async (page = 1, append = false) => {
+      try {
+        if (!append) {
+          setIsLoading(page === 1);
+        } else {
+          setIsLoadingMore(true);
+        }
 
-      const data = await getSchoolActivity(schoolId, {
-        page,
-        page_size: 20,
-      });
+        const data = await getSchoolActivity(schoolId, {
+          page,
+          page_size: 20,
+        });
 
-      if (append) {
-        setActivities(prev => [...prev, ...data.results]);
-      } else {
-        setActivities(data.results);
-      }
+        if (append) {
+          setActivities(prev => [...prev, ...data.results]);
+        } else {
+          setActivities(data.results);
+        }
 
-      setHasNextPage(!!data.next);
-      setTotalActivities(data.count);
-      setCurrentPage(page);
-      
-      // Clear error on success
-      if (error?.type !== 'network') {
-        setError(null);
+        setHasNextPage(!!data.next);
+        setTotalActivities(data.count);
+        setCurrentPage(page);
+
+        // Clear error on success
+        if (error?.type !== 'network') {
+          setError(null);
+        }
+      } catch (err) {
+        const dashboardError = createDashboardError(err, 'fetchActivities');
+        setError(dashboardError);
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
       }
-    } catch (err) {
-      const dashboardError = createDashboardError(err, 'fetchActivities');
-      setError(dashboardError);
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
-    }
-  }, [schoolId, error?.type]);
+    },
+    [schoolId, error?.type]
+  );
 
   const loadMoreActivities = useCallback(() => {
     if (!isLoadingMore && hasNextPage) {
@@ -251,28 +259,27 @@ export const useSchoolDashboard = ({
     }
   }, [fetchActivities, currentPage, hasNextPage, isLoadingMore]);
 
-  const updateSchool = useCallback(async (data: Partial<SchoolInfo>) => {
-    try {
-      const updatedSchool = await updateSchoolInfo(schoolId, data);
-      setSchoolInfo(updatedSchool);
-      return updatedSchool;
-    } catch (err) {
-      const dashboardError = createDashboardError(err, 'updateSchool');
-      // For update operations, we throw the formatted error so the UI can handle it
-      throw new Error(dashboardError.message);
-    }
-  }, [schoolId]);
+  const updateSchool = useCallback(
+    async (data: Partial<SchoolInfo>) => {
+      try {
+        const updatedSchool = await updateSchoolInfo(schoolId, data);
+        setSchoolInfo(updatedSchool);
+        return updatedSchool;
+      } catch (err) {
+        const dashboardError = createDashboardError(err, 'updateSchool');
+        // For update operations, we throw the formatted error so the UI can handle it
+        throw new Error(dashboardError.message);
+      }
+    },
+    [schoolId]
+  );
 
   const refreshAll = useCallback(async () => {
     setError(null);
     setIsLoading(true);
-    
+
     try {
-      await Promise.all([
-        fetchMetrics(),
-        fetchSchoolInfo(),
-        fetchActivities(1, false),
-      ]);
+      await Promise.all([fetchMetrics(), fetchSchoolInfo(), fetchActivities(1, false)]);
     } catch (err) {
       // Individual errors are handled in the fetch functions
       // This catch is for any unexpected errors during parallel execution
@@ -305,7 +312,7 @@ export const useSchoolDashboard = ({
       setHasNextPage(false);
       setTotalActivities(0);
       setError(null);
-      
+
       refreshAll();
     }
   }, [schoolId, userProfile, refreshAll]);
@@ -313,43 +320,43 @@ export const useSchoolDashboard = ({
   // Retry mechanism for failed requests
   const retryOperation = useCallback(async (operation: () => Promise<void>, maxRetries = 3) => {
     let lastError: any;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await operation();
         return; // Success
       } catch (error) {
         lastError = error;
-        
+
         // Don't retry for permission or validation errors
-        if ((error as any).response?.status === 401 || (error as any).response?.status === 403 || (error as any).response?.status === 404) {
+        if (
+          (error as any).response?.status === 401 ||
+          (error as any).response?.status === 403 ||
+          (error as any).response?.status === 404
+        ) {
           throw error;
         }
-        
+
         // Wait before retrying (exponential backoff)
         if (attempt < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
         }
       }
     }
-    
+
     throw lastError;
   }, []);
 
   // Enhanced refresh with retry logic
   const refreshAllWithRetry = useCallback(async () => {
     if (!schoolId || schoolId <= 0) return;
-    
+
     setError(null);
     setIsLoading(true);
-    
+
     try {
       await retryOperation(async () => {
-        await Promise.all([
-          fetchMetrics(),
-          fetchSchoolInfo(),
-          fetchActivities(1, false),
-        ]);
+        await Promise.all([fetchMetrics(), fetchSchoolInfo(), fetchActivities(1, false)]);
       });
     } catch (err) {
       // Error is already set by individual fetch functions
@@ -364,23 +371,23 @@ export const useSchoolDashboard = ({
     metrics,
     schoolInfo,
     activities,
-    
+
     // Loading states
     isLoading,
     isLoadingMore,
-    
+
     // Pagination
     currentPage,
     hasNextPage,
     totalActivities,
-    
+
     // Error handling
     error,
     wsError,
-    
+
     // WebSocket connection status
     isConnected,
-    
+
     // Actions
     refreshAll,
     refreshAllWithRetry,
@@ -389,7 +396,7 @@ export const useSchoolDashboard = ({
     fetchMetrics,
     fetchActivities,
     retryOperation,
-    
+
     // Clear error
     clearError: () => setError(null),
   };

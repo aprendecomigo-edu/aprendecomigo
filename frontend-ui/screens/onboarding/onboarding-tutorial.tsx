@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import { useTutorial } from '@/components/tutorial/TutorialContext';
-import { useOnboarding } from '@/hooks/useOnboarding';
 import { TutorialConfig, TutorialStep } from '@/components/tutorial/types';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 // Onboarding tutorial configuration
 const createOnboardingTutorialConfig = (userType: string = 'admin'): TutorialConfig => ({
@@ -17,7 +17,8 @@ const createOnboardingTutorialConfig = (userType: string = 'admin'): TutorialCon
     {
       id: 'welcome-overview',
       title: 'Welcome to Aprende Comigo!',
-      content: 'This tutorial will guide you through setting up your school and getting started with the platform. You can skip any step or exit at any time.',
+      content:
+        'This tutorial will guide you through setting up your school and getting started with the platform. You can skip any step or exit at any time.',
       position: 'center',
       highlight: false,
       skippable: true,
@@ -25,7 +26,8 @@ const createOnboardingTutorialConfig = (userType: string = 'admin'): TutorialCon
     {
       id: 'dashboard-overview',
       title: 'Your Dashboard',
-      content: 'This is your main dashboard where you can see school metrics, recent activities, and quick actions. Think of it as your command center.',
+      content:
+        'This is your main dashboard where you can see school metrics, recent activities, and quick actions. Think of it as your command center.',
       targetElement: '[data-testid="dashboard-overview"]',
       position: 'bottom',
       highlight: true,
@@ -34,7 +36,8 @@ const createOnboardingTutorialConfig = (userType: string = 'admin'): TutorialCon
     {
       id: 'school-profile',
       title: 'Complete School Profile',
-      content: 'Start by completing your school profile. This information will be visible to teachers, students, and parents.',
+      content:
+        'Start by completing your school profile. This information will be visible to teachers, students, and parents.',
       targetElement: '[data-testid="school-profile-card"]',
       position: 'right',
       highlight: true,
@@ -50,7 +53,8 @@ const createOnboardingTutorialConfig = (userType: string = 'admin'): TutorialCon
     {
       id: 'invite-teachers',
       title: 'Invite Your Teachers',
-      content: 'Teachers are the backbone of your platform. Use the invitation system to bring your teaching team onboard.',
+      content:
+        'Teachers are the backbone of your platform. Use the invitation system to bring your teaching team onboard.',
       targetElement: '[data-testid="invite-teachers-card"]',
       position: 'left',
       highlight: true,
@@ -66,7 +70,8 @@ const createOnboardingTutorialConfig = (userType: string = 'admin'): TutorialCon
     {
       id: 'add-students',
       title: 'Add Students',
-      content: 'Add students individually or import them in bulk. Student information helps with class scheduling and progress tracking.',
+      content:
+        'Add students individually or import them in bulk. Student information helps with class scheduling and progress tracking.',
       targetElement: '[data-testid="add-students-card"]',
       position: 'top',
       highlight: true,
@@ -82,7 +87,8 @@ const createOnboardingTutorialConfig = (userType: string = 'admin'): TutorialCon
     {
       id: 'billing-setup',
       title: 'Set Up Billing',
-      content: 'Configure your payment methods and billing preferences to enable seamless transactions for your school.',
+      content:
+        'Configure your payment methods and billing preferences to enable seamless transactions for your school.',
       targetElement: '[data-testid="billing-setup-card"]',
       position: 'bottom',
       highlight: true,
@@ -98,7 +104,8 @@ const createOnboardingTutorialConfig = (userType: string = 'admin'): TutorialCon
     {
       id: 'create-schedule',
       title: 'Create Your First Schedule',
-      content: 'Set up class schedules to organize tutoring sessions and manage teacher-student assignments effectively.',
+      content:
+        'Set up class schedules to organize tutoring sessions and manage teacher-student assignments effectively.',
       targetElement: '[data-testid="create-schedule-card"]',
       position: 'right',
       highlight: true,
@@ -114,7 +121,8 @@ const createOnboardingTutorialConfig = (userType: string = 'admin'): TutorialCon
     {
       id: 'navigation-help',
       title: 'Navigation & Help',
-      content: 'Use the sidebar to navigate between different sections. Look for help icons (?) throughout the platform for contextual assistance.',
+      content:
+        'Use the sidebar to navigate between different sections. Look for help icons (?) throughout the platform for contextual assistance.',
       targetElement: '[data-testid="sidebar-navigation"]',
       position: 'right',
       highlight: true,
@@ -123,7 +131,8 @@ const createOnboardingTutorialConfig = (userType: string = 'admin'): TutorialCon
     {
       id: 'completion',
       title: 'Tutorial Complete!',
-      content: 'Congratulations! You now know the basics of managing your school on Aprende Comigo. You can always access this tutorial again from the help menu.',
+      content:
+        'Congratulations! You now know the basics of managing your school on Aprende Comigo. You can always access this tutorial again from the help menu.',
       position: 'center',
       highlight: false,
       skippable: false,
@@ -143,7 +152,8 @@ const createMobileOnboardingTutorialConfig = (): TutorialConfig => ({
     {
       id: 'mobile-welcome',
       title: 'Welcome to Mobile Management',
-      content: 'Manage your school on the go! This mobile tutorial will show you the key features optimized for your device.',
+      content:
+        'Manage your school on the go! This mobile tutorial will show you the key features optimized for your device.',
       position: 'center',
       highlight: false,
       skippable: true,
@@ -151,7 +161,8 @@ const createMobileOnboardingTutorialConfig = (): TutorialConfig => ({
     {
       id: 'mobile-navigation',
       title: 'Mobile Navigation',
-      content: 'Use the hamburger menu to access all features. Swipe gestures are supported throughout the app.',
+      content:
+        'Use the hamburger menu to access all features. Swipe gestures are supported throughout the app.',
       targetElement: '[data-testid="mobile-menu-button"]',
       position: 'bottom',
       highlight: true,
@@ -160,7 +171,8 @@ const createMobileOnboardingTutorialConfig = (): TutorialConfig => ({
     {
       id: 'mobile-quick-actions',
       title: 'Quick Actions',
-      content: 'Access the most common actions directly from your dashboard for faster school management.',
+      content:
+        'Access the most common actions directly from your dashboard for faster school management.',
       targetElement: '[data-testid="quick-actions-panel"]',
       position: 'top',
       highlight: true,
@@ -169,7 +181,8 @@ const createMobileOnboardingTutorialConfig = (): TutorialConfig => ({
     {
       id: 'mobile-notifications',
       title: 'Stay Updated',
-      content: 'Enable push notifications to stay informed about important school activities and teacher communications.',
+      content:
+        'Enable push notifications to stay informed about important school activities and teacher communications.',
       targetElement: '[data-testid="notifications-bell"]',
       position: 'bottom',
       highlight: true,
@@ -178,7 +191,8 @@ const createMobileOnboardingTutorialConfig = (): TutorialConfig => ({
     {
       id: 'mobile-completion',
       title: 'Mobile Setup Complete!',
-      content: 'You\'re all set to manage your school from anywhere. Remember to sync data when you have a stable internet connection.',
+      content:
+        "You're all set to manage your school from anywhere. Remember to sync data when you have a stable internet connection.",
       position: 'center',
       highlight: false,
       skippable: false,
@@ -204,17 +218,17 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
 
   // Determine which tutorial config to use based on platform
   const isMobile = Platform.OS !== 'web';
-  const tutorialConfig = isMobile 
+  const tutorialConfig = isMobile
     ? createMobileOnboardingTutorialConfig()
     : createOnboardingTutorialConfig(userType);
 
   // Start tutorial automatically if requested and conditions are met
   useEffect(() => {
     if (autoStart && !state.isActive && progress?.shouldShowOnboarding) {
-      const hasCompletedTutorial = progress.completed_steps.some(step => 
-        step.includes('tutorial') || step.includes('onboarding')
+      const hasCompletedTutorial = progress.completed_steps.some(
+        step => step.includes('tutorial') || step.includes('onboarding')
       );
-      
+
       if (!hasCompletedTutorial) {
         startTutorial(tutorialConfig);
       }
@@ -228,7 +242,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
         try {
           // Mark tutorial completion in onboarding progress
           await completeStep('onboarding_tutorial_completed');
-          
+
           if (onComplete) {
             onComplete();
           }
@@ -239,7 +253,14 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
 
       handleTutorialEnd();
     }
-  }, [state.isActive, state.config, state.currentStep, completeStep, onComplete, tutorialConfig.id]);
+  }, [
+    state.isActive,
+    state.config,
+    state.currentStep,
+    completeStep,
+    onComplete,
+    tutorialConfig.id,
+  ]);
 
   // Public methods to control tutorial
   const startOnboardingTutorial = () => {
@@ -250,7 +271,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
     try {
       await skipTutorial();
       await completeStep('onboarding_tutorial_skipped');
-      
+
       if (onSkip) {
         onSkip();
       }
@@ -263,7 +284,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
     try {
       await completeTutorial();
       await completeStep('onboarding_tutorial_completed');
-      
+
       if (onComplete) {
         onComplete();
       }
@@ -287,17 +308,18 @@ export function useOnboardingTutorial() {
 
   const startOnboardingTutorial = (userType: string = 'admin') => {
     const isMobile = Platform.OS !== 'web';
-    const config = isMobile 
+    const config = isMobile
       ? createMobileOnboardingTutorialConfig()
       : createOnboardingTutorialConfig(userType);
-    
+
     startTutorial(config);
   };
 
   const isOnboardingTutorialActive = () => {
-    return state.isActive && (
-      state.config?.id === 'onboarding-tutorial' || 
-      state.config?.id === 'mobile-onboarding-tutorial'
+    return (
+      state.isActive &&
+      (state.config?.id === 'onboarding-tutorial' ||
+        state.config?.id === 'mobile-onboarding-tutorial')
     );
   };
 
@@ -314,30 +336,33 @@ export const ONBOARDING_TUTORIAL_STEPS = {
   schoolProfile: {
     id: 'school-profile-tutorial',
     title: 'Complete Your School Profile',
-    content: 'Add essential information about your school including name, description, contact details, and logo.',
+    content:
+      'Add essential information about your school including name, description, contact details, and logo.',
     targetElement: '[data-testid="school-profile-form"]',
     position: 'right' as const,
     highlight: true,
   },
-  
+
   teacherInvitation: {
-    id: 'teacher-invitation-tutorial', 
+    id: 'teacher-invitation-tutorial',
     title: 'Invite Teachers to Your School',
-    content: 'Send email invitations to teachers. They\'ll receive a link to join your school and set up their accounts.',
+    content:
+      "Send email invitations to teachers. They'll receive a link to join your school and set up their accounts.",
     targetElement: '[data-testid="invite-teacher-modal"]',
     position: 'left' as const,
     highlight: true,
   },
-  
+
   studentManagement: {
     id: 'student-management-tutorial',
     title: 'Add and Manage Students',
-    content: 'Add students individually or use bulk import. Include parent contact information for better communication.',
+    content:
+      'Add students individually or use bulk import. Include parent contact information for better communication.',
     targetElement: '[data-testid="add-student-modal"]',
     position: 'top' as const,
     highlight: true,
   },
-  
+
   billingSetup: {
     id: 'billing-setup-tutorial',
     title: 'Configure Billing Settings',
@@ -346,11 +371,12 @@ export const ONBOARDING_TUTORIAL_STEPS = {
     position: 'bottom' as const,
     highlight: true,
   },
-  
+
   scheduling: {
     id: 'scheduling-tutorial',
     title: 'Create Class Schedules',
-    content: 'Set up recurring schedules, book individual sessions, and manage teacher-student assignments.',
+    content:
+      'Set up recurring schedules, book individual sessions, and manage teacher-student assignments.',
     targetElement: '[data-testid="calendar-interface"]',
     position: 'left' as const,
     highlight: true,

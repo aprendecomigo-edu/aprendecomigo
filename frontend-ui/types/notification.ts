@@ -1,6 +1,6 @@
 /**
  * Notification Type Definitions
- * 
+ *
  * TypeScript interfaces for the notification system integrated with
  * the backend notification API endpoints.
  */
@@ -37,9 +37,9 @@ export interface NotificationMarkReadResponse {
   message: string;
 }
 
-export type NotificationType = 
-  | 'low_balance' 
-  | 'package_expiring' 
+export type NotificationType =
+  | 'low_balance'
+  | 'package_expiring'
   | 'balance_depleted'
   | 'renewal_prompt'
   | 'session_reminder'

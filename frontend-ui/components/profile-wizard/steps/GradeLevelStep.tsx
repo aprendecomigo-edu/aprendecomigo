@@ -1,20 +1,17 @@
+import { Check, GraduationCap, Users, BookOpen, School } from 'lucide-react-native';
 import React from 'react';
 import { Alert } from 'react-native';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Heading } from '@/components/ui/heading';
-import { Button, ButtonText } from '@/components/ui/button';
-import { FormControl } from '@/components/ui/form-control';
-import { Checkbox } from '@/components/ui/checkbox';
-import { CheckboxIndicator } from '@/components/ui/checkbox';
-import { CheckboxIcon } from '@/components/ui/checkbox';
-import { CheckboxLabel } from '@/components/ui/checkbox';
-import { Icon } from '@/components/ui/icon';
-import { Check, GraduationCap, Users, BookOpen, School } from 'lucide-react-native';
 
 import { TeacherProfileData, GradeLevel } from '@/api/invitationApi';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Checkbox, CheckboxIndicator, CheckboxIcon, CheckboxLabel } from '@/components/ui/checkbox';
+import { FormControl } from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 interface GradeLevelStepProps {
   profileData: TeacherProfileData;
@@ -75,7 +72,7 @@ const GradeLevelStep: React.FC<GradeLevelStepProps> = ({
   const toggleGradeLevel = (gradeLevel: GradeLevel) => {
     const currentLevels = [...profileData.grade_levels];
     const index = currentLevels.indexOf(gradeLevel);
-    
+
     if (index > -1) {
       // Remove if already selected
       currentLevels.splice(index, 1);
@@ -83,7 +80,7 @@ const GradeLevelStep: React.FC<GradeLevelStepProps> = ({
       // Add if not selected
       currentLevels.push(gradeLevel);
     }
-    
+
     updateProfileData({ grade_levels: currentLevels });
   };
 
@@ -105,7 +102,8 @@ const GradeLevelStep: React.FC<GradeLevelStepProps> = ({
             Níveis de Ensino
           </Heading>
           <Text className="text-gray-600">
-            Selecione os níveis de ensino em que você tem experiência e se sente confortável lecionando.
+            Selecione os níveis de ensino em que você tem experiência e se sente confortável
+            lecionando.
           </Text>
         </VStack>
 
@@ -122,16 +120,16 @@ const GradeLevelStep: React.FC<GradeLevelStepProps> = ({
         {/* Grade Level Options */}
         <FormControl className={validationErrors.grade_levels ? 'error' : ''}>
           <VStack space="md">
-            {gradeLevelOptions.map((option) => {
+            {gradeLevelOptions.map(option => {
               const isSelected = isGradeLevelSelected(option.value);
               const IconComponent = option.icon;
-              
+
               return (
                 <Box
                   key={option.value}
                   className={`border-2 rounded-lg p-4 ${
-                    isSelected 
-                      ? `${option.borderColor} ${option.bgColor}` 
+                    isSelected
+                      ? `${option.borderColor} ${option.bgColor}`
                       : 'border-gray-200 bg-white'
                   }`}
                 >
@@ -145,20 +143,26 @@ const GradeLevelStep: React.FC<GradeLevelStepProps> = ({
                       <CheckboxIndicator className="mt-1">
                         <CheckboxIcon as={Check} />
                       </CheckboxIndicator>
-                      
-                      <Icon 
-                        as={IconComponent} 
-                        size="lg" 
-                        className={isSelected ? option.color : 'text-gray-400'} 
+
+                      <Icon
+                        as={IconComponent}
+                        size="lg"
+                        className={isSelected ? option.color : 'text-gray-400'}
                       />
-                      
+
                       <VStack className="flex-1" space="xs">
                         <CheckboxLabel>
-                          <Text className={`font-semibold ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
+                          <Text
+                            className={`font-semibold ${
+                              isSelected ? 'text-gray-900' : 'text-gray-700'
+                            }`}
+                          >
                             {option.label}
                           </Text>
                         </CheckboxLabel>
-                        <Text className={`text-sm ${isSelected ? 'text-gray-700' : 'text-gray-500'}`}>
+                        <Text
+                          className={`text-sm ${isSelected ? 'text-gray-700' : 'text-gray-500'}`}
+                        >
                           {option.description}
                         </Text>
                       </VStack>
@@ -168,11 +172,9 @@ const GradeLevelStep: React.FC<GradeLevelStepProps> = ({
               );
             })}
           </VStack>
-          
+
           {validationErrors.grade_levels && (
-            <Text className="text-red-600 text-sm mt-2">
-              {validationErrors.grade_levels}
-            </Text>
+            <Text className="text-red-600 text-sm mt-2">{validationErrors.grade_levels}</Text>
           )}
         </FormControl>
 
@@ -184,7 +186,7 @@ const GradeLevelStep: React.FC<GradeLevelStepProps> = ({
                 Selecionados ({profileData.grade_levels.length} níveis):
               </Text>
               <VStack space="xs">
-                {profileData.grade_levels.map((level) => {
+                {profileData.grade_levels.map(level => {
                   const option = gradeLevelOptions.find(opt => opt.value === level);
                   return option ? (
                     <Text key={level} className="text-sm text-green-700">
@@ -224,10 +226,12 @@ const GradeLevelStep: React.FC<GradeLevelStepProps> = ({
             <Text className="font-medium text-gray-800">Informação sobre faixas etárias:</Text>
             <VStack space="xs">
               <Text className="text-sm text-gray-600">
-                <Text className="font-medium">Fundamental I:</Text> Foco em alfabetização e conceitos básicos
+                <Text className="font-medium">Fundamental I:</Text> Foco em alfabetização e
+                conceitos básicos
               </Text>
               <Text className="text-sm text-gray-600">
-                <Text className="font-medium">Fundamental II:</Text> Desenvolvimento de pensamento crítico
+                <Text className="font-medium">Fundamental II:</Text> Desenvolvimento de pensamento
+                crítico
               </Text>
               <Text className="text-sm text-gray-600">
                 <Text className="font-medium">Ensino Médio:</Text> Preparação para vestibular e ENEM

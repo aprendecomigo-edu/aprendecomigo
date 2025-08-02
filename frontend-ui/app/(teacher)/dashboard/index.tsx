@@ -1,10 +1,10 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router } from 'expo-router';
-import { 
-  AlertTriangleIcon, 
-  RefreshCwIcon, 
+import {
+  AlertTriangleIcon,
+  RefreshCwIcon,
   WifiOffIcon,
-  GraduationCapIcon, 
+  GraduationCapIcon,
   CalendarIcon,
   UsersIcon,
   TrendingUpIcon,
@@ -16,13 +16,14 @@ import {
   SearchIcon,
   FilterIcon,
   PlusIcon,
-  BarChart3Icon
+  BarChart3Icon,
 } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
 
 import { useAuth } from '@/api/authContext';
 import MainLayout from '@/components/layouts/main-layout';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -34,16 +35,16 @@ import { Input, InputField } from '@/components/ui/input';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 
 const TeacherDashboard = () => {
   const { userProfile } = useAuth();
   const { data, isLoading, error, refresh, lastUpdated } = useTeacherDashboard();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedView, setSelectedView] = useState<'overview' | 'students' | 'sessions'>('overview');
+  const [selectedView, setSelectedView] = useState<'overview' | 'students' | 'sessions'>(
+    'overview'
+  );
 
   // Quick action handlers
   const handleScheduleSession = useCallback(() => {
@@ -70,7 +71,7 @@ const TeacherDashboard = () => {
   const welcomeMessage = useMemo(() => {
     const name = userProfile?.name?.split(' ')[0] || 'Professor';
     const currentHour = new Date().getHours();
-    
+
     if (currentHour < 12) {
       return `Bom dia, ${name}!`;
     } else if (currentHour < 18) {
@@ -85,11 +86,11 @@ const TeacherDashboard = () => {
     if (!data?.students || !searchQuery.trim()) {
       return data?.students || [];
     }
-    
+
     const query = searchQuery.toLowerCase().trim();
-    return data.students.filter(student => 
-      student.name.toLowerCase().includes(query) ||
-      student.email.toLowerCase().includes(query)
+    return data.students.filter(
+      student =>
+        student.name.toLowerCase().includes(query) || student.email.toLowerCase().includes(query)
     );
   }, [data?.students, searchQuery]);
 
@@ -118,9 +119,7 @@ const TeacherDashboard = () => {
               <Heading size="lg" className="text-center text-gray-900">
                 Erro ao Carregar Dashboard
               </Heading>
-              <Text className="text-center text-gray-600">
-                {error}
-              </Text>
+              <Text className="text-center text-gray-600">{error}</Text>
             </VStack>
             <Button onPress={refresh} variant="solid">
               <Icon as={RefreshCwIcon} size="sm" className="text-white mr-2" />
@@ -136,9 +135,7 @@ const TeacherDashboard = () => {
     <MainLayout _title="Dashboard do Professor">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refresh} />
-        }
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} />}
         contentContainerStyle={{
           paddingBottom: isWeb ? 0 : 100,
           flexGrow: 1,
@@ -153,12 +150,12 @@ const TeacherDashboard = () => {
                 <Heading size="xl" className="text-gray-900">
                   {welcomeMessage}
                 </Heading>
-                
+
                 <Text className="text-gray-600">
                   {data?.teacher_info?.schools?.[0]?.name || 'Professor'}
                 </Text>
               </VStack>
-              
+
               <HStack space="xs" className="items-center">
                 <Pressable
                   onPress={refresh}
@@ -167,10 +164,10 @@ const TeacherDashboard = () => {
                   accessibilityLabel="Atualizar dashboard"
                   accessibilityRole="button"
                 >
-                  <Icon 
-                    as={RefreshCwIcon} 
-                    size="sm" 
-                    className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`} 
+                  <Icon
+                    as={RefreshCwIcon}
+                    size="sm"
+                    className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`}
                   />
                 </Pressable>
               </HStack>
@@ -195,9 +192,7 @@ const TeacherDashboard = () => {
                   <Text className="font-medium text-yellow-900">
                     Dados parcialmente desatualizados
                   </Text>
-                  <Text className="text-sm text-yellow-700">
-                    {error}
-                  </Text>
+                  <Text className="text-sm text-yellow-700">{error}</Text>
                 </VStack>
                 <Pressable onPress={refresh}>
                   <Text className="text-sm font-medium text-yellow-600">Atualizar</Text>
@@ -210,9 +205,7 @@ const TeacherDashboard = () => {
           {data?.quick_stats && (
             <Box className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 shadow-lg">
               <VStack space="md">
-                <Text className="text-white font-semibold text-lg">
-                  Resumo Rápido
-                </Text>
+                <Text className="text-white font-semibold text-lg">Resumo Rápido</Text>
                 <HStack space="lg" className="flex-wrap">
                   <VStack className="items-center">
                     <Text className="text-2xl font-bold text-white">
@@ -253,16 +246,16 @@ const TeacherDashboard = () => {
             <CardBody>
               <VStack space="sm">
                 <HStack space="sm">
-                  <Button 
-                    className="flex-1 bg-blue-600" 
+                  <Button
+                    className="flex-1 bg-blue-600"
                     onPress={handleScheduleSession}
                     accessibilityLabel="Agendar nova sessão"
                   >
                     <Icon as={CalendarIcon} size="sm" className="text-white mr-2" />
                     <ButtonText>Agendar Sessão</ButtonText>
                   </Button>
-                  <Button 
-                    className="flex-1 bg-green-600" 
+                  <Button
+                    className="flex-1 bg-green-600"
                     onPress={handleViewAllStudents}
                     accessibilityLabel="Ver todos os estudantes"
                   >
@@ -271,18 +264,18 @@ const TeacherDashboard = () => {
                   </Button>
                 </HStack>
                 <HStack space="sm">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1" 
+                  <Button
+                    variant="outline"
+                    className="flex-1"
                     onPress={handleViewAnalytics}
                     accessibilityLabel="Ver analytics detalhados"
                   >
                     <Icon as={TrendingUpIcon} size="sm" className="text-blue-600 mr-2" />
                     <ButtonText className="text-blue-600">Analytics</ButtonText>
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    className="flex-1" 
+                  <Button
+                    variant="outline"
+                    className="flex-1"
                     onPress={handleViewSessions}
                     accessibilityLabel="Gerenciar sessões"
                   >
@@ -303,16 +296,18 @@ const TeacherDashboard = () => {
                     Sessões de Hoje
                   </Heading>
                   <Badge className="bg-blue-100">
-                    <BadgeText className="text-blue-800">
-                      {data.sessions.today.length}
-                    </BadgeText>
+                    <BadgeText className="text-blue-800">{data.sessions.today.length}</BadgeText>
                   </Badge>
                 </HStack>
               </CardHeader>
               <CardBody>
                 <VStack space="sm">
-                  {data.sessions.today.slice(0, 3).map((session) => (
-                    <HStack key={session.id} space="sm" className="items-center py-2 border-b border-gray-100 last:border-b-0">
+                  {data.sessions.today.slice(0, 3).map(session => (
+                    <HStack
+                      key={session.id}
+                      space="sm"
+                      className="items-center py-2 border-b border-gray-100 last:border-b-0"
+                    >
                       <VStack className="w-12 h-12 bg-blue-100 rounded-lg items-center justify-center">
                         <Text className="text-xs font-bold text-blue-600">
                           {session.start_time.substring(0, 5)}
@@ -323,24 +318,34 @@ const TeacherDashboard = () => {
                           {session.session_type} - {session.grade_level}
                         </Text>
                         <Text className="text-xs text-gray-500">
-                          {session.student_names?.join(', ') || `${session.student_count} estudante(s)`}
+                          {session.student_names?.join(', ') ||
+                            `${session.student_count} estudante(s)`}
                         </Text>
                       </VStack>
                       <VStack className="items-end">
-                        <Badge 
+                        <Badge
                           className={`${
-                            session.status === 'scheduled' ? 'bg-yellow-100' : 
-                            session.status === 'completed' ? 'bg-green-100' : 'bg-gray-100'
+                            session.status === 'scheduled'
+                              ? 'bg-yellow-100'
+                              : session.status === 'completed'
+                              ? 'bg-green-100'
+                              : 'bg-gray-100'
                           }`}
                         >
-                          <BadgeText 
+                          <BadgeText
                             className={`${
-                              session.status === 'scheduled' ? 'text-yellow-800' : 
-                              session.status === 'completed' ? 'text-green-800' : 'text-gray-800'
+                              session.status === 'scheduled'
+                                ? 'text-yellow-800'
+                                : session.status === 'completed'
+                                ? 'text-green-800'
+                                : 'text-gray-800'
                             }`}
                           >
-                            {session.status === 'scheduled' ? 'Agendada' : 
-                             session.status === 'completed' ? 'Concluída' : session.status}
+                            {session.status === 'scheduled'
+                              ? 'Agendada'
+                              : session.status === 'completed'
+                              ? 'Concluída'
+                              : session.status}
                           </BadgeText>
                         </Badge>
                       </VStack>
@@ -366,9 +371,7 @@ const TeacherDashboard = () => {
                   Estudantes
                 </Heading>
                 <Badge className="bg-green-100">
-                  <BadgeText className="text-green-800">
-                    {data?.students?.length || 0}
-                  </BadgeText>
+                  <BadgeText className="text-green-800">{data?.students?.length || 0}</BadgeText>
                 </Badge>
               </HStack>
             </CardHeader>
@@ -393,8 +396,8 @@ const TeacherDashboard = () => {
 
                 {/* Students List */}
                 <VStack space="sm">
-                  {filteredStudents.slice(0, 5).map((student) => (
-                    <Pressable 
+                  {filteredStudents.slice(0, 5).map(student => (
+                    <Pressable
                       key={student.id}
                       onPress={() => router.push(`/(teacher)/students/${student.id}`)}
                       className="py-2 border-b border-gray-100 last:border-b-0"
@@ -408,25 +411,26 @@ const TeacherDashboard = () => {
                           </Text>
                         </VStack>
                         <VStack className="flex-1">
-                          <Text className="text-sm font-medium text-gray-900">
-                            {student.name}
-                          </Text>
+                          <Text className="text-sm font-medium text-gray-900">{student.name}</Text>
                           <Text className="text-xs text-gray-500">
-                            {student.last_session_date 
-                              ? `Última aula: ${new Date(student.last_session_date).toLocaleDateString('pt-PT')}`
-                              : 'Primeira aula pendente'
-                            }
+                            {student.last_session_date
+                              ? `Última aula: ${new Date(
+                                  student.last_session_date
+                                ).toLocaleDateString('pt-PT')}`
+                              : 'Primeira aula pendente'}
                           </Text>
                         </VStack>
                         <VStack className="items-end">
                           <Text className="text-xs font-semibold text-green-600">
                             {Math.round(student.completion_percentage)}%
                           </Text>
-                          <Box 
+                          <Box
                             className="w-16 h-1 bg-gray-200 rounded-full overflow-hidden"
-                            accessibilityLabel={`Progresso: ${Math.round(student.completion_percentage)}%`}
+                            accessibilityLabel={`Progresso: ${Math.round(
+                              student.completion_percentage
+                            )}%`}
                           >
-                            <Box 
+                            <Box
                               className="h-full bg-green-500 rounded-full"
                               style={{ width: `${Math.min(student.completion_percentage, 100)}%` }}
                             />
@@ -435,7 +439,7 @@ const TeacherDashboard = () => {
                       </HStack>
                     </Pressable>
                   ))}
-                  
+
                   {data?.students && data.students.length > 5 && (
                     <Pressable onPress={handleViewAllStudents} className="pt-2">
                       <Text className="text-sm font-medium text-blue-600 text-center">
@@ -443,7 +447,7 @@ const TeacherDashboard = () => {
                       </Text>
                     </Pressable>
                   )}
-                  
+
                   {filteredStudents.length === 0 && searchQuery && (
                     <Center className="py-8">
                       <VStack space="sm" className="items-center">
@@ -474,30 +478,24 @@ const TeacherDashboard = () => {
                       <Text className="text-lg font-bold text-gray-900">
                         {Math.round(data.progress_metrics.average_student_progress)}%
                       </Text>
-                      <Text className="text-xs text-gray-500 text-center">
-                        Progresso Médio
-                      </Text>
+                      <Text className="text-xs text-gray-500 text-center">Progresso Médio</Text>
                     </VStack>
                     <VStack className="items-center">
                       <Text className="text-lg font-bold text-gray-900">
                         {data.progress_metrics.total_assessments_given}
                       </Text>
-                      <Text className="text-xs text-gray-500 text-center">
-                        Avaliações Feitas
-                      </Text>
+                      <Text className="text-xs text-gray-500 text-center">Avaliações Feitas</Text>
                     </VStack>
                     <VStack className="items-center">
                       <Text className="text-lg font-bold text-gray-900">
                         {data.progress_metrics.students_improved_this_month}
                       </Text>
-                      <Text className="text-xs text-gray-500 text-center">
-                        Melhoraram Este Mês
-                      </Text>
+                      <Text className="text-xs text-gray-500 text-center">Melhoraram Este Mês</Text>
                     </VStack>
                   </HStack>
-                  
-                  <Button 
-                    variant="outline" 
+
+                  <Button
+                    variant="outline"
                     onPress={handleViewAnalytics}
                     accessibilityLabel="Ver analytics detalhados"
                   >
@@ -519,30 +517,35 @@ const TeacherDashboard = () => {
               </CardHeader>
               <CardBody>
                 <VStack space="sm">
-                  {data.recent_activities.slice(0, 5).map((activity) => (
-                    <HStack key={activity.id} space="sm" className="items-start py-2 border-b border-gray-100 last:border-b-0">
+                  {data.recent_activities.slice(0, 5).map(activity => (
+                    <HStack
+                      key={activity.id}
+                      space="sm"
+                      className="items-start py-2 border-b border-gray-100 last:border-b-0"
+                    >
                       <VStack className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center">
-                        <Icon 
+                        <Icon
                           as={
-                            activity.activity_type.includes('session') ? ClockIcon :
-                            activity.activity_type.includes('student') ? UsersIcon :
-                            activity.activity_type.includes('assessment') ? AwardIcon :
-                            MessageSquareIcon
-                          } 
-                          size="xs" 
-                          className="text-gray-600" 
+                            activity.activity_type.includes('session')
+                              ? ClockIcon
+                              : activity.activity_type.includes('student')
+                              ? UsersIcon
+                              : activity.activity_type.includes('assessment')
+                              ? AwardIcon
+                              : MessageSquareIcon
+                          }
+                          size="xs"
+                          className="text-gray-600"
                         />
                       </VStack>
                       <VStack className="flex-1">
-                        <Text className="text-sm text-gray-900">
-                          {activity.description}
-                        </Text>
+                        <Text className="text-sm text-gray-900">{activity.description}</Text>
                         <Text className="text-xs text-gray-500">
                           {new Date(activity.timestamp).toLocaleDateString('pt-PT', {
                             day: '2-digit',
                             month: 'short',
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
                           })}
                         </Text>
                       </VStack>
@@ -554,29 +557,30 @@ const TeacherDashboard = () => {
           )}
 
           {/* Empty State for New Teachers */}
-          {data && 
-           data.quick_stats.total_students === 0 && 
-           (!data.sessions.today || data.sessions.today.length === 0) && (
-            <Box className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-dashed border-green-200 rounded-xl p-8 text-center">
-              <VStack space="md" className="items-center">
-                <Icon as={GraduationCapIcon} size="xl" className="text-green-500" />
-                <Text className="text-xl font-bold text-gray-900">
-                  Bem-vindo como Professor! 👨‍🏫
-                </Text>
-                <Text className="text-gray-600 max-w-md">
-                  Está pronto para começar a ensinar? Configure o seu perfil e explore as funcionalidades disponíveis.
-                </Text>
-                <HStack space="md" className="flex-wrap justify-center">
-                  <Button onPress={handleViewProfile} variant="solid">
-                    <ButtonText>Configurar Perfil</ButtonText>
-                  </Button>
-                  <Button onPress={handleScheduleSession} variant="outline">
-                    <ButtonText>Agendar Primeira Aula</ButtonText>
-                  </Button>
-                </HStack>
-              </VStack>
-            </Box>
-          )}
+          {data &&
+            data.quick_stats.total_students === 0 &&
+            (!data.sessions.today || data.sessions.today.length === 0) && (
+              <Box className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-dashed border-green-200 rounded-xl p-8 text-center">
+                <VStack space="md" className="items-center">
+                  <Icon as={GraduationCapIcon} size="xl" className="text-green-500" />
+                  <Text className="text-xl font-bold text-gray-900">
+                    Bem-vindo como Professor! 👨‍🏫
+                  </Text>
+                  <Text className="text-gray-600 max-w-md">
+                    Está pronto para começar a ensinar? Configure o seu perfil e explore as
+                    funcionalidades disponíveis.
+                  </Text>
+                  <HStack space="md" className="flex-wrap justify-center">
+                    <Button onPress={handleViewProfile} variant="solid">
+                      <ButtonText>Configurar Perfil</ButtonText>
+                    </Button>
+                    <Button onPress={handleScheduleSession} variant="outline">
+                      <ButtonText>Agendar Primeira Aula</ButtonText>
+                    </Button>
+                  </HStack>
+                </VStack>
+              </Box>
+            )}
         </VStack>
       </ScrollView>
     </MainLayout>

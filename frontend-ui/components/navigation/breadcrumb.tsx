@@ -101,7 +101,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
 
     const firstItem = breadcrumbItems[0];
     const lastItems = breadcrumbItems.slice(-(maxItems - 2));
-    
+
     return [
       firstItem,
       {
@@ -141,11 +141,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
 
               {/* Separator */}
               {index < displayItems.length - 1 && (
-                <Icon
-                  as={ChevronRightIcon}
-                  size="sm"
-                  className="text-typography-400 mx-1"
-                />
+                <Icon as={ChevronRightIcon} size="sm" className="text-typography-400 mx-1" />
               )}
             </React.Fragment>
           ))}
@@ -170,9 +166,7 @@ const BreadcrumbItem: React.FC<BreadcrumbItemProps> = ({ item, onPress }) => {
         <Icon
           as={HomeIcon}
           size="sm"
-          className={cn(
-            item.isActive ? 'text-primary-600' : 'text-typography-500'
-          )}
+          className={cn(item.isActive ? 'text-primary-600' : 'text-typography-500')}
         />
       )}
       <Text
@@ -193,10 +187,7 @@ const BreadcrumbItem: React.FC<BreadcrumbItemProps> = ({ item, onPress }) => {
     return (
       <Pressable
         onPress={onPress}
-        className={cn(
-          'px-1 py-1 rounded',
-          Platform.OS === 'web' && 'hover:bg-background-50'
-        )}
+        className={cn('px-1 py-1 rounded', Platform.OS === 'web' && 'hover:bg-background-50')}
       >
         {content}
       </Pressable>

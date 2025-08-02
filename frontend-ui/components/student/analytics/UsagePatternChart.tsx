@@ -1,14 +1,16 @@
 /**
  * Usage Pattern Chart Component
- * 
+ *
  * Visualizes student usage patterns including peak hours,
  * days of week activity, and subject distribution using charts.
  */
 
+import { BarChart3, Clock, Calendar, AlertTriangle } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { Platform } from 'react-native';
-import { BarChart3, Clock, Calendar, AlertTriangle } from 'lucide-react-native';
 
+import type { UsagePattern } from '@/api/analyticsApi';
+import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
@@ -16,8 +18,6 @@ import { Icon } from '@/components/ui/icon';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge } from '@/components/ui/badge';
-import type { UsagePattern } from '@/api/analyticsApi';
 
 interface UsagePatternChartProps {
   patterns: UsagePattern[];
@@ -28,11 +28,11 @@ interface UsagePatternChartProps {
 /**
  * Simple bar chart component for web
  */
-function SimpleBarChart({ 
-  data, 
-  title, 
-  xAxisLabel, 
-  yAxisLabel 
+function SimpleBarChart({
+  data,
+  title,
+  xAxisLabel,
+  yAxisLabel,
 }: {
   data: { label: string; value: number; color?: string }[];
   title: string;
@@ -40,22 +40,18 @@ function SimpleBarChart({
   yAxisLabel: string;
 }) {
   const maxValue = Math.max(...data.map(d => d.value));
-  
+
   if (Platform.OS !== 'web') {
     // Simple text representation for mobile
     return (
       <VStack space="sm">
-        <Text className="text-sm font-medium text-typography-800">
-          {title}
-        </Text>
+        <Text className="text-sm font-medium text-typography-800">{title}</Text>
         <VStack space="xs">
           {data.slice(0, 5).map((item, index) => (
             <HStack key={index} className="items-center justify-between">
-              <Text className="text-sm text-typography-700">
-                {item.label}
-              </Text>
+              <Text className="text-sm text-typography-700">{item.label}</Text>
               <HStack space="xs" className="items-center">
-                <div 
+                <div
                   className={`h-2 rounded-full ${item.color || 'bg-primary-500'}`}
                   style={{ width: `${(item.value / maxValue) * 60}px` }}
                 />
@@ -76,32 +72,30 @@ function SimpleBarChart({
   const margin = { top: 20, right: 20, bottom: 40, left: 40 };
   const innerWidth = chartWidth - margin.left - margin.right;
   const innerHeight = chartHeight - margin.top - margin.bottom;
-  
-  const barWidth = innerWidth / data.length * 0.8;
-  const barSpacing = innerWidth / data.length * 0.2;
+
+  const barWidth = (innerWidth / data.length) * 0.8;
+  const barSpacing = (innerWidth / data.length) * 0.2;
 
   return (
     <VStack space="sm">
-      <Text className="text-sm font-medium text-typography-800">
-        {title}
-      </Text>
+      <Text className="text-sm font-medium text-typography-800">{title}</Text>
       <svg width={chartWidth} height={chartHeight} className="border border-outline-200 rounded-lg">
         {/* Chart background */}
-        <rect 
-          x={margin.left} 
-          y={margin.top} 
-          width={innerWidth} 
-          height={innerHeight} 
-          fill="transparent" 
-          stroke="#e5e7eb" 
+        <rect
+          x={margin.left}
+          y={margin.top}
+          width={innerWidth}
+          height={innerHeight}
+          fill="transparent"
+          stroke="#e5e7eb"
         />
-        
+
         {/* Bars */}
         {data.map((item, index) => {
           const barHeight = (item.value / maxValue) * innerHeight;
           const x = margin.left + index * (barWidth + barSpacing) + barSpacing / 2;
           const y = margin.top + innerHeight - barHeight;
-          
+
           return (
             <g key={index}>
               <rect
@@ -134,26 +128,14 @@ function SimpleBarChart({
             </g>
           );
         })}
-        
+
         {/* Y-axis labels */}
         {[0, Math.floor(maxValue / 2), maxValue].map((value, index) => {
           const y = margin.top + innerHeight - (value / maxValue) * innerHeight;
           return (
             <g key={index}>
-              <line
-                x1={margin.left - 5}
-                y1={y}
-                x2={margin.left}
-                y2={y}
-                stroke="#9ca3af"
-              />
-              <text
-                x={margin.left - 10}
-                y={y + 3}
-                textAnchor="end"
-                fontSize="10"
-                fill="#6b7280"
-              >
+              <line x1={margin.left - 5} y1={y} x2={margin.left} y2={y} stroke="#9ca3af" />
+              <text x={margin.left - 10} y={y + 3} textAnchor="end" fontSize="10" fill="#6b7280">
                 {value}
               </text>
             </g>
@@ -167,11 +149,7 @@ function SimpleBarChart({
 /**
  * Usage Pattern Chart Component
  */
-export function UsagePatternChart({ 
-  patterns, 
-  loading, 
-  timeRange 
-}: UsagePatternChartProps) {
+export function UsagePatternChart({ patterns, loading, timeRange }: UsagePatternChartProps) {
   // Process patterns data for visualization
   const chartData = useMemo(() => {
     if (!patterns || patterns.length === 0) return null;
@@ -230,16 +208,15 @@ export function UsagePatternChart({
 
     const totalSessions = patterns.reduce((sum, p) => sum + p.session_count, 0);
     const avgDuration = patterns.reduce((sum, p) => sum + p.average_duration, 0) / patterns.length;
-    
+
     // Find peak hour
     const hourCounts = new Map<number, number>();
     patterns.forEach(p => {
       const current = hourCounts.get(p.hour) || 0;
       hourCounts.set(p.hour, current + p.session_count);
     });
-    
-    const peakHour = Array.from(hourCounts.entries())
-      .sort((a, b) => b[1] - a[1])[0]?.[0];
+
+    const peakHour = Array.from(hourCounts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0];
 
     // Find peak day
     const dayCounts = new Map<number, number>();
@@ -247,10 +224,17 @@ export function UsagePatternChart({
       const current = dayCounts.get(p.day_of_week) || 0;
       dayCounts.set(p.day_of_week, current + p.session_count);
     });
-    
-    const dayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const peakDay = Array.from(dayCounts.entries())
-      .sort((a, b) => b[1] - a[1])[0]?.[0];
+
+    const dayLabels = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
+    const peakDay = Array.from(dayCounts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0];
 
     return {
       totalSessions,
@@ -281,13 +265,11 @@ export function UsagePatternChart({
               Usage Patterns
             </Heading>
           </HStack>
-          
+
           <VStack space="md" className="items-center py-8">
             <Icon as={AlertTriangle} size="xl" className="text-typography-300" />
             <VStack space="xs" className="items-center">
-              <Text className="font-medium text-typography-600">
-                No Pattern Data
-              </Text>
+              <Text className="font-medium text-typography-600">No Pattern Data</Text>
               <Text className="text-sm text-typography-500 text-center">
                 Complete more sessions to see your learning patterns and peak usage times
               </Text>
@@ -323,9 +305,7 @@ export function UsagePatternChart({
                 <Text className="text-sm font-medium text-typography-900">
                   Peak Time: {insights.peakHour || 'N/A'}
                 </Text>
-                <Text className="text-xs text-typography-600">
-                  Most active hour
-                </Text>
+                <Text className="text-xs text-typography-600">Most active hour</Text>
               </VStack>
             </HStack>
 
@@ -335,9 +315,7 @@ export function UsagePatternChart({
                 <Text className="text-sm font-medium text-typography-900">
                   Peak Day: {insights.peakDay || 'N/A'}
                 </Text>
-                <Text className="text-xs text-typography-600">
-                  Most active day
-                </Text>
+                <Text className="text-xs text-typography-600">Most active day</Text>
               </VStack>
             </HStack>
 
@@ -389,9 +367,7 @@ export function UsagePatternChart({
         {/* Pattern Insights */}
         <Card className="p-4 bg-primary-50 border-primary-200">
           <VStack space="sm">
-            <Text className="text-sm font-medium text-primary-900">
-              Pattern Insights
-            </Text>
+            <Text className="text-sm font-medium text-primary-900">Pattern Insights</Text>
             <VStack space="xs">
               {insights?.peakHour && (
                 <Text className="text-sm text-primary-800">
@@ -405,7 +381,8 @@ export function UsagePatternChart({
               )}
               {chartData.subjects.length > 0 && (
                 <Text className="text-sm text-primary-800">
-                  • Your top subject is {chartData.subjects[0].label} with {chartData.subjects[0].value} sessions
+                  • Your top subject is {chartData.subjects[0].label} with{' '}
+                  {chartData.subjects[0].value} sessions
                 </Text>
               )}
             </VStack>

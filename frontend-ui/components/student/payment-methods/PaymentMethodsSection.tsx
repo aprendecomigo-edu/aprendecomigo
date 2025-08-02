@@ -1,12 +1,15 @@
 /**
  * Payment Methods Section Component
- * 
+ *
  * Displays and manages payment methods in the Account Settings tab.
  * Provides functionality to add, remove, and set default payment methods.
  */
 
-import React, { useState } from 'react';
 import { CreditCard, Plus, AlertTriangle, RefreshCw } from 'lucide-react-native';
+import React, { useState } from 'react';
+
+import { AddPaymentMethodModal } from './AddPaymentMethodModal';
+import { PaymentMethodCard } from './PaymentMethodCard';
 
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -17,8 +20,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
-import { PaymentMethodCard } from './PaymentMethodCard';
-import { AddPaymentMethodModal } from './AddPaymentMethodModal';
 
 interface PaymentMethodsSectionProps {
   email?: string;
@@ -94,7 +95,7 @@ export function PaymentMethodsSection({ email }: PaymentMethodsSectionProps) {
               Payment Methods
             </Heading>
           </HStack>
-          
+
           <VStack space="md" className="items-center py-8">
             <Spinner size="large" />
             <Text className="text-typography-600">Loading payment methods...</Text>
@@ -114,23 +115,16 @@ export function PaymentMethodsSection({ email }: PaymentMethodsSectionProps) {
               Payment Methods
             </Heading>
           </HStack>
-          
+
           <VStack space="md" className="items-center py-8">
             <Icon as={AlertTriangle} size="xl" className="text-error-500" />
             <VStack space="sm" className="items-center">
               <Heading size="sm" className="text-error-900">
                 Unable to Load Payment Methods
               </Heading>
-              <Text className="text-error-700 text-sm text-center">
-                {error}
-              </Text>
+              <Text className="text-error-700 text-sm text-center">{error}</Text>
             </VStack>
-            <Button
-              action="secondary"
-              variant="outline"
-              size="sm"
-              onPress={refreshPaymentMethods}
-            >
+            <Button action="secondary" variant="outline" size="sm" onPress={refreshPaymentMethods}>
               <ButtonIcon as={RefreshCw} />
               <ButtonText>Try Again</ButtonText>
             </Button>
@@ -158,12 +152,7 @@ export function PaymentMethodsSection({ email }: PaymentMethodsSectionProps) {
               </Text>
             </VStack>
 
-            <Button
-              action="primary"
-              variant="solid"
-              size="sm"
-              onPress={handleAddPaymentMethod}
-            >
+            <Button action="primary" variant="solid" size="sm" onPress={handleAddPaymentMethod}>
               <ButtonIcon as={Plus} />
               <ButtonText>Add Payment Method</ButtonText>
             </Button>
@@ -175,19 +164,10 @@ export function PaymentMethodsSection({ email }: PaymentMethodsSectionProps) {
               <HStack space="sm" className="items-center">
                 <Icon as={AlertTriangle} size="sm" className="text-error-500" />
                 <VStack space="xs" className="flex-1">
-                  <Text className="text-sm font-medium text-error-800">
-                    Operation Failed
-                  </Text>
-                  <Text className="text-sm text-error-700">
-                    {operationError}
-                  </Text>
+                  <Text className="text-sm font-medium text-error-800">Operation Failed</Text>
+                  <Text className="text-sm text-error-700">{operationError}</Text>
                 </VStack>
-                <Button
-                  action="secondary"
-                  variant="outline"
-                  size="xs"
-                  onPress={clearErrors}
-                >
+                <Button action="secondary" variant="outline" size="xs" onPress={clearErrors}>
                   <ButtonText>Dismiss</ButtonText>
                 </Button>
               </HStack>
@@ -197,7 +177,7 @@ export function PaymentMethodsSection({ email }: PaymentMethodsSectionProps) {
           {/* Payment Methods List */}
           {hasPaymentMethods ? (
             <VStack space="md">
-              {paymentMethods.map((method) => (
+              {paymentMethods.map(method => (
                 <PaymentMethodCard
                   key={method.id}
                   paymentMethod={method}
@@ -237,20 +217,13 @@ export function PaymentMethodsSection({ email }: PaymentMethodsSectionProps) {
             <VStack space="md" className="items-center py-8">
               <Icon as={CreditCard} size="xl" className="text-typography-300" />
               <VStack space="xs" className="items-center">
-                <Text className="font-medium text-typography-600">
-                  No Payment Methods
-                </Text>
+                <Text className="font-medium text-typography-600">No Payment Methods</Text>
                 <Text className="text-sm text-typography-500 text-center max-w-sm">
-                  Add a payment method to make purchasing tutoring hours more convenient. 
-                  Your payment information is stored securely.
+                  Add a payment method to make purchasing tutoring hours more convenient. Your
+                  payment information is stored securely.
                 </Text>
               </VStack>
-              <Button
-                action="primary"
-                variant="solid"
-                size="md"
-                onPress={handleAddPaymentMethod}
-              >
+              <Button action="primary" variant="solid" size="md" onPress={handleAddPaymentMethod}>
                 <ButtonIcon as={Plus} />
                 <ButtonText>Add Your First Payment Method</ButtonText>
               </Button>
@@ -264,8 +237,8 @@ export function PaymentMethodsSection({ email }: PaymentMethodsSectionProps) {
                 Secure Payment Processing
               </Text>
               <Text className="text-sm text-success-700">
-                All payment methods are processed and stored securely by Stripe. 
-                We never store your complete card information on our servers.
+                All payment methods are processed and stored securely by Stripe. We never store your
+                complete card information on our servers.
               </Text>
             </VStack>
           </Card>

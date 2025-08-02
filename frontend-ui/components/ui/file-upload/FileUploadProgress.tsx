@@ -1,13 +1,14 @@
+import { X, AlertCircle, CheckCircle, Upload } from 'lucide-react-native';
 import React from 'react';
 import { Platform } from 'react-native';
+
 import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
-import { Progress, ProgressFilledTrack } from '@/components/ui/progress';
+import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import { X, AlertCircle, CheckCircle, Upload } from 'lucide-react-native';
+import { Progress, ProgressFilledTrack } from '@/components/ui/progress';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 export interface FileUploadProgressProps {
   fileName: string;
@@ -34,11 +35,11 @@ const FileUploadProgress: React.FC<FileUploadProgressProps> = ({
 }) => {
   const formatFileSize = (bytes?: number): string => {
     if (!bytes) return '';
-    
+
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     const size = (bytes / Math.pow(1024, i)).toFixed(1);
-    
+
     return `${size} ${sizes[i]}`;
   };
 
@@ -82,41 +83,29 @@ const FileUploadProgress: React.FC<FileUploadProgressProps> = ({
           <HStack className="items-center flex-1" space="sm">
             {getStatusIcon()}
             <VStack className="flex-1">
-              <Text 
-                className="font-medium text-gray-900 text-sm" 
+              <Text
+                className="font-medium text-gray-900 text-sm"
                 numberOfLines={1}
                 ellipsizeMode="middle"
               >
                 {fileName}
               </Text>
               {fileSize && (
-                <Text className="text-xs text-gray-500">
-                  {formatFileSize(fileSize)}
-                </Text>
+                <Text className="text-xs text-gray-500">{formatFileSize(fileSize)}</Text>
               )}
             </VStack>
           </HStack>
-          
+
           {/* Action buttons */}
           <HStack space="xs">
             {status === 'uploading' && onCancel && (
-              <Button
-                variant="outline"
-                size="xs"
-                onPress={onCancel}
-                className="border-gray-300"
-              >
+              <Button variant="outline" size="xs" onPress={onCancel} className="border-gray-300">
                 <Icon as={X} size="xs" className="text-gray-600" />
               </Button>
             )}
-            
+
             {(status === 'success' || status === 'error') && onRemove && (
-              <Button
-                variant="outline"
-                size="xs"
-                onPress={onRemove}
-                className="border-gray-300"
-              >
+              <Button variant="outline" size="xs" onPress={onRemove} className="border-gray-300">
                 <Icon as={X} size="xs" className="text-gray-600" />
               </Button>
             )}
@@ -126,25 +115,21 @@ const FileUploadProgress: React.FC<FileUploadProgressProps> = ({
         {/* Progress bar */}
         {(status === 'uploading' || status === 'success') && (
           <VStack space="xs">
-            <Progress 
-              value={getProgressValue()} 
-              className="w-full h-2 bg-gray-200"
-            >
-              <ProgressFilledTrack 
+            <Progress value={getProgressValue()} className="w-full h-2 bg-gray-200">
+              <ProgressFilledTrack
                 className={`bg-${getStatusColor()}-600 transition-all duration-300`}
               />
             </Progress>
-            
+
             <HStack className="justify-between items-center">
               <Text className="text-xs text-gray-600">
-                {status === 'uploading' 
+                {status === 'uploading'
                   ? `${Math.round(progress)}% uploaded`
-                  : status === 'success' 
-                    ? 'Upload complete'
-                    : ''
-                }
+                  : status === 'success'
+                  ? 'Upload complete'
+                  : ''}
               </Text>
-              
+
               {status === 'uploading' && (
                 <Text className="text-xs text-gray-500">
                   {progress > 0 ? 'Uploading...' : 'Preparing...'}
@@ -157,14 +142,8 @@ const FileUploadProgress: React.FC<FileUploadProgressProps> = ({
         {/* Error message */}
         {status === 'error' && (
           <VStack space="sm" className="bg-red-50 p-3 rounded border border-red-200">
-            <Text className="text-red-800 text-sm font-medium">
-              Upload failed
-            </Text>
-            {error && (
-              <Text className="text-red-600 text-sm">
-                {error}
-              </Text>
-            )}
+            <Text className="text-red-800 text-sm font-medium">Upload failed</Text>
+            {error && <Text className="text-red-600 text-sm">{error}</Text>}
             {onRetry && (
               <Button
                 variant="outline"
@@ -181,9 +160,7 @@ const FileUploadProgress: React.FC<FileUploadProgressProps> = ({
         {/* Success message */}
         {status === 'success' && (
           <Box className="bg-green-50 p-3 rounded border border-green-200">
-            <Text className="text-green-800 text-sm font-medium">
-              File uploaded successfully
-            </Text>
+            <Text className="text-green-800 text-sm font-medium">File uploaded successfully</Text>
           </Box>
         )}
       </VStack>

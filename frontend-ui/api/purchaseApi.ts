@@ -1,11 +1,12 @@
 /**
  * API client functions for purchase-related operations.
- * 
+ *
  * Handles communication with the backend purchase APIs including
  * pricing plans, purchase initiation, student balance, and Stripe configuration.
  */
 
 import apiClient from './apiClient';
+
 import type {
   PricingPlan,
   PurchaseInitiationRequest,
@@ -29,18 +30,18 @@ import type {
 export class PurchaseApiClient {
   /**
    * Fetch all active pricing plans.
-   * 
+   *
    * @returns Promise resolving to array of active pricing plans
    * @throws Error with descriptive message if request fails
    */
   static async getPricingPlans(): Promise<PricingPlan[]> {
     try {
       const response = await apiClient.get('/finances/api/pricing-plans/');
-      
+
       if (!Array.isArray(response.data)) {
         throw new Error('Invalid response format: expected array of pricing plans');
       }
-      
+
       return response.data.map((plan: any) => ({
         id: plan.id,
         name: plan.name,
@@ -56,7 +57,7 @@ export class PurchaseApiClient {
       }));
     } catch (error: any) {
       console.error('Error fetching pricing plans:', error);
-      
+
       if (error.response?.status === 503) {
         throw new Error('Pricing service temporarily unavailable. Please try again later.');
       } else if (error.response?.status >= 500) {
@@ -71,15 +72,17 @@ export class PurchaseApiClient {
 
   /**
    * Initiate a purchase for a specific pricing plan.
-   * 
+   *
    * @param request Purchase initiation request data
    * @returns Promise resolving to purchase initiation response
    * @throws Error with descriptive message if request fails
    */
-  static async initiatePurchase(request: PurchaseInitiationRequest): Promise<PurchaseInitiationResponse> {
+  static async initiatePurchase(
+    request: PurchaseInitiationRequest
+  ): Promise<PurchaseInitiationResponse> {
     try {
       const response = await apiClient.post('/finances/api/purchase/initiate/', request);
-      
+
       return {
         success: response.data.success,
         client_secret: response.data.client_secret,
@@ -90,7 +93,7 @@ export class PurchaseApiClient {
       };
     } catch (error: any) {
       console.error('Error initiating purchase:', error);
-      
+
       // Handle validation errors with detailed field information
       if (error.response?.status === 400 && error.response.data) {
         const errorData = error.response.data;
@@ -101,27 +104,27 @@ export class PurchaseApiClient {
           field_errors: errorData.field_errors || {},
         };
       }
-      
+
       // Handle rate limiting
       if (error.response?.status === 429) {
         throw new Error('Too many purchase attempts. Please try again later.');
       }
-      
+
       // Handle server errors
       if (error.response?.status >= 500) {
         throw new Error('Server error occurred during purchase initiation');
       }
-      
+
       // Handle network errors
       if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
         throw new Error('Network connection error. Please check your internet connection.');
       }
-      
+
       // Handle payment service errors
       if (error.response?.data?.error_type === 'api_connection_error') {
         throw new Error('Payment service temporarily unavailable. Please try again later.');
       }
-      
+
       // Generic error fallback
       const errorMessage = error.response?.data?.message || 'Failed to initiate purchase';
       throw new Error(errorMessage);
@@ -130,7 +133,7 @@ export class PurchaseApiClient {
 
   /**
    * Get student balance information.
-   * 
+   *
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to student balance data
    * @throws Error with descriptive message if request fails
@@ -139,7 +142,7 @@ export class PurchaseApiClient {
     try {
       const params = email ? { email } : {};
       const response = await apiClient.get('/finances/api/student-balance/', { params });
-      
+
       return {
         student_info: response.data.student_info,
         balance_summary: response.data.balance_summary,
@@ -148,7 +151,7 @@ export class PurchaseApiClient {
       };
     } catch (error: any) {
       console.error('Error fetching student balance:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Student not found');
       } else if (error.response?.status === 403) {
@@ -165,21 +168,21 @@ export class PurchaseApiClient {
 
   /**
    * Get Stripe configuration for frontend initialization.
-   * 
+   *
    * @returns Promise resolving to Stripe configuration
    * @throws Error with descriptive message if request fails
    */
   static async getStripeConfig(): Promise<StripeConfig> {
     try {
       const response = await apiClient.get('/finances/api/stripe/config/');
-      
+
       return {
         public_key: response.data.public_key,
         success: response.data.success,
       };
     } catch (error: any) {
       console.error('Error fetching Stripe config:', error);
-      
+
       if (error.response?.status === 503) {
         throw new Error('Payment service temporarily unavailable');
       } else if (error.response?.status >= 500) {
@@ -194,7 +197,7 @@ export class PurchaseApiClient {
 
   /**
    * Check if a student can book a session of specified duration.
-   * 
+   *
    * @param durationHours Session duration in hours
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to booking eligibility information
@@ -206,12 +209,14 @@ export class PurchaseApiClient {
       if (email) {
         params.email = email;
       }
-      
-      const response = await apiClient.get('/finances/api/student-balance/check-booking/', { params });
+
+      const response = await apiClient.get('/finances/api/student-balance/check-booking/', {
+        params,
+      });
       return response.data;
     } catch (error: any) {
       console.error('Error checking booking eligibility:', error);
-      
+
       if (error.response?.status === 400) {
         throw new Error(error.response.data?.error || 'Invalid booking request');
       } else if (error.response?.status === 404) {
@@ -228,16 +233,18 @@ export class PurchaseApiClient {
 
   /**
    * Get student transaction history.
-   * 
+   *
    * @param options Query options for filtering and pagination
    * @returns Promise resolving to paginated transaction history
    * @throws Error with descriptive message if request fails
    */
-  static async getTransactionHistory(options: TransactionFilterOptions & {
-    page?: number;
-    page_size?: number;
-    email?: string;
-  } = {}): Promise<PaginatedTransactionHistory> {
+  static async getTransactionHistory(
+    options: TransactionFilterOptions & {
+      page?: number;
+      page_size?: number;
+      email?: string;
+    } = {}
+  ): Promise<PaginatedTransactionHistory> {
     try {
       const response = await apiClient.get('/finances/api/student-balance/history/', {
         params: options,
@@ -245,7 +252,7 @@ export class PurchaseApiClient {
       return response.data;
     } catch (error: any) {
       console.error('Error fetching transaction history:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Student not found');
       } else if (error.response?.status === 403) {
@@ -262,16 +269,18 @@ export class PurchaseApiClient {
 
   /**
    * Get detailed purchase history with consumption tracking.
-   * 
+   *
    * @param options Query options for filtering and pagination
    * @returns Promise resolving to detailed purchase history
    * @throws Error with descriptive message if request fails
    */
-  static async getPurchaseHistory(options: PurchaseFilterOptions & {
-    page?: number;
-    page_size?: number;
-    email?: string;
-  } = {}): Promise<PaginatedPurchaseHistory> {
+  static async getPurchaseHistory(
+    options: PurchaseFilterOptions & {
+      page?: number;
+      page_size?: number;
+      email?: string;
+    } = {}
+  ): Promise<PaginatedPurchaseHistory> {
     try {
       const params: any = { ...options };
       if (options.active_only !== undefined) {
@@ -280,14 +289,14 @@ export class PurchaseApiClient {
       if (options.include_consumption !== undefined) {
         params.include_consumption = options.include_consumption.toString();
       }
-      
+
       const response = await apiClient.get('/finances/api/student-balance/purchases/', {
         params,
       });
       return response.data;
     } catch (error: any) {
       console.error('Error fetching purchase history:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Student not found');
       } else if (error.response?.status === 403) {
@@ -304,7 +313,7 @@ export class PurchaseApiClient {
 
   /**
    * Get student receipts.
-   * 
+   *
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to array of receipts
    * @throws Error with descriptive message if request fails
@@ -322,7 +331,7 @@ export class PurchaseApiClient {
 
   /**
    * Generate a receipt for a transaction.
-   * 
+   *
    * @param transactionId Transaction ID to generate receipt for
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to receipt generation response
@@ -330,7 +339,9 @@ export class PurchaseApiClient {
    */
   static async generateReceipt(transactionId: string, email?: string): Promise<any> {
     try {
-      const data = email ? { transaction_id: transactionId, email } : { transaction_id: transactionId };
+      const data = email
+        ? { transaction_id: transactionId, email }
+        : { transaction_id: transactionId };
       const response = await apiClient.post('/finances/student-balance/receipts/generate/', data);
       return response.data;
     } catch (error: any) {
@@ -341,7 +352,7 @@ export class PurchaseApiClient {
 
   /**
    * Get student payment methods.
-   * 
+   *
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to array of payment methods
    * @throws Error with descriptive message if request fails
@@ -349,7 +360,9 @@ export class PurchaseApiClient {
   static async getPaymentMethods(email?: string): Promise<any[]> {
     try {
       const params = email ? { email } : {};
-      const response = await apiClient.get('/finances/student-balance/payment-methods/', { params });
+      const response = await apiClient.get('/finances/student-balance/payment-methods/', {
+        params,
+      });
       return response.data;
     } catch (error: any) {
       console.error('Error fetching payment methods:', error);
@@ -359,19 +372,23 @@ export class PurchaseApiClient {
 
   /**
    * Add a new payment method.
-   * 
+   *
    * @param paymentMethodId Stripe payment method ID
    * @param setAsDefault Whether to set as default payment method
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to payment method addition response
    * @throws Error with descriptive message if request fails
    */
-  static async addPaymentMethod(paymentMethodId: string, setAsDefault: boolean = false, email?: string): Promise<any> {
+  static async addPaymentMethod(
+    paymentMethodId: string,
+    setAsDefault: boolean = false,
+    email?: string
+  ): Promise<any> {
     try {
-      const data = { 
-        payment_method_id: paymentMethodId, 
+      const data = {
+        payment_method_id: paymentMethodId,
         set_as_default: setAsDefault,
-        ...(email && { email })
+        ...(email && { email }),
       };
       const response = await apiClient.post('/finances/student-balance/payment-methods/', data);
       return response.data;
@@ -383,13 +400,16 @@ export class PurchaseApiClient {
 
   /**
    * Get usage analytics.
-   * 
+   *
    * @param timeRange Optional time range for analytics
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to usage analytics
    * @throws Error with descriptive message if request fails
    */
-  static async getUsageAnalytics(timeRange?: { start_date: string; end_date: string }, email?: string): Promise<any> {
+  static async getUsageAnalytics(
+    timeRange?: { start_date: string; end_date: string },
+    email?: string
+  ): Promise<any> {
     try {
       const params: any = {};
       if (email) params.email = email;
@@ -397,8 +417,10 @@ export class PurchaseApiClient {
         params.start_date = timeRange.start_date;
         params.end_date = timeRange.end_date;
       }
-      
-      const response = await apiClient.get('/finances/student-balance/analytics/usage/', { params });
+
+      const response = await apiClient.get('/finances/student-balance/analytics/usage/', {
+        params,
+      });
       return response.data;
     } catch (error: any) {
       console.error('Error fetching usage analytics:', error);
@@ -408,7 +430,7 @@ export class PurchaseApiClient {
 
   /**
    * Get available top-up packages for quick purchase.
-   * 
+   *
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to array of top-up packages
    * @throws Error with descriptive message if request fails
@@ -417,11 +439,11 @@ export class PurchaseApiClient {
     try {
       const params = email ? { email } : {};
       const response = await apiClient.get('/finances/student-balance/topup-packages/', { params });
-      
+
       if (!Array.isArray(response.data)) {
         throw new Error('Invalid response format: expected array of top-up packages');
       }
-      
+
       return response.data.map((pkg: any) => ({
         id: pkg.id,
         name: pkg.name,
@@ -434,7 +456,7 @@ export class PurchaseApiClient {
       }));
     } catch (error: any) {
       console.error('Error fetching top-up packages:', error);
-      
+
       if (error.response?.status === 503) {
         throw new Error('Top-up service temporarily unavailable. Please try again later.');
       } else if (error.response?.status >= 500) {
@@ -449,17 +471,20 @@ export class PurchaseApiClient {
 
   /**
    * Renew expired subscription with saved payment method.
-   * 
+   *
    * @param request Renewal request data
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to renewal response
    * @throws Error with descriptive message if request fails
    */
-  static async renewSubscription(request: RenewalRequest, email?: string): Promise<RenewalResponse> {
+  static async renewSubscription(
+    request: RenewalRequest,
+    email?: string
+  ): Promise<RenewalResponse> {
     try {
       const data = email ? { ...request, email } : request;
       const response = await apiClient.post('/finances/student-balance/renew-subscription/', data);
-      
+
       return {
         success: response.data.success,
         transaction_id: response.data.transaction_id,
@@ -470,7 +495,7 @@ export class PurchaseApiClient {
       };
     } catch (error: any) {
       console.error('Error renewing subscription:', error);
-      
+
       // Handle validation errors with detailed field information
       if (error.response?.status === 400 && error.response.data) {
         const errorData = error.response.data;
@@ -481,32 +506,32 @@ export class PurchaseApiClient {
           field_errors: errorData.field_errors || {},
         };
       }
-      
+
       // Handle payment errors
       if (error.response?.status === 402) {
         throw new Error('Payment could not be processed. Please check your payment method.');
       }
-      
+
       // Handle rate limiting
       if (error.response?.status === 429) {
         throw new Error('Too many renewal attempts. Please try again later.');
       }
-      
+
       // Handle server errors
       if (error.response?.status >= 500) {
         throw new Error('Server error occurred during subscription renewal');
       }
-      
+
       // Handle network errors
       if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
         throw new Error('Network connection error. Please check your internet connection.');
       }
-      
+
       // Handle payment service errors
       if (error.response?.data?.error_type === 'api_connection_error') {
         throw new Error('Payment service temporarily unavailable. Please try again later.');
       }
-      
+
       // Generic error fallback
       const errorMessage = error.response?.data?.message || 'Failed to renew subscription';
       throw new Error(errorMessage);
@@ -515,7 +540,7 @@ export class PurchaseApiClient {
 
   /**
    * Purchase additional hours quickly with saved payment method.
-   * 
+   *
    * @param request Quick top-up request data
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to top-up response
@@ -525,7 +550,7 @@ export class PurchaseApiClient {
     try {
       const data = email ? { ...request, email } : request;
       const response = await apiClient.post('/finances/student-balance/quick-topup/', data);
-      
+
       return {
         success: response.data.success,
         transaction_id: response.data.transaction_id,
@@ -536,7 +561,7 @@ export class PurchaseApiClient {
       };
     } catch (error: any) {
       console.error('Error processing quick top-up:', error);
-      
+
       // Handle validation errors with detailed field information
       if (error.response?.status === 400 && error.response.data) {
         const errorData = error.response.data;
@@ -547,32 +572,32 @@ export class PurchaseApiClient {
           field_errors: errorData.field_errors || {},
         };
       }
-      
+
       // Handle payment errors
       if (error.response?.status === 402) {
         throw new Error('Payment could not be processed. Please check your payment method.');
       }
-      
+
       // Handle rate limiting
       if (error.response?.status === 429) {
         throw new Error('Too many purchase attempts. Please try again later.');
       }
-      
+
       // Handle server errors
       if (error.response?.status >= 500) {
         throw new Error('Server error occurred during top-up purchase');
       }
-      
+
       // Handle network errors
       if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
         throw new Error('Network connection error. Please check your internet connection.');
       }
-      
+
       // Handle payment service errors
       if (error.response?.data?.error_type === 'api_connection_error') {
         throw new Error('Payment service temporarily unavailable. Please try again later.');
       }
-      
+
       // Generic error fallback
       const errorMessage = error.response?.data?.message || 'Failed to process top-up purchase';
       throw new Error(errorMessage);

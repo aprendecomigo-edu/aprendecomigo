@@ -1,39 +1,34 @@
 /**
  * Payment Method Card Component
- * 
+ *
  * Displays individual payment method information with actions
  * for setting as default and removal.
  */
 
-import React, { useState } from 'react';
 import { CreditCard, Check, MoreVertical, Trash2, Star, AlertTriangle } from 'lucide-react-native';
+import React, { useState } from 'react';
 
+import type { PaymentMethod } from '@/api/paymentMethodApi';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { 
-  Modal, 
-  ModalBackdrop, 
-  ModalBody, 
-  ModalCloseButton, 
-  ModalContent, 
-  ModalFooter, 
-  ModalHeader 
-} from '@/components/ui/modal';
-import { 
-  Menu,
-  MenuItem,
-  MenuItemLabel,
-  MenuSeparator
-} from '@/components/ui/menu';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { Menu, MenuItem, MenuItemLabel, MenuSeparator } from '@/components/ui/menu';
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+} from '@/components/ui/modal';
 import { Pressable } from '@/components/ui/pressable';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import type { PaymentMethod } from '@/api/paymentMethodApi';
 
 interface PaymentMethodCardProps {
   paymentMethod: PaymentMethod;
@@ -49,7 +44,7 @@ interface PaymentMethodCardProps {
  */
 function getCardBrandInfo(brand: string) {
   const brandLower = brand.toLowerCase();
-  
+
   switch (brandLower) {
     case 'visa':
       return { color: 'text-blue-600', bgColor: 'bg-blue-50' };
@@ -68,12 +63,12 @@ function getCardBrandInfo(brand: string) {
 /**
  * Confirmation modal for payment method removal
  */
-function RemovalConfirmationModal({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
+function RemovalConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
   paymentMethod,
-  isRemoving 
+  isRemoving,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -94,13 +89,13 @@ function RemovalConfirmationModal({
           </VStack>
           <ModalCloseButton />
         </ModalHeader>
-        
+
         <ModalBody>
           <VStack space="md">
             <Text className="text-typography-700">
               Are you sure you want to remove this payment method?
             </Text>
-            
+
             <Card className="p-3 bg-background-50">
               <HStack space="sm" className="items-center">
                 <Icon as={CreditCard} size="sm" className="text-typography-600" />
@@ -109,18 +104,19 @@ function RemovalConfirmationModal({
                     {paymentMethod.card.brand.toUpperCase()} •••• {paymentMethod.card.last4}
                   </Text>
                   <Text className="text-xs text-typography-600">
-                    Expires {paymentMethod.card.exp_month.toString().padStart(2, '0')}/{paymentMethod.card.exp_year}
+                    Expires {paymentMethod.card.exp_month.toString().padStart(2, '0')}/
+                    {paymentMethod.card.exp_year}
                   </Text>
                 </VStack>
               </HStack>
             </Card>
-            
+
             <Text className="text-sm text-typography-600">
               This action cannot be undone. You can add the payment method again later if needed.
             </Text>
           </VStack>
         </ModalBody>
-        
+
         <ModalFooter>
           <HStack space="md" className="w-full">
             <Button
@@ -173,7 +169,7 @@ export function PaymentMethodCard({
 }: PaymentMethodCardProps) {
   const [showRemovalModal, setShowRemovalModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  
+
   const brandInfo = getCardBrandInfo(paymentMethod.card.brand);
 
   const handleSetDefault = async () => {
@@ -202,7 +198,7 @@ export function PaymentMethodCard({
               <div className={`p-2 rounded-md ${brandInfo.bgColor}`}>
                 <Icon as={CreditCard} size="sm" className={brandInfo.color} />
               </div>
-              
+
               {/* Card Details */}
               <VStack space="0" className="flex-1">
                 <HStack space="sm" className="items-center">
@@ -217,11 +213,12 @@ export function PaymentMethodCard({
                   )}
                 </HStack>
                 <Text className="text-sm text-typography-600">
-                  Expires {paymentMethod.card.exp_month.toString().padStart(2, '0')}/{paymentMethod.card.exp_year}
+                  Expires {paymentMethod.card.exp_month.toString().padStart(2, '0')}/
+                  {paymentMethod.card.exp_year}
                 </Text>
               </VStack>
             </HStack>
-            
+
             {/* Actions Menu */}
             <Menu
               isOpen={showMenu}
@@ -241,7 +238,7 @@ export function PaymentMethodCard({
                   </MenuItemLabel>
                 </MenuItem>
               )}
-              
+
               {!paymentMethod.is_default && canRemove && (
                 <>
                   <MenuSeparator />
@@ -258,7 +255,9 @@ export function PaymentMethodCard({
           {paymentMethod.card.funding && (
             <HStack className="items-center">
               <Text className="text-xs text-typography-500">
-                {paymentMethod.card.funding.charAt(0).toUpperCase() + paymentMethod.card.funding.slice(1)} Card
+                {paymentMethod.card.funding.charAt(0).toUpperCase() +
+                  paymentMethod.card.funding.slice(1)}{' '}
+                Card
               </Text>
             </HStack>
           )}
@@ -266,9 +265,7 @@ export function PaymentMethodCard({
           {/* Billing Details */}
           {paymentMethod.billing_details.name && (
             <VStack space="xs">
-              <Text className="text-xs font-medium text-typography-700">
-                Billing Information
-              </Text>
+              <Text className="text-xs font-medium text-typography-700">Billing Information</Text>
               <Text className="text-xs text-typography-600">
                 {paymentMethod.billing_details.name}
               </Text>
@@ -278,8 +275,10 @@ export function PaymentMethodCard({
                     paymentMethod.billing_details.address.line1,
                     paymentMethod.billing_details.address.city,
                     paymentMethod.billing_details.address.state,
-                    paymentMethod.billing_details.address.postal_code
-                  ].filter(Boolean).join(', ')}
+                    paymentMethod.billing_details.address.postal_code,
+                  ]
+                    .filter(Boolean)
+                    .join(', ')}
                 </Text>
               )}
             </VStack>
@@ -290,20 +289,21 @@ export function PaymentMethodCard({
             <Text className="text-xs text-typography-500">
               Added {new Date(paymentMethod.created_at).toLocaleDateString()}
             </Text>
-            
+
             {paymentMethod.is_default && (
               <HStack space="xs" className="items-center">
                 <Icon as={Check} size="xs" className="text-success-500" />
-                <Text className="text-xs text-success-600">
-                  Default payment method
-                </Text>
+                <Text className="text-xs text-success-600">Default payment method</Text>
               </HStack>
             )}
           </HStack>
 
           {/* Loading States */}
           {(isSettingDefault || isRemoving) && (
-            <HStack space="xs" className="items-center justify-center p-2 bg-background-100 rounded-md">
+            <HStack
+              space="xs"
+              className="items-center justify-center p-2 bg-background-100 rounded-md"
+            >
               <Spinner size="sm" />
               <Text className="text-xs text-typography-600">
                 {isSettingDefault ? 'Setting as default...' : 'Removing...'}

@@ -19,13 +19,7 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { Fab, FabIcon, FabLabel } from '@/components/ui/fab';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import {
-  Modal,
-  ModalBackdrop,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-} from '@/components/ui/modal';
+import { Modal, ModalBackdrop, ModalContent, ModalHeader, ModalBody } from '@/components/ui/modal';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
@@ -181,10 +175,7 @@ const QuickActionsDropdown: React.FC<QuickActionsDropdownProps> = ({
         <Icon
           as={ChevronDownIcon}
           size="sm"
-          className={cn(
-            'text-white transition-transform',
-            isOpen && 'rotate-180'
-          )}
+          className={cn('text-white transition-transform', isOpen && 'rotate-180')}
         />
       </Button>
 
@@ -203,12 +194,8 @@ const QuickActionsDropdown: React.FC<QuickActionsDropdownProps> = ({
         >
           <Box className="bg-background-0 border border-border-200 rounded-lg shadow-lg">
             <VStack space="xs" className="p-2">
-              {actions.map((action) => (
-                <QuickActionItem
-                  key={action.id}
-                  action={action}
-                  onSelect={onActionSelect}
-                />
+              {actions.map(action => (
+                <QuickActionItem key={action.id} action={action} onSelect={onActionSelect} />
               ))}
             </VStack>
           </Box>
@@ -224,10 +211,7 @@ interface QuickActionsFABProps {
   onActionSelect: (action: QuickAction) => void;
 }
 
-const QuickActionsFAB: React.FC<QuickActionsFABProps> = ({
-  actions,
-  onActionSelect,
-}) => {
+const QuickActionsFAB: React.FC<QuickActionsFABProps> = ({ actions, onActionSelect }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (actions.length === 0) {
@@ -264,10 +248,7 @@ const QuickActionsFAB: React.FC<QuickActionsFABProps> = ({
 
       {/* Expanded Actions */}
       {isExpanded && (
-        <VStack
-          space="sm"
-          className="absolute bottom-32 right-4 mb-8"
-        >
+        <VStack space="sm" className="absolute bottom-32 right-4 mb-8">
           {actions.slice(0, 4).map((action, index) => (
             <Fab
               key={action.id}
@@ -309,10 +290,7 @@ interface QuickActionItemProps {
   onSelect: (action: QuickAction) => void;
 }
 
-const QuickActionItem: React.FC<QuickActionItemProps> = ({
-  action,
-  onSelect,
-}) => {
+const QuickActionItem: React.FC<QuickActionItemProps> = ({ action, onSelect }) => {
   const variantClasses = {
     primary: 'text-primary-600',
     secondary: 'text-secondary-600',
@@ -327,15 +305,8 @@ const QuickActionItem: React.FC<QuickActionItemProps> = ({
         'hover:bg-background-50 active:bg-background-100'
       )}
     >
-      <Icon
-        as={action.icon}
-        size="sm"
-        className={variantClasses[action.variant || 'outline']}
-      />
-      <Text
-        className="flex-1 font-medium text-typography-900"
-        numberOfLines={1}
-      >
+      <Icon as={action.icon} size="sm" className={variantClasses[action.variant || 'outline']} />
+      <Text className="flex-1 font-medium text-typography-900" numberOfLines={1}>
         {action.label}
       </Text>
     </Pressable>

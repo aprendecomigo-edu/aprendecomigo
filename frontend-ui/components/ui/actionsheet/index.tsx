@@ -4,7 +4,6 @@ import { createActionsheet } from '@gluestack-ui/actionsheet';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import { withStates } from '@gluestack-ui/nativewind-utils/withStates';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 import React, { useMemo } from 'react';
 import {
@@ -18,6 +17,7 @@ import {
   Platform,
   PressableProps,
 } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Svg } from 'react-native-svg';
 
 type IPrimitiveIcon = {

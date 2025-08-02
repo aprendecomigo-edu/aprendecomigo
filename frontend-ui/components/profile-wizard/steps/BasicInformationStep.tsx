@@ -1,21 +1,32 @@
+import * as ImagePicker from 'expo-image-picker';
+import { ChevronDownIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { Heading } from '@/components/ui/heading';
-import { Input, InputField } from '@/components/ui/input';
-import { Textarea, TextareaInput } from '@/components/ui/textarea';
-import { FormControl } from '@/components/ui/form-control';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectTrigger, SelectInput, SelectIcon, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator, SelectItem } from '@/components/ui/select';
-import { ChevronDownIcon } from 'lucide-react-native';
-import { ImageUploadComponent } from '@/components/ui/file-upload';
-import FileUploadService from '@/services/FileUploadService';
 
 import { TeacherProfileData, ContactPreferences } from '@/api/invitationApi';
+import { Box } from '@/components/ui/box';
+import { ImageUploadComponent } from '@/components/ui/file-upload';
+import { FormControl } from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Input, InputField } from '@/components/ui/input';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectIcon,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicatorWrapper,
+  SelectDragIndicator,
+  SelectItem,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
+import { Textarea, TextareaInput } from '@/components/ui/textarea';
+import { VStack } from '@/components/ui/vstack';
+import FileUploadService from '@/services/FileUploadService';
 
 interface BasicInformationStepProps {
   profileData: TeacherProfileData;
@@ -32,7 +43,9 @@ const BasicInformationStep: React.FC<BasicInformationStepProps> = ({
 }) => {
   // Profile photo upload state
   const [photoUploadProgress, setPhotoUploadProgress] = useState(0);
-  const [photoUploadStatus, setPhotoUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [photoUploadStatus, setPhotoUploadStatus] = useState<
+    'idle' | 'uploading' | 'success' | 'error'
+  >('idle');
   const [photoUploadError, setPhotoUploadError] = useState<string>('');
 
   const contactPreferences = profileData.contact_preferences || {
@@ -58,21 +71,21 @@ const BasicInformationStep: React.FC<BasicInformationStepProps> = ({
     try {
       // Update profile data with the local image URI immediately for preview
       updateProfileData({ profile_photo: image.uri });
-      
+
       // Start upload process
       setPhotoUploadStatus('uploading');
       setPhotoUploadProgress(0);
       setPhotoUploadError('');
 
       const result = await FileUploadService.uploadProfilePhoto(image, {
-        onProgress: (progress) => {
+        onProgress: progress => {
           setPhotoUploadProgress(progress.percentage);
         },
-        onError: (error) => {
+        onError: error => {
           setPhotoUploadStatus('error');
           setPhotoUploadError(error);
         },
-        onSuccess: (result) => {
+        onSuccess: result => {
           setPhotoUploadStatus('success');
           // Update profile data with the server URL
           if (result.url) {
@@ -124,9 +137,7 @@ const BasicInformationStep: React.FC<BasicInformationStepProps> = ({
         {/* Welcome Message */}
         <Box className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <VStack space="sm">
-            <Text className="text-blue-800 font-medium">
-              Bem-vindo, {invitationData?.email}!
-            </Text>
+            <Text className="text-blue-800 font-medium">Bem-vindo, {invitationData?.email}!</Text>
             <Text className="text-blue-700 text-sm">
               Você foi convidado para se juntar à escola {invitationData?.invitation?.school?.name}.
               Vamos configurar seu perfil de professor.
@@ -138,7 +149,9 @@ const BasicInformationStep: React.FC<BasicInformationStepProps> = ({
         <ImageUploadComponent
           onImageSelected={handleImageSelected}
           onImageRemoved={handleImageRemoved}
-          currentImageUri={typeof profileData.profile_photo === 'string' ? profileData.profile_photo : undefined}
+          currentImageUri={
+            typeof profileData.profile_photo === 'string' ? profileData.profile_photo : undefined
+          }
           uploadProgress={photoUploadProgress}
           uploadStatus={photoUploadStatus}
           uploadError={photoUploadError}
@@ -166,9 +179,7 @@ const BasicInformationStep: React.FC<BasicInformationStepProps> = ({
               />
             </Textarea>
             {validationErrors.introduction && (
-              <Text className="text-red-600 text-sm">
-                {validationErrors.introduction}
-              </Text>
+              <Text className="text-red-600 text-sm">{validationErrors.introduction}</Text>
             )}
             <Text className="text-xs text-gray-500">
               Caracteres: {(profileData.introduction || '').length}/500
@@ -182,11 +193,11 @@ const BasicInformationStep: React.FC<BasicInformationStepProps> = ({
             <Heading size="md" className="text-gray-800">
               Preferências de Contato
             </Heading>
-            
+
             {/* Notification Preferences */}
             <VStack space="md">
               <Text className="font-medium">Como você gostaria de receber notificações?</Text>
-              
+
               <VStack space="sm">
                 <HStack className="justify-between items-center py-2">
                   <VStack>
@@ -197,7 +208,7 @@ const BasicInformationStep: React.FC<BasicInformationStepProps> = ({
                   </VStack>
                   <Switch
                     value={contactPreferences.email_notifications}
-                    onValueChange={(value) => updateContactPreference('email_notifications', value)}
+                    onValueChange={value => updateContactPreference('email_notifications', value)}
                   />
                 </HStack>
 
@@ -210,7 +221,7 @@ const BasicInformationStep: React.FC<BasicInformationStepProps> = ({
                   </VStack>
                   <Switch
                     value={contactPreferences.sms_notifications}
-                    onValueChange={(value) => updateContactPreference('sms_notifications', value)}
+                    onValueChange={value => updateContactPreference('sms_notifications', value)}
                   />
                 </HStack>
 
@@ -223,7 +234,7 @@ const BasicInformationStep: React.FC<BasicInformationStepProps> = ({
                   </VStack>
                   <Switch
                     value={contactPreferences.call_notifications}
-                    onValueChange={(value) => updateContactPreference('call_notifications', value)}
+                    onValueChange={value => updateContactPreference('call_notifications', value)}
                   />
                 </HStack>
               </VStack>
@@ -234,7 +245,7 @@ const BasicInformationStep: React.FC<BasicInformationStepProps> = ({
               <Text className="font-medium">Método de Contato Preferido</Text>
               <Select
                 selectedValue={contactPreferences.preferred_contact_method}
-                onValueChange={(value) => updateContactPreference('preferred_contact_method', value)}
+                onValueChange={value => updateContactPreference('preferred_contact_method', value)}
               >
                 <SelectTrigger variant="outline" size="md">
                   <SelectInput placeholder="Selecione o método preferido" />
@@ -261,8 +272,8 @@ const BasicInformationStep: React.FC<BasicInformationStepProps> = ({
           <VStack space="sm">
             <Text className="font-medium text-gray-800">Dica:</Text>
             <Text className="text-sm text-gray-600">
-              Uma boa apresentação inclui sua experiência, suas matérias favoritas e o que te motiva como educador.
-              Isso ajuda os alunos e pais a se conectarem com você.
+              Uma boa apresentação inclui sua experiência, suas matérias favoritas e o que te motiva
+              como educador. Isso ajuda os alunos e pais a se conectarem com você.
             </Text>
           </VStack>
         </Box>

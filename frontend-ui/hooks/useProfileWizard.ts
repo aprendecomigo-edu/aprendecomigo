@@ -1,9 +1,10 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import { useState, useCallback, useRef, useEffect } from 'react';
+
+import { useSmartAutoSave } from './useDebounce';
 
 import apiClient from '@/api/apiClient';
-import { useSmartAutoSave } from './useDebounce';
-import axios from 'axios';
 
 const WIZARD_STORAGE_KEY = '@teacher_profile_wizard';
 
@@ -134,11 +135,14 @@ export interface CompletionData {
   missing_critical: string[];
   missing_optional: string[];
   is_complete: boolean;
-  step_completion: Record<string, {
-    is_complete: boolean;
-    completion_percentage: number;
-    missing_fields: string[];
-  }>;
+  step_completion: Record<
+    string,
+    {
+      is_complete: boolean;
+      completion_percentage: number;
+      missing_fields: string[];
+    }
+  >;
   recommendations?: Array<{
     text: string;
     priority: 'high' | 'medium' | 'low';
@@ -225,19 +229,19 @@ export function useProfileWizard() {
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
   const cancelTokenSourceRef = useRef<axios.CancelTokenSource | null>(null);
   const isMountedRef = useRef(true);
-  
+
   // Track component mount status for cleanup
   useEffect(() => {
     isMountedRef.current = true;
-    
+
     return () => {
       isMountedRef.current = false;
-      
+
       // Cleanup timeouts
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
-      
+
       // Cancel any ongoing API requests
       if (cancelTokenSourceRef.current) {
         cancelTokenSourceRef.current.cancel('Component unmounted');
@@ -279,15 +283,15 @@ export function useProfileWizard() {
   // Load existing profile data and progress
   const loadProgress = useCallback(async (): Promise<void> => {
     if (!isMountedRef.current) return;
-    
+
     // Cancel any existing request
     if (cancelTokenSourceRef.current) {
       cancelTokenSourceRef.current.cancel('New request initiated');
     }
-    
+
     // Create new cancel token
     cancelTokenSourceRef.current = axios.CancelToken.source();
-    
+
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
@@ -336,12 +340,12 @@ export function useProfileWizard() {
       await cacheState(newState);
     } catch (error) {
       if (!isMountedRef.current) return;
-      
+
       // Don't update state if request was cancelled
       if (axios.isCancel(error)) {
         return;
       }
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Failed to load profile data';
       setState(prev => ({
         ...prev,
@@ -354,123 +358,135 @@ export function useProfileWizard() {
   }, [loadCachedState, cacheState]);
 
   // Update form data with proper typing
-  const updateFormData = useCallback((updates: Partial<TeacherProfileWizardData>) => {
-    if (!isMountedRef.current) return;
-    
-    setState(prev => {
-      const newFormData = { ...prev.formData, ...updates };
-      const newState = {
-        ...prev,
-        formData: newFormData,
-        hasUnsavedChanges: true,
-        validationErrors: {}, // Clear validation errors on update
-      };
+  const updateFormData = useCallback(
+    (updates: Partial<TeacherProfileWizardData>) => {
+      if (!isMountedRef.current) return;
 
-      // Cache updated state (fire and forget)
-      cacheState(newState).catch(error => {
-        console.error('Failed to cache wizard state:', error);
+      setState(prev => {
+        const newFormData = { ...prev.formData, ...updates };
+        const newState = {
+          ...prev,
+          formData: newFormData,
+          hasUnsavedChanges: true,
+          validationErrors: {}, // Clear validation errors on update
+        };
+
+        // Cache updated state (fire and forget)
+        cacheState(newState).catch(error => {
+          console.error('Failed to cache wizard state:', error);
+        });
+
+        return newState;
       });
-      
-      return newState;
-    });
-  }, [cacheState]);
-  
+    },
+    [cacheState]
+  );
+
   // Update single field with type safety
-  const updateFormField = useCallback((update: ProfileFieldUpdate) => {
-    if (!isMountedRef.current) return;
-    
-    setState(prev => {
-      const newFormData = { 
-        ...prev.formData, 
-        [update.field]: update.value 
-      };
-      
-      const newState = {
-        ...prev,
-        formData: newFormData,
-        hasUnsavedChanges: true,
-        validationErrors: {
-          ...prev.validationErrors,
-          [update.field]: [], // Clear field-specific validation errors
-        },
-      };
+  const updateFormField = useCallback(
+    (update: ProfileFieldUpdate) => {
+      if (!isMountedRef.current) return;
 
-      // Cache updated state (fire and forget)
-      cacheState(newState).catch(error => {
-        console.error('Failed to cache wizard state:', error);
+      setState(prev => {
+        const newFormData = {
+          ...prev.formData,
+          [update.field]: update.value,
+        };
+
+        const newState = {
+          ...prev,
+          formData: newFormData,
+          hasUnsavedChanges: true,
+          validationErrors: {
+            ...prev.validationErrors,
+            [update.field]: [], // Clear field-specific validation errors
+          },
+        };
+
+        // Cache updated state (fire and forget)
+        cacheState(newState).catch(error => {
+          console.error('Failed to cache wizard state:', error);
+        });
+
+        return newState;
       });
-      
-      return newState;
-    });
-  }, [cacheState]);
+    },
+    [cacheState]
+  );
 
   // Set current step with bounds checking
-  const setCurrentStep = useCallback((step: number) => {
-    if (!isMountedRef.current) return;
-    
-    // Ensure step is within valid bounds
-    const clampedStep = Math.max(0, Math.min(step, 6)); // 0-6 for 7 steps
-    
-    setState(prev => {
-      if (prev.currentStep === clampedStep) return prev;
-      
-      const newState = { ...prev, currentStep: clampedStep };
-      
-      // Cache updated state (fire and forget)
-      cacheState(newState).catch(error => {
-        console.error('Failed to cache wizard state:', error);
+  const setCurrentStep = useCallback(
+    (step: number) => {
+      if (!isMountedRef.current) return;
+
+      // Ensure step is within valid bounds
+      const clampedStep = Math.max(0, Math.min(step, 6)); // 0-6 for 7 steps
+
+      setState(prev => {
+        if (prev.currentStep === clampedStep) return prev;
+
+        const newState = { ...prev, currentStep: clampedStep };
+
+        // Cache updated state (fire and forget)
+        cacheState(newState).catch(error => {
+          console.error('Failed to cache wizard state:', error);
+        });
+
+        return newState;
       });
-      
-      return newState;
-    });
-  }, [cacheState]);
+    },
+    [cacheState]
+  );
 
   // Validate current step with proper error handling
-  const validateStep = useCallback(async (stepIndex: number): Promise<boolean> => {
-    if (!isMountedRef.current) return false;
-    
-    try {
-      const response = await apiClient.post<ApiResponse<ValidationResponse>>(
-        '/accounts/teachers/profile-wizard/validate-step/',
-        {
-          step: stepIndex,
-          data: state.formData,
-        }
-      );
-
+  const validateStep = useCallback(
+    async (stepIndex: number): Promise<boolean> => {
       if (!isMountedRef.current) return false;
 
-      const validationData = response.data.data;
-      
-      if (validationData.is_valid) {
-        setState(prev => ({ ...prev, validationErrors: {} }));
-        return true;
-      } else {
-        setState(prev => ({ 
-          ...prev, 
-          validationErrors: validationData.errors || {} 
+      try {
+        const response = await apiClient.post<ApiResponse<ValidationResponse>>(
+          '/accounts/teachers/profile-wizard/validate-step/',
+          {
+            step: stepIndex,
+            data: state.formData,
+          }
+        );
+
+        if (!isMountedRef.current) return false;
+
+        const validationData = response.data.data;
+
+        if (validationData.is_valid) {
+          setState(prev => ({ ...prev, validationErrors: {} }));
+          return true;
+        } else {
+          setState(prev => ({
+            ...prev,
+            validationErrors: validationData.errors || {},
+          }));
+          return false;
+        }
+      } catch (error) {
+        if (!isMountedRef.current) return false;
+
+        console.error('Step validation error:', error);
+
+        // Set generic validation error
+        setState(prev => ({
+          ...prev,
+          error: 'Validation failed. Please check your input and try again.',
         }));
+
         return false;
       }
-    } catch (error) {
-      if (!isMountedRef.current) return false;
-      
-      console.error('Step validation error:', error);
-      
-      // Set generic validation error
-      setState(prev => ({
-        ...prev,
-        error: 'Validation failed. Please check your input and try again.',
-      }));
-      
-      return false;
-    }
-  }, [state.formData]);
+    },
+    [state.formData]
+  );
 
   // Save progress to backend with improved error handling
   const saveProgress = useCallback(async (): Promise<void> => {
     if (!isMountedRef.current) return;
-    
+
     setState(prev => ({ ...prev, isSaving: true, error: null }));
 
     try {
@@ -485,7 +501,7 @@ export function useProfileWizard() {
       if (!isMountedRef.current) return;
 
       const saveData = response.data.data;
-      
+
       const newState = {
         isSaving: false,
         hasUnsavedChanges: false,
@@ -497,7 +513,7 @@ export function useProfileWizard() {
       await cacheState({ ...state, ...newState });
     } catch (error) {
       if (!isMountedRef.current) return;
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Failed to save progress';
       setState(prev => ({
         ...prev,
@@ -511,7 +527,7 @@ export function useProfileWizard() {
   // Submit complete profile
   const submitProfile = useCallback(async (): Promise<void> => {
     if (!isMountedRef.current) return;
-    
+
     setState(prev => ({ ...prev, isSaving: true, error: null }));
 
     try {
@@ -521,8 +537,8 @@ export function useProfileWizard() {
 
       if (!isMountedRef.current) return;
 
-      setState(prev => ({ 
-        ...prev, 
+      setState(prev => ({
+        ...prev,
         isSaving: false,
         hasUnsavedChanges: false,
         error: null,
@@ -532,7 +548,7 @@ export function useProfileWizard() {
       await AsyncStorage.removeItem(WIZARD_STORAGE_KEY);
     } catch (error) {
       if (!isMountedRef.current) return;
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Failed to submit profile';
       setState(prev => ({
         ...prev,
@@ -544,76 +560,79 @@ export function useProfileWizard() {
   }, [state.formData]);
 
   // Get rate suggestions with proper typing
-  const getRateSuggestions = useCallback(async (
-    subject: string, 
-    location: string
-  ): Promise<any | null> => {
-    if (!isMountedRef.current) return null;
-    
-    try {
-      const response = await apiClient.get<ApiResponse>('/accounts/teachers/rate-suggestions/', {
-        params: { subject, location },
-      });
-      return response.data.data;
-    } catch (error) {
-      console.error('Error fetching rate suggestions:', error);
-      return null;
-    }
-  }, []);
+  const getRateSuggestions = useCallback(
+    async (subject: string, location: string): Promise<any | null> => {
+      if (!isMountedRef.current) return null;
+
+      try {
+        const response = await apiClient.get<ApiResponse>('/accounts/teachers/rate-suggestions/', {
+          params: { subject, location },
+        });
+        return response.data.data;
+      } catch (error) {
+        console.error('Error fetching rate suggestions:', error);
+        return null;
+      }
+    },
+    []
+  );
 
   // Upload profile photo with proper typing
-  const uploadProfilePhoto = useCallback(async (imageUri: string): Promise<string> => {
-    if (!isMountedRef.current) {
-      throw new Error('Component unmounted');
-    }
-    
-    try {
-      const formData = new FormData();
-      
-      // Type assertion for FormData append
-      formData.append('photo', {
-        uri: imageUri,
-        type: 'image/jpeg',
-        name: 'profile-photo.jpg',
-      } as any);
-
-      const response = await apiClient.post<ApiResponse<{ photo_url: string }>>(
-        '/accounts/teachers/profile/photo/', 
-        formData, 
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
+  const uploadProfilePhoto = useCallback(
+    async (imageUri: string): Promise<string> => {
       if (!isMountedRef.current) {
-        throw new Error('Component unmounted during upload');
+        throw new Error('Component unmounted');
       }
 
-      const photoUrl = response.data.data.photo_url;
-      updateFormData({ profile_photo: photoUrl });
-      return photoUrl;
-    } catch (error) {
-      console.error('Error uploading profile photo:', error);
-      throw error;
-    }
-  }, [updateFormData]);
+      try {
+        const formData = new FormData();
+
+        // Type assertion for FormData append
+        formData.append('photo', {
+          uri: imageUri,
+          type: 'image/jpeg',
+          name: 'profile-photo.jpg',
+        } as any);
+
+        const response = await apiClient.post<ApiResponse<{ photo_url: string }>>(
+          '/accounts/teachers/profile/photo/',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+
+        if (!isMountedRef.current) {
+          throw new Error('Component unmounted during upload');
+        }
+
+        const photoUrl = response.data.data.photo_url;
+        updateFormData({ profile_photo: photoUrl });
+        return photoUrl;
+      } catch (error) {
+        console.error('Error uploading profile photo:', error);
+        throw error;
+      }
+    },
+    [updateFormData]
+  );
 
   // Reset wizard state
   const resetWizard = useCallback(async (): Promise<void> => {
     if (!isMountedRef.current) return;
-    
+
     // Cancel any ongoing requests
     if (cancelTokenSourceRef.current) {
       cancelTokenSourceRef.current.cancel('Wizard reset');
     }
-    
+
     // Clear any pending timeouts
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
-    
+
     setState(DEFAULT_STATE);
     await AsyncStorage.removeItem(WIZARD_STORAGE_KEY);
   }, []);

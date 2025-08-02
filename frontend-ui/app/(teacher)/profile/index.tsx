@@ -1,9 +1,9 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router } from 'expo-router';
-import { 
-  UserIcon, 
-  EditIcon, 
-  SettingsIcon, 
+import {
+  UserIcon,
+  EditIcon,
+  SettingsIcon,
   AwardIcon,
   SchoolIcon,
   DollarSignIcon,
@@ -13,13 +13,14 @@ import {
   MapPinIcon,
   MailIcon,
   PhoneIcon,
-  CalendarIcon
+  CalendarIcon,
 } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
 
 import { useAuth } from '@/api/authContext';
 import MainLayout from '@/components/layouts/main-layout';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -30,8 +31,6 @@ import { Icon } from '@/components/ui/icon';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 
 const TeacherProfilePage = () => {
@@ -71,9 +70,7 @@ const TeacherProfilePage = () => {
               <Heading size="lg" className="text-center text-gray-900">
                 Erro ao Carregar Perfil
               </Heading>
-              <Text className="text-center text-gray-600">
-                {error}
-              </Text>
+              <Text className="text-center text-gray-600">{error}</Text>
             </VStack>
             <Button onPress={refresh} variant="solid">
               <Icon as={RefreshCwIcon} size="sm" className="text-white mr-2" />
@@ -91,9 +88,7 @@ const TeacherProfilePage = () => {
     <MainLayout _title="Perfil">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refresh} />
-        }
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} />}
         contentContainerStyle={{
           paddingBottom: isWeb ? 0 : 100,
           flexGrow: 1,
@@ -107,11 +102,9 @@ const TeacherProfilePage = () => {
               <Heading size="xl" className="text-gray-900">
                 Perfil
               </Heading>
-              <Text className="text-gray-600">
-                Gerencie as suas informações pessoais
-              </Text>
+              <Text className="text-gray-600">Gerencie as suas informações pessoais</Text>
             </VStack>
-            
+
             <HStack space="xs">
               <Pressable
                 onPress={refresh}
@@ -120,13 +113,13 @@ const TeacherProfilePage = () => {
                 accessibilityLabel="Atualizar perfil"
                 accessibilityRole="button"
               >
-                <Icon 
-                  as={RefreshCwIcon} 
-                  size="sm" 
-                  className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`} 
+                <Icon
+                  as={RefreshCwIcon}
+                  size="sm"
+                  className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`}
                 />
               </Pressable>
-              
+
               <Pressable
                 onPress={handleSettings}
                 className="p-2 rounded-md bg-gray-100 hover:bg-gray-200"
@@ -147,9 +140,7 @@ const TeacherProfilePage = () => {
                   <Text className="font-medium text-yellow-900">
                     Dados parcialmente desatualizados
                   </Text>
-                  <Text className="text-sm text-yellow-700">
-                    {error}
-                  </Text>
+                  <Text className="text-sm text-yellow-700">{error}</Text>
                 </VStack>
                 <Pressable onPress={refresh}>
                   <Text className="text-sm font-medium text-yellow-600">Atualizar</Text>
@@ -169,7 +160,7 @@ const TeacherProfilePage = () => {
                       {(teacherInfo?.name || 'P').charAt(0).toUpperCase()}
                     </Text>
                   </VStack>
-                  
+
                   {/* Basic Info */}
                   <VStack className="flex-1">
                     <Text className="text-xl font-bold text-gray-900">
@@ -180,23 +171,17 @@ const TeacherProfilePage = () => {
                     </Text>
                     {teacherInfo?.specialty && (
                       <Badge className="bg-blue-100 self-start">
-                        <BadgeText className="text-blue-800">
-                          {teacherInfo.specialty}
-                        </BadgeText>
+                        <BadgeText className="text-blue-800">{teacherInfo.specialty}</BadgeText>
                       </Badge>
                     )}
                   </VStack>
-                  
-                  <Button 
-                    onPress={handleEditProfile}
-                    variant="outline"
-                    size="sm"
-                  >
+
+                  <Button onPress={handleEditProfile} variant="outline" size="sm">
                     <Icon as={EditIcon} size="sm" className="text-blue-600 mr-2" />
                     <ButtonText className="text-blue-600">Editar</ButtonText>
                   </Button>
                 </HStack>
-                
+
                 {/* Profile Completion */}
                 {teacherInfo?.profile_completion_score !== undefined && (
                   <Box className="bg-gray-50 rounded-lg p-3">
@@ -209,7 +194,7 @@ const TeacherProfilePage = () => {
                       </Text>
                     </HStack>
                     <Box className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <Box 
+                      <Box
                         className="h-full bg-blue-500 rounded-full"
                         style={{ width: `${Math.min(teacherInfo.profile_completion_score, 100)}%` }}
                       />
@@ -233,15 +218,17 @@ const TeacherProfilePage = () => {
               </CardHeader>
               <CardBody>
                 <VStack space="sm">
-                  {teacherInfo.schools.map((school) => (
-                    <HStack key={school.id} space="sm" className="items-center py-2 border-b border-gray-100 last:border-b-0">
+                  {teacherInfo.schools.map(school => (
+                    <HStack
+                      key={school.id}
+                      space="sm"
+                      className="items-center py-2 border-b border-gray-100 last:border-b-0"
+                    >
                       <VStack className="w-8 h-8 bg-green-100 rounded-full items-center justify-center">
                         <Icon as={SchoolIcon} size="xs" className="text-green-600" />
                       </VStack>
                       <VStack className="flex-1">
-                        <Text className="text-sm font-medium text-gray-900">
-                          {school.name}
-                        </Text>
+                        <Text className="text-sm font-medium text-gray-900">{school.name}</Text>
                         <Text className="text-xs text-gray-500">
                           Membro desde {new Date(school.joined_at).toLocaleDateString('pt-PT')}
                         </Text>
@@ -266,20 +253,18 @@ const TeacherProfilePage = () => {
               </CardHeader>
               <CardBody>
                 <VStack space="sm">
-                  {teacherInfo.courses_taught.map((course) => (
-                    <HStack key={course.id} space="sm" className="items-center py-2 border-b border-gray-100 last:border-b-0">
+                  {teacherInfo.courses_taught.map(course => (
+                    <HStack
+                      key={course.id}
+                      space="sm"
+                      className="items-center py-2 border-b border-gray-100 last:border-b-0"
+                    >
                       <VStack className="w-8 h-8 bg-purple-100 rounded-full items-center justify-center">
-                        <Text className="text-xs font-bold text-purple-600">
-                          {course.code}
-                        </Text>
+                        <Text className="text-xs font-bold text-purple-600">{course.code}</Text>
                       </VStack>
                       <VStack className="flex-1">
-                        <Text className="text-sm font-medium text-gray-900">
-                          {course.name}
-                        </Text>
-                        <Text className="text-xs text-gray-500">
-                          Código: {course.code}
-                        </Text>
+                        <Text className="text-sm font-medium text-gray-900">{course.name}</Text>
+                        <Text className="text-xs text-gray-500">Código: {course.code}</Text>
                       </VStack>
                       <VStack className="items-end">
                         <Text className="text-sm font-semibold text-green-600">
@@ -302,29 +287,21 @@ const TeacherProfilePage = () => {
             </CardHeader>
             <CardBody>
               <VStack space="sm">
-                <Button 
-                  variant="outline" 
-                  onPress={handleEditProfile}
-                  className="justify-start"
-                >
+                <Button variant="outline" onPress={handleEditProfile} className="justify-start">
                   <Icon as={EditIcon} size="sm" className="text-blue-600 mr-3" />
                   <ButtonText className="text-blue-600">Editar Perfil Completo</ButtonText>
                 </Button>
-                
-                <Button 
-                  variant="outline" 
+
+                <Button
+                  variant="outline"
                   onPress={() => router.push('/(teacher)/analytics')}
                   className="justify-start"
                 >
                   <Icon as={StarIcon} size="sm" className="text-green-600 mr-3" />
                   <ButtonText className="text-green-600">Ver Desempenho</ButtonText>
                 </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onPress={handleSettings}
-                  className="justify-start"
-                >
+
+                <Button variant="outline" onPress={handleSettings} className="justify-start">
                   <Icon as={SettingsIcon} size="sm" className="text-gray-600 mr-3" />
                   <ButtonText className="text-gray-600">Configurações</ButtonText>
                 </Button>
@@ -334,12 +311,13 @@ const TeacherProfilePage = () => {
 
           {/* Stats Summary */}
           {data?.quick_stats && (
-            <Card variant="elevated" className="bg-gradient-to-r from-blue-500 to-purple-600 shadow-sm">
+            <Card
+              variant="elevated"
+              className="bg-gradient-to-r from-blue-500 to-purple-600 shadow-sm"
+            >
               <CardBody>
                 <VStack space="md">
-                  <Text className="text-white font-semibold text-lg">
-                    Resumo de Atividade
-                  </Text>
+                  <Text className="text-white font-semibold text-lg">Resumo de Atividade</Text>
                   <HStack space="lg" className="flex-wrap">
                     <VStack className="items-center">
                       <Text className="text-2xl font-bold text-white">

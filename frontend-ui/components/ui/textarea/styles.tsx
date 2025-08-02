@@ -24,7 +24,8 @@ export const textareaStyle = tva({
       xl: 'text-xl',
     },
     variant: {
-      outline: 'p-2 web:outline-0 web:outline-none flex-1 color-typography-900 align-text-top placeholder:text-typography-500 web:cursor-text web:data-[disabled=true]:cursor-not-allowed',
+      outline:
+        'p-2 web:outline-0 web:outline-none flex-1 color-typography-900 align-text-top placeholder:text-typography-500 web:cursor-text web:data-[disabled=true]:cursor-not-allowed',
     },
   },
-}); 
+});

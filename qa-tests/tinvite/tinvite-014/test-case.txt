@@ -1,0 +1,185 @@
+QA Test Case: Invite Teacher Form with Email Input and Role Selection
+
+Test ID: TINVITE-014
+Test Name: Invite Teacher Form with Email Input and Role Selection
+Purpose: Verify the complete "Invite Teacher" form functionality including email input validation, role selection dropdown, and form submission workflow
+Expected Result: School admin can successfully access invite form, input email addresses, select teacher roles, and submit invitations with proper validation and feedback
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Teacher Invitation System
+- Architecture: React Native frontend with Django backend
+- Component: InviteTeacherModal (frontend-ui/components/modals/invite-teacher-modal.tsx)
+- Page: School Admin Invitations Dashboard (frontend-ui/app/(school-admin)/invitations.tsx)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+4. Browser access: http://localhost:8081
+
+Test Data:
+- School Admin User: Authenticated school admin with invitation permissions
+- Test Emails: 
+  - Valid email: test.teacher@example.com
+  - Invalid email: invalid.email
+  - Duplicate email: existing.teacher@school.com
+- Roles: TEACHER, SCHOOL_ADMIN
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Verification
+1. Ensure development servers are running: `make dev`
+2. Verify browser opens to http://localhost:8081
+3. Confirm authentication as school admin user
+4. Navigate to School Admin section
+Expected: Development servers running, authenticated access confirmed
+Screenshot: 01_environment_ready.png
+
+Step 2: Navigate to Invitations Dashboard
+1. Click on "School Admin" navigation or access URL: http://localhost:8081/(school-admin)/invitations
+2. Verify Invitations dashboard loads completely
+3. Confirm "Teacher Invitations" heading is visible
+4. Verify statistics cards display properly
+Expected: Invitations dashboard loads with invitation statistics and management interface
+Screenshot: 02_invitations_dashboard_loaded.png
+
+Step 3: Open Invite Teacher Modal
+1. Locate and click "Convidar" (Invite) button in dashboard header
+2. Verify modal opens completely with proper title
+3. Confirm modal displays "Convidar Professor" heading
+4. Check that modal backdrop and close button are functional
+Expected: Invite Teacher Modal opens properly with all UI elements visible
+Screenshot: 03_invite_modal_opened.png
+
+Step 4: Verify Form Structure and Components
+1. Verify "Convitar por Email" section is visible
+2. Confirm single/bulk mode toggle buttons (Único/Múltiplos) are present
+3. Verify role selection dropdown displays "Selecionar função"
+4. Check email input field is present and properly labeled
+5. Verify custom message textarea is available
+6. Confirm "Enviar Convite" button is visible but disabled initially
+Expected: All form components present and properly structured
+Screenshot: 04_form_structure_complete.png
+
+Step 5: Test Role Selection Dropdown
+1. Click on the role selection dropdown
+2. Verify dropdown opens with available options
+3. Confirm "TEACHER" role option is present with description
+4. Confirm "SCHOOL_ADMIN" role option is present with description
+5. Select "TEACHER" role
+6. Verify selection is reflected in dropdown
+Expected: Role dropdown functions properly with both role options visible and selectable
+Screenshot: 05_role_selection_working.png
+
+Step 6: Test Email Input Validation - Valid Email
+1. Ensure "Único" (Single) mode is selected
+2. Click in email input field
+3. Enter valid email: "test.teacher@example.com"
+4. Verify email is accepted without validation errors
+5. Check that "Enviar Convite" button becomes enabled
+Expected: Valid email accepted, form validates successfully, submit button enabled
+Screenshot: 06_valid_email_entered.png
+
+Step 7: Test Email Input Validation - Invalid Email
+1. Clear the email field
+2. Enter invalid email: "invalid.email"
+3. Attempt to click "Enviar Convite" button
+4. Verify appropriate validation error is shown
+5. Confirm button remains disabled or shows error
+Expected: Invalid email rejected with clear error message
+Screenshot: 07_invalid_email_validation.png
+
+Step 8: Test Custom Message Functionality
+1. Enter valid email: "test.teacher@example.com"
+2. Click in custom message textarea
+3. Enter test message: "Bem-vindo à nossa escola! Esperamos trabalhar juntos."
+4. Verify character counter updates correctly
+5. Test maximum length limitation (500 characters)
+Expected: Custom message input works with character counting and length validation
+Screenshot: 08_custom_message_working.png
+
+Step 9: Test Form Submission - Single Invitation
+1. Ensure form has:
+   - Valid email: test.teacher@example.com
+   - Selected role: TEACHER
+   - Optional custom message
+2. Click "Enviar Convite" button
+3. Verify loading state is shown (spinner and "Enviando..." text)
+4. Wait for API response
+5. Check for success/error feedback
+Expected: Form submits successfully with loading state and appropriate feedback
+Screenshot: 09_single_invitation_submitted.png
+
+Step 10: Test Form Reset After Successful Submission
+1. After successful submission, verify success message appears
+2. Check that form fields are cleared/reset
+3. Confirm modal remains open for additional invitations
+4. Verify "Enviar Convite" button returns to disabled state
+Expected: Form resets properly after successful submission while keeping modal open
+Screenshot: 10_form_reset_after_success.png
+
+Step 11: Test Modal Close and Cleanup
+1. Click modal close button (X)
+2. Verify modal closes completely
+3. Check that form state is properly cleaned up
+4. Reopen modal and confirm it starts fresh
+Expected: Modal closes properly and state is cleaned up for next use
+Screenshot: 11_modal_close_cleanup.png
+
+Step 12: Test Form Validation Edge Cases
+1. Open invite modal again
+2. Test empty email submission (should show validation error)
+3. Test email with spaces: " test@example.com "
+4. Verify email trimming works correctly
+5. Test role selection requirement (if applicable)
+Expected: All validation edge cases handled properly with clear feedback
+Screenshot: 12_validation_edge_cases.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: 
+- All form components render correctly and are accessible
+- Role selection dropdown functions with both TEACHER and SCHOOL_ADMIN options
+- Email input validation works for valid and invalid formats
+- Custom message textarea functions with character counting
+- Form submission works with proper loading states
+- Success/error feedback is displayed appropriately
+- Form resets correctly after submission
+- Modal open/close functionality works properly
+- All validation edge cases are handled correctly
+
+FAIL:
+- Any form component fails to render or is inaccessible
+- Role selection dropdown missing options or not functional
+- Email validation fails to catch invalid formats or rejects valid emails
+- Custom message input not working or character count incorrect
+- Form submission fails or lacks proper loading/feedback states
+- Modal functionality broken (won't open/close properly)
+- Validation errors not displayed or are unclear
+- Form state not properly managed (doesn't reset or retains old data)
+
+Overall Result: PASS only if ALL individual steps pass, FAIL if ANY step fails
+
+=== ADDITIONAL VALIDATION POINTS ===
+
+UX Requirements:
+- Form completion takes less than 30 seconds for experienced user
+- All interactive elements have proper hover/focus states
+- Error messages are clear and actionable
+- Loading states prevent double-submission
+- Modal is accessible via keyboard navigation
+
+Technical Requirements:
+- API calls are made correctly to backend invitation endpoints
+- Proper error handling for network failures
+- Form data is properly sanitized before submission
+- No console errors during form interaction
+- Component state management is correct
+
+Mobile Responsiveness:
+- Modal displays properly on smaller screens
+- Form elements are touch-friendly and properly sized
+- Text remains readable at different zoom levels
+- Dropdown menus work correctly on touch devices

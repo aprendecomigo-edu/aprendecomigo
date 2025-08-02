@@ -57,14 +57,14 @@ class OnboardingApi {
 
   async completeOnboardingStep(stepId: string): Promise<OnboardingProgress> {
     const response = await apiClient.post('/accounts/onboarding_progress/', {
-      completed_steps: [stepId]
+      completed_steps: [stepId],
     });
     return response.data;
   }
 
   async skipOnboardingStep(stepId: string): Promise<OnboardingProgress> {
     const response = await apiClient.post('/accounts/onboarding_progress/', {
-      skipped_steps: [stepId]
+      skipped_steps: [stepId],
     });
     return response.data;
   }
@@ -74,21 +74,23 @@ class OnboardingApi {
     return response.data;
   }
 
-  async updateNavigationPreferences(data: UpdateNavigationPreferencesData): Promise<NavigationPreferences> {
+  async updateNavigationPreferences(
+    data: UpdateNavigationPreferencesData
+  ): Promise<NavigationPreferences> {
     const response = await apiClient.post('/accounts/navigation_preferences/', data);
     return response.data;
   }
 
   async skipOnboarding(): Promise<NavigationPreferences> {
     const response = await apiClient.post('/accounts/navigation_preferences/', {
-      show_onboarding: false
+      show_onboarding: false,
     });
     return response.data;
   }
 
   async enableOnboarding(): Promise<NavigationPreferences> {
     const response = await apiClient.post('/accounts/navigation_preferences/', {
-      show_onboarding: true
+      show_onboarding: true,
     });
     return response.data;
   }

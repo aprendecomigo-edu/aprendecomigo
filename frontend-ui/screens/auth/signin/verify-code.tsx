@@ -114,7 +114,7 @@ const VerifyCodeForm = () => {
 
       // Check if this is a new school admin that needs onboarding
       const shouldShowOnboarding = await checkForOnboarding(response);
-      
+
       if (shouldShowOnboarding) {
         console.log('Redirecting new school admin to onboarding welcome screen');
         router.replace('/onboarding/welcome');
@@ -147,14 +147,16 @@ const VerifyCodeForm = () => {
       try {
         const preferences = await onboardingApi.getNavigationPreferences();
         const progress = await onboardingApi.getOnboardingProgress();
-        
+
         // Show onboarding if:
         // 1. User hasn't disabled onboarding (show_onboarding is true)
         // 2. User hasn't completed the onboarding process (completion < 100%)
         // 3. This appears to be a new user (is_new_user flag or low completion)
-        return preferences.show_onboarding && 
-               progress.completion_percentage < 100 &&
-               (authResponse.is_new_user || progress.completion_percentage === 0);
+        return (
+          preferences.show_onboarding &&
+          progress.completion_percentage < 100 &&
+          (authResponse.is_new_user || progress.completion_percentage === 0)
+        );
       } catch (apiError) {
         // If we can't fetch onboarding data, default to showing onboarding for new admins
         console.log('Could not fetch onboarding data, defaulting to show onboarding for new admin');

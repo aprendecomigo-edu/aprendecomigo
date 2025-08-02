@@ -1,39 +1,49 @@
 /**
  * Renewal Confirmation Modal Component
- * 
+ *
  * Confirmation dialog with transaction details for subscription renewals
  * and quick top-up purchases before processing payment.
  */
 
+import {
+  X,
+  RotateCcw,
+  Zap,
+  CreditCard,
+  Calendar,
+  Clock,
+  Euro,
+  Shield,
+  CheckCircle,
+  AlertCircle,
+} from 'lucide-react-native';
 import React, { useState } from 'react';
-import { X, RotateCcw, Zap, CreditCard, Calendar, Clock, Euro, Shield, CheckCircle, AlertCircle } from 'lucide-react-native';
 
-import { 
-  Modal, 
-  ModalBackdrop, 
-  ModalContent, 
-  ModalHeader, 
-  ModalCloseButton, 
-  ModalBody, 
-  ModalFooter 
-} from '@/components/ui/modal';
+import { Alert, AlertIcon, AlertText } from '@/components/ui/alert';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import {
+  Modal,
+  ModalBackdrop,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+} from '@/components/ui/modal';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Divider } from '@/components/ui/divider';
-import { Alert, AlertIcon, AlertText } from '@/components/ui/alert';
-
-import type { 
-  PaymentMethod, 
-  PackageInfo, 
+import type {
+  PaymentMethod,
+  PackageInfo,
   TopUpPackage,
   RenewalRequest,
-  QuickTopUpRequest 
+  QuickTopUpRequest,
 } from '@/types/purchase';
 
 interface RenewalConfirmationModalProps {
@@ -61,7 +71,7 @@ interface RenewalConfirmationModalProps {
 
 /**
  * Renewal Confirmation Modal Component
- * 
+ *
  * Shows transaction details and confirms renewal or top-up purchases.
  */
 export function RenewalConfirmationModal({
@@ -197,17 +207,11 @@ export function RenewalConfirmationModal({
               <VStack space="md">
                 <HStack className="items-center justify-between">
                   <VStack space="xs">
-                    <Text className="font-semibold text-typography-900">
-                      {details.item}
-                    </Text>
-                    <Text className="text-sm text-typography-600">
-                      {details.description}
-                    </Text>
+                    <Text className="font-semibold text-typography-900">{details.item}</Text>
+                    <Text className="text-sm text-typography-600">{details.description}</Text>
                   </VStack>
                   <VStack className="items-end">
-                    <Text className="text-2xl font-bold text-typography-900">
-                      {details.price}
-                    </Text>
+                    <Text className="text-2xl font-bold text-typography-900">{details.price}</Text>
                   </VStack>
                 </HStack>
 
@@ -219,9 +223,7 @@ export function RenewalConfirmationModal({
                       <Icon as={Clock} size="sm" className="text-typography-500" />
                       <Text className="text-sm text-typography-700">Hours</Text>
                     </HStack>
-                    <Text className="text-sm font-medium text-typography-900">
-                      {details.hours}
-                    </Text>
+                    <Text className="text-sm font-medium text-typography-900">{details.hours}</Text>
                   </HStack>
 
                   <HStack className="items-center justify-between">
@@ -239,9 +241,7 @@ export function RenewalConfirmationModal({
                       <Icon as={Euro} size="sm" className="text-typography-500" />
                       <Text className="text-sm text-typography-700">Total Amount</Text>
                     </HStack>
-                    <Text className="text-sm font-bold text-typography-900">
-                      {details.price}
-                    </Text>
+                    <Text className="text-sm font-bold text-typography-900">{details.price}</Text>
                   </HStack>
                 </VStack>
               </VStack>
@@ -258,7 +258,8 @@ export function RenewalConfirmationModal({
                       {paymentMethod.card.brand.toUpperCase()} ••••{paymentMethod.card.last4}
                     </Text>
                     <Text className="text-xs text-typography-600">
-                      Expires {paymentMethod.card.exp_month.toString().padStart(2, '0')}/{paymentMethod.card.exp_year}
+                      Expires {paymentMethod.card.exp_month.toString().padStart(2, '0')}/
+                      {paymentMethod.card.exp_year}
                     </Text>
                     {paymentMethod.billing_details?.name && (
                       <Text className="text-xs text-typography-600">
@@ -272,22 +273,37 @@ export function RenewalConfirmationModal({
 
             {/* Biometric Authentication Status */}
             {enableBiometricAuth && (
-              <Card className={`p-4 ${biometricAuthCompleted ? 'bg-success-50 border-success-200' : 'bg-warning-50 border-warning-200'}`}>
+              <Card
+                className={`p-4 ${
+                  biometricAuthCompleted
+                    ? 'bg-success-50 border-success-200'
+                    : 'bg-warning-50 border-warning-200'
+                }`}
+              >
                 <HStack space="sm" className="items-center">
-                  <Icon 
-                    as={biometricAuthCompleted ? CheckCircle : Shield} 
-                    size="sm" 
-                    className={biometricAuthCompleted ? 'text-success-600' : 'text-warning-600'} 
+                  <Icon
+                    as={biometricAuthCompleted ? CheckCircle : Shield}
+                    size="sm"
+                    className={biometricAuthCompleted ? 'text-success-600' : 'text-warning-600'}
                   />
                   <VStack space="xs" className="flex-1">
-                    <Text className={`text-sm font-medium ${biometricAuthCompleted ? 'text-success-800' : 'text-warning-800'}`}>
-                      {biometricAuthCompleted ? 'Authentication Completed' : 'Biometric Authentication Required'}
+                    <Text
+                      className={`text-sm font-medium ${
+                        biometricAuthCompleted ? 'text-success-800' : 'text-warning-800'
+                      }`}
+                    >
+                      {biometricAuthCompleted
+                        ? 'Authentication Completed'
+                        : 'Biometric Authentication Required'}
                     </Text>
-                    <Text className={`text-xs ${biometricAuthCompleted ? 'text-success-700' : 'text-warning-700'}`}>
-                      {biometricAuthCompleted 
+                    <Text
+                      className={`text-xs ${
+                        biometricAuthCompleted ? 'text-success-700' : 'text-warning-700'
+                      }`}
+                    >
+                      {biometricAuthCompleted
                         ? 'Your identity has been verified successfully'
-                        : 'Please authenticate to confirm this transaction'
-                      }
+                        : 'Please authenticate to confirm this transaction'}
                     </Text>
                   </VStack>
                 </HStack>
@@ -299,11 +315,10 @@ export function RenewalConfirmationModal({
               <HStack space="sm" className="items-center">
                 <Icon as={Shield} size="sm" className="text-info-600" />
                 <VStack space="xs" className="flex-1">
-                  <Text className="text-xs font-medium text-info-800">
-                    Secure Transaction
-                  </Text>
+                  <Text className="text-xs font-medium text-info-800">Secure Transaction</Text>
                   <Text className="text-xs text-info-700">
-                    This transaction is processed securely by Stripe. You will receive a receipt via email.
+                    This transaction is processed securely by Stripe. You will receive a receipt via
+                    email.
                   </Text>
                 </VStack>
               </HStack>
@@ -323,7 +338,7 @@ export function RenewalConfirmationModal({
             >
               <ButtonText>Cancel</ButtonText>
             </Button>
-            
+
             <Button
               action="primary"
               variant="solid"
@@ -345,7 +360,9 @@ export function RenewalConfirmationModal({
               ) : (
                 <>
                   <ButtonIcon as={details.icon} />
-                  <ButtonText>Confirm {transactionType === 'renewal' ? 'Renewal' : 'Purchase'}</ButtonText>
+                  <ButtonText>
+                    Confirm {transactionType === 'renewal' ? 'Renewal' : 'Purchase'}
+                  </ButtonText>
                 </>
               )}
             </Button>

@@ -1,18 +1,17 @@
 /**
  * Student Account Dashboard Component
- * 
+ *
  * Comprehensive dashboard providing students with complete visibility into
  * their tutoring hour balances, purchase history, consumption tracking,
  * and account management features.
  */
 
-import React, { useMemo } from 'react';
-import { Platform } from 'react-native';
-import { 
-  CreditCard, 
-  History, 
-  Package, 
-  Settings, 
+import useRouter from '@unitools/router';
+import {
+  CreditCard,
+  History,
+  Package,
+  Settings,
   ShoppingCart,
   AlertTriangle,
   TrendingUp,
@@ -20,10 +19,20 @@ import {
   RefreshCw,
   Search,
   Plus,
-  Bell
+  Bell,
 } from 'lucide-react-native';
-import useRouter from '@unitools/router';
+import React, { useMemo } from 'react';
+import { Platform } from 'react-native';
 
+import { BalanceAlertProvider } from './balance/BalanceAlertProvider';
+import { NotificationCenter } from './balance/NotificationCenter';
+import { AccountSettings } from './dashboard/AccountSettings';
+import { DashboardOverview } from './dashboard/DashboardOverview';
+import { PurchaseHistory } from './dashboard/PurchaseHistory';
+import { TransactionHistory } from './dashboard/TransactionHistory';
+
+import { useAuth } from '@/api/authContext';
+import { StudentBalanceCard } from '@/components/purchase';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -38,17 +47,9 @@ import { ScrollView } from '@/components/ui/scroll-view';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { StudentBalanceCard } from '@/components/purchase';
 import { useStudentDashboard } from '@/hooks/useStudentDashboard';
-import { useAuth } from '@/api/authContext';
 
 // Import dashboard sections
-import { DashboardOverview } from './dashboard/DashboardOverview';
-import { TransactionHistory } from './dashboard/TransactionHistory';
-import { PurchaseHistory } from './dashboard/PurchaseHistory';
-import { AccountSettings } from './dashboard/AccountSettings';
-import { NotificationCenter } from './balance/NotificationCenter';
-import { BalanceAlertProvider } from './balance/BalanceAlertProvider';
 
 interface StudentAccountDashboardProps {
   email?: string;
@@ -63,41 +64,38 @@ const DASHBOARD_TABS = [
     id: 'overview' as const,
     label: 'Overview',
     icon: TrendingUp,
-    description: 'Account summary and quick actions'
+    description: 'Account summary and quick actions',
   },
   {
     id: 'transactions' as const,
     label: 'Transactions',
     icon: History,
-    description: 'Transaction history and payments'
+    description: 'Transaction history and payments',
   },
   {
     id: 'purchases' as const,
     label: 'Purchases',
     icon: Package,
-    description: 'Purchase history and consumption'
+    description: 'Purchase history and consumption',
   },
   {
     id: 'notifications' as const,
     label: 'Notifications',
     icon: Bell,
-    description: 'Balance alerts and important updates'
+    description: 'Balance alerts and important updates',
   },
   {
     id: 'settings' as const,
     label: 'Settings',
     icon: Settings,
-    description: 'Account and profile settings'
+    description: 'Account and profile settings',
   },
 ];
 
 /**
  * Main Student Account Dashboard Component
  */
-export function StudentAccountDashboard({ 
-  email, 
-  className = '' 
-}: StudentAccountDashboardProps) {
+export function StudentAccountDashboard({ email, className = '' }: StudentAccountDashboardProps) {
   const router = useRouter();
   const { userProfile } = useAuth();
   const dashboard = useStudentDashboard(email);
@@ -115,7 +113,8 @@ export function StudentAccountDashboard({
       totalPurchased: parseFloat(balance.hours_purchased),
       totalConsumed: parseFloat(balance.hours_consumed),
       activePackages: packages.length,
-      expiringSoon: expirations.filter(exp => exp.days_until_expiry && exp.days_until_expiry <= 7).length,
+      expiringSoon: expirations.filter(exp => exp.days_until_expiry && exp.days_until_expiry <= 7)
+        .length,
     };
   }, [dashboard.balance]);
 
@@ -141,7 +140,7 @@ export function StudentAccountDashboard({
               onTabChange={dashboard.actions.setActiveTab}
             />
           );
-        
+
         case 'transactions':
           return (
             <TransactionHistory
@@ -156,7 +155,7 @@ export function StudentAccountDashboard({
               onSearchChange={dashboard.actions.setSearchQuery}
             />
           );
-        
+
         case 'purchases':
           return (
             <PurchaseHistory
@@ -171,16 +170,12 @@ export function StudentAccountDashboard({
               onSearchChange={dashboard.actions.setSearchQuery}
             />
           );
-        
+
         case 'notifications':
           return (
-            <NotificationCenter
-              showSettings={true}
-              showFilters={true}
-              maxNotifications={50}
-            />
+            <NotificationCenter showSettings={true} showFilters={true} maxNotifications={50} />
           );
-        
+
         case 'settings':
           return (
             <AccountSettings
@@ -189,7 +184,7 @@ export function StudentAccountDashboard({
               onRefresh={dashboard.actions.refreshBalance}
             />
           );
-        
+
         default:
           return null;
       }
@@ -207,12 +202,7 @@ export function StudentAccountDashboard({
                 Unable to load this section. Please try refreshing or switching tabs.
               </Text>
             </VStack>
-            <Button
-              action="secondary"
-              variant="outline"
-              size="sm"
-              onPress={handleRefreshAll}
-            >
+            <Button action="secondary" variant="outline" size="sm" onPress={handleRefreshAll}>
               <ButtonIcon as={RefreshCw} />
               <ButtonText>Refresh Dashboard</ButtonText>
             </Button>
@@ -225,152 +215,155 @@ export function StudentAccountDashboard({
   return (
     <BalanceAlertProvider enableMonitoring={true} pollingInterval={30000}>
       <SafeAreaView className={`flex-1 bg-background-50 ${className}`}>
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <VStack className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full" space="lg">
-          {/* Header */}
-          <VStack space="sm">
-            <HStack className="items-center justify-between">
-              <VStack space="xs" className="flex-1">
-                <Heading size="3xl" className="text-typography-900">
-                  Account Dashboard
-                </Heading>
-                <Text className="text-lg text-typography-600">
-                  Manage your tutoring hours and account settings
-                </Text>
-              </VStack>
-              
-              <HStack space="sm">
-                <Button
-                  action="secondary"
-                  variant="outline"
-                  size="md"
-                  onPress={handleRefreshAll}
-                  className="min-w-24"
-                >
-                  <ButtonIcon as={RefreshCw} />
-                  <ButtonText className="hidden sm:flex">Refresh</ButtonText>
-                </Button>
-                
-                <Button
-                  action="primary"
-                  variant="solid"
-                  size="md"
-                  onPress={handlePurchaseMore}
-                  className="min-w-32"
-                >
-                  <ButtonIcon as={Plus} />
-                  <ButtonText>Purchase Hours</ButtonText>
-                </Button>
-              </HStack>
-            </HStack>
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          <VStack className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full" space="lg">
+            {/* Header */}
+            <VStack space="sm">
+              <HStack className="items-center justify-between">
+                <VStack space="xs" className="flex-1">
+                  <Heading size="3xl" className="text-typography-900">
+                    Account Dashboard
+                  </Heading>
+                  <Text className="text-lg text-typography-600">
+                    Manage your tutoring hours and account settings
+                  </Text>
+                </VStack>
 
-            {/* Quick Stats Cards */}
-            {quickStats && (
-              <HStack space="md" className="flex-wrap lg:flex-nowrap">
-                <Card className="flex-1 min-w-36 sm:min-w-32 p-4">
-                  <VStack space="xs" className="items-center">
-                    <Text className="text-2xl font-bold text-primary-600">
-                      {quickStats.remainingHours.toFixed(1)}
-                    </Text>
-                    <Text className="text-xs text-typography-500 text-center">
-                      Hours Remaining
-                    </Text>
-                  </VStack>
-                </Card>
-                
-                <Card className="flex-1 min-w-36 sm:min-w-32 p-4">
-                  <VStack space="xs" className="items-center">
-                    <Text className="text-lg font-semibold text-typography-700">
-                      {quickStats.activePackages}
-                    </Text>
-                    <Text className="text-xs text-typography-500 text-center">
-                      Active Packages
-                    </Text>
-                  </VStack>
-                </Card>
-                
-                {quickStats.expiringSoon > 0 && (
-                  <Card className="flex-1 min-w-36 sm:min-w-32 p-4 border-warning-300">
+                <HStack space="sm">
+                  <Button
+                    action="secondary"
+                    variant="outline"
+                    size="md"
+                    onPress={handleRefreshAll}
+                    className="min-w-24"
+                  >
+                    <ButtonIcon as={RefreshCw} />
+                    <ButtonText className="hidden sm:flex">Refresh</ButtonText>
+                  </Button>
+
+                  <Button
+                    action="primary"
+                    variant="solid"
+                    size="md"
+                    onPress={handlePurchaseMore}
+                    className="min-w-32"
+                  >
+                    <ButtonIcon as={Plus} />
+                    <ButtonText>Purchase Hours</ButtonText>
+                  </Button>
+                </HStack>
+              </HStack>
+
+              {/* Quick Stats Cards */}
+              {quickStats && (
+                <HStack space="md" className="flex-wrap lg:flex-nowrap">
+                  <Card className="flex-1 min-w-36 sm:min-w-32 p-4">
                     <VStack space="xs" className="items-center">
-                      <HStack space="xs" className="items-center">
-                        <Icon as={AlertTriangle} size="sm" className="text-warning-600" />
-                        <Text className="text-lg font-semibold text-warning-700">
-                          {quickStats.expiringSoon}
-                        </Text>
-                      </HStack>
+                      <Text className="text-2xl font-bold text-primary-600">
+                        {quickStats.remainingHours.toFixed(1)}
+                      </Text>
                       <Text className="text-xs text-typography-500 text-center">
-                        Expiring Soon
+                        Hours Remaining
                       </Text>
                     </VStack>
                   </Card>
-                )}
-              </HStack>
-            )}
-          </VStack>
 
-          {/* Tab Navigation */}
-          <Card className="p-1">
-            <HStack space="xs" className="flex-wrap lg:flex-nowrap">
-              {DASHBOARD_TABS.map((tab) => {
-                const isActive = dashboard.state.activeTab === tab.id;
-                
-                return (
-                  <Pressable
-                    key={tab.id}
-                    className={`flex-1 min-w-20 sm:min-w-24 p-3 rounded-md transition-colors ${
-                      isActive 
-                        ? 'bg-primary-600' 
-                        : `bg-transparent ${Platform.OS === 'web' ? 'hover:bg-background-100' : ''} active:bg-background-200`
-                    }`}
-                    onPress={() => dashboard.actions.setActiveTab(tab.id)}
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: isActive }}
-                    accessibilityLabel={`${tab.label} - ${tab.description}`}
-                  >
+                  <Card className="flex-1 min-w-36 sm:min-w-32 p-4">
                     <VStack space="xs" className="items-center">
-                      <Icon 
-                        as={tab.icon} 
-                        size="sm" 
-                        className={isActive ? 'text-white' : 'text-typography-600'} 
-                      />
-                      <Text 
-                        className={`text-xs font-medium text-center ${
-                          isActive ? 'text-white' : 'text-typography-700'
-                        }`}
-                        numberOfLines={1}
-                      >
-                        {tab.label}
+                      <Text className="text-lg font-semibold text-typography-700">
+                        {quickStats.activePackages}
+                      </Text>
+                      <Text className="text-xs text-typography-500 text-center">
+                        Active Packages
                       </Text>
                     </VStack>
-                  </Pressable>
-                );
-              })}
-            </HStack>
-          </Card>
+                  </Card>
 
-          {/* Search Bar (shown for transactions and purchases tabs) */}
-          {(dashboard.state.activeTab === 'transactions' || dashboard.state.activeTab === 'purchases') && (
-            <Card className="p-4">
-              <Input className="w-full">
-                <InputSlot className="pl-3">
-                  <InputIcon as={Search} className="text-typography-400" />
-                </InputSlot>
-                <InputField
-                  placeholder={`Search ${dashboard.state.activeTab}...`}
-                  value={dashboard.state.searchQuery}
-                  onChangeText={dashboard.actions.setSearchQuery}
-                  className="pl-10"
-                />
-              </Input>
+                  {quickStats.expiringSoon > 0 && (
+                    <Card className="flex-1 min-w-36 sm:min-w-32 p-4 border-warning-300">
+                      <VStack space="xs" className="items-center">
+                        <HStack space="xs" className="items-center">
+                          <Icon as={AlertTriangle} size="sm" className="text-warning-600" />
+                          <Text className="text-lg font-semibold text-warning-700">
+                            {quickStats.expiringSoon}
+                          </Text>
+                        </HStack>
+                        <Text className="text-xs text-typography-500 text-center">
+                          Expiring Soon
+                        </Text>
+                      </VStack>
+                    </Card>
+                  )}
+                </HStack>
+              )}
+            </VStack>
+
+            {/* Tab Navigation */}
+            <Card className="p-1">
+              <HStack space="xs" className="flex-wrap lg:flex-nowrap">
+                {DASHBOARD_TABS.map(tab => {
+                  const isActive = dashboard.state.activeTab === tab.id;
+
+                  return (
+                    <Pressable
+                      key={tab.id}
+                      className={`flex-1 min-w-20 sm:min-w-24 p-3 rounded-md transition-colors ${
+                        isActive
+                          ? 'bg-primary-600'
+                          : `bg-transparent ${
+                              Platform.OS === 'web' ? 'hover:bg-background-100' : ''
+                            } active:bg-background-200`
+                      }`}
+                      onPress={() => dashboard.actions.setActiveTab(tab.id)}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: isActive }}
+                      accessibilityLabel={`${tab.label} - ${tab.description}`}
+                    >
+                      <VStack space="xs" className="items-center">
+                        <Icon
+                          as={tab.icon}
+                          size="sm"
+                          className={isActive ? 'text-white' : 'text-typography-600'}
+                        />
+                        <Text
+                          className={`text-xs font-medium text-center ${
+                            isActive ? 'text-white' : 'text-typography-700'
+                          }`}
+                          numberOfLines={1}
+                        >
+                          {tab.label}
+                        </Text>
+                      </VStack>
+                    </Pressable>
+                  );
+                })}
+              </HStack>
             </Card>
-          )}
 
-          {/* Tab Content */}
-          <VStack className="flex-1" space="lg">
-            {renderTabContent()}
+            {/* Search Bar (shown for transactions and purchases tabs) */}
+            {(dashboard.state.activeTab === 'transactions' ||
+              dashboard.state.activeTab === 'purchases') && (
+              <Card className="p-4">
+                <Input className="w-full">
+                  <InputSlot className="pl-3">
+                    <InputIcon as={Search} className="text-typography-400" />
+                  </InputSlot>
+                  <InputField
+                    placeholder={`Search ${dashboard.state.activeTab}...`}
+                    value={dashboard.state.searchQuery}
+                    onChangeText={dashboard.actions.setSearchQuery}
+                    className="pl-10"
+                  />
+                </Input>
+              </Card>
+            )}
+
+            {/* Tab Content */}
+            <VStack className="flex-1" space="lg">
+              {renderTabContent()}
+            </VStack>
           </VStack>
-        </VStack>
-      </ScrollView>
+        </ScrollView>
       </SafeAreaView>
     </BalanceAlertProvider>
   );

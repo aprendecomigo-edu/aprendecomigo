@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
-import { 
-  getTeacherDashboard, 
-  TeacherDashboardData, 
+
+import {
+  getTeacherDashboard,
+  TeacherDashboardData,
   StudentProgress,
   getStudentProgress,
-  getStudentDetail
+  getStudentDetail,
 } from '@/api/teacherApi';
 
 export interface UseTeacherDashboardResult {
@@ -25,7 +26,7 @@ export const useTeacherDashboard = (): UseTeacherDashboardResult => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const dashboardData = await getTeacherDashboard();
       setData(dashboardData);
       setLastUpdated(new Date());
@@ -50,7 +51,7 @@ export const useTeacherDashboard = (): UseTeacherDashboardResult => {
     isLoading,
     error,
     refresh,
-    lastUpdated
+    lastUpdated,
   };
 };
 
@@ -78,7 +79,7 @@ export const useTeacherStudents = (): UseTeacherStudentsResult => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const studentsData = await getStudentProgress();
       setStudents(studentsData);
     } catch (err: any) {
@@ -93,9 +94,12 @@ export const useTeacherStudents = (): UseTeacherStudentsResult => {
     await loadStudents();
   }, [loadStudents]);
 
-  const getStudentById = useCallback((id: number) => {
-    return students.find(student => student.id === id);
-  }, [students]);
+  const getStudentById = useCallback(
+    (id: number) => {
+      return students.find(student => student.id === id);
+    },
+    [students]
+  );
 
   // Filter students based on search query and filter criteria
   const filteredStudents = useCallback(() => {
@@ -104,25 +108,27 @@ export const useTeacherStudents = (): UseTeacherStudentsResult => {
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(student => 
-        student.name.toLowerCase().includes(query) ||
-        student.email.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        student =>
+          student.name.toLowerCase().includes(query) || student.email.toLowerCase().includes(query)
       );
     }
 
     // Apply category filter
     switch (filterBy) {
       case 'active':
-        filtered = filtered.filter(student => 
-          student.last_session_date && 
-          new Date(student.last_session_date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+        filtered = filtered.filter(
+          student =>
+            student.last_session_date &&
+            new Date(student.last_session_date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
         );
         break;
       case 'needs_attention':
-        filtered = filtered.filter(student => 
-          student.completion_percentage < 50 || 
-          !student.last_session_date ||
-          new Date(student.last_session_date) < new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) // More than 14 days ago
+        filtered = filtered.filter(
+          student =>
+            student.completion_percentage < 50 ||
+            !student.last_session_date ||
+            new Date(student.last_session_date) < new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) // More than 14 days ago
         );
         break;
       case 'all':
@@ -148,7 +154,7 @@ export const useTeacherStudents = (): UseTeacherStudentsResult => {
     setSearchQuery,
     setFilterBy,
     refresh,
-    getStudentById
+    getStudentById,
   };
 };
 
@@ -166,16 +172,18 @@ export const useStudentDetail = (studentId: number): UseStudentDetailResult => {
 
   const loadStudent = useCallback(async () => {
     if (!studentId) return;
-    
+
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const studentData = await getStudentDetail(studentId);
       setStudent(studentData);
     } catch (err: any) {
       console.error('Failed to load student detail:', err);
-      setError(err?.response?.data?.detail || err?.message || 'Erro ao carregar detalhes do estudante');
+      setError(
+        err?.response?.data?.detail || err?.message || 'Erro ao carregar detalhes do estudante'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -193,6 +201,6 @@ export const useStudentDetail = (studentId: number): UseStudentDetailResult => {
     student,
     isLoading,
     error,
-    refresh
+    refresh,
   };
 };

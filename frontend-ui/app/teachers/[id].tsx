@@ -1,40 +1,42 @@
-import React, { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { 
-  ArrowLeft, 
-  Edit3, 
-  MessageCircle, 
-  Calendar, 
-  MapPin, 
-  Phone, 
-  Mail, 
+import {
+  ArrowLeft,
+  Edit3,
+  MessageCircle,
+  Calendar,
+  MapPin,
+  Phone,
+  Mail,
   GraduationCap,
   Clock,
   BookOpen,
   AlertTriangle,
   CheckCircle,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react-native';
+import React, { useState } from 'react';
 
 import { MainLayout } from '@/components/layouts/main-layout';
+import { AdminEditTeacherModal } from '@/components/modals/admin-edit-teacher-modal';
+import { AdminTeacherProfileHeader } from '@/components/teachers/admin-teacher-profile-header';
+import {
+  ProfileCompletionIndicator,
+  CircularProgress,
+} from '@/components/teachers/profile-completion-indicator';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
+import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import { Button, ButtonText } from '@/components/ui/button';
 import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
-import { Heading } from '@/components/ui/heading';
 import { Spinner } from '@/components/ui/spinner';
-import { Badge } from '@/components/ui/badge';
-import { Divider } from '@/components/ui/divider';
-import { Card } from '@/components/ui/card';
-import { Avatar } from '@/components/ui/avatar';
-
-import { ProfileCompletionIndicator, CircularProgress } from '@/components/teachers/profile-completion-indicator';
-import { AdminTeacherProfileHeader } from '@/components/teachers/admin-teacher-profile-header';
-import { AdminEditTeacherModal } from '@/components/modals/admin-edit-teacher-modal';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 import { useTeacherProfile } from '@/hooks/useTeacherProfile';
 
 // Color constants
@@ -64,14 +66,17 @@ interface InfoItemProps {
   emptyMessage?: string;
 }
 
-const InfoItem: React.FC<InfoItemProps> = ({ icon, label, value, emptyMessage = 'Não informado' }) => (
+const InfoItem: React.FC<InfoItemProps> = ({
+  icon,
+  label,
+  value,
+  emptyMessage = 'Não informado',
+}) => (
   <HStack space="sm" className="items-start">
     <Icon as={icon} size="sm" className="text-gray-500 mt-1" />
     <VStack className="flex-1">
       <Text className="text-sm font-medium text-gray-700">{label}</Text>
-      <Text className="text-sm text-gray-600">
-        {value || emptyMessage}
-      </Text>
+      <Text className="text-sm text-gray-600">{value || emptyMessage}</Text>
     </VStack>
   </HStack>
 );
@@ -105,9 +110,9 @@ export default function TeacherProfilePage() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const teacherId = parseInt(id as string);
-  
+
   const [showEditModal, setShowEditModal] = useState(false);
-  
+
   const {
     profile,
     loading,
@@ -120,10 +125,10 @@ export default function TeacherProfilePage() {
     isActive,
     hasCalendarIntegration,
     hasContactInfo,
-    refresh
-  } = useTeacherProfile({ 
-    teacherId, 
-    autoFetch: true 
+    refresh,
+  } = useTeacherProfile({
+    teacherId,
+    autoFetch: true,
   });
 
   const handleEditSuccess = (updatedTeacher: any) => {
@@ -145,7 +150,10 @@ export default function TeacherProfilePage() {
   if (loading) {
     return (
       <MainLayout>
-        <Box className="flex-1 justify-center items-center" style={{ backgroundColor: COLORS.gray[50] }}>
+        <Box
+          className="flex-1 justify-center items-center"
+          style={{ backgroundColor: COLORS.gray[50] }}
+        >
           <VStack className="items-center" space="md">
             <Spinner size="large" />
             <Text className="text-gray-500">Carregando perfil do professor...</Text>
@@ -158,7 +166,10 @@ export default function TeacherProfilePage() {
   if (error || !profile) {
     return (
       <MainLayout>
-        <Box className="flex-1 justify-center items-center p-6" style={{ backgroundColor: COLORS.gray[50] }}>
+        <Box
+          className="flex-1 justify-center items-center p-6"
+          style={{ backgroundColor: COLORS.gray[50] }}
+        >
           <VStack className="items-center max-w-sm" space="lg">
             <Icon as={AlertTriangle} size="xl" className="text-red-500" />
             <VStack className="items-center" space="sm">
@@ -186,8 +197,8 @@ export default function TeacherProfilePage() {
 
   return (
     <MainLayout>
-      <ScrollView 
-        className="flex-1" 
+      <ScrollView
+        className="flex-1"
         style={{ backgroundColor: COLORS.gray[50] }}
         showsVerticalScrollIndicator={false}
       >
@@ -202,12 +213,10 @@ export default function TeacherProfilePage() {
                 <Heading size="lg" className="text-gray-900">
                   Perfil do Professor
                 </Heading>
-                <Text className="text-sm text-gray-500">
-                  Visualização administrativa
-                </Text>
+                <Text className="text-sm text-gray-500">Visualização administrativa</Text>
               </VStack>
             </HStack>
-            
+
             <HStack space="sm">
               <Button
                 variant="outline"
@@ -220,7 +229,7 @@ export default function TeacherProfilePage() {
                 <Icon as={MessageCircle} size="sm" className="text-gray-600" />
                 <ButtonText className="text-gray-600 ml-2">Mensagem</ButtonText>
               </Button>
-              
+
               <Button
                 size="sm"
                 onPress={() => setShowEditModal(true)}
@@ -250,7 +259,7 @@ export default function TeacherProfilePage() {
               <Heading size="md" className="text-gray-900">
                 Status do Perfil
               </Heading>
-              
+
               <ProfileCompletionIndicator
                 completionPercentage={completionPercentage}
                 isComplete={profile.is_profile_complete || false}
@@ -270,14 +279,14 @@ export default function TeacherProfilePage() {
                   </Text>
                   {recommendations.slice(0, 3).map((rec, index) => (
                     <HStack key={index} space="xs" className="items-start">
-                      <Icon 
-                        as={rec.priority === 'high' ? AlertTriangle : TrendingUp} 
-                        size="xs" 
-                        className={rec.priority === 'high' ? 'text-red-500 mt-1' : 'text-blue-500 mt-1'} 
+                      <Icon
+                        as={rec.priority === 'high' ? AlertTriangle : TrendingUp}
+                        size="xs"
+                        className={
+                          rec.priority === 'high' ? 'text-red-500 mt-1' : 'text-blue-500 mt-1'
+                        }
                       />
-                      <Text className="text-sm text-gray-600 flex-1">
-                        {rec.text}
-                      </Text>
+                      <Text className="text-sm text-gray-600 flex-1">{rec.text}</Text>
                     </HStack>
                   ))}
                 </VStack>
@@ -291,26 +300,14 @@ export default function TeacherProfilePage() {
               <Heading size="md" className="text-gray-900">
                 Informações de Contato
               </Heading>
-              
+
               <VStack space="md">
-                <InfoItem
-                  icon={Mail}
-                  label="Email"
-                  value={profile.user.email}
-                />
-                
-                <InfoItem
-                  icon={Phone}
-                  label="Telefone"
-                  value={profile.phone_number}
-                />
-                
-                <InfoItem
-                  icon={MapPin}
-                  label="Endereço"
-                  value={profile.address}
-                />
-                
+                <InfoItem icon={Mail} label="Email" value={profile.user.email} />
+
+                <InfoItem icon={Phone} label="Telefone" value={profile.phone_number} />
+
+                <InfoItem icon={MapPin} label="Endereço" value={profile.address} />
+
                 <InfoItem
                   icon={Calendar}
                   label="Calendário"
@@ -327,19 +324,11 @@ export default function TeacherProfilePage() {
               <Heading size="md" className="text-gray-900">
                 Informações de Ensino
               </Heading>
-              
+
               <VStack space="md">
-                <InfoItem
-                  icon={GraduationCap}
-                  label="Formação"
-                  value={profile.education}
-                />
-                
-                <InfoItem
-                  icon={Clock}
-                  label="Disponibilidade"
-                  value={profile.availability}
-                />
+                <InfoItem icon={GraduationCap} label="Formação" value={profile.education} />
+
+                <InfoItem icon={Clock} label="Disponibilidade" value={profile.availability} />
 
                 {/* Courses */}
                 <VStack space="sm">
@@ -353,7 +342,7 @@ export default function TeacherProfilePage() {
                       </Badge>
                     )}
                   </HStack>
-                  
+
                   {activeCourses.length > 0 && (
                     <VStack space="sm">
                       {activeCourses.map(course => (
@@ -372,26 +361,38 @@ export default function TeacherProfilePage() {
               <Heading size="md" className="text-gray-900">
                 Atividade Recente
               </Heading>
-              
+
               <VStack space="sm">
                 <InfoItem
                   icon={Clock}
                   label="Última atividade"
-                  value={profile.last_activity ? new Date(profile.last_activity).toLocaleDateString('pt-BR') : ''}
+                  value={
+                    profile.last_activity
+                      ? new Date(profile.last_activity).toLocaleDateString('pt-BR')
+                      : ''
+                  }
                   emptyMessage="Nunca"
                 />
-                
+
                 <InfoItem
                   icon={Edit3}
                   label="Perfil atualizado"
-                  value={profile.last_profile_update ? new Date(profile.last_profile_update).toLocaleDateString('pt-BR') : ''}
+                  value={
+                    profile.last_profile_update
+                      ? new Date(profile.last_profile_update).toLocaleDateString('pt-BR')
+                      : ''
+                  }
                   emptyMessage="Nunca"
                 />
-                
+
                 <InfoItem
                   icon={BookOpen}
                   label="Criado em"
-                  value={profile.created_at ? new Date(profile.created_at).toLocaleDateString('pt-BR') : ''}
+                  value={
+                    profile.created_at
+                      ? new Date(profile.created_at).toLocaleDateString('pt-BR')
+                      : ''
+                  }
                 />
               </VStack>
             </VStack>

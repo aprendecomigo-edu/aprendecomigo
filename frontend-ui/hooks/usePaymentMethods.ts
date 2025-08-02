@@ -1,32 +1,38 @@
 /**
  * Custom hook for managing payment method data and operations.
- * 
+ *
  * Provides state management for payment method listing, adding, removing,
  * and setting default payment methods.
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { PaymentMethodApiClient, type PaymentMethod, type AddPaymentMethodRequest, type AddPaymentMethodResponse } from '@/api/paymentMethodApi';
+
+import {
+  PaymentMethodApiClient,
+  type PaymentMethod,
+  type AddPaymentMethodRequest,
+  type AddPaymentMethodResponse,
+} from '@/api/paymentMethodApi';
 
 interface UsePaymentMethodsResult {
   // Data state
   paymentMethods: PaymentMethod[];
   loading: boolean;
   error: string | null;
-  
+
   // Operation states
   adding: boolean;
   removing: boolean;
   settingDefault: boolean;
   operationError: string | null;
-  
+
   // Actions
   refreshPaymentMethods: () => Promise<void>;
   addPaymentMethod: (request: AddPaymentMethodRequest) => Promise<AddPaymentMethodResponse | null>;
   removePaymentMethod: (paymentMethodId: string) => Promise<void>;
   setDefaultPaymentMethod: (paymentMethodId: string) => Promise<void>;
   clearErrors: () => void;
-  
+
   // Computed values
   defaultPaymentMethod: PaymentMethod | null;
   hasPaymentMethods: boolean;
@@ -65,63 +71,72 @@ export function usePaymentMethods(email?: string): UsePaymentMethodsResult {
   }, [email]);
 
   // Add new payment method
-  const addPaymentMethod = useCallback(async (request: AddPaymentMethodRequest): Promise<AddPaymentMethodResponse | null> => {
-    setAdding(true);
-    setOperationError(null);
+  const addPaymentMethod = useCallback(
+    async (request: AddPaymentMethodRequest): Promise<AddPaymentMethodResponse | null> => {
+      setAdding(true);
+      setOperationError(null);
 
-    try {
-      const result = await PaymentMethodApiClient.addPaymentMethod(request, email);
-      
-      // Refresh payment methods to get the updated list
-      await refreshPaymentMethods();
-      
-      return result;
-    } catch (error: any) {
-      console.error('Error adding payment method:', error);
-      setOperationError(error.message || 'Failed to add payment method');
-      return null;
-    } finally {
-      setAdding(false);
-    }
-  }, [email, refreshPaymentMethods]);
+      try {
+        const result = await PaymentMethodApiClient.addPaymentMethod(request, email);
+
+        // Refresh payment methods to get the updated list
+        await refreshPaymentMethods();
+
+        return result;
+      } catch (error: any) {
+        console.error('Error adding payment method:', error);
+        setOperationError(error.message || 'Failed to add payment method');
+        return null;
+      } finally {
+        setAdding(false);
+      }
+    },
+    [email, refreshPaymentMethods]
+  );
 
   // Remove payment method
-  const removePaymentMethod = useCallback(async (paymentMethodId: string): Promise<void> => {
-    setRemoving(true);
-    setOperationError(null);
+  const removePaymentMethod = useCallback(
+    async (paymentMethodId: string): Promise<void> => {
+      setRemoving(true);
+      setOperationError(null);
 
-    try {
-      await PaymentMethodApiClient.removePaymentMethod(paymentMethodId, email);
-      
-      // Refresh payment methods to get the updated list
-      await refreshPaymentMethods();
-    } catch (error: any) {
-      console.error('Error removing payment method:', error);
-      setOperationError(error.message || 'Failed to remove payment method');
-      throw error; // Re-throw to allow component to handle
-    } finally {
-      setRemoving(false);
-    }
-  }, [email, refreshPaymentMethods]);
+      try {
+        await PaymentMethodApiClient.removePaymentMethod(paymentMethodId, email);
+
+        // Refresh payment methods to get the updated list
+        await refreshPaymentMethods();
+      } catch (error: any) {
+        console.error('Error removing payment method:', error);
+        setOperationError(error.message || 'Failed to remove payment method');
+        throw error; // Re-throw to allow component to handle
+      } finally {
+        setRemoving(false);
+      }
+    },
+    [email, refreshPaymentMethods]
+  );
 
   // Set default payment method
-  const setDefaultPaymentMethod = useCallback(async (paymentMethodId: string): Promise<void> => {
-    setSettingDefault(true);
-    setOperationError(null);
+  const setDefaultPaymentMethod = useCallback(
+    async (paymentMethodId: string): Promise<void> => {
+      setSettingDefault(true);
+      setOperationError(null);
 
-    try {
-      await PaymentMethodApiClient.setDefaultPaymentMethod(paymentMethodId, email);
-      
-      // Refresh payment methods to get the updated default status
-      await refreshPaymentMethods();
-    } catch (error: any) {
-      console.error('Error setting default payment method:', error);
-      setOperationError(error.message || 'Failed to set default payment method');
-      throw error; // Re-throw to allow component to handle
-    } finally {
-      setSettingDefault(false);
-    }
-  }, [email, refreshPaymentMethods]);
+      try {
+        await PaymentMethodApiClient.setDefaultPaymentMethod(paymentMethodId, email);
+
+        // Refresh payment methods to get the updated default status
+        await refreshPaymentMethods();
+      } catch (error: any) {
+        console.error('Error setting default payment method:', error);
+        setOperationError(error.message || 'Failed to set default payment method');
+        throw error; // Re-throw to allow component to handle
+      } finally {
+        setSettingDefault(false);
+      }
+    },
+    [email, refreshPaymentMethods]
+  );
 
   // Clear all errors
   const clearErrors = useCallback(() => {

@@ -2,15 +2,20 @@ import { router, useSegments } from 'expo-router';
 import type { Href } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 
-import { sidebarNavItems, getNavigationItems, NAVIGATION_COLORS, type SidebarItem } from './navigation-config';
+import {
+  sidebarNavItems,
+  getNavigationItems,
+  NAVIGATION_COLORS,
+  type SidebarItem,
+} from './navigation-config';
 
 import { useAuth } from '@/api/authContext';
 import { navigationApi } from '@/api/navigationApi';
 import { Box } from '@/components/ui/box';
 import { Icon } from '@/components/ui/icon';
+import { NotificationBadge, NotificationDot } from '@/components/ui/notification-badge';
 import { Pressable } from '@/components/ui/pressable';
 import { VStack } from '@/components/ui/vstack';
-import { NotificationBadge, NotificationDot } from '@/components/ui/notification-badge';
 
 interface SideNavigationProps {
   className?: string;
@@ -57,16 +62,16 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
       try {
         const response = await navigationApi.getNotificationCounts();
         const counts: Record<string, number> = {};
-        
+
         // Map backend response fields to navigation items
         counts['invitations'] = response.pending_invitations;
         counts['dashboard'] = response.overdue_tasks;
         counts['students'] = response.new_registrations;
         counts['teachers'] = response.incomplete_profiles;
-        
+
         // Calculate total for overall notification badge
         counts['total'] = response.total_unread;
-        
+
         setNotificationCounts(counts);
       } catch (error) {
         console.error('Failed to load notification counts:', error);
@@ -74,7 +79,7 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
     };
 
     loadNotificationCounts();
-    
+
     // Poll for updates every 30 seconds
     const interval = setInterval(loadNotificationCounts, 30000);
     return () => clearInterval(interval);
@@ -100,7 +105,7 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
         {navItems.map((item, index) => {
           const isSelected = index === selectedIndex;
           const notificationCount = notificationCounts[item.id] || 0;
-          
+
           return (
             <Box key={item.id} className="relative">
               <Pressable
@@ -111,7 +116,7 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
               >
                 <Icon as={item.icon} size="lg" className="text-white" />
               </Pressable>
-              
+
               {/* Notification Badge */}
               {notificationCount > 0 && (
                 <NotificationBadge
@@ -121,7 +126,7 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
                   className="absolute -top-1 -right-1"
                 />
               )}
-              
+
               {/* Badge for special states */}
               {item.badge && (
                 <Box className="absolute -top-1 -right-1">

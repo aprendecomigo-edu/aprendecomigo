@@ -1,6 +1,6 @@
 /**
  * Parent API Client
- * 
+ *
  * API client functions for parent-specific operations including
  * child account management, family metrics, and purchase approvals.
  */
@@ -99,7 +99,9 @@ export const getParentProfile = async (): Promise<ParentProfile> => {
   return response.data;
 };
 
-export const updateParentProfile = async (profileData: Partial<ParentProfile>): Promise<ParentProfile> => {
+export const updateParentProfile = async (
+  profileData: Partial<ParentProfile>
+): Promise<ParentProfile> => {
   const response = await apiClient.patch('/accounts/parent-profiles/me/', profileData);
   return response.data;
 };
@@ -152,7 +154,7 @@ export const createBudgetControl = async (budgetData: {
 };
 
 export const updateBudgetControl = async (
-  budgetId: string, 
+  budgetId: string,
   budgetData: Partial<FamilyBudgetControl>
 ): Promise<FamilyBudgetControl> => {
   const response = await apiClient.patch(`/finances/budget-controls/${budgetId}/`, budgetData);
@@ -198,7 +200,9 @@ export const getParentApprovalDashboard = async (): Promise<ParentApprovalDashbo
   return response.data;
 };
 
-export const getFamilyMetrics = async (timeframe?: 'week' | 'month' | 'quarter'): Promise<FamilyMetrics> => {
+export const getFamilyMetrics = async (
+  timeframe?: 'week' | 'month' | 'quarter'
+): Promise<FamilyMetrics> => {
   const params = timeframe ? { timeframe } : {};
   const response = await apiClient.get('/finances/family-metrics/', { params });
   return response.data;
@@ -210,20 +214,32 @@ export const getChildAccountBalance = async (childId: string) => {
   return response.data;
 };
 
-export const getChildTransactionHistory = async (childId: string, params?: {
-  page?: number;
-  limit?: number;
-  transaction_type?: string;
-}) => {
-  const response = await apiClient.get(`/finances/student-balance/transaction-history/?student_id=${childId}`, { params });
+export const getChildTransactionHistory = async (
+  childId: string,
+  params?: {
+    page?: number;
+    limit?: number;
+    transaction_type?: string;
+  }
+) => {
+  const response = await apiClient.get(
+    `/finances/student-balance/transaction-history/?student_id=${childId}`,
+    { params }
+  );
   return response.data;
 };
 
-export const getChildPurchaseHistory = async (childId: string, params?: {
-  page?: number;
-  limit?: number;
-}) => {
-  const response = await apiClient.get(`/finances/student-balance/purchase-history/?student_id=${childId}`, { params });
+export const getChildPurchaseHistory = async (
+  childId: string,
+  params?: {
+    page?: number;
+    limit?: number;
+  }
+) => {
+  const response = await apiClient.get(
+    `/finances/student-balance/purchase-history/?student_id=${childId}`,
+    { params }
+  );
   return response.data;
 };
 

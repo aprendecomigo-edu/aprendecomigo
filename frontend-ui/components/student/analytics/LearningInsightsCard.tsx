@@ -1,16 +1,15 @@
 /**
  * Learning Insights Card Component
- * 
+ *
  * Displays personalized learning insights based on session data
  * with achievements, suggestions, milestones, and warnings.
  */
 
-import React, { useState } from 'react';
-import { 
-  Lightbulb, 
-  Trophy, 
-  Flag, 
-  AlertTriangle, 
+import {
+  Lightbulb,
+  Trophy,
+  Flag,
+  AlertTriangle,
   Star,
   TrendingUp,
   BookOpen,
@@ -19,9 +18,11 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
-  X
+  X,
 } from 'lucide-react-native';
+import React, { useState } from 'react';
 
+import type { LearningInsight } from '@/api/analyticsApi';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -33,7 +34,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import type { LearningInsight } from '@/api/analyticsApi';
 
 interface LearningInsightsCardProps {
   insights: LearningInsight[];
@@ -91,11 +91,11 @@ function getInsightTypeInfo(type: LearningInsight['type']) {
 /**
  * Individual insight item component
  */
-function InsightItem({ 
-  insight, 
-  onMarkRead 
-}: { 
-  insight: LearningInsight; 
+function InsightItem({
+  insight,
+  onMarkRead,
+}: {
+  insight: LearningInsight;
   onMarkRead: (id: string) => void;
 }) {
   const typeInfo = getInsightTypeInfo(insight.type);
@@ -108,7 +108,11 @@ function InsightItem({
   };
 
   return (
-    <Card className={`p-4 ${typeInfo.bgColor} ${typeInfo.borderColor} ${!insight.is_read ? 'ring-2 ring-primary-200' : ''}`}>
+    <Card
+      className={`p-4 ${typeInfo.bgColor} ${typeInfo.borderColor} ${
+        !insight.is_read ? 'ring-2 ring-primary-200' : ''
+      }`}
+    >
       <VStack space="sm">
         {/* Header */}
         <HStack className="items-start justify-between">
@@ -116,39 +120,33 @@ function InsightItem({
             <Icon as={typeInfo.icon} size="sm" className={typeInfo.iconColor} />
             <VStack space="xs" className="flex-1">
               <HStack space="xs" className="items-center flex-wrap">
-                <Text className={`font-medium ${typeInfo.titleColor}`}>
-                  {insight.title}
-                </Text>
+                <Text className={`font-medium ${typeInfo.titleColor}`}>{insight.title}</Text>
                 {!insight.is_read && (
                   <Badge variant="solid" action="primary" size="xs">
                     <Text className="text-xs">New</Text>
                   </Badge>
                 )}
               </HStack>
-              
+
               {/* Show truncated description if not expanded */}
               <Text className="text-sm text-typography-700">
-                {isExpanded 
-                  ? insight.description 
-                  : insight.description.length > 100 
-                    ? `${insight.description.substring(0, 100)}...`
-                    : insight.description
-                }
+                {isExpanded
+                  ? insight.description
+                  : insight.description.length > 100
+                  ? `${insight.description.substring(0, 100)}...`
+                  : insight.description}
               </Text>
-              
+
               {/* Expand/Collapse button for long descriptions */}
               {insight.description.length > 100 && (
-                <Pressable
-                  onPress={() => setIsExpanded(!isExpanded)}
-                  className="self-start"
-                >
+                <Pressable onPress={() => setIsExpanded(!isExpanded)} className="self-start">
                   <HStack space="xs" className="items-center">
                     <Text className="text-xs text-primary-600 font-medium">
                       {isExpanded ? 'Show less' : 'Show more'}
                     </Text>
-                    <Icon 
-                      as={isExpanded ? ChevronUp : ChevronDown} 
-                      size="xs" 
+                    <Icon
+                      as={isExpanded ? ChevronUp : ChevronDown}
+                      size="xs"
                       className="text-primary-600"
                     />
                   </HStack>
@@ -178,17 +176,21 @@ function InsightItem({
               minute: '2-digit',
             })}
           </Text>
-          
-          <Badge 
-            variant="outline" 
-            action={insight.type === 'achievement' ? 'success' : 
-                   insight.type === 'milestone' ? 'primary' :
-                   insight.type === 'warning' ? 'error' : 'secondary'} 
+
+          <Badge
+            variant="outline"
+            action={
+              insight.type === 'achievement'
+                ? 'success'
+                : insight.type === 'milestone'
+                ? 'primary'
+                : insight.type === 'warning'
+                ? 'error'
+                : 'secondary'
+            }
             size="xs"
           >
-            <Text className="text-xs capitalize">
-              {insight.type}
-            </Text>
+            <Text className="text-xs capitalize">{insight.type}</Text>
           </Badge>
         </HStack>
       </VStack>
@@ -199,10 +201,7 @@ function InsightItem({
 /**
  * Learning Insights Card Component
  */
-export function LearningInsightsCard({ 
-  insights, 
-  onRefresh 
-}: LearningInsightsCardProps) {
+export function LearningInsightsCard({ insights, onRefresh }: LearningInsightsCardProps) {
   const { markInsightAsRead, insightsLoading, unreadInsights } = useAnalytics();
   const [showAll, setShowAll] = useState(false);
 
@@ -254,9 +253,7 @@ export function LearningInsightsCard({
           <VStack space="md" className="items-center py-8">
             <Icon as={Lightbulb} size="xl" className="text-typography-300" />
             <VStack space="xs" className="items-center">
-              <Text className="font-medium text-typography-600">
-                No Insights Yet
-              </Text>
+              <Text className="font-medium text-typography-600">No Insights Yet</Text>
               <Text className="text-sm text-typography-500 text-center max-w-sm">
                 Keep attending sessions to unlock personalized learning insights and recommendations
               </Text>
@@ -280,9 +277,7 @@ export function LearningInsightsCard({
               </Heading>
               {unreadInsights.length > 0 && (
                 <Badge variant="solid" action="primary" size="sm">
-                  <Text className="text-xs">
-                    {unreadInsights.length} new
-                  </Text>
+                  <Text className="text-xs">{unreadInsights.length} new</Text>
                 </Badge>
               )}
             </HStack>
@@ -314,12 +309,8 @@ export function LearningInsightsCard({
 
         {/* Insights List */}
         <VStack space="md">
-          {visibleInsights.map((insight) => (
-            <InsightItem
-              key={insight.id}
-              insight={insight}
-              onMarkRead={handleMarkRead}
-            />
+          {visibleInsights.map(insight => (
+            <InsightItem key={insight.id} insight={insight} onMarkRead={handleMarkRead} />
           ))}
 
           {/* Show More/Less Button */}
@@ -332,9 +323,7 @@ export function LearningInsightsCard({
               className="self-center"
             >
               <ButtonIcon as={showAll ? ChevronUp : ChevronDown} />
-              <ButtonText>
-                {showAll ? 'Show Less' : `Show ${insights.length - 3} More`}
-              </ButtonText>
+              <ButtonText>{showAll ? 'Show Less' : `Show ${insights.length - 3} More`}</ButtonText>
             </Button>
           )}
         </VStack>
@@ -345,37 +334,29 @@ export function LearningInsightsCard({
             <Text className="text-lg font-bold text-success-600">
               {insights.filter(i => i.type === 'achievement').length}
             </Text>
-            <Text className="text-xs text-typography-600">
-              Achievements
-            </Text>
+            <Text className="text-xs text-typography-600">Achievements</Text>
           </VStack>
-          
+
           <VStack space="0" className="items-center">
             <Text className="text-lg font-bold text-primary-600">
               {insights.filter(i => i.type === 'milestone').length}
             </Text>
-            <Text className="text-xs text-typography-600">
-              Milestones
-            </Text>
+            <Text className="text-xs text-typography-600">Milestones</Text>
           </VStack>
-          
+
           <VStack space="0" className="items-center">
             <Text className="text-lg font-bold text-warning-600">
               {insights.filter(i => i.type === 'suggestion').length}
             </Text>
-            <Text className="text-xs text-typography-600">
-              Suggestions
-            </Text>
+            <Text className="text-xs text-typography-600">Suggestions</Text>
           </VStack>
-          
+
           {insights.filter(i => i.type === 'warning').length > 0 && (
             <VStack space="0" className="items-center">
               <Text className="text-lg font-bold text-error-600">
                 {insights.filter(i => i.type === 'warning').length}
               </Text>
-              <Text className="text-xs text-typography-600">
-                Warnings
-              </Text>
+              <Text className="text-xs text-typography-600">Warnings</Text>
             </VStack>
           )}
         </HStack>

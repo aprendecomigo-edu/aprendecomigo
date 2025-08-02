@@ -1,21 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { Animated, Dimensions } from 'react-native';
 import useRouter from '@unitools/router';
-import { 
-  CheckCircle, 
-  Star, 
-  Users, 
-  BookOpen, 
-  DollarSign, 
+import {
+  CheckCircle,
+  Star,
+  Users,
+  BookOpen,
+  DollarSign,
   Calendar,
   ArrowRight,
   Share2,
   Settings,
   Eye,
   Sparkles,
-  Trophy
+  Trophy,
 } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { Animated, Dimensions } from 'react-native';
 
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -25,7 +26,6 @@ import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -160,17 +160,14 @@ const AnimatedSuccessIcon: React.FC = () => {
     <Box className="items-center justify-center relative">
       <Animated.View
         style={{
-          transform: [
-            { scale: scaleAnim },
-            { rotate: rotateInterpolate },
-          ],
+          transform: [{ scale: scaleAnim }, { rotate: rotateInterpolate }],
         }}
       >
         <Box className="w-24 h-24 rounded-full bg-green-100 items-center justify-center">
           <Icon as={CheckCircle} className="text-green-600" size="3xl" />
         </Box>
       </Animated.View>
-      
+
       {/* Sparkle effects */}
       <Box className="absolute -top-2 -right-2">
         <Icon as={Sparkles} className="text-yellow-500" size="lg" />
@@ -209,12 +206,12 @@ const ProfileSummaryCard: React.FC<{
               <Text className="text-gray-600 text-sm">Practice Name</Text>
               <Text className="text-gray-900 font-medium">{summary.schoolName}</Text>
             </HStack>
-            
+
             <HStack className="items-center justify-between">
               <Text className="text-gray-600 text-sm">Education System</Text>
               <Text className="text-gray-900 font-medium">{summary.educationalSystem}</Text>
             </HStack>
-            
+
             <HStack className="items-center justify-between">
               <Text className="text-gray-600 text-sm">Teaching Subjects</Text>
               <Badge className="bg-blue-100">
@@ -223,11 +220,12 @@ const ProfileSummaryCard: React.FC<{
                 </BadgeText>
               </Badge>
             </HStack>
-            
+
             <HStack className="items-center justify-between">
               <Text className="text-gray-600 text-sm">Average Rate</Text>
               <Text className="text-gray-900 font-medium">
-                {getCurrencySymbol(summary.currency)}{summary.averageRate}/hour
+                {getCurrencySymbol(summary.currency)}
+                {summary.averageRate}/hour
               </Text>
             </HStack>
           </VStack>
@@ -237,7 +235,7 @@ const ProfileSummaryCard: React.FC<{
               <Text className="text-gray-600 text-sm">Profile Completion</Text>
               <HStack space="xs" className="items-center">
                 <Box className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <Box 
+                  <Box
                     className="h-full bg-green-600 transition-all duration-500"
                     style={{ width: `${summary.completionScore}%` }}
                   />
@@ -269,28 +267,26 @@ const AchievementBadges: React.FC<{
       <Heading size="md" className="text-gray-900">
         Achievements Unlocked
       </Heading>
-      
+
       <VStack space="sm">
-        {earnedBadges.map((badge) => {
+        {earnedBadges.map(badge => {
           const BadgeIcon = badge.icon;
-          
+
           return (
             <Card key={badge.id} className="bg-white border border-gray-200">
               <CardContent className="p-3">
                 <HStack space="sm" className="items-center">
-                  <Box className={`w-10 h-10 rounded-full items-center justify-center ${badge.color}`}>
+                  <Box
+                    className={`w-10 h-10 rounded-full items-center justify-center ${badge.color}`}
+                  >
                     <Icon as={BadgeIcon} className={badge.color.split(' ')[1]} size="md" />
                   </Box>
-                  
+
                   <VStack className="flex-1" space="xs">
-                    <Text className="text-gray-900 font-medium text-sm">
-                      {badge.title}
-                    </Text>
-                    <Text className="text-gray-600 text-xs">
-                      {badge.description}
-                    </Text>
+                    <Text className="text-gray-900 font-medium text-sm">{badge.title}</Text>
+                    <Text className="text-gray-600 text-xs">{badge.description}</Text>
                   </VStack>
-                  
+
                   <Icon as={Trophy} className="text-yellow-500" size="sm" />
                 </HStack>
               </CardContent>
@@ -310,11 +306,11 @@ const NextStepsGrid: React.FC<{
       <Heading size="md" className="text-gray-900">
         Recommended Next Steps
       </Heading>
-      
+
       <VStack space="sm">
-        {NEXT_STEPS.map((step) => {
+        {NEXT_STEPS.map(step => {
           const StepIcon = step.icon;
-          
+
           return (
             <Pressable
               key={step.id}
@@ -328,20 +324,18 @@ const NextStepsGrid: React.FC<{
                 <CardContent className="p-4">
                   <HStack className="items-center justify-between">
                     <HStack space="sm" className="items-center flex-1">
-                      <Box className={`w-10 h-10 rounded-full items-center justify-center ${step.color}`}>
+                      <Box
+                        className={`w-10 h-10 rounded-full items-center justify-center ${step.color}`}
+                      >
                         <Icon as={StepIcon} className={step.color.split(' ')[1]} size="md" />
                       </Box>
-                      
+
                       <VStack className="flex-1" space="xs">
-                        <Text className="text-gray-900 font-medium">
-                          {step.title}
-                        </Text>
-                        <Text className="text-gray-600 text-sm">
-                          {step.description}
-                        </Text>
+                        <Text className="text-gray-900 font-medium">{step.title}</Text>
+                        <Text className="text-gray-600 text-sm">{step.description}</Text>
                       </VStack>
                     </HStack>
-                    
+
                     <Icon as={ArrowRight} className="text-gray-400" size="md" />
                   </HStack>
                 </CardContent>
@@ -407,7 +401,7 @@ export const OnboardingSuccessScreen: React.FC<OnboardingSuccessScreenProps> = (
       {/* Header Section */}
       <VStack className="items-center text-center" space="lg">
         {showCelebration && <AnimatedSuccessIcon />}
-        
+
         <VStack space="sm" className="items-center">
           <Heading size="2xl" className="text-gray-900 text-center">
             Congratulations, {userName}!
@@ -443,9 +437,7 @@ export const OnboardingSuccessScreen: React.FC<OnboardingSuccessScreenProps> = (
           className="w-full bg-blue-600 hover:bg-blue-700"
           size="lg"
         >
-          <ButtonText className="text-white font-medium text-lg">
-            Go to Dashboard
-          </ButtonText>
+          <ButtonText className="text-white font-medium text-lg">Go to Dashboard</ButtonText>
           <ButtonIcon as={ArrowRight} className="text-white ml-2" />
         </Button>
 

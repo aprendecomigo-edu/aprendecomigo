@@ -1,15 +1,15 @@
-import React from 'react';
 import { AlertCircle, CheckCircle, Clock, Info } from 'lucide-react-native';
+import React from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip } from '@/components/ui/tooltip';
 import { Pressable } from '@/components/ui/pressable';
+import { Progress } from '@/components/ui/progress';
+import { Text } from '@/components/ui/text';
+import { Tooltip } from '@/components/ui/tooltip';
+import { VStack } from '@/components/ui/vstack';
 
 interface ProfileCompletionIndicatorProps {
   completionPercentage: number;
@@ -28,17 +28,17 @@ interface ProfileCompletionIndicatorProps {
 
 // Color constants for consistency
 const COLORS = {
-  success: '#16A34A',    // green-600
-  warning: '#D97706',    // amber-600
-  danger: '#DC2626',     // red-600
-  info: '#2563EB',       // blue-600
+  success: '#16A34A', // green-600
+  warning: '#D97706', // amber-600
+  danger: '#DC2626', // red-600
+  info: '#2563EB', // blue-600
   gray: {
     100: '#F3F4F6',
     300: '#D1D5DB',
     500: '#6B7280',
     700: '#374151',
     900: '#111827',
-  }
+  },
 };
 
 const getCompletionStatus = (percentage: number, isComplete: boolean, hasCritical: boolean) => {
@@ -48,7 +48,7 @@ const getCompletionStatus = (percentage: number, isComplete: boolean, hasCritica
       color: COLORS.danger,
       icon: AlertCircle,
       label: 'Crítico',
-      bgColor: '#FEF2F2' // red-50
+      bgColor: '#FEF2F2', // red-50
     };
   } else if (isComplete && percentage >= 80) {
     return {
@@ -56,7 +56,7 @@ const getCompletionStatus = (percentage: number, isComplete: boolean, hasCritica
       color: COLORS.success,
       icon: CheckCircle,
       label: 'Completo',
-      bgColor: '#F0FDF4' // green-50
+      bgColor: '#F0FDF4', // green-50
     };
   } else {
     return {
@@ -64,7 +64,7 @@ const getCompletionStatus = (percentage: number, isComplete: boolean, hasCritica
       color: COLORS.warning,
       icon: Clock,
       label: 'Incompleto',
-      bgColor: '#FFFBEB' // amber-50
+      bgColor: '#FFFBEB', // amber-50
     };
   }
 };
@@ -79,25 +79,23 @@ const MinimalIndicator: React.FC<ProfileCompletionIndicatorProps> = ({
   completionPercentage,
   isComplete,
   missingCritical = [],
-  onViewDetails
+  onViewDetails,
 }) => {
   const hasCritical = missingCritical.length > 0;
   const statusInfo = getCompletionStatus(completionPercentage, isComplete, hasCritical);
-  
+
   return (
     <Pressable onPress={onViewDetails} className="flex-row items-center">
       <Box className="w-8 h-2 bg-gray-200 rounded-full mr-2">
-        <Box 
+        <Box
           className="h-full rounded-full"
-          style={{ 
+          style={{
             width: `${Math.max(completionPercentage, 5)}%`,
-            backgroundColor: getProgressBarColor(completionPercentage, hasCritical)
+            backgroundColor: getProgressBarColor(completionPercentage, hasCritical),
           }}
         />
       </Box>
-      <Text className="text-sm text-gray-600 min-w-12">
-        {Math.round(completionPercentage)}%
-      </Text>
+      <Text className="text-sm text-gray-600 min-w-12">{Math.round(completionPercentage)}%</Text>
     </Pressable>
   );
 };
@@ -106,26 +104,20 @@ const CompactIndicator: React.FC<ProfileCompletionIndicatorProps> = ({
   completionPercentage,
   isComplete,
   missingCritical = [],
-  onViewDetails
+  onViewDetails,
 }) => {
   const hasCritical = missingCritical.length > 0;
   const statusInfo = getCompletionStatus(completionPercentage, isComplete, hasCritical);
-  
+
   return (
     <Pressable onPress={onViewDetails}>
       <HStack className="items-center" space="xs">
-        <Icon 
-          as={statusInfo.icon} 
-          size="xs" 
-          style={{ color: statusInfo.color }}
-        />
+        <Icon as={statusInfo.icon} size="xs" style={{ color: statusInfo.color }} />
         <VStack>
           <Text className="text-sm font-medium" style={{ color: statusInfo.color }}>
             {Math.round(completionPercentage)}%
           </Text>
-          <Text className="text-xs text-gray-500">
-            {statusInfo.label}
-          </Text>
+          <Text className="text-xs text-gray-500">{statusInfo.label}</Text>
         </VStack>
       </HStack>
     </Pressable>
@@ -138,35 +130,31 @@ const DetailedIndicator: React.FC<ProfileCompletionIndicatorProps> = ({
   missingCritical = [],
   missingOptional = [],
   recommendations = [],
-  onViewDetails
+  onViewDetails,
 }) => {
   const hasCritical = missingCritical.length > 0;
   const statusInfo = getCompletionStatus(completionPercentage, isComplete, hasCritical);
-  
+
   const highPriorityRecommendations = recommendations.filter(r => r.priority === 'high');
-  
+
   return (
-    <Box 
+    <Box
       className="p-4 rounded-lg border"
-      style={{ 
+      style={{
         backgroundColor: statusInfo.bgColor,
-        borderColor: statusInfo.color 
+        borderColor: statusInfo.color,
       }}
     >
       <VStack space="sm">
         {/* Status Header */}
         <HStack className="items-center justify-between">
           <HStack className="items-center" space="xs">
-            <Icon 
-              as={statusInfo.icon} 
-              size="sm" 
-              style={{ color: statusInfo.color }}
-            />
+            <Icon as={statusInfo.icon} size="sm" style={{ color: statusInfo.color }} />
             <Text className="font-semibold" style={{ color: statusInfo.color }}>
               {statusInfo.label} - {Math.round(completionPercentage)}%
             </Text>
           </HStack>
-          
+
           {onViewDetails && (
             <Pressable onPress={onViewDetails}>
               <Icon as={Info} size="sm" className="text-gray-500" />
@@ -176,11 +164,11 @@ const DetailedIndicator: React.FC<ProfileCompletionIndicatorProps> = ({
 
         {/* Progress Bar */}
         <Box className="w-full h-2 bg-gray-200 rounded-full">
-          <Box 
+          <Box
             className="h-full rounded-full transition-all duration-300"
-            style={{ 
+            style={{
               width: `${Math.max(completionPercentage, 2)}%`,
-              backgroundColor: statusInfo.color
+              backgroundColor: statusInfo.color,
             }}
           />
         </Box>
@@ -204,9 +192,7 @@ const DetailedIndicator: React.FC<ProfileCompletionIndicatorProps> = ({
         {/* High Priority Recommendations */}
         {highPriorityRecommendations.length > 0 && (
           <VStack space="xs">
-            <Text className="text-xs font-medium text-gray-700">
-              Próximos passos:
-            </Text>
+            <Text className="text-xs font-medium text-gray-700">Próximos passos:</Text>
             {highPriorityRecommendations.slice(0, 2).map((rec, index) => (
               <Text key={index} className="text-xs text-gray-600">
                 • {rec.text}
@@ -224,9 +210,9 @@ const DetailedIndicator: React.FC<ProfileCompletionIndicatorProps> = ({
   );
 };
 
-export const ProfileCompletionIndicator: React.FC<ProfileCompletionIndicatorProps> = (props) => {
+export const ProfileCompletionIndicator: React.FC<ProfileCompletionIndicatorProps> = props => {
   const { variant = 'detailed', showDetails = true } = props;
-  
+
   switch (variant) {
     case 'minimal':
       return <MinimalIndicator {...props} />;
@@ -254,7 +240,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
   strokeWidth = 4,
   color = COLORS.info,
   backgroundColor = COLORS.gray[300],
-  showPercentage = true
+  showPercentage = true,
 }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -263,11 +249,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
 
   return (
     <Box className="relative" style={{ width: size, height: size }}>
-      <svg
-        width={size}
-        height={size}
-        className="transform -rotate-90"
-      >
+      <svg width={size} height={size} className="transform -rotate-90">
         {/* Background circle */}
         <circle
           cx={size / 2}
@@ -291,12 +273,10 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
           className="transition-all duration-300 ease-in-out"
         />
       </svg>
-      
+
       {showPercentage && (
         <Box className="absolute inset-0 flex items-center justify-center">
-          <Text className="text-xs font-semibold text-gray-700">
-            {Math.round(percentage)}%
-          </Text>
+          <Text className="text-xs font-semibold text-gray-700">{Math.round(percentage)}%</Text>
         </Box>
       )}
     </Box>

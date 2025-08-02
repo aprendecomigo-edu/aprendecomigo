@@ -1,18 +1,18 @@
 /**
  * Low Balance Notification Component
- * 
+ *
  * Toast notification system for real-time balance alerts with cross-platform
  * compatibility (Expo toast for mobile, custom toast for web).
  */
 
+import useRouter from '@unitools/router';
+import { AlertTriangle, Clock, CreditCard, X, ShoppingCart } from 'lucide-react-native';
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { Platform, Animated, Dimensions } from 'react-native';
-import { AlertTriangle, Clock, CreditCard, X, ShoppingCart } from 'lucide-react-native';
-import useRouter from '@unitools/router';
 
 import { Badge } from '@/components/ui/badge';
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Box } from '@/components/ui/box';
+import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
@@ -75,9 +75,9 @@ const ToastItem = ({ toast, onDismiss, onAction }: ToastItemProps) => {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(-100));
   const router = useRouter();
-  
+
   const colors = TOAST_COLORS[toast.type] || TOAST_COLORS.error;
-  
+
   const getIcon = () => {
     switch (toast.type) {
       case 'low_balance':
@@ -182,45 +182,25 @@ const ToastItem = ({ toast, onDismiss, onAction }: ToastItemProps) => {
         <VStack space="sm">
           <HStack className="items-start justify-between">
             <HStack space="sm" className="items-start flex-1">
-              <Icon 
-                as={IconComponent} 
-                size="sm" 
-                style={{ color: colors.icon }} 
-              />
+              <Icon as={IconComponent} size="sm" style={{ color: colors.icon }} />
               <VStack space="xs" className="flex-1">
                 <HStack space="xs" className="items-center flex-wrap">
-                  <Text 
-                    className="font-semibold text-sm"
-                    style={{ color: colors.text }}
-                  >
+                  <Text className="font-semibold text-sm" style={{ color: colors.text }}>
                     {toast.title}
                   </Text>
-                  <Badge
-                    variant="solid"
-                    action={getPriorityBadgeAction()}
-                    size="xs"
-                  >
-                    <Text className="text-xs">
-                      {toast.priority}
-                    </Text>
+                  <Badge variant="solid" action={getPriorityBadgeAction()} size="xs">
+                    <Text className="text-xs">{toast.priority}</Text>
                   </Badge>
                 </HStack>
-                
-                <Text 
-                  className="text-sm"
-                  style={{ color: colors.text }}
-                >
+
+                <Text className="text-sm" style={{ color: colors.text }}>
                   {toast.message}
                 </Text>
               </VStack>
             </HStack>
 
             <Pressable onPress={handleDismiss} className="p-1">
-              <Icon 
-                as={X} 
-                size="sm" 
-                style={{ color: colors.icon }} 
-              />
+              <Icon as={X} size="sm" style={{ color: colors.icon }} />
             </Pressable>
           </HStack>
 
@@ -237,13 +217,8 @@ const ToastItem = ({ toast, onDismiss, onAction }: ToastItemProps) => {
                 <ButtonIcon as={ShoppingCart} />
                 <ButtonText>{toast.actionLabel}</ButtonText>
               </Button>
-              
-              <Button
-                action="secondary"
-                variant="outline"
-                size="sm"
-                onPress={handleDismiss}
-              >
+
+              <Button action="secondary" variant="outline" size="sm" onPress={handleDismiss}>
                 <ButtonText>Later</ButtonText>
               </Button>
             </HStack>
@@ -290,9 +265,9 @@ export const LowBalanceToastProvider: React.FC<{ children: React.ReactNode }> = 
     <LowBalanceToastContext.Provider value={{ showToast, hideToast, hideAllToasts }}>
       {children}
       {toasts.map(toast => (
-        <ToastItem 
-          key={toast.id} 
-          toast={toast} 
+        <ToastItem
+          key={toast.id}
+          toast={toast}
           onDismiss={hideToast}
           onAction={handleToastAction}
         />
@@ -339,7 +314,9 @@ export const BalanceNotificationUtils = {
       id: 'low-balance-alert',
       type: 'low_balance',
       title: 'Low Balance Alert',
-      message: `Only ${remainingHours.toFixed(1)} hours remaining. Purchase more to continue learning.`,
+      message: `Only ${remainingHours.toFixed(
+        1
+      )} hours remaining. Purchase more to continue learning.`,
       priority: 'high',
       duration: 6000,
       actionLabel: 'Purchase Hours',
@@ -355,7 +332,9 @@ export const BalanceNotificationUtils = {
       id: 'critical-balance-alert',
       type: 'balance_depleted',
       title: 'Critical Balance',
-      message: `Only ${remainingHours.toFixed(1)} hours left! Your learning will be interrupted soon.`,
+      message: `Only ${remainingHours.toFixed(
+        1
+      )} hours left! Your learning will be interrupted soon.`,
       priority: 'urgent',
       duration: 8000,
       actionLabel: 'Buy Hours Now',
@@ -372,7 +351,9 @@ export const BalanceNotificationUtils = {
       id: 'package-expiring-alert',
       type: 'package_expiring',
       title: 'Package Expiring Soon',
-      message: `${hoursRemaining.toFixed(1)} hours expire in ${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'}`,
+      message: `${hoursRemaining.toFixed(1)} hours expire in ${daysUntilExpiry} day${
+        daysUntilExpiry === 1 ? '' : 's'
+      }`,
       priority: 'high',
       duration: 6000,
       actionLabel: 'Renew Package',
@@ -380,9 +361,7 @@ export const BalanceNotificationUtils = {
     });
   },
 
-  showBalanceDepletedAlert: (
-    showToast: (data: ToastNotificationData) => void
-  ) => {
+  showBalanceDepletedAlert: (showToast: (data: ToastNotificationData) => void) => {
     showToast({
       id: 'balance-depleted-alert',
       type: 'balance_depleted',

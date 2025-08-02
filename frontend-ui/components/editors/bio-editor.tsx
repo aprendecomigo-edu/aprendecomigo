@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Platform } from 'react-native';
-import { 
-  Bold, 
-  Italic, 
-  List, 
-  ListOrdered, 
-  Quote, 
-  Undo, 
+import {
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Quote,
+  Undo,
   Redo,
   Eye,
   Edit3,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
 } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -22,7 +23,6 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { Textarea } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
 
 interface BioEditorProps {
   value: string;
@@ -72,7 +72,7 @@ I'm committed to your success and will work tirelessly to help you achieve your 
 export const BioEditor: React.FC<BioEditorProps> = ({
   value,
   onChange,
-  placeholder = "Tell students about your teaching approach, experience, and what makes you unique as an educator...",
+  placeholder = 'Tell students about your teaching approach, experience, and what makes you unique as an educator...',
   maxWords = 500,
   minWords = 50,
   showTemplates = true,
@@ -81,15 +81,15 @@ export const BioEditor: React.FC<BioEditorProps> = ({
   const [isPreview, setIsPreview] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [showTemplatesPanel, setShowTemplatesPanel] = useState(false);
-  
+
   // Calculate word count
   const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
   const isOverLimit = wordCount > maxWords;
   const isUnderMinimum = wordCount < minWords;
-  
+
   // Character count
   const charCount = value.length;
-  
+
   // Get word count status
   const getWordCountStatus = () => {
     if (isOverLimit) return { color: 'text-red-600', bg: 'bg-red-100' };
@@ -101,7 +101,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
   const wordCountStatus = getWordCountStatus();
 
   // Apply template
-  const applyTemplate = (template: typeof BIO_TEMPLATES[0]) => {
+  const applyTemplate = (template: (typeof BIO_TEMPLATES)[0]) => {
     onChange(template.content);
     setSelectedTemplate(template.id);
     setShowTemplatesPanel(false);
@@ -117,7 +117,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = value.substring(start, end);
-    
+
     if (!selectedText) return;
 
     let formattedText = '';
@@ -160,9 +160,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
         <Card className="mb-4">
           <VStack space="md" className="p-4">
             <HStack className="items-center justify-between">
-              <Text className="font-semibold text-gray-900">
-                Bio Templates
-              </Text>
+              <Text className="font-semibold text-gray-900">Bio Templates</Text>
               <Button
                 variant="ghost"
                 size="sm"
@@ -173,22 +171,20 @@ export const BioEditor: React.FC<BioEditorProps> = ({
                 </ButtonText>
               </Button>
             </HStack>
-            
+
             {showTemplatesPanel && (
               <VStack space="sm">
-                {BIO_TEMPLATES.map((template) => (
-                  <Card 
+                {BIO_TEMPLATES.map(template => (
+                  <Card
                     key={template.id}
                     className={`p-3 border cursor-pointer transition-colors ${
-                      selectedTemplate === template.id 
-                        ? 'border-blue-300 bg-blue-50' 
+                      selectedTemplate === template.id
+                        ? 'border-blue-300 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <VStack space="xs">
-                      <Text className="font-medium text-gray-900">
-                        {template.title}
-                      </Text>
+                      <Text className="font-medium text-gray-900">{template.title}</Text>
                       <Text className="text-sm text-gray-600" numberOfLines={2}>
                         {template.content.substring(0, 120)}...
                       </Text>
@@ -196,11 +192,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
                         <Text className="text-xs text-gray-500">
                           ~{template.content.trim().split(/\s+/).length} words
                         </Text>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onPress={() => applyTemplate(template)}
-                        >
+                        <Button size="sm" variant="outline" onPress={() => applyTemplate(template)}>
                           <ButtonText>Use Template</ButtonText>
                         </Button>
                       </HStack>
@@ -254,13 +246,8 @@ export const BioEditor: React.FC<BioEditorProps> = ({
               onPress={() => setIsPreview(!isPreview)}
               className="flex-row items-center"
             >
-              <ButtonIcon 
-                as={isPreview ? Edit3 : Eye} 
-                className="text-gray-600 mr-1" 
-              />
-              <ButtonText className="text-gray-600">
-                {isPreview ? 'Edit' : 'Preview'}
-              </ButtonText>
+              <ButtonIcon as={isPreview ? Edit3 : Eye} className="text-gray-600 mr-1" />
+              <ButtonText className="text-gray-600">{isPreview ? 'Edit' : 'Preview'}</ButtonText>
             </Button>
           </HStack>
         </HStack>
@@ -273,16 +260,14 @@ export const BioEditor: React.FC<BioEditorProps> = ({
                 {wordCount} / {maxWords} words
               </BadgeText>
             </Badge>
-            
+
             {isOverLimit && (
               <HStack space="xs" className="items-center">
                 <Icon as={AlertCircle} size={16} className="text-red-500" />
-                <Text className="text-sm text-red-600">
-                  Reduce by {wordCount - maxWords} words
-                </Text>
+                <Text className="text-sm text-red-600">Reduce by {wordCount - maxWords} words</Text>
               </HStack>
             )}
-            
+
             {isUnderMinimum && wordCount > 0 && (
               <HStack space="xs" className="items-center">
                 <Icon as={AlertCircle} size={16} className="text-yellow-500" />
@@ -291,20 +276,16 @@ export const BioEditor: React.FC<BioEditorProps> = ({
                 </Text>
               </HStack>
             )}
-            
+
             {!isOverLimit && !isUnderMinimum && wordCount >= minWords && (
               <HStack space="xs" className="items-center">
                 <Icon as={CheckCircle2} size={16} className="text-green-500" />
-                <Text className="text-sm text-green-600">
-                  Perfect length!
-                </Text>
+                <Text className="text-sm text-green-600">Perfect length!</Text>
               </HStack>
             )}
           </HStack>
 
-          <Text className="text-sm text-gray-500">
-            {charCount} characters
-          </Text>
+          <Text className="text-sm text-gray-500">{charCount} characters</Text>
         </HStack>
       </Card>
 
@@ -313,11 +294,11 @@ export const BioEditor: React.FC<BioEditorProps> = ({
         <Box className="p-4">
           {isPreview ? (
             <VStack space="md">
-              <Text className="font-medium text-gray-900 mb-2">
-                Preview:
-              </Text>
+              <Text className="font-medium text-gray-900 mb-2">Preview:</Text>
               <Box className="min-h-48 p-4 bg-gray-50 rounded-lg">
-                {value ? renderPreview() : (
+                {value ? (
+                  renderPreview()
+                ) : (
                   <Text className="text-gray-500 italic">
                     Nothing to preview yet. Write your bio to see how it looks!
                   </Text>
@@ -326,9 +307,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
             </VStack>
           ) : (
             <VStack space="sm">
-              <Text className="font-medium text-gray-900">
-                Your Professional Biography
-              </Text>
+              <Text className="font-medium text-gray-900">Your Professional Biography</Text>
               <Textarea
                 id="bio-textarea"
                 value={value}
@@ -338,7 +317,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
                 multiline
                 numberOfLines={8}
               />
-              
+
               {/* Tips */}
               <Box className="p-3 bg-blue-50 rounded-lg mt-2">
                 <Text className="text-sm font-medium text-blue-900 mb-1">

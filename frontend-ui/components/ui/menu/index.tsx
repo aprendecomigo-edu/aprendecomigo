@@ -3,10 +3,10 @@ import { createMenu } from '@gluestack-ui/menu';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import { withStates } from '@gluestack-ui/nativewind-utils/withStates';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 import React from 'react';
 import { Pressable, Text, Platform, View } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 const menuStyle = tva({
   base: 'rounded-md bg-background-0 border border-outline-100 p-1 shadow-hard-5',

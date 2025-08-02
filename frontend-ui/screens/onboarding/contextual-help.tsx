@@ -2,14 +2,14 @@ import { HelpCircle, X, Info, AlertCircle, CheckCircle2, ExternalLink } from 'lu
 import React, { useState, useEffect } from 'react';
 import { Platform, Dimensions } from 'react-native';
 
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
 import {
   Popover,
   PopoverBackdrop,
@@ -20,8 +20,8 @@ import {
   PopoverBody,
   PopoverFooter,
 } from '@/components/ui/popover';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Divider } from '@/components/ui/divider';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isMobile = Platform.OS !== 'web' || screenWidth < 768;
@@ -117,9 +117,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
       {!isMobile && <ButtonText className="text-blue-600 ml-2">Help</ButtonText>}
       {showBadge && activeTips.length > 0 && (
         <Badge className="bg-red-500 ml-2 min-w-5 h-5">
-          <BadgeText className="text-white text-xs">
-            {activeTips.length}
-          </BadgeText>
+          <BadgeText className="text-white text-xs">{activeTips.length}</BadgeText>
         </Badge>
       )}
     </Button>
@@ -130,11 +128,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
   }
 
   return (
-    <Popover
-      isOpen={isOpen}
-      onClose={() => setIsOpen(false)}
-      placement={position}
-    >
+    <Popover isOpen={isOpen} onClose={() => setIsOpen(false)} placement={position}>
       {trigger || defaultTrigger}
       <PopoverBackdrop />
       <PopoverContent className={`${isMobile ? 'w-80' : 'w-96'} max-w-sm`}>
@@ -147,29 +141,22 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
             <PopoverCloseButton />
           </HStack>
         </PopoverHeader>
-        
+
         <PopoverBody>
           <VStack space="md">
             {activeTips.map((tip, index) => (
-              <Card 
-                key={tip.id}
-                className={`${getTipCardStyle(tip.type)} border`}
-              >
+              <Card key={tip.id} className={`${getTipCardStyle(tip.type)} border`}>
                 <VStack space="sm" className="p-4">
                   {/* Tip Header */}
                   <HStack className="items-start justify-between">
                     <HStack space="sm" className="items-start flex-1">
                       {getTipIcon(tip.type)}
                       <VStack className="flex-1" space="xs">
-                        <Text className="font-medium text-gray-900 text-sm">
-                          {tip.title}
-                        </Text>
-                        <Text className="text-gray-700 text-sm">
-                          {tip.content}
-                        </Text>
+                        <Text className="font-medium text-gray-900 text-sm">{tip.title}</Text>
+                        <Text className="text-gray-700 text-sm">{tip.content}</Text>
                       </VStack>
                     </HStack>
-                    
+
                     {tip.dismissible !== false && (
                       <Button
                         variant="link"
@@ -191,9 +178,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
                         onPress={tip.action.onPress}
                         className="bg-white border border-gray-300 hover:bg-gray-50"
                       >
-                        <ButtonText className="text-gray-700">
-                          {tip.action.label}
-                        </ButtonText>
+                        <ButtonText className="text-gray-700">{tip.action.label}</ButtonText>
                         <ButtonIcon as={ExternalLink} size={14} className="text-gray-500 ml-1" />
                       </Button>
                     </>
@@ -210,14 +195,8 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
                   <Text className="text-gray-600 text-sm flex-1">
                     {dismissedTips.length} tip{dismissedTips.length !== 1 ? 's' : ''} dismissed
                   </Text>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onPress={() => setDismissedTips([])}
-                  >
-                    <ButtonText className="text-blue-600 text-xs">
-                      Show all
-                    </ButtonText>
+                  <Button variant="link" size="sm" onPress={() => setDismissedTips([])}>
+                    <ButtonText className="text-blue-600 text-xs">Show all</ButtonText>
                   </Button>
                 </HStack>
               </Card>
@@ -245,7 +224,7 @@ export function useContextualHelp(contextId: string) {
     setTips(prev => {
       const existing = prev.find(t => t.id === tip.id);
       if (existing) {
-        return prev.map(t => t.id === tip.id ? tip : t);
+        return prev.map(t => (t.id === tip.id ? tip : t));
       }
       return [...prev, tip];
     });
@@ -260,9 +239,7 @@ export function useContextualHelp(contextId: string) {
   };
 
   const updateTip = (tipId: string, updates: Partial<HelpTip>) => {
-    setTips(prev => prev.map(tip => 
-      tip.id === tipId ? { ...tip, ...updates } : tip
-    ));
+    setTips(prev => prev.map(tip => (tip.id === tipId ? { ...tip, ...updates } : tip)));
   };
 
   return {
@@ -280,7 +257,8 @@ export const ONBOARDING_HELP_TIPS: Record<string, HelpTip[]> = {
     {
       id: 'welcome-start',
       title: 'Welcome to your onboarding journey',
-      content: 'Take your time to complete each step. You can always skip steps and return to them later.',
+      content:
+        'Take your time to complete each step. You can always skip steps and return to them later.',
       type: 'tip',
       priority: 'high',
       dismissible: true,
@@ -288,18 +266,20 @@ export const ONBOARDING_HELP_TIPS: Record<string, HelpTip[]> = {
     {
       id: 'welcome-help',
       title: 'Need assistance?',
-      content: 'Look for help icons throughout the platform. Our support team is here to help you succeed.',
+      content:
+        'Look for help icons throughout the platform. Our support team is here to help you succeed.',
       type: 'info',
       priority: 'medium',
       dismissible: true,
     },
   ],
-  
+
   checklist: [
     {
       id: 'checklist-order',
       title: 'Recommended step order',
-      content: 'While you can complete steps in any order, we recommend starting with your school profile and then inviting teachers.',
+      content:
+        'While you can complete steps in any order, we recommend starting with your school profile and then inviting teachers.',
       type: 'tip',
       priority: 'high',
       dismissible: true,
@@ -307,7 +287,8 @@ export const ONBOARDING_HELP_TIPS: Record<string, HelpTip[]> = {
     {
       id: 'checklist-skip',
       title: 'Skipping steps',
-      content: 'Skipped steps can be completed anytime from your dashboard. Your progress is always saved.',
+      content:
+        'Skipped steps can be completed anytime from your dashboard. Your progress is always saved.',
       type: 'info',
       priority: 'medium',
       dismissible: true,
@@ -315,18 +296,20 @@ export const ONBOARDING_HELP_TIPS: Record<string, HelpTip[]> = {
     {
       id: 'checklist-progress',
       title: 'Track your progress',
-      content: 'The progress bar shows your completion status. Each completed step unlocks more platform features.',
+      content:
+        'The progress bar shows your completion status. Each completed step unlocks more platform features.',
       type: 'success',
       priority: 'low',
       dismissible: true,
     },
   ],
-  
+
   teacher_invitation: [
     {
       id: 'teacher-email',
       title: 'Valid email required',
-      content: 'Make sure to use the teacher\'s primary email address. They\'ll need access to accept the invitation.',
+      content:
+        "Make sure to use the teacher's primary email address. They'll need access to accept the invitation.",
       type: 'warning',
       priority: 'high',
       dismissible: false,
@@ -334,18 +317,20 @@ export const ONBOARDING_HELP_TIPS: Record<string, HelpTip[]> = {
     {
       id: 'teacher-role',
       title: 'Choose the right role',
-      content: 'Teacher roles determine platform permissions. You can always update roles later from the dashboard.',
+      content:
+        'Teacher roles determine platform permissions. You can always update roles later from the dashboard.',
       type: 'info',
       priority: 'medium',
       dismissible: true,
     },
   ],
-  
+
   student_management: [
     {
       id: 'student-bulk',
       title: 'Bulk import available',
-      content: 'Need to add many students? Use the bulk import feature to upload a CSV file with student information.',
+      content:
+        'Need to add many students? Use the bulk import feature to upload a CSV file with student information.',
       type: 'tip',
       priority: 'medium',
       dismissible: true,
@@ -357,7 +342,8 @@ export const ONBOARDING_HELP_TIPS: Record<string, HelpTip[]> = {
     {
       id: 'student-parent',
       title: 'Parent information',
-      content: 'Adding parent contact information enables automatic updates about their child\'s progress and scheduling.',
+      content:
+        "Adding parent contact information enables automatic updates about their child's progress and scheduling.",
       type: 'info',
       priority: 'low',
       dismissible: true,

@@ -194,7 +194,7 @@ class CommunicationApi {
 
   async duplicateTemplate(id: number, newName?: string): Promise<SchoolEmailTemplate> {
     const response = await apiClient.post(`/api/communication/templates/${id}/duplicate/`, {
-      name: newName
+      name: newName,
     });
     return response.data;
   }
@@ -204,9 +204,12 @@ class CommunicationApi {
     return response.data;
   }
 
-  async sendTestEmail(templateId: number, testEmail: string): Promise<{ success: boolean; message: string }> {
+  async sendTestEmail(
+    templateId: number,
+    testEmail: string
+  ): Promise<{ success: boolean; message: string }> {
     const response = await apiClient.post(`/api/communication/templates/${templateId}/test/`, {
-      test_email: testEmail
+      test_email: testEmail,
     });
     return response.data;
   }
@@ -225,7 +228,7 @@ class CommunicationApi {
   async uploadLogo(logoFile: File): Promise<SchoolBranding> {
     const formData = new FormData();
     formData.append('logo', logoFile);
-    
+
     const response = await apiClient.patch('/api/communication/branding/', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -258,7 +261,7 @@ class CommunicationApi {
 
   // Teacher Onboarding Progress
   async getOnboardingProgress(teacherId?: number): Promise<TeacherOnboardingProgress> {
-    const endpoint = teacherId 
+    const endpoint = teacherId
       ? `/api/communication/onboarding/${teacherId}/`
       : '/api/communication/onboarding/me/';
     const response = await apiClient.get(endpoint);
@@ -266,19 +269,19 @@ class CommunicationApi {
   }
 
   async updateOnboardingProgress(
-    step: number, 
+    step: number,
     data?: Record<string, any>
   ): Promise<TeacherOnboardingProgress> {
     const response = await apiClient.patch('/api/communication/onboarding/me/', {
       current_step: step,
-      step_data: data
+      step_data: data,
     });
     return response.data;
   }
 
   async markMilestoneAchieved(milestone: string): Promise<TeacherOnboardingProgress> {
     const response = await apiClient.post('/api/communication/onboarding/milestone/', {
-      milestone
+      milestone,
     });
     return response.data;
   }
@@ -300,21 +303,21 @@ class CommunicationApi {
 
   async searchFAQs(query: string): Promise<FAQ[]> {
     const response = await apiClient.get('/api/communication/faqs/search/', {
-      params: { q: query }
+      params: { q: query },
     });
     return response.data;
   }
 
   async markFAQHelpful(faqId: number, helpful: boolean): Promise<{ success: boolean }> {
     const response = await apiClient.post(`/api/communication/faqs/${faqId}/helpful/`, {
-      helpful
+      helpful,
     });
     return response.data;
   }
 
   async getContextualFAQs(context: string, step?: number): Promise<FAQ[]> {
     const response = await apiClient.get('/api/communication/faqs/contextual/', {
-      params: { context, step }
+      params: { context, step },
     });
     return response.data;
   }
@@ -331,14 +334,17 @@ class CommunicationApi {
     return response.data;
   }
 
-  async updateFAQ(id: number, data: Partial<{
-    question: string;
-    answer: string;
-    category: string;
-    tags: string[];
-    order: number;
-    is_active: boolean;
-  }>): Promise<FAQ> {
+  async updateFAQ(
+    id: number,
+    data: Partial<{
+      question: string;
+      answer: string;
+      category: string;
+      tags: string[];
+      order: number;
+      is_active: boolean;
+    }>
+  ): Promise<FAQ> {
     const response = await apiClient.patch(`/api/communication/admin/faqs/${id}/`, data);
     return response.data;
   }
@@ -369,7 +375,10 @@ class CommunicationApi {
     variables_used: string[];
     missing_variables: string[];
   }> {
-    const response = await apiClient.post('/api/communication/templates/validate/', templateContent);
+    const response = await apiClient.post(
+      '/api/communication/templates/validate/',
+      templateContent
+    );
     return response.data;
   }
 }

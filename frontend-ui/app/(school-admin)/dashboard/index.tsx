@@ -1,6 +1,12 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router } from 'expo-router';
-import { AlertTriangleIcon, RefreshCwIcon, WifiOffIcon, SchoolIcon, ChevronDownIcon } from 'lucide-react-native';
+import {
+  AlertTriangleIcon,
+  RefreshCwIcon,
+  WifiOffIcon,
+  SchoolIcon,
+  ChevronDownIcon,
+} from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/api/authContext';
@@ -51,13 +57,13 @@ import useSchoolDashboard, { DashboardError } from '@/hooks/useSchoolDashboard';
 
 const SchoolAdminDashboard = () => {
   const { userProfile } = useAuth();
-  
+
   // State for school management
   const [adminSchools, setAdminSchools] = useState<SchoolMembership[]>([]);
   const [selectedSchoolId, setSelectedSchoolId] = useState<number | null>(null);
   const [schoolsLoading, setSchoolsLoading] = useState(true);
   const [schoolsError, setSchoolsError] = useState<string | null>(null);
-  
+
   // Load user's admin schools on mount
   useEffect(() => {
     const loadAdminSchools = async () => {
@@ -66,7 +72,7 @@ const SchoolAdminDashboard = () => {
         setSchoolsError(null);
         const schools = await getUserAdminSchools();
         setAdminSchools(schools);
-        
+
         // Auto-select the first school if only one, or the last selected one
         if (schools.length === 1) {
           setSelectedSchoolId(schools[0].school.id);
@@ -77,17 +83,19 @@ const SchoolAdminDashboard = () => {
         }
       } catch (error) {
         console.error('Error loading admin schools:', error);
-        setSchoolsError('Falha ao carregar escolas. Você pode não ter permissões de administrador.');
+        setSchoolsError(
+          'Falha ao carregar escolas. Você pode não ter permissões de administrador.'
+        );
       } finally {
         setSchoolsLoading(false);
       }
     };
-    
+
     if (userProfile) {
       loadAdminSchools();
     }
   }, [userProfile]);
-  
+
   // Get selected school info
   const selectedSchool = useMemo(() => {
     return adminSchools.find(school => school.school.id === selectedSchoolId);
@@ -144,20 +152,23 @@ const SchoolAdminDashboard = () => {
     router.push('/(school-admin)/settings');
   }, []);
 
-  const handleUpdateSchool = useCallback(async (data: any) => {
-    try {
-      await updateSchool(data);
-    } catch (err) {
-      // Error handling is done in the hook
-      throw err;
-    }
-  }, [updateSchool]);
+  const handleUpdateSchool = useCallback(
+    async (data: any) => {
+      try {
+        await updateSchool(data);
+      } catch (err) {
+        // Error handling is done in the hook
+        throw err;
+      }
+    },
+    [updateSchool]
+  );
 
   // Welcome message
   const welcomeMessage = useMemo(() => {
     const name = userProfile?.name?.split(' ')[0] || 'Administrador';
     const currentHour = new Date().getHours();
-    
+
     if (currentHour < 12) {
       return `Bom dia, ${name}!`;
     } else if (currentHour < 18) {
@@ -178,7 +189,7 @@ const SchoolAdminDashboard = () => {
       </Center>
     );
   }
-  
+
   // No admin schools available
   if (!schoolsLoading && adminSchools.length === 0) {
     return (
@@ -200,7 +211,7 @@ const SchoolAdminDashboard = () => {
       </Center>
     );
   }
-  
+
   // No school selected yet
   if (!selectedSchoolId) {
     return (
@@ -212,7 +223,7 @@ const SchoolAdminDashboard = () => {
       </Center>
     );
   }
-  
+
   // Dashboard error state
   if (error && !isLoading) {
     const dashboardError = error as DashboardError;
@@ -222,15 +233,13 @@ const SchoolAdminDashboard = () => {
           <Icon as={AlertTriangleIcon} size="xl" className="text-red-500" />
           <VStack space="sm" className="items-center">
             <Heading size="lg" className="text-center text-gray-900">
-              {dashboardError.type === 'permission' ? 'Acesso negado' : 'Erro ao carregar dashboard'}
+              {dashboardError.type === 'permission'
+                ? 'Acesso negado'
+                : 'Erro ao carregar dashboard'}
             </Heading>
-            <Text className="text-center text-gray-600">
-              {dashboardError.message}
-            </Text>
+            <Text className="text-center text-gray-600">{dashboardError.message}</Text>
             {dashboardError.details && (
-              <Text className="text-center text-gray-500 text-sm">
-                {dashboardError.details}
-              </Text>
+              <Text className="text-center text-gray-500 text-sm">{dashboardError.details}</Text>
             )}
           </VStack>
           {dashboardError.canRetry && (
@@ -265,14 +274,16 @@ const SchoolAdminDashboard = () => {
               <Heading size="xl" className="text-gray-900">
                 {welcomeMessage}
               </Heading>
-              
+
               {/* School Selector */}
               {adminSchools.length > 1 && (
-                <Pressable 
+                <Pressable
                   onPress={() => {
                     // In a real app, you might want to show a modal or dropdown
                     // For now, cycle through schools
-                    const currentIndex = adminSchools.findIndex(s => s.school.id === selectedSchoolId);
+                    const currentIndex = adminSchools.findIndex(
+                      s => s.school.id === selectedSchoolId
+                    );
                     const nextIndex = (currentIndex + 1) % adminSchools.length;
                     setSelectedSchoolId(adminSchools[nextIndex].school.id);
                   }}
@@ -284,30 +295,28 @@ const SchoolAdminDashboard = () => {
                   <Icon as={ChevronDownIcon} size="sm" className="text-gray-400" />
                 </Pressable>
               )}
-              
+
               {adminSchools.length === 1 && (
                 <Text className="text-gray-600">
                   {selectedSchool?.school.name || schoolInfo?.name || 'Carregando...'}
                 </Text>
               )}
             </VStack>
-            
+
             <HStack space="xs" className="items-center">
               {/* WebSocket Connection Status */}
-              {!isConnected && (
-                <Icon as={WifiOffIcon} size="sm" className="text-orange-500" />
-              )}
-              
+              {!isConnected && <Icon as={WifiOffIcon} size="sm" className="text-orange-500" />}
+
               {/* Refresh Button */}
               <Pressable
                 onPress={refreshAll}
                 disabled={isLoading}
                 className="p-2 rounded-md bg-gray-100 hover:bg-gray-200"
               >
-                <Icon 
-                  as={RefreshCwIcon} 
-                  size="sm" 
-                  className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`} 
+                <Icon
+                  as={RefreshCwIcon}
+                  size="sm"
+                  className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`}
                 />
               </Pressable>
             </HStack>
@@ -348,11 +357,11 @@ const SchoolAdminDashboard = () => {
               <Icon as={AlertTriangleIcon} size="sm" className="text-red-600 mt-0.5" />
               <VStack className="flex-1">
                 <Text className="font-medium text-red-900">
-                  {(error as DashboardError).type === 'permission' ? 'Acesso negado' : 'Erro no carregamento'}
+                  {(error as DashboardError).type === 'permission'
+                    ? 'Acesso negado'
+                    : 'Erro no carregamento'}
                 </Text>
-                <Text className="text-sm text-red-700">
-                  {(error as DashboardError).message}
-                </Text>
+                <Text className="text-sm text-red-700">{(error as DashboardError).message}</Text>
                 {(error as DashboardError).details && (
                   <Text className="text-xs text-red-600 mt-1">
                     {(error as DashboardError).details}
@@ -377,9 +386,7 @@ const SchoolAdminDashboard = () => {
         {metrics && !isLoading && (
           <Box className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 shadow-lg">
             <VStack space="md">
-              <Text className="text-white font-semibold text-lg">
-                Resumo Rápido
-              </Text>
+              <Text className="text-white font-semibold text-lg">Resumo Rápido</Text>
               <HStack space="lg" className="flex-wrap">
                 <VStack className="items-center">
                   <Text className="text-2xl font-bold text-white">
@@ -452,30 +459,29 @@ const SchoolAdminDashboard = () => {
         </VStack>
 
         {/* Empty State for New Schools */}
-        {!isLoading && 
-         metrics &&
-         metrics.student_count.total === 0 && 
-         metrics.teacher_count.total === 0 && (
-          <Box className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-dashed border-green-200 rounded-xl p-8 text-center">
-            <VStack space="md" className="items-center">
-              <Text className="text-xl font-bold text-gray-900">
-                Bem-vindo à sua escola! 🎉
-              </Text>
-              <Text className="text-gray-600 max-w-md">
-                Comece convidando professores e adicionando estudantes para ativar totalmente sua conta.
-                Este é o primeiro passo para reduzir a taxa de abandono e criar um ambiente de aprendizagem ativo.
-              </Text>
-              <HStack space="md" className="flex-wrap justify-center">
-                <Button onPress={handleInviteTeacher} variant="solid">
-                  <ButtonText>Convidar Professor</ButtonText>
-                </Button>
-                <Button onPress={handleAddStudent} variant="outline">
-                  <ButtonText>Adicionar Estudante</ButtonText>
-                </Button>
-              </HStack>
-            </VStack>
-          </Box>
-        )}
+        {!isLoading &&
+          metrics &&
+          metrics.student_count.total === 0 &&
+          metrics.teacher_count.total === 0 && (
+            <Box className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-dashed border-green-200 rounded-xl p-8 text-center">
+              <VStack space="md" className="items-center">
+                <Text className="text-xl font-bold text-gray-900">Bem-vindo à sua escola! 🎉</Text>
+                <Text className="text-gray-600 max-w-md">
+                  Comece convidando professores e adicionando estudantes para ativar totalmente sua
+                  conta. Este é o primeiro passo para reduzir a taxa de abandono e criar um ambiente
+                  de aprendizagem ativo.
+                </Text>
+                <HStack space="md" className="flex-wrap justify-center">
+                  <Button onPress={handleInviteTeacher} variant="solid">
+                    <ButtonText>Convidar Professor</ButtonText>
+                  </Button>
+                  <Button onPress={handleAddStudent} variant="outline">
+                    <ButtonText>Adicionar Estudante</ButtonText>
+                  </Button>
+                </HStack>
+              </VStack>
+            </Box>
+          )}
       </VStack>
     </ScrollView>
   );

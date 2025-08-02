@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
 import { InvitationStatusDashboard } from '@/components/invitations';
-import { InviteTeacherModal } from '@/components/modals/invite-teacher-modal';
 import MainLayout from '@/components/layouts/main-layout';
+import { InviteTeacherModal } from '@/components/modals/invite-teacher-modal';
 
 const InvitationsPage = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -27,7 +27,7 @@ const InvitationsPage = () => {
         autoRefresh={true}
         refreshInterval={30000}
       />
-      
+
       {/* Invite Teacher Modal */}
       <InviteTeacherModal
         isOpen={showInviteModal}

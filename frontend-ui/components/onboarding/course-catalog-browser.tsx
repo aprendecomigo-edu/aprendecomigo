@@ -1,19 +1,20 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { FlatList, SectionList } from 'react-native';
-import { 
-  Search, 
-  BookOpen, 
-  ChevronRight, 
-  ChevronDown, 
-  Plus, 
+import {
+  Search,
+  BookOpen,
+  ChevronRight,
+  ChevronDown,
+  Plus,
   Check,
   Filter,
   X,
   Globe,
   GraduationCap,
-  Users
+  Users,
 } from 'lucide-react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { FlatList, SectionList } from 'react-native';
 
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -21,11 +22,6 @@ import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
-import { Pressable } from '@/components/ui/pressable';
-import { Spinner } from '@/components/ui/spinner';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
 import {
   Modal,
   ModalBackdrop,
@@ -35,6 +31,10 @@ import {
   ModalBody,
   ModalFooter,
 } from '@/components/ui/modal';
+import { Pressable } from '@/components/ui/pressable';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 // Course interface matching backend structure
 export interface Course {
@@ -54,42 +54,42 @@ export interface Course {
 
 // Education level configuration
 const EDUCATION_LEVELS = {
-  'ensino_basico_1': {
+  ensino_basico_1: {
     name: '1st Cycle Basic Education',
     shortName: '1st Cycle',
     description: 'Ages 6-10 (Grades 1-4)',
     color: 'bg-green-100 text-green-700',
     order: 1,
   },
-  'ensino_basico_2': {
-    name: '2nd Cycle Basic Education', 
+  ensino_basico_2: {
+    name: '2nd Cycle Basic Education',
     shortName: '2nd Cycle',
     description: 'Ages 10-12 (Grades 5-6)',
     color: 'bg-blue-100 text-blue-700',
     order: 2,
   },
-  'ensino_basico_3': {
+  ensino_basico_3: {
     name: '3rd Cycle Basic Education',
-    shortName: '3rd Cycle', 
+    shortName: '3rd Cycle',
     description: 'Ages 12-15 (Grades 7-9)',
     color: 'bg-purple-100 text-purple-700',
     order: 3,
   },
-  'ensino_secundario': {
+  ensino_secundario: {
     name: 'Secondary Education',
     shortName: 'Secondary',
     description: 'Ages 15-18 (Grades 10-12)',
     color: 'bg-orange-100 text-orange-700',
     order: 4,
   },
-  'ensino_superior': {
+  ensino_superior: {
     name: 'Higher Education',
     shortName: 'Higher Ed',
     description: 'University/College Level',
     color: 'bg-red-100 text-red-700',
     order: 5,
   },
-  'custom': {
+  custom: {
     name: 'Custom/Other',
     shortName: 'Custom',
     description: 'Specialized or custom subjects',
@@ -138,8 +138,8 @@ const CourseCard: React.FC<{
   allowMultiSelect: boolean;
 }> = ({ course, isSelected, canSelect, onToggle, allowMultiSelect }) => {
   const levelConfig = EDUCATION_LEVELS[course.education_level as keyof typeof EDUCATION_LEVELS];
-  const subjectColorIndex = course.subject_area 
-    ? course.subject_area.charCodeAt(0) % SUBJECT_COLORS.length 
+  const subjectColorIndex = course.subject_area
+    ? course.subject_area.charCodeAt(0) % SUBJECT_COLORS.length
     : 0;
   const subjectColor = SUBJECT_COLORS[subjectColorIndex];
 
@@ -155,10 +155,11 @@ const CourseCard: React.FC<{
       <Card
         className={`
           border-2 transition-all duration-200 mb-3
-          ${isSelected 
-            ? 'border-blue-500 bg-blue-50 shadow-md' 
-            : canSelect 
-              ? 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50' 
+          ${
+            isSelected
+              ? 'border-blue-500 bg-blue-50 shadow-md'
+              : canSelect
+              ? 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
               : 'border-gray-100 bg-gray-50'
           }
         `}
@@ -168,33 +169,30 @@ const CourseCard: React.FC<{
             <HStack space="sm" className="items-start flex-1">
               {allowMultiSelect && (
                 <Box className="mt-1">
-                  <Box 
+                  <Box
                     className={`
                       w-5 h-5 rounded border-2 items-center justify-center
-                      ${isSelected 
-                        ? 'bg-blue-600 border-blue-600' 
-                        : canSelect
+                      ${
+                        isSelected
+                          ? 'bg-blue-600 border-blue-600'
+                          : canSelect
                           ? 'border-gray-300 bg-white'
                           : 'border-gray-200 bg-gray-100'
                       }
                     `}
                   >
-                    {isSelected && (
-                      <Icon as={Check} className="text-white" size="xs" />
-                    )}
+                    {isSelected && <Icon as={Check} className="text-white" size="xs" />}
                   </Box>
                 </Box>
               )}
-              
+
               <VStack className="flex-1" space="xs">
                 <VStack space="xs">
                   <Heading size="sm" className="text-gray-900 leading-tight">
                     {course.name}
                   </Heading>
                   {course.code && (
-                    <Text className="text-gray-500 text-xs font-mono">
-                      {course.code}
-                    </Text>
+                    <Text className="text-gray-500 text-xs font-mono">{course.code}</Text>
                   )}
                 </VStack>
 
@@ -204,13 +202,13 @@ const CourseCard: React.FC<{
                       <BadgeText className="text-xs">{levelConfig.shortName}</BadgeText>
                     </Badge>
                   )}
-                  
+
                   {course.subject_area && (
                     <Badge className={subjectColor}>
                       <BadgeText className="text-xs">{course.subject_area}</BadgeText>
                     </Badge>
                   )}
-                  
+
                   {course.difficulty_level && (
                     <Badge className="bg-gray-100 text-gray-700">
                       <BadgeText className="text-xs capitalize">
@@ -250,12 +248,10 @@ const CourseCard: React.FC<{
             {course.prerequisites?.length && (
               <VStack space="xs" className="mb-2">
                 <Text className="text-gray-700 text-xs font-medium">Prerequisites:</Text>
-                <Text className="text-gray-600 text-xs">
-                  {course.prerequisites.join(', ')}
-                </Text>
+                <Text className="text-gray-600 text-xs">{course.prerequisites.join(', ')}</Text>
               </VStack>
             )}
-            
+
             {course.learning_objectives?.length && (
               <VStack space="xs">
                 <Text className="text-gray-700 text-xs font-medium">Learning Objectives:</Text>
@@ -263,9 +259,7 @@ const CourseCard: React.FC<{
                   {course.learning_objectives.slice(0, 2).map((objective, index) => (
                     <HStack key={index} space="xs" className="items-start">
                       <Text className="text-gray-400 text-xs">•</Text>
-                      <Text className="text-gray-600 text-xs flex-1">
-                        {objective}
-                      </Text>
+                      <Text className="text-gray-600 text-xs flex-1">{objective}</Text>
                     </HStack>
                   ))}
                   {course.learning_objectives.length > 2 && (
@@ -332,29 +326,31 @@ const FilterModal: React.FC<{
           <VStack space="lg">
             {/* Education Levels */}
             <VStack space="md">
-              <Heading size="sm" className="text-gray-900">Education Levels</Heading>
+              <Heading size="sm" className="text-gray-900">
+                Education Levels
+              </Heading>
               <VStack space="sm">
-                {availableFilters.levels.map((level) => {
+                {availableFilters.levels.map(level => {
                   const levelConfig = EDUCATION_LEVELS[level as keyof typeof EDUCATION_LEVELS];
                   if (!levelConfig) return null;
-                  
+
                   const isSelected = localFilters.levels.includes(level);
-                  
+
                   return (
                     <Pressable
                       key={level}
                       onPress={() => {
                         setLocalFilters(prev => ({
                           ...prev,
-                          levels: isSelected 
+                          levels: isSelected
                             ? prev.levels.filter(l => l !== level)
-                            : [...prev.levels, level]
+                            : [...prev.levels, level],
                         }));
                       }}
                       className="w-full"
                     >
                       <HStack space="sm" className="items-center p-2 rounded-md hover:bg-gray-50">
-                        <Box 
+                        <Box
                           className={`
                             w-4 h-4 rounded border-2 items-center justify-center
                             ${isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}
@@ -366,9 +362,7 @@ const FilterModal: React.FC<{
                           <Text className="text-gray-900 text-sm font-medium">
                             {levelConfig.name}
                           </Text>
-                          <Text className="text-gray-600 text-xs">
-                            {levelConfig.description}
-                          </Text>
+                          <Text className="text-gray-600 text-xs">{levelConfig.description}</Text>
                         </VStack>
                       </HStack>
                     </Pressable>
@@ -380,26 +374,28 @@ const FilterModal: React.FC<{
             {/* Subject Areas */}
             {availableFilters.subjects.length > 0 && (
               <VStack space="md">
-                <Heading size="sm" className="text-gray-900">Subject Areas</Heading>
+                <Heading size="sm" className="text-gray-900">
+                  Subject Areas
+                </Heading>
                 <VStack space="sm">
-                  {availableFilters.subjects.map((subject) => {
+                  {availableFilters.subjects.map(subject => {
                     const isSelected = localFilters.subjects.includes(subject);
-                    
+
                     return (
                       <Pressable
                         key={subject}
                         onPress={() => {
                           setLocalFilters(prev => ({
                             ...prev,
-                            subjects: isSelected 
+                            subjects: isSelected
                               ? prev.subjects.filter(s => s !== subject)
-                              : [...prev.subjects, subject]
+                              : [...prev.subjects, subject],
                           }));
                         }}
                         className="w-full"
                       >
                         <HStack space="sm" className="items-center p-2 rounded-md hover:bg-gray-50">
-                          <Box 
+                          <Box
                             className={`
                               w-4 h-4 rounded border-2 items-center justify-center
                               ${isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}
@@ -418,26 +414,28 @@ const FilterModal: React.FC<{
 
             {/* Difficulty Levels */}
             <VStack space="md">
-              <Heading size="sm" className="text-gray-900">Difficulty Level</Heading>
+              <Heading size="sm" className="text-gray-900">
+                Difficulty Level
+              </Heading>
               <VStack space="sm">
-                {['beginner', 'intermediate', 'advanced'].map((difficulty) => {
+                {['beginner', 'intermediate', 'advanced'].map(difficulty => {
                   const isSelected = localFilters.difficulty.includes(difficulty);
-                  
+
                   return (
                     <Pressable
                       key={difficulty}
                       onPress={() => {
                         setLocalFilters(prev => ({
                           ...prev,
-                          difficulty: isSelected 
+                          difficulty: isSelected
                             ? prev.difficulty.filter(d => d !== difficulty)
-                            : [...prev.difficulty, difficulty]
+                            : [...prev.difficulty, difficulty],
                         }));
                       }}
                       className="w-full"
                     >
                       <HStack space="sm" className="items-center p-2 rounded-md hover:bg-gray-50">
-                        <Box 
+                        <Box
                           className={`
                             w-4 h-4 rounded border-2 items-center justify-center
                             ${isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}
@@ -482,7 +480,7 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
   maxSelections,
   showSelectionLimit = true,
   allowMultiSelect = true,
-  title = "Select Your Teaching Subjects",
+  title = 'Select Your Teaching Subjects',
   subtitle = "Choose the courses and subjects you'd like to teach",
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -498,7 +496,7 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
   const availableFilters = useMemo(() => {
     const levels = [...new Set(courses.map(c => c.education_level))];
     const subjects = [...new Set(courses.map(c => c.subject_area).filter(Boolean))];
-    
+
     return { levels, subjects };
   }, [courses]);
 
@@ -509,11 +507,12 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
     // Apply search
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(course =>
-        course.name.toLowerCase().includes(query) ||
-        course.code.toLowerCase().includes(query) ||
-        course.description?.toLowerCase().includes(query) ||
-        course.subject_area?.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        course =>
+          course.name.toLowerCase().includes(query) ||
+          course.code.toLowerCase().includes(query) ||
+          course.description?.toLowerCase().includes(query) ||
+          course.subject_area?.toLowerCase().includes(query)
       );
     }
 
@@ -521,16 +520,16 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
     if (filters.levels.length > 0) {
       filtered = filtered.filter(course => filters.levels.includes(course.education_level));
     }
-    
+
     if (filters.subjects.length > 0) {
-      filtered = filtered.filter(course => 
-        course.subject_area && filters.subjects.includes(course.subject_area)
+      filtered = filtered.filter(
+        course => course.subject_area && filters.subjects.includes(course.subject_area)
       );
     }
-    
+
     if (filters.difficulty.length > 0) {
-      filtered = filtered.filter(course => 
-        course.difficulty_level && filters.difficulty.includes(course.difficulty_level)
+      filtered = filtered.filter(
+        course => course.difficulty_level && filters.difficulty.includes(course.difficulty_level)
       );
     }
 
@@ -540,7 +539,7 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
   // Group courses by education level
   const groupedCourses = useMemo((): CourseGroup[] => {
     const groups: { [key: string]: Course[] } = {};
-    
+
     filteredCourses.forEach(course => {
       const level = course.education_level;
       if (!groups[level]) {
@@ -563,7 +562,8 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
   }, [filteredCourses]);
 
   const canSelectMore = !maxSelections || selectedCourseIds.length < maxSelections;
-  const hasActiveFilters = filters.levels.length > 0 || filters.subjects.length > 0 || filters.difficulty.length > 0;
+  const hasActiveFilters =
+    filters.levels.length > 0 || filters.subjects.length > 0 || filters.difficulty.length > 0;
 
   const renderCourseItem = ({ item }: { item: Course }) => (
     <CourseCard
@@ -603,12 +603,8 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
               <Heading size="xl" className="text-gray-900 text-center">
                 {title}
               </Heading>
-              <Text className="text-gray-600 text-center">
-                {subtitle}
-              </Text>
-              <Text className="text-blue-600 text-sm font-medium">
-                {educationalSystemName}
-              </Text>
+              <Text className="text-gray-600 text-center">{subtitle}</Text>
+              <Text className="text-blue-600 text-sm font-medium">{educationalSystemName}</Text>
             </VStack>
           </VStack>
 
@@ -644,9 +640,9 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
               onPress={() => setShowFilters(true)}
               className={`px-3 ${hasActiveFilters ? 'border-blue-500 bg-blue-50' : ''}`}
             >
-              <ButtonIcon 
-                as={Filter} 
-                className={hasActiveFilters ? 'text-blue-600' : 'text-gray-600'} 
+              <ButtonIcon
+                as={Filter}
+                className={hasActiveFilters ? 'text-blue-600' : 'text-gray-600'}
               />
             </Button>
           </HStack>
@@ -687,24 +683,17 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
           <VStack className="flex-1 items-center justify-center" space="md">
             <Icon as={Search} className="text-gray-400" size="xl" />
             <VStack space="xs" className="items-center">
-              <Text className="text-gray-600 text-center font-medium">
-                No courses found
-              </Text>
+              <Text className="text-gray-600 text-center font-medium">No courses found</Text>
               <Text className="text-gray-500 text-center text-sm">
                 {searchQuery.trim() || hasActiveFilters
                   ? 'Try adjusting your search or filters'
-                  : 'No courses available for this educational system'
-                }
+                  : 'No courses available for this educational system'}
               </Text>
             </VStack>
             {(searchQuery.trim() || hasActiveFilters) && (
               <VStack space="sm">
                 {searchQuery.trim() && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onPress={() => setSearchQuery('')}
-                  >
+                  <Button variant="outline" size="sm" onPress={() => setSearchQuery('')}>
                     <ButtonText>Clear search</ButtonText>
                   </Button>
                 )}
@@ -725,7 +714,7 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
             sections={groupedCourses}
             renderItem={renderCourseItem}
             renderSectionHeader={renderSectionHeader}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={item => item.id.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 100 }}
           />
@@ -733,7 +722,7 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
           <FlatList
             data={filteredCourses}
             renderItem={renderCourseItem}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={item => item.id.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 100 }}
           />
@@ -743,12 +732,10 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
       {/* Continue Button */}
       {selectedCourseIds.length > 0 && onSelectionComplete && (
         <Box className="bg-white px-4 py-4 border-t border-gray-200">
-          <Button
-            onPress={onSelectionComplete}
-            className="w-full bg-blue-600 hover:bg-blue-700"
-          >
+          <Button onPress={onSelectionComplete} className="w-full bg-blue-600 hover:bg-blue-700">
             <ButtonText className="text-white font-medium">
-              Continue with {selectedCourseIds.length} course{selectedCourseIds.length !== 1 ? 's' : ''}
+              Continue with {selectedCourseIds.length} course
+              {selectedCourseIds.length !== 1 ? 's' : ''}
             </ButtonText>
           </Button>
         </Box>

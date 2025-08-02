@@ -1,0 +1,165 @@
+QA Test Case: Teacher Invitation API Integration and Error Handling
+
+Test ID: TINVITE-019
+Test Name: Teacher Invitation API Integration and Error Handling
+Purpose: Verify robust API integration with comprehensive error handling, retry mechanisms, and graceful degradation for the teacher invitation system
+Expected Result: All API endpoints work correctly with proper error handling, retry logic, and user-friendly error messages
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Teacher Invitation System
+- Architecture: React Native frontend with Django backend
+- API Components: InvitationApi, useInvitationActions, error handling utilities
+- Endpoints: invite, bulk invite, resend, cancel, status check
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+4. Browser access: http://localhost:8081
+5. Network tools for simulation (DevTools Network tab)
+
+Test Data:
+- Valid API tokens and authentication
+- Test emails for various scenarios
+- Invalid tokens for error testing
+- Network conditions simulation
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and API Verification
+1. Start development servers: `make dev`
+2. Open browser DevTools Network tab
+3. Navigate to invitations dashboard
+4. Verify initial API calls succeed
+5. Check authentication headers and tokens
+Expected: All initial API calls successful with proper authentication
+Screenshot: 01_api_setup_verification.png
+
+Step 2: Test Single Invitation API Success Flow
+1. Open invite modal and enter valid email
+2. Monitor API call to InvitationApi.inviteExistingTeacher
+3. Verify request payload includes email, school_id, role, custom_message
+4. Check response format matches expected structure
+5. Confirm success handling updates UI correctly
+Expected: Single invitation API works with proper request/response
+Screenshot: 02_single_invitation_api.png
+
+Step 3: Test Bulk Invitation API Success Flow
+1. Switch to bulk mode with multiple emails
+2. Monitor API call to InvitationApi.sendBulkInvitations
+3. Verify bulk request payload structure
+4. Check response includes summary with counts
+5. Confirm progress tracking updates correctly
+Expected: Bulk invitation API processes multiple emails correctly
+Screenshot: 03_bulk_invitation_api.png
+
+Step 4: Test API Error Handling - Network Errors
+1. Open DevTools Network tab
+2. Set network throttling to "Offline"
+3. Attempt to send invitation
+4. Verify error handling shows appropriate message
+5. Return network to online and retry
+Expected: Network errors handled gracefully with retry options
+Screenshot: 04_network_error_handling.png
+
+Step 5: Test API Error Handling - Server Errors (500)
+1. Use DevTools to block or simulate 500 error
+2. Attempt invitation submission
+3. Verify server error is caught and displayed appropriately
+4. Check that retry mechanism is triggered if configured
+5. Confirm UI remains stable during server errors
+Expected: Server errors handled with appropriate user feedback
+Screenshot: 05_server_error_handling.png
+
+Step 6: Test API Error Handling - Validation Errors (400)
+1. Submit invitation with malformed data (if possible)
+2. Check 400 error response handling
+3. Verify validation error messages are displayed
+4. Confirm form remains in editable state for corrections
+5. Test field-specific error highlighting
+Expected: Validation errors provide clear correction guidance
+Screenshot: 06_validation_error_handling.png
+
+Step 7: Test Authentication Error Handling (401/403)
+1. Simulate expired or invalid authentication
+2. Attempt invitation operations
+3. Verify 401/403 errors trigger appropriate response
+4. Check that user is prompted to re-authenticate
+5. Confirm secure handling of authentication failures
+Expected: Authentication errors handled securely with re-auth flow
+Screenshot: 07_auth_error_handling.png
+
+Step 8: Test Retry Mechanism with Exponential Backoff
+1. Monitor network tab during API calls
+2. Simulate intermittent network issues
+3. Verify retry attempts with increasing delays
+4. Check maximum retry limit is respected
+5. Confirm final failure handling after max retries
+Expected: Retry mechanism works with proper backoff strategy
+Screenshot: 08_retry_mechanism.png
+
+Step 9: Test Error Message Parsing and Display
+1. Test various error response formats from API
+2. Verify parseInvitationError function handles different formats
+3. Check standardized vs legacy error format handling
+4. Confirm error messages are user-friendly
+5. Test error code to message mapping
+Expected: All error formats parsed correctly with clear messages
+Screenshot: 09_error_message_parsing.png
+
+Step 10: Test API Timeout Handling
+1. Simulate slow network conditions
+2. Set API timeout to short duration
+3. Attempt invitation submission
+4. Verify timeout errors are caught appropriately
+5. Check timeout retry behavior
+Expected: Timeout conditions handled gracefully
+Screenshot: 10_timeout_handling.png
+
+Step 11: Test API Rate Limiting Response
+1. Attempt rapid successive API calls
+2. Check for rate limiting responses (429)
+3. Verify rate limit error handling
+4. Test retry after rate limit period
+5. Confirm user feedback for rate limiting
+Expected: Rate limiting handled with appropriate delays
+Screenshot: 11_rate_limiting.png
+
+Step 12: Test API Response Validation
+1. Monitor API responses for required fields
+2. Verify response validation catches malformed responses
+3. Test handling of missing or invalid response data
+4. Check that UI handles incomplete responses gracefully
+5. Confirm error boundaries protect against invalid data
+Expected: Response validation prevents UI corruption
+Screenshot: 12_response_validation.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS:
+- All API endpoints respond correctly with proper request/response format
+- Network errors handled gracefully with appropriate user feedback
+- Server errors (500) caught and displayed with retry options
+- Validation errors (400) provide clear correction guidance
+- Authentication errors (401/403) trigger secure re-authentication flow
+- Retry mechanism works with exponential backoff and max limits
+- Error messages are parsed correctly and user-friendly
+- Timeout conditions handled without UI corruption
+- Rate limiting responses handled with appropriate delays
+- Response validation prevents malformed data from corrupting UI
+
+FAIL:
+- API endpoints fail or return incorrect data format
+- Network errors cause UI crashes or poor user experience
+- Server errors not handled or show technical error details
+- Validation errors unclear or don't help user correct issues
+- Authentication errors handled insecurely or cause data loss
+- Retry mechanism missing, broken, or excessive
+- Error messages confusing, technical, or missing
+- Timeouts cause crashes or indefinite loading states
+- Rate limiting not handled or causes poor user experience
+- Invalid responses corrupt UI or cause application crashes
+
+Overall Result: PASS only if ALL individual steps pass, FAIL if ANY step fails

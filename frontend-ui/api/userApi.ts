@@ -36,23 +36,23 @@ export interface TeacherProfile {
   address: string;
   phone_number: string;
   calendar_iframe?: string;
-  
+
   // Enhanced fields from backend
   profile_completion_score: number;
   is_profile_complete: boolean;
   last_activity?: string;
   status?: 'active' | 'inactive' | 'pending';
-  
+
   // Structured fields
   education_background?: Record<string, any>;
   teaching_subjects?: string[];
   rate_structure?: Record<string, any>;
   weekly_availability?: Record<string, any>;
-  
+
   // Related data
   teacher_courses?: TeacherCourse[];
   profile_completion?: ProfileCompletion;
-  
+
   // Timestamps
   created_at?: string;
   updated_at?: string;
@@ -214,9 +214,10 @@ export const getTeachers = async (): Promise<TeacherProfile[]> => {
  */
 export const getStudents = async (filters?: StudentFilters): Promise<StudentListResponse> => {
   const queryParams = new URLSearchParams();
-  
+
   if (filters?.search) queryParams.append('search', filters.search);
-  if (filters?.educational_system) queryParams.append('educational_system', filters.educational_system.toString());
+  if (filters?.educational_system)
+    queryParams.append('educational_system', filters.educational_system.toString());
   if (filters?.school_year) queryParams.append('school_year', filters.school_year);
   if (filters?.status) queryParams.append('status', filters.status);
   if (filters?.page) queryParams.append('page', filters.page.toString());
@@ -225,7 +226,7 @@ export const getStudents = async (filters?: StudentFilters): Promise<StudentList
 
   const url = `/accounts/students/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   const response = await apiClient.get<StudentListResponse>(url);
-  
+
   // Handle both paginated and non-paginated responses
   if (response.data.results) {
     return response.data;
@@ -259,7 +260,10 @@ export const createStudent = async (data: CreateStudentData): Promise<StudentPro
 /**
  * Update student profile
  */
-export const updateStudent = async (id: number, data: UpdateStudentData): Promise<StudentProfile> => {
+export const updateStudent = async (
+  id: number,
+  data: UpdateStudentData
+): Promise<StudentProfile> => {
   const response = await apiClient.patch<StudentProfile>(`/accounts/students/${id}/`, data);
   return response.data;
 };
@@ -282,7 +286,10 @@ export const getStudentById = async (id: number): Promise<StudentProfile> => {
 /**
  * Update student status
  */
-export const updateStudentStatus = async (id: number, status: 'active' | 'inactive' | 'graduated'): Promise<StudentProfile> => {
+export const updateStudentStatus = async (
+  id: number,
+  status: 'active' | 'inactive' | 'graduated'
+): Promise<StudentProfile> => {
   const response = await apiClient.patch<StudentProfile>(`/accounts/students/${id}/`, { status });
   return response.data;
 };
@@ -293,12 +300,16 @@ export const updateStudentStatus = async (id: number, status: 'active' | 'inacti
 export const bulkImportStudents = async (file: File): Promise<BulkImportResult> => {
   const formData = new FormData();
   formData.append('csv_file', file);
-  
-  const response = await apiClient.post<BulkImportResult>('/accounts/students/bulk_import/', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+
+  const response = await apiClient.post<BulkImportResult>(
+    '/accounts/students/bulk_import/',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
   return response.data;
 };
 
@@ -386,7 +397,15 @@ export interface SchoolMetrics {
 
 export interface SchoolActivity {
   id: string;
-  activity_type: 'invitation_sent' | 'invitation_accepted' | 'invitation_declined' | 'student_joined' | 'teacher_joined' | 'class_created' | 'class_completed' | 'class_cancelled';
+  activity_type:
+    | 'invitation_sent'
+    | 'invitation_accepted'
+    | 'invitation_declined'
+    | 'student_joined'
+    | 'teacher_joined'
+    | 'class_created'
+    | 'class_completed'
+    | 'class_cancelled';
   timestamp: string;
   actor: {
     id: number;
@@ -451,14 +470,17 @@ export const getSchoolActivity = async (
   }
 ): Promise<SchoolActivityResponse> => {
   const queryParams = new URLSearchParams();
-  
+
   if (params?.page) queryParams.append('page', params.page.toString());
   if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
-  if (params?.activity_types?.length) queryParams.append('activity_types', params.activity_types.join(','));
+  if (params?.activity_types?.length)
+    queryParams.append('activity_types', params.activity_types.join(','));
   if (params?.date_from) queryParams.append('date_from', params.date_from);
   if (params?.date_to) queryParams.append('date_to', params.date_to);
 
-  const url = `/accounts/schools/${schoolId}/activity/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const url = `/accounts/schools/${schoolId}/activity/${
+    queryParams.toString() ? `?${queryParams.toString()}` : ''
+  }`;
   const response = await apiClient.get<SchoolActivityResponse>(url);
   return response.data;
 };
@@ -466,7 +488,10 @@ export const getSchoolActivity = async (
 /**
  * Update school information
  */
-export const updateSchoolInfo = async (schoolId: number, data: Partial<SchoolInfo>): Promise<SchoolInfo> => {
+export const updateSchoolInfo = async (
+  schoolId: number,
+  data: Partial<SchoolInfo>
+): Promise<SchoolInfo> => {
   const response = await apiClient.patch<SchoolInfo>(`/accounts/schools/${schoolId}/`, data);
   return response.data;
 };
@@ -516,8 +541,8 @@ export const getUserSchoolMemberships = async (): Promise<SchoolMembership[]> =>
 export const getUserAdminSchools = async (): Promise<SchoolMembership[]> => {
   const memberships = await getUserSchoolMemberships();
   return memberships.filter(
-    membership => 
-      membership.is_active && 
+    membership =>
+      membership.is_active &&
       (membership.role === 'school_owner' || membership.role === 'school_admin')
   );
 };
@@ -617,15 +642,20 @@ export interface UpdateTeacherData {
 /**
  * Get enhanced list of teachers with filtering and pagination
  */
-export const getTeachersEnhanced = async (filters?: TeacherFilters): Promise<TeacherListResponse> => {
+export const getTeachersEnhanced = async (
+  filters?: TeacherFilters
+): Promise<TeacherListResponse> => {
   const queryParams = new URLSearchParams();
-  
+
   if (filters?.search) queryParams.append('search', filters.search);
   if (filters?.specialty) queryParams.append('specialty', filters.specialty);
   if (filters?.status) queryParams.append('status', filters.status);
-  if (filters?.completion_status) queryParams.append('completion_status', filters.completion_status);
-  if (filters?.min_completion) queryParams.append('min_completion', filters.min_completion.toString());
-  if (filters?.has_courses !== undefined) queryParams.append('has_courses', filters.has_courses.toString());
+  if (filters?.completion_status)
+    queryParams.append('completion_status', filters.completion_status);
+  if (filters?.min_completion)
+    queryParams.append('min_completion', filters.min_completion.toString());
+  if (filters?.has_courses !== undefined)
+    queryParams.append('has_courses', filters.has_courses.toString());
   if (filters?.page) queryParams.append('page', filters.page.toString());
   if (filters?.page_size) queryParams.append('page_size', filters.page_size.toString());
   if (filters?.ordering) queryParams.append('ordering', filters.ordering);
@@ -639,15 +669,22 @@ export const getTeachersEnhanced = async (filters?: TeacherFilters): Promise<Tea
  * Get teacher analytics for a school
  */
 export const getTeacherAnalytics = async (schoolId: number): Promise<TeacherAnalytics> => {
-  const response = await apiClient.get<TeacherAnalytics>(`/accounts/schools/${schoolId}/teacher-analytics/`);
+  const response = await apiClient.get<TeacherAnalytics>(
+    `/accounts/schools/${schoolId}/teacher-analytics/`
+  );
   return response.data;
 };
 
 /**
  * Perform bulk actions on teachers
  */
-export const performBulkTeacherActions = async (action: BulkTeacherAction): Promise<BulkActionResult> => {
-  const response = await apiClient.post<BulkActionResult>('/accounts/teachers/bulk-actions/', action);
+export const performBulkTeacherActions = async (
+  action: BulkTeacherAction
+): Promise<BulkActionResult> => {
+  const response = await apiClient.post<BulkActionResult>(
+    '/accounts/teachers/bulk-actions/',
+    action
+  );
   return response.data;
 };
 
@@ -655,14 +692,19 @@ export const performBulkTeacherActions = async (action: BulkTeacherAction): Prom
  * Get available message templates for teacher communication
  */
 export const getTeacherMessageTemplates = async (): Promise<TeacherMessageTemplate[]> => {
-  const response = await apiClient.get<TeacherMessageTemplate[]>('/accounts/teachers/message-templates/');
+  const response = await apiClient.get<TeacherMessageTemplate[]>(
+    '/accounts/teachers/message-templates/'
+  );
   return response.data;
 };
 
 /**
  * Update teacher profile (admin-editable fields only)
  */
-export const updateTeacherProfileAdmin = async (id: number, data: UpdateTeacherData): Promise<TeacherProfile> => {
+export const updateTeacherProfileAdmin = async (
+  id: number,
+  data: UpdateTeacherData
+): Promise<TeacherProfile> => {
   const response = await apiClient.patch<TeacherProfile>(`/accounts/teachers/${id}/`, data);
   return response.data;
 };
@@ -856,7 +898,9 @@ export const getRateSuggestions = async (params: {
 /**
  * Upload teacher profile photo
  */
-export const uploadTeacherProfilePhoto = async (file: File | Blob): Promise<{ photo_url: string }> => {
+export const uploadTeacherProfilePhoto = async (
+  file: File | Blob
+): Promise<{ photo_url: string }> => {
   const formData = new FormData();
   formData.append('photo', file);
 
@@ -876,6 +920,8 @@ export const uploadTeacherProfilePhoto = async (file: File | Blob): Promise<{ ph
  * Get teacher profile completion score
  */
 export const getTeacherProfileCompletionScore = async (): Promise<ProfileCompletion> => {
-  const response = await apiClient.get<ProfileCompletion>('/accounts/teachers/profile-completion-score/');
+  const response = await apiClient.get<ProfileCompletion>(
+    '/accounts/teachers/profile-completion-score/'
+  );
   return response.data;
 };

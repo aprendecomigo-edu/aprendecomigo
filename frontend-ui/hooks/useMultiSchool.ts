@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 
-import apiClient from '@/api/apiClient';
 import { InvitationError } from './useInvitations';
+
+import apiClient from '@/api/apiClient';
 
 // Types for multi-school functionality
 export interface SchoolMembership {
@@ -64,12 +65,13 @@ export const useMultiSchool = () => {
 
       const response = await apiClient.get('/accounts/school-memberships/');
       const membershipData = response.data.results || response.data;
-      
+
       setMemberships(membershipData);
 
       // Set current school if none is selected
       if (!currentSchool && membershipData.length > 0) {
-        const activeMembership = membershipData.find((m: SchoolMembership) => m.is_active) || membershipData[0];
+        const activeMembership =
+          membershipData.find((m: SchoolMembership) => m.is_active) || membershipData[0];
         setCurrentSchool(activeMembership);
       }
     } catch (err: any) {
@@ -108,18 +110,18 @@ export const useMultiSchool = () => {
 
       // Update local state
       setCurrentSchool(membership);
-      
-      // Update all memberships to reflect new active status
-      setMemberships(prev => prev.map(m => ({
-        ...m,
-        is_active: m.id === membership.id,
-      })));
 
-      Alert.alert(
-        'Escola Alterada',
-        `Você agora está visualizando ${membership.school.name}`,
-        [{ text: 'OK' }]
+      // Update all memberships to reflect new active status
+      setMemberships(prev =>
+        prev.map(m => ({
+          ...m,
+          is_active: m.id === membership.id,
+        }))
       );
+
+      Alert.alert('Escola Alterada', `Você agora está visualizando ${membership.school.name}`, [
+        { text: 'OK' },
+      ]);
     } catch (err: any) {
       const parsedError: InvitationError = {
         code: 'SWITCH_SCHOOL_ERROR',
@@ -133,49 +135,52 @@ export const useMultiSchool = () => {
   }, []);
 
   // Leave a school (with confirmation)
-  const leaveSchool = useCallback(async (membershipId: number, schoolName: string) => {
-    return new Promise<void>((resolve, reject) => {
-      Alert.alert(
-        'Sair da Escola',
-        `Tem certeza de que deseja sair da escola "${schoolName}"? Esta ação não pode ser desfeita.`,
-        [
-          { text: 'Cancelar', style: 'cancel', onPress: () => resolve() },
-          {
-            text: 'Sair',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                setLoading(true);
-                await apiClient.delete(`/accounts/school-memberships/${membershipId}/`);
-                
-                // Remove from local state
-                setMemberships(prev => prev.filter(m => m.id !== membershipId));
-                
-                // If this was the current school, switch to another one
-                if (currentSchool?.id === membershipId) {
-                  const remainingMemberships = memberships.filter(m => m.id !== membershipId);
-                  setCurrentSchool(remainingMemberships[0] || null);
-                }
+  const leaveSchool = useCallback(
+    async (membershipId: number, schoolName: string) => {
+      return new Promise<void>((resolve, reject) => {
+        Alert.alert(
+          'Sair da Escola',
+          `Tem certeza de que deseja sair da escola "${schoolName}"? Esta ação não pode ser desfeita.`,
+          [
+            { text: 'Cancelar', style: 'cancel', onPress: () => resolve() },
+            {
+              text: 'Sair',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  setLoading(true);
+                  await apiClient.delete(`/accounts/school-memberships/${membershipId}/`);
 
-                Alert.alert('Sucesso', `Você saiu da escola "${schoolName}".`);
-                resolve();
-              } catch (err: any) {
-                const parsedError: InvitationError = {
-                  code: 'LEAVE_SCHOOL_ERROR',
-                  message: 'Falha ao sair da escola. Tente novamente.',
-                  retryable: true,
-                };
-                setError(parsedError);
-                reject(parsedError);
-              } finally {
-                setLoading(false);
-              }
-            }
-          }
-        ]
-      );
-    });
-  }, [currentSchool, memberships]);
+                  // Remove from local state
+                  setMemberships(prev => prev.filter(m => m.id !== membershipId));
+
+                  // If this was the current school, switch to another one
+                  if (currentSchool?.id === membershipId) {
+                    const remainingMemberships = memberships.filter(m => m.id !== membershipId);
+                    setCurrentSchool(remainingMemberships[0] || null);
+                  }
+
+                  Alert.alert('Sucesso', `Você saiu da escola "${schoolName}".`);
+                  resolve();
+                } catch (err: any) {
+                  const parsedError: InvitationError = {
+                    code: 'LEAVE_SCHOOL_ERROR',
+                    message: 'Falha ao sair da escola. Tente novamente.',
+                    retryable: true,
+                  };
+                  setError(parsedError);
+                  reject(parsedError);
+                } finally {
+                  setLoading(false);
+                }
+              },
+            },
+          ]
+        );
+      });
+    },
+    [currentSchool, memberships]
+  );
 
   // Get school statistics
   const getSchoolStats = useCallback(async (schoolId: number): Promise<SchoolStats | null> => {
@@ -190,10 +195,7 @@ export const useMultiSchool = () => {
 
   // Refresh all data
   const refresh = useCallback(async () => {
-    await Promise.all([
-      fetchMemberships(),
-      fetchPendingInvitations(),
-    ]);
+    await Promise.all([fetchMemberships(), fetchPendingInvitations()]);
   }, [fetchMemberships, fetchPendingInvitations]);
 
   // Clear error state
@@ -211,11 +213,11 @@ export const useMultiSchool = () => {
     memberships,
     pendingInvitations,
     currentSchool,
-    
+
     // State
     loading,
     error,
-    
+
     // Actions
     fetchMemberships,
     fetchPendingInvitations,
@@ -224,7 +226,7 @@ export const useMultiSchool = () => {
     getSchoolStats,
     refresh,
     clearError,
-    
+
     // Computed values
     hasMultipleSchools: memberships.length > 1,
     hasPendingInvitations: pendingInvitations.length > 0,

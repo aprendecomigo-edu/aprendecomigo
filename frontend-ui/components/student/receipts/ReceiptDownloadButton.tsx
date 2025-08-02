@@ -1,21 +1,21 @@
 /**
  * Receipt Download Button Component
- * 
+ *
  * Provides download functionality for receipts with loading states
  * and error handling for both existing and to-be-generated receipts.
  */
 
-import React, { useState } from 'react';
 import { Download, FileText, RefreshCw, AlertTriangle } from 'lucide-react-native';
+import React, { useState } from 'react';
 
+import type { Receipt } from '@/api/receiptApi';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
 import { useReceipts } from '@/hooks/useReceipts';
-import type { Receipt } from '@/api/receiptApi';
 
 interface ReceiptDownloadButtonProps {
   transactionId: string;
@@ -41,7 +41,14 @@ export function ReceiptDownloadButton({
   onPreview,
   className = '',
 }: ReceiptDownloadButtonProps) {
-  const { generateReceipt, downloadReceipt, generating, downloading, generationError, downloadError } = useReceipts();
+  const {
+    generateReceipt,
+    downloadReceipt,
+    generating,
+    downloading,
+    generationError,
+    downloadError,
+  } = useReceipts();
   const [localError, setLocalError] = useState<string | null>(null);
 
   const handleDownload = async () => {
@@ -94,9 +101,7 @@ export function ReceiptDownloadButton({
       <VStack space="xs" className={className}>
         <HStack space="xs" className="items-center">
           <Icon as={AlertTriangle} size="sm" className="text-error-500" />
-          <Text className="text-xs text-error-600">
-            Receipt generation failed
-          </Text>
+          <Text className="text-xs text-error-600">Receipt generation failed</Text>
         </HStack>
         <Button
           action="secondary"
@@ -117,9 +122,7 @@ export function ReceiptDownloadButton({
       <VStack space="xs" className={className}>
         <HStack space="xs" className="items-center">
           <Spinner size="sm" />
-          <Text className="text-xs text-typography-600">
-            Generating receipt...
-          </Text>
+          <Text className="text-xs text-typography-600">Generating receipt...</Text>
         </HStack>
         <Button
           action="secondary"
@@ -142,7 +145,7 @@ export function ReceiptDownloadButton({
           {localError || generationError || downloadError}
         </Text>
       )}
-      
+
       <HStack space="xs">
         {/* Download Button */}
         <Button
@@ -162,21 +165,14 @@ export function ReceiptDownloadButton({
           ) : (
             <>
               <ButtonIcon as={Download} />
-              <ButtonText>
-                {existingReceipt ? 'Download' : 'Generate & Download'}
-              </ButtonText>
+              <ButtonText>{existingReceipt ? 'Download' : 'Generate & Download'}</ButtonText>
             </>
           )}
         </Button>
 
         {/* Preview Button (only for existing generated receipts) */}
         {existingReceipt?.status === 'generated' && onPreview && (
-          <Button
-            action="secondary"
-            variant="outline"
-            size={size}
-            onPress={handlePreview}
-          >
+          <Button action="secondary" variant="outline" size={size} onPress={handlePreview}>
             <ButtonIcon as={FileText} />
             <ButtonText>Preview</ButtonText>
           </Button>

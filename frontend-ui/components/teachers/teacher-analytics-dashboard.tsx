@@ -1,36 +1,36 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  CheckCircle, 
-  AlertTriangle, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Users,
+  CheckCircle,
+  AlertTriangle,
   BarChart3,
   PieChart,
   RefreshCw,
   Info,
   Award,
   Target,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react-native';
+import React, { useState, useMemo } from 'react';
 
-import { Box } from '@/components/ui/box';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Pressable } from '@/components/ui/pressable';
-import { Heading } from '@/components/ui/heading';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { Spinner } from '@/components/ui/spinner';
-import { ScrollView } from '@/components/ui/scroll-view';
-import { Progress } from '@/components/ui/progress';
+import { CircularProgress } from './profile-completion-indicator';
 
 import { TeacherAnalytics } from '@/api/userApi';
+import { Badge } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Pressable } from '@/components/ui/pressable';
+import { Progress } from '@/components/ui/progress';
+import { ScrollView } from '@/components/ui/scroll-view';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 import { useTeacherAnalytics } from '@/hooks/useTeacherAnalytics';
-import { CircularProgress } from './profile-completion-indicator';
 
 interface TeacherAnalyticsDashboardProps {
   schoolId?: number;
@@ -76,7 +76,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
   trend,
   trendValue,
   color = COLORS.primary,
-  onPress
+  onPress,
 }) => {
   const getTrendIcon = () => {
     if (trend === 'up') return TrendingUp;
@@ -107,13 +107,11 @@ const MetricCard: React.FC<MetricCardProps> = ({
               </HStack>
             )}
           </HStack>
-          
+
           <VStack space="xs">
             <Text className="text-2xl font-bold text-gray-900">{value}</Text>
             <Text className="text-sm font-medium text-gray-700">{title}</Text>
-            {subtitle && (
-              <Text className="text-xs text-gray-500">{subtitle}</Text>
-            )}
+            {subtitle && <Text className="text-xs text-gray-500">{subtitle}</Text>}
           </VStack>
         </VStack>
       </Pressable>
@@ -128,7 +126,7 @@ interface CompletionDistributionChartProps {
 
 const CompletionDistributionChart: React.FC<CompletionDistributionChartProps> = ({
   distribution,
-  total
+  total,
 }) => {
   if (total === 0) {
     return (
@@ -147,27 +145,22 @@ const CompletionDistributionChart: React.FC<CompletionDistributionChartProps> = 
 
   return (
     <VStack space="md">
-      {segments.map((segment) => {
+      {segments.map(segment => {
         const percentage = total > 0 ? (segment.count / total) * 100 : 0;
-        
+
         return (
           <VStack key={segment.range} space="xs">
             <HStack className="items-center justify-between">
               <HStack className="items-center" space="xs">
-                <Box 
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: segment.color }}
-                />
-                <Text className="text-sm font-medium text-gray-700">
-                  {segment.range}
-                </Text>
+                <Box className="w-3 h-3 rounded-full" style={{ backgroundColor: segment.color }} />
+                <Text className="text-sm font-medium text-gray-700">{segment.range}</Text>
               </HStack>
               <Text className="text-sm text-gray-600">
                 {segment.count} ({Math.round(percentage)}%)
               </Text>
             </HStack>
-            <Progress 
-              value={percentage} 
+            <Progress
+              value={percentage}
               className="h-2"
               style={{ backgroundColor: `${segment.color}20` }}
             />
@@ -194,7 +187,7 @@ const TopMissingFields: React.FC<TopMissingFieldsProps> = ({ fields, onFieldClic
       address: 'Endereço',
       availability: 'Disponibilidade',
       teaching_subjects: 'Disciplinas',
-      calendar_iframe: 'Calendário'
+      calendar_iframe: 'Calendário',
     };
     return fieldNames[field] || field;
   };
@@ -203,9 +196,7 @@ const TopMissingFields: React.FC<TopMissingFieldsProps> = ({ fields, onFieldClic
     return (
       <Box className="p-4 text-center">
         <Icon as={CheckCircle} size="lg" className="text-green-500 mb-2" />
-        <Text className="text-sm text-gray-500">
-          Todos os perfis estão completos!
-        </Text>
+        <Text className="text-sm text-gray-500">Todos os perfis estão completos!</Text>
       </Box>
     );
   }
@@ -220,22 +211,17 @@ const TopMissingFields: React.FC<TopMissingFieldsProps> = ({ fields, onFieldClic
         >
           <HStack className="items-center justify-between">
             <VStack className="flex-1">
-              <Text className="font-medium text-gray-900">
-                {getFieldDisplayName(field.field)}
-              </Text>
+              <Text className="font-medium text-gray-900">{getFieldDisplayName(field.field)}</Text>
               <Text className="text-xs text-gray-500">
                 {field.count} professores ({field.percentage}%)
               </Text>
             </VStack>
-            
+
             <HStack className="items-center" space="sm">
               <Box className="w-12">
                 <Progress value={field.percentage} className="h-2" />
               </Box>
-              <Badge 
-                variant={field.percentage > 50 ? 'destructive' : 'secondary'}
-                size="sm"
-              >
+              <Badge variant={field.percentage > 50 ? 'destructive' : 'secondary'} size="sm">
                 {field.percentage}%
               </Badge>
             </HStack>
@@ -258,22 +244,20 @@ interface TeachersNeedingAttentionProps {
 
 const TeachersNeedingAttention: React.FC<TeachersNeedingAttentionProps> = ({
   teachers,
-  onViewTeacher
+  onViewTeacher,
 }) => {
   if (teachers.length === 0) {
     return (
       <Box className="p-4 text-center">
         <Icon as={Award} size="lg" className="text-green-500 mb-2" />
-        <Text className="text-sm text-gray-500">
-          Todos os professores estão em boa situação!
-        </Text>
+        <Text className="text-sm text-gray-500">Todos os professores estão em boa situação!</Text>
       </Box>
     );
   }
 
   return (
     <VStack space="sm">
-      {teachers.slice(0, 5).map((teacher) => (
+      {teachers.slice(0, 5).map(teacher => (
         <Pressable
           key={teacher.teacher_id}
           onPress={() => onViewTeacher?.(teacher.teacher_id)}
@@ -283,10 +267,12 @@ const TeachersNeedingAttention: React.FC<TeachersNeedingAttentionProps> = ({
             <VStack className="flex-1">
               <Text className="font-medium text-gray-900">{teacher.name}</Text>
               <Text className="text-xs text-red-700">
-                {teacher.missing_critical.length} campo{teacher.missing_critical.length > 1 ? 's' : ''} crítico{teacher.missing_critical.length > 1 ? 's' : ''} em falta
+                {teacher.missing_critical.length} campo
+                {teacher.missing_critical.length > 1 ? 's' : ''} crítico
+                {teacher.missing_critical.length > 1 ? 's' : ''} em falta
               </Text>
             </VStack>
-            
+
             <HStack className="items-center" space="sm">
               <CircularProgress
                 percentage={teacher.completion_percentage}
@@ -300,7 +286,7 @@ const TeachersNeedingAttention: React.FC<TeachersNeedingAttentionProps> = ({
           </HStack>
         </Pressable>
       ))}
-      
+
       {teachers.length > 5 && (
         <Text className="text-xs text-gray-500 text-center">
           +{teachers.length - 5} mais professores precisam de atenção
@@ -313,10 +299,10 @@ const TeachersNeedingAttention: React.FC<TeachersNeedingAttentionProps> = ({
 export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps> = ({
   schoolId,
   onRefresh,
-  onViewTeacher
+  onViewTeacher,
 }) => {
   const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'quarter'>('month');
-  
+
   const {
     analytics,
     loading,
@@ -330,11 +316,11 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
     isHealthy,
     needsAttention,
     getCriticalTeachersCount,
-    getAverageCompletionGrade
+    getAverageCompletionGrade,
   } = useTeacherAnalytics({
     schoolId,
     autoFetch: true,
-    refreshInterval: 5 * 60 * 1000 // Refresh every 5 minutes
+    refreshInterval: 5 * 60 * 1000, // Refresh every 5 minutes
   });
 
   const handleRefresh = async () => {
@@ -346,7 +332,10 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
   const completionTrend = useMemo(() => getCompletionTrend(), [analytics]);
   const priorityIssues = useMemo(() => getHighPriorityIssues(), [analytics]);
   const topMissingFields = useMemo(() => getTopMissingFields(5), [analytics]);
-  const distributionPercentages = useMemo(() => getCompletionDistributionPercentages(), [analytics]);
+  const distributionPercentages = useMemo(
+    () => getCompletionDistributionPercentages(),
+    [analytics]
+  );
   const healthStatus = useMemo(() => isHealthy(), [analytics]);
   const attentionNeeded = useMemo(() => needsAttention(), [analytics]);
   const criticalCount = useMemo(() => getCriticalTeachersCount(), [analytics]);
@@ -384,9 +373,7 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
   if (!analytics) {
     return (
       <Box className="p-6">
-        <Text className="text-gray-500 text-center">
-          Nenhum dado de análise disponível
-        </Text>
+        <Text className="text-gray-500 text-center">Nenhum dado de análise disponível</Text>
       </Box>
     );
   }
@@ -404,18 +391,9 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
               Última atualização: {lastUpdated ? lastUpdated.toLocaleTimeString('pt-BR') : 'Nunca'}
             </Text>
           </VStack>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onPress={handleRefresh}
-            disabled={loading}
-          >
-            {loading ? (
-              <Spinner size="small" />
-            ) : (
-              <Icon as={RefreshCw} size="sm" />
-            )}
+
+          <Button variant="outline" size="sm" onPress={handleRefresh} disabled={loading}>
+            {loading ? <Spinner size="small" /> : <Icon as={RefreshCw} size="sm" />}
             <ButtonText className="ml-2">Atualizar</ButtonText>
           </Button>
         </HStack>
@@ -426,9 +404,7 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
             <HStack space="sm" className="items-start">
               <Icon as={AlertTriangle} size="sm" className="text-red-600 mt-1" />
               <VStack className="flex-1">
-                <Text className="text-sm font-medium text-red-800">
-                  Atenção necessária
-                </Text>
+                <Text className="text-sm font-medium text-red-800">Atenção necessária</Text>
                 <Text className="text-xs text-red-700">
                   Os perfis dos professores precisam de melhorias urgentes
                 </Text>
@@ -440,7 +416,7 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
         {/* Overview Metrics */}
         <VStack space="md">
           <Text className="text-lg font-semibold text-gray-900">Visão Geral</Text>
-          
+
           <HStack space="md" className="flex-wrap">
             <Box className="flex-1 min-w-40">
               <MetricCard
@@ -451,19 +427,34 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
                 subtitle={`${analytics.complete_profiles} completos`}
               />
             </Box>
-            
+
             <Box className="flex-1 min-w-40">
               <MetricCard
                 title="Completude Média"
                 value={`${Math.round(analytics.average_completion)}%`}
                 icon={Target}
-                color={completionGrade === 'A' || completionGrade === 'B' ? COLORS.success : 
-                       completionGrade === 'C' ? COLORS.warning : COLORS.danger}
+                color={
+                  completionGrade === 'A' || completionGrade === 'B'
+                    ? COLORS.success
+                    : completionGrade === 'C'
+                    ? COLORS.warning
+                    : COLORS.danger
+                }
                 subtitle={`Nota: ${completionGrade}`}
-                trend={completionTrend === 'improving' ? 'up' : 
-                       completionTrend === 'declining' ? 'down' : 'stable'}
-                trendValue={completionTrend === 'improving' ? 'Melhorando' : 
-                           completionTrend === 'declining' ? 'Piorando' : 'Estável'}
+                trend={
+                  completionTrend === 'improving'
+                    ? 'up'
+                    : completionTrend === 'declining'
+                    ? 'down'
+                    : 'stable'
+                }
+                trendValue={
+                  completionTrend === 'improving'
+                    ? 'Melhorando'
+                    : completionTrend === 'declining'
+                    ? 'Piorando'
+                    : 'Estável'
+                }
               />
             </Box>
           </HStack>
@@ -475,17 +466,19 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
                 value={analytics.complete_profiles}
                 icon={CheckCircle}
                 color={COLORS.success}
-                subtitle={`${Math.round((analytics.complete_profiles / analytics.total_teachers) * 100)}% do total`}
+                subtitle={`${Math.round(
+                  (analytics.complete_profiles / analytics.total_teachers) * 100
+                )}% do total`}
               />
             </Box>
-            
+
             <Box className="flex-1">
               <MetricCard
                 title="Precisam Atenção"
                 value={criticalCount}
                 icon={AlertTriangle}
                 color={criticalCount > 0 ? COLORS.danger : COLORS.success}
-                subtitle={criticalCount > 0 ? "Ação urgente" : "Tudo bem"}
+                subtitle={criticalCount > 0 ? 'Ação urgente' : 'Tudo bem'}
                 onPress={() => {
                   // TODO: Navigate to filtered view of critical teachers
                   console.log('View critical teachers');
@@ -504,7 +497,7 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
               </Heading>
               <Icon as={PieChart} size="md" className="text-gray-500" />
             </HStack>
-            
+
             <CompletionDistributionChart
               distribution={analytics.completion_distribution}
               total={analytics.total_teachers}
@@ -521,10 +514,10 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
               </Heading>
               <Icon as={BarChart3} size="md" className="text-gray-500" />
             </HStack>
-            
-            <TopMissingFields 
+
+            <TopMissingFields
               fields={topMissingFields}
-              onFieldClick={(field) => {
+              onFieldClick={field => {
                 // TODO: Navigate to teachers filtered by missing field
                 console.log('Filter by missing field:', field);
               }}
@@ -544,7 +537,7 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
                   {analytics.profile_completion_stats.needs_attention.length}
                 </Badge>
               </HStack>
-              
+
               <TeachersNeedingAttention
                 teachers={analytics.profile_completion_stats.needs_attention}
                 onViewTeacher={onViewTeacher}
@@ -563,7 +556,7 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
                 </Heading>
                 <Icon as={Info} size="md" className="text-amber-500" />
               </HStack>
-              
+
               <VStack space="sm">
                 {priorityIssues.map((issue, index) => (
                   <Box key={index} className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
@@ -584,7 +577,7 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
             <Heading size="md" className="text-gray-900">
               Recomendações
             </Heading>
-            
+
             <VStack space="sm">
               {healthStatus ? (
                 <Box className="p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -607,7 +600,7 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
                       </HStack>
                     </Box>
                   )}
-                  
+
                   {criticalCount > 0 && (
                     <Box className="p-3 bg-red-50 border border-red-200 rounded-lg">
                       <HStack space="sm" className="items-start">
@@ -618,12 +611,13 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
                       </HStack>
                     </Box>
                   )}
-                  
+
                   <Box className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
                     <HStack space="sm" className="items-start">
                       <Icon as={Target} size="sm" className="text-gray-600 mt-1" />
                       <Text className="text-sm text-gray-700">
-                        Use ferramentas de mensagem em massa para comunicar com múltiplos professores
+                        Use ferramentas de mensagem em massa para comunicar com múltiplos
+                        professores
                       </Text>
                     </HStack>
                   </Box>

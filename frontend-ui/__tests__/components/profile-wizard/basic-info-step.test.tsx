@@ -1,7 +1,6 @@
-import React from 'react';
 import { fireEvent, waitFor } from '@testing-library/react-native';
+import React from 'react';
 
-import { BasicInfoStep } from '@/components/profile-wizard/basic-info-step';
 import {
   render,
   createMockProfileData,
@@ -12,6 +11,8 @@ import {
   expectValidationError,
   expectNoValidationErrors,
 } from '../../utils/test-utils';
+
+import { BasicInfoStep } from '@/components/profile-wizard/basic-info-step';
 
 // Mock image picker
 jest.mock('expo-image-picker', () => ({
@@ -54,9 +55,7 @@ describe('BasicInfoStep', () => {
     });
 
     it('should populate fields with existing form data', () => {
-      const { getByTestId, getByDisplayValue } = render(
-        <BasicInfoStep {...defaultProps} />
-      );
+      const { getByTestId, getByDisplayValue } = render(<BasicInfoStep {...defaultProps} />);
 
       expect(getByDisplayValue(mockFormData.first_name)).toBeTruthy();
       expect(getByDisplayValue(mockFormData.last_name)).toBeTruthy();
@@ -343,9 +342,7 @@ describe('BasicInfoStep', () => {
       expect(queryByText('First name is required')).toBeTruthy();
 
       // Clear validation errors (simulating parent component clearing them)
-      rerender(
-        <BasicInfoStep {...defaultProps} validationErrors={{}} />
-      );
+      rerender(<BasicInfoStep {...defaultProps} validationErrors={{}} />);
 
       expect(queryByText('First name is required')).toBeNull();
     });
@@ -354,7 +351,7 @@ describe('BasicInfoStep', () => {
       const { getByTestId } = render(<BasicInfoStep {...defaultProps} />);
 
       const emailInput = getByTestId('email-input');
-      
+
       fireEvent.changeText(emailInput, 'invalid-email');
       fireEvent(emailInput, 'onBlur');
 
@@ -370,7 +367,7 @@ describe('BasicInfoStep', () => {
       const { getByTestId } = render(<BasicInfoStep {...defaultProps} />);
 
       const phoneInput = getByTestId('phone-input');
-      
+
       fireEvent.changeText(phoneInput, '123');
       fireEvent(phoneInput, 'onBlur');
 
@@ -385,7 +382,7 @@ describe('BasicInfoStep', () => {
       const { getByTestId } = render(<BasicInfoStep {...defaultProps} />);
 
       const longText = 'a'.repeat(1000);
-      
+
       await fillFormField(getByTestId, 'introduction-textarea', longText);
 
       // Should truncate to character limit (e.g., 500 characters)
@@ -531,7 +528,7 @@ describe('BasicInfoStep', () => {
       const { getByTestId } = render(<BasicInfoStep {...defaultProps} />);
 
       const firstNameInput = getByTestId('first-name-input');
-      
+
       fireEvent(firstNameInput, 'onSubmitEditing');
 
       // Should focus last name input (tested via focus management)
@@ -556,9 +553,7 @@ describe('BasicInfoStep', () => {
         introduction: '',
       };
 
-      const { getByTestId } = render(
-        <BasicInfoStep {...defaultProps} formData={emptyFormData} />
-      );
+      const { getByTestId } = render(<BasicInfoStep {...defaultProps} formData={emptyFormData} />);
 
       // Should render without crashing
       expect(getByTestId('first-name-input')).toBeTruthy();
@@ -578,7 +573,7 @@ describe('BasicInfoStep', () => {
       const { getByTestId } = render(<BasicInfoStep {...defaultProps} />);
 
       const veryLongName = 'a'.repeat(200);
-      
+
       await fillFormField(getByTestId, 'first-name-input', veryLongName);
 
       // Should handle long input (might truncate or show warning)
@@ -591,7 +586,7 @@ describe('BasicInfoStep', () => {
       const { getByTestId } = render(<BasicInfoStep {...defaultProps} />);
 
       const nameWithSpecialChars = 'José María Ñoño';
-      
+
       await fillFormField(getByTestId, 'first-name-input', nameWithSpecialChars);
 
       expect(mockOnFormDataChange).toHaveBeenCalledWith({
@@ -622,7 +617,7 @@ describe('BasicInfoStep', () => {
 
     it('should not re-render unnecessarily', () => {
       const renderSpy = jest.fn();
-      
+
       const TestComponent = (props: any) => {
         renderSpy();
         return <BasicInfoStep {...props} />;

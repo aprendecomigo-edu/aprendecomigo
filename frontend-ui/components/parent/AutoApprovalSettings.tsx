@@ -1,6 +1,6 @@
 /**
  * AutoApprovalSettings Component
- * 
+ *
  * Configuration interface for automatic approval thresholds including:
  * - Automatic approval amount limits
  * - Time-based auto-approval rules
@@ -9,10 +9,9 @@
  * - Emergency override controls
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Zap, 
-  Shield, 
+import {
+  Zap,
+  Shield,
   Clock,
   Euro,
   User,
@@ -23,21 +22,28 @@ import {
   Calendar,
   Brain,
   Save,
-  RotateCcw
+  RotateCcw,
 } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
-import { Select, SelectTrigger, SelectInput, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Divider } from '@/components/ui/divider';
 
 interface AutoApprovalRule {
   id: string;
@@ -87,24 +93,24 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
     name: 'New Auto-Approval Rule',
     enabled: true,
     conditions: {
-      max_amount: 25.00,
+      max_amount: 25.0,
       time_window: 'immediate',
     },
   });
 
   // Handle rule updates
   const updateRule = (ruleId: string, updates: Partial<AutoApprovalRule>) => {
-    setRules(prev => prev.map(rule => 
-      rule.id === ruleId ? { ...rule, ...updates } : rule
-    ));
+    setRules(prev => prev.map(rule => (rule.id === ruleId ? { ...rule, ...updates } : rule)));
   };
 
   const updateRuleCondition = (ruleId: string, condition: string, value: any) => {
-    setRules(prev => prev.map(rule => 
-      rule.id === ruleId 
-        ? { ...rule, conditions: { ...rule.conditions, [condition]: value } }
-        : rule
-    ));
+    setRules(prev =>
+      prev.map(rule =>
+        rule.id === ruleId
+          ? { ...rule, conditions: { ...rule.conditions, [condition]: value } }
+          : rule
+      )
+    );
   };
 
   // Handle saving changes
@@ -150,10 +156,11 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
   // Get rule status
   const getRuleStatus = (rule: AutoApprovalRule) => {
     if (!rule.enabled) return { status: 'disabled', color: 'text-gray-500', label: 'Disabled' };
-    
+
     const hasConditions = Object.keys(rule.conditions).length > 0;
-    if (!hasConditions) return { status: 'incomplete', color: 'text-orange-500', label: 'Incomplete' };
-    
+    if (!hasConditions)
+      return { status: 'incomplete', color: 'text-orange-500', label: 'Incomplete' };
+
     return { status: 'active', color: 'text-green-600', label: 'Active' };
   };
 
@@ -178,33 +185,17 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
           <HStack className="space-x-2">
             {isEditing ? (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={handleCancel}
-                  disabled={isSaving}
-                >
+                <Button variant="outline" size="sm" onPress={handleCancel} disabled={isSaving}>
                   <ButtonIcon as={XCircle} size={16} />
                   <ButtonText className="ml-1">Cancel</ButtonText>
                 </Button>
-                <Button
-                  action="primary"
-                  size="sm"
-                  onPress={handleSave}
-                  disabled={isSaving}
-                >
+                <Button action="primary" size="sm" onPress={handleSave} disabled={isSaving}>
                   <ButtonIcon as={Save} size={16} />
-                  <ButtonText className="ml-1">
-                    {isSaving ? 'Saving...' : 'Save'}
-                  </ButtonText>
+                  <ButtonText className="ml-1">{isSaving ? 'Saving...' : 'Save'}</ButtonText>
                 </Button>
               </>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onPress={() => setIsEditing(true)}
-              >
+              <Button variant="outline" size="sm" onPress={() => setIsEditing(true)}>
                 <ButtonIcon as={Settings} size={16} />
                 <ButtonText className="ml-1">Edit Rules</ButtonText>
               </Button>
@@ -220,16 +211,14 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
             <CardContent className="p-4">
               <HStack className="justify-between items-center">
                 <VStack className="flex-1">
-                  <Text className="text-sm font-medium text-blue-900">
-                    Auto-Approval System
-                  </Text>
+                  <Text className="text-sm font-medium text-blue-900">Auto-Approval System</Text>
                   <Text className="text-xs text-blue-700">
                     Enable automatic approval for purchases meeting your criteria
                   </Text>
                 </VStack>
                 <Switch
                   value={rules.some(rule => rule.enabled)}
-                  onValueChange={(enabled) => {
+                  onValueChange={enabled => {
                     if (!enabled) {
                       setRules(prev => prev.map(rule => ({ ...rule, enabled: false })));
                     }
@@ -247,12 +236,7 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                 Approval Rules ({rules.length})
               </Text>
               {isEditing && (
-                <Button
-                  action="primary"
-                  variant="outline"
-                  size="sm"
-                  onPress={handleAddRule}
-                >
+                <Button action="primary" variant="outline" size="sm" onPress={handleAddRule}>
                   <ButtonText className="text-xs">Add Rule</ButtonText>
                 </Button>
               )}
@@ -262,29 +246,28 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
               <VStack className="items-center py-8 space-y-4">
                 <Icon as={Zap} size={48} className="text-gray-400" />
                 <VStack className="items-center space-y-2">
-                  <Text className="text-sm font-medium text-gray-900">
-                    No Auto-Approval Rules
-                  </Text>
+                  <Text className="text-sm font-medium text-gray-900">No Auto-Approval Rules</Text>
                   <Text className="text-xs text-gray-600 text-center">
                     Create rules to automatically approve purchases that meet your criteria
                   </Text>
                 </VStack>
-                <Button
-                  action="primary"
-                  size="sm"
-                  onPress={handleAddRule}
-                >
+                <Button action="primary" size="sm" onPress={handleAddRule}>
                   <ButtonText>Create First Rule</ButtonText>
                 </Button>
               </VStack>
             ) : (
               <VStack className="space-y-2">
-                {rules.map((rule) => {
+                {rules.map(rule => {
                   const status = getRuleStatus(rule);
                   const isSelected = selectedRuleId === rule.id;
-                  
+
                   return (
-                    <Card key={rule.id} className={`border ${isSelected ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}`}>
+                    <Card
+                      key={rule.id}
+                      className={`border ${
+                        isSelected ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+                      }`}
+                    >
                       <CardContent className="p-3">
                         <VStack className="space-y-3">
                           {/* Rule Header */}
@@ -298,15 +281,18 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                                   <Badge
                                     variant="outline"
                                     action={
-                                      status.status === 'active' ? 'success' :
-                                      status.status === 'incomplete' ? 'warning' : 'secondary'
+                                      status.status === 'active'
+                                        ? 'success'
+                                        : status.status === 'incomplete'
+                                        ? 'warning'
+                                        : 'secondary'
                                     }
                                     size="sm"
                                   >
                                     <Text className="text-xs">{status.label}</Text>
                                   </Badge>
                                 </HStack>
-                                
+
                                 {/* Rule Summary */}
                                 <VStack className="space-y-1">
                                   {rule.conditions.max_amount && (
@@ -314,11 +300,12 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                                       • Auto-approve up to €{rule.conditions.max_amount}
                                     </Text>
                                   )}
-                                  {rule.conditions.time_window && rule.conditions.time_window !== 'immediate' && (
-                                    <Text className="text-xs text-gray-600">
-                                      • Delay approval by {rule.conditions.time_window}
-                                    </Text>
-                                  )}
+                                  {rule.conditions.time_window &&
+                                    rule.conditions.time_window !== 'immediate' && (
+                                      <Text className="text-xs text-gray-600">
+                                        • Delay approval by {rule.conditions.time_window}
+                                      </Text>
+                                    )}
                                   {rule.child_specific && (
                                     <Text className="text-xs text-gray-600">
                                       • Only for {rule.child_specific.child_name}
@@ -331,10 +318,10 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                             <HStack className="space-x-1">
                               <Switch
                                 value={rule.enabled}
-                                onValueChange={(enabled) => updateRule(rule.id, { enabled })}
+                                onValueChange={enabled => updateRule(rule.id, { enabled })}
                                 disabled={!isEditing}
                               />
-                              
+
                               {isEditing && (
                                 <>
                                   <Button
@@ -366,24 +353,32 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                                   <Text className="text-sm font-medium text-gray-900">
                                     Basic Settings
                                   </Text>
-                                  
+
                                   <VStack className="space-y-2">
                                     <Text className="text-xs text-gray-600">Rule Name</Text>
                                     <Input>
                                       <InputField
                                         value={rule.name}
-                                        onChangeText={(name) => updateRule(rule.id, { name })}
+                                        onChangeText={name => updateRule(rule.id, { name })}
                                         placeholder="Enter rule name"
                                       />
                                     </Input>
                                   </VStack>
 
                                   <VStack className="space-y-2">
-                                    <Text className="text-xs text-gray-600">Maximum Auto-Approval Amount (€)</Text>
+                                    <Text className="text-xs text-gray-600">
+                                      Maximum Auto-Approval Amount (€)
+                                    </Text>
                                     <Input>
                                       <InputField
                                         value={rule.conditions.max_amount?.toString() || ''}
-                                        onChangeText={(value) => updateRuleCondition(rule.id, 'max_amount', parseFloat(value) || 0)}
+                                        onChangeText={value =>
+                                          updateRuleCondition(
+                                            rule.id,
+                                            'max_amount',
+                                            parseFloat(value) || 0
+                                          )
+                                        }
                                         keyboardType="numeric"
                                         placeholder="0.00"
                                       />
@@ -396,12 +391,14 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                                   <Text className="text-sm font-medium text-gray-900">
                                     Timing Options
                                   </Text>
-                                  
+
                                   <VStack className="space-y-2">
                                     <Text className="text-xs text-gray-600">Approval Delay</Text>
                                     <Select
                                       selectedValue={rule.conditions.time_window || 'immediate'}
-                                      onValueChange={(value) => updateRuleCondition(rule.id, 'time_window', value)}
+                                      onValueChange={value =>
+                                        updateRuleCondition(rule.id, 'time_window', value)
+                                      }
                                     >
                                       <SelectTrigger>
                                         <SelectInput placeholder="Select timing" />
@@ -421,22 +418,28 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                                   <Text className="text-sm font-medium text-gray-900">
                                     Child-Specific Rules
                                   </Text>
-                                  
+
                                   <VStack className="space-y-2">
-                                    <Text className="text-xs text-gray-600">Apply to specific child (optional)</Text>
+                                    <Text className="text-xs text-gray-600">
+                                      Apply to specific child (optional)
+                                    </Text>
                                     <Select
-                                      selectedValue={rule.child_specific?.child_id.toString() || 'all'}
-                                      onValueChange={(value) => {
+                                      selectedValue={
+                                        rule.child_specific?.child_id.toString() || 'all'
+                                      }
+                                      onValueChange={value => {
                                         if (value === 'all') {
                                           updateRule(rule.id, { child_specific: undefined });
                                         } else {
-                                          const child = children.find(c => c.id.toString() === value);
+                                          const child = children.find(
+                                            c => c.id.toString() === value
+                                          );
                                           if (child) {
                                             updateRule(rule.id, {
                                               child_specific: {
                                                 child_id: child.id,
-                                                child_name: child.name
-                                              }
+                                                child_name: child.name,
+                                              },
                                             });
                                           }
                                         }
@@ -448,10 +451,10 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                                       <SelectContent>
                                         <SelectItem label="All children" value="all" />
                                         {children.map(child => (
-                                          <SelectItem 
-                                            key={child.id} 
-                                            label={child.name} 
-                                            value={child.id.toString()} 
+                                          <SelectItem
+                                            key={child.id}
+                                            label={child.name}
+                                            value={child.id.toString()}
                                           />
                                         ))}
                                       </SelectContent>
@@ -465,8 +468,16 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                                       </Text>
                                       <Input>
                                         <InputField
-                                          value={rule.conditions.child_balance_required?.toString() || ''}
-                                          onChangeText={(value) => updateRuleCondition(rule.id, 'child_balance_required', parseFloat(value) || 0)}
+                                          value={
+                                            rule.conditions.child_balance_required?.toString() || ''
+                                          }
+                                          onChangeText={value =>
+                                            updateRuleCondition(
+                                              rule.id,
+                                              'child_balance_required',
+                                              parseFloat(value) || 0
+                                            )
+                                          }
                                           keyboardType="numeric"
                                           placeholder="0.00"
                                         />
@@ -510,11 +521,9 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                 <VStack className="space-y-3">
                   <HStack className="items-center space-x-2">
                     <Icon as={Brain} size={20} className="text-green-600" />
-                    <Text className="text-sm font-medium text-green-900">
-                      Smart Suggestions
-                    </Text>
+                    <Text className="text-sm font-medium text-green-900">Smart Suggestions</Text>
                   </HStack>
-                  
+
                   <VStack className="space-y-2">
                     {children.map(child => (
                       <HStack key={child.id} className="justify-between items-center">
@@ -522,14 +531,20 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                           {child.name} ({child.trustLevel} trust)
                         </Text>
                         <Text className="text-xs text-green-700">
-                          Suggested limit: €{child.trustLevel === 'high' ? '50' : child.trustLevel === 'medium' ? '25' : '10'}
+                          Suggested limit: €
+                          {child.trustLevel === 'high'
+                            ? '50'
+                            : child.trustLevel === 'medium'
+                            ? '25'
+                            : '10'}
                         </Text>
                       </HStack>
                     ))}
                   </VStack>
-                  
+
                   <Text className="text-xs text-green-700">
-                    These suggestions are based on your children's purchase history and behavior patterns.
+                    These suggestions are based on your children's purchase history and behavior
+                    patterns.
                   </Text>
                 </VStack>
               </CardContent>
@@ -542,12 +557,11 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
               <HStack className="items-start space-x-2">
                 <Icon as={AlertTriangle} size={16} className="text-amber-600 mt-0.5" />
                 <VStack className="flex-1">
-                  <Text className="text-xs font-medium text-amber-800">
-                    Security Notice
-                  </Text>
+                  <Text className="text-xs font-medium text-amber-800">Security Notice</Text>
                   <Text className="text-xs text-amber-700">
-                    Auto-approval rules will process purchases without your direct intervention. 
-                    Review your rules regularly and set appropriate limits to maintain control over spending.
+                    Auto-approval rules will process purchases without your direct intervention.
+                    Review your rules regularly and set appropriate limits to maintain control over
+                    spending.
                   </Text>
                 </VStack>
               </HStack>

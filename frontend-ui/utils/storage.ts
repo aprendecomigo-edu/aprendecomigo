@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 /**
  * Platform-aware storage utility that provides a consistent interface
  * for storing data across web and mobile platforms.
- * 
+ *
  * On web: Uses localStorage as fallback if AsyncStorage fails
  * On mobile: Uses AsyncStorage directly
  */
@@ -25,12 +25,12 @@ class PlatformStorage {
         } catch (localStorageError) {
           console.error('Both AsyncStorage and localStorage failed:', {
             asyncStorageError: error,
-            localStorageError
+            localStorageError,
           });
           return null;
         }
       }
-      
+
       console.error('AsyncStorage.getItem failed:', error);
       return null;
     }
@@ -52,12 +52,12 @@ class PlatformStorage {
         } catch (localStorageError) {
           console.error('Both AsyncStorage and localStorage failed:', {
             asyncStorageError: error,
-            localStorageError
+            localStorageError,
           });
           throw new Error('Failed to store data');
         }
       }
-      
+
       console.error('AsyncStorage.setItem failed:', error);
       throw error;
     }
@@ -79,12 +79,12 @@ class PlatformStorage {
         } catch (localStorageError) {
           console.error('Both AsyncStorage and localStorage failed:', {
             asyncStorageError: error,
-            localStorageError
+            localStorageError,
           });
           throw new Error('Failed to remove data');
         }
       }
-      
+
       console.error('AsyncStorage.removeItem failed:', error);
       throw error;
     }
@@ -104,12 +104,12 @@ class PlatformStorage {
         } catch (localStorageError) {
           console.error('Both AsyncStorage and localStorage failed:', {
             asyncStorageError: error,
-            localStorageError
+            localStorageError,
           });
           throw new Error('Failed to clear storage');
         }
       }
-      
+
       console.error('AsyncStorage.clear failed:', error);
       throw error;
     }
@@ -128,12 +128,12 @@ class PlatformStorage {
         } catch (localStorageError) {
           console.error('Both AsyncStorage and localStorage failed:', {
             asyncStorageError: error,
-            localStorageError
+            localStorageError,
           });
           return [];
         }
       }
-      
+
       console.error('AsyncStorage.getAllKeys failed:', error);
       return [];
     }

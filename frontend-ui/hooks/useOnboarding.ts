@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useEffect, useCallback } from 'react';
 
-import { 
-  onboardingApi, 
-  OnboardingProgress, 
+import {
+  onboardingApi,
+  OnboardingProgress,
   NavigationPreferences,
   UpdateOnboardingProgressData,
-  UpdateNavigationPreferencesData 
+  UpdateNavigationPreferencesData,
 } from '@/api/onboardingApi';
 import { tasksApi, CreateTaskData } from '@/api/tasksApi';
 
@@ -51,7 +51,8 @@ export const ONBOARDING_STEPS = [
     description: 'Add your school information, logo, and contact details',
     icon: 'building',
     taskTitle: 'Complete your school profile',
-    taskDescription: 'Add school information, logo, and contact details to personalize your account'
+    taskDescription:
+      'Add school information, logo, and contact details to personalize your account',
   },
   {
     id: 'invite_first_teacher',
@@ -59,7 +60,7 @@ export const ONBOARDING_STEPS = [
     description: 'Send an invitation to your first teacher to join the platform',
     icon: 'user-plus',
     taskTitle: 'Invite your first teacher',
-    taskDescription: 'Send an invitation to a teacher to start building your team'
+    taskDescription: 'Send an invitation to a teacher to start building your team',
   },
   {
     id: 'add_first_student',
@@ -67,7 +68,7 @@ export const ONBOARDING_STEPS = [
     description: 'Add student information to start managing enrollments',
     icon: 'graduation-cap',
     taskTitle: 'Add your first student',
-    taskDescription: 'Add student information to start managing enrollments and classes'
+    taskDescription: 'Add student information to start managing enrollments and classes',
   },
   {
     id: 'setup_billing',
@@ -75,7 +76,7 @@ export const ONBOARDING_STEPS = [
     description: 'Configure payment methods and billing preferences',
     icon: 'credit-card',
     taskTitle: 'Set up billing information',
-    taskDescription: 'Configure payment methods and billing preferences for your school'
+    taskDescription: 'Configure payment methods and billing preferences for your school',
   },
   {
     id: 'create_first_schedule',
@@ -83,8 +84,8 @@ export const ONBOARDING_STEPS = [
     description: 'Schedule your first class or tutoring session',
     icon: 'calendar',
     taskTitle: 'Create your first class schedule',
-    taskDescription: 'Schedule a class or tutoring session to get started with the platform'
-  }
+    taskDescription: 'Schedule a class or tutoring session to get started with the platform',
+  },
 ];
 
 export function useOnboarding(): OnboardingState & OnboardingActions {
@@ -126,7 +127,7 @@ export function useOnboarding(): OnboardingState & OnboardingActions {
 
       const [progress, preferences] = await Promise.all([
         onboardingApi.getOnboardingProgress(),
-        onboardingApi.getNavigationPreferences()
+        onboardingApi.getNavigationPreferences(),
       ]);
 
       const currentStep = progress.completed_steps.length;
@@ -146,75 +147,83 @@ export function useOnboarding(): OnboardingState & OnboardingActions {
       setState(prev => ({ ...prev, ...newState }));
       await cacheState(newState);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load onboarding data';
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: errorMessage 
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to load onboarding data';
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
       }));
       console.error('Error loading onboarding data:', error);
     }
   }, [cacheState]);
 
   // Complete an onboarding step
-  const completeStep = useCallback(async (stepId: string) => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
+  const completeStep = useCallback(
+    async (stepId: string) => {
+      try {
+        setState(prev => ({ ...prev, isLoading: true }));
 
-      const updatedProgress = await onboardingApi.completeOnboardingStep(stepId);
-      
-      const currentStep = updatedProgress.completed_steps.length;
-      const isCompleted = updatedProgress.completion_percentage >= 100;
+        const updatedProgress = await onboardingApi.completeOnboardingStep(stepId);
 
-      const newState = {
-        progress: updatedProgress,
-        currentStep,
-        isCompleted,
-        isLoading: false,
-      };
+        const currentStep = updatedProgress.completed_steps.length;
+        const isCompleted = updatedProgress.completion_percentage >= 100;
 
-      setState(prev => ({ ...prev, ...newState }));
-      await cacheState({ ...state, ...newState });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to complete step';
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: errorMessage 
-      }));
-      console.error('Error completing step:', error);
-    }
-  }, [state, cacheState]);
+        const newState = {
+          progress: updatedProgress,
+          currentStep,
+          isCompleted,
+          isLoading: false,
+        };
+
+        setState(prev => ({ ...prev, ...newState }));
+        await cacheState({ ...state, ...newState });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to complete step';
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: errorMessage,
+        }));
+        console.error('Error completing step:', error);
+      }
+    },
+    [state, cacheState]
+  );
 
   // Skip an onboarding step
-  const skipStep = useCallback(async (stepId: string) => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
+  const skipStep = useCallback(
+    async (stepId: string) => {
+      try {
+        setState(prev => ({ ...prev, isLoading: true }));
 
-      const updatedProgress = await onboardingApi.skipOnboardingStep(stepId);
-      
-      const currentStep = updatedProgress.completed_steps.length + updatedProgress.skipped_steps.length;
-      const isCompleted = updatedProgress.completion_percentage >= 100;
+        const updatedProgress = await onboardingApi.skipOnboardingStep(stepId);
 
-      const newState = {
-        progress: updatedProgress,
-        currentStep,
-        isCompleted,
-        isLoading: false,
-      };
+        const currentStep =
+          updatedProgress.completed_steps.length + updatedProgress.skipped_steps.length;
+        const isCompleted = updatedProgress.completion_percentage >= 100;
 
-      setState(prev => ({ ...prev, ...newState }));
-      await cacheState({ ...state, ...newState });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to skip step';
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: errorMessage 
-      }));
-      console.error('Error skipping step:', error);
-    }
-  }, [state, cacheState]);
+        const newState = {
+          progress: updatedProgress,
+          currentStep,
+          isCompleted,
+          isLoading: false,
+        };
+
+        setState(prev => ({ ...prev, ...newState }));
+        await cacheState({ ...state, ...newState });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to skip step';
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: errorMessage,
+        }));
+        console.error('Error skipping step:', error);
+      }
+    },
+    [state, cacheState]
+  );
 
   // Skip entire onboarding process
   const skipOnboarding = useCallback(async () => {
@@ -233,10 +242,10 @@ export function useOnboarding(): OnboardingState & OnboardingActions {
       await cacheState({ ...state, ...newState });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to skip onboarding';
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: errorMessage 
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
       }));
       console.error('Error skipping onboarding:', error);
     }
@@ -259,40 +268,44 @@ export function useOnboarding(): OnboardingState & OnboardingActions {
       await cacheState({ ...state, ...newState });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to enable onboarding';
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: errorMessage 
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
       }));
       console.error('Error enabling onboarding:', error);
     }
   }, [state, cacheState]);
 
   // Update navigation preferences
-  const updatePreferences = useCallback(async (data: UpdateNavigationPreferencesData) => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
+  const updatePreferences = useCallback(
+    async (data: UpdateNavigationPreferencesData) => {
+      try {
+        setState(prev => ({ ...prev, isLoading: true }));
 
-      const updatedPreferences = await onboardingApi.updateNavigationPreferences(data);
+        const updatedPreferences = await onboardingApi.updateNavigationPreferences(data);
 
-      const newState = {
-        preferences: updatedPreferences,
-        shouldShowOnboarding: updatedPreferences.show_onboarding && !state.isCompleted,
-        isLoading: false,
-      };
+        const newState = {
+          preferences: updatedPreferences,
+          shouldShowOnboarding: updatedPreferences.show_onboarding && !state.isCompleted,
+          isLoading: false,
+        };
 
-      setState(prev => ({ ...prev, ...newState }));
-      await cacheState({ ...state, ...newState });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update preferences';
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: errorMessage 
-      }));
-      console.error('Error updating preferences:', error);
-    }
-  }, [state, cacheState]);
+        setState(prev => ({ ...prev, ...newState }));
+        await cacheState({ ...state, ...newState });
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to update preferences';
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: errorMessage,
+        }));
+        console.error('Error updating preferences:', error);
+      }
+    },
+    [state, cacheState]
+  );
 
   // Create onboarding task
   const createOnboardingTask = useCallback(async (taskData: CreateTaskData) => {
@@ -325,7 +338,7 @@ export function useOnboarding(): OnboardingState & OnboardingActions {
       await loadCachedState();
       await loadOnboardingData();
     };
-    
+
     initialize();
   }, [loadCachedState, loadOnboardingData]);
 

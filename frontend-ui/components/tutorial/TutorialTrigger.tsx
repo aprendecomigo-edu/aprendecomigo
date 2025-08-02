@@ -1,12 +1,12 @@
 import { HelpCircle, Play } from 'lucide-react-native';
 import React from 'react';
 
-import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
-import { Pressable } from '@/components/ui/pressable';
-import { Icon } from '@/components/ui/icon';
-
 import { useTutorial } from './TutorialContext';
 import { TutorialConfig } from './types';
+
+import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
+import { Pressable } from '@/components/ui/pressable';
 
 interface TutorialTriggerProps {
   config: TutorialConfig;
@@ -64,11 +64,7 @@ export const TutorialTrigger: React.FC<TutorialTriggerProps> = ({
       variant={isCompleted ? 'outline' : 'solid'}
       size={size}
       onPress={handlePress}
-      className={`${
-        isCompleted
-          ? 'border-green-600 bg-green-50'
-          : 'bg-blue-600'
-      } ${className}`}
+      className={`${isCompleted ? 'border-green-600 bg-green-50' : 'bg-blue-600'} ${className}`}
     >
       <ButtonIcon
         as={isCompleted ? HelpCircle : Play}

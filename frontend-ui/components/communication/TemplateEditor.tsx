@@ -1,17 +1,24 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Alert } from 'react-native';
-import { 
-  BoldIcon, 
-  ItalicIcon, 
-  LinkIcon, 
+import {
+  BoldIcon,
+  ItalicIcon,
+  LinkIcon,
   PaletteIcon,
   EyeIcon,
   SaveIcon,
   TypeIcon,
   CodeIcon,
-  WandIcon
+  WandIcon,
 } from 'lucide-react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Alert } from 'react-native';
 
+import {
+  SchoolEmailTemplate,
+  EmailTemplateType,
+  CreateTemplateRequest,
+  UpdateTemplateRequest,
+} from '@/api/communicationApi';
+import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -22,20 +29,12 @@ import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-
 import { useTemplateEditor, useTemplatePreview } from '@/hooks/useCommunicationTemplates';
 import { useSchoolBranding } from '@/hooks/useSchoolBranding';
-import { 
-  SchoolEmailTemplate, 
-  EmailTemplateType, 
-  CreateTemplateRequest,
-  UpdateTemplateRequest 
-} from '@/api/communicationApi';
 
 interface TemplateEditorProps {
   templateId?: number;
@@ -43,11 +42,7 @@ interface TemplateEditorProps {
   onCancel?: () => void;
 }
 
-const TemplateEditor: React.FC<TemplateEditorProps> = ({ 
-  templateId, 
-  onSave, 
-  onCancel 
-}) => {
+const TemplateEditor: React.FC<TemplateEditorProps> = ({ templateId, onSave, onCancel }) => {
   const [activeTab, setActiveTab] = useState<'content' | 'design' | 'preview'>('content');
   const [showVariables, setShowVariables] = useState(false);
   const [testEmail, setTestEmail] = useState('');
@@ -106,11 +101,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
       });
 
       if (!validation.is_valid && validation.errors.length > 0) {
-        Alert.alert(
-          'Template Validation Failed',
-          validation.errors.join('\n'),
-          [{ text: 'OK' }]
-        );
+        Alert.alert('Template Validation Failed', validation.errors.join('\n'), [{ text: 'OK' }]);
         return;
       }
 
@@ -149,14 +140,10 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
   const handleCancel = useCallback(() => {
     if (hasUnsavedChanges) {
-      Alert.alert(
-        'Unsaved Changes',
-        'You have unsaved changes. Are you sure you want to cancel?',
-        [
-          { text: 'Keep Editing', style: 'cancel' },
-          { text: 'Cancel', style: 'destructive', onPress: onCancel },
-        ]
-      );
+      Alert.alert('Unsaved Changes', 'You have unsaved changes. Are you sure you want to cancel?', [
+        { text: 'Keep Editing', style: 'cancel' },
+        { text: 'Cancel', style: 'destructive', onPress: onCancel },
+      ]);
     } else {
       onCancel?.();
     }
@@ -195,17 +182,21 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
   }, [testEmail, templateId, sendTestEmail]);
 
   // Variable insertion
-  const insertVariable = useCallback((variable: string) => {
-    if (!currentTemplate) return;
+  const insertVariable = useCallback(
+    (variable: string) => {
+      if (!currentTemplate) return;
 
-    const cursorPosition = 0; // In a real implementation, you'd track cursor position
-    const currentText = currentTemplate.html_content;
-    const newText = currentText.slice(0, cursorPosition) + 
-                   `{{ ${variable} }}` + 
-                   currentText.slice(cursorPosition);
-    
-    updateTemplateField('html_content', newText);
-  }, [currentTemplate, updateTemplateField]);
+      const cursorPosition = 0; // In a real implementation, you'd track cursor position
+      const currentText = currentTemplate.html_content;
+      const newText =
+        currentText.slice(0, cursorPosition) +
+        `{{ ${variable} }}` +
+        currentText.slice(cursorPosition);
+
+      updateTemplateField('html_content', newText);
+    },
+    [currentTemplate, updateTemplateField]
+  );
 
   if (loading) {
     return (
@@ -237,7 +228,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 Design professional email templates for your school
               </Text>
             </VStack>
-            
+
             <HStack space="sm">
               {hasUnsavedChanges && (
                 <Badge className="bg-yellow-100 text-yellow-800">
@@ -266,35 +257,41 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 activeTab === 'content' ? 'bg-blue-100 border border-blue-200' : 'bg-gray-100'
               }`}
             >
-              <Text className={`text-sm font-medium ${
-                activeTab === 'content' ? 'text-blue-700' : 'text-gray-600'
-              }`}>
+              <Text
+                className={`text-sm font-medium ${
+                  activeTab === 'content' ? 'text-blue-700' : 'text-gray-600'
+                }`}
+              >
                 Content
               </Text>
             </Pressable>
-            
+
             <Pressable
               onPress={() => setActiveTab('design')}
               className={`px-4 py-2 rounded-lg ${
                 activeTab === 'design' ? 'bg-blue-100 border border-blue-200' : 'bg-gray-100'
               }`}
             >
-              <Text className={`text-sm font-medium ${
-                activeTab === 'design' ? 'text-blue-700' : 'text-gray-600'
-              }`}>
+              <Text
+                className={`text-sm font-medium ${
+                  activeTab === 'design' ? 'text-blue-700' : 'text-gray-600'
+                }`}
+              >
                 Design
               </Text>
             </Pressable>
-            
+
             <Pressable
               onPress={() => setActiveTab('preview')}
               className={`px-4 py-2 rounded-lg ${
                 activeTab === 'preview' ? 'bg-blue-100 border border-blue-200' : 'bg-gray-100'
               }`}
             >
-              <Text className={`text-sm font-medium ${
-                activeTab === 'preview' ? 'text-blue-700' : 'text-gray-600'
-              }`}>
+              <Text
+                className={`text-sm font-medium ${
+                  activeTab === 'preview' ? 'text-blue-700' : 'text-gray-600'
+                }`}
+              >
                 Preview
               </Text>
             </Pressable>
@@ -313,14 +310,14 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   <Heading size="md" className="text-gray-900">
                     Template Information
                   </Heading>
-                  
+
                   <VStack space="sm">
                     <VStack space="xs">
                       <Text className="text-sm font-medium text-gray-700">Template Name</Text>
                       <Input>
                         <InputField
                           value={currentTemplate.name}
-                          onChangeText={(text) => updateTemplateField('name', text)}
+                          onChangeText={text => updateTemplateField('name', text)}
                           placeholder="Enter template name..."
                         />
                       </Input>
@@ -328,18 +325,24 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
                     <VStack space="xs">
                       <Text className="text-sm font-medium text-gray-700">Template Type</Text>
-                      <Select 
+                      <Select
                         value={currentTemplate.template_type}
-                        onValueChange={(value) => updateTemplateField('template_type', value)}
+                        onValueChange={value => updateTemplateField('template_type', value)}
                       >
                         <SelectTrigger>
                           <Text>
-                            {templateTypeOptions.find(opt => opt.value === currentTemplate.template_type)?.label || 'Select type'}
+                            {templateTypeOptions.find(
+                              opt => opt.value === currentTemplate.template_type
+                            )?.label || 'Select type'}
                           </Text>
                         </SelectTrigger>
                         <SelectContent>
                           {templateTypeOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value} label={option.label} />
+                            <SelectItem
+                              key={option.value}
+                              value={option.value}
+                              label={option.label}
+                            />
                           ))}
                         </SelectContent>
                       </Select>
@@ -355,8 +358,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <Heading size="md" className="text-gray-900">
                       Email Subject
                     </Heading>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       onPress={() => setShowVariables(!showVariables)}
                     >
@@ -366,11 +369,11 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                       </HStack>
                     </Button>
                   </HStack>
-                  
+
                   <Input>
                     <InputField
                       value={currentTemplate.subject_template}
-                      onChangeText={(text) => updateTemplateField('subject_template', text)}
+                      onChangeText={text => updateTemplateField('subject_template', text)}
                       placeholder="Enter email subject..."
                     />
                   </Input>
@@ -383,7 +386,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   <Heading size="md" className="text-gray-900">
                     HTML Content
                   </Heading>
-                  
+
                   {/* Rich Text Toolbar */}
                   <HStack space="sm" className="flex-wrap">
                     <Button size="sm" variant="outline">
@@ -399,11 +402,11 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                       <Icon as={PaletteIcon} size="xs" className="text-gray-600" />
                     </Button>
                   </HStack>
-                  
+
                   <Textarea className="min-h-64">
                     <TextareaInput
                       value={currentTemplate.html_content}
-                      onChangeText={(text) => updateTemplateField('html_content', text)}
+                      onChangeText={text => updateTemplateField('html_content', text)}
                       placeholder="Enter HTML content..."
                     />
                   </Textarea>
@@ -416,11 +419,11 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   <Heading size="md" className="text-gray-900">
                     Plain Text Content
                   </Heading>
-                  
+
                   <Textarea className="min-h-32">
                     <TextareaInput
                       value={currentTemplate.text_content}
-                      onChangeText={(text) => updateTemplateField('text_content', text)}
+                      onChangeText={text => updateTemplateField('text_content', text)}
                       placeholder="Enter plain text version..."
                     />
                   </Textarea>
@@ -434,7 +437,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <Heading size="md" className="text-gray-900">
                       Available Variables
                     </Heading>
-                    
+
                     <VStack space="sm">
                       {Object.entries(availableVariables).map(([category, variables]) => (
                         <VStack key={category} space="xs">
@@ -448,9 +451,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                                 onPress={() => insertVariable(variable)}
                                 className="px-2 py-1 bg-blue-50 border border-blue-200 rounded"
                               >
-                                <Text className="text-xs text-blue-700">
-                                  {variable}
-                                </Text>
+                                <Text className="text-xs text-blue-700">{variable}</Text>
                               </Pressable>
                             ))}
                           </HStack>
@@ -471,30 +472,26 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   <Heading size="md" className="text-gray-900">
                     Design Settings
                   </Heading>
-                  
+
                   <HStack className="justify-between items-center">
                     <VStack space="xs">
-                      <Text className="font-medium text-gray-700">
-                        Use School Branding
-                      </Text>
+                      <Text className="font-medium text-gray-700">Use School Branding</Text>
                       <Text className="text-sm text-gray-600">
                         Apply your school's colors and logo automatically
                       </Text>
                     </VStack>
                     <Switch
                       value={currentTemplate.use_school_branding}
-                      onValueChange={(value) => updateTemplateField('use_school_branding', value)}
+                      onValueChange={value => updateTemplateField('use_school_branding', value)}
                     />
                   </HStack>
 
                   <VStack space="xs">
-                    <Text className="text-sm font-medium text-gray-700">
-                      Custom CSS
-                    </Text>
+                    <Text className="text-sm font-medium text-gray-700">Custom CSS</Text>
                     <Textarea className="min-h-32">
                       <TextareaInput
                         value={currentTemplate.custom_css || ''}
-                        onChangeText={(text) => updateTemplateField('custom_css', text)}
+                        onChangeText={text => updateTemplateField('custom_css', text)}
                         placeholder="Add custom CSS styles..."
                       />
                     </Textarea>
@@ -513,11 +510,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <Heading size="md" className="text-gray-900">
                       Template Preview
                     </Heading>
-                    <Button 
-                      onPress={handleGeneratePreview} 
-                      disabled={previewLoading}
-                      size="sm"
-                    >
+                    <Button onPress={handleGeneratePreview} disabled={previewLoading} size="sm">
                       <HStack space="xs" className="items-center">
                         <Icon as={EyeIcon} size="xs" className="text-white" />
                         <ButtonText>
@@ -563,7 +556,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <Heading size="md" className="text-gray-900">
                       Send Test Email
                     </Heading>
-                    
+
                     <HStack space="sm">
                       <Box className="flex-1">
                         <Input>
@@ -575,7 +568,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                           />
                         </Input>
                       </Box>
-                      <Button 
+                      <Button
                         onPress={handleSendTest}
                         disabled={!testEmail || previewLoading}
                         size="sm"

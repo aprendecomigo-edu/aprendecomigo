@@ -11,9 +11,9 @@ import { navigationApi } from '@/api/navigationApi';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { NotificationBadge } from '@/components/ui/notification-badge';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
-import { NotificationBadge } from '@/components/ui/notification-badge';
 
 interface MobileNavigationProps {
   className?: string;
@@ -47,14 +47,14 @@ export const MobileNavigation = ({ className = '' }: MobileNavigationProps) => {
       try {
         const response = await navigationApi.getNotificationCounts();
         const counts: Record<string, number> = {};
-        
+
         // Map backend response fields to navigation items
         counts['home'] = response.overdue_tasks;
         counts['chat'] = 0; // Messages count not available in current API
-        
+
         // Calculate total for overall notification badge
         counts['total'] = response.total_unread;
-        
+
         setNotificationCounts(counts);
       } catch (error) {
         console.error('Failed to load notification counts:', error);
@@ -62,7 +62,7 @@ export const MobileNavigation = ({ className = '' }: MobileNavigationProps) => {
     };
 
     loadNotificationCounts();
-    
+
     // Poll for updates every 30 seconds
     const interval = setInterval(loadNotificationCounts, 30000);
     return () => clearInterval(interval);
@@ -73,7 +73,7 @@ export const MobileNavigation = ({ className = '' }: MobileNavigationProps) => {
     if (Platform.OS === 'ios') {
       Haptics.selectionAsync();
     }
-    
+
     router.push(route as Href<string>);
   };
 
@@ -93,7 +93,7 @@ export const MobileNavigation = ({ className = '' }: MobileNavigationProps) => {
       {navItems.map(item => {
         const isSelected = item.route === currentRoute;
         const notificationCount = notificationCounts[item.id] || 0;
-        
+
         return (
           <Box key={item.id} className="relative flex-1">
             <Pressable
@@ -113,12 +113,9 @@ export const MobileNavigation = ({ className = '' }: MobileNavigationProps) => {
                 <Icon
                   as={item.icon}
                   size="md"
-                  className={cn(
-                    'h-6 w-6',
-                    isSelected ? 'text-orange-400' : 'text-white'
-                  )}
+                  className={cn('h-6 w-6', isSelected ? 'text-orange-400' : 'text-white')}
                 />
-                
+
                 {/* Notification Badge */}
                 {notificationCount > 0 && (
                   <NotificationBadge
@@ -130,8 +127,8 @@ export const MobileNavigation = ({ className = '' }: MobileNavigationProps) => {
                   />
                 )}
               </Box>
-              
-              <Text 
+
+              <Text
                 className={cn(
                   'text-xs text-center mt-1 font-medium',
                   isSelected ? 'text-orange-400' : 'text-white'

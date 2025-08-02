@@ -1,14 +1,18 @@
 /**
  * Student Balance Card Component
- * 
+ *
  * Displays comprehensive student balance information including hours,
  * active packages, and upcoming expirations in a clean card format.
  */
 
-import React from 'react';
-import { Clock, Package, AlertTriangle, RefreshCw, User, ShoppingCart } from 'lucide-react-native';
 import useRouter from '@unitools/router';
+import { Clock, Package, AlertTriangle, RefreshCw, User, ShoppingCart } from 'lucide-react-native';
+import React from 'react';
 
+import {
+  BalanceStatusBar,
+  CompactBalanceStatusBar,
+} from '@/components/student/balance/BalanceStatusBar';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -20,7 +24,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useStudentBalance } from '@/hooks/useStudentBalance';
-import { BalanceStatusBar, CompactBalanceStatusBar } from '@/components/student/balance/BalanceStatusBar';
 import type { StudentBalanceResponse, PackageInfo } from '@/types/purchase';
 
 interface StudentBalanceCardProps {
@@ -77,16 +80,9 @@ export function StudentBalanceCard({
             <Heading size="sm" className="text-error-900">
               Unable to Load Balance
             </Heading>
-            <Text className="text-error-700 text-sm text-center">
-              {error}
-            </Text>
+            <Text className="text-error-700 text-sm text-center">{error}</Text>
           </VStack>
-          <Button
-            action="secondary"
-            variant="outline"
-            size="sm"
-            onPress={handleRefresh}
-          >
+          <Button action="secondary" variant="outline" size="sm" onPress={handleRefresh}>
             <ButtonIcon as={RefreshCw} />
             <ButtonText>Try Again</ButtonText>
           </Button>
@@ -100,12 +96,7 @@ export function StudentBalanceCard({
       <Card className={`p-6 ${className}`}>
         <VStack space="md" className="items-center">
           <Text className="text-typography-600">No balance information available</Text>
-          <Button
-            action="secondary"
-            variant="outline"
-            size="sm"
-            onPress={handleRefresh}
-          >
+          <Button action="secondary" variant="outline" size="sm" onPress={handleRefresh}>
             <ButtonIcon as={RefreshCw} />
             <ButtonText>Refresh</ButtonText>
           </Button>
@@ -132,12 +123,7 @@ export function StudentBalanceCard({
               </HStack>
             )}
           </VStack>
-          <Button
-            action="secondary"
-            variant="outline"
-            size="sm"
-            onPress={handleRefresh}
-          >
+          <Button action="secondary" variant="outline" size="sm" onPress={handleRefresh}>
             <ButtonIcon as={RefreshCw} />
           </Button>
         </HStack>
@@ -160,50 +146,41 @@ export function StudentBalanceCard({
               Hours Summary
             </Heading>
             {parseFloat(balance.balance_summary.remaining_hours) <= 2 && (
-              <Button
-                action="primary"
-                variant="solid"
-                size="sm"
-                onPress={handlePurchaseHours}
-              >
+              <Button action="primary" variant="solid" size="sm" onPress={handlePurchaseHours}>
                 <ButtonIcon as={ShoppingCart} />
                 <ButtonText>Buy Hours</ButtonText>
               </Button>
             )}
           </HStack>
-          
+
           <HStack className="justify-between">
             <VStack space="xs" className="items-center flex-1">
-              <Text className={`text-2xl font-bold ${
-                parseFloat(balance.balance_summary.remaining_hours) <= 2 
-                  ? 'text-error-600' 
-                  : parseFloat(balance.balance_summary.remaining_hours) <= 5 
-                  ? 'text-warning-600' 
-                  : 'text-primary-600'
-              }`}>
+              <Text
+                className={`text-2xl font-bold ${
+                  parseFloat(balance.balance_summary.remaining_hours) <= 2
+                    ? 'text-error-600'
+                    : parseFloat(balance.balance_summary.remaining_hours) <= 5
+                    ? 'text-warning-600'
+                    : 'text-primary-600'
+                }`}
+              >
                 {parseFloat(balance.balance_summary.remaining_hours).toFixed(1)}
               </Text>
-              <Text className="text-xs text-typography-500 text-center">
-                Hours Remaining
-              </Text>
+              <Text className="text-xs text-typography-500 text-center">Hours Remaining</Text>
             </VStack>
-            
+
             <VStack space="xs" className="items-center flex-1">
               <Text className="text-lg font-semibold text-typography-700">
                 {parseFloat(balance.balance_summary.hours_purchased).toFixed(1)}
               </Text>
-              <Text className="text-xs text-typography-500 text-center">
-                Hours Purchased
-              </Text>
+              <Text className="text-xs text-typography-500 text-center">Hours Purchased</Text>
             </VStack>
-            
+
             <VStack space="xs" className="items-center flex-1">
               <Text className="text-lg font-semibold text-typography-700">
                 {parseFloat(balance.balance_summary.hours_consumed).toFixed(1)}
               </Text>
-              <Text className="text-xs text-typography-500 text-center">
-                Hours Used
-              </Text>
+              <Text className="text-xs text-typography-500 text-center">Hours Used</Text>
             </VStack>
           </HStack>
         </VStack>
@@ -219,7 +196,7 @@ export function StudentBalanceCard({
                   Active Packages
                 </Heading>
               </HStack>
-              
+
               <VStack space="xs">
                 {balance.package_status.active_packages.map((pkg, index) => (
                   <PackageItem key={pkg.transaction_id} package={pkg} />
@@ -240,7 +217,7 @@ export function StudentBalanceCard({
                   Expiring Soon
                 </Heading>
               </HStack>
-              
+
               <VStack space="xs">
                 {balance.upcoming_expirations.map((expiration, index) => (
                   <ExpirationItem key={expiration.transaction_id} expiration={expiration} />
@@ -251,24 +228,22 @@ export function StudentBalanceCard({
         )}
 
         {/* Empty state for no active packages */}
-        {balance.package_status.active_packages.length === 0 && 
-         balance.upcoming_expirations.length === 0 && 
-         parseFloat(balance.balance_summary.remaining_hours) === 0 && (
-          <>
-            <Divider />
-            <VStack space="sm" className="items-center py-4">
-              <Icon as={Package} size="xl" className="text-typography-300" />
-              <VStack space="xs" className="items-center">
-                <Text className="text-typography-600 font-medium">
-                  No Active Packages
-                </Text>
-                <Text className="text-sm text-typography-500 text-center">
-                  Purchase a tutoring package to get started with your learning journey.
-                </Text>
+        {balance.package_status.active_packages.length === 0 &&
+          balance.upcoming_expirations.length === 0 &&
+          parseFloat(balance.balance_summary.remaining_hours) === 0 && (
+            <>
+              <Divider />
+              <VStack space="sm" className="items-center py-4">
+                <Icon as={Package} size="xl" className="text-typography-300" />
+                <VStack space="xs" className="items-center">
+                  <Text className="text-typography-600 font-medium">No Active Packages</Text>
+                  <Text className="text-sm text-typography-500 text-center">
+                    Purchase a tutoring package to get started with your learning journey.
+                  </Text>
+                </VStack>
               </VStack>
-            </VStack>
-          </>
-        )}
+            </>
+          )}
       </VStack>
     </Card>
   );
@@ -279,23 +254,22 @@ export function StudentBalanceCard({
  */
 function PackageItem({ package: pkg }: { package: PackageInfo }) {
   const remainingPercent = (parseFloat(pkg.hours_remaining) / parseFloat(pkg.hours_included)) * 100;
-  
+
   return (
     <HStack className="items-center justify-between p-3 bg-background-50 rounded-lg">
       <VStack space="xs" className="flex-1">
-        <Text className="text-sm font-medium text-typography-800">
-          {pkg.plan_name}
-        </Text>
+        <Text className="text-sm font-medium text-typography-800">{pkg.plan_name}</Text>
         <Text className="text-xs text-typography-600">
-          {parseFloat(pkg.hours_remaining).toFixed(1)} of {parseFloat(pkg.hours_included).toFixed(1)} hours remaining
+          {parseFloat(pkg.hours_remaining).toFixed(1)} of{' '}
+          {parseFloat(pkg.hours_included).toFixed(1)} hours remaining
         </Text>
       </VStack>
-      
+
       <VStack space="xs" className="items-end">
         {pkg.expires_at && (
           <Badge
             variant="outline"
-            action={pkg.days_until_expiry && pkg.days_until_expiry <= 7 ? "warning" : "secondary"}
+            action={pkg.days_until_expiry && pkg.days_until_expiry <= 7 ? 'warning' : 'secondary'}
             size="sm"
           >
             <Text className="text-xs">
@@ -312,24 +286,20 @@ function PackageItem({ package: pkg }: { package: PackageInfo }) {
  * Individual expiration item component.
  */
 function ExpirationItem({ expiration }: { expiration: any }) {
-  const urgencyColor = expiration.days_until_expiry <= 3 ? "error" : "warning";
-  
+  const urgencyColor = expiration.days_until_expiry <= 3 ? 'error' : 'warning';
+
   return (
     <HStack className="items-center justify-between p-3 bg-warning-50 rounded-lg">
       <VStack space="xs" className="flex-1">
-        <Text className="text-sm font-medium text-typography-800">
-          {expiration.plan_name}
-        </Text>
+        <Text className="text-sm font-medium text-typography-800">{expiration.plan_name}</Text>
         <Text className="text-xs text-typography-600">
           {parseFloat(expiration.hours_remaining).toFixed(1)} hours remaining
         </Text>
       </VStack>
-      
+
       <Badge variant="solid" action={urgencyColor} size="sm">
         <Icon as={AlertTriangle} size="xs" />
-        <Text className="text-xs ml-1">
-          {expiration.days_until_expiry} days left
-        </Text>
+        <Text className="text-xs ml-1">{expiration.days_until_expiry} days left</Text>
       </Badge>
     </HStack>
   );

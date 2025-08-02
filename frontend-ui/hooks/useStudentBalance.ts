@@ -1,17 +1,18 @@
 /**
  * Custom hook for fetching and managing student balance information.
- * 
+ *
  * Provides reactive access to student balance data including hours,
  * package status, and expiration information.
  */
 
 import { useState, useEffect, useCallback } from 'react';
+
 import { PurchaseApiClient } from '@/api/purchaseApi';
 import type { StudentBalanceResponse, UseStudentBalanceResult } from '@/types/purchase';
 
 /**
  * Hook for fetching and managing student balance data.
- * 
+ *
  * @param email Optional email parameter for admin access to other students' data
  * @returns Object containing balance data, loading state, error info, and refetch function
  */

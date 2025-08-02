@@ -1,31 +1,42 @@
-import React, { useState } from 'react';
-import { 
-  GraduationCap, 
-  Award, 
-  Certificate, 
-  Plus, 
-  X, 
+import {
+  GraduationCap,
+  Award,
+  Certificate,
+  Plus,
+  X,
   Calendar,
   MapPin,
   ExternalLink,
   CheckCircle2,
-  Upload
+  Upload,
 } from 'lucide-react-native';
+import React, { useState } from 'react';
 
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FormControl, FormControlLabel, FormControlHelper, FormControlError } from '@/components/ui/form-control';
+import { Divider } from '@/components/ui/divider';
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlHelper,
+  FormControlError,
+} from '@/components/ui/form-control';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
 import { ScrollView } from '@/components/ui/scroll-view';
-import { Select, SelectTrigger, SelectInput, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Divider } from '@/components/ui/divider';
 
 interface Degree {
   id: string;
@@ -67,25 +78,45 @@ interface EducationStepProps {
 const DEGREE_TYPES = [
   'High School Diploma',
   'Associate Degree',
-  'Bachelor\'s Degree',
-  'Master\'s Degree',
+  "Bachelor's Degree",
+  "Master's Degree",
   'Doctoral Degree (PhD)',
   'Professional Degree (JD, MD, etc.)',
   'Certificate Program',
   'Diploma',
-  'Other'
+  'Other',
 ];
 
 const COMMON_FIELDS = [
-  'Education', 'Mathematics', 'Science', 'English Literature', 'History',
-  'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Psychology',
-  'Business Administration', 'Art', 'Music', 'Physical Education',
-  'Foreign Languages', 'Economics', 'Political Science', 'Philosophy'
+  'Education',
+  'Mathematics',
+  'Science',
+  'English Literature',
+  'History',
+  'Physics',
+  'Chemistry',
+  'Biology',
+  'Computer Science',
+  'Psychology',
+  'Business Administration',
+  'Art',
+  'Music',
+  'Physical Education',
+  'Foreign Languages',
+  'Economics',
+  'Political Science',
+  'Philosophy',
 ];
 
 const HONOR_TYPES = [
-  'Summa Cum Laude', 'Magna Cum Laude', 'Cum Laude', 'Dean\'s List',
-  'Phi Beta Kappa', 'Honor Society', 'Scholarship Recipient', 'Other'
+  'Summa Cum Laude',
+  'Magna Cum Laude',
+  'Cum Laude',
+  "Dean's List",
+  'Phi Beta Kappa',
+  'Honor Society',
+  'Scholarship Recipient',
+  'Other',
 ];
 
 export const EducationStep: React.FC<EducationStepProps> = ({
@@ -98,7 +129,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
   const [showCertificationForm, setShowCertificationForm] = useState(false);
   const [showTrainingInput, setShowTrainingInput] = useState(false);
   const [newTraining, setNewTraining] = useState('');
-  
+
   const [editingDegree, setEditingDegree] = useState<Degree | null>(null);
   const [editingCertification, setEditingCertification] = useState<Certification | null>(null);
 
@@ -121,7 +152,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
   };
 
   const updateDegree = (id: string, updatedDegree: Omit<Degree, 'id'>) => {
-    const degrees = formData.degrees.map(degree => 
+    const degrees = formData.degrees.map(degree =>
       degree.id === id ? { ...updatedDegree, id } : degree
     );
     handleFieldChange('degrees', degrees);
@@ -130,7 +161,10 @@ export const EducationStep: React.FC<EducationStepProps> = ({
   };
 
   const removeDegree = (id: string) => {
-    handleFieldChange('degrees', formData.degrees.filter(degree => degree.id !== id));
+    handleFieldChange(
+      'degrees',
+      formData.degrees.filter(degree => degree.id !== id)
+    );
   };
 
   const addCertification = (certification: Omit<Certification, 'id'>) => {
@@ -144,7 +178,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
   };
 
   const updateCertification = (id: string, updatedCertification: Omit<Certification, 'id'>) => {
-    const certifications = formData.certifications.map(cert => 
+    const certifications = formData.certifications.map(cert =>
       cert.id === id ? { ...updatedCertification, id } : cert
     );
     handleFieldChange('certifications', certifications);
@@ -153,7 +187,10 @@ export const EducationStep: React.FC<EducationStepProps> = ({
   };
 
   const removeCertification = (id: string) => {
-    handleFieldChange('certifications', formData.certifications.filter(cert => cert.id !== id));
+    handleFieldChange(
+      'certifications',
+      formData.certifications.filter(cert => cert.id !== id)
+    );
   };
 
   const addTraining = (training: string) => {
@@ -170,7 +207,11 @@ export const EducationStep: React.FC<EducationStepProps> = ({
     handleFieldChange('additional_training', newTraining);
   };
 
-  const DegreeForm = ({ degree, onSubmit, onCancel }: {
+  const DegreeForm = ({
+    degree,
+    onSubmit,
+    onCancel,
+  }: {
     degree?: Degree;
     onSubmit: (degree: Omit<Degree, 'id'>) => void;
     onCancel: () => void;
@@ -212,13 +253,13 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                 </FormControlLabel>
                 <Select
                   selectedValue={formData.degree_type}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, degree_type: value }))}
+                  onValueChange={value => setFormData(prev => ({ ...prev, degree_type: value }))}
                 >
                   <SelectTrigger>
                     <SelectInput placeholder="Select degree type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {DEGREE_TYPES.map((type) => (
+                    {DEGREE_TYPES.map(type => (
                       <SelectItem key={type} label={type} value={type} />
                     ))}
                   </SelectContent>
@@ -234,7 +275,9 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                 <Input>
                   <InputField
                     value={formData.field_of_study}
-                    onChangeText={(value) => setFormData(prev => ({ ...prev, field_of_study: value }))}
+                    onChangeText={value =>
+                      setFormData(prev => ({ ...prev, field_of_study: value }))
+                    }
                     placeholder="e.g., Mathematics Education"
                   />
                 </Input>
@@ -251,7 +294,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                 <Input>
                   <InputField
                     value={formData.institution}
-                    onChangeText={(value) => setFormData(prev => ({ ...prev, institution: value }))}
+                    onChangeText={value => setFormData(prev => ({ ...prev, institution: value }))}
                     placeholder="University name"
                   />
                 </Input>
@@ -266,7 +309,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                 <Input>
                   <InputField
                     value={formData.location}
-                    onChangeText={(value) => setFormData(prev => ({ ...prev, location: value }))}
+                    onChangeText={value => setFormData(prev => ({ ...prev, location: value }))}
                     placeholder="City, Country"
                   />
                 </Input>
@@ -282,13 +325,15 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                 </FormControlLabel>
                 <Select
                   selectedValue={formData.graduation_year.toString()}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, graduation_year: parseInt(value) }))}
+                  onValueChange={value =>
+                    setFormData(prev => ({ ...prev, graduation_year: parseInt(value) }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectInput placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
-                    {years.map((year) => (
+                    {years.map(year => (
                       <SelectItem key={year} label={year.toString()} value={year.toString()} />
                     ))}
                   </SelectContent>
@@ -304,7 +349,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                 <Input>
                   <InputField
                     value={formData.gpa}
-                    onChangeText={(value) => setFormData(prev => ({ ...prev, gpa: value }))}
+                    onChangeText={value => setFormData(prev => ({ ...prev, gpa: value }))}
                     placeholder="e.g., 3.8/4.0"
                   />
                 </Input>
@@ -318,13 +363,13 @@ export const EducationStep: React.FC<EducationStepProps> = ({
             </FormControlLabel>
             <Select
               selectedValue={formData.honors}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, honors: value }))}
+              onValueChange={value => setFormData(prev => ({ ...prev, honors: value }))}
             >
               <SelectTrigger>
                 <SelectInput placeholder="Select honors (if any)" />
               </SelectTrigger>
               <SelectContent>
-                {HONOR_TYPES.map((honor) => (
+                {HONOR_TYPES.map(honor => (
                   <SelectItem key={honor} label={honor} value={honor} />
                 ))}
               </SelectContent>
@@ -338,7 +383,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
             <Input>
               <InputField
                 value={formData.description}
-                onChangeText={(value) => setFormData(prev => ({ ...prev, description: value }))}
+                onChangeText={value => setFormData(prev => ({ ...prev, description: value }))}
                 placeholder="Any additional details about your education"
                 multiline
                 numberOfLines={2}
@@ -359,7 +404,11 @@ export const EducationStep: React.FC<EducationStepProps> = ({
     );
   };
 
-  const CertificationForm = ({ certification, onSubmit, onCancel }: {
+  const CertificationForm = ({
+    certification,
+    onSubmit,
+    onCancel,
+  }: {
     certification?: Certification;
     onSubmit: (certification: Omit<Certification, 'id'>) => void;
     onCancel: () => void;
@@ -400,7 +449,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                 <Input>
                   <InputField
                     value={formData.name}
-                    onChangeText={(value) => setFormData(prev => ({ ...prev, name: value }))}
+                    onChangeText={value => setFormData(prev => ({ ...prev, name: value }))}
                     placeholder="e.g., Teaching License, TESOL Certificate"
                   />
                 </Input>
@@ -415,7 +464,9 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                 <Input>
                   <InputField
                     value={formData.issuing_organization}
-                    onChangeText={(value) => setFormData(prev => ({ ...prev, issuing_organization: value }))}
+                    onChangeText={value =>
+                      setFormData(prev => ({ ...prev, issuing_organization: value }))
+                    }
                     placeholder="e.g., State Board of Education"
                   />
                 </Input>
@@ -432,7 +483,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                 <Input>
                   <InputField
                     value={formData.issue_date}
-                    onChangeText={(value) => setFormData(prev => ({ ...prev, issue_date: value }))}
+                    onChangeText={value => setFormData(prev => ({ ...prev, issue_date: value }))}
                     placeholder="MM/YYYY"
                   />
                 </Input>
@@ -447,7 +498,9 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                 <Input>
                   <InputField
                     value={formData.expiration_date}
-                    onChangeText={(value) => setFormData(prev => ({ ...prev, expiration_date: value }))}
+                    onChangeText={value =>
+                      setFormData(prev => ({ ...prev, expiration_date: value }))
+                    }
                     placeholder="MM/YYYY (if applicable)"
                   />
                 </Input>
@@ -464,7 +517,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                 <Input>
                   <InputField
                     value={formData.credential_id}
-                    onChangeText={(value) => setFormData(prev => ({ ...prev, credential_id: value }))}
+                    onChangeText={value => setFormData(prev => ({ ...prev, credential_id: value }))}
                     placeholder="Certificate number/ID"
                   />
                 </Input>
@@ -479,7 +532,9 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                 <Input>
                   <InputField
                     value={formData.verification_url}
-                    onChangeText={(value) => setFormData(prev => ({ ...prev, verification_url: value }))}
+                    onChangeText={value =>
+                      setFormData(prev => ({ ...prev, verification_url: value }))
+                    }
                     placeholder="Link to verify certificate"
                   />
                 </Input>
@@ -510,7 +565,8 @@ export const EducationStep: React.FC<EducationStepProps> = ({
               Education Background
             </Heading>
             <Text className="text-gray-600">
-              Share your educational qualifications, certifications, and training to build credibility with students and parents.
+              Share your educational qualifications, certifications, and training to build
+              credibility with students and parents.
             </Text>
           </VStack>
 
@@ -524,11 +580,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                     Degrees
                   </Heading>
                 </HStack>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={() => setShowDegreeForm(true)}
-                >
+                <Button variant="outline" size="sm" onPress={() => setShowDegreeForm(true)}>
                   <ButtonIcon as={Plus} className="text-blue-600 mr-1" />
                   <ButtonText>Add Degree</ButtonText>
                 </Button>
@@ -537,7 +589,9 @@ export const EducationStep: React.FC<EducationStepProps> = ({
               {showDegreeForm && (
                 <DegreeForm
                   degree={editingDegree || undefined}
-                  onSubmit={editingDegree ? (degree) => updateDegree(editingDegree.id, degree) : addDegree}
+                  onSubmit={
+                    editingDegree ? degree => updateDegree(editingDegree.id, degree) : addDegree
+                  }
                   onCancel={() => {
                     setShowDegreeForm(false);
                     setEditingDegree(null);
@@ -547,7 +601,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
 
               {formData.degrees.length > 0 ? (
                 <VStack space="sm">
-                  {formData.degrees.map((degree) => (
+                  {formData.degrees.map(degree => (
                     <Card key={degree.id} className="border-gray-200">
                       <VStack space="sm" className="p-4">
                         <HStack className="items-start justify-between">
@@ -572,9 +626,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                               </Text>
                             </HStack>
                             {degree.gpa && (
-                              <Text className="text-sm text-gray-600">
-                                GPA: {degree.gpa}
-                              </Text>
+                              <Text className="text-sm text-gray-600">GPA: {degree.gpa}</Text>
                             )}
                             {degree.honors && (
                               <Badge className="bg-yellow-100 self-start">
@@ -582,9 +634,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                               </Badge>
                             )}
                             {degree.description && (
-                              <Text className="text-sm text-gray-600">
-                                {degree.description}
-                              </Text>
+                              <Text className="text-sm text-gray-600">{degree.description}</Text>
                             )}
                           </VStack>
                           <HStack space="xs">
@@ -633,11 +683,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                     Certifications & Licenses
                   </Heading>
                 </HStack>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={() => setShowCertificationForm(true)}
-                >
+                <Button variant="outline" size="sm" onPress={() => setShowCertificationForm(true)}>
                   <ButtonIcon as={Plus} className="text-green-600 mr-1" />
                   <ButtonText>Add Certification</ButtonText>
                 </Button>
@@ -646,9 +692,10 @@ export const EducationStep: React.FC<EducationStepProps> = ({
               {showCertificationForm && (
                 <CertificationForm
                   certification={editingCertification || undefined}
-                  onSubmit={editingCertification ? 
-                    (cert) => updateCertification(editingCertification.id, cert) : 
-                    addCertification
+                  onSubmit={
+                    editingCertification
+                      ? cert => updateCertification(editingCertification.id, cert)
+                      : addCertification
                   }
                   onCancel={() => {
                     setShowCertificationForm(false);
@@ -659,7 +706,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
 
               {formData.certifications.length > 0 ? (
                 <VStack space="sm">
-                  {formData.certifications.map((certification) => (
+                  {formData.certifications.map(certification => (
                     <Card key={certification.id} className="border-gray-200">
                       <VStack space="sm" className="p-4">
                         <HStack className="items-start justify-between">
@@ -677,7 +724,8 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                               <Icon as={Calendar} size={14} className="text-gray-500" />
                               <Text className="text-gray-600">
                                 Issued {certification.issue_date}
-                                {certification.expiration_date && ` • Expires ${certification.expiration_date}`}
+                                {certification.expiration_date &&
+                                  ` • Expires ${certification.expiration_date}`}
                               </Text>
                             </HStack>
                             {certification.credential_id && (
@@ -696,7 +744,9 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                                 }}
                               >
                                 <ButtonIcon as={ExternalLink} className="text-blue-600 mr-1" />
-                                <ButtonText className="text-blue-600">Verify Certificate</ButtonText>
+                                <ButtonText className="text-blue-600">
+                                  Verify Certificate
+                                </ButtonText>
                               </Button>
                             )}
                           </VStack>
@@ -746,18 +796,15 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                     Additional Training & Workshops
                   </Heading>
                 </HStack>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={() => setShowTrainingInput(true)}
-                >
+                <Button variant="outline" size="sm" onPress={() => setShowTrainingInput(true)}>
                   <ButtonIcon as={Plus} className="text-purple-600 mr-1" />
                   <ButtonText>Add Training</ButtonText>
                 </Button>
               </HStack>
 
               <Text className="text-gray-600">
-                Include professional development courses, workshops, seminars, or specialized training.
+                Include professional development courses, workshops, seminars, or specialized
+                training.
               </Text>
 
               {showTrainingInput && (
@@ -798,7 +845,11 @@ export const EducationStep: React.FC<EducationStepProps> = ({
               {formData.additional_training.length > 0 ? (
                 <VStack space="sm">
                   {formData.additional_training.map((training, index) => (
-                    <HStack key={index} space="sm" className="items-start p-3 bg-purple-50 rounded-lg">
+                    <HStack
+                      key={index}
+                      space="sm"
+                      className="items-start p-3 bg-purple-50 rounded-lg"
+                    >
                       <Icon as={CheckCircle2} size={16} className="text-purple-600 mt-0.5" />
                       <Text className="flex-1 text-purple-800">{training}</Text>
                       <Button

@@ -1,27 +1,26 @@
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
-import { useRouter } from 'expo-router';
 
-import { useInvitationProfileWizard } from '@/hooks/useInvitationProfileWizard';
-import { useInvitationActions } from '@/hooks/useInvitations';
+import StepIndicator from './StepIndicator';
+import AvailabilityStep from './steps/AvailabilityStep';
+import BasicInformationStep from './steps/BasicInformationStep';
+import CredentialsStep from './steps/CredentialsStep';
+import GradeLevelStep from './steps/GradeLevelStep';
+import PreviewSubmitStep from './steps/PreviewSubmitStep';
+import ProfileMarketingStep from './steps/ProfileMarketingStep';
+import RatesCompensationStep from './steps/RatesCompensationStep';
+import TeachingSubjectsStep from './steps/TeachingSubjectsStep';
 
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
 import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
 import { Spinner } from '@/components/ui/spinner';
-
-import StepIndicator from './StepIndicator';
-import BasicInformationStep from './steps/BasicInformationStep';
-import TeachingSubjectsStep from './steps/TeachingSubjectsStep';
-import GradeLevelStep from './steps/GradeLevelStep';
-import AvailabilityStep from './steps/AvailabilityStep';
-import RatesCompensationStep from './steps/RatesCompensationStep';
-import CredentialsStep from './steps/CredentialsStep';
-import ProfileMarketingStep from './steps/ProfileMarketingStep';
-import PreviewSubmitStep from './steps/PreviewSubmitStep';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
+import { useInvitationProfileWizard } from '@/hooks/useInvitationProfileWizard';
+import { useInvitationActions } from '@/hooks/useInvitations';
 
 interface ProfileWizardProps {
   invitationToken: string;
@@ -38,7 +37,7 @@ const ProfileWizard: React.FC<ProfileWizardProps> = ({
 }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const {
     currentStep,
     totalSteps,
@@ -86,14 +85,10 @@ const ProfileWizard: React.FC<ProfileWizardProps> = ({
 
   const handlePrevious = () => {
     if (hasUnsavedChanges) {
-      Alert.alert(
-        'Alterações não salvas',
-        'Você tem alterações não salvas. Deseja continuar?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Continuar', onPress: previousStep },
-        ]
-      );
+      Alert.alert('Alterações não salvas', 'Você tem alterações não salvas. Deseja continuar?', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Continuar', onPress: previousStep },
+      ]);
     } else {
       previousStep();
     }
@@ -106,13 +101,13 @@ const ProfileWizard: React.FC<ProfileWizardProps> = ({
         'Você perderá todas as informações inseridas.',
         [
           { text: 'Continuar editando', style: 'cancel' },
-          { 
-            text: 'Cancelar', 
+          {
+            text: 'Cancelar',
             style: 'destructive',
             onPress: () => {
               clearSavedData();
               onCancel?.();
-            }
+            },
           },
         ]
       );
@@ -141,30 +136,22 @@ const ProfileWizard: React.FC<ProfileWizardProps> = ({
 
     try {
       setIsSubmitting(true);
-      
+
       // Accept invitation with comprehensive profile data
       const result = await acceptInvitation(invitationToken, profileData);
-      
+
       // Clear saved wizard data
       await clearSavedData();
-      
-      Alert.alert(
-        'Sucesso!',
-        'Seu perfil foi configurado e o convite foi aceito com sucesso!',
-        [
-          {
-            text: 'Ir para Dashboard',
-            onPress: onSuccess,
-          }
-        ]
-      );
-      
+
+      Alert.alert('Sucesso!', 'Seu perfil foi configurado e o convite foi aceito com sucesso!', [
+        {
+          text: 'Ir para Dashboard',
+          onPress: onSuccess,
+        },
+      ]);
     } catch (error: any) {
       console.error('Failed to submit profile:', error);
-      Alert.alert(
-        'Erro',
-        error.message || 'Falha ao enviar perfil. Tente novamente.'
-      );
+      Alert.alert('Erro', error.message || 'Falha ao enviar perfil. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -183,7 +170,7 @@ const ProfileWizard: React.FC<ProfileWizardProps> = ({
         return <BasicInformationStep {...stepProps} />;
       case 2:
         return (
-          <TeachingSubjectsStep 
+          <TeachingSubjectsStep
             {...stepProps}
             onAddSubject={addTeachingSubject}
             onRemoveSubject={removeTeachingSubject}
@@ -197,7 +184,7 @@ const ProfileWizard: React.FC<ProfileWizardProps> = ({
         return <RatesCompensationStep {...stepProps} />;
       case 6:
         return (
-          <CredentialsStep 
+          <CredentialsStep
             {...stepProps}
             onAddEducation={addEducationEntry}
             onRemoveEducation={removeEducationEntry}
@@ -211,7 +198,7 @@ const ProfileWizard: React.FC<ProfileWizardProps> = ({
         return <ProfileMarketingStep {...stepProps} />;
       case 8:
         return (
-          <PreviewSubmitStep 
+          <PreviewSubmitStep
             {...stepProps}
             onEditStep={goToStep}
             onSubmit={handleSubmit}
@@ -248,24 +235,21 @@ const ProfileWizard: React.FC<ProfileWizardProps> = ({
                 Escola: {invitationData?.invitation?.school?.name}
               </Text>
             </VStack>
-            <Text className="text-sm text-gray-500">
-              {Math.round(getProgress())}% completo
-            </Text>
+            <Text className="text-sm text-gray-500">{Math.round(getProgress())}% completo</Text>
           </HStack>
-          
+
           <StepIndicator
             currentStep={currentStep}
             totalSteps={totalSteps}
-            completedSteps={Array.from({ length: totalSteps }, (_, i) => i + 1)
-              .filter(step => step < currentStep && isStepCompleted(step))}
+            completedSteps={Array.from({ length: totalSteps }, (_, i) => i + 1).filter(
+              step => step < currentStep && isStepCompleted(step)
+            )}
           />
         </VStack>
       </Box>
 
       {/* Step Content */}
-      <Box className="flex-1 p-6">
-        {renderCurrentStep()}
-      </Box>
+      <Box className="flex-1 p-6">{renderCurrentStep()}</Box>
 
       {/* Footer Navigation */}
       <Box className="bg-white border-t border-gray-200 px-6 py-4">
@@ -275,40 +259,27 @@ const ProfileWizard: React.FC<ProfileWizardProps> = ({
             onPress={canGoPrevious ? handlePrevious : handleCancel}
             disabled={isSubmitting}
           >
-            <ButtonText>
-              {canGoPrevious ? 'Anterior' : 'Cancelar'}
-            </ButtonText>
+            <ButtonText>{canGoPrevious ? 'Anterior' : 'Cancelar'}</ButtonText>
           </Button>
 
           <HStack space="sm">
             {hasUnsavedChanges && (
-              <Text className="text-xs text-amber-600 self-center">
-                Alterações não salvas
-              </Text>
+              <Text className="text-xs text-amber-600 self-center">Alterações não salvas</Text>
             )}
-            
+
             {isLastStep ? (
-              <Button
-                onPress={handleSubmit}
-                disabled={isSubmitting}
-                className="bg-green-600"
-              >
+              <Button onPress={handleSubmit} disabled={isSubmitting} className="bg-green-600">
                 {isSubmitting ? (
                   <HStack space="xs" className="items-center">
                     <Spinner size="small" />
                     <ButtonText className="text-white">Enviando...</ButtonText>
                   </HStack>
                 ) : (
-                  <ButtonText className="text-white">
-                    Finalizar Perfil
-                  </ButtonText>
+                  <ButtonText className="text-white">Finalizar Perfil</ButtonText>
                 )}
               </Button>
             ) : (
-              <Button
-                onPress={handleNext}
-                disabled={!canGoNext || isSubmitting}
-              >
+              <Button onPress={handleNext} disabled={!canGoNext || isSubmitting}>
                 <ButtonText>Próximo</ButtonText>
               </Button>
             )}

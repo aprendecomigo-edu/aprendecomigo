@@ -1,21 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { ScrollView } from 'react-native';
-import { 
-  DollarSign, 
-  Euro, 
-  Info, 
-  AlertCircle, 
-  Check, 
-  TrendingUp, 
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  DollarSign,
+  Euro,
+  Info,
+  AlertCircle,
+  Check,
+  TrendingUp,
   BookOpen,
   ChevronRight,
   Settings,
-  Copy
+  Copy,
 } from 'lucide-react-native';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { ScrollView } from 'react-native';
 import { z } from 'zod';
 
+import { Course } from './course-catalog-browser';
+
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -33,23 +36,6 @@ import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
-import { Pressable } from '@/components/ui/pressable';
-import { Switch } from '@/components/ui/switch';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import {
-  Select,
-  SelectTrigger,
-  SelectInput,
-  SelectIcon,
-  SelectPortal,
-  SelectBackdrop,
-  SelectContent,
-  SelectDragIndicatorWrapper, 
-  SelectDragIndicator,
-  SelectItem,
-} from '@/components/ui/select';
 import {
   Modal,
   ModalBackdrop,
@@ -59,8 +45,22 @@ import {
   ModalBody,
   ModalFooter,
 } from '@/components/ui/modal';
-
-import { Course } from './course-catalog-browser';
+import { Pressable } from '@/components/ui/pressable';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectIcon,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicatorWrapper,
+  SelectDragIndicator,
+  SelectItem,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 // Currency configuration
 const CURRENCIES = [
@@ -72,15 +72,15 @@ const CURRENCIES = [
 
 // Rate presets for different subjects and levels
 const RATE_PRESETS = {
-  'mathematics': { beginner: 25, intermediate: 35, advanced: 45 },
-  'physics': { beginner: 30, intermediate: 40, advanced: 50 },
-  'chemistry': { beginner: 30, intermediate: 40, advanced: 50 },
-  'biology': { beginner: 25, intermediate: 35, advanced: 45 },
-  'portuguese': { beginner: 20, intermediate: 30, advanced: 40 },
-  'english': { beginner: 25, intermediate: 35, advanced: 45 },
-  'history': { beginner: 20, intermediate: 30, advanced: 40 },
-  'geography': { beginner: 20, intermediate: 30, advanced: 40 },
-  'default': { beginner: 25, intermediate: 35, advanced: 45 },
+  mathematics: { beginner: 25, intermediate: 35, advanced: 45 },
+  physics: { beginner: 30, intermediate: 40, advanced: 50 },
+  chemistry: { beginner: 30, intermediate: 40, advanced: 50 },
+  biology: { beginner: 25, intermediate: 35, advanced: 45 },
+  portuguese: { beginner: 20, intermediate: 30, advanced: 40 },
+  english: { beginner: 25, intermediate: 35, advanced: 45 },
+  history: { beginner: 20, intermediate: 30, advanced: 40 },
+  geography: { beginner: 20, intermediate: 30, advanced: 40 },
+  default: { beginner: 25, intermediate: 35, advanced: 45 },
 } as const;
 
 interface CourseRate {
@@ -129,11 +129,13 @@ const RatePresetModal: React.FC<{
   courses: Course[];
   currency: string;
 }> = ({ isOpen, onClose, onApplyPreset, courses, currency }) => {
-  const [selectedLevel, setSelectedLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('intermediate');
+  const [selectedLevel, setSelectedLevel] = useState<'beginner' | 'intermediate' | 'advanced'>(
+    'intermediate'
+  );
 
   const handleApplyPresets = () => {
     const rates: Record<number, number> = {};
-    
+
     courses.forEach(course => {
       const subjectKey = course.subject_area?.toLowerCase() || 'default';
       const presets = RATE_PRESETS[subjectKey as keyof typeof RATE_PRESETS] || RATE_PRESETS.default;
@@ -171,38 +173,35 @@ const RatePresetModal: React.FC<{
             </VStack>
 
             <VStack space="md">
-              {(['beginner', 'intermediate', 'advanced'] as const).map((level) => (
-                <Pressable
-                  key={level}
-                  onPress={() => setSelectedLevel(level)}
-                  className="w-full"
-                >
-                  <Card 
+              {(['beginner', 'intermediate', 'advanced'] as const).map(level => (
+                <Pressable key={level} onPress={() => setSelectedLevel(level)} className="w-full">
+                  <Card
                     className={`border-2 ${
-                      selectedLevel === level 
-                        ? 'border-blue-500 bg-blue-50' 
+                      selectedLevel === level
+                        ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 bg-white'
                     }`}
                   >
                     <CardContent className="p-4">
                       <HStack className="items-center justify-between">
                         <VStack space="xs">
-                          <Text 
+                          <Text
                             className={`font-medium capitalize ${
                               selectedLevel === level ? 'text-blue-900' : 'text-gray-900'
                             }`}
                           >
                             {level} Level
                           </Text>
-                          <Text 
+                          <Text
                             className={`text-sm ${
                               selectedLevel === level ? 'text-blue-700' : 'text-gray-600'
                             }`}
                           >
-                            Average: {getCurrencySymbol(currency)}{RATE_PRESETS.default[level]}/hour
+                            Average: {getCurrencySymbol(currency)}
+                            {RATE_PRESETS.default[level]}/hour
                           </Text>
                         </VStack>
-                        
+
                         {selectedLevel === level && (
                           <Box className="w-6 h-6 rounded-full bg-blue-600 items-center justify-center">
                             <Icon as={Check} className="text-white" size="sm" />
@@ -219,8 +218,8 @@ const RatePresetModal: React.FC<{
               <HStack space="sm" className="items-start">
                 <Icon as={Info} className="text-yellow-600 mt-0.5" size="sm" />
                 <Text className="text-yellow-800 text-sm">
-                  These are suggested starting rates. You can adjust individual course rates 
-                  after applying the preset.
+                  These are suggested starting rates. You can adjust individual course rates after
+                  applying the preset.
                 </Text>
               </HStack>
             </Box>
@@ -252,7 +251,13 @@ const CourseRateCard: React.FC<{
   const [localRate, setLocalRate] = useState(rate.toString());
   const [hasError, setHasError] = useState(false);
 
-  const { control, handleSubmit, formState: { errors }, setValue, watch } = useForm<CourseRateFormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm<CourseRateFormData>({
     resolver: zodResolver(courseRateSchema),
     defaultValues: { rate },
     mode: 'onChange',
@@ -293,19 +298,17 @@ const CourseRateCard: React.FC<{
               <Box className="w-10 h-10 rounded-full bg-blue-100 items-center justify-center">
                 <Icon as={BookOpen} className="text-blue-600" size="sm" />
               </Box>
-              
+
               <VStack className="flex-1" space="xs">
                 <VStack space="xs">
                   <Heading size="sm" className="text-gray-900">
                     {course.name}
                   </Heading>
                   {course.code && (
-                    <Text className="text-gray-500 text-xs font-mono">
-                      {course.code}
-                    </Text>
+                    <Text className="text-gray-500 text-xs font-mono">{course.code}</Text>
                   )}
                 </VStack>
-                
+
                 <HStack space="xs" className="flex-wrap">
                   <Badge className="bg-blue-100">
                     <BadgeText className="text-blue-700 text-xs">
@@ -321,9 +324,7 @@ const CourseRateCard: React.FC<{
                   )}
                   {isDefault && (
                     <Badge className="bg-gray-100">
-                      <BadgeText className="text-gray-700 text-xs">
-                        Default Rate
-                      </BadgeText>
+                      <BadgeText className="text-gray-700 text-xs">Default Rate</BadgeText>
                     </Badge>
                   )}
                 </HStack>
@@ -333,9 +334,7 @@ const CourseRateCard: React.FC<{
             <Box className="ml-4">
               <FormControl isInvalid={hasError} className="w-32">
                 <HStack className="items-center">
-                  <Text className="text-gray-600 font-medium">
-                    {getCurrencySymbol(currency)}
-                  </Text>
+                  <Text className="text-gray-600 font-medium">{getCurrencySymbol(currency)}</Text>
                   <Controller
                     name="rate"
                     control={control}
@@ -344,7 +343,7 @@ const CourseRateCard: React.FC<{
                         <InputField
                           placeholder="25.00"
                           value={localRate}
-                          onChangeText={(text) => {
+                          onChangeText={text => {
                             setLocalRate(text);
                             const numericValue = parseFloat(text);
                             if (!isNaN(numericValue)) {
@@ -360,7 +359,7 @@ const CourseRateCard: React.FC<{
                   />
                   <Text className="text-gray-600 text-sm ml-1">/h</Text>
                 </HStack>
-                
+
                 {hasError && (
                   <FormControlError>
                     <FormControlErrorIcon as={AlertCircle} />
@@ -374,9 +373,7 @@ const CourseRateCard: React.FC<{
           </HStack>
 
           {course.description && (
-            <Text className="text-gray-600 text-sm">
-              {course.description}
-            </Text>
+            <Text className="text-gray-600 text-sm">{course.description}</Text>
           )}
         </VStack>
       </CardContent>
@@ -392,13 +389,19 @@ export const RateConfigurationManager: React.FC<RateConfigurationManagerProps> =
   onRatesChange,
   onContinue,
   isLoading = false,
-  title = "Set Your Teaching Rates",
-  subtitle = "Configure hourly rates for each subject to attract the right students",
+  title = 'Set Your Teaching Rates',
+  subtitle = 'Configure hourly rates for each subject to attract the right students',
 }) => {
   const [showPresetModal, setShowPresetModal] = useState(false);
   const [courseRates, setCourseRates] = useState<Record<number, CourseRate>>({});
 
-  const { control, handleSubmit, formState: { errors }, setValue, watch } = useForm<RateFormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm<RateFormData>({
     resolver: zodResolver(rateSchema),
     defaultValues: {
       defaultRate,
@@ -413,7 +416,7 @@ export const RateConfigurationManager: React.FC<RateConfigurationManagerProps> =
   // Initialize course rates
   useEffect(() => {
     const rates: Record<number, CourseRate> = {};
-    
+
     courses.forEach(course => {
       const existingRate = initialRates.find(r => r.courseId === course.id);
       rates[course.id] = {
@@ -423,7 +426,7 @@ export const RateConfigurationManager: React.FC<RateConfigurationManagerProps> =
         isCustom: !existingRate,
       };
     });
-    
+
     setCourseRates(rates);
   }, [courses, initialRates, defaultRate, defaultCurrency]);
 
@@ -512,7 +515,8 @@ export const RateConfigurationManager: React.FC<RateConfigurationManagerProps> =
     return CURRENCIES.find(c => c.code === code)?.symbol || '€';
   };
 
-  const averageRate = Object.values(courseRates).reduce((sum, rate) => sum + rate.rate, 0) / courses.length || 0;
+  const averageRate =
+    Object.values(courseRates).reduce((sum, rate) => sum + rate.rate, 0) / courses.length || 0;
   const minRate = Math.min(...Object.values(courseRates).map(r => r.rate));
   const maxRate = Math.max(...Object.values(courseRates).map(r => r.rate));
 
@@ -529,9 +533,7 @@ export const RateConfigurationManager: React.FC<RateConfigurationManagerProps> =
               <Heading size="xl" className="text-gray-900 text-center">
                 {title}
               </Heading>
-              <Text className="text-gray-600 text-center">
-                {subtitle}
-              </Text>
+              <Text className="text-gray-600 text-center">{subtitle}</Text>
             </VStack>
           </VStack>
 
@@ -540,20 +542,20 @@ export const RateConfigurationManager: React.FC<RateConfigurationManagerProps> =
             <VStack className="items-center" space="xs">
               <Text className="text-gray-500 text-xs uppercase tracking-wide">Average</Text>
               <Text className="text-gray-900 font-bold text-lg">
-                {getCurrencySymbol(watchedValues.currency)}{averageRate.toFixed(0)}/h
+                {getCurrencySymbol(watchedValues.currency)}
+                {averageRate.toFixed(0)}/h
               </Text>
             </VStack>
             <VStack className="items-center" space="xs">
               <Text className="text-gray-500 text-xs uppercase tracking-wide">Range</Text>
               <Text className="text-gray-900 font-medium">
-                {getCurrencySymbol(watchedValues.currency)}{minRate}-{maxRate}/h
+                {getCurrencySymbol(watchedValues.currency)}
+                {minRate}-{maxRate}/h
               </Text>
             </VStack>
             <VStack className="items-center" space="xs">
               <Text className="text-gray-500 text-xs uppercase tracking-wide">Subjects</Text>
-              <Text className="text-gray-900 font-medium">
-                {courses.length}
-              </Text>
+              <Text className="text-gray-900 font-medium">{courses.length}</Text>
             </VStack>
           </HStack>
         </VStack>
@@ -591,8 +593,12 @@ export const RateConfigurationManager: React.FC<RateConfigurationManagerProps> =
                             <SelectDragIndicatorWrapper>
                               <SelectDragIndicator />
                             </SelectDragIndicatorWrapper>
-                            {CURRENCIES.map((currency) => (
-                              <SelectItem key={currency.code} value={currency.code} label={`${currency.symbol} ${currency.name}`} />
+                            {CURRENCIES.map(currency => (
+                              <SelectItem
+                                key={currency.code}
+                                value={currency.code}
+                                label={`${currency.symbol} ${currency.name}`}
+                              />
                             ))}
                           </SelectContent>
                         </SelectPortal>
@@ -622,7 +628,7 @@ export const RateConfigurationManager: React.FC<RateConfigurationManagerProps> =
                           <InputField
                             placeholder="30.00"
                             value={value?.toString() || ''}
-                            onChangeText={(text) => {
+                            onChangeText={text => {
                               const numericValue = parseFloat(text);
                               if (!isNaN(numericValue)) {
                                 onChange(numericValue);
@@ -677,7 +683,7 @@ export const RateConfigurationManager: React.FC<RateConfigurationManagerProps> =
                     <ButtonIcon as={TrendingUp} className="text-blue-600 mr-1" />
                     <ButtonText className="text-blue-600">Apply Presets</ButtonText>
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -700,14 +706,12 @@ export const RateConfigurationManager: React.FC<RateConfigurationManagerProps> =
                   Subject-Specific Rates
                 </Heading>
                 <Badge className="bg-blue-100">
-                  <BadgeText className="text-blue-700 text-xs">
-                    {courses.length} subjects
-                  </BadgeText>
+                  <BadgeText className="text-blue-700 text-xs">{courses.length} subjects</BadgeText>
                 </Badge>
               </HStack>
 
               <VStack space="sm">
-                {courses.map((course) => (
+                {courses.map(course => (
                   <CourseRateCard
                     key={course.id}
                     course={course}
@@ -726,9 +730,7 @@ export const RateConfigurationManager: React.FC<RateConfigurationManagerProps> =
             <HStack space="sm" className="items-start">
               <Icon as={Info} className="text-blue-600 mt-0.5" size="sm" />
               <VStack space="xs" className="flex-1">
-                <Text className="text-blue-900 font-medium text-sm">
-                  Pricing Tips
-                </Text>
+                <Text className="text-blue-900 font-medium text-sm">Pricing Tips</Text>
                 <VStack space="xs">
                   <Text className="text-blue-800 text-sm">
                     • Research local market rates for your subjects

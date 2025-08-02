@@ -3,8 +3,9 @@
 
 // Monkey patch for CSSStyleDeclaration to handle numeric array indices
 if (typeof window !== 'undefined' && window.CSSStyleDeclaration) {
-  const originalDescriptor = Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype, '0') ||
-                             Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype, 'setProperty');
+  const originalDescriptor =
+    Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype, '0') ||
+    Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype, 'setProperty');
 
   if (!originalDescriptor || originalDescriptor.set) {
     // Already patched or has setter
@@ -26,25 +27,25 @@ if (typeof window !== 'undefined' && window.CSSStyleDeclaration) {
 
   // Override indexed property setter behavior
   Object.defineProperty(PatchedCSSStyleDeclaration.prototype, '0', {
-    set: function(value) {
+    set: function (value) {
       // Ignore numeric index assignments that cause the error
       console.warn('Ignored numeric CSS property assignment:', value);
     },
     configurable: true,
-    enumerable: false
+    enumerable: false,
   });
 
   // Add handlers for common numeric indices that might be accessed
   for (let i = 0; i < 20; i++) {
     Object.defineProperty(PatchedCSSStyleDeclaration.prototype, i.toString(), {
-      set: function(value) {
+      set: function (value) {
         console.warn(`Ignored numeric CSS property assignment at index ${i}:`, value);
       },
-      get: function() {
+      get: function () {
         return undefined;
       },
       configurable: true,
-      enumerable: false
+      enumerable: false,
     });
   }
 
@@ -81,7 +82,7 @@ if (typeof window !== 'undefined' && window.React && window.ReactDOM) {
   const originalCreateElement = window.React.createElement;
 
   // Patch createElement to catch and prevent CSS errors
-  window.React.createElement = function(type, props, ...children) {
+  window.React.createElement = function (type, props, ...children) {
     try {
       return originalCreateElement.apply(this, arguments);
     } catch (error) {
@@ -98,10 +99,13 @@ if (typeof window !== 'undefined' && window.React && window.ReactDOM) {
 }
 
 // Global error handler for CSS-related errors
-window.addEventListener('error', function(event) {
-  if (event.error && event.error.message &&
-      event.error.message.includes('CSSStyleDeclaration') &&
-      event.error.message.includes('Indexed property setter')) {
+window.addEventListener('error', function (event) {
+  if (
+    event.error &&
+    event.error.message &&
+    event.error.message.includes('CSSStyleDeclaration') &&
+    event.error.message.includes('Indexed property setter')
+  ) {
     console.warn('Prevented CSS StyleDeclaration error:', event.error.message);
     event.preventDefault();
     event.stopPropagation();

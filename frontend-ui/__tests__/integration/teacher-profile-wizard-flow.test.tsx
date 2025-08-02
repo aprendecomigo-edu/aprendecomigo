@@ -1,10 +1,7 @@
-import React from 'react';
-import { fireEvent, waitFor, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fireEvent, waitFor, act } from '@testing-library/react-native';
+import React from 'react';
 
-import { TeacherProfileWizard } from '@/screens/onboarding/teacher-profile-wizard';
-import { useProfileWizard } from '@/hooks/useProfileWizard';
-import apiClient from '@/api/apiClient';
 import {
   render,
   createMockProfileData,
@@ -16,6 +13,10 @@ import {
   pressButton,
   navigateToStep,
 } from '../utils/test-utils';
+
+import apiClient from '@/api/apiClient';
+import { useProfileWizard } from '@/hooks/useProfileWizard';
+import { TeacherProfileWizard } from '@/screens/onboarding/teacher-profile-wizard';
 
 // Use real hook instead of mocking it for integration tests
 jest.unmock('@/hooks/useProfileWizard');
@@ -32,7 +33,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    
+
     // Setup default API responses
     mockApiClient.get.mockResolvedValue(mockApiResponse({}));
     mockApiClient.post.mockResolvedValue(mockApiResponse({ success: true }));
@@ -74,13 +75,13 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       await act(async () => {
         const firstNameInput = getByTestId('first-name-input');
         fireEvent.changeText(firstNameInput, 'John');
-        
+
         const lastNameInput = getByTestId('last-name-input');
         fireEvent.changeText(lastNameInput, 'Doe');
-        
+
         const emailInput = getByTestId('email-input');
         fireEvent.changeText(emailInput, 'john.doe@example.com');
-        
+
         fireEvent.press(getByTestId('next-button'));
       });
 
@@ -92,8 +93,11 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       // Step 2: Biography
       await act(async () => {
         const bioTextarea = getByTestId('bio-textarea');
-        fireEvent.changeText(bioTextarea, 'I am an experienced mathematics teacher with over 5 years of experience...');
-        
+        fireEvent.changeText(
+          bioTextarea,
+          'I am an experienced mathematics teacher with over 5 years of experience...'
+        );
+
         fireEvent.press(getByTestId('next-button'));
       });
 
@@ -105,13 +109,13 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       // Step 3: Education
       await act(async () => {
         fireEvent.press(getByTestId('add-degree-button'));
-        
+
         const degreeTypeSelect = getByTestId('degree-type-select');
         fireEvent(degreeTypeSelect, 'onValueChange', 'Bachelor');
-        
+
         const fieldInput = getByTestId('field-of-study-input');
         fireEvent.changeText(fieldInput, 'Mathematics');
-        
+
         fireEvent.press(getByTestId('next-button'));
       });
 
@@ -123,13 +127,13 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       // Step 4: Subjects
       await act(async () => {
         fireEvent.press(getByTestId('add-subject-button'));
-        
+
         const subjectSelect = getByTestId('subject-select');
         fireEvent(subjectSelect, 'onValueChange', 'Mathematics');
-        
+
         const gradeLevelsSelect = getByTestId('grade-levels-select');
         fireEvent(gradeLevelsSelect, 'onValueChange', ['Grade 7', 'Grade 8']);
-        
+
         fireEvent.press(getByTestId('next-button'));
       });
 
@@ -142,10 +146,10 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       await act(async () => {
         const rateInput = getByTestId('individual-rate-input');
         fireEvent.changeText(rateInput, '25');
-        
+
         const currencySelect = getByTestId('currency-select');
         fireEvent(currencySelect, 'onValueChange', 'EUR');
-        
+
         fireEvent.press(getByTestId('next-button'));
       });
 
@@ -157,13 +161,13 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       // Step 6: Availability
       await act(async () => {
         fireEvent.press(getByTestId('monday-time-slot'));
-        
+
         const startTimeInput = getByTestId('start-time-input');
         fireEvent.changeText(startTimeInput, '09:00');
-        
+
         const endTimeInput = getByTestId('end-time-input');
         fireEvent.changeText(endTimeInput, '17:00');
-        
+
         fireEvent.press(getByTestId('save-time-slot'));
         fireEvent.press(getByTestId('next-button'));
       });
@@ -199,13 +203,15 @@ describe('TeacherProfileWizard - Integration Flow', () => {
     it('should handle validation errors and allow correction', async () => {
       // Mock validation error response
       mockApiClient.post
-        .mockResolvedValueOnce(mockApiResponse({
-          is_valid: false,
-          errors: {
-            first_name: ['First name is required'],
-            email: ['Invalid email format'],
-          },
-        }))
+        .mockResolvedValueOnce(
+          mockApiResponse({
+            is_valid: false,
+            errors: {
+              first_name: ['First name is required'],
+              email: ['Invalid email format'],
+            },
+          })
+        )
         .mockResolvedValueOnce(mockApiResponse({ is_valid: true })); // Second attempt succeeds
 
       const { getByTestId, getByText } = render(<TeacherProfileWizard />);
@@ -230,10 +236,10 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       await act(async () => {
         const firstNameInput = getByTestId('first-name-input');
         fireEvent.changeText(firstNameInput, 'John');
-        
+
         const emailInput = getByTestId('email-input');
         fireEvent.changeText(emailInput, 'john@example.com');
-        
+
         fireEvent.press(getByTestId('next-button'));
       });
 
@@ -379,10 +385,12 @@ describe('TeacherProfileWizard - Integration Flow', () => {
 
   describe('Navigation and State Management', () => {
     it('should prevent navigation with invalid data', async () => {
-      mockApiClient.post.mockResolvedValue(mockApiResponse({
-        is_valid: false,
-        errors: { first_name: ['Required'] },
-      }));
+      mockApiClient.post.mockResolvedValue(
+        mockApiResponse({
+          is_valid: false,
+          errors: { first_name: ['Required'] },
+        })
+      );
 
       const { getByTestId, getByText } = render(<TeacherProfileWizard />);
 
@@ -404,9 +412,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
     });
 
     it('should allow backward navigation and preserve data', async () => {
-      const { getByTestId, getByText, getByDisplayValue } = render(
-        <TeacherProfileWizard />
-      );
+      const { getByTestId, getByText, getByDisplayValue } = render(<TeacherProfileWizard />);
 
       // Wait for initialization
       await waitFor(() => {
@@ -417,7 +423,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       await act(async () => {
         const firstNameInput = getByTestId('first-name-input');
         fireEvent.changeText(firstNameInput, 'John');
-        
+
         fireEvent.press(getByTestId('next-button'));
       });
 
@@ -450,7 +456,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       await act(async () => {
         const firstNameInput = getByTestId('first-name-input');
         const lastNameInput = getByTestId('last-name-input');
-        
+
         fireEvent.changeText(firstNameInput, 'John');
         fireEvent.changeText(lastNameInput, 'Doe');
         fireEvent.changeText(firstNameInput, 'Jane');
@@ -472,9 +478,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
   describe('Exit and Resume Flow', () => {
     it('should show exit confirmation with unsaved changes', async () => {
       const mockOnExit = jest.fn();
-      const { getByTestId, getByText } = render(
-        <TeacherProfileWizard onExit={mockOnExit} />
-      );
+      const { getByTestId, getByText } = render(<TeacherProfileWizard onExit={mockOnExit} />);
 
       // Wait for initialization
       await waitFor(() => {
@@ -485,7 +489,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       await act(async () => {
         const firstNameInput = getByTestId('first-name-input');
         fireEvent.changeText(firstNameInput, 'Test');
-        
+
         fireEvent.press(getByTestId('exit-button'));
       });
 
@@ -505,9 +509,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
 
     it('should allow exit without saving', async () => {
       const mockOnExit = jest.fn();
-      const { getByTestId, getByText } = render(
-        <TeacherProfileWizard onExit={mockOnExit} />
-      );
+      const { getByTestId, getByText } = render(<TeacherProfileWizard onExit={mockOnExit} />);
 
       // Wait for initialization and make changes
       await waitFor(() => {
@@ -517,7 +519,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       await act(async () => {
         const firstNameInput = getByTestId('first-name-input');
         fireEvent.changeText(firstNameInput, 'Test');
-        
+
         fireEvent.press(getByTestId('exit-button'));
       });
 
@@ -530,9 +532,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
     });
 
     it('should resume from specific step', async () => {
-      const { getByText } = render(
-        <TeacherProfileWizard resumeFromStep={3} />
-      );
+      const { getByText } = render(<TeacherProfileWizard resumeFromStep={3} />);
 
       // Should start at step 3 (subjects)
       await waitFor(() => {
@@ -587,7 +587,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       // Make rapid changes
       await act(async () => {
         const firstNameInput = getByTestId('first-name-input');
-        
+
         fireEvent.changeText(firstNameInput, 'J');
         fireEvent.changeText(firstNameInput, 'Jo');
         fireEvent.changeText(firstNameInput, 'Joh');

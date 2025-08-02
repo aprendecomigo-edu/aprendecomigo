@@ -2,15 +2,24 @@ import { X } from 'lucide-react-native';
 import React from 'react';
 
 import { InvitationStatus, SchoolRole } from '@/api/invitationApi';
-
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
+import { Icon, ChevronDownIcon } from '@/components/ui/icon';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectIcon,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicatorWrapper,
+  SelectDragIndicator,
+  SelectItem,
+} from '@/components/ui/select';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Select, SelectTrigger, SelectInput, SelectIcon, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator, SelectItem } from '@/components/ui/select';
-import { ChevronDownIcon } from '@/components/ui/icon';
 
 interface InvitationFiltersProps {
   filters: {
@@ -101,10 +110,7 @@ export const InvitationFilters: React.FC<InvitationFiltersProps> = ({
           {/* Status Filter */}
           <VStack space="xs">
             <Text className="text-sm font-medium text-gray-700">Status</Text>
-            <Select
-              selectedValue={filters.status || ''}
-              onValueChange={handleStatusChange}
-            >
+            <Select selectedValue={filters.status || ''} onValueChange={handleStatusChange}>
               <SelectTrigger variant="outline" size="sm">
                 <SelectInput placeholder="Selecionar status" />
                 <SelectIcon className="mr-3" as={ChevronDownIcon} />
@@ -115,12 +121,8 @@ export const InvitationFilters: React.FC<InvitationFiltersProps> = ({
                   <SelectDragIndicatorWrapper>
                     <SelectDragIndicator />
                   </SelectDragIndicatorWrapper>
-                  {STATUS_OPTIONS.map((option) => (
-                    <SelectItem
-                      key={option.value}
-                      label={option.label}
-                      value={option.value}
-                    />
+                  {STATUS_OPTIONS.map(option => (
+                    <SelectItem key={option.value} label={option.label} value={option.value} />
                   ))}
                 </SelectContent>
               </SelectPortal>
@@ -130,10 +132,7 @@ export const InvitationFilters: React.FC<InvitationFiltersProps> = ({
           {/* Role Filter */}
           <VStack space="xs">
             <Text className="text-sm font-medium text-gray-700">Função</Text>
-            <Select
-              selectedValue={filters.role || ''}
-              onValueChange={handleRoleChange}
-            >
+            <Select selectedValue={filters.role || ''} onValueChange={handleRoleChange}>
               <SelectTrigger variant="outline" size="sm">
                 <SelectInput placeholder="Selecionar função" />
                 <SelectIcon className="mr-3" as={ChevronDownIcon} />
@@ -144,12 +143,8 @@ export const InvitationFilters: React.FC<InvitationFiltersProps> = ({
                   <SelectDragIndicatorWrapper>
                     <SelectDragIndicator />
                   </SelectDragIndicatorWrapper>
-                  {ROLE_OPTIONS.map((option) => (
-                    <SelectItem
-                      key={option.value}
-                      label={option.label}
-                      value={option.value}
-                    />
+                  {ROLE_OPTIONS.map(option => (
+                    <SelectItem key={option.value} label={option.label} value={option.value} />
                   ))}
                 </SelectContent>
               </SelectPortal>
@@ -159,10 +154,7 @@ export const InvitationFilters: React.FC<InvitationFiltersProps> = ({
           {/* Ordering Filter */}
           <VStack space="xs">
             <Text className="text-sm font-medium text-gray-700">Ordenação</Text>
-            <Select
-              selectedValue={filters.ordering || ''}
-              onValueChange={handleOrderingChange}
-            >
+            <Select selectedValue={filters.ordering || ''} onValueChange={handleOrderingChange}>
               <SelectTrigger variant="outline" size="sm">
                 <SelectInput placeholder="Selecionar ordenação" />
                 <SelectIcon className="mr-3" as={ChevronDownIcon} />
@@ -173,12 +165,8 @@ export const InvitationFilters: React.FC<InvitationFiltersProps> = ({
                   <SelectDragIndicatorWrapper>
                     <SelectDragIndicator />
                   </SelectDragIndicatorWrapper>
-                  {ORDERING_OPTIONS.map((option) => (
-                    <SelectItem
-                      key={option.value}
-                      label={option.label}
-                      value={option.value}
-                    />
+                  {ORDERING_OPTIONS.map(option => (
+                    <SelectItem key={option.value} label={option.label} value={option.value} />
                   ))}
                 </SelectContent>
               </SelectPortal>
@@ -190,9 +178,7 @@ export const InvitationFilters: React.FC<InvitationFiltersProps> = ({
         {hasActiveFilters() && (
           <Box className="p-2 bg-blue-50 rounded border border-blue-200">
             <VStack space="xs">
-              <Text className="text-xs font-medium text-blue-900">
-                Filtros ativos:
-              </Text>
+              <Text className="text-xs font-medium text-blue-900">Filtros ativos:</Text>
               <HStack space="xs" className="flex-wrap">
                 {filters.status && (
                   <Box className="px-2 py-1 bg-blue-100 rounded">

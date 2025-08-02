@@ -1,12 +1,11 @@
 /**
  * Account Settings Component
- * 
+ *
  * Provides account and profile management functionality including
  * user information display, notification preferences, and account actions.
  */
 
-import React, { useState } from 'react';
-import { 
+import {
   Bell,
   CreditCard,
   Download,
@@ -21,9 +20,11 @@ import {
   CheckCircle,
   Settings,
   Eye,
-  EyeOff
+  EyeOff,
 } from 'lucide-react-native';
+import React, { useState } from 'react';
 
+import { PaymentMethodsSection } from '@/components/student/payment-methods/PaymentMethodsSection';
 import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
@@ -33,14 +34,14 @@ import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
-import { 
-  Modal, 
-  ModalBackdrop, 
-  ModalBody, 
-  ModalCloseButton, 
-  ModalContent, 
-  ModalFooter, 
-  ModalHeader 
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
 } from '@/components/ui/modal';
 import { Pressable } from '@/components/ui/pressable';
 import { Switch } from '@/components/ui/switch';
@@ -48,7 +49,6 @@ import { Text } from '@/components/ui/text';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
 import type { StudentBalanceResponse, UserProfile } from '@/types/purchase';
-import { PaymentMethodsSection } from '@/components/student/payment-methods/PaymentMethodsSection';
 
 interface AccountSettingsProps {
   userProfile: UserProfile | null;
@@ -59,11 +59,7 @@ interface AccountSettingsProps {
 /**
  * User profile information section
  */
-function ProfileSection({ 
-  userProfile 
-}: { 
-  userProfile: UserProfile | null 
-}) {
+function ProfileSection({ userProfile }: { userProfile: UserProfile | null }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: userProfile?.name || '',
@@ -73,10 +69,10 @@ function ProfileSection({
 
   const userInitials = userProfile?.name
     ? userProfile.name
-      .split(' ')
-      .map((n: string) => n[0])
-      .join('')
-      .toUpperCase()
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
     : 'U';
 
   const handleSave = async () => {
@@ -119,49 +115,41 @@ function ProfileSection({
 
         <HStack space="lg" className="items-center">
           <Avatar className="h-20 w-20">
-            <AvatarFallbackText className="text-xl">
-              {userInitials}
-            </AvatarFallbackText>
+            <AvatarFallbackText className="text-xl">{userInitials}</AvatarFallbackText>
           </Avatar>
-          
+
           <VStack space="sm" className="flex-1">
             {isEditing ? (
               <VStack space="md">
                 <VStack space="xs">
-                  <Text className="text-sm font-medium text-typography-800">
-                    Full Name
-                  </Text>
+                  <Text className="text-sm font-medium text-typography-800">Full Name</Text>
                   <Input>
                     <InputField
                       value={formData.name}
-                      onChangeText={(value) => setFormData(prev => ({ ...prev, name: value }))}
+                      onChangeText={value => setFormData(prev => ({ ...prev, name: value }))}
                       placeholder="Enter your full name"
                     />
                   </Input>
                 </VStack>
-                
+
                 <VStack space="xs">
-                  <Text className="text-sm font-medium text-typography-800">
-                    Email Address
-                  </Text>
+                  <Text className="text-sm font-medium text-typography-800">Email Address</Text>
                   <Input>
                     <InputField
                       value={formData.email}
-                      onChangeText={(value) => setFormData(prev => ({ ...prev, email: value }))}
+                      onChangeText={value => setFormData(prev => ({ ...prev, email: value }))}
                       placeholder="Enter your email"
                       keyboardType="email-address"
                     />
                   </Input>
                 </VStack>
-                
+
                 <VStack space="xs">
-                  <Text className="text-sm font-medium text-typography-800">
-                    Phone Number
-                  </Text>
+                  <Text className="text-sm font-medium text-typography-800">Phone Number</Text>
                   <Input>
                     <InputField
                       value={formData.phone}
-                      onChangeText={(value) => setFormData(prev => ({ ...prev, phone: value }))}
+                      onChangeText={value => setFormData(prev => ({ ...prev, phone: value }))}
                       placeholder="Enter your phone number"
                       keyboardType="phone-pad"
                     />
@@ -195,11 +183,9 @@ function ProfileSection({
                   <Text className="text-lg font-semibold text-typography-900">
                     {userProfile?.name || 'Unknown User'}
                   </Text>
-                  <Text className="text-sm text-typography-600">
-                    Student Account
-                  </Text>
+                  <Text className="text-sm text-typography-600">Student Account</Text>
                 </VStack>
-                
+
                 <VStack space="xs">
                   <HStack space="xs" className="items-center">
                     <Icon as={Mail} size="sm" className="text-typography-500" />
@@ -207,13 +193,11 @@ function ProfileSection({
                       {userProfile?.email || 'No email provided'}
                     </Text>
                   </HStack>
-                  
+
                   {userProfile?.phone && (
                     <HStack space="xs" className="items-center">
                       <Icon as={User} size="sm" className="text-typography-500" />
-                      <Text className="text-sm text-typography-700">
-                        {userProfile.phone}
-                      </Text>
+                      <Text className="text-sm text-typography-700">{userProfile.phone}</Text>
                     </HStack>
                   )}
                 </VStack>
@@ -256,9 +240,7 @@ function NotificationSettings() {
         <VStack space="md">
           <HStack className="items-center justify-between">
             <VStack space="xs" className="flex-1">
-              <Text className="text-sm font-medium text-typography-800">
-                Email Notifications
-              </Text>
+              <Text className="text-sm font-medium text-typography-800">Email Notifications</Text>
               <Text className="text-xs text-typography-600">
                 Receive important account updates via email
               </Text>
@@ -272,9 +254,7 @@ function NotificationSettings() {
 
           <HStack className="items-center justify-between">
             <VStack space="xs" className="flex-1">
-              <Text className="text-sm font-medium text-typography-800">
-                Session Reminders
-              </Text>
+              <Text className="text-sm font-medium text-typography-800">Session Reminders</Text>
               <Text className="text-xs text-typography-600">
                 Get reminded about upcoming tutoring sessions
               </Text>
@@ -304,9 +284,7 @@ function NotificationSettings() {
 
           <HStack className="items-center justify-between">
             <VStack space="xs" className="flex-1">
-              <Text className="text-sm font-medium text-typography-800">
-                Weekly Reports
-              </Text>
+              <Text className="text-sm font-medium text-typography-800">Weekly Reports</Text>
               <Text className="text-xs text-typography-600">
                 Receive weekly summaries of your learning progress
               </Text>
@@ -320,9 +298,7 @@ function NotificationSettings() {
 
           <HStack className="items-center justify-between">
             <VStack space="xs" className="flex-1">
-              <Text className="text-sm font-medium text-typography-800">
-                Promotional Emails
-              </Text>
+              <Text className="text-sm font-medium text-typography-800">Promotional Emails</Text>
               <Text className="text-xs text-typography-600">
                 Receive offers and updates about new features
               </Text>
@@ -390,12 +366,8 @@ function SecuritySettings() {
               <HStack space="sm" className="items-center flex-1">
                 <Icon as={Lock} size="sm" className="text-typography-600" />
                 <VStack space="0">
-                  <Text className="text-sm font-medium text-typography-800">
-                    Change Password
-                  </Text>
-                  <Text className="text-xs text-typography-600">
-                    Update your account password
-                  </Text>
+                  <Text className="text-sm font-medium text-typography-800">Change Password</Text>
+                  <Text className="text-xs text-typography-600">Update your account password</Text>
                 </VStack>
               </HStack>
               <Icon as={Edit} size="sm" className="text-typography-400" />
@@ -405,9 +377,7 @@ function SecuritySettings() {
               <HStack space="sm" className="items-center flex-1">
                 <Icon as={Download} size="sm" className="text-typography-600" />
                 <VStack space="0">
-                  <Text className="text-sm font-medium text-typography-800">
-                    Download My Data
-                  </Text>
+                  <Text className="text-sm font-medium text-typography-800">Download My Data</Text>
                   <Text className="text-xs text-typography-600">
                     Export your account information and history
                   </Text>
@@ -420,9 +390,7 @@ function SecuritySettings() {
               <HStack space="sm" className="items-center flex-1">
                 <Icon as={Trash2} size="sm" className="text-error-600" />
                 <VStack space="0">
-                  <Text className="text-sm font-medium text-error-800">
-                    Delete Account
-                  </Text>
+                  <Text className="text-sm font-medium text-error-800">Delete Account</Text>
                   <Text className="text-xs text-error-600">
                     Permanently delete your account and all data
                   </Text>
@@ -442,43 +410,55 @@ function SecuritySettings() {
             <Heading size="lg">Change Password</Heading>
             <ModalCloseButton />
           </ModalHeader>
-          
+
           <ModalBody>
             <VStack space="md">
               <VStack space="xs">
-                <Text className="text-sm font-medium text-typography-800">
-                  Current Password
-                </Text>
+                <Text className="text-sm font-medium text-typography-800">Current Password</Text>
                 <Input>
                   <InputField
                     secureTextEntry={!showPasswords.current}
                     value={passwordData.currentPassword}
-                    onChangeText={(value) => setPasswordData(prev => ({ ...prev, currentPassword: value }))}
+                    onChangeText={value =>
+                      setPasswordData(prev => ({ ...prev, currentPassword: value }))
+                    }
                     placeholder="Enter current password"
                   />
-                  <InputSlot className="pr-3" onPress={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}>
-                    <InputIcon as={showPasswords.current ? EyeOff : Eye} className="text-typography-400" />
+                  <InputSlot
+                    className="pr-3"
+                    onPress={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                  >
+                    <InputIcon
+                      as={showPasswords.current ? EyeOff : Eye}
+                      className="text-typography-400"
+                    />
                   </InputSlot>
                 </Input>
               </VStack>
-              
+
               <VStack space="xs">
-                <Text className="text-sm font-medium text-typography-800">
-                  New Password
-                </Text>
+                <Text className="text-sm font-medium text-typography-800">New Password</Text>
                 <Input>
                   <InputField
                     secureTextEntry={!showPasswords.new}
                     value={passwordData.newPassword}
-                    onChangeText={(value) => setPasswordData(prev => ({ ...prev, newPassword: value }))}
+                    onChangeText={value =>
+                      setPasswordData(prev => ({ ...prev, newPassword: value }))
+                    }
                     placeholder="Enter new password"
                   />
-                  <InputSlot className="pr-3" onPress={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}>
-                    <InputIcon as={showPasswords.new ? EyeOff : Eye} className="text-typography-400" />
+                  <InputSlot
+                    className="pr-3"
+                    onPress={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                  >
+                    <InputIcon
+                      as={showPasswords.new ? EyeOff : Eye}
+                      className="text-typography-400"
+                    />
                   </InputSlot>
                 </Input>
               </VStack>
-              
+
               <VStack space="xs">
                 <Text className="text-sm font-medium text-typography-800">
                   Confirm New Password
@@ -487,17 +467,25 @@ function SecuritySettings() {
                   <InputField
                     secureTextEntry={!showPasswords.confirm}
                     value={passwordData.confirmPassword}
-                    onChangeText={(value) => setPasswordData(prev => ({ ...prev, confirmPassword: value }))}
+                    onChangeText={value =>
+                      setPasswordData(prev => ({ ...prev, confirmPassword: value }))
+                    }
                     placeholder="Confirm new password"
                   />
-                  <InputSlot className="pr-3" onPress={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}>
-                    <InputIcon as={showPasswords.confirm ? EyeOff : Eye} className="text-typography-400" />
+                  <InputSlot
+                    className="pr-3"
+                    onPress={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                  >
+                    <InputIcon
+                      as={showPasswords.confirm ? EyeOff : Eye}
+                      className="text-typography-400"
+                    />
                   </InputSlot>
                 </Input>
               </VStack>
             </VStack>
           </ModalBody>
-          
+
           <ModalFooter>
             <HStack space="md" className="w-full">
               <Button
@@ -529,11 +517,11 @@ function SecuritySettings() {
 /**
  * Account summary section
  */
-function AccountSummary({ 
-  balance, 
+function AccountSummary({
+  balance,
   userProfile,
-  onRefresh 
-}: { 
+  onRefresh,
+}: {
   balance: StudentBalanceResponse | null;
   userProfile: any;
   onRefresh: () => Promise<void>;
@@ -544,12 +532,7 @@ function AccountSummary({
         <VStack space="md" className="items-center">
           <Icon as={AlertTriangle} size="lg" className="text-warning-500" />
           <Text className="text-typography-600">Unable to load account summary</Text>
-          <Button
-            action="secondary"
-            variant="outline"
-            size="sm"
-            onPress={onRefresh}
-          >
+          <Button action="secondary" variant="outline" size="sm" onPress={onRefresh}>
             <ButtonIcon as={RefreshCw} />
             <ButtonText>Retry</ButtonText>
           </Button>
@@ -570,18 +553,14 @@ function AccountSummary({
 
         <VStack space="md">
           <HStack className="items-center justify-between">
-            <Text className="text-sm text-typography-700">
-              Account Status:
-            </Text>
+            <Text className="text-sm text-typography-700">Account Status:</Text>
             <Badge variant="solid" action="success" size="sm">
               <Text className="text-xs">Active</Text>
             </Badge>
           </HStack>
 
           <HStack className="items-center justify-between">
-            <Text className="text-sm text-typography-700">
-              Member Since:
-            </Text>
+            <Text className="text-sm text-typography-700">Member Since:</Text>
             <Text className="text-sm font-medium text-typography-900">
               {/* TODO: Get actual registration date from user profile */}
               January 2024
@@ -589,27 +568,21 @@ function AccountSummary({
           </HStack>
 
           <HStack className="items-center justify-between">
-            <Text className="text-sm text-typography-700">
-              Total Hours Purchased:
-            </Text>
+            <Text className="text-sm text-typography-700">Total Hours Purchased:</Text>
             <Text className="text-sm font-medium text-typography-900">
               {parseFloat(balance.balance_summary.hours_purchased).toFixed(1)}h
             </Text>
           </HStack>
 
           <HStack className="items-center justify-between">
-            <Text className="text-sm text-typography-700">
-              Hours Remaining:
-            </Text>
+            <Text className="text-sm text-typography-700">Hours Remaining:</Text>
             <Text className="text-sm font-medium text-primary-600">
               {parseFloat(balance.balance_summary.remaining_hours).toFixed(1)}h
             </Text>
           </HStack>
 
           <HStack className="items-center justify-between">
-            <Text className="text-sm text-typography-700">
-              Active Packages:
-            </Text>
+            <Text className="text-sm text-typography-700">Active Packages:</Text>
             <Text className="text-sm font-medium text-typography-900">
               {balance.package_status.active_packages.length}
             </Text>
@@ -623,11 +596,7 @@ function AccountSummary({
 /**
  * Main Account Settings Component
  */
-export function AccountSettings({
-  userProfile,
-  balance,
-  onRefresh,
-}: AccountSettingsProps) {
+export function AccountSettings({ userProfile, balance, onRefresh }: AccountSettingsProps) {
   return (
     <VStack space="lg">
       {/* Header */}
@@ -644,11 +613,7 @@ export function AccountSettings({
       <ProfileSection userProfile={userProfile} />
 
       {/* Account Summary */}
-      <AccountSummary 
-        balance={balance} 
-        userProfile={userProfile}
-        onRefresh={onRefresh}
-      />
+      <AccountSummary balance={balance} userProfile={userProfile} onRefresh={onRefresh} />
 
       {/* Payment Methods */}
       <PaymentMethodsSection />

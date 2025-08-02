@@ -1,12 +1,16 @@
+import useRouter from '@unitools/router';
 import React, { useState } from 'react';
 import { Platform } from 'react-native';
-import useRouter from '@unitools/router';
 
-import { OnboardingChecklist } from '@/screens/onboarding/onboarding-checklist';
-import { AddFirstTeacherFlow, AddFirstStudentFlow, SchoolProfileFlow } from '@/screens/onboarding/guided-flows';
-import { OnboardingTutorial } from '@/screens/onboarding/onboarding-tutorial';
 import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
+import {
+  AddFirstTeacherFlow,
+  AddFirstStudentFlow,
+  SchoolProfileFlow,
+} from '@/screens/onboarding/guided-flows';
+import { OnboardingChecklist } from '@/screens/onboarding/onboarding-checklist';
+import { OnboardingTutorial } from '@/screens/onboarding/onboarding-tutorial';
 
 export default function OnboardingChecklistPage() {
   const router = useRouter();
@@ -42,10 +46,7 @@ export default function OnboardingChecklistPage() {
   return (
     <Box className="flex-1 bg-gray-50">
       <VStack className="flex-1 p-4 max-w-4xl mx-auto">
-        <OnboardingChecklist 
-          onStepAction={handleStepAction}
-          showProgress={true}
-        />
+        <OnboardingChecklist onStepAction={handleStepAction} showProgress={true} />
       </VStack>
 
       {/* Guided Flow Modals */}

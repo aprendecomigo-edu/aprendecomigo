@@ -1,38 +1,37 @@
 /**
  * Quick Actions Modal Component
- * 
+ *
  * Main modal that orchestrates renewal and top-up flows,
  * integrating all the quick action components together.
  */
 
-import React, { useState, useEffect } from 'react';
 import { X, RotateCcw, Zap, AlertCircle } from 'lucide-react-native';
-
-import { 
-  Modal, 
-  ModalBackdrop, 
-  ModalContent, 
-  ModalHeader, 
-  ModalCloseButton, 
-  ModalBody 
-} from '@/components/ui/modal';
-import { Heading } from '@/components/ui/heading';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Alert, AlertIcon, AlertText } from '@/components/ui/alert';
+import React, { useState, useEffect } from 'react';
 
 import { OneClickRenewalButton } from './OneClickRenewalButton';
+import { PaymentSuccessHandler } from './PaymentSuccessHandler';
 import { QuickTopUpPanel } from './QuickTopUpPanel';
 import { RenewalConfirmationModal } from './RenewalConfirmationModal';
 import { SavedPaymentSelector } from './SavedPaymentSelector';
-import { PaymentSuccessHandler } from './PaymentSuccessHandler';
 
 import { PurchaseApiClient } from '@/api/purchaseApi';
-import { useStudentBalance } from '@/hooks/useStudentBalance';
+import { Alert, AlertIcon, AlertText } from '@/components/ui/alert';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import {
+  Modal,
+  ModalBackdrop,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+} from '@/components/ui/modal';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
-import type { 
+import { useStudentBalance } from '@/hooks/useStudentBalance';
+import type {
   QuickActionState,
   PaymentMethod,
   TopUpPackage,
@@ -40,7 +39,7 @@ import type {
   RenewalRequest,
   QuickTopUpRequest,
   RenewalResponse,
-  QuickTopUpResponse
+  QuickTopUpResponse,
 } from '@/types/purchase';
 
 interface QuickActionsModalProps {
@@ -53,12 +52,15 @@ interface QuickActionsModalProps {
   /** Optional email for admin access */
   email?: string;
   /** Callback when successful transaction completes */
-  onTransactionSuccess?: (type: 'renewal' | 'topup', response: RenewalResponse | QuickTopUpResponse) => void;
+  onTransactionSuccess?: (
+    type: 'renewal' | 'topup',
+    response: RenewalResponse | QuickTopUpResponse
+  ) => void;
 }
 
 /**
  * Quick Actions Modal Component
- * 
+ *
  * Main modal that handles both renewal and top-up flows with state management.
  */
 export function QuickActionsModal({
@@ -82,7 +84,9 @@ export function QuickActionsModal({
   });
 
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const [successResponse, setSuccessResponse] = useState<RenewalResponse | QuickTopUpResponse | null>(null);
+  const [successResponse, setSuccessResponse] = useState<
+    RenewalResponse | QuickTopUpResponse | null
+  >(null);
   const [expiredPackage, setExpiredPackage] = useState<PackageInfo | null>(null);
 
   // Reset state when modal opens/closes
@@ -115,8 +119,9 @@ export function QuickActionsModal({
   // Detect expired packages
   useEffect(() => {
     if (balance?.package_status.expired_packages.length) {
-      const mostRecent = balance.package_status.expired_packages
-        .sort((a, b) => new Date(b.expires_at || '').getTime() - new Date(a.expires_at || '').getTime())[0];
+      const mostRecent = balance.package_status.expired_packages.sort(
+        (a, b) => new Date(b.expires_at || '').getTime() - new Date(a.expires_at || '').getTime()
+      )[0];
       setExpiredPackage(mostRecent);
     }
   }, [balance]);
@@ -151,10 +156,10 @@ export function QuickActionsModal({
   // Handle renewal confirmation
   const handleRenewalConfirm = async (request: RenewalRequest) => {
     setActionState(prev => ({ ...prev, isProcessing: true, error: null }));
-    
+
     try {
       const response = await PurchaseApiClient.renewSubscription(request, email);
-      
+
       if (response.success) {
         setSuccessResponse(response);
         setActionState(prev => ({ ...prev, confirmationStep: 'success' }));
@@ -164,10 +169,10 @@ export function QuickActionsModal({
         throw new Error(response.message || 'Renewal failed');
       }
     } catch (error: any) {
-      setActionState(prev => ({ 
-        ...prev, 
+      setActionState(prev => ({
+        ...prev,
         error: error.message || 'Failed to process renewal',
-        confirmationStep: 'error' 
+        confirmationStep: 'error',
       }));
     } finally {
       setActionState(prev => ({ ...prev, isProcessing: false }));
@@ -177,10 +182,10 @@ export function QuickActionsModal({
   // Handle top-up confirmation
   const handleTopUpConfirm = async (request: QuickTopUpRequest) => {
     setActionState(prev => ({ ...prev, isProcessing: true, error: null }));
-    
+
     try {
       const response = await PurchaseApiClient.quickTopUp(request, email);
-      
+
       if (response.success) {
         setSuccessResponse(response);
         setActionState(prev => ({ ...prev, confirmationStep: 'success' }));
@@ -190,10 +195,10 @@ export function QuickActionsModal({
         throw new Error(response.message || 'Top-up failed');
       }
     } catch (error: any) {
-      setActionState(prev => ({ 
-        ...prev, 
+      setActionState(prev => ({
+        ...prev,
         error: error.message || 'Failed to process top-up',
-        confirmationStep: 'error' 
+        confirmationStep: 'error',
       }));
     } finally {
       setActionState(prev => ({ ...prev, isProcessing: false }));
@@ -219,11 +224,11 @@ export function QuickActionsModal({
     if (actionState.confirmationStep === 'success') {
       return actionState.actionType === 'renewal' ? 'Renewal Successful' : 'Purchase Successful';
     }
-    
+
     if (!actionState.actionType) {
       return 'Quick Actions';
     }
-    
+
     return actionState.actionType === 'renewal' ? 'Renew Subscription' : 'Purchase Hours';
   };
 
@@ -245,10 +250,12 @@ export function QuickActionsModal({
             <HStack className="items-center justify-between">
               <HStack space="sm" className="items-center">
                 {ModalIcon && (
-                  <Icon 
-                    as={ModalIcon} 
-                    size="sm" 
-                    className={actionState.actionType === 'renewal' ? 'text-primary-600' : 'text-warning-600'} 
+                  <Icon
+                    as={ModalIcon}
+                    size="sm"
+                    className={
+                      actionState.actionType === 'renewal' ? 'text-primary-600' : 'text-warning-600'
+                    }
                   />
                 )}
                 <Heading size="lg">{getModalTitle()}</Heading>
@@ -273,8 +280,16 @@ export function QuickActionsModal({
               {actionState.confirmationStep === 'success' && successResponse && (
                 <PaymentSuccessHandler
                   transactionType={actionState.actionType!}
-                  renewalResponse={actionState.actionType === 'renewal' ? successResponse as RenewalResponse : undefined}
-                  topUpResponse={actionState.actionType === 'topup' ? successResponse as QuickTopUpResponse : undefined}
+                  renewalResponse={
+                    actionState.actionType === 'renewal'
+                      ? (successResponse as RenewalResponse)
+                      : undefined
+                  }
+                  topUpResponse={
+                    actionState.actionType === 'topup'
+                      ? (successResponse as QuickTopUpResponse)
+                      : undefined
+                  }
                   email={email}
                   onDone={handleSuccessDone}
                   autoRefreshBalance={true}
@@ -287,7 +302,7 @@ export function QuickActionsModal({
                   <Text className="text-typography-600 text-center">
                     Choose what you'd like to do:
                   </Text>
-                  
+
                   <VStack space="sm">
                     {/* Show renewal if there's an expired package */}
                     {expiredPackage && (
@@ -295,32 +310,32 @@ export function QuickActionsModal({
                         email={email}
                         size="lg"
                         showPlanDetails={true}
-                        onRenewalSuccess={(response) => {
+                        onRenewalSuccess={response => {
                           setSuccessResponse(response);
-                          setActionState(prev => ({ 
-                            ...prev, 
+                          setActionState(prev => ({
+                            ...prev,
                             actionType: 'renewal',
-                            confirmationStep: 'success' 
+                            confirmationStep: 'success',
                           }));
                         }}
-                        onRenewalError={(error) => {
+                        onRenewalError={error => {
                           setActionState(prev => ({ ...prev, error }));
                         }}
                       />
                     )}
-                    
+
                     {/* Quick Top-Up Panel */}
                     <QuickTopUpPanel
                       email={email}
-                      onTopUpSuccess={(response) => {
+                      onTopUpSuccess={response => {
                         setSuccessResponse(response);
-                        setActionState(prev => ({ 
-                          ...prev, 
+                        setActionState(prev => ({
+                          ...prev,
                           actionType: 'topup',
-                          confirmationStep: 'success' 
+                          confirmationStep: 'success',
                         }));
                       }}
-                      onTopUpError={(error) => {
+                      onTopUpError={error => {
                         setActionState(prev => ({ ...prev, error }));
                       }}
                     />
@@ -329,31 +344,32 @@ export function QuickActionsModal({
               )}
 
               {/* Renewal Flow */}
-              {actionState.confirmationStep === 'select' && actionState.actionType === 'renewal' && (
-                <VStack space="lg">
-                  <Text className="text-typography-600">
-                    Select a payment method to renew your subscription:
-                  </Text>
-                  
-                  <SavedPaymentSelector
-                    email={email}
-                    selectedPaymentMethodId={actionState.selectedPaymentMethod?.id}
-                    onPaymentMethodSelect={handlePaymentMethodSelect}
-                    size="md"
-                    showCardDetails={true}
-                  />
-                </VStack>
-              )}
+              {actionState.confirmationStep === 'select' &&
+                actionState.actionType === 'renewal' && (
+                  <VStack space="lg">
+                    <Text className="text-typography-600">
+                      Select a payment method to renew your subscription:
+                    </Text>
+
+                    <SavedPaymentSelector
+                      email={email}
+                      selectedPaymentMethodId={actionState.selectedPaymentMethod?.id}
+                      onPaymentMethodSelect={handlePaymentMethodSelect}
+                      size="md"
+                      showCardDetails={true}
+                    />
+                  </VStack>
+                )}
 
               {/* Top-up Flow */}
               {actionState.confirmationStep === 'select' && actionState.actionType === 'topup' && (
                 <QuickTopUpPanel
                   email={email}
-                  onTopUpSuccess={(response) => {
+                  onTopUpSuccess={response => {
                     setSuccessResponse(response);
                     setActionState(prev => ({ ...prev, confirmationStep: 'success' }));
                   }}
-                  onTopUpError={(error) => {
+                  onTopUpError={error => {
                     setActionState(prev => ({ ...prev, error }));
                   }}
                 />
@@ -370,7 +386,9 @@ export function QuickActionsModal({
           onClose={() => setShowConfirmationModal(false)}
           transactionType={actionState.actionType!}
           expiredPackage={actionState.actionType === 'renewal' ? expiredPackage : undefined}
-          topUpPackage={actionState.actionType === 'topup' ? actionState.selectedPackage : undefined}
+          topUpPackage={
+            actionState.actionType === 'topup' ? actionState.selectedPackage : undefined
+          }
           paymentMethod={actionState.selectedPaymentMethod}
           onConfirm={handleConfirmation}
           isProcessing={actionState.isProcessing}

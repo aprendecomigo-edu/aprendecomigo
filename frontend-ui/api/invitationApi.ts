@@ -33,7 +33,7 @@ export interface WeeklySchedule {
 
 export interface TimeSlot {
   start_time: string; // HH:MM format
-  end_time: string;   // HH:MM format
+  end_time: string; // HH:MM format
   available: boolean;
 }
 
@@ -55,7 +55,7 @@ export interface ExperienceEntry {
   role: string;
   institution: string;
   start_date: string; // YYYY-MM-DD
-  end_date?: string;  // YYYY-MM-DD, null if current
+  end_date?: string; // YYYY-MM-DD, null if current
   description: string;
   is_current: boolean;
 }
@@ -73,35 +73,35 @@ export interface TeacherProfileData {
   profile_photo?: File | string;
   contact_preferences?: ContactPreferences;
   introduction?: string;
-  
+
   // Step 2: Teaching Subjects
   teaching_subjects: SubjectExpertise[];
   custom_subjects?: string[];
-  
+
   // Step 3: Grade Level Preferences
   grade_levels: GradeLevel[];
-  
+
   // Step 4: Availability & Scheduling
   availability_schedule?: WeeklySchedule;
   timezone: string;
   availability_notes?: string;
-  
+
   // Step 5: Rates & Compensation
   hourly_rate: number;
   rate_negotiable: boolean;
   payment_preferences?: PaymentPreferences;
-  
+
   // Step 6: Credentials & Experience
   education_background: EducationEntry[];
   teaching_experience: ExperienceEntry[];
   certifications: CertificationFile[];
-  
+
   // Step 7: Profile Marketing
   teaching_philosophy: string;
   teaching_approach: string;
   specializations: string[];
   achievements?: string[];
-  
+
   // Legacy fields for backward compatibility
   bio?: string;
   specialty?: string;
@@ -244,7 +244,7 @@ export class InvitationApi {
     ordering?: string;
   }): Promise<InvitationListResponse> {
     const response = await apiClient.get('/accounts/teacher-invitations/list_for_school/', {
-      params
+      params,
     });
     return response.data;
   }
@@ -260,7 +260,10 @@ export class InvitationApi {
   /**
    * Accept invitation by token with comprehensive profile data
    */
-  static async acceptInvitation(token: string, profileData?: TeacherProfileData): Promise<{
+  static async acceptInvitation(
+    token: string,
+    profileData?: TeacherProfileData
+  ): Promise<{
     message: string;
     teacher: any;
     school_membership: {
@@ -273,7 +276,10 @@ export class InvitationApi {
       name: string;
     };
   }> {
-    const response = await apiClient.post(`/accounts/teacher-invitations/${token}/accept/`, profileData || {});
+    const response = await apiClient.post(
+      `/accounts/teacher-invitations/${token}/accept/`,
+      profileData || {}
+    );
     return response.data;
   }
 
@@ -295,7 +301,7 @@ export class InvitationApi {
     invitation: TeacherInvitation;
   }> {
     const response = await apiClient.patch(`/accounts/teacher-invitations/${token}/`, {
-      status: InvitationStatus.CANCELLED
+      status: InvitationStatus.CANCELLED,
     });
     return response.data;
   }
@@ -322,10 +328,13 @@ export class InvitationApi {
   /**
    * Update invitation details (admin action)
    */
-  static async updateInvitation(token: string, data: {
-    custom_message?: string;
-    role?: SchoolRole;
-  }): Promise<TeacherInvitation> {
+  static async updateInvitation(
+    token: string,
+    data: {
+      custom_message?: string;
+      role?: SchoolRole;
+    }
+  ): Promise<TeacherInvitation> {
     const response = await apiClient.patch(`/accounts/teacher-invitations/${token}/`, data);
     return response.data;
   }

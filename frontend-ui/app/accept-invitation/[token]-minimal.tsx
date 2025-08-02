@@ -1,8 +1,9 @@
-import React from 'react';
 import { useLocalSearchParams } from 'expo-router';
+import React from 'react';
+
+import MainLayout from '@/components/layouts/main-layout';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import MainLayout from '@/components/layouts/main-layout';
 
 const AcceptInvitationMinimal = () => {
   const { token } = useLocalSearchParams<{ token: string }>();

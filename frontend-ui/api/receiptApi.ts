@@ -1,12 +1,13 @@
 /**
  * API client functions for receipt-related operations.
- * 
+ *
  * Handles communication with the backend receipt APIs including
  * receipt listing, generation, and download functionality.
  */
 
-import apiClient from './apiClient';
 import { Linking, Platform } from 'react-native';
+
+import apiClient from './apiClient';
 
 export interface Receipt {
   id: string;
@@ -33,7 +34,7 @@ export interface ReceiptGenerationResponse {
 export class ReceiptApiClient {
   /**
    * Get all receipts for the authenticated student.
-   * 
+   *
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to array of receipts
    * @throws Error with descriptive message if request fails
@@ -42,11 +43,11 @@ export class ReceiptApiClient {
     try {
       const params = email ? { email } : {};
       const response = await apiClient.get('/api/student-balance/receipts/', { params });
-      
+
       if (!Array.isArray(response.data)) {
         throw new Error('Invalid response format: expected array of receipts');
       }
-      
+
       return response.data.map((receipt: any) => ({
         id: receipt.id,
         transaction_id: receipt.transaction_id,
@@ -60,7 +61,7 @@ export class ReceiptApiClient {
       }));
     } catch (error: any) {
       console.error('Error fetching receipts:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Student not found');
       } else if (error.response?.status === 403) {
@@ -77,17 +78,22 @@ export class ReceiptApiClient {
 
   /**
    * Generate a receipt for a specific transaction.
-   * 
+   *
    * @param transactionId The transaction ID to generate receipt for
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to receipt generation response
    * @throws Error with descriptive message if request fails
    */
-  static async generateReceipt(transactionId: string, email?: string): Promise<ReceiptGenerationResponse> {
+  static async generateReceipt(
+    transactionId: string,
+    email?: string
+  ): Promise<ReceiptGenerationResponse> {
     try {
-      const data = email ? { transaction_id: transactionId, email } : { transaction_id: transactionId };
+      const data = email
+        ? { transaction_id: transactionId, email }
+        : { transaction_id: transactionId };
       const response = await apiClient.post('/api/student-balance/receipts/generate/', data);
-      
+
       return {
         success: response.data.success,
         receipt_id: response.data.receipt_id,
@@ -96,7 +102,7 @@ export class ReceiptApiClient {
       };
     } catch (error: any) {
       console.error('Error generating receipt:', error);
-      
+
       if (error.response?.status === 400) {
         throw new Error(error.response.data?.message || 'Invalid receipt generation request');
       } else if (error.response?.status === 404) {
@@ -115,7 +121,7 @@ export class ReceiptApiClient {
 
   /**
    * Download a receipt by ID.
-   * 
+   *
    * @param receiptId The receipt ID to download
    * @param email Optional email parameter for admin access
    * @returns Promise that resolves when download is initiated
@@ -155,7 +161,7 @@ export class ReceiptApiClient {
       }
     } catch (error: any) {
       console.error('Error downloading receipt:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Receipt not found');
       } else if (error.response?.status === 403) {
@@ -172,7 +178,7 @@ export class ReceiptApiClient {
 
   /**
    * Get receipt preview URL for modal display.
-   * 
+   *
    * @param receiptId The receipt ID to preview
    * @param email Optional email parameter for admin access
    * @returns Promise resolving to preview URL
@@ -181,16 +187,18 @@ export class ReceiptApiClient {
   static async getReceiptPreviewUrl(receiptId: string, email?: string): Promise<string> {
     try {
       const params = email ? { email, preview: 'true' } : { preview: 'true' };
-      const response = await apiClient.get(`/api/student-balance/receipts/${receiptId}/download/`, { params });
-      
+      const response = await apiClient.get(`/api/student-balance/receipts/${receiptId}/download/`, {
+        params,
+      });
+
       if (!response.data.preview_url) {
         throw new Error('Preview URL not available');
       }
-      
+
       return response.data.preview_url;
     } catch (error: any) {
       console.error('Error getting receipt preview:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Receipt not found');
       } else if (error.response?.status === 403) {
@@ -207,9 +215,5 @@ export class ReceiptApiClient {
 }
 
 // Convenience exports for direct function access
-export const {
-  getReceipts,
-  generateReceipt,
-  downloadReceipt,
-  getReceiptPreviewUrl,
-} = ReceiptApiClient;
+export const { getReceipts, generateReceipt, downloadReceipt, getReceiptPreviewUrl } =
+  ReceiptApiClient;

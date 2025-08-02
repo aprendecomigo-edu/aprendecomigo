@@ -65,8 +65,8 @@ const MainLayout = ({
       <VStack className="min-h-screen w-full bg-background-0">
         {/* Mobile Header */}
         <Box className="md:hidden">
-          <TopNavigation 
-            variant="mobile" 
+          <TopNavigation
+            variant="mobile"
             onSchoolChange={handleSchoolChange}
             showSearch={showSearch}
             showQuickActions={showQuickActions}
@@ -92,7 +92,9 @@ const MainLayout = ({
               {isSidebarVisible && (
                 <TutorialHighlight
                   id="navigation"
-                  isActive={state.isActive && state.config?.steps[state.currentStep]?.id === 'navigation'}
+                  isActive={
+                    state.isActive && state.config?.steps[state.currentStep]?.id === 'navigation'
+                  }
                 >
                   <SideNavigation />
                 </TutorialHighlight>
@@ -107,7 +109,7 @@ const MainLayout = ({
                   <Breadcrumb />
                 </Box>
               )}
-              
+
               {children}
             </VStack>
           </HStack>

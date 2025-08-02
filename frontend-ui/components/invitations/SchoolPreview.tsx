@@ -1,38 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  School, 
-  Users, 
-  GraduationCap, 
-  MapPin, 
-  Globe, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  Award, 
+import {
+  School,
+  Users,
+  GraduationCap,
+  MapPin,
+  Globe,
+  Mail,
+  Phone,
+  Calendar,
+  Award,
   TrendingUp,
   Eye,
   EyeOff,
-  ExternalLink
+  ExternalLink,
 } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
 
+import apiClient from '@/api/apiClient';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
+import { Grid } from '@/components/ui/grid';
+import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { Image } from '@/components/ui/image';
+import { Pressable } from '@/components/ui/pressable';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Avatar } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Pressable } from '@/components/ui/pressable';
-import { Divider } from '@/components/ui/divider';
-import { Heading } from '@/components/ui/heading';
-import { Spinner } from '@/components/ui/spinner';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Image } from '@/components/ui/image';
-import { Grid } from '@/components/ui/grid';
-
-import apiClient from '@/api/apiClient';
 
 interface SchoolDetails {
   id: number;
@@ -160,7 +159,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
         {showStats && (
           <CardBody>
             <Grid className="grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((i) => (
+              {[1, 2, 3, 4].map(i => (
                 <Box key={i} className="text-center p-3 bg-gray-50 rounded">
                   <Skeleton className="w-8 h-8 rounded mx-auto mb-2" />
                   <Skeleton className="w-12 h-6 rounded mx-auto mb-1" />
@@ -204,7 +203,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
                 <Avatar.FallbackText>{schoolDetails.name}</Avatar.FallbackText>
               )}
             </Avatar>
-            
+
             <VStack className="flex-1">
               <Text className="font-bold text-base">{schoolDetails.name}</Text>
               {schoolDetails.city && schoolDetails.state && (
@@ -226,7 +225,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
                 </HStack>
               )}
             </VStack>
-            
+
             {schoolDetails.website && (
               <Pressable onPress={handleWebsiteOpen}>
                 <Icon as={ExternalLink} size="sm" className="text-blue-600" />
@@ -244,14 +243,14 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
       {/* Banner Image */}
       {schoolDetails.banner_url && (
         <Box className="w-full h-32 overflow-hidden rounded-t-lg">
-          <Image 
+          <Image
             source={{ uri: schoolDetails.banner_url }}
             className="w-full h-full"
             resizeMode="cover"
           />
         </Box>
       )}
-      
+
       <CardHeader>
         <VStack space="md">
           {/* School Header */}
@@ -263,23 +262,26 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
                 <Avatar.FallbackText>{schoolDetails.name}</Avatar.FallbackText>
               )}
             </Avatar>
-            
+
             <VStack className="flex-1">
               <Heading size="xl">{schoolDetails.name}</Heading>
-              
+
               {/* Location */}
               {(schoolDetails.city || schoolDetails.address) && (
                 <HStack space="xs" className="items-center mt-1">
                   <Icon as={MapPin} size="sm" className="text-gray-500" />
                   <Text className="text-sm text-gray-600">
-                    {schoolDetails.address ? 
-                      `${schoolDetails.address}${schoolDetails.city ? `, ${schoolDetails.city}` : ''}` :
-                      `${schoolDetails.city}${schoolDetails.state ? `, ${schoolDetails.state}` : ''}`
-                    }
+                    {schoolDetails.address
+                      ? `${schoolDetails.address}${
+                          schoolDetails.city ? `, ${schoolDetails.city}` : ''
+                        }`
+                      : `${schoolDetails.city}${
+                          schoolDetails.state ? `, ${schoolDetails.state}` : ''
+                        }`}
                   </Text>
                 </HStack>
               )}
-              
+
               {/* School Type & Founded */}
               <HStack space="md" className="mt-2">
                 {schoolDetails.school_type && (
@@ -298,12 +300,10 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
               </HStack>
             </VStack>
           </HStack>
-          
+
           {/* Description */}
           {schoolDetails.description && (
-            <Text className="text-gray-700 leading-relaxed">
-              {schoolDetails.description}
-            </Text>
+            <Text className="text-gray-700 leading-relaxed">{schoolDetails.description}</Text>
           )}
         </VStack>
       </CardHeader>
@@ -316,7 +316,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
               <Heading size="md">Estatísticas</Heading>
               {loadingStats ? (
                 <Grid className="grid-cols-2 gap-4">
-                  {[1, 2, 3, 4].map((i) => (
+                  {[1, 2, 3, 4].map(i => (
                     <Box key={i} className="text-center p-3 bg-gray-50 rounded">
                       <Skeleton className="w-8 h-8 rounded mx-auto mb-2" />
                       <Skeleton className="w-12 h-6 rounded mx-auto mb-1" />
@@ -333,7 +333,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
                     </Text>
                     <Text className="text-sm text-gray-600">Estudantes</Text>
                   </Box>
-                  
+
                   <Box className="text-center p-4 bg-green-50 rounded-lg">
                     <Icon as={GraduationCap} size="lg" className="text-green-600 mx-auto mb-2" />
                     <Text className="text-2xl font-bold text-green-600">
@@ -341,7 +341,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
                     </Text>
                     <Text className="text-sm text-gray-600">Professores</Text>
                   </Box>
-                  
+
                   {schoolStats.courses_offered && (
                     <Box className="text-center p-4 bg-purple-50 rounded-lg">
                       <Icon as={Award} size="lg" className="text-purple-600 mx-auto mb-2" />
@@ -351,7 +351,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
                       <Text className="text-sm text-gray-600">Cursos</Text>
                     </Box>
                   )}
-                  
+
                   {schoolStats.success_rate && (
                     <Box className="text-center p-4 bg-yellow-50 rounded-lg">
                       <Icon as={TrendingUp} size="lg" className="text-yellow-600 mx-auto mb-2" />
@@ -363,9 +363,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
                   )}
                 </Grid>
               ) : (
-                <Text className="text-gray-500 text-center py-4">
-                  Estatísticas não disponíveis
-                </Text>
+                <Text className="text-gray-500 text-center py-4">Estatísticas não disponíveis</Text>
               )}
             </VStack>
           )}
@@ -374,7 +372,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
           {(expanded || showFullDetails) && (
             <VStack space="md">
               <Divider />
-              
+
               {/* Specializations */}
               {schoolDetails.specializations && schoolDetails.specializations.length > 0 && (
                 <VStack space="sm">
@@ -388,7 +386,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
                   </HStack>
                 </VStack>
               )}
-              
+
               {/* Grades Offered */}
               {schoolDetails.grades_offered && schoolDetails.grades_offered.length > 0 && (
                 <VStack space="sm">
@@ -402,7 +400,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
                   </HStack>
                 </VStack>
               )}
-              
+
               {/* Languages */}
               {schoolDetails.languages && schoolDetails.languages.length > 0 && (
                 <VStack space="sm">
@@ -416,7 +414,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
                   </HStack>
                 </VStack>
               )}
-              
+
               {/* Facilities */}
               {schoolDetails.facilities && schoolDetails.facilities.length > 0 && (
                 <VStack space="sm">
@@ -431,7 +429,7 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
                   </VStack>
                 </VStack>
               )}
-              
+
               {/* Certifications */}
               {schoolDetails.certifications && schoolDetails.certifications.length > 0 && (
                 <VStack space="sm">
@@ -450,72 +448,70 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
           )}
 
           {/* Contact Information */}
-          {showContactInfo && (schoolDetails.email || schoolDetails.phone || schoolDetails.website) && (
-            <VStack space="md">
-              <Divider />
-              <Heading size="sm">Informações de Contato</Heading>
-              
-              <VStack space="sm">
-                {schoolDetails.email && (
-                  <HStack space="sm" className="items-center">
-                    <Icon as={Mail} size="sm" className="text-gray-500" />
-                    <Text className="text-sm text-gray-700">{schoolDetails.email}</Text>
-                  </HStack>
-                )}
-                
-                {schoolDetails.phone && (
-                  <HStack space="sm" className="items-center">
-                    <Icon as={Phone} size="sm" className="text-gray-500" />
-                    <Text className="text-sm text-gray-700">{schoolDetails.phone}</Text>
-                  </HStack>
-                )}
-                
-                {schoolDetails.website && (
-                  <Pressable onPress={handleWebsiteOpen}>
+          {showContactInfo &&
+            (schoolDetails.email || schoolDetails.phone || schoolDetails.website) && (
+              <VStack space="md">
+                <Divider />
+                <Heading size="sm">Informações de Contato</Heading>
+
+                <VStack space="sm">
+                  {schoolDetails.email && (
                     <HStack space="sm" className="items-center">
-                      <Icon as={Globe} size="sm" className="text-blue-600" />
-                      <Text className="text-sm text-blue-600 underline">
-                        {schoolDetails.website}
-                      </Text>
-                      <Icon as={ExternalLink} size="xs" className="text-blue-600" />
+                      <Icon as={Mail} size="sm" className="text-gray-500" />
+                      <Text className="text-sm text-gray-700">{schoolDetails.email}</Text>
                     </HStack>
-                  </Pressable>
+                  )}
+
+                  {schoolDetails.phone && (
+                    <HStack space="sm" className="items-center">
+                      <Icon as={Phone} size="sm" className="text-gray-500" />
+                      <Text className="text-sm text-gray-700">{schoolDetails.phone}</Text>
+                    </HStack>
+                  )}
+
+                  {schoolDetails.website && (
+                    <Pressable onPress={handleWebsiteOpen}>
+                      <HStack space="sm" className="items-center">
+                        <Icon as={Globe} size="sm" className="text-blue-600" />
+                        <Text className="text-sm text-blue-600 underline">
+                          {schoolDetails.website}
+                        </Text>
+                        <Icon as={ExternalLink} size="xs" className="text-blue-600" />
+                      </HStack>
+                    </Pressable>
+                  )}
+                </VStack>
+
+                {/* Social Media */}
+                {schoolDetails.social_media && (
+                  <HStack space="md" className="mt-2">
+                    {Object.entries(schoolDetails.social_media).map(([platform, url]) => {
+                      if (!url) return null;
+                      return (
+                        <Pressable
+                          key={platform}
+                          onPress={() => handleSocialMediaOpen(platform, url)}
+                        >
+                          <Badge className="bg-gray-100 text-gray-800">
+                            <Text className="text-xs capitalize">{platform}</Text>
+                          </Badge>
+                        </Pressable>
+                      );
+                    })}
+                  </HStack>
                 )}
               </VStack>
-              
-              {/* Social Media */}
-              {schoolDetails.social_media && (
-                <HStack space="md" className="mt-2">
-                  {Object.entries(schoolDetails.social_media).map(([platform, url]) => {
-                    if (!url) return null;
-                    return (
-                      <Pressable 
-                        key={platform}
-                        onPress={() => handleSocialMediaOpen(platform, url)}
-                      >
-                        <Badge className="bg-gray-100 text-gray-800">
-                          <Text className="text-xs capitalize">{platform}</Text>
-                        </Badge>
-                      </Pressable>
-                    );
-                  })}
-                </HStack>
-              )}
-            </VStack>
-          )}
+            )}
 
           {/* Action Buttons */}
           <VStack space="sm">
             {!showFullDetails && (
-              <Button 
-                variant="outline" 
-                onPress={() => setExpanded(!expanded)}
-              >
+              <Button variant="outline" onPress={() => setExpanded(!expanded)}>
                 <Icon as={expanded ? EyeOff : Eye} size="sm" className="mr-2" />
                 <ButtonText>{expanded ? 'Ver Menos' : 'Ver Mais Detalhes'}</ButtonText>
               </Button>
             )}
-            
+
             {onContactSchool && (
               <Button onPress={onContactSchool}>
                 <Icon as={Mail} size="sm" className="mr-2" />

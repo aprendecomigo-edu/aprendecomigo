@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
-import { 
-  GraduationCapIcon, 
+import {
+  GraduationCapIcon,
   CalendarIcon,
   UsersIcon,
   TrendingUpIcon,
-  DollarSignIcon
+  DollarSignIcon,
 } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 
@@ -22,13 +22,13 @@ import { VStack } from '@/components/ui/vstack';
 
 const TutorDashboard = () => {
   const { userProfile } = useAuth();
-  
+
   // Mock school data for testing
   const mockSchool = {
     id: 1,
     name: `${userProfile?.name || 'Tutor'} - Negócio de Tutoria`,
   };
-  
+
   const selectedSchoolId = mockSchool.id;
 
   // Quick action handlers
@@ -59,19 +59,14 @@ const TutorDashboard = () => {
   }
 
   return (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      className="flex-1 bg-gray-50"
-    >
+    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-gray-50">
       <VStack className="p-6" space="lg">
         {/* Header Section */}
         <VStack space="sm">
           <Heading size="xl" className="text-gray-900">
             {welcomeMessage}
           </Heading>
-          <Text className="text-gray-600">
-            {mockSchool.name}
-          </Text>
+          <Text className="text-gray-600">{mockSchool.name}</Text>
           <Text className="text-sm text-gray-500">
             {new Date().toLocaleDateString('pt-PT', {
               weekday: 'long',
@@ -92,35 +87,21 @@ const TutorDashboard = () => {
           <CardBody>
             <VStack space="sm">
               <HStack space="sm">
-                <Button 
-                  className="flex-1 bg-blue-600" 
-                  onPress={handleScheduleSession}
-                >
+                <Button className="flex-1 bg-blue-600" onPress={handleScheduleSession}>
                   <Icon as={CalendarIcon} size="sm" className="text-white mr-2" />
                   <ButtonText>Agendar Aula</ButtonText>
                 </Button>
-                <Button 
-                  className="flex-1 bg-green-600" 
-                  onPress={handleViewStudents}
-                >
+                <Button className="flex-1 bg-green-600" onPress={handleViewStudents}>
                   <Icon as={UsersIcon} size="sm" className="text-white mr-2" />
                   <ButtonText>Ver Estudantes</ButtonText>
                 </Button>
               </HStack>
               <HStack space="sm">
-                <Button 
-                  variant="outline" 
-                  className="flex-1" 
-                  onPress={handleViewAnalytics}
-                >
+                <Button variant="outline" className="flex-1" onPress={handleViewAnalytics}>
                   <Icon as={TrendingUpIcon} size="sm" className="text-blue-600 mr-2" />
                   <ButtonText className="text-blue-600">Analytics</ButtonText>
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-1" 
-                  onPress={handleManageSessions}
-                >
+                <Button variant="outline" className="flex-1" onPress={handleManageSessions}>
                   <Icon as={DollarSignIcon} size="sm" className="text-green-600 mr-2" />
                   <ButtonText className="text-green-600">Sessões</ButtonText>
                 </Button>
@@ -130,13 +111,16 @@ const TutorDashboard = () => {
         </Card>
 
         {/* Student Acquisition Hub - THE KEY COMPONENT FOR TESTING */}
-        <StudentAcquisitionHub 
+        <StudentAcquisitionHub
           schoolId={selectedSchoolId}
           tutorName={userProfile?.name || 'Tutor'}
         />
 
         {/* Getting Started Guide */}
-        <Card variant="elevated" className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-dashed border-green-200 shadow-sm">
+        <Card
+          variant="elevated"
+          className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-dashed border-green-200 shadow-sm"
+        >
           <CardBody>
             <VStack space="md" className="items-center text-center">
               <VStack space="sm">
@@ -144,14 +128,12 @@ const TutorDashboard = () => {
                   Bem-vindo ao teu negócio de tutoria! 🎓
                 </Text>
                 <Text className="text-sm text-gray-600">
-                  Use a secção "Aquisição de Estudantes" acima para começar a convidar novos estudantes.
+                  Use a secção "Aquisição de Estudantes" acima para começar a convidar novos
+                  estudantes.
                 </Text>
               </VStack>
               <HStack space="sm">
-                <Button 
-                  variant="solid"
-                  onPress={() => router.push('/(tutor)/acquisition')}
-                >
+                <Button variant="solid" onPress={() => router.push('/(tutor)/acquisition')}>
                   <ButtonText>Convidar Mais Estudantes</ButtonText>
                 </Button>
               </HStack>

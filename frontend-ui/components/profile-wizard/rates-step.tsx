@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Platform } from 'react-native';
-import { 
-  DollarSign, 
-  Plus, 
-  X, 
+import {
+  DollarSign,
+  Plus,
+  X,
   TrendingUp,
   Users,
   User,
@@ -14,25 +12,12 @@ import {
   AlertCircle,
   Calculator,
   Target,
-  Award
+  Award,
 } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 
-import { Box } from '@/components/ui/box';
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { FormControl, FormControlLabel, FormControlHelper, FormControlError } from '@/components/ui/form-control';
-import { Heading } from '@/components/ui/heading';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
-import { Input, InputField } from '@/components/ui/input';
-import { ScrollView } from '@/components/ui/scroll-view';
-import { Select, SelectTrigger, SelectInput, SelectContent, SelectItem } from '@/components/ui/select';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Textarea, TextareaInput } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { 
+import {
   AlertDialog,
   AlertDialogBackdrop,
   AlertDialogContent,
@@ -40,7 +25,33 @@ import {
   AlertDialogFooter,
   AlertDialogBody,
 } from '@/components/ui/alert-dialog';
+import { Badge, BadgeText } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlHelper,
+  FormControlError,
+} from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
+import { ScrollView } from '@/components/ui/scroll-view';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
+import { Textarea, TextareaInput } from '@/components/ui/textarea';
+import { VStack } from '@/components/ui/vstack';
 
 interface PackageDeal {
   id: string;
@@ -78,9 +89,7 @@ const CURRENCIES = [
   { value: 'BRL', label: 'Brazilian Real (R$)', symbol: 'R$' },
 ];
 
-const PAYMENT_METHODS = [
-  'Credit Card', 'Debit Card', 'PayPal', 'Bank Transfer', 'Stripe', 'Cash'
-];
+const PAYMENT_METHODS = ['Credit Card', 'Debit Card', 'PayPal', 'Bank Transfer', 'Stripe', 'Cash'];
 
 const CANCELLATION_POLICIES = [
   {
@@ -125,7 +134,8 @@ export const RatesStep: React.FC<RatesStepProps> = ({
   const [hasTrialLesson, setHasTrialLesson] = useState(!!formData.rate_structure.trial_lesson_rate);
   const [hasGroupRate, setHasGroupRate] = useState(!!formData.rate_structure.group_rate);
 
-  const currency = CURRENCIES.find(c => c.value === formData.rate_structure.currency) || CURRENCIES[0];
+  const currency =
+    CURRENCIES.find(c => c.value === formData.rate_structure.currency) || CURRENCIES[0];
 
   const handleFieldChange = (field: keyof RatesFormData, value: any) => {
     onFormDataChange({ [field]: value });
@@ -143,11 +153,15 @@ export const RatesStep: React.FC<RatesStepProps> = ({
     const updatedMethods = checked
       ? [...currentMethods, method]
       : currentMethods.filter(m => m !== method);
-    
+
     handleFieldChange('payment_methods', updatedMethods);
   };
 
-  const calculatePackagePrice = (sessions: number, individualRate: number, discountPercent: number) => {
+  const calculatePackagePrice = (
+    sessions: number,
+    individualRate: number,
+    discountPercent: number
+  ) => {
     const totalBeforeDiscount = sessions * individualRate;
     const discountAmount = totalBeforeDiscount * (discountPercent / 100);
     return totalBeforeDiscount - discountAmount;
@@ -174,11 +188,9 @@ export const RatesStep: React.FC<RatesStepProps> = ({
 
     const currentPackages = formData.rate_structure.package_deals || [];
     let updatedPackages;
-    
+
     if (editingPackage) {
-      updatedPackages = currentPackages.map(p => 
-        p.id === editingPackage.id ? packageDeal : p
-      );
+      updatedPackages = currentPackages.map(p => (p.id === editingPackage.id ? packageDeal : p));
     } else {
       updatedPackages = [...currentPackages, packageDeal];
     }
@@ -194,8 +206,9 @@ export const RatesStep: React.FC<RatesStepProps> = ({
   };
 
   const handleDeletePackage = (packageId: string) => {
-    const updatedPackages = (formData.rate_structure.package_deals || [])
-      .filter(p => p.id !== packageId);
+    const updatedPackages = (formData.rate_structure.package_deals || []).filter(
+      p => p.id !== packageId
+    );
     handleRateStructureChange('package_deals', updatedPackages);
   };
 
@@ -239,7 +252,11 @@ export const RatesStep: React.FC<RatesStepProps> = ({
 
   // Auto-calculate package price when discount changes
   useEffect(() => {
-    if (newPackage.sessions && newPackage.discount_percentage && formData.rate_structure.individual_rate) {
+    if (
+      newPackage.sessions &&
+      newPackage.discount_percentage &&
+      formData.rate_structure.individual_rate
+    ) {
       const calculatedPrice = calculatePackagePrice(
         newPackage.sessions,
         formData.rate_structure.individual_rate,
@@ -247,7 +264,11 @@ export const RatesStep: React.FC<RatesStepProps> = ({
       );
       setNewPackage(prev => ({ ...prev, price: calculatedPrice }));
     }
-  }, [newPackage.sessions, newPackage.discount_percentage, formData.rate_structure.individual_rate]);
+  }, [
+    newPackage.sessions,
+    newPackage.discount_percentage,
+    formData.rate_structure.individual_rate,
+  ]);
 
   const getFieldError = (fieldName: string): string | undefined => {
     return validationErrors[fieldName]?.[0];
@@ -269,8 +290,8 @@ export const RatesStep: React.FC<RatesStepProps> = ({
               Rates & Pricing Structure
             </Heading>
             <Text className="text-gray-600">
-              Set competitive rates that reflect your expertise and attract students. 
-              You can always adjust these later as you gain experience.
+              Set competitive rates that reflect your expertise and attract students. You can always
+              adjust these later as you gain experience.
             </Text>
           </VStack>
 
@@ -285,15 +306,11 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                       Market Rate Suggestions
                     </Heading>
                   </HStack>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onPress={() => setShowRateSuggestions(false)}
-                  >
+                  <Button size="sm" variant="ghost" onPress={() => setShowRateSuggestions(false)}>
                     <ButtonIcon as={X} className="text-blue-600" />
                   </Button>
                 </HStack>
-                
+
                 <VStack space="sm">
                   <Text className="text-blue-800">
                     Based on your experience level and subject expertise:
@@ -301,17 +318,20 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                   <HStack space="md" className="flex-wrap">
                     <Badge className="bg-blue-100">
                       <BadgeText className="text-blue-800">
-                        Average: {currency.symbol}{rateSuggestion.average}/hour
+                        Average: {currency.symbol}
+                        {rateSuggestion.average}/hour
                       </BadgeText>
                     </Badge>
                     <Badge className="bg-blue-100">
                       <BadgeText className="text-blue-800">
-                        Range: {currency.symbol}{rateSuggestion.min}-{rateSuggestion.max}/hour
+                        Range: {currency.symbol}
+                        {rateSuggestion.min}-{rateSuggestion.max}/hour
                       </BadgeText>
                     </Badge>
                   </HStack>
                   <Text className="text-sm text-blue-700">
-                    Consider starting at the lower end and increasing rates as you build reviews and experience.
+                    Consider starting at the lower end and increasing rates as you build reviews and
+                    experience.
                   </Text>
                 </VStack>
               </VStack>
@@ -324,25 +344,25 @@ export const RatesStep: React.FC<RatesStepProps> = ({
               <Heading size="md" className="text-gray-900">
                 Currency
               </Heading>
-              
+
               <FormControl isInvalid={hasFieldError('rate_structure.currency')}>
                 <FormControlLabel>
                   <Text>Primary Currency *</Text>
                 </FormControlLabel>
                 <Select
                   selectedValue={formData.rate_structure.currency}
-                  onValueChange={(value) => handleRateStructureChange('currency', value)}
+                  onValueChange={value => handleRateStructureChange('currency', value)}
                   isDisabled={isLoading}
                 >
                   <SelectTrigger>
                     <SelectInput placeholder="Select currency" />
                   </SelectTrigger>
                   <SelectContent>
-                    {CURRENCIES.map((currency) => (
-                      <SelectItem 
-                        key={currency.value} 
-                        label={currency.label} 
-                        value={currency.value} 
+                    {CURRENCIES.map(currency => (
+                      <SelectItem
+                        key={currency.value}
+                        label={currency.label}
+                        value={currency.value}
                       />
                     ))}
                   </SelectContent>
@@ -373,19 +393,19 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                 </VStack>
                 <Icon as={User} size={24} className="text-blue-600" />
               </HStack>
-              
+
               <FormControl isInvalid={hasFieldError('rate_structure.individual_rate')}>
                 <FormControlLabel>
                   <Text>Hourly Rate *</Text>
                 </FormControlLabel>
                 <HStack space="sm" className="items-center">
-                  <Text className="text-lg font-medium text-gray-700">
-                    {currency.symbol}
-                  </Text>
+                  <Text className="text-lg font-medium text-gray-700">{currency.symbol}</Text>
                   <Input className="flex-1">
                     <InputField
                       value={formData.rate_structure.individual_rate?.toString() || ''}
-                      onChangeText={(value) => handleRateStructureChange('individual_rate', parseFloat(value) || 0)}
+                      onChangeText={value =>
+                        handleRateStructureChange('individual_rate', parseFloat(value) || 0)
+                      }
                       placeholder="0"
                       keyboardType="numeric"
                       isDisabled={isLoading}
@@ -423,20 +443,20 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                   isDisabled={isLoading}
                 />
               </HStack>
-              
+
               {hasTrialLesson && (
                 <FormControl>
                   <FormControlLabel>
                     <Text>Trial Lesson Rate</Text>
                   </FormControlLabel>
                   <HStack space="sm" className="items-center">
-                    <Text className="text-lg font-medium text-gray-700">
-                      {currency.symbol}
-                    </Text>
+                    <Text className="text-lg font-medium text-gray-700">{currency.symbol}</Text>
                     <Input className="flex-1">
                       <InputField
                         value={formData.rate_structure.trial_lesson_rate?.toString() || ''}
-                        onChangeText={(value) => handleRateStructureChange('trial_lesson_rate', parseFloat(value) || 0)}
+                        onChangeText={value =>
+                          handleRateStructureChange('trial_lesson_rate', parseFloat(value) || 0)
+                        }
                         placeholder="0"
                         keyboardType="numeric"
                         isDisabled={isLoading}
@@ -444,13 +464,20 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                     </Input>
                     <Text className="text-gray-600">/hour</Text>
                   </HStack>
-                  {formData.rate_structure.individual_rate > 0 && formData.rate_structure.trial_lesson_rate && (
-                    <FormControlHelper>
-                      <Text className="text-green-600">
-                        {Math.round(((formData.rate_structure.individual_rate - formData.rate_structure.trial_lesson_rate) / formData.rate_structure.individual_rate) * 100)}% discount from regular rate
-                      </Text>
-                    </FormControlHelper>
-                  )}
+                  {formData.rate_structure.individual_rate > 0 &&
+                    formData.rate_structure.trial_lesson_rate && (
+                      <FormControlHelper>
+                        <Text className="text-green-600">
+                          {Math.round(
+                            ((formData.rate_structure.individual_rate -
+                              formData.rate_structure.trial_lesson_rate) /
+                              formData.rate_structure.individual_rate) *
+                              100
+                          )}
+                          % discount from regular rate
+                        </Text>
+                      </FormControlHelper>
+                    )}
                 </FormControl>
               )}
             </VStack>
@@ -474,20 +501,20 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                   isDisabled={isLoading}
                 />
               </HStack>
-              
+
               {hasGroupRate && (
                 <FormControl>
                   <FormControlLabel>
                     <Text>Per Student Rate (Group)</Text>
                   </FormControlLabel>
                   <HStack space="sm" className="items-center">
-                    <Text className="text-lg font-medium text-gray-700">
-                      {currency.symbol}
-                    </Text>
+                    <Text className="text-lg font-medium text-gray-700">{currency.symbol}</Text>
                     <Input className="flex-1">
                       <InputField
                         value={formData.rate_structure.group_rate?.toString() || ''}
-                        onChangeText={(value) => handleRateStructureChange('group_rate', parseFloat(value) || 0)}
+                        onChangeText={value =>
+                          handleRateStructureChange('group_rate', parseFloat(value) || 0)
+                        }
                         placeholder="0"
                         keyboardType="numeric"
                         isDisabled={isLoading}
@@ -524,10 +551,11 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                   <ButtonText className="text-white">Add Package</ButtonText>
                 </Button>
               </HStack>
-              
-              {formData.rate_structure.package_deals && formData.rate_structure.package_deals.length > 0 ? (
+
+              {formData.rate_structure.package_deals &&
+              formData.rate_structure.package_deals.length > 0 ? (
                 <VStack space="sm">
-                  {formData.rate_structure.package_deals.map((packageDeal) => (
+                  {formData.rate_structure.package_deals.map(packageDeal => (
                     <Card key={packageDeal.id} className="bg-gray-50">
                       <VStack space="sm" className="p-4">
                         <HStack className="items-start justify-between">
@@ -547,14 +575,16 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                                 {packageDeal.sessions} sessions
                               </Text>
                               <Text className="text-sm font-medium text-gray-900">
-                                {currency.symbol}{packageDeal.price} total
+                                {currency.symbol}
+                                {packageDeal.price} total
                               </Text>
                               <Text className="text-sm text-gray-600">
-                                ({currency.symbol}{Math.round(packageDeal.price / packageDeal.sessions)}/session)
+                                ({currency.symbol}
+                                {Math.round(packageDeal.price / packageDeal.sessions)}/session)
                               </Text>
                             </HStack>
                           </VStack>
-                          
+
                           <HStack space="xs">
                             <Button
                               size="sm"
@@ -596,20 +626,20 @@ export const RatesStep: React.FC<RatesStepProps> = ({
               <Heading size="md" className="text-gray-900">
                 Accepted Payment Methods
               </Heading>
-              
+
               <VStack space="sm">
-                {PAYMENT_METHODS.map((method) => (
+                {PAYMENT_METHODS.map(method => (
                   <HStack key={method} space="sm" className="items-center py-2">
                     <Switch
                       value={formData.payment_methods?.includes(method) || false}
-                      onValueChange={(checked) => handlePaymentMethodToggle(method, checked)}
+                      onValueChange={checked => handlePaymentMethodToggle(method, checked)}
                       isDisabled={isLoading}
                     />
                     <Text className="flex-1">{method}</Text>
                   </HStack>
                 ))}
               </VStack>
-              
+
               <FormControlHelper>
                 <Text>Select all payment methods you're comfortable accepting</Text>
               </FormControlHelper>
@@ -622,10 +652,10 @@ export const RatesStep: React.FC<RatesStepProps> = ({
               <Heading size="md" className="text-gray-900">
                 Cancellation Policy
               </Heading>
-              
+
               <FormControl isInvalid={hasFieldError('cancellation_policy')}>
                 <VStack space="sm">
-                  {CANCELLATION_POLICIES.map((policy) => (
+                  {CANCELLATION_POLICIES.map(policy => (
                     <Pressable
                       key={policy.value}
                       onPress={() => handleFieldChange('cancellation_policy', policy.value)}
@@ -637,22 +667,26 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                     >
                       <VStack space="xs">
                         <HStack className="items-center justify-between">
-                          <Text className={`font-medium ${
-                            formData.cancellation_policy === policy.value
-                              ? 'text-blue-900'
-                              : 'text-gray-900'
-                          }`}>
+                          <Text
+                            className={`font-medium ${
+                              formData.cancellation_policy === policy.value
+                                ? 'text-blue-900'
+                                : 'text-gray-900'
+                            }`}
+                          >
                             {policy.name}
                           </Text>
                           {formData.cancellation_policy === policy.value && (
                             <Icon as={CheckCircle2} size={20} className="text-blue-600" />
                           )}
                         </HStack>
-                        <Text className={`text-sm ${
-                          formData.cancellation_policy === policy.value
-                            ? 'text-blue-700'
-                            : 'text-gray-600'
-                        }`}>
+                        <Text
+                          className={`text-sm ${
+                            formData.cancellation_policy === policy.value
+                              ? 'text-blue-700'
+                              : 'text-gray-600'
+                          }`}
+                        >
                           {policy.description}
                         </Text>
                       </VStack>
@@ -678,41 +712,45 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                     Rate Summary
                   </Heading>
                 </HStack>
-                
+
                 <VStack space="sm">
                   <HStack className="items-center justify-between">
                     <Text className="text-green-800">Individual lessons:</Text>
                     <Text className="font-semibold text-green-900">
-                      {currency.symbol}{formData.rate_structure.individual_rate}/hour
+                      {currency.symbol}
+                      {formData.rate_structure.individual_rate}/hour
                     </Text>
                   </HStack>
-                  
+
                   {hasTrialLesson && formData.rate_structure.trial_lesson_rate && (
                     <HStack className="items-center justify-between">
                       <Text className="text-green-800">Trial lesson:</Text>
                       <Text className="font-semibold text-green-900">
-                        {currency.symbol}{formData.rate_structure.trial_lesson_rate}/hour
+                        {currency.symbol}
+                        {formData.rate_structure.trial_lesson_rate}/hour
                       </Text>
                     </HStack>
                   )}
-                  
+
                   {hasGroupRate && formData.rate_structure.group_rate && (
                     <HStack className="items-center justify-between">
                       <Text className="text-green-800">Group lessons:</Text>
                       <Text className="font-semibold text-green-900">
-                        {currency.symbol}{formData.rate_structure.group_rate}/student/hour
+                        {currency.symbol}
+                        {formData.rate_structure.group_rate}/student/hour
                       </Text>
                     </HStack>
                   )}
-                  
-                  {formData.rate_structure.package_deals && formData.rate_structure.package_deals.length > 0 && (
-                    <HStack className="items-center justify-between">
-                      <Text className="text-green-800">Package deals:</Text>
-                      <Text className="font-semibold text-green-900">
-                        {formData.rate_structure.package_deals.length} available
-                      </Text>
-                    </HStack>
-                  )}
+
+                  {formData.rate_structure.package_deals &&
+                    formData.rate_structure.package_deals.length > 0 && (
+                      <HStack className="items-center justify-between">
+                        <Text className="text-green-800">Package deals:</Text>
+                        <Text className="font-semibold text-green-900">
+                          {formData.rate_structure.package_deals.length} available
+                        </Text>
+                      </HStack>
+                    )}
                 </VStack>
               </VStack>
             </Card>
@@ -748,7 +786,7 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                 <Input>
                   <InputField
                     value={newPackage.name || ''}
-                    onChangeText={(value) => setNewPackage(prev => ({ ...prev, name: value }))}
+                    onChangeText={value => setNewPackage(prev => ({ ...prev, name: value }))}
                     placeholder="e.g., Starter Package, Monthly Bundle"
                   />
                 </Input>
@@ -760,21 +798,19 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                 </FormControlLabel>
                 <Select
                   selectedValue={newPackage.sessions?.toString() || '4'}
-                  onValueChange={(value) => setNewPackage(prev => ({ 
-                    ...prev, 
-                    sessions: parseInt(value) 
-                  }))}
+                  onValueChange={value =>
+                    setNewPackage(prev => ({
+                      ...prev,
+                      sessions: parseInt(value),
+                    }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectInput placeholder="Select sessions" />
                   </SelectTrigger>
                   <SelectContent>
-                    {[4, 8, 12, 16, 20, 24].map((num) => (
-                      <SelectItem 
-                        key={num} 
-                        label={`${num} sessions`} 
-                        value={num.toString()} 
-                      />
+                    {[4, 8, 12, 16, 20, 24].map(num => (
+                      <SelectItem key={num} label={`${num} sessions`} value={num.toString()} />
                     ))}
                   </SelectContent>
                 </Select>
@@ -788,10 +824,12 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                   <Input className="flex-1">
                     <InputField
                       value={newPackage.discount_percentage?.toString() || ''}
-                      onChangeText={(value) => setNewPackage(prev => ({ 
-                        ...prev, 
-                        discount_percentage: parseFloat(value) || 0 
-                      }))}
+                      onChangeText={value =>
+                        setNewPackage(prev => ({
+                          ...prev,
+                          discount_percentage: parseFloat(value) || 0,
+                        }))
+                      }
                       placeholder="10"
                       keyboardType="numeric"
                     />
@@ -812,30 +850,26 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                   <Input className="flex-1">
                     <InputField
                       value={newPackage.price?.toFixed(2) || '0.00'}
-                      onChangeText={(value) => setNewPackage(prev => ({ 
-                        ...prev, 
-                        price: parseFloat(value) || 0 
-                      }))}
+                      onChangeText={value =>
+                        setNewPackage(prev => ({
+                          ...prev,
+                          price: parseFloat(value) || 0,
+                        }))
+                      }
                       placeholder="0.00"
                       keyboardType="numeric"
                     />
                   </Input>
                 </HStack>
                 <FormControlHelper>
-                  <Text>
-                    Auto-calculated based on discount. You can override this value.
-                  </Text>
+                  <Text>Auto-calculated based on discount. You can override this value.</Text>
                 </FormControlHelper>
               </FormControl>
             </VStack>
           </AlertDialogBody>
           <AlertDialogFooter>
             <HStack space="sm" className="w-full">
-              <Button
-                variant="outline"
-                onPress={resetPackageForm}
-                className="flex-1"
-              >
+              <Button variant="outline" onPress={resetPackageForm} className="flex-1">
                 <ButtonText>Cancel</ButtonText>
               </Button>
               <Button
@@ -843,9 +877,7 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                 className="flex-1 bg-blue-600"
                 isDisabled={!newPackage.name || !newPackage.sessions}
               >
-                <ButtonText>
-                  {editingPackage ? 'Update Package' : 'Create Package'}
-                </ButtonText>
+                <ButtonText>{editingPackage ? 'Update Package' : 'Create Package'}</ButtonText>
               </Button>
             </HStack>
           </AlertDialogFooter>

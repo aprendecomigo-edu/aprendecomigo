@@ -1,10 +1,11 @@
+import { Check } from 'lucide-react-native';
 import React from 'react';
+
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
-import { VStack } from '@/components/ui/vstack';
-import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
-import { Check } from 'lucide-react-native';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 interface StepIndicatorProps {
   currentStep: number;
@@ -79,15 +80,15 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
             <VStack key={stepNumber} className="items-center flex-1" space="xs">
               {/* Step Circle */}
               <Box
-                className={`w-8 h-8 rounded-full border-2 items-center justify-center ${getStepColor(status)}`}
+                className={`w-8 h-8 rounded-full border-2 items-center justify-center ${getStepColor(
+                  status
+                )}`}
               >
                 {isCompleted ? (
                   <Icon as={Check} size="sm" className="text-white" />
                 ) : (
                   <Text
-                    className={`text-xs font-medium ${
-                      isCurrent ? 'text-white' : 'text-gray-600'
-                    }`}
+                    className={`text-xs font-medium ${isCurrent ? 'text-white' : 'text-gray-600'}`}
                   >
                     {stepNumber}
                   </Text>

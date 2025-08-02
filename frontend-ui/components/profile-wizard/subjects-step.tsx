@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
-import { Platform } from 'react-native';
-import { 
-  BookOpen, 
-  Plus, 
-  X, 
+import {
+  BookOpen,
+  Plus,
+  X,
   Search,
   Star,
   Award,
@@ -11,25 +9,12 @@ import {
   Users,
   Calendar,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { Platform } from 'react-native';
 
-import { Box } from '@/components/ui/box';
-import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { FormControl, FormControlLabel, FormControlHelper, FormControlError } from '@/components/ui/form-control';
-import { Heading } from '@/components/ui/heading';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
-import { Input, InputField } from '@/components/ui/input';
-import { ScrollView } from '@/components/ui/scroll-view';
-import { Select, SelectTrigger, SelectInput, SelectContent, SelectItem } from '@/components/ui/select';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Textarea, TextareaInput } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { 
+import {
   AlertDialog,
   AlertDialogBackdrop,
   AlertDialogContent,
@@ -37,7 +22,33 @@ import {
   AlertDialogFooter,
   AlertDialogBody,
 } from '@/components/ui/alert-dialog';
+import { Badge, BadgeText } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlHelper,
+  FormControlError,
+} from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
+import { ScrollView } from '@/components/ui/scroll-view';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import { Text } from '@/components/ui/text';
+import { Textarea, TextareaInput } from '@/components/ui/textarea';
+import { VStack } from '@/components/ui/vstack';
 
 interface TeachingSubject {
   id: string;
@@ -62,31 +73,78 @@ interface SubjectsStepProps {
 
 const PREDEFINED_SUBJECTS = [
   // STEM
-  'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Statistics',
-  'Calculus', 'Algebra', 'Geometry', 'Data Science', 'Programming',
-  
+  'Mathematics',
+  'Physics',
+  'Chemistry',
+  'Biology',
+  'Computer Science',
+  'Statistics',
+  'Calculus',
+  'Algebra',
+  'Geometry',
+  'Data Science',
+  'Programming',
+
   // Languages
-  'Portuguese', 'English', 'Spanish', 'French', 'German', 'Italian', 'Chinese', 'Japanese',
-  
+  'Portuguese',
+  'English',
+  'Spanish',
+  'French',
+  'German',
+  'Italian',
+  'Chinese',
+  'Japanese',
+
   // Humanities
-  'History', 'Geography', 'Philosophy', 'Psychology', 'Sociology', 'Literature',
-  'Writing', 'Essay Writing', 'Creative Writing',
-  
+  'History',
+  'Geography',
+  'Philosophy',
+  'Psychology',
+  'Sociology',
+  'Literature',
+  'Writing',
+  'Essay Writing',
+  'Creative Writing',
+
   // Arts
-  'Music', 'Art', 'Drama', 'Dance', 'Fine Arts', 'Digital Art',
-  
+  'Music',
+  'Art',
+  'Drama',
+  'Dance',
+  'Fine Arts',
+  'Digital Art',
+
   // Business & Economics
-  'Economics', 'Business Studies', 'Accounting', 'Finance', 'Marketing', 'Management',
-  
+  'Economics',
+  'Business Studies',
+  'Accounting',
+  'Finance',
+  'Marketing',
+  'Management',
+
   // Test Preparation
-  'SAT Prep', 'ACT Prep', 'TOEFL', 'IELTS', 'GRE', 'GMAT',
-  
+  'SAT Prep',
+  'ACT Prep',
+  'TOEFL',
+  'IELTS',
+  'GRE',
+  'GMAT',
+
   // Other
-  'Study Skills', 'Special Needs Education', 'ESL/EFL', 'Tutoring'
+  'Study Skills',
+  'Special Needs Education',
+  'ESL/EFL',
+  'Tutoring',
 ];
 
 const SUBJECT_CATEGORIES = [
-  'STEM', 'Languages', 'Humanities', 'Arts', 'Business', 'Test Preparation', 'Special Education'
+  'STEM',
+  'Languages',
+  'Humanities',
+  'Arts',
+  'Business',
+  'Test Preparation',
+  'Special Education',
 ];
 
 const GRADE_LEVELS = [
@@ -128,7 +186,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
   const [showAddSubject, setShowAddSubject] = useState(false);
   const [editingSubject, setEditingSubject] = useState<TeachingSubject | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState<string | null>(null);
-  
+
   // New subject form state
   const [newSubject, setNewSubject] = useState<Partial<TeachingSubject>>({
     subject: '',
@@ -138,9 +196,10 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
     description: '',
   });
 
-  const filteredSubjects = PREDEFINED_SUBJECTS.filter(subject =>
-    subject.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    !formData.teaching_subjects.some(ts => ts.subject === subject)
+  const filteredSubjects = PREDEFINED_SUBJECTS.filter(
+    subject =>
+      subject.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !formData.teaching_subjects.some(ts => ts.subject === subject)
   );
 
   const handleFieldChange = (field: keyof SubjectsFormData, value: any) => {
@@ -155,7 +214,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
       expertise_level: 'intermediate',
       years_teaching: 1,
     };
-    
+
     handleFieldChange('teaching_subjects', [...formData.teaching_subjects, subject]);
     setSearchTerm('');
   };
@@ -176,7 +235,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
 
     let updatedSubjects;
     if (editingSubject) {
-      updatedSubjects = formData.teaching_subjects.map(s => 
+      updatedSubjects = formData.teaching_subjects.map(s =>
         s.id === editingSubject.id ? subject : s
       );
     } else {
@@ -216,7 +275,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
     const updatedLevels = checked
       ? [...currentLevels, level]
       : currentLevels.filter(l => l !== level);
-    
+
     setNewSubject(prev => ({ ...prev, grade_levels: updatedLevels }));
   };
 
@@ -225,17 +284,22 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
     const updatedCategories = checked
       ? [...currentCategories, category]
       : currentCategories.filter(c => c !== category);
-    
+
     handleFieldChange('subject_categories', updatedCategories);
   };
 
   const getExpertiseColor = (level: string) => {
     switch (level) {
-      case 'beginner': return 'bg-blue-100 text-blue-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-orange-100 text-orange-800';
-      case 'expert': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'beginner':
+        return 'bg-blue-100 text-blue-800';
+      case 'intermediate':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'advanced':
+        return 'bg-orange-100 text-orange-800';
+      case 'expert':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -257,7 +321,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
               Teaching Subjects & Expertise
             </Heading>
             <Text className="text-gray-600">
-              Add the subjects you teach, your expertise level, and the grade levels you work with. 
+              Add the subjects you teach, your expertise level, and the grade levels you work with.
               This helps students find the right tutor for their needs.
             </Text>
           </VStack>
@@ -271,25 +335,27 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
               <Text className="text-gray-600 text-sm">
                 Select the broad categories that best describe your teaching areas.
               </Text>
-              
+
               <HStack space="sm" className="flex-wrap">
-                {SUBJECT_CATEGORIES.map((category) => (
+                {SUBJECT_CATEGORIES.map(category => (
                   <Pressable
                     key={category}
-                    onPress={() => handleCategoryToggle(
-                      category, 
-                      !formData.subject_categories?.includes(category)
-                    )}
+                    onPress={() =>
+                      handleCategoryToggle(
+                        category,
+                        !formData.subject_categories?.includes(category)
+                      )
+                    }
                     className="mb-2"
                   >
-                    <Badge 
+                    <Badge
                       className={
                         formData.subject_categories?.includes(category)
                           ? 'bg-blue-600'
                           : 'bg-gray-100 border border-gray-300'
                       }
                     >
-                      <BadgeText 
+                      <BadgeText
                         className={
                           formData.subject_categories?.includes(category)
                             ? 'text-white'
@@ -314,7 +380,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
                     Your Teaching Subjects ({formData.teaching_subjects.length})
                   </Heading>
                 </HStack>
-                
+
                 <VStack space="sm">
                   {formData.teaching_subjects.map((subject, index) => (
                     <Card key={subject.id} className="bg-gray-50">
@@ -331,35 +397,37 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
                                 </BadgeText>
                               </Badge>
                             </HStack>
-                            
+
                             <HStack space="md" className="items-center">
                               <HStack space="xs" className="items-center">
                                 <Icon as={Users} size={14} className="text-gray-500" />
                                 <Text className="text-sm text-gray-600">
-                                  {subject.grade_levels.map(level => 
-                                    GRADE_LEVELS.find(gl => gl.value === level)?.label || level
-                                  ).join(', ')}
+                                  {subject.grade_levels
+                                    .map(
+                                      level =>
+                                        GRADE_LEVELS.find(gl => gl.value === level)?.label || level
+                                    )
+                                    .join(', ')}
                                 </Text>
                               </HStack>
-                              
+
                               <HStack space="xs" className="items-center">
                                 <Icon as={Calendar} size={14} className="text-gray-500" />
                                 <Text className="text-sm text-gray-600">
-                                  {subject.years_teaching === 0 
-                                    ? 'New to subject' 
-                                    : `${subject.years_teaching}+ years`
-                                  }
+                                  {subject.years_teaching === 0
+                                    ? 'New to subject'
+                                    : `${subject.years_teaching}+ years`}
                                 </Text>
                               </HStack>
                             </HStack>
-                            
+
                             {subject.description && (
                               <Text className="text-sm text-gray-600 mt-1">
                                 {subject.description}
                               </Text>
                             )}
                           </VStack>
-                          
+
                           <HStack space="xs">
                             <Button
                               size="sm"
@@ -392,15 +460,12 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
                 <Heading size="md" className="text-gray-900">
                   Add Teaching Subject
                 </Heading>
-                <Button
-                  onPress={() => setShowAddSubject(true)}
-                  className="bg-blue-600"
-                >
+                <Button onPress={() => setShowAddSubject(true)} className="bg-blue-600">
                   <ButtonIcon as={Plus} className="text-white mr-2" />
                   <ButtonText className="text-white">Add Subject</ButtonText>
                 </Button>
               </HStack>
-              
+
               {/* Quick Add from Search */}
               <VStack space="sm">
                 <FormControl>
@@ -418,14 +483,14 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
                     <Text>Search and tap to quickly add common subjects</Text>
                   </FormControlHelper>
                 </FormControl>
-                
+
                 {searchTerm && filteredSubjects.length > 0 && (
                   <VStack space="xs">
                     <Text className="text-sm font-medium text-gray-700">
                       Quick Add Suggestions:
                     </Text>
                     <HStack space="xs" className="flex-wrap">
-                      {filteredSubjects.slice(0, 8).map((subject) => (
+                      {filteredSubjects.slice(0, 8).map(subject => (
                         <Button
                           key={subject}
                           variant="outline"
@@ -475,7 +540,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
                 <Input>
                   <InputField
                     value={newSubject.subject || ''}
-                    onChangeText={(value) => setNewSubject(prev => ({ ...prev, subject: value }))}
+                    onChangeText={value => setNewSubject(prev => ({ ...prev, subject: value }))}
                     placeholder="e.g., Mathematics, Physics, Portuguese"
                   />
                 </Input>
@@ -487,12 +552,12 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
                   <Text>Grade Levels *</Text>
                 </FormControlLabel>
                 <VStack space="xs">
-                  {GRADE_LEVELS.map((level) => (
+                  {GRADE_LEVELS.map(level => (
                     <HStack key={level.value} space="sm" className="items-center">
                       <Checkbox
                         value={level.value}
                         isChecked={newSubject.grade_levels?.includes(level.value) || false}
-                        onChange={(checked) => handleGradeLevelToggle(level.value, checked)}
+                        onChange={checked => handleGradeLevelToggle(level.value, checked)}
                       />
                       <Text className="flex-1">{level.label}</Text>
                     </HStack>
@@ -512,27 +577,29 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
                     </FormControlLabel>
                     <Select
                       selectedValue={newSubject.expertise_level || 'intermediate'}
-                      onValueChange={(value) => setNewSubject(prev => ({ 
-                        ...prev, 
-                        expertise_level: value as any 
-                      }))}
+                      onValueChange={value =>
+                        setNewSubject(prev => ({
+                          ...prev,
+                          expertise_level: value as any,
+                        }))
+                      }
                     >
                       <SelectTrigger>
                         <SelectInput placeholder="Select expertise level" />
                       </SelectTrigger>
                       <SelectContent>
-                        {EXPERTISE_LEVELS.map((level) => (
-                          <SelectItem 
-                            key={level.value} 
-                            label={`${level.label} - ${level.description}`} 
-                            value={level.value} 
+                        {EXPERTISE_LEVELS.map(level => (
+                          <SelectItem
+                            key={level.value}
+                            label={`${level.label} - ${level.description}`}
+                            value={level.value}
                           />
                         ))}
                       </SelectContent>
                     </Select>
                   </FormControl>
                 </VStack>
-                
+
                 <VStack className="flex-1">
                   <FormControl>
                     <FormControlLabel>
@@ -540,20 +607,22 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
                     </FormControlLabel>
                     <Select
                       selectedValue={newSubject.years_teaching?.toString() || '1'}
-                      onValueChange={(value) => setNewSubject(prev => ({ 
-                        ...prev, 
-                        years_teaching: parseInt(value) 
-                      }))}
+                      onValueChange={value =>
+                        setNewSubject(prev => ({
+                          ...prev,
+                          years_teaching: parseInt(value),
+                        }))
+                      }
                     >
                       <SelectTrigger>
                         <SelectInput placeholder="Select years" />
                       </SelectTrigger>
                       <SelectContent>
-                        {YEARS_TEACHING_OPTIONS.map((option) => (
-                          <SelectItem 
-                            key={option.value} 
-                            label={option.label} 
-                            value={option.value.toString()} 
+                        {YEARS_TEACHING_OPTIONS.map(option => (
+                          <SelectItem
+                            key={option.value}
+                            label={option.label}
+                            value={option.value.toString()}
                           />
                         ))}
                       </SelectContent>
@@ -570,7 +639,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
                 <Textarea>
                   <TextareaInput
                     value={newSubject.description || ''}
-                    onChangeText={(value) => setNewSubject(prev => ({ ...prev, description: value }))}
+                    onChangeText={value => setNewSubject(prev => ({ ...prev, description: value }))}
                     placeholder="Describe your approach, specializations, or what makes you unique in teaching this subject..."
                     numberOfLines={3}
                   />
@@ -583,11 +652,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
           </AlertDialogBody>
           <AlertDialogFooter>
             <HStack space="sm" className="w-full">
-              <Button
-                variant="outline"
-                onPress={resetSubjectForm}
-                className="flex-1"
-              >
+              <Button variant="outline" onPress={resetSubjectForm} className="flex-1">
                 <ButtonText>Cancel</ButtonText>
               </Button>
               <Button
@@ -603,10 +668,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
       </AlertDialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog 
-        isOpen={!!showDeleteDialog} 
-        onClose={() => setShowDeleteDialog(null)}
-      >
+      <AlertDialog isOpen={!!showDeleteDialog} onClose={() => setShowDeleteDialog(null)}>
         <AlertDialogBackdrop />
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -616,8 +678,8 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
           </AlertDialogHeader>
           <AlertDialogBody>
             <Text className="text-gray-600">
-              Are you sure you want to remove this subject from your teaching profile? 
-              This action cannot be undone.
+              Are you sure you want to remove this subject from your teaching profile? This action
+              cannot be undone.
             </Text>
           </AlertDialogBody>
           <AlertDialogFooter>

@@ -1,21 +1,23 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router } from 'expo-router';
-import { 
-  SearchIcon, 
-  FilterIcon, 
-  UsersIcon, 
+import {
+  SearchIcon,
+  FilterIcon,
+  UsersIcon,
   TrendingUpIcon,
   AlertTriangleIcon,
   RefreshCwIcon,
   ChevronRightIcon,
   CalendarIcon,
   MessageSquareIcon,
-  BarChart3Icon
+  BarChart3Icon,
 } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl } from 'react-native';
 
+import type { StudentProgress } from '@/api/teacherApi';
 import MainLayout from '@/components/layouts/main-layout';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -25,14 +27,22 @@ import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
 import { ScrollView } from '@/components/ui/scroll-view';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectIcon,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicatorWrapper,
+  SelectDragIndicator,
+  SelectItem,
+} from '@/components/ui/select';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Select, SelectTrigger, SelectInput, SelectIcon, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator, SelectItem } from '@/components/ui/select';
-
-import { useTeacherStudents } from '@/hooks/useTeacherDashboard';
 import { useDebounce } from '@/hooks/useDebounce';
-import type { StudentProgress } from '@/api/teacherApi';
+import { useTeacherStudents } from '@/hooks/useTeacherDashboard';
 
 interface StudentListItemProps {
   student: StudentProgress;
@@ -44,10 +54,12 @@ const StudentListItem: React.FC<StudentListItemProps> = ({ student, onPress }) =
     if (!student.last_session_date) {
       return { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Novo' };
     }
-    
+
     const lastSessionDate = new Date(student.last_session_date);
-    const daysSinceLastSession = Math.floor((Date.now() - lastSessionDate.getTime()) / (1000 * 60 * 60 * 24));
-    
+    const daysSinceLastSession = Math.floor(
+      (Date.now() - lastSessionDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
     if (daysSinceLastSession <= 7) {
       return { bg: 'bg-green-100', text: 'text-green-800', label: 'Ativo' };
     } else if (daysSinceLastSession <= 14) {
@@ -65,9 +77,9 @@ const StudentListItem: React.FC<StudentListItemProps> = ({ student, onPress }) =
   }, []);
 
   const status = getStatusColor(student);
-  
+
   return (
-    <Pressable 
+    <Pressable
       onPress={onPress}
       className="bg-white rounded-lg border border-gray-200 p-4 mb-3 shadow-sm hover:shadow-md transition-shadow"
       accessibilityLabel={`Ver detalhes de ${student.name}`}
@@ -80,27 +92,21 @@ const StudentListItem: React.FC<StudentListItemProps> = ({ student, onPress }) =
             {student.name.charAt(0).toUpperCase()}
           </Text>
         </VStack>
-        
+
         {/* Student Info */}
         <VStack className="flex-1" space="xs">
           <HStack className="justify-between items-start">
             <VStack className="flex-1">
-              <Text className="text-base font-semibold text-gray-900">
-                {student.name}
-              </Text>
-              <Text className="text-sm text-gray-500">
-                {student.email}
-              </Text>
+              <Text className="text-base font-semibold text-gray-900">{student.name}</Text>
+              <Text className="text-sm text-gray-500">{student.email}</Text>
             </VStack>
-            
+
             {/* Status Badge */}
             <Badge className={status.bg}>
-              <BadgeText className={status.text}>
-                {status.label}
-              </BadgeText>
+              <BadgeText className={status.text}>{status.label}</BadgeText>
             </Badge>
           </HStack>
-          
+
           {/* Progress and Stats */}
           <HStack space="md" className="items-center">
             <VStack className="flex-1">
@@ -111,28 +117,29 @@ const StudentListItem: React.FC<StudentListItemProps> = ({ student, onPress }) =
                 </Text>
               </HStack>
               <Box className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                <Box 
-                  className={`h-full rounded-full ${getProgressColor(student.completion_percentage)}`}
+                <Box
+                  className={`h-full rounded-full ${getProgressColor(
+                    student.completion_percentage
+                  )}`}
                   style={{ width: `${Math.min(student.completion_percentage, 100)}%` }}
                 />
               </Box>
             </VStack>
-            
+
             {/* Last Session */}
             <VStack className="items-end">
               <Text className="text-xs text-gray-500">Última aula</Text>
               <Text className="text-xs font-medium text-gray-700">
-                {student.last_session_date 
-                  ? new Date(student.last_session_date).toLocaleDateString('pt-PT', { 
-                      day: '2-digit', 
-                      month: 'short' 
+                {student.last_session_date
+                  ? new Date(student.last_session_date).toLocaleDateString('pt-PT', {
+                      day: '2-digit',
+                      month: 'short',
                     })
-                  : 'Nunca'
-                }
+                  : 'Nunca'}
               </Text>
             </VStack>
           </HStack>
-          
+
           {/* Skills and Assessments */}
           {(student.skills_mastered?.length > 0 || student.recent_assessments?.length > 0) && (
             <HStack space="lg" className="items-center">
@@ -149,7 +156,7 @@ const StudentListItem: React.FC<StudentListItemProps> = ({ student, onPress }) =
             </HStack>
           )}
         </VStack>
-        
+
         {/* Arrow */}
         <Icon as={ChevronRightIcon} size="sm" className="text-gray-400" />
       </HStack>
@@ -167,7 +174,7 @@ const TeacherStudentsPage = () => {
     filterBy,
     setSearchQuery,
     setFilterBy,
-    refresh
+    refresh,
   } = useTeacherStudents();
 
   // Debounce search to avoid excessive API calls
@@ -206,9 +213,7 @@ const TeacherStudentsPage = () => {
               <Heading size="lg" className="text-center text-gray-900">
                 Erro ao Carregar Estudantes
               </Heading>
-              <Text className="text-center text-gray-600">
-                {error}
-              </Text>
+              <Text className="text-center text-gray-600">{error}</Text>
             </VStack>
             <Button onPress={refresh} variant="solid">
               <Icon as={RefreshCwIcon} size="sm" className="text-white mr-2" />
@@ -232,7 +237,8 @@ const TeacherStudentsPage = () => {
                 Nenhum Estudante Encontrado
               </Heading>
               <Text className="text-center text-gray-600">
-                Ainda não tem estudantes atribuídos. Entre em contacto com a administração da escola.
+                Ainda não tem estudantes atribuídos. Entre em contacto com a administração da
+                escola.
               </Text>
             </VStack>
             <Button onPress={handleScheduleSession} variant="solid">
@@ -258,7 +264,7 @@ const TeacherStudentsPage = () => {
                 {filteredStudents.length} de {students.length} estudante(s)
               </Text>
             </VStack>
-            
+
             <Pressable
               onPress={refresh}
               disabled={isLoading}
@@ -266,10 +272,10 @@ const TeacherStudentsPage = () => {
               accessibilityLabel="Atualizar lista de estudantes"
               accessibilityRole="button"
             >
-              <Icon 
-                as={RefreshCwIcon} 
-                size="sm" 
-                className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`} 
+              <Icon
+                as={RefreshCwIcon}
+                size="sm"
+                className={`text-gray-600 ${isLoading ? 'animate-spin' : ''}`}
               />
             </Pressable>
           </HStack>
@@ -290,10 +296,10 @@ const TeacherStudentsPage = () => {
                   <Icon as={SearchIcon} size="sm" className="text-gray-400" />
                 </Box>
               </Box>
-              
+
               <Select
                 selectedValue={filterBy}
-                onValueChange={(value) => setFilterBy(value as 'all' | 'active' | 'needs_attention')}
+                onValueChange={value => setFilterBy(value as 'all' | 'active' | 'needs_attention')}
               >
                 <SelectTrigger variant="outline" size="md" className="min-w-32">
                   <SelectInput placeholder="Filtrar" />
@@ -318,9 +324,7 @@ const TeacherStudentsPage = () => {
               <HStack space="sm" className="items-center">
                 {searchQuery && (
                   <Badge className="bg-blue-100">
-                    <BadgeText className="text-blue-800">
-                      Pesquisa: "{searchQuery}"
-                    </BadgeText>
+                    <BadgeText className="text-blue-800">Pesquisa: "{searchQuery}"</BadgeText>
                   </Badge>
                 )}
                 {filterBy !== 'all' && (
@@ -330,7 +334,7 @@ const TeacherStudentsPage = () => {
                     </BadgeText>
                   </Badge>
                 )}
-                <Pressable 
+                <Pressable
                   onPress={() => {
                     setSearchQuery('');
                     setFilterBy('all');
@@ -352,9 +356,7 @@ const TeacherStudentsPage = () => {
                 <Text className="font-medium text-yellow-900">
                   Dados parcialmente desatualizados
                 </Text>
-                <Text className="text-sm text-yellow-700">
-                  {error}
-                </Text>
+                <Text className="text-sm text-yellow-700">{error}</Text>
               </VStack>
               <Pressable onPress={refresh}>
                 <Text className="text-sm font-medium text-yellow-600">Atualizar</Text>
@@ -367,29 +369,28 @@ const TeacherStudentsPage = () => {
         {filteredStudents.length > 0 ? (
           <FlatList
             data={filteredStudents}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={item => item.id.toString()}
             renderItem={({ item }) => (
-              <StudentListItem
-                student={item}
-                onPress={() => handleStudentPress(item.id)}
-              />
+              <StudentListItem student={item} onPress={() => handleStudentPress(item.id)} />
             )}
             contentContainerStyle={{
               padding: 16,
               paddingBottom: isWeb ? 16 : 100,
             }}
-            refreshControl={
-              <RefreshControl refreshing={isLoading} onRefresh={refresh} />
-            }
+            refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} />}
             showsVerticalScrollIndicator={false}
             // Performance optimizations for large lists
             initialNumToRender={10}
             maxToRenderPerBatch={10}
             windowSize={10}
             removeClippedSubviews={true}
-            getItemLayout={(data, index) => (
-              { length: 120, offset: 120 * index, index } // Approximate item height
-            )}
+            getItemLayout={
+              (data, index) => ({
+                length: 120,
+                offset: 120 * index,
+                index,
+              }) // Approximate item height
+            }
           />
         ) : (
           <Center className="flex-1 p-6">
@@ -400,16 +401,15 @@ const TeacherStudentsPage = () => {
                   Nenhum estudante encontrado
                 </Heading>
                 <Text className="text-center text-gray-600">
-                  {searchQuery 
+                  {searchQuery
                     ? `Nenhum resultado para "${searchQuery}". Tente ajustar os filtros de pesquisa.`
                     : filterBy === 'active'
                     ? 'Nenhum estudante ativo encontrado.'
-                    : 'Nenhum estudante que precisa de atenção encontrado.'
-                  }
+                    : 'Nenhum estudante que precisa de atenção encontrado.'}
                 </Text>
               </VStack>
               {(searchQuery || filterBy !== 'all') && (
-                <Button 
+                <Button
                   variant="outline"
                   onPress={() => {
                     setSearchQuery('');

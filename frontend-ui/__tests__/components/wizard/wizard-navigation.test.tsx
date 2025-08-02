@@ -1,16 +1,14 @@
-import React from 'react';
 import { fireEvent } from '@testing-library/react-native';
+import React from 'react';
+
+import { render, createMockCompletionData } from '../../utils/test-utils';
 
 import { WizardNavigation } from '@/components/wizard/wizard-navigation';
 import { WIZARD_STEPS } from '@/screens/onboarding/teacher-profile-wizard';
-import {
-  render,
-  createMockCompletionData,
-} from '../../utils/test-utils';
 
 describe('WizardNavigation', () => {
   const mockOnStepClick = jest.fn();
-  
+
   const defaultProps = {
     steps: WIZARD_STEPS,
     currentStep: 0,
@@ -33,9 +31,7 @@ describe('WizardNavigation', () => {
     });
 
     it('should highlight current step', () => {
-      const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={2} />
-      );
+      const { getByTestId } = render(<WizardNavigation {...defaultProps} currentStep={2} />);
 
       const currentStepButton = getByTestId('step-button-2');
       expect(currentStepButton.props.className).toContain('current');
@@ -45,8 +41,12 @@ describe('WizardNavigation', () => {
       const completionData = createMockCompletionData({
         step_completion: {
           'basic-info': { is_complete: true, completion_percentage: 100, missing_fields: [] },
-          'biography': { is_complete: true, completion_percentage: 100, missing_fields: [] },
-          'education': { is_complete: false, completion_percentage: 50, missing_fields: ['certifications'] },
+          biography: { is_complete: true, completion_percentage: 100, missing_fields: [] },
+          education: {
+            is_complete: false,
+            completion_percentage: 50,
+            missing_fields: ['certifications'],
+          },
         },
       });
 
@@ -77,9 +77,7 @@ describe('WizardNavigation', () => {
 
   describe('Step Status Indicators', () => {
     it('should show error indicator for steps with errors', () => {
-      const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} hasErrors={true} />
-      );
+      const { getByTestId } = render(<WizardNavigation {...defaultProps} hasErrors={true} />);
 
       expect(getByTestId('step-error-indicator')).toBeTruthy();
     });
@@ -87,10 +85,10 @@ describe('WizardNavigation', () => {
     it('should show completion percentage for partially completed steps', () => {
       const completionData = createMockCompletionData({
         step_completion: {
-          'education': { 
-            is_complete: false, 
-            completion_percentage: 75, 
-            missing_fields: ['certifications'] 
+          education: {
+            is_complete: false,
+            completion_percentage: 75,
+            missing_fields: ['certifications'],
           },
         },
       });
@@ -131,7 +129,7 @@ describe('WizardNavigation', () => {
       const completionData = createMockCompletionData({
         step_completion: {
           'basic-info': { is_complete: true, completion_percentage: 100, missing_fields: [] },
-          'biography': { is_complete: true, completion_percentage: 100, missing_fields: [] },
+          biography: { is_complete: true, completion_percentage: 100, missing_fields: [] },
         },
       });
 
@@ -147,9 +145,7 @@ describe('WizardNavigation', () => {
     });
 
     it('should prevent navigation to future incomplete steps', () => {
-      const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={1} />
-      );
+      const { getByTestId } = render(<WizardNavigation {...defaultProps} currentStep={1} />);
 
       const futureStepButton = getByTestId('step-button-4');
       expect(futureStepButton.props.disabled).toBe(true);
@@ -188,18 +184,14 @@ describe('WizardNavigation', () => {
     });
 
     it('should apply correct styles for current step', () => {
-      const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={2} />
-      );
+      const { getByTestId } = render(<WizardNavigation {...defaultProps} currentStep={2} />);
 
       const currentStepButton = getByTestId('step-button-2');
       expect(currentStepButton.props.className).toContain('current');
     });
 
     it('should apply correct styles for disabled future steps', () => {
-      const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={1} />
-      );
+      const { getByTestId } = render(<WizardNavigation {...defaultProps} currentStep={1} />);
 
       const futureStepButton = getByTestId('step-button-4');
       expect(futureStepButton.props.className).toContain('disabled');
@@ -216,7 +208,7 @@ describe('WizardNavigation', () => {
       const completionData = createMockCompletionData({
         step_completion: {
           'basic-info': { is_complete: true, completion_percentage: 100, missing_fields: [] },
-          'biography': { is_complete: true, completion_percentage: 100, missing_fields: [] },
+          biography: { is_complete: true, completion_percentage: 100, missing_fields: [] },
         },
       });
 
@@ -240,9 +232,7 @@ describe('WizardNavigation', () => {
     });
 
     it('should indicate current step to screen readers', () => {
-      const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={2} />
-      );
+      const { getByTestId } = render(<WizardNavigation {...defaultProps} currentStep={2} />);
 
       const currentStepButton = getByTestId('step-button-2');
       expect(currentStepButton.props.accessibilityLabel).toContain('current');
@@ -264,9 +254,7 @@ describe('WizardNavigation', () => {
     });
 
     it('should indicate disabled steps to screen readers', () => {
-      const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={1} />
-      );
+      const { getByTestId } = render(<WizardNavigation {...defaultProps} currentStep={1} />);
 
       const disabledStepButton = getByTestId('step-button-4');
       expect(disabledStepButton.props.accessibilityState.disabled).toBe(true);
@@ -282,9 +270,7 @@ describe('WizardNavigation', () => {
 
   describe('Responsive Design', () => {
     it('should handle compact mode on smaller screens', () => {
-      const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} compact={true} />
-      );
+      const { getByTestId } = render(<WizardNavigation {...defaultProps} compact={true} />);
 
       const navigation = getByTestId('wizard-navigation');
       expect(navigation.props.className).toContain('compact');
@@ -298,7 +284,7 @@ describe('WizardNavigation', () => {
       // Should show abbreviated titles
       expect(getByText('Basic')).toBeTruthy();
       expect(getByText('Bio')).toBeTruthy();
-      
+
       // Should not show full titles
       expect(queryByText('Basic Information')).toBeNull();
       expect(queryByText('Professional Biography')).toBeNull();
@@ -307,27 +293,21 @@ describe('WizardNavigation', () => {
 
   describe('Edge Cases', () => {
     it('should handle missing completion data gracefully', () => {
-      const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} completionData={null} />
-      );
+      const { getByTestId } = render(<WizardNavigation {...defaultProps} completionData={null} />);
 
       // Should still render navigation
       expect(getByTestId('wizard-navigation')).toBeTruthy();
     });
 
     it('should handle empty steps array', () => {
-      const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} steps={[]} />
-      );
+      const { getByTestId } = render(<WizardNavigation {...defaultProps} steps={[]} />);
 
       const navigation = getByTestId('wizard-navigation');
       expect(navigation.props.children).toHaveLength(0);
     });
 
     it('should handle invalid current step index', () => {
-      const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={999} />
-      );
+      const { getByTestId } = render(<WizardNavigation {...defaultProps} currentStep={999} />);
 
       // Should not crash
       expect(getByTestId('wizard-navigation')).toBeTruthy();
@@ -355,15 +335,13 @@ describe('WizardNavigation', () => {
   describe('Performance', () => {
     it('should memoize step rendering to prevent unnecessary re-renders', () => {
       const renderSpy = jest.fn();
-      
+
       const TestComponent = (props: any) => {
         renderSpy();
         return <WizardNavigation {...props} />;
       };
 
-      const { rerender } = render(
-        <TestComponent {...defaultProps} />
-      );
+      const { rerender } = render(<TestComponent {...defaultProps} />);
 
       expect(renderSpy).toHaveBeenCalledTimes(1);
 
@@ -379,9 +357,7 @@ describe('WizardNavigation', () => {
     });
 
     it('should only re-render affected steps when completion data changes', () => {
-      const { rerender, getByTestId } = render(
-        <WizardNavigation {...defaultProps} />
-      );
+      const { rerender, getByTestId } = render(<WizardNavigation {...defaultProps} />);
 
       const step0 = getByTestId('step-button-0');
       const step1 = getByTestId('step-button-1');
@@ -393,9 +369,7 @@ describe('WizardNavigation', () => {
         },
       });
 
-      rerender(
-        <WizardNavigation {...defaultProps} completionData={updatedCompletionData} />
-      );
+      rerender(<WizardNavigation {...defaultProps} completionData={updatedCompletionData} />);
 
       // Step 0 should be updated, step 1 should remain the same
       expect(getByTestId('step-completed-0')).toBeTruthy();

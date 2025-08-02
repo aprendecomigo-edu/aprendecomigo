@@ -1,5 +1,5 @@
-import React from 'react';
 import { Clock, Mail, Users } from 'lucide-react-native';
+import React from 'react';
 
 import { Box } from '@/components/ui/box';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -45,7 +45,7 @@ export const InvitationLoadingState: React.FC<InvitationLoadingStateProps> = ({
                   {/* Invitation Details Skeleton */}
                   <Box className="p-4 bg-gray-50 rounded-lg">
                     <VStack space="sm">
-                      {[1, 2, 3, 4, 5].map((i) => (
+                      {[1, 2, 3, 4, 5].map(i => (
                         <HStack key={i} className="justify-between">
                           <Skeleton className="w-20 h-4 rounded" />
                           <Skeleton className="w-32 h-4 rounded" />
@@ -95,9 +95,7 @@ export const InvitationLoadingState: React.FC<InvitationLoadingStateProps> = ({
 
           {/* Loading Message */}
           <VStack space="sm" className="items-center">
-            <Text className="text-lg font-medium text-gray-900">
-              {message}
-            </Text>
+            <Text className="text-lg font-medium text-gray-900">{message}</Text>
             <Text className="text-center text-gray-600">
               Verificando detalhes da escola e validando permissões...
             </Text>
@@ -107,7 +105,7 @@ export const InvitationLoadingState: React.FC<InvitationLoadingStateProps> = ({
           {showProgress && (
             <Box className="w-full">
               <Box className="w-full bg-gray-200 rounded-full h-2">
-                <Box 
+                <Box
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${Math.min(progress, 100)}%` }}
                 />
@@ -144,11 +142,7 @@ export const InvitationLoadingState: React.FC<InvitationLoadingStateProps> = ({
       <VStack space="md" className="items-center">
         <Spinner size="large" />
         <Text className="text-gray-600">{message}</Text>
-        {showProgress && (
-          <Text className="text-sm text-gray-500">
-            {Math.round(progress)}%
-          </Text>
-        )}
+        {showProgress && <Text className="text-sm text-gray-500">{Math.round(progress)}%</Text>}
       </VStack>
     </Center>
   );

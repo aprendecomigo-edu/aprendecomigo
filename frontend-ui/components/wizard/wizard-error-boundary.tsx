@@ -1,14 +1,14 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { RefreshCw, AlertTriangle, Home, Save } from 'lucide-react-native';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -41,7 +41,7 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
 
   constructor(props: WizardErrorBoundaryProps) {
     super(props);
-    
+
     this.state = {
       hasError: false,
       errorId: '',
@@ -52,7 +52,7 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     // Generate unique error ID for tracking
     const errorId = `wizard_error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     return {
       hasError: true,
       error,
@@ -117,7 +117,7 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
 
     // Implement exponential backoff for retries
     const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
-    
+
     const timeout = setTimeout(() => {
       this.setState({
         hasError: false,
@@ -163,34 +163,37 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
 
   private getErrorSeverity = (error: Error): 'critical' | 'moderate' | 'minor' => {
     const message = error.message.toLowerCase();
-    
+
     // Critical errors that make the wizard unusable
     if (message.includes('network') || message.includes('api') || message.includes('server')) {
       return 'critical';
     }
-    
+
     // UI rendering errors
     if (message.includes('render') || message.includes('component') || message.includes('hook')) {
       return 'moderate';
     }
-    
+
     // Other errors
     return 'minor';
   };
 
-  private getErrorMessage = (error: Error): { title: string; description: string; suggestions: string[] } => {
+  private getErrorMessage = (
+    error: Error
+  ): { title: string; description: string; suggestions: string[] } => {
     const severity = this.getErrorSeverity(error);
     const message = error.message.toLowerCase();
 
     if (message.includes('network') || message.includes('fetch') || message.includes('api')) {
       return {
         title: 'Connection Problem',
-        description: 'We\'re having trouble connecting to our servers. Your progress may not be saved.',
+        description:
+          "We're having trouble connecting to our servers. Your progress may not be saved.",
         suggestions: [
           'Check your internet connection',
           'Try again in a few moments',
-          'Save your work and return later'
-        ]
+          'Save your work and return later',
+        ],
       };
     }
 
@@ -201,8 +204,8 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
         suggestions: [
           'Review your entered information',
           'Try simplifying complex entries',
-          'Save your progress and continue'
-        ]
+          'Save your progress and continue',
+        ],
       };
     }
 
@@ -213,8 +216,8 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
         suggestions: [
           'Save your progress immediately',
           'Contact support if the problem persists',
-          'Try accessing from a different device or browser'
-        ]
+          'Try accessing from a different device or browser',
+        ],
       };
     }
 
@@ -224,8 +227,8 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
       suggestions: [
         'Try the action again',
         'Save your current progress',
-        'Refresh the page if the problem continues'
-      ]
+        'Refresh the page if the problem continues',
+      ],
     };
   };
 
@@ -256,16 +259,12 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
                 <Heading size="lg" className="text-gray-900 text-center">
                   {title}
                 </Heading>
-                
-                <Text className="text-gray-600 text-center">
-                  {description}
-                </Text>
+
+                <Text className="text-gray-600 text-center">{description}</Text>
 
                 {/* Error Suggestions */}
                 <VStack space="xs" className="w-full">
-                  <Text className="text-sm font-medium text-gray-900">
-                    What you can try:
-                  </Text>
+                  <Text className="text-sm font-medium text-gray-900">What you can try:</Text>
                   {suggestions.map((suggestion, index) => (
                     <Text key={index} className="text-sm text-gray-600">
                       • {suggestion}
@@ -276,9 +275,7 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
                 {/* Development Info */}
                 {__DEV__ && (
                   <Box className="w-full p-3 bg-gray-100 rounded-lg">
-                    <Text className="text-xs font-mono text-gray-800">
-                      {error.message}
-                    </Text>
+                    <Text className="text-xs font-mono text-gray-800">{error.message}</Text>
                     {retryCount > 0 && (
                       <Text className="text-xs text-gray-600 mt-1">
                         Retry attempts: {retryCount}/{maxRetries}
@@ -303,30 +300,18 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
                 )}
 
                 <HStack space="sm" className="w-full">
-                  <Button
-                    variant="outline"
-                    onPress={this.handleSaveAndExit}
-                    className="flex-1"
-                  >
+                  <Button variant="outline" onPress={this.handleSaveAndExit} className="flex-1">
                     <ButtonIcon as={Save} className="text-gray-600 mr-1" />
                     <ButtonText className="text-gray-600">Save & Exit</ButtonText>
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    onPress={this.handleGoToDashboard}
-                    className="flex-1"
-                  >
+                  <Button variant="outline" onPress={this.handleGoToDashboard} className="flex-1">
                     <ButtonIcon as={Home} className="text-gray-600 mr-1" />
                     <ButtonText className="text-gray-600">Dashboard</ButtonText>
                   </Button>
                 </HStack>
 
-                <Button
-                  variant="outline"
-                  onPress={this.handleReset}
-                  className="w-full"
-                >
+                <Button variant="outline" onPress={this.handleReset} className="w-full">
                   <ButtonText className="text-gray-500">Reset Wizard</ButtonText>
                 </Button>
               </VStack>

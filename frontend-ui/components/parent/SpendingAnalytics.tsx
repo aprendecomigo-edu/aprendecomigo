@@ -1,6 +1,6 @@
 /**
  * SpendingAnalytics Component
- * 
+ *
  * Visual spending tracking and analytics with:
  * - Spending trends and patterns
  * - Budget utilization charts
@@ -9,10 +9,9 @@
  * - Mobile-optimized chart displays
  */
 
-import React, { useState, useMemo } from 'react';
-import { 
-  BarChart3, 
-  TrendingUp, 
+import {
+  BarChart3,
+  TrendingUp,
   TrendingDown,
   Calendar,
   Clock,
@@ -24,12 +23,15 @@ import {
   Filter,
   Download,
   PieChart,
-  Activity
+  Activity,
 } from 'lucide-react-native';
+import React, { useState, useMemo } from 'react';
 
+import { FamilyMetrics, FamilyBudgetControl } from '@/api/parentApi';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
@@ -37,9 +39,6 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Divider } from '@/components/ui/divider';
-
-import { FamilyMetrics, FamilyBudgetControl } from '@/api/parentApi';
 
 interface SpendingData {
   date: string;
@@ -73,32 +72,32 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
   const spendingTrends = useMemo(() => {
     const now = new Date();
     const periods = [];
-    
+
     // Create time periods based on timeframe
     for (let i = 6; i >= 0; i--) {
       let periodStart, periodEnd, label;
-      
+
       if (timeframe === 'week') {
-        periodStart = new Date(now.getTime() - (i * 7 * 24 * 60 * 60 * 1000));
-        periodEnd = new Date(periodStart.getTime() + (7 * 24 * 60 * 60 * 1000));
+        periodStart = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
+        periodEnd = new Date(periodStart.getTime() + 7 * 24 * 60 * 60 * 1000);
         label = periodStart.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
       } else if (timeframe === 'month') {
         periodStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
         periodEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
         label = periodStart.toLocaleDateString('en-GB', { month: 'short' });
       } else {
-        periodStart = new Date(now.getFullYear(), now.getMonth() - (i * 3), 1);
-        periodEnd = new Date(now.getFullYear(), now.getMonth() - (i * 3) + 3, 0);
+        periodStart = new Date(now.getFullYear(), now.getMonth() - i * 3, 1);
+        periodEnd = new Date(now.getFullYear(), now.getMonth() - i * 3 + 3, 0);
         label = `Q${Math.floor(periodStart.getMonth() / 3) + 1} ${periodStart.getFullYear()}`;
       }
-      
+
       const periodSpending = spendingHistory
         .filter(s => {
           const date = new Date(s.date);
           return date >= periodStart && date <= periodEnd;
         })
         .reduce((sum, s) => sum + s.amount, 0);
-      
+
       periods.push({
         label,
         amount: periodSpending,
@@ -106,14 +105,14 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
         end: periodEnd,
       });
     }
-    
+
     return periods;
   }, [spendingHistory, timeframe]);
 
   // Calculate child comparison data
   const childComparison = useMemo(() => {
     const childData = new Map();
-    
+
     spendingHistory.forEach(spend => {
       if (!childData.has(spend.child_id)) {
         childData.set(spend.child_id, {
@@ -124,13 +123,13 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
           purchases: 0,
         });
       }
-      
+
       const child = childData.get(spend.child_id);
       child.totalSpent += spend.amount;
       child.totalHours += spend.hours;
       child.purchases += 1;
     });
-    
+
     return Array.from(childData.values()).sort((a, b) => b.totalSpent - a.totalSpent);
   }, [spendingHistory]);
 
@@ -141,16 +140,21 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
 
     const currentSpent = parseFloat(familyMetrics.total_spent_this_month);
     const monthlyLimit = activeBudget.monthly_limit ? parseFloat(activeBudget.monthly_limit) : null;
-    
+
     return {
       spent: currentSpent,
       monthlyLimit,
       percentage: monthlyLimit ? (currentSpent / monthlyLimit) * 100 : 0,
       remaining: monthlyLimit ? monthlyLimit - currentSpent : null,
-      status: monthlyLimit ? 
-        (currentSpent >= monthlyLimit ? 'exceeded' :
-         currentSpent >= monthlyLimit * 0.9 ? 'warning' :
-         currentSpent >= monthlyLimit * 0.75 ? 'caution' : 'safe') : 'no-limit'
+      status: monthlyLimit
+        ? currentSpent >= monthlyLimit
+          ? 'exceeded'
+          : currentSpent >= monthlyLimit * 0.9
+          ? 'warning'
+          : currentSpent >= monthlyLimit * 0.75
+          ? 'caution'
+          : 'safe'
+        : 'no-limit',
     };
   }, [budgetControls, familyMetrics]);
 
@@ -174,15 +178,17 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
 
     const currentWeekSpending = last7Days.reduce((sum, s) => sum + s.amount, 0);
     const previousWeekSpending = previous7Days.reduce((sum, s) => sum + s.amount, 0);
-    
-    const change = previousWeekSpending > 0 ? 
-      ((currentWeekSpending - previousWeekSpending) / previousWeekSpending) * 100 : 0;
+
+    const change =
+      previousWeekSpending > 0
+        ? ((currentWeekSpending - previousWeekSpending) / previousWeekSpending) * 100
+        : 0;
 
     return {
       currentWeek: currentWeekSpending,
       previousWeek: previousWeekSpending,
       change,
-      trend: change > 10 ? 'increasing' : change < -10 ? 'decreasing' : 'stable'
+      trend: change > 10 ? 'increasing' : change < -10 ? 'decreasing' : 'stable',
     };
   }, [spendingHistory]);
 
@@ -213,9 +219,7 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
                   size="sm"
                   onPress={() => onTimeframeChange(period)}
                 >
-                  <ButtonText className="text-xs capitalize">
-                    {period}
-                  </ButtonText>
+                  <ButtonText className="text-xs capitalize">{period}</ButtonText>
                 </Button>
               ))}
             </HStack>
@@ -261,19 +265,32 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
                     {formatCurrency(parseFloat(familyMetrics.total_spent_this_month))}
                   </Text>
                   <HStack className="items-center space-x-1">
-                    <Icon 
-                      as={spendingVelocity.trend === 'increasing' ? TrendingUp : 
-                         spendingVelocity.trend === 'decreasing' ? TrendingDown : Activity} 
-                      size={12} 
+                    <Icon
+                      as={
+                        spendingVelocity.trend === 'increasing'
+                          ? TrendingUp
+                          : spendingVelocity.trend === 'decreasing'
+                          ? TrendingDown
+                          : Activity
+                      }
+                      size={12}
                       className={
-                        spendingVelocity.trend === 'increasing' ? 'text-red-500' :
-                        spendingVelocity.trend === 'decreasing' ? 'text-green-500' : 'text-gray-500'
+                        spendingVelocity.trend === 'increasing'
+                          ? 'text-red-500'
+                          : spendingVelocity.trend === 'decreasing'
+                          ? 'text-green-500'
+                          : 'text-gray-500'
                       }
                     />
-                    <Text className={`text-xs ${
-                      spendingVelocity.trend === 'increasing' ? 'text-red-600' :
-                      spendingVelocity.trend === 'decreasing' ? 'text-green-600' : 'text-gray-600'
-                    }`}>
+                    <Text
+                      className={`text-xs ${
+                        spendingVelocity.trend === 'increasing'
+                          ? 'text-red-600'
+                          : spendingVelocity.trend === 'decreasing'
+                          ? 'text-green-600'
+                          : 'text-gray-600'
+                      }`}
+                    >
                       {Math.abs(spendingVelocity.change).toFixed(1)}% vs last week
                     </Text>
                   </HStack>
@@ -314,9 +331,13 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
                     <Badge
                       variant="solid"
                       action={
-                        budgetUtilization.status === 'exceeded' ? 'error' :
-                        budgetUtilization.status === 'warning' ? 'warning' :
-                        budgetUtilization.status === 'caution' ? 'info' : 'success'
+                        budgetUtilization.status === 'exceeded'
+                          ? 'error'
+                          : budgetUtilization.status === 'warning'
+                          ? 'warning'
+                          : budgetUtilization.status === 'caution'
+                          ? 'info'
+                          : 'success'
                       }
                       size="sm"
                     >
@@ -330,12 +351,15 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
 
                   <HStack className="justify-between items-center">
                     <Text className="text-sm text-gray-600">
-                      {formatCurrency(budgetUtilization.spent)} / {formatCurrency(budgetUtilization.monthlyLimit)}
+                      {formatCurrency(budgetUtilization.spent)} /{' '}
+                      {formatCurrency(budgetUtilization.monthlyLimit)}
                     </Text>
                     {budgetUtilization.remaining !== null && (
-                      <Text className={`text-sm font-medium ${
-                        budgetUtilization.remaining < 0 ? 'text-red-600' : 'text-green-600'
-                      }`}>
+                      <Text
+                        className={`text-sm font-medium ${
+                          budgetUtilization.remaining < 0 ? 'text-red-600' : 'text-green-600'
+                        }`}
+                      >
                         {budgetUtilization.remaining < 0 ? 'Over by ' : 'Remaining: '}
                         {formatCurrency(Math.abs(budgetUtilization.remaining))}
                       </Text>
@@ -362,28 +386,23 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
                 {spendingTrends.map((trend, index) => (
                   <VStack key={index} className="space-y-1">
                     <HStack className="justify-between items-center">
-                      <Text className="text-xs text-gray-600">
-                        {trend.label}
-                      </Text>
+                      <Text className="text-xs text-gray-600">{trend.label}</Text>
                       <Text className="text-xs font-medium text-gray-900">
                         {formatCurrency(trend.amount)}
                       </Text>
                     </HStack>
-                    <Progress 
-                      value={(trend.amount / maxAmount) * 100} 
-                      className="h-2"
-                    />
+                    <Progress value={(trend.amount / maxAmount) * 100} className="h-2" />
                   </VStack>
                 ))}
               </VStack>
 
               {/* Trend summary */}
               <HStack className="justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <Text className="text-sm text-gray-700">
-                  Average per {timeframe}:
-                </Text>
+                <Text className="text-sm text-gray-700">Average per {timeframe}:</Text>
                 <Text className="text-sm font-semibold text-gray-900">
-                  {formatCurrency(spendingTrends.reduce((sum, t) => sum + t.amount, 0) / spendingTrends.length)}
+                  {formatCurrency(
+                    spendingTrends.reduce((sum, t) => sum + t.amount, 0) / spendingTrends.length
+                  )}
                 </Text>
               </HStack>
             </VStack>
@@ -396,30 +415,24 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
         <Card className="bg-white">
           <CardContent className="p-4">
             <VStack className="space-y-4">
-              <Text className="text-sm font-medium text-gray-900">
-                Spending by Child
-              </Text>
+              <Text className="text-sm font-medium text-gray-900">Spending by Child</Text>
 
               {childComparison.length === 0 ? (
                 <VStack className="items-center py-8 space-y-2">
                   <Icon as={Users} size={32} className="text-gray-400" />
-                  <Text className="text-sm text-gray-600">
-                    No spending data available
-                  </Text>
+                  <Text className="text-sm text-gray-600">No spending data available</Text>
                 </VStack>
               ) : (
                 <VStack className="space-y-3">
-                  {childComparison.map((child) => (
+                  {childComparison.map(child => (
                     <VStack key={child.id} className="space-y-2 p-3 bg-gray-50 rounded-lg">
                       <HStack className="justify-between items-center">
-                        <Text className="text-sm font-medium text-gray-900">
-                          {child.name}
-                        </Text>
+                        <Text className="text-sm font-medium text-gray-900">{child.name}</Text>
                         <Text className="text-sm font-bold text-gray-900">
                           {formatCurrency(child.totalSpent)}
                         </Text>
                       </HStack>
-                      
+
                       <HStack className="justify-between items-center">
                         <Text className="text-xs text-gray-600">
                           {child.totalHours} hours • {child.purchases} purchases
@@ -428,9 +441,12 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
                           Avg: {formatCurrency(child.totalSpent / child.purchases)}
                         </Text>
                       </HStack>
-                      
-                      <Progress 
-                        value={(child.totalSpent / Math.max(...childComparison.map(c => c.totalSpent))) * 100} 
+
+                      <Progress
+                        value={
+                          (child.totalSpent / Math.max(...childComparison.map(c => c.totalSpent))) *
+                          100
+                        }
                         className="h-2"
                       />
                     </VStack>
@@ -449,12 +465,13 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
           <Card className="bg-white">
             <CardContent className="p-4">
               <VStack className="space-y-3">
-                <Text className="text-sm font-medium text-gray-900">
-                  Recent Purchases
-                </Text>
+                <Text className="text-sm font-medium text-gray-900">Recent Purchases</Text>
 
                 {spendingHistory.slice(0, 5).map((purchase, index) => (
-                  <HStack key={index} className="justify-between items-center p-2 bg-gray-50 rounded">
+                  <HStack
+                    key={index}
+                    className="justify-between items-center p-2 bg-gray-50 rounded"
+                  >
                     <VStack className="flex-1">
                       <HStack className="justify-between items-start w-full">
                         <Text className="text-sm font-medium text-gray-900">
@@ -468,9 +485,7 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
                         <Text className="text-xs text-gray-600">
                           {purchase.child_name} • {new Date(purchase.date).toLocaleDateString()}
                         </Text>
-                        <Text className="text-xs text-gray-600">
-                          {purchase.hours} hours
-                        </Text>
+                        <Text className="text-xs text-gray-600">{purchase.hours} hours</Text>
                       </HStack>
                     </VStack>
                   </HStack>

@@ -1,6 +1,6 @@
 /**
  * TypeScript interfaces for payment monitoring and administrative functionality.
- * 
+ *
  * These interfaces define the data structures used throughout
  * the payment monitoring dashboards, transaction management, and administrative operations.
  */
@@ -67,7 +67,13 @@ export interface TransactionMonitoring {
   customer_email: string;
   amount: string;
   currency: string;
-  status: 'requires_payment_method' | 'requires_confirmation' | 'requires_action' | 'processing' | 'succeeded' | 'canceled';
+  status:
+    | 'requires_payment_method'
+    | 'requires_confirmation'
+    | 'requires_action'
+    | 'processing'
+    | 'succeeded'
+    | 'canceled';
   status_display: string;
   created_at: string;
   updated_at: string;
@@ -161,7 +167,15 @@ export interface DisputeRecord {
   amount: string;
   currency: string;
   reason: string;
-  status: 'warning_needs_response' | 'warning_under_review' | 'warning_closed' | 'needs_response' | 'under_review' | 'charge_refunded' | 'won' | 'lost';
+  status:
+    | 'warning_needs_response'
+    | 'warning_under_review'
+    | 'warning_closed'
+    | 'needs_response'
+    | 'under_review'
+    | 'charge_refunded'
+    | 'won'
+    | 'lost';
   status_display: string;
   evidence_due_by: string | null;
   created_at: string;
@@ -199,7 +213,12 @@ export interface DisputeEvidenceResponse {
 export interface FraudAlert {
   id: string;
   payment_intent_id: string;
-  alert_type: 'high_risk_score' | 'velocity_check' | 'card_testing' | 'unusual_pattern' | 'blacklisted_card';
+  alert_type:
+    | 'high_risk_score'
+    | 'velocity_check'
+    | 'card_testing'
+    | 'unusual_pattern'
+    | 'blacklisted_card';
   risk_score: number;
   description: string;
   status: 'active' | 'investigating' | 'resolved' | 'false_positive';
@@ -265,7 +284,13 @@ export interface PaymentRetryResponse {
 // Audit trail types
 export interface AuditLogEntry {
   id: string;
-  action_type: 'refund_initiated' | 'dispute_responded' | 'fraud_investigated' | 'payment_retried' | 'transaction_viewed' | 'webhook_resent';
+  action_type:
+    | 'refund_initiated'
+    | 'dispute_responded'
+    | 'fraud_investigated'
+    | 'payment_retried'
+    | 'transaction_viewed'
+    | 'webhook_resent';
   resource_type: 'payment_intent' | 'refund' | 'dispute' | 'fraud_alert' | 'webhook_event';
   resource_id: string;
   performed_by: string;
@@ -290,7 +315,14 @@ export interface PaginatedAuditLog {
 
 // Dashboard state types
 export interface PaymentMonitoringState {
-  activeView: 'dashboard' | 'transactions' | 'refunds' | 'disputes' | 'fraud' | 'webhooks' | 'audit';
+  activeView:
+    | 'dashboard'
+    | 'transactions'
+    | 'refunds'
+    | 'disputes'
+    | 'fraud'
+    | 'webhooks'
+    | 'audit';
   timeRange: 'last_24h' | 'last_7d' | 'last_30d' | 'custom';
   customDateRange?: {
     start_date: string;
@@ -312,7 +344,12 @@ export interface TransactionManagementState {
 
 // Real-time WebSocket types
 export interface PaymentWebSocketMessage {
-  type: 'metrics_update' | 'transaction_update' | 'webhook_status' | 'fraud_alert' | 'dispute_update';
+  type:
+    | 'metrics_update'
+    | 'transaction_update'
+    | 'webhook_status'
+    | 'fraud_alert'
+    | 'dispute_update';
   data: any;
   timestamp: string;
 }

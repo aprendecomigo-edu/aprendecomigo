@@ -1,13 +1,15 @@
 /**
  * Saved Payment Selector Component
- * 
+ *
  * Payment method selection component with default method highlighting
  * and support for biometric authentication confirmation.
  */
 
-import React, { useState, useEffect } from 'react';
 import { CreditCard, Check, Plus, Shield, Fingerprint } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
 
+import { Alert, AlertIcon, AlertText } from '@/components/ui/alert';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
@@ -16,9 +18,6 @@ import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Alert, AlertIcon, AlertText } from '@/components/ui/alert';
-
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 import type { PaymentMethod, BiometricAuthState } from '@/types/purchase';
 
@@ -43,7 +42,7 @@ interface SavedPaymentSelectorProps {
 
 /**
  * Saved Payment Selector Component
- * 
+ *
  * Displays saved payment methods with selection functionality and biometric auth support.
  */
 export function SavedPaymentSelector({
@@ -69,12 +68,12 @@ export function SavedPaymentSelector({
     const checkBiometricSupport = async () => {
       // In a real implementation, you would check for biometric availability
       // This is a placeholder for the actual biometric API check
-      const isSupported = enableBiometricAuth && (
+      const isSupported =
+        enableBiometricAuth &&
         // Check for TouchID/FaceID on iOS or fingerprint on Android
-        typeof window !== 'undefined' && 
-        ('TouchID' in window || 'FaceID' in window || 'AndroidFingerprint' in window)
-      );
-      
+        typeof window !== 'undefined' &&
+        ('TouchID' in window || 'FaceID' in window || 'AndroidFingerprint' in window);
+
       setBiometricState(prev => ({
         ...prev,
         isSupported,
@@ -90,16 +89,16 @@ export function SavedPaymentSelector({
   const handlePaymentMethodSelect = async (paymentMethod: PaymentMethod) => {
     if (biometricState.isSupported && onBiometricAuth) {
       setBiometricState(prev => ({ ...prev, isAuthenticating: true, error: null }));
-      
+
       try {
         const authenticated = await onBiometricAuth(paymentMethod);
         if (authenticated) {
           onPaymentMethodSelect(paymentMethod);
         }
       } catch (error: any) {
-        setBiometricState(prev => ({ 
-          ...prev, 
-          error: error.message || 'Biometric authentication failed' 
+        setBiometricState(prev => ({
+          ...prev,
+          error: error.message || 'Biometric authentication failed',
         }));
       } finally {
         setBiometricState(prev => ({ ...prev, isAuthenticating: false }));
@@ -112,19 +111,26 @@ export function SavedPaymentSelector({
   // Get card brand icon color
   const getCardBrandColor = (brand: string) => {
     switch (brand.toLowerCase()) {
-      case 'visa': return 'text-blue-600';
-      case 'mastercard': return 'text-red-600';
-      case 'amex': return 'text-green-600';
-      default: return 'text-typography-600';
+      case 'visa':
+        return 'text-blue-600';
+      case 'mastercard':
+        return 'text-red-600';
+      case 'amex':
+        return 'text-green-600';
+      default:
+        return 'text-typography-600';
     }
   };
 
   // Get size classes
   const getSizeClasses = () => {
     switch (size) {
-      case 'sm': return { card: 'p-3', text: 'text-sm', icon: 'sm' as const };
-      case 'lg': return { card: 'p-5', text: 'text-base', icon: 'lg' as const };
-      default: return { card: 'p-4', text: 'text-sm', icon: 'md' as const };
+      case 'sm':
+        return { card: 'p-3', text: 'text-sm', icon: 'sm' as const };
+      case 'lg':
+        return { card: 'p-5', text: 'text-base', icon: 'lg' as const };
+      default:
+        return { card: 'p-4', text: 'text-sm', icon: 'md' as const };
     }
   };
 
@@ -135,7 +141,9 @@ export function SavedPaymentSelector({
       <VStack space="sm">
         <Text className="font-medium text-typography-700">Payment Method</Text>
         <Card className={sizeClasses.card}>
-          <Text className={`${sizeClasses.text} text-typography-600`}>Loading payment methods...</Text>
+          <Text className={`${sizeClasses.text} text-typography-600`}>
+            Loading payment methods...
+          </Text>
         </Card>
       </VStack>
     );
@@ -164,12 +172,7 @@ export function SavedPaymentSelector({
               No saved payment methods
             </Text>
             {onAddPaymentMethod && (
-              <Button
-                action="primary"
-                variant="outline"
-                size="sm"
-                onPress={onAddPaymentMethod}
-              >
+              <Button action="primary" variant="outline" size="sm" onPress={onAddPaymentMethod}>
                 <ButtonIcon as={Plus} />
                 <ButtonText>Add Payment Method</ButtonText>
               </Button>
@@ -201,28 +204,28 @@ export function SavedPaymentSelector({
       )}
 
       <VStack space="sm">
-        {paymentMethods.map((method) => {
+        {paymentMethods.map(method => {
           const isSelected = selectedPaymentMethodId === method.id;
           const isDefault = method.is_default;
-          
+
           return (
             <Pressable
               key={method.id}
               onPress={() => handlePaymentMethodSelect(method)}
               disabled={biometricState.isAuthenticating}
             >
-              <Card 
+              <Card
                 className={`${sizeClasses.card} border-2 ${
-                  isSelected 
-                    ? 'border-primary-500 bg-primary-50' 
+                  isSelected
+                    ? 'border-primary-500 bg-primary-50'
                     : 'border-outline-200 bg-background-0'
                 } ${biometricState.isAuthenticating ? 'opacity-50' : ''}`}
               >
                 <HStack className="items-center justify-between">
                   <HStack space="md" className="items-center flex-1">
                     {/* Card Icon */}
-                    <Icon 
-                      as={CreditCard} 
+                    <Icon
+                      as={CreditCard}
                       size={sizeClasses.icon}
                       className={getCardBrandColor(method.card.brand)}
                     />
@@ -239,11 +242,12 @@ export function SavedPaymentSelector({
                           </Badge>
                         )}
                       </HStack>
-                      
+
                       {showCardDetails && (
                         <VStack space="xs">
                           <Text className="text-xs text-typography-600">
-                            Expires {method.card.exp_month.toString().padStart(2, '0')}/{method.card.exp_year}
+                            Expires {method.card.exp_month.toString().padStart(2, '0')}/
+                            {method.card.exp_year}
                           </Text>
                           {method.billing_details?.name && (
                             <Text className="text-xs text-typography-600">
@@ -255,9 +259,7 @@ export function SavedPaymentSelector({
                     </VStack>
 
                     {/* Selection Indicator */}
-                    {isSelected && (
-                      <Icon as={Check} size="sm" className="text-primary-600" />
-                    )}
+                    {isSelected && <Icon as={Check} size="sm" className="text-primary-600" />}
                   </HStack>
                 </HStack>
               </Card>
@@ -268,7 +270,9 @@ export function SavedPaymentSelector({
         {/* Add New Payment Method */}
         {onAddPaymentMethod && (
           <Pressable onPress={onAddPaymentMethod}>
-            <Card className={`${sizeClasses.card} border-2 border-dashed border-outline-300 bg-background-0`}>
+            <Card
+              className={`${sizeClasses.card} border-2 border-dashed border-outline-300 bg-background-0`}
+            >
               <HStack space="md" className="items-center justify-center">
                 <Icon as={Plus} size={sizeClasses.icon} className="text-typography-500" />
                 <Text className={`${sizeClasses.text} text-typography-600`}>
@@ -285,11 +289,10 @@ export function SavedPaymentSelector({
         <HStack space="sm" className="items-center">
           <Icon as={Shield} size="sm" className="text-success-600" />
           <VStack space="xs" className="flex-1">
-            <Text className="text-xs font-medium text-success-800">
-              Secure Payment Processing
-            </Text>
+            <Text className="text-xs font-medium text-success-800">Secure Payment Processing</Text>
             <Text className="text-xs text-success-700">
-              Your payment methods are stored securely by Stripe and protected with industry-standard encryption.
+              Your payment methods are stored securely by Stripe and protected with
+              industry-standard encryption.
             </Text>
           </VStack>
         </HStack>

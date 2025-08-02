@@ -1,5 +1,6 @@
-import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
+
 import apiClient from '@/api/apiClient';
 
 export interface FileUploadProgress {
@@ -65,7 +66,7 @@ export class FileUploadService {
 
       // Configure progress tracking
       if (options.onProgress) {
-        xhr.upload.addEventListener('progress', (event) => {
+        xhr.upload.addEventListener('progress', event => {
           if (event.lengthComputable) {
             const progress: FileUploadProgress = {
               loaded: event.loaded,
@@ -87,7 +88,7 @@ export class FileUploadService {
               url: response.url || response.file_url,
               fileName: response.filename || response.name,
             };
-            
+
             if (options.onSuccess) {
               options.onSuccess(result);
             }
@@ -138,17 +139,17 @@ export class FileUploadService {
 
       // Get auth token from apiClient
       const token = apiClient.defaults.headers.common['Authorization'];
-      
+
       // Open and send request
       xhr.open('POST', url);
-      
+
       // Set headers
       if (token) {
         xhr.setRequestHeader('Authorization', token);
       }
-      
+
       // Note: Don't set Content-Type header for FormData - browser will set it with boundary
-      
+
       xhr.send(formData);
     });
   }
@@ -163,21 +164,21 @@ export class FileUploadService {
     try {
       const endpoint = options.endpoint || '/accounts/teacher-profile/upload-photo/';
       const fieldName = options.fieldName || 'profile_photo';
-      
+
       const formData = this.createFormData(image, fieldName, options.additionalData);
-      
+
       // Use the base URL from apiClient
       const baseURL = apiClient.defaults.baseURL || '';
       const fullUrl = `${baseURL}${endpoint}`;
-      
+
       return await this.createXMLHttpRequest(fullUrl, formData, options);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown upload error';
-      
+
       if (options.onError) {
         options.onError(errorMessage);
       }
-      
+
       return {
         success: false,
         error: errorMessage,
@@ -195,21 +196,21 @@ export class FileUploadService {
     try {
       const endpoint = options.endpoint || '/accounts/teacher-profile/upload-credential/';
       const fieldName = options.fieldName || 'credential_file';
-      
+
       const formData = this.createFormData(document, fieldName, options.additionalData);
-      
+
       // Use the base URL from apiClient
       const baseURL = apiClient.defaults.baseURL || '';
       const fullUrl = `${baseURL}${endpoint}`;
-      
+
       return await this.createXMLHttpRequest(fullUrl, formData, options);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown upload error';
-      
+
       if (options.onError) {
         options.onError(errorMessage);
       }
-      
+
       return {
         success: false,
         error: errorMessage,
@@ -227,21 +228,21 @@ export class FileUploadService {
   ): Promise<FileUploadResult> {
     try {
       const fieldName = options.fieldName || 'file';
-      
+
       const formData = this.createFormData(file, fieldName, options.additionalData);
-      
+
       // Use the base URL from apiClient
       const baseURL = apiClient.defaults.baseURL || '';
       const fullUrl = `${baseURL}${endpoint}`;
-      
+
       return await this.createXMLHttpRequest(fullUrl, formData, options);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown upload error';
-      
+
       if (options.onError) {
         options.onError(errorMessage);
       }
-      
+
       return {
         success: false,
         error: errorMessage,
@@ -266,7 +267,10 @@ export class FileUploadService {
     if (file.size && file.size > maxSizeInMB * 1024 * 1024) {
       return {
         isValid: false,
-        error: `File must be smaller than ${maxSizeInMB}MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`,
+        error: `File must be smaller than ${maxSizeInMB}MB. Current size: ${(
+          file.size /
+          (1024 * 1024)
+        ).toFixed(2)}MB`,
       };
     }
 

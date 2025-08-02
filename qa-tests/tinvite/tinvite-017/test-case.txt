@@ -1,0 +1,216 @@
+QA Test Case: Resend Invitation Functionality for Pending Requests
+
+Test ID: TINVITE-017
+Test Name: Resend Invitation Functionality for Pending Requests
+Purpose: Verify that school admins can successfully resend invitations for pending requests with proper validation, feedback, and status updates
+Expected Result: Resend functionality works correctly for pending invitations, provides appropriate feedback, updates status tracking, and handles edge cases properly
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Teacher Invitation System
+- Architecture: React Native frontend with Django backend
+- Components: InvitationListItem, useInvitationActions hook
+- API: InvitationApi.resendInvitation() method
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+4. Browser access: http://localhost:8081
+
+Test Data:
+- School Admin User: Authenticated with invitation management permissions
+- Pending Invitations: At least 2-3 invitations in PENDING or SENT status
+- Test Emails: teacher1@example.com, teacher2@example.com
+- Invalid Token: For testing error handling
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Dashboard Access
+1. Ensure development servers are running: `make dev`
+2. Navigate to http://localhost:8081
+3. Authenticate as school admin user
+4. Access invitations dashboard: http://localhost:8081/(school-admin)/invitations
+5. Verify dashboard loads with existing invitation data
+Expected: Dashboard displays with list of invitations including pending ones
+Screenshot: 01_dashboard_with_pending_invitations.png
+
+Step 2: Identify Pending Invitations for Resending
+1. Scan invitation list for invitations with PENDING, SENT, or DELIVERED status
+2. Verify these invitations show appropriate status indicators
+3. Look for action buttons on each invitation item
+4. Identify resend action button (typically a refresh or arrow icon)
+5. If no pending invitations exist, create new invitations first
+Expected: Pending invitations are clearly identified with visible action buttons
+Screenshot: 02_pending_invitations_identified.png
+
+Step 3: Test Resend Button Visibility and Accessibility
+1. Hover over or examine pending invitation items
+2. Verify resend button is visible and appropriately labeled
+3. Check button accessibility (tooltips, ARIA labels)
+4. Confirm resend button is only available for appropriate statuses
+5. Verify resend button is NOT available for ACCEPTED, DECLINED, or EXPIRED invitations
+Expected: Resend button is properly displayed only for eligible invitations
+Screenshot: 03_resend_button_visibility.png
+
+Step 4: Test Single Invitation Resend Process
+1. Select a pending invitation from the list
+2. Click the resend button/action
+3. Verify loading state appears immediately
+4. Monitor API call in browser developer tools
+5. Wait for API response
+6. Check for success/error feedback message
+Expected: Resend process initiates with proper loading state and feedback
+Screenshot: 04_single_resend_process.png
+
+Step 5: Verify Resend Success Feedback
+1. After successful resend, check for success message/alert
+2. Verify success message includes appropriate text (e.g., "Invitation resent successfully")
+3. Check that invitation status is updated in the dashboard
+4. Verify timestamp or last sent date is updated
+5. Confirm invitation remains in appropriate status (SENT)
+Expected: Clear success feedback with status updates reflected immediately
+Screenshot: 05_resend_success_feedback.png
+
+Step 6: Test Resend Error Handling
+1. Attempt to resend an invitation that might cause an error
+2. Test with invalid or expired invitation token (if possible)
+3. Simulate network error during resend process
+4. Verify appropriate error messages are displayed
+5. Check that error messages are user-friendly and actionable
+6. Confirm dashboard state remains consistent after errors
+Expected: Error conditions are handled gracefully with clear messaging
+Screenshot: 06_resend_error_handling.png
+
+Step 7: Test Multiple Invitation Resend Workflow
+1. Identify multiple pending invitations
+2. Resend first invitation and wait for completion
+3. Immediately resend second invitation
+4. Verify both operations complete successfully
+5. Check that dashboard updates reflect both resend actions
+6. Confirm no interference between multiple resend operations
+Expected: Multiple resend operations work independently and successfully
+Screenshot: 07_multiple_resend_workflow.png
+
+Step 8: Test Resend Rate Limiting and Throttling
+1. Rapidly click resend button multiple times on same invitation
+2. Verify system prevents excessive resend requests
+3. Check for appropriate throttling messages if implemented
+4. Test resend frequency limitations (if any)
+5. Verify user feedback about rate limiting
+Expected: Rate limiting protects against abuse while providing clear feedback
+Screenshot: 08_resend_rate_limiting.png
+
+Step 9: Verify Email Delivery After Resend
+1. After successful resend, check logs for email sending
+2. Use `make logs` to view backend email sending logs
+3. Verify email is queued/sent to the correct recipient
+4. Check that resend email contains updated invitation information
+5. Confirm email template includes proper resend context
+Expected: Email is successfully queued/sent with correct content
+Screenshot: 09_email_delivery_verification.png
+
+Step 10: Test Resend Impact on Statistics
+1. Note current statistics on dashboard before resending
+2. Perform resend operation on pending invitation
+3. Verify statistics cards update appropriately
+4. Check that "Enviados" count increases if status changes to SENT
+5. Confirm total counts remain consistent
+6. Verify real-time statistics updates
+Expected: Dashboard statistics accurately reflect resend actions
+Screenshot: 10_statistics_update_after_resend.png
+
+Step 11: Test Resend with Custom Messages
+1. Check if resend functionality preserves original custom message
+2. Verify that custom message is included in resent invitation
+3. Test resend behavior when original invitation had no custom message
+4. Confirm resend email includes any school-specific branding
+5. Check that resend context is properly communicated
+Expected: Custom messages and branding are preserved in resent invitations
+Screenshot: 11_custom_message_preservation.png
+
+Step 12: Test Resend Status Tracking and History
+1. Check if resend actions are logged/tracked
+2. Verify invitation history shows resend events
+3. Look for resend timestamps in invitation details
+4. Check that resend count is tracked (if implemented)
+5. Verify audit trail for invitation management
+Expected: Resend actions are properly tracked and logged for audit purposes
+Screenshot: 12_resend_tracking_history.png
+
+Step 13: Test Edge Cases and Boundary Conditions
+1. Test resend on invitation that is about to expire
+2. Attempt resend on invitation where recipient email is no longer valid
+3. Test resend when original invitation token has been compromised
+4. Verify behavior when resending after recipient has seen but not acted
+5. Test resend on bulk-created invitations
+Expected: Edge cases are handled appropriately with proper error messages
+Screenshot: 13_edge_cases_handling.png
+
+Step 14: Test Integration with Auto-Refresh
+1. Perform resend action while auto-refresh is active
+2. Verify auto-refresh doesn't interfere with resend process
+3. Check that resend updates persist through refresh cycles
+4. Confirm resend feedback doesn't get lost during auto-refresh
+5. Test resend during active WebSocket connections (if applicable)
+Expected: Resend functionality integrates smoothly with real-time updates
+Screenshot: 14_auto_refresh_integration.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS:
+- Resend button is visible and accessible only for appropriate invitation statuses
+- Resend process works smoothly with proper loading states
+- Success feedback is clear and immediate after successful resend
+- Error handling provides appropriate messages for different error conditions
+- Multiple resend operations work independently without interference
+- Rate limiting prevents abuse while providing clear user feedback
+- Email delivery is confirmed through backend logs
+- Dashboard statistics update correctly after resend actions
+- Custom messages and branding are preserved in resent invitations
+- Resend actions are properly tracked and logged
+- Edge cases and boundary conditions are handled gracefully
+- Integration with auto-refresh and real-time updates works correctly
+
+FAIL:
+- Resend button missing, inaccessible, or available for wrong statuses
+- Resend process fails, hangs, or lacks proper loading feedback
+- Success feedback is missing, unclear, or delayed
+- Poor error handling or confusing error messages
+- Multiple resend operations interfere with each other
+- No rate limiting or inadequate protection against abuse
+- Email delivery fails or logs show no sending activity
+- Dashboard statistics don't update or show incorrect counts
+- Custom messages lost or corruption in resent invitations
+- No tracking or audit trail for resend actions
+- Edge cases cause crashes or unexpected behavior
+- Integration issues with auto-refresh or real-time features
+
+Overall Result: PASS only if ALL individual steps pass, FAIL if ANY step fails
+
+=== ADDITIONAL VALIDATION POINTS ===
+
+Performance Requirements:
+- Resend operations complete within 3 seconds under normal conditions
+- No memory leaks or excessive resource usage during multiple resends
+- Efficient API calls without unnecessary requests
+- Proper cleanup of loading states and event listeners
+
+User Experience Requirements:
+- Clear visual feedback during entire resend process
+- Intuitive resend button placement and design
+- Appropriate confirmation for resend actions (if required)
+- Consistent behavior across different invitation types
+
+Security Requirements:
+- Resend only allowed for authorized users with proper permissions
+- Token validation prevents unauthorized resend attempts
+- Rate limiting protects against potential abuse
+- Audit logging for security monitoring and compliance
+
+Technical Requirements:
+- Proper error boundaries prevent crashes during resend failures
+- Clean API integration with consistent response handling
+- Efficient state management for UI updates
+- Compatible with both web and mobile platforms

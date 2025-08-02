@@ -1,5 +1,5 @@
-import React from 'react';
 import { AlertCircle, RefreshCw, Clock, UserX, Shield, AlertTriangle } from 'lucide-react-native';
+import React from 'react';
 
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -41,9 +41,7 @@ export const InvitationErrorDisplay: React.FC<InvitationErrorDisplayProps> = ({
   showGoHome = true,
   showContactSupport = false,
 }) => {
-  const errorData: InvitationError = typeof error === 'string' 
-    ? { message: error } 
-    : error;
+  const errorData: InvitationError = typeof error === 'string' ? { message: error } : error;
 
   const getErrorConfig = (code?: string) => {
     switch (code) {
@@ -52,23 +50,25 @@ export const InvitationErrorDisplay: React.FC<InvitationErrorDisplayProps> = ({
           icon: AlertCircle,
           color: '#EF4444',
           title: 'Convite Não Encontrado',
-          description: 'Este convite não existe ou o link pode estar incorreto. Verifique o link recebido por email.',
+          description:
+            'Este convite não existe ou o link pode estar incorreto. Verifique o link recebido por email.',
           severity: 'error' as const,
           showRetry: false,
           showContactSupport: true,
         };
-      
+
       case 'INVITATION_EXPIRED':
         return {
           icon: Clock,
           color: '#F59E0B',
           title: 'Convite Expirado',
-          description: 'Este convite expirou. Entre em contato com a escola para solicitar um novo convite.',
+          description:
+            'Este convite expirou. Entre em contato com a escola para solicitar um novo convite.',
           severity: 'warning' as const,
           showRetry: false,
           showContactSupport: true,
         };
-      
+
       case 'AUTHENTICATION_REQUIRED':
         return {
           icon: Shield,
@@ -79,7 +79,7 @@ export const InvitationErrorDisplay: React.FC<InvitationErrorDisplayProps> = ({
           showRetry: true,
           showContactSupport: false,
         };
-      
+
       case 'DUPLICATE_MEMBERSHIP':
         return {
           icon: UserX,
@@ -90,7 +90,7 @@ export const InvitationErrorDisplay: React.FC<InvitationErrorDisplayProps> = ({
           showRetry: false,
           showContactSupport: false,
         };
-      
+
       case 'INVITATION_ALREADY_PROCESSED':
         return {
           icon: AlertTriangle,
@@ -101,18 +101,19 @@ export const InvitationErrorDisplay: React.FC<InvitationErrorDisplayProps> = ({
           showRetry: false,
           showContactSupport: false,
         };
-      
+
       case 'NETWORK_ERROR':
         return {
           icon: RefreshCw,
           color: '#6B7280',
           title: 'Erro de Conexão',
-          description: 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.',
+          description:
+            'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.',
           severity: 'error' as const,
           showRetry: true,
           showContactSupport: false,
         };
-      
+
       case 'SERVER_ERROR':
         return {
           icon: AlertCircle,
@@ -123,7 +124,7 @@ export const InvitationErrorDisplay: React.FC<InvitationErrorDisplayProps> = ({
           showRetry: true,
           showContactSupport: true,
         };
-      
+
       default:
         return {
           icon: AlertCircle,
@@ -192,9 +193,7 @@ export const InvitationErrorDisplay: React.FC<InvitationErrorDisplayProps> = ({
                 <Heading size="lg" className={colors.title}>
                   {config.title}
                 </Heading>
-                <Text className={`${colors.description} text-center`}>
-                  {config.description}
-                </Text>
+                <Text className={`${colors.description} text-center`}>{config.description}</Text>
               </VStack>
             </VStack>
           </CardHeader>
@@ -213,25 +212,26 @@ export const InvitationErrorDisplay: React.FC<InvitationErrorDisplayProps> = ({
                     </Text>
                   )}
                   {errorData.path && (
-                    <Text className="text-xs text-gray-600 font-mono">
-                      Path: {errorData.path}
-                    </Text>
+                    <Text className="text-xs text-gray-600 font-mono">Path: {errorData.path}</Text>
                   )}
                 </Box>
               )}
 
               {/* Action Buttons */}
               <VStack space="sm">
-                {(showRetry && (config.showRetry || onRetry)) && (
-                  <Button 
-                    variant="solid" 
+                {showRetry && (config.showRetry || onRetry) && (
+                  <Button
+                    variant="solid"
                     onPress={onRetry}
                     disabled={retrying}
                     className={
-                      config.severity === 'error' ? 'bg-red-600' :
-                      config.severity === 'warning' ? 'bg-yellow-600' :
-                      config.severity === 'info' ? 'bg-blue-600' :
-                      'bg-gray-600'
+                      config.severity === 'error'
+                        ? 'bg-red-600'
+                        : config.severity === 'warning'
+                        ? 'bg-yellow-600'
+                        : config.severity === 'info'
+                        ? 'bg-blue-600'
+                        : 'bg-gray-600'
                     }
                   >
                     {retrying ? (
@@ -248,34 +248,38 @@ export const InvitationErrorDisplay: React.FC<InvitationErrorDisplayProps> = ({
                   </Button>
                 )}
 
-                {(showContactSupport && (config.showContactSupport || onContactSupport)) && (
-                  <Button 
-                    variant="outline" 
+                {showContactSupport && (config.showContactSupport || onContactSupport) && (
+                  <Button
+                    variant="outline"
                     onPress={onContactSupport}
                     className={
-                      config.severity === 'error' ? 'border-red-300' :
-                      config.severity === 'warning' ? 'border-yellow-300' :
-                      config.severity === 'info' ? 'border-blue-300' :
-                      'border-gray-300'
+                      config.severity === 'error'
+                        ? 'border-red-300'
+                        : config.severity === 'warning'
+                        ? 'border-yellow-300'
+                        : config.severity === 'info'
+                        ? 'border-blue-300'
+                        : 'border-gray-300'
                     }
                   >
-                    <ButtonText className={
-                      config.severity === 'error' ? 'text-red-600' :
-                      config.severity === 'warning' ? 'text-yellow-600' :
-                      config.severity === 'info' ? 'text-blue-600' :
-                      'text-gray-600'
-                    }>
+                    <ButtonText
+                      className={
+                        config.severity === 'error'
+                          ? 'text-red-600'
+                          : config.severity === 'warning'
+                          ? 'text-yellow-600'
+                          : config.severity === 'info'
+                          ? 'text-blue-600'
+                          : 'text-gray-600'
+                      }
+                    >
                       Entrar em Contato com Suporte
                     </ButtonText>
                   </Button>
                 )}
 
-                {(showGoHome && onGoHome) && (
-                  <Button 
-                    variant="outline"
-                    onPress={onGoHome}
-                    className="border-gray-300"
-                  >
+                {showGoHome && onGoHome && (
+                  <Button variant="outline" onPress={onGoHome} className="border-gray-300">
                     <ButtonText className="text-gray-600">Voltar ao Início</ButtonText>
                   </Button>
                 )}

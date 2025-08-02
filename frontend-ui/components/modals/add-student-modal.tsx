@@ -1,8 +1,14 @@
 import { X, User, Calendar, Mail, Phone, GraduationCap } from 'lucide-react-native';
 import React, { useState } from 'react';
 
-import { createStudent, CreateStudentData, getEducationalSystems, EducationalSystem } from '@/api/userApi';
 import { useAuth } from '@/api/authContext';
+import {
+  createStudent,
+  CreateStudentData,
+  getEducationalSystems,
+  EducationalSystem,
+} from '@/api/userApi';
+import AuthGuard from '@/components/common/AuthGuard';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
@@ -34,7 +40,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
-import AuthGuard from '@/components/common/AuthGuard';
 
 // Color constants
 const COLORS = {
@@ -84,17 +89,19 @@ const getCurrentSchoolId = (userProfile: any): number => {
   // Get the first school where user has admin privileges
   if (userProfile?.school_memberships) {
     const adminMembership = userProfile.school_memberships.find(
-      (membership: any) => 
-        membership.is_active && 
+      (membership: any) =>
+        membership.is_active &&
         (membership.role === 'school_owner' || membership.role === 'school_admin')
     );
     if (adminMembership?.school?.id) {
       return adminMembership.school.id;
     }
   }
-  
+
   // Security: throw error instead of fallback to prevent unauthorized access
-  throw new Error('Unable to determine school context. Please ensure you have proper school administration privileges.');
+  throw new Error(
+    'Unable to determine school context. Please ensure you have proper school administration privileges.'
+  );
 };
 
 interface AddStudentModalProps {
@@ -106,7 +113,7 @@ interface AddStudentModalProps {
 export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalProps) => {
   const { showToast } = useToast();
   const { userProfile } = useAuth();
-  
+
   const [formData, setFormData] = useState<StudentFormData>({
     name: '',
     email: '',
@@ -131,7 +138,7 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
         console.error('Failed to load educational systems:', error);
       }
     };
-    
+
     if (isOpen) {
       loadEducationalSystems();
     }
@@ -203,7 +210,7 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
       const birthDate = new Date(formData.birth_date);
       const today = new Date();
       const age = today.getFullYear() - birthDate.getFullYear();
-      
+
       if (birthDate > today) {
         newErrors.birth_date = 'Data de nascimento não pode ser no futuro';
       } else if (age < 5 || age > 25) {
@@ -227,7 +234,7 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
 
     try {
       setIsSaving(true);
-      
+
       // Validate school context first
       let schoolId: number;
       try {
@@ -236,7 +243,7 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
         showToast('error', schoolError.message || 'Erro ao validar permissões de escola');
         return;
       }
-      
+
       // Sanitize all form data before submission
       const createData: CreateStudentData = {
         name: sanitizeInput(formData.name),
@@ -249,7 +256,7 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
         address: sanitizeInput(formData.address),
         school_id: schoolId,
       };
-      
+
       await createStudent(createData);
 
       // Show success feedback
@@ -276,21 +283,22 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
 
       // Show specific error feedback based on error type
       let errorMessage = 'Erro ao criar aluno. Tente novamente.';
-      
+
       if (error.response?.status === 403) {
         errorMessage = 'Você não tem permissão para criar alunos nesta escola.';
       } else if (error.response?.status === 401) {
         errorMessage = 'Sua sessão expirou. Faça login novamente.';
       } else if (error.response?.status === 400) {
-        errorMessage = error.response?.data?.message || 
-                     error.response?.data?.detail || 
-                     'Dados inválidos. Verifique as informações fornecidas.';
+        errorMessage =
+          error.response?.data?.message ||
+          error.response?.data?.detail ||
+          'Dados inválidos. Verifique as informações fornecidas.';
       } else if (error.response?.status >= 500) {
         errorMessage = 'Erro interno do servidor. Tente novamente em alguns minutos.';
       } else if (error.response?.data?.message || error.response?.data?.detail) {
         errorMessage = error.response.data.message || error.response.data.detail;
       }
-      
+
       showToast('error', errorMessage);
     } finally {
       setIsSaving(false);
@@ -315,205 +323,216 @@ export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalP
   return (
     <AuthGuard requiredRoles={['school_owner', 'school_admin']}>
       <Modal isOpen={isOpen} onClose={handleClose} size="lg">
-      <ModalBackdrop />
-      <ModalContent>
-        <ModalHeader>
-          <Heading size="lg">Adicionar Novo Aluno</Heading>
-          <ModalCloseButton>
-            <Icon as={X} />
-          </ModalCloseButton>
-        </ModalHeader>
+        <ModalBackdrop />
+        <ModalContent>
+          <ModalHeader>
+            <Heading size="lg">Adicionar Novo Aluno</Heading>
+            <ModalCloseButton>
+              <Icon as={X} />
+            </ModalCloseButton>
+          </ModalHeader>
 
-        <ModalBody>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <VStack space="lg">
-              <Text className="text-gray-600">
-                Preencha as informações do aluno para criar um novo cadastro:
-              </Text>
-
-              {/* Name Field */}
-              <VStack space="xs">
-                <Text className="text-sm font-medium text-gray-700">Nome Completo *</Text>
-                <Input>
-                  <HStack className="items-center px-3">
-                    <Icon as={User} size="sm" className="text-gray-400" />
-                    <InputField
-                      placeholder="João Silva"
-                      value={formData.name}
-                      onChangeText={text => updateFormData('name', text)}
-                      className="flex-1 ml-2"
-                    />
-                  </HStack>
-                </Input>
-                {errors.name && <Text className="text-xs text-red-500">{errors.name}</Text>}
-              </VStack>
-
-              {/* Email Field */}
-              <VStack space="xs">
-                <Text className="text-sm font-medium text-gray-700">Email *</Text>
-                <Input>
-                  <HStack className="items-center px-3">
-                    <Icon as={Mail} size="sm" className="text-gray-400" />
-                    <InputField
-                      placeholder="joao.silva@example.com"
-                      value={formData.email}
-                      onChangeText={text => updateFormData('email', text)}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      className="flex-1 ml-2"
-                    />
-                  </HStack>
-                </Input>
-                {errors.email && <Text className="text-xs text-red-500">{errors.email}</Text>}
-              </VStack>
-
-              {/* Phone Field */}
-              <VStack space="xs">
-                <Text className="text-sm font-medium text-gray-700">Telefone *</Text>
-                <Input>
-                  <HStack className="items-center px-3">
-                    <Icon as={Phone} size="sm" className="text-gray-400" />
-                    <InputField
-                      placeholder="+351912345678"
-                      value={formData.phone_number}
-                      onChangeText={text => updateFormData('phone_number', text)}
-                      keyboardType="phone-pad"
-                      className="flex-1 ml-2"
-                    />
-                  </HStack>
-                </Input>
-                {errors.phone_number && (
-                  <Text className="text-xs text-red-500">{errors.phone_number}</Text>
-                )}
-              </VStack>
-
-              {/* School Year Field */}
-              <VStack space="xs">
-                <Text className="text-sm font-medium text-gray-700">Ano Escolar *</Text>
-                <Select
-                  selectedValue={formData.school_year}
-                  onValueChange={value => updateFormData('school_year', value)}
-                >
-                  <SelectTrigger>
-                    <HStack className="items-center px-3">
-                      <Icon as={GraduationCap} size="sm" className="text-gray-400" />
-                      <SelectInput placeholder="Selecione o ano escolar" className="flex-1 ml-2" />
-                    </HStack>
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent>
-                      <SelectDragIndicatorWrapper>
-                        <SelectDragIndicator />
-                      </SelectDragIndicatorWrapper>
-                      {SCHOOL_YEARS.map(year => (
-                        <SelectItem key={year} label={year} value={year} />
-                      ))}
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-                {errors.school_year && (
-                  <Text className="text-xs text-red-500">{errors.school_year}</Text>
-                )}
-              </VStack>
-
-              {/* Educational System Field */}
-              <VStack space="xs">
-                <Text className="text-sm font-medium text-gray-700">Sistema Educacional</Text>
-                <Select
-                  selectedValue={formData.educational_system_id?.toString()}
-                  onValueChange={value => updateFormData('educational_system_id', parseInt(value))}
-                >
-                  <SelectTrigger>
-                    <SelectInput placeholder="Selecione o sistema educacional" />
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent>
-                      <SelectDragIndicatorWrapper>
-                        <SelectDragIndicator />
-                      </SelectDragIndicatorWrapper>
-                      {educationalSystems.map(system => (
-                        <SelectItem key={system.id} label={system.name} value={system.id.toString()} />
-                      ))}
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-              </VStack>
-
-              {/* Birth Date Field */}
-              <VStack space="xs">
-                <Text className="text-sm font-medium text-gray-700">Data de Nascimento *</Text>
-                <Input>
-                  <HStack className="items-center px-3">
-                    <Icon as={Calendar} size="sm" className="text-gray-400" />
-                    <InputField
-                      placeholder="2005-06-15"
-                      value={formData.birth_date}
-                      onChangeText={text => updateFormData('birth_date', text)}
-                      className="flex-1 ml-2"
-                    />
-                  </HStack>
-                </Input>
-                <Text className="text-xs text-gray-500">Formato: AAAA-MM-DD</Text>
-                {errors.birth_date && (
-                  <Text className="text-xs text-red-500">{errors.birth_date}</Text>
-                )}
-              </VStack>
-
-              {/* Address Field */}
-              <VStack space="xs">
-                <Text className="text-sm font-medium text-gray-700">Endereço</Text>
-                <Input>
-                  <InputField
-                    placeholder="Rua, número, código postal e localidade"
-                    value={formData.address}
-                    onChangeText={text => updateFormData('address', text)}
-                    multiline
-                  />
-                </Input>
-              </VStack>
-
-              {/* Info Box */}
-              <Box className="rounded-lg p-3" style={{ backgroundColor: COLORS.gray[50] }}>
-                <Text className="text-sm text-gray-600">
-                  O aluno receberá um email com as instruções para acessar a plataforma.
+          <ModalBody>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <VStack space="lg">
+                <Text className="text-gray-600">
+                  Preencha as informações do aluno para criar um novo cadastro:
                 </Text>
-              </Box>
-            </VStack>
-          </ScrollView>
-        </ModalBody>
 
-        <ModalFooter>
-          <HStack space="sm" className="justify-end">
-            <Button 
-              variant="outline" 
-              onPress={handleClose} 
-              disabled={isSaving}
-              accessibilityLabel="Cancelar criação de aluno"
-              accessibilityHint="Toque para fechar o formulário sem salvar"
-            >
-              <ButtonText>Cancelar</ButtonText>
-            </Button>
-            <Button
-              onPress={handleSave}
-              disabled={isSaving}
-              style={{ backgroundColor: COLORS.primary }}
-              accessibilityLabel={isSaving ? "Salvando aluno..." : "Criar aluno"}
-              accessibilityHint={isSaving ? "Aguarde enquanto o aluno é criado" : "Toque para salvar o novo aluno"}
-            >
-              {isSaving ? (
-                <HStack space="xs" className="items-center">
-                  <Spinner size="small" />
-                  <ButtonText className="text-white">Salvando...</ButtonText>
-                </HStack>
-              ) : (
-                <ButtonText className="text-white">Criar Aluno</ButtonText>
-              )}
-            </Button>
-          </HStack>
-        </ModalFooter>
-      </ModalContent>
+                {/* Name Field */}
+                <VStack space="xs">
+                  <Text className="text-sm font-medium text-gray-700">Nome Completo *</Text>
+                  <Input>
+                    <HStack className="items-center px-3">
+                      <Icon as={User} size="sm" className="text-gray-400" />
+                      <InputField
+                        placeholder="João Silva"
+                        value={formData.name}
+                        onChangeText={text => updateFormData('name', text)}
+                        className="flex-1 ml-2"
+                      />
+                    </HStack>
+                  </Input>
+                  {errors.name && <Text className="text-xs text-red-500">{errors.name}</Text>}
+                </VStack>
+
+                {/* Email Field */}
+                <VStack space="xs">
+                  <Text className="text-sm font-medium text-gray-700">Email *</Text>
+                  <Input>
+                    <HStack className="items-center px-3">
+                      <Icon as={Mail} size="sm" className="text-gray-400" />
+                      <InputField
+                        placeholder="joao.silva@example.com"
+                        value={formData.email}
+                        onChangeText={text => updateFormData('email', text)}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        className="flex-1 ml-2"
+                      />
+                    </HStack>
+                  </Input>
+                  {errors.email && <Text className="text-xs text-red-500">{errors.email}</Text>}
+                </VStack>
+
+                {/* Phone Field */}
+                <VStack space="xs">
+                  <Text className="text-sm font-medium text-gray-700">Telefone *</Text>
+                  <Input>
+                    <HStack className="items-center px-3">
+                      <Icon as={Phone} size="sm" className="text-gray-400" />
+                      <InputField
+                        placeholder="+351912345678"
+                        value={formData.phone_number}
+                        onChangeText={text => updateFormData('phone_number', text)}
+                        keyboardType="phone-pad"
+                        className="flex-1 ml-2"
+                      />
+                    </HStack>
+                  </Input>
+                  {errors.phone_number && (
+                    <Text className="text-xs text-red-500">{errors.phone_number}</Text>
+                  )}
+                </VStack>
+
+                {/* School Year Field */}
+                <VStack space="xs">
+                  <Text className="text-sm font-medium text-gray-700">Ano Escolar *</Text>
+                  <Select
+                    selectedValue={formData.school_year}
+                    onValueChange={value => updateFormData('school_year', value)}
+                  >
+                    <SelectTrigger>
+                      <HStack className="items-center px-3">
+                        <Icon as={GraduationCap} size="sm" className="text-gray-400" />
+                        <SelectInput
+                          placeholder="Selecione o ano escolar"
+                          className="flex-1 ml-2"
+                        />
+                      </HStack>
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectBackdrop />
+                      <SelectContent>
+                        <SelectDragIndicatorWrapper>
+                          <SelectDragIndicator />
+                        </SelectDragIndicatorWrapper>
+                        {SCHOOL_YEARS.map(year => (
+                          <SelectItem key={year} label={year} value={year} />
+                        ))}
+                      </SelectContent>
+                    </SelectPortal>
+                  </Select>
+                  {errors.school_year && (
+                    <Text className="text-xs text-red-500">{errors.school_year}</Text>
+                  )}
+                </VStack>
+
+                {/* Educational System Field */}
+                <VStack space="xs">
+                  <Text className="text-sm font-medium text-gray-700">Sistema Educacional</Text>
+                  <Select
+                    selectedValue={formData.educational_system_id?.toString()}
+                    onValueChange={value =>
+                      updateFormData('educational_system_id', parseInt(value))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectInput placeholder="Selecione o sistema educacional" />
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectBackdrop />
+                      <SelectContent>
+                        <SelectDragIndicatorWrapper>
+                          <SelectDragIndicator />
+                        </SelectDragIndicatorWrapper>
+                        {educationalSystems.map(system => (
+                          <SelectItem
+                            key={system.id}
+                            label={system.name}
+                            value={system.id.toString()}
+                          />
+                        ))}
+                      </SelectContent>
+                    </SelectPortal>
+                  </Select>
+                </VStack>
+
+                {/* Birth Date Field */}
+                <VStack space="xs">
+                  <Text className="text-sm font-medium text-gray-700">Data de Nascimento *</Text>
+                  <Input>
+                    <HStack className="items-center px-3">
+                      <Icon as={Calendar} size="sm" className="text-gray-400" />
+                      <InputField
+                        placeholder="2005-06-15"
+                        value={formData.birth_date}
+                        onChangeText={text => updateFormData('birth_date', text)}
+                        className="flex-1 ml-2"
+                      />
+                    </HStack>
+                  </Input>
+                  <Text className="text-xs text-gray-500">Formato: AAAA-MM-DD</Text>
+                  {errors.birth_date && (
+                    <Text className="text-xs text-red-500">{errors.birth_date}</Text>
+                  )}
+                </VStack>
+
+                {/* Address Field */}
+                <VStack space="xs">
+                  <Text className="text-sm font-medium text-gray-700">Endereço</Text>
+                  <Input>
+                    <InputField
+                      placeholder="Rua, número, código postal e localidade"
+                      value={formData.address}
+                      onChangeText={text => updateFormData('address', text)}
+                      multiline
+                    />
+                  </Input>
+                </VStack>
+
+                {/* Info Box */}
+                <Box className="rounded-lg p-3" style={{ backgroundColor: COLORS.gray[50] }}>
+                  <Text className="text-sm text-gray-600">
+                    O aluno receberá um email com as instruções para acessar a plataforma.
+                  </Text>
+                </Box>
+              </VStack>
+            </ScrollView>
+          </ModalBody>
+
+          <ModalFooter>
+            <HStack space="sm" className="justify-end">
+              <Button
+                variant="outline"
+                onPress={handleClose}
+                disabled={isSaving}
+                accessibilityLabel="Cancelar criação de aluno"
+                accessibilityHint="Toque para fechar o formulário sem salvar"
+              >
+                <ButtonText>Cancelar</ButtonText>
+              </Button>
+              <Button
+                onPress={handleSave}
+                disabled={isSaving}
+                style={{ backgroundColor: COLORS.primary }}
+                accessibilityLabel={isSaving ? 'Salvando aluno...' : 'Criar aluno'}
+                accessibilityHint={
+                  isSaving ? 'Aguarde enquanto o aluno é criado' : 'Toque para salvar o novo aluno'
+                }
+              >
+                {isSaving ? (
+                  <HStack space="xs" className="items-center">
+                    <Spinner size="small" />
+                    <ButtonText className="text-white">Salvando...</ButtonText>
+                  </HStack>
+                ) : (
+                  <ButtonText className="text-white">Criar Aluno</ButtonText>
+                )}
+              </Button>
+            </HStack>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
     </AuthGuard>
   );

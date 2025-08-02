@@ -1,40 +1,49 @@
 /**
  * Transaction Management Screen - GitHub Issue #118
- * 
+ *
  * Administrative interface for searching, viewing, and managing transactions
  * including bulk actions, detailed investigation, and transaction lifecycle management.
  */
 
+import {
+  Search,
+  Filter,
+  Download,
+  RefreshCw,
+  AlertCircle,
+  Settings,
+  Plus,
+} from 'lucide-react-native';
 import React, { useEffect, useState, useCallback } from 'react';
 import { ScrollView } from 'react-native';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Heading } from '@/components/ui/heading';
-import { Text } from '@/components/ui/text';
-import { Box } from '@/components/ui/box';
-import { Button } from '@/components/ui/button';
-import { Icon } from '@/components/ui/icon';
-import { Spinner } from '@/components/ui/spinner';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Modal, ModalBackdrop, ModalContent } from '@/components/ui/modal';
-import { Search, Filter, Download, RefreshCw, AlertCircle, Settings, Plus } from 'lucide-react-native';
 
-// Import custom components (to be created)
-import TransactionSearchInterface from '@/components/payment-monitoring/TransactionSearchInterface';
-import TransactionManagementTable from '@/components/payment-monitoring/TransactionManagementTable';
-import TransactionDetailModal from '@/components/payment-monitoring/TransactionDetailModal';
+import { PaymentMonitoringApiClient } from '@/api/paymentMonitoringApi';
 import BulkActionModal from '@/components/payment-monitoring/BulkActionModal';
 import RefundConfirmationModal from '@/components/payment-monitoring/RefundConfirmationModal';
+import TransactionDetailModal from '@/components/payment-monitoring/TransactionDetailModal';
+import TransactionManagementTable from '@/components/payment-monitoring/TransactionManagementTable';
+import TransactionSearchInterface from '@/components/payment-monitoring/TransactionSearchInterface';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button } from '@/components/ui/button';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Modal, ModalBackdrop, ModalContent } from '@/components/ui/modal';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
+
+// Import custom components (to be created)
 
 // Import API and hooks
-import { PaymentMonitoringApiClient } from '@/api/paymentMonitoringApi';
 import { useTransactionWebSocket } from '@/hooks/usePaymentMonitoringWebSocket';
-import type { 
-  TransactionMonitoring, 
-  PaginatedTransactionMonitoring, 
+import type {
+  TransactionMonitoring,
+  PaginatedTransactionMonitoring,
   TransactionSearchFilters,
-  SavedSearch 
+  SavedSearch,
 } from '@/types/paymentMonitoring';
 
 interface TransactionManagementState {
@@ -112,12 +121,12 @@ export default function TransactionManagement() {
   useEffect(() => {
     if (transactionUpdates.length > 0 && transactions) {
       const updatedTransactions = { ...transactions };
-      
+
       transactionUpdates.forEach(update => {
         const existingIndex = updatedTransactions.results.findIndex(
           t => t.id === update.transaction.id
         );
-        
+
         if (update.action === 'created') {
           if (existingIndex === -1) {
             updatedTransactions.results.unshift(update.transaction);
@@ -129,7 +138,7 @@ export default function TransactionManagement() {
           }
         }
       });
-      
+
       setTransactions(updatedTransactions);
       clearUpdates();
     }
@@ -200,44 +209,47 @@ export default function TransactionManagement() {
   }, []);
 
   // Process bulk action
-  const processBulkAction = useCallback(async (action: string, options: any) => {
-    try {
-      setActionLoading(true);
-      
-      // Process each selected transaction
-      const promises = state.selectedTransactions.map(async (transactionId) => {
-        switch (action) {
-          case 'refund':
-            return PaymentMonitoringApiClient.processRefund({
-              payment_intent_id: transactionId,
-              reason: options.reason,
-              reason_description: options.description,
-              notify_customer: options.notifyCustomer,
-            });
-          case 'retry':
-            return PaymentMonitoringApiClient.retryPayment({
-              payment_intent_id: transactionId,
-              retry_strategy: options.strategy,
-            });
-          // Add more bulk actions as needed
-          default:
-            throw new Error(`Unknown bulk action: ${action}`);
-        }
-      });
+  const processBulkAction = useCallback(
+    async (action: string, options: any) => {
+      try {
+        setActionLoading(true);
 
-      await Promise.all(promises);
-      
-      // Refresh data and clear selection
-      loadTransactions();
-      clearSelection();
-      setModalState(prev => ({ ...prev, bulkActionModal: false }));
-    } catch (err: any) {
-      console.error('Error processing bulk action:', err);
-      setError(err.message || 'Failed to process bulk action');
-    } finally {
-      setActionLoading(false);
-    }
-  }, [state.selectedTransactions, clearSelection]);
+        // Process each selected transaction
+        const promises = state.selectedTransactions.map(async transactionId => {
+          switch (action) {
+            case 'refund':
+              return PaymentMonitoringApiClient.processRefund({
+                payment_intent_id: transactionId,
+                reason: options.reason,
+                reason_description: options.description,
+                notify_customer: options.notifyCustomer,
+              });
+            case 'retry':
+              return PaymentMonitoringApiClient.retryPayment({
+                payment_intent_id: transactionId,
+                retry_strategy: options.strategy,
+              });
+            // Add more bulk actions as needed
+            default:
+              throw new Error(`Unknown bulk action: ${action}`);
+          }
+        });
+
+        await Promise.all(promises);
+
+        // Refresh data and clear selection
+        loadTransactions();
+        clearSelection();
+        setModalState(prev => ({ ...prev, bulkActionModal: false }));
+      } catch (err: any) {
+        console.error('Error processing bulk action:', err);
+        setError(err.message || 'Failed to process bulk action');
+      } finally {
+        setActionLoading(false);
+      }
+    },
+    [state.selectedTransactions, clearSelection]
+  );
 
   // Handle pagination
   const handlePageChange = useCallback((page: number) => {
@@ -294,7 +306,7 @@ export default function TransactionManagement() {
                   <Text size="xs">Live updates</Text>
                 </Badge>
               )}
-              
+
               {transactions && (
                 <Text size="sm" className="text-typography-500">
                   {transactions.count.toLocaleString()} total transactions
@@ -310,42 +322,27 @@ export default function TransactionManagement() {
                 <Badge variant="secondary">
                   <Text size="xs">{state.selectedTransactions.length} selected</Text>
                 </Badge>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={() => handleBulkAction('refund')}
-                >
+
+                <Button variant="outline" size="sm" onPress={() => handleBulkAction('refund')}>
                   <Text size="sm">Refund</Text>
                 </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={() => handleBulkAction('retry')}
-                >
+
+                <Button variant="outline" size="sm" onPress={() => handleBulkAction('retry')}>
                   <Text size="sm">Retry</Text>
                 </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={clearSelection}
-                >
+
+                <Button variant="outline" size="sm" onPress={clearSelection}>
                   <Text size="sm">Clear</Text>
                 </Button>
               </HStack>
             )}
 
             {/* Export */}
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={handleExport}
-              disabled={actionLoading}
-            >
+            <Button variant="outline" size="sm" onPress={handleExport} disabled={actionLoading}>
               <Icon as={Download} size="xs" />
-              <Text size="sm" className="ml-1">Export</Text>
+              <Text size="sm" className="ml-1">
+                Export
+              </Text>
             </Button>
 
             {/* Refresh */}
@@ -401,14 +398,14 @@ export default function TransactionManagement() {
       </VStack>
 
       {/* Modals */}
-      
+
       {/* Transaction Detail Modal */}
       <TransactionDetailModal
         transaction={modalState.transactionDetail}
         isOpen={!!modalState.transactionDetail}
         onClose={() => setModalState(prev => ({ ...prev, transactionDetail: null }))}
         onRefund={handleRefundRequest}
-        onRetry={(transaction) => {
+        onRetry={transaction => {
           // Handle retry action
           console.log('Retry transaction:', transaction.id);
         }}
@@ -431,7 +428,7 @@ export default function TransactionManagement() {
         transaction={modalState.refundConfirmation}
         isOpen={!!modalState.refundConfirmation}
         onClose={() => setModalState(prev => ({ ...prev, refundConfirmation: null }))}
-        onConfirm={async (request) => {
+        onConfirm={async request => {
           try {
             setActionLoading(true);
             await PaymentMonitoringApiClient.processRefund(request);

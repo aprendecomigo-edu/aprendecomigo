@@ -1,40 +1,41 @@
 /**
  * Custom hook for managing student dashboard data and state.
- * 
+ *
  * Provides centralized state management for dashboard tabs, filters,
  * search functionality, and data fetching across all dashboard sections.
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
+
 import { PurchaseApiClient } from '@/api/purchaseApi';
-import type { 
+import type {
   DashboardState,
   TransactionFilterOptions,
   PurchaseFilterOptions,
   PaginatedTransactionHistory,
   PaginatedPurchaseHistory,
-  StudentBalanceResponse
+  StudentBalanceResponse,
 } from '@/types/purchase';
 
 interface UseStudentDashboardResult {
   // Dashboard state
   state: DashboardState;
-  
+
   // Balance data
   balance: StudentBalanceResponse | null;
   balanceLoading: boolean;
   balanceError: string | null;
-  
+
   // Transaction history
   transactions: PaginatedTransactionHistory | null;
   transactionsLoading: boolean;
   transactionsError: string | null;
-  
+
   // Purchase history
   purchases: PaginatedPurchaseHistory | null;
   purchasesLoading: boolean;
   purchasesError: string | null;
-  
+
   // Actions
   actions: {
     setActiveTab: (tab: DashboardState['activeTab']) => void;
@@ -83,16 +84,16 @@ export function useStudentDashboard(email?: string): UseStudentDashboardResult {
   }, []);
 
   const setTransactionFilters = useCallback((filters: Partial<TransactionFilterOptions>) => {
-    setState(prev => ({ 
-      ...prev, 
-      transactionFilters: { ...prev.transactionFilters, ...filters }
+    setState(prev => ({
+      ...prev,
+      transactionFilters: { ...prev.transactionFilters, ...filters },
     }));
   }, []);
 
   const setPurchaseFilters = useCallback((filters: Partial<PurchaseFilterOptions>) => {
-    setState(prev => ({ 
-      ...prev, 
-      purchaseFilters: { ...prev.purchaseFilters, ...filters }
+    setState(prev => ({
+      ...prev,
+      purchaseFilters: { ...prev.purchaseFilters, ...filters },
     }));
   }, []);
 
@@ -102,12 +103,12 @@ export function useStudentDashboard(email?: string): UseStudentDashboardResult {
 
   // Debounced search query for API calls
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(state.searchQuery);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(state.searchQuery);
     }, 300);
-    
+
     return () => clearTimeout(timer);
   }, [state.searchQuery]);
 
@@ -129,98 +130,108 @@ export function useStudentDashboard(email?: string): UseStudentDashboardResult {
   }, [email]);
 
   // Fetch transaction history
-  const refreshTransactions = useCallback(async (page = 1) => {
-    setTransactionsLoading(true);
-    setTransactionsError(null);
+  const refreshTransactions = useCallback(
+    async (page = 1) => {
+      setTransactionsLoading(true);
+      setTransactionsError(null);
 
-    try {
-      const options = {
-        ...state.transactionFilters,
-        page,
-        page_size: 20,
-        email,
-      };
+      try {
+        const options = {
+          ...state.transactionFilters,
+          page,
+          page_size: 20,
+          email,
+        };
 
-      // Add search to filters if present
-      if (debouncedSearchQuery.trim()) {
-        options.search = debouncedSearchQuery.trim();
-      }
+        // Add search to filters if present
+        if (debouncedSearchQuery.trim()) {
+          options.search = debouncedSearchQuery.trim();
+        }
 
-      const transactionData = await PurchaseApiClient.getTransactionHistory(options);
-      
-      if (page === 1) {
-        setTransactions(transactionData);
-      } else {
-        // Append to existing data for pagination
-        setTransactions(prev => prev ? {
-          ...transactionData,
-          results: [...prev.results, ...transactionData.results]
-        } : transactionData);
+        const transactionData = await PurchaseApiClient.getTransactionHistory(options);
+
+        if (page === 1) {
+          setTransactions(transactionData);
+        } else {
+          // Append to existing data for pagination
+          setTransactions(prev =>
+            prev
+              ? {
+                  ...transactionData,
+                  results: [...prev.results, ...transactionData.results],
+                }
+              : transactionData
+          );
+        }
+      } catch (error: any) {
+        console.error('Error fetching transactions:', error);
+        setTransactionsError(error.message || 'Failed to load transaction history');
+        if (page === 1) {
+          setTransactions(null);
+        }
+      } finally {
+        setTransactionsLoading(false);
       }
-    } catch (error: any) {
-      console.error('Error fetching transactions:', error);
-      setTransactionsError(error.message || 'Failed to load transaction history');
-      if (page === 1) {
-        setTransactions(null);
-      }
-    } finally {
-      setTransactionsLoading(false);
-    }
-  }, [state.transactionFilters, debouncedSearchQuery, email]);
+    },
+    [state.transactionFilters, debouncedSearchQuery, email]
+  );
 
   // Fetch purchase history
-  const refreshPurchases = useCallback(async (page = 1) => {
-    setPurchasesLoading(true);
-    setPurchasesError(null);
+  const refreshPurchases = useCallback(
+    async (page = 1) => {
+      setPurchasesLoading(true);
+      setPurchasesError(null);
 
-    try {
-      const options = {
-        ...state.purchaseFilters,
-        page,
-        page_size: 20,
-        email,
-      };
+      try {
+        const options = {
+          ...state.purchaseFilters,
+          page,
+          page_size: 20,
+          email,
+        };
 
-      // Add search to filters if present
-      if (debouncedSearchQuery.trim()) {
-        options.search = debouncedSearchQuery.trim();
-      }
+        // Add search to filters if present
+        if (debouncedSearchQuery.trim()) {
+          options.search = debouncedSearchQuery.trim();
+        }
 
-      const purchaseData = await PurchaseApiClient.getPurchaseHistory(options);
-      
-      if (page === 1) {
-        setPurchases(purchaseData);
-      } else {
-        // Append to existing data for pagination
-        setPurchases(prev => prev ? {
-          ...purchaseData,
-          results: [...prev.results, ...purchaseData.results]
-        } : purchaseData);
+        const purchaseData = await PurchaseApiClient.getPurchaseHistory(options);
+
+        if (page === 1) {
+          setPurchases(purchaseData);
+        } else {
+          // Append to existing data for pagination
+          setPurchases(prev =>
+            prev
+              ? {
+                  ...purchaseData,
+                  results: [...prev.results, ...purchaseData.results],
+                }
+              : purchaseData
+          );
+        }
+      } catch (error: any) {
+        console.error('Error fetching purchases:', error);
+        setPurchasesError(error.message || 'Failed to load purchase history');
+        if (page === 1) {
+          setPurchases(null);
+        }
+      } finally {
+        setPurchasesLoading(false);
       }
-    } catch (error: any) {
-      console.error('Error fetching purchases:', error);
-      setPurchasesError(error.message || 'Failed to load purchase history');
-      if (page === 1) {
-        setPurchases(null);
-      }
-    } finally {
-      setPurchasesLoading(false);
-    }
-  }, [state.purchaseFilters, debouncedSearchQuery, email]);
+    },
+    [state.purchaseFilters, debouncedSearchQuery, email]
+  );
 
   // Refresh all data
   const refreshAll = useCallback(async () => {
-    await Promise.all([
-      refreshBalance(),
-      refreshTransactions(1),
-      refreshPurchases(1),
-    ]);
+    await Promise.all([refreshBalance(), refreshTransactions(1), refreshPurchases(1)]);
   }, [refreshBalance, refreshTransactions, refreshPurchases]);
 
   // Load more data for pagination
   const loadMoreTransactions = useCallback(async () => {
     if (!transactions?.next || transactionsLoading) return;
-    
+
     // Calculate next page from URL or increment current page
     const currentPage = Math.ceil(transactions.results.length / 20);
     await refreshTransactions(currentPage + 1);
@@ -228,7 +239,7 @@ export function useStudentDashboard(email?: string): UseStudentDashboardResult {
 
   const loadMorePurchases = useCallback(async () => {
     if (!purchases?.next || purchasesLoading) return;
-    
+
     // Calculate next page from URL or increment current page
     const currentPage = Math.ceil(purchases.results.length / 20);
     await refreshPurchases(currentPage + 1);

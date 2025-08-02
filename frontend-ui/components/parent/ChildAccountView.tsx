@@ -1,13 +1,12 @@
 /**
  * ChildAccountView Component
- * 
+ *
  * Detailed view of a specific child's account showing their progress,
  * balance, activity history, and parent management options.
  */
 
-import React, { useMemo } from 'react';
-import { Platform, RefreshControl } from 'react-native';
-import { 
+import useRouter from '@unitools/router';
+import {
   ArrowLeft,
   User,
   CreditCard,
@@ -17,9 +16,12 @@ import {
   TrendingUp,
   Clock,
   Activity,
-  Shield
+  Shield,
 } from 'lucide-react-native';
-import useRouter from '@unitools/router';
+import React, { useMemo } from 'react';
+import { Platform, RefreshControl } from 'react-native';
+
+import { BudgetControlSettings } from './BudgetControlSettings';
 
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
@@ -34,30 +36,20 @@ import { ScrollView } from '@/components/ui/scroll-view';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
 import { useChildAccount } from '@/hooks/useChildAccount';
-import { BudgetControlSettings } from './BudgetControlSettings';
 
 interface ChildAccountViewProps {
   childId: string;
 }
 
-export const ChildAccountView: React.FC<ChildAccountViewProps> = ({
-  childId,
-}) => {
+export const ChildAccountView: React.FC<ChildAccountViewProps> = ({ childId }) => {
   const router = useRouter();
-  const {
-    childData,
-    isLoading,
-    error,
-    isRefreshing,
-    actions
-  } = useChildAccount(childId);
+  const { childData, isLoading, error, isRefreshing, actions } = useChildAccount(childId);
 
   // Memoized child status
   const childStatus = useMemo(() => {
     if (!childData.balance) return 'inactive';
-    
+
     const balance = parseFloat(childData.balance.current_balance || '0');
     if (balance <= 0) return 'low_balance';
     if (balance < 5) return 'warning';
@@ -104,9 +96,7 @@ export const ChildAccountView: React.FC<ChildAccountViewProps> = ({
       <SafeAreaView className="flex-1 bg-gray-50">
         <VStack className="flex-1 justify-center items-center p-6">
           <Spinner size="large" color="#3b82f6" />
-          <Text className="mt-4 text-gray-600 text-center">
-            Loading child account...
-          </Text>
+          <Text className="mt-4 text-gray-600 text-center">Loading child account...</Text>
         </VStack>
       </SafeAreaView>
     );
@@ -120,14 +110,8 @@ export const ChildAccountView: React.FC<ChildAccountViewProps> = ({
           <Heading size="lg" className="text-gray-900 text-center mb-2">
             Unable to Load Account
           </Heading>
-          <Text className="text-gray-600 text-center mb-6">
-            {error}
-          </Text>
-          <Button 
-            action="primary" 
-            onPress={actions.refreshChildData}
-            className="w-full max-w-xs"
-          >
+          <Text className="text-gray-600 text-center mb-6">{error}</Text>
+          <Button action="primary" onPress={actions.refreshChildData} className="w-full max-w-xs">
             <ButtonText>Try Again</ButtonText>
           </Button>
         </VStack>
@@ -152,30 +136,23 @@ export const ChildAccountView: React.FC<ChildAccountViewProps> = ({
         <VStack className="bg-white border-b border-gray-200 px-4 py-6">
           <HStack className="justify-between items-center mb-4">
             <HStack className="flex-1 space-x-3">
-              <Pressable 
+              <Pressable
                 onPress={() => router.back()}
                 className="items-center justify-center w-10 h-10 rounded-full bg-gray-100 active:bg-gray-200"
               >
                 <Icon as={ArrowLeft} size={20} className="text-gray-600" />
               </Pressable>
-              
+
               <VStack className="flex-1">
                 <Heading size="xl" className="text-gray-900">
                   {childData.profile?.child_user.name || 'Child Account'}
                 </Heading>
-                <Text className="text-gray-600">
-                  {childData.profile?.child_user.email}
-                </Text>
+                <Text className="text-gray-600">{childData.profile?.child_user.email}</Text>
               </VStack>
             </HStack>
-            
-            <Badge 
-              variant="solid" 
-              action={statusInfo.badgeAction}
-            >
-              <Text className="text-xs font-medium">
-                {statusInfo.label}
-              </Text>
+
+            <Badge variant="solid" action={statusInfo.badgeAction}>
+              <Text className="text-xs font-medium">{statusInfo.label}</Text>
             </Badge>
           </HStack>
         </VStack>
@@ -195,9 +172,7 @@ export const ChildAccountView: React.FC<ChildAccountViewProps> = ({
                   {/* Balance Info */}
                   <HStack className="justify-between items-center p-4 bg-blue-50 rounded-lg">
                     <VStack>
-                      <Text className="text-sm text-blue-700 font-medium">
-                        Current Balance
-                      </Text>
+                      <Text className="text-sm text-blue-700 font-medium">Current Balance</Text>
                       <Text className="text-2xl font-bold text-blue-900">
                         {Math.floor(parseFloat(childData.balance.current_balance || '0'))}h
                       </Text>
@@ -214,7 +189,7 @@ export const ChildAccountView: React.FC<ChildAccountViewProps> = ({
                       </Text>
                       <Text className="text-xs text-gray-600">This Month</Text>
                     </VStack>
-                    
+
                     <VStack className="flex-1 items-center p-3 bg-gray-50 rounded-lg">
                       <Icon as={Activity} size={20} className="text-gray-600 mb-1" />
                       <Text className="text-sm font-medium text-gray-900">
@@ -222,7 +197,7 @@ export const ChildAccountView: React.FC<ChildAccountViewProps> = ({
                       </Text>
                       <Text className="text-xs text-gray-600">Transactions</Text>
                     </VStack>
-                    
+
                     <VStack className="flex-1 items-center p-3 bg-gray-50 rounded-lg">
                       <Icon as={TrendingUp} size={20} className="text-gray-600 mb-1" />
                       <Text className="text-sm font-medium text-gray-900">
@@ -273,9 +248,13 @@ export const ChildAccountView: React.FC<ChildAccountViewProps> = ({
                           </Text>
                         </VStack>
                       </HStack>
-                      <Text className={`text-sm font-medium ${
-                        transaction.transaction_type === 'debit' ? 'text-red-600' : 'text-green-600'
-                      }`}>
+                      <Text
+                        className={`text-sm font-medium ${
+                          transaction.transaction_type === 'debit'
+                            ? 'text-red-600'
+                            : 'text-green-600'
+                        }`}
+                      >
                         {transaction.transaction_type === 'debit' ? '-' : '+'}
                         {transaction.hours}h
                       </Text>
@@ -302,7 +281,10 @@ export const ChildAccountView: React.FC<ChildAccountViewProps> = ({
               <CardContent>
                 <VStack className="space-y-3">
                   {childData.purchaseHistory.slice(0, 3).map((purchase, index) => (
-                    <HStack key={index} className="justify-between items-center py-3 border-b border-gray-100 last:border-b-0">
+                    <HStack
+                      key={index}
+                      className="justify-between items-center py-3 border-b border-gray-100 last:border-b-0"
+                    >
                       <HStack className="flex-1 space-x-3">
                         <VStack className="w-8 h-8 bg-green-100 rounded-full items-center justify-center">
                           <Icon as={CreditCard} size={14} className="text-green-600" />
@@ -320,9 +302,7 @@ export const ChildAccountView: React.FC<ChildAccountViewProps> = ({
                         <Text className="text-sm font-medium text-gray-900">
                           €{purchase.amount}
                         </Text>
-                        <Text className="text-xs text-green-600">
-                          +{purchase.hours_purchased}h
-                        </Text>
+                        <Text className="text-xs text-green-600">+{purchase.hours_purchased}h</Text>
                       </VStack>
                     </HStack>
                   ))}

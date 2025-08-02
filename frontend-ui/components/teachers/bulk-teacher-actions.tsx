@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { 
+import {
   Users,
   Mail,
   Activity,
@@ -11,30 +10,30 @@ import {
   Send,
   FileDown,
   Settings,
-  MessageSquare
+  MessageSquare,
 } from 'lucide-react-native';
-
-import { Box } from '@/components/ui/box';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Pressable } from '@/components/ui/pressable';
-import { Modal } from '@/components/ui/modal';
-import { Heading } from '@/components/ui/heading';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
-import { FormControl } from '@/components/ui/form-control';
-import { Spinner } from '@/components/ui/spinner';
-import { ScrollView } from '@/components/ui/scroll-view';
-import { Badge } from '@/components/ui/badge';
-import { Divider } from '@/components/ui/divider';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Progress } from '@/components/ui/progress';
+import React, { useState, useEffect } from 'react';
 
 import { TeacherProfile, TeacherMessageTemplate } from '@/api/userApi';
+import { Badge } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Divider } from '@/components/ui/divider';
+import { FormControl } from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Icon } from '@/components/ui/icon';
+import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
+import { Pressable } from '@/components/ui/pressable';
+import { Progress } from '@/components/ui/progress';
+import { ScrollView } from '@/components/ui/scroll-view';
+import { Select } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { Textarea } from '@/components/ui/textarea';
+import { VStack } from '@/components/ui/vstack';
 import { useBulkTeacherActions } from '@/hooks/useBulkTeacherActions';
 
 interface BulkTeacherActionsProps {
@@ -72,23 +71,25 @@ const MESSAGE_TEMPLATES = [
     id: 'profile_completion_reminder',
     name: 'Lembrete de Perfil',
     subject: 'Complete seu perfil na plataforma',
-    content: 'Olá {{name}}, notamos que seu perfil ainda não está completo. Complete as informações para melhorar sua visibilidade para os estudantes.',
-    variables: ['name', 'completion_percentage', 'missing_fields']
+    content:
+      'Olá {{name}}, notamos que seu perfil ainda não está completo. Complete as informações para melhorar sua visibilidade para os estudantes.',
+    variables: ['name', 'completion_percentage', 'missing_fields'],
   },
   {
     id: 'welcome_onboarding',
     name: 'Boas-vindas',
     subject: 'Bem-vindo à nossa plataforma!',
-    content: 'Olá {{name}}, seja bem-vindo à nossa plataforma! Estamos animados para tê-lo conosco.',
-    variables: ['name', 'school_name']
+    content:
+      'Olá {{name}}, seja bem-vindo à nossa plataforma! Estamos animados para tê-lo conosco.',
+    variables: ['name', 'school_name'],
   },
   {
     id: 'custom',
     name: 'Mensagem Personalizada',
     subject: '',
     content: '',
-    variables: ['name', 'email']
-  }
+    variables: ['name', 'email'],
+  },
 ];
 
 const EXPORT_FIELDS = [
@@ -109,26 +110,26 @@ export const BulkTeacherActions: React.FC<BulkTeacherActionsProps> = ({
   selectedTeachers,
   teachers,
   onClearSelection,
-  onActionComplete
+  onActionComplete,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [currentAction, setCurrentAction] = useState<ActionType | null>(null);
-  
+
   // Form states
   const [messageForm, setMessageForm] = useState<MessageFormData>({
     template: '',
     customMessage: '',
-    subject: ''
+    subject: '',
   });
-  
+
   const [statusForm, setStatusForm] = useState<StatusFormData>({
     status: 'active',
-    reason: ''
+    reason: '',
   });
-  
+
   const [exportForm, setExportForm] = useState<ExportFormData>({
     fields: EXPORT_FIELDS.filter(f => f.default).map(f => f.id),
-    format: 'csv'
+    format: 'csv',
   });
 
   const {
@@ -142,7 +143,7 @@ export const BulkTeacherActions: React.FC<BulkTeacherActionsProps> = ({
     getSuccessRate,
     hasErrors,
     getErrorMessages,
-    clearResult
+    clearResult,
   } = useBulkTeacherActions();
 
   const selectedTeacherData = teachers.filter(t => selectedTeachers.includes(t.id));
@@ -196,54 +197,44 @@ export const BulkTeacherActions: React.FC<BulkTeacherActionsProps> = ({
         return (
           <VStack space="lg">
             <FormControl>
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                Modelo de Mensagem
-              </Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Modelo de Mensagem</Text>
               <Select
                 selectedValue={messageForm.template}
-                onValueChange={(value) => {
+                onValueChange={value => {
                   const template = MESSAGE_TEMPLATES.find(t => t.id === value);
                   setMessageForm(prev => ({
                     ...prev,
                     template: value,
                     subject: template?.subject || '',
-                    customMessage: template?.content || ''
+                    customMessage: template?.content || '',
                   }));
                 }}
               >
                 {MESSAGE_TEMPLATES.map(template => (
-                  <Select.Item 
-                    key={template.id} 
-                    value={template.id} 
-                    label={template.name} 
-                  />
+                  <Select.Item key={template.id} value={template.id} label={template.name} />
                 ))}
               </Select>
             </FormControl>
 
             <FormControl>
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                Assunto
-              </Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Assunto</Text>
               <Input
                 value={messageForm.subject}
-                onChangeText={(value) => setMessageForm(prev => ({ ...prev, subject: value }))}
+                onChangeText={value => setMessageForm(prev => ({ ...prev, subject: value }))}
                 placeholder="Assunto da mensagem"
               />
             </FormControl>
 
             <FormControl>
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                Mensagem
-              </Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Mensagem</Text>
               <Textarea
                 value={messageForm.customMessage}
-                onChangeText={(value) => setMessageForm(prev => ({ ...prev, customMessage: value }))}
+                onChangeText={value => setMessageForm(prev => ({ ...prev, customMessage: value }))}
                 placeholder="Digite sua mensagem aqui..."
                 numberOfLines={6}
               />
               <Text className="text-xs text-gray-500 mt-1">
-                Use {{name}} para incluir o nome do professor
+                Use {{ name }} para incluir o nome do professor
               </Text>
             </FormControl>
 
@@ -260,12 +251,10 @@ export const BulkTeacherActions: React.FC<BulkTeacherActionsProps> = ({
         return (
           <VStack space="lg">
             <FormControl>
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                Novo Status
-              </Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Novo Status</Text>
               <Select
                 selectedValue={statusForm.status}
-                onValueChange={(value) => setStatusForm(prev => ({ ...prev, status: value as any }))}
+                onValueChange={value => setStatusForm(prev => ({ ...prev, status: value as any }))}
               >
                 <Select.Item value="active" label="Ativo" />
                 <Select.Item value="inactive" label="Inativo" />
@@ -274,12 +263,10 @@ export const BulkTeacherActions: React.FC<BulkTeacherActionsProps> = ({
             </FormControl>
 
             <FormControl>
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                Motivo (opcional)
-              </Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Motivo (opcional)</Text>
               <Textarea
                 value={statusForm.reason}
-                onChangeText={(value) => setStatusForm(prev => ({ ...prev, reason: value }))}
+                onChangeText={value => setStatusForm(prev => ({ ...prev, reason: value }))}
                 placeholder="Motivo da alteração de status..."
                 numberOfLines={3}
               />
@@ -298,21 +285,19 @@ export const BulkTeacherActions: React.FC<BulkTeacherActionsProps> = ({
         return (
           <VStack space="lg">
             <FormControl>
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                Campos para Exportar
-              </Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Campos para Exportar</Text>
               <VStack space="sm">
                 {EXPORT_FIELDS.map(field => (
                   <HStack key={field.id} className="items-center justify-between">
                     <Text className="text-sm text-gray-700">{field.label}</Text>
                     <Checkbox
                       value={exportForm.fields.includes(field.id)}
-                      onValueChange={(checked) => {
+                      onValueChange={checked => {
                         setExportForm(prev => ({
                           ...prev,
-                          fields: checked 
+                          fields: checked
                             ? [...prev.fields, field.id]
-                            : prev.fields.filter(f => f !== field.id)
+                            : prev.fields.filter(f => f !== field.id),
                         }));
                       }}
                     />
@@ -322,12 +307,10 @@ export const BulkTeacherActions: React.FC<BulkTeacherActionsProps> = ({
             </FormControl>
 
             <FormControl>
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                Formato
-              </Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Formato</Text>
               <Select
                 selectedValue={exportForm.format}
-                onValueChange={(value) => setExportForm(prev => ({ ...prev, format: value as any }))}
+                onValueChange={value => setExportForm(prev => ({ ...prev, format: value as any }))}
               >
                 <Select.Item value="csv" label="CSV" />
                 <Select.Item value="xlsx" label="Excel (XLSX)" />
@@ -360,34 +343,23 @@ export const BulkTeacherActions: React.FC<BulkTeacherActionsProps> = ({
           <HStack className="items-center" space="sm">
             <Icon as={Users} size="sm" className="text-blue-600" />
             <Text className="font-medium text-gray-900">
-              {selectedTeachers.length} professor{selectedTeachers.length > 1 ? 'es' : ''} selecionado{selectedTeachers.length > 1 ? 's' : ''}
+              {selectedTeachers.length} professor{selectedTeachers.length > 1 ? 'es' : ''}{' '}
+              selecionado{selectedTeachers.length > 1 ? 's' : ''}
             </Text>
           </HStack>
 
           <HStack space="sm">
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => handleActionStart('message')}
-            >
+            <Button variant="outline" size="sm" onPress={() => handleActionStart('message')}>
               <Icon as={Mail} size="sm" className="text-gray-600" />
               <ButtonText className="text-gray-600 ml-1">Mensagem</ButtonText>
             </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => handleActionStart('status')}
-            >
+            <Button variant="outline" size="sm" onPress={() => handleActionStart('status')}>
               <Icon as={Activity} size="sm" className="text-gray-600" />
               <ButtonText className="text-gray-600 ml-1">Status</ButtonText>
             </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => handleActionStart('export')}
-            >
+            <Button variant="outline" size="sm" onPress={() => handleActionStart('export')}>
               <Icon as={Download} size="sm" className="text-gray-600" />
               <ButtonText className="text-gray-600 ml-1">Exportar</ButtonText>
             </Button>
@@ -416,10 +388,11 @@ export const BulkTeacherActions: React.FC<BulkTeacherActionsProps> = ({
                   {currentAction === 'profile' && 'Atualizar Perfis'}
                 </Heading>
                 <Text className="text-sm text-gray-600">
-                  Ação será aplicada a {selectedTeachers.length} professor{selectedTeachers.length > 1 ? 'es' : ''}
+                  Ação será aplicada a {selectedTeachers.length} professor
+                  {selectedTeachers.length > 1 ? 'es' : ''}
                 </Text>
               </VStack>
-              
+
               <Pressable onPress={() => setShowModal(false)} className="p-2 -mr-2">
                 <Icon as={X} size="md" className="text-gray-500" />
               </Pressable>
@@ -458,35 +431,44 @@ export const BulkTeacherActions: React.FC<BulkTeacherActionsProps> = ({
 
             {/* Result Display */}
             {lastResult && !loading && (
-              <Box className={`p-4 border rounded-lg ${
-                lastResult.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-              }`}>
+              <Box
+                className={`p-4 border rounded-lg ${
+                  lastResult.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                }`}
+              >
                 <HStack space="sm" className="items-start">
-                  <Icon 
-                    as={lastResult.success ? CheckCircle : AlertCircle} 
-                    size="sm" 
-                    className={lastResult.success ? 'text-green-600 mt-1' : 'text-red-600 mt-1'} 
+                  <Icon
+                    as={lastResult.success ? CheckCircle : AlertCircle}
+                    size="sm"
+                    className={lastResult.success ? 'text-green-600 mt-1' : 'text-red-600 mt-1'}
                   />
                   <VStack className="flex-1">
-                    <Text className={`text-sm font-medium ${
-                      lastResult.success ? 'text-green-800' : 'text-red-800'
-                    }`}>
+                    <Text
+                      className={`text-sm font-medium ${
+                        lastResult.success ? 'text-green-800' : 'text-red-800'
+                      }`}
+                    >
                       {lastResult.success ? 'Ação concluída' : 'Ação parcialmente concluída'}
                     </Text>
-                    <Text className={`text-xs ${
-                      lastResult.success ? 'text-green-700' : 'text-red-700'
-                    }`}>
-                      {lastResult.successful_count} de {lastResult.total_processed} processados com sucesso
+                    <Text
+                      className={`text-xs ${
+                        lastResult.success ? 'text-green-700' : 'text-red-700'
+                      }`}
+                    >
+                      {lastResult.successful_count} de {lastResult.total_processed} processados com
+                      sucesso
                     </Text>
-                    
+
                     {hasErrors() && (
                       <VStack space="xs" className="mt-2">
                         <Text className="text-xs font-medium text-red-700">Erros:</Text>
-                        {getErrorMessages().slice(0, 3).map((error, index) => (
-                          <Text key={index} className="text-xs text-red-600">
-                            • {error}
-                          </Text>
-                        ))}
+                        {getErrorMessages()
+                          .slice(0, 3)
+                          .map((error, index) => (
+                            <Text key={index} className="text-xs text-red-600">
+                              • {error}
+                            </Text>
+                          ))}
                       </VStack>
                     )}
 

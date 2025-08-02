@@ -1,7 +1,12 @@
 import { type LucideIcon } from 'lucide-react-native';
 
 // Re-export existing types for backward compatibility
-export type { NavigationItem, SidebarItem, BottomTabItem, School } from '@/components/navigation/navigation-config';
+export type {
+  NavigationItem,
+  SidebarItem,
+  BottomTabItem,
+  School,
+} from '@/components/navigation/navigation-config';
 
 // New types for enhanced navigation features
 

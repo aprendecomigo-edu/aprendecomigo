@@ -10,10 +10,10 @@ export { OnboardingSuccessScreen } from './onboarding-success-screen';
 // Export types
 export type { Course } from './course-catalog-browser';
 export type { EducationalSystem } from './educational-system-selector';
-export type { 
-  TutorOnboardingData, 
+export type {
+  TutorOnboardingData,
   OnboardingStep,
-  DEFAULT_TUTOR_ONBOARDING_STEPS 
+  DEFAULT_TUTOR_ONBOARDING_STEPS,
 } from './tutor-onboarding-progress';
 
 // Re-export from modal components for easy access

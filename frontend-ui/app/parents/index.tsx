@@ -1,6 +1,7 @@
 import Link from '@unitools/link';
 import React from 'react';
 
+import { PurchaseFlow } from '@/components/purchase';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { LinkText } from '@/components/ui/link';
@@ -8,7 +9,6 @@ import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { PurchaseFlow } from '@/components/purchase';
 
 export default function LandingPage() {
   const handlePurchaseComplete = (transactionId: number) => {
@@ -31,10 +31,7 @@ export default function LandingPage() {
           </VStack>
 
           {/* Purchase Flow */}
-          <PurchaseFlow 
-            onPurchaseComplete={handlePurchaseComplete}
-            className="mt-8"
-          />
+          <PurchaseFlow onPurchaseComplete={handlePurchaseComplete} className="mt-8" />
 
           {/* Authentication Links */}
           <VStack space="md" className="items-center mt-8">

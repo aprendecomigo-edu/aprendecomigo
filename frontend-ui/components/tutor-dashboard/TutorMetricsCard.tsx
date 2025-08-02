@@ -1,11 +1,11 @@
-import { 
-  TrendingDownIcon, 
-  TrendingUpIcon, 
-  UsersIcon, 
-  CalendarIcon, 
-  DollarSignIcon, 
+import {
+  TrendingDownIcon,
+  TrendingUpIcon,
+  UsersIcon,
+  CalendarIcon,
+  DollarSignIcon,
   StarIcon,
-  ActivityIcon 
+  ActivityIcon,
 } from 'lucide-react-native';
 import React from 'react';
 
@@ -52,16 +52,16 @@ const MetricItem: React.FC<MetricItemProps> = ({
       <Icon as={IconComponent} size="sm" className={`text-${color}-600`} />
       <Text className="text-sm font-medium text-gray-600 flex-1">{title}</Text>
     </HStack>
-    
+
     <VStack space="xs">
       <Text className="text-2xl font-bold text-gray-900">
-        {prefix}{typeof value === 'number' ? value.toLocaleString() : value}{suffix}
+        {prefix}
+        {typeof value === 'number' ? value.toLocaleString() : value}
+        {suffix}
       </Text>
-      
-      {subtitle && (
-        <Text className="text-xs text-gray-500">{subtitle}</Text>
-      )}
-      
+
+      {subtitle && <Text className="text-xs text-gray-500">{subtitle}</Text>}
+
       {trend && (
         <HStack space="xs" className="items-center">
           <Icon
@@ -74,7 +74,8 @@ const MetricItem: React.FC<MetricItemProps> = ({
               trend.isPositive ? 'text-green-600' : 'text-red-600'
             }`}
           >
-            {trend.isPositive ? '+' : ''}{trend.value}%
+            {trend.isPositive ? '+' : ''}
+            {trend.value}%
           </Text>
           <Text className="text-xs text-gray-500">vs mês anterior</Text>
         </HStack>
@@ -123,9 +124,7 @@ export const TutorMetricsCard: React.FC<TutorMetricsCardProps> = ({ analytics, i
         <CardBody>
           <VStack space="md" className="items-center py-8">
             <Icon as={ActivityIcon} size="xl" className="text-gray-300" />
-            <Text className="text-lg font-medium text-gray-600">
-              Métricas indisponíveis
-            </Text>
+            <Text className="text-lg font-medium text-gray-600">Métricas indisponíveis</Text>
             <Text className="text-sm text-gray-500 text-center">
               Não foi possível carregar suas métricas de negócio
             </Text>
@@ -136,20 +135,26 @@ export const TutorMetricsCard: React.FC<TutorMetricsCardProps> = ({ analytics, i
   }
 
   // Calculate monthly trends
-  const studentTrend = analytics.monthly_growth ? {
-    value: Math.round(analytics.monthly_growth.students * 100) / 100,
-    isPositive: analytics.monthly_growth.students >= 0,
-  } : null;
+  const studentTrend = analytics.monthly_growth
+    ? {
+        value: Math.round(analytics.monthly_growth.students * 100) / 100,
+        isPositive: analytics.monthly_growth.students >= 0,
+      }
+    : null;
 
-  const earningsTrend = analytics.monthly_growth ? {
-    value: Math.round(analytics.monthly_growth.earnings * 100) / 100,
-    isPositive: analytics.monthly_growth.earnings >= 0,
-  } : null;
+  const earningsTrend = analytics.monthly_growth
+    ? {
+        value: Math.round(analytics.monthly_growth.earnings * 100) / 100,
+        isPositive: analytics.monthly_growth.earnings >= 0,
+      }
+    : null;
 
-  const hoursTrend = analytics.monthly_growth ? {
-    value: Math.round(analytics.monthly_growth.hours * 100) / 100,
-    isPositive: analytics.monthly_growth.hours >= 0,
-  } : null;
+  const hoursTrend = analytics.monthly_growth
+    ? {
+        value: Math.round(analytics.monthly_growth.hours * 100) / 100,
+        isPositive: analytics.monthly_growth.hours >= 0,
+      }
+    : null;
 
   return (
     <Card variant="elevated" className="bg-white shadow-sm">
@@ -170,7 +175,7 @@ export const TutorMetricsCard: React.FC<TutorMetricsCardProps> = ({ analytics, i
               icon={UsersIcon}
               color="blue"
             />
-            
+
             <MetricItem
               title="Receita Total"
               value={analytics.total_earnings}
@@ -193,11 +198,14 @@ export const TutorMetricsCard: React.FC<TutorMetricsCardProps> = ({ analytics, i
               color="purple"
               suffix="h"
             />
-            
+
             <MetricItem
               title="Avaliação Média"
               value={analytics.average_rating.toFixed(1)}
-              subtitle={`${Object.values(analytics.rating_distribution).reduce((a, b) => a + b, 0)} avaliações`}
+              subtitle={`${Object.values(analytics.rating_distribution).reduce(
+                (a, b) => a + b,
+                0
+              )} avaliações`}
               trend={
                 analytics.average_rating >= 4.5
                   ? { value: Math.round((analytics.average_rating - 4.0) * 25), isPositive: true }
@@ -211,17 +219,13 @@ export const TutorMetricsCard: React.FC<TutorMetricsCardProps> = ({ analytics, i
 
           {/* Performance Metrics Bar */}
           <VStack space="md">
-            <Text className="text-sm font-medium text-gray-700">
-              Métricas de Performance
-            </Text>
-            
+            <Text className="text-sm font-medium text-gray-700">Métricas de Performance</Text>
+
             <VStack space="sm">
               {/* Completion Rate */}
               <VStack space="xs">
                 <HStack className="justify-between items-center">
-                  <Text className="text-sm text-gray-600">
-                    Taxa de Conclusão
-                  </Text>
+                  <Text className="text-sm text-gray-600">Taxa de Conclusão</Text>
                   <Text className="text-sm font-semibold text-gray-900">
                     {Math.round(analytics.performance_metrics.completion_rate * 100)}%
                   </Text>
@@ -229,7 +233,9 @@ export const TutorMetricsCard: React.FC<TutorMetricsCardProps> = ({ analytics, i
                 <VStack className="w-full bg-gray-200 rounded-full h-2">
                   <VStack
                     className="bg-green-500 h-2 rounded-full"
-                    style={{ width: `${Math.round(analytics.performance_metrics.completion_rate * 100)}%` }}
+                    style={{
+                      width: `${Math.round(analytics.performance_metrics.completion_rate * 100)}%`,
+                    }}
                   />
                 </VStack>
               </VStack>
@@ -237,9 +243,7 @@ export const TutorMetricsCard: React.FC<TutorMetricsCardProps> = ({ analytics, i
               {/* On Time Rate */}
               <VStack space="xs">
                 <HStack className="justify-between items-center">
-                  <Text className="text-sm text-gray-600">
-                    Pontualidade
-                  </Text>
+                  <Text className="text-sm text-gray-600">Pontualidade</Text>
                   <Text className="text-sm font-semibold text-gray-900">
                     {Math.round(analytics.performance_metrics.on_time_rate * 100)}%
                   </Text>
@@ -247,7 +251,9 @@ export const TutorMetricsCard: React.FC<TutorMetricsCardProps> = ({ analytics, i
                 <VStack className="w-full bg-gray-200 rounded-full h-2">
                   <VStack
                     className="bg-blue-500 h-2 rounded-full"
-                    style={{ width: `${Math.round(analytics.performance_metrics.on_time_rate * 100)}%` }}
+                    style={{
+                      width: `${Math.round(analytics.performance_metrics.on_time_rate * 100)}%`,
+                    }}
                   />
                 </VStack>
               </VStack>
@@ -255,9 +261,7 @@ export const TutorMetricsCard: React.FC<TutorMetricsCardProps> = ({ analytics, i
               {/* Student Retention */}
               <VStack space="xs">
                 <HStack className="justify-between items-center">
-                  <Text className="text-sm text-gray-600">
-                    Retenção de Estudantes
-                  </Text>
+                  <Text className="text-sm text-gray-600">Retenção de Estudantes</Text>
                   <Text className="text-sm font-semibold text-gray-900">
                     {Math.round(analytics.performance_metrics.student_retention * 100)}%
                   </Text>
@@ -265,7 +269,11 @@ export const TutorMetricsCard: React.FC<TutorMetricsCardProps> = ({ analytics, i
                 <VStack className="w-full bg-gray-200 rounded-full h-2">
                   <VStack
                     className="bg-purple-500 h-2 rounded-full"
-                    style={{ width: `${Math.round(analytics.performance_metrics.student_retention * 100)}%` }}
+                    style={{
+                      width: `${Math.round(
+                        analytics.performance_metrics.student_retention * 100
+                      )}%`,
+                    }}
                   />
                 </VStack>
               </VStack>

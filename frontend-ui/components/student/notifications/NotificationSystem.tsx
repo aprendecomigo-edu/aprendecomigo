@@ -1,44 +1,44 @@
 /**
  * Notification System Component
- * 
+ *
  * Handles real-time notifications for low balance alerts, renewal prompts,
  * and other important student account notifications.
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Bell, 
-  AlertTriangle, 
-  CreditCard, 
-  TrendingDown, 
-  X, 
+import useRouter from '@unitools/router';
+import {
+  Bell,
+  AlertTriangle,
+  CreditCard,
+  TrendingDown,
+  X,
   Settings,
   Clock,
   Package,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { 
-  Modal, 
-  ModalBackdrop, 
-  ModalBody, 
-  ModalCloseButton, 
-  ModalContent, 
-  ModalFooter, 
-  ModalHeader 
-} from '@/components/ui/modal';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+} from '@/components/ui/modal';
 import { Pressable } from '@/components/ui/pressable';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import useRouter from '@unitools/router';
 
 interface Notification {
   id: string;
@@ -61,8 +61,8 @@ interface NotificationSystemProps {
  * Get notification styling based on type and priority
  */
 function getNotificationStyle(type: Notification['type'], priority: Notification['priority']) {
-  const baseClasses = "border-l-4";
-  
+  const baseClasses = 'border-l-4';
+
   switch (priority) {
     case 'urgent':
       return {
@@ -98,11 +98,11 @@ function getNotificationStyle(type: Notification['type'], priority: Notification
 /**
  * Individual notification item component
  */
-function NotificationItem({ 
-  notification, 
-  onDismiss, 
-  onAction 
-}: { 
+function NotificationItem({
+  notification,
+  onDismiss,
+  onAction,
+}: {
   notification: Notification;
   onDismiss: (id: string) => void;
   onAction: (notification: Notification) => void;
@@ -117,18 +117,14 @@ function NotificationItem({
             <Icon as={style.icon} size="sm" className={style.iconColor} />
             <VStack space="xs" className="flex-1">
               <HStack space="xs" className="items-center flex-wrap">
-                <Text className={`font-medium ${style.titleColor}`}>
-                  {notification.title}
-                </Text>
+                <Text className={`font-medium ${style.titleColor}`}>{notification.title}</Text>
                 {!notification.isRead && (
                   <Badge variant="solid" action="primary" size="xs">
                     <Text className="text-xs">New</Text>
                   </Badge>
                 )}
               </HStack>
-              <Text className="text-sm text-typography-700">
-                {notification.message}
-              </Text>
+              <Text className="text-sm text-typography-700">{notification.message}</Text>
               {notification.actionLabel && (
                 <Button
                   action={notification.priority === 'urgent' ? 'negative' : 'primary'}
@@ -161,16 +157,20 @@ function NotificationItem({
             })}
           </Text>
 
-          <Badge 
-            variant="outline" 
-            action={notification.priority === 'urgent' ? 'error' : 
-                   notification.priority === 'high' ? 'warning' :
-                   notification.priority === 'medium' ? 'primary' : 'secondary'} 
+          <Badge
+            variant="outline"
+            action={
+              notification.priority === 'urgent'
+                ? 'error'
+                : notification.priority === 'high'
+                ? 'warning'
+                : notification.priority === 'medium'
+                ? 'primary'
+                : 'secondary'
+            }
             size="xs"
           >
-            <Text className="text-xs capitalize">
-              {notification.priority}
-            </Text>
+            <Text className="text-xs capitalize">{notification.priority}</Text>
           </Badge>
         </HStack>
       </VStack>
@@ -192,7 +192,7 @@ function NotificationPreferencesModal({
 
   const handlePreferenceChange = async (key: string, value: boolean) => {
     if (!preferences) return;
-    
+
     try {
       await updatePreferences({ [key]: value });
     } catch (error) {
@@ -225,12 +225,10 @@ function NotificationPreferencesModal({
               <Text className="text-sm font-medium text-typography-800">
                 Balance & Payment Alerts
               </Text>
-              
+
               <HStack className="items-center justify-between">
                 <VStack space="xs" className="flex-1">
-                  <Text className="text-sm text-typography-700">
-                    Low Balance Alerts
-                  </Text>
+                  <Text className="text-sm text-typography-700">Low Balance Alerts</Text>
                   <Text className="text-xs text-typography-600">
                     Get notified when your tutoring hours are running low
                   </Text>
@@ -238,16 +236,14 @@ function NotificationPreferencesModal({
                 <Switch
                   size="sm"
                   isChecked={preferences.low_balance_alerts}
-                  onToggle={(checked) => handlePreferenceChange('low_balance_alerts', checked)}
+                  onToggle={checked => handlePreferenceChange('low_balance_alerts', checked)}
                   disabled={preferencesUpdating}
                 />
               </HStack>
 
               <HStack className="items-center justify-between">
                 <VStack space="xs" className="flex-1">
-                  <Text className="text-sm text-typography-700">
-                    Package Expiration
-                  </Text>
+                  <Text className="text-sm text-typography-700">Package Expiration</Text>
                   <Text className="text-xs text-typography-600">
                     Get alerted before your hour packages expire
                   </Text>
@@ -255,16 +251,14 @@ function NotificationPreferencesModal({
                 <Switch
                   size="sm"
                   isChecked={preferences.package_expiration}
-                  onToggle={(checked) => handlePreferenceChange('package_expiration', checked)}
+                  onToggle={checked => handlePreferenceChange('package_expiration', checked)}
                   disabled={preferencesUpdating}
                 />
               </HStack>
 
               <HStack className="items-center justify-between">
                 <VStack space="xs" className="flex-1">
-                  <Text className="text-sm text-typography-700">
-                    Renewal Prompts
-                  </Text>
+                  <Text className="text-sm text-typography-700">Renewal Prompts</Text>
                   <Text className="text-xs text-typography-600">
                     Smart reminders to purchase more hours
                   </Text>
@@ -272,22 +266,18 @@ function NotificationPreferencesModal({
                 <Switch
                   size="sm"
                   isChecked={preferences.renewal_prompts}
-                  onToggle={(checked) => handlePreferenceChange('renewal_prompts', checked)}
+                  onToggle={checked => handlePreferenceChange('renewal_prompts', checked)}
                   disabled={preferencesUpdating}
                 />
               </HStack>
             </VStack>
 
             <VStack space="sm">
-              <Text className="text-sm font-medium text-typography-800">
-                Learning & Sessions
-              </Text>
+              <Text className="text-sm font-medium text-typography-800">Learning & Sessions</Text>
 
               <HStack className="items-center justify-between">
                 <VStack space="xs" className="flex-1">
-                  <Text className="text-sm text-typography-700">
-                    Session Reminders
-                  </Text>
+                  <Text className="text-sm text-typography-700">Session Reminders</Text>
                   <Text className="text-xs text-typography-600">
                     Reminders about upcoming tutoring sessions
                   </Text>
@@ -295,16 +285,14 @@ function NotificationPreferencesModal({
                 <Switch
                   size="sm"
                   isChecked={preferences.session_reminders}
-                  onToggle={(checked) => handlePreferenceChange('session_reminders', checked)}
+                  onToggle={checked => handlePreferenceChange('session_reminders', checked)}
                   disabled={preferencesUpdating}
                 />
               </HStack>
 
               <HStack className="items-center justify-between">
                 <VStack space="xs" className="flex-1">
-                  <Text className="text-sm text-typography-700">
-                    Learning Insights
-                  </Text>
+                  <Text className="text-sm text-typography-700">Learning Insights</Text>
                   <Text className="text-xs text-typography-600">
                     Personalized insights about your learning progress
                   </Text>
@@ -312,16 +300,14 @@ function NotificationPreferencesModal({
                 <Switch
                   size="sm"
                   isChecked={preferences.learning_insights}
-                  onToggle={(checked) => handlePreferenceChange('learning_insights', checked)}
+                  onToggle={checked => handlePreferenceChange('learning_insights', checked)}
                   disabled={preferencesUpdating}
                 />
               </HStack>
 
               <HStack className="items-center justify-between">
                 <VStack space="xs" className="flex-1">
-                  <Text className="text-sm text-typography-700">
-                    Weekly Reports
-                  </Text>
+                  <Text className="text-sm text-typography-700">Weekly Reports</Text>
                   <Text className="text-xs text-typography-600">
                     Weekly summaries of your learning activity
                   </Text>
@@ -329,22 +315,18 @@ function NotificationPreferencesModal({
                 <Switch
                   size="sm"
                   isChecked={preferences.weekly_reports}
-                  onToggle={(checked) => handlePreferenceChange('weekly_reports', checked)}
+                  onToggle={checked => handlePreferenceChange('weekly_reports', checked)}
                   disabled={preferencesUpdating}
                 />
               </HStack>
             </VStack>
 
             <VStack space="sm">
-              <Text className="text-sm font-medium text-typography-800">
-                Delivery Methods
-              </Text>
+              <Text className="text-sm font-medium text-typography-800">Delivery Methods</Text>
 
               <HStack className="items-center justify-between">
                 <VStack space="xs" className="flex-1">
-                  <Text className="text-sm text-typography-700">
-                    In-App Notifications
-                  </Text>
+                  <Text className="text-sm text-typography-700">In-App Notifications</Text>
                   <Text className="text-xs text-typography-600">
                     Show notifications within the app
                   </Text>
@@ -352,16 +334,14 @@ function NotificationPreferencesModal({
                 <Switch
                   size="sm"
                   isChecked={preferences.in_app_notifications}
-                  onToggle={(checked) => handlePreferenceChange('in_app_notifications', checked)}
+                  onToggle={checked => handlePreferenceChange('in_app_notifications', checked)}
                   disabled={preferencesUpdating}
                 />
               </HStack>
 
               <HStack className="items-center justify-between">
                 <VStack space="xs" className="flex-1">
-                  <Text className="text-sm text-typography-700">
-                    Email Notifications
-                  </Text>
+                  <Text className="text-sm text-typography-700">Email Notifications</Text>
                   <Text className="text-xs text-typography-600">
                     Send notifications to your email address
                   </Text>
@@ -369,7 +349,7 @@ function NotificationPreferencesModal({
                 <Switch
                   size="sm"
                   isChecked={preferences.email_notifications}
-                  onToggle={(checked) => handlePreferenceChange('email_notifications', checked)}
+                  onToggle={checked => handlePreferenceChange('email_notifications', checked)}
                   disabled={preferencesUpdating}
                 />
               </HStack>
@@ -378,13 +358,7 @@ function NotificationPreferencesModal({
         </ModalBody>
 
         <ModalFooter>
-          <Button
-            action="primary"
-            variant="solid"
-            size="md"
-            onPress={onClose}
-            className="w-full"
-          >
+          <Button action="primary" variant="solid" size="md" onPress={onClose} className="w-full">
             <ButtonIcon as={CheckCircle} />
             <ButtonText>Save Preferences</ButtonText>
           </Button>
@@ -397,13 +371,10 @@ function NotificationPreferencesModal({
 /**
  * Notification System Component
  */
-export function NotificationSystem({ 
-  email, 
-  className = '' 
-}: NotificationSystemProps) {
+export function NotificationSystem({ email, className = '' }: NotificationSystemProps) {
   const router = useRouter();
   const { hasLowBalance, shouldShowRenewalPrompt, preferences } = useAnalytics(email);
-  
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showPreferences, setShowPreferences] = useState(false);
 
@@ -418,7 +389,8 @@ export function NotificationSystem({
           id: 'low-balance',
           type: 'low_balance',
           title: 'Low Balance Alert',
-          message: 'Your tutoring hours are running low. Consider purchasing more hours to continue your learning.',
+          message:
+            'Your tutoring hours are running low. Consider purchasing more hours to continue your learning.',
           priority: 'high',
           timestamp: new Date(),
           isRead: false,
@@ -433,7 +405,8 @@ export function NotificationSystem({
           id: 'renewal-prompt',
           type: 'renewal_prompt',
           title: 'Time to Renew',
-          message: 'Based on your usage patterns, you might want to purchase additional tutoring hours.',
+          message:
+            'Based on your usage patterns, you might want to purchase additional tutoring hours.',
           priority: 'medium',
           timestamp: new Date(),
           isRead: false,
@@ -446,7 +419,7 @@ export function NotificationSystem({
       setNotifications(prev => {
         const existingIds = prev.map(n => n.id);
         const newIds = newNotifications.map(n => n.id);
-        
+
         if (JSON.stringify(existingIds.sort()) !== JSON.stringify(newIds.sort())) {
           return newNotifications;
         }
@@ -512,7 +485,7 @@ export function NotificationSystem({
 
           {/* Notifications List */}
           <VStack space="md">
-            {notifications.map((notification) => (
+            {notifications.map(notification => (
               <NotificationItem
                 key={notification.id}
                 notification={notification}

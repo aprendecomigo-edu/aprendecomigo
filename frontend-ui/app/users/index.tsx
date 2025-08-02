@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import {
   UserPlus,
   Mail,
@@ -16,36 +17,35 @@ import {
   Settings,
 } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'expo-router';
 
 import { useAuth } from '@/api/authContext';
 import { getTeachers, TeacherProfile } from '@/api/userApi';
-import { ProfileCompletionIndicator } from '@/components/teachers/profile-completion-indicator';
-import { BulkTeacherActions } from '@/components/teachers/bulk-teacher-actions';
-import { TeacherCommunicationPanel } from '@/components/teachers/teacher-communication-panel';
-import { TeacherAnalyticsDashboard } from '@/components/teachers/teacher-analytics-dashboard';
-import { useTeachers } from '@/hooks/useTeachers';
 import { MainLayout } from '@/components/layouts/main-layout';
 import { AddStudentModal } from '@/components/modals/add-student-modal';
 import { AddTeacherModal } from '@/components/modals/add-teacher-modal';
-import { InviteTeacherModal } from '@/components/modals/invite-teacher-modal';
 import { BulkImportStudentsModal } from '@/components/modals/bulk-import-students-modal';
+import { InviteTeacherModal } from '@/components/modals/invite-teacher-modal';
 import { StudentListTable } from '@/components/students/StudentListTable';
+import { BulkTeacherActions } from '@/components/teachers/bulk-teacher-actions';
+import { ProfileCompletionIndicator } from '@/components/teachers/profile-completion-indicator';
+import { TeacherAnalyticsDashboard } from '@/components/teachers/teacher-analytics-dashboard';
+import { TeacherCommunicationPanel } from '@/components/teachers/teacher-communication-panel';
+import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
+import { Menu } from '@/components/ui/menu';
 import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Input, InputField } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Menu } from '@/components/ui/menu';
+import { useTeachers } from '@/hooks/useTeachers';
 
 // Color constants
 const COLORS = {
@@ -200,7 +200,9 @@ const TeachersTab = ({
   const [viewMode, setViewMode] = useState<TeacherViewMode>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTeachers, setSelectedTeachers] = useState<Set<number>>(new Set());
-  const [completionFilter, setCompletionFilter] = useState<'all' | 'complete' | 'incomplete' | 'critical'>('all');
+  const [completionFilter, setCompletionFilter] = useState<
+    'all' | 'complete' | 'incomplete' | 'critical'
+  >('all');
   const [showFilters, setShowFilters] = useState(false);
 
   // Filter teachers based on search and completion status
@@ -210,11 +212,12 @@ const TeachersTab = ({
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(teacher => 
-        teacher.user.name.toLowerCase().includes(query) ||
-        teacher.user.email.toLowerCase().includes(query) ||
-        teacher.specialty?.toLowerCase().includes(query) ||
-        teacher.bio?.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        teacher =>
+          teacher.user.name.toLowerCase().includes(query) ||
+          teacher.user.email.toLowerCase().includes(query) ||
+          teacher.specialty?.toLowerCase().includes(query) ||
+          teacher.bio?.toLowerCase().includes(query)
       );
     }
 
@@ -281,7 +284,7 @@ const TeachersTab = ({
       const date = new Date(teacher.last_activity);
       const now = new Date();
       const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       if (diffDays === 0) return 'Hoje';
       if (diffDays === 1) return 'Ontem';
       if (diffDays < 7) return `${diffDays} dias atrás`;
@@ -338,9 +341,15 @@ const TeachersTab = ({
           </Box>
           <Pressable
             onPress={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-md border ${showFilters ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-300'}`}
+            className={`p-2 rounded-md border ${
+              showFilters ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-300'
+            }`}
           >
-            <Icon as={Filter} size="sm" className={showFilters ? 'text-blue-600' : 'text-gray-500'} />
+            <Icon
+              as={Filter}
+              size="sm"
+              className={showFilters ? 'text-blue-600' : 'text-gray-500'}
+            />
           </Pressable>
         </HStack>
 
@@ -351,17 +360,23 @@ const TeachersTab = ({
                 key={filter}
                 onPress={() => setCompletionFilter(filter)}
                 className={`px-3 py-1 rounded-full border ${
-                  completionFilter === filter 
-                    ? 'bg-blue-100 border-blue-300' 
+                  completionFilter === filter
+                    ? 'bg-blue-100 border-blue-300'
                     : 'bg-white border-gray-300'
                 }`}
               >
-                <Text className={`text-sm ${
-                  completionFilter === filter ? 'text-blue-700' : 'text-gray-600'
-                }`}>
-                  {filter === 'all' ? 'Todos' : 
-                   filter === 'complete' ? 'Completos' :
-                   filter === 'incomplete' ? 'Incompletos' : 'Críticos'}
+                <Text
+                  className={`text-sm ${
+                    completionFilter === filter ? 'text-blue-700' : 'text-gray-600'
+                  }`}
+                >
+                  {filter === 'all'
+                    ? 'Todos'
+                    : filter === 'complete'
+                    ? 'Completos'
+                    : filter === 'incomplete'
+                    ? 'Incompletos'
+                    : 'Críticos'}
                 </Text>
               </Pressable>
             ))}
@@ -376,7 +391,9 @@ const TeachersTab = ({
           <HStack className="p-4 border-b border-gray-200 items-center">
             <Box className="w-8">
               <Checkbox
-                value={selectedTeachers.size > 0 && selectedTeachers.size === filteredTeachers.length}
+                value={
+                  selectedTeachers.size > 0 && selectedTeachers.size === filteredTeachers.length
+                }
                 onValueChange={handleSelectAll}
               />
             </Box>
@@ -395,8 +412,8 @@ const TeachersTab = ({
                 <VStack className="items-center" space="xs">
                   <Icon as={GraduationCap} size="lg" className="text-gray-400" />
                   <Text className="text-gray-500">
-                    {searchQuery || completionFilter !== 'all' 
-                      ? 'Nenhum professor encontrado' 
+                    {searchQuery || completionFilter !== 'all'
+                      ? 'Nenhum professor encontrado'
                       : 'Nenhum professor cadastrado'}
                   </Text>
                   <Text className="text-gray-400 text-sm text-center">
@@ -412,13 +429,15 @@ const TeachersTab = ({
             filteredTeachers.map((teacher, index) => (
               <HStack
                 key={teacher.id}
-                className={`p-4 items-center ${index < filteredTeachers.length - 1 ? 'border-b border-gray-200' : ''}`}
+                className={`p-4 items-center ${
+                  index < filteredTeachers.length - 1 ? 'border-b border-gray-200' : ''
+                }`}
               >
                 {/* Selection checkbox */}
                 <Box className="w-8">
                   <Checkbox
                     value={selectedTeachers.has(teacher.id)}
-                    onValueChange={(selected) => handleSelectTeacher(teacher.id, selected)}
+                    onValueChange={selected => handleSelectTeacher(teacher.id, selected)}
                   />
                 </Box>
 
@@ -444,26 +463,31 @@ const TeachersTab = ({
 
                 {/* Courses */}
                 <Box className="w-24">
-                  <Text className="text-sm text-gray-600">
-                    {getCoursesText(teacher)}
-                  </Text>
+                  <Text className="text-sm text-gray-600">{getCoursesText(teacher)}</Text>
                 </Box>
 
                 {/* Last activity */}
                 <Box className="w-24">
-                  <Text className="text-xs text-gray-500">
-                    {getLastActivityText(teacher)}
-                  </Text>
+                  <Text className="text-xs text-gray-500">{getLastActivityText(teacher)}</Text>
                 </Box>
 
                 {/* Status */}
                 <Box className="w-20">
-                  <Badge 
-                    variant={teacher.status === 'active' ? 'success' : teacher.status === 'inactive' ? 'secondary' : 'outline'}
+                  <Badge
+                    variant={
+                      teacher.status === 'active'
+                        ? 'success'
+                        : teacher.status === 'inactive'
+                        ? 'secondary'
+                        : 'outline'
+                    }
                     size="sm"
                   >
-                    {teacher.status === 'active' ? 'Ativo' : 
-                     teacher.status === 'inactive' ? 'Inativo' : 'Pendente'}
+                    {teacher.status === 'active'
+                      ? 'Ativo'
+                      : teacher.status === 'inactive'
+                      ? 'Inativo'
+                      : 'Pendente'}
                   </Badge>
                 </Box>
 
@@ -475,14 +499,14 @@ const TeachersTab = ({
                   >
                     <Icon as={ExternalLink} size="xs" className="text-blue-600" />
                   </Pressable>
-                  
+
                   <Pressable
                     onPress={() => handleSendMessage(teacher.id)}
                     className="p-1 rounded bg-green-50"
                   >
                     <Icon as={MessageCircle} size="xs" className="text-green-600" />
                   </Pressable>
-                  
+
                   <Pressable
                     onPress={() => handleTeacherActions(teacher.id)}
                     className="p-1 rounded bg-gray-50"
@@ -507,11 +531,12 @@ const TeachersTab = ({
             Gestão de Professores
           </Heading>
           <Text className="text-sm text-gray-600">
-            {filteredTeachers.length} professor{filteredTeachers.length !== 1 ? 'es' : ''} 
-            {selectedTeachers.size > 0 && ` • ${selectedTeachers.size} selecionado${selectedTeachers.size > 1 ? 's' : ''}`}
+            {filteredTeachers.length} professor{filteredTeachers.length !== 1 ? 'es' : ''}
+            {selectedTeachers.size > 0 &&
+              ` • ${selectedTeachers.size} selecionado${selectedTeachers.size > 1 ? 's' : ''}`}
           </Text>
         </VStack>
-        
+
         <HStack space="sm">
           {!userHasTeacherProfile && (
             <ActionButton
@@ -532,9 +557,9 @@ const TeachersTab = ({
 
       {/* View Mode Switcher */}
       <HStack className="w-full border-b border-gray-200">
-        {(['list', 'analytics', 'communication'] as const).map((mode) => {
+        {(['list', 'analytics', 'communication'] as const).map(mode => {
           const isActive = viewMode === mode;
-          
+
           return (
             <Pressable
               key={mode}
@@ -547,13 +572,15 @@ const TeachersTab = ({
               onPress={() => setViewMode(mode)}
             >
               <HStack className="items-center justify-center" space="xs">
-                <Icon 
-                  as={mode === 'list' ? Users : mode === 'analytics' ? Activity : MessageCircle} 
-                  size="sm" 
-                  className={isActive ? 'text-primary-600' : 'text-gray-500'} 
+                <Icon
+                  as={mode === 'list' ? Users : mode === 'analytics' ? Activity : MessageCircle}
+                  size="sm"
+                  className={isActive ? 'text-primary-600' : 'text-gray-500'}
                 />
                 <Text
-                  className={`text-sm font-medium ${isActive ? 'text-primary-600' : 'text-gray-500'}`}
+                  className={`text-sm font-medium ${
+                    isActive ? 'text-primary-600' : 'text-gray-500'
+                  }`}
                 >
                   {mode === 'list' ? 'Lista' : mode === 'analytics' ? 'Análises' : 'Comunicação'}
                 </Text>

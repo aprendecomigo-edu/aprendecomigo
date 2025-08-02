@@ -1,15 +1,16 @@
 /**
  * Stripe Payment Form Component
- * 
+ *
  * Integrates with Stripe Elements for secure payment processing.
  * Handles payment form display, validation, and submission with comprehensive error handling.
  */
 
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { CreditCard, Lock, AlertCircle, CheckCircle } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { CreditCard, Lock, AlertCircle, CheckCircle } from 'lucide-react-native';
+
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,8 +19,8 @@ import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
 import { View } from '@/components/ui/view';
+import { VStack } from '@/components/ui/vstack';
 import type { PricingPlan, StripeConfig } from '@/types/purchase';
 
 // Web-only Stripe integration
@@ -89,8 +90,8 @@ export function StripePaymentForm({
               Payment Processing
             </Heading>
             <Text className="text-typography-600 text-center">
-              Payment processing is currently available on the web version. 
-              Please visit our website to complete your purchase.
+              Payment processing is currently available on the web version. Please visit our website
+              to complete your purchase.
             </Text>
           </VStack>
         </VStack>
@@ -120,9 +121,7 @@ export function StripePaymentForm({
             <Heading size="sm" className="text-error-900">
               Payment Setup Error
             </Heading>
-            <Text className="text-error-800 text-sm">
-              {loadError}
-            </Text>
+            <Text className="text-error-800 text-sm">{loadError}</Text>
           </VStack>
         </Alert>
       </Card>
@@ -238,25 +237,19 @@ function PaymentFormContent({
                 Payment Details
               </Heading>
             </HStack>
-            
+
             {/* Order summary */}
             <Card className="p-4 bg-background-50">
               <VStack space="sm">
                 <HStack className="items-center justify-between">
-                  <Text className="font-medium text-typography-800">
-                    {selectedPlan.name}
-                  </Text>
+                  <Text className="font-medium text-typography-800">{selectedPlan.name}</Text>
                   <Text className="font-bold text-typography-900">
                     €{formatPrice(selectedPlan.price_eur)}
                   </Text>
                 </HStack>
-                <Text className="text-sm text-typography-600">
-                  {selectedPlan.description}
-                </Text>
+                <Text className="text-sm text-typography-600">{selectedPlan.description}</Text>
                 <HStack className="items-center justify-between">
-                  <Text className="text-sm text-typography-600">
-                    Hours included:
-                  </Text>
+                  <Text className="text-sm text-typography-600">Hours included:</Text>
                   <Text className="text-sm font-medium text-typography-800">
                     {selectedPlan.hours_included}
                   </Text>
@@ -267,9 +260,7 @@ function PaymentFormContent({
 
           {/* Stripe Payment Element */}
           <VStack space="sm">
-            <Text className="font-medium text-typography-800">
-              Card Information
-            </Text>
+            <Text className="font-medium text-typography-800">Card Information</Text>
             <View className="p-3 border border-outline-200 rounded-lg bg-white">
               <PaymentElement />
             </View>
@@ -283,9 +274,7 @@ function PaymentFormContent({
                 <Heading size="sm" className="text-error-900">
                   Payment Error
                 </Heading>
-                <Text className="text-error-800 text-sm">
-                  {paymentError}
-                </Text>
+                <Text className="text-error-800 text-sm">{paymentError}</Text>
               </VStack>
             </Alert>
           )}
@@ -315,17 +304,15 @@ function PaymentFormContent({
             ) : (
               <>
                 <ButtonIcon as={CheckCircle} />
-                <ButtonText>
-                  Complete Purchase - €{formatPrice(selectedPlan.price_eur)}
-                </ButtonText>
+                <ButtonText>Complete Purchase - €{formatPrice(selectedPlan.price_eur)}</ButtonText>
               </>
             )}
           </Button>
 
           {/* Terms notice */}
           <Text className="text-xs text-typography-500 text-center">
-            By completing this purchase, you agree to our Terms of Service and acknowledge 
-            our Privacy Policy. Your payment will be processed securely by Stripe.
+            By completing this purchase, you agree to our Terms of Service and acknowledge our
+            Privacy Policy. Your payment will be processed securely by Stripe.
           </Text>
         </VStack>
       </form>

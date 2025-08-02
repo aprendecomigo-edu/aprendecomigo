@@ -64,7 +64,7 @@ const mockAnalytics: TutorAnalytics = {
   performance_metrics: {
     completion_rate: 0.95,
     on_time_rate: 0.98,
-    student_retention: 0.90,
+    student_retention: 0.9,
   },
 };
 

@@ -1,6 +1,6 @@
-export { 
-  default as ResponsiveContainer, 
-  ResponsiveStack, 
+export {
+  default as ResponsiveContainer,
+  ResponsiveStack,
   TouchFriendly,
   breakpoints,
   getDeviceType,
@@ -12,12 +12,9 @@ export {
   getResponsiveSpacing,
   getResponsivePadding,
   getResponsiveMargin,
-  getResponsiveTextSize
+  getResponsiveTextSize,
 } from './ResponsiveContainer';
 
-export { 
-  MobileOptimizedCard,
-  MobileListCard 
-} from './MobileOptimizedCard';
+export { MobileOptimizedCard, MobileListCard } from './MobileOptimizedCard';
 
 export type { Breakpoint } from './ResponsiveContainer';

@@ -57,10 +57,7 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
       )}
     >
       <Text
-        className={cn(
-          'font-semibold text-white text-center leading-none',
-          textSizeClasses[size]
-        )}
+        className={cn('font-semibold text-white text-center leading-none', textSizeClasses[size])}
       >
         {displayCount}
       </Text>

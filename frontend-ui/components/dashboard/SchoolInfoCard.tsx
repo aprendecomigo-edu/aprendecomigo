@@ -10,7 +10,17 @@ import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
-import { Select, SelectTrigger, SelectInput, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicatorWrapper,
+  SelectDragIndicator,
+  SelectItem,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Text } from '@/components/ui/text';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
@@ -33,15 +43,9 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon: IconComponent, label, value, pl
   <HStack space="sm" className="items-start">
     <Icon as={IconComponent} size="sm" className="text-gray-500 mt-1" />
     <VStack space="xs" className="flex-1 min-w-0">
-      <Text className="text-xs font-medium text-gray-600 uppercase tracking-wide">
-        {label}
-      </Text>
+      <Text className="text-xs font-medium text-gray-600 uppercase tracking-wide">{label}</Text>
       <Text className="text-sm text-gray-900">
-        {value || (
-          <Text className="text-gray-500 italic">
-            {placeholder || 'Não informado'}
-          </Text>
-        )}
+        {value || <Text className="text-gray-500 italic">{placeholder || 'Não informado'}</Text>}
       </Text>
     </VStack>
   </HStack>
@@ -57,11 +61,7 @@ const InfoRowSkeleton: React.FC = () => (
   </HStack>
 );
 
-const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
-  schoolInfo,
-  isLoading,
-  onUpdate,
-}) => {
+const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({ schoolInfo, isLoading, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState<Partial<SchoolInfo>>({});
@@ -147,9 +147,7 @@ const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
         <CardBody>
           <VStack space="md" className="items-center py-8">
             <Icon as={School} size="xl" className="text-gray-300" />
-            <Text className="text-lg font-medium text-gray-600">
-              Informações indisponíveis
-            </Text>
+            <Text className="text-lg font-medium text-gray-600">Informações indisponíveis</Text>
             <Text className="text-sm text-gray-500 text-center">
               Não foi possível carregar as informações da escola
             </Text>
@@ -166,12 +164,9 @@ const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
           <Heading size="md" className="text-gray-900">
             Informações da Escola
           </Heading>
-          
+
           {!isEditing ? (
-            <Pressable
-              onPress={handleEdit}
-              className="p-2 rounded-md bg-blue-50 hover:bg-blue-100"
-            >
+            <Pressable onPress={handleEdit} className="p-2 rounded-md bg-blue-50 hover:bg-blue-100">
               <Icon as={Edit} size="sm" className="text-blue-600" />
             </Pressable>
           ) : (
@@ -194,7 +189,7 @@ const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
           )}
         </HStack>
       </CardHeader>
-      
+
       <CardBody>
         {isEditing ? (
           <VStack space="lg">
@@ -267,10 +262,15 @@ const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
             </FormControl>
 
             <FormControl>
-              <Text className="text-sm font-medium text-gray-700 mb-2">Política de Custo de Teste</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Política de Custo de Teste
+              </Text>
               <Select
-                selectedValue={editData.settings?.trial_cost_absorption || schoolInfo.settings.trial_cost_absorption}
-                onValueChange={(value) => updateSetting('trial_cost_absorption', value)}
+                selectedValue={
+                  editData.settings?.trial_cost_absorption ||
+                  schoolInfo.settings.trial_cost_absorption
+                }
+                onValueChange={value => updateSetting('trial_cost_absorption', value)}
               >
                 <SelectTrigger>
                   <SelectInput placeholder="Selecionar política" />
@@ -297,13 +297,9 @@ const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
               value={schoolInfo.name}
               placeholder="Nome da escola não informado"
             />
-            
+
             {schoolInfo.description && (
-              <InfoRow
-                icon={School}
-                label="Descrição"
-                value={schoolInfo.description}
-              />
+              <InfoRow icon={School} label="Descrição" value={schoolInfo.description} />
             )}
 
             <InfoRow
@@ -334,11 +330,7 @@ const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({
             </HStack>
 
             {schoolInfo.website && (
-              <InfoRow
-                icon={Globe}
-                label="Website"
-                value={schoolInfo.website}
-              />
+              <InfoRow icon={Globe} label="Website" value={schoolInfo.website} />
             )}
 
             <VStack space="xs">

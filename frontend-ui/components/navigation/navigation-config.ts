@@ -1,9 +1,9 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { 
-  HomeIcon, 
-  Calendar, 
-  MessagesSquare, 
-  Users, 
+import {
+  HomeIcon,
+  Calendar,
+  MessagesSquare,
+  Users,
   Settings,
   GraduationCapIcon,
   UsersIcon,
@@ -11,7 +11,7 @@ import {
   BarChart3Icon,
   MailIcon,
   TrendingUpIcon,
-  UserPlusIcon
+  UserPlusIcon,
 } from 'lucide-react-native';
 
 // Color constants
@@ -134,7 +134,7 @@ export const tutorSidebarNavItems: SidebarItem[] = [
     permission: 'tutor',
   },
   {
-    id: 'sessions', 
+    id: 'sessions',
     icon: Calendar,
     route: '/(tutor)/sessions',
     permission: 'tutor',
@@ -271,13 +271,11 @@ export const ROUTE_PERMISSIONS: Record<string, string[]> = {
 // Navigation items getter based on user role
 export const getNavigationItems = (userRole: string): SidebarItem[] => {
   if (userRole === 'school_admin') {
-    return adminSidebarNavItems.filter(item => 
-      !item.permission || item.permission === userRole
-    );
+    return adminSidebarNavItems.filter(item => !item.permission || item.permission === userRole);
   }
   if (userRole === 'tutor' || userRole === 'teacher') {
-    return tutorSidebarNavItems.filter(item => 
-      !item.permission || item.permission === 'tutor' || !item.permission
+    return tutorSidebarNavItems.filter(
+      item => !item.permission || item.permission === 'tutor' || !item.permission
     );
   }
   return sidebarNavItems;

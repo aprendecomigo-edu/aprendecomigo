@@ -1,23 +1,24 @@
 /**
  * BudgetControlSettings Component
- * 
+ *
  * Component for managing child budget controls including
  * spending limits and approval thresholds.
  */
 
-import React, { useState } from 'react';
-import { 
-  Shield, 
-  Edit, 
-  Save, 
+import {
+  Shield,
+  Edit,
+  Save,
   X,
   AlertCircle,
   CheckCircle,
   Euro,
   Calendar,
-  Clock
+  Clock,
 } from 'lucide-react-native';
+import React, { useState } from 'react';
 
+import { FamilyBudgetControl } from '@/api/parentApi';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -28,8 +29,6 @@ import { Input, InputField } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
-import { FamilyBudgetControl } from '@/api/parentApi';
 
 interface BudgetControlSettingsProps {
   childId: string;
@@ -62,7 +61,12 @@ export const BudgetControlSettings: React.FC<BudgetControlSettingsProps> = ({
     const errors: string[] = [];
 
     // Check for valid numbers
-    const numericFields = ['monthly_limit', 'weekly_limit', 'daily_limit', 'requires_approval_above'];
+    const numericFields = [
+      'monthly_limit',
+      'weekly_limit',
+      'daily_limit',
+      'requires_approval_above',
+    ];
     numericFields.forEach(field => {
       const value = formData[field as keyof typeof formData] as string;
       if (value && (isNaN(parseFloat(value)) || parseFloat(value) < 0)) {
@@ -93,7 +97,7 @@ export const BudgetControlSettings: React.FC<BudgetControlSettingsProps> = ({
 
     try {
       setIsLoading(true);
-      
+
       // Convert empty strings to null for optional fields
       const cleanData = {
         ...formData,
@@ -133,11 +137,11 @@ export const BudgetControlSettings: React.FC<BudgetControlSettingsProps> = ({
               Budget Controls
             </Heading>
           </HStack>
-          
+
           <HStack className="space-x-2">
             {budgetControl && (
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 action={budgetControl.is_active ? 'success' : 'secondary'}
                 size="sm"
               >
@@ -146,34 +150,18 @@ export const BudgetControlSettings: React.FC<BudgetControlSettingsProps> = ({
                 </Text>
               </Badge>
             )}
-            
+
             {!isEditing ? (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onPress={() => setIsEditing(true)}
-              >
+              <Button variant="outline" size="sm" onPress={() => setIsEditing(true)}>
                 <ButtonIcon as={Edit} size={14} />
-                <ButtonText className="ml-1">
-                  {budgetControl ? 'Edit' : 'Set up'}
-                </ButtonText>
+                <ButtonText className="ml-1">{budgetControl ? 'Edit' : 'Set up'}</ButtonText>
               </Button>
             ) : (
               <HStack className="space-x-1">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onPress={handleCancel}
-                  disabled={isLoading}
-                >
+                <Button variant="outline" size="sm" onPress={handleCancel} disabled={isLoading}>
                   <ButtonIcon as={X} size={14} />
                 </Button>
-                <Button 
-                  action="primary"
-                  size="sm"
-                  onPress={handleSave}
-                  disabled={isLoading}
-                >
+                <Button action="primary" size="sm" onPress={handleSave} disabled={isLoading}>
                   <ButtonIcon as={Save} size={14} />
                 </Button>
               </HStack>
@@ -193,11 +181,7 @@ export const BudgetControlSettings: React.FC<BudgetControlSettingsProps> = ({
             <Text className="text-gray-600 text-center max-w-sm">
               Set spending limits and approval thresholds to manage your child's purchases.
             </Text>
-            <Button 
-              action="primary" 
-              size="sm"
-              onPress={() => setIsEditing(true)}
-            >
+            <Button action="primary" size="sm" onPress={() => setIsEditing(true)}>
               <ButtonText>Set Up Controls</ButtonText>
             </Button>
           </VStack>
@@ -207,26 +191,22 @@ export const BudgetControlSettings: React.FC<BudgetControlSettingsProps> = ({
             {/* Active/Inactive Toggle */}
             <HStack className="justify-between items-center p-3 bg-gray-50 rounded-lg">
               <VStack className="flex-1">
-                <Text className="text-sm font-medium text-gray-900">
-                  Budget Controls
-                </Text>
+                <Text className="text-sm font-medium text-gray-900">Budget Controls</Text>
                 <Text className="text-xs text-gray-600">
                   Enable spending limits and approval requirements
                 </Text>
               </VStack>
               <Switch
                 value={formData.is_active}
-                onValueChange={(value) => handleFieldChange('is_active', value)}
+                onValueChange={value => handleFieldChange('is_active', value)}
                 disabled={!isEditing}
               />
             </HStack>
 
             {/* Spending Limits */}
             <VStack className="space-y-3">
-              <Text className="text-sm font-medium text-gray-700">
-                Spending Limits
-              </Text>
-              
+              <Text className="text-sm font-medium text-gray-700">Spending Limits</Text>
+
               {/* Monthly Limit */}
               <VStack className="space-y-1">
                 <Text className="text-xs text-gray-600">Monthly Limit (€)</Text>
@@ -236,7 +216,7 @@ export const BudgetControlSettings: React.FC<BudgetControlSettingsProps> = ({
                     <InputField
                       placeholder="No limit"
                       value={formData.monthly_limit}
-                      onChangeText={(value) => handleFieldChange('monthly_limit', value)}
+                      onChangeText={value => handleFieldChange('monthly_limit', value)}
                       keyboardType="numeric"
                       editable={isEditing}
                     />
@@ -253,7 +233,7 @@ export const BudgetControlSettings: React.FC<BudgetControlSettingsProps> = ({
                     <InputField
                       placeholder="No limit"
                       value={formData.weekly_limit}
-                      onChangeText={(value) => handleFieldChange('weekly_limit', value)}
+                      onChangeText={value => handleFieldChange('weekly_limit', value)}
                       keyboardType="numeric"
                       editable={isEditing}
                     />
@@ -270,7 +250,7 @@ export const BudgetControlSettings: React.FC<BudgetControlSettingsProps> = ({
                     <InputField
                       placeholder="No limit"
                       value={formData.daily_limit}
-                      onChangeText={(value) => handleFieldChange('daily_limit', value)}
+                      onChangeText={value => handleFieldChange('daily_limit', value)}
                       keyboardType="numeric"
                       editable={isEditing}
                     />
@@ -281,10 +261,8 @@ export const BudgetControlSettings: React.FC<BudgetControlSettingsProps> = ({
 
             {/* Approval Threshold */}
             <VStack className="space-y-3">
-              <Text className="text-sm font-medium text-gray-700">
-                Approval Settings
-              </Text>
-              
+              <Text className="text-sm font-medium text-gray-700">Approval Settings</Text>
+
               <VStack className="space-y-1">
                 <Text className="text-xs text-gray-600">
                   Require approval for purchases above (€)
@@ -294,7 +272,7 @@ export const BudgetControlSettings: React.FC<BudgetControlSettingsProps> = ({
                   <Input className="flex-1">
                     <InputField
                       value={formData.requires_approval_above}
-                      onChangeText={(value) => handleFieldChange('requires_approval_above', value)}
+                      onChangeText={value => handleFieldChange('requires_approval_above', value)}
                       keyboardType="numeric"
                       editable={isEditing}
                     />
@@ -311,11 +289,9 @@ export const BudgetControlSettings: React.FC<BudgetControlSettingsProps> = ({
               <VStack className="p-3 bg-blue-50 rounded-lg space-y-2">
                 <HStack className="items-center space-x-2">
                   <Icon as={CheckCircle} size={16} className="text-blue-600" />
-                  <Text className="text-sm font-medium text-blue-900">
-                    Budget Controls Active
-                  </Text>
+                  <Text className="text-sm font-medium text-blue-900">Budget Controls Active</Text>
                 </HStack>
-                
+
                 <VStack className="space-y-1">
                   {budgetControl.monthly_limit && (
                     <Text className="text-xs text-blue-800">

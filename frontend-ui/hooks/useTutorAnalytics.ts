@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { getTutorAnalytics, TutorAnalytics } from '@/api/tutorApi';
 import { useAuth } from '@/api/authContext';
+import { getTutorAnalytics, TutorAnalytics } from '@/api/tutorApi';
 
 interface UseTutorAnalyticsResult {
   analytics: TutorAnalytics | null;
@@ -20,7 +20,7 @@ const useTutorAnalytics = (schoolId?: number): UseTutorAnalyticsResult => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const data = await getTutorAnalytics(schoolId);
       setAnalytics(data);
     } catch (err) {

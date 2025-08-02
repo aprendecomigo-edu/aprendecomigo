@@ -1,14 +1,11 @@
-import React from 'react';
 import { CheckCircle2, AlertTriangle, Info } from 'lucide-react-native';
+import React from 'react';
 
-import { Box } from '@/components/ui/box';
 import { Badge, BadgeText } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
 import { Card } from '@/components/ui/card';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import { Progress } from '@/components/ui/progress';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
 import {
   Popover,
   PopoverBackdrop,
@@ -16,6 +13,9 @@ import {
   PopoverHeader,
   PopoverBody,
 } from '@/components/ui/popover';
+import { Progress } from '@/components/ui/progress';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 interface CompletionData {
   completion_percentage: number;
@@ -52,13 +52,13 @@ export const ProfileCompletionTracker: React.FC<ProfileCompletionTrackerProps> =
     return null;
   }
 
-  const { 
-    completion_percentage, 
-    missing_critical, 
-    missing_optional, 
+  const {
+    completion_percentage,
+    missing_critical,
+    missing_optional,
     is_complete,
     scores_breakdown,
-    recommendations 
+    recommendations,
   } = completionData;
 
   const getCompletionColor = () => {
@@ -94,25 +94,25 @@ export const ProfileCompletionTracker: React.FC<ProfileCompletionTrackerProps> =
       <Popover
         isOpen={showPopover}
         onClose={() => setShowPopover(false)}
-        trigger={(triggerProps) => (
+        trigger={triggerProps => (
           <Box {...triggerProps} onPress={() => setShowPopover(true)}>
             <HStack space="xs" className={`items-center ${className}`}>
-              <Badge 
+              <Badge
                 className={`${
-                  is_complete ? 'bg-green-100' : 
-                  completion_percentage >= 70 ? 'bg-blue-100' : 
-                  completion_percentage >= 50 ? 'bg-yellow-100' : 'bg-red-100'
+                  is_complete
+                    ? 'bg-green-100'
+                    : completion_percentage >= 70
+                    ? 'bg-blue-100'
+                    : completion_percentage >= 50
+                    ? 'bg-yellow-100'
+                    : 'bg-red-100'
                 }`}
               >
                 <BadgeText className={getCompletionColor()}>
                   {Math.round(completion_percentage)}%
                 </BadgeText>
               </Badge>
-              <Icon 
-                as={getStatusIcon()} 
-                size={16} 
-                className={getCompletionColor()} 
-              />
+              <Icon as={getStatusIcon()} size={16} className={getCompletionColor()} />
             </HStack>
           </Box>
         )}
@@ -120,18 +120,14 @@ export const ProfileCompletionTracker: React.FC<ProfileCompletionTrackerProps> =
         <PopoverBackdrop />
         <PopoverContent className="w-80">
           <PopoverHeader>
-            <Text className="font-semibold text-gray-900">
-              Profile Completion
-            </Text>
+            <Text className="font-semibold text-gray-900">Profile Completion</Text>
           </PopoverHeader>
           <PopoverBody>
             <VStack space="md">
               {/* Progress Overview */}
               <VStack space="xs">
                 <HStack className="items-center justify-between">
-                  <Text className="text-sm font-medium text-gray-700">
-                    {getCompletionStatus()}
-                  </Text>
+                  <Text className="text-sm font-medium text-gray-700">{getCompletionStatus()}</Text>
                   <Text className={`text-sm font-semibold ${getCompletionColor()}`}>
                     {Math.round(completion_percentage)}%
                   </Text>
@@ -144,9 +140,7 @@ export const ProfileCompletionTracker: React.FC<ProfileCompletionTrackerProps> =
               {/* Missing Critical Fields */}
               {missing_critical.length > 0 && (
                 <VStack space="xs">
-                  <Text className="text-sm font-medium text-red-700">
-                    Required Fields Missing:
-                  </Text>
+                  <Text className="text-sm font-medium text-red-700">Required Fields Missing:</Text>
                   {missing_critical.slice(0, 3).map((field, index) => (
                     <Text key={index} className="text-sm text-red-600">
                       • {field}
@@ -163,12 +157,8 @@ export const ProfileCompletionTracker: React.FC<ProfileCompletionTrackerProps> =
               {/* Top Recommendation */}
               {recommendations && recommendations.length > 0 && (
                 <VStack space="xs">
-                  <Text className="text-sm font-medium text-gray-700">
-                    Next Step:
-                  </Text>
-                  <Text className="text-sm text-gray-600">
-                    {recommendations[0].text}
-                  </Text>
+                  <Text className="text-sm font-medium text-gray-700">Next Step:</Text>
+                  <Text className="text-sm text-gray-600">{recommendations[0].text}</Text>
                 </VStack>
               )}
             </VStack>
@@ -185,34 +175,28 @@ export const ProfileCompletionTracker: React.FC<ProfileCompletionTrackerProps> =
         {/* Header */}
         <HStack className="items-center justify-between">
           <HStack space="sm" className="items-center">
-            <Icon 
-              as={getStatusIcon()} 
-              size={20} 
-              className={getCompletionColor()} 
-            />
-            <Text className="font-semibold text-gray-900">
-              Profile Completion
-            </Text>
+            <Icon as={getStatusIcon()} size={20} className={getCompletionColor()} />
+            <Text className="font-semibold text-gray-900">Profile Completion</Text>
           </HStack>
-          <Badge 
+          <Badge
             className={`${
-              is_complete ? 'bg-green-100' : 
-              completion_percentage >= 70 ? 'bg-blue-100' : 
-              completion_percentage >= 50 ? 'bg-yellow-100' : 'bg-red-100'
+              is_complete
+                ? 'bg-green-100'
+                : completion_percentage >= 70
+                ? 'bg-blue-100'
+                : completion_percentage >= 50
+                ? 'bg-yellow-100'
+                : 'bg-red-100'
             }`}
           >
-            <BadgeText className={getCompletionColor()}>
-              {getCompletionStatus()}
-            </BadgeText>
+            <BadgeText className={getCompletionColor()}>{getCompletionStatus()}</BadgeText>
           </Badge>
         </HStack>
 
         {/* Progress Bar */}
         <VStack space="xs">
           <HStack className="items-center justify-between">
-            <Text className="text-sm text-gray-600">
-              Overall Progress
-            </Text>
+            <Text className="text-sm text-gray-600">Overall Progress</Text>
             <Text className={`text-sm font-semibold ${getCompletionColor()}`}>
               {Math.round(completion_percentage)}%
             </Text>
@@ -225,9 +209,7 @@ export const ProfileCompletionTracker: React.FC<ProfileCompletionTrackerProps> =
         {/* Detailed Scores Breakdown */}
         {scores_breakdown && showDetails && (
           <VStack space="sm">
-            <Text className="text-sm font-medium text-gray-700">
-              Section Breakdown:
-            </Text>
+            <Text className="text-sm font-medium text-gray-700">Section Breakdown:</Text>
             {Object.entries(scores_breakdown).map(([section, score]) => (
               <HStack key={section} className="items-center justify-between">
                 <Text className="text-sm text-gray-600 capitalize">
@@ -235,10 +217,7 @@ export const ProfileCompletionTracker: React.FC<ProfileCompletionTrackerProps> =
                 </Text>
                 <HStack space="xs" className="items-center">
                   <Box className="w-16 bg-gray-200 rounded-full h-2">
-                    <Box 
-                      className="bg-blue-600 h-2 rounded-full"
-                      style={{ width: `${score}%` }}
-                    />
+                    <Box className="bg-blue-600 h-2 rounded-full" style={{ width: `${score}%` }} />
                   </Box>
                   <Text className="text-sm text-gray-600 w-10 text-right">
                     {Math.round(score)}%
@@ -300,22 +279,18 @@ export const ProfileCompletionTracker: React.FC<ProfileCompletionTrackerProps> =
         {/* Recommendations */}
         {recommendations && recommendations.length > 0 && showDetails && (
           <VStack space="xs" className="p-3 bg-green-50 rounded-lg">
-            <Text className="text-sm font-medium text-green-700">
-              Recommendations:
-            </Text>
+            <Text className="text-sm font-medium text-green-700">Recommendations:</Text>
             <VStack space="xs">
               {recommendations.slice(0, 3).map((rec, index) => (
                 <HStack key={index} space="xs" className="items-start">
-                  <Icon 
-                    as={rec.priority === 'high' ? AlertTriangle : Info} 
-                    size={14} 
+                  <Icon
+                    as={rec.priority === 'high' ? AlertTriangle : Info}
+                    size={14}
                     className={`mt-0.5 ${
                       rec.priority === 'high' ? 'text-red-500' : 'text-green-500'
-                    }`} 
+                    }`}
                   />
-                  <Text className="text-sm text-green-600 flex-1">
-                    {rec.text}
-                  </Text>
+                  <Text className="text-sm text-green-600 flex-1">{rec.text}</Text>
                 </HStack>
               ))}
             </VStack>
@@ -327,9 +302,7 @@ export const ProfileCompletionTracker: React.FC<ProfileCompletionTrackerProps> =
           <VStack space="xs" className="p-3 bg-green-50 rounded-lg">
             <HStack space="xs" className="items-center">
               <Icon as={CheckCircle2} size={16} className="text-green-500" />
-              <Text className="text-sm font-medium text-green-700">
-                Profile Complete!
-              </Text>
+              <Text className="text-sm font-medium text-green-700">Profile Complete!</Text>
             </HStack>
             <Text className="text-sm text-green-600">
               Your profile is complete and ready to attract students. Great work!

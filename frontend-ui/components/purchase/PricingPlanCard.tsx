@@ -1,12 +1,13 @@
 /**
  * Pricing Plan Card Component
- * 
+ *
  * Displays individual pricing plan information in a visually appealing card format
  * with responsive design and interactive selection capabilities.
  */
 
-import React, { memo } from 'react';
 import { CheckCircle2, Clock, Users, Star } from 'lucide-react-native';
+import React, { memo } from 'react';
+
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -65,10 +66,14 @@ export const PricingPlanCard = memo(function PricingPlanCard({
   };
 
   return (
-    <Card 
+    <Card
       className={`
         relative p-6 border-2 transition-all duration-300 transform hover:scale-105
-        ${isSelected ? 'border-primary-500 shadow-lg bg-primary-50' : 'border-outline-200 hover:border-primary-300'}
+        ${
+          isSelected
+            ? 'border-primary-500 shadow-lg bg-primary-50'
+            : 'border-outline-200 hover:border-primary-300'
+        }
         ${isPopular ? 'ring-2 ring-primary-500 shadow-xl' : ''}
         ${disabled ? 'opacity-50' : ''}
       `}
@@ -93,9 +98,7 @@ export const PricingPlanCard = memo(function PricingPlanCard({
             <Heading size="lg" className="text-typography-900 flex-1">
               {plan.name}
             </Heading>
-            {isSelected && (
-              <Icon as={CheckCircle2} size="md" className="text-primary-600" />
-            )}
+            {isSelected && <Icon as={CheckCircle2} size="md" className="text-primary-600" />}
           </HStack>
 
           {/* Price display */}
@@ -109,15 +112,11 @@ export const PricingPlanCard = memo(function PricingPlanCard({
           </HStack>
 
           {/* Value proposition */}
-          <Text className="text-sm font-medium text-typography-700">
-            {getValueText()}
-          </Text>
+          <Text className="text-sm font-medium text-typography-700">{getValueText()}</Text>
         </VStack>
 
         {/* Plan description */}
-        <Text className="text-typography-600 leading-relaxed">
-          {plan.description}
-        </Text>
+        <Text className="text-typography-600 leading-relaxed">{plan.description}</Text>
 
         {/* Plan features */}
         <VStack space="sm" className="flex-1">
@@ -130,25 +129,19 @@ export const PricingPlanCard = memo(function PricingPlanCard({
 
           <HStack space="xs" className="items-center">
             <Icon as={CheckCircle2} size="sm" className="text-success-600 flex-shrink-0" />
-            <Text className="text-sm text-typography-700 flex-1">
-              Access to all subjects
-            </Text>
+            <Text className="text-sm text-typography-700 flex-1">Access to all subjects</Text>
           </HStack>
 
           {plan.plan_type === 'subscription' ? (
             <HStack space="xs" className="items-center">
               <Icon as={CheckCircle2} size="sm" className="text-success-600 flex-shrink-0" />
-              <Text className="text-sm text-typography-700 flex-1">
-                Cancel anytime
-              </Text>
+              <Text className="text-sm text-typography-700 flex-1">Cancel anytime</Text>
             </HStack>
           ) : (
             <>
               <HStack space="xs" className="items-center">
                 <Icon as={CheckCircle2} size="sm" className="text-success-600 flex-shrink-0" />
-                <Text className="text-sm text-typography-700 flex-1">
-                  No recurring charges
-                </Text>
+                <Text className="text-sm text-typography-700 flex-1">No recurring charges</Text>
               </HStack>
               {plan.validity_days && (
                 <HStack space="xs" className="items-center">

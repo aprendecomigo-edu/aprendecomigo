@@ -1,6 +1,6 @@
 /**
  * Custom hook for managing the complete purchase flow.
- * 
+ *
  * Handles state management for the entire purchase process from
  * plan selection through payment completion, including error handling
  * and Stripe integration.
@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
+
 import { PurchaseApiClient } from '@/api/purchaseApi';
 import type {
   PurchaseFlowState,
@@ -34,7 +35,7 @@ const initialState: PurchaseFlowState = {
 
 /**
  * Hook for managing the complete purchase flow with comprehensive state management.
- * 
+ *
  * @returns Object containing state, actions, and computed properties
  */
 export function usePurchaseFlow(): UsePurchaseFlowResult {
@@ -85,7 +86,9 @@ export function usePurchaseFlow(): UsePurchaseFlowResult {
           ...prev.formData.errors,
           ...(name.trim() ? {} : { name: 'Name is required' }),
           ...(email.trim() ? {} : { email: 'Email is required' }),
-          ...(email.trim() && isValidEmail(email.trim()) ? {} : { email: 'Please enter a valid email address' }),
+          ...(email.trim() && isValidEmail(email.trim())
+            ? {}
+            : { email: 'Please enter a valid email address' }),
         },
       },
     }));
@@ -199,74 +202,77 @@ export function usePurchaseFlow(): UsePurchaseFlowResult {
     }
   }, [state.formData, validateForm]);
 
-  const confirmPayment = useCallback(async (stripe: StripeInstance, elements: StripeElements) => {
-    if (!state.paymentIntentSecret) {
-      setError('No payment intent available');
-      return;
-    }
-
-    setState(prev => ({
-      ...prev,
-      formData: {
-        ...prev.formData,
-        isProcessing: true,
-      },
-      errorMessage: null,
-    }));
-
-    try {
-      const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/purchase/success`,
-        },
-        redirect: 'if_required',
-      });
-
-      if (error) {
-        console.error('Payment confirmation failed:', error);
-        setState(prev => ({
-          ...prev,
-          formData: {
-            ...prev.formData,
-            isProcessing: false,
-          },
-          errorMessage: error.message || 'Payment failed',
-          step: 'error',
-        }));
-      } else if (paymentIntent?.status === 'succeeded') {
-        setState(prev => ({
-          ...prev,
-          formData: {
-            ...prev.formData,
-            isProcessing: false,
-          },
-          step: 'success',
-        }));
-      } else {
-        setState(prev => ({
-          ...prev,
-          formData: {
-            ...prev.formData,
-            isProcessing: false,
-          },
-          errorMessage: 'Payment processing incomplete',
-          step: 'error',
-        }));
+  const confirmPayment = useCallback(
+    async (stripe: StripeInstance, elements: StripeElements) => {
+      if (!state.paymentIntentSecret) {
+        setError('No payment intent available');
+        return;
       }
-    } catch (error: any) {
-      console.error('Payment confirmation error:', error);
+
       setState(prev => ({
         ...prev,
         formData: {
           ...prev.formData,
-          isProcessing: false,
+          isProcessing: true,
         },
-        errorMessage: error.message || 'Payment processing failed',
-        step: 'error',
+        errorMessage: null,
       }));
-    }
-  }, [state.paymentIntentSecret]);
+
+      try {
+        const { error, paymentIntent } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: `${window.location.origin}/purchase/success`,
+          },
+          redirect: 'if_required',
+        });
+
+        if (error) {
+          console.error('Payment confirmation failed:', error);
+          setState(prev => ({
+            ...prev,
+            formData: {
+              ...prev.formData,
+              isProcessing: false,
+            },
+            errorMessage: error.message || 'Payment failed',
+            step: 'error',
+          }));
+        } else if (paymentIntent?.status === 'succeeded') {
+          setState(prev => ({
+            ...prev,
+            formData: {
+              ...prev.formData,
+              isProcessing: false,
+            },
+            step: 'success',
+          }));
+        } else {
+          setState(prev => ({
+            ...prev,
+            formData: {
+              ...prev.formData,
+              isProcessing: false,
+            },
+            errorMessage: 'Payment processing incomplete',
+            step: 'error',
+          }));
+        }
+      } catch (error: any) {
+        console.error('Payment confirmation error:', error);
+        setState(prev => ({
+          ...prev,
+          formData: {
+            ...prev.formData,
+            isProcessing: false,
+          },
+          errorMessage: error.message || 'Payment processing failed',
+          step: 'error',
+        }));
+      }
+    },
+    [state.paymentIntentSecret]
+  );
 
   const resetFlow = useCallback(() => {
     setState(initialState);
@@ -322,7 +328,7 @@ export function usePurchaseFlow(): UsePurchaseFlowResult {
 
 /**
  * Simple email validation helper function.
- * 
+ *
  * @param email Email string to validate
  * @returns Boolean indicating if email format is valid
  */

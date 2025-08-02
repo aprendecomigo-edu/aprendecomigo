@@ -1,26 +1,33 @@
 /**
  * ParentDashboard Component
- * 
+ *
  * Main parent dashboard providing overview of all children's accounts,
  * family metrics, purchase approvals, and quick actions for parent users.
  */
 
-import React, { useMemo } from 'react';
-import { Platform, RefreshControl } from 'react-native';
-import { 
-  Users, 
-  Bell, 
-  CreditCard, 
-  Settings, 
+import {
+  Users,
+  Bell,
+  CreditCard,
+  Settings,
   AlertCircle,
   TrendingUp,
   Clock,
   CheckCircle,
   XCircle,
   Search,
-  Filter
+  Filter,
 } from 'lucide-react-native';
+import React, { useMemo } from 'react';
+import { Platform, RefreshControl } from 'react-native';
 
+import { ChildAccountCard } from './ChildAccountCard';
+import { ChildAccountSelector } from './ChildAccountSelector';
+import { FamilyMetricsOverview } from './FamilyMetricsOverview';
+import { ParentQuickActions } from './ParentQuickActions';
+import { PurchaseApprovalCard } from './PurchaseApprovalCard';
+
+import { useAuth } from '@/api/authContext';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -35,14 +42,7 @@ import { ScrollView } from '@/components/ui/scroll-view';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
 import { useParentDashboard } from '@/hooks/useParentDashboard';
-import { useAuth } from '@/api/authContext';
-import { ChildAccountSelector } from './ChildAccountSelector';
-import { ChildAccountCard } from './ChildAccountCard';
-import { FamilyMetricsOverview } from './FamilyMetricsOverview';
-import { ParentQuickActions } from './ParentQuickActions';
-import { PurchaseApprovalCard } from './PurchaseApprovalCard';
 
 export const ParentDashboard: React.FC = () => {
   const { userProfile } = useAuth();
@@ -57,13 +57,13 @@ export const ParentDashboard: React.FC = () => {
     error,
     isRefreshing,
     timeframe,
-    actions
+    actions,
   } = useParentDashboard();
 
   // Memoized dashboard sections
   const dashboardSections = useMemo(() => {
     if (!dashboardData || !familyMetrics) return [];
-    
+
     return [
       {
         id: 'overview',
@@ -91,16 +91,20 @@ export const ParentDashboard: React.FC = () => {
         hasData: recentApprovals.length > 0,
       },
     ];
-  }, [dashboardData, familyMetrics, pendingApprovals.length, recentApprovals.length, children.length]);
+  }, [
+    dashboardData,
+    familyMetrics,
+    pendingApprovals.length,
+    recentApprovals.length,
+    children.length,
+  ]);
 
   if (isLoading && !dashboardData) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50">
         <VStack className="flex-1 justify-center items-center p-6">
           <Spinner size="large" color="#3b82f6" />
-          <Text className="mt-4 text-gray-600 text-center">
-            Loading your family dashboard...
-          </Text>
+          <Text className="mt-4 text-gray-600 text-center">Loading your family dashboard...</Text>
         </VStack>
       </SafeAreaView>
     );
@@ -114,14 +118,8 @@ export const ParentDashboard: React.FC = () => {
           <Heading size="lg" className="text-gray-900 text-center mb-2">
             Unable to Load Dashboard
           </Heading>
-          <Text className="text-gray-600 text-center mb-6">
-            {error}
-          </Text>
-          <Button 
-            action="primary" 
-            onPress={actions.refreshDashboard}
-            className="w-full max-w-xs"
-          >
+          <Text className="text-gray-600 text-center mb-6">{error}</Text>
+          <Button action="primary" onPress={actions.refreshDashboard} className="w-full max-w-xs">
             <ButtonText>Try Again</ButtonText>
           </Button>
         </VStack>
@@ -149,18 +147,16 @@ export const ParentDashboard: React.FC = () => {
               <Heading size="xl" className="text-gray-900">
                 Family Dashboard
               </Heading>
-              <Text className="text-gray-600">
-                Welcome back, {userProfile?.name || 'Parent'}
-              </Text>
+              <Text className="text-gray-600">Welcome back, {userProfile?.name || 'Parent'}</Text>
             </VStack>
-            
+
             <HStack className="space-x-2">
               {pendingApprovals.length > 0 && (
                 <Pressable className="relative">
                   <Icon as={Bell} size={24} className="text-gray-600" />
-                  <Badge 
-                    size="sm" 
-                    variant="solid" 
+                  <Badge
+                    size="sm"
+                    variant="solid"
                     action="error"
                     className="absolute -top-2 -right-2 min-w-5 h-5"
                   >
@@ -170,7 +166,7 @@ export const ParentDashboard: React.FC = () => {
                   </Badge>
                 </Pressable>
               )}
-              
+
               <Pressable>
                 <Icon as={Settings} size={24} className="text-gray-600" />
               </Pressable>
@@ -214,23 +210,21 @@ export const ParentDashboard: React.FC = () => {
                     Pending Approvals
                   </Heading>
                   <Badge variant="solid" action="warning">
-                    <Text className="text-xs font-medium">
-                      {pendingApprovals.length} pending
-                    </Text>
+                    <Text className="text-xs font-medium">{pendingApprovals.length} pending</Text>
                   </Badge>
                 </HStack>
               </CardHeader>
               <CardContent>
                 <VStack className="space-y-3">
-                  {pendingApprovals.slice(0, 3).map((approval) => (
+                  {pendingApprovals.slice(0, 3).map(approval => (
                     <PurchaseApprovalCard
                       key={approval.id}
                       approval={approval}
-                      onApprove={(notes) => actions.approvePurchase(approval.id.toString(), notes)}
-                      onReject={(notes) => actions.rejectPurchase(approval.id.toString(), notes)}
+                      onApprove={notes => actions.approvePurchase(approval.id.toString(), notes)}
+                      onReject={notes => actions.rejectPurchase(approval.id.toString(), notes)}
                     />
                   ))}
-                  
+
                   {pendingApprovals.length > 3 && (
                     <Button variant="outline" size="sm" className="w-full">
                       <ButtonText>View All {pendingApprovals.length} Approvals</ButtonText>
@@ -261,11 +255,11 @@ export const ParentDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <VStack className="space-y-4">
-                  {children.map((child) => {
+                  {children.map(child => {
                     const childMetrics = familyMetrics?.children_summary.find(
                       c => c.child_id === child.id
                     );
-                    
+
                     return (
                       <ChildAccountCard
                         key={child.id}
@@ -291,30 +285,31 @@ export const ParentDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <VStack className="space-y-3">
-                  {recentApprovals.slice(0, 5).map((approval) => (
+                  {recentApprovals.slice(0, 5).map(approval => (
                     <HStack key={approval.id} className="justify-between items-center py-2">
                       <HStack className="flex-1 space-x-3">
-                        <Icon 
+                        <Icon
                           as={approval.status === 'approved' ? CheckCircle : XCircle}
                           size={20}
-                          className={approval.status === 'approved' ? 'text-green-600' : 'text-red-600'}
+                          className={
+                            approval.status === 'approved' ? 'text-green-600' : 'text-red-600'
+                          }
                         />
                         <VStack className="flex-1">
                           <Text className="text-gray-900 font-medium">
                             {approval.pricing_plan.name}
                           </Text>
                           <Text className="text-sm text-gray-600">
-                            €{approval.amount} • {new Date(approval.responded_at || '').toLocaleDateString()}
+                            €{approval.amount} •{' '}
+                            {new Date(approval.responded_at || '').toLocaleDateString()}
                           </Text>
                         </VStack>
                       </HStack>
-                      <Badge 
-                        variant="solid" 
+                      <Badge
+                        variant="solid"
                         action={approval.status === 'approved' ? 'success' : 'error'}
                       >
-                        <Text className="text-xs font-medium capitalize">
-                          {approval.status}
-                        </Text>
+                        <Text className="text-xs font-medium capitalize">{approval.status}</Text>
                       </Badge>
                     </HStack>
                   ))}
@@ -333,7 +328,8 @@ export const ParentDashboard: React.FC = () => {
                     No Children Added Yet
                   </Heading>
                   <Text className="text-gray-600 text-center max-w-sm">
-                    Add your children's accounts to start managing their tutoring experience and purchases.
+                    Add your children's accounts to start managing their tutoring experience and
+                    purchases.
                   </Text>
                   <Button action="primary" className="mt-4">
                     <ButtonText>Add Child Account</ButtonText>

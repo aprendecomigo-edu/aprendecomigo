@@ -1,7 +1,7 @@
-import React from 'react';
+import { jest } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { jest } from '@jest/globals';
+import React from 'react';
 
 import TeacherStudentsPage from '@/app/(teacher)/students/index';
 import { useTeacherStudents } from '@/hooks/useTeacherDashboard';
@@ -19,12 +19,16 @@ jest.mock('@/hooks/useTeacherDashboard', () => ({
 }));
 
 jest.mock('@/hooks/useDebounce', () => ({
-  useDebounce: jest.fn((value) => value),
+  useDebounce: jest.fn(value => value),
 }));
 
 jest.mock('@/components/layouts/main-layout', () => {
   return function MockMainLayout({ children, _title }: any) {
-    return <div data-testid="main-layout" data-title={_title}>{children}</div>;
+    return (
+      <div data-testid="main-layout" data-title={_title}>
+        {children}
+      </div>
+    );
   };
 });
 
@@ -166,7 +170,11 @@ describe('TeacherStudentsPage', () => {
       render(<TeacherStudentsPage />);
 
       expect(screen.getByText('Nenhum Estudante Encontrado')).toBeTruthy();
-      expect(screen.getByText('Ainda não tem estudantes atribuídos. Entre em contacto com a administração da escola.')).toBeTruthy();
+      expect(
+        screen.getByText(
+          'Ainda não tem estudantes atribuídos. Entre em contacto com a administração da escola.'
+        )
+      ).toBeTruthy();
       expect(screen.getByText('Agendar Primeira Aula')).toBeTruthy();
     });
   });
@@ -183,7 +191,7 @@ describe('TeacherStudentsPage', () => {
         setSearchQuery: jest.fn(),
         setFilterBy: jest.fn(),
         refresh: jest.fn(),
-        getStudentById: jest.fn((id) => mockStudents.find(s => s.id === id)),
+        getStudentById: jest.fn(id => mockStudents.find(s => s.id === id)),
       });
     });
 
@@ -192,12 +200,12 @@ describe('TeacherStudentsPage', () => {
 
       expect(screen.getByText('Meus Estudantes')).toBeTruthy();
       expect(screen.getByText('3 de 3 estudante(s)')).toBeTruthy();
-      
+
       // Should display all students
       expect(screen.getByText('Ana Costa')).toBeTruthy();
       expect(screen.getByText('Pedro Santos')).toBeTruthy();
       expect(screen.getByText('Maria Silva')).toBeTruthy();
-      
+
       // Should display email addresses
       expect(screen.getByText('ana@estudante.com')).toBeTruthy();
       expect(screen.getByText('pedro@estudante.com')).toBeTruthy();
@@ -315,7 +323,9 @@ describe('TeacherStudentsPage', () => {
       render(<TeacherStudentsPage />);
 
       expect(screen.getByText('Nenhum estudante encontrado')).toBeTruthy();
-      expect(screen.getByText('Nenhum resultado para "xyz". Tente ajustar os filtros de pesquisa.')).toBeTruthy();
+      expect(
+        screen.getByText('Nenhum resultado para "xyz". Tente ajustar os filtros de pesquisa.')
+      ).toBeTruthy();
     });
   });
 

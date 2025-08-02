@@ -5,10 +5,10 @@ import { withStates } from '@gluestack-ui/nativewind-utils/withStates';
 import { withStyleContext, useStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
 import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
 import { createPopover } from '@gluestack-ui/popover';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 import React from 'react';
 import { View, Pressable, Platform, ScrollView } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const SCOPE = 'POPOVER';

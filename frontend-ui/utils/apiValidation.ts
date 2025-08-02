@@ -25,7 +25,11 @@ export class ApiValidator {
       errors.push('Email muito longo');
     }
 
-    if (!data.phone_number || typeof data.phone_number !== 'string' || data.phone_number.trim().length === 0) {
+    if (
+      !data.phone_number ||
+      typeof data.phone_number !== 'string' ||
+      data.phone_number.trim().length === 0
+    ) {
       errors.push('Telefone é obrigatório');
     } else if (!/^[\+]?[0-9\s\-\(\)]{8,20}$/.test(data.phone_number.trim())) {
       errors.push('Formato de telefone inválido');
@@ -43,7 +47,7 @@ export class ApiValidator {
       const birthDate = new Date(data.birth_date);
       const today = new Date();
       const age = today.getFullYear() - birthDate.getFullYear();
-      
+
       if (birthDate > today) {
         errors.push('Data de nascimento não pode ser no futuro');
       } else if (age < 5 || age > 25) {
@@ -55,7 +59,11 @@ export class ApiValidator {
       errors.push('ID da escola é obrigatório');
     }
 
-    if (!data.educational_system_id || typeof data.educational_system_id !== 'number' || data.educational_system_id <= 0) {
+    if (
+      !data.educational_system_id ||
+      typeof data.educational_system_id !== 'number' ||
+      data.educational_system_id <= 0
+    ) {
       errors.push('Sistema educacional é obrigatório');
     }
 
@@ -70,7 +78,7 @@ export class ApiValidator {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -81,7 +89,10 @@ export class ApiValidator {
       errors.push('Número da página deve ser maior que 0');
     }
 
-    if (filters.page_size && (typeof filters.page_size !== 'number' || filters.page_size < 1 || filters.page_size > 100)) {
+    if (
+      filters.page_size &&
+      (typeof filters.page_size !== 'number' || filters.page_size < 1 || filters.page_size > 100)
+    ) {
       errors.push('Tamanho da página deve estar entre 1 e 100');
     }
 
@@ -93,7 +104,10 @@ export class ApiValidator {
       errors.push('Status inválido');
     }
 
-    if (filters.educational_system && (typeof filters.educational_system !== 'number' || filters.educational_system <= 0)) {
+    if (
+      filters.educational_system &&
+      (typeof filters.educational_system !== 'number' || filters.educational_system <= 0)
+    ) {
       errors.push('ID do sistema educacional inválido');
     }
 
@@ -103,7 +117,7 @@ export class ApiValidator {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -120,7 +134,7 @@ export class ApiValidator {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -149,7 +163,7 @@ export function withValidation<T extends any[], R>(
 ) {
   return async (...args: T): Promise<R> => {
     const validation = validator(...args);
-    
+
     if (!validation.isValid) {
       throw new Error(`Dados inválidos: ${validation.errors.join(', ')}`);
     }

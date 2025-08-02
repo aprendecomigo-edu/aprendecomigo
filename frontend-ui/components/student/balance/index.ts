@@ -1,22 +1,22 @@
 /**
  * Balance Components Export Index
- * 
+ *
  * Centralized exports for the enhanced balance dashboard and notification components.
  */
 
 export { BalanceStatusBar, CompactBalanceStatusBar, getBalanceStatus } from './BalanceStatusBar';
 export { BalanceAlertProvider, useBalanceAlert } from './BalanceAlertProvider';
 export { NotificationCenter } from './NotificationCenter';
-export { 
-  LowBalanceToastProvider, 
-  useLowBalanceToast, 
+export {
+  LowBalanceToastProvider,
+  useLowBalanceToast,
   withBalanceAlerts,
-  BalanceNotificationUtils 
+  BalanceNotificationUtils,
 } from './LowBalanceNotification';
 
 export type { BalanceStatus } from './BalanceStatusBar';
-export type { 
+export type {
   BalanceAlertContextType,
   BalanceAlertState,
-  BalanceAlertActions
+  BalanceAlertActions,
 } from '@/types/notification';

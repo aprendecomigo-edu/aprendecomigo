@@ -86,19 +86,26 @@ jest.mock('expo-asset', () => ({
 // Mock React Native Vector Icons
 jest.mock('lucide-react-native', () => {
   const React = require('react');
-  
+
   const MockIcon = React.forwardRef((props, ref) => {
     const { testID, ...otherProps } = props;
-    return React.createElement('Text', {
-      ...otherProps,
-      ref,
-      testID: testID || 'mock-icon',
-    }, 'MockIcon');
+    return React.createElement(
+      'Text',
+      {
+        ...otherProps,
+        ref,
+        testID: testID || 'mock-icon',
+      },
+      'MockIcon'
+    );
   });
-  
-  return new Proxy({}, {
-    get: () => MockIcon,
-  });
+
+  return new Proxy(
+    {},
+    {
+      get: () => MockIcon,
+    }
+  );
 });
 
 // Mock API client
@@ -117,15 +124,15 @@ global.FormData = class FormData {
   constructor() {
     this.data = {};
   }
-  
+
   append(key, value) {
     this.data[key] = value;
   }
-  
+
   get(key) {
     return this.data[key];
   }
-  
+
   has(key) {
     return key in this.data;
   }
@@ -135,7 +142,7 @@ global.FormData = class FormData {
 jest.mock('@/components/ui/image', () => {
   const React = require('react');
   return {
-    Image: React.forwardRef((props, ref) => 
+    Image: React.forwardRef((props, ref) =>
       React.createElement('View', { ...props, ref, testID: 'mock-image' })
     ),
   };
@@ -183,7 +190,7 @@ console.warn = (...args) => {
   if (
     typeof warningString === 'string' &&
     (warningString.includes('componentWillReceiveProps') ||
-     warningString.includes('componentWillUpdate'))
+      warningString.includes('componentWillUpdate'))
   ) {
     return;
   }

@@ -26,6 +26,7 @@ import {
   FormControlHelperText,
 } from '@/components/ui/form-control';
 import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
 import { ArrowLeftIcon, Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
@@ -33,7 +34,6 @@ import { Radio, RadioGroup, RadioIcon, RadioIndicator, RadioLabel } from '@/comp
 import { Text } from '@/components/ui/text';
 import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
-import { HStack } from '@/components/ui/hstack';
 
 // Define user types with proper TypeScript safety
 export type UserType = 'tutor' | 'school';
@@ -45,7 +45,8 @@ const USER_TYPE_CONFIG = {
     subtitle: 'Create your professional tutoring account with Aprende Comigo',
     label: 'Individual Tutor',
     sectionTitle: 'Practice Information',
-    sectionDescription: 'Your practice name will be auto-generated from your name. You can customize it later.',
+    sectionDescription:
+      'Your practice name will be auto-generated from your name. You can customize it later.',
     nameLabel: 'Practice Name',
     namePlaceholder: 'Your practice name (auto-generated)',
     icon: GraduationCap,
@@ -71,12 +72,12 @@ const validateUserType = (type: string | undefined): UserType => {
   if (type === 'tutor' || type === 'school') {
     return type;
   }
-  
+
   // Log warning for invalid type but gracefully fallback
   if (type && type !== 'tutor' && type !== 'school') {
     console.warn(`Invalid user type "${type}" provided. Defaulting to "tutor".`);
   }
-  
+
   return 'tutor'; // Default to tutor
 };
 
@@ -84,7 +85,7 @@ const validateUserType = (type: string | undefined): UserType => {
 const generateSchoolName = (userName: string, userType: UserType): string => {
   if (userType !== 'tutor') return '';
   if (!userName?.trim()) return '';
-  
+
   try {
     return `${userName.trim()}'s Tutoring Practice`;
   } catch (error) {
@@ -94,44 +95,47 @@ const generateSchoolName = (userName: string, userType: UserType): string => {
 };
 
 // Define the form schema based on user type
-const createOnboardingSchema = (userType: UserType) => z.object({
-  // User information
-  userName: z.string().min(1, 'Name is required').max(150, 'Name must be 150 characters or less'),
-  userEmail: z
-    .string()
-    .email('Please enter a valid email')
-    .min(1, 'Email is required')
-    .max(150, 'Email must be 150 characters or less'),
-  userPhone: z
-    .string()
-    .min(4, 'Phone number is required')
-    .max(20, 'Phone number must be 20 characters or less')
-    .regex(/^[+\d\s]+$/, 'Phone number can only contain digits, spaces, and + sign')
-    .refine(val => /\d/.test(val), 'Phone number must contain at least one digit')
-    .refine(val => !val.startsWith(' '), 'Phone number cannot start with a space')
-    .refine(val => !/\s{2,}/.test(val), 'No consecutive spaces allowed')
-    .refine(
-      val => !/.*\+.*/.test(val.substring(1)),
-      'Plus sign (+) can only appear at the beginning'
-    ),
+const createOnboardingSchema = (userType: UserType) =>
+  z.object({
+    // User information
+    userName: z.string().min(1, 'Name is required').max(150, 'Name must be 150 characters or less'),
+    userEmail: z
+      .string()
+      .email('Please enter a valid email')
+      .min(1, 'Email is required')
+      .max(150, 'Email must be 150 characters or less'),
+    userPhone: z
+      .string()
+      .min(4, 'Phone number is required')
+      .max(20, 'Phone number must be 20 characters or less')
+      .regex(/^[+\d\s]+$/, 'Phone number can only contain digits, spaces, and + sign')
+      .refine(val => /\d/.test(val), 'Phone number must contain at least one digit')
+      .refine(val => !val.startsWith(' '), 'Phone number cannot start with a space')
+      .refine(val => !/\s{2,}/.test(val), 'No consecutive spaces allowed')
+      .refine(
+        val => !/.*\+.*/.test(val.substring(1)),
+        'Plus sign (+) can only appear at the beginning'
+      ),
 
-  // School information - conditional based on user type
-  schoolName: userType === 'school' 
-    ? z.string()
-        .min(1, 'School name is required')
-        .max(150, 'School name must be 150 characters or less')
-    : z.string().optional(),
-  schoolAddress: z.string().optional(),
-  schoolWebsite: z
-    .string()
-    .url('Please enter a valid URL')
-    .max(200, 'Website URL must be 200 characters or less')
-    .optional()
-    .or(z.literal('')),
-  primaryContact: z.enum(['email', 'phone'], {
-    required_error: 'Please select a primary contact method',
-  }),
-});
+    // School information - conditional based on user type
+    schoolName:
+      userType === 'school'
+        ? z
+            .string()
+            .min(1, 'School name is required')
+            .max(150, 'School name must be 150 characters or less')
+        : z.string().optional(),
+    schoolAddress: z.string().optional(),
+    schoolWebsite: z
+      .string()
+      .url('Please enter a valid URL')
+      .max(200, 'Website URL must be 200 characters or less')
+      .optional()
+      .or(z.literal('')),
+    primaryContact: z.enum(['email', 'phone'], {
+      required_error: 'Please select a primary contact method',
+    }),
+  });
 
 type OnboardingSchemaType = z.infer<ReturnType<typeof createOnboardingSchema>>;
 
@@ -175,7 +179,7 @@ const OnboardingForm = () => {
       setValue('userName', userProfile.name || '');
       setValue('userEmail', userProfile.email || '');
       setValue('userPhone', userProfile.phone_number || '');
-      
+
       // Auto-generate school name for tutors
       if (userType === 'tutor' && userProfile.name) {
         setValue('schoolName', generateSchoolName(userProfile.name, userType));
@@ -204,9 +208,10 @@ const OnboardingForm = () => {
       }
 
       // Convert form data to API request format that matches the backend serializer
-      const schoolName = userType === 'tutor' 
-        ? generateSchoolName(data.userName, userType)
-        : data.schoolName || 'Untitled School';
+      const schoolName =
+        userType === 'tutor'
+          ? generateSchoolName(data.userName, userType)
+          : data.schoolName || 'Untitled School';
 
       // Validate generated school name
       if (!schoolName?.trim()) {
@@ -245,7 +250,9 @@ const OnboardingForm = () => {
         router.replace(
           `/auth/verify-code?contact=${encodeURIComponent(
             data.primaryContact === 'email' ? data.userEmail : data.userPhone
-          )}&contactType=${data.primaryContact}&nextRoute=${encodeURIComponent('/onboarding/tutor-flow')}`
+          )}&contactType=${data.primaryContact}&nextRoute=${encodeURIComponent(
+            '/onboarding/tutor-flow'
+          )}`
         );
       } else {
         // For schools, use existing verification flow
@@ -257,10 +264,10 @@ const OnboardingForm = () => {
       }
     } catch (error: any) {
       console.error('Error during registration:', error);
-      
+
       // Enhanced error handling with specific messages
       let errorMessage = 'Failed to complete registration. Please try again.';
-      
+
       if (error?.response?.status === 400) {
         errorMessage = 'Invalid information provided. Please check your details and try again.';
       } else if (error?.response?.status === 409) {
@@ -291,13 +298,15 @@ const OnboardingForm = () => {
         >
           <Icon as={ArrowLeftIcon} className="md:hidden text-background-800" size="xl" />
         </Pressable>
-        
+
         {/* User Type Indicator */}
         <HStack space="md" className="items-center justify-center mb-2">
-          <Box className={`w-12 h-12 rounded-full items-center justify-center ${USER_TYPE_CONFIG[userType].backgroundColor}`}>
-            <Icon 
-              as={USER_TYPE_CONFIG[userType].icon} 
-              className={USER_TYPE_CONFIG[userType].iconColor} 
+          <Box
+            className={`w-12 h-12 rounded-full items-center justify-center ${USER_TYPE_CONFIG[userType].backgroundColor}`}
+          >
+            <Icon
+              as={USER_TYPE_CONFIG[userType].icon}
+              className={USER_TYPE_CONFIG[userType].iconColor}
               size="lg"
               accessibilityLabel={`${USER_TYPE_CONFIG[userType].label} icon`}
             />
@@ -319,7 +328,7 @@ const OnboardingForm = () => {
         </VStack>
       </VStack>
 
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         accessibilityLabel="Registration form content"
       >
@@ -474,9 +483,7 @@ const OnboardingForm = () => {
 
             <FormControl isInvalid={!!errors.schoolName}>
               <FormControlLabel>
-                <FormControlLabelText>
-                  {USER_TYPE_CONFIG[userType].nameLabel}
-                </FormControlLabelText>
+                <FormControlLabelText>{USER_TYPE_CONFIG[userType].nameLabel}</FormControlLabelText>
               </FormControlLabel>
               <Controller
                 name="schoolName"
@@ -502,7 +509,8 @@ const OnboardingForm = () => {
               {userType === 'tutor' && (
                 <FormControlHelper>
                   <FormControlHelperText>
-                    This will be automatically generated from your name. You can change it later in settings.
+                    This will be automatically generated from your name. You can change it later in
+                    settings.
                   </FormControlHelperText>
                 </FormControlHelper>
               )}

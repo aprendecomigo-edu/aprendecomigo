@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 
-import CommunicationApi, { 
-  TeacherOnboardingProgress, 
-  FAQ, 
-  FAQCategory 
+import CommunicationApi, {
+  TeacherOnboardingProgress,
+  FAQ,
+  FAQCategory,
 } from '@/api/communicationApi';
 
 export const useTeacherOnboarding = (teacherId?: number, autoFetch = true) => {
@@ -17,11 +17,12 @@ export const useTeacherOnboarding = (teacherId?: number, autoFetch = true) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const progressData = await CommunicationApi.getOnboardingProgress(teacherId);
       setProgress(progressData);
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to fetch onboarding progress';
+      const errorMessage =
+        err.response?.data?.detail || err.message || 'Failed to fetch onboarding progress';
       setError(errorMessage);
       console.error('Error fetching onboarding progress:', err);
     } finally {
@@ -33,13 +34,14 @@ export const useTeacherOnboarding = (teacherId?: number, autoFetch = true) => {
     try {
       setUpdating(true);
       setError(null);
-      
+
       const updatedProgress = await CommunicationApi.updateOnboardingProgress(step, data);
       setProgress(updatedProgress);
-      
+
       return updatedProgress;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to update onboarding progress';
+      const errorMessage =
+        err.response?.data?.detail || err.message || 'Failed to update onboarding progress';
       setError(errorMessage);
       console.error('Error updating onboarding progress:', err);
       throw err;
@@ -52,17 +54,15 @@ export const useTeacherOnboarding = (teacherId?: number, autoFetch = true) => {
     try {
       setUpdating(true);
       setError(null);
-      
+
       const updatedProgress = await CommunicationApi.markMilestoneAchieved(milestone);
       setProgress(updatedProgress);
-      
+
       // Show celebration
-      Alert.alert(
-        '🎉 Milestone Achieved!',
-        `Congratulations! You've completed: ${milestone}`,
-        [{ text: 'Continue', style: 'default' }]
-      );
-      
+      Alert.alert('🎉 Milestone Achieved!', `Congratulations! You've completed: ${milestone}`, [
+        { text: 'Continue', style: 'default' },
+      ]);
+
       return updatedProgress;
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || err.message || 'Failed to mark milestone';
@@ -74,26 +74,29 @@ export const useTeacherOnboarding = (teacherId?: number, autoFetch = true) => {
     }
   }, []);
 
-  const nextStep = useCallback(async (stepData?: Record<string, any>) => {
-    if (!progress) return false;
-    
-    const nextStepNumber = progress.current_step + 1;
-    if (nextStepNumber > progress.total_steps) return false;
-    
-    try {
-      await updateProgress(nextStepNumber, stepData);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }, [progress, updateProgress]);
+  const nextStep = useCallback(
+    async (stepData?: Record<string, any>) => {
+      if (!progress) return false;
+
+      const nextStepNumber = progress.current_step + 1;
+      if (nextStepNumber > progress.total_steps) return false;
+
+      try {
+        await updateProgress(nextStepNumber, stepData);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    },
+    [progress, updateProgress]
+  );
 
   const previousStep = useCallback(async () => {
     if (!progress) return false;
-    
+
     const prevStepNumber = progress.current_step - 1;
     if (prevStepNumber < 1) return false;
-    
+
     try {
       await updateProgress(prevStepNumber);
       return true;
@@ -102,16 +105,19 @@ export const useTeacherOnboarding = (teacherId?: number, autoFetch = true) => {
     }
   }, [progress, updateProgress]);
 
-  const goToStep = useCallback(async (stepNumber: number) => {
-    if (!progress || stepNumber < 1 || stepNumber > progress.total_steps) return false;
-    
-    try {
-      await updateProgress(stepNumber);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }, [progress, updateProgress]);
+  const goToStep = useCallback(
+    async (stepNumber: number) => {
+      if (!progress || stepNumber < 1 || stepNumber > progress.total_steps) return false;
+
+      try {
+        await updateProgress(stepNumber);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    },
+    [progress, updateProgress]
+  );
 
   useEffect(() => {
     if (autoFetch) {
@@ -132,7 +138,9 @@ export const useTeacherOnboarding = (teacherId?: number, autoFetch = true) => {
     goToStep,
     // Computed properties
     isCompleted: progress?.completed_at !== null,
-    progressPercentage: progress ? (progress.completed_steps.length / progress.total_steps) * 100 : 0,
+    progressPercentage: progress
+      ? (progress.completed_steps.length / progress.total_steps) * 100
+      : 0,
     canGoNext: progress ? progress.current_step < progress.total_steps : false,
     canGoPrevious: progress ? progress.current_step > 1 : false,
     clearError: () => setError(null),
@@ -147,28 +155,27 @@ export const useFAQSystem = (autoFetch = true) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
-  const fetchFAQs = useCallback(async (params?: {
-    category?: string;
-    search?: string;
-    is_active?: boolean;
-  }) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const faqsData = await CommunicationApi.getFAQs({
-        is_active: true,
-        ...params,
-      });
-      setFaqs(faqsData);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to fetch FAQs';
-      setError(errorMessage);
-      console.error('Error fetching FAQs:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchFAQs = useCallback(
+    async (params?: { category?: string; search?: string; is_active?: boolean }) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const faqsData = await CommunicationApi.getFAQs({
+          is_active: true,
+          ...params,
+        });
+        setFaqs(faqsData);
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.detail || err.message || 'Failed to fetch FAQs';
+        setError(errorMessage);
+        console.error('Error fetching FAQs:', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -179,39 +186,42 @@ export const useFAQSystem = (autoFetch = true) => {
     }
   }, []);
 
-  const searchFAQs = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      fetchFAQs();
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const searchResults = await CommunicationApi.searchFAQs(query);
-      setFaqs(searchResults);
-      setSearchQuery(query);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to search FAQs';
-      setError(errorMessage);
-      console.error('Error searching FAQs:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchFAQs]);
+  const searchFAQs = useCallback(
+    async (query: string) => {
+      if (!query.trim()) {
+        fetchFAQs();
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const searchResults = await CommunicationApi.searchFAQs(query);
+        setFaqs(searchResults);
+        setSearchQuery(query);
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.detail || err.message || 'Failed to search FAQs';
+        setError(errorMessage);
+        console.error('Error searching FAQs:', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchFAQs]
+  );
 
   const markFAQHelpful = useCallback(async (faqId: number, helpful: boolean) => {
     try {
       await CommunicationApi.markFAQHelpful(faqId, helpful);
-      
+
       // Update FAQ in local state
-      setFaqs(prevFaqs => 
-        prevFaqs.map(faq => 
-          faq.id === faqId 
-            ? { 
-                ...faq, 
-                helpful_count: helpful ? faq.helpful_count + 1 : Math.max(0, faq.helpful_count - 1)
+      setFaqs(prevFaqs =>
+        prevFaqs.map(faq =>
+          faq.id === faqId
+            ? {
+                ...faq,
+                helpful_count: helpful ? faq.helpful_count + 1 : Math.max(0, faq.helpful_count - 1),
               }
             : faq
         )
@@ -221,13 +231,16 @@ export const useFAQSystem = (autoFetch = true) => {
     }
   }, []);
 
-  const filterByCategory = useCallback((category: string) => {
-    setSelectedCategory(category);
-    fetchFAQs({ 
-      category: category || undefined,
-      search: searchQuery || undefined
-    });
-  }, [fetchFAQs, searchQuery]);
+  const filterByCategory = useCallback(
+    (category: string) => {
+      setSelectedCategory(category);
+      fetchFAQs({
+        category: category || undefined,
+        search: searchQuery || undefined,
+      });
+    },
+    [fetchFAQs, searchQuery]
+  );
 
   const clearFilters = useCallback(() => {
     setSearchQuery('');
@@ -268,7 +281,7 @@ export const useContextualHelp = () => {
     try {
       setLoading(true);
       setCurrentContext(context);
-      
+
       const contextualData = await CommunicationApi.getContextualFAQs(context, step);
       setContextualFAQs(contextualData);
     } catch (err: any) {
@@ -359,25 +372,25 @@ export const useOnboardingHelpers = () => {
       7: 'Profile Marketing',
       8: 'Review & Submit',
     };
-    
+
     return stepNames[step as keyof typeof stepNames] || `Step ${step}`;
   }, []);
 
   const getMilestoneMessage = useCallback((milestone: string): string => {
     const milestoneMessages = {
-      'basic_info_complete': 'You\'ve provided your basic information!',
-      'subjects_selected': 'You\'ve selected your teaching subjects!',
-      'availability_set': 'You\'ve set your availability preferences!',
-      'credentials_added': 'You\'ve added your teaching credentials!',
-      'profile_complete': 'Your profile is now complete!',
+      basic_info_complete: "You've provided your basic information!",
+      subjects_selected: "You've selected your teaching subjects!",
+      availability_set: "You've set your availability preferences!",
+      credentials_added: "You've added your teaching credentials!",
+      profile_complete: 'Your profile is now complete!',
     };
-    
+
     return milestoneMessages[milestone as keyof typeof milestoneMessages] || milestone;
   }, []);
 
   const getProgressMessage = useCallback((progress: TeacherOnboardingProgress): string => {
     const completedPercentage = (progress.completed_steps.length / progress.total_steps) * 100;
-    
+
     if (completedPercentage === 0) {
       return "Let's get started with your teacher profile!";
     } else if (completedPercentage < 50) {
@@ -385,22 +398,22 @@ export const useOnboardingHelpers = () => {
     } else if (completedPercentage < 100) {
       return "You're almost there!";
     } else {
-      return "Congratulations! Your profile is complete!";
+      return 'Congratulations! Your profile is complete!';
     }
   }, []);
 
   const getNextStepHint = useCallback((currentStep: number): string => {
     const hints = {
       1: "Next, you'll select the subjects you teach.",
-      2: "Coming up: choose the grade levels you work with.",
-      3: "Next, set your availability preferences.",
+      2: 'Coming up: choose the grade levels you work with.',
+      3: 'Next, set your availability preferences.',
       4: "You'll then set your rates and compensation.",
-      5: "After this, add your teaching credentials.",
-      6: "Almost done! Create your profile marketing content.",
-      7: "Finally, review and submit your complete profile.",
+      5: 'After this, add your teaching credentials.',
+      6: 'Almost done! Create your profile marketing content.',
+      7: 'Finally, review and submit your complete profile.',
     };
-    
-    return hints[currentStep as keyof typeof hints] || "Continue with the next step.";
+
+    return hints[currentStep as keyof typeof hints] || 'Continue with the next step.';
   }, []);
 
   return {

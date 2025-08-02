@@ -1,10 +1,26 @@
+import {
+  Lightbulb,
+  Users,
+  Target,
+  Sparkles,
+  BookOpen,
+  Heart,
+  X,
+  CheckCircle2,
+} from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Lightbulb, Users, Target, Sparkles, BookOpen, Heart, X, CheckCircle2 } from 'lucide-react-native';
 
+import { BioEditor } from '@/components/editors/bio-editor';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FormControl, FormControlLabel, FormControlHelper, FormControlError } from '@/components/ui/form-control';
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlHelper,
+  FormControlError,
+} from '@/components/ui/form-control';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
@@ -12,9 +28,6 @@ import { Input, InputField } from '@/components/ui/input';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-
-import { BioEditor } from '@/components/editors/bio-editor';
 
 interface BiographyFormData {
   professional_bio: string;
@@ -33,43 +46,53 @@ interface BiographyStepProps {
 }
 
 const TEACHING_APPROACHES = [
-  { 
-    id: 'interactive', 
-    label: 'Interactive Learning', 
+  {
+    id: 'interactive',
+    label: 'Interactive Learning',
     description: 'Engaging students through hands-on activities and discussions',
-    icon: Users 
+    icon: Users,
   },
-  { 
-    id: 'personalized', 
-    label: 'Personalized Instruction', 
+  {
+    id: 'personalized',
+    label: 'Personalized Instruction',
     description: 'Adapting lessons to individual learning styles and needs',
-    icon: Target 
+    icon: Target,
   },
-  { 
-    id: 'creative', 
-    label: 'Creative Teaching', 
+  {
+    id: 'creative',
+    label: 'Creative Teaching',
     description: 'Using innovative methods to make learning fun and memorable',
-    icon: Sparkles 
+    icon: Sparkles,
   },
-  { 
-    id: 'structured', 
-    label: 'Structured Learning', 
+  {
+    id: 'structured',
+    label: 'Structured Learning',
     description: 'Clear objectives, step-by-step progression, and regular assessments',
-    icon: BookOpen 
+    icon: BookOpen,
   },
-  { 
-    id: 'supportive', 
-    label: 'Supportive Environment', 
+  {
+    id: 'supportive',
+    label: 'Supportive Environment',
     description: 'Building confidence and providing emotional support for learning',
-    icon: Heart 
+    icon: Heart,
   },
 ];
 
 const COMMON_SPECIALIZATIONS = [
-  'Exam Preparation', 'Test Prep', 'Homework Help', 'Advanced Placement',
-  'IB Program', 'Special Needs', 'ESL/EFL', 'Adult Learning',
-  'Online Teaching', 'Group Classes', 'One-on-One Tutoring',
-  'Curriculum Development', 'Assessment Design', 'Learning Disabilities'
+  'Exam Preparation',
+  'Test Prep',
+  'Homework Help',
+  'Advanced Placement',
+  'IB Program',
+  'Special Needs',
+  'ESL/EFL',
+  'Adult Learning',
+  'Online Teaching',
+  'Group Classes',
+  'One-on-One Tutoring',
+  'Curriculum Development',
+  'Assessment Design',
+  'Learning Disabilities',
 ];
 
 export const BiographyStep: React.FC<BiographyStepProps> = ({
@@ -96,7 +119,10 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
   };
 
   const removeSpecialization = (specialization: string) => {
-    handleFieldChange('specializations', formData.specializations.filter(s => s !== specialization));
+    handleFieldChange(
+      'specializations',
+      formData.specializations.filter(s => s !== specialization)
+    );
   };
 
   const addAchievement = (achievement: string) => {
@@ -125,7 +151,9 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
     return !!validationErrors[fieldName]?.length;
   };
 
-  const wordCount = formData.professional_bio ? formData.professional_bio.trim().split(/\s+/).length : 0;
+  const wordCount = formData.professional_bio
+    ? formData.professional_bio.trim().split(/\s+/).length
+    : 0;
 
   return (
     <ScrollView className="flex-1">
@@ -137,7 +165,8 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
               Professional Biography
             </Heading>
             <Text className="text-gray-600">
-              Tell your story! Help students understand who you are as an educator and what makes you unique.
+              Tell your story! Help students understand who you are as an educator and what makes
+              you unique.
             </Text>
           </VStack>
 
@@ -148,18 +177,28 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
                 <Heading size="md" className="text-gray-900">
                   Your Teaching Story
                 </Heading>
-                <Badge className={`${
-                  wordCount < 50 ? 'bg-red-100' :
-                  wordCount > 500 ? 'bg-red-100' :
-                  wordCount > 400 ? 'bg-yellow-100' :
-                  'bg-green-100'
-                }`}>
-                  <BadgeText className={`${
-                    wordCount < 50 ? 'text-red-700' :
-                    wordCount > 500 ? 'text-red-700' :
-                    wordCount > 400 ? 'text-yellow-700' :
-                    'text-green-700'
-                  }`}>
+                <Badge
+                  className={`${
+                    wordCount < 50
+                      ? 'bg-red-100'
+                      : wordCount > 500
+                      ? 'bg-red-100'
+                      : wordCount > 400
+                      ? 'bg-yellow-100'
+                      : 'bg-green-100'
+                  }`}
+                >
+                  <BadgeText
+                    className={`${
+                      wordCount < 50
+                        ? 'text-red-700'
+                        : wordCount > 500
+                        ? 'text-red-700'
+                        : wordCount > 400
+                        ? 'text-yellow-700'
+                        : 'text-green-700'
+                    }`}
+                  >
                     {wordCount} / 500 words
                   </BadgeText>
                 </Badge>
@@ -168,7 +207,7 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
               <FormControl isInvalid={hasFieldError('professional_bio')}>
                 <BioEditor
                   value={formData.professional_bio}
-                  onChange={(value) => handleFieldChange('professional_bio', value)}
+                  onChange={value => handleFieldChange('professional_bio', value)}
                   maxWords={500}
                   minWords={50}
                   showTemplates={true}
@@ -191,7 +230,7 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
                   Teaching Philosophy
                 </Heading>
               </HStack>
-              
+
               <Text className="text-gray-600">
                 What drives you as an educator? What do you believe about learning?
               </Text>
@@ -205,16 +244,24 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
                     💡 Consider addressing these questions:
                   </Text>
                   <VStack space="xs">
-                    <Text className="text-sm text-gray-600">• What do you believe about how students learn best?</Text>
-                    <Text className="text-sm text-gray-600">• How do you create an effective learning environment?</Text>
-                    <Text className="text-sm text-gray-600">• What role do you play in your students' success?</Text>
-                    <Text className="text-sm text-gray-600">• How do you handle different learning styles?</Text>
+                    <Text className="text-sm text-gray-600">
+                      • What do you believe about how students learn best?
+                    </Text>
+                    <Text className="text-sm text-gray-600">
+                      • How do you create an effective learning environment?
+                    </Text>
+                    <Text className="text-sm text-gray-600">
+                      • What role do you play in your students' success?
+                    </Text>
+                    <Text className="text-sm text-gray-600">
+                      • How do you handle different learning styles?
+                    </Text>
                   </VStack>
                 </Box>
                 <Input>
                   <InputField
                     value={formData.teaching_philosophy}
-                    onChangeText={(value) => handleFieldChange('teaching_philosophy', value)}
+                    onChangeText={value => handleFieldChange('teaching_philosophy', value)}
                     placeholder="e.g., I believe every student has unique potential that can be unlocked through personalized, patient guidance and creating a safe space for exploration..."
                     multiline
                     numberOfLines={4}
@@ -239,38 +286,50 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
               <Heading size="md" className="text-gray-900">
                 Teaching Approach
               </Heading>
-              
+
               <Text className="text-gray-600">
                 Select the approach that best describes your teaching style:
               </Text>
 
               <VStack space="sm">
-                {TEACHING_APPROACHES.map((approach) => (
+                {TEACHING_APPROACHES.map(approach => (
                   <Button
                     key={approach.id}
-                    variant={formData.teaching_approach === approach.id ? "solid" : "outline"}
+                    variant={formData.teaching_approach === approach.id ? 'solid' : 'outline'}
                     onPress={() => toggleTeachingApproach(approach.id)}
                     className={`p-4 ${
-                      formData.teaching_approach === approach.id 
-                        ? 'bg-blue-600 border-blue-600' 
+                      formData.teaching_approach === approach.id
+                        ? 'bg-blue-600 border-blue-600'
                         : 'bg-white border-gray-200 hover:border-blue-300'
                     }`}
                   >
                     <HStack space="sm" className="items-center w-full">
-                      <Icon 
-                        as={approach.icon} 
-                        size={20} 
-                        className={formData.teaching_approach === approach.id ? 'text-white' : 'text-blue-600'} 
+                      <Icon
+                        as={approach.icon}
+                        size={20}
+                        className={
+                          formData.teaching_approach === approach.id
+                            ? 'text-white'
+                            : 'text-blue-600'
+                        }
                       />
                       <VStack className="flex-1 items-start">
-                        <Text className={`font-medium ${
-                          formData.teaching_approach === approach.id ? 'text-white' : 'text-gray-900'
-                        }`}>
+                        <Text
+                          className={`font-medium ${
+                            formData.teaching_approach === approach.id
+                              ? 'text-white'
+                              : 'text-gray-900'
+                          }`}
+                        >
                           {approach.label}
                         </Text>
-                        <Text className={`text-sm ${
-                          formData.teaching_approach === approach.id ? 'text-blue-100' : 'text-gray-600'
-                        }`}>
+                        <Text
+                          className={`text-sm ${
+                            formData.teaching_approach === approach.id
+                              ? 'text-blue-100'
+                              : 'text-gray-600'
+                          }`}
+                        >
                           {approach.description}
                         </Text>
                       </VStack>
@@ -296,14 +355,15 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
                   <ButtonText>Add Specialization</ButtonText>
                 </Button>
               </HStack>
-              
+
               <Text className="text-gray-600">
-                What specific areas do you excel in? This helps students find you for their specific needs.
+                What specific areas do you excel in? This helps students find you for their specific
+                needs.
               </Text>
 
               {formData.specializations.length > 0 && (
                 <HStack space="xs" className="flex-wrap">
-                  {formData.specializations.map((spec) => (
+                  {formData.specializations.map(spec => (
                     <Badge key={spec} className="bg-blue-100 mb-2">
                       <BadgeText className="text-blue-800">{spec}</BadgeText>
                       <Button
@@ -321,25 +381,23 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
 
               {showSpecializationInput && (
                 <VStack space="sm">
-                  <Text className="text-sm font-medium text-gray-700">
-                    Common Specializations:
-                  </Text>
+                  <Text className="text-sm font-medium text-gray-700">Common Specializations:</Text>
                   <HStack space="xs" className="flex-wrap">
-                    {COMMON_SPECIALIZATIONS
-                      .filter(spec => !formData.specializations.includes(spec))
-                      .map((spec) => (
-                        <Button
-                          key={spec}
-                          variant="outline"
-                          size="sm"
-                          onPress={() => addSpecialization(spec)}
-                          className="mb-2"
-                        >
-                          <ButtonText>{spec}</ButtonText>
-                        </Button>
-                      ))}
+                    {COMMON_SPECIALIZATIONS.filter(
+                      spec => !formData.specializations.includes(spec)
+                    ).map(spec => (
+                      <Button
+                        key={spec}
+                        variant="outline"
+                        size="sm"
+                        onPress={() => addSpecialization(spec)}
+                        className="mb-2"
+                      >
+                        <ButtonText>{spec}</ButtonText>
+                      </Button>
+                    ))}
                   </HStack>
-                  
+
                   <HStack space="sm">
                     <VStack className="flex-1">
                       <Input>
@@ -357,7 +415,7 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
                       <ButtonText>Add</ButtonText>
                     </Button>
                   </HStack>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -377,23 +435,24 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
                 <Heading size="md" className="text-gray-900">
                   Achievements & Recognition
                 </Heading>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={() => setShowAchievementInput(true)}
-                >
+                <Button variant="outline" size="sm" onPress={() => setShowAchievementInput(true)}>
                   <ButtonText>Add Achievement</ButtonText>
                 </Button>
               </HStack>
-              
+
               <Text className="text-gray-600">
-                Share any awards, certifications, or notable accomplishments that demonstrate your expertise.
+                Share any awards, certifications, or notable accomplishments that demonstrate your
+                expertise.
               </Text>
 
               {formData.achievements.length > 0 && (
                 <VStack space="sm">
                   {formData.achievements.map((achievement, index) => (
-                    <HStack key={index} space="sm" className="items-start p-3 bg-green-50 rounded-lg">
+                    <HStack
+                      key={index}
+                      space="sm"
+                      className="items-start p-3 bg-green-50 rounded-lg"
+                    >
                       <Icon as={CheckCircle2} size={16} className="text-green-600 mt-0.5" />
                       <Text className="flex-1 text-green-800">{achievement}</Text>
                       <Button
@@ -416,13 +475,21 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
                       💡 Examples of achievements:
                     </Text>
                     <VStack space="xs">
-                      <Text className="text-sm text-blue-800">• Teacher of the Year Award (2023)</Text>
-                      <Text className="text-sm text-blue-800">• 95% of students improved by at least one grade level</Text>
-                      <Text className="text-sm text-blue-800">• Certified in [Specific Teaching Method]</Text>
-                      <Text className="text-sm text-blue-800">• Published researcher in educational methodology</Text>
+                      <Text className="text-sm text-blue-800">
+                        • Teacher of the Year Award (2023)
+                      </Text>
+                      <Text className="text-sm text-blue-800">
+                        • 95% of students improved by at least one grade level
+                      </Text>
+                      <Text className="text-sm text-blue-800">
+                        • Certified in [Specific Teaching Method]
+                      </Text>
+                      <Text className="text-sm text-blue-800">
+                        • Published researcher in educational methodology
+                      </Text>
                     </VStack>
                   </Box>
-                  
+
                   <HStack space="sm">
                     <VStack className="flex-1">
                       <Input>
@@ -442,12 +509,8 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
                       <ButtonText>Add</ButtonText>
                     </Button>
                   </HStack>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onPress={() => setShowAchievementInput(false)}
-                  >
+
+                  <Button variant="ghost" size="sm" onPress={() => setShowAchievementInput(false)}>
                     <ButtonText>Done</ButtonText>
                   </Button>
                 </VStack>
@@ -461,9 +524,10 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
               <Heading size="md" className="text-gray-900">
                 Student Success Stories
               </Heading>
-              
+
               <Text className="text-gray-600">
-                What kind of results do your students typically achieve? Share some success stories (without naming specific students).
+                What kind of results do your students typically achieve? Share some success stories
+                (without naming specific students).
               </Text>
 
               <FormControl isInvalid={hasFieldError('student_outcomes')}>
@@ -472,16 +536,23 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
                     💡 Examples of student outcomes:
                   </Text>
                   <VStack space="xs">
-                    <Text className="text-sm text-yellow-800">• "Students typically improve their grades by 1-2 letter grades within 3 months"</Text>
-                    <Text className="text-sm text-yellow-800">• "Helped 20+ students gain acceptance into their top-choice universities"</Text>
-                    <Text className="text-sm text-yellow-800">• "85% of my SAT prep students improved their scores by 200+ points"</Text>
+                    <Text className="text-sm text-yellow-800">
+                      • "Students typically improve their grades by 1-2 letter grades within 3
+                      months"
+                    </Text>
+                    <Text className="text-sm text-yellow-800">
+                      • "Helped 20+ students gain acceptance into their top-choice universities"
+                    </Text>
+                    <Text className="text-sm text-yellow-800">
+                      • "85% of my SAT prep students improved their scores by 200+ points"
+                    </Text>
                   </VStack>
                 </Box>
-                
+
                 <Input>
                   <InputField
                     value={formData.student_outcomes}
-                    onChangeText={(value) => handleFieldChange('student_outcomes', value)}
+                    onChangeText={value => handleFieldChange('student_outcomes', value)}
                     placeholder="Share some typical outcomes your students achieve..."
                     multiline
                     numberOfLines={3}

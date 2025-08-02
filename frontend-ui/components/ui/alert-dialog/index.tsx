@@ -4,10 +4,10 @@ import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import { withStyleContext, useStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
 import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 import React from 'react';
 import { View, Pressable, ScrollView, Platform } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 

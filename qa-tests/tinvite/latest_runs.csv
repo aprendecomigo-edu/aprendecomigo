@@ -9,3 +9,14 @@ tinvite-007,Email Confirmation Flow,Test email confirmation after successful inv
 tinvite-008,Role Assignment Verification,Test proper TEACHER role assignment after acceptance,,,0,0,0
 tinvite-009,Error Handling Edge Cases,Test expired tokens and invalid invitations,,,0,0,0
 tinvite-010,End-to-End Complete Flow,Test complete teacher invitation flow with all GitHub #49 fixes,,,0,0,0
+tinvite-011,School Admin Invitation Flow,Complete dashboard management including modal and bulk invitations,,,0,0,0
+tinvite-012,Teacher Invitation Acceptance Flow,Complete end-to-end acceptance including authentication and routing,,,0,0,0
+tinvite-013,API Integration and Email Delivery,Backend API endpoints bulk processing and email tracking,,,0,0,0
+tinvite-014,Invite Teacher Form with Email Input and Role Selection,Complete form functionality including validation and submission,20250802-041226,PASS_WITH_ISSUES,1,0,1
+tinvite-015,Email Invitation vs Shareable Link Generation Options,Verification of invitation methods and link generation features,,,0,0,0
+tinvite-016,Teacher Invitation Status Dashboard Functionality,Complete dashboard with filtering search statistics and real-time updates,,,0,0,0
+tinvite-017,Resend Invitation Functionality for Pending Requests,Resend functionality with validation feedback and status updates,,,0,0,0
+tinvite-018,Bulk Invitation Capability with Multiple Teacher Emails,Complete bulk workflow with parsing validation and progress tracking,,,0,0,0
+tinvite-019,Teacher Invitation API Integration and Error Handling,Robust API integration with comprehensive error handling and retry mechanisms,,,0,0,0
+tinvite-020,Success/Error Messaging System for Teacher Invitations,Comprehensive messaging system with clear feedback for all user actions,,,0,0,0
+tinvite-021,Mobile Responsiveness and UX Flow for Teacher Invitations,Complete mobile responsiveness and optimal user experience flows,,,0,0,0

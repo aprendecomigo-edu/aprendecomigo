@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Platform, Dimensions } from 'react-native';
-import { 
-  Calendar, 
-  Clock, 
+import {
+  Calendar,
+  Clock,
   Globe,
   Plus,
   Minus,
@@ -13,24 +11,37 @@ import {
   Trash2,
   RotateCcw,
   Users,
-  Timer
+  Timer,
 } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { Platform, Dimensions } from 'react-native';
 
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FormControl, FormControlLabel, FormControlHelper, FormControlError } from '@/components/ui/form-control';
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlHelper,
+  FormControlError,
+} from '@/components/ui/form-control';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
+import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
-import { Select, SelectTrigger, SelectInput, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Pressable } from '@/components/ui/pressable';
 
 interface TimeSlot {
   start_time: string;
@@ -71,12 +82,24 @@ const DAYS_OF_WEEK = [
 ];
 
 const TIMEZONES = [
-  'Europe/Lisbon', 'Europe/London', 'Europe/Madrid', 'Europe/Paris',
-  'Europe/Berlin', 'Europe/Rome', 'Europe/Amsterdam',
-  'America/New_York', 'America/Los_Angeles', 'America/Chicago',
-  'America/Sao_Paulo', 'America/Mexico_City',
-  'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Seoul', 'Asia/Kolkata',
-  'Australia/Sydney', 'Australia/Melbourne',
+  'Europe/Lisbon',
+  'Europe/London',
+  'Europe/Madrid',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'Europe/Rome',
+  'Europe/Amsterdam',
+  'America/New_York',
+  'America/Los_Angeles',
+  'America/Chicago',
+  'America/Sao_Paulo',
+  'America/Mexico_City',
+  'Asia/Tokyo',
+  'Asia/Shanghai',
+  'Asia/Seoul',
+  'Asia/Kolkata',
+  'Australia/Sydney',
+  'Australia/Melbourne',
 ];
 
 const SESSION_DURATIONS = [30, 45, 60, 90, 120];
@@ -85,12 +108,14 @@ const SESSION_DURATIONS = [30, 45, 60, 90, 120];
 const generateTimeOptions = () => {
   const times: { value: string; label: string }[] = [];
   for (let hour = 0; hour < 24; hour++) {
-    for (let minute of [0, 30]) {
-      const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    for (const minute of [0, 30]) {
+      const timeString = `${hour.toString().padStart(2, '0')}:${minute
+        .toString()
+        .padStart(2, '0')}`;
       const displayTime = new Date(`2000-01-01T${timeString}`).toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
       });
       times.push({ value: timeString, label: displayTime });
     }
@@ -123,7 +148,12 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
     });
   };
 
-  const handleTimeSlotChange = (day: string, slotIndex: number, field: 'start_time' | 'end_time', value: string) => {
+  const handleTimeSlotChange = (
+    day: string,
+    slotIndex: number,
+    field: 'start_time' | 'end_time',
+    value: string
+  ) => {
     const currentSlots = formData.weekly_availability[day] || [];
     const updatedSlots = [...currentSlots];
     updatedSlots[slotIndex] = {
@@ -164,7 +194,7 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
 
   const copyDaySchedule = (fromDay: string, toDay: string) => {
     const sourceSlots = formData.weekly_availability[fromDay] || [];
-    
+
     handleFieldChange('weekly_availability', {
       ...formData.weekly_availability,
       [toDay]: [...sourceSlots],
@@ -181,7 +211,7 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
   const applyToAllDays = (sourceDay: string) => {
     const sourceSlots = formData.weekly_availability[sourceDay] || [];
     const updatedAvailability: { [key: string]: TimeSlot[] } = {};
-    
+
     DAYS_OF_WEEK.forEach(day => {
       updatedAvailability[day.key] = [...sourceSlots];
     });
@@ -200,7 +230,7 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
 
   const getTotalWeeklyHours = () => {
     let totalMinutes = 0;
-    
+
     Object.values(formData.weekly_availability).forEach(daySlots => {
       daySlots.forEach(slot => {
         const start = new Date(`2000-01-01T${slot.start_time}`);
@@ -210,13 +240,13 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
       });
     });
 
-    return Math.round(totalMinutes / 60 * 10) / 10; // Round to 1 decimal place
+    return Math.round((totalMinutes / 60) * 10) / 10; // Round to 1 decimal place
   };
 
   const getDayHours = (day: string) => {
     const daySlots = formData.weekly_availability[day] || [];
     let totalMinutes = 0;
-    
+
     daySlots.forEach(slot => {
       const start = new Date(`2000-01-01T${slot.start_time}`);
       const end = new Date(`2000-01-01T${slot.end_time}`);
@@ -262,7 +292,8 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
               Weekly Availability & Schedule
             </Heading>
             <Text className="text-gray-600">
-              Set your teaching schedule and booking preferences. Students will see your available time slots in their local timezone.
+              Set your teaching schedule and booking preferences. Students will see your available
+              time slots in their local timezone.
             </Text>
           </VStack>
 
@@ -277,22 +308,22 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                   </Heading>
                 </HStack>
                 <Badge className="bg-blue-600">
-                  <BadgeText className="text-white">
-                    {totalWeeklyHours}h/week
-                  </BadgeText>
+                  <BadgeText className="text-white">{totalWeeklyHours}h/week</BadgeText>
                 </Badge>
               </HStack>
-              
+
               <HStack space="md" className="flex-wrap">
-                {DAYS_OF_WEEK.map((day) => {
+                {DAYS_OF_WEEK.map(day => {
                   const dayHours = getDayHours(day.key);
                   const hasSlots = dayHours > 0;
-                  
+
                   return (
                     <VStack key={day.key} space="xs" className="items-center">
-                      <Text className={`text-xs font-medium ${
-                        hasSlots ? 'text-blue-800' : 'text-gray-500'
-                      }`}>
+                      <Text
+                        className={`text-xs font-medium ${
+                          hasSlots ? 'text-blue-800' : 'text-gray-500'
+                        }`}
+                      >
                         {day.short}
                       </Text>
                       <Badge className={hasSlots ? 'bg-blue-100' : 'bg-gray-100'}>
@@ -321,21 +352,21 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                 </VStack>
                 <Icon as={Globe} size={24} className="text-blue-600" />
               </HStack>
-              
+
               <FormControl isInvalid={hasFieldError('time_zone')}>
                 <FormControlLabel>
                   <Text>Your Timezone *</Text>
                 </FormControlLabel>
                 <Select
                   selectedValue={formData.time_zone}
-                  onValueChange={(value) => handleFieldChange('time_zone', value)}
+                  onValueChange={value => handleFieldChange('time_zone', value)}
                   isDisabled={isLoading}
                 >
                   <SelectTrigger>
                     <SelectInput placeholder="Select your timezone" />
                   </SelectTrigger>
                   <SelectContent>
-                    {TIMEZONES.map((timezone) => (
+                    {TIMEZONES.map(timezone => (
                       <SelectItem key={timezone} label={timezone} value={timezone} />
                     ))}
                   </SelectContent>
@@ -358,15 +389,15 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
               <Heading size="md" className="text-gray-900">
                 Weekly Schedule
               </Heading>
-              
+
               {/* Day Selector - Mobile */}
               {isMobile && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <HStack space="sm" className="pb-2">
-                    {DAYS_OF_WEEK.map((day) => {
+                    {DAYS_OF_WEEK.map(day => {
                       const hasSlots = (formData.weekly_availability[day.key] || []).length > 0;
                       const isSelected = selectedDay === day.key;
-                      
+
                       return (
                         <Pressable
                           key={day.key}
@@ -380,22 +411,26 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                           }`}
                         >
                           <VStack space="xs" className="items-center min-w-16">
-                            <Text className={`text-xs font-medium ${
-                              isSelected
-                                ? 'text-blue-800'
-                                : hasSlots
-                                ? 'text-green-800'
-                                : 'text-gray-600'
-                            }`}>
+                            <Text
+                              className={`text-xs font-medium ${
+                                isSelected
+                                  ? 'text-blue-800'
+                                  : hasSlots
+                                  ? 'text-green-800'
+                                  : 'text-gray-600'
+                              }`}
+                            >
                               {day.short}
                             </Text>
-                            <Text className={`text-xs ${
-                              isSelected
-                                ? 'text-blue-600'
-                                : hasSlots
-                                ? 'text-green-600'
-                                : 'text-gray-500'
-                            }`}>
+                            <Text
+                              className={`text-xs ${
+                                isSelected
+                                  ? 'text-blue-600'
+                                  : hasSlots
+                                  ? 'text-green-600'
+                                  : 'text-gray-500'
+                              }`}
+                            >
                               {getDayHours(day.key) > 0 ? `${getDayHours(day.key)}h` : '—'}
                             </Text>
                           </VStack>
@@ -409,28 +444,28 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
               {/* Desktop Day Tabs */}
               {!isMobile && (
                 <HStack space="xs" className="border-b border-gray-200">
-                  {DAYS_OF_WEEK.map((day) => {
+                  {DAYS_OF_WEEK.map(day => {
                     const hasSlots = (formData.weekly_availability[day.key] || []).length > 0;
                     const isSelected = selectedDay === day.key;
-                    
+
                     return (
                       <Pressable
                         key={day.key}
                         onPress={() => setSelectedDay(day.key)}
                         className={`px-4 py-3 border-b-2 ${
-                          isSelected
-                            ? 'border-blue-500'
-                            : 'border-transparent'
+                          isSelected ? 'border-blue-500' : 'border-transparent'
                         }`}
                       >
                         <VStack space="xs" className="items-center">
-                          <Text className={`font-medium ${
-                            isSelected
-                              ? 'text-blue-600'
-                              : hasSlots
-                              ? 'text-green-600'
-                              : 'text-gray-600'
-                          }`}>
+                          <Text
+                            className={`font-medium ${
+                              isSelected
+                                ? 'text-blue-600'
+                                : hasSlots
+                                ? 'text-green-600'
+                                : 'text-gray-600'
+                            }`}
+                          >
                             {day.label}
                           </Text>
                           <Text className="text-xs text-gray-500">
@@ -450,15 +485,11 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                     {DAYS_OF_WEEK.find(d => d.key === selectedDay)?.label} Schedule
                   </Text>
                   <HStack space="sm">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onPress={() => addTimeSlot(selectedDay)}
-                    >
+                    <Button size="sm" variant="outline" onPress={() => addTimeSlot(selectedDay)}>
                       <ButtonIcon as={Plus} className="text-gray-600 mr-1" />
                       <ButtonText>Add Time</ButtonText>
                     </Button>
-                    
+
                     {selectedDaySlots.length > 0 && (
                       <>
                         <Button
@@ -469,7 +500,7 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                           <ButtonIcon as={Copy} className="text-gray-600 mr-1" />
                           <ButtonText>Copy to All</ButtonText>
                         </Button>
-                        
+
                         <Button
                           size="sm"
                           variant="outline"
@@ -492,38 +523,50 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                             <Text className="text-xs text-gray-600 mb-1">From</Text>
                             <Select
                               selectedValue={slot.start_time}
-                              onValueChange={(value) => handleTimeSlotChange(selectedDay, index, 'start_time', value)}
+                              onValueChange={value =>
+                                handleTimeSlotChange(selectedDay, index, 'start_time', value)
+                              }
                             >
                               <SelectTrigger>
                                 <SelectInput />
                               </SelectTrigger>
                               <SelectContent>
-                                {TIME_OPTIONS.map((time) => (
-                                  <SelectItem key={time.value} label={time.label} value={time.value} />
+                                {TIME_OPTIONS.map(time => (
+                                  <SelectItem
+                                    key={time.value}
+                                    label={time.label}
+                                    value={time.value}
+                                  />
                                 ))}
                               </SelectContent>
                             </Select>
                           </VStack>
-                          
+
                           <Icon as={Clock} size={16} className="text-gray-400 mt-6" />
-                          
+
                           <VStack className="flex-1">
                             <Text className="text-xs text-gray-600 mb-1">To</Text>
                             <Select
                               selectedValue={slot.end_time}
-                              onValueChange={(value) => handleTimeSlotChange(selectedDay, index, 'end_time', value)}
+                              onValueChange={value =>
+                                handleTimeSlotChange(selectedDay, index, 'end_time', value)
+                              }
                             >
                               <SelectTrigger>
                                 <SelectInput />
                               </SelectTrigger>
                               <SelectContent>
-                                {TIME_OPTIONS.map((time) => (
-                                  <SelectItem key={time.value} label={time.label} value={time.value} />
+                                {TIME_OPTIONS.map(time => (
+                                  <SelectItem
+                                    key={time.value}
+                                    label={time.label}
+                                    value={time.value}
+                                  />
                                 ))}
                               </SelectContent>
                             </Select>
                           </VStack>
-                          
+
                           <VStack className="items-center justify-center mt-6">
                             {!isValidTimeSlot(slot) && (
                               <Icon as={AlertCircle} size={16} className="text-red-500 mb-1" />
@@ -548,10 +591,7 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                       <Text className="text-sm text-gray-500">
                         Add time slots when you're available to teach
                       </Text>
-                      <Button
-                        onPress={() => addTimeSlot(selectedDay)}
-                        className="mt-2"
-                      >
+                      <Button onPress={() => addTimeSlot(selectedDay)} className="mt-2">
                         <ButtonIcon as={Plus} className="text-white mr-2" />
                         <ButtonText>Add First Time Slot</ButtonText>
                       </Button>
@@ -580,9 +620,7 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                   onPress={() => setShowAdvancedSettings(!showAdvancedSettings)}
                 >
                   <ButtonIcon as={Settings} className="text-gray-600 mr-1" />
-                  <ButtonText>
-                    {showAdvancedSettings ? 'Hide' : 'Show'} Advanced
-                  </ButtonText>
+                  <ButtonText>{showAdvancedSettings ? 'Hide' : 'Show'} Advanced</ButtonText>
                 </Button>
               </HStack>
 
@@ -594,17 +632,23 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                   </FormControlLabel>
                   <Select
                     selectedValue={formData.booking_preferences.min_notice_hours.toString()}
-                    onValueChange={(value) => handleBookingPreferenceChange('min_notice_hours', parseInt(value))}
+                    onValueChange={value =>
+                      handleBookingPreferenceChange('min_notice_hours', parseInt(value))
+                    }
                   >
                     <SelectTrigger>
                       <SelectInput />
                     </SelectTrigger>
                     <SelectContent>
-                      {[1, 2, 4, 8, 12, 24, 48, 72].map((hours) => (
-                        <SelectItem 
-                          key={hours} 
-                          label={hours < 24 ? `${hours} hours` : `${hours / 24} day${hours > 24 ? 's' : ''}`} 
-                          value={hours.toString()} 
+                      {[1, 2, 4, 8, 12, 24, 48, 72].map(hours => (
+                        <SelectItem
+                          key={hours}
+                          label={
+                            hours < 24
+                              ? `${hours} hours`
+                              : `${hours / 24} day${hours > 24 ? 's' : ''}`
+                          }
+                          value={hours.toString()}
                         />
                       ))}
                     </SelectContent>
@@ -620,11 +664,13 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                     <Text>Available Session Durations *</Text>
                   </FormControlLabel>
                   <VStack space="sm">
-                    {SESSION_DURATIONS.map((duration) => (
+                    {SESSION_DURATIONS.map(duration => (
                       <HStack key={duration} space="sm" className="items-center py-1">
                         <Switch
-                          value={formData.booking_preferences.session_duration_options.includes(duration)}
-                          onValueChange={(checked) => toggleSessionDuration(duration, checked)}
+                          value={formData.booking_preferences.session_duration_options.includes(
+                            duration
+                          )}
+                          onValueChange={checked => toggleSessionDuration(duration, checked)}
                         />
                         <Text className="flex-1">{duration} minutes</Text>
                         {duration === 60 && (
@@ -643,16 +689,16 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                 {/* Auto-Accept Bookings */}
                 <HStack className="items-center justify-between py-2">
                   <VStack className="flex-1 mr-4">
-                    <Text className="font-medium text-gray-900">
-                      Auto-Accept Bookings
-                    </Text>
+                    <Text className="font-medium text-gray-900">Auto-Accept Bookings</Text>
                     <Text className="text-sm text-gray-600">
                       Automatically confirm bookings within your available hours
                     </Text>
                   </VStack>
                   <Switch
                     value={formData.booking_preferences.auto_accept_bookings}
-                    onValueChange={(value) => handleBookingPreferenceChange('auto_accept_bookings', value)}
+                    onValueChange={value =>
+                      handleBookingPreferenceChange('auto_accept_bookings', value)
+                    }
                   />
                 </HStack>
 
@@ -660,25 +706,23 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                 {showAdvancedSettings && (
                   <VStack space="md" className="pt-4 border-t border-gray-200">
                     <Text className="font-medium text-gray-900">Advanced Settings</Text>
-                    
+
                     <FormControl>
                       <FormControlLabel>
                         <Text>Maximum Advance Booking</Text>
                       </FormControlLabel>
                       <Select
                         selectedValue={formData.booking_preferences.max_advance_days.toString()}
-                        onValueChange={(value) => handleBookingPreferenceChange('max_advance_days', parseInt(value))}
+                        onValueChange={value =>
+                          handleBookingPreferenceChange('max_advance_days', parseInt(value))
+                        }
                       >
                         <SelectTrigger>
                           <SelectInput />
                         </SelectTrigger>
                         <SelectContent>
-                          {[7, 14, 30, 60, 90].map((days) => (
-                            <SelectItem 
-                              key={days} 
-                              label={`${days} days`} 
-                              value={days.toString()} 
-                            />
+                          {[7, 14, 30, 60, 90].map(days => (
+                            <SelectItem key={days} label={`${days} days`} value={days.toString()} />
                           ))}
                         </SelectContent>
                       </Select>
@@ -702,36 +746,40 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                     Availability Summary
                   </Heading>
                 </HStack>
-                
+
                 <VStack space="sm">
                   <HStack className="items-center justify-between">
                     <Text className="text-green-800">Total weekly hours:</Text>
-                    <Text className="font-semibold text-green-900">
-                      {totalWeeklyHours} hours
-                    </Text>
+                    <Text className="font-semibold text-green-900">{totalWeeklyHours} hours</Text>
                   </HStack>
-                  
+
                   <HStack className="items-center justify-between">
                     <Text className="text-green-800">Active days:</Text>
                     <Text className="font-semibold text-green-900">
-                      {Object.values(formData.weekly_availability).filter(slots => slots.length > 0).length} days
+                      {
+                        Object.values(formData.weekly_availability).filter(
+                          slots => slots.length > 0
+                        ).length
+                      }{' '}
+                      days
                     </Text>
                   </HStack>
-                  
+
                   <HStack className="items-center justify-between">
                     <Text className="text-green-800">Session durations:</Text>
                     <Text className="font-semibold text-green-900">
                       {formData.booking_preferences.session_duration_options.join(', ')} min
                     </Text>
                   </HStack>
-                  
+
                   <HStack className="items-center justify-between">
                     <Text className="text-green-800">Booking notice:</Text>
                     <Text className="font-semibold text-green-900">
-                      {formData.booking_preferences.min_notice_hours < 24 
+                      {formData.booking_preferences.min_notice_hours < 24
                         ? `${formData.booking_preferences.min_notice_hours} hours`
-                        : `${formData.booking_preferences.min_notice_hours / 24} day${formData.booking_preferences.min_notice_hours > 24 ? 's' : ''}`
-                      }
+                        : `${formData.booking_preferences.min_notice_hours / 24} day${
+                            formData.booking_preferences.min_notice_hours > 24 ? 's' : ''
+                          }`}
                     </Text>
                   </HStack>
                 </VStack>

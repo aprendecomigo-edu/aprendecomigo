@@ -6,15 +6,15 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
+import { AuthProvider, useAuth } from '@/api/authContext';
+import { TutorialProvider, TutorialOverlay } from '@/components/tutorial';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import '../global.css';
-import { AuthProvider, useAuth } from '@/api/authContext';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { ToastProvider } from '@/components/ui/toast';
 import { View } from '@/components/ui/view';
 import { useColorScheme } from '@/components/useColorScheme';
-import { TutorialProvider, TutorialOverlay } from '@/components/tutorial';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -118,9 +118,12 @@ function RootLayoutNav() {
 
       // Global error handler for CSS-related errors
       const handleError = (event: ErrorEvent) => {
-        if (event.error && event.error.message &&
-            event.error.message.includes('CSSStyleDeclaration') &&
-            event.error.message.includes('Indexed property setter')) {
+        if (
+          event.error &&
+          event.error.message &&
+          event.error.message.includes('CSSStyleDeclaration') &&
+          event.error.message.includes('Indexed property setter')
+        ) {
           console.warn('Prevented CSS StyleDeclaration error:', event.error.message);
           event.preventDefault();
           event.stopPropagation();
@@ -132,9 +135,12 @@ function RootLayoutNav() {
 
       // Prevent React error boundary triggers from CSS errors
       const originalConsoleError = console.error;
-      console.error = function(...args) {
+      console.error = function (...args) {
         const message = args.join(' ');
-        if (message.includes('CSSStyleDeclaration') && message.includes('Indexed property setter')) {
+        if (
+          message.includes('CSSStyleDeclaration') &&
+          message.includes('Indexed property setter')
+        ) {
           console.warn('Suppressed CSS error:', message);
           return;
         }
@@ -167,20 +173,20 @@ function RootLayoutNav() {
                 <Stack.Screen name="purchase" />
                 <Stack.Screen name="onboarding" />
                 <Stack.Screen name="accept-invitation" />
-                <Stack.Screen 
-                  name="(school-admin)" 
+                <Stack.Screen
+                  name="(school-admin)"
                   options={{
                     headerShown: false,
                   }}
                 />
-                <Stack.Screen 
-                  name="(tutor)" 
+                <Stack.Screen
+                  name="(tutor)"
                   options={{
                     headerShown: false,
                   }}
                 />
-                <Stack.Screen 
-                  name="(teacher)" 
+                <Stack.Screen
+                  name="(teacher)"
                   options={{
                     headerShown: false,
                   }}

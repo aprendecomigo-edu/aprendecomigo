@@ -3,8 +3,9 @@ import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { cssInterop } from 'nativewind';
 import React, { forwardRef, memo } from 'react';
 
-import { headingStyle } from './styles';
 import { filterWebProps } from '../utils/filterWebProps';
+
+import { headingStyle } from './styles';
 
 type IHeadingProps = VariantProps<typeof headingStyle> &
   React.ComponentPropsWithoutRef<typeof H1> & {

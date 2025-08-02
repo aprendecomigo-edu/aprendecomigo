@@ -1,4 +1,11 @@
-import { TrendingDown, TrendingUp, Users, GraduationCap, BookOpen, Activity } from 'lucide-react-native';
+import {
+  TrendingDown,
+  TrendingUp,
+  Users,
+  GraduationCap,
+  BookOpen,
+  Activity,
+} from 'lucide-react-native';
 import React from 'react';
 
 import { SchoolMetrics } from '@/api/userApi';
@@ -40,14 +47,12 @@ const MetricItem: React.FC<MetricItemProps> = ({
       <Icon as={IconComponent} size="sm" className={`text-${color}-600`} />
       <Text className="text-sm font-medium text-gray-600 flex-1">{title}</Text>
     </HStack>
-    
+
     <VStack space="xs">
       <Text className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</Text>
-      
-      {subtitle && (
-        <Text className="text-xs text-gray-500">{subtitle}</Text>
-      )}
-      
+
+      {subtitle && <Text className="text-xs text-gray-500">{subtitle}</Text>}
+
       {trend && (
         <HStack space="xs" className="items-center">
           <Icon
@@ -60,7 +65,8 @@ const MetricItem: React.FC<MetricItemProps> = ({
               trend.isPositive ? 'text-green-600' : 'text-red-600'
             }`}
           >
-            {trend.isPositive ? '+' : ''}{trend.value}%
+            {trend.isPositive ? '+' : ''}
+            {trend.value}%
           </Text>
         </HStack>
       )}
@@ -108,9 +114,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) => {
         <CardBody>
           <VStack space="md" className="items-center py-8">
             <Icon as={Activity} size="xl" className="text-gray-300" />
-            <Text className="text-lg font-medium text-gray-600">
-              Métricas indisponíveis
-            </Text>
+            <Text className="text-lg font-medium text-gray-600">Métricas indisponíveis</Text>
             <Text className="text-sm text-gray-500 text-center">
               Não foi possível carregar as métricas da escola
             </Text>
@@ -153,7 +157,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) => {
               icon={Users}
               color="blue"
             />
-            
+
             <MetricItem
               title="Professores"
               value={metrics.teacher_count.total}
@@ -174,15 +178,21 @@ const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) => {
               icon={BookOpen}
               color="purple"
             />
-            
+
             <MetricItem
               title="Taxa de Aceitação"
               value={Math.round(metrics.engagement_metrics.acceptance_rate * 100)}
               subtitle={`${metrics.engagement_metrics.invitations_sent} convites`}
               trend={
                 metrics.engagement_metrics.acceptance_rate >= 0.7
-                  ? { value: Math.round(metrics.engagement_metrics.acceptance_rate * 100), isPositive: true }
-                  : { value: Math.round((1 - metrics.engagement_metrics.acceptance_rate) * 100), isPositive: false }
+                  ? {
+                      value: Math.round(metrics.engagement_metrics.acceptance_rate * 100),
+                      isPositive: true,
+                    }
+                  : {
+                      value: Math.round((1 - metrics.engagement_metrics.acceptance_rate) * 100),
+                      isPositive: false,
+                    }
               }
               icon={Activity}
               color="orange"
@@ -193,9 +203,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) => {
           {metrics.class_metrics.completion_rate > 0 && (
             <VStack space="xs">
               <HStack className="justify-between items-center">
-                <Text className="text-sm font-medium text-gray-600">
-                  Taxa de Conclusão
-                </Text>
+                <Text className="text-sm font-medium text-gray-600">Taxa de Conclusão</Text>
                 <Text className="text-sm font-bold text-gray-900">
                   {Math.round(metrics.class_metrics.completion_rate * 100)}%
                 </Text>

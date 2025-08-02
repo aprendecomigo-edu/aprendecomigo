@@ -1,13 +1,15 @@
 /**
  * Quick Top-Up Panel Component
- * 
+ *
  * Provides quick hour purchase interface with preset packages (5, 10, 20 hours)
  * and one-click purchasing using saved payment methods.
  */
 
-import React, { useState, useEffect } from 'react';
 import { Clock, Zap, Star, CreditCard, AlertCircle, CheckCircle } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
 
+import { PurchaseApiClient } from '@/api/purchaseApi';
+import { Alert, AlertIcon, AlertText } from '@/components/ui/alert';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
@@ -16,18 +18,15 @@ import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Alert, AlertIcon, AlertText } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/toast';
-
-import { PurchaseApiClient } from '@/api/purchaseApi';
+import { VStack } from '@/components/ui/vstack';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 import { useStudentBalance } from '@/hooks/useStudentBalance';
-import type { 
-  TopUpPackage, 
-  PaymentMethod, 
+import type {
+  TopUpPackage,
+  PaymentMethod,
   QuickTopUpRequest,
-  QuickTopUpResponse 
+  QuickTopUpResponse,
 } from '@/types/purchase';
 
 interface QuickTopUpPanelProps {
@@ -45,7 +44,7 @@ interface QuickTopUpPanelProps {
 
 /**
  * Quick Top-Up Panel Component
- * 
+ *
  * Shows preset hour packages and allows quick purchase with saved payment methods.
  */
 export function QuickTopUpPanel({
@@ -71,9 +70,7 @@ export function QuickTopUpPanel({
     const loadData = async () => {
       try {
         setLoading(true);
-        const [packagesData] = await Promise.all([
-          PurchaseApiClient.getTopUpPackages(email),
-        ]);
+        const [packagesData] = await Promise.all([PurchaseApiClient.getTopUpPackages(email)]);
 
         setPackages(packagesData.sort((a, b) => a.display_order - b.display_order));
       } catch (err: any) {
@@ -151,15 +148,13 @@ export function QuickTopUpPanel({
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to purchase hours';
       setError(errorMessage);
-      
+
       toast.show({
         placement: 'top',
         render: ({ id }) => (
           <Alert mx="$3" action="error" variant="solid">
             <AlertIcon as={AlertCircle} />
-            <AlertText>
-              Purchase failed: {errorMessage}
-            </AlertText>
+            <AlertText>Purchase failed: {errorMessage}</AlertText>
           </Alert>
         ),
       });
@@ -190,12 +185,8 @@ export function QuickTopUpPanel({
           <Alert action="error" variant="outline">
             <AlertIcon as={AlertCircle} />
             <VStack space="xs" className="flex-1">
-              <AlertText className="font-medium">
-                Unable to Load Packages
-              </AlertText>
-              <AlertText className="text-sm">
-                {error}
-              </AlertText>
+              <AlertText className="font-medium">Unable to Load Packages</AlertText>
+              <AlertText className="text-sm">{error}</AlertText>
             </VStack>
           </Alert>
           <Button
@@ -240,9 +231,7 @@ export function QuickTopUpPanel({
           <Alert action="warning" variant="outline">
             <AlertIcon as={AlertCircle} />
             <VStack space="xs" className="flex-1">
-              <AlertText className="font-medium">
-                No Default Payment Method
-              </AlertText>
+              <AlertText className="font-medium">No Default Payment Method</AlertText>
               <AlertText className="text-sm">
                 Add a payment method to enable quick purchases
               </AlertText>
@@ -252,21 +241,19 @@ export function QuickTopUpPanel({
 
         {/* Package Selection */}
         <VStack space="md">
-          <Text className="font-medium text-typography-800">
-            Choose Package
-          </Text>
-          
+          <Text className="font-medium text-typography-800">Choose Package</Text>
+
           <VStack space="sm">
-            {packages.map((pkg) => (
+            {packages.map(pkg => (
               <Pressable
                 key={pkg.id}
                 onPress={() => handlePackageSelect(pkg)}
                 disabled={!defaultPaymentMethod}
               >
-                <Card 
+                <Card
                   className={`p-4 border-2 ${
-                    selectedPackage?.id === pkg.id 
-                      ? 'border-primary-500 bg-primary-50' 
+                    selectedPackage?.id === pkg.id
+                      ? 'border-primary-500 bg-primary-50'
                       : 'border-outline-200 bg-background-0'
                   } ${!defaultPaymentMethod ? 'opacity-50' : ''}`}
                 >
@@ -274,26 +261,26 @@ export function QuickTopUpPanel({
                     <HStack space="md" className="items-center">
                       {/* Package Icon */}
                       <VStack className="items-center">
-                        <Icon 
-                          as={Clock} 
-                          size="lg" 
-                          className={selectedPackage?.id === pkg.id ? 'text-primary-600' : 'text-typography-500'}
+                        <Icon
+                          as={Clock}
+                          size="lg"
+                          className={
+                            selectedPackage?.id === pkg.id
+                              ? 'text-primary-600'
+                              : 'text-typography-500'
+                          }
                         />
                         {pkg.is_popular && (
                           <HStack space="xs" className="items-center mt-1">
                             <Icon as={Star} size="xs" className="text-warning-500" />
-                            <Text className="text-xs text-warning-600 font-medium">
-                              POPULAR
-                            </Text>
+                            <Text className="text-xs text-warning-600 font-medium">POPULAR</Text>
                           </HStack>
                         )}
                       </VStack>
 
                       {/* Package Details */}
                       <VStack space="xs">
-                        <Text className="font-semibold text-typography-900">
-                          {pkg.name}
-                        </Text>
+                        <Text className="font-semibold text-typography-900">{pkg.name}</Text>
                         <Text className="text-sm text-typography-600">
                           {pkg.hours} hours • €{pkg.price_per_hour}/hour
                         </Text>
@@ -310,9 +297,7 @@ export function QuickTopUpPanel({
                       <Text className="text-lg font-bold text-typography-900">
                         €{pkg.price_eur}
                       </Text>
-                      <Text className="text-xs text-typography-500">
-                        Total
-                      </Text>
+                      <Text className="text-xs text-typography-500">Total</Text>
                     </VStack>
                   </HStack>
                 </Card>
@@ -324,14 +309,16 @@ export function QuickTopUpPanel({
         {/* Payment Method Display */}
         {defaultPaymentMethod && (
           <VStack space="xs">
-            <Text className="text-sm font-medium text-typography-700">
-              Payment Method
-            </Text>
-            <HStack space="sm" className="items-center p-3 bg-background-50 rounded-lg border border-outline-200">
+            <Text className="text-sm font-medium text-typography-700">Payment Method</Text>
+            <HStack
+              space="sm"
+              className="items-center p-3 bg-background-50 rounded-lg border border-outline-200"
+            >
               <Icon as={CreditCard} size="sm" className="text-typography-600" />
               <VStack space="xs">
                 <Text className="text-sm font-medium text-typography-800">
-                  {defaultPaymentMethod.card.brand.toUpperCase()} ••••{defaultPaymentMethod.card.last4}
+                  {defaultPaymentMethod.card.brand.toUpperCase()} ••••
+                  {defaultPaymentMethod.card.last4}
                 </Text>
                 <Text className="text-xs text-typography-600">
                   Expires {defaultPaymentMethod.card.exp_month}/{defaultPaymentMethod.card.exp_year}
@@ -369,11 +356,10 @@ export function QuickTopUpPanel({
         {/* Security Notice */}
         <Card className="p-3 bg-success-50 border-success-200">
           <VStack space="xs">
-            <Text className="text-xs font-medium text-success-800">
-              Secure & Instant
-            </Text>
+            <Text className="text-xs font-medium text-success-800">Secure & Instant</Text>
             <Text className="text-xs text-success-700">
-              Your payment is processed securely by Stripe. Hours are added to your account immediately after successful payment.
+              Your payment is processed securely by Stripe. Hours are added to your account
+              immediately after successful payment.
             </Text>
           </VStack>
         </Card>

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  StudentProfile, 
-  StudentFilters, 
+
+import {
+  StudentProfile,
+  StudentFilters,
   StudentListResponse,
   getStudents,
   getStudentById,
@@ -14,7 +15,7 @@ import {
   EducationalSystem,
   CreateStudentData,
   UpdateStudentData,
-  BulkImportResult
+  BulkImportResult,
 } from '@/api/userApi';
 import ApiValidator from '@/utils/apiValidation';
 
@@ -28,25 +29,25 @@ interface UseStudentsReturn {
   students: StudentProfile[];
   totalCount: number;
   educationalSystems: EducationalSystem[];
-  
+
   // Pagination
   currentPage: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
-  
+
   // Loading states
   isLoading: boolean;
   isCreating: boolean;
   isUpdating: boolean;
   isDeleting: boolean;
   isBulkImporting: boolean;
-  
+
   // Error states
   error: string | null;
-  
+
   // Filters
   filters: StudentFilters;
-  
+
   // Actions
   loadStudents: (newFilters?: StudentFilters) => Promise<void>;
   loadMoreStudents: () => Promise<void>;
@@ -54,10 +55,13 @@ interface UseStudentsReturn {
   createStudentRecord: (data: CreateStudentData) => Promise<StudentProfile>;
   updateStudentRecord: (id: number, data: UpdateStudentData) => Promise<StudentProfile>;
   deleteStudentRecord: (id: number) => Promise<void>;
-  updateStudentStatusRecord: (id: number, status: 'active' | 'inactive' | 'graduated') => Promise<StudentProfile>;
+  updateStudentStatusRecord: (
+    id: number,
+    status: 'active' | 'inactive' | 'graduated'
+  ) => Promise<StudentProfile>;
   bulkImportStudentsFromCSV: (file: File) => Promise<BulkImportResult>;
   getStudentByIdRecord: (id: number) => Promise<StudentProfile>;
-  
+
   // Filter management
   setFilters: (newFilters: StudentFilters) => void;
   clearFilters: () => void;
@@ -70,7 +74,7 @@ interface UseStudentsReturn {
 
 export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn => {
   const { initialFilters = {}, autoLoad = true } = options;
-  
+
   // State management
   const [students, setStudents] = useState<StudentProfile[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -78,17 +82,17 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [hasPreviousPage, setHasPreviousPage] = useState(false);
-  
+
   // Loading states
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBulkImporting, setIsBulkImporting] = useState(false);
-  
+
   // Error state
   const [error, setError] = useState<string | null>(null);
-  
+
   // Filters
   const [filters, setFiltersState] = useState<StudentFilters>({
     page: 1,
@@ -106,7 +110,7 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
         console.error('Failed to load educational systems:', err);
       }
     };
-    
+
     loadEducationalSystems();
   }, []);
 
@@ -135,54 +139,60 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
   };
 
   // Load students function
-  const loadStudents = useCallback(async (newFilters?: StudentFilters) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const filtersToUse = newFilters || filters;
-      
-      // Validate filters before sending request
-      const validation = ApiValidator.validateStudentFilters(filtersToUse);
-      if (!validation.isValid) {
-        throw new Error(`Filtros inválidos: ${validation.errors.join(', ')}`);
+  const loadStudents = useCallback(
+    async (newFilters?: StudentFilters) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const filtersToUse = newFilters || filters;
+
+        // Validate filters before sending request
+        const validation = ApiValidator.validateStudentFilters(filtersToUse);
+        if (!validation.isValid) {
+          throw new Error(`Filtros inválidos: ${validation.errors.join(', ')}`);
+        }
+
+        const response: StudentListResponse = await getStudents(filtersToUse);
+
+        setStudents(response.results);
+        setTotalCount(response.count);
+        setCurrentPage(filtersToUse.page || 1);
+        setHasNextPage(!!response.next);
+        setHasPreviousPage(!!response.previous);
+
+        if (newFilters) {
+          setFiltersState(filtersToUse);
+        }
+      } catch (err: any) {
+        console.error('Failed to load students:', err);
+        const errorMessage = getErrorMessage(
+          err,
+          'Erro ao carregar lista de alunos. Tente novamente.'
+        );
+        setError(errorMessage);
+        setStudents([]);
+        setTotalCount(0);
+      } finally {
+        setIsLoading(false);
       }
-      
-      const response: StudentListResponse = await getStudents(filtersToUse);
-      
-      setStudents(response.results);
-      setTotalCount(response.count);
-      setCurrentPage(filtersToUse.page || 1);
-      setHasNextPage(!!response.next);
-      setHasPreviousPage(!!response.previous);
-      
-      if (newFilters) {
-        setFiltersState(filtersToUse);
-      }
-    } catch (err: any) {
-      console.error('Failed to load students:', err);
-      const errorMessage = getErrorMessage(err, 'Erro ao carregar lista de alunos. Tente novamente.');
-      setError(errorMessage);
-      setStudents([]);
-      setTotalCount(0);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filters]);
+    },
+    [filters]
+  );
 
   // Load more students (pagination)
   const loadMoreStudents = useCallback(async () => {
     if (!hasNextPage || isLoading) return;
-    
+
     const nextPage = currentPage + 1;
     const newFilters = { ...filters, page: nextPage };
-    
+
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response: StudentListResponse = await getStudents(newFilters);
-      
+
       // Append new results to existing students
       setStudents(prev => [...prev, ...response.results]);
       setCurrentPage(nextPage);
@@ -204,65 +214,69 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
   }, [loadStudents, filters]);
 
   // CRUD operations
-  const createStudentRecord = useCallback(async (data: CreateStudentData): Promise<StudentProfile> => {
-    try {
-      setIsCreating(true);
-      setError(null);
-      
-      // Validate and sanitize data before sending
-      const sanitizedData = ApiValidator.sanitizeStudentData(data);
-      const validation = ApiValidator.validateStudentData(sanitizedData);
-      if (!validation.isValid) {
-        throw new Error(`Dados inválidos: ${validation.errors.join(', ')}`);
-      }
-      
-      const newStudent = await createStudent(sanitizedData);
-      
-      // Add to the beginning of the list
-      setStudents(prev => [newStudent, ...prev]);
-      setTotalCount(prev => prev + 1);
-      
-      return newStudent;
-    } catch (err: any) {
-      console.error('Failed to create student:', err);
-      const errorMessage = getErrorMessage(err, 'Erro ao criar aluno. Tente novamente.');
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setIsCreating(false);
-    }
-  }, []);
+  const createStudentRecord = useCallback(
+    async (data: CreateStudentData): Promise<StudentProfile> => {
+      try {
+        setIsCreating(true);
+        setError(null);
 
-  const updateStudentRecord = useCallback(async (id: number, data: UpdateStudentData): Promise<StudentProfile> => {
-    try {
-      setIsUpdating(true);
-      setError(null);
-      
-      const updatedStudent = await updateStudent(id, data);
-      
-      // Update in the list
-      setStudents(prev => prev.map(student => 
-        student.id === id ? updatedStudent : student
-      ));
-      
-      return updatedStudent;
-    } catch (err: any) {
-      console.error('Failed to update student:', err);
-      const errorMessage = getErrorMessage(err, 'Erro ao atualizar aluno. Tente novamente.');
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setIsUpdating(false);
-    }
-  }, []);
+        // Validate and sanitize data before sending
+        const sanitizedData = ApiValidator.sanitizeStudentData(data);
+        const validation = ApiValidator.validateStudentData(sanitizedData);
+        if (!validation.isValid) {
+          throw new Error(`Dados inválidos: ${validation.errors.join(', ')}`);
+        }
+
+        const newStudent = await createStudent(sanitizedData);
+
+        // Add to the beginning of the list
+        setStudents(prev => [newStudent, ...prev]);
+        setTotalCount(prev => prev + 1);
+
+        return newStudent;
+      } catch (err: any) {
+        console.error('Failed to create student:', err);
+        const errorMessage = getErrorMessage(err, 'Erro ao criar aluno. Tente novamente.');
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      } finally {
+        setIsCreating(false);
+      }
+    },
+    []
+  );
+
+  const updateStudentRecord = useCallback(
+    async (id: number, data: UpdateStudentData): Promise<StudentProfile> => {
+      try {
+        setIsUpdating(true);
+        setError(null);
+
+        const updatedStudent = await updateStudent(id, data);
+
+        // Update in the list
+        setStudents(prev => prev.map(student => (student.id === id ? updatedStudent : student)));
+
+        return updatedStudent;
+      } catch (err: any) {
+        console.error('Failed to update student:', err);
+        const errorMessage = getErrorMessage(err, 'Erro ao atualizar aluno. Tente novamente.');
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    []
+  );
 
   const deleteStudentRecord = useCallback(async (id: number): Promise<void> => {
     try {
       setIsDeleting(true);
       setError(null);
-      
+
       await deleteStudent(id);
-      
+
       // Remove from the list
       setStudents(prev => prev.filter(student => student.id !== id));
       setTotalCount(prev => prev - 1);
@@ -276,57 +290,67 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
     }
   }, []);
 
-  const updateStudentStatusRecord = useCallback(async (id: number, status: 'active' | 'inactive' | 'graduated'): Promise<StudentProfile> => {
-    try {
-      setIsUpdating(true);
-      setError(null);
-      
-      // Validate status update data
-      const validation = ApiValidator.validateStudentStatusUpdate(id, status);
-      if (!validation.isValid) {
-        throw new Error(`Parâmetros inválidos: ${validation.errors.join(', ')}`);
-      }
-      
-      const updatedStudent = await updateStudentStatus(id, status);
-      
-      // Update in the list
-      setStudents(prev => prev.map(student => 
-        student.id === id ? updatedStudent : student
-      ));
-      
-      return updatedStudent;
-    } catch (err: any) {
-      console.error('Failed to update student status:', err);
-      const errorMessage = getErrorMessage(err, 'Erro ao atualizar status do aluno. Tente novamente.');
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setIsUpdating(false);
-    }
-  }, []);
+  const updateStudentStatusRecord = useCallback(
+    async (id: number, status: 'active' | 'inactive' | 'graduated'): Promise<StudentProfile> => {
+      try {
+        setIsUpdating(true);
+        setError(null);
 
-  const bulkImportStudentsFromCSV = useCallback(async (file: File): Promise<BulkImportResult> => {
-    try {
-      setIsBulkImporting(true);
-      setError(null);
-      
-      const result = await bulkImportStudents(file);
-      
-      // Refresh the student list after import
-      if (result.success && result.created_count > 0) {
-        await refreshStudents();
+        // Validate status update data
+        const validation = ApiValidator.validateStudentStatusUpdate(id, status);
+        if (!validation.isValid) {
+          throw new Error(`Parâmetros inválidos: ${validation.errors.join(', ')}`);
+        }
+
+        const updatedStudent = await updateStudentStatus(id, status);
+
+        // Update in the list
+        setStudents(prev => prev.map(student => (student.id === id ? updatedStudent : student)));
+
+        return updatedStudent;
+      } catch (err: any) {
+        console.error('Failed to update student status:', err);
+        const errorMessage = getErrorMessage(
+          err,
+          'Erro ao atualizar status do aluno. Tente novamente.'
+        );
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      } finally {
+        setIsUpdating(false);
       }
-      
-      return result;
-    } catch (err: any) {
-      console.error('Failed to bulk import students:', err);
-      const errorMessage = getErrorMessage(err, 'Erro ao importar alunos do CSV. Tente novamente.');
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setIsBulkImporting(false);
-    }
-  }, [refreshStudents]);
+    },
+    []
+  );
+
+  const bulkImportStudentsFromCSV = useCallback(
+    async (file: File): Promise<BulkImportResult> => {
+      try {
+        setIsBulkImporting(true);
+        setError(null);
+
+        const result = await bulkImportStudents(file);
+
+        // Refresh the student list after import
+        if (result.success && result.created_count > 0) {
+          await refreshStudents();
+        }
+
+        return result;
+      } catch (err: any) {
+        console.error('Failed to bulk import students:', err);
+        const errorMessage = getErrorMessage(
+          err,
+          'Erro ao importar alunos do CSV. Tente novamente.'
+        );
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      } finally {
+        setIsBulkImporting(false);
+      }
+    },
+    [refreshStudents]
+  );
 
   const getStudentByIdRecord = useCallback(async (id: number): Promise<StudentProfile> => {
     try {
@@ -341,11 +365,14 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
   }, []);
 
   // Filter management
-  const setFilters = useCallback((newFilters: StudentFilters) => {
-    const updatedFilters = { ...filters, ...newFilters, page: 1 };
-    setFiltersState(updatedFilters);
-    loadStudents(updatedFilters);
-  }, [filters, loadStudents]);
+  const setFilters = useCallback(
+    (newFilters: StudentFilters) => {
+      const updatedFilters = { ...filters, ...newFilters, page: 1 };
+      setFiltersState(updatedFilters);
+      loadStudents(updatedFilters);
+    },
+    [filters, loadStudents]
+  );
 
   const clearFilters = useCallback(() => {
     const clearedFilters: StudentFilters = {
@@ -356,25 +383,40 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
     loadStudents(clearedFilters);
   }, [filters.page_size, loadStudents]);
 
-  const setSearch = useCallback((search: string) => {
-    setFilters({ search: search || undefined });
-  }, [setFilters]);
+  const setSearch = useCallback(
+    (search: string) => {
+      setFilters({ search: search || undefined });
+    },
+    [setFilters]
+  );
 
-  const setStatusFilter = useCallback((status?: 'active' | 'inactive' | 'graduated') => {
-    setFilters({ status });
-  }, [setFilters]);
+  const setStatusFilter = useCallback(
+    (status?: 'active' | 'inactive' | 'graduated') => {
+      setFilters({ status });
+    },
+    [setFilters]
+  );
 
-  const setEducationalSystemFilter = useCallback((systemId?: number) => {
-    setFilters({ educational_system: systemId });
-  }, [setFilters]);
+  const setEducationalSystemFilter = useCallback(
+    (systemId?: number) => {
+      setFilters({ educational_system: systemId });
+    },
+    [setFilters]
+  );
 
-  const setSchoolYearFilter = useCallback((schoolYear?: string) => {
-    setFilters({ school_year: schoolYear });
-  }, [setFilters]);
+  const setSchoolYearFilter = useCallback(
+    (schoolYear?: string) => {
+      setFilters({ school_year: schoolYear });
+    },
+    [setFilters]
+  );
 
-  const setSortOrder = useCallback((ordering?: string) => {
-    setFilters({ ordering });
-  }, [setFilters]);
+  const setSortOrder = useCallback(
+    (ordering?: string) => {
+      setFilters({ ordering });
+    },
+    [setFilters]
+  );
 
   // Auto-load on mount
   useEffect(() => {
@@ -388,25 +430,25 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
     students,
     totalCount,
     educationalSystems,
-    
+
     // Pagination
     currentPage,
     hasNextPage,
     hasPreviousPage,
-    
+
     // Loading states
     isLoading,
     isCreating,
     isUpdating,
     isDeleting,
     isBulkImporting,
-    
+
     // Error state
     error,
-    
+
     // Filters
     filters,
-    
+
     // Actions
     loadStudents,
     loadMoreStudents,
@@ -417,7 +459,7 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
     updateStudentStatusRecord,
     bulkImportStudentsFromCSV,
     getStudentByIdRecord,
-    
+
     // Filter management
     setFilters,
     clearFilters,

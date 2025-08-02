@@ -1,0 +1,313 @@
+QA Test Case: API Integration and Email Delivery Testing
+
+Test ID: TINVITE-013
+Test Name: Teacher Invitation API Integration and Email Delivery
+Purpose: Test backend API endpoints, bulk processing, email delivery status tracking, and complete API integration
+Expected Result: All invitation APIs work correctly, bulk processing functions properly, and email delivery is tracked accurately
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Educational Platform
+- Architecture: Django REST Framework backend with invitation APIs
+- APIs: invite_existing, invite_bulk, invitation status, accept/decline endpoints
+- GitHub Issues: #85 (API fixes), #86 (decline endpoint), #99-100 (email system)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Start development servers: `make dev-open`
+4. Backend logs: `make logs` (critical for API monitoring)
+5. API testing tools: browser dev tools, curl, or Postman equivalent
+
+Test Data:
+- School Admin Email: anapmc.carvalho@gmail.com
+- Valid API test emails: api.test1@example.com, api.test2@example.com
+- Bulk test emails: bulk.api1@example.com, bulk.api2@example.com, bulk.api3@example.com
+- Invalid email formats: invalid-email, @missing-domain.com
+- Large bulk set: 25+ emails for stress testing
+
+Pre-requisites:
+1. School admin authenticated with proper permissions
+2. Backend server running with API endpoints accessible
+3. Email system configured for delivery tracking
+4. Database clean state or isolated test environment
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and API Access Verification
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  source .venv/bin/activate
+  make dev-open
+  # Open separate terminal for continuous log monitoring:
+  make logs
+
+1. Start development environment with both servers
+2. Verify backend API is accessible at appropriate port
+3. Open browser developer tools for network monitoring
+4. Authenticate as school admin to get valid session/tokens
+5. Verify authentication headers are properly set
+6. Check base API URL and endpoints are reachable
+
+Expected: Development environment running with API access verified
+Screenshot: 01_api_environment_setup.png
+
+Step 2: Test Single Teacher Invitation API Endpoint
+1. Open browser network tab to monitor API calls
+2. Use frontend to send single invitation to api.test1@example.com
+3. Monitor POST call to /accounts/teachers/invite_existing/
+4. Verify request payload includes: email, school_id, role, custom_message
+5. Check response status is 200/201 with proper invitation data
+6. Verify response includes: invitation id, token, status, email_delivery_status
+7. Check backend logs for successful invitation creation
+
+Expected: Single invitation API works correctly with proper request/response
+Screenshot: 02_single_invitation_api_test.png
+API Logs: Document request/response format in results
+
+Step 3: Test Bulk Invitation API Endpoint
+1. Clear network monitoring or create new session
+2. Use frontend to send bulk invitations to multiple emails
+3. Monitor POST call to /accounts/teachers/invite_bulk/
+4. Verify request payload includes school_id and invitations array
+5. Check each invitation in array has email, role, custom_message
+6. Verify response includes summary with counts (total, created, errors, duplicates)
+7. Check response includes successful_invitations, failed_invitations arrays
+8. Monitor backend logs for bulk processing completion
+
+Expected: Bulk invitation API processes multiple invitations with detailed results
+Screenshot: 03_bulk_invitation_api_test.png
+API Logs: Document bulk processing response structure
+
+Step 4: Test API Response Structure Validation
+1. Examine single invitation API response structure
+2. Verify all required fields are present and correctly typed
+3. Check bulk invitation response has proper summary structure
+4. Validate invitation objects have consistent schema
+5. Test response includes proper error handling fields
+6. Verify timestamp formats are ISO 8601 compliant
+7. Check all enum values match frontend expectations
+
+Expected: API responses have consistent, well-structured schemas
+Screenshot: 04_api_response_validation.png
+API Response Documentation: Save response examples
+
+Step 5: Test Invitation Status API Endpoint
+1. Use invitation token from previous test
+2. Make GET request to /accounts/teacher-invitations/[token]/status/
+3. Verify response includes invitation details and can_accept boolean
+4. Check school information is included in response
+5. Verify invitation metadata (created_at, expires_at, etc.)
+6. Test with invalid token returns appropriate 404 error
+7. Check expired token handling
+
+Expected: Status API provides complete invitation information
+Screenshot: 05_invitation_status_api_test.png
+
+Step 6: Test Invitation List API for School
+1. Make GET request to /accounts/teacher-invitations/list_for_school/
+2. Verify pagination response with count, next, previous
+3. Test filtering parameters: status, email, role, ordering
+4. Check results array contains complete invitation objects
+5. Test pagination by requesting different pages
+6. Verify filtering works correctly with query parameters
+
+Expected: List API provides paginated, filterable invitation results
+Screenshot: 06_invitation_list_api_test.png
+
+Step 7: Test Accept Invitation API Endpoint
+1. Use valid invitation token
+2. Make POST request to /accounts/teacher-invitations/[token]/accept/
+3. Verify request can include optional profile data
+4. Check response includes teacher object and school_membership
+5. Verify school information in response
+6. Test accept API updates invitation status to ACCEPTED
+7. Verify idempotency - accepting already accepted invitation
+
+Expected: Accept API successfully processes invitation acceptance
+Screenshot: 07_accept_invitation_api_test.png
+
+Step 8: Test Decline Invitation API Endpoint
+1. Use fresh invitation token
+2. Make POST request to /accounts/teacher-invitations/[token]/decline/
+3. Verify simple response structure
+4. Check invitation status updates to DECLINED
+5. Test decline API prevents later acceptance
+6. Verify idempotency for already declined invitations
+7. Check declined_at timestamp is set correctly
+
+Expected: Decline API properly processes invitation rejection
+Screenshot: 08_decline_invitation_api_test.png
+
+Step 9: Test Bulk Processing Performance and Limits
+1. Create bulk invitation with maximum allowed emails (50)
+2. Monitor processing time and memory usage
+3. Test bulk processing with invalid emails mixed in
+4. Verify error handling for oversized bulk requests
+5. Check partial success handling (some succeed, some fail)
+6. Monitor backend logs for performance metrics
+7. Test concurrent bulk requests
+
+Expected: Bulk processing handles limits and performs adequately
+Screenshot: 09_bulk_processing_performance.png
+
+Step 10: Test Email Delivery Status Tracking
+1. Send invitations and monitor email_delivery_status field
+2. Check status progression: not_sent -> pending -> sent -> delivered
+3. Test bounce handling if email delivery fails
+4. Verify delivery status updates in real-time or near real-time
+5. Check delivery status affects invitation workflow
+6. Test resend invitation functionality
+
+Expected: Email delivery status tracked accurately throughout process
+Screenshot: 10_email_delivery_tracking.png
+
+Step 11: Test API Error Handling and Validation
+1. Test various invalid inputs to invitation APIs
+2. Send malformed JSON to endpoints
+3. Test missing required fields
+4. Check duplicate email handling in bulk
+5. Test rate limiting if implemented
+6. Verify proper HTTP status codes for different errors
+7. Check error message format consistency
+
+Expected: APIs handle errors gracefully with consistent error responses
+Screenshot: 11_api_error_handling.png
+
+Step 12: Test Authentication and Authorization
+1. Test API calls without authentication
+2. Verify proper 401 responses for unauthenticated requests
+3. Test with wrong school permissions
+4. Check role-based access control
+5. Test token expiration handling
+6. Verify cross-school invitation restrictions
+
+Expected: Authentication and authorization work correctly across all APIs
+Screenshot: 12_api_auth_testing.png
+
+Step 13: Test API Data Consistency
+1. Create invitation via API and verify in database
+2. Check data consistency between API responses and stored data
+3. Test updates propagate correctly (status changes)
+4. Verify foreign key relationships are maintained
+5. Check timestamp consistency across API calls
+6. Test data integrity during concurrent operations
+
+Expected: API operations maintain data consistency and integrity
+Screenshot: 13_api_data_consistency.png
+
+Step 14: Test Invitation Token Security
+1. Verify invitation tokens are sufficiently random/secure
+2. Test token uniqueness across invitations
+3. Check token expiration enforcement
+4. Test token cannot be guessed or enumerated
+5. Verify tokens are invalidated after use (if applicable)
+6. Check token format is consistent
+
+Expected: Invitation tokens provide adequate security
+Screenshot: 14_invitation_token_security.png
+
+Step 15: Test API Integration with Frontend Components
+1. Verify all frontend components use APIs correctly
+2. Check error handling between frontend and backend
+3. Test loading states during API calls
+4. Verify proper error message propagation
+5. Check retry mechanisms work with APIs
+6. Test real-time updates and polling
+
+Expected: Frontend integrates seamlessly with backend APIs
+Screenshot: 15_frontend_api_integration.png
+
+Step 16: Test Email Template and Content
+1. Send test invitation and examine email content
+2. Verify email templates render correctly
+3. Check personalization fields (name, school, role)
+4. Test custom message inclusion in emails
+5. Verify links in emails are properly formatted
+6. Check email formatting across different clients
+
+Expected: Email templates render correctly with proper content
+Screenshot: 16_email_template_testing.png
+
+Step 17: Test API Response Times and Performance
+1. Measure response times for single invitation API
+2. Test bulk invitation processing times
+3. Check status lookup performance
+4. Verify list API pagination performance
+5. Test concurrent API request handling
+6. Monitor memory usage during bulk operations
+
+Expected: APIs perform adequately under normal and peak loads
+Screenshot: 17_api_performance_testing.png
+
+Step 18: Test Webhook Integration (If Implemented)
+1. Check if webhooks are fired for invitation events
+2. Test webhook payload structure
+3. Verify webhook delivery for different status changes
+4. Test webhook retry mechanisms
+5. Check webhook authentication/security
+
+Expected: Webhooks (if implemented) function correctly for invitation events
+Screenshot: 18_webhook_integration.png
+
+Step 19: Test API Documentation Compliance
+1. Compare API behavior with documentation
+2. Verify response schemas match documented format
+3. Check all documented endpoints are functional
+4. Test documented error codes and messages
+5. Verify API versioning if applicable
+
+Expected: APIs match documentation and are properly documented
+Screenshot: 19_api_documentation_compliance.png
+
+Step 20: Test Complete API Workflow Integration
+1. Execute complete invitation workflow via APIs
+2. Test end-to-end flow from creation to acceptance
+3. Verify all API interactions work together
+4. Check data flow consistency throughout process
+5. Test error recovery at each API step
+
+Expected: Complete API workflow functions as integrated system
+Screenshot: 20_complete_api_workflow.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All invitation APIs function correctly, bulk processing works properly, and email delivery is tracked accurately with proper error handling
+FAIL: Any critical API endpoint fails, bulk processing broken, or email delivery not tracked
+
+Individual Step Criteria:
+- Step 1: PASS if API environment accessible, FAIL if endpoints unreachable
+- Step 2: PASS if single invitation API works, FAIL if API call fails or wrong response
+- Step 3: PASS if bulk API processes correctly, FAIL if bulk processing broken
+- Step 4: PASS if response structure consistent, FAIL if schema inconsistencies
+- Step 5: PASS if status API works, FAIL if status lookup broken
+- Step 6: PASS if list API functional, FAIL if pagination or filtering broken
+- Step 7: PASS if accept API works, FAIL if acceptance processing fails
+- Step 8: PASS if decline API works, FAIL if decline processing fails
+- Step 9: PASS if bulk performance adequate, FAIL if limits not enforced
+- Step 10: PASS if email tracking works, FAIL if delivery status not tracked
+- Step 11: PASS if error handling good, FAIL if poor error responses
+- Step 12: PASS if auth/authz works, FAIL if security issues
+- Step 13: PASS if data consistent, FAIL if data integrity issues
+- Step 14: PASS if tokens secure, FAIL if token security concerns
+- Step 15: PASS if frontend integration smooth, FAIL if integration broken
+- Step 16: PASS if email templates good, FAIL if email content issues
+- Step 17: PASS if performance adequate, FAIL if poor response times
+- Step 18: PASS if webhooks work, FAIL if webhook issues
+- Step 19: PASS if docs match behavior, FAIL if API doesn't match docs
+- Step 20: PASS if complete workflow works, FAIL if integration issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- API responses under 500ms for single operations
+- Bulk processing completes within 30 seconds for 50 invitations
+- Error responses include actionable error messages
+- Email delivery status updates within 5 minutes
+- All APIs handle concurrent requests properly
+- Authentication errors provide clear guidance
+- Rate limiting provides proper feedback
+- API responses are consistent and well-structured
+- Email templates are professional and clear
+- Webhook delivery is reliable and timely

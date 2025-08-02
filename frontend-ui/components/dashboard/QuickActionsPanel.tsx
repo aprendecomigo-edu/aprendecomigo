@@ -1,4 +1,12 @@
-import { CalendarPlus, MessageCircleIcon, PlusIcon, SettingsIcon, UserPlusIcon, UsersIcon, MailIcon } from 'lucide-react-native';
+import {
+  CalendarPlus,
+  MessageCircleIcon,
+  PlusIcon,
+  SettingsIcon,
+  UserPlusIcon,
+  UsersIcon,
+  MailIcon,
+} from 'lucide-react-native';
 import React from 'react';
 
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -50,18 +58,12 @@ const QuickActionItem: React.FC<{ action: QuickAction }> = ({ action }) => (
           className={`${action.disabled ? 'text-gray-400' : `text-${action.color}-600`}`}
         />
         <Text
-          className={`font-semibold flex-1 ${
-            action.disabled ? 'text-gray-500' : 'text-gray-900'
-          }`}
+          className={`font-semibold flex-1 ${action.disabled ? 'text-gray-500' : 'text-gray-900'}`}
         >
           {action.title}
         </Text>
       </HStack>
-      <Text
-        className={`text-sm ${
-          action.disabled ? 'text-gray-400' : 'text-gray-600'
-        }`}
-      >
+      <Text className={`text-sm ${action.disabled ? 'text-gray-400' : 'text-gray-600'}`}>
         {action.description}
       </Text>
     </VStack>
@@ -118,14 +120,18 @@ const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
       color: 'indigo',
       onPress: onManageUsers,
     },
-    ...(onManageInvitations ? [{
-      id: 'manage-invitations',
-      title: 'Gerir Convites',
-      description: 'Acompanhe status dos convites',
-      icon: MailIcon,
-      color: 'teal',
-      onPress: onManageInvitations,
-    }] : []),
+    ...(onManageInvitations
+      ? [
+          {
+            id: 'manage-invitations',
+            title: 'Gerir Convites',
+            description: 'Acompanhe status dos convites',
+            icon: MailIcon,
+            color: 'teal',
+            onPress: onManageInvitations,
+          },
+        ]
+      : []),
     {
       id: 'settings',
       title: 'Configurações',
@@ -148,7 +154,7 @@ const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
           {/* Render actions in pairs */}
           {Array.from({ length: Math.ceil(actions.length / 2) }, (_, rowIndex) => (
             <HStack key={rowIndex} space="md" className="flex-wrap">
-              {actions.slice(rowIndex * 2, rowIndex * 2 + 2).map((action) => (
+              {actions.slice(rowIndex * 2, rowIndex * 2 + 2).map(action => (
                 <QuickActionItem key={action.id} action={action} />
               ))}
             </HStack>

@@ -1,0 +1,176 @@
+QA Test Case: Email Invitation vs Shareable Link Generation Options
+
+Test ID: TINVITE-015
+Test Name: Email Invitation vs Shareable Link Generation Options
+Purpose: Verify that school admins can choose between sending email invitations directly or generating shareable invitation links for manual distribution
+Expected Result: Both invitation methods work correctly with proper link generation, sharing options, and fallback behavior when link API is unavailable
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - Teacher Invitation System  
+- Architecture: React Native frontend with Django backend
+- Component: InviteTeacherModal with link generation features
+- Note: Link generation API is currently disabled/not implemented (line 69-75 in modal)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers running: `make dev`
+4. Browser access: http://localhost:8081
+
+Test Data:
+- School Admin User: Authenticated with invitation permissions
+- Test Email: test.teacher@example.com
+- School ID: 1 (default for testing)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Navigation
+1. Ensure development servers are running: `make dev`
+2. Navigate to http://localhost:8081
+3. Authenticate as school admin user
+4. Access invitations page: http://localhost:8081/(school-admin)/invitations
+Expected: Successfully authenticated and on invitations dashboard
+Screenshot: 01_dashboard_access.png
+
+Step 2: Open Invitation Modal and Verify Current State
+1. Click "Convidar" button to open invitation modal
+2. Examine modal layout for invitation options
+3. Verify current implementation shows "Convitar por Email" section
+4. Check for any link generation UI elements (currently disabled)
+Expected: Modal opens with email invitation as primary option
+Screenshot: 02_modal_invitation_options.png
+
+Step 3: Test Email Invitation Method (Current Implementation)
+1. Select "Único" (Single) mode if not already selected
+2. Choose "TEACHER" role from dropdown
+3. Enter valid email: test.teacher@example.com
+4. Add custom message: "Convite para se juntar como professor"
+5. Click "Enviar Convite" button
+6. Verify email invitation is sent successfully
+Expected: Email invitation sent with success message displayed
+Screenshot: 03_email_invitation_sent.png
+
+Step 4: Investigate Link Generation Feature Status
+1. Examine modal interface for link generation options
+2. Look for buttons/sections related to "Link" or "Compartilhar"
+3. Check browser console for any messages about link API
+4. Verify current implementation shows email as only option
+Expected: Link generation features are disabled/not visible due to API not being implemented
+Screenshot: 04_link_options_status.png
+
+Step 5: Test Link Generation API Graceful Fallback
+1. Open browser developer tools to monitor console
+2. Check for any error messages related to invitation links
+3. Verify that link loading (if triggered) fails gracefully
+4. Confirm that email invitation remains functional when link API is unavailable
+Expected: No errors shown to user, graceful fallback to email-only mode
+Screenshot: 05_link_api_fallback.png
+
+Step 6: Verify Copy Link Functionality (When Available)
+Note: This step will likely fail due to disabled API, but test the UI logic
+1. Look for copy link functionality in the modal code
+2. If link generation were working, verify copy button would be present
+3. Test that clipboard functionality is properly handled
+4. Check for proper user feedback when copying links
+Expected: Copy functionality exists in code but is disabled due to API limitations
+Screenshot: 06_copy_link_handling.png
+
+Step 7: Test WhatsApp Sharing Feature (When Available)
+Note: This functionality depends on link generation API
+1. Look for WhatsApp sharing functionality in the modal
+2. Verify that WhatsApp URL generation logic exists
+3. Test that sharing options would work on mobile devices
+4. Check platform-specific handling (web vs mobile)
+Expected: WhatsApp sharing code exists but is inactive due to disabled link API
+Screenshot: 07_whatsapp_sharing_logic.png
+
+Step 8: Test QR Code Generation Feature (When Available)
+Note: This feature shows "coming soon" message
+1. Look for QR code functionality in the modal
+2. Click on QR code button if present
+3. Verify "coming soon" message appears
+4. Check that QR code feature is properly stubbed
+Expected: QR code feature shows "coming soon" placeholder message
+Screenshot: 08_qr_code_placeholder.png
+
+Step 9: Test Link Expiration and Usage Tracking
+Note: Test the data structure and UI preparation for when API is available
+1. Examine the InvitationLink interface in the code
+2. Verify fields for URL, expires_at, and usage_count
+3. Check that UI is prepared to display link expiration information
+4. Verify usage count tracking would be available
+Expected: Data structures exist for link management features
+Screenshot: 09_link_data_structure.png
+
+Step 10: Test Multiple Invitation Methods Integration
+1. Verify that both email and link methods can coexist
+2. Check that role selection applies to both invitation types
+3. Confirm custom messages work for both methods
+4. Test that school ID is properly passed to both APIs
+Expected: Invitation methods are properly integrated with shared configuration
+Screenshot: 10_methods_integration.png
+
+Step 11: Test Error Handling for Disabled Features
+1. Verify that disabled link features don't cause UI errors
+2. Check that error messages are appropriate for unavailable features
+3. Confirm that fallback to email-only is seamless
+4. Test that user experience is not degraded by disabled features
+Expected: Smooth user experience despite disabled link generation
+Screenshot: 11_disabled_features_handling.png
+
+Step 12: Verify Future-Ready Implementation
+1. Check that link generation integration points are ready
+2. Verify that API endpoint placeholder exists
+3. Confirm that UI components are prepared for link features
+4. Test that enabling link API would activate all related features
+Expected: Implementation is ready for link API when it becomes available
+Screenshot: 12_future_ready_implementation.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS:
+- Email invitation method works correctly and completely
+- Disabled link generation features fail gracefully without user-facing errors
+- UI is prepared for link generation features when API becomes available
+- Copy, WhatsApp, and QR code functionality exists in code but is properly disabled
+- Error handling for unavailable features is appropriate
+- User experience remains smooth despite disabled features
+- Integration points for future link API are properly implemented
+
+FAIL:
+- Email invitation method fails or is incomplete
+- Disabled features cause user-facing errors or confusion
+- UI breaks when trying to access link generation features
+- Missing error handling for unavailable features
+- Poor user experience due to incomplete feature implementation
+- Integration points for future features are missing or incorrect
+
+Overall Result: PASS only if ALL individual steps pass, FAIL if ANY step fails
+
+=== TECHNICAL VALIDATION POINTS ===
+
+Code Quality:
+- getSchoolInvitationLink function properly throws error for unimplemented API
+- Loading states are handled correctly for link generation
+- Platform-specific code (web vs mobile) is properly implemented
+- Error boundaries protect against link generation failures
+
+User Experience:
+- Clear indication that link features are not yet available (if shown)
+- Email invitation remains primary and fully functional method
+- No broken links or non-functional buttons
+- Appropriate messaging for "coming soon" features
+
+Future Compatibility:
+- InvitationLink interface is properly defined
+- API integration points are clearly marked
+- Feature flags or environment checks are in place
+- Code is structured for easy activation of link features
+
+Performance:
+- No unnecessary API calls to disabled endpoints
+- Proper loading state management
+- Efficient error handling for unavailable features
+- Clean component lifecycle management
