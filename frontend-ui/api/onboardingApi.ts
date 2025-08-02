@@ -46,50 +46,50 @@ export interface UpdateNavigationPreferencesData {
 
 class OnboardingApi {
   async getOnboardingProgress(): Promise<OnboardingProgress> {
-    const response = await apiClient.get('/accounts/onboarding_progress/');
+    const response = await apiClient.get('/accounts/users/onboarding_progress/');
     return response.data;
   }
 
   async updateOnboardingProgress(data: UpdateOnboardingProgressData): Promise<OnboardingProgress> {
-    const response = await apiClient.post('/accounts/onboarding_progress/', data);
+    const response = await apiClient.post('/accounts/users/onboarding_progress/', data);
     return response.data;
   }
 
   async completeOnboardingStep(stepId: string): Promise<OnboardingProgress> {
-    const response = await apiClient.post('/accounts/onboarding_progress/', {
+    const response = await apiClient.post('/accounts/users/onboarding_progress/', {
       completed_steps: [stepId],
     });
     return response.data;
   }
 
   async skipOnboardingStep(stepId: string): Promise<OnboardingProgress> {
-    const response = await apiClient.post('/accounts/onboarding_progress/', {
+    const response = await apiClient.post('/accounts/users/onboarding_progress/', {
       skipped_steps: [stepId],
     });
     return response.data;
   }
 
   async getNavigationPreferences(): Promise<NavigationPreferences> {
-    const response = await apiClient.get('/accounts/navigation_preferences/');
+    const response = await apiClient.get('/accounts/users/navigation_preferences/');
     return response.data;
   }
 
   async updateNavigationPreferences(
     data: UpdateNavigationPreferencesData
   ): Promise<NavigationPreferences> {
-    const response = await apiClient.post('/accounts/navigation_preferences/', data);
+    const response = await apiClient.post('/accounts/users/navigation_preferences/', data);
     return response.data;
   }
 
   async skipOnboarding(): Promise<NavigationPreferences> {
-    const response = await apiClient.post('/accounts/navigation_preferences/', {
+    const response = await apiClient.post('/accounts/users/navigation_preferences/', {
       show_onboarding: false,
     });
     return response.data;
   }
 
   async enableOnboarding(): Promise<NavigationPreferences> {
-    const response = await apiClient.post('/accounts/navigation_preferences/', {
+    const response = await apiClient.post('/accounts/users/navigation_preferences/', {
       show_onboarding: true,
     });
     return response.data;

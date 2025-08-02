@@ -148,6 +148,47 @@ export default function SchoolSettingsPage() {
   }
 
   if (authorizationError || (!selectedSchoolId && !schoolsLoading)) {
+    // Check if user is school_admin but has no admin schools - this might be a data issue
+    const isSchoolAdmin = userProfile?.user_type === 'school_admin' || userProfile?.is_admin;
+    
+    if (isSchoolAdmin && !authorizationError) {
+      // For school admins without admin schools, show a more helpful message
+      return (
+        <Center className="flex-1 bg-background-light-0">
+          <VStack space="lg" className="items-center px-6 max-w-md">
+            <VStack space="md" className="items-center">
+              <Heading size="lg" className="text-center">
+                School Setup Required
+              </Heading>
+              <Text className="text-center text-typography-600">
+                Your account has admin permissions but no schools are configured. Please contact support or check your account setup.
+              </Text>
+              <Text className="text-center text-typography-500 text-sm mt-2">
+                User Type: {userProfile?.user_type} | Admin: {userProfile?.is_admin ? 'Yes' : 'No'}
+              </Text>
+            </VStack>
+            <VStack space="sm" className="w-full">
+              <Button onPress={() => router.replace('/(school-admin)/dashboard')} className="w-full">
+                <ButtonText>Go to Dashboard</ButtonText>
+              </Button>
+              <Button
+                variant="outline"
+                onPress={() => {
+                  // Try to reload the page to refresh data
+                  if (typeof window !== 'undefined') {
+                    window.location.reload();
+                  }
+                }}
+                className="w-full"
+              >
+                <ButtonText>Refresh Page</ButtonText>
+              </Button>
+            </VStack>
+          </VStack>
+        </Center>
+      );
+    }
+    
     return (
       <Center className="flex-1 bg-background-light-0">
         <VStack space="lg" className="items-center px-6 max-w-md">
@@ -165,7 +206,7 @@ export default function SchoolSettingsPage() {
             </Button>
             <Button
               variant="outline"
-              onPress={() => router.push('/auth/login' as any)}
+              onPress={() => router.push('/auth/signin' as any)}
               className="w-full"
             >
               <ButtonText>Sign Out</ButtonText>

@@ -39,6 +39,7 @@ export interface NavigationItem {
 
 export interface SidebarItem {
   id: string;
+  label: string;
   icon: LucideIcon | any;
   route: string;
   permission?: string;
@@ -68,54 +69,56 @@ export interface BottomTabItem {
 export const adminSidebarNavItems: SidebarItem[] = [
   {
     id: 'dashboard',
+    label: 'Dashboard',
     icon: HomeIcon,
-    route: '/school-admin/dashboard',
+    route: '/(school-admin)/dashboard',
     permission: 'school_admin',
   },
   {
     id: 'teachers',
+    label: 'Teachers',
     icon: GraduationCapIcon,
     route: '/teachers',
     permission: 'school_admin',
   },
   {
     id: 'students',
+    label: 'Students',
     icon: UsersIcon,
     route: '/students',
     permission: 'school_admin',
   },
   {
-    id: 'classes',
-    icon: BookOpenIcon,
-    route: '/classes',
-    permission: 'school_admin',
-  },
-  {
     id: 'calendar',
+    label: 'Calendar',
     icon: Calendar,
     route: '/calendar',
   },
   {
     id: 'analytics',
+    label: 'Analytics',
     icon: BarChart3Icon,
-    route: '/analytics',
+    route: '/(school-admin)/analytics',
     permission: 'school_admin',
   },
   {
     id: 'invitations',
+    label: 'Invitations',
     icon: MailIcon,
-    route: '/invitations',
+    route: '/(school-admin)/invitations',
     permission: 'school_admin',
   },
   {
     id: 'chat',
+    label: 'Chat',
     icon: MessagesSquare,
     route: '/chat',
   },
   {
     id: 'settings',
+    label: 'Settings',
     icon: Settings,
-    route: '/settings',
+    route: '/(school-admin)/settings',
   },
 ];
 
@@ -123,46 +126,54 @@ export const adminSidebarNavItems: SidebarItem[] = [
 export const tutorSidebarNavItems: SidebarItem[] = [
   {
     id: 'dashboard',
+    label: 'Dashboard',
     icon: HomeIcon,
     route: '/(tutor)/dashboard',
     permission: 'tutor',
   },
   {
     id: 'students',
+    label: 'Students',
     icon: UsersIcon,
     route: '/(tutor)/students',
     permission: 'tutor',
   },
   {
     id: 'sessions',
+    label: 'Sessions',
     icon: Calendar,
     route: '/(tutor)/sessions',
     permission: 'tutor',
   },
   {
     id: 'analytics',
+    label: 'Analytics',
     icon: TrendingUpIcon,
     route: '/(tutor)/analytics',
     permission: 'tutor',
   },
   {
     id: 'acquisition',
+    label: 'Acquisition',
     icon: UserPlusIcon,
     route: '/(tutor)/acquisition',
     permission: 'tutor',
   },
   {
     id: 'calendar',
+    label: 'Calendar',
     icon: Calendar,
     route: '/calendar',
   },
   {
     id: 'chat',
+    label: 'Chat',
     icon: MessagesSquare,
     route: '/chat',
   },
   {
     id: 'settings',
+    label: 'Settings',
     icon: Settings,
     route: '/settings',
   },
@@ -172,26 +183,31 @@ export const tutorSidebarNavItems: SidebarItem[] = [
 export const sidebarNavItems: SidebarItem[] = [
   {
     id: 'home',
+    label: 'Home',
     icon: HomeIcon,
     route: '/home',
   },
   {
     id: 'calendar',
+    label: 'Calendar',
     icon: Calendar,
     route: '/calendar',
   },
   {
     id: 'chat',
+    label: 'Chat',
     icon: MessagesSquare,
     route: '/chat',
   },
   {
     id: 'users',
+    label: 'Users',
     icon: Users,
     route: '/users',
   },
   {
     id: 'settings',
+    label: 'Settings',
     icon: Settings,
     route: '/settings',
   },

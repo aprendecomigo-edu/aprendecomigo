@@ -3,7 +3,7 @@ import apiClient from './apiClient';
 // Types for API responses
 export interface SearchResult {
   id: string;
-  type: 'teacher' | 'student' | 'class' | 'setting';
+  type: 'teacher' | 'student' | 'class';
   title: string;
   subtitle?: string;
   avatar?: string;

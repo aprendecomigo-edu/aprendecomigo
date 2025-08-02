@@ -59,13 +59,6 @@ const DEFAULT_CATEGORIES: SearchCategory[] = [
     icon: BookOpenIcon,
     searchTypes: ['class'],
   },
-  {
-    id: 'setting',
-    label: 'Settings',
-    type: 'setting',
-    icon: SettingsIcon,
-    searchTypes: ['setting'],
-  },
 ];
 
 // Debounce hook

@@ -1,0 +1,2 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+nav-006,Enhanced Navigation System Test,Comprehensive test of navigation labels search quick actions and routing fixes,20250802-053150,PARTIAL_FAIL,1,0,1

@@ -31,7 +31,7 @@ export interface QuickAction {
 export interface SearchCategory {
   id: string;
   label: string;
-  type: 'teacher' | 'student' | 'class' | 'setting';
+  type: 'teacher' | 'student' | 'class';
   icon: LucideIcon;
   searchTypes: string[];
 }
@@ -97,7 +97,7 @@ export interface NavigationPermission {
 // Search result types (extending the API types)
 export interface EnhancedSearchResult {
   id: string;
-  type: 'teacher' | 'student' | 'class' | 'setting';
+  type: 'teacher' | 'student' | 'class';
   title: string;
   subtitle?: string;
   avatar?: string;

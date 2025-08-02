@@ -127,10 +127,10 @@ class GlobalSearchAPITestCase(TestCase):
         
         teacher_result = data['results'][0]
         self.assertEqual(teacher_result['type'], 'teacher')
-        self.assertEqual(teacher_result['name'], 'John Teacher')
-        self.assertEqual(teacher_result['email'], 'teacher@testschool.com')
-        self.assertIn('specialty', teacher_result)
-        self.assertEqual(teacher_result['specialty'], 'Mathematics')
+        self.assertEqual(teacher_result['title'], 'John Teacher')
+        self.assertEqual(teacher_result['metadata']['email'], 'teacher@testschool.com')
+        self.assertIn('specialty', teacher_result['metadata'])
+        self.assertEqual(teacher_result['metadata']['specialty'], 'Mathematics')
     
     def test_global_search_students_success(self):
         """Test global search returns students from current school."""
@@ -144,15 +144,15 @@ class GlobalSearchAPITestCase(TestCase):
         
         student_result = data['results'][0]
         self.assertEqual(student_result['type'], 'student')
-        self.assertEqual(student_result['name'], 'Jane Student')
-        self.assertEqual(student_result['email'], 'student@testschool.com')
-        self.assertIn('school_year', student_result)
-        self.assertEqual(student_result['school_year'], '10')
+        self.assertEqual(student_result['title'], 'Jane Student')
+        self.assertEqual(student_result['metadata']['email'], 'student@testschool.com')
+        self.assertIn('school_year', student_result['metadata'])
+        self.assertEqual(student_result['metadata']['school_year'], '10')
     
     def test_global_search_courses_success(self):
         """Test global search returns courses relevant to current school."""
         url = reverse('accounts:global-search')
-        response = self.client.get(url, {'q': 'Mathematics', 'types': 'course'})
+        response = self.client.get(url, {'q': 'Mathematics', 'types': 'class'})
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
@@ -160,15 +160,15 @@ class GlobalSearchAPITestCase(TestCase):
         self.assertEqual(len(data['results']), 1)
         
         course_result = data['results'][0]
-        self.assertEqual(course_result['type'], 'course')
-        self.assertEqual(course_result['name'], 'Advanced Mathematics')
-        self.assertEqual(course_result['code'], 'MATH_ADV')
-        self.assertIn('description', course_result)
+        self.assertEqual(course_result['type'], 'class')
+        self.assertEqual(course_result['title'], 'Advanced Mathematics')
+        self.assertEqual(course_result['metadata']['code'], 'MATH_ADV')
+        self.assertIn('description', course_result['metadata'])
     
     def test_global_search_multiple_types(self):
         """Test global search with multiple types."""
         url = reverse('accounts:global-search')
-        response = self.client.get(url, {'q': 'math', 'types': 'teacher,course'})
+        response = self.client.get(url, {'q': 'math', 'types': 'teacher,class'})
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
@@ -178,7 +178,7 @@ class GlobalSearchAPITestCase(TestCase):
         # Should find both teacher (specialty) and course
         types_found = [result['type'] for result in data['results']]
         self.assertIn('teacher', types_found)
-        self.assertIn('course', types_found)
+        self.assertIn('class', types_found)
     
     def test_global_search_school_scoped(self):
         """Test that search results are scoped to user's current school."""
@@ -292,8 +292,8 @@ class GlobalSearchAPITestCase(TestCase):
         
         # Results should be the same
         self.assertEqual(
-            response_lower.json()['results'][0]['name'],
-            response_upper.json()['results'][0]['name']
+            response_lower.json()['results'][0]['title'],
+            response_upper.json()['results'][0]['title']
         )
     
     def test_global_search_partial_matches(self):
@@ -305,7 +305,7 @@ class GlobalSearchAPITestCase(TestCase):
         
         data = response.json()
         self.assertEqual(len(data['results']), 1)
-        self.assertEqual(data['results'][0]['name'], 'John Teacher')
+        self.assertEqual(data['results'][0]['title'], 'John Teacher')
     
     def test_global_search_no_results(self):
         """Test global search when no matches found."""
@@ -330,7 +330,7 @@ class GlobalSearchAPITestCase(TestCase):
         self.assertGreaterEqual(len(data['results']), 1)
     
     def test_global_search_response_format(self):
-        """Test that search response has correct format."""
+        """Test that search response has correct format matching frontend interface."""
         url = reverse('accounts:global-search')
         response = self.client.get(url, {'q': 'John', 'types': 'teacher'})
         
@@ -338,15 +338,30 @@ class GlobalSearchAPITestCase(TestCase):
         
         data = response.json()
         
-        # Check response structure
+        # Check response structure matches GlobalSearchResponse interface
         self.assertIn('results', data)
         self.assertIn('total_count', data)
-        self.assertIn('query', data)
-        self.assertIn('types', data)
+        self.assertIn('categories', data)
         
-        # Check result item structure
+        # Check result item structure matches SearchResult interface
         if data['results']:
             result = data['results'][0]
-            self.assertIn('type', result)
-            self.assertIn('name', result)
+            # Required fields
             self.assertIn('id', result)
+            self.assertIn('type', result)
+            self.assertIn('title', result)
+            self.assertIn('route', result)
+            
+            # Optional fields
+            self.assertTrue('subtitle' in result or result.get('subtitle') is None)
+            self.assertTrue('avatar' in result or result.get('avatar') is None)
+            self.assertTrue('metadata' in result or result.get('metadata') is None)
+            
+            # Validate type is one of expected values
+            self.assertIn(result['type'], ['teacher', 'student', 'class', 'setting'])
+            
+            # Validate route is a proper path
+            self.assertTrue(result['route'].startswith('/'))
+            
+            # Validate ID is string
+            self.assertIsInstance(result['id'], str)

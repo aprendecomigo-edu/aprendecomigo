@@ -3,7 +3,7 @@
 backend:
 	@echo "Starting Django backend server..."
 	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; exit 1; fi
-	cd backend && source ../.venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver
+	cd backend && source ../.venv/bin/activate && DJANGO_ENV=development DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development daphne -b 0.0.0.0 -p 8000 aprendecomigo.asgi:application
 
 frontend:
 	@echo "Starting Expo frontend server..."
@@ -21,7 +21,7 @@ dev:
 	@sleep 2
 	@echo "Please wait while servers start up..."
 	@echo "Starting backend server..."
-	@(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver > ../logs/backend.log 2>&1) & \
+	@(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development daphne -b 0.0.0.0 -p 8000 aprendecomigo.asgi:application > ../logs/backend.log 2>&1) & \
 	echo $$! > logs/backend.pid
 	@sleep 3
 	@echo "Starting frontend server..."
@@ -48,7 +48,7 @@ dev-open:
 	@sleep 2
 	@echo "Please wait while servers start up..."
 	@echo "Starting backend server..."
-	@(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver > ../logs/backend.log 2>&1) & \
+	@(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development daphne -b 0.0.0.0 -p 8000 aprendecomigo.asgi:application > ../logs/backend.log 2>&1) & \
 	echo $$! > logs/backend.pid
 	@sleep 3
 	@echo "Starting frontend server..."
@@ -106,7 +106,7 @@ stop:
 	fi
 	@lsof -ti:8000 | xargs kill -9 2>/dev/null || true
 	@lsof -ti:8081 | xargs kill -9 2>/dev/null || true
-	@pkill -f "python3 manage.py runserver" || true
+	@pkill -f "daphne -b 0.0.0.0 -p 8000 aprendecomigo.asgi:application" || true
 	@pkill -f "python manage.py runserver" || true
 	@pkill -f "python.*manage.py" || true
 	@pkill -f "expo start" || true

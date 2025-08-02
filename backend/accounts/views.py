@@ -4792,11 +4792,13 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
 
 class GlobalSearchView(KnoxAuthenticatedAPIView):
     """
-    Global search API for searching across teachers, students, courses, and school settings.
-    GET /api/search/global/?q=query&types=teacher,student&limit=10
+    Global search API for searching across teachers, students, classes, and school settings.
+    GET /api/accounts/search/global/?q=query&types=teacher,student,class&limit=10
     
     Supports school-scoped results with PostgreSQL full-text search capabilities.
     Performance target: <200ms response time.
+    
+    Returns results in format expected by frontend NavigationAPI interface.
     """
     
     def get(self, request):
@@ -4805,8 +4807,15 @@ class GlobalSearchView(KnoxAuthenticatedAPIView):
         
         Query parameters:
         - q: Search query (required)
-        - types: Comma-separated list of types to search (teacher,student,course)
+        - types: Comma-separated list of types to search (teacher,student,class)
         - limit: Number of results to return (default 10, max 50)
+        
+        Returns:
+        {
+            "results": [SearchResult], 
+            "total_count": int,
+            "categories": {type: count}
+        }
         """
         # Get and validate query parameter
         query = request.query_params.get('q', '').strip()
@@ -4817,8 +4826,8 @@ class GlobalSearchView(KnoxAuthenticatedAPIView):
             )
         
         # Get and validate types parameter
-        types_param = request.query_params.get('types', 'teacher,student,course')
-        valid_types = {'teacher', 'student', 'course'}
+        types_param = request.query_params.get('types', 'teacher,student,class')
+        valid_types = {'teacher', 'student', 'class'}
         requested_types = set(type.strip() for type in types_param.split(','))
         
         # Validate that all requested types are valid
@@ -4870,19 +4879,19 @@ class GlobalSearchView(KnoxAuthenticatedAPIView):
             student_results = self._search_students(query, user_school_ids, limit)
             results.extend(student_results)
         
-        # Search courses
-        if 'course' in requested_types:
+        # Search courses (mapped from 'class' type)
+        if 'class' in requested_types:
             course_results = self._search_courses(query, limit)
             results.extend(course_results)
         
         # Sort results by relevance (could be enhanced with actual scoring)
         # For now, we'll sort by exact matches first, then partial matches
         def sort_key(result):
-            name_lower = result.get('name', '').lower()
+            title_lower = result.get('title', '').lower()
             query_lower = query.lower()
-            if query_lower == name_lower:
+            if query_lower == title_lower:
                 return 0  # Exact match
-            elif query_lower in name_lower:
+            elif query_lower in title_lower:
                 return 1  # Partial match
             else:
                 return 2  # Other match
@@ -4892,11 +4901,16 @@ class GlobalSearchView(KnoxAuthenticatedAPIView):
         # Apply final limit across all results
         results = results[:limit]
         
+        # Calculate categories for frontend
+        categories = {}
+        for result in results:
+            result_type = result['type']
+            categories[result_type] = categories.get(result_type, 0) + 1
+        
         return Response({
             "results": results,
             "total_count": len(results),
-            "query": query,
-            "types": list(requested_types)
+            "categories": categories
         }, status=status.HTTP_200_OK)
     
     def _search_teachers(self, query, user_school_ids, limit):
@@ -4922,18 +4936,24 @@ class GlobalSearchView(KnoxAuthenticatedAPIView):
             user = membership.user
             teacher_profile = getattr(user, 'teacher_profile', None)
             
-            result = {
-                "id": user.id,
-                "type": "teacher",
-                "name": user.name,
-                "email": user.email,
-            }
+            # Build subtitle
+            subtitle_parts = []
+            if teacher_profile and teacher_profile.specialty:
+                subtitle_parts.append(teacher_profile.specialty)
+            subtitle_parts.append(user.email)
             
-            if teacher_profile:
-                result.update({
-                    "specialty": teacher_profile.specialty,
-                    "bio": teacher_profile.bio[:200] if teacher_profile.bio else "",
-                })
+            result = {
+                "id": str(user.id),
+                "type": "teacher",
+                "title": user.name,
+                "subtitle": " • ".join(subtitle_parts) if subtitle_parts else None,
+                "route": f"/teachers/{user.id}",
+                "metadata": {
+                    "email": user.email,
+                    "specialty": teacher_profile.specialty if teacher_profile else None,
+                    "bio": teacher_profile.bio[:200] if teacher_profile and teacher_profile.bio else None,
+                }
+            }
             
             results.append(result)
         
@@ -4961,18 +4981,27 @@ class GlobalSearchView(KnoxAuthenticatedAPIView):
             user = membership.user
             student_profile = getattr(user, 'student_profile', None)
             
-            result = {
-                "id": user.id,
-                "type": "student", 
-                "name": user.name,
-                "email": user.email,
-            }
-            
+            # Build subtitle
+            subtitle_parts = []
             if student_profile:
-                result.update({
-                    "school_year": student_profile.school_year,
-                    "educational_system": student_profile.educational_system.name if student_profile.educational_system else None,
-                })
+                if student_profile.school_year:
+                    subtitle_parts.append(f"Year {student_profile.school_year}")
+                if student_profile.educational_system:
+                    subtitle_parts.append(student_profile.educational_system.name)
+            subtitle_parts.append(user.email)
+            
+            result = {
+                "id": str(user.id),
+                "type": "student",
+                "title": user.name,
+                "subtitle": " • ".join(subtitle_parts) if subtitle_parts else None,
+                "route": f"/students/{user.id}",
+                "metadata": {
+                    "email": user.email,
+                    "school_year": student_profile.school_year if student_profile else None,
+                    "educational_system": student_profile.educational_system.name if student_profile and student_profile.educational_system else None,
+                }
+            }
             
             results.append(result)
         
@@ -4989,14 +5018,27 @@ class GlobalSearchView(KnoxAuthenticatedAPIView):
         
         results = []
         for course in courses[:limit]:
+            # Build subtitle
+            subtitle_parts = []
+            if course.code:
+                subtitle_parts.append(course.code)
+            if course.educational_system:
+                subtitle_parts.append(course.educational_system.name)
+            if course.education_level:
+                subtitle_parts.append(course.education_level)
+            
             result = {
-                "id": course.id,
-                "type": "course",
-                "name": course.name,
-                "code": course.code,
-                "description": course.description[:200] if course.description else "",
-                "education_level": course.education_level,
-                "educational_system": course.educational_system.name if course.educational_system else None,
+                "id": str(course.id),
+                "type": "class",  # Frontend expects 'class' not 'course'
+                "title": course.name,
+                "subtitle": " • ".join(subtitle_parts) if subtitle_parts else None,
+                "route": f"/classes/{course.id}",
+                "metadata": {
+                    "code": course.code,
+                    "description": course.description[:200] if course.description else None,
+                    "education_level": course.education_level,
+                    "educational_system": course.educational_system.name if course.educational_system else None,
+                }
             }
             results.append(result)
         

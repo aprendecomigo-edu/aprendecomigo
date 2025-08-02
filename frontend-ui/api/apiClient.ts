@@ -53,6 +53,16 @@ apiClient.interceptors.response.use(
   async error => {
     const originalRequest = error.config;
 
+    // Log detailed error information for debugging
+    console.error('API Error:', {
+      url: originalRequest?.url,
+      method: originalRequest?.method,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+    });
+
     // If error is 401 and not already retrying
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -71,6 +81,13 @@ apiClient.interceptors.response.use(
       error.isAuthenticationError = true;
 
       return Promise.reject(error);
+    }
+
+    // For other errors, ensure proper error propagation
+    if (error.response?.data?.detail) {
+      error.message = error.response.data.detail;
+    } else if (error.response?.data?.error) {
+      error.message = error.response.data.error;
     }
 
     return Promise.reject(error);
