@@ -2,14 +2,16 @@ import { X, Mail, Copy, Check, MessageCircle, QrCode, Users } from 'lucide-react
 import React, { useState } from 'react';
 import { Platform, Alert, Linking } from 'react-native';
 
-import { useInviteTeacher, useBulkInvitations } from '@/hooks/useInvitations';
 import { SchoolRole } from '@/api/invitationApi';
+import { InvitationErrorBoundary } from '@/components/invitations/InvitationErrorBoundary';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
+import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
-import { Icon } from '@/components/ui/icon';
+import { Icon, ChevronDownIcon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
 import {
   Modal,
@@ -20,14 +22,31 @@ import {
   ModalBody,
   ModalFooter,
 } from '@/components/ui/modal';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectIcon,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicatorWrapper,
+  SelectDragIndicator,
+  SelectItem,
+} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { Select, SelectTrigger, SelectInput, SelectIcon, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicatorWrapper, SelectDragIndicator, SelectItem } from '@/components/ui/select';
-import { ChevronDownIcon } from '@/components/ui/icon';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
-import { Divider } from '@/components/ui/divider';
-import { Badge, BadgeText } from '@/components/ui/badge';
+import { VStack } from '@/components/ui/vstack';
+import {
+  INVITATION_CONSTANTS,
+  INVITATION_MESSAGES,
+  INVITATION_PLACEHOLDERS,
+  ROLE_LABELS,
+  ROLE_DESCRIPTIONS,
+} from '@/constants/invitations';
+import { useInviteTeacher, useBulkInvitations } from '@/hooks/useInvitations';
+import { sanitizeInvitationMessage } from '@/utils/textSanitization';
 
 // Color constants
 const COLORS = {
@@ -54,22 +73,23 @@ interface InvitationLink {
 
 // Role options for dropdown
 const ROLE_OPTIONS = [
-  { value: SchoolRole.TEACHER, label: 'Professor', description: 'Pode dar aulas e gerenciar estudantes' },
-  { value: SchoolRole.SCHOOL_ADMIN, label: 'Administrador', description: 'Pode gerenciar escola e professores' },
+  { value: SchoolRole.TEACHER, label: ROLE_LABELS.teacher, description: ROLE_DESCRIPTIONS.teacher },
+  {
+    value: SchoolRole.SCHOOL_ADMIN,
+    label: ROLE_LABELS.school_admin,
+    description: ROLE_DESCRIPTIONS.school_admin,
+  },
 ];
 
 // Invitation mode
 type InvitationMode = 'single' | 'bulk';
 
-// API calls (keeping link functionality for now)
+// API calls for invitation links
 const getSchoolInvitationLink = async (schoolId: number): Promise<InvitationLink> => {
   try {
-    // This endpoint might not exist yet, using mock data
-    return {
-      url: 'https://aprendecomigo.com/join-school/xyz789abc123',
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      usage_count: 5,
-    };
+    // TODO: Implement real API endpoint when available
+    // For now, return a graceful fallback or disable this feature
+    throw new Error('Invitation link API not yet implemented');
   } catch (error) {
     console.error('Error getting school invitation link:', error);
     throw error;
@@ -105,14 +125,22 @@ export const InviteTeacherModal = ({
   const [invitationMode, setInvitationMode] = useState<InvitationMode>('single');
   const [isLoading, setIsLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-  
+
   // Use hooks
   const { inviteTeacher, loading: inviteLoading } = useInviteTeacher();
-  const { sendBulkInvitations, loading: bulkLoading, progress, resetProgress } = useBulkInvitations();
+  const {
+    sendBulkInvitations,
+    loading: bulkLoading,
+    progress,
+    resetProgress,
+  } = useBulkInvitations();
 
   React.useEffect(() => {
     if (isOpen) {
-      loadInvitationLink();
+      // Disable invitation link loading for now since API is not implemented
+      // loadInvitationLink();
+      setIsLoading(false);
+      setInvitationLink(null);
     }
   }, [isOpen]);
 
@@ -123,7 +151,7 @@ export const InviteTeacherModal = ({
       setInvitationLink(link);
     } catch (error) {
       console.error('Error loading invitation link:', error);
-      Alert.alert('Erro', 'Não foi possível carregar o link de convite.');
+      Alert.alert('Erro', INVITATION_MESSAGES.ERROR.LOAD_INVITATION_LINK_FAILED);
     } finally {
       setIsLoading(false);
     }
@@ -164,26 +192,23 @@ export const InviteTeacherModal = ({
         if (supported) {
           await Linking.openURL(whatsappUrl);
         } else {
-          Alert.alert(
-            'WhatsApp não encontrado',
-            'Por favor, instale o WhatsApp para usar esta funcionalidade.'
-          );
+          Alert.alert('WhatsApp não encontrado', INVITATION_MESSAGES.ERROR.WHATSAPP_NOT_FOUND);
         }
       }
     } catch (error) {
       console.error('Error opening WhatsApp:', error);
-      Alert.alert('Erro', 'Não foi possível abrir o WhatsApp.');
+      Alert.alert('Erro', INVITATION_MESSAGES.ERROR.FAILED_TO_OPEN_WHATSAPP);
     }
   };
 
   const handleShowQRCode = () => {
     // TODO: Implement QR code display
-    Alert.alert('QR Code', 'Funcionalidade de QR Code será implementada em breve.');
+    Alert.alert('QR Code', INVITATION_MESSAGES.INFO.QR_CODE_COMING_SOON);
   };
 
   const handleSendEmailInvite = async () => {
     if (!email.trim()) {
-      Alert.alert('Erro', 'Por favor, insira um email válido.');
+      Alert.alert('Erro', INVITATION_MESSAGES.ERROR.INVALID_EMAIL);
       return;
     }
 
@@ -194,8 +219,8 @@ export const InviteTeacherModal = ({
         role: selectedRole,
         custom_message: customMessage.trim() || undefined,
       });
-      
-      Alert.alert('Sucesso', 'Convite enviado por email com sucesso!');
+
+      Alert.alert('Sucesso', INVITATION_MESSAGES.SUCCESS.INVITE_SENT);
       setEmail('');
       setCustomMessage('');
       onSuccess();
@@ -207,14 +232,14 @@ export const InviteTeacherModal = ({
 
   const handleBulkInvite = async () => {
     const emails = parseBulkEmails(bulkEmails);
-    
+
     if (emails.length === 0) {
-      Alert.alert('Erro', 'Por favor, insira pelo menos um email válido.');
+      Alert.alert('Erro', INVITATION_MESSAGES.ERROR.NO_EMAILS);
       return;
     }
 
-    if (emails.length > 50) {
-      Alert.alert('Erro', 'Máximo de 50 convites por vez.');
+    if (emails.length > INVITATION_CONSTANTS.MAX_BULK_INVITATIONS) {
+      Alert.alert('Erro', INVITATION_MESSAGES.ERROR.TOO_MANY_EMAILS);
       return;
     }
 
@@ -239,7 +264,7 @@ export const InviteTeacherModal = ({
         message += `Erros: ${summary.total_errors}`;
       }
 
-      Alert.alert('Convites Enviados', message);
+      Alert.alert(INVITATION_MESSAGES.SUCCESS.BULK_INVITES_COMPLETED, message);
       setBulkEmails('');
       setCustomMessage('');
       resetProgress();
@@ -275,257 +300,228 @@ export const InviteTeacherModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="lg">
-      <ModalBackdrop />
-      <ModalContent>
-        <ModalHeader>
-          <Heading size="lg">Convidar Professor</Heading>
-          <ModalCloseButton>
-            <Icon as={X} />
-          </ModalCloseButton>
-        </ModalHeader>
+    <InvitationErrorBoundary>
+      <Modal isOpen={isOpen} onClose={handleClose} size="lg">
+        <ModalBackdrop />
+        <ModalContent>
+          <ModalHeader>
+            <Heading size="lg">Convidar Professor</Heading>
+            <ModalCloseButton>
+              <Icon as={X} />
+            </ModalCloseButton>
+          </ModalHeader>
 
-        <ModalBody>
-          {isLoading ? (
-            <Center className="py-8">
-              <VStack className="items-center" space="md">
-                <Spinner size="large" />
-                <Text className="text-gray-500">Carregando link de convite...</Text>
-              </VStack>
-            </Center>
-          ) : invitationLink ? (
-            <VStack space="lg">
-              {/* Invitation Link Info */}
-              <Box className="p-4 bg-gray-50 rounded-lg border">
-                <VStack space="sm">
-                  <Text className="font-medium text-gray-900">Link de Convite da Escola</Text>
-                  <Text className="text-sm text-gray-600 font-mono break-all">
-                    {invitationLink.url}
-                  </Text>
-                  <HStack className="justify-between">
-                    <Text className="text-xs text-gray-500">
-                      Expira em: {new Date(invitationLink.expires_at).toLocaleDateString('pt-BR')}
-                    </Text>
-                    <Text className="text-xs text-gray-500">
-                      Usado: {invitationLink.usage_count} vezes
-                    </Text>
-                  </HStack>
+          <ModalBody>
+            {isLoading ? (
+              <Center className="py-8">
+                <VStack className="items-center" space="md">
+                  <Spinner size="large" />
+                  <Text className="text-gray-500">Carregando link de convite...</Text>
                 </VStack>
-              </Box>
-
-              {/* Sharing Options */}
-              <VStack space="md">
-                <Text className="font-medium text-gray-900">Opções de Compartilhamento</Text>
-
-                <VStack space="sm">
-                  {/* Copy Link */}
-                  <Button variant="outline" onPress={handleCopyLink}>
-                    <HStack space="xs" className="items-center">
-                      <Icon as={linkCopied ? Check : Copy} size="sm" className="text-gray-600" />
-                      <ButtonText>{linkCopied ? 'Link Copiado!' : 'Copiar Link'}</ButtonText>
-                    </HStack>
-                  </Button>
-
-                  {/* WhatsApp Share */}
-                  <Button style={{ backgroundColor: '#25D366' }} onPress={handleWhatsAppShare}>
-                    <HStack space="xs" className="items-center">
-                      <Icon as={MessageCircle} size="sm" className="text-white" />
-                      <ButtonText className="text-white">Compartilhar no WhatsApp</ButtonText>
-                    </HStack>
-                  </Button>
-
-                  {/* QR Code */}
-                  <Button variant="outline" onPress={handleShowQRCode}>
-                    <HStack space="xs" className="items-center">
-                      <Icon as={QrCode} size="sm" className="text-gray-600" />
-                      <ButtonText>Mostrar QR Code</ButtonText>
-                    </HStack>
-                  </Button>
-                </VStack>
-              </VStack>
-
-              <Divider className="my-4" />
-              
-              {/* Email Invite Section */}
+              </Center>
+            ) : (
               <VStack space="lg">
-                <Text className="font-medium text-gray-900">Convitar por Email</Text>
+                {/* Email Invite Section - directly show this since link feature is disabled */}
+                <VStack space="lg">
+                  <Text className="font-medium text-gray-900">Convitar por Email</Text>
 
-                {/* Mode Selection */}
-                <HStack space="sm">
-                  <Button
-                    variant={invitationMode === 'single' ? 'solid' : 'outline'}
-                    size="sm"
-                    onPress={() => setInvitationMode('single')}
-                    style={invitationMode === 'single' ? { backgroundColor: COLORS.primary } : {}}
-                  >
-                    <HStack space="xs" className="items-center">
-                      <Icon as={Mail} size="sm" className={invitationMode === 'single' ? 'text-white' : 'text-gray-600'} />
-                      <ButtonText className={invitationMode === 'single' ? 'text-white' : 'text-gray-600'}>
-                        Único
-                      </ButtonText>
-                    </HStack>
-                  </Button>
-                  
-                  <Button
-                    variant={invitationMode === 'bulk' ? 'solid' : 'outline'}
-                    size="sm"
-                    onPress={() => setInvitationMode('bulk')}
-                    style={invitationMode === 'bulk' ? { backgroundColor: COLORS.primary } : {}}
-                  >
-                    <HStack space="xs" className="items-center">
-                      <Icon as={Users} size="sm" className={invitationMode === 'bulk' ? 'text-white' : 'text-gray-600'} />
-                      <ButtonText className={invitationMode === 'bulk' ? 'text-white' : 'text-gray-600'}>
-                        Múltiplos
-                      </ButtonText>
-                    </HStack>
-                  </Button>
-                </HStack>
+                  {/* Mode Selection */}
+                  <HStack space="sm">
+                    <Button
+                      variant={invitationMode === 'single' ? 'solid' : 'outline'}
+                      size="sm"
+                      onPress={() => setInvitationMode('single')}
+                      style={invitationMode === 'single' ? { backgroundColor: COLORS.primary } : {}}
+                    >
+                      <HStack space="xs" className="items-center">
+                        <Icon
+                          as={Mail}
+                          size="sm"
+                          className={invitationMode === 'single' ? 'text-white' : 'text-gray-600'}
+                        />
+                        <ButtonText
+                          className={invitationMode === 'single' ? 'text-white' : 'text-gray-600'}
+                        >
+                          Único
+                        </ButtonText>
+                      </HStack>
+                    </Button>
 
-                {/* Role Selection */}
-                <VStack space="sm">
-                  <Text className="text-sm font-medium text-gray-700">Função</Text>
-                  <Select selectedValue={selectedRole} onValueChange={setSelectedRole}>
-                    <SelectTrigger variant="outline" size="md">
-                      <SelectInput placeholder="Selecionar função" />
-                      <SelectIcon className="mr-3" as={ChevronDownIcon} />
-                    </SelectTrigger>
-                    <SelectPortal>
-                      <SelectBackdrop />
-                      <SelectContent>
-                        <SelectDragIndicatorWrapper>
-                          <SelectDragIndicator />
-                        </SelectDragIndicatorWrapper>
-                        {ROLE_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} label={option.label} value={option.value}>
-                            <VStack>
-                              <Text className="font-medium">{option.label}</Text>
-                              <Text className="text-xs text-gray-500">{option.description}</Text>
-                            </VStack>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </SelectPortal>
-                  </Select>
-                </VStack>
+                    <Button
+                      variant={invitationMode === 'bulk' ? 'solid' : 'outline'}
+                      size="sm"
+                      onPress={() => setInvitationMode('bulk')}
+                      style={invitationMode === 'bulk' ? { backgroundColor: COLORS.primary } : {}}
+                    >
+                      <HStack space="xs" className="items-center">
+                        <Icon
+                          as={Users}
+                          size="sm"
+                          className={invitationMode === 'bulk' ? 'text-white' : 'text-gray-600'}
+                        />
+                        <ButtonText
+                          className={invitationMode === 'bulk' ? 'text-white' : 'text-gray-600'}
+                        >
+                          Múltiplos
+                        </ButtonText>
+                      </HStack>
+                    </Button>
+                  </HStack>
 
-                {/* Email Input - Single Mode */}
-                {invitationMode === 'single' && (
+                  {/* Role Selection */}
                   <VStack space="sm">
-                    <Text className="text-sm font-medium text-gray-700">Email</Text>
-                    <Input>
-                      <InputField
-                        placeholder="email@exemplo.com"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                      />
-                    </Input>
+                    <Text className="text-sm font-medium text-gray-700">Função</Text>
+                    <Select selectedValue={selectedRole} onValueChange={setSelectedRole}>
+                      <SelectTrigger variant="outline" size="md">
+                        <SelectInput placeholder="Selecionar função" />
+                        <SelectIcon className="mr-3" as={ChevronDownIcon} />
+                      </SelectTrigger>
+                      <SelectPortal>
+                        <SelectBackdrop />
+                        <SelectContent>
+                          <SelectDragIndicatorWrapper>
+                            <SelectDragIndicator />
+                          </SelectDragIndicatorWrapper>
+                          {ROLE_OPTIONS.map(option => (
+                            <SelectItem
+                              key={option.value}
+                              label={option.label}
+                              value={option.value}
+                            >
+                              <VStack>
+                                <Text className="font-medium">{option.label}</Text>
+                                <Text className="text-xs text-gray-500">{option.description}</Text>
+                              </VStack>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </SelectPortal>
+                    </Select>
                   </VStack>
-                )}
 
-                {/* Bulk Email Input */}
-                {invitationMode === 'bulk' && (
-                  <VStack space="sm">
-                    <HStack className="justify-between items-center">
-                      <Text className="text-sm font-medium text-gray-700">Emails</Text>
+                  {/* Email Input - Single Mode */}
+                  {invitationMode === 'single' && (
+                    <VStack space="sm">
+                      <Text className="text-sm font-medium text-gray-700">Email</Text>
+                      <Input>
+                        <InputField
+                          placeholder={INVITATION_PLACEHOLDERS.EMAIL}
+                          value={email}
+                          onChangeText={setEmail}
+                          keyboardType="email-address"
+                          autoCapitalize="none"
+                        />
+                      </Input>
+                    </VStack>
+                  )}
+
+                  {/* Bulk Email Input */}
+                  {invitationMode === 'bulk' && (
+                    <VStack space="sm">
+                      <HStack className="justify-between items-center">
+                        <Text className="text-sm font-medium text-gray-700">Emails</Text>
+                        <Text className="text-xs text-gray-500">
+                          {parseBulkEmails(bulkEmails).length} emails válidos
+                        </Text>
+                      </HStack>
+                      <Textarea>
+                        <TextareaInput
+                          placeholder={INVITATION_PLACEHOLDERS.BULK_EMAILS}
+                          value={bulkEmails}
+                          onChangeText={setBulkEmails}
+                          numberOfLines={4}
+                          textAlignVertical="top"
+                        />
+                      </Textarea>
                       <Text className="text-xs text-gray-500">
-                        {parseBulkEmails(bulkEmails).length} emails válidos
+                        Separe os emails por vírgula, ponto e vírgula ou quebra de linha. Máximo{' '}
+                        {INVITATION_CONSTANTS.MAX_BULK_INVITATIONS} emails.
                       </Text>
-                    </HStack>
+                    </VStack>
+                  )}
+
+                  {/* Custom Message */}
+                  <VStack space="sm">
+                    <Text className="text-sm font-medium text-gray-700">
+                      Mensagem personalizada (opcional)
+                    </Text>
                     <Textarea>
                       <TextareaInput
-                        placeholder="email1@exemplo.com, email2@exemplo.com
-ou um por linha"
-                        value={bulkEmails}
-                        onChangeText={setBulkEmails}
-                        numberOfLines={4}
+                        placeholder={INVITATION_PLACEHOLDERS.CUSTOM_MESSAGE}
+                        value={customMessage}
+                        onChangeText={setCustomMessage}
+                        numberOfLines={3}
                         textAlignVertical="top"
+                        maxLength={INVITATION_CONSTANTS.MAX_CUSTOM_MESSAGE_LENGTH}
                       />
                     </Textarea>
                     <Text className="text-xs text-gray-500">
-                      Separe os emails por vírgula, ponto e vírgula ou quebra de linha. Máximo 50 emails.
+                      {customMessage.length}/{INVITATION_CONSTANTS.MAX_CUSTOM_MESSAGE_LENGTH}{' '}
+                      caracteres
                     </Text>
                   </VStack>
-                )}
 
-                {/* Custom Message */}
-                <VStack space="sm">
-                  <Text className="text-sm font-medium text-gray-700">Mensagem personalizada (opcional)</Text>
-                  <Textarea>
-                    <TextareaInput
-                      placeholder="Adicione uma mensagem personalizada ao convite..."
-                      value={customMessage}
-                      onChangeText={setCustomMessage}
-                      numberOfLines={3}
-                      textAlignVertical="top"
-                      maxLength={500}
-                    />
-                  </Textarea>
-                  <Text className="text-xs text-gray-500">
-                    {customMessage.length}/500 caracteres
-                  </Text>
-                </VStack>
-
-                {/* Progress indicator for bulk */}
-                {invitationMode === 'bulk' && (progress.total > 0) && (
-                  <Box className="p-3 bg-blue-50 rounded-lg">
-                    <VStack space="xs">
-                      <Text className="text-sm font-medium">Progresso do envio:</Text>
-                      <HStack space="md">
-                        <Badge variant="solid" className="bg-green-500">
-                          <BadgeText className="text-white">Sucesso: {progress.completed}</BadgeText>
-                        </Badge>
-                        {progress.failed > 0 && (
-                          <Badge variant="solid" className="bg-red-500">
-                            <BadgeText className="text-white">Falha: {progress.failed}</BadgeText>
+                  {/* Progress indicator for bulk */}
+                  {invitationMode === 'bulk' && progress.total > 0 && (
+                    <Box className="p-3 bg-blue-50 rounded-lg">
+                      <VStack space="xs">
+                        <Text className="text-sm font-medium">Progresso do envio:</Text>
+                        <HStack space="md">
+                          <Badge variant="solid" className="bg-green-500">
+                            <BadgeText className="text-white">
+                              Sucesso: {progress.completed}
+                            </BadgeText>
                           </Badge>
-                        )}
-                      </HStack>
-                    </VStack>
-                  </Box>
-                )}
-
-                {/* Send Button */}
-                <Button
-                  onPress={invitationMode === 'single' ? handleSendEmailInvite : handleBulkInvite}
-                  disabled={!isFormValid() || inviteLoading || bulkLoading}
-                  style={{ backgroundColor: COLORS.primary }}
-                >
-                  {(inviteLoading || bulkLoading) ? (
-                    <HStack space="xs" className="items-center">
-                      <Spinner size="small" />
-                      <ButtonText className="text-white">
-                        {invitationMode === 'bulk' ? 'Enviando...' : 'Enviando...'}
-                      </ButtonText>
-                    </HStack>
-                  ) : (
-                    <HStack space="xs" className="items-center">
-                      <Icon as={invitationMode === 'bulk' ? Users : Mail} size="sm" className="text-white" />
-                      <ButtonText className="text-white">
-                        {invitationMode === 'bulk' 
-                          ? `Enviar ${getCurrentEmails().length} Convites` 
-                          : 'Enviar Convite'
-                        }
-                      </ButtonText>
-                    </HStack>
+                          {progress.failed > 0 && (
+                            <Badge variant="solid" className="bg-red-500">
+                              <BadgeText className="text-white">Falha: {progress.failed}</BadgeText>
+                            </Badge>
+                          )}
+                        </HStack>
+                      </VStack>
+                    </Box>
                   )}
-                </Button>
-              </VStack>
-            </VStack>
-          ) : (
-            <Center className="py-8">
-              <Text className="text-red-500">Erro ao carregar o link de convite</Text>
-            </Center>
-          )}
-        </ModalBody>
 
-        <ModalFooter>
-          <Button variant="outline" onPress={handleClose}>
-            <ButtonText>Fechar</ButtonText>
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+                  {/* Send Button */}
+                  <Button
+                    onPress={invitationMode === 'single' ? handleSendEmailInvite : handleBulkInvite}
+                    disabled={!isFormValid() || inviteLoading || bulkLoading}
+                    style={{ backgroundColor: COLORS.primary }}
+                  >
+                    {inviteLoading || bulkLoading ? (
+                      <HStack space="xs" className="items-center">
+                        <Spinner size="small" />
+                        <ButtonText className="text-white">
+                          {invitationMode === 'bulk' ? 'Enviando...' : 'Enviando...'}
+                        </ButtonText>
+                      </HStack>
+                    ) : (
+                      <HStack space="xs" className="items-center">
+                        <Icon
+                          as={invitationMode === 'bulk' ? Users : Mail}
+                          size="sm"
+                          className="text-white"
+                        />
+                        <ButtonText className="text-white">
+                          {invitationMode === 'bulk'
+                            ? `Enviar ${getCurrentEmails().length} Convites`
+                            : 'Enviar Convite'}
+                        </ButtonText>
+                      </HStack>
+                    )}
+                  </Button>
+                </VStack>
+              </VStack>
+            )}
+          </ModalBody>
+
+          <ModalFooter>
+            <Button variant="outline" onPress={handleClose}>
+              <ButtonText>Fechar</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </InvitationErrorBoundary>
   );
 };

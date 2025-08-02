@@ -2,9 +2,11 @@ import { RefreshCw, Search, Filter, Plus } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 import { RefreshControl, FlatList } from 'react-native';
 
-import { useInvitations, useInvitationPolling } from '@/hooks/useInvitations';
-import { InvitationStatus, SchoolRole } from '@/api/invitationApi';
+import { InvitationErrorBoundary } from './InvitationErrorBoundary';
+import { InvitationFilters } from './InvitationFilters';
+import { InvitationListItem } from './InvitationListItem';
 
+import { InvitationStatus, SchoolRole } from '@/api/invitationApi';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
@@ -15,9 +17,7 @@ import { Input, InputField } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
-import { InvitationListItem } from './InvitationListItem';
-import { InvitationFilters } from './InvitationFilters';
+import { useInvitations, useInvitationPolling } from '@/hooks/useInvitations';
 
 interface InvitationStatusDashboardProps {
   onInvitePress?: () => void;
@@ -38,14 +38,8 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
     ordering?: string;
   }>({});
 
-  const {
-    invitations,
-    loading,
-    error,
-    pagination,
-    fetchInvitations,
-    refreshInvitations,
-  } = useInvitations();
+  const { invitations, loading, error, pagination, fetchInvitations, refreshInvitations } =
+    useInvitations();
 
   const { isPolling, startPolling, stopPolling } = useInvitationPolling(
     refreshInvitations,
@@ -55,12 +49,14 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
   // Start/stop polling based on autoRefresh prop
   useEffect(() => {
     if (autoRefresh) {
-      const cleanup = startPolling();
-      return cleanup;
+      startPolling();
+      return () => {
+        stopPolling();
+      };
     } else {
       stopPolling();
     }
-  }, [autoRefresh, startPolling, stopPolling]);
+  }, [autoRefresh]); // Remove functions from dependency array
 
   const handleSearch = () => {
     fetchInvitations({
@@ -94,7 +90,7 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
   };
 
   const getStatsData = () => {
-    const statusCounts = invitations.reduce((acc, invitation) => {
+    const statusCounts = (invitations || []).reduce((acc, invitation) => {
       acc[invitation.status] = (acc[invitation.status] || 0) + 1;
       return acc;
     }, {} as Record<InvitationStatus, number>);
@@ -112,9 +108,10 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
       },
       {
         label: 'Enviados',
-        value: (statusCounts[InvitationStatus.SENT] || 0) + 
-               (statusCounts[InvitationStatus.DELIVERED] || 0) + 
-               (statusCounts[InvitationStatus.VIEWED] || 0),
+        value:
+          (statusCounts[InvitationStatus.SENT] || 0) +
+          (statusCounts[InvitationStatus.DELIVERED] || 0) +
+          (statusCounts[InvitationStatus.VIEWED] || 0),
         color: '#3B82F6',
       },
       {
@@ -124,9 +121,10 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
       },
       {
         label: 'Expirados',
-        value: (statusCounts[InvitationStatus.EXPIRED] || 0) + 
-               (statusCounts[InvitationStatus.CANCELLED] || 0) + 
-               (statusCounts[InvitationStatus.DECLINED] || 0),
+        value:
+          (statusCounts[InvitationStatus.EXPIRED] || 0) +
+          (statusCounts[InvitationStatus.CANCELLED] || 0) +
+          (statusCounts[InvitationStatus.DECLINED] || 0),
         color: '#EF4444',
       },
     ];
@@ -138,21 +136,14 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
       <HStack className="justify-between items-center">
         <VStack>
           <Heading size="xl">Convites de Professores</Heading>
-          <Text className="text-gray-600">
-            Gerencie convites e acompanhe o status
-          </Text>
+          <Text className="text-gray-600">Gerencie convites e acompanhe o status</Text>
         </VStack>
-        
+
         <HStack space="sm">
-          <Button
-            variant="outline"
-            size="sm"
-            onPress={refreshInvitations}
-            disabled={loading}
-          >
+          <Button variant="outline" size="sm" onPress={refreshInvitations} disabled={loading}>
             <Icon as={RefreshCw} size="sm" className={loading ? 'animate-spin' : ''} />
           </Button>
-          
+
           {onInvitePress && (
             <Button size="sm" onPress={onInvitePress}>
               <HStack space="xs" className="items-center">
@@ -199,10 +190,7 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
           <Button variant="outline" onPress={handleSearch} disabled={loading}>
             <Icon as={Search} size="sm" />
           </Button>
-          <Button
-            variant="outline"
-            onPress={() => setShowFilters(!showFilters)}
-          >
+          <Button variant="outline" onPress={() => setShowFilters(!showFilters)}>
             <Icon as={Filter} size="sm" />
           </Button>
         </HStack>
@@ -241,7 +229,7 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
 
   const renderFooter = () => {
     if (!loading) return null;
-    
+
     return (
       <Box className="py-4">
         <Center>
@@ -256,14 +244,11 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
       <VStack space="md" className="items-center">
         <Icon as={Search} size="xl" className="text-gray-400" />
         <VStack space="xs" className="items-center">
-          <Text className="text-lg font-medium text-gray-900">
-            Nenhum convite encontrado
-          </Text>
+          <Text className="text-lg font-medium text-gray-900">Nenhum convite encontrado</Text>
           <Text className="text-gray-600 text-center">
             {searchQuery || Object.keys(filters).length > 0
               ? 'Tente ajustar os filtros de busca'
-              : 'Comece convidando professores para sua escola'
-            }
+              : 'Comece convidando professores para sua escola'}
           </Text>
         </VStack>
         {(searchQuery || Object.keys(filters).length > 0) && (
@@ -291,25 +276,22 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
   }
 
   return (
-    <Box className="flex-1 bg-gray-50">
-      <FlatList
-        data={invitations}
-        keyExtractor={(item) => item.id}
-        renderItem={renderInvitation}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={!loading ? renderEmpty : null}
-        ListFooterComponent={renderFooter}
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={refreshInvitations}
-          />
-        }
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        showsVerticalScrollIndicator={false}
-        className="p-4"
-      />
-    </Box>
+    <InvitationErrorBoundary>
+      <Box className="flex-1 bg-gray-50">
+        <FlatList
+          data={invitations}
+          keyExtractor={item => item.id}
+          renderItem={renderInvitation}
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={!loading ? renderEmpty : null}
+          ListFooterComponent={renderFooter}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={refreshInvitations} />}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          showsVerticalScrollIndicator={false}
+          className="p-4"
+        />
+      </Box>
+    </InvitationErrorBoundary>
   );
 };
