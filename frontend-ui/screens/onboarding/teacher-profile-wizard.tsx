@@ -44,6 +44,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { WizardNavigation } from '@/components/wizard/wizard-navigation';
+import WizardErrorBoundary from '@/components/wizard/wizard-error-boundary';
 import { useProfileWizard } from '@/hooks/useProfileWizard';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -141,6 +142,10 @@ export const TeacherProfileWizard: React.FC<TeacherProfileWizardProps> = ({
 
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Computed state values
+  const isAutoSaving = isSaving && hasUnsavedChanges;
+  const hasCriticalErrors = error !== null && !isLoading;
 
   // Initialize wizard
   useEffect(() => {
@@ -287,6 +292,35 @@ export const TeacherProfileWizard: React.FC<TeacherProfileWizardProps> = ({
     } catch (error) {
       console.error('Error saving before exit:', error);
     }
+  };
+
+  // Error boundary handlers
+  const handleErrorBoundaryReset = () => {
+    // Clear local state and try to reload from the hook
+    setHasUnsavedChanges(false);
+    setShowExitDialog(false);
+    loadProgress().catch(console.error);
+  };
+
+  const handleErrorBoundarySaveAndExit = async () => {
+    try {
+      // Attempt to save current progress before exiting
+      await saveProgress();
+    } catch (error) {
+      console.error('Failed to save progress during error recovery:', error);
+    } finally {
+      // Exit regardless of save success
+      if (onExit) {
+        onExit();
+      } else {
+        router.back();
+      }
+    }
+  };
+
+  const handleErrorBoundaryGoToDashboard = () => {
+    // Navigate to dashboard without saving
+    router.push('/(school-admin)/dashboard');
   };
 
   const currentStepConfig = WIZARD_STEPS[currentStep];

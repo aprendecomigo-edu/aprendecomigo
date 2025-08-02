@@ -1,0 +1,215 @@
+QA Test Case: Mobile Payment Flow Validation and Cross-Platform Testing
+
+Test ID: PAYMENT-009
+Test Name: Mobile-Optimized Payment Success Flow Validation
+Purpose: Verify that payment success flows work correctly across different mobile devices and screen sizes, ensuring touch-optimized experience
+Expected Result: Consistent payment experience across mobile devices with proper touch interactions and responsive notifications
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: React Native (Expo) with web support
+- Payment Integration: Stripe Checkout optimized for mobile
+- Related Issues: GitHub Issue #84 (Payment Success Flow Validation), #55 (Payment Integration - Mobile Requirements)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Run: make dev-open to start both frontend and backend
+4. Mobile Testing: Chrome DevTools Device Simulation
+
+Test Devices (Simulated):
+- iPhone SE (375x667) - Small screen test
+- iPhone 12 Pro (390x844) - Standard mobile
+- iPad Air (820x1180) - Tablet view
+- Samsung Galaxy S21 (360x800) - Android simulation
+- Custom: 320x568 - Minimum supported width
+
+Payment Method:
+- Stripe test card: 4242424242424242 (mobile-optimized entry)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Mobile Testing Preparation
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev-open
+
+1. Open Chrome DevTools
+2. Enable Device Toolbar (Ctrl+Shift+M / Cmd+Shift+M)
+3. Select iPhone SE (375x667) as initial test device
+4. Navigate to http://localhost:8081
+
+Expected: Environment ready with mobile simulation active
+Screenshot: 01_mobile_environment_setup.png
+
+Step 2: iPhone SE Payment Flow Test (Small Screen)
+1. Navigate to http://localhost:8081/purchase
+2. Verify purchase flow renders correctly on small screen
+3. Check that all buttons are touch-sized (minimum 44px)
+4. Test pricing plan selection with touch interaction
+5. Verify scrolling works smoothly
+
+Expected: All UI elements accessible and properly sized for small screen
+Screenshot: 02_iphone_se_purchase_flow.png
+
+Step 3: Mobile Form Input Validation
+1. Fill student information form on mobile:
+   - Tap input fields and verify keyboard appears
+   - Test auto-complete/auto-correct behavior
+   - Enter: Name "Ana Costa", Email "ana.mobile@test.com"
+2. Verify form validation works on mobile
+3. Test form navigation (tab order)
+
+Expected: Mobile form input works smoothly with proper keyboard handling
+Screenshot: 03_mobile_form_input.png
+
+Step 4: Mobile Payment Entry Testing
+1. Proceed to payment step
+2. Test Stripe payment form on mobile:
+   - Card number entry with spacing
+   - Expiry date input
+   - CVC entry
+   - Zip code if required
+3. Verify payment form is mobile-optimized
+4. Test numeric keyboards for card input
+
+Expected: Payment form optimized for mobile input
+Screenshot: 04_mobile_payment_entry.png
+
+Step 5: Mobile Payment Success Toast Validation
+1. Complete payment with test card: 4242424242424242
+2. Verify success toast appears correctly on mobile:
+   - Proper positioning (not cut off)
+   - Readable text size
+   - Appropriate duration (6 seconds)
+   - Touch-dismissible if applicable
+3. Check toast doesn't interfere with other mobile UI
+
+Expected: Success toast displays perfectly on mobile screen
+Screenshot: 05_mobile_success_toast.png
+
+Step 6: iPad/Tablet View Testing
+1. Switch device simulation to iPad Air (820x1180)
+2. Repeat payment flow from Steps 2-5
+3. Verify responsive design adapts properly
+4. Test landscape orientation
+5. Check touch targets remain appropriate
+
+Expected: Payment flow adapts well to tablet screen sizes
+Screenshot: 06_ipad_payment_flow.png
+
+Step 7: Android Device Simulation
+1. Switch to Samsung Galaxy S21 (360x800)
+2. Complete full payment flow
+3. Test Android-specific behaviors:
+   - Back button handling
+   - Touch feedback
+   - Keyboard behavior
+4. Verify payment success notifications work identically
+
+Expected: Android simulation works identically to iOS
+Screenshot: 07_android_payment_flow.png
+
+Step 8: Minimum Width Testing (320px)
+1. Set custom device size to 320x568 (minimum supported)
+2. Test complete payment flow
+3. Verify all elements remain accessible
+4. Check for horizontal scrolling issues
+5. Ensure payment form remains usable
+
+Expected: Payment flow works on minimum supported screen width
+Screenshot: 08_minimum_width_test.png
+
+Step 9: Cross-Device Consistency Validation
+1. Compare screenshots from all device tests
+2. Verify UI consistency across screen sizes
+3. Check that payment success behavior is identical
+4. Ensure toast notifications appear consistently
+5. Validate navigation flows work on all devices
+
+Expected: Consistent experience across all tested devices
+Screenshot: 09_cross_device_comparison.png
+
+Step 10: Mobile Performance and Accessibility
+1. Test payment flow with slow network simulation
+2. Verify loading states work properly on mobile
+3. Test accessibility features:
+   - Screen reader compatibility
+   - High contrast mode
+   - Large text support
+4. Check touch accessibility guidelines compliance
+
+Expected: Mobile performance and accessibility meet standards
+Screenshot: 10_mobile_accessibility_test.png
+
+Step 11: Touch Interaction Edge Cases
+1. Test rapid tap scenarios (prevent double-submission)
+2. Test swipe gestures don't interfere
+3. Verify pinch-to-zoom doesn't break layout
+4. Test device rotation during payment flow
+5. Check for touch event conflicts
+
+Expected: Robust touch interaction handling
+Screenshot: 11_touch_interaction_tests.png
+
+Step 12: Mobile Browser Console Validation
+1. Open mobile browser console (if available)
+2. Verify no console.log statements during payment flow
+3. Check for mobile-specific JavaScript errors
+4. Validate proper error handling on mobile
+
+Expected: Clean console with no mobile-specific issues
+Screenshot: 12_mobile_console_validation.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS Conditions:
+- Payment flow works consistently across all tested mobile devices
+- Touch targets meet accessibility guidelines (44px minimum)
+- Payment success notifications display correctly on all screen sizes
+- NO console.log statements appear during mobile payment flows
+- Form inputs work properly with mobile keyboards
+- Responsive design adapts appropriately to different screen sizes
+- Performance remains acceptable on simulated slow networks
+- Accessibility features work correctly
+- Touch interactions are robust and prevent errors
+
+FAIL Conditions:
+- Any console.log statements appear during mobile payment flows
+- Payment flow fails or behaves differently on any tested device
+- Touch targets too small or inaccessible
+- Success notifications cut off or improperly positioned
+- Form inputs don't work properly on mobile
+- Responsive design breaks on any screen size
+- Performance issues on mobile
+- Accessibility violations
+- Touch interaction problems or double-submission issues
+
+Individual Step Criteria:
+- Step 1: PASS if mobile testing environment sets up correctly
+- Step 2: PASS if iPhone SE display works properly
+- Step 3: PASS if mobile form input works smoothly
+- Step 4: PASS if payment entry is mobile-optimized
+- Step 5: PASS if success toast displays correctly on mobile
+- Step 6: PASS if tablet view adapts properly
+- Step 7: PASS if Android simulation works identically
+- Step 8: PASS if minimum width maintains usability
+- Step 9: PASS if cross-device consistency maintained
+- Step 10: PASS if mobile performance and accessibility acceptable
+- Step 11: PASS if touch interactions work robustly
+- Step 12: PASS if mobile console remains clean
+
+Overall Result: PASS only if ALL steps pass across ALL tested devices and NO console.log statements appear
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Touch targets must be minimum 44px for accessibility
+- Payment forms must be optimized for mobile keyboards
+- Success notifications must be clearly visible on all screen sizes
+- Loading states must provide clear feedback on slower mobile connections
+- Error messages must be readable and actionable on mobile
+- Navigation must work intuitively with mobile gestures
+- Form validation must work smoothly on mobile
+- Payment flow must prevent accidental double-submission
+- Mobile experience must feel native and responsive

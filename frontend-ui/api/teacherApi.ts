@@ -110,7 +110,7 @@ export interface TeacherDashboardData {
  */
 export const getTeacherDashboard = async (): Promise<TeacherDashboardData> => {
   try {
-    const response = await apiClient.get('/api/teachers/consolidated_dashboard/');
+    const response = await apiClient.get('/api/accounts/teachers/consolidated_dashboard/');
     return response.data;
   } catch (error) {
     console.error('Error fetching teacher dashboard:', error);

@@ -1,0 +1,185 @@
+QA Test Case: Payment Success Flow Validation - Dedicated Purchase Page
+
+Test ID: PAYMENT-008
+Test Name: Payment Success Flow Validation on Purchase Page (/purchase)
+Purpose: Verify that the payment success notifications and redirect behavior work correctly on the dedicated purchase page, including automatic dashboard redirection
+Expected Result: Users see success toast notifications with automatic redirection to dashboard after payment completion
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: React Native (Expo) Frontend + Django Backend
+- Payment Integration: Stripe Checkout with webhook system
+- Related Issues: GitHub Issue #84 (Payment Success Flow Validation), #82 (Frontend Notification Fixes), #55 (Payment Integration)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Run: make dev-open to start both frontend and backend
+4. Stripe Test Environment: Uses test keys for safe payment testing
+
+Test Data:
+- Test Payment Method: Stripe test card 4242424242424242
+- Test Email: test.student@aprendecomigo.com
+- Test Student Name: Maria Santos
+- Test Amount: Standard tutoring package
+
+Browser Compatibility:
+- Primary: Chrome/Chromium (via Playwright)
+- Mobile simulation: Chrome DevTools mobile view
+- Navigation behavior validation required
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Verification
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev-open
+
+Expected: Both frontend (port 8081) and backend (port 8000) start successfully
+Screenshot: 01_environment_ready.png
+Debug: Use 'make logs' to view server logs if issues occur
+
+Step 2: Navigate to Dedicated Purchase Page
+1. Open browser to http://localhost:8081/purchase
+2. Verify page loads with PurchaseFlow component
+3. Check for clean, focused purchase experience
+4. Verify cancel button functionality (should navigate to home)
+
+Expected: Purchase page loads correctly with focused purchase experience
+Screenshot: 02_purchase_page_loaded.png
+
+Step 3: Complete Purchase Flow Setup
+1. Select a pricing plan from available options
+2. Fill out student information form:
+   - Student Name: Maria Santos
+   - Student Email: test.student@aprendecomigo.com
+3. Progress to payment step
+4. Verify UI responsiveness and progress indicators
+
+Expected: Payment form loads correctly with all required fields
+Screenshot: 03_purchase_flow_setup.png
+
+Step 4: Process Payment with Test Card
+1. Enter Stripe test card details:
+   - Card Number: 4242424242424242
+   - Expiry: 12/25 (future date)
+   - CVC: 456
+   - Name: Maria Santos
+2. Complete payment submission
+3. Monitor browser console (should remain clean)
+4. Verify payment processing indicators work correctly
+
+Expected: Payment processes smoothly without console.log statements
+Screenshot: 04_payment_processing.png
+
+Step 5: Verify Success Toast with Redirect Message
+1. Wait for payment completion
+2. Verify SUCCESS TOAST notification appears with:
+   - Message: "Payment successful! Transaction ID: [ID]. Redirecting to your dashboard..."
+   - Duration: 6 seconds visible
+   - Success styling and appropriate icons
+3. Verify message indicates upcoming redirection
+4. Check that no console.log statements appear
+
+Expected: Success toast with redirect message appears correctly
+Screenshot: 05_success_toast_with_redirect.png
+
+Step 6: Validate Automatic Dashboard Redirection
+1. Wait for 3-second delay (as implemented in purchase/index.tsx)
+2. Verify automatic navigation to /home occurs
+3. Check that redirection happens smoothly
+4. Ensure user understands the redirection (toast message prepared them)
+
+Expected: Automatic redirection to /home after 3-second delay
+Screenshot: 06_automatic_dashboard_redirect.png
+
+Step 7: Verify Success Card Display (Before Redirect)
+1. During the 3-second delay, verify PurchaseSuccessCard displays
+2. Check for complete purchase information:
+   - Transaction ID
+   - Plan details
+   - Professional success styling
+3. Ensure card is visible but doesn't interfere with redirect
+
+Expected: Success card displays briefly before redirect
+Screenshot: 07_success_card_before_redirect.png
+
+Step 8: Test Cancel Functionality
+1. Navigate back to /purchase
+2. Start purchase flow but click Cancel button
+3. Verify navigation to home page (/)
+4. Ensure cancellation works at any step
+
+Expected: Cancel button properly navigates to home page
+Screenshot: 08_cancel_functionality_test.png
+
+Step 9: Mobile Purchase Flow Validation
+1. Use mobile device simulation (iPhone/Android)
+2. Complete entire purchase flow on mobile
+3. Verify toast notifications display correctly
+4. Test automatic redirection on mobile
+5. Ensure touch interactions work properly
+
+Expected: Mobile experience works identically with proper responsive design
+Screenshot: 09_mobile_purchase_flow.png
+
+Step 10: Browser Console and Network Validation
+1. Open browser developer tools
+2. Monitor console for clean execution (no console.log statements)
+3. Check network tab for proper API calls
+4. Verify webhook processing in backend logs
+
+Commands:
+  make logs
+
+Expected: Clean console, proper API calls, successful webhook processing
+Screenshot: 10_console_network_validation.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS Conditions:
+- Success toast appears with correct redirect message
+- Automatic dashboard redirection occurs after 3 seconds
+- NO console.log statements appear during payment flow
+- PurchaseSuccessCard displays correctly before redirect
+- Cancel functionality works properly
+- Mobile experience works identically to desktop
+- Toast notification timing and behavior are correct
+- Backend webhook processing completes successfully
+- All navigation flows work as expected
+
+FAIL Conditions:
+- Any console.log statements appear during payment flow
+- Success toast does not appear or has incorrect message
+- Automatic redirection fails or doesn't occur
+- Cancel functionality broken or navigates incorrectly
+- Mobile experience differs from desktop or fails
+- Success card missing or displays incorrectly
+- Backend processing errors occur
+- Navigation flows break or behave unexpectedly
+
+Individual Step Criteria:
+- Step 1: PASS if environment starts successfully
+- Step 2: PASS if purchase page loads correctly
+- Step 3: PASS if purchase flow setup works properly
+- Step 4: PASS if payment processes without console logs
+- Step 5: PASS if success toast with redirect message appears
+- Step 6: PASS if automatic redirection works correctly
+- Step 7: PASS if success card displays properly
+- Step 8: PASS if cancel functionality works
+- Step 9: PASS if mobile experience is identical
+- Step 10: PASS if console is clean and backend processes correctly
+
+Overall Result: PASS only if ALL steps pass, NO console.log statements appear, and automatic redirection works correctly
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Success toast must clearly indicate upcoming redirection
+- 3-second delay must provide enough time to read success message
+- Redirection must be smooth and not jarring
+- Cancel button must be clearly visible and functional
+- Mobile touch targets must be appropriately sized
+- Loading states must prevent accidental double-submission
+- Success messaging must be encouraging and professional
+- No technical information should be exposed to end users

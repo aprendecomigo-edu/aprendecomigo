@@ -133,17 +133,26 @@ class TeacherDashboardService:
             )
         )
         
-        for progress in progress_records:
-            # Get last session date
-            last_session_date = None
-            last_session = ClassSession.objects.filter(
+        # Optimize: Get all last session dates in a single query to avoid N+1 problem
+        student_ids = [progress.student.id for progress in progress_records]
+        last_sessions = {}
+        if student_ids:
+            # Get the most recent completed session for each student
+            from django.db.models import Max
+            session_dates = ClassSession.objects.filter(
                 teacher=self.teacher_profile,
-                students=progress.student,
+                students__id__in=student_ids,
                 status=SessionStatus.COMPLETED
-            ).order_by('-date').first()
+            ).values('students__id').annotate(
+                last_date=Max('date')
+            )
             
-            if last_session:
-                last_session_date = last_session.date
+            for session_data in session_dates:
+                last_sessions[session_data['students__id']] = session_data['last_date']
+        
+        for progress in progress_records:
+            # Get last session date from optimized query result
+            last_session_date = last_sessions.get(progress.student.id)
             
             students_data.append({
                 'id': progress.student.id,

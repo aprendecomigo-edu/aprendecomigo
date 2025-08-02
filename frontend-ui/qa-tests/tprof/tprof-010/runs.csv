@@ -1,0 +1,2 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250802-070205,2025-08-02T07:02:05Z,PARTIAL,6,5,Playwright Chrome,macOS development,Auto-save works perfectly but mobile dropdown interactions fail

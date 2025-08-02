@@ -1,0 +1,268 @@
+QA Test Case: End-to-End Payment Integration with Stripe Webhook Validation
+
+Test ID: PAYMENT-011
+Test Name: Complete Payment Integration Testing with Webhook Verification
+Purpose: Verify complete payment flow integration including Stripe processing, webhook handling, account balance updates, and receipt generation
+Expected Result: Complete payment ecosystem works seamlessly from frontend initiation to backend completion with proper notifications
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: React Native Frontend + Django Backend + Stripe Integration
+- Payment Integration: Complete Stripe Checkout with webhook system
+- Related Issues: GitHub Issue #84 (Payment Success Flow), #83 (Backend Webhook Verification), #55 (Complete Payment Integration)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Run: make dev-open to start both frontend and backend
+4. Stripe Configuration: Test environment with webhook endpoints
+
+Test Data:
+- Test Card: 4242424242424242 (successful payment)
+- Test Email: integration.test@aprendecomigo.com
+- Test Student: Carlos Integration Test
+- Test Plan: Basic tutoring package
+
+Integration Points to Validate:
+- Frontend → Stripe Checkout
+- Stripe → Backend Webhooks
+- Backend → Account Balance Updates
+- Backend → Receipt Generation
+- Frontend → Success Notifications
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment and Integration Setup
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev-open
+  make logs
+
+1. Verify both frontend (8081) and backend (8000) start
+2. Check Stripe test keys are configured
+3. Verify webhook endpoints are accessible
+4. Monitor backend logs for startup confirmation
+
+Expected: Complete environment ready with Stripe integration
+Screenshot: 01_integration_environment_setup.png
+
+Step 2: Database State Verification (Pre-Payment)
+Commands:
+  # Check initial account balance if user exists
+  make logs | grep -i balance
+
+1. Navigate to http://localhost:8081/purchase
+2. Note any existing account balances
+3. Verify database state before payment
+4. Check for any pre-existing transactions
+
+Expected: Clean initial state documented
+Screenshot: 02_pre_payment_database_state.png
+
+Step 3: Initiate Complete Payment Flow
+1. Select pricing plan (Basic tutoring package)
+2. Fill student information:
+   - Name: Carlos Integration Test
+   - Email: integration.test@aprendecomigo.com
+3. Proceed to payment step
+4. Monitor backend logs for payment intent creation
+
+Expected: Payment intent created successfully in backend
+Screenshot: 03_payment_intent_creation.png
+
+Step 4: Stripe Payment Processing
+1. Enter test card details: 4242424242424242
+2. Complete payment form submission
+3. Monitor browser network tab for Stripe API calls
+4. Verify payment processes through Stripe
+5. Check for proper Stripe response handling
+
+Expected: Stripe payment processing completes successfully
+Screenshot: 04_stripe_payment_processing.png
+
+Step 5: Webhook Reception Verification
+Commands:
+  make logs | grep -i webhook
+
+1. Monitor backend logs for webhook reception
+2. Verify webhook signature validation
+3. Check for successful webhook processing
+4. Ensure webhook data matches payment intent
+
+Expected: Webhook received and processed successfully
+Screenshot: 05_webhook_processing_logs.png
+
+Step 6: Account Balance Update Validation
+Commands:
+  make logs | grep -i balance
+
+1. Verify account balance updated in backend
+2. Check transaction record creation
+3. Confirm hours added to student account
+4. Validate database consistency
+
+Expected: Account balance updated correctly with new hours
+Screenshot: 06_account_balance_update.png
+
+Step 7: Receipt Generation Verification
+Commands:
+  make logs | grep -i receipt
+
+1. Verify receipt generation triggered
+2. Check receipt details accuracy
+3. Confirm receipt stored in database
+4. Validate receipt content matches purchase
+
+Expected: Receipt generated with accurate purchase details
+Screenshot: 07_receipt_generation.png
+
+Step 8: Frontend Success Notification Validation
+1. Verify success toast notification appears
+2. Check notification content includes transaction ID
+3. Confirm NO console.log statements
+4. Validate PurchaseSuccessCard displays correctly
+5. Verify transaction ID matches backend records
+
+Expected: Frontend displays success correctly without console logs
+Screenshot: 08_frontend_success_notification.png
+
+Step 9: End-to-End Data Consistency Check
+Commands:
+  make logs | grep -E "(payment|transaction|balance)"
+
+1. Compare frontend transaction ID with backend logs
+2. Verify Stripe payment ID matches webhook data
+3. Check account balance reflects exact purchase amount
+4. Confirm all database records are consistent
+
+Expected: Complete data consistency across all systems
+Screenshot: 09_data_consistency_verification.png
+
+Step 10: Email Notification Integration Test
+Commands:
+  make logs | grep -i email
+
+1. Check for email notification triggers
+2. Verify receipt email preparation
+3. Confirm email template processing
+4. Validate email queue handling
+
+Expected: Email notifications processed correctly
+Screenshot: 10_email_notification_integration.png
+
+Step 11: Error Recovery Integration Test
+1. Start new payment flow
+2. Use declined card: 4000000000000002
+3. Verify complete error handling chain:
+   - Stripe error → Backend processing → Frontend display
+4. Confirm no system state corruption
+5. Test recovery with successful payment
+
+Expected: Error recovery maintains system integrity
+Screenshot: 11_error_recovery_integration.png
+
+Step 12: Multi-User Concurrency Test
+1. Open multiple browser tabs/windows
+2. Initiate payments simultaneously
+3. Verify webhook processing handles concurrency
+4. Check database integrity under load
+5. Confirm no race conditions or conflicts
+
+Expected: System handles concurrent payments correctly
+Screenshot: 12_concurrency_test.png
+
+Step 13: Mobile Integration Validation
+1. Switch to mobile device simulation
+2. Complete full end-to-end payment flow
+3. Verify all integration points work on mobile
+4. Check webhook processing identical to desktop
+5. Confirm mobile notifications work properly
+
+Expected: Mobile integration identical to desktop
+Screenshot: 13_mobile_integration_validation.png
+
+Step 14: Performance and Timing Validation
+1. Measure complete payment flow timing
+2. Verify webhook processing speed
+3. Check database update performance
+4. Ensure UI responsiveness maintained
+5. Validate timeout handling
+
+Expected: Performance meets acceptable standards
+Screenshot: 14_performance_timing_validation.png
+
+Step 15: Security and Compliance Verification
+1. Verify no sensitive data in browser console
+2. Check webhook signature validation works
+3. Confirm payment data encryption
+4. Validate PCI compliance measures
+5. Ensure no payment details stored insecurely
+
+Expected: Security measures properly implemented
+Screenshot: 15_security_compliance_verification.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS Conditions:
+- Complete payment flow works from frontend to backend
+- Stripe integration processes payments correctly
+- Webhooks received and processed successfully
+- Account balances updated accurately
+- Receipt generation works correctly
+- NO console.log statements appear during entire flow
+- Frontend success notifications display properly
+- Data consistency maintained across all systems
+- Email notifications triggered correctly
+- Error recovery works without system corruption
+- Concurrent payments handled properly
+- Mobile integration works identically
+- Performance meets acceptable standards
+- Security measures properly implemented
+
+FAIL Conditions:
+- Any console.log statements appear during payment flow
+- Payment processing fails at any integration point
+- Webhook processing errors or failures
+- Account balance updates incorrect or missing
+- Receipt generation fails or contains errors
+- Data inconsistency between systems
+- Frontend notifications missing or incorrect
+- Email notification failures
+- Error recovery corrupts system state
+- Concurrency issues or race conditions
+- Mobile integration differs from desktop
+- Performance below acceptable standards
+- Security vulnerabilities identified
+
+Individual Step Criteria:
+- Step 1: PASS if integration environment ready
+- Step 2: PASS if initial state properly documented
+- Step 3: PASS if payment intent created successfully
+- Step 4: PASS if Stripe processing completes
+- Step 5: PASS if webhook received and processed
+- Step 6: PASS if account balance updated correctly
+- Step 7: PASS if receipt generated accurately
+- Step 8: PASS if frontend success displayed without console logs
+- Step 9: PASS if data consistency maintained
+- Step 10: PASS if email notifications processed
+- Step 11: PASS if error recovery maintains integrity
+- Step 12: PASS if concurrency handled properly
+- Step 13: PASS if mobile integration identical
+- Step 14: PASS if performance acceptable
+- Step 15: PASS if security measures implemented
+
+Overall Result: PASS only if ALL integration points work correctly and NO console.log statements appear throughout entire flow
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Complete payment flow must feel seamless to users
+- Loading states must provide clear feedback during processing
+- Success notifications must be immediate and reassuring
+- Error handling must maintain user confidence
+- Performance must not impact user experience
+- Security must be transparent to users
+- Mobile experience must be identical to desktop
+- Integration points must be invisible to end users
+- System must handle edge cases gracefully
+- Data integrity must be maintained at all times

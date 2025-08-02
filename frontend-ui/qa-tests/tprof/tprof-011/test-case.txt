@@ -1,0 +1,235 @@
+QA Test Case: Mobile Responsiveness and Cross-Platform Testing
+
+Test ID: TPROF-011
+Test Name: Mobile Responsiveness and Cross-Platform Testing
+Purpose: Verify that the Teacher Profile Wizard functions properly on mobile devices and maintains responsive design across screen sizes
+Expected Result: Wizard is fully functional on mobile devices with optimal user experience
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - EdTech Platform
+- Architecture: React Native Expo with web support
+- Frontend Route: /accept-invitation/profile-wizard or /onboarding/teacher-profile
+- Responsive Framework: NativeWind (Tailwind CSS for React Native)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Development servers: make dev
+3. Browser with device simulation capabilities
+4. Multiple screen size testing
+
+Test Data:
+- Test Email: mobile.test@aprendecomigo.com
+- User Role: teacher/school_owner
+- Test invitation token: Valid teacher invitation
+- Device screen sizes: Mobile (375px), Tablet (768px), Desktop (1024px+)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev
+
+Wait for both servers to start completely.
+Frontend should be available at http://localhost:8081
+
+Expected: Servers start without errors
+Screenshot: 01_servers_started.png
+
+Step 2: Desktop Responsive Testing (Baseline)
+1. Open browser to http://localhost:8081
+2. Set browser window to desktop size (1280x800)
+3. Navigate to profile wizard
+4. Verify all elements display properly with adequate spacing
+5. Complete Step 1 (Basic Information) to establish baseline
+
+Expected: Desktop layout displays correctly with proper spacing
+Screenshot: 02_desktop_baseline.png
+
+Step 3: Mobile Portrait Testing (375x667 - iPhone SE)
+1. Open browser developer tools
+2. Set device simulation to "iPhone SE" or custom 375x667
+3. Refresh page to load mobile layout
+4. Verify wizard header layout:
+   - Title and progress percentage fit on one line or wrap gracefully
+   - Step indicator is horizontally scrollable or stacked
+   - School name displays without truncation
+5. Complete Step 1 form fields:
+   - Introduction text area is properly sized
+   - Input fields are touch-friendly (minimum 44px height)
+   - Buttons are accessible and properly spaced
+
+Expected: Mobile portrait layout is functional and user-friendly
+Screenshot: 03_mobile_portrait_step1.png
+
+Step 4: Mobile Landscape Testing (667x375)
+1. Rotate device simulation to landscape mode (667x375)
+2. Verify wizard adapts to landscape orientation:
+   - Header remains visible and functional
+   - Form content adjusts to available height
+   - Navigation buttons remain accessible
+   - Keyboard appearance doesn't break layout
+3. Test form interaction in landscape mode
+
+Expected: Landscape mode maintains usability with proper layout adaptation
+Screenshot: 04_mobile_landscape.png
+
+Step 5: Tablet Portrait Testing (768x1024 - iPad)
+1. Set device simulation to "iPad" or custom 768x1024
+2. Verify tablet-optimized layout:
+   - Better utilization of screen space than mobile
+   - Form fields have appropriate sizing
+   - Step indicator displays optimally
+   - Multi-column layout where appropriate
+3. Test Step 2 (Teaching Subjects) with touch interactions
+
+Expected: Tablet layout provides optimal user experience with better space utilization
+Screenshot: 05_tablet_portrait.png
+
+Step 6: Touch Interaction Testing
+1. On mobile device simulation (375x667)
+2. Navigate to Step 2 (Teaching Subjects)
+3. Test touch interactions:
+   - Subject selection from dropdown/list
+   - Add custom subject button
+   - Remove subject functionality
+   - Scroll behavior in subject list
+4. Verify touch targets are minimum 44x44px
+5. Test form validation error display on mobile
+
+Expected: All touch interactions work smoothly with appropriate target sizes
+Screenshot: 06_touch_interactions.png
+
+Step 7: Complex Form Mobile Testing
+1. Navigate to Step 4 (Availability)
+2. On mobile device (375x667), test schedule interface:
+   - Time picker functionality
+   - Day selection interface
+   - Add/remove time slots
+   - Calendar/schedule visualization
+3. Verify interface remains usable despite complexity
+4. Test horizontal scrolling if schedule is wide
+
+Expected: Complex forms remain functional and intuitive on mobile
+Screenshot: 07_complex_form_mobile.png
+
+Step 8: Cross-Platform Step Navigation
+1. Test navigation on different screen sizes:
+   - Mobile (375px): Previous/Next buttons
+   - Tablet (768px): Step indicator interaction
+   - Desktop (1024px+): Keyboard navigation (Tab, Enter)
+2. Verify step indicator behavior:
+   - Mobile: Horizontal scroll or stacked layout
+   - Tablet/Desktop: Full horizontal display
+3. Test progress percentage display across sizes
+
+Expected: Navigation adapts appropriately to each screen size
+Screenshot: 08_cross_platform_navigation.png
+
+Step 9: Modal and Overlay Testing
+1. On mobile device simulation, test any modals/overlays:
+   - File upload dialogs
+   - Confirmation dialogs
+   - Error message displays
+   - Loading states
+2. Verify modals don't overflow screen boundaries
+3. Test modal dismissal gestures (tap outside, swipe, etc.)
+4. Verify backdrop and focus management
+
+Expected: Modals display properly and are dismissible on mobile
+Screenshot: 09_mobile_modals.png
+
+Step 10: Text Input and Keyboard Testing
+1. On mobile simulation with on-screen keyboard
+2. Test text input fields:
+   - Introduction text area (Step 1)
+   - Teaching philosophy (Step 7)
+   - Custom subject entry (Step 2)
+3. Verify keyboard appearance doesn't break layout:
+   - Form scrolls to keep active field visible
+   - Submit buttons remain accessible
+   - Layout adjusts properly when keyboard appears/disappears
+
+Expected: Keyboard interactions don't break layout and maintain usability
+Screenshot: 10_keyboard_testing.png
+
+Step 11: Performance Testing on Mobile
+1. Using mobile device simulation, test performance:
+   - Step loading times
+   - Scroll performance
+   - Animation smoothness
+   - Auto-save responsiveness
+2. Monitor browser performance tools for:
+   - Frame rate during animations
+   - Memory usage during wizard usage
+   - Network requests efficiency
+
+Expected: Performance remains acceptable on mobile with smooth interactions
+Screenshot: 11_mobile_performance.png
+
+Step 12: Orientation Change Testing
+1. On mobile simulation, complete partial form data
+2. Rotate between portrait and landscape multiple times
+3. Verify:
+   - Data persists through orientation changes
+   - Layout adapts properly each time
+   - No visual glitches or layout breaks
+   - Form state is maintained
+4. Test mid-form submission during orientation change
+
+Expected: Orientation changes don't affect functionality or data integrity
+Screenshot: 12_orientation_changes.png
+
+Step 13: Cross-Browser Mobile Testing
+1. Test mobile responsiveness in different browsers:
+   - Chrome mobile simulation
+   - Firefox mobile simulation
+   - Safari mobile simulation (if available)
+2. Verify consistent behavior across browsers:
+   - Layout rendering
+   - Touch interactions
+   - Form functionality
+   - Navigation behavior
+
+Expected: Consistent mobile experience across different browsers
+Screenshot: 13_cross_browser_mobile.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: ALL of the following conditions must be met:
+- Layout displays correctly on all tested screen sizes
+- All form elements are accessible and properly sized on mobile
+- Touch targets meet accessibility guidelines (min 44x44px)
+- Text remains readable without horizontal scrolling
+- Navigation works intuitively on all device sizes
+- Complex forms maintain usability on small screens
+- Modals and overlays display properly without overflow
+- Keyboard interactions don't break layout
+- Performance remains acceptable on mobile simulation
+- Orientation changes don't affect functionality
+- Cross-browser mobile compatibility is maintained
+- Auto-save functionality works on mobile devices
+
+FAIL: ANY of the following conditions occur:
+- Layout breaks or overflows on any tested screen size
+- Form elements are too small or difficult to interact with on mobile
+- Text is too small to read or requires horizontal scrolling
+- Navigation becomes unusable on small screens
+- Complex forms are non-functional on mobile
+- Modals overflow screen boundaries or become unusable
+- Keyboard appearance breaks form layout
+- Performance is significantly degraded on mobile
+- Orientation changes cause data loss or layout issues
+- Significant differences in behavior across browsers
+- Touch interactions fail or are unresponsive
+
+Individual Screen Size Criteria:
+- Mobile Portrait (375px): PASS if all functionality works with touch-friendly sizing
+- Mobile Landscape (667px): PASS if layout adapts properly to reduced height
+- Tablet (768px): PASS if optimal use of space without mobile limitations
+- Desktop (1024px+): PASS if full functionality without mobile constraints
+
+Overall Result: PASS only if wizard is fully functional across ALL tested screen sizes
+Performance Criteria: Mobile interactions should feel responsive (< 100ms touch response)

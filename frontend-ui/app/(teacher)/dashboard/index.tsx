@@ -587,4 +587,14 @@ const TeacherDashboard = () => {
   );
 };
 
+// Add keyboard shortcuts for web
+if (isWeb) {
+  // TODO: Implement keyboard shortcuts
+  // - Ctrl+1: Overview
+  // - Ctrl+2: Students 
+  // - Ctrl+3: Analytics
+  // - Ctrl+4: Quick Actions
+  // - Ctrl+R: Refresh
+}
+
 export default TeacherDashboard;

@@ -8,3 +8,7 @@ tprof-006,Step Navigation & Flow Control,Test wizard navigation between steps an
 tprof-007,Course Catalog Selection Interface,Course selection interface for tutors (GitHub Issue #44),,,0,0,0
 tprof-008,Tutor Student Invitation System,Comprehensive student invitation system testing (GitHub Issue #48),20250731-212322,FAIL,1,0,1
 tprof-009,Complete Teacher Profile Wizard,Complete teacher profile creation during invitation acceptance (GitHub Issue #50),20250801-100135,FAIL,1,0,1
+tprof-010,Auto-Save Functionality and Data Persistence,Comprehensive testing of auto-save every 30 seconds and data recovery,20250802-070205,PARTIAL,1,0,1
+tprof-011,Mobile Responsiveness and Cross-Platform,Test wizard functionality across mobile and desktop screen sizes,,,0,0,0
+tprof-012,Form Validation and Error Handling,Comprehensive form validation and error recovery testing,,,0,0,0
+tprof-013,Edge Cases and Boundary Value Testing,Test extreme values and unusual inputs for robust error handling,,,0,0,0

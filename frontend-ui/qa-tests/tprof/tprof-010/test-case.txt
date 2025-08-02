@@ -1,0 +1,202 @@
+QA Test Case: Auto-Save Functionality and Data Persistence
+
+Test ID: TPROF-010
+Test Name: Auto-Save Functionality and Data Persistence Testing
+Purpose: Verify that the Teacher Profile Wizard auto-saves data every 30 seconds and properly persists user input across sessions
+Expected Result: User data is automatically saved and can be recovered after browser refresh or system interruption
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo - EdTech Platform
+- Architecture: Django REST API backend + React Native Expo frontend
+- Frontend Route: /accept-invitation/profile-wizard or /onboarding/teacher-profile
+- Auto-save: Data saved to AsyncStorage every 1 second when changes detected
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: .venv/ in project root (backend)
+3. Node.js environment with Expo
+4. Development servers: make dev
+
+Test Data:
+- Test Email: autosave.test@aprendecomigo.com
+- User Role: teacher/school_owner (dual role for tutors)
+- Test invitation token: Generated from backend invitation system
+- Profile data: Partial completion across multiple steps
+
+Pre-test Authentication:
+- User must have valid teacher invitation
+- Should reach profile wizard page successfully
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev
+
+Wait for both backend and frontend servers to start completely.
+Backend should be available at http://localhost:8000
+Frontend should be available at http://localhost:8081
+
+Expected: Both servers start without errors
+Screenshot: 01_servers_started.png
+Debug: Use 'make logs' if servers don't start properly
+
+Step 2: Initialize Profile Wizard Session
+1. Open browser to http://localhost:8081
+2. Navigate to profile wizard page (via invitation link or direct route)
+3. Verify wizard loads with step 1 (Basic Information)
+4. Open browser developer tools to monitor AsyncStorage
+
+Expected: Profile wizard loads and AsyncStorage is accessible
+Screenshot: 02_wizard_initialized.png
+
+Step 3: Test Auto-Save on Step 1 (Basic Information)
+1. Fill in partial information:
+   - Introduction: "I am a passionate mathematics teacher with experience in"
+2. Wait exactly 2 seconds (auto-save triggers after 1 second)
+3. Check browser developer tools -> Application -> Local Storage
+4. Verify key exists: "invitation_profile_wizard_{token}"
+5. Verify saved data contains introduction text
+
+Expected: Data automatically saved to AsyncStorage within 2 seconds
+Screenshot: 03_step1_autosave_verified.png
+
+Step 4: Test Data Persistence Across Browser Refresh
+1. With Step 1 partially filled, refresh the browser (F5 or Ctrl+R)
+2. Verify wizard reloads to same step with saved data
+3. Verify introduction text is restored: "I am a passionate mathematics teacher with experience in"
+4. Continue typing: " secondary education and STEM subjects"
+5. Wait 2 seconds and verify updated text is auto-saved
+
+Expected: Data persists across refresh and continues auto-saving
+Screenshot: 04_refresh_persistence_verified.png
+
+Step 5: Test Auto-Save Across Multiple Steps
+1. Complete Step 1 fully:
+   - Introduction: "I am a passionate mathematics teacher with experience in secondary education and STEM subjects. I believe in making learning interactive and accessible."
+2. Move to Step 2 (Teaching Subjects)
+3. Add subjects: "Matemática", "Física"
+4. Wait 2 seconds
+5. Check AsyncStorage for updated data including currentStep: 2
+6. Move to Step 3 (Grade Levels)
+7. Select: "Secondary (7th-12th grade)"
+8. Wait 2 seconds and verify auto-save
+
+Expected: Each step change and data update triggers auto-save
+Screenshot: 05_multi_step_autosave.png
+
+Step 6: Test Session Recovery After Simulated Interruption
+1. With data in multiple steps (1, 2, and 3), close browser tab completely
+2. Open new browser tab to http://localhost:8081
+3. Navigate back to profile wizard
+4. Verify wizard resumes from last active step (Step 3)
+5. Verify all previously entered data is restored:
+   - Step 1: Complete introduction text
+   - Step 2: Selected subjects (Matemática, Física)
+   - Step 3: Selected grade level (Secondary)
+
+Expected: Complete session recovery with all data intact
+Screenshot: 06_session_recovery_verified.png
+
+Step 7: Test Auto-Save with Complex Form Data
+1. Navigate to Step 4 (Availability)
+2. Set complex schedule:
+   - Monday: 14:00-18:00
+   - Wednesday: 10:00-12:00, 14:00-18:00
+   - Friday: 14:00-17:00
+3. Wait 2 seconds after each time slot addition
+4. Navigate to Step 5 (Rates & Compensation)
+5. Set rates:
+   - Hourly rate: €28
+   - Rate negotiable: enabled
+6. Wait 2 seconds
+7. Check AsyncStorage for complex nested data structure
+
+Expected: Complex form data (schedules, rates) properly auto-saved
+Screenshot: 07_complex_data_autosave.png
+
+Step 8: Test Auto-Save Performance Under Rapid Input
+1. Navigate to Step 6 (Credentials)
+2. Rapidly add multiple education entries:
+   - Entry 1: "Bachelor's in Mathematics, University of Porto, 2015"
+   - Entry 2: "Master's in Education, University of Lisbon, 2017"
+   - Entry 3: "PhD in Mathematics Education, University of Coimbra, 2020"
+3. Add entries quickly (within 5 seconds)
+4. Wait 3 seconds total
+5. Verify all entries are auto-saved (not just the last one)
+
+Expected: Auto-save handles rapid input without data loss
+Screenshot: 08_rapid_input_autosave.png
+
+Step 9: Test Storage Cleanup on Completion
+1. Complete all wizard steps
+2. Reach Step 8 (Preview & Submit)
+3. Click "Finalizar Perfil" (but don't actually submit if possible)
+4. Check AsyncStorage before submission
+5. If submission is successful, verify AsyncStorage data is cleared
+6. If not submitting, manually test clearSavedData function
+
+Expected: Storage is properly cleaned up after successful completion
+Screenshot: 09_storage_cleanup.png
+
+Step 10: Test Auto-Save Error Handling
+1. Open browser developer tools -> Console
+2. Simulate storage quota exceeded (if possible through dev tools)
+3. OR disconnect network and try to save
+4. Fill in wizard data and verify graceful error handling
+5. Verify user can continue using wizard despite storage issues
+6. Check console for appropriate error messages (warnings, not crashes)
+
+Expected: Graceful error handling for storage issues
+Screenshot: 10_error_handling.png
+
+Step 11: Test Cross-Tab Data Consistency
+1. Open profile wizard in first browser tab
+2. Fill in Step 1 data and wait for auto-save
+3. Open same profile wizard URL in second browser tab
+4. Verify second tab loads with data from first tab
+5. Update data in second tab
+6. Wait for auto-save, then refresh first tab
+7. Verify data consistency across tabs
+
+Expected: Data stays consistent across multiple browser tabs
+Screenshot: 11_cross_tab_consistency.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: ALL of the following conditions must be met:
+- Auto-save triggers within 2 seconds of any data change
+- Data persists across browser refreshes
+- Session recovery works after complete browser closure
+- All form data types (text, arrays, objects) are properly saved
+- Complex nested data structures are preserved
+- Multiple rapid inputs are all captured
+- Storage cleanup occurs after successful completion
+- Error handling is graceful (warnings, not crashes)
+- Cross-tab data consistency is maintained
+- No data corruption or loss occurs
+- Performance remains responsive during auto-save operations
+
+FAIL: ANY of the following conditions occur:
+- Auto-save takes longer than 3 seconds or doesn't trigger
+- Data is lost after browser refresh
+- Session recovery fails or restores incorrect data
+- Complex form data is corrupted during save/load
+- Rapid input causes data loss
+- Storage errors crash the application
+- Cross-tab usage causes data conflicts
+- Performance degrades significantly during auto-save
+- User experience is negatively impacted by save operations
+
+Individual Feature Criteria:
+- Auto-save Timing: PASS if saves occur within 1-2 seconds of changes
+- Data Persistence: PASS if all data types are preserved accurately
+- Session Recovery: PASS if wizard resumes from correct step with all data
+- Error Handling: PASS if storage issues don't crash application
+- Performance: PASS if auto-save doesn't block UI interactions
+
+Overall Result: PASS only if ALL auto-save features work reliably without data loss
+Performance Criteria: Auto-save operations should be imperceptible to user experience
