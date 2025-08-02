@@ -13,19 +13,20 @@ dev:
 	@echo "Starting development servers..."
 	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; echo "Run: python3 -m venv .venv && source .venv/bin/activate && pip install -r backend/requirements.txt"; exit 1; fi
 	@mkdir -p logs
-	@echo "Backend logs: logs/backend.log"
-	@echo "Frontend logs: logs/frontend.log"
-	@echo "Stopping any existing servers on ports 8000 and 8081..."
-	@lsof -ti:8000 | xargs kill -9 2>/dev/null || true
-	@lsof -ti:8081 | xargs kill -9 2>/dev/null || true
-	@sleep 2
-	@echo "Please wait while servers start up..."
-	@echo "Starting backend server..."
-	@(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development daphne -b 0.0.0.0 -p 8000 aprendecomigo.asgi:application > ../logs/backend.log 2>&1) & \
-	echo $$! > logs/backend.pid
-	@sleep 3
-	@echo "Starting frontend server..."
-	@(cd frontend-ui && EXPO_PUBLIC_ENV=development npx expo start --web > ../logs/frontend.log 2>&1) & \
+	@TIMESTAMP=$$(date +"%Y%m%d-%H%M%S"); \
+	echo "Backend logs: logs/backend-$$TIMESTAMP.log"; \
+	echo "Frontend logs: logs/frontend-$$TIMESTAMP.log"; \
+	echo "Stopping any existing servers on ports 8000 and 8081..."; \
+	lsof -ti:8000 | xargs kill -9 2>/dev/null || true; \
+	lsof -ti:8081 | xargs kill -9 2>/dev/null || true; \
+	sleep 2; \
+	echo "Please wait while servers start up..."; \
+	echo "Starting backend server..."; \
+	(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver > ../logs/backend-$$TIMESTAMP.log 2>&1) & \
+	echo $$! > logs/backend.pid; \
+	sleep 3; \
+	echo "Starting frontend server..."; \
+	(cd frontend-ui && EXPO_PUBLIC_ENV=development npx expo start --web > ../logs/frontend-$$TIMESTAMP.log 2>&1) & \
 	echo $$! > logs/frontend.pid
 	@sleep 8 && echo "Servers should be ready!" && \
 	echo "Frontend: http://localhost:8081" && \
@@ -40,19 +41,20 @@ dev-open:
 	@echo "Starting development servers with auto-browser opening..."
 	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; echo "Run: python3 -m venv .venv && source .venv/bin/activate && pip install -r backend/requirements.txt"; exit 1; fi
 	@mkdir -p logs
-	@echo "Backend logs: logs/backend.log"
-	@echo "Frontend logs: logs/frontend.log"
-	@echo "Stopping any existing servers on ports 8000 and 8081..."
-	@lsof -ti:8000 | xargs kill -9 2>/dev/null || true
-	@lsof -ti:8081 | xargs kill -9 2>/dev/null || true
-	@sleep 2
-	@echo "Please wait while servers start up..."
-	@echo "Starting backend server..."
-	@(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development daphne -b 0.0.0.0 -p 8000 aprendecomigo.asgi:application > ../logs/backend.log 2>&1) & \
-	echo $$! > logs/backend.pid
-	@sleep 3
-	@echo "Starting frontend server..."
-	@(cd frontend-ui && EXPO_PUBLIC_ENV=development npx expo start --web > ../logs/frontend.log 2>&1) & \
+	@TIMESTAMP=$$(date +"%Y%m%d-%H%M%S"); \
+	echo "Backend logs: logs/backend-$$TIMESTAMP.log"; \
+	echo "Frontend logs: logs/frontend-$$TIMESTAMP.log"; \
+	echo "Stopping any existing servers on ports 8000 and 8081..."; \
+	lsof -ti:8000 | xargs kill -9 2>/dev/null || true; \
+	lsof -ti:8081 | xargs kill -9 2>/dev/null || true; \
+	sleep 2; \
+	echo "Please wait while servers start up..."; \
+	echo "Starting backend server..."; \
+	(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver > ../logs/backend-$$TIMESTAMP.log 2>&1) & \
+	echo $$! > logs/backend.pid; \
+	sleep 3; \
+	echo "Starting frontend server..."; \
+	(cd frontend-ui && EXPO_PUBLIC_ENV=development npx expo start --web > ../logs/frontend-$$TIMESTAMP.log 2>&1) & \
 	echo $$! > logs/frontend.pid
 	@sleep 8 && echo "Servers should be ready!" && \
 	echo "Frontend: http://localhost:8081" && \
@@ -82,17 +84,26 @@ logs:
 	@echo "Development Server Logs"
 	@echo "=========================="
 	@if [ ! -d "logs" ]; then echo "No logs directory found. Run 'make dev' first."; exit 1; fi
-	@if [ ! -f "logs/backend.log" ] && [ ! -f "logs/frontend.log" ]; then echo "No log files found. Make sure servers are running."; exit 1; fi
-	@echo "Backend Log (last 10 lines):"
-	@echo "--------------------------------"
-	@if [ -f "logs/backend.log" ]; then tail -10 logs/backend.log 2>/dev/null || echo "No backend log content"; else echo "Backend log not found"; fi
-	@echo ""
-	@echo "Frontend Log (last 10 lines):"
-	@echo "---------------------------------"
-	@if [ -f "logs/frontend.log" ]; then tail -10 logs/frontend.log 2>/dev/null || echo "No frontend log content"; else echo "Frontend log not found"; fi
-	@echo ""
-	@echo "For live logs: tail -f logs/backend.log logs/frontend.log"
-	@echo "For full logs: cat logs/backend.log logs/frontend.log"
+	@LATEST_BACKEND=$$(ls -t logs/backend-*.log 2>/dev/null | head -1); \
+	LATEST_FRONTEND=$$(ls -t logs/frontend-*.log 2>/dev/null | head -1); \
+	if [ -z "$$LATEST_BACKEND" ] && [ -z "$$LATEST_FRONTEND" ]; then \
+		echo "No timestamped log files found. Checking for legacy logs..."; \
+		if [ ! -f "logs/backend.log" ] && [ ! -f "logs/frontend.log" ]; then \
+			echo "No log files found. Make sure servers are running."; exit 1; \
+		fi; \
+		LATEST_BACKEND="logs/backend.log"; \
+		LATEST_FRONTEND="logs/frontend.log"; \
+	fi; \
+	echo "Backend Log (last 10 lines): $$LATEST_BACKEND"; \
+	echo "--------------------------------"; \
+	if [ -f "$$LATEST_BACKEND" ]; then tail -10 "$$LATEST_BACKEND" 2>/dev/null || echo "No backend log content"; else echo "Backend log not found"; fi; \
+	echo ""; \
+	echo "Frontend Log (last 10 lines): $$LATEST_FRONTEND"; \
+	echo "---------------------------------"; \
+	if [ -f "$$LATEST_FRONTEND" ]; then tail -10 "$$LATEST_FRONTEND" 2>/dev/null || echo "No frontend log content"; else echo "Frontend log not found"; fi; \
+	echo ""; \
+	echo "For live logs: tail -f $$LATEST_BACKEND $$LATEST_FRONTEND"; \
+	echo "For full logs: cat $$LATEST_BACKEND $$LATEST_FRONTEND"
 
 stop:
 	@echo "Stopping development servers..."
