@@ -1,0 +1,223 @@
+QA Test Case: Tailwind Safelist Dynamic Classes Verification
+
+Test ID: XPLAT-003
+Test Name: Tailwind Safelist Dynamic Classes Verification (GitHub Issue #119 - Subissue 3)
+Purpose: Verify that the expanded Tailwind safelist preserves all dynamically generated CSS classes in production builds
+Expected Result: All dynamic color classes and utility classes are preserved in production builds and render correctly
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Frontend
+- Architecture: React Native + Expo with Tailwind CSS + NativeWind
+- Issue Context: GitHub Issue #119 - Safelist expansion to prevent class purging
+- Key Files: tailwind.config.js (safelist section), production build output
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Node.js and npm for build processes
+3. Browser for testing production builds
+4. Development server for comparison
+
+Test Data:
+- Dynamic color patterns: bg-${color}-{shade}, text-${color}-{shade}
+- Template literal usage in components
+- Function-generated classes
+- Production vs development comparison
+
+Critical Dynamic Class Patterns to Test:
+- Background: bg-red-50, bg-green-100, bg-blue-600, etc.
+- Text: text-red-600, text-green-700, text-blue-600, etc.
+- Border: border-red-200, border-green-300, etc.
+- Hover: hover:bg-red-100, hover:bg-green-100, etc.
+- Custom theme: text-primary-600, bg-success-50, etc.
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Inspect Current Tailwind Safelist Configuration
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  grep -A 50 "safelist:" tailwind.config.js
+
+Expected: Extensive safelist with 75+ classes
+Expected: Dynamic color patterns for all colors (red, green, blue, etc.)
+Expected: Background, text, border, and hover state classes
+Expected: Custom theme colors (primary, secondary, success, etc.)
+Screenshot: 01_tailwind_safelist_config.png
+
+Step 2: Verify Safelist Categories
+Commands:
+  grep -c "bg-.*-[0-9]" tailwind.config.js
+  grep -c "text-.*-[0-9]" tailwind.config.js
+  grep -c "border-.*-[0-9]" tailwind.config.js
+  grep -c "hover:bg-" tailwind.config.js
+
+Expected: Multiple background color classes (20+)
+Expected: Multiple text color classes (18+)
+Expected: Multiple border color classes (18+)
+Expected: Multiple hover state classes (9+)
+Screenshot: 02_safelist_categories_count.png
+
+Step 3: Identify Dynamic Class Usage in Components
+Commands:
+  grep -r "bg-\${" components/ | head -5
+  grep -r "text-\${" components/ | head -5
+  grep -r "className={\`" components/ | wc -l
+
+Expected: Template literal color interpolation found in components
+Expected: Multiple files using dynamic class patterns
+Expected: 80+ instances of template literal className usage
+Screenshot: 03_dynamic_class_usage_found.png
+
+Step 4: Test Development Build (Baseline)
+Commands:
+  EXPO_PUBLIC_ENV=development npx expo start --web
+
+1. Open browser to http://localhost:8081
+2. Navigate to pages with colorful UI (dashboard, forms, etc.)
+3. Use DevTools to inspect elements with dynamic colors
+4. Note classes like bg-green-50, text-blue-600, etc.
+
+Expected: All dynamic classes present and functional
+Expected: Colors render correctly in development
+Expected: No missing or broken styles
+Screenshot: 04_development_build_baseline.png
+
+Step 5: Build Production Version
+Commands:
+  npm run build:web:prod
+
+Expected: Build completes successfully without errors
+Expected: dist/ folder created with production assets
+Expected: No Tailwind purge warnings about missing classes
+Screenshot: 05_production_build_success.png
+
+Step 6: Inspect Production CSS Output
+Commands:
+  find dist/ -name "*.css" | head -3
+  wc -l dist/*.css 2>/dev/null || wc -l dist/assets/*.css 2>/dev/null || echo "CSS files may be in different location"
+
+Expected: Production CSS files exist
+Expected: Substantial CSS content (not overly purged)
+Expected: No zero-byte or minimal CSS files
+Screenshot: 06_production_css_files.png
+
+Step 7: Verify Specific Dynamic Classes in Production CSS
+Commands:
+  grep -o "\.bg-green-50" dist/*.css dist/assets/*.css 2>/dev/null | head -3
+  grep -o "\.text-blue-600" dist/*.css dist/assets/*.css 2>/dev/null | head -3
+  grep -o "\.border-red-200" dist/*.css dist/assets/*.css 2>/dev/null | head -3
+
+Expected: Dynamic classes found in production CSS
+Expected: Classes retain proper formatting
+Expected: No missing classes from safelist
+Screenshot: 07_dynamic_classes_in_production.png
+
+Step 8: Test Production Application Functionality
+Commands:
+  # Serve production build locally
+  cd dist && python -m http.server 8080 &
+  # Or use any static server
+
+1. Open browser to http://localhost:8080
+2. Navigate through application pages
+3. Look for any broken styling or missing colors
+4. Check components that use dynamic classes
+5. Compare with development version
+
+Expected: Production app functions identically to development
+Expected: All colors and styles render correctly
+Expected: No broken or missing dynamic styling
+Screenshot: 08_production_app_functionality.png
+
+Step 9: Inspect Production HTML for Class Usage
+Commands:
+  grep -o "bg-[a-z]*-[0-9]*" dist/index.html | sort | uniq
+  grep -o "text-[a-z]*-[0-9]*" dist/index.html | sort | uniq
+
+Expected: Dynamic classes present in production HTML
+Expected: Variety of color classes found
+Expected: Classes match those defined in safelist
+Screenshot: 09_production_html_classes.png
+
+Step 10: Compare Development vs Production Rendering
+1. Take screenshots of key pages in development mode
+2. Take identical screenshots of production build
+3. Compare for visual differences
+4. Look for any missing colors or broken styles
+5. Document any discrepancies
+
+Expected: Identical visual appearance between development and production
+Expected: No color degradation or missing styles
+Expected: Dynamic classes work in both environments
+Screenshot: 10_dev_vs_prod_comparison.png
+
+Step 11: Test Specific Safelist Categories
+Test each category from the safelist:
+
+Background Colors:
+- Verify bg-red-50, bg-green-100, bg-blue-600 render correctly
+
+Text Colors:
+- Verify text-red-600, text-green-700, text-blue-600 display correctly
+
+Border Colors:
+- Verify border-red-200, border-green-300 show properly
+
+Hover States:
+- Verify hover:bg-red-100 works on interactive elements
+
+Custom Theme Colors:
+- Verify text-primary-600, bg-success-50 display correctly
+
+Expected: All safelist categories function in production
+Expected: Interactive states work properly
+Expected: Custom theme colors preserved
+Screenshot: 11_safelist_categories_tested.png
+
+Step 12: Verify Build Size and Performance
+Commands:
+  du -sh dist/
+  ls -la dist/*.css dist/assets/*.css 2>/dev/null | head -5
+
+Expected: Reasonable build size (not excessively large due to safelist)
+Expected: CSS files present but not bloated
+Expected: Build performance acceptable
+Screenshot: 12_build_size_performance.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All dynamic classes preserved in production build AND application renders identically to development
+FAIL: Any dynamic classes missing in production OR visual differences between development and production
+
+Individual Step Criteria:
+- Step 1: PASS if safelist comprehensive (75+ classes), FAIL if minimal
+- Step 2: PASS if all categories well-represented, FAIL if gaps in coverage
+- Step 3: PASS if dynamic usage found in components, FAIL if no dynamic patterns
+- Step 4: PASS if development works perfectly, FAIL if broken baseline
+- Step 5: PASS if production build succeeds, FAIL if build errors
+- Step 6: PASS if CSS files generated, FAIL if missing/empty CSS
+- Step 7: PASS if dynamic classes in production CSS, FAIL if classes purged
+- Step 8: PASS if production app functions correctly, FAIL if broken styles
+- Step 9: PASS if classes in production HTML, FAIL if missing from HTML
+- Step 10: PASS if dev/prod identical, FAIL if visual differences
+- Step 11: PASS if all categories work, FAIL if any category broken
+- Step 12: PASS if reasonable performance, FAIL if excessive bloat
+
+Critical Success Factors:
+1. Production build completes without Tailwind purge errors
+2. All safelist classes preserved in production CSS
+3. Dynamic color patterns work in production
+4. No visual differences between development and production
+5. Interactive states (hover, focus) function correctly
+6. Custom theme colors render properly
+7. Build size remains reasonable
+
+Specific Classes That Must Work:
+- bg-green-50, bg-red-100, bg-blue-600
+- text-red-600, text-green-700, text-blue-600
+- border-red-200, border-green-300
+- hover:bg-red-100, hover:bg-green-100
+- text-primary-600, bg-success-50, text-error-600
+
+Overall Result: PASS only if ALL dynamic classes work correctly in production AND no visual degradation from development to production

@@ -11,5 +11,5 @@ export { default as DashboardSkeleton } from './DashboardSkeleton';
 // Re-export existing dashboard components for backward compatibility
 export { default as ActivityFeed } from '../dashboard/ActivityFeed';
 export { default as MetricsCard } from '../dashboard/MetricsCard';
-export { default as QuickActionsPanel as LegacyQuickActionsPanel } from '../dashboard/QuickActionsPanel';
+export { default as LegacyQuickActionsPanel } from '../dashboard/QuickActionsPanel';
 export { default as SchoolInfoCard } from '../dashboard/SchoolInfoCard';

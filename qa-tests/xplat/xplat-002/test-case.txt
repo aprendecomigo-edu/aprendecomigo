@@ -1,0 +1,197 @@
+QA Test Case: Platform Detection and Configuration Logic Verification
+
+Test ID: XPLAT-002  
+Test Name: Platform Detection and Configuration Logic Verification (GitHub Issue #119 - Subissue 2)
+Purpose: Verify that platform detection correctly serves CSS variables to web and hex values to native platforms
+Expected Result: Platform.OS detection works correctly and serves appropriate configuration for each platform
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Frontend
+- Architecture: React Native + Expo Cross-Platform
+- Issue Context: GitHub Issue #119 - Platform-specific theming implementation
+- Key Implementation: components/ui/gluestack-ui-provider/config.ts
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui  
+2. Development Tools: Node.js, Expo CLI, React Native
+3. Browser DevTools for web inspection
+4. iOS Simulator (if available)
+5. Android Emulator (if available)
+
+Test Data:
+- Platform detection logic
+- Configuration export verification
+- Theme value inspection
+- Runtime platform behavior
+
+Technical Context:
+The fix implements a createConfig function that:
+- Detects platform using Platform.OS !== 'web'
+- Serves vars() wrapped CSS variables for web
+- Serves direct hex values for native (iOS/Android)
+- Maintains identical theme values across platforms
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Inspect Configuration File Structure
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  cat components/ui/gluestack-ui-provider/config.ts
+
+Expected: File contains lightThemeHex and darkThemeHex objects with hex values
+Expected: createConfig function with isNative parameter present
+Expected: Platform.OS !== 'web' detection logic visible
+Screenshot: 01_config_file_structure.png
+
+Step 2: Verify Platform Detection Logic
+Commands:
+  grep -A 10 -B 5 "Platform.OS" components/ui/gluestack-ui-provider/config.ts
+
+Expected: Platform import from react-native present
+Expected: isNative variable defined as Platform.OS !== 'web'
+Expected: createConfig function uses isNative parameter
+Screenshot: 02_platform_detection_logic.png
+
+Step 3: Verify Configuration Function Logic
+Commands:
+  grep -A 15 "createConfig" components/ui/gluestack-ui-provider/config.ts
+
+Expected: Function takes isNative boolean parameter
+Expected: Conditional logic: if (isNative) return hex values
+Expected: Else branch: return vars(hex values) for web
+Screenshot: 03_create_config_function.png
+
+Step 4: Verify Hex Value Objects
+Commands:
+  grep -A 20 "lightThemeHex" components/ui/gluestack-ui-provider/config.ts
+  grep -A 20 "darkThemeHex" components/ui/gluestack-ui-provider/config.ts
+
+Expected: Objects contain CSS variable names as keys
+Expected: Hex color values as values (e.g., '#2563EB')
+Expected: Complete color palette for both light and dark themes
+Screenshot: 04_hex_value_objects.png
+
+Step 5: Test Web Platform Configuration (Runtime)
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  EXPO_PUBLIC_ENV=development npx expo start --web
+
+1. Open browser to http://localhost:8081
+2. Open DevTools Console
+3. Type: document.querySelector('*').style.getPropertyValue('--color-primary-600')
+4. Inspect theme configuration in React DevTools
+
+Expected: Application loads successfully on web
+Expected: CSS variables are accessible and return hex values
+Expected: vars() function wrapping confirmed in console
+Screenshot: 05_web_runtime_config.png
+
+Step 6: Inspect Web Configuration in Browser DevTools
+1. Right-click on a themed element (button, header)
+2. Inspect Element
+3. Go to Computed styles tab
+4. Look for CSS custom properties (--color-*)
+5. Verify they resolve to correct hex values
+
+Expected: CSS variables present in computed styles
+Expected: Variables resolve to hex values (not transparent)
+Expected: Theme colors match expected values
+Screenshot: 06_web_css_variables_inspect.png
+
+Step 7: Verify Native Configuration Export
+Commands:
+  node -e "
+    const { Platform } = require('react-native');
+    Platform.OS = 'ios';
+    const { config } = require('./components/ui/gluestack-ui-provider/config.ts');
+    console.log('Native config sample:', JSON.stringify(config.light['--color-primary-600'], null, 2));
+  "
+
+Expected: Command shows direct hex value without vars() wrapping
+Expected: Native platform gets raw hex values
+Note: This is a conceptual test - may need browser/environment simulation
+Screenshot: 07_native_config_export.png
+
+Step 8: Verify Configuration Consistency
+Commands:
+  grep -o "#[0-9A-Fa-f]\{6\}" components/ui/gluestack-ui-provider/config.ts | sort | uniq -c | head -10
+
+Expected: Consistent hex color format across all values
+Expected: No malformed color values
+Expected: Light and dark themes have corresponding colors
+Screenshot: 08_config_consistency.png
+
+Step 9: Test Theme Value Integrity
+1. Pick 5 random color values from lightThemeHex
+2. Verify corresponding values exist in darkThemeHex
+3. Check that color names match (--color-primary-600, etc.)
+4. Verify values are valid hex colors
+
+Commands to verify specific colors:
+  grep -o '--color-primary-600.*#[0-9A-Fa-f]\{6\}' components/ui/gluestack-ui-provider/config.ts
+
+Expected: All color keys have corresponding light/dark variants
+Expected: All values are valid 6-digit hex colors
+Expected: Color naming follows consistent pattern
+Screenshot: 09_theme_value_integrity.png
+
+Step 10: Test Configuration Export Behavior
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  node -e "
+    // Simulate web environment
+    global.Platform = { OS: 'web' };
+    try {
+      console.log('Testing configuration export...');
+      console.log('Platform detection should work for web');
+    } catch(e) {
+      console.log('Expected: May need React Native environment');
+    }
+  "
+
+Expected: No errors in configuration logic
+Expected: Platform detection accessible
+Expected: Export mechanism functions properly
+Screenshot: 10_config_export_behavior.png
+
+Step 11: Verify Theme Application (Cross-Reference)
+1. Start web application
+2. Navigate to a page with multiple theme colors
+3. Use browser DevTools to inspect multiple themed elements
+4. Verify each uses appropriate CSS variables
+5. Check that variables resolve to expected hex values
+
+Expected: Multiple theme colors visible on same page
+Expected: All use CSS variable approach on web
+Expected: Variables resolve to expected values
+Screenshot: 11_theme_application_verification.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Platform detection works correctly AND appropriate configurations served to each platform
+FAIL: Platform detection fails OR wrong configuration served to any platform
+
+Individual Step Criteria:
+- Step 1: PASS if config structure complete, FAIL if missing components
+- Step 2: PASS if Platform.OS detection present, FAIL if missing/incorrect
+- Step 3: PASS if createConfig logic correct, FAIL if flawed implementation
+- Step 4: PASS if hex objects complete, FAIL if missing colors/malformed
+- Step 5: PASS if web loads with CSS variables, FAIL if not working
+- Step 6: PASS if CSS variables inspectable, FAIL if not accessible
+- Step 7: PASS if native gets hex values, FAIL if gets CSS variables
+- Step 8: PASS if config consistent, FAIL if malformed values
+- Step 9: PASS if theme integrity maintained, FAIL if missing/broken values
+- Step 10: PASS if export mechanism works, FAIL if configuration errors
+- Step 11: PASS if theme application verified, FAIL if broken theming
+
+Critical Success Factors:
+1. Platform.OS detection correctly identifies web vs native
+2. Web platform receives vars() wrapped CSS variables
+3. Native platforms receive direct hex values
+4. No runtime errors in configuration logic
+5. Theme values remain consistent across platform configurations
+6. Configuration export works in all target environments
+
+Overall Result: PASS only if ALL platform detection works correctly AND appropriate configurations are served to each platform type

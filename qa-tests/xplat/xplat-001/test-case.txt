@@ -1,0 +1,172 @@
+QA Test Case: Cross-Platform Theming System Verification
+
+Test ID: XPLAT-001
+Test Name: Cross-Platform Theming System Verification (GitHub Issue #119 - Subissue 2)
+Purpose: Verify that the CSS variables fix for native platforms ensures consistent theming across web and native platforms
+Expected Result: All colors render correctly on web (CSS variables) and native (hex fallbacks) platforms with identical visual appearance
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Frontend
+- Architecture: React Native + Expo with Cross-Platform Support
+- Issue Context: GitHub Issue #119 - CSS variables fixed for native platforms
+- Key Files: components/ui/gluestack-ui-provider/config.ts, tailwind.config.js
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: try .venv/ in project root
+3. Backend: make dev (for complete testing)
+4. Frontend environments:
+   - Web: EXPO_PUBLIC_ENV=development npx expo start --web
+   - iOS: npx expo run:ios (if available)
+   - Android: npx expo run:android (if available)
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com
+- User Role: school_owner (for dashboard access with rich UI components)
+- Browser Matrix: Chrome, Safari, Firefox
+- Devices: iOS Simulator, Android Emulator (if available)
+
+Critical Components to Test:
+- Dashboard components with dynamic colors
+- Authentication screens
+- Button states and theming
+- Navigation elements
+- Form components
+- Error/success/warning states
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Verify Gluestack UI Configuration Structure
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  cat components/ui/gluestack-ui-provider/config.ts | head -20
+
+Expected: Should see platform detection logic with isNative variable and createConfig function
+Expected: Should see both lightThemeHex and darkThemeHex objects with hex color values
+Expected: Should see vars() function used only for web platform, direct hex for native
+Screenshot: 01_config_structure_verified.png
+
+Step 2: Start Backend Services
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Django server starts on port 8000
+Expected: No errors in server startup
+Debug: Use 'make logs' to view server logs if issues occur
+Screenshot: 02_backend_services_running.png
+
+Step 3: Test Web Platform Theming (CSS Variables)
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  EXPO_PUBLIC_ENV=development npx expo start --web
+
+Expected: Application loads on http://localhost:8081
+Expected: Web platform uses CSS variables (inspectable in DevTools)
+Expected: All theme colors render correctly in browser
+Screenshot: 03_web_theming_verified.png
+
+Step 4: Inspect CSS Variables in Web DevTools
+1. Open browser DevTools (F12)
+2. Navigate to Elements/Inspector tab
+3. Inspect a themed component (button, header, etc.)
+4. Verify CSS variables are properly resolved
+5. Check that styles show var(--color-primary-600): #2563EB format
+
+Expected: CSS variables properly resolved to hex values
+Expected: No transparent or missing colors
+Expected: Variables like --color-primary-600 visible in computed styles
+Screenshot: 04_css_variables_devtools.png
+
+Step 5: Test Different Theme Components on Web
+1. Navigate to login page
+2. Navigate to dashboard (if authenticated)
+3. Test button hover states
+4. Test form input focus states
+5. Test navigation elements
+6. Look for any missing or transparent colors
+
+Expected: All UI elements display correct colors
+Expected: Interactive states work properly
+Expected: No visual glitches or missing colors
+Screenshot: 05_web_components_themed.png
+
+Step 6: Test Dark Mode (if available)
+1. Enable system dark mode OR use app dark mode toggle
+2. Verify theme switches properly
+3. Check all components adapt to dark theme
+4. Verify dark theme color variables resolve correctly
+
+Expected: Smooth transition to dark theme
+Expected: All colors adapt appropriately
+Expected: No broken styles in dark mode
+Screenshot: 06_dark_mode_verified.png
+
+Step 7: Verify Native Platform Configuration (Code Review)
+Commands:
+  grep -n "Platform.OS" components/ui/gluestack-ui-provider/config.ts
+  grep -n "isNative" components/ui/gluestack-ui-provider/config.ts
+
+Expected: Platform detection logic present
+Expected: Different config paths for web vs native
+Expected: Native platforms use direct hex values instead of vars()
+Screenshot: 07_native_config_verified.png
+
+Step 8: Test Production Build (Critical for Tailwind Safelist)
+Commands:
+  npm run build:web:prod
+
+Expected: Build completes successfully
+Expected: No missing CSS classes in production build
+Expected: dist/ folder contains properly styled application
+Screenshot: 08_production_build_success.png
+
+Step 9: Verify Production CSS Output
+Commands:
+  find dist/ -name "*.css" | head -3
+  grep -o "bg-green-50\|text-blue-600\|border-red-200" dist/index.html || echo "Classes may be in separate CSS files"
+
+Expected: Production CSS contains dynamic classes from safelist
+Expected: No purged classes that should be preserved
+Expected: Application renders correctly in production build
+Screenshot: 09_production_css_verified.png
+
+Step 10: Cross-Platform Color Consistency Check
+1. Take screenshots of key UI components on web
+2. If available, take screenshots on iOS simulator
+3. If available, take screenshots on Android emulator
+4. Compare color consistency across platforms
+5. Document any discrepancies
+
+Expected: Identical color appearance across all platforms
+Expected: No platform-specific color variations
+Expected: Consistent theme application
+Screenshot: 10_cross_platform_consistency.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All steps complete successfully AND all platforms display identical theming
+FAIL: Any step fails OR color inconsistencies exist across platforms
+
+Individual Step Criteria:
+- Step 1: PASS if config structure shows platform detection, FAIL if missing
+- Step 2: PASS if backend starts without errors, FAIL if startup issues
+- Step 3: PASS if web loads with proper theming, FAIL if broken styles
+- Step 4: PASS if CSS variables resolve properly, FAIL if missing/transparent
+- Step 5: PASS if all components themed correctly, FAIL if any broken styles
+- Step 6: PASS if dark mode works properly, FAIL if broken dark theme
+- Step 7: PASS if native config uses hex values, FAIL if still using vars()
+- Step 8: PASS if production build succeeds, FAIL if build errors
+- Step 9: PASS if production CSS complete, FAIL if missing classes
+- Step 10: PASS if cross-platform consistency, FAIL if platform differences
+
+Critical Success Factors:
+1. Web platform uses CSS variables successfully
+2. Native platform configuration uses hex fallbacks
+3. No visual differences between platforms
+4. Production build preserves all necessary styles
+5. All theme colors render correctly (no transparent/missing colors)
+
+Overall Result: PASS only if ALL steps pass AND no cross-platform visual discrepancies exist
