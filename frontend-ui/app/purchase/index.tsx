@@ -11,12 +11,18 @@ import React from 'react';
 import { PurchaseFlow } from '@/components/purchase';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { ScrollView } from '@/components/ui/scroll-view';
+import { useToast } from '@/components/ui/toast';
 
 export default function PurchasePage() {
   const router = useRouter();
+  const { showToast } = useToast();
 
   const handlePurchaseComplete = (transactionId: number) => {
-    console.log(`Purchase completed with transaction ID: ${transactionId}`);
+    showToast(
+      'success',
+      `Payment successful! Transaction ID: ${transactionId}. Redirecting to your dashboard...`,
+      6000
+    );
 
     // Navigate to success page or dashboard after a brief delay
     setTimeout(() => {

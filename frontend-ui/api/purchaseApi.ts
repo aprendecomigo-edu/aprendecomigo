@@ -36,7 +36,7 @@ export class PurchaseApiClient {
    */
   static async getPricingPlans(): Promise<PricingPlan[]> {
     try {
-      const response = await apiClient.get('/finances/api/pricing-plans/');
+      const response = await apiClient.get('/finances/pricing-plans/');
 
       if (!Array.isArray(response.data)) {
         throw new Error('Invalid response format: expected array of pricing plans');
@@ -81,7 +81,7 @@ export class PurchaseApiClient {
     request: PurchaseInitiationRequest
   ): Promise<PurchaseInitiationResponse> {
     try {
-      const response = await apiClient.post('/finances/api/purchase/initiate/', request);
+      const response = await apiClient.post('/finances/purchase/initiate/', request);
 
       return {
         success: response.data.success,
@@ -141,7 +141,7 @@ export class PurchaseApiClient {
   static async getStudentBalance(email?: string): Promise<StudentBalanceResponse> {
     try {
       const params = email ? { email } : {};
-      const response = await apiClient.get('/finances/api/student-balance/', { params });
+      const response = await apiClient.get('/finances/student-balance/', { params });
 
       return {
         student_info: response.data.student_info,
@@ -174,7 +174,7 @@ export class PurchaseApiClient {
    */
   static async getStripeConfig(): Promise<StripeConfig> {
     try {
-      const response = await apiClient.get('/finances/api/stripe/config/');
+      const response = await apiClient.get('/finances/stripe/config/');
 
       return {
         public_key: response.data.public_key,
@@ -210,7 +210,7 @@ export class PurchaseApiClient {
         params.email = email;
       }
 
-      const response = await apiClient.get('/finances/api/student-balance/check-booking/', {
+      const response = await apiClient.get('/finances/student-balance/check-booking/', {
         params,
       });
       return response.data;
@@ -246,7 +246,7 @@ export class PurchaseApiClient {
     } = {}
   ): Promise<PaginatedTransactionHistory> {
     try {
-      const response = await apiClient.get('/finances/api/student-balance/history/', {
+      const response = await apiClient.get('/finances/student-balance/history/', {
         params: options,
       });
       return response.data;
@@ -290,7 +290,7 @@ export class PurchaseApiClient {
         params.include_consumption = options.include_consumption.toString();
       }
 
-      const response = await apiClient.get('/finances/api/student-balance/purchases/', {
+      const response = await apiClient.get('/finances/student-balance/purchases/', {
         params,
       });
       return response.data;

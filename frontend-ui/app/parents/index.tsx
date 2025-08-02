@@ -8,12 +8,18 @@ import { LinkText } from '@/components/ui/link';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
+import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
 
 export default function LandingPage() {
+  const { showToast } = useToast();
+
   const handlePurchaseComplete = (transactionId: number) => {
-    console.log(`Purchase completed with transaction ID: ${transactionId}`);
-    // You could navigate to a success page or show a success message here
+    showToast(
+      'success',
+      `Payment successful! Transaction ID: ${transactionId}. You can now access your tutoring hours.`,
+      6000
+    );
   };
 
   return (
