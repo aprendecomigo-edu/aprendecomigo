@@ -40,5 +40,15 @@ config.transformer = {
 // Better module resolution for React Native Web compatibility
 config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
 
+// Watchman and file watching configuration to prevent EMFILE errors
+config.watchFolders = [projectRoot];
+
+// Simple server configuration
+config.server = {
+  enhanceMiddleware: (middleware) => {
+    return middleware;
+  },
+};
+
 // Apply the NativeWind transformer
 module.exports = withNativeWind(config, { input: './global.css' });

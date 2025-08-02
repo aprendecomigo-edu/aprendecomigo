@@ -7,6 +7,7 @@ cache poisoning attacks.
 
 import hashlib
 import json
+import time
 from typing import Any, Dict, List, Optional, Union
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -192,5 +193,3 @@ def invalidate_user_cache_pattern(prefix: str, user_id: int):
     pass
 
 
-# Import time for timestamp generation
-import time

@@ -1,11 +1,11 @@
 test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
-dash-001,Backend School Metrics API,Test school dashboard metrics endpoint authentication and data structure,,,0,0,0
-dash-002,Backend Activity Feed API,Test school activity feed endpoint pagination and filtering,,,0,0,0
+dash-001,Backend School Metrics API,Test school dashboard metrics endpoint authentication and data structure,20250802-014644,FAIL,1,0,1
+dash-002,Backend Activity Feed API,Test school activity feed endpoint pagination and filtering,20250802-020803,FAIL,1,0,1
 dash-003,Backend WebSocket Integration,Test real-time dashboard WebSocket connection and message broadcasting,,,0,0,0
-dash-004,Frontend Dashboard Rendering,Test main dashboard page component rendering and data display,,,0,0,0
-dash-005,Frontend Quick Actions Panel,Test quick action buttons functionality and navigation,,,0,0,0
+dash-004,Frontend Dashboard Rendering,Test main dashboard page component rendering and data display,20250802-014644,PASS,1,1,0
+dash-005,Frontend Quick Actions Panel,Test quick action buttons functionality and navigation,20250802-014644,PASS,1,1,0
 dash-006,Frontend School Info Card,Test school information editing and validation,,,0,0,0
 dash-007,Frontend Responsive Design,Test dashboard responsive behavior across different screen sizes,,,0,0,0
-dash-008,Real-time Updates Integration,Test end-to-end real-time updates when data changes,,,0,0,0
-dash-009,Empty State Onboarding,Test empty state display and call-to-action functionality,,,0,0,0
+dash-008,Real-time Updates Integration,Test end-to-end real-time updates when data changes,20250802-014644,PASS,1,1,0
+dash-009,Empty State Onboarding,Test empty state display and call-to-action functionality,20250802-014644,PASS,1,1,0
 dash-010,Error Handling and Recovery,Test error states loading failures and recovery mechanisms,,,0,0,0

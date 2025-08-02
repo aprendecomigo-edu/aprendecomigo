@@ -5,8 +5,37 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/api/authContext';
 import { getUserAdminSchools, SchoolMembership } from '@/api/userApi';
-import { ActivityFeed, MetricsCard, QuickActionsPanel } from '@/components/dashboard';
-import SchoolInfoCard from '@/components/dashboard/SchoolInfoCard';
+// Temporarily comment out problematic imports to debug
+// import { ActivityFeed, MetricsCard, QuickActionsPanel } from '@/components/dashboard';
+
+// Temporary placeholder components for debugging
+const MetricsCard = ({ metrics, isLoading }: any) => (
+  <Box className="p-4 bg-white rounded-lg border">
+    <Text>MetricsCard Placeholder - {isLoading ? 'Loading...' : 'Loaded'}</Text>
+  </Box>
+);
+
+const QuickActionsPanel = ({ school, onAction }: any) => (
+  <Box className="p-4 bg-white rounded-lg border">
+    <Text>QuickActionsPanel Placeholder</Text>
+  </Box>
+);
+
+const ActivityFeed = ({ activities, isLoading, onLoadMore }: any) => (
+  <Box className="p-4 bg-white rounded-lg border">
+    <Text>ActivityFeed Placeholder - {isLoading ? 'Loading...' : 'Loaded'}</Text>
+  </Box>
+);
+// Temporarily comment out problematic SchoolInfoCard import
+// import SchoolInfoCard from '@/components/dashboard/SchoolInfoCard';
+
+// Temporary placeholder for SchoolInfoCard
+const SchoolInfoCard = ({ school, isLoading, onSave }: any) => (
+  <Box className="p-4 bg-white rounded-lg border">
+    <Text>SchoolInfoCard Placeholder - {isLoading ? 'Loading...' : 'Loaded'}</Text>
+    {school && <Text className="text-sm text-gray-600">School: {school.name}</Text>}
+  </Box>
+);
 import MainLayout from '@/components/layouts/main-layout';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';

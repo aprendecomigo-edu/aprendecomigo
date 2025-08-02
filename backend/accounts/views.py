@@ -1135,6 +1135,131 @@ class SchoolViewSet(KnoxAuthenticatedViewSet):
         serializer = EducationalSystemSerializer(systems, many=True)
         
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['get'], url_path='metrics', permission_classes=[IsAuthenticated, IsSchoolOwnerOrAdmin])
+    def metrics(self, request, pk=None):
+        """Get comprehensive metrics for school dashboard"""
+        school = self.get_object()
+        
+        # Check if user can manage this school
+        if not can_user_manage_school(request.user, school.id):
+            return Response(
+                {"error": "You don't have permission to view metrics for this school"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
+        # Import here to avoid circular imports
+        from .services.metrics_service import SchoolMetricsService
+        from .serializers import SchoolMetricsSerializer
+        
+        metrics_service = SchoolMetricsService(school)
+        metrics_data = metrics_service.get_metrics()
+        
+        serializer = SchoolMetricsSerializer(data=metrics_data)
+        serializer.is_valid(raise_exception=True)
+        
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['get'], url_path='activity', permission_classes=[IsAuthenticated, IsSchoolOwnerOrAdmin])
+    def activity(self, request, pk=None):
+        """Get paginated activity feed for school"""
+        school = self.get_object()
+        
+        # Check if user can manage this school
+        if not can_user_manage_school(request.user, school.id):
+            return Response(
+                {"error": "You don't have permission to view activity for this school"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
+        # Import here to avoid circular imports
+        from .services.metrics_service import SchoolActivityService
+        from .serializers import SchoolActivitySerializer
+        from rest_framework.pagination import PageNumberPagination
+        from django.core.paginator import Paginator, EmptyPage
+        
+        # Get query parameters for filtering
+        activity_types = request.query_params.get('activity_types')
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        
+        # Safely parse pagination parameters with validation
+        try:
+            page = int(request.query_params.get('page', 1))
+            page_size = min(int(request.query_params.get('page_size', 20)), 100)  # Max 100 items per page
+        except (ValueError, TypeError):
+            page = 1
+            page_size = 20
+        
+        # Build filters
+        filters = {}
+        if activity_types:
+            filters['activity_types'] = activity_types
+        if date_from:
+            filters['date_from'] = date_from
+        if date_to:
+            filters['date_to'] = date_to
+        
+        try:
+            # Get activities using the service
+            activities_queryset = SchoolActivityService.get_activity_feed(
+                school=school, 
+                page_size=None,  # Get all, we'll paginate manually
+                filters=filters
+            )
+            
+            # Set up pagination
+            paginator = Paginator(activities_queryset, page_size)
+            
+            try:
+                activities_page = paginator.page(page)
+            except EmptyPage:
+                activities_page = paginator.page(paginator.num_pages) if paginator.num_pages > 0 else paginator.page(1)
+            
+            # Serialize the activities
+            serializer = SchoolActivitySerializer(
+                activities_page.object_list, 
+                many=True, 
+                context={'request': request}
+            )
+            
+            # Build pagination response
+            response_data = {
+                'count': paginator.count,
+                'next': None,
+                'previous': None,
+                'results': serializer.data
+            }
+            
+            # Add next/previous page URLs if they exist
+            if activities_page.has_next():
+                next_page = activities_page.next_page_number()
+                response_data['next'] = request.build_absolute_uri(
+                    request.path + f'?page={next_page}'
+                )
+                # Preserve filter parameters
+                for key, value in request.query_params.items():
+                    if key != 'page':
+                        response_data['next'] += f'&{key}={value}'
+            
+            if activities_page.has_previous():
+                prev_page = activities_page.previous_page_number()
+                response_data['previous'] = request.build_absolute_uri(
+                    request.path + f'?page={prev_page}'
+                )
+                # Preserve filter parameters
+                for key, value in request.query_params.items():
+                    if key != 'page':
+                        response_data['previous'] += f'&{key}={value}'
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Failed to get activity feed for school {school.id}: {e}")
+            return Response(
+                {"error": "Failed to retrieve activity feed. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class SchoolMembershipViewSet(KnoxAuthenticatedViewSet):
