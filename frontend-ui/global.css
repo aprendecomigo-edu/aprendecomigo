@@ -3,8 +3,213 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS Variables for gradients and glass effects */
+/* CSS Variables for color system, gradients and glass effects */
 :root {
+  /* Primary Color Palette */
+  --color-primary-0: #ffffff;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+
+  /* Secondary Color Palette */
+  --color-secondary-0: #ffffff;
+  --color-secondary-50: #f0f9ff;
+  --color-secondary-100: #e0f2fe;
+  --color-secondary-200: #bae6fd;
+  --color-secondary-300: #7dd3fc;
+  --color-secondary-400: #38bdf8;
+  --color-secondary-500: #0ea5e9;
+  --color-secondary-600: #0284c7;
+  --color-secondary-700: #0369a1;
+  --color-secondary-800: #075985;
+  --color-secondary-900: #0c4a6e;
+  --color-secondary-950: #082f49;
+
+  /* Tertiary Color Palette */
+  --color-tertiary-50: #fefce8;
+  --color-tertiary-100: #fef9c3;
+  --color-tertiary-200: #fef08a;
+  --color-tertiary-300: #fde047;
+  --color-tertiary-400: #facc15;
+  --color-tertiary-500: #eab308;
+  --color-tertiary-600: #ca8a04;
+  --color-tertiary-700: #a16207;
+  --color-tertiary-800: #854d0e;
+  --color-tertiary-900: #713f12;
+  --color-tertiary-950: #422006;
+
+  /* Error Color Palette */
+  --color-error-0: #ffffff;
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-200: #fecaca;
+  --color-error-300: #fca5a5;
+  --color-error-400: #f87171;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-error-700: #b91c1c;
+  --color-error-800: #991b1b;
+  --color-error-900: #7f1d1d;
+  --color-error-950: #450a0a;
+
+  /* Success Color Palette */
+  --color-success-0: #ffffff;
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
+  --color-success-950: #052e16;
+
+  /* Warning Color Palette */
+  --color-warning-0: #ffffff;
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
+  --color-warning-950: #451a03;
+
+  /* Info Color Palette */
+  --color-info-0: #ffffff;
+  --color-info-50: #f0f9ff;
+  --color-info-100: #e0f2fe;
+  --color-info-200: #bae6fd;
+  --color-info-300: #7dd3fc;
+  --color-info-400: #38bdf8;
+  --color-info-500: #0ea5e9;
+  --color-info-600: #0284c7;
+  --color-info-700: #0369a1;
+  --color-info-800: #075985;
+  --color-info-900: #0c4a6e;
+  --color-info-950: #082f49;
+
+  /* Typography Color Palette */
+  --color-typography-0: #ffffff;
+  --color-typography-50: #f9fafb;
+  --color-typography-100: #f3f4f6;
+  --color-typography-200: #e5e7eb;
+  --color-typography-300: #d1d5db;
+  --color-typography-400: #9ca3af;
+  --color-typography-500: #6b7280;
+  --color-typography-600: #4b5563;
+  --color-typography-700: #374151;
+  --color-typography-800: #1f2937;
+  --color-typography-900: #111827;
+  --color-typography-950: #030712;
+
+  /* Outline Color Palette */
+  --color-outline-0: #ffffff;
+  --color-outline-50: #f9fafb;
+  --color-outline-100: #f3f4f6;
+  --color-outline-200: #e5e7eb;
+  --color-outline-300: #d1d5db;
+  --color-outline-400: #9ca3af;
+  --color-outline-500: #6b7280;
+  --color-outline-600: #4b5563;
+  --color-outline-700: #374151;
+  --color-outline-800: #1f2937;
+  --color-outline-900: #111827;
+  --color-outline-950: #030712;
+
+  /* Background Color Palette */
+  --color-background-0: #ffffff;
+  --color-background-50: #f9fafb;
+  --color-background-100: #f3f4f6;
+  --color-background-200: #e5e7eb;
+  --color-background-300: #d1d5db;
+  --color-background-400: #9ca3af;
+  --color-background-500: #6b7280;
+  --color-background-600: #4b5563;
+  --color-background-700: #374151;
+  --color-background-800: #1f2937;
+  --color-background-900: #111827;
+  --color-background-950: #030712;
+  --color-background-error: #fef2f2;
+  --color-background-warning: #fffbeb;
+  --color-background-success: #f0fdf4;
+  --color-background-muted: #f9fafb;
+  --color-background-info: #f0f9ff;
+
+  /* Border Color Palette */
+  --color-border-0: #ffffff;
+  --color-border-50: #f9fafb;
+  --color-border-100: #f3f4f6;
+  --color-border-200: #e5e7eb;
+  --color-border-300: #d1d5db;
+  --color-border-400: #9ca3af;
+  --color-border-500: #6b7280;
+  --color-border-600: #4b5563;
+  --color-border-700: #374151;
+  --color-border-800: #1f2937;
+  --color-border-900: #111827;
+  --color-border-950: #030712;
+  --color-border-error: #fecaca;
+  --color-border-warning: #fde68a;
+  --color-border-success: #bbf7d0;
+  --color-border-muted: #e5e7eb;
+  --color-border-info: #bae6fd;
+
+  /* Accent Color Palette */
+  --color-accent-0: #ffffff;
+  --color-accent-50: #fdf2f8;
+  --color-accent-100: #fce7f3;
+  --color-accent-200: #fbcfe8;
+  --color-accent-300: #f9a8d4;
+  --color-accent-400: #f472b6;
+  --color-accent-500: #ec4899;
+  --color-accent-600: #db2777;
+  --color-accent-700: #be185d;
+  --color-accent-800: #9d174d;
+  --color-accent-900: #831843;
+  --color-accent-950: #500724;
+
+  /* Accent Dark Color Palette */
+  --color-accent-dark-0: #ffffff;
+  --color-accent-dark-50: #fff7ed;
+  --color-accent-dark-100: #ffedd5;
+  --color-accent-dark-200: #fed7aa;
+  --color-accent-dark-300: #fdba74;
+  --color-accent-dark-400: #fb923c;
+  --color-accent-dark-500: #f97316;
+  --color-accent-dark-600: #ea580c;
+  --color-accent-dark-700: #c2410c;
+  --color-accent-dark-800: #9a3412;
+  --color-accent-dark-900: #7c2d12;
+  --color-accent-dark-950: #431407;
+
+  /* Accent Pink Color Palette */
+  --color-accent-pink-0: #ffffff;
+  --color-accent-pink-50: #fdf4ff;
+  --color-accent-pink-100: #fae8ff;
+  --color-accent-pink-200: #f5d0fe;
+  --color-accent-pink-300: #f0abfc;
+  --color-accent-pink-400: #e879f9;
+  --color-accent-pink-500: #d946ef;
+  --color-accent-pink-600: #c026d3;
+  --color-accent-pink-700: #a21caf;
+  --color-accent-pink-800: #86198f;
+  --color-accent-pink-900: #701a75;
+  --color-accent-pink-950: #4a044e;
+
   /* Gradient Patterns - Design System */
   --gradient-primary: linear-gradient(135deg, #f59e0b, #38bdf8);
   --gradient-accent: linear-gradient(135deg, #0ea5e9, #d946ef);
@@ -32,6 +237,59 @@
 /* Dark mode variables */
 @media (prefers-color-scheme: dark) {
   :root {
+    /* Dark mode colors - keep primary/secondary/accent the same for consistency */
+    /* Background Color Palette (Dark Mode) */
+    --color-background-0: #030712;
+    --color-background-50: #111827;
+    --color-background-100: #1f2937;
+    --color-background-200: #374151;
+    --color-background-300: #4b5563;
+    --color-background-400: #6b7280;
+    --color-background-500: #9ca3af;
+    --color-background-600: #d1d5db;
+    --color-background-700: #e5e7eb;
+    --color-background-800: #f3f4f6;
+    --color-background-900: #f9fafb;
+    --color-background-950: #ffffff;
+    --color-background-error: #450a0a;
+    --color-background-warning: #451a03;
+    --color-background-success: #052e16;
+    --color-background-muted: #111827;
+    --color-background-info: #082f49;
+
+    /* Typography Color Palette (Dark Mode) */
+    --color-typography-0: #030712;
+    --color-typography-50: #111827;
+    --color-typography-100: #1f2937;
+    --color-typography-200: #374151;
+    --color-typography-300: #4b5563;
+    --color-typography-400: #6b7280;
+    --color-typography-500: #9ca3af;
+    --color-typography-600: #d1d5db;
+    --color-typography-700: #e5e7eb;
+    --color-typography-800: #f3f4f6;
+    --color-typography-900: #f9fafb;
+    --color-typography-950: #ffffff;
+
+    /* Border Color Palette (Dark Mode) */  
+    --color-border-0: #030712;
+    --color-border-50: #111827;
+    --color-border-100: #1f2937;
+    --color-border-200: #374151;
+    --color-border-300: #4b5563;
+    --color-border-400: #6b7280;
+    --color-border-500: #9ca3af;
+    --color-border-600: #d1d5db;
+    --color-border-700: #e5e7eb;
+    --color-border-800: #f3f4f6;
+    --color-border-900: #f9fafb;
+    --color-border-950: #ffffff;
+    --color-border-error: #7f1d1d;
+    --color-border-warning: #78350f;
+    --color-border-success: #14532d;
+    --color-border-muted: #374151;
+    --color-border-info: #0c4a6e;
+
     /* Gradient Patterns - Design System (Dark Mode) */
     --gradient-primary: linear-gradient(135deg, #f59e0b, #38bdf8);
     --gradient-accent: linear-gradient(135deg, #0ea5e9, #d946ef);
