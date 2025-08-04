@@ -436,6 +436,7 @@ class EndToEndOnboardingTests(APITestCase):
             "email": "newflow@example.com",
             "phone_number": "+1234567890",
             "primary_contact": "email",
+            "user_type": "school",
             "school": {"name": "Flow School"},
         }
 
@@ -477,6 +478,7 @@ class EndToEndOnboardingTests(APITestCase):
             "email": "phoneflow@example.com",
             "phone_number": "+1234567890",
             "primary_contact": "phone",
+            "user_type": "school",
             "school": {"name": "Phone User School"},
         }
 

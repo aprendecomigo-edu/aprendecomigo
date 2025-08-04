@@ -17,11 +17,12 @@ from accounts.models import (
     TeacherProfile, StudentProfile, Course, EducationalSystem,
     StudentProgress, ProgressAssessment
 )
+from accounts.tests.test_base import BaseTestCase
 from finances.models import ClassSession, SessionStatus, SessionType, TeacherPaymentEntry
 from knox.models import AuthToken
 
 
-class TeacherDashboardAPITest(APITestCase):
+class TeacherDashboardAPITest(BaseTestCase, APITestCase):
     """Test suite for Teacher Dashboard API functionality."""
     
     def setUp(self):
@@ -30,14 +31,8 @@ class TeacherDashboardAPITest(APITestCase):
         from django.core.cache import cache
         cache.clear()
         
-        # Create educational system
-        self.educational_system, _ = EducationalSystem.objects.get_or_create(
-            code="pt",
-            defaults={
-                "name": "Portugal", 
-                "description": "Portuguese education system"
-            }
-        )
+        # Use the default educational system from base class
+        self.educational_system = self.default_educational_system
         
         # Create school
         self.school = School.objects.create(

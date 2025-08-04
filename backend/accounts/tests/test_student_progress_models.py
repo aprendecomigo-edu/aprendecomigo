@@ -16,21 +16,16 @@ from accounts.models import (
 )
 # Models to be implemented:
 # from accounts.models import StudentProgress, ProgressAssessment
+from accounts.tests.test_base import BaseTestCase
 
 
-class StudentProgressModelTest(TestCase):
+class StudentProgressModelTest(BaseTestCase):
     """Test suite for StudentProgress model."""
     
     def setUp(self):
         """Set up test data."""
         # Create educational system
-        self.educational_system, _ = EducationalSystem.objects.get_or_create(
-            code="pt",
-            defaults={
-                "name": "Portugal", 
-                "description": "Portuguese education system"
-            }
-        )
+        self.educational_system = self.default_educational_system  # Use default from BaseTestCase
         
         # Create school
         self.school = School.objects.create(
@@ -174,19 +169,13 @@ class StudentProgressModelTest(TestCase):
             progress.clean()
 
 
-class ProgressAssessmentModelTest(TestCase):
+class ProgressAssessmentModelTest(BaseTestCase):
     """Test suite for ProgressAssessment model."""
     
     def setUp(self):
         """Set up test data."""
         # Create educational system
-        self.educational_system, _ = EducationalSystem.objects.get_or_create(
-            code="pt",
-            defaults={
-                "name": "Portugal", 
-                "description": "Portuguese education system"
-            }
-        )
+        self.educational_system = self.default_educational_system  # Use default from BaseTestCase
         
         # Create school
         self.school = School.objects.create(

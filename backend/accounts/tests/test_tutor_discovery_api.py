@@ -26,9 +26,10 @@ from accounts.models import (
     CustomUser, School, SchoolMembership, SchoolRole, TeacherProfile,
     Course, EducationalSystem, TeacherCourse, EducationalSystemType
 )
+from accounts.tests.test_base import BaseTestCase
 
 
-class TutorDiscoveryAPITestCase(TestCase):
+class TutorDiscoveryAPITestCase(BaseTestCase):
     """Test case for TutorDiscoveryAPIView."""
     
     def setUp(self):
@@ -36,13 +37,7 @@ class TutorDiscoveryAPITestCase(TestCase):
         self.client = APIClient()
         
         # Create educational system
-        self.educational_system, _ = EducationalSystem.objects.get_or_create(
-            code="pt",
-            defaults={
-                "name": "Portugal",
-                "description": "Portuguese educational system"
-            }
-        )
+        self.educational_system = self.default_educational_system  # Use default from BaseTestCase
         
         # Create schools
         self.school1 = School.objects.create(
@@ -644,7 +639,7 @@ class TutorDiscoveryAPITestCase(TestCase):
         }
     }
 )
-class TutorDiscoveryThrottlingTestCase(TestCase):
+class TutorDiscoveryThrottlingTestCase(BaseTestCase):
     """Test rate limiting for tutor discovery endpoint."""
 
     def setUp(self):
@@ -700,7 +695,7 @@ class TutorDiscoveryThrottlingTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
 
 
-class TutorDiscoveryPerformanceTestCase(TestCase):
+class TutorDiscoveryPerformanceTestCase(BaseTestCase):
     """Test performance characteristics of tutor discovery endpoint."""
 
     def setUp(self):
