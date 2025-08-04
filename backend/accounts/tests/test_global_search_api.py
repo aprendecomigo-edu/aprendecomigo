@@ -11,9 +11,10 @@ from accounts.models import (
     CustomUser, School, SchoolMembership, SchoolRole, 
     TeacherProfile, StudentProfile, Course, EducationalSystem
 )
+from accounts.tests.test_base import BaseTestCase
 
 
-class GlobalSearchAPITestCase(TestCase):
+class GlobalSearchAPITestCase(BaseTestCase):
     """Test cases for global search API endpoints."""
     
     def setUp(self):
@@ -21,13 +22,7 @@ class GlobalSearchAPITestCase(TestCase):
         self.client = APIClient()
         
         # Get or create educational system
-        self.educational_system, _ = EducationalSystem.objects.get_or_create(
-            code="pt",
-            defaults={
-                "name": "Portugal",
-                "description": "Portuguese educational system"
-            }
-        )
+        self.educational_system = self.default_educational_system  # Use default from BaseTestCase
         
         # Create a school
         self.school = School.objects.create(

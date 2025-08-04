@@ -115,7 +115,7 @@ class TeacherProfileWizardSecurityTestCase(TestCase):
             '<script>alert("xss")</script>',
             '../../etc/passwd',
             'javascript:alert("xss")',
-            ''; DROP TABLE users; --',
+            "'; DROP TABLE users; --",
         ]
         
         for phone in invalid_phones:

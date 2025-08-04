@@ -14,10 +14,11 @@ from accounts.models import (
     CustomUser, School, SchoolMembership, SchoolRole,
     EducationalSystem, SchoolActivity, ActivityType
 )
+from accounts.tests.test_base import BaseTestCase
 from finances.models import ClassSession
 
 
-class SchoolMetricsAPITest(TestCase):
+class SchoolMetricsAPITest(BaseTestCase):
     """Test cases for School Metrics API endpoint"""
     
     def setUp(self):
@@ -227,7 +228,7 @@ class SchoolMetricsAPITest(TestCase):
         self.assertEqual(mock_cache_set.call_args[1]['timeout'], 300)  # 5 minutes
 
 
-class SchoolActivityFeedAPITest(TestCase):
+class SchoolActivityFeedAPITest(BaseTestCase):
     """Test cases for School Activity Feed API endpoint"""
     
     def setUp(self):
@@ -417,7 +418,7 @@ class SchoolActivityFeedAPITest(TestCase):
         self.assertEqual(data['results'][0]['description'], "Recent activity")
 
 
-class SchoolUpdateAPITest(TestCase):
+class SchoolUpdateAPITest(BaseTestCase):
     """Test cases for School Update API endpoint enhancement"""
     
     def setUp(self):
@@ -577,7 +578,7 @@ class SchoolUpdateAPITest(TestCase):
         self.assertIn('updated school', activity.description.lower())
 
 
-class SecurityFixesTest(TestCase):
+class SecurityFixesTest(BaseTestCase):
     """Test cases for critical security fixes"""
     
     def setUp(self):

@@ -16,12 +16,13 @@ from accounts.models import (
     EducationalSystem,
     TeacherCourse
 )
+from accounts.tests.test_base import BaseTestCase
 from accounts.services.profile_completion import ProfileCompletionService
 
 User = get_user_model()
 
 
-class ProfileCompletionServiceTestCase(TestCase):
+class ProfileCompletionServiceTestCase(BaseTestCase):
     """Test cases for ProfileCompletionService"""
     
     def setUp(self):

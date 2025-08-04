@@ -22,7 +22,6 @@ from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
 from classroom.consumers import ChatConsumer
-from accounts.consumers import SchoolDashboardConsumer
 from django.urls import path
 
 application = ProtocolTypeRouter(
@@ -31,8 +30,8 @@ application = ProtocolTypeRouter(
         "websocket": AllowedHostsOriginValidator(
             AuthMiddlewareStack(
                 URLRouter([
+                    # Only chat functionality uses websockets
                     path("ws/chat/<str:channel_name>/", ChatConsumer.as_asgi()),
-                    path("ws/schools/<int:school_id>/dashboard/", SchoolDashboardConsumer.as_asgi())
                 ])
             )
         ),

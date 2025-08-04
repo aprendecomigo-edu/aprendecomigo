@@ -17,7 +17,7 @@ from django.db import models, transaction
 from django.utils import timezone
 from knox.auth import TokenAuthentication
 from knox.models import AuthToken
-from rest_framework import status, viewsets
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response

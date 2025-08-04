@@ -17,26 +17,20 @@ from accounts.models import (
     TrialCostAbsorption,
     DataRetentionChoices
 )
+from accounts.tests.test_base import BaseTestCase
 
 User = get_user_model()
 
 
-class SchoolSettingsAPITestCase(TestCase):
+class SchoolSettingsAPITestCase(BaseTestCase):
     """Test cases for school settings API endpoints"""
     
     def setUp(self):
         """Set up test data"""
         self.client = APIClient()
         
-        # Get or create educational system
-        self.educational_system, _ = EducationalSystem.objects.get_or_create(
-            code="pt",
-            defaults={
-                "name": "Portugal",
-                "description": "Portuguese educational system",
-                "is_active": True
-            }
-        )
+        # Use the default educational system from base class
+        self.educational_system = self.default_educational_system
         
         # Create school owner user
         self.owner_user = User.objects.create_user(

@@ -51,6 +51,7 @@ class TestUserSignup(TestCase):
             "email": "newuser@example.com",
             "phone_number": "+1234567890",
             "primary_contact": "email",
+            "user_type": "school",
             "school": {"name": "New School"},
         }
 
@@ -98,6 +99,7 @@ class TestUserSignup(TestCase):
             "email": "existing@example.com",  # Already exists
             "phone_number": "+1234567890",
             "primary_contact": "email",
+            "user_type": "school",
             "school": {"name": "Phone User School"},
         }
 
@@ -114,6 +116,7 @@ class TestUserSignup(TestCase):
             "email": "newuser@example.com",
             "phone_number": "not-a-phone-number",  # Invalid format
             "primary_contact": "email",
+            "user_type": "school",
             "school": {"name": "Phone User School"},
         }
 
@@ -130,6 +133,7 @@ class TestUserSignup(TestCase):
                 "email": "phoneuser@example.com",
                 "phone_number": "+1234567890",
                 "primary_contact": "phone",
+                "user_type": "school",
                 "school": {"name": "Phone User School"},
             }
 
@@ -151,6 +155,7 @@ class TestUserSignup(TestCase):
             "email": "newuser@example.com",
             "phone_number": "+1234567890",
             "primary_contact": "email",
+            "user_type": "school",
             "school": {
                 "name": "",  # Invalid - empty name
                 "website": "not-a-url",  # Invalid URL
@@ -169,6 +174,7 @@ class TestUserSignup(TestCase):
             "email": "noschool@example.com",
             "phone_number": "+1234567890",
             "primary_contact": "email",
+            "user_type": "school",
         }
 
         response = self.client.post(self.url, data, format="json")
@@ -182,6 +188,7 @@ class TestUserSignup(TestCase):
             "email": "emptyschool@example.com",
             "phone_number": "+1234567890",
             "primary_contact": "email",
+            "user_type": "school",
             "school": {
                 "name": "",  # Empty school name
             },
@@ -231,6 +238,7 @@ class TestUserSignup(TestCase):
             "email": "anon@example.com",
             "phone_number": "+1234567890",
             "primary_contact": "email",
+            "user_type": "school",
             "school": {"name": "Anonymous School"},
         }
 

@@ -19,11 +19,12 @@ from accounts.models import (
     EducationalSystem,
     TeacherCourse
 )
+from accounts.tests.test_base import BaseTestCase
 
 User = get_user_model()
 
 
-class TeacherAnalyticsViewTestCase(TestCase):
+class TeacherAnalyticsViewTestCase(BaseTestCase):
     """Test cases for TeacherAnalyticsView"""
     
     def setUp(self):

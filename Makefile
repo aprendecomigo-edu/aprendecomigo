@@ -1,4 +1,4 @@
-.PHONY: dev dev-open backend frontend stop logs open health check-deps create-test-data verify-test-data create-admin-calendar
+.PHONY: dev dev-open backend frontend stop logs open health check-deps create-test-data verify-test-data create-admin-calendar lint setup-hooks
 
 backend:
 	@echo "Starting Django backend server..."
@@ -160,3 +160,18 @@ create-admin-calendar:
 	@cd backend && source ../.venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development python3 manage.py create_admin_calendar_events --school-admin-email ana.silva@example.com
 	@echo "Admin calendar events created successfully!"
 	@echo "Admin can now see calendar events in dashboard and calendar pages"
+
+lint:
+	@echo "Running linting checks..."
+	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; exit 1; fi
+	@cd backend && source ../.venv/bin/activate && \
+		pip install flake8 > /dev/null 2>&1 && \
+		echo "Checking for syntax errors and undefined names..." && \
+		flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics && \
+		echo "✓ Critical linting checks passed!" && \
+		echo "Running additional style checks..." && \
+		flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+setup-hooks:
+	@echo "Setting up Git hooks..."
+	@./setup-hooks.sh

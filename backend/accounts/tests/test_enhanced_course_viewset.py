@@ -26,12 +26,13 @@ from accounts.models import (
     EducationalSystem,
     TeacherCourse
 )
+from accounts.tests.test_base import BaseTestCase
 from finances.models import ClassSession, SessionStatus, SessionType
 
 User = get_user_model()
 
 
-class EnhancedCourseViewSetTestCase(TestCase):
+class EnhancedCourseViewSetTestCase(BaseTestCase):
     """Test case for Enhanced CourseViewSet API."""
     
     def setUp(self):
