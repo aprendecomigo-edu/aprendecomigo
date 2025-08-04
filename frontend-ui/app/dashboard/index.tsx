@@ -18,7 +18,6 @@ export default function DashboardRouter() {
   const { isLoggedIn, isLoading } = useAuth();
   const { userProfile } = useUserProfile();
   const { userSchools } = useSchool();
-  const routerInstance = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigationError, setNavigationError] = useState<string | null>(null);
 
@@ -143,8 +142,7 @@ function determineUserDashboard(userProfile: any, userSchools: any[]): string | 
           return '/(student)/dashboard';
         case 'parent':
           return '/(parent)/dashboard';
-        default:
-          // Default to school admin for unknown types
+        default:  //  TODO type should be known! If it isn't, either something is wrong with saving and getting the user type OR should return to login page. Defaulting to admin dashboard could be a security issue. 
           return '/(school-admin)/dashboard';
       }
   }
