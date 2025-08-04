@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Pre-commit hook to run linting checks before committing
+
+echo "Running pre-commit checks..."
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Check if we have any Python files being committed in backend/
+if git diff --cached --name-only | grep -q "^backend/.*\.py$"; then
+    echo -e "${YELLOW}Python files detected in backend/. Running flake8 linting...${NC}"
+    
+    # Navigate to backend directory
+    cd backend/
+    
+    # Activate virtual environment if it exists
+    if [ -f "../.venv/bin/activate" ]; then
+        source ../.venv/bin/activate
+    fi
+    
+    # Install flake8 if not present
+    if ! command -v flake8 &> /dev/null; then
+        echo "Installing flake8..."
+        pip install flake8 > /dev/null 2>&1
+    fi
+    
+    # Run critical flake8 checks (syntax errors and undefined names)
+    echo "Checking for syntax errors and undefined names..."
+    flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+    
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}✗ Linting failed! Please fix the errors above before committing.${NC}"
+        echo -e "${YELLOW}Tip: These are critical errors that will cause the GitHub Actions workflow to fail.${NC}"
+        exit 1
+    fi
+    
+    # Run additional flake8 checks (warnings only, won't block commit)
+    echo "Running additional style checks (warnings only)..."
+    flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    echo -e "${GREEN}✓ Critical linting checks passed!${NC}"
+    cd ..
+fi
+
+# Check if we have any JavaScript/TypeScript files being committed in frontend-ui/
+if git diff --cached --name-only | grep -q "^frontend-ui/.*\.\(js\|jsx\|ts\|tsx\)$"; then
+    echo -e "${YELLOW}JavaScript/TypeScript files detected in frontend-ui/.${NC}"
+    
+    # Check if eslint is available
+    if [ -f "frontend-ui/package.json" ]; then
+        cd frontend-ui/
+        
+        # Check for lint script in package.json
+        if grep -q '"lint"' package.json; then
+            echo "Running ESLint..."
+            npm run lint 2>/dev/null
+            
+            if [ $? -ne 0 ]; then
+                echo -e "${YELLOW}⚠ ESLint warnings detected. Consider fixing them.${NC}"
+                # Don't block commit for ESLint warnings
+            else
+                echo -e "${GREEN}✓ ESLint checks passed!${NC}"
+            fi
+        fi
+        
+        cd ..
+    fi
+fi
+
+echo -e "${GREEN}✓ Pre-commit checks completed successfully!${NC}"
+exit 0

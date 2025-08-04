@@ -22,7 +22,7 @@ from rest_framework.response import Response
 from django.utils import timezone
 
 from finances.services.package_expiration_service import PackageExpirationService
-from finances.models import PurchaseTransaction
+from finances.models import PurchaseTransaction, AdminActionType
 from finances.serializers import PurchaseHistorySerializer
 
 logger = logging.getLogger(__name__)
