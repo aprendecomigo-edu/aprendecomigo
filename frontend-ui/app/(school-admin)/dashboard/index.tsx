@@ -11,7 +11,7 @@ import {
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useAuth } from '@/api/authContext';
+import { useAuth, useUserProfile, useSchool } from '@/api/auth';
 import { getSchoolInfo, SchoolInfo } from '@/api/userApi';
 import { ToDoTaskList } from '@/components/dashboard/ToDoTaskList';
 import { UpcomingEventsTable } from '@/components/dashboard/UpcomingEventsTable';
@@ -19,127 +19,76 @@ import { UpcomingEventsTable } from '@/components/dashboard/UpcomingEventsTable'
 const QuickActionsPanel = ({
   onInviteTeacher,
   onAddStudent,
-  onScheduleClass,
-  onViewMessages,
-  onManageUsers,
   onManageInvitations,
   onSettings,
   onCommunication,
 }: any) => (
-  <Box className="glass-container p-6 rounded-xl">
-    <VStack space="md">
-      <Heading size="md" className="font-primary text-gray-900">
+  <Box className="glass-container p-4 rounded-xl">
+    <VStack space="sm">
+      <Heading size="sm" className="font-primary text-gray-900">
         <Text className="bg-gradient-accent">Quick Actions</Text>
       </Heading>
-
-      <VStack space="sm" className={isWeb ? 'lg:grid lg:grid-cols-2 lg:gap-3' : ''}>
+      
+      <HStack space="md" className="justify-center flex-wrap">
         {/* Communication System */}
         <Pressable
           onPress={onCommunication}
-          className="feature-card-gradient flex-row items-center p-4 rounded-lg active:scale-98 transition-transform"
+          className="items-center p-3 rounded-lg active:scale-95 transition-transform min-w-[60px]"
         >
-          <Box className="mr-3 p-2 bg-primary-600 rounded-full">
+          <Box className="p-3 bg-primary-600 rounded-full mb-1">
             <Icon as={MailIcon} size="sm" className="text-white" />
           </Box>
-          <VStack className="flex-1">
-            <Text className="font-semibold font-primary text-gray-900">Email Communications</Text>
-            <Text className="text-sm font-body text-gray-600">
-              Manage email templates and teacher communications
-            </Text>
-          </VStack>
+          <Text className="text-xs font-body text-gray-700 text-center">Email</Text>
         </Pressable>
 
         {/* Invite Teacher */}
         <Pressable
           onPress={onInviteTeacher}
-          className="feature-card-gradient flex-row items-center p-4 rounded-lg active:scale-98 transition-transform"
+          className="items-center p-3 rounded-lg active:scale-95 transition-transform min-w-[60px]"
         >
-          <Box className="mr-3 p-2 bg-accent-600 rounded-full">
+          <Box className="p-3 bg-accent-600 rounded-full mb-1">
             <Icon as={UsersIcon} size="sm" className="text-white" />
           </Box>
-          <VStack className="flex-1">
-            <Text className="font-semibold font-primary text-gray-900">Invite Teacher</Text>
-            <Text className="text-sm font-body text-gray-600">
-              Send invitations to new teachers
-            </Text>
-          </VStack>
+          <Text className="text-xs font-body text-gray-700 text-center">Convidar</Text>
         </Pressable>
 
         {/* Add Student */}
         <Pressable
           onPress={onAddStudent}
-          className="feature-card-gradient flex-row items-center p-4 rounded-lg active:scale-98 transition-transform"
+          className="items-center p-3 rounded-lg active:scale-95 transition-transform min-w-[60px]"
         >
-          <Box className="mr-3 p-2 bg-success-600 rounded-full">
+          <Box className="p-3 bg-success-600 rounded-full mb-1">
             <Icon as={SchoolIcon} size="sm" className="text-white" />
           </Box>
-          <VStack className="flex-1">
-            <Text className="font-semibold font-primary text-gray-900">Add Student</Text>
-            <Text className="text-sm font-body text-gray-600">
-              Register new students to your school
-            </Text>
-          </VStack>
+          <Text className="text-xs font-body text-gray-700 text-center">Estudante</Text>
         </Pressable>
 
         {/* Manage Invitations */}
         <Pressable
           onPress={onManageInvitations}
-          className="feature-card-gradient flex-row items-center p-4 rounded-lg active:scale-98 transition-transform"
+          className="items-center p-3 rounded-lg active:scale-95 transition-transform min-w-[60px]"
         >
-          <Box className="mr-3 p-2 bg-accent-600 rounded-full">
+          <Box className="p-3 bg-orange-600 rounded-full mb-1">
             <Icon as={AlertTriangleIcon} size="sm" className="text-white" />
           </Box>
-          <VStack className="flex-1">
-            <Text className="font-semibold font-primary text-gray-900">Manage Invitations</Text>
-            <Text className="text-sm font-body text-gray-600">
-              Track and manage teacher invitations
-            </Text>
-          </VStack>
+          <Text className="text-xs font-body text-gray-700 text-center">Convites</Text>
         </Pressable>
 
         {/* Settings */}
         <Pressable
           onPress={onSettings}
-          className="feature-card-gradient flex-row items-center p-4 rounded-lg active:scale-98 transition-transform"
+          className="items-center p-3 rounded-lg active:scale-95 transition-transform min-w-[60px]"
         >
-          <Box className="mr-3 p-2 bg-gray-600 rounded-full">
+          <Box className="p-3 bg-gray-600 rounded-full mb-1">
             <Icon as={SettingsIcon} size="sm" className="text-white" />
           </Box>
-          <VStack className="flex-1">
-            <Text className="font-semibold font-primary text-gray-900">School Settings</Text>
-            <Text className="text-sm font-body text-gray-600">
-              Configure school preferences and details
-            </Text>
-          </VStack>
+          <Text className="text-xs font-body text-gray-700 text-center">Config</Text>
         </Pressable>
-      </VStack>
+      </HStack>
     </VStack>
   </Box>
 );
 
-// SchoolInfoCard component
-const SchoolInfoCard = ({ schoolInfo, isLoading, onUpdate }: any) => (
-  <Box className="glass-container p-6 rounded-xl">
-    <VStack space="md">
-      <Heading size="md" className="font-primary text-gray-900">
-        <Text className="bg-gradient-accent">School Information</Text>
-      </Heading>
-      <Box className="bg-gradient-subtle p-6 rounded-xl">
-        <VStack space="sm">
-          <Text className="font-semibold font-primary text-gray-900">
-            {schoolInfo?.name || 'School Name'}
-          </Text>
-          <Text className="font-body text-gray-600">
-            {schoolInfo?.description || 'School description and details will appear here.'}
-          </Text>
-          {isLoading && (
-            <Text className="text-sm font-body text-gray-500">Loading school information...</Text>
-          )}
-        </VStack>
-      </Box>
-    </VStack>
-  </Box>
-);
 import MainLayout from '@/components/layouts/MainLayout';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -153,7 +102,9 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 
 const SchoolAdminDashboard = () => {
-  const { userProfile, userSchools, currentSchool } = useAuth();
+  const { } = useAuth();
+  const { userProfile } = useUserProfile();
+  const { userSchools, currentSchool } = useSchool();
 
   // Filter admin schools from user schools
   const adminSchools = useMemo(() => {
@@ -162,7 +113,7 @@ const SchoolAdminDashboard = () => {
     );
   }, [userSchools]);
 
-  // State for school info only (no metrics or activities)
+  // State for school info only (no or activities)
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
   const [schoolInfoLoading, setSchoolInfoLoading] = useState(false);
   const [schoolInfoError, setSchoolInfoError] = useState<string | null>(null);
@@ -461,37 +412,24 @@ const SchoolAdminDashboard = () => {
         )}
 
         {/* Main Dashboard Content */}
-        <VStack space="lg" className={isWeb ? 'lg:grid lg:grid-cols-2 lg:gap-6' : ''}>
-          {/* Left Column */}
-          <VStack space="lg">
-            {/* Quick Actions Panel */}
-            <QuickActionsPanel
-              onInviteTeacher={handleInviteTeacher}
-              onAddStudent={handleAddStudent}
-              onScheduleClass={handleScheduleClass}
-              onViewMessages={handleViewMessages}
-              onManageUsers={handleManageUsers}
-              onManageInvitations={handleManageInvitations}
-              onSettings={handleSettings}
-              onCommunication={handleCommunication}
-            />
+        <VStack space="lg">
+          {/* Quick Actions Row - Slim horizontal layout */}
+          <QuickActionsPanel
+            onInviteTeacher={handleInviteTeacher}
+            onAddStudent={handleAddStudent}
+            onScheduleClass={handleScheduleClass}
+            onViewMessages={handleViewMessages}
+            onManageUsers={handleManageUsers}
+            onManageInvitations={handleManageInvitations}
+            onSettings={handleSettings}
+            onCommunication={handleCommunication}
+          />
 
-            {/* To-Do Task List */}
-            <ToDoTaskList />
-          </VStack>
+          {/* Upcoming Events Table Row - Full width */}
+          <UpcomingEventsTable />
 
-          {/* Right Column */}
-          <VStack space="lg">
-            {/* School Info Card */}
-            <SchoolInfoCard
-              schoolInfo={schoolInfo}
-              isLoading={schoolInfoLoading}
-              onUpdate={handleUpdateSchool}
-            />
-
-            {/* Upcoming Events Table */}
-            <UpcomingEventsTable />
-          </VStack>
+          {/* To-Do Task List Row - Full width */}
+          <ToDoTaskList />
         </VStack>
 
         {/* Welcome State for New Schools - Always visible as a helpful guide */}

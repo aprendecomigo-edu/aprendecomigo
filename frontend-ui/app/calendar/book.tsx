@@ -3,7 +3,7 @@ import { Calendar, Clock, User, ChevronDown } from 'lucide-react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import schedulerApi, { CreateClassScheduleData, AvailableTimeSlot } from '@/api/schedulerApi';
 import { getTeachers, getStudents, TeacherProfile, StudentProfile } from '@/api/userApi';
 import MainLayout from '@/components/layouts/MainLayout';
@@ -96,7 +96,7 @@ const getNext30Days = (): Array<{ value: string; label: string }> => {
 };
 
 const BookClassScreen: React.FC = () => {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const [formData, setFormData] = useState<BookingFormData>(initialFormData);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   const [students, setStudents] = useState<StudentProfile[]>([]);

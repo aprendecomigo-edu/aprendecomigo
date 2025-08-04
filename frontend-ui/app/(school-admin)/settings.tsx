@@ -1,52 +1,62 @@
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { View, Alert } from 'react-native';
-
-import { SchoolSettingsForm } from '../../components/school-settings/SchoolSettingsForm';
-import { useSchoolSettings, SchoolSettingsFormData } from '../../hooks/useSchoolSettings';
-
-import { useAuth } from '@/api/authContext';
-import { getUserAdminSchools, SchoolMembership } from '@/api/userApi';
+import { Alert } from 'react-native';
 import {
-  AlertDialog,
-  AlertDialogBackdrop,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogBody,
-  AlertDialogFooter,
-  AlertDialogCloseButton,
-} from '@/components/ui/alert-dialog';
-import { Box } from '@/components/ui/box';
-import { Button, ButtonText } from '@/components/ui/button';
+  Settings,
+  School,
+  Bell,
+  Users,
+  Clock,
+  Shield,
+  Palette,
+  Globe,
+  CreditCard,
+  Database,
+  Smartphone,
+} from 'lucide-react-native';
+
+import { useUserProfile } from '@/api/auth';
+import { getUserAdminSchools, SchoolMembership } from '@/api/userApi';
 import { Center } from '@/components/ui/center';
-import { Heading } from '@/components/ui/heading';
-import { HStack } from '@/components/ui/hstack';
-import { Icon, CloseIcon } from '@/components/ui/icon';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
-import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
+import {
+  SettingsLayout,
+  SettingsSection,
+  SettingsToggleItem,
+  SettingsActionItem,
+} from '@/components/settings';
 
 export default function SchoolSettingsPage() {
-  const [showExitDialog, setShowExitDialog] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [adminSchools, setAdminSchools] = useState<SchoolMembership[]>([]);
   const [selectedSchoolId, setSelectedSchoolId] = useState<number | null>(null);
   const [schoolsLoading, setSchoolsLoading] = useState(true);
   const [authorizationError, setAuthorizationError] = useState<string | null>(null);
-  const toast = useToast();
-  const { userProfile } = useAuth();
-  const {
-    schoolSettings,
-    educationalSystems,
-    loading,
-    saving,
-    error,
-    fetchSchoolSettings,
-    fetchEducationalSystems,
-    updateSchoolSettings,
-    clearError,
-  } = useSchoolSettings();
+  const { userProfile } = useUserProfile();
+
+  // Settings state - in a real app, these would come from API
+  const [settings, setSettings] = useState({
+    notifications: {
+      emailNotifications: true,
+      smsNotifications: false,
+      pushNotifications: true,
+      classReminders: true,
+      adminAlerts: true,
+    },
+    permissions: {
+      allowStudentSelfEnrollment: false,
+      requireParentApproval: true,
+      autoAssignTeachers: false,
+      enableGuestAccess: false,
+    },
+    privacy: {
+      gdprCompliance: true,
+      allowDataExport: true,
+      requireDataConsent: true,
+      enableAnalytics: true,
+    },
+  });
 
   // Load admin schools on mount
   useEffect(() => {
@@ -57,18 +67,15 @@ export default function SchoolSettingsPage() {
         setAdminSchools(schools);
 
         if (schools.length > 0) {
-          // Auto-select the first school
           setSelectedSchoolId(schools[0].school.id);
           setAuthorizationError(null);
         } else {
-          // User has no admin schools - this is a legitimate authorization issue
           setAuthorizationError(
             'You do not have administrative access to any schools. Please contact your system administrator.'
           );
           setSelectedSchoolId(null);
         }
       } catch (error) {
-        // Handle API errors properly without bypassing authorization
         setAuthorizationError(
           'Failed to load school information. Please try again or contact support.'
         );
@@ -84,61 +91,56 @@ export default function SchoolSettingsPage() {
     }
   }, [userProfile]);
 
-  // Fetch school settings when selected school changes
-  useEffect(() => {
-    if (selectedSchoolId) {
-      fetchSchoolSettings(selectedSchoolId);
-      fetchEducationalSystems(selectedSchoolId);
-    }
-  }, [selectedSchoolId, fetchSchoolSettings, fetchEducationalSystems]);
-
-  // Show error toast when error occurs
-  useEffect(() => {
-    if (error) {
-      // Simple alert for now
-      Alert.alert('Error', error);
-      clearError();
-    }
-  }, [error, clearError]);
-
-  const handleSave = async (data: SchoolSettingsFormData) => {
-    if (!selectedSchoolId) {
-      Alert.alert('Error', 'No school selected');
-      return;
-    }
-
-    try {
-      await updateSchoolSettings(selectedSchoolId, data);
-      setHasUnsavedChanges(false);
-
-      // Simple alert for now
-      Alert.alert('Success', 'School settings updated successfully');
-    } catch (err) {
-      // Error is handled in the hook and displayed via toast
-    }
+  const updateNotificationSetting = (key: string, value: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      notifications: {
+        ...prev.notifications,
+        [key]: value,
+      },
+    }));
   };
 
-  const handleCancel = () => {
-    if (hasUnsavedChanges) {
-      setShowExitDialog(true);
-    } else {
-      router.back();
-    }
+  const updatePermissionSetting = (key: string, value: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      permissions: {
+        ...prev.permissions,
+        [key]: value,
+      },
+    }));
   };
 
-  const confirmExit = () => {
-    setShowExitDialog(false);
-    setHasUnsavedChanges(false);
-    router.back();
+  const updatePrivacySetting = (key: string, value: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      privacy: {
+        ...prev.privacy,
+        [key]: value,
+      },
+    }));
   };
 
-  const cancelExit = () => {
-    setShowExitDialog(false);
+  const handleSchoolProfileEdit = () => {
+    router.push('/(school-admin)/profile');
   };
 
-  if (schoolsLoading || loading) {
+  const handleAdvancedSettings = () => {
+    // TODO: Navigate to advanced settings form
+    Alert.alert('Advanced Settings', 'Advanced settings panel coming soon');
+  };
+
+  const handleBillingSettings = () => {
+    router.push('/(school-admin)/billing');
+  };
+
+  const handleIntegrations = () => {
+    router.push('/(school-admin)/integrations');
+  };
+
+  if (schoolsLoading) {
     return (
-      <Center className="flex-1 bg-background-light-0">
+      <Center className="flex-1 bg-gradient-page">
         <VStack space="md" className="items-center">
           <Spinner size="large" />
           <Text>Loading school settings...</Text>
@@ -147,119 +149,188 @@ export default function SchoolSettingsPage() {
     );
   }
 
-  if (authorizationError || (!selectedSchoolId && !schoolsLoading)) {
-    // Check if user is school_admin but has no admin schools - this might be a data issue
-    const isSchoolAdmin = userProfile?.user_type === 'school_admin' || userProfile?.is_admin;
-    
-    if (isSchoolAdmin && !authorizationError) {
-      // For school admins without admin schools, show a more helpful message
-      return (
-        <Center className="flex-1 bg-background-light-0">
-          <VStack space="lg" className="items-center px-6 max-w-md">
-            <VStack space="md" className="items-center">
-              <Heading size="lg" className="text-center">
-                School Setup Required
-              </Heading>
-              <Text className="text-center text-typography-600">
-                Your account has admin permissions but no schools are configured. Please contact support or check your account setup.
-              </Text>
-              <Text className="text-center text-typography-500 text-sm mt-2">
-                User Type: {userProfile?.user_type} | Admin: {userProfile?.is_admin ? 'Yes' : 'No'}
-              </Text>
-            </VStack>
-            <VStack space="sm" className="w-full">
-              <Button onPress={() => router.replace('/(school-admin)/dashboard')} className="w-full">
-                <ButtonText>Go to Dashboard</ButtonText>
-              </Button>
-              <Button
-                variant="outline"
-                onPress={() => {
-                  // Try to reload the page to refresh data
-                  if (typeof window !== 'undefined') {
-                    window.location.reload();
-                  }
-                }}
-                className="w-full"
-              >
-                <ButtonText>Refresh Page</ButtonText>
-              </Button>
-            </VStack>
-          </VStack>
-        </Center>
-      );
-    }
-    
+  if (authorizationError) {
     return (
-      <Center className="flex-1 bg-background-light-0">
-        <VStack space="lg" className="items-center px-6 max-w-md">
-          <VStack space="md" className="items-center">
-            <Heading size="lg" className="text-center">
-              Access Denied
-            </Heading>
-            <Text className="text-center text-typography-600">
-              {authorizationError || 'You do not have permission to access school settings.'}
+      <SettingsLayout title="Settings" subtitle="Access Denied">
+        <Center className="flex-1">
+          <VStack space="lg" className="items-center px-6 max-w-md">
+            <Text className="text-center text-gray-600">
+              {authorizationError}
             </Text>
           </VStack>
-          <VStack space="sm" className="w-full">
-            <Button onPress={() => router.replace('/(school-admin)/dashboard')} className="w-full">
-              <ButtonText>Go to Dashboard</ButtonText>
-            </Button>
-            <Button
-              variant="outline"
-              onPress={() => router.push('/auth/signin' as any)}
-              className="w-full"
-            >
-              <ButtonText>Sign Out</ButtonText>
-            </Button>
-          </VStack>
-        </VStack>
-      </Center>
+        </Center>
+      </SettingsLayout>
     );
   }
 
   const currentSchool = adminSchools.find(s => s.school.id === selectedSchoolId)?.school;
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
-      <Box className="flex-1 bg-background-light-0">
-        <SchoolSettingsForm
-          schoolId={selectedSchoolId!}
-          initialData={schoolSettings || undefined}
-          educationalSystems={educationalSystems}
-          onSave={handleSave}
-          onCancel={handleCancel}
-          loading={saving}
+    <SettingsLayout 
+      title="School Settings" 
+      subtitle={currentSchool?.name || 'Configure your school'}
+    >
+      {/* School Profile Section */}
+      <SettingsSection
+        title="School Profile"
+        description="Manage your school information and branding"
+        icon={School}
+      >
+        <SettingsActionItem
+          title="Edit School Profile"
+          description="Update school name, address, and contact details"
+          icon={School}
+          onPress={handleSchoolProfileEdit}
         />
+        <SettingsActionItem
+          title="Branding & Appearance"
+          description="Customize colors, logo, and visual identity"
+          icon={Palette}
+          onPress={() => router.push('/(school-admin)/branding')}
+        />
+      </SettingsSection>
 
-        {/* Exit Confirmation Dialog */}
-        <AlertDialog isOpen={showExitDialog} onClose={cancelExit}>
-          <AlertDialogBackdrop />
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <Heading size="lg">Unsaved Changes</Heading>
-              <AlertDialogCloseButton>
-                <Icon as={CloseIcon} />
-              </AlertDialogCloseButton>
-            </AlertDialogHeader>
-            <AlertDialogBody>
-              <Text>
-                You have unsaved changes that will be lost if you leave this page. Are you sure you
-                want to continue?
-              </Text>
-            </AlertDialogBody>
-            <AlertDialogFooter>
-              <HStack space="md">
-                <Button variant="outline" onPress={cancelExit}>
-                  <ButtonText>Cancel</ButtonText>
-                </Button>
-                <Button action="negative" onPress={confirmExit}>
-                  <ButtonText>Leave</ButtonText>
-                </Button>
-              </HStack>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </Box>
-    </View>
+      {/* Notifications Section */}
+      <SettingsSection
+        title="Notifications"
+        description="Control how and when you receive alerts"
+        icon={Bell}
+      >
+        <SettingsToggleItem
+          title="Email Notifications"
+          description="Receive updates and alerts via email"
+          icon={Bell}
+          value={settings.notifications.emailNotifications}
+          onValueChange={(value) => updateNotificationSetting('emailNotifications', value)}
+        />
+        <SettingsToggleItem
+          title="SMS Notifications"
+          description="Get important alerts via SMS"
+          icon={Smartphone}
+          value={settings.notifications.smsNotifications}
+          onValueChange={(value) => updateNotificationSetting('smsNotifications', value)}
+        />
+        <SettingsToggleItem
+          title="Push Notifications"
+          description="Receive notifications on your mobile device"
+          icon={Bell}
+          value={settings.notifications.pushNotifications}
+          onValueChange={(value) => updateNotificationSetting('pushNotifications', value)}
+        />
+        <SettingsToggleItem
+          title="Class Reminders"
+          description="Automatic reminders before scheduled classes"
+          icon={Clock}
+          value={settings.notifications.classReminders}
+          onValueChange={(value) => updateNotificationSetting('classReminders', value)}
+        />
+        <SettingsToggleItem
+          title="Admin Alerts"
+          description="Important administrative notifications"
+          icon={Shield}
+          value={settings.notifications.adminAlerts}
+          onValueChange={(value) => updateNotificationSetting('adminAlerts', value)}
+        />
+      </SettingsSection>
+
+      {/* Permissions & Access Section */}
+      <SettingsSection
+        title="Permissions & Access"
+        description="Control user access and enrollment settings"
+        icon={Users}
+      >
+        <SettingsToggleItem
+          title="Student Self-Enrollment"
+          description="Allow students to enroll themselves in classes"
+          icon={Users}
+          value={settings.permissions.allowStudentSelfEnrollment}
+          onValueChange={(value) => updatePermissionSetting('allowStudentSelfEnrollment', value)}
+        />
+        <SettingsToggleItem
+          title="Require Parent Approval"
+          description="Parent consent required for student actions"
+          icon={Shield}
+          value={settings.permissions.requireParentApproval}
+          onValueChange={(value) => updatePermissionSetting('requireParentApproval', value)}
+        />
+        <SettingsToggleItem
+          title="Auto-Assign Teachers"
+          description="Automatically assign teachers to new classes"
+          icon={Users}
+          value={settings.permissions.autoAssignTeachers}
+          onValueChange={(value) => updatePermissionSetting('autoAssignTeachers', value)}
+        />
+        <SettingsToggleItem
+          title="Guest Access"
+          description="Allow guest users to view public content"
+          icon={Globe}
+          value={settings.permissions.enableGuestAccess}
+          onValueChange={(value) => updatePermissionSetting('enableGuestAccess', value)}
+        />
+      </SettingsSection>
+
+      {/* Privacy & Data Section */}
+      <SettingsSection
+        title="Privacy & Data"
+        description="Manage data protection and compliance settings"
+        icon={Shield}
+      >
+        <SettingsToggleItem
+          title="GDPR Compliance"
+          description="Enable GDPR compliance features"
+          icon={Shield}
+          value={settings.privacy.gdprCompliance}
+          onValueChange={(value) => updatePrivacySetting('gdprCompliance', value)}
+        />
+        <SettingsToggleItem
+          title="Allow Data Export"
+          description="Users can request and download their data"
+          icon={Database}
+          value={settings.privacy.allowDataExport}
+          onValueChange={(value) => updatePrivacySetting('allowDataExport', value)}
+        />
+        <SettingsToggleItem
+          title="Require Data Consent"
+          description="Explicit consent required for data processing"
+          icon={Shield}
+          value={settings.privacy.requireDataConsent}
+          onValueChange={(value) => updatePrivacySetting('requireDataConsent', value)}
+        />
+        <SettingsToggleItem
+          title="Analytics"
+          description="Collect anonymous usage data to improve the platform"
+          icon={Database}
+          value={settings.privacy.enableAnalytics}
+          onValueChange={(value) => updatePrivacySetting('enableAnalytics', value)}
+        />
+      </SettingsSection>
+
+      {/* Advanced Settings Section */}
+      <SettingsSection
+        title="Advanced Settings"
+        description="Additional configuration options"
+        icon={Settings}
+      >
+        <SettingsActionItem
+          title="Billing & Payments"
+          description="Manage billing information and payment settings"
+          icon={CreditCard}
+          onPress={handleBillingSettings}
+        />
+        <SettingsActionItem
+          title="Integrations"
+          description="Connect with external tools and services"
+          icon={Globe}
+          onPress={handleIntegrations}
+        />
+        <SettingsActionItem
+          title="Advanced Configuration"
+          description="Educational systems, schedules, and detailed settings"
+          icon={Settings}
+          onPress={handleAdvancedSettings}
+          badge={{ text: "Pro", variant: "solid", action: "primary" }}
+        />
+      </SettingsSection>
+    </SettingsLayout>
   );
 }

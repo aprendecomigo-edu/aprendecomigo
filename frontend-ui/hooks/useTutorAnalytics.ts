@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import { getTutorAnalytics, TutorAnalytics } from '@/api/tutorApi';
 
 interface UseTutorAnalyticsResult {
@@ -11,7 +11,7 @@ interface UseTutorAnalyticsResult {
 }
 
 const useTutorAnalytics = (schoolId?: number): UseTutorAnalyticsResult => {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const [analytics, setAnalytics] = useState<TutorAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

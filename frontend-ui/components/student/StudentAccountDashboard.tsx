@@ -31,7 +31,7 @@ import { DashboardOverview } from './dashboard/DashboardOverview';
 import { PurchaseHistory } from './dashboard/PurchaseHistory';
 import { TransactionHistory } from './dashboard/TransactionHistory';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import { StudentBalanceCard } from '@/components/purchase';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
@@ -97,7 +97,7 @@ const DASHBOARD_TABS = [
  */
 export function StudentAccountDashboard({ email, className = '' }: StudentAccountDashboardProps) {
   const router = useRouter();
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const dashboard = useStudentDashboard(email);
 
   // Quick stats from balance data

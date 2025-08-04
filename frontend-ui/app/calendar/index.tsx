@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 
 import apiClient from '@/api/apiClient';
-import { useAuth } from '@/api/authContext';
+import { useAuth, useUserProfile } from '@/api/auth';
 import schedulerApi, { ClassSchedule } from '@/api/schedulerApi';
 import { tasksApi, Task } from '@/api/tasksApi';
 import MainLayout from '@/components/layouts/MainLayout';
@@ -150,7 +150,7 @@ const ClassCard: React.FC<{
   onPress: () => void;
   showDate?: boolean;
 }> = ({ classSchedule, onPress, showDate = false }) => {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const isTeacher = userProfile?.user_type === 'teacher';
 
   return (
@@ -321,7 +321,7 @@ const ListView: React.FC<{
 
 // Main calendar component
 const CalendarScreen: React.FC = () => {
-  const { userProfile, ensureUserProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>('list');
   const [classes, setClasses] = useState<ClassSchedule[]>([]);
@@ -385,10 +385,9 @@ const CalendarScreen: React.FC = () => {
   }, [currentDate, view]);
 
   useEffect(() => {
-    // Ensure user profile is loaded before checking permissions
+    // Load data when component mounts
     const initializeData = async () => {
       try {
-        await ensureUserProfile();
         await loadClasses();
         await loadTasks();
       } catch (error) {
@@ -396,7 +395,7 @@ const CalendarScreen: React.FC = () => {
       }
     };
     initializeData();
-  }, [loadClasses, loadTasks, ensureUserProfile]);
+  }, [loadClasses, loadTasks]);
 
   const handleClassPress = (classSchedule: ClassSchedule) => {
     router.push(`/calendar/${classSchedule.id}`);

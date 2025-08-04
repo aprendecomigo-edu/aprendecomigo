@@ -1,2 +1,2 @@
-import { WelcomeScreen } from '@/screens/onboarding/welcome-screen';
+import { WelcomeScreen } from '@/components/onboarding/WelcomeScreen';
 export default WelcomeScreen;

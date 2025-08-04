@@ -3,7 +3,7 @@ import { CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
-import { useAuth } from '@/api/authContext';
+import { useAuth, useUserProfile } from '@/api/auth';
 import InvitationApi, { InvitationStatusResponse } from '@/api/invitationApi';
 import MainLayout from '@/components/layouts/MainLayout';
 import ProfileWizard from '@/components/profile-wizard/ProfileWizard';
@@ -20,7 +20,8 @@ import { VStack } from '@/components/ui/vstack';
 const AcceptInvitationProfileWizardPage = () => {
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
-  const { isLoggedIn, userProfile } = useAuth();
+  const { isLoggedIn } = useAuth();
+  const { userProfile } = useUserProfile();
 
   const [invitationData, setInvitationData] = useState<InvitationStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -98,7 +99,7 @@ const AcceptInvitationProfileWizardPage = () => {
   const handleWizardSuccess = () => {
     // ProfileWizard already handles invitation acceptance and shows success alert
     // Navigate to teacher dashboard after successful profile creation
-    router.replace('/(tutor)/dashboard');
+    router.replace('/(school-admin)/dashboard');
   };
 
   const handleWizardCancel = () => {

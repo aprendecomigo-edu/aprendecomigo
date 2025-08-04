@@ -3,7 +3,7 @@ import React from 'react';
 import { Platform } from 'react-native';
 
 import { AuthGuard } from '@/components/auth/AuthGuard';
-import { TeacherProfileWizard } from '@/screens/onboarding/teacher-profile-wizard';
+import { TeacherProfileWizard } from '@/components/onboarding/TeacherProfileWizard';
 
 export default function TeacherProfileOnboardingPage() {
   const router = useRouter();

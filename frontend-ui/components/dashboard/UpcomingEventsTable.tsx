@@ -7,7 +7,7 @@ import {
   AlertCircleIcon,
   CheckCircleIcon,
 } from 'lucide-react-native';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -18,77 +18,38 @@ import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { useSchedules } from '@/hooks/useSchedules';
+import { ClassSchedule } from '@/api/schedulerApi';
 
-// Mock data types
-interface EventStatus {
-  type: 'scheduled' | 'confirmed' | 'pending' | 'cancelled';
-  label: string;
-}
-
-interface UpcomingEvent {
+// UI Event interface (mapped from API ClassSchedule)
+interface UIEvent {
   id: string;
   date: string;
   time: string;
   subject: string;
   teacher: string;
   student: string;
-  status: EventStatus['type'];
+  status: 'scheduled' | 'confirmed' | 'pending' | 'cancelled' | 'completed';
   duration?: string;
 }
 
-// Mock data - in real app this would come from API
-const MOCK_EVENTS: UpcomingEvent[] = [
-  {
-    id: '1',
-    date: '2025-08-02',
-    time: '14:00',
-    subject: 'Matemática',
-    teacher: 'Prof. Ana Silva',
-    student: 'João Santos',
-    status: 'confirmed',
-    duration: '1h',
-  },
-  {
-    id: '2',
-    date: '2025-08-02',
-    time: '16:30',
-    subject: 'Português',
-    teacher: 'Prof. Maria Costa',
-    student: 'Sofia Oliveira',
-    status: 'scheduled',
-    duration: '1h30m',
-  },
-  {
-    id: '3',
-    date: '2025-08-03',
-    time: '10:00',
-    subject: 'Ciências',
-    teacher: 'Prof. Carlos Ferreira',
-    student: 'Miguel Alves',
-    status: 'pending',
-    duration: '1h',
-  },
-  {
-    id: '4',
-    date: '2025-08-05',
-    time: '15:00',
-    subject: 'História',
-    teacher: 'Prof. Isabel Pereira',
-    student: 'Ana Rodrigues',
-    status: 'scheduled',
-    duration: '1h',
-  },
-  {
-    id: '5',
-    date: '2025-08-06',
-    time: '11:00',
-    subject: 'Inglês',
-    teacher: 'Prof. David Brown',
-    student: 'Pedro Martins',
-    status: 'confirmed',
-    duration: '1h',
-  },
-];
+// Helper function to map API ClassSchedule to UI Event
+const mapClassScheduleToUIEvent = (schedule: ClassSchedule): UIEvent => {
+  // Calculate duration from start/end times or use duration_minutes
+  const duration = schedule.duration_minutes ? `${Math.floor(schedule.duration_minutes / 60)}h${schedule.duration_minutes % 60 > 0 ? schedule.duration_minutes % 60 + 'm' : ''}` : undefined;
+  
+  return {
+    id: schedule.id.toString(),
+    date: schedule.scheduled_date,
+    time: schedule.start_time,
+    subject: schedule.title,
+    teacher: schedule.teacher_name,
+    student: schedule.student_name,
+    status: schedule.status === 'no_show' ? 'cancelled' : schedule.status,
+    duration,
+  };
+};
+
 
 type FilterType = 'today' | 'week' | 'month';
 
@@ -103,7 +64,7 @@ const FILTER_OPTIONS: FilterOption[] = [
   { value: 'month', label: 'Este Mês' },
 ];
 
-const STATUS_CONFIG: Record<EventStatus['type'], { color: string; label: string; icon: any }> = {
+const STATUS_CONFIG: Record<UIEvent['status'], { color: string; label: string; icon: any }> = {
   scheduled: {
     color: 'blue',
     label: 'Agendada',
@@ -124,12 +85,14 @@ const STATUS_CONFIG: Record<EventStatus['type'], { color: string; label: string;
     label: 'Cancelada',
     icon: AlertCircleIcon,
   },
+  completed: {
+    color: 'blue',
+    label: 'Concluída',
+    icon: CheckCircleIcon,
+  },
 };
 
 interface UpcomingEventsTableProps {
-  // Future props for real data
-  events?: UpcomingEvent[];
-  isLoading?: boolean;
   onRefresh?: () => void;
 }
 
@@ -151,7 +114,7 @@ const formatDate = (dateString: string): string => {
   }
 };
 
-const filterEventsByPeriod = (events: UpcomingEvent[], filter: FilterType): UpcomingEvent[] => {
+const filterEventsByPeriod = (events: UIEvent[], filter: FilterType): UIEvent[] => {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -175,7 +138,7 @@ const filterEventsByPeriod = (events: UpcomingEvent[], filter: FilterType): Upco
   });
 };
 
-const StatusBadge: React.FC<{ status: EventStatus['type'] }> = ({ status }) => {
+const StatusBadge: React.FC<{ status: UIEvent['status'] }> = ({ status }) => {
   const config = STATUS_CONFIG[status];
 
   return (
@@ -189,7 +152,7 @@ const StatusBadge: React.FC<{ status: EventStatus['type'] }> = ({ status }) => {
   );
 };
 
-const EventRow: React.FC<{ event: UpcomingEvent; isLast: boolean }> = ({ event, isLast }) => (
+const EventRow: React.FC<{ event: UIEvent; isLast: boolean }> = ({ event, isLast }) => (
   <VStack className={`p-4 w-full ${!isLast ? 'border-b border-gray-100' : ''}`}>
     <HStack space="sm" className="items-start w-full">
       {/* Date/Time Column */}
@@ -283,11 +246,22 @@ const FilterButtons: React.FC<{
 );
 
 const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({
-  events = MOCK_EVENTS,
-  isLoading = false,
   onRefresh,
 }) => {
   const [activeFilter, setActiveFilter] = useState<FilterType>('week');
+  
+  // Use the API hook
+  const {
+    schedules,
+    loading,
+    error,
+    refreshSchedules,
+  } = useSchedules();
+  
+  // Convert API schedules to UI events
+  const events = useMemo(() => {
+    return schedules.map(mapClassScheduleToUIEvent);
+  }, [schedules]);
 
   const filteredEvents = useMemo(() => {
     return filterEventsByPeriod(events, activeFilter).sort((a, b) => {
@@ -296,6 +270,15 @@ const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({
       return dateA.getTime() - dateB.getTime();
     });
   }, [events, activeFilter]);
+  
+  // Handle refresh - use API refresh or custom callback
+  const handleRefresh = useCallback(async () => {
+    if (onRefresh) {
+      onRefresh();
+    } else {
+      await refreshSchedules();
+    }
+  }, [onRefresh, refreshSchedules]);
 
   return (
     <Box className="glass-container p-6 rounded-xl w-full">
@@ -321,9 +304,16 @@ const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({
 
         {/* Events List */}
         <Box className="bg-white rounded-xl border border-gray-100 w-full">
-          {isLoading ? (
+          {loading ? (
             <VStack space="md" className="p-8">
               <Text className="text-center font-body text-gray-500">Carregando aulas...</Text>
+            </VStack>
+          ) : error ? (
+            <VStack space="md" className="items-center py-8">
+              <Text className="text-center font-body text-red-600">Erro: {error}</Text>
+              <Button variant="outline" size="sm" onPress={handleRefresh}>
+                <ButtonText>Tentar Novamente</ButtonText>
+              </Button>
             </VStack>
           ) : filteredEvents.length === 0 ? (
             <EmptyState filter={activeFilter} />
@@ -356,11 +346,9 @@ const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({
               <ButtonText>Ver Calendário</ButtonText>
             </Button>
 
-            {onRefresh && (
-              <Button variant="solid" size="sm" onPress={onRefresh}>
-                <ButtonText>Atualizar</ButtonText>
-              </Button>
-            )}
+            <Button variant="solid" size="sm" onPress={handleRefresh}>
+              <ButtonText>Atualizar</ButtonText>
+            </Button>
           </HStack>
         )}
       </VStack>

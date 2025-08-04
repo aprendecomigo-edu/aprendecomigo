@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import { NotificationApiClient } from '@/api/notificationApi';
 import type {
   NotificationResponse,
@@ -61,7 +61,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     initialFilters = {},
   } = options;
 
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
 
   // State
   const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
@@ -298,7 +298,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
 export function useUnreadNotificationCount() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
 
   const fetchUnreadCount = useCallback(async () => {
     if (!userProfile) return;

@@ -1,7 +1,7 @@
 import { Redirect, Stack, type Href } from 'expo-router';
 import React from 'react';
 
-import { useAuth } from '@/api/authContext';
+import { useAuth } from '@/api/auth';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { View } from '@/components/ui/view';

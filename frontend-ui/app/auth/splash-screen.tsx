@@ -1,2 +1,2 @@
-import { SplashScreen } from '@/screens/auth/splash-screen';
+import { SplashScreen } from '@/components/auth';
 export default SplashScreen;

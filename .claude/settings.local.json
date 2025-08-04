@@ -43,7 +43,8 @@
       "mcp__playwright__browser_evaluate",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:gluestack.io)",
-      "WebFetch(domain:www.nativewind.dev)"
+      "WebFetch(domain:www.nativewind.dev)",
+      "WebFetch(domain:docs.expo.dev)"
     ],
     "deny": []
   }

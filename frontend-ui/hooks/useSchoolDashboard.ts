@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import {
   getSchoolActivity,
   getSchoolInfo,
@@ -108,7 +108,7 @@ export const useSchoolDashboard = ({
   schoolId,
   refreshInterval = 30000, // 30 seconds
 }: UseSchoolDashboardProps) => {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
 
   // State management
   const [metrics, setMetrics] = useState<SchoolMetrics | null>(null);

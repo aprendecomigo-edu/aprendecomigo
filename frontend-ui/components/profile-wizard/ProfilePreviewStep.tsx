@@ -673,7 +673,7 @@ export const ProfilePreviewStep: React.FC<ProfilePreviewStepProps> = ({
                     {formData.first_name} {formData.last_name} - {formData.professional_title}
                   </Text>
                   <Text className="text-green-700 text-sm">
-                    aprende-comigo.com/tutor/{formData.first_name?.toLowerCase()}-
+                    aprende-comigo.com/school/{formData.first_name?.toLowerCase()}-
                     {formData.last_name?.toLowerCase()}
                   </Text>
                   <Text className="text-gray-700 text-sm">

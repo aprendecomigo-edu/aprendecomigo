@@ -272,7 +272,7 @@ export function NotificationCenter({
         router.push('/purchase');
         break;
       default:
-        router.push('/student/dashboard');
+        router.push('/(student)/dashboard');
     }
 
     // Mark as read if not already

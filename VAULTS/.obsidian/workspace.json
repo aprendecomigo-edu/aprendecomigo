@@ -11,10 +11,14 @@
             "id": "5a084ef52007d964",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "FOUNDER_VAULT/test-accounts-2025-08-02.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "test-accounts-2025-08-02"
             }
           }
         ]
@@ -161,7 +165,7 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "4f5658ed65bd62b9",
+  "active": "5a084ef52007d964",
   "lastOpenFiles": [
     "FOUNDER_VAULT/github-issue-132-code-review-report.md",
     "FOUNDER_VAULT/dashboard-essential-content-implementation-2025-08-02.md",

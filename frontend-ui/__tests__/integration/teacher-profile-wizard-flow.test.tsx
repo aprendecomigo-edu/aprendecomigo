@@ -16,7 +16,7 @@ import {
 
 import apiClient from '@/api/apiClient';
 import { useProfileWizard } from '@/hooks/useProfileWizard';
-import { TeacherProfileWizard } from '@/screens/onboarding/teacher-profile-wizard';
+import { TeacherProfileWizard } from '@/components/onboarding/TeacherProfileWizard';
 
 // Use real hook instead of mocking it for integration tests
 jest.unmock('@/hooks/useProfileWizard');

@@ -1,2 +1,2 @@
-import ChannelListScreenPage from '@/screens/chat/channel-list';
-export default ChannelListScreenPage;
+import ChatList from '@/components/chat/ChatList';
+export default ChatList;

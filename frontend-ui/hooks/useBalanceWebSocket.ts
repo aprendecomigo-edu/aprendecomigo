@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-import { useAuth } from '@/api/authContext';
+import { useAuth, useUserProfile } from '@/api/auth';
 import { useWebSocketEnhanced } from '@/hooks/useWebSocket';
 import type { NotificationResponse } from '@/types/notification';
 import type { StudentBalanceResponse } from '@/types/purchase';
@@ -57,7 +57,7 @@ export function useBalanceWebSocket(
 ): UseBalanceWebSocketResult {
   const { enabled = true, reconnectInterval = 5000, maxReconnectAttempts = 5 } = options;
 
-  const { userProfile, token } = useAuth();
+  const { userProfile } = useUserProfile();
 
   // State
   const [latestBalance, setLatestBalance] = useState<StudentBalanceResponse | null>(null);
@@ -74,8 +74,8 @@ export function useBalanceWebSocket(
   const wsUrl = null; // Temporarily disabled until backend consumer is implemented
 
   // Future WebSocket URL when backend consumer is available:
-  // const wsUrl = userProfile && token && enabled
-  //   ? `ws://localhost:8000/ws/balance/${userProfile.id}/?token=${token}`
+  // const wsUrl = userProfile && enabled
+  //   ? `ws://localhost:8000/ws/balance/${userProfile.id}/`
   //   : null;
 
   const {

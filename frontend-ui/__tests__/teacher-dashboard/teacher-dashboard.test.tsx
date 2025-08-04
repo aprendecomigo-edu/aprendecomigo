@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import { router } from 'expo-router';
 import React from 'react';
 
-import { useAuth } from '@/api/authContext';
+import { useAuth, useUserProfile } from '@/api/auth';
 import TeacherDashboard from '@/app/(teacher)/dashboard/index';
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 
@@ -15,8 +15,9 @@ jest.mock('expo-router', () => ({
   },
 }));
 
-jest.mock('@/api/authContext', () => ({
+jest.mock('@/api/auth', () => ({
   useAuth: jest.fn(),
+  useUserProfile: jest.fn(),
 }));
 
 jest.mock('@/hooks/useTeacherDashboard', () => ({

@@ -18,7 +18,7 @@ import {
 import React, { useCallback } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import MainLayout from '@/components/layouts/MainLayout';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
@@ -34,7 +34,7 @@ import { VStack } from '@/components/ui/vstack';
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 
 const TeacherProfilePage = () => {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const { data, isLoading, error, refresh } = useTeacherDashboard();
 
   const handleEditProfile = useCallback(() => {

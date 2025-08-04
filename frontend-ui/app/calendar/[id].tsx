@@ -3,7 +3,7 @@ import { Calendar, Clock, User, MapPin, BookOpen } from 'lucide-react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import schedulerApi, { ClassSchedule } from '@/api/schedulerApi';
 import MainLayout from '@/components/layouts/MainLayout';
 import { Badge, BadgeText } from '@/components/ui/badge';
@@ -37,7 +37,7 @@ const getStatusColor = (status: string): string => {
 
 const ClassDetailScreen: React.FC = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const [classSchedule, setClassSchedule] = useState<ClassSchedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);

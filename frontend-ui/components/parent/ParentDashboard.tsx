@@ -27,7 +27,7 @@ import { FamilyMetricsOverview } from './FamilyMetricsOverview';
 import { ParentQuickActions } from './ParentQuickActions';
 import { PurchaseApprovalCard } from './PurchaseApprovalCard';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -45,7 +45,7 @@ import { VStack } from '@/components/ui/vstack';
 import { useParentDashboard } from '@/hooks/useParentDashboard';
 
 export const ParentDashboard: React.FC = () => {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const {
     dashboardData,
     familyMetrics,

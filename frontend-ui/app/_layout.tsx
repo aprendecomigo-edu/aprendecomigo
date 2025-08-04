@@ -1,12 +1,12 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, Redirect, type Href } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
-import { AuthProvider, useAuth } from '@/api/authContext';
+import { AuthProvider, useAuth, UserProfileProvider, SchoolProvider } from '@/api/auth';
 import { TutorialProvider, TutorialOverlay } from '@/components/tutorial';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import '../global.css';
@@ -62,47 +62,47 @@ function LoadingScreen() {
   );
 }
 
-// This component will handle protected routes
-function ProtectedRoutes() {
+// Navigation wrapper with auth-aware routing
+function AuthAwareNavigation() {
   const { isLoggedIn, isLoading } = useAuth();
 
+  // Show loading screen while checking authentication
   if (isLoading) {
     return <LoadingScreen />;
   }
 
-  if (!isLoggedIn) {
-    return <Redirect href="/auth/signin" />;
-  }
-
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="home" />
-      <Stack.Screen name="profile" />
-      <Stack.Screen name="admin" />
-      <Stack.Screen name="student" />
-      <Stack.Screen name="chat" />
-    </Stack>
-  );
-}
-
-// This component will handle public routes
-function PublicRoutes() {
-  const { isLoggedIn, isLoading } = useAuth();
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
-  if (isLoggedIn) {
-    return <Redirect href={'home' as Href} />;
-  }
-
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
+      {/* Always accessible routes */}
       <Stack.Screen name="index" />
-      <Stack.Screen name="auth/signin" />
-      <Stack.Screen name="auth/signup" />
-      <Stack.Screen name="auth/verify-code" />
+      
+      {/* Public routes - only show when NOT logged in */}
+      {!isLoggedIn && (
+        <Stack.Screen name="auth" />
+      )}
+      
+      {/* Protected routes - only show when logged in */}
+      {isLoggedIn && (
+        <>
+          <Stack.Screen name="home" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="settings" />
+          <Stack.Screen name="chat" />
+          <Stack.Screen name="purchase" />
+          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="accept-invitation" />
+          <Stack.Screen name="(school-admin)" options={{ headerShown: false }} />
+          <Stack.Screen name="(teacher)" options={{ headerShown: false }} />
+          <Stack.Screen name="(parent)" />
+          <Stack.Screen name="admin" />
+          <Stack.Screen name="(student)" />
+          <Stack.Screen name="students" />
+          <Stack.Screen name="teachers" />
+          <Stack.Screen name="calendar" />
+          <Stack.Screen name="users" />
+          <Stack.Screen name="dashboard" />
+        </>
+      )}
     </Stack>
   );
 }
@@ -160,46 +160,14 @@ function RootLayoutNav() {
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <ToastProvider>
           <AuthProvider>
-            <TutorialProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="landing" />
-                <Stack.Screen name="auth" />
-                <Stack.Screen name="home" />
-                <Stack.Screen name="profile" />
-                <Stack.Screen name="settings" />
-                <Stack.Screen name="chat" />
-                <Stack.Screen name="purchase" />
-                <Stack.Screen name="onboarding" />
-                <Stack.Screen name="accept-invitation" />
-                <Stack.Screen
-                  name="(school-admin)"
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="(tutor)"
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="(teacher)"
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen name="parents" />
-                <Stack.Screen name="admin" />
-                <Stack.Screen name="student" />
-                <Stack.Screen name="students" />
-                <Stack.Screen name="teachers" />
-                <Stack.Screen name="calendar" />
-                <Stack.Screen name="users" />
-              </Stack>
-              <TutorialOverlay />
-            </TutorialProvider>
+            <UserProfileProvider>
+              <SchoolProvider>
+                <TutorialProvider>
+                  <AuthAwareNavigation />
+                  <TutorialOverlay />
+                </TutorialProvider>
+              </SchoolProvider>
+            </UserProfileProvider>
           </AuthProvider>
         </ToastProvider>
       </ThemeProvider>

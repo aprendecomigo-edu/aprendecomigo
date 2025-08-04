@@ -1,7 +1,7 @@
 import { Redirect } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 
-import { useAuth } from '@/api/authContext';
+import { useAuth, useUserProfile } from '@/api/auth';
 import { Center } from '@/components/ui/center';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
@@ -9,23 +9,11 @@ import { VStack } from '@/components/ui/vstack';
 
 // Role-based home redirect component
 const RoleBasedHome: React.FC = () => {
-  const { userProfile, isLoading, ensureUserProfile } = useAuth();
-  const [isUserProfileLoaded, setIsUserProfileLoaded] = useState(false);
-
-  // Ensure user profile is loaded
-  useEffect(() => {
-    const loadProfile = async () => {
-      await ensureUserProfile();
-      setIsUserProfileLoaded(true);
-    };
-
-    if (!isUserProfileLoaded && !isLoading) {
-      loadProfile();
-    }
-  }, [ensureUserProfile, isLoading, isUserProfileLoaded]);
+  const { isLoading } = useAuth();
+  const { userProfile, isLoading: isProfileLoading } = useUserProfile();
 
   // Show loading while checking user profile
-  if (isLoading || !isUserProfileLoaded || !userProfile) {
+  if (isLoading || isProfileLoading || !userProfile) {
     return (
       <Center className="flex-1">
         <VStack space="md" className="items-center">
@@ -53,12 +41,12 @@ const RoleBasedHome: React.FC = () => {
 
     // Students go to student dashboard
     if (userProfile.user_type === 'student') {
-      return '/student/dashboard';
+      return '/(student)/dashboard';
     }
 
     // Parents go to parent dashboard
     if (userProfile.user_type === 'parent') {
-      return '/parents';
+      return '/(parent)/dashboard';
     }
 
     // Default fallback to admin dashboard

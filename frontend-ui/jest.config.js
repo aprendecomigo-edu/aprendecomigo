@@ -1,7 +1,4 @@
-const { defaults: tsjPreset } = require('ts-jest/presets');
-
 module.exports = {
-  ...tsjPreset,
   preset: 'jest-expo',
   transformIgnorePatterns: [
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@gluestack-ui/.*|@gluestack-style/.*|lucide-react-native)',
@@ -20,7 +17,6 @@ module.exports = {
   ],
   collectCoverageFrom: [
     'components/**/*.{js,jsx,ts,tsx}',
-    'screens/**/*.{js,jsx,ts,tsx}',
     'hooks/**/*.{js,jsx,ts,tsx}',
     'api/**/*.{js,jsx,ts,tsx}',
     '!**/*.d.ts',
@@ -39,7 +35,7 @@ module.exports = {
       statements: 85,
     },
     // Specific coverage requirements for critical components
-    './screens/onboarding/teacher-profile-wizard.tsx': {
+    './components/onboarding/TeacherProfileWizard.tsx': {
       branches: 85,
       functions: 95,
       lines: 90,
@@ -55,7 +51,6 @@ module.exports = {
   moduleNameMapping: {
     '^@/(.*)$': '<rootDir>/$1',
     '^@/components/(.*)$': '<rootDir>/components/$1',
-    '^@/screens/(.*)$': '<rootDir>/screens/$1',
     '^@/hooks/(.*)$': '<rootDir>/hooks/$1',
     '^@/api/(.*)$': '<rootDir>/api/$1',
     '^@/constants/(.*)$': '<rootDir>/constants/$1',

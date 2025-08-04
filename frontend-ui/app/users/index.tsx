@@ -18,7 +18,7 @@ import {
 } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import { getTeachers, TeacherProfile } from '@/api/userApi';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { AddStudentModal } from '@/components/modals/AddStudentModal';
@@ -676,7 +676,7 @@ const StaffTab = () => {
 };
 
 export default function UsersPage() {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const [activeTab, setActiveTab] = useState<TabType>('teachers');
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [isInviteTeacherModalOpen, setIsInviteTeacherModalOpen] = useState(false);

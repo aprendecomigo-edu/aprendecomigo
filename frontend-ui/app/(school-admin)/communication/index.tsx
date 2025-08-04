@@ -13,7 +13,7 @@ import {
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import MainLayout from '@/components/layouts/MainLayout';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -31,7 +31,7 @@ import { useEmailAnalytics } from '@/hooks/useEmailAnalytics';
 import { useSchoolBranding } from '@/hooks/useSchoolBranding';
 
 const CommunicationDashboard = () => {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const [refreshing, setRefreshing] = useState(false);
 
   // Hooks for data fetching

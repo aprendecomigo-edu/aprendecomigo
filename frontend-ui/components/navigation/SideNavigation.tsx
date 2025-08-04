@@ -9,7 +9,7 @@ import {
   type SidebarItem,
 } from './navigation-config';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import { navigationApi } from '@/api/navigationApi';
 import { Box } from '@/components/ui/box';
 import { Icon } from '@/components/ui/icon';
@@ -30,7 +30,7 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [notificationCounts, setNotificationCounts] = useState<Record<string, number>>({});
   const segments = useSegments();
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
 
   // Get navigation items based on user role
   const navItems = React.useMemo(() => {

@@ -1,2 +1,2 @@
-import AdminDashboardPage from '@/screens/dashboard/admin-dashboard';
+import AdminDashboardPage from '@/components/dashboard/AdminDashboard';
 export default AdminDashboardPage;

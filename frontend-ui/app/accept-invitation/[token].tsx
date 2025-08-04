@@ -3,7 +3,7 @@ import { CheckCircle, AlertCircle, Clock, UserCheck } from 'lucide-react-native'
 import React, { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 
-import { useAuth } from '@/api/authContext';
+import { useAuth, useUserProfile } from '@/api/auth';
 import InvitationApi, { InvitationStatusResponse } from '@/api/invitationApi';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -20,7 +20,8 @@ import { sanitizeInvitationMessage } from '@/utils/textSanitization';
 const AcceptInvitationPage = () => {
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
-  const { userProfile, isLoggedIn } = useAuth();
+  const { isLoggedIn } = useAuth();
+  const { userProfile } = useUserProfile();
 
   const [invitationData, setInvitationData] = useState<InvitationStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,7 +93,7 @@ const AcceptInvitationPage = () => {
           onPress: () => {
             // Navigate to appropriate dashboard based on role
             if (result.school_membership.role === 'teacher') {
-              router.push('/(tutor)/dashboard');
+              router.push('/(school-admin)/dashboard');
             } else {
               router.push('/(school-admin)/dashboard');
             }
@@ -206,7 +207,7 @@ const AcceptInvitationPage = () => {
           <Button
             onPress={() => {
               if (invitation.role === 'teacher') {
-                router.push('/(tutor)/dashboard');
+                router.push('/(school-admin)/dashboard');
               } else {
                 router.push('/(school-admin)/dashboard');
               }

@@ -1,7 +1,7 @@
 import { X, User, Calendar, Mail, Phone, GraduationCap } from 'lucide-react-native';
 import React, { useState } from 'react';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import {
   createStudent,
   CreateStudentData,
@@ -112,7 +112,7 @@ interface AddStudentModalProps {
 
 export const AddStudentModal = ({ isOpen, onClose, onSuccess }: AddStudentModalProps) => {
   const { showToast } = useToast();
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
 
   const [formData, setFormData] = useState<StudentFormData>({
     name: '',

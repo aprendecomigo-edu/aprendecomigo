@@ -1,4 +1,4 @@
-.PHONY: dev dev-open backend frontend stop logs open health check-deps
+.PHONY: dev dev-open backend frontend stop logs open health check-deps create-test-data verify-test-data create-admin-calendar
 
 backend:
 	@echo "Starting Django backend server..."
@@ -140,3 +140,23 @@ check-deps:
 	@echo "Environment variables:"
 	@echo "DJANGO_ENV: $${DJANGO_ENV:-not set}"
 	@echo "EXPO_PUBLIC_ENV: $${EXPO_PUBLIC_ENV:-not set}"
+
+create-test-data:
+	@echo "Creating school admin test data..."
+	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; exit 1; fi
+	@cd backend && source ../.venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development python3 manage.py create_school_admin_test_data --clear-existing
+	@echo "Test data created successfully!"
+	@echo "Admin email: ana.silva@example.com"
+	@echo "Verify data with: make verify-test-data"
+
+verify-test-data:
+	@echo "Verifying school admin test data..."
+	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; exit 1; fi
+	@cd backend && source ../.venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development python3 manage.py verify_test_data
+
+create-admin-calendar:
+	@echo "Creating admin calendar events..."
+	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; exit 1; fi
+	@cd backend && source ../.venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development python3 manage.py create_admin_calendar_events --school-admin-email ana.silva@example.com
+	@echo "Admin calendar events created successfully!"
+	@echo "Admin can now see calendar events in dashboard and calendar pages"

@@ -65,11 +65,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         is_admin: dashboardData.user_info.is_admin,
         created_at: dashboardData.user_info.date_joined,
         updated_at: dashboardData.user_info.date_joined, // Using date_joined as fallback
-        roles: dashboardData.user_info.roles || [], // Map from dashboard roles
+        roles: (dashboardData.user_info as any).roles || [], // Map from dashboard roles - may not be available
       };
 
       // Extract schools from roles
-      const schools: UserSchool[] = (dashboardData.user_info.roles || []).map((role: any) => ({
+      const schools: UserSchool[] = ((dashboardData.user_info as any).roles || []).map((role: any) => ({
         id: role.school.id,
         name: role.school.name,
         role: role.role,

@@ -18,9 +18,11 @@ import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { useTasks } from '@/hooks/useTasks';
+import { Task as ApiTask } from '@/api/tasksApi';
 
-// Task types
-interface Task {
+// UI Task interface (mapped from API Task)
+interface UITask {
   id: string;
   title: string;
   completed: boolean;
@@ -29,48 +31,23 @@ interface Task {
   createdAt: string;
 }
 
-type TaskPriority = Task['priority'];
+// Helper function to map API task to UI task
+const mapApiTaskToUITask = (apiTask: ApiTask): UITask => ({
+  id: apiTask.id,
+  title: apiTask.title,
+  completed: apiTask.status === 'completed',
+  priority: apiTask.priority,
+  dueDate: apiTask.due_date,
+  createdAt: apiTask.created_at,
+});
+
+type TaskPriority = UITask['priority'];
 
 interface ToDoTaskListProps {
-  // Future props for real data integration
-  initialTasks?: Task[];
-  onTasksChange?: (tasks: Task[]) => void;
   maxHeight?: number;
+  onTasksChange?: (tasks: UITask[]) => void;
 }
 
-// Mock initial tasks for demonstration
-const INITIAL_TASKS: Task[] = [
-  {
-    id: '1',
-    title: 'Revisar convites de professores pendentes',
-    completed: false,
-    priority: 'high',
-    dueDate: '2025-08-02',
-    createdAt: '2025-08-01T10:00:00Z',
-  },
-  {
-    id: '2',
-    title: 'Atualizar informações da escola no perfil',
-    completed: false,
-    priority: 'medium',
-    createdAt: '2025-08-01T14:30:00Z',
-  },
-  {
-    id: '3',
-    title: 'Configurar templates de email para comunicação',
-    completed: true,
-    priority: 'low',
-    createdAt: '2025-07-30T09:15:00Z',
-  },
-  {
-    id: '4',
-    title: 'Verificar horários disponíveis dos professores',
-    completed: false,
-    priority: 'medium',
-    dueDate: '2025-08-03',
-    createdAt: '2025-08-01T16:45:00Z',
-  },
-];
 
 const PRIORITY_CONFIG: Record<TaskPriority, { color: string; label: string; icon: any }> = {
   high: {
@@ -130,10 +107,11 @@ const PriorityBadge: React.FC<{ priority: TaskPriority }> = ({ priority }) => {
 };
 
 const TaskItem: React.FC<{
-  task: Task;
+  task: UITask;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
-}> = ({ task, onToggle, onDelete }) => {
+  isLoading?: boolean;
+}> = ({ task, onToggle, onDelete, isLoading = false }) => {
   const dueDateInfo = task.dueDate ? formatDueDate(task.dueDate) : null;
 
   return (
@@ -142,7 +120,8 @@ const TaskItem: React.FC<{
         {/* Checkbox */}
         <Pressable
           onPress={() => onToggle(task.id)}
-          className={`w-5 h-5 rounded border-2 items-center justify-center mt-0.5 ${
+          disabled={isLoading}
+          className={`w-5 h-5 rounded border-2 items-center justify-center mt-0.5 ${isLoading ? 'opacity-50' : ''} ${
             task.completed ? 'bg-success-600 border-success-600' : 'border-gray-300 bg-white'
           }`}
         >
@@ -184,7 +163,8 @@ const TaskItem: React.FC<{
         {/* Delete button */}
         <Pressable
           onPress={() => onDelete(task.id)}
-          className="p-2 rounded-lg active:scale-95 transition-transform"
+          disabled={isLoading}
+          className={`p-2 rounded-lg active:scale-95 transition-transform ${isLoading ? 'opacity-50' : ''}`}
         >
           <Icon as={TrashIcon} size="xs" className="text-gray-400" />
         </Pressable>
@@ -274,12 +254,28 @@ const EmptyState: React.FC<{ onAddTask: () => void }> = ({ onAddTask }) => (
 );
 
 const ToDoTaskList: React.FC<ToDoTaskListProps> = ({
-  initialTasks = INITIAL_TASKS,
   onTasksChange,
   maxHeight = 500,
 }) => {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  
+  // Use the API hook
+  const {
+    tasks: apiTasks,
+    loading,
+    error,
+    createTask,
+    updateTask,
+    deleteTask,
+    toggleTaskCompletion,
+    refreshTasks,
+  } = useTasks();
+  
+  // Convert API tasks to UI tasks
+  const tasks = useMemo(() => {
+    return apiTasks.map(mapApiTaskToUITask);
+  }, [apiTasks]);
 
   const { pendingTasks, completedTasks } = useMemo(() => {
     const pending = tasks
@@ -305,30 +301,45 @@ const ToDoTaskList: React.FC<ToDoTaskListProps> = ({
     return { pendingTasks: pending, completedTasks: completed };
   }, [tasks]);
 
-  const updateTasks = (newTasks: Task[]) => {
-    setTasks(newTasks);
-    onTasksChange?.(newTasks);
+  // Update parent component when tasks change
+  React.useEffect(() => {
+    onTasksChange?.(tasks);
+  }, [tasks, onTasksChange]);
+
+  const handleToggleTask = async (id: string) => {
+    setActionLoading(id);
+    try {
+      await toggleTaskCompletion(id);
+    } catch (err) {
+      console.error('Failed to toggle task:', err);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleToggleTask = (id: string) => {
-    updateTasks(
-      tasks.map(task => (task.id === id ? { ...task, completed: !task.completed } : task))
-    );
+  const handleDeleteTask = async (id: string) => {
+    setActionLoading(id);
+    try {
+      await deleteTask(id);
+    } catch (err) {
+      console.error('Failed to delete task:', err);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleDeleteTask = (id: string) => {
-    updateTasks(tasks.filter(task => task.id !== id));
-  };
-
-  const handleAddTask = (title: string, priority: TaskPriority) => {
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title,
-      completed: false,
-      priority,
-      createdAt: new Date().toISOString(),
-    };
-    updateTasks([...tasks, newTask]);
+  const handleAddTask = async (title: string, priority: TaskPriority) => {
+    try {
+      await createTask({
+        title,
+        priority,
+        task_type: 'personal', // Default to personal tasks
+        description: '', // Optional field
+      });
+      setShowAddForm(false);
+    } catch (err) {
+      console.error('Failed to create task:', err);
+    }
   };
 
   return (
@@ -353,13 +364,30 @@ const ToDoTaskList: React.FC<ToDoTaskListProps> = ({
           )}
         </HStack>
 
+        {/* Loading State */}
+        {loading && (
+          <VStack space="md" className="items-center py-8">
+            <Text className="text-center font-body text-gray-500">Carregando tarefas...</Text>
+          </VStack>
+        )}
+        
+        {/* Error State */}
+        {error && (
+          <VStack space="md" className="items-center py-4">
+            <Text className="text-center font-body text-red-600">Erro: {error}</Text>
+            <Button variant="outline" size="sm" onPress={refreshTasks}>
+              <ButtonText>Tentar Novamente</ButtonText>
+            </Button>
+          </VStack>
+        )}
+
         {/* Add Task Form */}
         {showAddForm && (
           <AddTaskForm onAdd={handleAddTask} onCancel={() => setShowAddForm(false)} />
         )}
 
         {/* Tasks List */}
-        {tasks.length === 0 && !showAddForm ? (
+        {!loading && !error && tasks.length === 0 && !showAddForm ? (
           <EmptyState onAddTask={() => setShowAddForm(true)} />
         ) : (
           <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight }}>
@@ -377,6 +405,7 @@ const ToDoTaskList: React.FC<ToDoTaskListProps> = ({
                         task={task}
                         onToggle={handleToggleTask}
                         onDelete={handleDeleteTask}
+                        isLoading={actionLoading === task.id}
                       />
                     ))}
                   </VStack>
@@ -396,6 +425,7 @@ const ToDoTaskList: React.FC<ToDoTaskListProps> = ({
                         task={task}
                         onToggle={handleToggleTask}
                         onDelete={handleDeleteTask}
+                        isLoading={actionLoading === task.id}
                       />
                     ))}
                   </VStack>

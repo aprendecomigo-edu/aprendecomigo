@@ -104,7 +104,7 @@ export function DashboardOverview({
       onTabChange('transactions');
     } else if (action.action === 'transactions') {
       // Fallback to balance page if no tab change handler
-      router.push('/student/balance');
+      router.push('/(student)/balance');
     } else if (action.id === 'purchase') {
       onPurchase();
     }

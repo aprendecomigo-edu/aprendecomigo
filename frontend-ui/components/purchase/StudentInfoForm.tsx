@@ -8,7 +8,7 @@
 import { User, Mail, AlertCircle, CheckCircle } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 
-import { useAuthContext } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -47,21 +47,21 @@ export function StudentInfoForm({
   disabled = false,
   className = '',
 }: StudentInfoFormProps) {
-  const { user } = useAuthContext();
+  const { userProfile } = useUserProfile();
   const [localName, setLocalName] = useState(studentName);
   const [localEmail, setLocalEmail] = useState(studentEmail);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Initialize form with authenticated user data if available
   useEffect(() => {
-    if (user && !studentName && !studentEmail) {
-      const userName = user.name || '';
-      const userEmail = user.email || '';
+    if (userProfile && !studentName && !studentEmail) {
+      const userName = userProfile.name || '';
+      const userEmail = userProfile.email || '';
       setLocalName(userName);
       setLocalEmail(userEmail);
       onInfoChange(userName, userEmail);
     }
-  }, [user, studentName, studentEmail, onInfoChange]);
+  }, [userProfile, studentName, studentEmail, onInfoChange]);
 
   // Track unsaved changes
   useEffect(() => {
@@ -145,7 +145,7 @@ export function StudentInfoForm({
             <Icon as={CheckCircle} className="text-success-600" />
             <VStack space="xs" className="flex-1">
               <Text className="text-success-800 font-medium">
-                Signed in as {user.name || user.email}
+                Signed in as {userProfile.name || userProfile.email}
               </Text>
               <Text className="text-success-700 text-sm">
                 You can modify the information below if needed.

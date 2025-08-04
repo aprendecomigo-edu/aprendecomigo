@@ -14,7 +14,7 @@ import {
   DEFAULT_TUTOR_ONBOARDING_STEPS,
 } from './tutor-onboarding-progress';
 
-import { useAuth } from '@/api/authContext';
+import { useAuth, useUserProfile } from '@/api/auth';
 import {
   createTutorSchool,
   getCourseCatalog,
@@ -95,7 +95,8 @@ export const TutorOnboardingFlow: React.FC<TutorOnboardingFlowProps> = ({
 }) => {
   const router = useRouter();
   const toast = useToast();
-  const { userProfile, checkAuthStatus } = useAuth();
+  const { checkAuthStatus } = useAuth();
+  const { userProfile } = useUserProfile();
 
   const [state, setState] = useState<OnboardingState>({
     currentStep: initialStep,

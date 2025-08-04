@@ -9,7 +9,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 
 import { getBalanceStatus } from './BalanceStatusBar';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import { NotificationApiClient } from '@/api/notificationApi';
 import { useToast } from '@/components/ui/toast';
 import { useBalanceUpdates } from '@/hooks/useBalanceWebSocket';
@@ -52,7 +52,7 @@ export function BalanceAlertProvider({
   pollingInterval = 30000, // 30 seconds
   enableMonitoring = true,
 }: BalanceAlertProviderProps) {
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const {
     balance,
     loading: balanceLoading,
@@ -419,6 +419,6 @@ function getActionUrl(notificationType: string): string {
     case 'renewal_prompt':
       return '/purchase';
     default:
-      return '/student/dashboard';
+      return '/(student)/dashboard';
   }
 }

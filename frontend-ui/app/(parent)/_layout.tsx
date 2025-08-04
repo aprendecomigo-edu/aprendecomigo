@@ -1,8 +1,9 @@
 /**
  * Parent Layout - Role-based layout for parent users
  *
- * Provides the navigation structure and authentication guard
- * for parent-specific routes with child account management features.
+ * Provides the navigation structure for parent-specific routes
+ * with child account management features.
+ * Authentication is handled at the root level by Stack.Protected.
  */
 
 import { Tabs } from 'expo-router';
@@ -14,7 +15,10 @@ import { Icon } from '@/components/ui/icon';
 
 export default function ParentLayout() {
   return (
-    <AuthGuard allowedRoles={['parent']} redirectTo="/auth/signin">
+    <AuthGuard 
+      allowedUserTypes={['parent']}
+      redirectTo="/dashboard"
+    >
       <Tabs
         screenOptions={{
           headerShown: false,

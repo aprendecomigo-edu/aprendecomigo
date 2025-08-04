@@ -8,9 +8,9 @@ import {
   AddFirstTeacherFlow,
   AddFirstStudentFlow,
   SchoolProfileFlow,
-} from '@/screens/onboarding/guided-flows';
-import { OnboardingChecklist } from '@/screens/onboarding/onboarding-checklist';
-import { OnboardingTutorial } from '@/screens/onboarding/onboarding-tutorial';
+} from '@/components/onboarding/GuidedFlows';
+import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
+import { OnboardingTutorial } from '@/components/onboarding/OnboardingTutorial';
 
 export default function OnboardingChecklistPage() {
   const router = useRouter();

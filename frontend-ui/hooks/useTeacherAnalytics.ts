@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import { TeacherAnalytics, getTeacherAnalytics } from '@/api/userApi';
 
 interface UseTeacherAnalyticsOptions {
@@ -38,7 +38,7 @@ export const useTeacherAnalytics = (
   options: UseTeacherAnalyticsOptions = {}
 ): UseTeacherAnalyticsReturn => {
   const { schoolId: initialSchoolId, autoFetch = true, refreshInterval } = options;
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
 
   const [analytics, setAnalytics] = useState<TeacherAnalytics | null>(null);
   const [loading, setLoading] = useState(false);

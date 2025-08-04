@@ -13,7 +13,8 @@ import {
 } from '../../utils/test-utils';
 
 import { useProfileWizard } from '@/hooks/useProfileWizard';
-import { TeacherProfileWizard, WIZARD_STEPS } from '@/screens/onboarding/teacher-profile-wizard';
+import { TeacherProfileWizard } from '@/components/onboarding/TeacherProfileWizard';
+import { WIZARD_STEPS } from '@/components/onboarding/constants';
 
 // Mock the hook
 jest.mock('@/hooks/useProfileWizard');

@@ -6,7 +6,7 @@ import { Platform, Haptics } from 'react-native';
 
 import { bottomTabNavItems, getNavigationItems, NAVIGATION_COLORS } from './navigation-config';
 
-import { useAuth } from '@/api/authContext';
+import { useUserProfile } from '@/api/auth';
 import { navigationApi } from '@/api/navigationApi';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
@@ -26,7 +26,7 @@ interface MobileNavigationProps {
  */
 export const MobileNavigation = ({ className = '' }: MobileNavigationProps) => {
   const segments = useSegments();
-  const { userProfile } = useAuth();
+  const { userProfile } = useUserProfile();
   const [notificationCounts, setNotificationCounts] = useState<Record<string, number>>({});
 
   // Get navigation items based on user role (fallback to bottom tabs for mobile)
