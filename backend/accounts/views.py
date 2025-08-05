@@ -2730,167 +2730,201 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
         for course in courses_data:
             course_id = course['id']
             
-            if course_id in popularity_data:
-                course['popularity_metrics'] = popularity_data[course_id]
+            if request.query_params.get('include_popularity') == 'true':
+                course['popularity_metrics'] = popularity_data.get(course_id, {
+                    'total_sessions': 0,
+                    'unique_students': 0,
+                    'popularity_score': 0,
+                    'rank': 0
+                })
             
-            if course_id in teacher_data:
-                course['available_teachers'] = teacher_data[course_id]
+            if request.query_params.get('include_teachers') == 'true':
+                course['available_teachers'] = teacher_data.get(course_id, [])
             
-            if course_id in market_data:
-                course['market_data'] = market_data[course_id]
+            if request.query_params.get('include_market_data') == 'true':
+                course['market_data'] = market_data.get(course_id, {
+                    'avg_hourly_rate': 0.0,
+                    'min_hourly_rate': 0.0,
+                    'max_hourly_rate': 0.0,
+                    'total_teachers': 0,
+                    'demand_score': 0
+                })
         
         return courses_data
     
     def _calculate_popularity_metrics(self, course_ids):
         """Calculate popularity metrics for courses."""
-        from finances.models import ClassSession, SessionStatus
-        from collections import defaultdict
-        
-        # NOTE: This is a simplified implementation that counts all sessions for teachers
-        # who teach a course, regardless of which specific course the session was for.
-        # In practice, you might want to track session-to-course relationships more precisely.
-        
-        # Get course associations through teacher-course relationships
-        teacher_courses = TeacherCourse.objects.filter(
-            course_id__in=course_ids
-        ).select_related('teacher', 'course')
-        
-        # Map courses to teachers
-        course_teachers = defaultdict(list)
-        for tc in teacher_courses:
-            course_teachers[tc.course_id].append(tc.teacher_id)
-        
-        # Calculate metrics per course
-        course_metrics = {}
-        for course_id in course_ids:
-            teachers = course_teachers.get(course_id, [])
+        try:
+            from finances.models import ClassSession, SessionStatus
+            from collections import defaultdict
             
-            if not teachers:
-                # No teachers for this course
+            # NOTE: This is a simplified implementation that counts all sessions for teachers
+            # who teach a course, regardless of which specific course the session was for.
+            # In practice, you might want to track session-to-course relationships more precisely.
+            
+            # Get course associations through teacher-course relationships
+            teacher_courses = TeacherCourse.objects.filter(
+                course_id__in=course_ids
+            ).select_related('teacher', 'course')
+            
+            # Map courses to teachers
+            course_teachers = defaultdict(list)
+            for tc in teacher_courses:
+                course_teachers[tc.course_id].append(tc.teacher_id)
+            
+            # Calculate metrics per course
+            course_metrics = {}
+            for course_id in course_ids:
+                teachers = course_teachers.get(course_id, [])
+                
+                if not teachers:
+                    # No teachers for this course
+                    course_metrics[course_id] = {
+                        'total_sessions': 0,
+                        'unique_students': 0,
+                        'popularity_score': 0,
+                        'rank': 0
+                    }
+                    continue
+                
+                # Get sessions for teachers of this course
+                sessions = ClassSession.objects.filter(
+                    teacher_id__in=teachers,
+                    status=SessionStatus.COMPLETED
+                ).prefetch_related('students')
+                
+                total_sessions = sessions.count()
+                unique_students = set()
+                for session in sessions:
+                    for student in session.students.all():
+                        unique_students.add(student.id)
+                
+                # Calculate popularity score (sessions * 2 + unique_students * 3)
+                popularity_score = total_sessions * 2 + len(unique_students) * 3
+                
                 course_metrics[course_id] = {
-                    'total_sessions': 0,
-                    'unique_students': 0,
-                    'popularity_score': 0,
-                    'rank': 0
+                    'total_sessions': total_sessions,
+                    'unique_students': len(unique_students),
+                    'popularity_score': popularity_score,
+                    'rank': 0  # Will be calculated after all scores are computed
                 }
-                continue
             
-            # Get sessions for teachers of this course
-            sessions = ClassSession.objects.filter(
-                teacher_id__in=teachers,
-                status=SessionStatus.COMPLETED
-            ).prefetch_related('students')
+            # Calculate ranks
+            sorted_courses = sorted(
+                course_metrics.items(),
+                key=lambda x: x[1]['popularity_score'],
+                reverse=True
+            )
             
-            total_sessions = sessions.count()
-            unique_students = set()
-            for session in sessions:
-                for student in session.students.all():
-                    unique_students.add(student.id)
+            for rank, (course_id, metrics) in enumerate(sorted_courses, 1):
+                course_metrics[course_id]['rank'] = rank
             
-            # Calculate popularity score (sessions * 2 + unique_students * 3)
-            popularity_score = total_sessions * 2 + len(unique_students) * 3
+            return course_metrics
             
-            course_metrics[course_id] = {
-                'total_sessions': total_sessions,
-                'unique_students': len(unique_students),
-                'popularity_score': popularity_score,
-                'rank': 0  # Will be calculated after all scores are computed
-            }
-        
-        # Calculate ranks
-        sorted_courses = sorted(
-            course_metrics.items(),
-            key=lambda x: x[1]['popularity_score'],
-            reverse=True
-        )
-        
-        for rank, (course_id, metrics) in enumerate(sorted_courses, 1):
-            course_metrics[course_id]['rank'] = rank
-        
-        return course_metrics
+        except Exception as e:
+            logger.error(f"Error calculating popularity metrics: {e}")
+            # Return empty metrics for all courses
+            return {course_id: {
+                'total_sessions': 0,
+                'unique_students': 0,
+                'popularity_score': 0,
+                'rank': 0
+            } for course_id in course_ids}
     
     def _get_teacher_information(self, course_ids):
         """Get teacher information for courses."""
-        teacher_data = {}
-        
-        # Get teacher-course relationships
-        teacher_courses = TeacherCourse.objects.filter(
-            course_id__in=course_ids,
-            is_active=True
-        ).select_related('teacher__user', 'course')
-        
-        # Group by course
-        for tc in teacher_courses:
-            course_id = tc.course_id
-            if course_id not in teacher_data:
-                teacher_data[course_id] = []
+        try:
+            teacher_data = {}
             
-            teacher_info = {
-                'id': tc.teacher.id,
-                'name': tc.teacher.user.name,
-                'email': tc.teacher.user.email,
-                'hourly_rate': float(tc.hourly_rate) if tc.hourly_rate else float(tc.teacher.hourly_rate or 0),
-                'profile_completion_score': float(tc.teacher.profile_completion_score),
-                'is_profile_complete': tc.teacher.is_profile_complete,
-                'specialty': tc.teacher.specialty
-            }
+            # Get teacher-course relationships
+            teacher_courses = TeacherCourse.objects.filter(
+                course_id__in=course_ids,
+                is_active=True
+            ).select_related('teacher__user', 'course')
             
-            teacher_data[course_id].append(teacher_info)
-        
-        return teacher_data
+            # Group by course
+            for tc in teacher_courses:
+                course_id = tc.course_id
+                if course_id not in teacher_data:
+                    teacher_data[course_id] = []
+                
+                teacher_info = {
+                    'id': tc.teacher.id,
+                    'name': tc.teacher.user.name,
+                    'email': tc.teacher.user.email,
+                    'hourly_rate': float(tc.hourly_rate) if tc.hourly_rate else float(tc.teacher.hourly_rate or 0),
+                    'profile_completion_score': float(tc.teacher.profile_completion_score or 0),
+                    'is_profile_complete': tc.teacher.is_profile_complete,
+                    'specialty': tc.teacher.specialty or ''
+                }
+                
+                teacher_data[course_id].append(teacher_info)
+            
+            return teacher_data
+            
+        except Exception as e:
+            logger.error(f"Error getting teacher information: {e}")
+            # Return empty teacher data for all courses
+            return {}
     
     def _calculate_market_data(self, course_ids):
         """Calculate market data for courses."""
-        from django.db.models import Avg, Min, Max, Count
-        
-        market_data = {}
-        
-        # Get aggregated data from teacher-course relationships
-        for course_id in course_ids:
-            teacher_courses = TeacherCourse.objects.filter(
-                course_id=course_id,
-                is_active=True
-            ).exclude(hourly_rate__isnull=True)
+        try:
+            from django.db.models import Avg, Min, Max, Count
             
-            if teacher_courses.exists():
-                # Use teacher-course specific rates where available
-                rates = [float(tc.hourly_rate) for tc in teacher_courses if tc.hourly_rate]
+            market_data = {}
+            
+            # Get aggregated data from teacher-course relationships
+            for course_id in course_ids:
+                teacher_courses = TeacherCourse.objects.filter(
+                    course_id=course_id,
+                    is_active=True
+                ).exclude(hourly_rate__isnull=True)
                 
-                # Fallback to teacher profile rates if no course-specific rates
-                if not rates:
-                    rates = [
-                        float(tc.teacher.hourly_rate) 
-                        for tc in teacher_courses 
-                        if tc.teacher.hourly_rate
-                    ]
-                
-                if rates:
-                    avg_rate = sum(rates) / len(rates)
-                    min_rate = min(rates)
-                    max_rate = max(rates)
+                if teacher_courses.exists():
+                    # Use teacher-course specific rates where available
+                    rates = [float(tc.hourly_rate) for tc in teacher_courses if tc.hourly_rate]
+                    
+                    # Fallback to teacher profile rates if no course-specific rates
+                    if not rates:
+                        rates = [
+                            float(tc.teacher.hourly_rate) 
+                            for tc in teacher_courses 
+                            if tc.teacher.hourly_rate
+                        ]
+                    
+                    if rates:
+                        avg_rate = sum(rates) / len(rates)
+                        min_rate = min(rates)
+                        max_rate = max(rates)
+                    else:
+                        avg_rate = min_rate = max_rate = 0.0
+                    
+                    total_teachers = teacher_courses.count()
+                    
+                    # Calculate demand score based on teacher availability and sessions
+                    # This is a simplified calculation - in production, you might want more sophisticated scoring
+                    demand_score = min(100, total_teachers * 10)  # Cap at 100
+                    
                 else:
                     avg_rate = min_rate = max_rate = 0.0
+                    total_teachers = 0
+                    demand_score = 0
                 
-                total_teachers = teacher_courses.count()
-                
-                # Calculate demand score based on teacher availability and sessions
-                # This is a simplified calculation - in production, you might want more sophisticated scoring
-                demand_score = min(100, total_teachers * 10)  # Cap at 100
-                
-            else:
-                avg_rate = min_rate = max_rate = 0.0
-                total_teachers = 0
-                demand_score = 0
+                market_data[course_id] = {
+                    'avg_hourly_rate': avg_rate,
+                    'min_hourly_rate': min_rate,
+                    'max_hourly_rate': max_rate,
+                    'total_teachers': total_teachers,
+                    'demand_score': demand_score
+                }
             
-            market_data[course_id] = {
-                'avg_hourly_rate': avg_rate,
-                'min_hourly_rate': min_rate,
-                'max_hourly_rate': max_rate,
-                'total_teachers': total_teachers,
-                'demand_score': demand_score
-            }
-        
-        return market_data
+            return market_data
+            
+        except Exception as e:
+            logger.error(f"Error calculating market data: {e}")
+            # Return empty market data for all courses
+            return {}
     
     def _apply_custom_ordering(self, courses_data, ordering):
         """Apply custom ordering for enhanced data."""
