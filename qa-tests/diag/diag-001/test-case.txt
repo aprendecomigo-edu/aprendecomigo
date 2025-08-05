@@ -1,0 +1,207 @@
+QA Test Case: Emergency App Loading Diagnostic After Calendar Color System Changes
+
+Test ID: DIAG-001
+Test Name: Post-Calendar-Color-Fix App Loading Diagnostic
+Purpose: Identify why the app loads but becomes unresponsive after calendar color system changes
+Expected Result: Root cause identified and specific fix recommendations provided
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Architecture: Django REST API + React Native (Expo) Frontend
+- Issue: App was working before calendar color fixes, now loads but becomes unresponsive
+- Recent Changes: Calendar implementation changed from hardcoded colors to CSS variables
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: make dev-open (starts both backend and frontend with browser)
+4. Log monitoring: make logs (view server logs)
+
+Test Data:
+- Test Email: anapmc.carvalho@gmail.com (existing user with school_owner role)
+- Expected working URLs: http://localhost:8081 (main app), http://localhost:8081/calendar (calendar page)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment and Server Status Check
+1. Start development servers
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev-open
+
+2. Verify both servers are running
+Commands:
+  make logs
+
+Expected: Both Django backend and Expo frontend servers should be running without errors
+Screenshot: 01_servers_running.png
+
+Step 2: Browser Console Analysis - Initial Load
+1. Open Chrome DevTools (F12)
+2. Navigate to Console tab
+3. Clear console log
+4. Navigate to http://localhost:8081
+5. Wait for initial app load (up to 30 seconds)
+6. Capture all console errors/warnings
+
+Expected: App should load initial screen
+Screenshot: 02_initial_load_console.png
+Debug: Look for:
+- JavaScript errors (red messages)
+- React component errors
+- Failed API calls
+- CSS/styling errors
+- Calendar-related errors
+
+Step 3: Network Tab Analysis
+1. Switch to Network tab in DevTools
+2. Refresh the page (Ctrl+R / Cmd+R)
+3. Monitor all network requests for 60 seconds
+4. Check for failed requests (red status codes)
+5. Verify API endpoints are responding
+
+Expected: All API calls should return successful responses (200, 201, etc.)
+Screenshot: 03_network_requests.png
+Debug: Look for:
+- Failed API calls (4xx, 5xx status codes)
+- Failed resource loading (CSS, JS, images)
+- Authentication issues
+- Slow or hanging requests
+
+Step 4: React DevTools Component Analysis
+1. Install React DevTools extension if not present
+2. Open React DevTools tab
+3. Navigate through component tree
+4. Look for components in error state
+5. Check for infinite render loops (components updating repeatedly)
+
+Expected: Components should render normally without errors
+Screenshot: 04_react_components.png
+Debug: Look for:
+- Components showing error boundaries
+- Components with missing props
+- Rapid re-renders (performance tab)
+- Calendar-related components specifically
+
+Step 5: Calendar Page Specific Testing
+1. Navigate to http://localhost:8081/calendar
+2. Monitor console for calendar-specific errors
+3. Check if calendar components render
+4. Test calendar interactions (if any render)
+
+Expected: Calendar page should load with proper styling
+Screenshot: 05_calendar_page.png
+Debug: Look for:
+- CSS variable loading issues
+- Calendar component rendering errors
+- Color system failures
+- Tailwind class application issues
+
+Step 6: CSS Variables and Styling Analysis
+1. Open Elements tab in DevTools
+2. Select calendar-related elements
+3. Check computed styles
+4. Verify CSS variables are defined and have values
+5. Look for Tailwind class application
+
+Expected: CSS variables should be properly defined and applied
+Screenshot: 06_css_variables.png
+Debug: Look for:
+- Undefined CSS variables (showing as fallback values)
+- Missing Tailwind classes
+- Color system conflicts
+- Theme-related CSS issues
+
+Step 7: Authentication Flow Testing
+1. If not logged in, attempt login with anapmc.carvalho@gmail.com
+2. Monitor console during authentication
+3. Check if user reaches dashboard successfully
+4. Test navigation between pages
+
+Expected: Authentication should work and user should reach functional dashboard
+Screenshot: 07_auth_dashboard.png
+Debug: Look for:
+- Authentication API failures
+- Session/token issues
+- Dashboard rendering problems
+- Navigation failures
+
+Step 8: JavaScript Performance Analysis
+1. Switch to Performance tab in DevTools
+2. Start recording
+3. Navigate through the app for 30 seconds
+4. Stop recording
+5. Analyze for infinite loops or performance issues
+
+Expected: No infinite loops or excessive JavaScript execution
+Screenshot: 08_performance_analysis.png
+Debug: Look for:
+- Long-running JavaScript tasks
+- Infinite loops
+- Memory leaks
+- Excessive re-renders
+
+Step 9: Backend Log Analysis
+1. Monitor backend logs during testing
+Commands:
+  make logs
+
+2. Look for Django errors, warnings, or unusual activity
+3. Check for API endpoint issues
+
+Expected: Backend should be processing requests normally
+Screenshot: 09_backend_logs.png
+Debug: Look for:
+- Django server errors
+- Database connection issues
+- API endpoint failures
+- Authentication problems
+
+Step 10: Targeted Calendar Component Investigation
+1. If calendar is identified as the issue, inspect calendar component files
+2. Check recent changes to calendar color system
+3. Look for hardcoded colors vs CSS variables
+4. Verify import statements and dependencies
+
+Expected: Identify specific calendar component or styling issue
+Screenshot: 10_calendar_component_analysis.png
+Debug: Files to check:
+- /frontend-ui/components/calendar/CalendarTheme.ts
+- /frontend-ui/components/calendar/MonthView.tsx
+- /frontend-ui/app/calendar/index.tsx
+- Any CSS files with calendar styling
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Root cause identified with specific error messages and fix recommendations provided
+FAIL: Unable to identify the cause of app unresponsiveness
+
+Individual Step Criteria:
+- Step 1: PASS if servers start successfully, FAIL if startup errors
+- Step 2: PASS if console loads without critical errors, FAIL if JavaScript errors prevent loading
+- Step 3: PASS if API calls are successful, FAIL if authentication or critical API failures
+- Step 4: PASS if React components render normally, FAIL if component errors or infinite loops
+- Step 5: PASS if calendar page loads (even with styling issues), FAIL if calendar crashes app
+- Step 6: PASS if CSS variables are defined, FAIL if undefined variables break styling
+- Step 7: PASS if authentication works, FAIL if login/session issues
+- Step 8: PASS if no performance issues detected, FAIL if infinite loops or memory leaks
+- Step 9: PASS if backend logs show normal operation, FAIL if server errors
+- Step 10: PASS if specific component issue identified, FAIL if no actionable findings
+
+Overall Result: PASS only if root cause is identified and actionable fix recommendations provided
+
+=== EXPECTED DIAGNOSTIC OUTCOMES ===
+
+This test should identify one or more of the following issues:
+1. CSS variables not properly defined or loaded
+2. Calendar component rendering errors
+3. Tailwind CSS class conflicts
+4. React component infinite loops
+5. API authentication failures
+6. JavaScript errors preventing app functionality
+7. Missing dependencies or imports
+8. Theme system conflicts
+
+The diagnostic should provide specific file names, line numbers, and error messages to enable immediate fixes.

@@ -1,0 +1,136 @@
+QA Test Case: Dashboard Context Fix Validation
+
+Test ID: DASH-011
+Test Name: SchoolContext and TopNavigation Context Fix Validation
+Purpose: Verify that the SchoolContext and TopNavigation context fixes prevent "Loading..." and "No school found" errors
+Expected Result: Dashboard loads with proper school name in header and no context-related error messages
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Architecture: Django REST + React Native (Expo) with WebSocket support
+- Testing Environment: Local development environment
+- Key Fixes: SchoolContext and TopNavigation now use AuthContext instead of UserProfileContext
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/backend
+2. Python Virtual Environment: .venv/ in project root
+3. Development server: `make dev` (starts both backend and frontend)
+4. Backend URL: http://localhost:8000
+5. Frontend URL: http://localhost:8081
+
+Test Data:
+- Test Email: admin@testschool.com
+- Verification Code: 123456
+- User Role: School Owner
+- Expected School Name: Should display actual school name (not "Loading...")
+- Sign-in URL: http://localhost:3000/auth/signin
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+1. Navigate to project directory: /Users/anapmc/Code/aprendecomigo/backend
+2. Ensure virtual environment is activated
+3. Start development servers
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/backend
+  make dev
+
+Expected: Both backend (port 8000) and frontend (port 3000) servers start successfully
+Debug: Use 'make logs' to view server logs if issues occur
+Screenshot: 01_servers_started.png
+
+Step 2: Navigate to Sign-in Page
+1. Open browser to http://localhost:3000/auth/signin
+2. Verify the sign-in page loads correctly
+3. Check that the page shows email input field
+
+Expected: Sign-in page loads with email input field visible
+Screenshot: 02_signin_page.png
+
+Step 3: Authentication Process
+1. Enter test email: admin@testschool.com
+2. Submit email form
+3. Wait for verification code input to appear
+4. Enter verification code: 123456
+5. Submit verification code
+
+Expected: Authentication successful, user is redirected to dashboard
+Screenshot: 03_email_entry.png, 04_verification_code.png, 05_auth_success.png
+
+Step 4: Dashboard Load Verification
+1. Verify user is redirected to dashboard automatically
+2. Wait for dashboard to load completely (max 5 seconds)
+3. Check that dashboard content appears
+4. Verify NO "No school found" error message appears
+5. Verify NO loading spinners remain stuck
+
+Expected: Dashboard loads successfully without context errors
+Screenshot: 06_dashboard_loaded.png
+
+Step 5: TopNavigation School Name Check
+1. Look at the top navigation/header area
+2. Verify that the school name is displayed correctly
+3. Ensure NO "Loading..." text appears in the header
+4. Verify the school name matches the test user's school
+
+Expected: Header shows actual school name, not "Loading..." text
+Screenshot: 07_header_school_name.png
+
+Step 6: SchoolContext Validation
+1. Check if any school-related data is displayed on dashboard
+2. Verify school metrics, school name, or school-specific information appears
+3. Look for any error messages related to school context
+4. Ensure school data loads properly throughout the dashboard
+
+Expected: School context data loads and displays correctly
+Screenshot: 08_school_context_data.png
+
+Step 7: Console Error Check
+1. Open browser developer tools (F12)
+2. Check the Console tab for any JavaScript errors
+3. Look specifically for context-related errors
+4. Verify no errors about missing school data or context providers
+
+Expected: No console errors related to context or school data
+Screenshot: 09_console_clean.png
+
+Step 8: Page Refresh Stability Test
+1. Refresh the dashboard page (F5)
+2. Wait for page to reload completely
+3. Verify the same proper behavior (school name in header, no errors)
+4. Ensure consistent behavior after refresh
+
+Expected: Page behaves consistently after refresh, no regression
+Screenshot: 10_refresh_stability.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Dashboard loads successfully AND header shows school name (not "Loading...") AND no "No school found" errors AND all school context data loads
+
+FAIL: Any of the following occurs:
+- "Loading..." text remains in header permanently
+- "No school found" error message appears
+- Dashboard fails to load school context data
+- Console shows context-related errors
+- Authentication fails
+- Any step fails to complete as expected
+
+Individual Step Criteria:
+- Step 1: PASS if both servers start without errors, FAIL if any server fails to start
+- Step 2: PASS if sign-in page loads correctly, FAIL if page is broken
+- Step 3: PASS if authentication completes successfully, FAIL if auth fails
+- Step 4: PASS if dashboard loads without "No school found" error, FAIL if error appears
+- Step 5: PASS if header shows actual school name, FAIL if "Loading..." persists
+- Step 6: PASS if school context data displays correctly, FAIL if context errors occur
+- Step 7: PASS if no console errors related to context, FAIL if context errors present
+- Step 8: PASS if behavior is consistent after refresh, FAIL if regression occurs
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
+
+=== UX/BEHAVIORAL REQUIREMENTS ===
+- Header school name should appear within 2 seconds of dashboard load
+- No loading states should persist indefinitely
+- School context should be available immediately after authentication
+- All school-specific UI elements should display actual data, not placeholders

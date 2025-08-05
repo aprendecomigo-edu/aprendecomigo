@@ -44,7 +44,8 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:gluestack.io)",
       "WebFetch(domain:www.nativewind.dev)",
-      "WebFetch(domain:docs.expo.dev)"
+      "WebFetch(domain:docs.expo.dev)",
+      "mcp__playwright__browser_network_requests"
     ],
     "deny": []
   }
