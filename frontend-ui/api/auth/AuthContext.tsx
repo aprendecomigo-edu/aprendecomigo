@@ -2,7 +2,8 @@ import { router } from 'expo-router';
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 import { setAuthErrorCallback } from '../apiClient';
-import { isAuthenticated, logout } from '../authApi';
+import { isAuthenticated, logout, UserProfile } from '../authApi';
+import { storage } from '@/utils/storage';
 
 // Global flag to prevent multiple simultaneous auth checks
 let isAuthCheckInProgress = false;
@@ -12,11 +13,13 @@ interface AuthContextType {
   isLoading: boolean;
   serverError: string | null;
   serverAlert: { type: 'error' | 'warning'; message: string } | null;
+  userProfile: UserProfile | null;
   clearServerAlert: () => void;
   logout: () => Promise<void>;
   signOut: () => Promise<void>; // Alias for logout
   checkAuthStatus: () => Promise<boolean>;
   notifyAuthError: () => void;
+  setUserProfile: (profile: UserProfile) => Promise<void>;
   // Legacy compatibility - this should use useUserProfile instead
   ensureUserProfile?: () => Promise<void>;
 }
@@ -31,7 +34,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     type: 'error' | 'warning';
     message: string;
   } | null>(null);
+  const [userProfile, setUserProfileState] = useState<UserProfile | null>(null);
   const hasInitializedRef = useRef(false);
+
+  // Store user profile data for immediate routing
+  const setUserProfile = async (profile: UserProfile): Promise<void> => {
+    setUserProfileState(profile);
+    // Store user profile in local storage for persistence
+    await storage.setItem('user_profile', JSON.stringify(profile));
+  };
+
+  // Load cached user profile from storage
+  const loadCachedUserProfile = async (): Promise<void> => {
+    try {
+      const cachedProfile = await storage.getItem('user_profile');
+      if (cachedProfile) {
+        setUserProfileState(JSON.parse(cachedProfile));
+      }
+    } catch (error) {
+      console.error('Error loading cached user profile:', error);
+    }
+  };
 
   // Optimized auth status check - LIGHT operation ONLY
   const checkAuthStatus = async (): Promise<boolean> => {
@@ -50,6 +73,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const authenticated = await isAuthenticated();
 
       setIsLoggedIn(authenticated);
+      
+      // If not authenticated, clear cached user profile
+      if (!authenticated) {
+        setUserProfileState(null);
+        await storage.removeItem('user_profile');
+      } else if (!userProfile) {
+        // If authenticated but no cached profile, try to load from storage
+        await loadCachedUserProfile();
+      }
+      
       return authenticated;
     } catch (error: any) {
       // Check if this is a server connection error (server completely down)
@@ -94,6 +127,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await logout();
       setIsLoggedIn(false);
+      setUserProfileState(null);
+      await storage.removeItem('user_profile');
       router.replace('/auth/signin');
     } catch (error) {
       console.error('Error during logout:', error);
@@ -104,6 +139,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleNotifyAuthError = () => {
     console.log('Authentication error notified by API client');
     setIsLoggedIn(false);
+    setUserProfileState(null);
+    storage.removeItem('user_profile').catch(console.error);
   };
 
   // Check auth status on mount
@@ -139,11 +176,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     serverError,
     serverAlert,
+    userProfile,
     clearServerAlert: () => setServerAlert(null),
     logout: handleLogout,
     signOut: handleLogout, // Alias for logout
     checkAuthStatus,
     notifyAuthError: handleNotifyAuthError,
+    setUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

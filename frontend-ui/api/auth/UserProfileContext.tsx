@@ -86,13 +86,15 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [isLoggedIn]);
 
-  // Auto-fetch profile when user logs in (if not already cached)
-  useEffect(() => {
-    if (isLoggedIn && !userProfileCached && !userProfile && !isProfileLoading) {
-      console.log('🔑 User authenticated, auto-fetching profile...');
-      fetchUserProfile();
-    }
-  }, [isLoggedIn, userProfileCached, userProfile, isProfileLoading]);
+  // Auto-fetch profile is DISABLED for performance - profile is now cached in AuthContext
+  // This hook was causing 8+ second delays by auto-firing API calls during login
+  // Profile data is now stored during login and available immediately for routing
+  // useEffect(() => {
+  //   if (isLoggedIn && !userProfileCached && !userProfile && !isProfileLoading) {
+  //     console.log('🔑 User authenticated, auto-fetching profile...');
+  //     fetchUserProfile();
+  //   }
+  // }, [isLoggedIn, userProfileCached, userProfile, isProfileLoading]);
 
   const value = {
     userProfile,

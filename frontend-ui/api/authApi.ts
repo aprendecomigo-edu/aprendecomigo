@@ -42,6 +42,7 @@ export interface UserProfile {
   updated_at: string;
   roles?: UserRole[];
   first_login_completed?: boolean;
+  primary_role?: string; // From backend AuthenticationResponseSerializer
 }
 
 export interface SchoolInfo {

@@ -53,7 +53,7 @@ const VerifyCodeForm = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
-  const { checkAuthStatus } = useAuth();
+  const { checkAuthStatus, setUserProfile } = useAuth();
 
   // Verify code form
   const verifyCodeForm = useForm<VerifyCodeSchemaType>({
@@ -100,6 +100,10 @@ const VerifyCodeForm = () => {
       console.log('Verification API params:', params);
       const response: AuthResponse = await verifyEmailCode(params);
       console.log('Verification response:', response);
+
+      // Store user profile data for immediate routing
+      await setUserProfile(response.user);
+      console.log('User profile stored with primary_role:', response.user.primary_role);
 
       // Successfully verified - now explicitly update auth state
       await checkAuthStatus();
