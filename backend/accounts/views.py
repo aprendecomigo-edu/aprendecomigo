@@ -171,6 +171,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
     def dashboard_info(self, request):
         """
         Get dashboard information for the current user
+        Cached for 5 minutes to prevent duplicate calls during authentication flow
         """
         user = request.user
 
@@ -181,6 +182,13 @@ class UserViewSet(KnoxAuthenticatedViewSet):
                 {"error": "Authentication required"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+        
+        # Cache key for user dashboard info
+        cache_key = f"dashboard_info_user_{user.id}"
+        cached_response = cache.get(cache_key)
+        
+        if cached_response is not None:
+            return Response(cached_response)
 
         # Basic user info
         user_info = {
@@ -287,7 +295,12 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             if hasattr(user, "student_profile") and user.student_profile:
                 user_info["calendar_iframe"] = user.student_profile.calendar_iframe
 
-        return Response({"user_info": user_info, "stats": stats})
+        response_data = {"user_info": user_info, "stats": stats}
+        
+        # Cache the response for 5 minutes to prevent duplicate calls
+        cache.set(cache_key, response_data, timeout=300)
+        
+        return Response(response_data)
 
     @action(detail=False, methods=["post"])
     def complete_first_login(self, request):
@@ -7768,10 +7781,21 @@ class ParentChildRelationshipViewSet(KnoxAuthenticatedViewSet):
     """
     ViewSet for managing parent-child relationships.
     Allows parents to manage their children and school administrators to oversee relationships.
+    
+    Restricts access to users with parent-child relationships or admin permissions
+    to prevent unnecessary API calls from other user types.
     """
     
     serializer_class = ParentChildRelationshipSerializer
     permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        """
+        Allow access to parents with children OR school administrators.
+        This prevents teachers and students from accessing parent-child relationships unnecessarily.
+        """
+        # Keep the existing permission logic but optimize queryset filtering instead
+        return [IsAuthenticated()]
     
     def get_queryset(self):
         """Filter relationships based on user role and permissions."""

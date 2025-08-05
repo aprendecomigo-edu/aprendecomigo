@@ -547,14 +547,16 @@ class UserWithRolesSerializer(UserSerializer):
 class AuthenticationResponseSerializer(UserWithRolesSerializer):
     """
     Enhanced User serializer for authentication responses.
-    Includes user_type for frontend routing decisions.
+    Includes user_type and primary_role for immediate frontend routing decisions.
+    This prevents the need for additional API calls during authentication flow.
     """
 
     user_type = serializers.SerializerMethodField()
     is_admin = serializers.SerializerMethodField()
+    primary_role = serializers.SerializerMethodField()
 
     class Meta(UserWithRolesSerializer.Meta):
-        fields: ClassVar[list[str]] = [*list(UserWithRolesSerializer.Meta.fields), "user_type", "is_admin"]
+        fields: ClassVar[list[str]] = [*list(UserWithRolesSerializer.Meta.fields), "user_type", "is_admin", "primary_role"]
 
     def get_user_type(self, obj):
         """
@@ -591,6 +593,35 @@ class AuthenticationResponseSerializer(UserWithRolesSerializer):
         
         admin_school_ids = list_school_ids_owned_or_managed(obj)
         return len(admin_school_ids) > 0
+    
+    def get_primary_role(self, obj):
+        """
+        Get the user's primary role for immediate frontend routing.
+        Returns the highest priority role the user has.
+        """
+        from .db_queries import list_school_ids_owned_or_managed
+        
+        # Check if user is a school owner or admin in any school
+        admin_school_ids = list_school_ids_owned_or_managed(obj)
+        if len(admin_school_ids) > 0:
+            return SchoolRole.SCHOOL_OWNER
+        
+        # Check if user is a teacher in any school
+        teacher_membership = SchoolMembership.objects.filter(
+            user=obj, role=SchoolRole.TEACHER, is_active=True
+        ).first()
+        if teacher_membership:
+            return SchoolRole.TEACHER
+        
+        # Check if user is a student in any school
+        student_membership = SchoolMembership.objects.filter(
+            user=obj, role=SchoolRole.STUDENT, is_active=True
+        ).first()
+        if student_membership:
+            return SchoolRole.STUDENT
+        
+        # Default fallback
+        return SchoolRole.STUDENT
 
 
 class RequestCodeSerializer(serializers.Serializer):

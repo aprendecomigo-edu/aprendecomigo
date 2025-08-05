@@ -1,0 +1,201 @@
+QA Test Case: API Call Pattern Verification
+
+Test ID: PERF-002
+Test Name: API Call Pattern Verification During Dashboard Redirect
+Purpose: Verify that the dashboard router fix eliminates duplicate API calls and prevents cross-role API calls
+Expected Result: Clean API call patterns with <3 calls during redirect and no duplicate dashboard_info calls
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: React Native + Expo frontend, Django backend
+- Critical Fix: UserProfileContext auto-firing hooks disabled
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev`
+4. Network monitoring tools: Browser DevTools Network tab
+
+Test Data:
+- School Owner Test Email: anapmc.carvalho@gmail.com
+- Any available teacher, student, or parent test accounts
+
+API Endpoints to Monitor:
+- `/api/accounts/users/dashboard_info/` (should not duplicate)
+- `/finances/parent-approval-dashboard/` (should not be called by non-parents)
+- `/finances/family-metrics/` (should not be called by non-parents)
+- `/accounts/parent-child-relationships/` (should not be called by non-parents)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Network Monitoring Preparation
+1. Navigate to project directory
+2. Start development servers
+3. Open browser to http://localhost:8081
+4. Open Developer Tools (F12)
+5. Navigate to Network tab
+6. Configure network monitoring:
+   - Enable "Preserve log" to keep requests across navigation
+   - Filter by XHR/Fetch to focus on API calls
+   - Clear any existing network logs
+
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Development environment ready with network monitoring configured
+Screenshot: 01_network_monitoring_setup.png
+
+Step 2: Baseline API Call Analysis - School Owner Login
+1. Navigate to signin page (http://localhost:8081/auth/signin)
+2. Clear network logs
+3. Enter school owner email: anapmc.carvalho@gmail.com
+4. Click "Send Verification Code"
+5. **START MONITORING** - Clear logs again before verification
+6. Enter verification code and submit
+7. **TRACK ALL API CALLS** from verification through dashboard redirect
+8. Wait until final dashboard is fully loaded
+9. **STOP MONITORING** and analyze network log
+
+Expected: 
+- Login verification API call: 1 call
+- Dashboard redirect process: <2 additional API calls
+- Total during redirect flow: <3 API calls
+Screenshot: 02_school_owner_api_calls.png
+
+Step 3: Duplicate API Call Detection
+1. In Network tab, search for "dashboard_info" requests
+2. Count total occurrences of dashboard_info API calls
+3. Verify timestamps - should be NO duplicate calls
+4. Check request details:
+   - Same endpoint called multiple times = DUPLICATE (FAIL)
+   - Single call only = CORRECT (PASS)
+
+Expected: Exactly 1 dashboard_info call, no duplicates
+Screenshot: 03_dashboard_info_duplicate_check.png
+
+Step 4: Cross-Role API Call Detection - School Owner
+1. Filter network requests by endpoint patterns
+2. Look specifically for parent-related endpoints:
+   - `/finances/parent-approval-dashboard/`
+   - `/finances/family-metrics/`
+   - `/accounts/parent-child-relationships/`
+3. Verify NO parent endpoints are called by school owner
+4. Document any unexpected cross-role API calls
+
+Expected: NO parent-specific API calls for school owner login
+Screenshot: 04_cross_role_api_detection.png
+
+Step 5: API Call Timing Analysis
+1. Review timestamps of all API calls during redirect
+2. Calculate time between login verification and first dashboard API call
+3. Identify any long-running or slow API calls
+4. Verify API calls happen quickly and efficiently
+5. Check for any timeouts or failed requests
+
+Expected: 
+- All API calls complete quickly (<500ms each)
+- No failed requests (4xx/5xx status codes)
+- Clean, efficient request timing
+Screenshot: 05_api_timing_analysis.png
+
+Step 6: Role-Specific API Pattern Verification (if other accounts available)
+Note: Test with available accounts for other roles
+
+For Teacher Account:
+1. Logout and clear network logs
+2. Login with teacher account
+3. Monitor API calls during redirect
+4. Verify:
+   - No parent-specific endpoints called
+   - No school admin endpoints called inappropriately
+   - Only teacher-relevant API calls made
+
+For Student Account:
+1. Logout and clear network logs
+2. Login with student account
+3. Monitor API calls during redirect
+4. Verify:
+   - No parent/teacher/admin endpoints called
+   - Only student-relevant API calls made
+
+For Parent Account:
+1. Logout and clear network logs
+2. Login with parent account
+3. Monitor API calls during redirect
+4. Verify appropriate parent endpoints are called
+5. Confirm no admin/teacher endpoints called
+
+Expected: Each role makes only appropriate API calls for their context
+Screenshot: 06_role_specific_api_patterns.png
+
+Step 7: Backend Log Correlation
+1. Access backend logs during API call testing
+Commands:
+  make logs
+
+2. Correlate frontend network requests with backend log entries
+3. Look for:
+   - API request frequency and timing
+   - Any 404/500 errors indicating wrong endpoints
+   - Performance-related warnings
+   - Evidence of hook auto-firing (should be DISABLED)
+
+Expected: Backend logs confirm clean API patterns with no errors
+Screenshot: 07_backend_log_correlation.png
+
+Step 8: UserProfileContext Hook Verification
+1. Check browser console for any logging related to UserProfileContext
+2. Verify that auto-firing useEffect hook is NOT triggering
+3. Look for evidence that profile data comes from AuthContext cache instead
+4. Confirm no unnecessary profile fetching during redirect
+
+Expected: No evidence of UserProfileContext auto-firing, profile data comes from cache
+Screenshot: 08_hook_verification.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Clean API call patterns achieved
+- Total API calls during redirect <3 calls
+- Zero duplicate dashboard_info API calls
+- No cross-role API calls (role-appropriate endpoints only)
+- All API calls complete successfully with good timing
+- Backend logs show clean, minimal API activity
+- No evidence of auto-firing hooks causing unnecessary requests
+
+FAIL: API call problems detected
+- Total API calls during redirect ≥3 calls
+- Duplicate dashboard_info API calls found
+- Cross-role API calls detected (wrong endpoints for user role)
+- Failed API requests (4xx/5xx status codes)
+- Slow or timing-out API calls
+- Backend logs show errors or excessive activity
+- Evidence of auto-firing hooks causing performance issues
+
+Individual Step Criteria:
+- Step 1: PASS if monitoring setup successful, FAIL if technical issues
+- Step 2: PASS if <3 total API calls during redirect, FAIL if ≥3 calls
+- Step 3: PASS if no duplicate dashboard_info calls, FAIL if duplicates found
+- Step 4: PASS if no cross-role calls, FAIL if inappropriate endpoints called
+- Step 5: PASS if all calls fast and successful, FAIL if slow/failed calls
+- Step 6: PASS if role-specific patterns correct, FAIL if inappropriate calls
+- Step 7: PASS if backend logs clean, FAIL if errors/warnings
+- Step 8: PASS if hooks disabled/cached, FAIL if auto-firing detected
+
+Overall Result: PASS only if ALL steps pass AND API patterns are clean, FAIL if ANY step fails
+
+=== API CALL BENCHMARKS ===
+
+Success Metrics:
+1. **Total API Calls**: <3 during redirect (reduced from 6+)
+2. **Duplicate Calls**: 0 dashboard_info duplicates (eliminated)
+3. **Cross-Role Calls**: 0 inappropriate endpoint calls (eliminated)
+4. **Performance**: All calls <500ms response time
+5. **Success Rate**: 100% successful API calls (no 4xx/5xx errors)
+
+Comparison to Previous Issues:
+- BEFORE: 6+ API calls, duplicates, cross-role calls, poor performance
+- AFTER: <3 API calls, no duplicates, role-appropriate only, fast performance
+- IMPROVEMENT: >50% reduction in API calls, eliminated problematic patterns
