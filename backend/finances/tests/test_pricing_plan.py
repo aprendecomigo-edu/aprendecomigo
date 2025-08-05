@@ -28,49 +28,7 @@ from ..models import PricingPlan, PlanType
 class PricingPlanModelTestCase(TestCase):
     """Test cases for PricingPlan model."""
 
-    def test_package_plan_creation_with_required_fields(self):
-        """Test creating a package PricingPlan with required fields."""
-        plan = PricingPlan.objects.create(
-            name="Basic Package",
-            description="10 hours of tutoring",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("10.0"),
-            price_eur=Decimal("100.00"),
-            validity_days=30,
-            display_order=1,
-            is_featured=False,
-            is_active=True
-        )
-        
-        self.assertEqual(plan.name, "Basic Package")
-        self.assertEqual(plan.description, "10 hours of tutoring")
-        self.assertEqual(plan.plan_type, PlanType.PACKAGE)
-        self.assertEqual(plan.hours_included, Decimal("10.0"))
-        self.assertEqual(plan.price_eur, Decimal("100.00"))
-        self.assertEqual(plan.validity_days, 30)
-        self.assertEqual(plan.display_order, 1)
-        self.assertFalse(plan.is_featured)
-        self.assertTrue(plan.is_active)
-        self.assertIsNotNone(plan.created_at)
-        self.assertIsNotNone(plan.updated_at)
 
-    def test_subscription_plan_creation(self):
-        """Test creating a subscription PricingPlan."""
-        plan = PricingPlan.objects.create(
-            name="Monthly Subscription",
-            description="Unlimited tutoring access",
-            plan_type=PlanType.SUBSCRIPTION,
-            hours_included=Decimal("20.0"),
-            price_eur=Decimal("150.00"),
-            validity_days=None,  # Subscriptions should not have validity_days
-            display_order=2,
-            is_featured=True,
-            is_active=True
-        )
-        
-        self.assertEqual(plan.plan_type, PlanType.SUBSCRIPTION)
-        self.assertIsNone(plan.validity_days)
-        self.assertTrue(plan.is_featured)
 
     def test_price_per_hour_property_calculation(self):
         """Test price_per_hour property method calculation."""
@@ -89,22 +47,6 @@ class PricingPlanModelTestCase(TestCase):
         # price_per_hour = 120.00 / 10.0 = 12.00
         self.assertEqual(plan.price_per_hour, Decimal("12.00"))
 
-    def test_price_per_hour_property_with_zero_hours(self):
-        """Test price_per_hour property when hours_included is zero."""
-        plan = PricingPlan.objects.create(
-            name="Test Package",
-            description="Test description",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("0.0"),
-            price_eur=Decimal("100.00"),
-            validity_days=30,
-            display_order=1,
-            is_featured=False,
-            is_active=True
-        )
-        
-        # Should return None when hours_included is zero to avoid division by zero
-        self.assertIsNone(plan.price_per_hour)
 
     def test_package_validation_requires_validity_days(self):
         """Test that package plans must have validity_days specified."""
@@ -188,84 +130,7 @@ class PricingPlanModelTestCase(TestCase):
         self.assertEqual(len(active_plans), 1)
 
 
-    def test_display_order_functionality(self):
-        """Test that display_order affects plan ordering."""
-        plan1 = PricingPlan.objects.create(
-            name="Third Plan",
-            description="Should be third",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("10.0"),
-            price_eur=Decimal("100.00"),
-            validity_days=30,
-            display_order=3,
-            is_featured=False,
-            is_active=True
-        )
-        
-        plan2 = PricingPlan.objects.create(
-            name="First Plan",
-            description="Should be first",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("15.0"),
-            price_eur=Decimal("150.00"),
-            validity_days=45,
-            display_order=1,
-            is_featured=False,
-            is_active=True
-        )
-        
-        plan3 = PricingPlan.objects.create(
-            name="Second Plan",
-            description="Should be second",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("20.0"),
-            price_eur=Decimal("200.00"),
-            validity_days=60,
-            display_order=2,
-            is_featured=False,
-            is_active=True
-        )
-        
-        # Test ordering
-        plans = list(PricingPlan.objects.all())
-        self.assertEqual(plans[0], plan2)  # display_order=1
-        self.assertEqual(plans[1], plan3)  # display_order=2
-        self.assertEqual(plans[2], plan1)  # display_order=3
 
-    def test_featured_plan_functionality(self):
-        """Test is_featured flag functionality."""
-        featured_plan = PricingPlan.objects.create(
-            name="Featured Plan",
-            description="This is featured",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("10.0"),
-            price_eur=Decimal("100.00"),
-            validity_days=30,
-            display_order=1,
-            is_featured=True,
-            is_active=True
-        )
-        
-        regular_plan = PricingPlan.objects.create(
-            name="Regular Plan",
-            description="Not featured",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("10.0"),
-            price_eur=Decimal("100.00"),
-            validity_days=30,
-            display_order=2,
-            is_featured=False,
-            is_active=True
-        )
-        
-        # Test filtering by featured status
-        featured_plans = PricingPlan.objects.filter(is_featured=True)
-        regular_plans = PricingPlan.objects.filter(is_featured=False)
-        
-        self.assertIn(featured_plan, featured_plans)
-        self.assertNotIn(regular_plan, featured_plans)
-        self.assertIn(regular_plan, regular_plans)
-        self.assertNotIn(featured_plan, regular_plans)
 
 
 

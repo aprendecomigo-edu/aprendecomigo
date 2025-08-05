@@ -12,7 +12,7 @@ from unittest.mock import patch, MagicMock
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from knox.models import AuthToken
 from PIL import Image
@@ -63,8 +63,8 @@ class TeacherProfileWizardSecurityTestCase(TestCase):
         self.token_instance, self.token = AuthToken.objects.create(self.user)
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
         
-        self.save_progress_url = reverse('accounts:teacher-profile-wizard', kwargs={'action': 'save-progress'})
-        self.validate_step_url = reverse('accounts:teacher-profile-wizard', kwargs={'action': 'validate-step'})
+        self.save_progress_url = reverse('teacher-profile-wizard', kwargs={'action': 'save-progress'})
+        self.validate_step_url = reverse('teacher-profile-wizard', kwargs={'action': 'validate-step'})
 
     def test_input_validation_prevents_malicious_data(self):
         """Test that input validation prevents malicious data injection."""
@@ -155,23 +155,6 @@ class TeacherProfileWizardSecurityTestCase(TestCase):
         self.assertNotIn('<iframe>', sanitized_bio)
         self.assertNotIn('javascript:', sanitized_bio)
 
-    @override_settings(
-        REST_FRAMEWORK={
-            'DEFAULT_AUTHENTICATION_CLASSES': (
-                'knox.auth.TokenAuthentication',
-                'rest_framework_simplejwt.authentication.JWTAuthentication',
-            ),
-            'DEFAULT_PERMISSION_CLASSES': [
-                'rest_framework.permissions.IsAuthenticated',
-            ],
-            'DEFAULT_THROTTLE_CLASSES': [
-                'accounts.throttles.ProfileWizardThrottle',
-            ],
-            'DEFAULT_THROTTLE_RATES': {
-                'profile_wizard': '10/min',
-            },
-        }
-    )
     def test_rate_limiting_protection(self):
         """Test that rate limiting prevents abuse."""
         payload = {
@@ -214,7 +197,7 @@ class TeacherProfileWizardSecurityTestCase(TestCase):
                 }
                 
                 # Assuming there's a profile photo upload endpoint
-                upload_url = reverse('accounts:teacher-profile-wizard', kwargs={'action': 'upload-photo'})
+                upload_url = reverse('teacher-profile-wizard', kwargs={'action': 'upload-photo'})
                 response = self.client.post(upload_url, payload, format='multipart')
                 
                 # Should reject malicious files
@@ -238,7 +221,7 @@ class TeacherProfileWizardSecurityTestCase(TestCase):
             'profile_photo': uploaded_file,
         }
         
-        upload_url = reverse('accounts:teacher-profile-wizard', kwargs={'action': 'upload-photo'})
+        upload_url = reverse('teacher-profile-wizard', kwargs={'action': 'upload-photo'})
         response = self.client.post(upload_url, payload, format='multipart')
         
         # Should accept valid image
@@ -279,7 +262,7 @@ class TeacherProfileWizardTransactionTestCase(TransactionTestCase):
         self.token_instance, self.token = AuthToken.objects.create(self.user)
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
         
-        self.save_progress_url = reverse('accounts:teacher-profile-wizard', kwargs={'action': 'save-progress'})
+        self.save_progress_url = reverse('teacher-profile-wizard', kwargs={'action': 'save-progress'})
 
     def test_transaction_rollback_on_error(self):
         """Test that database changes are rolled back when an error occurs."""
@@ -464,7 +447,7 @@ class SecurityLoggingTestCase(TestCase):
         self.token_instance, self.token = AuthToken.objects.create(self.user)
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
         
-        self.save_progress_url = reverse('accounts:teacher-profile-wizard', kwargs={'action': 'save-progress'})
+        self.save_progress_url = reverse('teacher-profile-wizard', kwargs={'action': 'save-progress'})
 
     @patch('accounts.views.logger')
     def test_security_events_logged(self, mock_logger):
@@ -488,23 +471,6 @@ class SecurityLoggingTestCase(TestCase):
                             for call in log_calls)
         self.assertTrue(security_logged, "Security event should be logged")
 
-    @override_settings(
-        REST_FRAMEWORK={
-            'DEFAULT_AUTHENTICATION_CLASSES': (
-                'knox.auth.TokenAuthentication',
-                'rest_framework_simplejwt.authentication.JWTAuthentication',
-            ),
-            'DEFAULT_PERMISSION_CLASSES': [
-                'rest_framework.permissions.IsAuthenticated',
-            ],
-            'DEFAULT_THROTTLE_CLASSES': [
-                'accounts.throttles.ProfileWizardThrottle',
-            ],
-            'DEFAULT_THROTTLE_RATES': {
-                'profile_wizard': '10/min',
-            },
-        }
-    )
     @patch('accounts.views.logger')
     def test_rate_limit_events_logged(self, mock_logger):
         """Test that rate limiting events are logged."""

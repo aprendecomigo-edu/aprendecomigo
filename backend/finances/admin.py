@@ -5,10 +5,10 @@ from django.utils import timezone
 
 from .models import (
     ClassSession,
-    # FamilyBudgetControl,
+    FamilyBudgetControl,
     HourConsumption,
     PricingPlan,
-    # PurchaseApprovalRequest,
+    PurchaseApprovalRequest,
     PurchaseTransaction,
     SchoolBillingSettings,
     StudentAccountBalance,
@@ -1088,394 +1088,394 @@ class PricingPlanAdmin(admin.ModelAdmin):
 # PARENT-CHILD PURCHASE APPROVAL ADMIN (Issues #111 & #112)
 # =======================
 
-# @admin.register(FamilyBudgetControl)
-# class FamilyBudgetControlAdmin(admin.ModelAdmin):
-#    """Admin interface for family budget controls."""
-#
-#    list_display = [
-#        "parent_name",
-#        "child_name",
-#        "school_name",
-#        "monthly_limit_display",
-#        "weekly_limit_display", 
-#        "auto_approval_display",
-#        "sessions_approval",
-#        "packages_approval",
-#        "is_active",
-#        "updated_at",
-#    ]
-#    list_filter = [
-#        "require_approval_for_sessions",
-#        "require_approval_for_packages",
-#        "is_active",
-#        "parent_child_relationship__school",
-#        "created_at",
-#        "updated_at",
-#    ]
-#    search_fields = [
-#        "parent_child_relationship__parent__name",
-#        "parent_child_relationship__parent__email",
-#        "parent_child_relationship__child__name",
-#        "parent_child_relationship__child__email",
-#        "parent_child_relationship__school__name",
-#    ]
-#    readonly_fields = [
-#        "current_monthly_spending",
-#        "current_weekly_spending",
-#        "created_at", 
-#        "updated_at"
-#    ]
-#    
-#    fieldsets = (
-#        ("Relationship Information", {
-#            "fields": ("parent_child_relationship",)
-#        }),
-#        ("Budget Limits", {
-#            "fields": (
-#                "monthly_budget_limit",
-#                "weekly_budget_limit",
-#                "current_monthly_spending",
-#                "current_weekly_spending",
-#            )
-#        }),
-#        ("Approval Settings", {
-#            "fields": (
-#                "auto_approval_threshold",
-#                "require_approval_for_sessions",
-#                "require_approval_for_packages",
-#            )
-#        }),
-#        ("Status", {
-#            "fields": ("is_active",)
-#        }),
-#        ("Timestamps", {
-#            "fields": ("created_at", "updated_at"),
-#            "classes": ("collapse",),
-#        }),
-#    )
-#
-#    @admin.display(
-#        description="Parent",
-#        ordering="parent_child_relationship__parent__name",
-#    )
-#    def parent_name(self, obj):
-#        """Display parent name."""
-#        return obj.parent_child_relationship.parent.name
-#
-#    @admin.display(
-#        description="Child",
-#        ordering="parent_child_relationship__child__name",
-#    )
-#    def child_name(self, obj):
-#        """Display child name."""
-#        return obj.parent_child_relationship.child.name
-#
-#    @admin.display(
-#        description="School",
-#        ordering="parent_child_relationship__school__name",
-#    )
-#    def school_name(self, obj):
-#        """Display school name."""
-#        return obj.parent_child_relationship.school.name
-#
-#    @admin.display(description="Monthly Limit")
-#    def monthly_limit_display(self, obj):
-#        """Display monthly budget limit."""
-#        if obj.monthly_budget_limit:
-#            return format_html("€{}", obj.monthly_budget_limit)
-#        return format_html('<span style="color: gray;">No limit</span>')
-#
-#    @admin.display(description="Weekly Limit")
-#    def weekly_limit_display(self, obj):
-#        """Display weekly budget limit."""
-#        if obj.weekly_budget_limit:
-#            return format_html("€{}", obj.weekly_budget_limit)
-#        return format_html('<span style="color: gray;">No limit</span>')
-#
-#    @admin.display(description="Auto Approval")
-#    def auto_approval_display(self, obj):
-#        """Display auto approval threshold."""
-#        if obj.auto_approval_threshold > 0:
-#            return format_html("€{}", obj.auto_approval_threshold)
-#        return format_html('<span style="color: red;">Manual only</span>')
-#
-#    @admin.display(description="Sessions", boolean=True)
-#    def sessions_approval(self, obj):
-#        """Display session approval requirement."""
-#        return obj.require_approval_for_sessions
-#
-#    @admin.display(description="Packages", boolean=True)
-#    def packages_approval(self, obj):
-#        """Display package approval requirement."""
-#        return obj.require_approval_for_packages
-#
-#    def get_queryset(self, request):
-#        """Optimize queryset with select_related."""
-#        return super().get_queryset(request).select_related(
-#            "parent_child_relationship__parent",
-#            "parent_child_relationship__child",
-#            "parent_child_relationship__school"
-#        )
-#
+@admin.register(FamilyBudgetControl)
+class FamilyBudgetControlAdmin(admin.ModelAdmin):
+    """Admin interface for family budget controls."""
 
-# @admin.register(PurchaseApprovalRequest)
-# class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
-#    """Admin interface for purchase approval requests."""
-#
-#    list_display = [
-#        "request_id",
-#        "student_name",
-#        "parent_name",
-#        "amount_display",
-#        "request_type_display",
-#        "status_display",
-#        "requested_at",
-#        "time_remaining_display",
-#        "is_expired_display",
-#    ]
-#    list_filter = [
-#        "status",
-#        "request_type",
-#        "requested_at",
-#        "expires_at",
-#        "parent_child_relationship__school",
-#    ]
-#    search_fields = [
-#        "student__name",
-#        "student__email",
-#        "parent__name", 
-#        "parent__email",
-#        "description",
-#    ]
-#    readonly_fields = [
-#        "time_remaining_display",
-#        "is_expired_display",
-#        "requested_at",
-#        "responded_at",
-#        "created_at",
-#        "updated_at",
-#    ]
-#    date_hierarchy = "requested_at"
-#    ordering = ["-requested_at"]
-#
-#    fieldsets = (
-#        ("Request Information", {
-#            "fields": (
-#                "student",
-#                "parent",
-#                "parent_child_relationship",
-#                "amount",
-#                "description",
-#                "request_type",
-#            )
-#        }),
-#        ("Related Items", {
-#            "fields": (
-#                "pricing_plan",
-#                "class_session",
-#                "request_metadata",
-#            ),
-#            "classes": ("collapse",),
-#        }),
-#        ("Approval Status", {
-#            "fields": (
-#                "status",
-#                "parent_notes",
-#                "responded_at",
-#            )
-#        }),
-#        ("Timing", {
-#            "fields": (
-#                "requested_at",
-#                "expires_at",
-#                "time_remaining_display",
-#                "is_expired_display",
-#            )
-#        }),
-#        ("Timestamps", {
-#            "fields": ("created_at", "updated_at"),
-#            "classes": ("collapse",),
-#        }),
-#    )
-#
-#    actions = ["approve_requests", "deny_requests", "mark_expired"]
-#
-#    @admin.display(
-#        description="Request ID",
-#        ordering="id",
-#    )
-#    def request_id(self, obj):
-#        """Display request ID."""
-#        return f"#{obj.id}"
-#
-#    @admin.display(
-#        description="Student",
-#        ordering="student__name",
-#    )
-#    def student_name(self, obj):
-#        """Display student name."""
-#        return obj.student.name
-#
-#    @admin.display(
-#        description="Parent",
-#        ordering="parent__name",
-#    )
-#    def parent_name(self, obj):
-#        """Display parent name."""
-#        return obj.parent.name
-#
-#    @admin.display(description="Amount")
-#    def amount_display(self, obj):
-#        """Display amount with currency formatting."""
-#        return format_html("€{}", obj.amount)
-#
-#    @admin.display(description="Type")
-#    def request_type_display(self, obj):
-#        """Display request type with icon."""
-#        type_icons = {
-#            "hours": "📚",
-#            "session": "👨‍🏫",
-#            "subscription": "🔄"
-#        }
-#        icon = type_icons.get(obj.request_type, "📋")
-#        return format_html("{} {}", icon, obj.get_request_type_display())
-#
-#    @admin.display(description="Status")
-#    def status_display(self, obj):
-#        """Display status with color coding."""
-#        status_colors = {
-#            "pending": "orange",
-#            "approved": "green",
-#            "denied": "red",
-#            "expired": "gray",
-#            "cancelled": "purple"
-#        }
-#        color = status_colors.get(obj.status, "black")
-#        return format_html(
-#            '<span style="color: {}; font-weight: bold;">{}</span>',
-#            color,
-#            obj.get_status_display()
-#        )
-#
-#    @admin.display(description="Time Remaining")
-#    def time_remaining_display(self, obj):
-#        """Display time remaining until expiration."""
-#        if obj.is_expired:
-#            return format_html('<span style="color: red;">Expired</span>')
-#        elif obj.status != "pending":
-#            return format_html('<span style="color: gray;">N/A</span>')
-#        else:
-#            remaining = obj.time_remaining
-#            hours = remaining.total_seconds() / 3600
-#            if hours < 1:
-#                return format_html(
-#                    '<span style="color: red; font-weight: bold;">{:.0f} min</span>',
-#                    remaining.total_seconds() / 60
-#                )
-#            elif hours < 6:
-#                return format_html(
-#                    '<span style="color: orange; font-weight: bold;">{:.1f} hours</span>',
-#                    hours
-#                )
-#            else:
-#                return format_html(
-#                    '<span style="color: green;">{:.1f} hours</span>',
-#                    hours
-#                )
-#
-#    @admin.display(description="Expired", boolean=True)
-#    def is_expired_display(self, obj):
-#        """Display expiration status."""
-#        return obj.is_expired
-#
-#    @admin.action(description="Approve selected requests")
-#    def approve_requests(self, request, queryset):
-#        """Bulk approve requests."""
-#        pending_requests = queryset.filter(status="pending")
-#        approved_count = 0
-#        
-#        for approval_request in pending_requests:
-#            if not approval_request.is_expired:
-#                try:
-#                    approval_request.approve("Bulk approved by admin")
-#                    approved_count += 1
-#                except Exception as e:
-#                    self.message_user(
-#                        request,
-#                        f"Error approving request {approval_request.id}: {e}",
-#                        level="ERROR"
-#                    )
-#        
-#        if approved_count > 0:
-#            self.message_user(
-#                request,
-#                f"Successfully approved {approved_count} request(s)."
-#            )
-#        else:
-#            self.message_user(
-#                request,
-#                "No requests were approved. Requests must be pending and not expired."
-#            )
-#
-#    @admin.action(description="Deny selected requests")
-#    def deny_requests(self, request, queryset):
-#        """Bulk deny requests."""
-#        pending_requests = queryset.filter(status="pending")
-#        denied_count = 0
-#        
-#        for approval_request in pending_requests:
-#            try:
-#                approval_request.deny("Bulk denied by admin")
-#                denied_count += 1
-#            except Exception as e:
-#                self.message_user(
-#                    request,
-#                    f"Error denying request {approval_request.id}: {e}",
-#                    level="ERROR"
-#                )
-#        
-#        if denied_count > 0:
-#            self.message_user(
-#                request,
-#                f"Successfully denied {denied_count} request(s)."
-#            )
-#        else:
-#            self.message_user(
-#                request,
-#                "No requests were denied. Requests must be pending."
-#            )
-#
-#    @admin.action(description="Mark expired requests as expired")
-#    def mark_expired(self, request, queryset):
-#        """Mark expired pending requests as expired."""
-#        expired_requests = queryset.filter(
-#            status="pending"
-#        ).filter(
-#            expires_at__lt=timezone.now()
-#        )
-#        
-#        expired_count = 0
-#        for approval_request in expired_requests:
-#            approval_request.mark_expired()
-#            expired_count += 1
-#        
-#        if expired_count > 0:
-#            self.message_user(
-#                request,
-#                f"Successfully marked {expired_count} request(s) as expired."
-#            )
-#        else:
-#            self.message_user(
-#                request,
-#                "No expired requests found."
-#            )
-#
-#    def get_queryset(self, request):
-#        """Optimize queryset with select_related."""
-#        return super().get_queryset(request).select_related(
-#            "student",
-#            "parent",
-#            "parent_child_relationship__school",
-#            "pricing_plan",
-#            "class_session"
-#        )
+    list_display = [
+        "parent_name",
+        "child_name",
+        "school_name",
+        "monthly_limit_display",
+        "weekly_limit_display", 
+        "auto_approval_display",
+        "sessions_approval",
+        "packages_approval",
+        "is_active",
+        "updated_at",
+    ]
+    list_filter = [
+        "require_approval_for_sessions",
+        "require_approval_for_packages",
+        "is_active",
+        "parent_child_relationship__school",
+        "created_at",
+        "updated_at",
+    ]
+    search_fields = [
+        "parent_child_relationship__parent__name",
+        "parent_child_relationship__parent__email",
+        "parent_child_relationship__child__name",
+        "parent_child_relationship__child__email",
+        "parent_child_relationship__school__name",
+    ]
+    readonly_fields = [
+        "current_monthly_spending",
+        "current_weekly_spending",
+        "created_at", 
+        "updated_at"
+    ]
+    
+    fieldsets = (
+        ("Relationship Information", {
+            "fields": ("parent_child_relationship",)
+        }),
+        ("Budget Limits", {
+            "fields": (
+                "monthly_budget_limit",
+                "weekly_budget_limit",
+                "current_monthly_spending",
+                "current_weekly_spending",
+            )
+        }),
+        ("Approval Settings", {
+            "fields": (
+                "auto_approval_threshold",
+                "require_approval_for_sessions",
+                "require_approval_for_packages",
+            )
+        }),
+        ("Status", {
+            "fields": ("is_active",)
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at"),
+            "classes": ("collapse",),
+        }),
+    )
+
+    @admin.display(
+        description="Parent",
+        ordering="parent_child_relationship__parent__name",
+    )
+    def parent_name(self, obj):
+        """Display parent name."""
+        return obj.parent_child_relationship.parent.name
+
+    @admin.display(
+        description="Child",
+        ordering="parent_child_relationship__child__name",
+    )
+    def child_name(self, obj):
+        """Display child name."""
+        return obj.parent_child_relationship.child.name
+
+    @admin.display(
+        description="School",
+        ordering="parent_child_relationship__school__name",
+    )
+    def school_name(self, obj):
+        """Display school name."""
+        return obj.parent_child_relationship.school.name
+
+    @admin.display(description="Monthly Limit")
+    def monthly_limit_display(self, obj):
+        """Display monthly budget limit."""
+        if obj.monthly_budget_limit:
+            return format_html("€{}", obj.monthly_budget_limit)
+        return format_html('<span style="color: gray;">No limit</span>')
+
+    @admin.display(description="Weekly Limit")
+    def weekly_limit_display(self, obj):
+        """Display weekly budget limit."""
+        if obj.weekly_budget_limit:
+            return format_html("€{}", obj.weekly_budget_limit)
+        return format_html('<span style="color: gray;">No limit</span>')
+
+    @admin.display(description="Auto Approval")
+    def auto_approval_display(self, obj):
+        """Display auto approval threshold."""
+        if obj.auto_approval_threshold > 0:
+            return format_html("€{}", obj.auto_approval_threshold)
+        return format_html('<span style="color: red;">Manual only</span>')
+
+    @admin.display(description="Sessions", boolean=True)
+    def sessions_approval(self, obj):
+        """Display session approval requirement."""
+        return obj.require_approval_for_sessions
+
+    @admin.display(description="Packages", boolean=True)
+    def packages_approval(self, obj):
+        """Display package approval requirement."""
+        return obj.require_approval_for_packages
+
+    def get_queryset(self, request):
+        """Optimize queryset with select_related."""
+        return super().get_queryset(request).select_related(
+            "parent_child_relationship__parent",
+            "parent_child_relationship__child",
+            "parent_child_relationship__school"
+        )
+
+
+@admin.register(PurchaseApprovalRequest)
+class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
+    """Admin interface for purchase approval requests."""
+
+    list_display = [
+        "request_id",
+        "student_name",
+        "parent_name",
+        "amount_display",
+        "request_type_display",
+        "status_display",
+        "requested_at",
+        "time_remaining_display",
+        "is_expired_display",
+    ]
+    list_filter = [
+        "status",
+        "request_type",
+        "requested_at",
+        "expires_at",
+        "parent_child_relationship__school",
+    ]
+    search_fields = [
+        "student__name",
+        "student__email",
+        "parent__name", 
+        "parent__email",
+        "description",
+    ]
+    readonly_fields = [
+        "time_remaining_display",
+        "is_expired_display",
+        "requested_at",
+        "responded_at",
+        "created_at",
+        "updated_at",
+    ]
+    date_hierarchy = "requested_at"
+    ordering = ["-requested_at"]
+
+    fieldsets = (
+        ("Request Information", {
+            "fields": (
+                "student",
+                "parent",
+                "parent_child_relationship",
+                "amount",
+                "description",
+                "request_type",
+            )
+        }),
+        ("Related Items", {
+            "fields": (
+                "pricing_plan",
+                "class_session",
+                "request_metadata",
+            ),
+            "classes": ("collapse",),
+        }),
+        ("Approval Status", {
+            "fields": (
+                "status",
+                "parent_notes",
+                "responded_at",
+            )
+        }),
+        ("Timing", {
+            "fields": (
+                "requested_at",
+                "expires_at",
+                "time_remaining_display",
+                "is_expired_display",
+            )
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at"),
+            "classes": ("collapse",),
+        }),
+    )
+
+    actions = ["approve_requests", "deny_requests", "mark_expired"]
+
+    @admin.display(
+        description="Request ID",
+        ordering="id",
+    )
+    def request_id(self, obj):
+        """Display request ID."""
+        return f"#{obj.id}"
+
+    @admin.display(
+        description="Student",
+        ordering="student__name",
+    )
+    def student_name(self, obj):
+        """Display student name."""
+        return obj.student.name
+
+    @admin.display(
+        description="Parent",
+        ordering="parent__name",
+    )
+    def parent_name(self, obj):
+        """Display parent name."""
+        return obj.parent.name
+
+    @admin.display(description="Amount")
+    def amount_display(self, obj):
+        """Display amount with currency formatting."""
+        return format_html("€{}", obj.amount)
+
+    @admin.display(description="Type")
+    def request_type_display(self, obj):
+        """Display request type with icon."""
+        type_icons = {
+            "hours": "📚",
+            "session": "👨‍🏫",
+            "subscription": "🔄"
+        }
+        icon = type_icons.get(obj.request_type, "📋")
+        return format_html("{} {}", icon, obj.get_request_type_display())
+
+    @admin.display(description="Status")
+    def status_display(self, obj):
+        """Display status with color coding."""
+        status_colors = {
+            "pending": "orange",
+            "approved": "green",
+            "denied": "red",
+            "expired": "gray",
+            "cancelled": "purple"
+        }
+        color = status_colors.get(obj.status, "black")
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color,
+            obj.get_status_display()
+        )
+
+    @admin.display(description="Time Remaining")
+    def time_remaining_display(self, obj):
+        """Display time remaining until expiration."""
+        if obj.is_expired:
+            return format_html('<span style="color: red;">Expired</span>')
+        elif obj.status != "pending":
+            return format_html('<span style="color: gray;">N/A</span>')
+        else:
+            remaining = obj.time_remaining
+            hours = remaining.total_seconds() / 3600
+            if hours < 1:
+                return format_html(
+                    '<span style="color: red; font-weight: bold;">{:.0f} min</span>',
+                    remaining.total_seconds() / 60
+                )
+            elif hours < 6:
+                return format_html(
+                    '<span style="color: orange; font-weight: bold;">{:.1f} hours</span>',
+                    hours
+                )
+            else:
+                return format_html(
+                    '<span style="color: green;">{:.1f} hours</span>',
+                    hours
+                )
+
+    @admin.display(description="Expired", boolean=True)
+    def is_expired_display(self, obj):
+        """Display expiration status."""
+        return obj.is_expired
+
+    @admin.action(description="Approve selected requests")
+    def approve_requests(self, request, queryset):
+        """Bulk approve requests."""
+        pending_requests = queryset.filter(status="pending")
+        approved_count = 0
+        
+        for approval_request in pending_requests:
+            if not approval_request.is_expired:
+                try:
+                    approval_request.approve("Bulk approved by admin")
+                    approved_count += 1
+                except Exception as e:
+                    self.message_user(
+                        request,
+                        f"Error approving request {approval_request.id}: {e}",
+                        level="ERROR"
+                    )
+        
+        if approved_count > 0:
+            self.message_user(
+                request,
+                f"Successfully approved {approved_count} request(s)."
+            )
+        else:
+            self.message_user(
+                request,
+                "No requests were approved. Requests must be pending and not expired."
+            )
+
+    @admin.action(description="Deny selected requests")
+    def deny_requests(self, request, queryset):
+        """Bulk deny requests."""
+        pending_requests = queryset.filter(status="pending")
+        denied_count = 0
+        
+        for approval_request in pending_requests:
+            try:
+                approval_request.deny("Bulk denied by admin")
+                denied_count += 1
+            except Exception as e:
+                self.message_user(
+                    request,
+                    f"Error denying request {approval_request.id}: {e}",
+                    level="ERROR"
+                )
+        
+        if denied_count > 0:
+            self.message_user(
+                request,
+                f"Successfully denied {denied_count} request(s)."
+            )
+        else:
+            self.message_user(
+                request,
+                "No requests were denied. Requests must be pending."
+            )
+
+    @admin.action(description="Mark expired requests as expired")
+    def mark_expired(self, request, queryset):
+        """Mark expired pending requests as expired."""
+        expired_requests = queryset.filter(
+            status="pending"
+        ).filter(
+            expires_at__lt=timezone.now()
+        )
+        
+        expired_count = 0
+        for approval_request in expired_requests:
+            approval_request.mark_expired()
+            expired_count += 1
+        
+        if expired_count > 0:
+            self.message_user(
+                request,
+                f"Successfully marked {expired_count} request(s) as expired."
+            )
+        else:
+            self.message_user(
+                request,
+                "No expired requests found."
+            )
+
+    def get_queryset(self, request):
+        """Optimize queryset with select_related."""
+        return super().get_queryset(request).select_related(
+            "student",
+            "parent",
+            "parent_child_relationship__school",
+            "pricing_plan",
+            "class_session"
+        )

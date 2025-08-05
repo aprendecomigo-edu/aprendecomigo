@@ -1,0 +1,799 @@
+"""
+Comprehensive Test Suite for Email Communication System (Issues #99 & #100)
+
+Tests cover:
+- Email template rendering and branding
+- Enhanced email sending service
+- Email sequence orchestration
+- Django signals automation
+- Email tracking and analytics
+"""
+
+import json
+from datetime import datetime, timedelta
+from unittest.mock import patch, MagicMock
+
+from django.test import TestCase, override_settings
+from django.utils import timezone
+from django.core import mail
+from django.core.management import call_command
+from django.db import transaction
+
+from ..models import (
+    School, CustomUser, TeacherInvitation, SchoolEmailTemplate, 
+    EmailCommunication, EmailSequence, EmailSequenceStep,
+    EmailTemplateType, EmailCommunicationType, EmailDeliveryStatus,
+    InvitationStatus, SchoolRole
+)
+from ..services.email_template_service import (
+    EmailTemplateRenderingService, EmailTemplateVariableExtractor,
+    SchoolEmailTemplateManager
+)
+from ..services.enhanced_email_service import EnhancedEmailService, EmailAnalyticsService
+from ..services.email_sequence_service import EmailSequenceOrchestrationService
+from ..services.default_templates import DefaultEmailTemplates
+
+
+class EmailTemplateRenderingTest(TestCase):
+    """Test email template rendering with school branding."""
+    
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Test School",
+            description="A test school for template testing",
+            primary_color="#FF5722",
+            secondary_color="#FF8A65",
+            contact_email="test@testschool.com"
+        )
+        
+        self.template = SchoolEmailTemplate.objects.create(
+            school=self.school,
+            template_type=EmailTemplateType.INVITATION,
+            name="Test Invitation Template",
+            subject_template="Join {{ school_name }} - {{ teacher_name }}",
+            html_content="<h1>Welcome {{ teacher_name }}!</h1><p>Join {{ school_name }}</p>",
+            text_content="Welcome {{ teacher_name }}! Join {{ school_name }}",
+            use_school_branding=True
+        )
+    
+    def test_template_rendering_with_context(self):
+        """Test basic template rendering with context variables."""
+        context = {
+            'teacher_name': 'John Doe',
+            'recipient_email': 'john@example.com'
+        }
+        
+        subject, html_content, text_content = EmailTemplateRenderingService.render_template(
+            template=self.template,
+            context_variables=context
+        )
+        
+        self.assertEqual(subject, "Join Test School - John Doe")
+        self.assertIn("Welcome John Doe!", html_content)
+        self.assertIn("Join Test School", html_content)
+        self.assertIn("Welcome John Doe!", text_content)
+        
+    def test_school_branding_integration(self):
+        """Test that school branding is properly applied."""
+        context = {'teacher_name': 'Jane Doe'}
+        
+        subject, html_content, text_content = EmailTemplateRenderingService.render_template(
+            template=self.template,
+            context_variables=context
+        )
+        
+        # Check that school colors are included in CSS
+        self.assertIn(self.school.primary_color, html_content)
+        self.assertIn("--school-primary-color", html_content)
+        self.assertIn("school-branded", html_content)
+        
+    def test_template_variable_extraction(self):
+        """Test extraction of template variables."""
+        variables = EmailTemplateVariableExtractor.extract_variables_from_template(self.template)
+        
+        expected_subject_vars = {'school_name', 'teacher_name'}
+        expected_html_vars = {'teacher_name', 'school_name'}
+        
+        self.assertEqual(variables['subject'], expected_subject_vars)
+        self.assertEqual(variables['html'], expected_html_vars)
+        
+    def test_missing_variables_detection(self):
+        """Test detection of missing template variables."""
+        context = {'teacher_name': 'John Doe'}  # Missing school_name
+        
+        missing = EmailTemplateVariableExtractor.get_missing_variables(
+            template=self.template,
+            provided_context=context
+        )
+        
+        # school_name should be missing from subject
+        self.assertIn('subject', missing)
+        self.assertIn('school_name', missing['subject'])
+        
+    def test_fallback_html_structure(self):
+        """Test fallback HTML structure for malformed templates."""
+        # Create template with minimal HTML
+        minimal_template = SchoolEmailTemplate.objects.create(
+            school=self.school,
+            template_type=EmailTemplateType.WELCOME,
+            name="Minimal Template",
+            subject_template="Welcome",
+            html_content="<p>Just a paragraph</p>",
+            text_content="Just text",
+            use_school_branding=False
+        )
+        
+        subject, html_content, text_content = EmailTemplateRenderingService.render_template(
+            template=minimal_template,
+            context_variables={}
+        )
+        
+        # Should wrap in proper HTML structure
+        self.assertIn("<!DOCTYPE html>", html_content)
+        self.assertIn("<html", html_content)
+        self.assertIn("<head>", html_content)
+        self.assertIn("<body>", html_content)
+
+
+class EnhancedEmailServiceTest(TestCase):
+    """Test enhanced email sending service."""
+    
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Email Test School",
+            contact_email="admin@emailtest.com"
+        )
+        
+        self.user = CustomUser.objects.create(
+            email="admin@emailtest.com",
+            name="Admin User"
+        )
+        
+        self.template = SchoolEmailTemplate.objects.create(
+            school=self.school,
+            template_type=EmailTemplateType.WELCOME,
+            name="Welcome Template",
+            subject_template="Welcome to {{ school_name }}",
+            html_content="<h1>Welcome {{ teacher_name }}!</h1>",
+            text_content="Welcome {{ teacher_name }}!"
+        )
+    
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_send_template_email(self):
+        """Test sending a template email."""
+        context = {
+            'teacher_name': 'Test Teacher',
+            'recipient_email': 'teacher@example.com'
+        }
+        
+        result = EnhancedEmailService.send_template_email(
+            school=self.school,
+            template_type=EmailTemplateType.WELCOME,
+            recipient_email='teacher@example.com',
+            context_variables=context,
+            created_by=self.user
+        )
+        
+        self.assertTrue(result['success'])
+        self.assertEqual(len(mail.outbox), 1)
+        
+        # Check email content
+        email = mail.outbox[0]
+        self.assertEqual(email.subject, "Welcome to Email Test School")
+        self.assertIn("Welcome Test Teacher!", email.body)
+        
+        # Check database record
+        email_comm = EmailCommunication.objects.get(id=result['email_communication_id'])
+        self.assertEqual(email_comm.delivery_status, EmailDeliveryStatus.SENT)
+        self.assertEqual(email_comm.recipient_email, 'teacher@example.com')
+        
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_bulk_email_sending(self):
+        """Test bulk email sending functionality."""
+        recipients = [
+            {'email': 'teacher1@example.com', 'context': {'teacher_name': 'Teacher One'}},
+            {'email': 'teacher2@example.com', 'context': {'teacher_name': 'Teacher Two'}},
+            {'email': 'teacher3@example.com', 'context': {'teacher_name': 'Teacher Three'}},
+        ]
+        
+        result = EnhancedEmailService.send_bulk_template_emails(
+            school=self.school,
+            template_type=EmailTemplateType.WELCOME,
+            recipients=recipients,
+            created_by=self.user
+        )
+        
+        self.assertEqual(result['total_recipients'], 3)
+        self.assertEqual(result['successful_emails'], 3)
+        self.assertEqual(result['failed_emails'], 0)
+        self.assertEqual(len(mail.outbox), 3)
+        
+        # Check that all emails were created in database
+        email_comms = EmailCommunication.objects.filter(
+            school=self.school,
+            template_type=EmailTemplateType.WELCOME
+        )
+        self.assertEqual(email_comms.count(), 3)
+        
+    def test_email_retry_functionality(self):
+        """Test email retry for failed sends."""
+        # Create a failed email communication
+        email_comm = EmailCommunication.objects.create(
+            recipient_email='failed@example.com',
+            school=self.school,
+            template=self.template,
+            template_type=EmailTemplateType.WELCOME,
+            subject='Test Subject',
+            delivery_status=EmailDeliveryStatus.FAILED,
+            failure_reason='Test failure',
+            retry_count=1,
+            max_retries=3
+        )
+        
+        # Test that it can be retried
+        self.assertTrue(email_comm.can_retry())
+        
+        # Test retry functionality
+        with override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend'):
+            result = EnhancedEmailService.retry_failed_email(email_comm.id)
+            
+        self.assertTrue(result['success'])
+        
+        # Check updated status
+        email_comm.refresh_from_db()
+        self.assertEqual(email_comm.delivery_status, EmailDeliveryStatus.SENT)
+        
+    def test_max_retry_limit(self):
+        """Test that emails respect max retry limits."""
+        email_comm = EmailCommunication.objects.create(
+            recipient_email='maxretry@example.com',
+            school=self.school,
+            template=self.template,
+            template_type=EmailTemplateType.WELCOME,
+            subject='Test Subject',
+            delivery_status=EmailDeliveryStatus.FAILED,
+            retry_count=3,
+            max_retries=3
+        )
+        
+        # Should not be able to retry
+        self.assertFalse(email_comm.can_retry())
+        
+        result = EnhancedEmailService.retry_failed_email(email_comm.id)
+        self.assertFalse(result['success'])
+        self.assertIn('max retries', result['error'])
+
+
+class EmailSequenceOrchestrationTest(TestCase):
+    """Test email sequence orchestration service."""
+    
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Sequence Test School",
+            contact_email="admin@sequencetest.com"
+        )
+        
+        # Create templates for sequence
+        self.welcome_template = SchoolEmailTemplate.objects.create(
+            school=self.school,
+            template_type=EmailTemplateType.WELCOME,
+            name="Welcome",
+            subject_template="Welcome to {{ school_name }}",
+            html_content="<h1>Welcome!</h1>",
+            text_content="Welcome!"
+        )
+        
+        self.reminder_template = SchoolEmailTemplate.objects.create(
+            school=self.school,
+            template_type=EmailTemplateType.REMINDER,
+            name="Reminder",
+            subject_template="Reminder from {{ school_name }}",
+            html_content="<h1>Reminder!</h1>",
+            text_content="Reminder!"
+        )
+        
+        # Create email sequence
+        self.sequence = EmailSequence.objects.create(
+            school=self.school,
+            name="Welcome Sequence",
+            description="Welcome sequence for new teachers",
+            trigger_event="invitation_accepted",
+            is_active=True,
+            max_emails=3
+        )
+        
+        # Create sequence steps
+        self.step1 = EmailSequenceStep.objects.create(
+            sequence=self.sequence,
+            template=self.welcome_template,
+            step_number=1,
+            delay_hours=0,
+            send_condition="always"
+        )
+        
+        self.step2 = EmailSequenceStep.objects.create(
+            sequence=self.sequence,
+            template=self.reminder_template,
+            step_number=2,
+            delay_hours=24,
+            send_condition="if_no_response"
+        )
+        
+    def test_sequence_triggering(self):
+        """Test triggering an email sequence."""
+        context = {
+            'teacher_name': 'New Teacher',
+            'recipient_email': 'newteacher@example.com'
+        }
+        
+        result = EmailSequenceOrchestrationService.trigger_sequence(
+            school=self.school,
+            trigger_event='invitation_accepted',
+            context=context
+        )
+        
+        self.assertTrue(result['success'])
+        self.assertEqual(result['triggered_sequences'], 1)
+        
+        # Check that sequence steps were scheduled
+        scheduled_emails = EmailCommunication.objects.filter(
+            sequence=self.sequence,
+            recipient_email='newteacher@example.com'
+        )
+        self.assertEqual(scheduled_emails.count(), 2)
+        
+        # Check timing
+        immediate_email = scheduled_emails.get(sequence_step=self.step1)
+        delayed_email = scheduled_emails.get(sequence_step=self.step2)
+        
+        # Step 1 should be queued for immediate sending
+        self.assertAlmostEqual(
+            immediate_email.queued_at,
+            timezone.now(),
+            delta=timedelta(seconds=10)
+        )
+        
+        # Step 2 should be queued for 24 hours later
+        expected_delay = timezone.now() + timedelta(hours=24)
+        self.assertAlmostEqual(
+            delayed_email.queued_at,
+            expected_delay,
+            delta=timedelta(minutes=1)
+        )
+        
+    def test_duplicate_sequence_prevention(self):
+        """Test prevention of duplicate sequences for same recipient."""
+        context = {
+            'recipient_email': 'duplicate@example.com'
+        }
+        
+        # Trigger sequence first time
+        result1 = EmailSequenceOrchestrationService.trigger_sequence(
+            school=self.school,
+            trigger_event='invitation_accepted',
+            context=context
+        )
+        
+        # Trigger sequence second time
+        result2 = EmailSequenceOrchestrationService.trigger_sequence(
+            school=self.school,
+            trigger_event='invitation_accepted',
+            context=context
+        )
+        
+        self.assertTrue(result1['success'])
+        self.assertTrue(result2['success'])
+        
+        # Should only have one set of sequence emails
+        total_emails = EmailCommunication.objects.filter(
+            sequence=self.sequence,
+            recipient_email='duplicate@example.com'
+        ).count()
+        
+        # First trigger creates emails, second should be prevented
+        self.assertEqual(total_emails, 2)  # Only from first trigger
+        
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_due_sequence_processing(self):
+        """Test processing of due sequence emails."""
+        # Create emails that are due to be sent
+        context = {'teacher_name': 'Test Teacher'}
+        
+        past_time = timezone.now() - timedelta(hours=1)
+        
+        email_comm = EmailCommunication.objects.create(
+            recipient_email='due@example.com',
+            school=self.school,
+            template=self.welcome_template,
+            template_type=EmailTemplateType.WELCOME,
+            subject='Test Subject',
+            communication_type=EmailCommunicationType.SEQUENCE,
+            sequence=self.sequence,
+            sequence_step=self.step1,
+            delivery_status=EmailDeliveryStatus.QUEUED,
+            queued_at=past_time
+        )
+        
+        # Process due emails
+        result = EmailSequenceOrchestrationService.process_due_sequence_emails()
+        
+        self.assertTrue(result['success'])
+        self.assertEqual(result['processed_emails'], 1)
+        self.assertEqual(result['successful_emails'], 1)
+        
+        # Check email was sent
+        self.assertEqual(len(mail.outbox), 1)
+        
+        # Check status updated
+        email_comm.refresh_from_db()
+        self.assertEqual(email_comm.delivery_status, EmailDeliveryStatus.SENT)
+        
+    def test_sequence_cancellation(self):
+        """Test canceling sequences for specific recipients."""
+        # Create queued sequence emails
+        EmailCommunication.objects.create(
+            recipient_email='cancel@example.com',
+            school=self.school,
+            template=self.welcome_template,
+            template_type=EmailTemplateType.WELCOME,
+            subject='Test Subject',
+            communication_type=EmailCommunicationType.SEQUENCE,
+            sequence=self.sequence,
+            delivery_status=EmailDeliveryStatus.QUEUED
+        )
+        
+        EmailCommunication.objects.create(
+            recipient_email='cancel@example.com',
+            school=self.school,
+            template=self.reminder_template,
+            template_type=EmailTemplateType.REMINDER,
+            subject='Test Subject 2',
+            communication_type=EmailCommunicationType.SEQUENCE,
+            sequence=self.sequence,
+            delivery_status=EmailDeliveryStatus.QUEUED
+        )
+        
+        # Cancel sequence
+        result = EmailSequenceOrchestrationService.cancel_sequence_for_recipient(
+            sequence=self.sequence,
+            recipient_email='cancel@example.com',
+            reason='User opted out'
+        )
+        
+        self.assertTrue(result['success'])
+        self.assertEqual(result['cancelled_emails'], 2)
+        
+        # Check emails were marked as failed
+        cancelled_emails = EmailCommunication.objects.filter(
+            sequence=self.sequence,
+            recipient_email='cancel@example.com',
+            delivery_status=EmailDeliveryStatus.FAILED
+        )
+        self.assertEqual(cancelled_emails.count(), 2)
+
+
+class EmailAutomationSignalsTest(TestCase):
+    """Test Django signals for email automation."""
+    
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Signal Test School",
+            contact_email="admin@signaltest.com"
+        )
+        
+        self.inviter = CustomUser.objects.create(
+            email="inviter@signaltest.com",
+            name="Inviter User"
+        )
+        
+        # Create invitation template
+        SchoolEmailTemplate.objects.create(
+            school=self.school,
+            template_type=EmailTemplateType.INVITATION,
+            name="Invitation Template",
+            subject_template="Join {{ school_name }}",
+            html_content="<h1>Join us!</h1>",
+            text_content="Join us!"
+        )
+        
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_invitation_creation_signal(self):
+        """Test that creating an invitation triggers email."""
+        # Create teacher invitation (should trigger signal)
+        invitation = TeacherInvitation.objects.create(
+            school=self.school,
+            email='newteacher@example.com',
+            invited_by=self.inviter,
+            role=SchoolRole.TEACHER,
+            batch_id='test-batch-123'
+        )
+        
+        # Check email was sent
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.to, ['newteacher@example.com'])
+        self.assertIn('Join Signal Test School', email.subject)
+        
+        # Check invitation status updated
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.status, InvitationStatus.SENT)
+        self.assertIsNotNone(invitation.email_sent_at)
+        
+        # Check email communication created
+        email_comm = EmailCommunication.objects.filter(
+            teacher_invitation=invitation,
+            template_type=EmailTemplateType.INVITATION
+        ).first()
+        self.assertIsNotNone(email_comm)
+        self.assertEqual(email_comm.delivery_status, EmailDeliveryStatus.SENT)
+
+
+class EmailAnalyticsTest(TestCase):
+    """Test email analytics and reporting."""
+    
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Analytics Test School",
+            contact_email="admin@analyticstest.com"
+        )
+        
+        self.template = SchoolEmailTemplate.objects.create(
+            school=self.school,
+            template_type=EmailTemplateType.WELCOME,
+            name="Analytics Template",
+            subject_template="Welcome",
+            html_content="<h1>Welcome!</h1>",
+            text_content="Welcome!"
+        )
+        
+        # Create various email communications for testing
+        self.create_test_emails()
+        
+    def create_test_emails(self):
+        """Create test email communications with various statuses."""
+        base_time = timezone.now() - timedelta(days=15)
+        
+        # Create emails with different statuses
+        statuses = [
+            EmailDeliveryStatus.SENT,
+            EmailDeliveryStatus.DELIVERED,
+            EmailDeliveryStatus.OPENED,
+            EmailDeliveryStatus.CLICKED,
+            EmailDeliveryStatus.FAILED,
+            EmailDeliveryStatus.BOUNCED
+        ]
+        
+        for i, status in enumerate(statuses):
+            EmailCommunication.objects.create(
+                recipient_email=f'test{i}@example.com',
+                school=self.school,
+                template=self.template,
+                template_type=EmailTemplateType.WELCOME,
+                subject='Test Email',
+                delivery_status=status,
+                queued_at=base_time + timedelta(hours=i)
+            )
+    
+    def test_school_email_statistics(self):
+        """Test school email statistics generation."""
+        stats = EmailAnalyticsService.get_school_email_stats(self.school, days=30)
+        
+        self.assertEqual(stats['total_emails'], 6)
+        self.assertEqual(stats['sent_emails'], 1)
+        self.assertEqual(stats['delivered_emails'], 1)
+        self.assertEqual(stats['opened_emails'], 1)
+        self.assertEqual(stats['clicked_emails'], 1)
+        self.assertEqual(stats['failed_emails'], 1)
+        self.assertEqual(stats['bounced_emails'], 1)
+        
+        # Check rates calculation
+        self.assertAlmostEqual(stats['delivery_rate'], 16.67, places=1)  # 1/6 * 100
+        self.assertAlmostEqual(stats['open_rate'], 16.67, places=1)     # 1/6 * 100
+        self.assertAlmostEqual(stats['click_rate'], 16.67, places=1)    # 1/6 * 100
+        self.assertAlmostEqual(stats['failure_rate'], 16.67, places=1)  # 1/6 * 100
+        
+    def test_template_performance_statistics(self):
+        """Test template performance statistics."""
+        stats = EmailAnalyticsService.get_template_performance(self.template, days=30)
+        
+        self.assertEqual(stats['template_id'], self.template.id)
+        self.assertEqual(stats['total_sent'], 6)
+        self.assertEqual(stats['delivered'], 1)
+        self.assertEqual(stats['opened'], 1)
+        self.assertEqual(stats['clicked'], 1)
+        self.assertEqual(stats['failed'], 1)
+        
+        # Check performance rates
+        self.assertAlmostEqual(stats['delivery_rate'], 16.67, places=1)
+        self.assertAlmostEqual(stats['open_rate'], 16.67, places=1)
+        self.assertAlmostEqual(stats['click_rate'], 16.67, places=1)
+        self.assertAlmostEqual(stats['failure_rate'], 16.67, places=1)
+
+
+class DefaultTemplateTest(TestCase):
+    """Test default template creation and management."""
+    
+    def test_default_template_retrieval(self):
+        """Test retrieving default templates."""
+        for template_type in [t[0] for t in EmailTemplateType.choices]:
+            template_data = DefaultEmailTemplates.get_default_template(template_type)
+            
+            self.assertIn('name', template_data)
+            self.assertIn('subject', template_data)
+            self.assertIn('html', template_data)
+            self.assertIn('text', template_data)
+            
+            # Check that templates have required content
+            self.assertTrue(len(template_data['subject']) > 0)
+            self.assertTrue(len(template_data['html']) > 0)
+            self.assertTrue(len(template_data['text']) > 0)
+            
+    def test_management_command_template_creation(self):
+        """Test management command for creating default templates."""
+        school = School.objects.create(
+            name="Command Test School",
+            contact_email="admin@commandtest.com"
+        )
+        
+        # Run management command
+        call_command('create_default_email_templates', '--school-id', school.id)
+        
+        # Check that templates were created
+        created_templates = SchoolEmailTemplate.objects.filter(school=school)
+        
+        # Should have one template for each type
+        self.assertEqual(created_templates.count(), len(EmailTemplateType.choices))
+        
+        # Check each template type exists
+        for template_type_tuple in EmailTemplateType.choices:
+            template_type = template_type_tuple[0]
+            template_exists = created_templates.filter(
+                template_type=template_type
+            ).exists()
+            self.assertTrue(template_exists, f"Template {template_type} was not created")
+            
+    def test_school_template_manager(self):
+        """Test school email template manager functionality."""
+        school = School.objects.create(
+            name="Manager Test School",
+            contact_email="admin@managertest.com"
+        )
+        
+        # Create a school-specific template
+        school_template = SchoolEmailTemplate.objects.create(
+            school=school,
+            template_type=EmailTemplateType.INVITATION,
+            name="School Invitation",
+            subject_template="Custom invitation",
+            html_content="<h1>Custom</h1>",
+            text_content="Custom"
+        )
+        
+        # Get template for school
+        retrieved_template = SchoolEmailTemplateManager.get_template_for_school(
+            school=school,
+            template_type=EmailTemplateType.INVITATION
+        )
+        
+        self.assertEqual(retrieved_template.id, school_template.id)
+        
+        # Test fallback behavior for non-existent template
+        no_template = SchoolEmailTemplateManager.get_template_for_school(
+            school=school,
+            template_type=EmailTemplateType.WELCOME,
+            fallback_to_default=False
+        )
+        
+        self.assertIsNone(no_template)
+
+
+class IntegrationTest(TestCase):
+    """Integration tests for the complete email system."""
+    
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Integration Test School",
+            description="School for integration testing",
+            contact_email="admin@integrationtest.com",
+            primary_color="#2196F3"
+        )
+        
+        self.inviter = CustomUser.objects.create(
+            email="admin@integrationtest.com",
+            name="Admin User"
+        )
+        
+        # Create default templates
+        call_command('create_default_email_templates', '--school-id', self.school.id)
+        
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_complete_teacher_invitation_flow(self):
+        """Test complete teacher invitation flow with email automation."""
+        # Create teacher invitation (triggers invitation email)
+        invitation = TeacherInvitation.objects.create(
+            school=self.school,
+            email='fullflow@example.com',
+            invited_by=self.inviter,
+            role=SchoolRole.TEACHER,
+            custom_message='Welcome to our team!',
+            batch_id='integration-test-123'
+        )
+        
+        # Check invitation email was sent
+        self.assertEqual(len(mail.outbox), 1)
+        invitation_email = mail.outbox[0]
+        self.assertIn('Integration Test School', invitation_email.subject)
+        self.assertIn('fullflow@example.com', invitation_email.to)
+        
+        # Check email communication was created
+        email_comm = EmailCommunication.objects.filter(
+            teacher_invitation=invitation,
+            template_type=EmailTemplateType.INVITATION
+        ).first()
+        self.assertIsNotNone(email_comm)
+        self.assertEqual(email_comm.delivery_status, EmailDeliveryStatus.SENT)
+        
+        # Check invitation status
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.status, InvitationStatus.SENT)
+        
+        # Simulate invitation acceptance
+        mail.outbox.clear()  # Clear previous emails
+        
+        teacher_user = CustomUser.objects.create(
+            email='fullflow@example.com',
+            name='Full Flow Teacher'
+        )
+        
+        invitation.is_accepted = True
+        invitation.accepted_at = timezone.now()
+        invitation.save()
+        
+        # Check that welcome email sequence was triggered
+        # (This depends on your signal implementation)
+        welcome_emails = EmailCommunication.objects.filter(
+            recipient_email='fullflow@example.com',
+            template_type=EmailTemplateType.WELCOME
+        )
+        
+        # The exact count depends on your sequence configuration
+        self.assertGreaterEqual(welcome_emails.count(), 0)
+        
+    def test_email_analytics_end_to_end(self):
+        """Test end-to-end email analytics functionality."""
+        # Send multiple emails
+        recipients = [
+            {'email': 'analytics1@example.com', 'context': {'teacher_name': 'Teacher One'}},
+            {'email': 'analytics2@example.com', 'context': {'teacher_name': 'Teacher Two'}},
+            {'email': 'analytics3@example.com', 'context': {'teacher_name': 'Teacher Three'}},
+        ]
+        
+        with override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend'):
+            result = EnhancedEmailService.send_bulk_template_emails(
+                school=self.school,
+                template_type=EmailTemplateType.WELCOME,
+                recipients=recipients
+            )
+        
+        self.assertEqual(result['successful_emails'], 3)
+        
+        # Get analytics
+        stats = EmailAnalyticsService.get_school_email_stats(self.school, days=1)
+        
+        self.assertEqual(stats['total_emails'], 3)
+        self.assertEqual(stats['sent_emails'], 3)
+        self.assertEqual(stats['delivery_rate'], 100.0)  # All sent successfully
+        
+        # Test template performance
+        welcome_template = SchoolEmailTemplate.objects.get(
+            school=self.school,
+            template_type=EmailTemplateType.WELCOME
+        )
+        
+        template_stats = EmailAnalyticsService.get_template_performance(
+            template=welcome_template,
+            days=1
+        )
+        
+        self.assertEqual(template_stats['total_sent'], 3)
+        self.assertEqual(template_stats['delivery_rate'], 100.0)

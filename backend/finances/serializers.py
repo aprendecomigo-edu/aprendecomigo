@@ -11,10 +11,10 @@ from rest_framework import serializers
 
 from .models import (
     ClassSession,
-    # FamilyBudgetControl,
+    FamilyBudgetControl,
     HourConsumption,
     PricingPlan,
-    # PurchaseApprovalRequest,
+    PurchaseApprovalRequest,
     PurchaseTransaction,
     Receipt,
     SchoolBillingSettings,
@@ -1021,106 +1021,106 @@ class PaymentMethodResponseSerializer(serializers.Serializer):
 # PARENT-CHILD PURCHASE APPROVAL SERIALIZERS (Issues #111 & #112)
 # =======================
 
-#class FamilyBudgetControlSerializer(serializers.ModelSerializer):
-#    """
-#    Serializer for FamilyBudgetControl model.
-#    Handles budget limits and approval settings for parent-child relationships.
-#    """
-#    
-#    parent_name = serializers.CharField(source='parent_child_relationship.parent.name', read_only=True)
-#    child_name = serializers.CharField(source='parent_child_relationship.child.name', read_only=True)
-#    school_name = serializers.CharField(source='parent_child_relationship.school.name', read_only=True)
-#    current_monthly_spending = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-#    current_weekly_spending = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-#    
-#    class Meta:
-#        model = FamilyBudgetControl
-#        fields = [
-#            'id', 'parent_child_relationship', 'parent_name', 'child_name', 'school_name',
-#            'monthly_budget_limit', 'weekly_budget_limit', 'auto_approval_threshold',
-#            'require_approval_for_sessions', 'require_approval_for_packages',
-#            'current_monthly_spending', 'current_weekly_spending', 'is_active',
-#            'created_at', 'updated_at'
-#        ]
-#        read_only_fields = [
-#            'id', 'parent_name', 'child_name', 'school_name',
-#            'current_monthly_spending', 'current_weekly_spending',
-#            'created_at', 'updated_at'
-#        ]
-#    
-#    def check_budget_limits(self, amount):
-#        """Check if a purchase amount would exceed budget limits."""
-#        if self.instance:
-#            return self.instance.check_budget_limits(amount)
-#        return {'allowed': True, 'can_auto_approve': True, 'reasons': []}
-#
+class FamilyBudgetControlSerializer(serializers.ModelSerializer):
+    """
+    Serializer for FamilyBudgetControl model.
+    Handles budget limits and approval settings for parent-child relationships.
+    """
+    
+    parent_name = serializers.CharField(source='parent_child_relationship.parent.name', read_only=True)
+    child_name = serializers.CharField(source='parent_child_relationship.child.name', read_only=True)
+    school_name = serializers.CharField(source='parent_child_relationship.school.name', read_only=True)
+    current_monthly_spending = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    current_weekly_spending = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    
+    class Meta:
+        model = FamilyBudgetControl
+        fields = [
+            'id', 'parent_child_relationship', 'parent_name', 'child_name', 'school_name',
+            'monthly_budget_limit', 'weekly_budget_limit', 'auto_approval_threshold',
+            'require_approval_for_sessions', 'require_approval_for_packages',
+            'current_monthly_spending', 'current_weekly_spending', 'is_active',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'parent_name', 'child_name', 'school_name',
+            'current_monthly_spending', 'current_weekly_spending',
+            'created_at', 'updated_at'
+        ]
+    
+    def check_budget_limits(self, amount):
+        """Check if a purchase amount would exceed budget limits."""
+        if self.instance:
+            return self.instance.check_budget_limits(amount)
+        return {'allowed': True, 'can_auto_approve': True, 'reasons': []}
 
-#class PurchaseApprovalRequestSerializer(serializers.ModelSerializer):
-#    """
-#    Serializer for PurchaseApprovalRequest model.
-#    Handles purchase approval workflow between parents and children.
-#    """
-#    
-#    student_name = serializers.CharField(source='student.name', read_only=True)
-#    parent_name = serializers.CharField(source='parent.name', read_only=True)
-#    pricing_plan_name = serializers.CharField(source='pricing_plan.name', read_only=True)
-#    class_session_info = serializers.SerializerMethodField()
-#    time_remaining_hours = serializers.SerializerMethodField()
-#    is_expired = serializers.BooleanField(read_only=True)
-#    
-#    class Meta:
-#        model = PurchaseApprovalRequest
-#        fields = [
-#            'id', 'student', 'student_name', 'parent', 'parent_name',
-#            'parent_child_relationship', 'amount', 'description', 'request_type',
-#            'status', 'pricing_plan', 'pricing_plan_name', 'class_session',
-#            'class_session_info', 'request_metadata', 'requested_at', 'responded_at',
-#            'expires_at', 'time_remaining_hours', 'is_expired', 'parent_notes',
-#            'created_at', 'updated_at'
-#        ]
-#        read_only_fields = [
-#            'id', 'student_name', 'parent_name', 'pricing_plan_name',
-#            'class_session_info', 'time_remaining_hours', 'is_expired',
-#            'requested_at', 'responded_at', 'created_at', 'updated_at'
-#        ]
-#    
-#    def get_class_session_info(self, obj):
-#        """Get basic info about the class session if applicable."""
-#        if obj.class_session:
-#            return {
-#                'id': obj.class_session.id,
-#                'date': obj.class_session.date,
-#                'start_time': obj.class_session.start_time,
-#                'duration_hours': float(obj.class_session.duration_hours),
-#                'teacher_name': obj.class_session.teacher.user.name
-#            }
-#        return None
-#    
-#    def get_time_remaining_hours(self, obj):
-#        """Get time remaining until expiration in hours."""
-#        if obj.is_expired:
-#            return 0
-#        
-#        remaining = obj.time_remaining
-#        return round(remaining.total_seconds() / 3600, 1)
-#    
-#    def validate(self, data):
-#        """Validate the approval request data."""
-#        # Ensure student and parent are different users
-#        if data.get('student') == data.get('parent'):
-#            raise serializers.ValidationError("Student and parent cannot be the same user")
-#        
-#        # Validate parent-child relationship matches
-#        relationship = data.get('parent_child_relationship')
-#        if relationship:
-#            if (data.get('parent') and relationship.parent != data['parent']):
-#                raise serializers.ValidationError("Parent must match the parent-child relationship")
-#            
-#            if (data.get('student') and relationship.child != data['student']):
-#                raise serializers.ValidationError("Student must match the parent-child relationship")
-#        
-#        return data
-#
+
+class PurchaseApprovalRequestSerializer(serializers.ModelSerializer):
+    """
+    Serializer for PurchaseApprovalRequest model.
+    Handles purchase approval workflow between parents and children.
+    """
+    
+    student_name = serializers.CharField(source='student.name', read_only=True)
+    parent_name = serializers.CharField(source='parent.name', read_only=True)
+    pricing_plan_name = serializers.CharField(source='pricing_plan.name', read_only=True)
+    class_session_info = serializers.SerializerMethodField()
+    time_remaining_hours = serializers.SerializerMethodField()
+    is_expired = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = PurchaseApprovalRequest
+        fields = [
+            'id', 'student', 'student_name', 'parent', 'parent_name',
+            'parent_child_relationship', 'amount', 'description', 'request_type',
+            'status', 'pricing_plan', 'pricing_plan_name', 'class_session',
+            'class_session_info', 'request_metadata', 'requested_at', 'responded_at',
+            'expires_at', 'time_remaining_hours', 'is_expired', 'parent_notes',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'student_name', 'parent_name', 'pricing_plan_name',
+            'class_session_info', 'time_remaining_hours', 'is_expired',
+            'requested_at', 'responded_at', 'created_at', 'updated_at'
+        ]
+    
+    def get_class_session_info(self, obj):
+        """Get basic info about the class session if applicable."""
+        if obj.class_session:
+            return {
+                'id': obj.class_session.id,
+                'date': obj.class_session.date,
+                'start_time': obj.class_session.start_time,
+                'duration_hours': float(obj.class_session.duration_hours),
+                'teacher_name': obj.class_session.teacher.user.name
+            }
+        return None
+    
+    def get_time_remaining_hours(self, obj):
+        """Get time remaining until expiration in hours."""
+        if obj.is_expired:
+            return 0
+        
+        remaining = obj.time_remaining
+        return round(remaining.total_seconds() / 3600, 1)
+    
+    def validate(self, data):
+        """Validate the approval request data."""
+        # Ensure student and parent are different users
+        if data.get('student') == data.get('parent'):
+            raise serializers.ValidationError("Student and parent cannot be the same user")
+        
+        # Validate parent-child relationship matches
+        relationship = data.get('parent_child_relationship')
+        if relationship:
+            if (data.get('parent') and relationship.parent != data['parent']):
+                raise serializers.ValidationError("Parent must match the parent-child relationship")
+            
+            if (data.get('student') and relationship.child != data['student']):
+                raise serializers.ValidationError("Student must match the parent-child relationship")
+        
+        return data
+
 
 class PurchaseApprovalActionSerializer(serializers.Serializer):
     """
@@ -1246,7 +1246,7 @@ class ParentDashboardSerializer(serializers.Serializer):
     Serializer for parent approval dashboard data.
     """
     
-    # pending_requests = PurchaseApprovalRequestSerializer(many=True, read_only=True)
+    pending_requests = PurchaseApprovalRequestSerializer(many=True, read_only=True)
     children_summary = serializers.ListField(
         child=serializers.DictField(),
         read_only=True,

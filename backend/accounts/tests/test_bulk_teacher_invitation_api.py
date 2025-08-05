@@ -17,8 +17,8 @@ from accounts.models import (
     SchoolRole,
     TeacherInvitation,
     InvitationStatus,
+    EmailDeliveryStatus
 )
-from messaging.models import EmailDeliveryStatus
 
 User = get_user_model()
 
@@ -205,7 +205,7 @@ class BulkTeacherInvitationAPITest(TestCase):
         response = self.client.post(self.bulk_invite_url, invitation_data, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('no more than 100 elements', response.data['invitations'][0].lower())
+        self.assertIn('maximum', response.data['invitations'][0].lower())
     
     def test_bulk_invitation_duplicate_emails_in_request(self):
         """Test handling of duplicate emails within the same request."""
@@ -256,9 +256,7 @@ class BulkTeacherInvitationAPITest(TestCase):
         
         response = self.client.post(self.bulk_invite_url, invitation_data, format='json')
         
-        # Returns 400 Bad Request since school_id validation fails at serializer level
-        # This is semantically correct - user is sending invalid data (school they can't manage)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
     
     def test_bulk_invitation_invalid_school_id(self):
         """Test handling of invalid school ID."""
@@ -387,7 +385,7 @@ class BulkTeacherInvitationSerializerTest(TestCase):
         self.assertEqual(len(serializer.validated_data['invitations']), 2)
     
     def test_serializer_validation_invalid_email(self):
-        """Test serializer validation with invalid email - should pass, validation moved to view level."""
+        """Test serializer validation with invalid email."""
         from accounts.serializers import BulkTeacherInvitationSerializer
         
         data = {
@@ -403,8 +401,8 @@ class BulkTeacherInvitationSerializerTest(TestCase):
             context={'request': type('obj', (object,), {'user': self.admin_user})()}
         )
         
-        # Serializer should pass - validation moved to view level for partial success handling
-        self.assertTrue(serializer.is_valid())
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('invitations', serializer.errors)
     
     def test_serializer_validation_too_many_invitations(self):
         """Test serializer validation with too many invitations."""
@@ -427,7 +425,7 @@ class BulkTeacherInvitationSerializerTest(TestCase):
         self.assertIn('invitations', serializer.errors)
     
     def test_serializer_validation_duplicate_emails(self):
-        """Test serializer validation with duplicate emails - should pass, validation moved to view level."""
+        """Test serializer validation with duplicate emails."""
         from accounts.serializers import BulkTeacherInvitationSerializer
         
         data = {
@@ -443,8 +441,8 @@ class BulkTeacherInvitationSerializerTest(TestCase):
             context={'request': type('obj', (object,), {'user': self.admin_user})()}
         )
         
-        # Serializer should pass - duplicate validation moved to view level for partial success handling
-        self.assertTrue(serializer.is_valid())
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('invitations', serializer.errors)
     
     def test_serializer_validation_school_permission(self):
         """Test serializer validation for school permission."""

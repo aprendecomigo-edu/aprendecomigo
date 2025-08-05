@@ -19,14 +19,12 @@ class ProfileWizardThrottle(UserRateThrottle):
     
     def throttle_failure(self):
         """Log throttling events for security monitoring."""
-        request = getattr(self, 'request', None)
-        user = getattr(request, 'user', None) if request else None
+        user = getattr(self.request, 'user', None)
         user_id = getattr(user, 'id', 'anonymous') if user else 'anonymous'
-        ip = self.get_ident(request) if request else 'unknown'
         
         logger.warning(
             f"Rate limit exceeded for profile wizard. "
-            f"User: {user_id}, IP: {ip}, "
+            f"User: {user_id}, IP: {self.get_ident()}, "
             f"Rate: {self.rate}"
         )
         
@@ -44,14 +42,12 @@ class FileUploadThrottle(UserRateThrottle):
     
     def throttle_failure(self):
         """Log file upload throttling events for security monitoring."""
-        request = getattr(self, 'request', None)
-        user = getattr(request, 'user', None) if request else None
+        user = getattr(self.request, 'user', None)
         user_id = getattr(user, 'id', 'anonymous') if user else 'anonymous'
-        ip = self.get_ident(request) if request else 'unknown'
         
         logger.warning(
             f"File upload rate limit exceeded. "
-            f"User: {user_id}, IP: {ip}, "
+            f"User: {user_id}, IP: {self.get_ident()}, "
             f"Rate: {self.rate}"
         )
         
@@ -69,14 +65,12 @@ class SecurityEventThrottle(UserRateThrottle):
     
     def throttle_failure(self):
         """Log security-related throttling."""
-        request = getattr(self, 'request', None)
-        user = getattr(request, 'user', None) if request else None
+        user = getattr(self.request, 'user', None)
         user_id = getattr(user, 'id', 'anonymous') if user else 'anonymous'
-        ip = self.get_ident(request) if request else 'unknown'
         
         logger.error(
             f"Security event throttle triggered. "
-            f"User: {user_id}, IP: {ip}, "
+            f"User: {user_id}, IP: {self.get_ident()}, "
             f"Rate: {self.rate}"
         )
         
@@ -89,17 +83,14 @@ class IPBasedThrottle(AnonRateThrottle):
     Rate limits requests from the same IP address to prevent abuse of public APIs.
     """
     
-    rate = '100/h'  # 100 requests per hour per IP
+    rate = '100/hour'  # 100 requests per hour per IP
     scope = 'ip_based'
     
     def throttle_failure(self):
         """Log IP-based throttling events for monitoring."""
-        request = getattr(self, 'request', None)
-        ip = self.get_ident(request) if request else 'unknown'
-        
         logger.warning(
             f"IP-based rate limit exceeded. "
-            f"IP: {ip}, "
+            f"IP: {self.get_ident()}, "
             f"Rate: {self.rate}"
         )
         

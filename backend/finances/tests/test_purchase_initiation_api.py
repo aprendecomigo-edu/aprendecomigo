@@ -39,31 +39,7 @@ from finances.models import (
 # Disable logging during tests to reduce noise
 logging.disable(logging.CRITICAL)
 
-# Disable throttling during tests
-TEST_SETTINGS = {
-    'REST_FRAMEWORK': {
-        'DEFAULT_THROTTLE_CLASSES': [],
-        'DEFAULT_THROTTLE_RATES': {}
-    },
-    # Override all throttle rates to be very high for tests
-    'REST_FRAMEWORK_THROTTLE_RATES': {
-        'auth_code_request': '1000/min',
-        'auth_signup_ip': '1000/min', 
-        'auth_code_verify_email': '1000/min',
-        'auth_code_verify_ip': '1000/min',
-        'purchase_initiation': '1000/min',
-        'purchase_initiation_email': '1000/min',
-    },
-    # Also override the cache to use dummy cache
-    'CACHES': {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-        }
-    }
-}
 
-
-@override_settings(**TEST_SETTINGS)
 class PurchaseInitiationAPITestCase(TestCase):
     """Base test case with common setup for purchase initiation API tests."""
     
@@ -775,10 +751,6 @@ class PurchaseInitiationAPIRateLimitingTests(PurchaseInitiationAPITestCase):
         finally:
             # Restore original throttle classes
             purchase_initiate.throttle_classes = original_throttle_classes
-    
-    def tearDown(self):
-        """Clean up after test."""
-        super().tearDown()
 
 
 # Re-enable logging after all tests

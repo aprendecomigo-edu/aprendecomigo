@@ -527,28 +527,3 @@ class CanManageChildPurchases(permissions.BasePermission):
             ).exists()
         
         return False
-
-
-class IsParentWithChildren(permissions.BasePermission):
-    """
-    Permission class that only allows users with active parent-child relationships 
-    to access parent-specific endpoints. This prevents admin users from triggering 
-    parent API calls that cause performance issues.
-    
-    This is stricter than IsParentInAnySchool as it validates actual parent-child
-    relationships exist, not just school membership role.
-    """
-
-    message = "You must have active parent-child relationships to access this endpoint."
-
-    def has_permission(self, request, _view):
-        if not request.user or not request.user.is_authenticated:
-            return False
-            
-        from .models import ParentChildRelationship
-        
-        # Check if user has any active parent-child relationships
-        return ParentChildRelationship.objects.filter(
-            parent=request.user,
-            is_active=True
-        ).exists()

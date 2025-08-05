@@ -567,13 +567,69 @@ class StudentBalanceSecurityTests(StudentBalanceAPITestCase):
             response = self.client.get(url, {'email': self.student_user.email})
             self.assertIn(response.status_code, [status.HTTP_200_OK])
 
+    def test_invalid_email_parameter_format(self):
+        """Test error handling for invalid email format in parameters."""
+        self.authenticate_as_admin()
+        
+        url = reverse('finances:student-balance-summary')
+        response = self.client.get(url, {'email': 'invalid-email-format'})
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_sql_injection_protection(self):
+        """Test protection against SQL injection in email parameter."""
+        self.authenticate_as_admin()
+        
+        malicious_emails = [
+            "'; DROP TABLE accounts_customuser; --",
+            "admin@test.com' OR '1'='1",
+            "test@example.com'; SELECT * FROM finances_purchasetransaction; --"
+        ]
+        
+        url = reverse('finances:student-balance-summary')
+        
+        for malicious_email in malicious_emails:
+            response = self.client.get(url, {'email': malicious_email})
+            # Should return 404 (not found) or 400 (bad request), not crash
+            self.assertIn(response.status_code, [
+                status.HTTP_404_NOT_FOUND, 
+                status.HTTP_400_BAD_REQUEST
+            ])
 
 
 class StudentBalancePerformanceTests(StudentBalanceAPITestCase):
     """Performance-related tests for student balance API."""
 
+    def test_balance_summary_query_optimization(self):
+        """Test that balance summary uses optimized queries."""
+        self.authenticate_as_student()
+        url = reverse('finances:student-balance-summary')
+        
+        with self.assertNumQueries(10):  # Allow reasonable number of queries
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_purchase_history_query_optimization(self):
+        """Test that purchase history uses optimized queries with pagination."""
+        # Create many transactions to test query optimization
+        transactions = []
+        for i in range(50):
+            transactions.append(PurchaseTransaction(
+                student=self.student_user,
+                transaction_type=TransactionType.PACKAGE,
+                amount=Decimal("100.00"),
+                payment_status=TransactionPaymentStatus.COMPLETED,
+                stripe_payment_intent_id=f"pi_test_perf_{i}",
+                expires_at=timezone.now() + timezone.timedelta(days=30)
+            ))
+        PurchaseTransaction.objects.bulk_create(transactions)
+        
+        self.authenticate_as_student()
+        url = reverse('finances:student-balance-purchases')
+        
+        with self.assertNumQueries(23):  # Allow for serializer calculations
+            response = self.client.get(url, {'page_size': 20})
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class StudentBalanceDataIntegrityTests(StudentBalanceAPITestCase):

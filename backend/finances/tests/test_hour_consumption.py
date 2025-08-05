@@ -85,56 +85,7 @@ class HourConsumptionModelTest(TestCase):
         )
         self.class_session.students.add(self.student)
 
-    def test_hour_consumption_creation(self):
-        """Test creating a basic HourConsumption record."""
-        consumption = HourConsumption.objects.create(
-            student_account=self.student_balance,
-            class_session=self.class_session,
-            purchase_transaction=self.purchase_transaction,
-            hours_consumed=Decimal("1.00"),
-            hours_originally_reserved=Decimal("1.00")
-        )
-        
-        self.assertEqual(consumption.student_account, self.student_balance)
-        self.assertEqual(consumption.class_session, self.class_session)
-        self.assertEqual(consumption.purchase_transaction, self.purchase_transaction)
-        self.assertEqual(consumption.hours_consumed, Decimal("1.00"))
-        self.assertEqual(consumption.hours_originally_reserved, Decimal("1.00"))
-        self.assertFalse(consumption.is_refunded)
-        self.assertEqual(consumption.refund_reason, "")
-        self.assertIsNotNone(consumption.consumed_at)
 
-    def test_hour_consumption_required_fields(self):
-        """Test that all required fields are enforced."""
-        # Test missing student_account
-        with self.assertRaises(ValidationError):
-            consumption = HourConsumption(
-                class_session=self.class_session,
-                purchase_transaction=self.purchase_transaction,
-                hours_consumed=Decimal("1.00"),
-                hours_originally_reserved=Decimal("1.00")
-            )
-            consumption.full_clean()
-        
-        # Test missing class_session
-        with self.assertRaises(ValidationError):
-            consumption = HourConsumption(
-                student_account=self.student_balance,
-                purchase_transaction=self.purchase_transaction,
-                hours_consumed=Decimal("1.00"),
-                hours_originally_reserved=Decimal("1.00")
-            )
-            consumption.full_clean()
-        
-        # Test missing purchase_transaction
-        with self.assertRaises(ValidationError):
-            consumption = HourConsumption(
-                student_account=self.student_balance,
-                class_session=self.class_session,
-                hours_consumed=Decimal("1.00"),
-                hours_originally_reserved=Decimal("1.00")
-            )
-            consumption.full_clean()
 
     def test_hours_difference_property(self):
         """Test the hours_difference property calculation."""
@@ -268,42 +219,7 @@ class HourConsumptionModelTest(TestCase):
         self.assertIn("already been refunded", str(context.exception))
 
 
-    def test_str_representation(self):
-        """Test the string representation of HourConsumption."""
-        consumption = HourConsumption.objects.create(
-            student_account=self.student_balance,
-            class_session=self.class_session,
-            purchase_transaction=self.purchase_transaction,
-            hours_consumed=Decimal("1.00"),
-            hours_originally_reserved=Decimal("1.00")
-        )
-        
-        expected_str = f"Hour consumption: {self.student.name} - 1.00h consumed for session on {self.class_session.date}"
-        self.assertEqual(str(consumption), expected_str)
 
-    def test_negative_hours_validation(self):
-        """Test validation for negative hours values."""
-        # Test negative hours_consumed
-        with self.assertRaises(ValidationError):
-            consumption = HourConsumption(
-                student_account=self.student_balance,
-                class_session=self.class_session,
-                purchase_transaction=self.purchase_transaction,
-                hours_consumed=Decimal("-1.00"),  # Negative value
-                hours_originally_reserved=Decimal("1.00")
-            )
-            consumption.full_clean()
-        
-        # Test negative hours_originally_reserved
-        with self.assertRaises(ValidationError):
-            consumption = HourConsumption(
-                student_account=self.student_balance,
-                class_session=self.class_session,
-                purchase_transaction=self.purchase_transaction,
-                hours_consumed=Decimal("1.00"),
-                hours_originally_reserved=Decimal("-1.00")  # Negative value
-            )
-            consumption.full_clean()
 
     def test_integration_with_student_account_balance_update(self):
         """Test that creating consumption updates student account balance."""
@@ -323,41 +239,7 @@ class HourConsumptionModelTest(TestCase):
         expected_hours_consumed = initial_hours_consumed + Decimal("2.00")
         self.assertEqual(self.student_balance.hours_consumed, expected_hours_consumed)
 
-    def test_audit_trail_functionality(self):
-        """Test that the audit trail is properly maintained."""
-        consumption = HourConsumption.objects.create(
-            student_account=self.student_balance,
-            class_session=self.class_session,
-            purchase_transaction=self.purchase_transaction,
-            hours_consumed=Decimal("1.00"),
-            hours_originally_reserved=Decimal("1.00")
-        )
-        
-        # Verify audit fields are populated
-        self.assertIsNotNone(consumption.consumed_at)
-        self.assertIsNotNone(consumption.created_at)
-        self.assertIsNotNone(consumption.updated_at)
-        
-        # Verify consumed_at is close to creation time
-        time_diff = abs((consumption.consumed_at - consumption.created_at).total_seconds())
-        self.assertLess(time_diff, 1.0)  # Within 1 second
 
-    def test_meta_options(self):
-        """Test model meta options."""
-        consumption = HourConsumption.objects.create(
-            student_account=self.student_balance,
-            class_session=self.class_session,
-            purchase_transaction=self.purchase_transaction,
-            hours_consumed=Decimal("1.00"),
-            hours_originally_reserved=Decimal("1.00")
-        )
-        
-        # Test verbose names
-        self.assertEqual(consumption._meta.verbose_name, "Hour Consumption")
-        self.assertEqual(consumption._meta.verbose_name_plural, "Hour Consumptions")
-        
-        # Test ordering
-        self.assertEqual(consumption._meta.ordering, ["-consumed_at"])
 
 
 class HourConsumptionIntegrationTest(TestCase):

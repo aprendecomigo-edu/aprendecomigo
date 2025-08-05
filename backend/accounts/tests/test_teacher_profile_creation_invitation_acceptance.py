@@ -36,8 +36,8 @@ from accounts.models import (
     TeacherInvitation,
     TeacherProfile,
     InvitationStatus,
+    EmailDeliveryStatus,
 )
-from messaging.models import EmailDeliveryStatus
 
 User = get_user_model()
 

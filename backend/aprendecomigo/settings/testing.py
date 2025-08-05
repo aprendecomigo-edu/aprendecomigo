@@ -37,27 +37,16 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {},
 }
 
-# Explicitly disable all throttle scopes to prevent any throttling during tests
-# Set to None disables the throttle entirely
-DEFAULT_THROTTLE_RATES = {
-    'profile_wizard': None,
-    'file_upload': None, 
-    'security_event': None,
-    'ip_based': None,
-}
-
 # Disable password hashing for faster tests
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 # Use a faster session backend
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
-# Use locmem cache backend for tests to support throttling tests
-# DummyCache doesn't persist data, making throttling tests impossible
+# Use a faster cache backend
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "test-cache",
     }
 }
 
@@ -83,4 +72,9 @@ from .base import *  # noqa: F403, E402
 
 # Allow testserver for Django test client
 ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
+
+# Stripe Test Configuration
+STRIPE_SECRET_KEY = "sk_test_test_key_for_django_tests"
+STRIPE_PUBLIC_KEY = "pk_test_test_key_for_django_tests"
+STRIPE_WEBHOOK_SECRET = "whsec_test_key_for_django_tests"
 

@@ -6,10 +6,15 @@ from .views import (
     BulkTeacherActionsView,
     CourseViewSet,
     EducationalSystemViewSet,
+    EmailCommunicationViewSet,
+    EmailSequenceViewSet,
     GlobalSearchView,
     InvitationViewSet,
+    ParentChildRelationshipViewSet,
+    ParentProfileViewSet,
     RequestCodeView,
     SchoolDashboardViewSet,
+    SchoolEmailTemplateViewSet,
     SchoolInvitationLinkView,
     SchoolMembershipViewSet,
     SchoolViewSet,
@@ -27,8 +32,13 @@ from .views import (
     TutorOnboardingStartView,
     TutorOnboardingValidateStepView,
     UserViewSet,
-    ValidateTokenView,
     VerifyCodeView,
+    # Enhanced Communication API Views
+    EnhancedSchoolEmailTemplateViewSet,
+    SchoolBrandingAPIView,
+    CommunicationAnalyticsAPIView,
+    TemplateAnalyticsAPIView,
+    CommunicationSettingsAPIView,
 )
 
 app_name = "accounts"
@@ -46,17 +56,20 @@ router.register(r"invitations", InvitationViewSet, basename="invitation")
 router.register(r"teacher-invitations", TeacherInvitationViewSet, basename="teacher-invitation")
 router.register(r"school-dashboard", SchoolDashboardViewSet, basename="school-dashboard")
 
+# Communication system endpoints
+router.register(r"email-templates", SchoolEmailTemplateViewSet, basename="email-templates")
+router.register(r"email-sequences", EmailSequenceViewSet, basename="email-sequences")
+router.register(r"email-communications", EmailCommunicationViewSet, basename="email-communications")
+
+# Enhanced Communication system endpoints (new frontend features)
+router.register(r"communication/templates", EnhancedSchoolEmailTemplateViewSet, basename="communication-templates")
 
 # Parent-child account management endpoints
+router.register(r"parent-profiles", ParentProfileViewSet, basename="parent-profiles")
+router.register(r"parent-child-relationships", ParentChildRelationshipViewSet, basename="parent-child-relationships")
 
 # URL patterns for the accounts app
 urlpatterns = [
-    # Bulk teacher actions endpoint (must come BEFORE router.urls to avoid conflicts)
-    path(
-        "teachers/bulk-actions/",
-        BulkTeacherActionsView.as_view(),
-        name="bulk-teacher-actions",
-    ),
     # ViewSet URLs - remove the 'api/' prefix, it should be added in the main urls.py
     path("", include(router.urls)),
     # Auth endpoints
@@ -70,11 +83,6 @@ urlpatterns = [
         VerifyCodeView.as_view(),
         name="verify_code",
     ),
-    path(
-        "auth/validate-token/",
-        ValidateTokenView.as_view(),
-        name="validate_token",
-    ),
     # Invitation link endpoint (public)
     path(
         "invitation-links/<str:token>/",
@@ -86,6 +94,12 @@ urlpatterns = [
         "search/global/",
         GlobalSearchView.as_view(),
         name="global-search",
+    ),
+    # Bulk teacher actions endpoint
+    path(
+        "teachers/bulk-actions/",
+        BulkTeacherActionsView.as_view(),
+        name="bulk-teacher-actions",
     ),
     # Teacher analytics endpoint
     path(
@@ -150,6 +164,26 @@ urlpatterns = [
         name="teacher-profile-completion-status",
     ),
     # Enhanced Communication API endpoints
+    path(
+        "communication/branding/",
+        SchoolBrandingAPIView.as_view(),
+        name="communication-branding",
+    ),
+    path(
+        "communication/analytics/",
+        CommunicationAnalyticsAPIView.as_view(),
+        name="communication-analytics",
+    ),
+    path(
+        "communication/analytics/templates/",
+        TemplateAnalyticsAPIView.as_view(),
+        name="communication-analytics-templates",
+    ),
+    path(
+        "communication/settings/",
+        CommunicationSettingsAPIView.as_view(),
+        name="communication-settings",
+    ),
     # Knox authentication URLs
     path("auth/logout/", knox_views.LogoutView.as_view(), name="knox_logout"),
     path("auth/logoutall/", knox_views.LogoutAllView.as_view(), name="knox_logoutall"),

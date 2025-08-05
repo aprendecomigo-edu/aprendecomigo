@@ -12,11 +12,11 @@ from django.utils import timezone
 from datetime import timedelta
 
 from ..models import (
-    TeacherInvitation, CustomUser, InvitationStatus, School
+    TeacherInvitation, CustomUser, InvitationStatus, 
+    EmailTemplateType, EmailCommunicationType, School
 )
-from messaging.models import EmailTemplateType, EmailCommunicationType
-from messaging.services import EnhancedEmailService
-from messaging.services.email_sequence_service import EmailSequenceOrchestrationService
+from ..services.enhanced_email_service import EnhancedEmailService
+from ..services.email_sequence_service import EmailSequenceOrchestrationService
 
 logger = logging.getLogger(__name__)
 

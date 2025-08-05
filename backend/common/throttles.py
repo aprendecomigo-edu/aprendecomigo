@@ -54,10 +54,7 @@ class PurchaseInitiationEmailThrottle(AnonRateThrottle):
     def get_cache_key(self, request, _view):
         # Extract email from student_info in the request data
         student_info = request.data.get("student_info", {})
-        if isinstance(student_info, dict):
-            email = student_info.get("email", "")
-        else:
-            email = ""
+        email = student_info.get("email", "")
         if not email:
             # Fallback to IP-based if no email provided
             return None

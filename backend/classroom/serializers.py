@@ -46,7 +46,7 @@ class MessageSerializer(serializers.ModelSerializer):
             "reactions",
             "attachments",
         ]
-        read_only_fields = ["channel", "sender", "timestamp"]
+        read_only_fields = ["sender", "timestamp"]
 
 
 class ChannelSerializer(serializers.ModelSerializer):

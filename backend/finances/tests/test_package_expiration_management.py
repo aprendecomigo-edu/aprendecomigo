@@ -460,9 +460,132 @@ class PackageNotificationTests(TestCase):
         
         self.now = timezone.now()
 
+    @patch('finances.services.package_expiration_service.send_mail')
+    def test_send_expiration_warning_email(self, mock_send_mail):
+        """Test sending expiration warning email to student."""
+        mock_send_mail.return_value = True
+        
+        # Create package expiring soon
+        expiring_package = PurchaseTransaction.objects.create(
+            student=self.student,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('100.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            expires_at=self.now + timedelta(days=3)
+        )
+        
+        # Send notification
+        result = PackageExpirationService.send_expiration_warning(
+            expiring_package, 
+            days_until_expiry=3
+        )
+        
+        # Verify notification was sent
+        self.assertIsInstance(result, NotificationResult)
+        self.assertTrue(result.success)
+        self.assertEqual(result.notification_type, 'email')
+        self.assertEqual(result.recipient, self.student.email)
+        
+        # Verify email was called
+        mock_send_mail.assert_called_once()
 
+    @patch('finances.services.package_expiration_service.send_mail')
+    def test_send_expiration_confirmation_email(self, mock_send_mail):
+        """Test sending expiration confirmation email after processing."""
+        mock_send_mail.return_value = True
+        
+        # Create expired package
+        expired_package = PurchaseTransaction.objects.create(
+            student=self.student,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('100.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            expires_at=self.now - timedelta(days=1),
+            metadata={'hours_included': 5}
+        )
+        
+        # Send confirmation
+        result = PackageExpirationService.send_expiration_confirmation(
+            expired_package,
+            hours_expired=Decimal('3.00')
+        )
+        
+        # Verify notification was sent
+        self.assertIsInstance(result, NotificationResult)
+        self.assertTrue(result.success)
+        self.assertEqual(result.notification_type, 'email')
+        
+        # Verify email was called
+        mock_send_mail.assert_called_once()
 
+    def test_batch_notification_sending(self):
+        """Test sending notifications to multiple students efficiently."""
+        # Create multiple students with expiring packages
+        students_packages = []
+        for i in range(3):
+            student = User.objects.create_user(
+                email=f"student{i}@test.com",
+                name=f"Test Student {i}",
+                phone_number=f"+123456789{i}"
+            )
+            
+            package = PurchaseTransaction.objects.create(
+                student=student,
+                transaction_type=TransactionType.PACKAGE,
+                amount=Decimal('100.00'),
+                payment_status=TransactionPaymentStatus.COMPLETED,
+                expires_at=self.now + timedelta(days=2)
+            )
+            
+            students_packages.append((student, package))
+        
+        # Send batch notifications
+        with patch('finances.services.package_expiration_service.send_mail') as mock_send_mail:
+            mock_send_mail.return_value = True
+            
+            results = PackageExpirationService.send_batch_expiration_warnings(
+                [pkg for _, pkg in students_packages],
+                days_until_expiry=2
+            )
+            
+            # Verify all notifications were sent
+            self.assertEqual(len(results), 3)
+            for result in results:
+                self.assertIsInstance(result, NotificationResult)
+                self.assertTrue(result.success)
+            
+            # Verify email was called for each student
+            self.assertEqual(mock_send_mail.call_count, 3)
 
+    def test_notification_preferences_respected(self):
+        """Test that student notification preferences are respected."""
+        # Create student with notification preferences disabled
+        self.student.metadata = {'email_notifications': False}
+        self.student.save()
+        
+        # Create expiring package
+        expiring_package = PurchaseTransaction.objects.create(
+            student=self.student,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('100.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            expires_at=self.now + timedelta(days=3)
+        )
+        
+        # Attempt to send notification
+        with patch('finances.services.package_expiration_service.send_mail') as mock_send_mail:
+            result = PackageExpirationService.send_expiration_warning(
+                expiring_package,
+                days_until_expiry=3,
+                respect_preferences=True
+            )
+            
+            # Verify notification was skipped
+            self.assertFalse(result.success)
+            self.assertIn('disabled', result.message.lower())
+            
+            # Verify email was not called
+            mock_send_mail.assert_not_called()
 
 
 class PackageExtensionTests(TestCase):

@@ -55,7 +55,7 @@ urlpatterns = [
     path("api/finances/", include("finances.urls")),  # Add finances URLs
     path("api/scheduler/", include("scheduler.urls")),  # Add scheduler URLs
     path("api/", include("tasks.urls")),  # Add tasks URLs
-    path("api/messaging/", include("messaging.urls", namespace="messaging")),  # Add messaging URLs
+    path("api/notifications/", include("notifications.urls", namespace="notifications")),  # Add notifications URLs
 ]
 
 # In development, serve static files for Swagger UI and media files for uploads

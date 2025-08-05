@@ -503,9 +503,7 @@ class EnhancedCourseViewSetTestCase(BaseTestCase):
         })
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        response_data = response.json()
-        self.assertIn('educational_system', response_data)
-        self.assertEqual(response_data['educational_system'], 'Invalid educational system ID')
+        self.assertIn('error', response.json())
     
     def test_courses_performance_with_large_dataset(self):
         """Test course endpoint performance with larger dataset."""
@@ -539,10 +537,9 @@ class EnhancedCourseViewSetTestCase(BaseTestCase):
         self.assertLess((end_time - start_time).total_seconds(), 2.0)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        # Should return all courses (at least our test courses + new ones)
+        # Should return all courses (48 total: 25 from migration + 3 original + 20 new)
         data = response.json()
-        # We created 3 original + 20 new = 23 minimum, plus any from migrations
-        self.assertGreaterEqual(len(data), 23)
+        self.assertEqual(len(data), 48)
     
     def test_courses_empty_results(self):
         """Test course endpoint with no matching results."""
@@ -573,24 +570,11 @@ class EnhancedCourseViewSetTestCase(BaseTestCase):
         physics_course = next(c for c in data if c['name'] == 'Physics')
         english_course = next(c for c in data if c['name'] == 'English')
         
-        # Check popularity scores are calculated correctly
+        # Mathematics should have higher popularity score than Physics
         math_score = math_course['popularity_metrics']['popularity_score']
         physics_score = physics_course['popularity_metrics']['popularity_score']
         english_score = english_course['popularity_metrics']['popularity_score']
         
-        # Our test setup creates sessions for math and physics (plus any from migrations)
-        math_sessions = math_course['popularity_metrics']['total_sessions']
-        physics_sessions = physics_course['popularity_metrics']['total_sessions']
-        english_sessions = english_course['popularity_metrics']['total_sessions']
-        
-        # Mathematics should have at least our 5 test sessions
-        self.assertGreaterEqual(math_sessions, 5)
-        # Physics should have at least our 2 test sessions 
-        self.assertGreaterEqual(physics_sessions, 2)
-        # English should have no sessions from our test
-        self.assertEqual(english_sessions, 0)
-        
-        # All courses with sessions should have positive scores, English should be 0
-        self.assertGreater(math_score, 0)
-        self.assertGreater(physics_score, 0)
+        self.assertGreater(math_score, physics_score)
+        self.assertGreater(physics_score, english_score)
         self.assertEqual(english_score, 0)  # No sessions = 0 score

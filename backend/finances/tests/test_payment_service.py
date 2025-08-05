@@ -29,6 +29,30 @@ from finances.services.payment_service import PaymentService
 logging.disable(logging.CRITICAL)
 
 
+class PaymentServiceInitializationTests(TestCase):
+    """Test PaymentService initialization and configuration."""
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_payment_service_initialization_success(self):
+        """Test that PaymentService initializes correctly with valid Stripe configuration."""
+        service = PaymentService()
+        self.assertIsNotNone(service)
+        self.assertIsNotNone(service.stripe_service)
+
+    @override_settings(
+        STRIPE_SECRET_KEY="",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_payment_service_initialization_fails_with_invalid_stripe_config(self):
+        """Test that PaymentService raises error when Stripe configuration is invalid."""
+        with self.assertRaises(ValueError):
+            PaymentService()
+
 
 class PaymentServiceCreatePaymentIntentTests(TestCase):
     """Test payment intent creation functionality."""

@@ -52,13 +52,12 @@ class ProfileCompletionService:
     PROFILE_COMPLETE_THRESHOLD = 80.0
     
     @classmethod
-    def calculate_completion(cls, teacher_profile=None, user_id=None) -> Dict[str, Any]:
+    def calculate_completion(cls, teacher_profile) -> Dict[str, Any]:
         """
         Calculate comprehensive profile completion score and recommendations.
         
         Args:
-            teacher_profile: TeacherProfile instance (takes precedence over user_id)
-            user_id: User ID to find the teacher profile for
+            teacher_profile: TeacherProfile instance
             
         Returns:
             Dict containing:
@@ -68,39 +67,7 @@ class ProfileCompletionService:
             - recommendations: List of improvement suggestions
             - is_complete: Boolean indicating if profile meets completion threshold
             - scores_breakdown: Detailed scoring by category
-            - percentage: Alias for completion_percentage (for backward compatibility)
         """
-        # Handle user_id parameter
-        if teacher_profile is None and user_id is not None:
-            from accounts.models import TeacherProfile
-            from django.contrib.auth import get_user_model
-            
-            User = get_user_model()
-            try:
-                user = User.objects.get(id=user_id)
-                if hasattr(user, 'teacher_profile'):
-                    teacher_profile = user.teacher_profile
-                else:
-                    # User without teacher profile
-                    return {
-                        'completion_percentage': 0.0,
-                        'percentage': 0.0,  # Backward compatibility
-                        'missing_critical': cls.CRITICAL_FIELDS.copy(),
-                        'missing_optional': cls.OPTIONAL_FIELDS.copy(),
-                        'recommendations': [{'text': 'Create a teacher profile to get started', 'priority': 'high'}],
-                        'is_complete': False,
-                        'scores_breakdown': {
-                            'basic_info': 0.0,
-                            'teaching_details': 0.0,
-                            'professional_info': 0.0,
-                        }
-                    }
-            except User.DoesNotExist:
-                # Invalid user_id
-                return None
-        
-        if teacher_profile is None:
-            raise ValueError("Either teacher_profile or user_id must be provided")
         try:
             # Calculate scores for each category
             basic_score = cls._calculate_basic_info_score(teacher_profile)
@@ -126,7 +93,6 @@ class ProfileCompletionService:
             
             return {
                 'completion_percentage': round(completion_percentage, 1),
-                'percentage': round(completion_percentage, 1),  # Backward compatibility
                 'missing_critical': missing_critical,
                 'missing_optional': missing_optional,
                 'recommendations': recommendations,
@@ -143,7 +109,6 @@ class ProfileCompletionService:
             # Return minimal valid response on error
             return {
                 'completion_percentage': 0.0,
-                'percentage': 0.0,  # Backward compatibility
                 'missing_critical': cls.CRITICAL_FIELDS.copy(),
                 'missing_optional': cls.OPTIONAL_FIELDS.copy(),
                 'recommendations': [{'text': 'Please complete your profile information', 'priority': 'high'}],
@@ -319,36 +284,13 @@ class ProfileCompletionService:
         return missing_critical, missing_optional
     
     @classmethod
-    def get_profile_recommendations(cls, teacher_profile=None, user_id=None) -> List[Dict[str, str]]:
+    def get_profile_recommendations(cls, teacher_profile) -> List[Dict[str, str]]:
         """
         Generate specific recommendations for profile improvement.
-        
-        Args:
-            teacher_profile: TeacherProfile instance (takes precedence over user_id)
-            user_id: User ID to find the teacher profile for
         
         Returns:
             List of recommendation dictionaries with 'text' and 'priority' keys
         """
-        # Handle user_id parameter
-        if teacher_profile is None and user_id is not None:
-            from accounts.models import TeacherProfile
-            from django.contrib.auth import get_user_model
-            
-            User = get_user_model()
-            try:
-                user = User.objects.get(id=user_id)
-                if hasattr(user, 'teacher_profile'):
-                    teacher_profile = user.teacher_profile
-                else:
-                    # User without teacher profile
-                    return []
-            except User.DoesNotExist:
-                # Invalid user_id
-                return []
-        
-        if teacher_profile is None:
-            return []
         recommendations = []
         missing_critical, missing_optional = cls.identify_missing_fields(teacher_profile)
         
@@ -478,11 +420,6 @@ class ProfileCompletionService:
         from accounts.models import SchoolMembership, SchoolRole
         
         try:
-            # Check if school exists first
-            from accounts.models import School
-            if not School.objects.filter(id=school_id).exists():
-                return None
-                
             # Get all teacher profiles for the school
             teacher_memberships = SchoolMembership.objects.filter(
                 school_id=school_id,
@@ -565,4 +502,11 @@ class ProfileCompletionService:
             
         except Exception as e:
             logger.error(f"Error calculating school completion analytics for school {school_id}: {e}")
-            return None
+            return {
+                'total_teachers': 0,
+                'average_completion': 0.0,
+                'complete_profiles': 0,
+                'incomplete_profiles': 0,
+                'completion_distribution': {'0-25%': 0, '26-50%': 0, '51-75%': 0, '76-100%': 0},
+                'common_missing_fields': [],
+            }

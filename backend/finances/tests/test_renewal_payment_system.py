@@ -38,7 +38,6 @@ class StoredPaymentMethodModelTests(TestCase):
         self.student = CustomUser.objects.create_user(
             email='student@test.com',
             name='Test Student',
-            user_type='student'
         )
         
         self.payment_method_data = {
@@ -109,7 +108,43 @@ class StoredPaymentMethodModelTests(TestCase):
         expired_payment_method = StoredPaymentMethod.objects.create(**expired_data)
         self.assertTrue(expired_payment_method.is_expired)
 
+    def test_unique_default_constraint(self):
+        """Test that only one default payment method per student is allowed."""
+        # Create first default payment method
+        StoredPaymentMethod.objects.create(**self.payment_method_data)
+        
+        # Try to create second default payment method for same student
+        second_data = self.payment_method_data.copy()
+        second_data['stripe_payment_method_id'] = 'pm_test_second'
+        second_data['stripe_customer_id'] = 'cus_test_second'
+        
+        # This should not raise an error as the model's save method handles it
+        second_payment_method = StoredPaymentMethod.objects.create(**second_data)
+        
+        # Verify only one is default
+        default_methods = StoredPaymentMethod.objects.filter(
+            student=self.student,
+            is_default=True
+        )
+        self.assertEqual(default_methods.count(), 1)
+        self.assertEqual(default_methods.first(), second_payment_method)
 
+    def test_stripe_payment_method_id_uniqueness(self):
+        """Test that stripe_payment_method_id is unique across all records."""
+        StoredPaymentMethod.objects.create(**self.payment_method_data)
+        
+        # Create another student
+        another_student = CustomUser.objects.create_user(
+            email='another@test.com',
+            name='Another Student',
+        )
+        
+        # Try to create payment method with same stripe_payment_method_id
+        duplicate_data = self.payment_method_data.copy()
+        duplicate_data['student'] = another_student
+        
+        with self.assertRaises(IntegrityError):
+            StoredPaymentMethod.objects.create(**duplicate_data)
 
     def test_validation_expiration_month(self):
         """Test validation of card expiration month."""
@@ -154,11 +189,108 @@ class PaymentMethodServiceTests(TestCase):
         self.student = CustomUser.objects.create_user(
             email='student@test.com',
             name='Test Student',
-            user_type='student'
         )
         self.service = PaymentMethodService()
 
+    @patch('finances.services.payment_method_service.stripe')
+    def test_add_payment_method_with_customer_creation(self, mock_stripe):
+        """Test adding payment method with automatic customer creation."""
+        # Mock Stripe responses
+        mock_payment_method = Mock()
+        mock_payment_method.id = 'pm_test_123456789'
+        mock_payment_method.type = 'card'
+        mock_payment_method.card = {
+            'brand': 'visa',
+            'last4': '4242',
+            'exp_month': 12,
+            'exp_year': 2025
+        }
+        
+        mock_customer = Mock()
+        mock_customer.id = 'cus_test_123456789'
+        
+        # Setup method mocks
+        self.service.stripe_service.retrieve_payment_method = Mock(return_value={
+            'success': True,
+            'payment_method': mock_payment_method
+        })
+        self.service.stripe_service.create_customer = Mock(return_value={
+            'success': True,
+            'customer_id': 'cus_test_123456789',
+            'customer': mock_customer
+        })
+        self.service.stripe_service.attach_payment_method_to_customer = Mock(return_value={
+            'success': True,
+            'payment_method': mock_payment_method
+        })
+        
+        # Call the method
+        result = self.service.add_payment_method(
+            student_user=self.student,
+            stripe_payment_method_id='pm_test_123456789',
+            is_default=True
+        )
+        
+        # Verify result
+        self.assertTrue(result['success'])
+        self.assertIn('payment_method_id', result)
+        self.assertEqual(result['stripe_customer_id'], 'cus_test_123456789')
+        
+        # Verify database record
+        payment_method = StoredPaymentMethod.objects.get(id=result['payment_method_id'])
+        self.assertEqual(payment_method.stripe_customer_id, 'cus_test_123456789')
+        self.assertEqual(payment_method.stripe_payment_method_id, 'pm_test_123456789')
+        self.assertTrue(payment_method.is_default)
 
+    @patch('finances.services.payment_method_service.stripe')
+    def test_add_payment_method_with_existing_customer(self, mock_stripe):
+        """Test adding payment method with existing customer."""
+        # Create existing payment method with customer
+        existing_pm = StoredPaymentMethod.objects.create(
+            student=self.student,
+            stripe_payment_method_id='pm_existing',
+            stripe_customer_id='cus_existing_123',
+            card_brand='mastercard',
+            card_last4='1234',
+            is_default=False,
+            is_active=True
+        )
+        
+        # Mock Stripe responses
+        mock_payment_method = Mock()
+        mock_payment_method.id = 'pm_test_new'
+        mock_payment_method.type = 'card'
+        mock_payment_method.card = {
+            'brand': 'visa',
+            'last4': '4242',
+            'exp_month': 12,
+            'exp_year': 2025
+        }
+        
+        # Setup method mocks
+        self.service.stripe_service.retrieve_payment_method = Mock(return_value={
+            'success': True,
+            'payment_method': mock_payment_method
+        })
+        self.service.stripe_service.retrieve_customer = Mock(return_value={
+            'success': True,
+            'customer': Mock(id='cus_existing_123')
+        })
+        self.service.stripe_service.attach_payment_method_to_customer = Mock(return_value={
+            'success': True,
+            'payment_method': mock_payment_method
+        })
+        
+        # Call the method
+        result = self.service.add_payment_method(
+            student_user=self.student,
+            stripe_payment_method_id='pm_test_new',
+            is_default=True
+        )
+        
+        # Verify result uses existing customer
+        self.assertTrue(result['success'])
+        self.assertEqual(result['stripe_customer_id'], 'cus_existing_123')
 
     def test_add_payment_method_duplicate_prevention(self):
         """Test prevention of duplicate payment method addition."""
@@ -227,7 +359,6 @@ class RenewalPaymentServiceTests(TestCase):
         self.student = CustomUser.objects.create_user(
             email='student@test.com',
             name='Test Student',
-            user_type='student'
         )
         
         # Create student account balance
@@ -278,6 +409,35 @@ class RenewalPaymentServiceTests(TestCase):
         self.assertEqual(five_hour_package['price'], 50.0)
         self.assertEqual(five_hour_package['price_per_hour'], 10.0)
 
+    @patch('finances.services.renewal_payment_service.stripe')
+    def test_quick_topup_success(self, mock_stripe):
+        """Test successful quick top-up purchase."""
+        # Mock Stripe payment intent
+        mock_payment_intent = Mock()
+        mock_payment_intent.id = 'pi_topup_123'
+        mock_payment_intent.client_secret = 'pi_topup_123_secret'
+        mock_payment_intent.status = 'succeeded'
+        
+        mock_stripe.PaymentIntent.create.return_value = mock_payment_intent
+        mock_stripe.PaymentIntent.confirm.return_value = mock_payment_intent
+        
+        # Call quick top-up
+        result = self.service.quick_topup(
+            student_user=self.student,
+            hours=Decimal('5.00')
+        )
+        
+        # Verify success
+        self.assertTrue(result['success'])
+        self.assertEqual(result['hours_purchased'], Decimal('5.00'))
+        self.assertEqual(result['amount_paid'], Decimal('50.00'))
+        
+        # Verify transaction created
+        transaction = PurchaseTransaction.objects.get(id=result['transaction_id'])
+        self.assertEqual(transaction.transaction_type, TransactionType.PACKAGE)
+        self.assertEqual(transaction.amount, Decimal('50.00'))
+        self.assertEqual(transaction.metadata['renewal_type'], 'quick_topup')
+        self.assertEqual(transaction.metadata['hours'], '5.00')
 
     def test_quick_topup_invalid_package(self):
         """Test quick top-up with invalid hours package."""
@@ -289,6 +449,36 @@ class RenewalPaymentServiceTests(TestCase):
         self.assertFalse(result['success'])
         self.assertEqual(result['error_type'], 'invalid_package')
 
+    @patch('finances.services.renewal_payment_service.stripe')
+    def test_renew_subscription_success(self, mock_stripe):
+        """Test successful subscription renewal."""
+        # Mock Stripe payment intent
+        mock_payment_intent = Mock()
+        mock_payment_intent.id = 'pi_renewal_123'
+        mock_payment_intent.client_secret = 'pi_renewal_123_secret'
+        mock_payment_intent.status = 'succeeded'
+        
+        mock_stripe.PaymentIntent.create.return_value = mock_payment_intent
+        mock_stripe.PaymentIntent.confirm.return_value = mock_payment_intent
+        
+        # Call renewal
+        result = self.service.renew_subscription(
+            student_user=self.student,
+            original_transaction_id=self.original_transaction.id
+        )
+        
+        # Verify success
+        self.assertTrue(result['success'])
+        self.assertIn('transaction_id', result)
+        
+        # Verify new transaction created
+        new_transaction = PurchaseTransaction.objects.get(id=result['transaction_id'])
+        self.assertEqual(new_transaction.transaction_type, TransactionType.SUBSCRIPTION)
+        self.assertEqual(new_transaction.amount, self.original_transaction.amount)
+        self.assertEqual(
+            new_transaction.metadata['original_transaction_id'], 
+            self.original_transaction.id
+        )
 
     def test_renew_subscription_invalid_transaction(self):
         """Test renewal with invalid original transaction."""
@@ -372,13 +562,11 @@ class RenewalPaymentSecurityTests(TestCase):
         self.student1 = CustomUser.objects.create_user(
             email='student1@test.com',
             name='Student One',
-            user_type='student'
         )
         
         self.student2 = CustomUser.objects.create_user(
             email='student2@test.com',
             name='Student Two',
-            user_type='student'
         )
         
         # Create payment method for student1
@@ -426,6 +614,15 @@ class RenewalPaymentSecurityTests(TestCase):
         result = service.get_default_payment_method(self.student1)
         self.assertEqual(result.id, self.payment_method.id)
 
+    def test_stored_payment_method_queryset_security(self):
+        """Test that queryset filtering prevents cross-student data access."""
+        # Student2 should not see student1's payment methods
+        student2_methods = StoredPaymentMethod.objects.filter(student=self.student2)
+        self.assertEqual(student2_methods.count(), 0)
+        
+        # Student1 should see their own
+        student1_methods = StoredPaymentMethod.objects.filter(student=self.student1)
+        self.assertEqual(student1_methods.count(), 1)
 
     def test_pci_compliance_no_raw_card_data(self):
         """Test that no raw card data is stored."""
