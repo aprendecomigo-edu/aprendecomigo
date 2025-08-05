@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0007_remove_emailcommunication_created_by_and_more'),
+        ('accounts', '0006_remove_teacherinvitation_unique_active_teacher_invitation_per_school_and_more'),
         ('messaging', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
