@@ -52,10 +52,10 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 # Use a faster session backend
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
-# Use a faster cache backend
+# Use dummy cache backend for tests to ensure consistent behavior
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
     }
 }
 
