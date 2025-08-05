@@ -868,6 +868,35 @@ class VerifyCodeView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
+class ValidateTokenView(APIView):
+    """
+    Lightweight API endpoint to validate authentication token.
+    PERFORMANCE OPTIMIZED: Returns minimal response for fast auth checks.
+    Used instead of heavy dashboard_info endpoint for authentication validation.
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Validate token and return minimal user info.
+        This is a lightweight alternative to dashboard_info for auth checks.
+        """
+        try:
+            # Token is valid if we reach here (middleware validated it)
+            return Response({
+                "valid": True,
+                "user_id": request.user.id,
+                "email": request.user.email
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Token validation error: {e}")
+            return Response({
+                "valid": False,
+                "error": "Token validation failed"
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+
 class SchoolViewSet(KnoxAuthenticatedViewSet):
     """
     API endpoint for schools.
