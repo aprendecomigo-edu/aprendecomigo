@@ -30,6 +30,7 @@ from messaging.models import (
 from rest_framework import serializers, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -1477,8 +1478,10 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
                 teacher_courses = []
                 if course_ids:
                     for course_id in course_ids:
-                        teacher_course = TeacherCourse.objects.create(
-                            teacher=teacher_profile, course_id=course_id, is_active=True
+                        teacher_course, created = TeacherCourse.objects.get_or_create(
+                            teacher=teacher_profile, 
+                            course_id=course_id,
+                            defaults={'is_active': True}
                         )
                         teacher_courses.append(teacher_course)
 
@@ -1518,6 +1521,12 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
 
                 return Response(response_data, status=status.HTTP_201_CREATED)
 
+        except ValidationError as e:
+            # Handle validation errors as 400
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except Exception as e:
             # Log the error for debugging
             logger.error(f"Teacher onboarding failed for user {request.user.id}: {e!s}")
@@ -2629,6 +2638,12 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
             
             return Response(courses_data)
             
+        except DRFValidationError:
+            # Let DRF validation errors propagate as 400
+            raise
+        except ValidationError as e:
+            # Convert Django validation errors to DRF validation errors
+            raise DRFValidationError(str(e))
         except Exception as e:
             logger.error(f"Error in CourseViewSet.list for user {request.user.id}: {e}")
             return Response(
@@ -2647,9 +2662,7 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
                     raise ValidationError("Invalid educational system ID")
                 queryset = queryset.filter(educational_system_id=educational_system_id)
             except (ValueError, ValidationError):
-                # Invalid ID - this will be handled by returning empty results
-                # or we could raise a 400 error here
-                from rest_framework.exceptions import ValidationError as DRFValidationError
+                # Invalid ID - raise 400 error
                 raise DRFValidationError({"educational_system": "Invalid educational system ID"})
         
         # Filter by education level

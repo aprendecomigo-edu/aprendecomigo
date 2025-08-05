@@ -158,36 +158,8 @@ def invalidate_metrics_cache_on_activity(sender, instance, created, **kwargs):
         from accounts.services.metrics_service import SchoolMetricsService
         SchoolMetricsService.invalidate_cache(instance.school.id)
         
-        # Also broadcast the new activity via WebSocket
-        # Note: This would be async in a real implementation
-        # For now, we'll just import the broadcaster
-        try:
-            from accounts.consumers import SchoolDashboardBroadcaster
-            from accounts.serializers import SchoolActivitySerializer
-            from asgiref.sync import async_to_sync
-            
-            # Serialize the activity
-            serializer = SchoolActivitySerializer(
-                instance, 
-                context={'school': instance.school}
-            )
-            
-            # Broadcast to WebSocket
-            async_to_sync(SchoolDashboardBroadcaster.broadcast_new_activity)(
-                instance.school.id,
-                serializer.data
-            )
-        except Exception as e:
-            # Log WebSocket broadcasting failures but don't break the transaction
-            logger.error(
-                f"Failed to broadcast activity to WebSocket for school {instance.school.id}: {str(e)}",
-                exc_info=True,
-                extra={
-                    'school_id': instance.school.id,
-                    'activity_id': getattr(instance, 'id', None),
-                    'activity_type': getattr(instance, 'activity_type', None)
-                }
-            )
+        # Note: WebSocket broadcasting for dashboard updates has been removed
+        # as per the decision to limit WebSocket usage to chat functionality only
 
 
 @receiver(post_save, sender=SchoolMembership)
