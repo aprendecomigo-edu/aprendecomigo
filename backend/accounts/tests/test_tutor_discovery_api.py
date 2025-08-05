@@ -646,11 +646,13 @@ class TutorDiscoveryThrottlingTestCase(BaseTestCase):
         """Set up minimal test data for throttling tests."""
         cache.clear()
         
-        # Create minimal test data
-        self.educational_system = EducationalSystem.objects.create(
-            name="Test System",
+        # Create minimal test data - use get_or_create to avoid duplicates
+        self.educational_system, _ = EducationalSystem.objects.get_or_create(
             code=EducationalSystemType.PORTUGAL,
-            description="Test system"
+            defaults={
+                "name": "Test System",
+                "description": "Test system"
+            }
         )
         
         self.school = School.objects.create(name="Test School")

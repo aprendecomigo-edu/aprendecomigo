@@ -52,10 +52,12 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 # Use a faster session backend
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
-# Use dummy cache backend for tests to ensure consistent behavior
+# Use locmem cache backend for tests to support throttling tests
+# DummyCache doesn't persist data, making throttling tests impossible
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "test-cache",
     }
 }
 
