@@ -66,7 +66,7 @@ INSTALLED_APPS = [
     "finances",
     "scheduler",
     "tasks",
-    "notifications",
+    "messaging",
 ]
 
 MIDDLEWARE = [

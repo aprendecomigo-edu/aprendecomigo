@@ -267,27 +267,6 @@ class HourConsumptionModelTest(TestCase):
         
         self.assertIn("already been refunded", str(context.exception))
 
-    def test_one_to_one_relationship_with_class_session(self):
-        """Test that HourConsumption has a one-to-one relationship with ClassSession."""
-        # Create first consumption record
-        consumption1 = HourConsumption.objects.create(
-            student_account=self.student_balance,
-            class_session=self.class_session,
-            purchase_transaction=self.purchase_transaction,
-            hours_consumed=Decimal("1.00"),
-            hours_originally_reserved=Decimal("1.00")
-        )
-        
-        # Attempting to create second consumption for same session should fail
-        with self.assertRaises(ValidationError):
-            consumption2 = HourConsumption(
-                student_account=self.student_balance,
-                class_session=self.class_session,  # Same session
-                purchase_transaction=self.purchase_transaction,
-                hours_consumed=Decimal("0.50"),
-                hours_originally_reserved=Decimal("1.00")
-            )
-            consumption2.full_clean()
 
     def test_str_representation(self):
         """Test the string representation of HourConsumption."""

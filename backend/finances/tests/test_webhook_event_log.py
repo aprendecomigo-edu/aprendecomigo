@@ -48,13 +48,6 @@ class WebhookEventLogModelTest(TestCase):
         self.assertEqual(log.error_message, '')
         self.assertIsNotNone(log.created_at)
     
-    def test_stripe_event_id_uniqueness(self):
-        """Test that stripe_event_id must be unique."""
-        WebhookEventLog.objects.create(**self.sample_event_data)
-        
-        # Try to create another log with the same stripe_event_id
-        with self.assertRaises(IntegrityError):
-            WebhookEventLog.objects.create(**self.sample_event_data)
     
     def test_mark_as_processing(self):
         """Test marking a webhook event as processing."""

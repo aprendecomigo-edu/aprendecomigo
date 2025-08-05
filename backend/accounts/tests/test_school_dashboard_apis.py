@@ -820,3 +820,26 @@ class SecurityFixesTest(BaseTestCase):
         self.assertIn('Updated school:', activity.description)
         self.assertIn('New School Name', activity.description)
         self.assertIn('New description', activity.description)
+    
+    def test_metrics_response_performance(self):
+        """Test that metrics API responds within acceptable time limits."""
+        self.client.force_authenticate(user=self.school_owner)
+        url = reverse('accounts:school-dashboard-metrics', kwargs={'pk': self.school.id})
+        
+        start_time = timezone.now()
+        response = self.client.get(url)
+        end_time = timezone.now()
+        
+        response_time_ms = (end_time - start_time).total_seconds() * 1000
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Response should be under 500ms for reasonable performance
+        self.assertLess(response_time_ms, 500)
+    
+    def test_metrics_nonexistent_school(self):
+        """Test metrics endpoint for non-existent school."""
+        self.client.force_authenticate(user=self.school_owner)
+        url = reverse('accounts:school-dashboard-metrics', kwargs={'pk': 999999})
+        
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

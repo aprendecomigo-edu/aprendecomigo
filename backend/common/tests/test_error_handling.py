@@ -224,7 +224,7 @@ class TestAPIErrorCodes(TestCase):
     def test_error_code_as_string(self):
         """Test that error codes can be used as strings."""
         error_code = APIErrorCode.INVITATION_EXPIRED
-        self.assertEqual(str(error_code), "INVITATION_EXPIRED")
+        self.assertEqual(error_code.value, "INVITATION_EXPIRED")
 
     def test_error_code_in_response(self):
         """Test that error codes work correctly in response creation."""
@@ -294,7 +294,8 @@ class TestErrorResponseConsistency(TestCase):
     @patch('django.utils.timezone.now')
     def test_timestamp_consistency(self, mock_now):
         """Test that timestamps are consistently formatted."""
-        test_time = timezone.datetime(2025, 8, 1, 10, 30, 0, tzinfo=timezone.utc)
+        from datetime import timezone as dt_timezone
+        test_time = timezone.datetime(2025, 8, 1, 10, 30, 0, tzinfo=dt_timezone.utc)
         mock_now.return_value = test_time
 
         response = create_error_response(APIErrorCode.VALIDATION_FAILED, "Test")

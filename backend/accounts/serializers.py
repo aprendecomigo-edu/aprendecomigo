@@ -7,22 +7,20 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import (
-    Course,
-    EducationalSystem,
+from messaging.models import (
     EmailDeliveryStatus,
     EmailSequence,
     EmailSequenceStep, 
     EmailCommunication,
     EmailTemplateType,
     EmailCommunicationType,
+)
+from .models import (
+    Course,
+    EducationalSystem,
     InvitationStatus,
-    ParentProfile,
-    ParentChildRelationship,
-    RelationshipType,
     School,
     SchoolActivity,
-    SchoolEmailTemplate,
     SchoolInvitation,
     SchoolMembership,
     SchoolRole,
@@ -1704,7 +1702,13 @@ class SingleInvitationSerializer(serializers.Serializer):
     Serializer for a single invitation in a bulk request.
     """
     
-    email = serializers.CharField()  # Use CharField to allow invalid emails, validate in view
+    email = serializers.CharField(allow_blank=True)  # Use CharField to allow invalid emails, validate in view
+    
+    def validate_email(self, value):
+        """Allow all email formats to pass through for view-level partial success handling."""
+        # All email validation moved to view level to enable 207 Multi-Status responses
+        # for partial failures as per API requirements
+        return value
 
 
 class BulkTeacherInvitationSerializer(serializers.Serializer):
@@ -1758,6 +1762,11 @@ class BulkTeacherInvitationSerializer(serializers.Serializer):
         
         return value.strip()
     
+    def validate(self, data):
+        """Custom validation for the entire serializer."""
+        data = super().validate(data)
+        return data
+    
     def validate_school_id(self, value):
         """Validate that the school exists and user has permission."""
         try:
@@ -1779,15 +1788,16 @@ class BulkTeacherInvitationSerializer(serializers.Serializer):
         return value
     
     def validate_invitations(self, value):
-        """Validate invitation list for duplicates and limits."""
+        """Validate invitation list for limits and duplicates within request."""
         if len(value) == 0:
             raise serializers.ValidationError("At least one invitation is required")
         
         if len(value) > 100:
             raise serializers.ValidationError("Maximum 100 invitations allowed per batch")
         
-        # Note: Duplicate and invalid email validation moved to view level
-        # to allow partial success handling as per API requirements
+        # Note: Duplicate validation within request temporarily disabled to allow
+        # view-level partial success handling as per API requirements.
+        # This allows the view to return 207 Multi-Status for partial failures.
         
         return value
     
@@ -2447,342 +2457,4 @@ class TeacherConsolidatedDashboardSerializer(serializers.Serializer):
         }
 
 
-# Communication System Serializers
 
-class SchoolEmailTemplateSerializer(serializers.ModelSerializer):
-    """
-    Serializer for SchoolEmailTemplate model.
-    Handles CRUD operations for email templates with school-level permissions.
-    """
-    
-    created_by_name = serializers.SerializerMethodField()
-    school_name = serializers.SerializerMethodField()
-    template_variables = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = SchoolEmailTemplate
-        fields = [
-            'id', 'school', 'template_type', 'name',
-            'subject_template', 'html_content', 'text_content',
-            'use_school_branding', 'custom_css', 'is_active', 
-            'is_default', 'created_by', 'created_by_name', 
-            'school_name', 'template_variables', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'created_by', 'created_by_name', 'school_name', 
-                           'template_variables', 'created_at', 'updated_at']
-    
-    def get_created_by_name(self, obj):
-        """Get the name of the user who created this template."""
-        if obj.created_by:
-            return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
-        return None
-    
-    def get_school_name(self, obj):
-        """Get the school name."""
-        return obj.school.name
-    
-    def get_template_variables(self, obj):
-        """Extract template variables from content."""
-        import re
-        variables = set()
-        # Find variables in subject, html, and text content
-        for content in [obj.subject_template, obj.html_content, obj.text_content]:
-            if content:
-                variables.update(re.findall(r'\{\{(\w+)\}\}', content))
-        return sorted(list(variables))
-    
-    def create(self, validated_data):
-        """Create a new email template."""
-        # Set the creating user
-        request = self.context.get('request')
-        if request and request.user:
-            validated_data['created_by'] = request.user
-        
-        return super().create(validated_data)
-
-
-class EmailSequenceStepSerializer(serializers.ModelSerializer):
-    """
-    Serializer for EmailSequenceStep model.
-    """
-    
-    template_name = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = EmailSequenceStep
-        fields = [
-            'id', 'sequence', 'template', 'template_name',
-            'step_number', 'delay_hours', 'send_condition',
-            'is_active', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'template_name', 'created_at', 'updated_at']
-    
-    def get_template_name(self, obj):
-        """Get the name of the email template."""
-        return obj.template.name if obj.template else None
-
-
-class EmailSequenceSerializer(serializers.ModelSerializer):
-    """
-    Serializer for EmailSequence model.
-    """
-    
-    steps = EmailSequenceStepSerializer(many=True, read_only=True)
-    steps_count = serializers.SerializerMethodField()
-    school_name = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = EmailSequence
-        fields = [
-            'id', 'school', 'school_name', 'name', 'description',
-            'trigger_event', 'is_active', 'max_emails', 'steps',
-            'steps_count', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'school_name', 'steps', 'steps_count', 
-                           'created_at', 'updated_at']
-    
-    def get_steps_count(self, obj):
-        """Get the number of steps in this sequence."""
-        return obj.steps.count()
-    
-    def get_school_name(self, obj):
-        """Get the school name."""
-        return obj.school.name
-
-
-class EmailCommunicationSerializer(serializers.ModelSerializer):
-    """
-    Serializer for EmailCommunication model.
-    Tracks email communications sent through the system.
-    """
-    
-    sent_by_name = serializers.SerializerMethodField()
-    school_name = serializers.SerializerMethodField()
-    template_name = serializers.SerializerMethodField()
-    sequence_name = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = EmailCommunication
-        fields = [
-            'id', 'school', 'school_name', 'recipient_email',
-            'communication_type', 'template', 'template_name',
-            'sequence', 'sequence_name', 'subject', 'html_content',
-            'text_content', 'delivery_status', 'sent_at', 'delivered_at',
-            'opened_at', 'clicked_at', 'bounce_reason', 'sent_by',
-            'sent_by_name', 'metadata', 'created_at', 'updated_at'
-        ]
-        read_only_fields = [
-            'id', 'school_name', 'template_name', 'sequence_name',
-            'sent_by_name', 'delivery_status', 'sent_at', 'delivered_at',
-            'opened_at', 'clicked_at', 'bounce_reason', 'created_at', 'updated_at'
-        ]
-    
-    def get_sent_by_name(self, obj):
-        """Get the name of the user who sent this communication."""
-        if obj.sent_by:
-            return f"{obj.sent_by.first_name} {obj.sent_by.last_name}".strip()
-        return None
-    
-    def get_school_name(self, obj):
-        """Get the school name."""
-        return obj.school.name
-    
-    def get_template_name(self, obj):
-        """Get the template name if used."""
-        return obj.template.name if obj.template else None
-    
-    def get_sequence_name(self, obj):
-        """Get the sequence name if part of a sequence."""
-        return obj.sequence.name if obj.sequence else None
-
-
-class EmailTemplatePreviewSerializer(serializers.Serializer):
-    """
-    Serializer for email template preview functionality.
-    """
-    
-    template_variables = serializers.DictField(
-        child=serializers.CharField(),
-        help_text="Variables to substitute in the template"
-    )
-    
-    def validate_template_variables(self, value):
-        """Validate template variables."""
-        if not isinstance(value, dict):
-            raise serializers.ValidationError("Template variables must be a dictionary")
-        
-        # Check for common required variables
-        template = self.context.get('template')
-        if template:
-            # Extract variables from template content
-            import re
-            required_vars = set()
-            for content in [template.subject_template, template.html_content, template.text_content]:
-                if content:
-                    required_vars.update(re.findall(r'\{\{(\w+)\}\}', content))
-            
-            # Check if all required variables are provided
-            missing_vars = required_vars - set(value.keys())
-            if missing_vars:
-                raise serializers.ValidationError(
-                    f"Missing required template variables: {', '.join(missing_vars)}"
-                )
-        
-        return value
-
-
-class EmailAnalyticsSerializer(serializers.Serializer):
-    """
-    Serializer for email analytics data.
-    """
-    
-    total_sent = serializers.IntegerField()
-    total_delivered = serializers.IntegerField()
-    total_opened = serializers.IntegerField()
-    total_clicked = serializers.IntegerField()
-    total_bounced = serializers.IntegerField()
-    
-    delivery_rate = serializers.FloatField()
-    open_rate = serializers.FloatField()
-    click_rate = serializers.FloatField()
-    bounce_rate = serializers.FloatField()
-    
-    recent_communications = EmailCommunicationSerializer(many=True, read_only=True)
-    
-    # Communication breakdown by type
-    by_type = serializers.DictField(child=serializers.IntegerField())
-    
-    # Communication trend data
-    daily_stats = serializers.ListField(
-        child=serializers.DictField()
-    )
-
-
-# =======================
-# PARENT-CHILD MANAGEMENT SERIALIZERS (Issues #111 & #112)
-# =======================
-
-class ParentProfileSerializer(serializers.ModelSerializer):
-    """
-    Serializer for ParentProfile model.
-    Handles parent-specific settings and preferences.
-    """
-    
-    user_name = serializers.CharField(source='user.name', read_only=True)
-    user_email = serializers.CharField(source='user.email', read_only=True)
-    children_count = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = ParentProfile
-        fields = [
-            'id', 'user', 'user_name', 'user_email',
-            'notification_preferences', 'default_approval_settings',
-            'email_notifications_enabled', 'sms_notifications_enabled',
-            'children_count', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'user', 'user_name', 'user_email', 'children_count', 'created_at', 'updated_at']
-    
-    def get_children_count(self, obj):
-        """Get the number of children this parent manages."""
-        return obj.user.children_relationships.filter(is_active=True).count()
-
-
-class ParentChildRelationshipSerializer(serializers.ModelSerializer):
-    """
-    Serializer for ParentChildRelationship model.
-    Handles parent-child relationships within schools.
-    """
-    
-    parent_name = serializers.CharField(source='parent.name', read_only=True)
-    parent_email = serializers.CharField(source='parent.email', read_only=True)
-    child_name = serializers.CharField(source='child.name', read_only=True)
-    child_email = serializers.CharField(source='child.email', read_only=True)
-    school_name = serializers.CharField(source='school.name', read_only=True)
-    has_budget_control = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = ParentChildRelationship
-        fields = [
-            'id', 'parent', 'parent_name', 'parent_email',
-            'child', 'child_name', 'child_email',
-            'school', 'school_name', 'relationship_type',
-            'permissions', 'is_active', 'requires_purchase_approval',
-            'requires_session_approval', 'has_budget_control',
-            'created_at', 'updated_at'
-        ]
-        read_only_fields = [
-            'id', 'parent_name', 'parent_email', 'child_name', 'child_email',
-            'school_name', 'has_budget_control', 'created_at', 'updated_at'
-        ]
-    
-    def get_has_budget_control(self, obj):
-        """Check if this relationship has budget control settings."""
-        return hasattr(obj, 'budget_control') and obj.budget_control is not None
-    
-    def validate(self, data):
-        """Validate the parent-child relationship data."""
-        # Ensure parent and child are different users
-        if data.get('parent') == data.get('child'):
-            raise serializers.ValidationError("Parent and child cannot be the same user")
-        
-        # Check for existing relationship
-        if not self.instance:  # Only on creation
-            parent = data.get('parent')
-            child = data.get('child')
-            school = data.get('school')
-            
-            if parent and child and school:
-                existing = ParentChildRelationship.objects.filter(
-                    parent=parent,
-                    child=child,
-                    school=school
-                ).exists()
-                
-                if existing:
-                    raise serializers.ValidationError(
-                        "A relationship between this parent and child already exists in this school"
-                    )
-        
-        return data
-
-
-class SchoolBrandingSerializer(serializers.ModelSerializer):
-    """
-    Serializer for School branding settings used in communication templates.
-    """
-    
-    class Meta:
-        model = School
-        fields = [
-            'id', 'name', 'primary_color', 'secondary_color', 
-            'text_color', 'background_color', 'logo'
-        ]
-        read_only_fields = ['id', 'name']
-    
-    def validate_primary_color(self, value):
-        """Validate primary color format."""
-        import re
-        if value and not re.match(r'^#[0-9A-Fa-f]{6}$', value):
-            raise serializers.ValidationError('Primary color must be a valid hex color (e.g., #3B82F6)')
-        return value
-    
-    def validate_secondary_color(self, value):
-        """Validate secondary color format."""
-        import re
-        if value and not re.match(r'^#[0-9A-Fa-f]{6}$', value):
-            raise serializers.ValidationError('Secondary color must be a valid hex color (e.g., #10B981)')
-        return value
-    
-    def validate_text_color(self, value):
-        """Validate text color format."""
-        import re
-        if value and not re.match(r'^#[0-9A-Fa-f]{6}$', value):
-            raise serializers.ValidationError('Text color must be a valid hex color (e.g., #1F2937)')
-        return value
-    
-    def validate_background_color(self, value):
-        """Validate background color format."""
-        import re
-        if value and not re.match(r'^#[0-9A-Fa-f]{6}$', value):
-            raise serializers.ValidationError('Background color must be a valid hex color (e.g., #F9FAFB)')
-        return value

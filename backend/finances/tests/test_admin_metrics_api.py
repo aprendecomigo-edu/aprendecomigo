@@ -29,6 +29,11 @@ class AdminMetricsAPITest(TestCase):
     
     def setUp(self):
         """Set up test data."""
+        # Clean up any existing webhooks from previous tests
+        from finances.models import WebhookEventLog, PurchaseTransaction
+        WebhookEventLog.objects.all().delete()
+        PurchaseTransaction.objects.all().delete()
+        
         # Create test school
         self.school = School.objects.create(name="Test School")
         

@@ -186,6 +186,11 @@ class MessageAPITest(APITestCase):
 
     def setUp(self):
         """Set up test users, channels, and messages."""
+        # Clean up any existing data to ensure test isolation
+        Message.objects.all().delete()
+        Channel.objects.all().delete()
+        User.objects.all().delete()
+        
         self.user1 = User.objects.create_user(
             username="user1", email="user1@example.com", password="password"
         )
@@ -215,16 +220,23 @@ class MessageAPITest(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        
+        # Handle pagination if present
+        if 'results' in response.data:
+            messages = response.data['results']
+        else:
+            messages = response.data
+            
+        self.assertEqual(len(messages), 2)
 
         # Verify message content and senders
-        contents = [msg["content"] for msg in response.data]
+        contents = [msg["content"] for msg in messages]
         self.assertIn("Message 1 from user1", contents)
         self.assertIn("Message 2 from user2", contents)
 
     def test_message_creation(self):
         """Test creating a new message in a channel."""
-        url = reverse("channel-messages", args=[self.channel.id])
+        url = reverse("channel-send-message", args=[self.channel.id])
         data = {"content": "New test message"}
 
         response = self.client.post(url, data, format="json")
@@ -240,7 +252,7 @@ class MessageAPITest(APITestCase):
 
     def test_message_with_file(self):
         """Test sending a message with a file attachment."""
-        url = reverse("channel-messages", args=[self.channel.id])
+        url = reverse("channel-send-message", args=[self.channel.id])
 
         # Create test file
         test_file = SimpleUploadedFile(
@@ -257,7 +269,8 @@ class MessageAPITest(APITestCase):
 
         # Verify file was saved
         message = Message.objects.get(id=response.data["id"])
-        self.assertTrue(message.file.name.endswith("test_attachment.txt"))
+        self.assertIsNotNone(message.file)
+        self.assertIn("test_attachment", message.file.name)
 
 
 class ReactionAPITest(APITestCase):
@@ -350,6 +363,9 @@ class UserSearchAPITest(APITestCase):
 
     def setUp(self):
         """Set up test users with various names for search tests."""
+        # Clean up any existing data to ensure test isolation
+        User.objects.all().delete()
+        
         # Create test users
         self.user1 = User.objects.create_user(
             username="user1",
@@ -389,8 +405,8 @@ class UserSearchAPITest(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)  # Should find johndoe only
-        self.assertEqual(response.data[0]["username"], "johndoe")
+        self.assertEqual(len(response.data['results']), 1)  # Should find johndoe only
+        self.assertEqual(response.data['results'][0]["username"], "johndoe")
 
     def test_search_by_first_name(self):
         """Test searching users by first name."""
@@ -400,8 +416,8 @@ class UserSearchAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Should find user3 (johndoe), but not user1 (as it's the authenticated user)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["first_name"], "John")
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]["first_name"], "John")
 
     def test_search_by_last_name(self):
         """Test searching users by last name."""
@@ -409,8 +425,8 @@ class UserSearchAPITest(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)  # Should find smithy only (not user1)
-        self.assertEqual(response.data[0]["last_name"], "Smith")
+        self.assertEqual(len(response.data['results']), 1)  # Should find smithy only (not user1)
+        self.assertEqual(response.data['results'][0]["last_name"], "Smith")
 
     def test_empty_search(self):
         """Test that empty search returns no results."""
@@ -418,7 +434,7 @@ class UserSearchAPITest(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)  # Empty result set
+        self.assertEqual(len(response.data['results']), 0)  # Empty result set
 
     def test_multiple_results(self):
         """Test search that matches multiple users."""
@@ -426,8 +442,8 @@ class UserSearchAPITest(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)  # Should find user2 and user3
+        self.assertEqual(len(response.data['results']), 2)  # Should find user2 and user3
 
-        usernames = [user["username"] for user in response.data]
+        usernames = [user["username"] for user in response.data['results']]
         self.assertIn("user2", usernames)
         self.assertIn("johndoe", usernames)
