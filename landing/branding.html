@@ -36,6 +36,7 @@
       --color-white:  #f9fafb; /* text on dark */
       --color-neutral-50:  #f9fafb; /* text on dark */
       --color-neutral-200: #e5e7eb;
+      --color-neutral-350: #B1B9C5;
       --color-neutral-500: #64748b;
       --color-neutral-700: #334155;
       --color-neutral-900: #111827; /* text on light */
@@ -121,8 +122,14 @@
     .color-warning        { color: var(--color-warning); }
     .color-error          { color: var(--color-error); }
 
-    .color-neutral-50          { color: var(--color-neutral-50); }
-
+    .color-white          { color: var(--color-white); }
+    .color-lightest         { color: var(--color-neutral-50); }
+    .color-lighter         { color: var(--color-neutral-200); }
+    .color-light         { color: var(--color-neutral-350); }
+    .color-dark         { color: var(--color-neutral-500); }
+    .color-darker         { color: var(--color-neutral-700); }
+    .color-darkest         { color: var(--color-neutral-900); }
+    .color-black         { color: var(--color-neutral-900); }
     
     .font-brand {
       font-family: var(--font-brand);
@@ -151,6 +158,23 @@
 
 
     .bg-accent-pink { background: var(--color-accent-pink); }
+
+
+    .bg-white { background: var(--color-white);}
+    .bg-lightest { background: var(--color-neutral-50);}
+    .bg-lighter { background: var(--color-neutral-200);}
+    .bg-light { background: var(--color-neutral-350);}
+    .bg-dark { background: var(--color-neutral-500);}
+    .bg-darker { background: var(--color-neutral-700);}
+    .bg-darkest { background: var(--color-neutral-900);}
+    .bg-black { background: var(--color-neutral-900);}
+
+    .bg-success { background: var(--color-success);}
+    .bg-success-light { background: var(--color-success-light);}
+    .bg-warning { background: var(--color-warning);}
+    .bg-error { background: var(--color-error);}
+    .bg-info { background: var(--color-info);}
+
 
 
     .color-gradient-primary {
@@ -246,12 +270,6 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .feature-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-      border-color: #10b981;
-    }
-
     .hero-card {
       background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
       border: 1px solid #e5e7eb;
@@ -284,6 +302,94 @@
       background: rgba(255, 255, 255, 0.95);
       border: 1px solid rgba(255, 255, 255, 0.4);
       box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+    }
+
+        /* Pricing Cards */
+        .pricing-card {
+      background: white;
+      border: 2px solid var(--color-neutral-200);
+      border-radius: var(--radius-2xl);
+      padding: var(--space-8);
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .border-gradient-primary{
+      border: 4px solid transparent;
+      border-image: var(--gradient-primary) 1 stretch;
+      border-radius: var(--radius-2xl);
+
+    }
+
+    .pricing-card:hover {
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .pricing-card.featured {
+      border-color: var(--color-primary);
+      transform: scale(1.05);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .pricing-card.featured::before {
+      content: "Popular";
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-primary);
+      color: white;
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-full);
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    /* Testimonial Cards */
+    .testimonial-card {
+      background: white;
+      border-radius: var(--radius-2xl);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-md);
+      position: relative;
+    }
+
+    .testimonial-card::before {
+      content: '"';
+      position: absolute;
+      top: -10px;
+      left: var(--space-6);
+      font-size: 4rem;
+      color: var(--color-primary);
+      font-family: serif;
+      line-height: 1;
+    }
+
+    /* Stats Cards */
+    .stats-card {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      color: white;
+      border-radius: var(--radius-2xl);
+      padding: var(--space-6);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stats-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+      animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
     }
 
     
@@ -509,23 +615,90 @@
           </div>
           </div>
 
-          <!-- Neutrals/System -->
-          <div class="grid md:grid-cols-4 gap-8">
-            <div>
-              <h3 class="text-lg font-semibold mb-4">Neutral Scale</h3>
-              <div class="color-swatch" style="background: var(--color-neutral-900)">900</div>
-              <div class="color-swatch" style="background: var(--color-neutral-700); color: #fff">700</div>
-              <div class="color-swatch" style="background: var(--color-neutral-500); color: #fff">500</div>
-              <div class="color-swatch" style="background: var(--color-neutral-200); color: #000">200</div>
-              <div class="color-swatch" style="background: var(--color-neutral-50); color: #000; border: 1px solid #e5e7eb">50</div>
+          <!-- Neutrals -->
+    <h3 class="text-xl font-semibold mb-4">Neutrals</h3>
+     <!-- Note that gradient inside span even if inside other semantic elements-->
+    <div class="grid md:grid-cols-2 gap-8 mb-16">
+        <div class="space-y-4">
+          <div class="grid md:grid-cols-2 gap-8 items-center gap-4">
+            <div class="color-swatch bg-darkest">
+              <code class="color-lighter">class="bg-darkest"</code>
+              <code class="color-white">class="bg-black"</code>
             </div>
-            
+            <div>
+              <p class="color-swatch"><span class="color-darkest">Darkest Neutral/Black</span>
+                <code class="color-darkest">class="color-darkest"</code>
+                <code class="color-black">class="color-black"</code>
+              </p>
+              
+            </div>
+          </div>
+          <div class="grid md:grid-cols-2 gap-8 items-center gap-4">
+            <div class="color-swatch bg-darker">
+              <code class="color-lighter">class="bg-darker"</code>
+            </div>
+            <div>
+              <p class="color-swatch"><span class="color-darker">Darker Neutral</span>
+                <code class="color-darker">class="color-darker"</code>
+              
+            </div>
+          </div>
+          <div class="grid md:grid-cols-2 gap-8 items-center gap-4">
+            <div class="color-swatch bg-dark">
+                <code class="color-white">class="bg-dark"</code>
+            </div>
+            <div>
+              <p class="color-swatch"><span class="color-dark">Dark Neutral</span>
+                <code class="color-dark">class="color-dark"</code>
+              </p>
+              
+            </div>
+          </div>
+
+        </div>
+        <div class="space-y-4">
+          <div class="grid md:grid-cols-2 gap-8 items-center gap-4">
+            <div class="color-swatch bg-light">
+              <code class="color-black">class="bg-light"</code>
+            </div>
+            <div>
+              <h1 class="font-semibold "><span class="color-light">Light neutral</span>
+              <code class="color-light">class="color-light"</code>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-8 items-center gap-4">
+            <div class="color-swatch bg-lighter">
+              <code class="color-black">class="bg-lighter"</code>
+            </div>
+            <div >
+              <p><span class="font-semibold color-lighter">Lighter Neutral</span></p>
+              <code>class="color-lighter"</code>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-2 gap-8 items-center gap-4">
+            <div class="color-swatch bg-lightest border">
+              <code class="color-darkest">class=".bg-lightest"</code>
+              <code class="color-black">class=".bg-white"</code>
+            </div>
+            <div>
+              <p class="font-semibold"><span class="color-white text-shadow">Lightest/White Neutral</span></p>
+              <code class="color-darkest">class=".color-lightest"</code>
+              <code class="color-black">class=".color-white"</code>
+            </div>
+          </div>
+          </div>
+          </div>
+
+          <!-- System Colors -->
+          <div class="grid md:grid-cols-4 gap-8">     
             <div>
               <h3 class="text-lg font-semibold mb-4">Semantic Colors</h3>
-              <div class="color-swatch" style="background: var(--color-success)">Success</div>
-              <div class="color-swatch" style="background: var(--color-warning)">Warning</div>
-              <div class="color-swatch" style="background: var(--color-error)">Error</div>
-              <div class="color-swatch" style="background: var(--color-info)">Info</div>
+              <div class="color-swatch bg-success">Success</div>
+              <div class="color-swatch bg-success-light">Success Light</div>
+              <div class="color-swatch bg-warning">Warning</div>
+              <div class="color-swatch bg-error">Error</div>
+              <div class="color-swatch bg-info">Info</div>
             </div>
           </div>
 
@@ -585,71 +758,43 @@
 
     <!-- Buttons -->
     <section class="mb-16">
-      <h2 class="text-2xl font-bold mb-8">🔘 Button System</h2>
+      <h2 class="text-2xl font-bold mb-8">Button System</h2>
       
       <div class="grid md:grid-cols-2 gap-8">
         <div>
-          <h3 class="text-xl font-semibold mb-4">Primary Buttons</h3>
+          <h3 class="text-xl font-semibold">Fill buttons</h3>
           <div class="space-y-4">
-            <div class="p-4">
-              <button class="bg-black text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-gray-900 hover:shadow-2xl transition-all text-lg mb-4">
+              <button class="bg-primary text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-gray-900 hover:shadow-2xl transition-all text-lg mb-4">
                 Primary Button
               </button>
-            </div>
-            
-            <div class="p-4">
-              <button class="text-black border-2 border-black px-8 py-4 rounded-full font-semibold hover:bg-black hover:text-white transition-all text-lg mb-4">
-                Secondary Button
+              <button class="bg-accent text-white px-8 py-4 rounded-full font-bold shadow-xl hover:shadow-2xl transition-all text-lg mb-4">
+                Accent Button
               </button>
-            </div>
+              <button class="bg-accent-dark text-white px-8 py-4 rounded-full font-bold shadow-xl hover:shadow-2xl transition-all text-lg mb-4">
+                Dark Accent Button
+              </button>
+              <button class="bg-accent-pink text-white px-8 py-4 rounded-full font-bold shadow-xl hover:shadow-2xl transition-all text-lg mb-4">
+                Pink Accent Button
+              </button>
+
+             
           </div>
         </div>
 
         <div>
           <h3 class="text-xl font-semibold mb-4">Special Buttons</h3>
           <div class="space-y-4">
-            <div class="p-4">
               <button class="bg-gradient-primary text-white px-8 py-4 rounded-full font-bold shadow-xl hover:shadow-2xl transition-all text-lg mb-4">
                 Gradient Button
               </button>
-            </div>
+                          
+              <button class="text-black border-2 border-black px-8 py-4 rounded-full font-semibold hover:bg-black hover:text-white transition-all text-lg mb-4">
+                Outline
+              </button>
 
-            <div class="p-4">
               <button class="glass-light px-6 py-3 rounded-full font-semibold transition-all hover:glass-container text-lg mb-4">
                 Glass Button
               </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Cards -->
-    <section class="mb-16">
-      <h2 class="text-2xl font-bold mb-8">🎯 Card Components</h2>
-      
-      <div class="grid md:grid-cols-2 gap-8">
-        <div>
-          <h3 class="text-xl font-semibold mb-4">Hero Cards</h3>
-          <div class="hero-card rounded-3xl p-8 mb-4 shadow-2xl">
-            <div class="bg-emerald-100 p-4 rounded-2xl mb-6 w-fit">
-              <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-                <span class="text-white font-bold">1</span>
-              </div>
-            </div>
-            <h4 class="font-bold text-xl mb-3">Hero Card Example</h4>
-            <p class="text-gray-600 leading-relaxed">Perfect for process steps, feature highlights, and call-to-action cards.</p>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="text-xl font-semibold mb-4">Feature Cards</h3>
-          <div class="feature-card-gradient rounded-3xl p-8 mb-4 group">
-            <div class="bg-blue-100 p-4 rounded-2xl mb-6 w-fit group-hover:scale-110 transition-transform">
-              <span class="text-3xl">🚀</span>
-            </div>
-            <h3 class="font-bold text-xl mb-4">Feature Card</h3>
-            <p class="text-gray-600 leading-relaxed">Ideal for feature grids, service descriptions, and highlighted content sections.</p>
           </div>
         </div>
       </div>
@@ -703,7 +848,114 @@
         </div>
 
       </div>
+      <div class="grid md:grid-cols-2 gap-8">
+        <div>
+          <h3 class="text-xl font-semibold mb-4">Hero Cards</h3>
+          <div class="hero-card rounded-3xl p-8 mb-4 shadow-2xl">
+            <div class="bg-emerald-100 p-4 rounded-2xl mb-6 w-fit">
+              <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+                <span class="text-white font-bold">1</span>
+              </div>
+            </div>
+            <h4 class="font-bold text-xl mb-3">Hero Card Example</h4>
+            <p class="text-gray-600 leading-relaxed">Perfect for process steps, feature highlights, and call-to-action cards.</p>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-xl font-semibold mb-4">Feature Cards</h3>
+          <div class="feature-card-gradient rounded-3xl p-8 mb-4 group">
+            <div class="bg-blue-100 p-4 rounded-2xl mb-6 w-fit group-hover:scale-110 transition-transform">
+              <span class="text-3xl">🚀</span>
+            </div>
+            <h3 class="font-bold text-xl mb-4">Feature Card</h3>
+            <p class="text-gray-600 leading-relaxed">Ideal for feature grids, service descriptions, and highlighted content sections.</p>
+          </div>
+        </div>
+      </div>
+      <h3 class="text-xl font-semibold mb-4">Pricing Cards</h3>
+
+      <div class="grid md:grid-cols-2 gap-8 mb-8">
+          <div class="pricing-card border-gradient-primary rounded-2xl">
+            <h4 class="font-bold text-lg mb-2">Basic Plan</h4>
+            <div class="text-3xl font-bold mb-4">€29<span class="text-lg text-gray-500">/month</span></div>
+            <ul class="space-y-2 mb-6">
+              <li>✓ Feature one</li>
+              <li>✓ Feature two</li>
+              <li>✓ Feature three</li>
+            </ul>
+            <button class="bg-accent text-white px-8 py-4 rounded-full font-bold shadow-xl hover:shadow-2xl transition-all text-lg mb-4">Choose Plan</button>
+          </div>
+          
+          <div class="pricing-card featured">
+            <h4 class="font-bold text-lg mb-2">Pro Plan</h4>
+            <div class="text-3xl font-bold mb-4">€59<span class="text-lg text-gray-500">/month</span></div>
+            <ul class="space-y-2 mb-6">
+              <li>✓ Everything in Basic</li>
+              <li>✓ Advanced features</li>
+              <li>✓ Priority support</li>
+            </ul>
+            <button class="btn btn-primary btn-md rounded-full w-full">Choose Plan</button>
+          </div>
+      </div>
+      <div class="mb-8">
+        <h3 class="text-xl font-semibold mb-4">Specialty Cards</h3>
+        <div class="grid md:grid-cols-2 gap-8">
+          
+          <div class="stats-card">
+            <div class="text-3xl font-bold mb-2 color-white">2,500+</div>
+            <div class="text-sm color-lighter">Students Served</div>
+          </div>
+        </div>
+      </div>
     </section>
+
+        <!-- x. Example full width section -->
+        <section class="mb-12">
+          <h2 class="text-2xl font-semibold mb-6">Alerts</h2>
+          
+              <div class="p-2 bg-accent items-center text-indigo-100 leading-none lg:rounded-full flex lg:inline-flex" role="alert">
+                <span class="flex rounded-full bg-accent-dark uppercase px-2 py-1 text-xs font-bold mr-3">New</span>
+                <span class="font-semibold mr-2 text-left text-white flex-auto">Get the coolest t-shirts from our brand new store</span>
+                <svg class="fill-current opacity-75 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M12.95 10.707l.707-.707L8 4.343 6.586 5.757 10.828 10l-4.242 4.243L8 15.657l4.95-4.95z"/></svg>
+              </div>
+          <p class="mt-6 mb-6 text-sm text-neutral-500 max-w-prose">Usage: Use for announcements and new features</p>
+  
+  
+            <div class="bg-teal-100 border-t-4 border-teal-500 color-success rounded-2xl px-4 py-3 shadow-md relative" role="alert">
+              <div class="flex">
+                <div class="py-1"><svg class="fill-current h-6 w-6 color-success mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg></div>
+                <div>
+                  <p class="font-bold">New event added</p>
+                  <p class="text-sm">Your calendar event was successful..</p>
+                  
+                </div>
+                <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                  <svg class="fill-current h-6 w-6" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+                </span>
+              </div>
+            </div>
+          <p class="mt-6 mb-6 text-sm text-neutral-500 max-w-prose">App feedback: action successful</p>
+  
+          <div class="bg-red-100 border border-red-400 color-error border-t-4 rounded-2xl px-4 py-3 shadow-md relative" role="alert">
+            <div class="flex">
+              <!-- Replace with exclamation point -->
+              <div class="py-1"><svg class="fill-current h-6 w-6 text-red-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg></div>
+              <div>
+  
+                <p class="font-bold">Something went wrong</p>
+                <p class="text-sm">Details or actions</p>
+                
+              </div>
+              <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                <svg class="fill-current h-6 w-6" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+              </span>
+            </div>
+          </div>
+        <p class="mt-6 mb-6 text-sm text-neutral-500 max-w-prose">App feedback: something went wrong.</p>
+  
+          </section>
+  
 
     <!-- Lists and Tables -->
     <section class="mb-16">

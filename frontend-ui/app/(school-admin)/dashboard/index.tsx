@@ -11,7 +11,7 @@ import {
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useAuth, useUserProfile, useSchool } from '@/api/auth';
+import { useAuth, useSchool } from '@/api/auth';
 import { getSchoolInfo, SchoolInfo } from '@/api/userApi';
 import { ToDoTaskList } from '@/components/dashboard/ToDoTaskList';
 import { UpcomingEventsTable } from '@/components/dashboard/UpcomingEventsTable';
@@ -102,8 +102,7 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 
 const SchoolAdminDashboard = () => {
-  const { } = useAuth();
-  const { userProfile } = useUserProfile();
+  const { userProfile } = useAuth();
   const { userSchools, currentSchool } = useSchool();
 
   // Filter admin schools from user schools

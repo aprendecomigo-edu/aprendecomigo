@@ -27,6 +27,7 @@ from .views import (
     TutorOnboardingStartView,
     TutorOnboardingValidateStepView,
     UserViewSet,
+    ValidateTokenView,
     VerifyCodeView,
 )
 
@@ -68,6 +69,11 @@ urlpatterns = [
         "auth/verify-code/",
         VerifyCodeView.as_view(),
         name="verify_code",
+    ),
+    path(
+        "auth/validate-token/",
+        ValidateTokenView.as_view(),
+        name="validate_token",
     ),
     # Invitation link endpoint (public)
     path(

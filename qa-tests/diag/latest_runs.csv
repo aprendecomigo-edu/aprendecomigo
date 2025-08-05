@@ -1,0 +1,2 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+diag-001,Post-Calendar-Color-Fix App Loading Diagnostic,Emergency diagnostic to identify why app loads but becomes unresponsive after calendar color system changes,,,0,0,0

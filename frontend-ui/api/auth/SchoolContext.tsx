@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-import { useUserProfile } from './UserProfileContext';
+import { useAuth } from './AuthContext';
 
 export interface UserSchool {
   id: number;
@@ -22,7 +22,7 @@ interface SchoolContextType {
 const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
 
 export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { userProfile } = useUserProfile();
+  const { userProfile } = useAuth();
   const [userSchools, setUserSchools] = useState<UserSchool[]>([]);
   const [currentSchool, setCurrentSchoolState] = useState<UserSchool | null>(null);
 
