@@ -2,11 +2,13 @@ import { router } from 'expo-router';
 import { Plus, CalendarDays, Clock, User, MapPin } from 'lucide-react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
+import { DateData } from 'react-native-calendars';
 
 import apiClient from '@/api/apiClient';
 import { useAuth, useUserProfile } from '@/api/auth';
 import schedulerApi, { ClassSchedule } from '@/api/schedulerApi';
 import { tasksApi, Task } from '@/api/tasksApi';
+import MonthView from '@/components/calendar/MonthView';
 import MainLayout from '@/components/layouts/MainLayout';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
@@ -23,7 +25,7 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 
 // Calendar view types
-type CalendarView = 'week' | 'month' | 'list';
+type CalendarView = 'list' | 'week' | 'month';
 
 // Helper function to get week dates
 const getWeekDates = (date: Date): Date[] => {
@@ -405,10 +407,26 @@ const CalendarScreen: React.FC = () => {
     router.push('/calendar/book');
   };
 
+  const handleDayPress = (day: DateData) => {
+    const selectedDate = new Date(day.dateString);
+    setCurrentDate(selectedDate);
+    
+    // Filter events for the selected day
+    const dayClasses = classes.filter(c => c.scheduled_date === day.dateString);
+    const dayTasks = tasks.filter(t => t.due_date && t.due_date.split('T')[0] === day.dateString);
+    
+    // If there are events on this day, you could show them in a modal or navigate to a detail view
+    if (dayClasses.length > 0 || dayTasks.length > 0) {
+      console.log(`Selected day ${day.dateString} has ${dayClasses.length} classes and ${dayTasks.length} tasks`);
+    }
+  };
+
   const navigatePrevious = () => {
     const newDate = new Date(currentDate);
     if (view === 'week') {
       newDate.setDate(currentDate.getDate() - 7);
+    } else if (view === 'month') {
+      newDate.setMonth(currentDate.getMonth() - 1);
     } else {
       newDate.setMonth(currentDate.getMonth() - 1);
     }
@@ -419,6 +437,8 @@ const CalendarScreen: React.FC = () => {
     const newDate = new Date(currentDate);
     if (view === 'week') {
       newDate.setDate(currentDate.getDate() + 7);
+    } else if (view === 'month') {
+      newDate.setMonth(currentDate.getMonth() + 1);
     } else {
       newDate.setMonth(currentDate.getMonth() + 1);
     }
@@ -462,6 +482,13 @@ const CalendarScreen: React.FC = () => {
             >
               <ButtonText>Week</ButtonText>
             </Button>
+            <Button
+              variant={view === 'month' ? 'solid' : 'outline'}
+              size="sm"
+              onPress={() => setView('month')}
+            >
+              <ButtonText>Month</ButtonText>
+            </Button>
           </HStack>
           <HStack space="xs">
             <Button variant="outline" size="sm" onPress={navigatePrevious}>
@@ -486,12 +513,20 @@ const CalendarScreen: React.FC = () => {
           <>
             {view === 'list' ? (
               <ListView classes={classes} tasks={tasks} onClassPress={handleClassPress} />
-            ) : (
+            ) : view === 'week' ? (
               <WeekView
                 currentDate={currentDate}
                 classes={classes}
                 tasks={tasks}
                 onClassPress={handleClassPress}
+              />
+            ) : (
+              <MonthView
+                currentDate={currentDate}
+                classes={classes}
+                tasks={tasks}
+                onDayPress={handleDayPress}
+                isDarkMode={false}
               />
             )}
           </>
