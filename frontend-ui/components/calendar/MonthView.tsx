@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Calendar, DateData, MarkingProps } from 'react-native-calendars';
 import { View, Text } from 'react-native';
 import { calendarTheme, darkCalendarTheme, DOT_COLORS, getMultiDotStyle } from './CalendarTheme';
 import { ClassSchedule } from '@/api/schedulerApi';
 import { Task } from '@/api/tasksApi';
+import { validateDate, safeDateKey, getTodayKey } from './dateUtils';
 
 interface MonthViewProps {
   currentDate: Date;
@@ -59,10 +60,10 @@ export const MonthView: React.FC<MonthViewProps> = ({
   onDayPress,
   isDarkMode = false 
 }) => {
-  // Create marked dates object with dots for events
-  const createMarkedDates = (): MarkedDates => {
+  // Memoized marked dates computation for performance
+  const markedDates = useMemo((): MarkedDates => {
     const marked: MarkedDates = {};
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayKey();
     
     // Add today's marking
     marked[today] = {
@@ -79,10 +80,20 @@ export const MonthView: React.FC<MonthViewProps> = ({
       },
     };
     
-    // Process classes
+    // Process classes with date validation
     const safeClasses = classes || [];
     safeClasses.forEach(classItem => {
-      const dateKey = classItem.scheduled_date;
+      const dateValidation = validateDate(classItem.scheduled_date);
+      if (!dateValidation.isValid) {
+        if (__DEV__) {
+          console.warn('Invalid class scheduled_date:', classItem.scheduled_date, dateValidation.error);
+        }
+        return;
+      }
+      
+      const dateKey = safeDateKey(classItem.scheduled_date);
+      if (!dateKey) return;
+      
       if (!marked[dateKey]) {
         marked[dateKey] = { dots: [], customStyles: {} };
       }
@@ -113,12 +124,22 @@ export const MonthView: React.FC<MonthViewProps> = ({
       }
     });
     
-    // Process tasks
+    // Process tasks with date validation
     const safeTasks = tasks || [];
     safeTasks.forEach(task => {
       if (!task.due_date) return;
       
-      const dateKey = task.due_date.split('T')[0];
+      const dateValidation = validateDate(task.due_date);
+      if (!dateValidation.isValid) {
+        if (__DEV__) {
+          console.warn('Invalid task due_date:', task.due_date, dateValidation.error);
+        }
+        return;
+      }
+      
+      const dateKey = safeDateKey(task.due_date);
+      if (!dateKey) return;
+      
       if (!marked[dateKey]) {
         marked[dateKey] = { dots: [], customStyles: {} };
       }
@@ -158,9 +179,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
     });
     
     return marked;
-  };
-  
-  const markedDates = createMarkedDates();
+  }, [classes, tasks, isDarkMode]); // Dependencies for memoization
   
   return (
     <Calendar
@@ -169,7 +188,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
       monthFormat="MMMM yyyy"
       onMonthChange={(month) => {
         // Handle month change if needed
-        console.log('Month changed to:', month);
+        // Month navigation is handled by parent component
       }}
       hideArrows={false}
       renderArrow={(direction) => direction === 'left' ? '←' : '→'}
@@ -191,7 +210,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
       }}
       // Custom day component for multi-dot rendering
       dayComponent={({ date, state, marking }) => {
-        const isToday = date?.dateString === new Date().toISOString().split('T')[0];
+        const isToday = date?.dateString === getTodayKey();
         const isSelected = marking?.selected;
         const dots = marking?.dots || [];
         

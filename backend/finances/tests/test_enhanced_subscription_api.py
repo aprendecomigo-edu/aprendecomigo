@@ -6,7 +6,7 @@ including billing dates, subscription status, and related features.
 """
 
 from decimal import Decimal
-from datetime import date, timedelta
+from datetime import date, timedelta, timezone as dt_timezone
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -180,10 +180,10 @@ class EnhancedSubscriptionAPITest(APITestCase):
     def test_billing_cycle_calculation(self, mock_now):
         """Test billing cycle calculation logic."""
         # Mock current date
-        mock_now.return_value = timezone.datetime(2025, 2, 15, tzinfo=timezone.utc)
+        mock_now.return_value = timezone.datetime(2025, 2, 15, tzinfo=dt_timezone.utc)
         
         # Create subscription from January 15
-        subscription_date = timezone.datetime(2025, 1, 15, tzinfo=timezone.utc)
+        subscription_date = timezone.datetime(2025, 1, 15, tzinfo=dt_timezone.utc)
         PurchaseTransaction.objects.create(
             student=self.student,
             transaction_type=TransactionType.SUBSCRIPTION,
@@ -219,10 +219,10 @@ class EnhancedSubscriptionAPITest(APITestCase):
     def test_billing_cycle_past_period(self, mock_now):
         """Test billing cycle calculation when current date is past period end."""
         # Mock current date to be past the expected period end
-        mock_now.return_value = timezone.datetime(2025, 3, 20, tzinfo=timezone.utc)
+        mock_now.return_value = timezone.datetime(2025, 3, 20, tzinfo=dt_timezone.utc)
         
         # Create subscription from January 15
-        subscription_date = timezone.datetime(2025, 1, 15, tzinfo=timezone.utc)
+        subscription_date = timezone.datetime(2025, 1, 15, tzinfo=dt_timezone.utc)
         PurchaseTransaction.objects.create(
             student=self.student,
             transaction_type=TransactionType.SUBSCRIPTION,
@@ -418,9 +418,9 @@ class SubscriptionInfoServiceTest(TestCase):
         from finances.views import StudentBalanceViewSet
         
         # Test subscription created on last day of month
-        mock_now.return_value = timezone.datetime(2025, 3, 31, tzinfo=timezone.utc)
+        mock_now.return_value = timezone.datetime(2025, 3, 31, tzinfo=dt_timezone.utc)
         
-        subscription_date = timezone.datetime(2025, 1, 31, tzinfo=timezone.utc)
+        subscription_date = timezone.datetime(2025, 1, 31, tzinfo=dt_timezone.utc)
         PurchaseTransaction.objects.create(
             student=self.student,
             transaction_type=TransactionType.SUBSCRIPTION,

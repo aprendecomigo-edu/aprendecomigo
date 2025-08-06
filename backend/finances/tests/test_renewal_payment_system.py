@@ -38,7 +38,6 @@ class StoredPaymentMethodModelTests(TestCase):
         self.student = CustomUser.objects.create_user(
             email='student@test.com',
             name='Test Student',
-            user_type='student'
         )
         
         self.payment_method_data = {
@@ -138,7 +137,6 @@ class StoredPaymentMethodModelTests(TestCase):
         another_student = CustomUser.objects.create_user(
             email='another@test.com',
             name='Another Student',
-            user_type='student'
         )
         
         # Try to create payment method with same stripe_payment_method_id
@@ -191,7 +189,6 @@ class PaymentMethodServiceTests(TestCase):
         self.student = CustomUser.objects.create_user(
             email='student@test.com',
             name='Test Student',
-            user_type='student'
         )
         self.service = PaymentMethodService()
 
@@ -362,7 +359,6 @@ class RenewalPaymentServiceTests(TestCase):
         self.student = CustomUser.objects.create_user(
             email='student@test.com',
             name='Test Student',
-            user_type='student'
         )
         
         # Create student account balance
@@ -566,13 +562,11 @@ class RenewalPaymentSecurityTests(TestCase):
         self.student1 = CustomUser.objects.create_user(
             email='student1@test.com',
             name='Student One',
-            user_type='student'
         )
         
         self.student2 = CustomUser.objects.create_user(
             email='student2@test.com',
             name='Student Two',
-            user_type='student'
         )
         
         # Create payment method for student1

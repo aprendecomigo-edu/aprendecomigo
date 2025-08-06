@@ -3,12 +3,15 @@ import { Plus, CalendarDays, Clock, User, MapPin } from 'lucide-react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { DateData } from 'react-native-calendars';
+import { useColorScheme } from '@/components/useColorScheme';
+import { safeFormatDate, safeFormatTime, validateDate } from '@/components/calendar/dateUtils';
 
 import apiClient from '@/api/apiClient';
 import { useAuth, useUserProfile } from '@/api/auth';
 import schedulerApi, { ClassSchedule } from '@/api/schedulerApi';
 import { tasksApi, Task } from '@/api/tasksApi';
 import MonthView from '@/components/calendar/MonthView';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import MainLayout from '@/components/layouts/MainLayout';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
@@ -88,12 +91,7 @@ const TaskCard: React.FC<{
   };
 
   const formatDueDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-PT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+    return safeFormatDate(dateString);
   };
 
   return (
@@ -129,11 +127,7 @@ const TaskCard: React.FC<{
             <HStack space="xs" className="items-center">
               <Icon as={Clock} size="sm" className="text-gray-500" />
               <Text className="text-sm text-gray-600">
-                Due:{' '}
-                {new Date(task.due_date).toLocaleTimeString('pt-PT', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                Due: {safeFormatTime(task.due_date)}
               </Text>
             </HStack>
           )}
@@ -179,7 +173,7 @@ const ClassCard: React.FC<{
             {showDate && (
               <HStack space="xs" className="items-center">
                 <Icon as={CalendarDays} size="sm" className="text-gray-500" />
-                <Text className="text-sm text-gray-600">{classSchedule.scheduled_date}</Text>
+                <Text className="text-sm text-gray-600">{safeFormatDate(classSchedule.scheduled_date)}</Text>
               </HStack>
             )}
             <HStack space="xs" className="items-center">
@@ -233,10 +227,15 @@ const WeekView: React.FC<{
         <VStack space="lg">
           {weekDates.map((date, index) => {
             const dateStr = date.toISOString().split('T')[0];
-            const dayClasses = safeClasses.filter(c => c.scheduled_date === dateStr);
-            const dayTasks = safeTasks.filter(
-              t => t.due_date && t.due_date.split('T')[0] === dateStr
-            );
+            const dayClasses = safeClasses.filter(c => {
+              const validation = validateDate(c.scheduled_date);
+              return validation.isValid && validation.date?.toISOString().split('T')[0] === dateStr;
+            });
+            const dayTasks = safeTasks.filter(t => {
+              if (!t.due_date) return false;
+              const validation = validateDate(t.due_date);
+              return validation.isValid && validation.date?.toISOString().split('T')[0] === dateStr;
+            });
 
             const hasContent = dayClasses.length > 0 || dayTasks.length > 0;
 
@@ -324,6 +323,8 @@ const ListView: React.FC<{
 // Main calendar component
 const CalendarScreen: React.FC = () => {
   const { userProfile } = useUserProfile();
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>('list');
   const [classes, setClasses] = useState<ClassSchedule[]>([]);
@@ -341,7 +342,9 @@ const CalendarScreen: React.FC = () => {
       // API now returns the array directly
       setClasses(Array.isArray(classes) ? classes : []);
     } catch (error) {
-      console.error('Error loading classes:', error);
+      if (__DEV__) {
+        console.error('Error loading classes:', error);
+      }
       // Set empty array on error to prevent crashes
       setClasses([]);
       Alert.alert('Error', 'Failed to load classes');
@@ -381,7 +384,9 @@ const CalendarScreen: React.FC = () => {
 
       setTasks(calendarTasks || []);
     } catch (error) {
-      console.error('Error loading tasks:', error);
+      if (__DEV__) {
+        console.error('Error loading tasks:', error);
+      }
       setTasks([]);
     }
   }, [currentDate, view]);
@@ -393,7 +398,9 @@ const CalendarScreen: React.FC = () => {
         await loadClasses();
         await loadTasks();
       } catch (error) {
-        console.error('Error in initializeData:', error);
+        if (__DEV__) {
+          console.error('Error in initializeData:', error);
+        }
       }
     };
     initializeData();
@@ -408,16 +415,38 @@ const CalendarScreen: React.FC = () => {
   };
 
   const handleDayPress = (day: DateData) => {
-    const selectedDate = new Date(day.dateString);
-    setCurrentDate(selectedDate);
-    
-    // Filter events for the selected day
-    const dayClasses = classes.filter(c => c.scheduled_date === day.dateString);
-    const dayTasks = tasks.filter(t => t.due_date && t.due_date.split('T')[0] === day.dateString);
-    
-    // If there are events on this day, you could show them in a modal or navigate to a detail view
-    if (dayClasses.length > 0 || dayTasks.length > 0) {
-      console.log(`Selected day ${day.dateString} has ${dayClasses.length} classes and ${dayTasks.length} tasks`);
+    try {
+      const selectedDate = new Date(day.dateString);
+      
+      // Validate the selected date
+      if (isNaN(selectedDate.getTime())) {
+        if (__DEV__) {
+          console.warn('Invalid date selected:', day.dateString);
+        }
+        return;
+      }
+      
+      setCurrentDate(selectedDate);
+      
+      // Filter events for the selected day with validation
+      const dayClasses = classes.filter(c => {
+        const validation = validateDate(c.scheduled_date);
+        return validation.isValid && validation.date?.toISOString().split('T')[0] === day.dateString;
+      });
+      const dayTasks = tasks.filter(t => {
+        if (!t.due_date) return false;
+        const validation = validateDate(t.due_date);
+        return validation.isValid && validation.date?.toISOString().split('T')[0] === day.dateString;
+      });
+      
+      // If there are events on this day, you could show them in a modal or navigate to a detail view
+      if (dayClasses.length > 0 || dayTasks.length > 0) {
+        // Future enhancement: Show day detail modal
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Error handling day press:', error);
+      }
     }
   };
 
@@ -512,22 +541,46 @@ const CalendarScreen: React.FC = () => {
         ) : (
           <>
             {view === 'list' ? (
-              <ListView classes={classes} tasks={tasks} onClassPress={handleClassPress} />
+              <ErrorBoundary
+                onError={(error, errorInfo) => {
+                  if (__DEV__) {
+                    console.error('List view error:', error, errorInfo);
+                  }
+                }}
+              >
+                <ListView classes={classes} tasks={tasks} onClassPress={handleClassPress} />
+              </ErrorBoundary>
             ) : view === 'week' ? (
-              <WeekView
-                currentDate={currentDate}
-                classes={classes}
-                tasks={tasks}
-                onClassPress={handleClassPress}
-              />
+              <ErrorBoundary
+                onError={(error, errorInfo) => {
+                  if (__DEV__) {
+                    console.error('Week view error:', error, errorInfo);
+                  }
+                }}
+              >
+                <WeekView
+                  currentDate={currentDate}
+                  classes={classes}
+                  tasks={tasks}
+                  onClassPress={handleClassPress}
+                />
+              </ErrorBoundary>
             ) : (
-              <MonthView
-                currentDate={currentDate}
-                classes={classes}
-                tasks={tasks}
-                onDayPress={handleDayPress}
-                isDarkMode={false}
-              />
+              <ErrorBoundary
+                onError={(error, errorInfo) => {
+                  if (__DEV__) {
+                    console.error('Month view error:', error, errorInfo);
+                  }
+                }}
+              >
+                <MonthView
+                  currentDate={currentDate}
+                  classes={classes}
+                  tasks={tasks}
+                  onDayPress={handleDayPress}
+                  isDarkMode={isDarkMode}
+                />
+              </ErrorBoundary>
             )}
           </>
         )}

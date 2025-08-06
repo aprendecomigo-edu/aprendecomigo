@@ -73,3 +73,8 @@ from .base import *  # noqa: F403, E402
 # Allow testserver for Django test client
 ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
 
+# Stripe Test Configuration
+STRIPE_SECRET_KEY = "sk_test_test_key_for_django_tests"
+STRIPE_PUBLIC_KEY = "pk_test_test_key_for_django_tests"
+STRIPE_WEBHOOK_SECRET = "whsec_test_key_for_django_tests"
+
