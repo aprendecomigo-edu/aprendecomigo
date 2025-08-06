@@ -270,91 +270,83 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def available_slots(self, request):
-        """Get available time slots for a teacher on a specific date"""
+        """
+        Get available time slots for a teacher on a specific date.
+        
+        Implements requirements from GitHub issue #148:
+        - Required parameters: teacher_id, date (ISO format)
+        - Optional parameters: duration_minutes (default 60), date_end (for ranges)
+        - Returns ISO datetime format with proper timezone handling
+        - Includes performance optimization with caching
+        """
+        from .services import AvailableSlotsService, SlotValidationService
+        
+        # Extract and validate required parameters
         teacher_id = request.query_params.get("teacher_id")
         date_str = request.query_params.get("date")
-
+        
         if not teacher_id or not date_str:
             return Response(
-                {"error": "teacher_id and date are required"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "teacher_id and date are required parameters"}, 
+                status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Extract optional parameters
+        duration_minutes = request.query_params.get("duration_minutes", 60)
+        date_end_str = request.query_params.get("date_end")
+        
         try:
-            date = datetime.strptime(date_str, "%Y-%m-%d").date()
-            teacher = TeacherProfile.objects.get(id=teacher_id)
-        except (ValueError, TeacherProfile.DoesNotExist):
+            # Validate teacher exists
+            teacher = TeacherProfile.objects.select_related('user').get(id=teacher_id)
+            
+            # Validate and parse dates
+            start_date = SlotValidationService.validate_date_format(date_str)
+            end_date = None
+            if date_end_str:
+                end_date = SlotValidationService.validate_date_format(date_end_str)
+                SlotValidationService.validate_date_range(start_date, end_date)
+            
+            # Validate duration
+            duration_minutes = int(duration_minutes)
+            SlotValidationService.validate_duration(duration_minutes)
+            
+        except (ValueError, TeacherProfile.DoesNotExist) as e:
             return Response(
-                {"error": "Invalid teacher_id or date format"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
             )
-
+        
+        # Get user's accessible schools
         user_schools = self.get_user_schools()
-        available_slots = []
-
-        for school in user_schools:
-            # Get teacher's availability for this day
-            day_of_week = date.strftime("%A").lower()
-            availability = TeacherAvailability.objects.filter(
-                teacher=teacher, school=school, day_of_week=day_of_week, is_active=True
-            ).first()
-
-            if not availability:
-                continue
-
-            # Check for unavailability
-            unavailability = TeacherUnavailability.objects.filter(
-                teacher=teacher, school=school, date=date
-            ).first()
-
-            if unavailability and unavailability.is_all_day:
-                continue
-
-            # Get existing classes for this day
-            existing_classes = ClassSchedule.objects.filter(
-                teacher=teacher,
-                school=school,
-                scheduled_date=date,
-                status__in=[ClassStatus.SCHEDULED, ClassStatus.CONFIRMED],
-            ).values_list("start_time", "end_time")
-
-            # Generate available slots (assuming 1-hour slots)
-            current_time = availability.start_time
-            end_time = availability.end_time
-
-            while current_time < end_time:
-                slot_end = (datetime.combine(date, current_time) + timedelta(hours=1)).time()
-                if slot_end > end_time:
-                    break
-
-                # Check if this slot conflicts with existing classes
-                slot_available = True
-                for start, end in existing_classes:
-                    if current_time < end and slot_end > start:
-                        slot_available = False
-                        break
-
-                # Check if this slot conflicts with unavailability
-                if unavailability and not unavailability.is_all_day:
-                    if (
-                        current_time < unavailability.end_time
-                        and slot_end > unavailability.start_time
-                    ):
-                        slot_available = False
-
-                if slot_available:
-                    available_slots.append(
-                        {
-                            "start_time": current_time.strftime("%H:%M"),
-                            "end_time": slot_end.strftime("%H:%M"),
-                            "school_id": school.id,
-                            "school_name": school.name,
-                        }
-                    )
-
-                current_time = slot_end
-
-        return Response(
-            {"teacher_id": teacher_id, "date": date_str, "available_slots": available_slots}
-        )
+        
+        # Initialize service and calculate slots
+        service = AvailableSlotsService(teacher=teacher, schools=user_schools)
+        
+        try:
+            available_slots = service.get_available_slots(
+                start_date=start_date,
+                duration_minutes=duration_minutes,
+                end_date=end_date
+            )
+            
+            # Return response in the exact format specified in issue #148
+            return Response({
+                "available_slots": available_slots
+            })
+            
+        except Exception as e:
+            # Log error for debugging (using Django's logging framework)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(
+                f"Error calculating available slots for teacher {teacher_id} "
+                f"on {date_str}: {str(e)}"
+            )
+            
+            return Response(
+                {"error": "Unable to calculate available slots"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class RecurringClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
