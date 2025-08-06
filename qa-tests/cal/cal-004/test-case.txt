@@ -1,0 +1,147 @@
+QA Test Case: Date Selection & Navigation
+
+Test ID: CAL-004
+Test Name: Date Selection & Navigation
+Purpose: Verify date selection in Month view and week navigation in Week view work correctly
+Expected Result: Users can select dates in Month view and navigate weeks properly with accurate date updates
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Date Navigation: Month view uses react-native-calendars, Week view uses custom week calculation
+- Navigation Controls: Previous/Next arrows and Today button
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: Use .venv/ in project root
+3. Start development servers: `make dev`
+4. Test URL: http://localhost:8081
+
+Test Data:
+- Valid authenticated user: anapmc.carvalho@gmail.com (school_owner role)
+- No specific test data needed for date navigation testing
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Setup and Access Calendar
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev
+
+1. Open browser to http://localhost:8081
+2. Login with: anapmc.carvalho@gmail.com
+3. Navigate to Calendar page
+
+Expected: Calendar page loads successfully
+Screenshot: 01_calendar_date_nav_ready.png
+
+Step 2: Test Month View Date Selection
+1. Switch to Month view
+2. Click on different dates in the current month
+3. Verify date selection updates currentDate state
+4. Check if visual feedback is provided for selected date
+5. Note the currently selected date
+
+Expected: Clicking dates updates selection with visual feedback
+Screenshot: 02_month_date_selection.png
+
+Step 3: Test Month Navigation with Arrows
+1. In Month view, click the right arrow (→) 
+2. Verify month advances to next month
+3. Check month name updates in header
+4. Click left arrow (←) twice
+5. Verify month goes back appropriately
+
+Expected: Month navigation works with proper month name updates
+Screenshot: 03_month_arrow_navigation.png
+
+Step 4: Test Week View Week Navigation  
+1. Switch to Week view
+2. Note the current week dates displayed
+3. Click right arrow (→) to advance week
+4. Verify week dates advance by 7 days
+5. Click left arrow (←) to go back
+6. Confirm week dates go back by 7 days
+
+Expected: Week navigation advances/retreats by exactly 7 days
+Screenshot: 04_week_navigation.png
+
+Step 5: Test Today Button Functionality
+1. Navigate to a different month (not current month)
+2. Click "Today" button
+3. Verify calendar returns to current date
+4. Switch to Week view in different week
+5. Click "Today" button again
+6. Confirm week view shows current week
+
+Expected: Today button always returns to current date/week
+Screenshot: 05_today_button_function.png
+
+Step 6: Test Cross-View Date Consistency
+1. In Month view, select a specific date
+2. Switch to Week view
+3. Verify the selected date's week is shown
+4. Switch to List view
+5. Confirm events for that date period are displayed
+
+Expected: Selected date carries across views appropriately
+Screenshot: 06_cross_view_date_consistency.png
+
+Step 7: Test Date Boundary Conditions
+1. Navigate to end of month (e.g., January 31st)
+2. Click next month arrow
+3. Verify proper handling of month boundaries
+4. Test February to March transition
+5. Test year boundary transitions
+
+Expected: Month boundaries handle correctly without errors
+Screenshot: 07_date_boundary_handling.png
+
+Step 8: Test Week View Sunday/Monday First Day
+1. In Week view, check first day of week
+2. Verify it starts with Monday (firstDay={1} configuration)
+3. Check that Sunday appears as last day of week
+4. Confirm week date range calculation is correct
+
+Expected: Week starts with Monday, Sunday is last day
+Screenshot: 08_week_first_day_config.png
+
+Step 9: Test Navigation State Persistence
+1. Navigate to specific month/week
+2. Switch between views multiple times
+3. Return to Month/Week view
+4. Verify navigation state is maintained
+5. Refresh page and check if date resets to today
+
+Expected: Navigation state persists during view switches
+Screenshot: 09_navigation_state_persistence.png
+
+Step 10: Test Invalid Date Handling
+1. Open browser console
+2. Try rapid clicking on navigation arrows
+3. Watch for date-related JavaScript errors
+4. Test selecting dates outside current month range
+5. Verify error boundaries protect against date issues
+
+Expected: No JavaScript errors, graceful handling of edge cases
+Screenshot: 10_invalid_date_handling.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Date selection and navigation work smoothly across all views with accurate date calculations
+FAIL: Date selection doesn't work, navigation errors, incorrect date calculations, or JavaScript errors
+
+Individual Step Criteria:
+- Step 1: PASS if calendar loads, FAIL if login/navigation fails
+- Step 2: PASS if date selection works with feedback, FAIL if selection broken
+- Step 3: PASS if month navigation works correctly, FAIL if month changes incorrect
+- Step 4: PASS if week navigation advances by 7 days, FAIL if week calculation wrong
+- Step 5: PASS if Today button returns to current date, FAIL if Today button broken
+- Step 6: PASS if date consistency across views, FAIL if date state not shared
+- Step 7: PASS if month boundaries handled correctly, FAIL if boundary errors
+- Step 8: PASS if week starts Monday, FAIL if first day incorrect
+- Step 9: PASS if navigation state persists, FAIL if state lost during switches
+- Step 10: PASS if no date errors, FAIL if JavaScript errors occur
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

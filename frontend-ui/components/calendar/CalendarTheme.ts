@@ -46,20 +46,21 @@ export const calendarTheme: Theme = {
   // Day marking styles - these will be used for our multi-dot implementation
   'stylesheet.day.basic': {
     base: {
-      width: 32,
-      height: 32,
+      width: 40,
+      height: 40,
       alignItems: 'center',
       justifyContent: 'center',
+      margin: 2,
     },
     today: {
       backgroundColor: 'transparent',
-      borderWidth: 1,
+      borderWidth: 2,
       borderColor: '#2563eb',
-      borderRadius: 16,
+      borderRadius: 20,
     },
     selected: {
       backgroundColor: '#2563eb',
-      borderRadius: 16,
+      borderRadius: 20,
     },
   },
 };
@@ -106,20 +107,21 @@ export const darkCalendarTheme: Theme = {
   // Day marking styles - Dark mode
   'stylesheet.day.basic': {
     base: {
-      width: 32,
-      height: 32,
+      width: 40,
+      height: 40,
       alignItems: 'center',
       justifyContent: 'center',
+      margin: 2,
     },
     today: {
       backgroundColor: 'transparent',
-      borderWidth: 1,
+      borderWidth: 2,
       borderColor: '#2563eb',
-      borderRadius: 16,
+      borderRadius: 20,
     },
     selected: {
       backgroundColor: '#2563eb',
-      borderRadius: 16,
+      borderRadius: 20,
     },
   },
 };

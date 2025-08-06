@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Calendar, DateData, MarkingProps } from 'react-native-calendars';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { calendarTheme, darkCalendarTheme, DOT_COLORS, getMultiDotStyle } from './CalendarTheme';
 import { ClassSchedule } from '@/api/schedulerApi';
 import { Task } from '@/api/tasksApi';
+import { validateDate, safeDateKey, getTodayKey } from './dateUtils';
+import { useWorkingDays } from '@/hooks/useWorkingDays';
 
 interface MonthViewProps {
   currentDate: Date;
@@ -27,7 +29,7 @@ const MultiDotMarking: React.FC<{ dots: { color: string; key: string }[] }> = ({
       justifyContent: 'center', 
       alignItems: 'center',
       position: 'absolute',
-      bottom: 2,
+      bottom: 3,
       left: 0,
       right: 0,
     }}>
@@ -38,10 +40,11 @@ const MultiDotMarking: React.FC<{ dots: { color: string; key: string }[] }> = ({
             key={`${dot.color}-${index}`}
             style={[
               {
-                width: 6,
-                height: 6,
-                borderRadius: 3,
+                width: 8,
+                height: 8,
+                borderRadius: 4,
                 backgroundColor: dot.color,
+                marginHorizontal: 1,
               },
               dotStyle,
             ]}
@@ -59,10 +62,12 @@ export const MonthView: React.FC<MonthViewProps> = ({
   onDayPress,
   isDarkMode = false 
 }) => {
-  // Create marked dates object with dots for events
-  const createMarkedDates = (): MarkedDates => {
+  const { isWorkingDay, isLoading } = useWorkingDays();
+  
+  // Memoized marked dates computation for performance
+  const markedDates = useMemo((): MarkedDates => {
     const marked: MarkedDates = {};
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayKey();
     
     // Add today's marking
     marked[today] = {
@@ -70,7 +75,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
         container: {
           borderWidth: 2,
           borderColor: DOT_COLORS.class,
-          borderRadius: 16,
+          borderRadius: 20, // Increased from 16 for better visibility
         },
         text: {
           color: isDarkMode ? '#ffffff' : '#030712',
@@ -79,10 +84,13 @@ export const MonthView: React.FC<MonthViewProps> = ({
       },
     };
     
-    // Process classes
+    // Process classes with validation
     const safeClasses = classes || [];
     safeClasses.forEach(classItem => {
-      const dateKey = classItem.scheduled_date;
+      const validation = validateDate(classItem.scheduled_date);
+      if (!validation.isValid) return;
+      
+      const dateKey = safeDateKey(classItem.scheduled_date);
       if (!marked[dateKey]) {
         marked[dateKey] = { dots: [], customStyles: {} };
       }
@@ -103,7 +111,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
           container: {
             borderWidth: 2,
             borderColor: DOT_COLORS.class,
-            borderRadius: 16,
+            borderRadius: 20,
           },
           text: {
             color: isDarkMode ? '#ffffff' : '#030712',
@@ -113,12 +121,15 @@ export const MonthView: React.FC<MonthViewProps> = ({
       }
     });
     
-    // Process tasks
+    // Process tasks with validation
     const safeTasks = tasks || [];
     safeTasks.forEach(task => {
       if (!task.due_date) return;
       
-      const dateKey = task.due_date.split('T')[0];
+      const validation = validateDate(task.due_date);
+      if (!validation.isValid) return;
+      
+      const dateKey = safeDateKey(task.due_date);
       if (!marked[dateKey]) {
         marked[dateKey] = { dots: [], customStyles: {} };
       }
@@ -127,27 +138,23 @@ export const MonthView: React.FC<MonthViewProps> = ({
         marked[dateKey].dots = [];
       }
       
-      // Determine dot color based on task properties
-      let dotColor = DOT_COLORS.task;
-      if (task.is_urgent) {
-        dotColor = DOT_COLORS.urgent;
-      } else if (task.status === 'completed') {
-        dotColor = DOT_COLORS.completed;
-      }
+      // Add task dot with priority-based color
+      const taskColor = task.priority === 'high' ? DOT_COLORS.highPriority : 
+                       task.priority === 'medium' ? DOT_COLORS.mediumPriority : 
+                       DOT_COLORS.lowPriority;
       
-      // Add task dot
       marked[dateKey].dots!.push({
         key: `task-${task.id}`,
-        color: dotColor,
+        color: taskColor,
       });
       
-      // Override today's marking if it has events
+      // Override today's marking if it has tasks
       if (dateKey === today) {
         marked[dateKey].customStyles = {
           container: {
             borderWidth: 2,
-            borderColor: DOT_COLORS.class,
-            borderRadius: 16,
+            borderColor: taskColor,
+            borderRadius: 20,
           },
           text: {
             color: isDarkMode ? '#ffffff' : '#030712',
@@ -156,80 +163,123 @@ export const MonthView: React.FC<MonthViewProps> = ({
         };
       }
     });
+
+    // Add working days styling - make non-working days visually distinct
+    if (!isLoading) {
+      // Get current month's dates
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const dayIndex = date.getDay() === 0 ? 6 : date.getDay() - 1; // Convert Sunday=0 to Sunday=6
+        const dateKey = date.toISOString().split('T')[0];
+        
+        if (!isWorkingDay(dayIndex)) {
+          // Style non-working days
+          if (!marked[dateKey]) {
+            marked[dateKey] = { customStyles: {} };
+          }
+          
+          // Only add non-working day styling if it's not today and doesn't have events
+          if (dateKey !== today && (!marked[dateKey].dots || marked[dateKey].dots!.length === 0)) {
+            marked[dateKey].customStyles = {
+              container: {
+                opacity: 0.4, // Make non-working days more transparent
+                backgroundColor: isDarkMode ? '#374151' : '#F3F4F6',
+              },
+              text: {
+                color: isDarkMode ? '#9CA3AF' : '#6B7280',
+                fontWeight: '400',
+              },
+            };
+          }
+        }
+      }
+    }
     
     return marked;
-  };
-  
-  const markedDates = createMarkedDates();
-  
+  }, [classes, tasks, isDarkMode, isWorkingDay, isLoading, currentDate]);
+
   return (
     <Calendar
       current={currentDate.toISOString().split('T')[0]}
       onDayPress={onDayPress}
-      monthFormat="MMMM yyyy"
-      onMonthChange={(month) => {
-        // Handle month change if needed
-        console.log('Month changed to:', month);
-      }}
-      hideArrows={false}
-      renderArrow={(direction) => direction === 'left' ? '←' : '→'}
-      hideExtraDays={true}
-      disableMonthChange={false}
-      firstDay={1} // Monday as first day
-      hideDayNames={false}
-      showWeekNumbers={false}
-      disableAllTouchEventsForDisabledDays={true}
-      enableSwipeMonths={true}
       markedDates={markedDates}
       markingType="multi-dot"
       theme={isDarkMode ? darkCalendarTheme : calendarTheme}
+      monthFormat="MMMM yyyy"
+      firstDay={1} // Start week on Monday
+      showWeekNumbers={false}
+      disableMonthChange={false}
+      hideArrows={true} // We handle navigation in parent component
+      hideExtraDays={false}
+      disableArrowLeft={true}
+      disableArrowRight={true}
       style={{
-        borderWidth: 1,
-        borderColor: isDarkMode ? '#374151' : '#e5e7eb',
         borderRadius: 12,
-        marginHorizontal: 4,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        backgroundColor: isDarkMode ? '#1F2937' : '#ffffff',
+        paddingBottom: 8,
       }}
-      // Custom day component for multi-dot rendering
       dayComponent={({ date, state, marking }) => {
-        const isToday = date?.dateString === new Date().toISOString().split('T')[0];
-        const isSelected = marking?.selected;
-        const dots = marking?.dots || [];
-        
-        let textColor = isDarkMode ? '#ffffff' : '#030712';
-        let backgroundColor = 'transparent';
-        let borderColor = 'transparent';
-        let borderWidth = 0;
-        
-        if (state === 'disabled') {
-          textColor = isDarkMode ? '#6b7280' : '#9ca3af';
-        } else if (isSelected) {
-          backgroundColor = DOT_COLORS.class;
-          textColor = '#ffffff';
-        } else if (isToday) {
-          borderColor = DOT_COLORS.class;
-          borderWidth = 2;
-        }
+        const isToday = date?.dateString === getTodayKey();
+        const hasMarking = marking && (marking.dots?.length > 0 || marking.customStyles);
         
         return (
           <View style={{ 
-            width: 32, 
-            height: 32, 
-            alignItems: 'center', 
-            justifyContent: 'center',
+            width: 40, 
+            height: 40, 
+            justifyContent: 'center', 
+            alignItems: 'center',
             position: 'relative',
-            backgroundColor,
-            borderColor,
-            borderWidth,
-            borderRadius: 16,
           }}>
-            <Text style={{ 
-              fontSize: 16, 
-              color: textColor,
-              fontWeight: isToday ? '600' : '400',
-            }}>
-              {date?.day}
-            </Text>
-            {dots.length > 0 && <MultiDotMarking dots={dots} />}
+            <View
+              style={[
+                {
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                },
+                marking?.customStyles?.container,
+                isToday && !hasMarking ? {
+                  borderWidth: 2,
+                  borderColor: DOT_COLORS.class,
+                } : {},
+              ]}
+            >
+              {/* Day number text */}
+              <View style={{
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+                <View
+                  style={[
+                    {
+                      color: state === 'disabled' ? '#d9d9d9' : 
+                            isToday ? (isDarkMode ? '#ffffff' : '#030712') :
+                            state === 'today' ? (isDarkMode ? '#ffffff' : '#030712') :
+                            isDarkMode ? '#ffffff' : '#030712',
+                      fontSize: 16,
+                      fontWeight: isToday ? '600' : '400',
+                    },
+                    marking?.customStyles?.text,
+                  ]}
+                />
+              </View>
+              
+              {/* Multi-dot marking */}
+              {marking?.dots && marking.dots.length > 0 && (
+                <MultiDotMarking dots={marking.dots} />
+              )}
+            </View>
           </View>
         );
       }}

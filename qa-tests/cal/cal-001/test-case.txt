@@ -1,0 +1,140 @@
+QA Test Case: Calendar View Navigation
+
+Test ID: CAL-001
+Test Name: Calendar View Navigation
+Purpose: Verify that users can switch between Month, Week, and List (Agenda) views seamlessly and that all views load correctly without errors
+Expected Result: All three calendar views (Month, Week, List) load properly with smooth navigation between them
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Architecture: React Native + Expo frontend with Django backend
+- Calendar Component: Located at /app/calendar/index.tsx
+- Calendar Views: Month (using react-native-calendars), Week, and List (custom implementations)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: Use .venv/ in project root  
+3. Start development servers: `make dev`
+4. Test URL: http://localhost:8081
+
+Test Data:
+- Valid authenticated user (school_owner, teacher, or student)
+- Test Account: anapmc.carvalho@gmail.com (school_owner role)
+- At least one scheduled class or task for better visual testing
+- Both light and dark theme availability
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev
+
+Expected: Development servers start successfully
+Screenshot: 01_dev_servers_running.png
+Debug: Use 'make logs' to view server logs if issues occur
+
+Step 2: Navigate to Application and Login
+1. Open browser to http://localhost:8081
+2. Complete login flow with test email: anapmc.carvalho@gmail.com
+3. Navigate to Calendar page via main navigation
+
+Expected: User successfully logs in and reaches calendar page
+Screenshot: 02_calendar_page_loaded.png
+
+Step 3: Verify Default View Load
+1. Observe the default calendar view (should be List view)
+2. Check that the page loads without errors
+3. Verify header shows "Calendar"
+4. Confirm view control buttons are visible: List, Week, Month
+
+Expected: Calendar page loads successfully with List view active
+Screenshot: 03_default_list_view.png
+
+Step 4: Test Month View Switch
+1. Click "Month" button in view controls
+2. Wait for view to load completely
+3. Verify Month calendar component appears
+4. Check for proper calendar grid layout
+5. Confirm navigation arrows (← →) are visible
+6. Verify "Today" button is present
+
+Expected: Month view loads showing calendar grid with navigation controls
+Screenshot: 04_month_view_active.png
+
+Step 5: Test Week View Switch
+1. Click "Week" button in view controls  
+2. Wait for view to load completely
+3. Verify week view shows 7 days
+4. Check that days are properly labeled
+5. Confirm date range is displayed correctly
+
+Expected: Week view loads showing 7 days with proper date labels
+Screenshot: 05_week_view_active.png
+
+Step 6: Test List View Switch
+1. Click "List" button in view controls
+2. Wait for view to load completely
+3. Verify list format shows upcoming events
+4. Check for proper event cards display
+5. Confirm events show date and time information
+
+Expected: List view loads showing upcoming events in card format
+Screenshot: 06_list_view_active.png
+
+Step 7: Test Rapid View Switching
+1. Quickly switch between views: Month → Week → List → Month
+2. Repeat switching 3 times rapidly
+3. Observe any lag, errors, or loading issues
+4. Verify each view maintains proper state
+
+Expected: Views switch smoothly without errors or significant lag
+Screenshot: 07_rapid_switching_test.png
+
+Step 8: Test View Button Visual States
+1. In Month view, verify Month button appears active/selected
+2. Switch to Week view, verify Week button appears active
+3. Switch to List view, verify List button appears active
+4. Confirm inactive buttons have different styling
+
+Expected: Active view button has distinct visual state (solid vs outline)
+Screenshot: 08_button_states_verification.png
+
+Step 9: Test Navigation Persistence
+1. Switch to Month view
+2. Navigate to different month using arrows
+3. Switch to Week view, then back to Month
+4. Verify Month view retains the previously selected month
+
+Expected: View navigation state persists when switching between views
+Screenshot: 09_navigation_persistence.png
+
+Step 10: Test Error Boundaries
+1. Open browser console to monitor for errors
+2. Switch between all three views multiple times
+3. Check console for any JavaScript errors
+4. Verify ErrorBoundary components work if present
+
+Expected: No JavaScript errors in console, smooth view transitions
+Screenshot: 10_console_error_check.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All views load successfully, smooth switching between views, no JavaScript errors, proper visual states for active buttons
+FAIL: Any view fails to load, errors during switching, JavaScript console errors, or buttons don't show active states
+
+Individual Step Criteria:
+- Step 1: PASS if dev servers start, FAIL if startup errors
+- Step 2: PASS if login and calendar navigation work, FAIL if authentication or navigation fails
+- Step 3: PASS if default List view loads properly, FAIL if page doesn't load or shows errors
+- Step 4: PASS if Month view displays calendar grid, FAIL if Month view doesn't load or is broken
+- Step 5: PASS if Week view shows 7 days correctly, FAIL if Week view doesn't load or is malformed
+- Step 6: PASS if List view shows events properly, FAIL if List view doesn't load or is broken
+- Step 7: PASS if rapid switching works smoothly, FAIL if lag/errors occur during switching
+- Step 8: PASS if button states change correctly, FAIL if active states don't work
+- Step 9: PASS if navigation state persists, FAIL if state is lost between view switches
+- Step 10: PASS if no console errors, FAIL if JavaScript errors are logged
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

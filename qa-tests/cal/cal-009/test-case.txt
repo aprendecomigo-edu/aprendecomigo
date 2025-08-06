@@ -1,0 +1,195 @@
+QA Test Case: Performance
+
+Test ID: CAL-009
+Test Name: Performance
+Purpose: Verify calendar renders smoothly, switches views without lag, and maintains responsive performance
+Expected Result: Calendar operations complete quickly with smooth animations and no performance bottlenecks
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Performance Targets: View switching <500ms, rendering <2s, smooth 60fps interactions
+- Optimization: useMemo for marked dates, ErrorBoundary wrapping, efficient re-renders
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: Use .venv/ in project root
+3. Start development servers: `make dev`
+4. Test URL: http://localhost:8081
+
+Test Data:
+- Valid authenticated user: anapmc.carvalho@gmail.com (school_owner role)
+- Calendar with substantial event data (multiple classes and tasks)
+- Browser performance monitoring tools
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Setup and Performance Monitoring
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev
+
+1. Open browser to http://localhost:8081
+2. Open Chrome DevTools Performance tab
+3. Login with: anapmc.carvalho@gmail.com
+4. Navigate to Calendar page
+5. Start performance recording
+
+Expected: Calendar loads, performance monitoring active
+Screenshot: 01_performance_monitoring_setup.png
+
+Step 2: Measure Initial Calendar Load Time
+1. Refresh calendar page
+2. Time from navigation to full calendar render
+3. Note loading spinner duration
+4. Check total time to interactive state
+5. Target: Full load under 3 seconds
+
+Expected: Calendar loads completely within 3 seconds
+Screenshot: 02_initial_load_performance.png
+
+Step 3: Test View Switching Performance
+1. Time switching from List to Month view
+2. Time switching from Month to Week view  
+3. Time switching from Week back to List view
+4. Repeat switching cycle 3 times
+5. Target: Each switch under 500ms
+
+Expected: View switches complete smoothly under 500ms each
+Screenshot: 03_view_switching_performance.png
+
+Step 4: Test Month Navigation Performance
+1. In Month view, time navigation between months
+2. Click next month arrow 10 times rapidly
+3. Time each month change
+4. Click previous month arrow 10 times rapidly
+5. Target: Month changes under 200ms each
+
+Expected: Month navigation is instant with no lag
+Screenshot: 04_month_navigation_performance.png
+
+Step 5: Test Week Navigation Performance
+1. In Week view, time week navigation
+2. Rapidly navigate forward 10 weeks
+3. Rapidly navigate backward 10 weeks
+4. Check for any lag or frame drops
+5. Target: Week changes under 100ms each
+
+Expected: Week navigation is immediate with no performance issues
+Screenshot: 05_week_navigation_performance.png
+
+Step 6: Test Scrolling Performance in List View
+1. Switch to List view with many events
+2. Scroll through event list rapidly
+3. Check for smooth 60fps scrolling
+4. Test both mouse wheel and touch scrolling
+5. Monitor for frame drops or stuttering
+
+Expected: Smooth scrolling at 60fps with no stuttering
+Screenshot: 06_list_scrolling_performance.png
+
+Step 7: Test Date Selection Performance in Month View
+1. Rapidly click different dates in Month view
+2. Time response to date selection
+3. Click 20 different dates in succession
+4. Check for lag or delayed responses
+5. Target: Date selection under 50ms
+
+Expected: Date selection is immediate with no lag
+Screenshot: 07_date_selection_performance.png
+
+Step 8: Test Today Button Performance
+1. Navigate to distant date (6 months away)
+2. Time Today button response
+3. Repeat Today button from different distant dates
+4. Test Today button 10 times rapidly
+5. Target: Today button response under 100ms
+
+Expected: Today button responds immediately regardless of current date
+Screenshot: 08_today_button_performance.png
+
+Step 9: Test Memory Usage During Extended Use
+1. Leave calendar open for extended period
+2. Switch views continuously for 2 minutes
+3. Monitor memory usage in DevTools
+4. Check for memory leaks or excessive growth
+5. Target: Stable memory usage, no leaks
+
+Expected: Memory usage remains stable during extended use
+Screenshot: 09_memory_usage_monitoring.png
+
+Step 10: Test Rapid Interaction Performance
+1. Rapidly switch between all views 20 times
+2. Rapidly navigate months while switching views
+3. Stress test with continuous user interaction
+4. Monitor for any performance degradation
+5. Check CPU usage during stress test
+
+Expected: Performance remains consistent during rapid interactions
+Screenshot: 10_rapid_interaction_stress_test.png
+
+Step 11: Test Event Rendering Performance with Large Dataset
+1. If available, test with calendar having many events
+2. Time Month view rendering with multiple event dots
+3. Test Week view with multiple events per day
+4. Test List view scrolling with many event cards
+5. Target: Rendering time stays under 1 second
+
+Expected: Calendar renders quickly even with substantial event data
+Screenshot: 11_large_dataset_performance.png
+
+Step 12: Test Performance Across Different Network Conditions
+1. Use DevTools Network tab to simulate slow 3G
+2. Test calendar loading and API calls
+3. Switch to Fast 3G simulation
+4. Test on simulated offline mode (cached data)
+5. Monitor how performance changes with network
+
+Expected: Calendar remains usable even on slower network connections
+Screenshot: 12_network_condition_performance.png
+
+Step 13: Test Animation and Transition Smoothness
+1. Look for any animations in view switching
+2. Test calendar month change animations
+3. Check for smooth transitions between states
+4. Monitor frame rate during transitions
+5. Verify no janky or stuttering animations
+
+Expected: All transitions and animations are smooth at 60fps
+Screenshot: 13_animation_smoothness.png
+
+Step 14: Performance Analysis and Bottleneck Identification
+1. Stop performance recording in DevTools
+2. Analyze performance timeline
+3. Identify any performance bottlenecks:
+   - Long JavaScript execution
+   - Layout thrashing
+   - Excessive re-renders
+4. Check for optimization opportunities
+
+Expected: Performance profile shows efficient execution with no major bottlenecks
+Screenshot: 14_performance_analysis.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All calendar operations perform smoothly within target times, no performance degradation during extended use
+FAIL: Lag, stuttering, slow responses, memory leaks, or performance below targets
+
+Individual Step Criteria:
+- Step 1: PASS if monitoring setup successful, FAIL if setup issues
+- Step 2: PASS if initial load under 3 seconds, FAIL if longer load times
+- Step 3: PASS if view switching under 500ms, FAIL if slower switching
+- Step 4: PASS if month navigation under 200ms, FAIL if laggy navigation
+- Step 5: PASS if week navigation under 100ms, FAIL if slow week changes
+- Step 6: PASS if smooth 60fps scrolling, FAIL if stuttering or frame drops
+- Step 7: PASS if date selection under 50ms, FAIL if slow date response
+- Step 8: PASS if Today button under 100ms, FAIL if slow Today button
+- Step 9: PASS if stable memory usage, FAIL if memory leaks detected
+- Step 10: PASS if consistent performance during stress, FAIL if performance degrades
+- Step 11: PASS if large dataset renders under 1s, FAIL if slow rendering with data
+- Step 12: PASS if usable on slow networks, FAIL if unusable on slow connections
+- Step 13: PASS if smooth 60fps animations, FAIL if janky animations
+- Step 14: PASS if no major bottlenecks found, FAIL if significant performance issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

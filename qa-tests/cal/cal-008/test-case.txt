@@ -1,0 +1,186 @@
+QA Test Case: Error Handling
+
+Test ID: CAL-008
+Test Name: Error Handling
+Purpose: Verify calendar handles invalid dates, empty states, and error conditions gracefully without crashing
+Expected Result: Calendar shows appropriate error messages and empty states, maintains functionality during errors
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Error Boundaries: ErrorBoundary components wrap each view
+- Date Validation: validateDate function in dateUtils.ts
+- Empty States: Custom messages when no events exist
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: Use .venv/ in project root
+3. Start development servers: `make dev`
+4. Test URL: http://localhost:8081
+
+Test Data:
+- Valid authenticated user: anapmc.carvalho@gmail.com (school_owner role)
+- Access to browser console for error monitoring
+- Ability to simulate network conditions
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Setup and Console Monitoring
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev
+
+1. Open browser to http://localhost:8081
+2. Open browser console (F12) to monitor errors
+3. Login with: anapmc.carvalho@gmail.com
+4. Navigate to Calendar page
+5. Clear console to start fresh
+
+Expected: Calendar loads normally, console cleared for error monitoring
+Screenshot: 01_console_ready_error_testing.png
+
+Step 2: Test Empty Event State Display
+1. Navigate to a date period with no scheduled events
+2. Switch to List view
+3. Verify empty state message appears:
+   - "No classes or tasks scheduled"
+   - "Your upcoming classes and tasks will appear here"
+   - Calendar icon displayed
+4. Check styling is appropriate
+
+Expected: Empty state displays with proper message and icon
+Screenshot: 02_empty_state_list_view.png
+
+Step 3: Test Empty State in Week View
+1. Navigate to week with no events
+2. Switch to Week view
+3. Verify each day shows appropriate empty message:
+   - "No classes or tasks scheduled"
+   - Gray background (bg-gray-50)
+4. Check layout remains intact with empty days
+
+Expected: Week view shows proper empty day states
+Screenshot: 03_empty_state_week_view.png
+
+Step 4: Test Month View with No Event Dots
+1. Navigate to month with no events
+2. Switch to Month view
+3. Verify calendar displays properly without event dots
+4. Confirm date selection still works
+5. Check navigation arrows remain functional
+
+Expected: Month view functions normally without events
+Screenshot: 04_empty_state_month_view.png
+
+Step 5: Test API Error Handling (Simulated Network Issues)
+1. Open browser Network tab in Developer Tools
+2. Block network requests to simulate API failure
+3. Refresh calendar page or navigate to calendar
+4. Observe error handling behavior:
+   - Loading states handle timeouts appropriately
+   - Error messages appear if network fails
+   - App doesn't crash or become unusable
+
+Expected: Graceful handling of network failures with proper error states
+Screenshot: 05_network_error_handling.png
+
+Step 6: Test Invalid Date Handling
+1. In console, monitor for date-related warnings/errors
+2. Rapidly navigate between months and weeks
+3. Test edge cases like:
+   - February 29th in non-leap years
+   - End of month transitions
+   - Year boundary crossings
+4. Check for any JavaScript date errors
+
+Expected: No JavaScript errors, graceful date boundary handling
+Screenshot: 06_invalid_date_handling.png
+
+Step 7: Test Error Boundary Functionality
+1. With console open, switch between views rapidly
+2. Look for any React error boundaries triggered
+3. Test error recovery:
+   - If error boundary triggers, can user recover?
+   - Does error boundary show appropriate message?
+   - Can user navigate back to working state?
+
+Expected: Error boundaries catch errors gracefully and allow recovery
+Screenshot: 07_error_boundary_testing.png
+
+Step 8: Test Malformed Event Data Handling
+1. Check console for warnings about invalid event data
+2. Look for date validation warnings like:
+   - "Invalid class scheduled_date"
+   - "Invalid task due_date"
+3. Verify malformed events are filtered out gracefully
+4. Confirm valid events still display properly
+
+Expected: Invalid events filtered out without breaking display of valid events
+Screenshot: 08_malformed_data_handling.png
+
+Step 9: Test Loading State Error Recovery
+1. Refresh page while on calendar
+2. If loading state appears, wait for timeout
+3. Test what happens if loading never completes:
+   - Does spinner timeout appropriately?
+   - Is there fallback error message?
+   - Can user retry or navigate away?
+
+Expected: Loading states have proper timeouts and error recovery
+Screenshot: 09_loading_error_recovery.png
+
+Step 10: Test Memory and Performance Error Conditions
+1. Leave calendar open and switch views extensively
+2. Monitor console for memory warnings
+3. Test rapid navigation and view switching
+4. Check for:
+   - Memory leaks
+   - Performance warnings
+   - Component lifecycle errors
+
+Expected: No memory leaks or performance-related errors
+Screenshot: 10_memory_performance_errors.png
+
+Step 11: Test Date Validation Edge Cases
+1. Test specific problematic dates:
+   - Invalid ISO date strings
+   - Null or undefined dates
+   - Future dates far into future (year 2099)
+   - Past dates far in past (year 1900)
+2. Monitor validateDate function behavior
+
+Expected: Date validation handles all edge cases gracefully
+Screenshot: 11_date_validation_edge_cases.png
+
+Step 12: Test Recovery from Error States
+1. If any errors occurred in previous steps, test recovery:
+   - Can user navigate away from error state?
+   - Does page refresh resolve errors?
+   - Are errors persistent or temporary?
+2. Test user workflows after error recovery
+3. Verify functionality returns to normal
+
+Expected: Users can recover from error states and continue normal usage
+Screenshot: 12_error_recovery_testing.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Calendar handles all error conditions gracefully with appropriate messages and maintains core functionality
+FAIL: Crashes, unhandled errors, poor error messages, or inability to recover from errors
+
+Individual Step Criteria:
+- Step 1: PASS if console monitoring ready, FAIL if setup issues
+- Step 2: PASS if empty state displays properly in List view, FAIL if broken empty state
+- Step 3: PASS if Week view empty states work, FAIL if empty days broken
+- Step 4: PASS if Month view works without events, FAIL if functionality breaks
+- Step 5: PASS if API errors handled gracefully, FAIL if crashes on network issues
+- Step 6: PASS if no date-related JavaScript errors, FAIL if date errors occur
+- Step 7: PASS if error boundaries work properly, FAIL if unrecoverable errors
+- Step 8: PASS if malformed data filtered gracefully, FAIL if malformed data breaks display
+- Step 9: PASS if loading states have proper fallbacks, FAIL if infinite loading/no recovery
+- Step 10: PASS if no memory/performance errors, FAIL if memory leaks or performance issues
+- Step 11: PASS if date validation handles edge cases, FAIL if validation failures
+- Step 12: PASS if recovery possible from error states, FAIL if errors unrecoverable
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

@@ -1,0 +1,185 @@
+QA Test Case: Theme Switching
+
+Test ID: CAL-006
+Test Name: Theme Switching
+Purpose: Verify calendar displays correctly in both light and dark themes with proper contrast and readability
+Expected Result: Calendar components maintain readability and proper styling in both light and dark themes
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Theme System: Uses useColorScheme hook with light/dark mode detection
+- Calendar Themes: calendarTheme (light) and darkCalendarTheme (dark) in CalendarTheme.ts
+- Theme Variables: Text colors, backgrounds, borders adapt to theme
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: Use .venv/ in project root
+3. Start development servers: `make dev`
+4. Test URL: http://localhost:8081
+
+Test Data:
+- Valid authenticated user: anapmc.carvalho@gmail.com (school_owner role)
+- Events with different types for color contrast testing
+- Calendar with populated events for visibility testing
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Setup and Initial Theme Check
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev
+
+1. Open browser to http://localhost:8081
+2. Login with: anapmc.carvalho@gmail.com  
+3. Navigate to Calendar page
+4. Note current theme (light or dark)
+
+Expected: Calendar loads in default theme
+Screenshot: 01_calendar_default_theme.png
+
+Step 2: Test Light Theme Calendar Display
+1. If not in light theme, switch to light theme (browser/OS setting)
+2. Verify Month view in light theme:
+   - Calendar background is light
+   - Text is dark and readable
+   - Today's date border is visible
+   - Event dots are clearly visible
+3. Check all calendar elements for proper contrast
+
+Expected: All calendar elements clearly visible with good contrast in light theme
+Screenshot: 02_light_theme_month_view.png
+
+Step 3: Test Dark Theme Calendar Display  
+1. Switch to dark theme (browser/OS dark mode setting)
+2. Allow theme to propagate to calendar
+3. Verify Month view in dark theme:
+   - Calendar background is dark
+   - Text is light and readable
+   - Today's date border remains visible
+   - Event dots maintain good contrast
+4. Check that calendar border adapts to dark theme
+
+Expected: All calendar elements clearly visible with good contrast in dark theme
+Screenshot: 03_dark_theme_month_view.png
+
+Step 4: Test Theme Switch Impact on Event Dots
+1. In Month view, identify days with event dots
+2. Switch between light and dark themes
+3. Verify event dots remain visible in both themes:
+   - Class dots (blue) maintain visibility
+   - Task dots (orange) maintain visibility  
+   - Urgent task dots (red) maintain visibility
+   - Completed task dots (gray) maintain visibility
+4. Check dot contrast against calendar background
+
+Expected: Event dots clearly visible in both light and dark themes
+Screenshot: 04_theme_switch_event_dots.png
+
+Step 5: Test Week View Theme Switching
+1. Switch to Week view
+2. Test in light theme:
+   - Week header text readable
+   - Day labels clear
+   - Event cards have proper background/text contrast
+3. Switch to dark theme and verify same elements
+4. Check event card styling adapts properly
+
+Expected: Week view maintains readability in both themes
+Screenshot: 05_week_view_theme_switching.png
+
+Step 6: Test List View Theme Switching
+1. Switch to List view  
+2. Test in light theme:
+   - Event cards background and text contrast
+   - Badge colors remain readable
+   - Status indicators maintain visibility
+3. Switch to dark theme and verify:
+   - Cards adapt to dark background
+   - Text remains readable
+   - Color badges maintain proper contrast
+
+Expected: List view event cards readable in both themes  
+Screenshot: 06_list_view_theme_switching.png
+
+Step 7: Test Navigation Controls Theme Adaptation
+1. Check navigation buttons (←, Today, →) in light theme
+2. Verify button styling and text readability
+3. Switch to dark theme
+4. Confirm buttons adapt with proper contrast
+5. Test view switching buttons (List, Week, Month) in both themes
+
+Expected: Navigation controls maintain visibility and usability in both themes
+Screenshot: 07_navigation_controls_themes.png
+
+Step 8: Test Today Date Highlighting in Both Themes
+1. Navigate to current date in Month view
+2. Verify today's date highlighting in light theme
+3. Switch to dark theme
+4. Confirm today's date remains highlighted with proper contrast
+5. Check border color and text weight remain visible
+
+Expected: Today's date clearly highlighted in both light and dark themes
+Screenshot: 08_today_highlighting_themes.png
+
+Step 9: Test Calendar Border and Layout in Themes
+1. Examine calendar border styling in light theme
+2. Switch to dark theme
+3. Verify calendar border adapts (color: #374151 for dark, #e5e7eb for light)
+4. Check that calendar maintains proper visual separation
+5. Confirm border radius and overall layout consistency
+
+Expected: Calendar border and layout maintain proper styling in both themes
+Screenshot: 09_calendar_border_themes.png
+
+Step 10: Test Rapid Theme Switching
+1. Rapidly switch between light and dark themes multiple times
+2. Observe calendar re-rendering and adaptation
+3. Check for any visual glitches or layout issues
+4. Verify theme transitions are smooth
+5. Confirm no JavaScript errors in console
+
+Expected: Theme switching works smoothly without visual glitches or errors
+Screenshot: 10_rapid_theme_switching.png
+
+Step 11: Test Disabled/Inactive Elements Theme Support
+1. In Month view, find dates from previous/next month (if visible)
+2. Check disabled date styling in light theme
+3. Switch to dark theme  
+4. Verify disabled dates adapt properly (textColor: #6b7280 for dark, #9ca3af for light)
+5. Confirm disabled elements maintain proper contrast
+
+Expected: Disabled elements properly styled and readable in both themes
+Screenshot: 11_disabled_elements_themes.png
+
+Step 12: Test Empty State Theme Compatibility
+1. Navigate to date period with no events
+2. Check empty state message in light theme
+3. Switch to dark theme
+4. Verify empty state text and icons adapt properly
+5. Confirm empty state maintains readability
+
+Expected: Empty states clearly visible and readable in both themes
+Screenshot: 12_empty_state_themes.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Calendar maintains excellent readability, proper contrast, and visual appeal in both light and dark themes
+FAIL: Poor contrast, unreadable text, invisible elements, or theme adaptation failures in any theme
+
+Individual Step Criteria:
+- Step 1: PASS if calendar loads properly, FAIL if theme detection fails
+- Step 2: PASS if light theme has good contrast and readability, FAIL if visibility issues
+- Step 3: PASS if dark theme has good contrast and readability, FAIL if visibility issues  
+- Step 4: PASS if event dots visible in both themes, FAIL if dots invisible/poor contrast
+- Step 5: PASS if Week view readable in both themes, FAIL if readability issues
+- Step 6: PASS if List view cards readable in both themes, FAIL if contrast problems
+- Step 7: PASS if navigation controls work in both themes, FAIL if buttons invisible/unusable
+- Step 8: PASS if today highlighting works in both themes, FAIL if highlighting invisible
+- Step 9: PASS if calendar borders adapt properly, FAIL if border styling broken
+- Step 10: PASS if theme switching smooth, FAIL if glitches or errors occur
+- Step 11: PASS if disabled elements styled properly, FAIL if disabled elements invisible
+- Step 12: PASS if empty states readable in both themes, FAIL if empty state visibility issues
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

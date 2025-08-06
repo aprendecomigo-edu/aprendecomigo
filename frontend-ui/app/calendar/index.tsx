@@ -1,14 +1,18 @@
 import { router } from 'expo-router';
 import { Plus, CalendarDays, Clock, User, MapPin } from 'lucide-react-native';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Alert } from 'react-native';
 import { DateData } from 'react-native-calendars';
+import { useColorScheme } from '@/components/useColorScheme';
+import { safeFormatDate, safeFormatTime, validateDate } from '@/components/calendar/dateUtils';
 
 import apiClient from '@/api/apiClient';
 import { useAuth, useUserProfile } from '@/api/auth';
 import schedulerApi, { ClassSchedule } from '@/api/schedulerApi';
 import { tasksApi, Task } from '@/api/tasksApi';
 import MonthView from '@/components/calendar/MonthView';
+import WeekView from '@/components/calendar/WeekView';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import MainLayout from '@/components/layouts/MainLayout';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
@@ -42,16 +46,6 @@ const getWeekDates = (date: Date): Date[] => {
   }
   return week;
 };
-
-// Helper function to format date
-// Helper function to format date (currently unused)
-// const formatDate = (date: Date): string => {
-//   return date.toLocaleDateString('pt-PT', {
-//     day: '2-digit',
-//     month: '2-digit',
-//     year: 'numeric',
-//   });
-// };
 
 // Helper function to get status color
 const getStatusColor = (status: string): string => {
@@ -88,59 +82,54 @@ const TaskCard: React.FC<{
   };
 
   const formatDueDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-PT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+    return safeFormatDate(dateString);
   };
 
   return (
-    <Box className="bg-white rounded-lg border border-l-4 border-l-orange-500 border-gray-200 p-4 mb-3 shadow-sm">
-      <VStack space="sm">
+    <Box className="bg-white rounded-xl border border-l-4 border-l-orange-500 border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+      <VStack space="md">
         {/* Header */}
         <HStack className="justify-between items-start">
-          <VStack className="flex-1">
-            <Text className="font-bold text-lg">{task.title}</Text>
-            <Text className="text-gray-600">{task.task_type}</Text>
+          <VStack className="flex-1 mr-3">
+            <Text className="font-bold text-lg text-gray-900 leading-tight">{task.title}</Text>
+            <Text className="text-orange-600 font-medium text-sm mt-1">{task.task_type}</Text>
           </VStack>
-          <HStack space="xs">
+          <VStack space="xs" className="items-end">
             <Badge className={getPriorityColor(task.priority)}>
-              <BadgeText>{task.priority.toUpperCase()}</BadgeText>
+              <BadgeText className="font-semibold text-xs">{task.priority.toUpperCase()}</BadgeText>
             </Badge>
             {task.is_urgent && (
               <Badge className="bg-red-100 text-red-800">
-                <BadgeText>URGENT</BadgeText>
+                <BadgeText className="font-semibold text-xs">URGENT</BadgeText>
               </Badge>
             )}
-          </HStack>
+          </VStack>
         </HStack>
 
         {/* Date and Time */}
-        <HStack space="md" className="flex-wrap">
+        <HStack space="lg" className="flex-wrap">
           {showDate && task.due_date && (
-            <HStack space="xs" className="items-center">
-              <Icon as={CalendarDays} size="sm" className="text-gray-500" />
-              <Text className="text-sm text-gray-600">{formatDueDate(task.due_date)}</Text>
+            <HStack space="xs" className="items-center bg-gray-50 px-3 py-2 rounded-lg">
+              <Icon as={CalendarDays} size="sm" className="text-gray-600" />
+              <Text className="text-sm text-gray-700 font-medium">{formatDueDate(task.due_date)}</Text>
             </HStack>
           )}
           {task.due_date && (
-            <HStack space="xs" className="items-center">
-              <Icon as={Clock} size="sm" className="text-gray-500" />
-              <Text className="text-sm text-gray-600">
-                Due:{' '}
-                {new Date(task.due_date).toLocaleTimeString('pt-PT', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+            <HStack space="xs" className="items-center bg-orange-50 px-3 py-2 rounded-lg">
+              <Icon as={Clock} size="sm" className="text-orange-600" />
+              <Text className="text-sm text-orange-700 font-medium">
+                Due: {safeFormatTime(task.due_date)}
               </Text>
             </HStack>
           )}
         </HStack>
 
         {/* Description */}
-        {task.description && <Text className="text-sm text-gray-600">{task.description}</Text>}
+        {task.description && (
+          <Box className="bg-gray-50 p-3 rounded-lg">
+            <Text className="text-sm text-gray-700 leading-relaxed">{task.description}</Text>
+          </Box>
+        )}
       </VStack>
     </Box>
   );
@@ -156,54 +145,59 @@ const ClassCard: React.FC<{
   const isTeacher = userProfile?.user_type === 'teacher';
 
   return (
-    <Pressable onPress={onPress}>
-      <Box className="bg-white rounded-lg border border-gray-200 p-4 mb-3 shadow-sm">
-        <VStack space="sm">
+    <Pressable onPress={onPress} className="active:scale-[0.98] transition-transform">
+      <Box className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+        <VStack space="md">
           {/* Header */}
           <HStack className="justify-between items-start">
-            <VStack className="flex-1">
-              <Text className="font-bold text-lg">{classSchedule.title}</Text>
-              <Text className="text-gray-600">
+            <VStack className="flex-1 mr-3">
+              <Text className="font-bold text-lg text-gray-900 leading-tight">{classSchedule.title}</Text>
+              <Text className="text-blue-600 font-medium text-sm mt-1">
                 {isTeacher
                   ? `Student: ${classSchedule.student_name}`
                   : `Teacher: ${classSchedule.teacher_name}`}
               </Text>
             </VStack>
             <Badge className={getStatusColor(classSchedule.status)}>
-              <BadgeText>{classSchedule.status_display}</BadgeText>
+              <BadgeText className="font-semibold text-xs">{classSchedule.status_display}</BadgeText>
             </Badge>
           </HStack>
 
           {/* Date and Time */}
-          <HStack space="md" className="flex-wrap">
-            {showDate && (
-              <HStack space="xs" className="items-center">
-                <Icon as={CalendarDays} size="sm" className="text-gray-500" />
-                <Text className="text-sm text-gray-600">{classSchedule.scheduled_date}</Text>
+          <VStack space="sm">
+            <HStack space="sm" className="flex-wrap">
+              {showDate && (
+                <HStack space="xs" className="items-center bg-gray-50 px-3 py-2 rounded-lg">
+                  <Icon as={CalendarDays} size="sm" className="text-gray-600" />
+                  <Text className="text-sm text-gray-700 font-medium">{safeFormatDate(classSchedule.scheduled_date)}</Text>
+                </HStack>
+              )}
+              <HStack space="xs" className="items-center bg-blue-50 px-3 py-2 rounded-lg">
+                <Icon as={Clock} size="sm" className="text-blue-600" />
+                <Text className="text-sm text-blue-700 font-medium">
+                  {classSchedule.start_time} - {classSchedule.end_time}
+                </Text>
               </HStack>
-            )}
-            <HStack space="xs" className="items-center">
-              <Icon as={Clock} size="sm" className="text-gray-500" />
-              <Text className="text-sm text-gray-600">
-                {classSchedule.start_time} - {classSchedule.end_time}
-              </Text>
             </HStack>
-            <HStack space="xs" className="items-center">
-              <Icon as={MapPin} size="sm" className="text-gray-500" />
-              <Text className="text-sm text-gray-600">{classSchedule.school_name}</Text>
+            
+            <HStack space="xs" className="items-center bg-gray-50 px-3 py-2 rounded-lg">
+              <Icon as={MapPin} size="sm" className="text-gray-600" />
+              <Text className="text-sm text-gray-700 font-medium">{classSchedule.school_name}</Text>
             </HStack>
-          </HStack>
+          </VStack>
 
           {/* Description */}
           {classSchedule.description && (
-            <Text className="text-sm text-gray-600">{classSchedule.description}</Text>
+            <Box className="bg-gray-50 p-3 rounded-lg">
+              <Text className="text-sm text-gray-700 leading-relaxed">{classSchedule.description}</Text>
+            </Box>
           )}
 
           {/* Additional students for group classes */}
           {classSchedule.additional_students_names.length > 0 && (
-            <HStack space="xs" className="items-center">
-              <Icon as={User} size="sm" className="text-gray-500" />
-              <Text className="text-sm text-gray-600">
+            <HStack space="xs" className="items-center bg-green-50 px-3 py-2 rounded-lg">
+              <Icon as={User} size="sm" className="text-green-600" />
+              <Text className="text-sm text-green-700 font-medium">
                 Group: {classSchedule.additional_students_names.join(', ')}
               </Text>
             </HStack>
@@ -214,69 +208,8 @@ const ClassCard: React.FC<{
   );
 };
 
-// Week view component
-const WeekView: React.FC<{
-  currentDate: Date;
-  classes: ClassSchedule[];
-  tasks: Task[];
-  onClassPress: (classSchedule: ClassSchedule) => void;
-}> = ({ currentDate, classes, tasks, onClassPress }) => {
-  // Add null check and default to empty array
-  const safeClasses = classes || [];
-  const safeTasks = tasks || [];
 
-  const weekDates = getWeekDates(currentDate);
-
-  return (
-    <VStack className="flex-1" space="md">
-      <ScrollView>
-        <VStack space="lg">
-          {weekDates.map((date, index) => {
-            const dateStr = date.toISOString().split('T')[0];
-            const dayClasses = safeClasses.filter(c => c.scheduled_date === dateStr);
-            const dayTasks = safeTasks.filter(
-              t => t.due_date && t.due_date.split('T')[0] === dateStr
-            );
-
-            const hasContent = dayClasses.length > 0 || dayTasks.length > 0;
-
-            return (
-              <VStack key={index} space="sm">
-                <Text className="font-medium text-gray-700">
-                  {date.toLocaleDateString('pt-PT', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                  })}
-                </Text>
-                {hasContent ? (
-                  <VStack space="xs">
-                    {dayClasses.map(classSchedule => (
-                      <ClassCard
-                        key={`class-${classSchedule.id}`}
-                        classSchedule={classSchedule}
-                        onPress={() => onClassPress(classSchedule)}
-                      />
-                    ))}
-                    {dayTasks.map(task => (
-                      <TaskCard key={`task-${task.id}`} task={task} />
-                    ))}
-                  </VStack>
-                ) : (
-                  <Box className="bg-gray-50 rounded-lg p-4">
-                    <Text className="text-gray-500 text-center">No classes or tasks scheduled</Text>
-                  </Box>
-                )}
-              </VStack>
-            );
-          })}
-        </VStack>
-      </ScrollView>
-    </VStack>
-  );
-};
-
-// List view component
+// List view component with improved UX
 const ListView: React.FC<{
   classes: ClassSchedule[];
   tasks: Task[];
@@ -286,36 +219,139 @@ const ListView: React.FC<{
   const safeClasses = classes || [];
   const safeTasks = tasks || [];
 
-  const hasContent = safeClasses.length > 0 || safeTasks.length > 0;
+  // Combine and sort events by date
+  const allEvents = useMemo(() => {
+    const events: Array<{
+      type: 'class' | 'task';
+      date: string;
+      sortDate: Date;
+      data: ClassSchedule | Task;
+    }> = [];
 
-  if (!hasContent) {
+    // Add classes
+    safeClasses.forEach(classSchedule => {
+      const validation = validateDate(classSchedule.scheduled_date);
+      if (validation.isValid && validation.date) {
+        events.push({
+          type: 'class',
+          date: classSchedule.scheduled_date,
+          sortDate: validation.date,
+          data: classSchedule,
+        });
+      }
+    });
+
+    // Add tasks
+    safeTasks.forEach(task => {
+      if (!task.due_date) return;
+      const validation = validateDate(task.due_date);
+      if (validation.isValid && validation.date) {
+        events.push({
+          type: 'task',
+          date: task.due_date,
+          sortDate: validation.date,
+          data: task,
+        });
+      }
+    });
+
+    // Sort by date
+    return events.sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime());
+  }, [safeClasses, safeTasks]);
+
+  // Group events by date
+  const eventsByDate = useMemo(() => {
+    const grouped: { [key: string]: Array<typeof allEvents[0]> } = {};
+    
+    allEvents.forEach(event => {
+      const dateKey = event.sortDate.toISOString().split('T')[0];
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(event);
+    });
+
+    return Object.keys(grouped)
+      .sort()
+      .map(dateKey => ({
+        date: new Date(dateKey),
+        dateKey,
+        events: grouped[dateKey],
+      }));
+  }, [allEvents]);
+
+  if (eventsByDate.length === 0) {
     return (
-      <Center className="flex-1 py-12">
-        <Icon as={CalendarDays} size="xl" className="text-gray-300 mb-4" />
-        <Text className="text-lg font-medium text-gray-600 mb-2">
-          No classes or tasks scheduled
+      <Center className="flex-1 py-16">
+        <Box className="bg-gray-50 rounded-full p-6 mb-6">
+          <Icon as={CalendarDays} size="2xl" className="text-gray-400" />
+        </Box>
+        <Text className="text-xl font-semibold text-gray-700 mb-3">
+          No upcoming events
         </Text>
-        <Text className="text-gray-500 text-center max-w-sm">
-          Your upcoming classes and tasks will appear here
+        <Text className="text-gray-500 text-center max-w-sm leading-6">
+          Your scheduled classes and tasks will appear here. Start by booking a class or creating a task.
         </Text>
       </Center>
     );
   }
 
   return (
-    <ScrollView>
-      <VStack space="md">
-        {safeClasses.map(classSchedule => (
-          <ClassCard
-            key={`class-${classSchedule.id}`}
-            classSchedule={classSchedule}
-            onPress={() => onClassPress(classSchedule)}
-            showDate={true}
-          />
-        ))}
-        {safeTasks.map(task => (
-          <TaskCard key={`task-${task.id}`} task={task} showDate={true} />
-        ))}
+    <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
+      <VStack space="lg" className="pb-6">
+        {eventsByDate.map(({ date, dateKey, events }) => {
+          const isToday = date.toDateString() === new Date().toDateString();
+          const isThisWeek = date.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000 && date.getTime() > Date.now() - 24 * 60 * 60 * 1000;
+          
+          return (
+            <VStack key={dateKey} space="md">
+              {/* Date Header */}
+              <Box className={`px-4 py-3 rounded-xl ${isToday ? 'bg-blue-50 border border-blue-200' : isThisWeek ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50 border border-gray-200'}`}>
+                <HStack className="justify-between items-center">
+                  <VStack space="xs">
+                    <Text className={`text-lg font-bold ${isToday ? 'text-blue-900' : isThisWeek ? 'text-orange-900' : 'text-gray-900'}`}>
+                      {date.toLocaleDateString('pt-PT', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                      })}
+                    </Text>
+                    {isToday && (
+                      <Text className="text-sm font-medium text-blue-700">
+                        Today
+                      </Text>
+                    )}
+                  </VStack>
+                  <Badge className={`${isToday ? 'bg-blue-100 text-blue-800' : isThisWeek ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800'}`}>
+                    <BadgeText className="font-medium">
+                      {events.length} {events.length === 1 ? 'event' : 'events'}
+                    </BadgeText>
+                  </Badge>
+                </HStack>
+              </Box>
+
+              {/* Events for this date */}
+              <VStack space="sm" className="px-2">
+                {events.map((event, index) => (
+                  <Box key={`${event.type}-${event.data.id}-${index}`} className="transform transition-all">
+                    {event.type === 'class' ? (
+                      <ClassCard
+                        classSchedule={event.data as ClassSchedule}
+                        onPress={() => onClassPress(event.data as ClassSchedule)}
+                        showDate={false}
+                      />
+                    ) : (
+                      <TaskCard
+                        task={event.data as Task}
+                        showDate={false}
+                      />
+                    )}
+                  </Box>
+                ))}
+              </VStack>
+            </VStack>
+          );
+        })}
       </VStack>
     </ScrollView>
   );
@@ -324,6 +360,8 @@ const ListView: React.FC<{
 // Main calendar component
 const CalendarScreen: React.FC = () => {
   const { userProfile } = useUserProfile();
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>('list');
   const [classes, setClasses] = useState<ClassSchedule[]>([]);
@@ -341,7 +379,9 @@ const CalendarScreen: React.FC = () => {
       // API now returns the array directly
       setClasses(Array.isArray(classes) ? classes : []);
     } catch (error) {
-      console.error('Error loading classes:', error);
+      if (__DEV__) {
+        console.error('Error loading classes:', error);
+      }
       // Set empty array on error to prevent crashes
       setClasses([]);
       Alert.alert('Error', 'Failed to load classes');
@@ -381,7 +421,9 @@ const CalendarScreen: React.FC = () => {
 
       setTasks(calendarTasks || []);
     } catch (error) {
-      console.error('Error loading tasks:', error);
+      if (__DEV__) {
+        console.error('Error loading tasks:', error);
+      }
       setTasks([]);
     }
   }, [currentDate, view]);
@@ -393,7 +435,9 @@ const CalendarScreen: React.FC = () => {
         await loadClasses();
         await loadTasks();
       } catch (error) {
-        console.error('Error in initializeData:', error);
+        if (__DEV__) {
+          console.error('Error in initializeData:', error);
+        }
       }
     };
     initializeData();
@@ -408,16 +452,38 @@ const CalendarScreen: React.FC = () => {
   };
 
   const handleDayPress = (day: DateData) => {
-    const selectedDate = new Date(day.dateString);
-    setCurrentDate(selectedDate);
-    
-    // Filter events for the selected day
-    const dayClasses = classes.filter(c => c.scheduled_date === day.dateString);
-    const dayTasks = tasks.filter(t => t.due_date && t.due_date.split('T')[0] === day.dateString);
-    
-    // If there are events on this day, you could show them in a modal or navigate to a detail view
-    if (dayClasses.length > 0 || dayTasks.length > 0) {
-      console.log(`Selected day ${day.dateString} has ${dayClasses.length} classes and ${dayTasks.length} tasks`);
+    try {
+      const selectedDate = new Date(day.dateString);
+      
+      // Validate the selected date
+      if (isNaN(selectedDate.getTime())) {
+        if (__DEV__) {
+          console.warn('Invalid date selected:', day.dateString);
+        }
+        return;
+      }
+      
+      setCurrentDate(selectedDate);
+      
+      // Filter events for the selected day with validation
+      const dayClasses = classes.filter(c => {
+        const validation = validateDate(c.scheduled_date);
+        return validation.isValid && validation.date?.toISOString().split('T')[0] === day.dateString;
+      });
+      const dayTasks = tasks.filter(t => {
+        if (!t.due_date) return false;
+        const validation = validateDate(t.due_date);
+        return validation.isValid && validation.date?.toISOString().split('T')[0] === day.dateString;
+      });
+      
+      // If there are events on this day, you could show them in a modal or navigate to a detail view
+      if (dayClasses.length > 0 || dayTasks.length > 0) {
+        // Future enhancement: Show day detail modal
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Error handling day press:', error);
+      }
     }
   };
 
@@ -512,22 +578,46 @@ const CalendarScreen: React.FC = () => {
         ) : (
           <>
             {view === 'list' ? (
-              <ListView classes={classes} tasks={tasks} onClassPress={handleClassPress} />
+              <ErrorBoundary
+                onError={(error, errorInfo) => {
+                  if (__DEV__) {
+                    console.error('List view error:', error, errorInfo);
+                  }
+                }}
+              >
+                <ListView classes={classes} tasks={tasks} onClassPress={handleClassPress} />
+              </ErrorBoundary>
             ) : view === 'week' ? (
-              <WeekView
-                currentDate={currentDate}
-                classes={classes}
-                tasks={tasks}
-                onClassPress={handleClassPress}
-              />
+              <ErrorBoundary
+                onError={(error, errorInfo) => {
+                  if (__DEV__) {
+                    console.error('Week view error:', error, errorInfo);
+                  }
+                }}
+              >
+                <WeekView
+                  currentDate={currentDate}
+                  classes={classes}
+                  tasks={tasks}
+                  onClassPress={handleClassPress}
+                />
+              </ErrorBoundary>
             ) : (
-              <MonthView
-                currentDate={currentDate}
-                classes={classes}
-                tasks={tasks}
-                onDayPress={handleDayPress}
-                isDarkMode={false}
-              />
+              <ErrorBoundary
+                onError={(error, errorInfo) => {
+                  if (__DEV__) {
+                    console.error('Month view error:', error, errorInfo);
+                  }
+                }}
+              >
+                <MonthView
+                  currentDate={currentDate}
+                  classes={classes}
+                  tasks={tasks}
+                  onDayPress={handleDayPress}
+                  isDarkMode={isDarkMode}
+                />
+              </ErrorBoundary>
             )}
           </>
         )}

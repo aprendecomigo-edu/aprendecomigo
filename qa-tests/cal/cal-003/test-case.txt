@@ -1,0 +1,174 @@
+QA Test Case: Multi-Dot Feature
+
+Test ID: CAL-003
+Test Name: Multi-Dot Feature  
+Purpose: Verify that multiple events on the same day display properly using the multi-dot marking system in Month view
+Expected Result: Days with multiple events show multiple colored dots (up to 3 maximum) with correct colors for event types
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Calendar Component: MonthView.tsx with multi-dot marking feature
+- Dot Colors: Classes (blue), Tasks (orange), Urgent tasks (red), Completed tasks (gray)
+- Maximum Dots: 3 dots per day (more events truncated visually)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: Use .venv/ in project root
+3. Start development servers: `make dev`
+4. Test URL: http://localhost:8081
+
+Test Data:
+- Valid authenticated user: anapmc.carvalho@gmail.com (school_owner role)
+- At least one day with multiple events (2-4 events on same day)
+- Mix of event types: classes and tasks
+- Mix of task priorities and urgency levels
+- At least one day with more than 3 events (to test truncation)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Login
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev
+
+1. Open browser to http://localhost:8081
+2. Complete login with: anapmc.carvalho@gmail.com
+3. Navigate to Calendar page
+
+Expected: Successfully logged in and on calendar page
+Screenshot: 01_calendar_ready_for_multi_dot_test.png
+
+Step 2: Switch to Month View
+1. Click "Month" button to activate Month view
+2. Wait for Month view calendar to load
+3. Observe the calendar grid layout
+4. Look for days with event dots/markers
+
+Expected: Month view loads with calendar grid showing event dots on relevant dates
+Screenshot: 02_month_view_with_event_dots.png
+
+Step 3: Identify Single Event Days
+1. Look for days with only one event
+2. Verify single dot appears on these days
+3. Check dot color matches event type:
+   - Classes: Blue dot
+   - Regular tasks: Orange dot
+   - Urgent tasks: Red dot
+   - Completed tasks: Gray dot
+
+Expected: Single event days show one appropriately colored dot
+Screenshot: 03_single_event_dots.png
+
+Step 4: Identify Multi-Event Days
+1. Look for days with multiple events (2 or more)
+2. Count the number of dots on these days
+3. Verify multiple dots appear horizontally aligned
+4. Check that dots don't overlap or cause layout issues
+
+Expected: Multi-event days show multiple dots in horizontal alignment
+Screenshot: 04_multi_event_dots_layout.png
+
+Step 5: Test Two Events on Same Day
+1. Find a day with exactly 2 events
+2. Verify exactly 2 dots appear
+3. Check dot colors match the event types
+4. Confirm dots are properly spaced
+5. Verify dots don't extend beyond day cell boundaries
+
+Expected: Two dots appear with correct colors and proper spacing
+Screenshot: 05_two_events_same_day.png
+
+Step 6: Test Three Events on Same Day  
+1. Find a day with exactly 3 events
+2. Verify exactly 3 dots appear
+3. Check all dots are visible and properly aligned
+4. Confirm dot spacing remains appropriate
+5. Verify no dots are cut off or hidden
+
+Expected: Three dots appear with proper alignment and visibility
+Screenshot: 06_three_events_same_day.png
+
+Step 7: Test Maximum Dot Limit (More Than 3 Events)
+1. Find a day with more than 3 events (if available)
+2. Verify only 3 dots are displayed (truncation limit)
+3. Check that the most important events are represented
+4. Confirm no layout breaking occurs with many events
+5. Verify dots maintain proper styling
+
+Expected: Maximum 3 dots shown even with more than 3 events, no layout issues
+Screenshot: 07_max_dot_limit_test.png
+
+Step 8: Test Dot Color Accuracy
+1. Cross-reference events from List view with Month view dots
+2. For each day with events:
+   - Switch to List view to see event types
+   - Switch back to Month view
+   - Verify dot colors match event types:
+     * Classes: Blue (DOT_COLORS.class)
+     * Tasks: Orange (DOT_COLORS.task)  
+     * Urgent tasks: Red (DOT_COLORS.urgent)
+     * Completed tasks: Gray (DOT_COLORS.completed)
+
+Expected: Dot colors accurately represent event types
+Screenshot: 08_dot_color_verification.png
+
+Step 9: Test Dot Positioning and Sizing
+1. Examine dot positioning within day cells
+2. Verify dots appear at bottom of day cell
+3. Check dot size consistency (6px width/height, 3px border-radius)
+4. Confirm dots are centered horizontally within day cell
+5. Verify dots don't interfere with date numbers
+
+Expected: Dots properly positioned at bottom center of day cells with consistent sizing
+Screenshot: 09_dot_positioning_sizing.png
+
+Step 10: Test Theme Compatibility
+1. If dark mode is available, switch themes
+2. Verify dots remain visible in both light and dark themes
+3. Check that dot colors maintain good contrast
+4. Confirm dots don't blend with background in either theme
+
+Expected: Dots remain clearly visible and maintain good contrast in all themes
+Screenshot: 10_theme_compatibility_dots.png
+
+Step 11: Test Month Navigation with Multi-Dots
+1. Navigate to previous month using arrow buttons
+2. Navigate to next month
+3. Verify multi-dot display works consistently across months
+4. Check that dots properly load when month changes
+5. Confirm no visual glitches during month transitions
+
+Expected: Multi-dot feature works consistently when navigating between months
+Screenshot: 11_month_navigation_dots.png
+
+Step 12: Test Day Cell Interaction with Multiple Dots
+1. Click on a day cell that has multiple dots
+2. Verify the day press handler works correctly
+3. Check that multiple dots don't interfere with touch/click events
+4. Confirm date selection still functions normally
+
+Expected: Day interaction works normally even with multiple dots present
+Screenshot: 12_day_interaction_with_dots.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Multi-dot feature works correctly showing appropriate number and colors of dots for multiple events per day
+FAIL: Dots missing, wrong colors, layout issues, or functionality breaks with multiple events
+
+Individual Step Criteria:
+- Step 1: PASS if login and navigation work, FAIL if authentication fails
+- Step 2: PASS if Month view loads with dots, FAIL if Month view broken or no dots
+- Step 3: PASS if single event dots show correct colors, FAIL if wrong colors or missing dots  
+- Step 4: PASS if multi-event days show multiple dots, FAIL if only one dot or layout issues
+- Step 5: PASS if 2 events show 2 dots properly, FAIL if wrong count or spacing issues
+- Step 6: PASS if 3 events show 3 dots properly, FAIL if wrong count or alignment issues
+- Step 7: PASS if >3 events show max 3 dots, FAIL if more than 3 dots or layout breaks
+- Step 8: PASS if dot colors match event types, FAIL if wrong colors
+- Step 9: PASS if dot positioning and sizing correct, FAIL if positioning/sizing issues
+- Step 10: PASS if dots visible in all themes, FAIL if visibility issues
+- Step 11: PASS if dots work across month navigation, FAIL if dots break during navigation
+- Step 12: PASS if day interaction works with dots, FAIL if interaction breaks
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

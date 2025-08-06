@@ -278,6 +278,24 @@ const WEEKDAYS = [
   { value: 6, label: 'Sunday' },
 ];
 
+const WORKING_DAYS_PRESETS = [
+  {
+    name: 'Monday - Friday',
+    days: [0, 1, 2, 3, 4],
+    description: '5-day work week'
+  },
+  {
+    name: 'Monday - Saturday',
+    days: [0, 1, 2, 3, 4, 5],
+    description: '6-day work week (default)'
+  },
+  {
+    name: 'Sunday - Thursday',
+    days: [6, 0, 1, 2, 3],
+    description: 'Middle East pattern'
+  }
+];
+
 export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
   schoolId,
   initialData,
@@ -1032,7 +1050,31 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
             <FormControlLabel>
               <Text>Working Days</Text>
             </FormControlLabel>
+            
+            {/* Quick Presets */}
             <VStack space="sm">
+              <Text size="sm" className="font-medium text-gray-700">Quick Presets:</Text>
+              <HStack space="xs" className="flex-wrap">
+                {WORKING_DAYS_PRESETS.map((preset, index) => {
+                  const isActive = JSON.stringify([...value].sort()) === JSON.stringify([...preset.days].sort());
+                  return (
+                    <Button
+                      key={index}
+                      size="sm"
+                      variant={isActive ? "solid" : "outline"}
+                      onPress={() => onChange(preset.days)}
+                      className="mb-2"
+                    >
+                      <ButtonText>{preset.name}</ButtonText>
+                    </Button>
+                  );
+                })}
+              </HStack>
+            </VStack>
+            
+            {/* Individual Day Selection */}
+            <VStack space="sm">
+              <Text size="sm" className="font-medium text-gray-700">Custom Selection:</Text>
               {WEEKDAYS.map(day => (
                 <HStack key={day.value} space="sm" alignItems="center">
                   <Switch
@@ -1049,8 +1091,12 @@ export const SchoolSettingsForm: React.FC<SchoolSettingsFormProps> = ({
                 </HStack>
               ))}
             </VStack>
+            
             <FormControlHelper>
-              <Text size="sm">Select the days when your school operates</Text>
+              <Text size="sm">
+                Select the days when your school operates. Use presets for common patterns or customize individual days.
+                Changes will affect calendar views for all users.
+              </Text>
             </FormControlHelper>
           </FormControl>
         )}

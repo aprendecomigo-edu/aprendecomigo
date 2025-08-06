@@ -1,0 +1,188 @@
+QA Test Case: Cross-Platform Testing
+
+Test ID: CAL-007
+Test Name: Cross-Platform Testing
+Purpose: Verify calendar functionality works correctly on web browsers and has responsive behavior for mobile screen sizes
+Expected Result: Calendar displays and functions properly across different browsers and screen sizes
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform  
+- Cross-Platform: React Native + Expo with web support
+- Target Platforms: Web browsers (Chrome, Safari, Firefox), Mobile responsive
+- Responsive Design: Should adapt to mobile and tablet screen sizes
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: Use .venv/ in project root
+3. Start development servers: `make dev`
+4. Test URL: http://localhost:8081
+
+Test Data:
+- Valid authenticated user: anapmc.carvalho@gmail.com (school_owner role)
+- Events across different dates for layout testing
+- Multiple browsers available for testing
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Setup and Chrome Web Testing
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev
+
+1. Open Google Chrome browser
+2. Navigate to http://localhost:8081
+3. Login with: anapmc.carvalho@gmail.com
+4. Navigate to Calendar page
+5. Test all three views (Month, Week, List)
+
+Expected: Calendar works fully in Chrome browser
+Screenshot: 01_chrome_browser_calendar.png
+
+Step 2: Safari Browser Testing
+1. Open Safari browser
+2. Navigate to http://localhost:8081
+3. Login with same credentials
+4. Navigate to Calendar page
+5. Test Month view calendar functionality:
+   - Date selection
+   - Month navigation
+   - Event dots display
+6. Test Week and List view switching
+
+Expected: Calendar functionality identical to Chrome in Safari
+Screenshot: 02_safari_browser_calendar.png
+
+Step 3: Firefox Browser Testing (if available)
+1. Open Firefox browser
+2. Navigate to http://localhost:8081
+3. Complete login flow
+4. Navigate to Calendar page
+5. Verify Month view displays correctly
+6. Test navigation controls and view switching
+7. Check for any browser-specific rendering issues
+
+Expected: Calendar displays and functions properly in Firefox
+Screenshot: 03_firefox_browser_calendar.png
+
+Step 4: Mobile Screen Size Simulation (320px width)
+1. In Chrome, open Developer Tools (F12)
+2. Click device toolbar icon (mobile view)
+3. Select "iPhone SE" or set width to 320px
+4. Refresh calendar page
+5. Test calendar responsiveness:
+   - Month view calendar grid adapts to small screen
+   - View switching buttons remain accessible
+   - Navigation controls fit properly
+
+Expected: Calendar adapts to mobile screen without horizontal scrolling
+Screenshot: 04_mobile_320px_responsive.png
+
+Step 5: Tablet Screen Size Simulation (768px width)
+1. In Developer Tools, set viewport to iPad size (768px)
+2. Refresh calendar page
+3. Test intermediate screen size behavior:
+   - Calendar takes advantage of additional space
+   - Event cards display properly
+   - Navigation remains functional
+4. Test both portrait and landscape orientations
+
+Expected: Calendar optimized for tablet screen size
+Screenshot: 05_tablet_768px_responsive.png
+
+Step 6: Desktop Large Screen Testing (1920px width)
+1. Set viewport to desktop size (1920px width)
+2. Refresh calendar page
+3. Verify calendar doesn't stretch inappropriately
+4. Check that layout remains centered and readable
+5. Confirm event cards maintain proper proportions
+
+Expected: Calendar displays properly on large desktop screens
+Screenshot: 06_desktop_1920px_layout.png
+
+Step 7: Touch vs Mouse Interaction Testing
+1. In mobile view, test touch interactions:
+   - Tap date selection in Month view
+   - Tap view switching buttons
+   - Tap navigation arrows
+2. In desktop view, test mouse interactions:
+   - Click precision on dates
+   - Hover states (if any)
+   - Mouse wheel scrolling in Week/List views
+
+Expected: Both touch and mouse interactions work appropriately for platform
+Screenshot: 07_touch_mouse_interactions.png
+
+Step 8: Mobile Navigation Menu Testing
+1. In mobile view (320px), check how main navigation works
+2. Verify calendar page remains accessible
+3. Test if mobile navigation doesn't interfere with calendar
+4. Check for any overflow or layout issues
+
+Expected: Mobile navigation works without interfering with calendar
+Screenshot: 08_mobile_navigation_calendar.png
+
+Step 9: Performance Across Browsers
+1. In each browser, open console and check for errors
+2. Time calendar view switching performance
+3. Test smooth scrolling in List and Week views
+4. Check memory usage during extended calendar use
+5. Verify no browser-specific performance issues
+
+Expected: Calendar performs consistently across browsers
+Screenshot: 09_cross_browser_performance.png
+
+Step 10: Feature Parity Testing
+1. Create checklist of calendar features
+2. Test each feature in different browsers:
+   - Month view date selection
+   - Week navigation
+   - List view event display
+   - Today button functionality
+   - Theme switching (if available)
+3. Verify feature parity across platforms
+
+Expected: All features work consistently across browsers and screen sizes
+Screenshot: 10_feature_parity_testing.png
+
+Step 11: Text Readability Across Sizes
+1. Test different screen sizes for text readability
+2. Check font sizes scale appropriately
+3. Verify event cards remain readable on small screens
+4. Confirm button text remains legible
+5. Test calendar date numbers visibility
+
+Expected: All text remains readable across different screen sizes
+Screenshot: 11_text_readability_responsive.png
+
+Step 12: Layout Breakpoints Testing
+1. Gradually resize browser from 320px to 1920px
+2. Identify any layout breakpoints or issues
+3. Check for awkward intermediate sizes
+4. Verify smooth responsive behavior throughout range
+5. Test orientation changes on tablet sizes
+
+Expected: Layout adapts smoothly across all screen sizes without breaking
+Screenshot: 12_layout_breakpoints_test.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Calendar functions identically across browsers and adapts properly to all screen sizes with maintained usability
+FAIL: Browser incompatibilities, responsive layout issues, feature differences across platforms, or usability problems
+
+Individual Step Criteria:
+- Step 1: PASS if calendar works fully in Chrome, FAIL if functionality broken
+- Step 2: PASS if Safari identical to Chrome, FAIL if Safari-specific issues
+- Step 3: PASS if Firefox works properly, FAIL if Firefox compatibility issues
+- Step 4: PASS if mobile 320px usable without scrolling, FAIL if layout breaks
+- Step 5: PASS if tablet 768px optimized, FAIL if poor tablet experience
+- Step 6: PASS if desktop 1920px displays properly, FAIL if stretching/layout issues
+- Step 7: PASS if touch/mouse appropriate for platform, FAIL if interaction issues
+- Step 8: PASS if mobile navigation doesn't interfere, FAIL if navigation conflicts
+- Step 9: PASS if consistent performance across browsers, FAIL if performance issues
+- Step 10: PASS if feature parity maintained, FAIL if features missing on platforms
+- Step 11: PASS if text readable at all sizes, FAIL if readability issues
+- Step 12: PASS if smooth responsive behavior, FAIL if layout breaks at any size
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

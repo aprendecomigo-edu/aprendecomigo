@@ -1,0 +1,11 @@
+test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
+cal-001,Calendar View Navigation,Test switching between Month Week and Agenda views,,,0,0,0
+cal-002,Event Display,Verify classes and tasks show correctly in all calendar views,,,0,0,0
+cal-003,Multi-Dot Feature,Check multiple events on same day display properly,,,0,0,0
+cal-004,Date Selection Navigation,Test date selection and week navigation,,,0,0,0
+cal-005,Today Button,Verify today button returns to current date,,,0,0,0
+cal-006,Theme Switching,Test calendar in light and dark modes,,,0,0,0
+cal-007,Cross-Platform,Test calendar on web and mobile responsive,,,0,0,0
+cal-008,Error Handling,Test invalid dates and empty states,,,0,0,0
+cal-009,Performance,Check rendering speed and responsiveness,,,0,0,0
+cal-010,Event Colors,Verify event colors match types classes vs tasks,,,0,0,0

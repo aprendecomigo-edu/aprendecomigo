@@ -1,0 +1,185 @@
+QA Test Case: Event Colors
+
+Test ID: CAL-010
+Test Name: Event Colors
+Purpose: Verify event colors match their types (classes vs tasks) and status/priority levels across all calendar views
+Expected Result: All event colors follow the defined color scheme consistently and maintain good visual distinction
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Color Scheme: DOT_COLORS defined in CalendarTheme.ts
+- Event Types: Classes (blue), Tasks (orange), Urgent tasks (red), Completed tasks (gray)
+- Status Colors: Class statuses and task priorities have specific color mappings
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: Use .venv/ in project root
+3. Start development servers: `make dev`
+4. Test URL: http://localhost:8081
+
+Test Data:
+- Valid authenticated user: anapmc.carvalho@gmail.com (school_owner role)
+- Classes with different statuses: scheduled, confirmed, completed, cancelled
+- Tasks with different priorities: high, medium, low
+- At least one urgent task
+- Mix of completed and pending tasks
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Setup and Color Reference Documentation
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev
+
+1. Open browser to http://localhost:8081
+2. Login with: anapmc.carvalho@gmail.com
+3. Navigate to Calendar page
+4. Document expected color scheme for reference:
+   - Classes: Blue dots in Month view
+   - Tasks: Orange dots in Month view
+   - Urgent tasks: Red dots in Month view
+   - Completed tasks: Gray dots in Month view
+
+Expected: Calendar loads, color reference established
+Screenshot: 01_color_testing_setup.png
+
+Step 2: Test Class Status Colors in List View
+1. Switch to List view
+2. Find classes with different statuses
+3. Verify status badge colors match specification:
+   - Scheduled: bg-blue-100 text-blue-800 (light blue background, dark blue text)
+   - Confirmed: bg-green-100 text-green-800 (light green background, dark green text)
+   - Completed: bg-gray-100 text-gray-800 (light gray background, dark gray text)
+   - Cancelled: bg-red-100 text-red-800 (light red background, dark red text)
+
+Expected: Class status badges display correct colors
+Screenshot: 02_class_status_colors_list.png
+
+Step 3: Test Task Priority Colors in List View
+1. In List view, locate tasks with different priorities
+2. Verify priority badge colors:
+   - High Priority: bg-red-100 text-red-800 (red)
+   - Medium Priority: bg-yellow-100 text-yellow-800 (yellow/amber)
+   - Low Priority: bg-green-100 text-green-800 (green)
+3. Check urgent badge: bg-red-100 text-red-800 (red with "URGENT" text)
+
+Expected: Task priority badges show correct colors according to priority level
+Screenshot: 03_task_priority_colors_list.png
+
+Step 4: Test Event Dot Colors in Month View
+1. Switch to Month view
+2. Identify dates with different event types
+3. Verify dot colors match event types:
+   - Class events: Blue dots (DOT_COLORS.class)
+   - Regular task events: Orange dots (DOT_COLORS.task)
+   - Urgent task events: Red dots (DOT_COLORS.urgent)
+   - Completed task events: Gray dots (DOT_COLORS.completed)
+
+Expected: Month view dots accurately represent event types with correct colors
+Screenshot: 04_event_dot_colors_month.png
+
+Step 5: Test Color Consistency Across Views
+1. Identify a specific class in List view and note its status color
+2. Switch to Month view and find the same class date
+3. Verify the dot color corresponds to the class type (blue for classes)
+4. Repeat for a high-priority task (should be red dot if urgent, orange if regular)
+5. Test consistency for completed tasks (gray dots)
+
+Expected: Color meanings consistent across List and Month views
+Screenshot: 05_color_consistency_cross_view.png
+
+Step 6: Test Urgent Task Color Priority
+1. Find urgent tasks in List view (should have both priority and urgent badges)
+2. Verify urgent badge is red (bg-red-100 text-red-800)
+3. Switch to Month view
+4. Confirm urgent tasks show red dots (DOT_COLORS.urgent)
+5. Verify urgent color overrides regular task color
+
+Expected: Urgent tasks consistently show red in both views
+Screenshot: 06_urgent_task_color_priority.png
+
+Step 7: Test Completed Task Color Handling
+1. Find completed tasks in List view
+2. Verify completed tasks show gray priority badges
+3. Switch to Month view  
+4. Confirm completed tasks show gray dots (DOT_COLORS.completed)
+5. Check that completion status overrides priority for dot color
+
+Expected: Completed tasks consistently show gray coloring
+Screenshot: 07_completed_task_colors.png
+
+Step 8: Test Color Contrast and Accessibility
+1. Check badge text contrast against background colors
+2. Verify all colors meet accessibility contrast requirements
+3. Test readability in both light and dark themes
+4. Confirm color-blind users can distinguish between different statuses
+5. Use browser accessibility tools if available
+
+Expected: All colors provide sufficient contrast for readability
+Screenshot: 08_color_contrast_accessibility.png
+
+Step 9: Test Multi-Dot Color Combinations
+1. Find dates with multiple events of different types
+2. Verify multi-dot displays show distinct colors
+3. Test combinations like:
+   - Class + regular task (blue + orange dots)
+   - Class + urgent task (blue + red dots)
+   - Multiple tasks with different priorities
+4. Confirm colors don't blend or become indistinguishable
+
+Expected: Multi-dot combinations maintain color distinction
+Screenshot: 09_multi_dot_color_combinations.png
+
+Step 10: Test Color Consistency with Event Cards
+1. In List view, check event card border styling
+2. Verify classes have consistent blue left border (border-l-blue-500)
+3. Check tasks have orange left border (border-l-orange-500)
+4. Confirm border colors align with badge and dot colors
+5. Test card color consistency across different screen sizes
+
+Expected: Event card borders match overall color scheme
+Screenshot: 10_event_card_color_consistency.png
+
+Step 11: Test Color Theme Adaptation
+1. Switch between light and dark themes (if available)
+2. Verify colors adapt appropriately for theme:
+   - Light theme: Colors have good contrast on white/light backgrounds
+   - Dark theme: Colors maintain visibility on dark backgrounds
+3. Check that color meanings remain consistent across themes
+4. Confirm dot visibility in both themes
+
+Expected: Colors maintain meaning and visibility across themes
+Screenshot: 11_color_theme_adaptation.png
+
+Step 12: Test Color Edge Cases
+1. Test events with missing or null status/priority data
+2. Verify default colors are applied appropriately
+3. Check for any color bleeding or CSS conflicts
+4. Test rapid view switching to ensure colors render correctly
+5. Verify colors remain stable during animations/transitions
+
+Expected: Edge cases handle gracefully with appropriate fallback colors
+Screenshot: 12_color_edge_cases.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All event colors accurately represent their types and statuses with good contrast and consistency across views
+FAIL: Wrong colors, poor contrast, inconsistent color usage, or accessibility issues
+
+Individual Step Criteria:
+- Step 1: PASS if setup complete and reference documented, FAIL if setup issues
+- Step 2: PASS if class status colors match spec, FAIL if wrong class status colors
+- Step 3: PASS if task priority colors correct, FAIL if wrong priority colors
+- Step 4: PASS if Month view dot colors accurate, FAIL if wrong dot colors
+- Step 5: PASS if colors consistent across views, FAIL if inconsistent color usage
+- Step 6: PASS if urgent tasks consistently red, FAIL if urgent color wrong
+- Step 7: PASS if completed tasks consistently gray, FAIL if completion color wrong
+- Step 8: PASS if good contrast and accessibility, FAIL if poor contrast/accessibility
+- Step 9: PASS if multi-dot colors distinct, FAIL if colors blend or indistinguishable
+- Step 10: PASS if card borders match color scheme, FAIL if border colors inconsistent
+- Step 11: PASS if colors adapt well to themes, FAIL if theme color issues
+- Step 12: PASS if edge cases handled properly, FAIL if color edge case failures
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails

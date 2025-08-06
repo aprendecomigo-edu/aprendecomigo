@@ -1,0 +1,165 @@
+QA Test Case: Event Display
+
+Test ID: CAL-002
+Test Name: Event Display
+Purpose: Verify that classes and tasks show up correctly in all calendar views with proper information display and formatting
+Expected Result: All scheduled classes and tasks appear correctly in Month, Week, and List views with accurate details
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo EdTech Platform
+- Architecture: React Native + Expo frontend with Django backend
+- API Endpoints: /api/scheduler/class-schedules/ and /api/tasks/calendar/
+- Event Types: Classes (from scheduler) and Tasks (from tasks module)
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo/frontend-ui
+2. Python Virtual Environment: Use .venv/ in project root
+3. Start development servers: `make dev`
+4. Test URL: http://localhost:8081
+
+Test Data:
+- Valid authenticated user: anapmc.carvalho@gmail.com (school_owner role)
+- At least 2-3 scheduled classes with different statuses (scheduled, confirmed, completed)
+- At least 2-3 tasks with different priorities (high, medium, low)
+- Tasks with due dates spread across different days
+- At least one urgent task for color testing
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Login
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo/frontend-ui
+  make dev
+
+1. Open browser to http://localhost:8081
+2. Complete login with: anapmc.carvalho@gmail.com
+3. Navigate to Calendar page
+
+Expected: Successfully logged in and on calendar page
+Screenshot: 01_calendar_page_ready.png
+
+Step 2: Verify List View Event Display
+1. Ensure List view is active (default view)
+2. Check for presence of class cards and task cards
+3. Verify class cards show:
+   - Class title
+   - Student/Teacher name (based on user role)
+   - Status badge (scheduled, confirmed, completed, cancelled)
+   - Date and time information
+   - School name
+   - Description (if present)
+4. Verify task cards show:
+   - Task title
+   - Task type
+   - Priority badge (HIGH, MEDIUM, LOW)
+   - URGENT badge (if applicable)
+   - Due date and time
+   - Description (if present)
+
+Expected: All events display with complete information
+Screenshot: 02_list_view_events_detailed.png
+
+Step 3: Verify Class Status Colors
+1. Locate classes with different statuses
+2. Check status badge colors:
+   - Scheduled: blue background (bg-blue-100 text-blue-800)
+   - Confirmed: green background (bg-green-100 text-green-800)  
+   - Completed: gray background (bg-gray-100 text-gray-800)
+   - Cancelled: red background (bg-red-100 text-red-800)
+
+Expected: Status badges show correct colors for each status
+Screenshot: 03_class_status_colors.png
+
+Step 4: Verify Task Priority Colors
+1. Locate tasks with different priorities
+2. Check priority badge colors:
+   - High: red background (bg-red-100 text-red-800)
+   - Medium: yellow background (bg-yellow-100 text-yellow-800)
+   - Low: green background (bg-green-100 text-green-800)
+3. Check urgent badge: red background (bg-red-100 text-red-800)
+
+Expected: Priority badges show correct colors and urgent flag works
+Screenshot: 04_task_priority_colors.png
+
+Step 5: Switch to Week View Event Display
+1. Click "Week" button
+2. Wait for week view to load
+3. Verify events appear on correct days
+4. Check that events show abbreviated information appropriate for week view
+5. Confirm both classes and tasks are visible
+6. Verify events don't overlap or cause display issues
+
+Expected: Events appear on correct days in week view with appropriate detail level
+Screenshot: 05_week_view_events.png
+
+Step 6: Switch to Month View Event Display  
+1. Click "Month" button
+2. Wait for month view to load
+3. Verify dots/markers appear on days with events
+4. Check that different event types have different colored dots
+5. Confirm multiple events on same day show multiple dots
+6. Verify today's date is highlighted appropriately
+
+Expected: Month view shows event indicators on appropriate dates
+Screenshot: 06_month_view_event_dots.png
+
+Step 7: Test Event Date Accuracy
+1. In List view, note the date of a specific class
+2. Switch to Week view and verify the class appears on the correct day
+3. Switch to Month view and verify a dot appears on that date
+4. Repeat for a task with a specific due date
+
+Expected: Events appear on consistent dates across all views
+Screenshot: 07_date_consistency_check.png
+
+Step 8: Test Empty State Display
+1. Navigate to a date range with no events (use navigation arrows in Month view)
+2. Switch to Week view for that empty period  
+3. Switch to List view
+4. Verify appropriate empty state messages appear
+5. Check for proper styling of empty states
+
+Expected: Empty states show appropriate messages and styling
+Screenshot: 08_empty_state_display.png
+
+Step 9: Test Event Detail Completeness
+1. In List view, find a class card
+2. Verify all expected fields are present and populated:
+   - Title, participant names, status, time, school, description
+3. Find a task card and verify all expected fields:
+   - Title, type, priority, urgency, due date/time, description
+4. Check for any missing or null data display issues
+
+Expected: All event details display completely without null/undefined values
+Screenshot: 09_event_detail_completeness.png
+
+Step 10: Test Event Interaction
+1. In List view, click on a class card
+2. Verify it navigates to class detail page
+3. Use browser back button to return to calendar
+4. Confirm calendar state is preserved
+5. Test that task cards don't navigate (they shouldn't be clickable for navigation)
+
+Expected: Class cards navigate to details, task cards don't cause navigation errors
+Screenshot: 10_event_interaction_test.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All events display correctly in all views with accurate information, proper colors, and correct dates
+FAIL: Missing events, incorrect information, wrong colors, date mismatches, or display errors
+
+Individual Step Criteria:
+- Step 1: PASS if login and navigation work, FAIL if authentication fails
+- Step 2: PASS if all event details show correctly in List view, FAIL if information is missing/incorrect
+- Step 3: PASS if class status colors match specification, FAIL if colors are wrong
+- Step 4: PASS if task priority colors match specification, FAIL if colors are wrong  
+- Step 5: PASS if events appear correctly in Week view, FAIL if events missing or misplaced
+- Step 6: PASS if event dots appear on correct dates in Month view, FAIL if markers missing/wrong
+- Step 7: PASS if dates consistent across views, FAIL if date mismatches occur
+- Step 8: PASS if empty states display properly, FAIL if empty states broken/missing
+- Step 9: PASS if all event fields populate correctly, FAIL if null/undefined values shown
+- Step 10: PASS if interactions work as expected, FAIL if navigation errors occur
+
+Overall Result: PASS only if ALL steps pass, FAIL if ANY step fails
