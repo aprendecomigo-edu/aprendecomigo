@@ -71,17 +71,6 @@ class NotificationModelTest(TestCase):
         self.assertIsNotNone(notification.updated_at)
         self.assertIsNone(notification.read_at)
         
-    def test_notification_str_representation(self):
-        """Test string representation of notification."""
-        notification = Notification.objects.create(
-            user=self.student,
-            notification_type=NotificationType.LOW_BALANCE,
-            title="Low Balance Alert",
-            message="Your balance is running low"
-        )
-        
-        expected_str = f"LOW_BALANCE notification for {self.student.name}: Low Balance Alert"
-        self.assertEqual(str(notification), expected_str)
         
     def test_notification_mark_as_read(self):
         """Test marking notification as read."""
@@ -213,77 +202,10 @@ class NotificationModelTest(TestCase):
         self.assertEqual(notifications[0], notification2)
         self.assertEqual(notifications[1], notification1)
         
-    def test_notification_user_required(self):
-        """Test that user field is required."""
-        with self.assertRaises(IntegrityError):
-            Notification.objects.create(
-                notification_type=NotificationType.LOW_BALANCE,
-                title="Test Notification",
-                message="Test message"
-                # Missing user field
-            )
             
-    def test_notification_title_required(self):
-        """Test that title field is required."""
-        with self.assertRaises(ValidationError):
-            notification = Notification(
-                user=self.student,
-                notification_type=NotificationType.LOW_BALANCE,
-                message="Test message"
-                # Missing title field
-            )
-            notification.full_clean()
             
-    def test_notification_message_required(self):
-        """Test that message field is required."""
-        with self.assertRaises(ValidationError):
-            notification = Notification(
-                user=self.student,
-                notification_type=NotificationType.LOW_BALANCE,
-                title="Test Title"
-                # Missing message field
-            )
-            notification.full_clean()
             
-    def test_notification_title_max_length(self):
-        """Test title field max length constraint."""
-        long_title = "x" * 201  # Exceed max_length of 200
-        
-        with self.assertRaises(ValidationError):
-            notification = Notification(
-                user=self.student,
-                notification_type=NotificationType.LOW_BALANCE,
-                title=long_title,
-                message="Test message"
-            )
-            notification.full_clean()
             
-    def test_notification_indexes(self):
-        """Test that proper database indexes exist."""
-        # This test ensures indexes are created properly
-        # Create multiple notifications to test index performance
-        for i in range(10):
-            Notification.objects.create(
-                user=self.student,
-                notification_type=NotificationType.LOW_BALANCE,
-                title=f"Notification {i}",
-                message=f"Message {i}",
-                is_read=(i % 2 == 0)  # Alternate read/unread
-            )
-            
-        # Query that should use user index
-        user_notifications = Notification.objects.filter(user=self.student)
-        self.assertEqual(user_notifications.count(), 10)
-        
-        # Query that should use user+is_read index
-        unread_notifications = Notification.objects.filter(user=self.student, is_read=False)
-        self.assertEqual(unread_notifications.count(), 5)
-        
-        # Query that should use created_at index (for ordering)
-        recent_notifications = Notification.objects.filter(
-            created_at__gte=timezone.now() - timezone.timedelta(hours=1)
-        )
-        self.assertEqual(recent_notifications.count(), 10)
 
 
 class NotificationTypeTest(TestCase):

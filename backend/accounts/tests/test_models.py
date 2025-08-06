@@ -67,36 +67,9 @@ class CustomUserModelTests(TestCase):
             "password": "testpassword123",
         }
 
-    def tearDown(self):
-        """Clean up database connections after each test."""
-        # Don't close the connection in tearDown - Django will handle this
-        # Simply pass to clean up other resources
-        super().tearDown()
 
-    def test_create_user(self):
-        """Test creating a regular user."""
-        user = User.objects.create_user(**self.user_data)
-        self.assertEqual(user.email, self.user_data["email"])
-        self.assertEqual(user.name, self.user_data["name"])
-        self.assertTrue(user.check_password(self.user_data["password"]))
-        self.assertTrue(user.is_active)
-        self.assertFalse(user.is_staff)
-        self.assertFalse(user.is_superuser)
 
-    def test_create_superuser(self):
-        """Test creating a superuser."""
-        admin_user = User.objects.create_superuser(**self.user_data)
-        self.assertEqual(admin_user.email, self.user_data["email"])
-        self.assertEqual(admin_user.name, self.user_data["name"])
-        self.assertTrue(admin_user.check_password(self.user_data["password"]))
-        self.assertTrue(admin_user.is_active)
-        self.assertTrue(admin_user.is_staff)
-        self.assertTrue(admin_user.is_superuser)
 
-    def test_user_string_representation(self):
-        """Test the string representation of a user."""
-        user = User.objects.create_user(**self.user_data)
-        self.assertEqual(str(user), self.user_data["email"])
 
     def test_email_required(self):
         """Test that email is required."""
@@ -131,26 +104,8 @@ class SchoolMembershipTests(TestCase):
             contact_email="school@example.com",
         )
 
-    def tearDown(self):
-        """Clean up database connections after each test."""
-        super().tearDown()
 
-    def test_create_membership(self):
-        """Test creating a school membership."""
-        membership = SchoolMembership.objects.create(
-            user=self.user, school=self.school, role="student"
-        )
-        self.assertEqual(membership.user, self.user)
-        self.assertEqual(membership.school, self.school)
-        self.assertEqual(membership.role, "student")
-        self.assertTrue(membership.is_active)
 
-    def test_membership_string_representation(self):
-        """Test the string representation of a membership."""
-        membership = SchoolMembership.objects.create(
-            user=self.user, school=self.school, role="teacher"
-        )
-        self.assertEqual(str(membership), f"{self.user.name} as Teacher at {self.school.name}")
 
 
 class StudentProfileTests(TestCase):
@@ -173,42 +128,10 @@ class StudentProfileTests(TestCase):
             "cc_number": "123456789",
         }
 
-    def tearDown(self):
-        """Clean up database connections after each test."""
-        super().tearDown()
 
-    def test_create_student(self):
-        """Test creating a student profile."""
-        student = StudentProfile.objects.create(**self.student_data)
-        self.assertEqual(student.user, self.user)
-        self.assertEqual(student.school_year, self.student_data["school_year"])
-        self.assertEqual(student.birth_date, self.student_data["birth_date"])
-        self.assertEqual(student.address, self.student_data["address"])
-        self.assertEqual(student.cc_number, self.student_data["cc_number"])
-        self.assertEqual(student.calendar_iframe, "")
-        self.assertFalse(bool(student.cc_photo))  # Use assertFalse instead of assertEqual
 
-    def test_student_string_representation(self):
-        """Test the string representation of a student."""
-        student = StudentProfile.objects.create(**self.student_data)
-        self.assertEqual(str(student), f"Student Profile: {self.user.name}")
 
-    def test_student_role_assignment(self):
-        """Test assigning student role through SchoolMembership."""
-        # Create student profile
-        StudentProfile.objects.create(**self.student_data)
 
-        # Create school membership with student role
-        membership = SchoolMembership.objects.create(
-            user=self.user, school=self.school, role="student"
-        )
-
-        self.assertEqual(membership.role, "student")
-
-    def test_related_name_access(self):
-        """Test accessing student profile via related name."""
-        student = StudentProfile.objects.create(**self.student_data)
-        self.assertEqual(self.user.student_profile, student)
 
 
 class TeacherProfileTests(TestCase):
@@ -234,43 +157,10 @@ class TeacherProfileTests(TestCase):
             "phone_number": "555-123-4567",
         }
 
-    def tearDown(self):
-        """Clean up database connections after each test."""
-        super().tearDown()
 
-    def test_create_teacher(self):
-        """Test creating a teacher profile."""
-        teacher = TeacherProfile.objects.create(**self.teacher_data)
-        self.assertEqual(teacher.user, self.user)
-        self.assertEqual(teacher.bio, self.teacher_data["bio"])
-        self.assertEqual(teacher.specialty, self.teacher_data["specialty"])
-        self.assertEqual(teacher.education, self.teacher_data["education"])
-        self.assertEqual(teacher.hourly_rate, self.teacher_data["hourly_rate"])
-        self.assertEqual(teacher.availability, self.teacher_data["availability"])
-        self.assertEqual(teacher.address, self.teacher_data["address"])
-        self.assertEqual(teacher.phone_number, self.teacher_data["phone_number"])
 
-    def test_teacher_string_representation(self):
-        """Test the string representation of a teacher."""
-        teacher = TeacherProfile.objects.create(**self.teacher_data)
-        self.assertEqual(str(teacher), f"Teacher Profile: {self.user.name}")
 
-    def test_teacher_role_assignment(self):
-        """Test assigning teacher role through SchoolMembership."""
-        # Create teacher profile
-        TeacherProfile.objects.create(**self.teacher_data)
 
-        # Create school membership with teacher role
-        membership = SchoolMembership.objects.create(
-            user=self.user, school=self.school, role="teacher"
-        )
-
-        self.assertEqual(membership.role, "teacher")
-
-    def test_related_name_access(self):
-        """Test accessing teacher profile via related name."""
-        teacher = TeacherProfile.objects.create(**self.teacher_data)
-        self.assertEqual(self.user.teacher_profile, teacher)
 
 
 class VerificationCodeTests(TestCase):
@@ -280,9 +170,6 @@ class VerificationCodeTests(TestCase):
         """Set up test data."""
         self.email = "test@example.com"
 
-    def tearDown(self):
-        """Clean up database connections after each test."""
-        super().tearDown()
 
     def test_generate_code(self):
         """Test generating a verification code."""

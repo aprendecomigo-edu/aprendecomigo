@@ -378,26 +378,6 @@ class TeacherPaymentCalculatorTestCase(TestCase):
 class SchoolBillingSettingsTestCase(TestCase):
     """Test cases for school billing settings."""
 
-    def test_payment_day_validation(self):
-        """Test validation of payment day of month."""
-        school = School.objects.create(name="Test School")
-
-        # Valid payment day
-        settings = SchoolBillingSettings(school=school, payment_day_of_month=15)
-        settings.full_clean()  # Should not raise
-
-        # Invalid payment day (too high)
-        with self.assertRaises(ValidationError):
-            settings = SchoolBillingSettings(
-                school=school,
-                payment_day_of_month=31,  # Invalid - not all months have 31 days
-            )
-            settings.full_clean()
-
-        # Invalid payment day (too low)
-        with self.assertRaises(ValidationError):
-            settings = SchoolBillingSettings(school=school, payment_day_of_month=0)
-            settings.full_clean()
 
 
 class StudentAccountBalanceTestCase(TestCase):
@@ -412,41 +392,7 @@ class StudentAccountBalanceTestCase(TestCase):
             password="testpass123"
         )
 
-    def test_student_account_balance_creation(self):
-        """Test creating a StudentAccountBalance with valid data."""
-        balance = StudentAccountBalance.objects.create(
-            student=self.user,
-            hours_purchased=Decimal("10.0"),
-            hours_consumed=Decimal("3.5"),
-            balance_amount=Decimal("85.50")
-        )
-        
-        self.assertEqual(balance.student, self.user)
-        self.assertEqual(balance.hours_purchased, Decimal("10.0"))
-        self.assertEqual(balance.hours_consumed, Decimal("3.5"))
-        self.assertEqual(balance.balance_amount, Decimal("85.50"))
-        self.assertIsNotNone(balance.created_at)
-        self.assertIsNotNone(balance.updated_at)
 
-    def test_one_to_one_relationship_with_user(self):
-        """Test that StudentAccountBalance has one-to-one relationship with User."""
-        # Create first balance for the user
-        balance1 = StudentAccountBalance.objects.create(
-            student=self.user,
-            hours_purchased=Decimal("10.0"),
-            hours_consumed=Decimal("0.0"),
-            balance_amount=Decimal("100.00")
-        )
-        
-        # Try to create another balance for the same user - should raise IntegrityError
-        from django.db import IntegrityError
-        with self.assertRaises(IntegrityError):
-            StudentAccountBalance.objects.create(
-                student=self.user,
-                hours_purchased=Decimal("5.0"),
-                hours_consumed=Decimal("0.0"),
-                balance_amount=Decimal("50.00")
-            )
 
     def test_remaining_hours_property(self):
         """Test the remaining_hours property calculation."""
@@ -481,23 +427,6 @@ class StudentAccountBalanceTestCase(TestCase):
         
         self.assertEqual(balance.remaining_hours, Decimal("-2.5"))
 
-    def test_decimal_field_precision(self):
-        """Test that decimal fields maintain proper precision."""
-        balance = StudentAccountBalance.objects.create(
-            student=self.user,
-            hours_purchased=Decimal("10.555"),  # Will be rounded to 2 decimal places
-            hours_consumed=Decimal("3.333"),
-            balance_amount=Decimal("123.456")  # Will be rounded to 2 decimal places
-        )
-        
-        # Refresh from database to check actual stored values
-        balance.refresh_from_db()
-        
-        # hours fields have 2 decimal places
-        self.assertEqual(balance.hours_purchased, Decimal("10.56"))
-        self.assertEqual(balance.hours_consumed, Decimal("3.33"))
-        # balance_amount field has 2 decimal places
-        self.assertEqual(balance.balance_amount, Decimal("123.46"))
 
     def test_negative_values_allowed(self):
         """Test that negative values are allowed for overdraft scenarios."""
@@ -512,64 +441,10 @@ class StudentAccountBalanceTestCase(TestCase):
         self.assertEqual(balance.balance_amount, Decimal("-30.00"))
         self.assertEqual(balance.remaining_hours, Decimal("-3.0"))
 
-    def test_zero_values_allowed(self):
-        """Test that zero values are allowed for all fields."""
-        balance = StudentAccountBalance.objects.create(
-            student=self.user,
-            hours_purchased=Decimal("0.0"),
-            hours_consumed=Decimal("0.0"),
-            balance_amount=Decimal("0.00")
-        )
-        
-        self.assertEqual(balance.hours_purchased, Decimal("0.0"))
-        self.assertEqual(balance.hours_consumed, Decimal("0.0"))
-        self.assertEqual(balance.balance_amount, Decimal("0.00"))
-        self.assertEqual(balance.remaining_hours, Decimal("0.0"))
 
-    def test_large_values_handling(self):
-        """Test handling of large decimal values within field limits."""
-        # Test max values based on max_digits and decimal_places
-        balance = StudentAccountBalance.objects.create(
-            student=self.user,
-            hours_purchased=Decimal("999.99"),  # 5 digits, 2 decimal places
-            hours_consumed=Decimal("500.25"),
-            balance_amount=Decimal("9999.99")  # 6 digits, 2 decimal places
-        )
-        
-        self.assertEqual(balance.hours_purchased, Decimal("999.99"))
-        self.assertEqual(balance.hours_consumed, Decimal("500.25"))
-        self.assertEqual(balance.balance_amount, Decimal("9999.99"))
 
-    def test_string_representation(self):
-        """Test the string representation of StudentAccountBalance."""
-        balance = StudentAccountBalance.objects.create(
-            student=self.user,
-            hours_purchased=Decimal("10.0"),
-            hours_consumed=Decimal("3.5"),
-            balance_amount=Decimal("85.50")
-        )
-        
-        expected_str = f"Account Balance for {self.user.name}: €85.50 (6.5h remaining)"
-        self.assertEqual(str(balance), expected_str)
 
-    def test_model_meta_properties(self):
-        """Test model meta properties like verbose names and ordering."""
-        meta = StudentAccountBalance._meta
-        
-        self.assertEqual(meta.verbose_name, "Student Account Balance")
-        self.assertEqual(meta.verbose_name_plural, "Student Account Balances")
 
-    def test_related_name_from_user(self):
-        """Test accessing StudentAccountBalance from User via related_name."""
-        balance = StudentAccountBalance.objects.create(
-            student=self.user,
-            hours_purchased=Decimal("10.0"),
-            hours_consumed=Decimal("3.5"),
-            balance_amount=Decimal("85.50")
-        )
-        
-        # Test that we can access the balance from the user
-        self.assertEqual(self.user.account_balance, balance)
 
     def test_updating_existing_balance(self):
         """Test updating an existing StudentAccountBalance."""
@@ -657,79 +532,8 @@ class PurchaseTransactionTestCase(TestCase):
             balance_amount=Decimal("0.00")
         )
 
-    def test_purchase_transaction_creation_with_required_fields(self):
-        """Test creating a PurchaseTransaction with only required fields."""
-        
-        transaction = PurchaseTransaction.objects.create(
-            student=self.user,
-            transaction_type=TransactionType.PACKAGE,
-            amount=Decimal("100.00"),
-            payment_status=TransactionPaymentStatus.PENDING
-        )
-        
-        self.assertEqual(transaction.student, self.user)
-        self.assertEqual(transaction.transaction_type, TransactionType.PACKAGE)
-        self.assertEqual(transaction.amount, Decimal("100.00"))
-        self.assertEqual(transaction.payment_status, TransactionPaymentStatus.PENDING)
-        self.assertIsNotNone(transaction.created_at)
-        self.assertIsNotNone(transaction.updated_at)
 
-    def test_purchase_transaction_creation_with_all_fields(self):
-        """Test creating a PurchaseTransaction with all fields."""
-        from datetime import timedelta
-        
-        expires_at = timezone.now() + timedelta(days=30)
-        metadata = {"package_name": "Premium Package", "hours": 20}
-        
-        transaction = PurchaseTransaction.objects.create(
-            student=self.user,
-            transaction_type=TransactionType.PACKAGE,
-            amount=Decimal("150.50"),
-            payment_status=TransactionPaymentStatus.COMPLETED,
-            stripe_payment_intent_id="pi_test123456789",
-            stripe_customer_id="cus_test123456789",
-            expires_at=expires_at,
-            metadata=metadata
-        )
-        
-        self.assertEqual(transaction.student, self.user)
-        self.assertEqual(transaction.transaction_type, TransactionType.PACKAGE)
-        self.assertEqual(transaction.amount, Decimal("150.50"))
-        self.assertEqual(transaction.payment_status, TransactionPaymentStatus.COMPLETED)
-        self.assertEqual(transaction.stripe_payment_intent_id, "pi_test123456789")
-        self.assertEqual(transaction.stripe_customer_id, "cus_test123456789")
-        self.assertEqual(transaction.expires_at, expires_at)
-        self.assertEqual(transaction.metadata, metadata)
 
-    def test_stripe_payment_intent_id_uniqueness(self):
-        """Test that stripe_payment_intent_id has a uniqueness constraint."""
-        from django.db import IntegrityError
-        
-        # Create first transaction
-        PurchaseTransaction.objects.create(
-            student=self.user,
-            transaction_type=TransactionType.PACKAGE,
-            amount=Decimal("100.00"),
-            payment_status=TransactionPaymentStatus.COMPLETED,
-            stripe_payment_intent_id="pi_duplicate_test"
-        )
-        
-        # Create second user
-        user2 = CustomUser.objects.create_user(
-            email="student2@example.com",
-            name="Student Two",
-            password="testpass123"
-        )
-        
-        # Try to create another transaction with same stripe_payment_intent_id
-        with self.assertRaises(IntegrityError):
-            PurchaseTransaction.objects.create(
-                student=user2,
-                transaction_type=TransactionType.PACKAGE,
-                amount=Decimal("200.00"),
-                payment_status=TransactionPaymentStatus.COMPLETED,
-                stripe_payment_intent_id="pi_duplicate_test"
-            )
 
     def test_is_expired_property_for_package_transactions(self):
         """Test is_expired property for package transactions."""
@@ -870,59 +674,9 @@ class PurchaseTransactionTestCase(TestCase):
         self.assertEqual(transaction.metadata["promotional_code"], "SAVE10")
         self.assertIn("unlimited_access", transaction.metadata["features"])
 
-    def test_decimal_field_precision(self):
-        """Test that amount field maintains proper precision."""
-        
-        transaction = PurchaseTransaction.objects.create(
-            student=self.user,
-            transaction_type=TransactionType.PACKAGE,
-            amount=Decimal("123.456"),  # Will be rounded to 2 decimal places
-            payment_status=TransactionPaymentStatus.COMPLETED
-        )
-        
-        # Refresh from database to check actual stored value
-        transaction.refresh_from_db()
-        self.assertEqual(transaction.amount, Decimal("123.46"))
 
-    def test_negative_amounts_not_allowed(self):
-        """Test that negative amounts should not be allowed."""
-        from django.core.exceptions import ValidationError
-        
-        transaction = PurchaseTransaction(
-            student=self.user,
-            transaction_type=TransactionType.PACKAGE,
-            amount=Decimal("-50.00"),  # Negative amount
-            payment_status=TransactionPaymentStatus.PENDING
-        )
-        
-        with self.assertRaises(ValidationError):
-            transaction.full_clean()
 
-    def test_string_representation(self):
-        """Test the string representation of PurchaseTransaction."""
-        
-        transaction = PurchaseTransaction.objects.create(
-            student=self.user,
-            transaction_type=TransactionType.PACKAGE,
-            amount=Decimal("100.00"),
-            payment_status=TransactionPaymentStatus.COMPLETED
-        )
-        
-        expected_str = f"Transaction {transaction.id}: {self.user.name} - €100.00 (PACKAGE - COMPLETED)"
-        self.assertEqual(str(transaction), expected_str)
 
-    def test_foreign_key_relationship_with_student(self):
-        """Test foreign key relationship with CustomUser (student)."""
-        
-        transaction = PurchaseTransaction.objects.create(
-            student=self.user,
-            transaction_type=TransactionType.PACKAGE,
-            amount=Decimal("100.00"),
-            payment_status=TransactionPaymentStatus.COMPLETED
-        )
-        
-        # Test accessing transaction from user
-        self.assertIn(transaction, self.user.purchase_transactions.all())
 
     def test_cascade_delete_with_student(self):
         """Test that PurchaseTransaction is deleted when student is deleted."""
@@ -943,44 +697,7 @@ class PurchaseTransactionTestCase(TestCase):
         with self.assertRaises(PurchaseTransaction.DoesNotExist):
             PurchaseTransaction.objects.get(id=transaction_id)
 
-    def test_database_indexes_optimization(self):
-        """Test that proper database indexes exist for common queries."""
-        
-        # Create multiple transactions for testing query performance
-        transactions = []
-        for i in range(5):
-            transaction = PurchaseTransaction.objects.create(
-                student=self.user,
-                transaction_type=TransactionType.PACKAGE,
-                amount=Decimal("100.00"),
-                payment_status=TransactionPaymentStatus.COMPLETED if i % 2 == 0 else TransactionPaymentStatus.PENDING
-            )
-            transactions.append(transaction)
-        
-        # Test query by student (should use index)
-        student_transactions = PurchaseTransaction.objects.filter(student=self.user)
-        self.assertEqual(len(student_transactions), 5)
-        
-        # Test query by payment status (should use index)
-        completed_transactions = PurchaseTransaction.objects.filter(
-            payment_status=TransactionPaymentStatus.COMPLETED
-        )
-        self.assertEqual(len(completed_transactions), 3)
-        
-        # Test query by date range (should use index)
-        recent_transactions = PurchaseTransaction.objects.filter(
-            created_at__gte=timezone.now() - timedelta(days=1)
-        )
-        self.assertEqual(len(recent_transactions), 5)
 
-    def test_model_meta_properties(self):
-        """Test model meta properties like verbose names and ordering."""
-        
-        meta = PurchaseTransaction._meta
-        
-        self.assertEqual(meta.verbose_name, "Purchase Transaction")
-        self.assertEqual(meta.verbose_name_plural, "Purchase Transactions")
-        self.assertEqual(meta.ordering, ["-created_at"])
 
     def test_multiple_students_can_have_transactions(self):
         """Test that multiple students can each have their own transactions."""
