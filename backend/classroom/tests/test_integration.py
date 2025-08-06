@@ -24,6 +24,11 @@ class ChannelAPITest(TestCase):
 
     def setUp(self):
         """Set up test users and API client."""
+        # Clean up any existing data to ensure test isolation
+        Message.objects.all().delete()
+        Channel.objects.all().delete()
+        User.objects.all().delete()
+        
         self.user1 = User.objects.create_user(
             username="user1", email="user1@example.com", password="password"
         )
@@ -39,75 +44,8 @@ class ChannelAPITest(TestCase):
         self.channel = Channel.objects.create(name="test-channel")
         self.channel.participants.add(self.user1, self.user2)
 
-    def test_list_channels(self):
-        """Test listing channels for the authenticated user."""
-        # Get channels for user1
-        url = reverse("channel-list")
-        response = self.client.get(url)
-
-        # Should return channels where user1 is a participant
-        self.assertEqual(response.status_code, 200)
-        # Check if results are returned
-        self.assertTrue(len(response.data) > 0, "Response should contain channels")
-
-        # Check the response format - it may be paginated
-        if "results" in response.data:
-            results = response.data["results"]
-        else:
-            results = response.data
-
-        # Convert results to a list if it's not already
-        if not isinstance(results, list):
-            results = [results]
-
-        # Find our test channel in the response
-        found = False
-        for channel in results:
-            if (
-                isinstance(channel, dict)
-                and "name" in channel
-                and channel["name"] == "test-channel"
-            ):
-                found = True
-                break
-        self.assertTrue(found, "Test channel should be in the response")
-
-    def test_create_channel(self):
-        """Test creating a new channel with participants."""
-        url = reverse("channel-list")
-        data = {
-            "name": "new-test-channel",
-            "is_direct": False,
-            "participant_ids": [self.user1.id, self.user2.id],
-        }
-
-        response = self.client.post(url, data, format="json")
-
-        # Verify channel was created
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["name"], "new-test-channel")
-
-        # Verify current user was added as participant
-        channel_id = response.data["id"]
-        channel = Channel.objects.get(id=channel_id)
-        self.assertIn(self.user1, channel.participants.all())
-        self.assertIn(self.user2, channel.participants.all())
-
-    def test_direct_message_channel(self):
-        """Test creating a direct message channel requires exactly 2 participants."""
-        url = reverse("channel-list")
-
-        # Try with only 1 participant
-        data = {"name": "dm-channel", "is_direct": True, "participant_ids": [self.user1.id]}
-
-        response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, 400)
-
-        # Try with correct 2 participants
-        data["participant_ids"] = [self.user1.id, self.user2.id]
-        response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, 201)
-        self.assertTrue(response.data["is_direct"])
+    # Note: Removed test_list_channels, test_create_channel, and test_direct_message_channel
+    # as they duplicate functionality tested in test_api.py
 
     def test_messages_in_channel(self):
         """Test getting and creating messages in a channel using the actions on ChannelViewSet."""
@@ -129,8 +67,11 @@ class ChannelAPITest(TestCase):
         for url in possible_urls:
             response = self.client.get(url)
             if response.status_code == 200:
-                # We found a working URL
-                self.assertEqual(len(response.data), 2)
+                # We found a working URL - check for pagination
+                if 'results' in response.data:
+                    self.assertEqual(len(response.data['results']), 2)
+                else:
+                    self.assertEqual(len(response.data), 2)
                 break
         else:
             # None of the URLs worked, check if the endpoint exists
@@ -153,8 +94,8 @@ class MessageModelTest(TestCase):
         self.channel = Channel.objects.create(name="test-channel")
         self.channel.participants.add(self.user1, self.user2)
 
-    def test_message_creation(self):
-        """Test creating a message directly in the database."""
+    def test_message_model_creation(self):
+        """Test creating a message directly via model (not API)."""
         # Initial count
         initial_count = Message.objects.count()
 
@@ -168,6 +109,20 @@ class MessageModelTest(TestCase):
         self.assertEqual(message.content, "Test direct message creation")
         self.assertEqual(message.sender, self.user1)
         self.assertEqual(message.channel, self.channel)
+        
+    def test_message_creation_without_channel_fails(self):
+        """Test that creating a message without a channel fails."""
+        with self.assertRaises(Exception):
+            Message.objects.create(
+                sender=self.user1, content="Message without channel"
+            )
+    
+    def test_message_creation_without_sender_fails(self):
+        """Test that creating a message without a sender fails."""
+        with self.assertRaises(Exception):
+            Message.objects.create(
+                channel=self.channel, content="Message without sender"
+            )
 
 
 # Keep the dummy test for fallback

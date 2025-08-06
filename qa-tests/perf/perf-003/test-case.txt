@@ -1,0 +1,216 @@
+QA Test Case: Role-Based Dashboard Routing Verification
+
+Test ID: PERF-003
+Test Name: Role-Based Dashboard Routing Verification
+Purpose: Verify that all user roles redirect to correct dashboards using cached primary_role data
+Expected Result: Each user role redirects to appropriate dashboard path with correct functionality
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: React Native + Expo frontend, Django backend
+- Critical Fix: AuthContext caching with primary_role based routing
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev`
+4. Browser with developer tools for URL and role inspection
+
+Test Data (Test Accounts Required):
+- School Owner: anapmc.carvalho@gmail.com
+- Teacher: [TO BE IDENTIFIED - check test accounts documentation]
+- Student: [TO BE IDENTIFIED - check test accounts documentation]  
+- Parent: [TO BE IDENTIFIED - check test accounts documentation]
+
+Expected Routing Mapping:
+- `primary_role: "school_owner"` → `/(school-admin)/` route
+- `primary_role: "teacher"` → `/(teacher)/` route
+- `primary_role: "student"` → `/(student)/` route
+- `primary_role: "parent"` → `/(parent)/` route
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Test Account Discovery and Preparation
+1. Check existing test account documentation
+Commands:
+  cat /Users/anapmc/Code/aprendecomigo/VAULTS/FOUNDER_VAULT/test-accounts-2025-08-02.md
+
+2. If test accounts file doesn't exist, examine backend for user fixtures/seeds
+Commands:
+  find /Users/anapmc/Code/aprendecomigo/backend -name "*.py" -exec grep -l "test.*email\|teacher.*email\|student.*email\|parent.*email" {} \;
+
+3. Start development servers
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Identify available test accounts for each role, servers running
+Screenshot: 01_test_accounts_identified.png
+
+Step 2: School Owner Role Routing Test
+1. Navigate to http://localhost:8081/auth/signin
+2. Enter school owner email: anapmc.carvalho@gmail.com
+3. Complete verification code process
+4. **VERIFY FINAL URL** after redirect completion
+5. **CHECK BROWSER CONSOLE** for AuthContext data:
+   - Open Developer Tools → Console
+   - Look for user profile logging
+   - Verify `primary_role: "school_owner"`
+6. **VERIFY DASHBOARD CONTENT** matches school admin interface
+
+Expected: 
+- Final URL: http://localhost:8081/(school-admin)/
+- Console shows primary_role: "school_owner"  
+- Dashboard displays school admin content and navigation
+Screenshot: 02_school_owner_routing.png
+
+Step 3: Teacher Role Routing Test (if account available)
+1. Logout from school owner account
+2. Navigate to signin page
+3. Enter teacher test account email
+4. Complete verification code process
+5. **VERIFY FINAL URL** after redirect completion
+6. **CHECK BROWSER CONSOLE** for AuthContext data:
+   - Verify `primary_role: "teacher"`
+7. **VERIFY DASHBOARD CONTENT** matches teacher interface
+
+Expected:
+- Final URL: http://localhost:8081/(teacher)/
+- Console shows primary_role: "teacher"
+- Dashboard displays teacher-specific content and navigation
+Screenshot: 03_teacher_routing.png
+
+Step 4: Student Role Routing Test (if account available)
+1. Logout from previous account
+2. Navigate to signin page  
+3. Enter student test account email
+4. Complete verification code process
+5. **VERIFY FINAL URL** after redirect completion
+6. **CHECK BROWSER CONSOLE** for AuthContext data:
+   - Verify `primary_role: "student"`
+7. **VERIFY DASHBOARD CONTENT** matches student interface
+
+Expected:
+- Final URL: http://localhost:8081/(student)/
+- Console shows primary_role: "student"
+- Dashboard displays student-specific content and navigation
+Screenshot: 04_student_routing.png
+
+Step 5: Parent Role Routing Test (if account available)
+1. Logout from previous account
+2. Navigate to signin page
+3. Enter parent test account email
+4. Complete verification code process
+5. **VERIFY FINAL URL** after redirect completion
+6. **CHECK BROWSER CONSOLE** for AuthContext data:
+   - Verify `primary_role: "parent"`
+7. **VERIFY DASHBOARD CONTENT** matches parent interface
+
+Expected:
+- Final URL: http://localhost:8081/(parent)/
+- Console shows primary_role: "parent"
+- Dashboard displays parent-specific content and navigation
+Screenshot: 05_parent_routing.png
+
+Step 6: AuthContext Cache Verification
+1. For each successful role login, inspect browser storage:
+   - Open Developer Tools → Application/Storage tab
+   - Check localStorage for cached user profile data
+   - Verify primary_role is stored correctly
+2. Test cache persistence:
+   - Refresh browser page
+   - Verify user remains logged in with correct role
+   - Confirm routing still works from cached data
+
+Expected: User profile with primary_role cached in localStorage, persists across refresh
+Screenshot: 06_authcontext_cache_verification.png
+
+Step 7: Direct Dashboard Route Access Test
+1. While logged in with any role, manually navigate to /dashboard
+2. Verify redirect still works from /dashboard to role-specific dashboard
+3. Test with different roles if multiple accounts available
+4. Measure redirect time (should be instant with cached data)
+
+Expected: /dashboard redirects immediately to appropriate role dashboard
+Screenshot: 07_direct_dashboard_access.png
+
+Step 8: Multi-Role Account Testing (if applicable)
+1. If any test accounts have multiple roles, test role priority:
+   - Login to multi-role account
+   - Verify which role is used as primary_role
+   - Confirm routing to appropriate dashboard
+2. Check backend AuthenticationResponseSerializer logic for primary_role determination
+
+Expected: Multi-role accounts route to logically appropriate dashboard based on primary_role
+Screenshot: 08_multi_role_testing.png
+
+Step 9: Error Condition Testing
+1. Test behavior with invalid/missing primary_role data:
+   - Clear localStorage while logged in
+   - Navigate to /dashboard
+   - Observe fallback behavior
+2. Test with corrupted cached data:
+   - Manually edit localStorage user data to invalid format
+   - Navigate to /dashboard
+   - Verify graceful error handling
+
+Expected: Graceful fallback to login or appropriate error handling
+Screenshot: 09_error_condition_testing.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: All role-based routing works correctly
+- School owner routes to /(school-admin)/ with correct dashboard content
+- Teacher routes to /(teacher)/ with correct dashboard content (if account available)
+- Student routes to /(student)/ with correct dashboard content (if account available)
+- Parent routes to /(parent)/ with correct dashboard content (if account available)
+- AuthContext correctly caches primary_role for all tested roles
+- Cache persists across browser refresh
+- Direct /dashboard access redirects properly for all roles
+- Error conditions handled gracefully
+
+FAIL: Any routing problems detected
+- Any role routes to wrong dashboard path
+- Dashboard content doesn't match expected role interface
+- primary_role not cached correctly in AuthContext
+- Cache doesn't persist across browser refresh
+- Direct /dashboard access fails or routes incorrectly
+- Multi-role accounts route to wrong dashboard
+- Error conditions cause crashes or poor user experience
+
+Individual Step Criteria:
+- Step 1: PASS if test accounts identified/available, FAIL if no accounts or server issues
+- Step 2: PASS if school owner routes correctly, FAIL if wrong route or errors
+- Step 3: PASS if teacher routes correctly (or SKIP if no account), FAIL if available but wrong routing
+- Step 4: PASS if student routes correctly (or SKIP if no account), FAIL if available but wrong routing  
+- Step 5: PASS if parent routes correctly (or SKIP if no account), FAIL if available but wrong routing
+- Step 6: PASS if AuthContext cache works, FAIL if caching problems
+- Step 7: PASS if direct /dashboard routing works, FAIL if routing fails
+- Step 8: PASS if multi-role handled correctly (or SKIP if not applicable), FAIL if problems
+- Step 9: PASS if error conditions handled gracefully, FAIL if crashes or poor handling
+
+Overall Result: PASS only if ALL applicable steps pass AND routing works for all available roles, FAIL if ANY step fails
+
+=== ROLE ROUTING BENCHMARKS ===
+
+Success Metrics:
+1. **Routing Accuracy**: 100% correct role-to-dashboard mapping
+2. **Performance**: Instant redirects using cached primary_role data
+3. **Cache Persistence**: User data survives browser refresh
+4. **Error Handling**: Graceful degradation for invalid states
+5. **User Experience**: Smooth, predictable navigation to appropriate dashboards
+
+Expected Role Mappings:
+- school_owner → /(school-admin)/dashboard (admin interface)
+- teacher → /(teacher)/dashboard (teacher interface)
+- student → /(student)/dashboard (student interface)  
+- parent → /(parent)/dashboard (parent interface)
+
+Verification Points:
+- URL paths match expected patterns
+- Dashboard content appropriate for role
+- Navigation menus role-specific
+- AuthContext data consistent with routing
+- Cache persistence across sessions

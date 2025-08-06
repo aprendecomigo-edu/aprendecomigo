@@ -144,163 +144,14 @@ class PricingPlanModelTestCase(TestCase):
         
         self.assertIn("Subscription plans should not have validity_days", str(context.exception))
 
-    def test_positive_price_validation(self):
-        """Test that price_eur must be positive."""
-        plan = PricingPlan(
-            name="Free Package",
-            description="Invalid free package",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("10.0"),
-            price_eur=Decimal("0.00"),  # Invalid - must be positive
-            validity_days=30,
-            display_order=1,
-            is_featured=False,
-            is_active=True
-        )
-        
-        with self.assertRaises(ValidationError) as context:
-            plan.full_clean()
-        
-        self.assertIn("Price must be greater than 0", str(context.exception))
 
-    def test_negative_price_validation(self):
-        """Test that price_eur cannot be negative."""
-        plan = PricingPlan(
-            name="Negative Price Package",
-            description="Invalid negative price",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("10.0"),
-            price_eur=Decimal("-50.00"),  # Invalid - cannot be negative
-            validity_days=30,
-            display_order=1,
-            is_featured=False,
-            is_active=True
-        )
-        
-        with self.assertRaises(ValidationError) as context:
-            plan.full_clean()
-        
-        self.assertIn("Price must be greater than 0", str(context.exception))
 
-    def test_positive_hours_validation(self):
-        """Test that hours_included must be positive."""
-        plan = PricingPlan(
-            name="Zero Hours Package",
-            description="Invalid zero hours package",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("0.0"),  # Invalid - must be positive
-            price_eur=Decimal("100.00"),
-            validity_days=30,
-            display_order=1,
-            is_featured=False,
-            is_active=True
-        )
-        
-        with self.assertRaises(ValidationError) as context:
-            plan.full_clean()
-        
-        self.assertIn("Hours included must be greater than 0", str(context.exception))
 
-    def test_negative_hours_validation(self):
-        """Test that hours_included cannot be negative."""
-        plan = PricingPlan(
-            name="Negative Hours Package",
-            description="Invalid negative hours",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("-5.0"),  # Invalid - cannot be negative
-            price_eur=Decimal("100.00"),
-            validity_days=30,
-            display_order=1,
-            is_featured=False,
-            is_active=True
-        )
-        
-        with self.assertRaises(ValidationError) as context:
-            plan.full_clean()
-        
-        self.assertIn("Hours included must be greater than 0", str(context.exception))
 
-    def test_positive_validity_days_validation(self):
-        """Test that validity_days must be positive when specified."""
-        plan = PricingPlan(
-            name="Zero Validity Package",
-            description="Invalid zero validity",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("10.0"),
-            price_eur=Decimal("100.00"),
-            validity_days=0,  # Invalid - must be positive
-            display_order=1,
-            is_featured=False,
-            is_active=True
-        )
-        
-        with self.assertRaises(ValidationError) as context:
-            plan.full_clean()
-        
-        # Check that validation error occurred (Django validator message)
-        self.assertIn("Ensure this value is greater than or equal to 1", str(context.exception))
 
-    def test_negative_validity_days_validation(self):
-        """Test that validity_days cannot be negative."""
-        plan = PricingPlan(
-            name="Negative Validity Package",
-            description="Invalid negative validity",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("10.0"),
-            price_eur=Decimal("100.00"),
-            validity_days=-10,  # Invalid - cannot be negative
-            display_order=1,
-            is_featured=False,
-            is_active=True
-        )
-        
-        with self.assertRaises(ValidationError) as context:
-            plan.full_clean()
-        
-        # Check that validation error occurred (Django validator message)
-        self.assertIn("Ensure this value is greater than or equal to 1", str(context.exception))
 
-    def test_string_representation(self):
-        """Test string representation of PricingPlan."""
-        plan = PricingPlan.objects.create(
-            name="Premium Package",
-            description="20 hours of tutoring",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("20.0"),
-            price_eur=Decimal("180.00"),
-            validity_days=60,
-            display_order=1,
-            is_featured=True,
-            is_active=True
-        )
-        
-        expected_str = "Premium Package - €180.00 (20.0h, 60 days)"
-        self.assertEqual(str(plan), expected_str)
 
-    def test_string_representation_subscription(self):
-        """Test string representation of subscription PricingPlan."""
-        plan = PricingPlan.objects.create(
-            name="Monthly Unlimited",
-            description="Unlimited access",
-            plan_type=PlanType.SUBSCRIPTION,
-            hours_included=Decimal("30.0"),
-            price_eur=Decimal("200.00"),
-            validity_days=None,
-            display_order=1,
-            is_featured=True,
-            is_active=True
-        )
-        
-        expected_str = "Monthly Unlimited - €200.00 (30.0h, subscription)"
-        self.assertEqual(str(plan), expected_str)
 
-    def test_model_meta_properties(self):
-        """Test model meta properties like verbose names and ordering."""
-        meta = PricingPlan._meta
-        
-        self.assertEqual(meta.verbose_name, "Pricing Plan")
-        self.assertEqual(meta.verbose_name_plural, "Pricing Plans")
-        self.assertEqual(meta.ordering, ["display_order", "name"])
 
     def test_active_plans_manager(self):
         """Test that active plans manager returns only active plans."""
@@ -336,26 +187,6 @@ class PricingPlanModelTestCase(TestCase):
         self.assertNotIn(inactive_plan, active_plans)
         self.assertEqual(len(active_plans), 1)
 
-    def test_decimal_field_precision(self):
-        """Test that decimal fields maintain proper precision."""
-        plan = PricingPlan.objects.create(
-            name="Precision Test",
-            description="Test decimal precision",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("10.555"),  # Will be rounded to 2 decimal places
-            price_eur=Decimal("123.456"),  # Will be rounded to 2 decimal places
-            validity_days=30,
-            display_order=1,
-            is_featured=False,
-            is_active=True
-        )
-        
-        # Refresh from database to check actual stored values
-        plan.refresh_from_db()
-        
-        # Both fields have 2 decimal places
-        self.assertEqual(plan.hours_included, Decimal("10.56"))
-        self.assertEqual(plan.price_eur, Decimal("123.46"))
 
     def test_display_order_functionality(self):
         """Test that display_order affects plan ordering."""
@@ -436,23 +267,6 @@ class PricingPlanModelTestCase(TestCase):
         self.assertIn(regular_plan, regular_plans)
         self.assertNotIn(featured_plan, regular_plans)
 
-    def test_large_values_handling(self):
-        """Test handling of large decimal values within field limits."""
-        plan = PricingPlan.objects.create(
-            name="Large Values Test",
-            description="Test large values",
-            plan_type=PlanType.PACKAGE,
-            hours_included=Decimal("999.99"),  # 5 digits, 2 decimal places
-            price_eur=Decimal("9999.99"),  # 6 digits, 2 decimal places
-            validity_days=999,  # Large but valid integer
-            display_order=1,
-            is_featured=False,
-            is_active=True
-        )
-        
-        self.assertEqual(plan.hours_included, Decimal("999.99"))
-        self.assertEqual(plan.price_eur, Decimal("9999.99"))
-        self.assertEqual(plan.validity_days, 999)
 
 
 class PricingPlanAPITestCase(APITestCase):

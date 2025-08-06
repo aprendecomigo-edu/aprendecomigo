@@ -47,6 +47,8 @@
       "WebFetch(domain:docs.expo.dev)",
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:wix.github.io)"
+      "WebFetch(domain:www.django-rest-framework.org)",
+      "mcp__playwright__browser_network_requests"
     ],
     "deny": []
   }

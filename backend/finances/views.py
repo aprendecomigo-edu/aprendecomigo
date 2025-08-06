@@ -3249,9 +3249,20 @@ class ParentApprovalDashboardView(APIView):
     
     Provides pending requests, children spending summaries, recent transactions,
     and budget alerts in a single comprehensive response.
+    
+    Restricted to users with active parent-child relationships to prevent
+    admin users from triggering parent API calls that cause performance issues.
     """
     
     permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        """
+        Add role-based validation to prevent cross-role API calls.
+        Only users with active parent-child relationships can access this endpoint.
+        """
+        from accounts.permissions import IsParentWithChildren
+        return [IsAuthenticated(), IsParentWithChildren()]
     
     def get(self, request):
         """
@@ -3422,9 +3433,20 @@ class FamilyMetricsView(APIView):
     
     Provides spending summaries, budget tracking, and financial insights
     for family accounts across different timeframes.
+    
+    Restricted to users with active parent-child relationships to prevent
+    admin users from triggering parent API calls that cause performance issues.
     """
     
     permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        """
+        Add role-based validation to prevent cross-role API calls.
+        Only users with active parent-child relationships can access this endpoint.
+        """
+        from accounts.permissions import IsParentWithChildren
+        return [IsAuthenticated(), IsParentWithChildren()]
     
     def get(self, request):
         """

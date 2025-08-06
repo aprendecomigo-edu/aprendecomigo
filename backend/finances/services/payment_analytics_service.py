@@ -335,17 +335,14 @@ class PaymentAnalyticsService:
                 'success_rate': 0.0
             }
         
-        status_counts = queryset.values('status').annotate(
-            count=Count('id')
-        )
-        
-        status_map = {item['status']: item['count'] for item in status_counts}
-        
-        processed_events = status_map.get(WebhookEventStatus.PROCESSED, 0)
-        failed_events = status_map.get(WebhookEventStatus.FAILED, 0)
-        retrying_events = status_map.get(WebhookEventStatus.RETRYING, 0)
-        pending_events = status_map.get(WebhookEventStatus.RECEIVED, 0) + \
-                        status_map.get(WebhookEventStatus.PROCESSING, 0)
+        # Build status map by manually counting each status
+        # This is more reliable than the values().annotate() approach which seems to have issues
+        processed_events = queryset.filter(status=WebhookEventStatus.PROCESSED).count()
+        failed_events = queryset.filter(status=WebhookEventStatus.FAILED).count()
+        retrying_events = queryset.filter(status=WebhookEventStatus.RETRYING).count()
+        received_events = queryset.filter(status=WebhookEventStatus.RECEIVED).count()
+        processing_events = queryset.filter(status=WebhookEventStatus.PROCESSING).count()
+        pending_events = received_events + processing_events
         
         success_rate = (processed_events / total_events) * 100 if total_events > 0 else 0
         

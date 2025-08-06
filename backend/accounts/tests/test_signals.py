@@ -1,6 +1,7 @@
 """
 Test suite for Django signals that automatically create school activities.
 """
+from datetime import date, time
 from django.test import TestCase
 from django.utils import timezone
 from accounts.models import (
@@ -148,9 +149,9 @@ class SchoolActivitySignalsTest(TestCase):
         class_session = ClassSession.objects.create(
             school=self.school,
             teacher=teacher_profile,
-            date='2024-01-15',
-            start_time='10:00:00',
-            end_time='11:00:00',
+            date=date(2024, 1, 15),
+            start_time=time(10, 0, 0),
+            end_time=time(11, 0, 0),
             session_type='individual',
             grade_level='7',
             status='scheduled'
@@ -176,9 +177,9 @@ class SchoolActivitySignalsTest(TestCase):
         class_session = ClassSession.objects.create(
             school=self.school,
             teacher=teacher_profile,
-            date='2024-01-15',
-            start_time='10:00:00',
-            end_time='11:00:00',
+            date=date(2024, 1, 15),
+            start_time=time(10, 0, 0),
+            end_time=time(11, 0, 0),
             session_type='individual',
             grade_level='7',
             status='scheduled'

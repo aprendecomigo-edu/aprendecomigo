@@ -42,6 +42,7 @@ export interface UserProfile {
   updated_at: string;
   roles?: UserRole[];
   first_login_completed?: boolean;
+  primary_role?: string; // From backend AuthenticationResponseSerializer
 }
 
 export interface SchoolInfo {
@@ -145,6 +146,7 @@ export const logout = async () => {
 
 /**
  * Check if user is authenticated
+ * OPTIMIZED: Uses lightweight token validation instead of heavy dashboard_info call
  */
 export const isAuthenticated = async (): Promise<boolean> => {
   const token = await getToken();
@@ -152,9 +154,9 @@ export const isAuthenticated = async (): Promise<boolean> => {
     return false;
   }
 
-  // Validate token with server
+  // Validate token with lightweight server endpoint
   try {
-    await apiClient.get('/accounts/users/dashboard_info/');
+    await apiClient.get('/accounts/auth/validate-token/');
     return true;
   } catch (error: any) {
     // If server is unreachable, we can't verify auth - logout user

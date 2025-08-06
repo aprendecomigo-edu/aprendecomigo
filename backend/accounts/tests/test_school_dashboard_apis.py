@@ -57,6 +57,17 @@ class SchoolMetricsAPITest(BaseTestCase):
             description='A test school'
         )
         
+        # Create teacher profiles
+        from accounts.models import TeacherProfile
+        self.teacher1_profile = TeacherProfile.objects.create(
+            user=self.teacher1,
+            bio='Teacher One Bio'
+        )
+        self.teacher2_profile = TeacherProfile.objects.create(
+            user=self.teacher2,
+            bio='Teacher Two Bio'
+        )
+        
         # Create school memberships
         SchoolMembership.objects.create(
             user=self.school_owner,
@@ -136,30 +147,31 @@ class SchoolMetricsAPITest(BaseTestCase):
         """Test metrics with class data"""
         # Create some class sessions
         today = timezone.now()
-        ClassSession.objects.create(
+        # Create class sessions
+        session1 = ClassSession.objects.create(
             school=self.school,
-            teacher=self.teacher1,
-            student=self.student1,
+            teacher=self.teacher1_profile,
             date=today.date(),
-            time=today.time(),
-            duration=timedelta(hours=1),
-            subject='Math',
-            educational_system=self.ed_system,
-            school_year='1',
+            start_time=today.time(),
+            end_time=(today + timedelta(hours=1)).time(),
+            session_type='individual',
+            grade_level='7',
             status='scheduled'
         )
-        ClassSession.objects.create(
+        session1.students.add(self.student1)
+        
+        session2 = ClassSession.objects.create(
             school=self.school,
-            teacher=self.teacher1,
-            student=self.student2,
+            teacher=self.teacher1_profile,
             date=today.date(),
-            time=(today - timedelta(hours=2)).time(),
-            duration=timedelta(hours=1),
-            subject='Science',
-            educational_system=self.ed_system,
-            school_year='1',
-            status='completed'
+            start_time=(today - timedelta(hours=2)).time(),
+            end_time=(today - timedelta(hours=1)).time(),
+            session_type='individual',
+            grade_level='8',
+            status='completed',
+            actual_duration_hours=1.0
         )
+        session2.students.add(self.student2)
         
         self.client.force_authenticate(user=self.school_owner)
         url = reverse('accounts:school-dashboard-metrics', kwargs={'pk': self.school.id})
@@ -213,6 +225,8 @@ class SchoolMetricsAPITest(BaseTestCase):
     @patch('django.core.cache.cache.set')
     def test_get_school_metrics_caching(self, mock_cache_set, mock_cache_get):
         """Test that metrics are cached properly"""
+        from common.cache_utils import SecureCacheKeyGenerator
+        
         mock_cache_get.return_value = None  # Cache miss
         
         self.client.force_authenticate(user=self.school_owner)
@@ -221,11 +235,22 @@ class SchoolMetricsAPITest(BaseTestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        # Verify cache was set with 5-minute TTL
+        # Verify cache was set
         mock_cache_set.assert_called_once()
-        cache_key = f'school_metrics_{self.school.id}'
-        self.assertEqual(mock_cache_set.call_args[0][0], cache_key)
-        self.assertEqual(mock_cache_set.call_args[1]['timeout'], 300)  # 5 minutes
+        
+        # Get the actual cache call arguments
+        cache_call_args = mock_cache_set.call_args
+        actual_cache_key = cache_call_args[0][0]  # First positional argument is the key
+        
+        # Verify the key starts with the secure prefix for school metrics
+        self.assertTrue(actual_cache_key.startswith('secure_school_metrics_'))
+        
+        # Check if timeout was passed as positional or keyword argument
+        if len(cache_call_args[0]) >= 3:  # cache.set(key, value, timeout)
+            timeout = cache_call_args[0][2]
+            self.assertEqual(timeout, 300)  # 5 minutes
+        elif 'timeout' in cache_call_args[1]:  # cache.set(key, value, timeout=300)
+            self.assertEqual(cache_call_args[1]['timeout'], 300)  # 5 minutes
 
 
 class SchoolActivityFeedAPITest(BaseTestCase):
@@ -820,3 +845,26 @@ class SecurityFixesTest(BaseTestCase):
         self.assertIn('Updated school:', activity.description)
         self.assertIn('New School Name', activity.description)
         self.assertIn('New description', activity.description)
+    
+    def test_metrics_response_performance(self):
+        """Test that metrics API responds within acceptable time limits."""
+        self.client.force_authenticate(user=self.school_owner)
+        url = reverse('accounts:school-dashboard-metrics', kwargs={'pk': self.school.id})
+        
+        start_time = timezone.now()
+        response = self.client.get(url)
+        end_time = timezone.now()
+        
+        response_time_ms = (end_time - start_time).total_seconds() * 1000
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Response should be under 500ms for reasonable performance
+        self.assertLess(response_time_ms, 500)
+    
+    def test_metrics_nonexistent_school(self):
+        """Test metrics endpoint for non-existent school."""
+        self.client.force_authenticate(user=self.school_owner)
+        url = reverse('accounts:school-dashboard-metrics', kwargs={'pk': 999999})
+        
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

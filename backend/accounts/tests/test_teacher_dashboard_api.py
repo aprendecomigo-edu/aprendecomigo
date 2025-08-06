@@ -505,7 +505,7 @@ class TeacherDashboardPermissionsTest(APITestCase):
             email="teacher1@test.com",
             name="Teacher One"
         )
-        self.teacher1_profile = TeacherProfile.objects.create(user=self.teacher1)
+        self.teacher1_profile = TeacherProfile.objects.create(user=self.teacher1, bio="Teacher 1 bio")
         SchoolMembership.objects.create(
             user=self.teacher1,
             school=self.school1,
@@ -517,7 +517,7 @@ class TeacherDashboardPermissionsTest(APITestCase):
             email="teacher2@test.com",
             name="Teacher Two"
         )
-        self.teacher2_profile = TeacherProfile.objects.create(user=self.teacher2)
+        self.teacher2_profile = TeacherProfile.objects.create(user=self.teacher2, bio="Teacher 2 bio")
         SchoolMembership.objects.create(
             user=self.teacher2,
             school=self.school2,

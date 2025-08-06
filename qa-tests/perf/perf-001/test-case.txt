@@ -1,0 +1,165 @@
+QA Test Case: Dashboard Redirect Performance Verification
+
+Test ID: PERF-001
+Test Name: Dashboard Redirect Performance Verification
+Purpose: Verify that the dashboard router performance fix achieves <1 second redirect times after login
+Expected Result: User redirects from /dashboard to role-specific dashboard in under 1 second
+
+=== CONTEXT (Pre-test Requirements) ===
+
+System Information:
+- Project: Aprende Comigo Platform
+- Architecture: React Native + Expo frontend, Django backend
+- Critical Performance Fix: Dashboard router optimization implemented 2025-08-05
+
+Required Environment Setup:
+1. Project Location: /Users/anapmc/Code/aprendecomigo
+2. Python Virtual Environment: .venv/ in project root
+3. Development servers: `make dev`
+4. Browser Developer Tools: Network and Performance tabs enabled
+
+Test Data:
+- School Owner Test Email: anapmc.carvalho@gmail.com
+- Teacher Test Email: (to be determined from test accounts)
+- Student Test Email: (to be determined from test accounts)
+- Parent Test Email: (to be determined from test accounts)
+
+=== DETAILED STEP-BY-STEP INSTRUCTIONS ===
+
+Step 1: Environment Setup and Server Start
+1. Navigate to project directory
+2. Start development servers
+3. Verify both frontend and backend are running
+Commands:
+  cd /Users/anapmc/Code/aprendecomigo
+  make dev
+
+Expected: Both servers start successfully on http://localhost:8081 (frontend) and http://localhost:8000 (backend)
+Screenshot: 01_servers_running.png
+
+Step 2: Prepare Performance Monitoring
+1. Open browser to http://localhost:8081
+2. Open Developer Tools (F12)
+3. Navigate to Network tab
+4. Clear network logs
+5. Navigate to Performance tab and prepare for recording
+Expected: Developer tools ready for performance measurement
+Screenshot: 02_devtools_ready.png
+
+Step 3: School Owner Login Performance Test
+1. Navigate to signin page
+2. Enter school owner email: anapmc.carvalho@gmail.com
+3. Click "Send Verification Code"
+4. Check email for verification code
+5. **START PERFORMANCE RECORDING** before entering code
+6. Enter verification code and submit
+7. **MEASURE TIME** from submission to final dashboard load
+8. **STOP PERFORMANCE RECORDING**
+9. Record network activity and timing
+
+Expected: Redirect to /(school-admin) dashboard in <1 second
+Critical Measurement: Login verification → Dashboard load time
+Screenshot: 03_school_owner_performance.png
+
+Step 4: Network Activity Analysis
+1. Review Network tab logs during redirect
+2. Count total API calls made during redirect process
+3. Identify any duplicate dashboard_info calls
+4. Verify no cross-role API calls (no parent endpoints called)
+5. Document timing of each network request
+
+Expected: 
+- Total API calls <3 during redirect
+- No duplicate dashboard_info calls
+- No parent/student API calls for school owner
+- All requests complete quickly
+Screenshot: 04_network_analysis.png
+
+Step 5: Repeat for Additional User Roles (if available)
+Note: Test with available test accounts for other roles
+
+For Teacher Role:
+1. Logout from school owner account
+2. Repeat Steps 2-4 with teacher test account
+3. Verify redirect to /(teacher) dashboard
+4. Measure performance and API calls
+
+For Student Role:
+1. Logout from previous account
+2. Repeat Steps 2-4 with student test account
+3. Verify redirect to /(student) dashboard
+4. Measure performance and API calls
+
+For Parent Role:
+1. Logout from previous account
+2. Repeat Steps 2-4 with parent test account
+3. Verify redirect to /(parent) dashboard
+4. Measure performance and API calls
+
+Expected: All role redirects complete in <1 second
+Screenshot: 05_all_roles_performance.png
+
+Step 6: Browser Cache Impact Test
+1. Perform fresh login (clear cache)
+2. Perform subsequent login (with cache)
+3. Compare performance between fresh vs cached scenarios
+4. Verify cached user profile enables faster redirects
+
+Expected: Cached scenarios perform as well or better than fresh scenarios
+Screenshot: 06_cache_impact_test.png
+
+Step 7: Server Log Analysis
+1. Check backend logs during test execution
+Commands:
+  make logs
+
+2. Look for:
+   - API call frequency and timing
+   - Any error messages during redirect
+   - Performance-related log entries
+   - Verification that auto-firing hooks are disabled
+
+Expected: Clean logs with minimal API calls, no errors
+Screenshot: 07_server_logs.png
+
+=== PASS/FAIL CRITERIA ===
+
+PASS: Dashboard redirect performance meets all targets
+- Redirect time consistently <1 second across all user roles
+- API calls during redirect <3 total calls
+- No duplicate dashboard_info API calls observed
+- No cross-role API calls (admin not calling parent endpoints)
+- Server logs show clean, minimal API activity
+- User experience is smooth and responsive
+
+FAIL: Any performance target not met
+- Redirect time ≥1 second for any user role
+- API calls during redirect ≥3 calls
+- Duplicate dashboard_info calls detected
+- Cross-role API calls observed
+- Server errors or excessive API activity
+- Poor user experience or visible delays
+
+Individual Step Criteria:
+- Step 1: PASS if servers start successfully, FAIL if startup issues
+- Step 2: PASS if dev tools ready, FAIL if browser issues
+- Step 3: PASS if redirect <1 second, FAIL if ≥1 second or errors
+- Step 4: PASS if <3 API calls and no duplicates, FAIL if ≥3 calls or duplicates
+- Step 5: PASS if all available roles perform well, FAIL if any role has issues
+- Step 6: PASS if caching improves or maintains performance, FAIL if caching degrades performance
+- Step 7: PASS if logs are clean, FAIL if errors or excessive activity
+
+Overall Result: PASS only if ALL steps pass AND performance targets met, FAIL if ANY step fails
+
+=== PERFORMANCE BENCHMARKS ===
+
+Critical Success Metrics:
+1. **Redirect Time**: <1 second (down from 8+ seconds = 87.5% improvement)
+2. **API Call Count**: <3 calls during redirect (down from 6+ calls)
+3. **User Experience**: Immediate, responsive redirects
+4. **Server Load**: Reduced unnecessary API traffic
+
+Performance Comparison:
+- BEFORE FIX: 8+ seconds, 6+ API calls, duplicate calls, cross-role calls
+- AFTER FIX: <1 second, <3 API calls, no duplicates, role-specific calls
+- TARGET IMPROVEMENT: 87.5% faster redirect times

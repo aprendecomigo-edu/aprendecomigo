@@ -53,7 +53,7 @@ const VerifyCodeForm = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
-  const { checkAuthStatus } = useAuth();
+  const { checkAuthStatus, setUserProfile } = useAuth();
 
   // Verify code form
   const verifyCodeForm = useForm<VerifyCodeSchemaType>({
@@ -98,34 +98,73 @@ const VerifyCodeForm = () => {
           : { phone: data.contact, code: data.code };
 
       console.log('Verification API params:', params);
-      const response: AuthResponse = await verifyEmailCode(params);
-      console.log('Verification response:', response);
-
-      // Successfully verified - now explicitly update auth state
-      await checkAuthStatus();
-
-      toast.showToast('success', 'Verification successful!');
-
-      // Check if there's a specific next route (e.g., for tutors)
-      if (nextRoute) {
-        console.log('Redirecting to specified next route:', nextRoute);
-        router.replace(decodeURIComponent(nextRoute));
-        return;
+      
+      // Step 1: API verification - handle specific errors
+      let response: AuthResponse;
+      try {
+        response = await verifyEmailCode(params);
+        console.log('Verification response:', response);
+      } catch (verifyError: any) {
+        console.error('Verification API error:', verifyError);
+        
+        // Handle specific verification errors
+        if (verifyError.response?.status === 400) {
+          const errorMessage = verifyError.response?.data?.error || 'Invalid verification code. Please try again.';
+          toast.showToast('error', errorMessage);
+          return;
+        } else if (verifyError.response?.status === 429) {
+          toast.showToast('error', 'Too many attempts. Please wait and try again.');
+          return;
+        }
+        
+        // Re-throw unexpected errors
+        throw verifyError;
       }
 
-      // Check if this is a new school admin that needs onboarding
-      const shouldShowOnboarding = await checkForOnboarding(response);
+      // Step 2: Store profile and update auth - handle separately to avoid false error messages
+      try {
+        // Store user profile data for immediate routing
+        await setUserProfile(response.user);
+        console.log('User profile stored with primary_role:', response.user.primary_role);
 
-      if (shouldShowOnboarding) {
-        console.log('Redirecting new school admin to onboarding welcome screen');
-        router.replace('/onboarding/welcome');
-      } else {
-        // Navigate to root after verification - auth context will handle redirect
-        router.replace('/');
+        // Successfully verified - now explicitly update auth state
+        await checkAuthStatus();
+
+        // Show success message (verification definitely succeeded)
+        toast.showToast('success', 'Verification successful!');
+
+        // Check if there's a specific next route (e.g., for tutors)
+        if (nextRoute) {
+          console.log('Redirecting to specified next route:', nextRoute);
+          router.replace(decodeURIComponent(nextRoute));
+          return;
+        }
+
+        // Check if this is a new school admin that needs onboarding
+        const shouldShowOnboarding = await checkForOnboarding(response);
+
+        if (shouldShowOnboarding) {
+          console.log('Redirecting new school admin to onboarding welcome screen');
+          router.replace('/onboarding/welcome');
+        } else {
+          // Navigate to root after verification - auth context will handle redirect
+          router.replace('/');
+        }
+      } catch (authUpdateError) {
+        // Auth succeeded but state update failed - still redirect with success message
+        console.warn('Auth state update failed, but verification succeeded:', authUpdateError);
+        toast.showToast('success', 'Verification successful!');
+        
+        // Still proceed with redirect since verification actually succeeded
+        if (nextRoute) {
+          router.replace(decodeURIComponent(nextRoute));
+        } else {
+          router.replace('/');
+        }
       }
     } catch (error) {
-      console.error('Verification error:', error);
-      toast.showToast('error', 'Invalid verification code. Please try again.');
+      console.error('Unexpected verification error:', error);
+      toast.showToast('error', 'An unexpected error occurred. Please try again.');
     } finally {
       setIsVerifying(false);
     }

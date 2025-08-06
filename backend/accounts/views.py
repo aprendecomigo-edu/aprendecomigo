@@ -1,6 +1,7 @@
 import logging
 
-from common.messaging import send_email_verification_code, TeacherInvitationEmailService
+from common.messaging import send_email_verification_code
+from messaging.services import TeacherInvitationEmailService
 from common.throttles import (
     BulkInvitationIPThrottle,
     BulkInvitationThrottle,
@@ -17,8 +18,19 @@ from django.db import models, transaction
 from django.utils import timezone
 from knox.auth import TokenAuthentication
 from knox.models import AuthToken
+from messaging.models import (
+    EmailDeliveryStatus,
+    EmailSequence,
+    EmailSequenceStep,
+    EmailCommunication,
+    SchoolEmailTemplate,
+    EmailTemplateType,
+    EmailCommunicationType,
+)
 from rest_framework import serializers, status, viewsets
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -42,16 +54,7 @@ from .models import (
     Course,
     CustomUser,
     EducationalSystem,
-    EmailDeliveryStatus,
-    EmailSequence,
-    EmailSequenceStep,
-    EmailCommunication,
-    SchoolEmailTemplate,
-    EmailTemplateType,
-    EmailCommunicationType,
     InvitationStatus,
-    ParentChildRelationship,
-    ParentProfile,
     School,
     SchoolActivity,
     SchoolInvitation,
@@ -78,20 +81,13 @@ from .serializers import (
     CreateStudentSerializer,
     CreateUserSerializer,
     EducationalSystemSerializer,
-    EmailAnalyticsSerializer,
-    EmailCommunicationSerializer,
-    EmailSequenceSerializer,
-    EmailTemplatePreviewSerializer,
     EnhancedSchoolSerializer,
     InviteExistingTeacherSerializer,
-    ParentChildRelationshipSerializer,
-    ParentProfileSerializer,
     ProfileWizardDataSerializer,
     ProfileWizardStepValidationSerializer,
     ProfilePhotoUploadSerializer,
     RequestCodeSerializer,
     SchoolActivitySerializer,
-    SchoolEmailTemplateSerializer,
     SchoolInvitationSerializer,
     SchoolMembershipSerializer,
     SchoolMetricsSerializer,
@@ -117,11 +113,9 @@ class KnoxAuthenticatedAPIView(APIView):
     """
     Base class for views that require Knox token authentication.
     """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.authentication_classes = [TokenAuthentication]
-        self.permission_classes = [IsAuthenticated]
+    
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated]
 
 
 # Base class for authenticated viewsets
@@ -129,11 +123,9 @@ class KnoxAuthenticatedViewSet(viewsets.ModelViewSet):
     """
     Base class for viewsets that require Knox token authentication.
     """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.authentication_classes = [TokenAuthentication]
-        self.permission_classes = [IsAuthenticated]
+    
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated]
 
 
 class UserViewSet(KnoxAuthenticatedViewSet):
@@ -171,6 +163,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
     def dashboard_info(self, request):
         """
         Get dashboard information for the current user
+        Cached for 5 minutes to prevent duplicate calls during authentication flow
         """
         user = request.user
 
@@ -181,6 +174,13 @@ class UserViewSet(KnoxAuthenticatedViewSet):
                 {"error": "Authentication required"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+        
+        # Cache key for user dashboard info
+        cache_key = f"dashboard_info_user_{user.id}"
+        cached_response = cache.get(cache_key)
+        
+        if cached_response is not None:
+            return Response(cached_response)
 
         # Basic user info
         user_info = {
@@ -287,7 +287,12 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             if hasattr(user, "student_profile") and user.student_profile:
                 user_info["calendar_iframe"] = user.student_profile.calendar_iframe
 
-        return Response({"user_info": user_info, "stats": stats})
+        response_data = {"user_info": user_info, "stats": stats}
+        
+        # Cache the response for 5 minutes to prevent duplicate calls
+        cache.set(cache_key, response_data, timeout=300)
+        
+        return Response(response_data)
 
     @action(detail=False, methods=["post"])
     def complete_first_login(self, request):
@@ -853,6 +858,35 @@ class VerifyCodeView(APIView):
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+class ValidateTokenView(APIView):
+    """
+    Lightweight API endpoint to validate authentication token.
+    PERFORMANCE OPTIMIZED: Returns minimal response for fast auth checks.
+    Used instead of heavy dashboard_info endpoint for authentication validation.
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Validate token and return minimal user info.
+        This is a lightweight alternative to dashboard_info for auth checks.
+        """
+        try:
+            # Token is valid if we reach here (middleware validated it)
+            return Response({
+                "valid": True,
+                "user_id": request.user.id,
+                "email": request.user.email
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Token validation error: {e}")
+            return Response({
+                "valid": False,
+                "error": "Token validation failed"
+            }, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class SchoolViewSet(KnoxAuthenticatedViewSet):
@@ -1486,8 +1520,10 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
                 teacher_courses = []
                 if course_ids:
                     for course_id in course_ids:
-                        teacher_course = TeacherCourse.objects.create(
-                            teacher=teacher_profile, course_id=course_id, is_active=True
+                        teacher_course, created = TeacherCourse.objects.get_or_create(
+                            teacher=teacher_profile, 
+                            course_id=course_id,
+                            defaults={'is_active': True}
                         )
                         teacher_courses.append(teacher_course)
 
@@ -1527,6 +1563,12 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
 
                 return Response(response_data, status=status.HTTP_201_CREATED)
 
+        except ValidationError as e:
+            # Handle validation errors as 400
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except Exception as e:
             # Log the error for debugging
             logger.error(f"Teacher onboarding failed for user {request.user.id}: {e!s}")
@@ -2638,6 +2680,12 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
             
             return Response(courses_data)
             
+        except DRFValidationError:
+            # Let DRF validation errors propagate as 400
+            raise
+        except ValidationError as e:
+            # Convert Django validation errors to DRF validation errors
+            raise DRFValidationError(str(e))
         except Exception as e:
             logger.error(f"Error in CourseViewSet.list for user {request.user.id}: {e}")
             return Response(
@@ -2656,9 +2704,7 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
                     raise ValidationError("Invalid educational system ID")
                 queryset = queryset.filter(educational_system_id=educational_system_id)
             except (ValueError, ValidationError):
-                # Invalid ID - this will be handled by returning empty results
-                # or we could raise a 400 error here
-                from rest_framework.exceptions import ValidationError as DRFValidationError
+                # Invalid ID - raise 400 error
                 raise DRFValidationError({"educational_system": "Invalid educational system ID"})
         
         # Filter by education level
@@ -2726,167 +2772,201 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
         for course in courses_data:
             course_id = course['id']
             
-            if course_id in popularity_data:
-                course['popularity_metrics'] = popularity_data[course_id]
+            if request.query_params.get('include_popularity') == 'true':
+                course['popularity_metrics'] = popularity_data.get(course_id, {
+                    'total_sessions': 0,
+                    'unique_students': 0,
+                    'popularity_score': 0,
+                    'rank': 0
+                })
             
-            if course_id in teacher_data:
-                course['available_teachers'] = teacher_data[course_id]
+            if request.query_params.get('include_teachers') == 'true':
+                course['available_teachers'] = teacher_data.get(course_id, [])
             
-            if course_id in market_data:
-                course['market_data'] = market_data[course_id]
+            if request.query_params.get('include_market_data') == 'true':
+                course['market_data'] = market_data.get(course_id, {
+                    'avg_hourly_rate': 0.0,
+                    'min_hourly_rate': 0.0,
+                    'max_hourly_rate': 0.0,
+                    'total_teachers': 0,
+                    'demand_score': 0
+                })
         
         return courses_data
     
     def _calculate_popularity_metrics(self, course_ids):
         """Calculate popularity metrics for courses."""
-        from finances.models import ClassSession, SessionStatus
-        from collections import defaultdict
-        
-        # NOTE: This is a simplified implementation that counts all sessions for teachers
-        # who teach a course, regardless of which specific course the session was for.
-        # In practice, you might want to track session-to-course relationships more precisely.
-        
-        # Get course associations through teacher-course relationships
-        teacher_courses = TeacherCourse.objects.filter(
-            course_id__in=course_ids
-        ).select_related('teacher', 'course')
-        
-        # Map courses to teachers
-        course_teachers = defaultdict(list)
-        for tc in teacher_courses:
-            course_teachers[tc.course_id].append(tc.teacher_id)
-        
-        # Calculate metrics per course
-        course_metrics = {}
-        for course_id in course_ids:
-            teachers = course_teachers.get(course_id, [])
+        try:
+            from finances.models import ClassSession, SessionStatus
+            from collections import defaultdict
             
-            if not teachers:
-                # No teachers for this course
+            # NOTE: This is a simplified implementation that counts all sessions for teachers
+            # who teach a course, regardless of which specific course the session was for.
+            # In practice, you might want to track session-to-course relationships more precisely.
+            
+            # Get course associations through teacher-course relationships
+            teacher_courses = TeacherCourse.objects.filter(
+                course_id__in=course_ids
+            ).select_related('teacher', 'course')
+            
+            # Map courses to teachers
+            course_teachers = defaultdict(list)
+            for tc in teacher_courses:
+                course_teachers[tc.course_id].append(tc.teacher_id)
+            
+            # Calculate metrics per course
+            course_metrics = {}
+            for course_id in course_ids:
+                teachers = course_teachers.get(course_id, [])
+                
+                if not teachers:
+                    # No teachers for this course
+                    course_metrics[course_id] = {
+                        'total_sessions': 0,
+                        'unique_students': 0,
+                        'popularity_score': 0,
+                        'rank': 0
+                    }
+                    continue
+                
+                # Get sessions for teachers of this course
+                sessions = ClassSession.objects.filter(
+                    teacher_id__in=teachers,
+                    status=SessionStatus.COMPLETED
+                ).prefetch_related('students')
+                
+                total_sessions = sessions.count()
+                unique_students = set()
+                for session in sessions:
+                    for student in session.students.all():
+                        unique_students.add(student.id)
+                
+                # Calculate popularity score (sessions * 2 + unique_students * 3)
+                popularity_score = total_sessions * 2 + len(unique_students) * 3
+                
                 course_metrics[course_id] = {
-                    'total_sessions': 0,
-                    'unique_students': 0,
-                    'popularity_score': 0,
-                    'rank': 0
+                    'total_sessions': total_sessions,
+                    'unique_students': len(unique_students),
+                    'popularity_score': popularity_score,
+                    'rank': 0  # Will be calculated after all scores are computed
                 }
-                continue
             
-            # Get sessions for teachers of this course
-            sessions = ClassSession.objects.filter(
-                teacher_id__in=teachers,
-                status=SessionStatus.COMPLETED
-            ).prefetch_related('students')
+            # Calculate ranks
+            sorted_courses = sorted(
+                course_metrics.items(),
+                key=lambda x: x[1]['popularity_score'],
+                reverse=True
+            )
             
-            total_sessions = sessions.count()
-            unique_students = set()
-            for session in sessions:
-                for student in session.students.all():
-                    unique_students.add(student.id)
+            for rank, (course_id, metrics) in enumerate(sorted_courses, 1):
+                course_metrics[course_id]['rank'] = rank
             
-            # Calculate popularity score (sessions * 2 + unique_students * 3)
-            popularity_score = total_sessions * 2 + len(unique_students) * 3
+            return course_metrics
             
-            course_metrics[course_id] = {
-                'total_sessions': total_sessions,
-                'unique_students': len(unique_students),
-                'popularity_score': popularity_score,
-                'rank': 0  # Will be calculated after all scores are computed
-            }
-        
-        # Calculate ranks
-        sorted_courses = sorted(
-            course_metrics.items(),
-            key=lambda x: x[1]['popularity_score'],
-            reverse=True
-        )
-        
-        for rank, (course_id, metrics) in enumerate(sorted_courses, 1):
-            course_metrics[course_id]['rank'] = rank
-        
-        return course_metrics
+        except Exception as e:
+            logger.error(f"Error calculating popularity metrics: {e}")
+            # Return empty metrics for all courses
+            return {course_id: {
+                'total_sessions': 0,
+                'unique_students': 0,
+                'popularity_score': 0,
+                'rank': 0
+            } for course_id in course_ids}
     
     def _get_teacher_information(self, course_ids):
         """Get teacher information for courses."""
-        teacher_data = {}
-        
-        # Get teacher-course relationships
-        teacher_courses = TeacherCourse.objects.filter(
-            course_id__in=course_ids,
-            is_active=True
-        ).select_related('teacher__user', 'course')
-        
-        # Group by course
-        for tc in teacher_courses:
-            course_id = tc.course_id
-            if course_id not in teacher_data:
-                teacher_data[course_id] = []
+        try:
+            teacher_data = {}
             
-            teacher_info = {
-                'id': tc.teacher.id,
-                'name': tc.teacher.user.name,
-                'email': tc.teacher.user.email,
-                'hourly_rate': float(tc.hourly_rate) if tc.hourly_rate else float(tc.teacher.hourly_rate or 0),
-                'profile_completion_score': float(tc.teacher.profile_completion_score),
-                'is_profile_complete': tc.teacher.is_profile_complete,
-                'specialty': tc.teacher.specialty
-            }
+            # Get teacher-course relationships
+            teacher_courses = TeacherCourse.objects.filter(
+                course_id__in=course_ids,
+                is_active=True
+            ).select_related('teacher__user', 'course')
             
-            teacher_data[course_id].append(teacher_info)
-        
-        return teacher_data
+            # Group by course
+            for tc in teacher_courses:
+                course_id = tc.course_id
+                if course_id not in teacher_data:
+                    teacher_data[course_id] = []
+                
+                teacher_info = {
+                    'id': tc.teacher.id,
+                    'name': tc.teacher.user.name,
+                    'email': tc.teacher.user.email,
+                    'hourly_rate': float(tc.hourly_rate) if tc.hourly_rate else float(tc.teacher.hourly_rate or 0),
+                    'profile_completion_score': float(tc.teacher.profile_completion_score or 0),
+                    'is_profile_complete': tc.teacher.is_profile_complete,
+                    'specialty': tc.teacher.specialty or ''
+                }
+                
+                teacher_data[course_id].append(teacher_info)
+            
+            return teacher_data
+            
+        except Exception as e:
+            logger.error(f"Error getting teacher information: {e}")
+            # Return empty teacher data for all courses
+            return {}
     
     def _calculate_market_data(self, course_ids):
         """Calculate market data for courses."""
-        from django.db.models import Avg, Min, Max, Count
-        
-        market_data = {}
-        
-        # Get aggregated data from teacher-course relationships
-        for course_id in course_ids:
-            teacher_courses = TeacherCourse.objects.filter(
-                course_id=course_id,
-                is_active=True
-            ).exclude(hourly_rate__isnull=True)
+        try:
+            from django.db.models import Avg, Min, Max, Count
             
-            if teacher_courses.exists():
-                # Use teacher-course specific rates where available
-                rates = [float(tc.hourly_rate) for tc in teacher_courses if tc.hourly_rate]
+            market_data = {}
+            
+            # Get aggregated data from teacher-course relationships
+            for course_id in course_ids:
+                teacher_courses = TeacherCourse.objects.filter(
+                    course_id=course_id,
+                    is_active=True
+                ).exclude(hourly_rate__isnull=True)
                 
-                # Fallback to teacher profile rates if no course-specific rates
-                if not rates:
-                    rates = [
-                        float(tc.teacher.hourly_rate) 
-                        for tc in teacher_courses 
-                        if tc.teacher.hourly_rate
-                    ]
-                
-                if rates:
-                    avg_rate = sum(rates) / len(rates)
-                    min_rate = min(rates)
-                    max_rate = max(rates)
+                if teacher_courses.exists():
+                    # Use teacher-course specific rates where available
+                    rates = [float(tc.hourly_rate) for tc in teacher_courses if tc.hourly_rate]
+                    
+                    # Fallback to teacher profile rates if no course-specific rates
+                    if not rates:
+                        rates = [
+                            float(tc.teacher.hourly_rate) 
+                            for tc in teacher_courses 
+                            if tc.teacher.hourly_rate
+                        ]
+                    
+                    if rates:
+                        avg_rate = sum(rates) / len(rates)
+                        min_rate = min(rates)
+                        max_rate = max(rates)
+                    else:
+                        avg_rate = min_rate = max_rate = 0.0
+                    
+                    total_teachers = teacher_courses.count()
+                    
+                    # Calculate demand score based on teacher availability and sessions
+                    # This is a simplified calculation - in production, you might want more sophisticated scoring
+                    demand_score = min(100, total_teachers * 10)  # Cap at 100
+                    
                 else:
                     avg_rate = min_rate = max_rate = 0.0
+                    total_teachers = 0
+                    demand_score = 0
                 
-                total_teachers = teacher_courses.count()
-                
-                # Calculate demand score based on teacher availability and sessions
-                # This is a simplified calculation - in production, you might want more sophisticated scoring
-                demand_score = min(100, total_teachers * 10)  # Cap at 100
-                
-            else:
-                avg_rate = min_rate = max_rate = 0.0
-                total_teachers = 0
-                demand_score = 0
+                market_data[course_id] = {
+                    'avg_hourly_rate': avg_rate,
+                    'min_hourly_rate': min_rate,
+                    'max_hourly_rate': max_rate,
+                    'total_teachers': total_teachers,
+                    'demand_score': demand_score
+                }
             
-            market_data[course_id] = {
-                'avg_hourly_rate': avg_rate,
-                'min_hourly_rate': min_rate,
-                'max_hourly_rate': max_rate,
-                'total_teachers': total_teachers,
-                'demand_score': demand_score
-            }
-        
-        return market_data
+            return market_data
+            
+        except Exception as e:
+            logger.error(f"Error calculating market data: {e}")
+            # Return empty market data for all courses
+            return {}
     
     def _apply_custom_ordering(self, courses_data, ordering):
         """Apply custom ordering for enhanced data."""
@@ -7768,10 +7848,21 @@ class ParentChildRelationshipViewSet(KnoxAuthenticatedViewSet):
     """
     ViewSet for managing parent-child relationships.
     Allows parents to manage their children and school administrators to oversee relationships.
+    
+    Restricts access to users with parent-child relationships or admin permissions
+    to prevent unnecessary API calls from other user types.
     """
     
     serializer_class = ParentChildRelationshipSerializer
     permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        """
+        Allow access to parents with children OR school administrators.
+        This prevents teachers and students from accessing parent-child relationships unnecessarily.
+        """
+        # Keep the existing permission logic but optimize queryset filtering instead
+        return [IsAuthenticated()]
     
     def get_queryset(self):
         """Filter relationships based on user role and permissions."""

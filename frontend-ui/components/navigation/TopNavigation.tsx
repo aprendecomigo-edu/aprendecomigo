@@ -12,7 +12,7 @@ import { Platform, Alert } from 'react-native';
 import { NAVIGATION_COLORS } from './navigation-config';
 import { QuickActions } from './QuickActions';
 
-import { useAuth, useUserProfile, useSchool, UserSchool } from '@/api/auth';
+import { useAuth, useSchool, UserSchool } from '@/api/auth';
 import { GlobalSearch } from '@/components/search/GlobalSearch';
 import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
@@ -62,8 +62,7 @@ export const TopNavigation = ({
   showSearch = false,
   showQuickActions = true,
 }: TopNavigationProps) => {
-  const { logout } = useAuth();
-  const { userProfile } = useUserProfile();
+  const { logout, userProfile } = useAuth();
   const { userSchools, currentSchool, setCurrentSchool } = useSchool();
   const [showSchoolMenu, setShowSchoolMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);

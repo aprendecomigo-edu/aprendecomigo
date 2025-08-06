@@ -186,6 +186,14 @@ class SchoolSettingsModelTest(TestCase):
     
     def setUp(self):
         """Set up test data"""
+        # Create default educational system that SchoolSettings expects
+        self.educational_system = EducationalSystem.objects.create(
+            id=1,
+            name='Portugal',
+            code='pt',
+            description='Portuguese educational system'
+        )
+        
         self.school = School.objects.create(
             name='Test School',
             description='A test school'

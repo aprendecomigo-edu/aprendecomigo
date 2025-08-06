@@ -1,0 +1,2 @@
+run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
+run-20250805-093728,2025-08-05T09:37:28Z,PARTIAL_PASS,5,2,Playwright Chrome,macOS development,Backend performance fix working - API calls reduced 6+ to 3. Frontend routing issues prevent final redirect completion.

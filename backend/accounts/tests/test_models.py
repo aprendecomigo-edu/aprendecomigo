@@ -13,6 +13,7 @@ from accounts.models import (
     StudentProfile,
     TeacherProfile,
     VerificationCode,
+    EducationalSystem,
 )
 
 User = get_user_model()
@@ -158,6 +159,17 @@ class StudentProfileTests(TestCase):
 
     def setUp(self):
         """Set up test data."""
+        # Create educational system if it doesn't exist
+        self.educational_system, _ = EducationalSystem.objects.get_or_create(
+            id=1,
+            defaults={
+                'name': 'Portugal',
+                'code': 'pt', 
+                'description': 'Portuguese educational system',
+                'is_active': True
+            }
+        )
+        
         self.user = User.objects.create_user(
             email="student@example.com",
             password="studentpass123",

@@ -524,7 +524,7 @@ class ErrorHandlingTests(WizardOrchestrationAPITestCase):
         response = self.client.post(url, {}, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('expired', response.data['error'].lower())
+        self.assertIn('expired', response.data['error']['message'].lower())
     
     def test_unauthorized_access(self):
         """Test handling of unauthorized access attempts."""
@@ -548,4 +548,4 @@ class ErrorHandlingTests(WizardOrchestrationAPITestCase):
         response = self.client.post(url, {}, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertIn('not for your account', response.data['error'])
+        self.assertIn('not for your account', response.data['error']['message'])

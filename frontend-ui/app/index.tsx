@@ -9,9 +9,6 @@ import { VStack } from '@/components/ui/vstack';
 export default function Index() {
   const { isLoggedIn, isLoading } = useAuth();
 
-  // AuthContext already handles auth check on initialization
-  // No need to call checkAuthStatus() again here
-
   // While checking auth status, show a loading spinner
   if (isLoading) {
     return (
@@ -23,6 +20,7 @@ export default function Index() {
   }
 
   // If authenticated, redirect to main dashboard router which handles role-based routing
+  // TODO: lets go straight to school-admin dashboard for now and fix other bits later
   if (isLoggedIn) {
     return <Redirect href={'/dashboard' as Href} />;
   }

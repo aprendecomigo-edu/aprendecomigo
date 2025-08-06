@@ -37,16 +37,27 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {},
 }
 
+# Explicitly disable all throttle scopes to prevent any throttling during tests
+# Set to None disables the throttle entirely
+DEFAULT_THROTTLE_RATES = {
+    'profile_wizard': None,
+    'file_upload': None, 
+    'security_event': None,
+    'ip_based': None,
+}
+
 # Disable password hashing for faster tests
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 # Use a faster session backend
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
-# Use a faster cache backend
+# Use locmem cache backend for tests to support throttling tests
+# DummyCache doesn't persist data, making throttling tests impossible
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "test-cache",
     }
 }
 
