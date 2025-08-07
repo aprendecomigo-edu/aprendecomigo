@@ -78,3 +78,32 @@ STRIPE_SECRET_KEY = "sk_test_test_key_for_django_tests"
 STRIPE_PUBLIC_KEY = "pk_test_test_key_for_django_tests"
 STRIPE_WEBHOOK_SECRET = "whsec_test_key_for_django_tests"
 
+# Override logging to use console only (no file handlers) for CI/testing
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'ERROR',  # Only show errors in tests to reduce noise
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
+
