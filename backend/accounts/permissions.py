@@ -527,3 +527,56 @@ class CanManageChildPurchases(permissions.BasePermission):
             ).exists()
         
         return False
+
+
+class IsParentWithChildren(permissions.BasePermission):
+    """
+    Custom permission to check if user is a parent with active children relationships.
+    Used for parent dashboard and child management features.
+    """
+
+    message = "You must be a parent with active children to perform this action."
+
+    def has_permission(self, request, _view):
+        if not (request.user and request.user.is_authenticated):
+            return False
+            
+        from .models import ParentChildRelationship
+        
+        # Check if user has any active parent-child relationships
+        return ParentChildRelationship.objects.filter(
+            parent=request.user,
+            is_active=True
+        ).exists()
+
+    def has_object_permission(self, request, _view, obj):
+        from .models import ParentChildRelationship
+        
+        # First check if user is a parent with children
+        if not ParentChildRelationship.objects.filter(
+            parent=request.user,
+            is_active=True
+        ).exists():
+            return False
+        
+        # If object relates to a specific child, verify parent-child relationship
+        if hasattr(obj, "child"):
+            return ParentChildRelationship.objects.filter(
+                parent=request.user,
+                child=obj.child,
+                is_active=True
+            ).exists()
+        
+        # If object relates to a student, verify parent-child relationship
+        if hasattr(obj, "student"):
+            return ParentChildRelationship.objects.filter(
+                parent=request.user,
+                child=obj.student,
+                is_active=True
+            ).exists()
+        
+        # If object is linked to a user, check if that user is the requester
+        if hasattr(obj, "user"):
+            return obj.user == request.user
+        
+        return True  # User is a parent with children, allow general access

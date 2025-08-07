@@ -6,20 +6,20 @@ based on teacher invitation status changes and profile updates.
 """
 
 import logging
+from django.apps import apps
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta
 
-from accounts.models import TeacherInvitation, CustomUser, InvitationStatus, School
-from .models import EmailTemplateType, EmailCommunicationType
-from .services.enhanced_email_service import EnhancedEmailService
-from .services.email_sequence_service import EmailSequenceOrchestrationService
+from messaging.models import EmailTemplateType, EmailCommunicationType
+from messaging.services.enhanced_email_service import EnhancedEmailService
+from messaging.services.email_sequence_service import EmailSequenceOrchestrationService
 
 logger = logging.getLogger(__name__)
 
 
-# @receiver(post_save, sender=TeacherInvitation)  # TEMPORARILY DISABLED - Conflicts with legacy email service
+# @receiver(post_save, sender="accounts.TeacherInvitation")  # TEMPORARILY DISABLED - Conflicts with legacy email service
 def handle_teacher_invitation_created(sender, instance, created, **kwargs):
     """
     Handle automated emails when a teacher invitation is created.
@@ -50,6 +50,7 @@ def handle_teacher_invitation_created(sender, instance, created, **kwargs):
                 logger.info(f"Invitation email sent successfully to {instance.email}")
                 
                 # Mark invitation as sent
+                from accounts.models import InvitationStatus
                 instance.status = InvitationStatus.SENT
                 instance.email_sent_at = timezone.now()
                 instance.save(update_fields=['status', 'email_sent_at'])
@@ -71,7 +72,7 @@ def handle_teacher_invitation_created(sender, instance, created, **kwargs):
             instance.mark_email_failed(f"Signal processing error: {str(e)}")
 
 
-# @receiver(post_save, sender=TeacherInvitation)  # TEMPORARILY DISABLED - Conflicts with legacy email service
+# @receiver(post_save, sender="accounts.TeacherInvitation")  # TEMPORARILY DISABLED - Conflicts with legacy email service
 def handle_teacher_invitation_accepted(sender, instance, **kwargs):
     """
     Handle automated emails when a teacher invitation is accepted.
@@ -92,6 +93,7 @@ def handle_teacher_invitation_accepted(sender, instance, **kwargs):
                 
                 try:
                     # Find the teacher user (should exist after acceptance)
+                    CustomUser = apps.get_model('accounts', 'CustomUser')
                     teacher_user = CustomUser.objects.filter(email=instance.email).first()
                     
                     if teacher_user:
@@ -132,7 +134,7 @@ def handle_teacher_invitation_accepted(sender, instance, **kwargs):
             logger.exception(f"Error checking invitation acceptance status for {instance.id}: {e}")
 
 
-@receiver(post_save, sender=CustomUser)
+@receiver(post_save, sender="accounts.CustomUser")
 def handle_teacher_profile_updates(sender, instance, created, **kwargs):
     """
     Handle automated emails when teacher profiles are updated.
@@ -330,7 +332,7 @@ def _has_recent_profile_reminder(user, school, hours: int = 24) -> bool:
     Returns:
         True if user has received a recent profile reminder
     """
-    from .models import EmailCommunication
+    from messaging.models import EmailCommunication
     
     cutoff_time = timezone.now() - timedelta(hours=hours)
     
@@ -347,7 +349,7 @@ def _has_recent_profile_reminder(user, school, hours: int = 24) -> bool:
 # Signal to prevent duplicate email sends during rapid updates
 _processing_invitations = set()
 
-@receiver(pre_save, sender=TeacherInvitation)
+@receiver(pre_save, sender="accounts.TeacherInvitation")
 def handle_teacher_invitation_pre_save(sender, instance, **kwargs):
     """
     Handle pre-save logic to prevent duplicate email processing.
@@ -357,7 +359,7 @@ def handle_teacher_invitation_pre_save(sender, instance, **kwargs):
         _processing_invitations.add(instance.id)
 
 
-@receiver(post_save, sender=TeacherInvitation)
+@receiver(post_save, sender="accounts.TeacherInvitation")
 def handle_teacher_invitation_post_save_cleanup(sender, instance, **kwargs):
     """
     Clean up processing set after invitation processing.

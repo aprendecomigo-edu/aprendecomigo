@@ -15,14 +15,13 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from knox.models import AuthToken
 
-from accounts.models import CustomUser, School, ParentChildRelationship, RelationshipType
+from accounts.models import CustomUser, School, ParentChildRelationship, RelationshipType, TeacherProfile
 from finances.models import (
     FamilyBudgetControl,
     PurchaseApprovalRequest,
     PurchaseTransaction,
     PricingPlan,
     ClassSession,
-    TeacherProfile,
     TransactionPaymentStatus,
     PurchaseRequestType,
     PurchaseApprovalStatus,

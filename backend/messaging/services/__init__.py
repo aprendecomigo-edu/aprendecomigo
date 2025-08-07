@@ -10,6 +10,7 @@ from .email_sequence_service import EmailSequenceOrchestrationService
 from .secure_template_engine import SecureTemplateEngine, HTMLSanitizer, TemplateVariableValidator
 from .teacher_communication_templates import DefaultEmailTemplates
 from .teacher_invitation_service import TeacherInvitationEmailService
+from .balance_monitoring_service import BalanceMonitoringService
 
 __all__ = [
     'EnhancedEmailService',
@@ -21,4 +22,5 @@ __all__ = [
     'TemplateVariableValidator',
     'DefaultEmailTemplates',
     'TeacherInvitationEmailService',
+    'BalanceMonitoringService',
 ]

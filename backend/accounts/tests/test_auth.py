@@ -32,10 +32,11 @@ class EmailAuthTests(APITestCase):
         """Set up test data."""
         self.client = APIClient()
         self.school = School.objects.create(name="Test School")
+        self.email = "test@example.com"  # Add the missing email attribute
 
         # Create a test user
         self.test_user = CustomUser.objects.create_user(
-            email="test@example.com", password="testpass123", name="Test User"
+            email=self.email, password="testpass123", name="Test User"
         )
         SchoolMembership.objects.create(user=self.test_user, school=self.school, role="student")
 
@@ -75,9 +76,8 @@ class EmailAuthTests(APITestCase):
 
     def test_verify_email_code(self):
         """Test verifying an email code."""
-        # Create a user with the test email
-        User.objects.create_user(email=self.email, password="testpass123", name="Test User")
-
+        # User already exists from setUp() as self.test_user
+        
         # Create a verification code
         verification = VerificationCode.generate_code(self.email)
 
@@ -96,8 +96,7 @@ class EmailAuthTests(APITestCase):
 
     def test_verify_email_code_invalid(self):
         """Test verifying with an invalid code."""
-        # Create a user with the test email
-        User.objects.create_user(email=self.email, password="testpass123", name="Test User")
+        # User already exists from setUp() as self.test_user
 
         # We need to generate a code in the database for the email
         # even though we're not using the actual code in the test
@@ -115,8 +114,7 @@ class EmailAuthTests(APITestCase):
 
     def test_verify_email_code_expired(self):
         """Test verifying with an expired code."""
-        # Create a user with the test email
-        User.objects.create_user(email=self.email, password="testpass123", name="Test User")
+        # User already exists from setUp() as self.test_user
 
         # Create a verification code
         verification = VerificationCode.generate_code(self.email)

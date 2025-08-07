@@ -11,14 +11,13 @@ from django.test import TestCase
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from accounts.models import CustomUser, School, ParentChildRelationship, RelationshipType
+from accounts.models import CustomUser, School, ParentChildRelationship, RelationshipType, TeacherProfile
 from finances.models import (
     FamilyBudgetControl,
     PurchaseApprovalRequest,
     PurchaseTransaction,
     PricingPlan,
     ClassSession,
-    TeacherProfile,
     TransactionPaymentStatus,
     PurchaseRequestType,
     PurchaseApprovalStatus,

@@ -9,11 +9,9 @@ import logging
 from typing import Dict, Any, Optional, List
 
 from django.db import transaction
-# Cross-app models will be loaded at runtime using apps.get_model()
 from django.apps import apps
 from finances.models import StoredPaymentMethod
 from finances.services.stripe_base import StripeService
-
 
 logger = logging.getLogger(__name__)
 
@@ -333,7 +331,7 @@ class PaymentMethodService:
             logger.error(f"Error getting default payment method for student {student_user.id}: {e}")
             return None
     
-    def cleanup_expired_payment_methods(self, student_user: Optional[CustomUser] = None) -> Dict[str, Any]:
+    def cleanup_expired_payment_methods(self, student_user=None) -> Dict[str, Any]:
         """
         Clean up expired payment methods (mark as inactive).
         
@@ -455,10 +453,16 @@ class PaymentMethodService:
                     f"for student {student_user.id} not found in Stripe. Will create new one."
                 )
         
-        # Check existing transactions for customer_id
-        existing_transaction = student_user.purchase_transactions.filter(
-            stripe_customer_id__isnull=False
-        ).first()
+        # Check existing transactions for customer_id using proper cross-app access
+        try:
+            PurchaseTransaction = apps.get_model('finances', 'PurchaseTransaction')
+            existing_transaction = PurchaseTransaction.objects.filter(
+                student=student_user,
+                stripe_customer_id__isnull=False
+            ).first()
+        except LookupError:
+            # Model not available, skip transaction check
+            existing_transaction = None
         
         if existing_transaction and existing_transaction.stripe_customer_id:
             # Verify customer exists in Stripe
