@@ -620,6 +620,23 @@ class TeacherProfile(models.Model):
         from django.utils import timezone
         self.last_activity = timezone.now()
         self.save(update_fields=['last_activity'])
+    
+    def save(self, *args, **kwargs):
+        """Override save to update completion score."""
+        # Avoid infinite recursion - skip completion update if we're already updating these fields
+        update_fields = kwargs.get('update_fields', [])
+        if update_fields and 'profile_completion_score' in update_fields:
+            return super().save(*args, **kwargs)
+        
+        # Save first, then update completion
+        super().save(*args, **kwargs)
+        
+        # Update completion score after saving
+        try:
+            self.update_completion_score()
+        except Exception as e:
+            logger.error(f"Failed to update completion score for teacher {self.id}: {e}")
+            # Don't fail the save if completion update fails
 
 
 class Course(models.Model):
@@ -861,13 +878,18 @@ class VerificationCode(models.Model):
 
         if self.failed_attempts >= self.max_attempts:
             return False
+            
         # Expire codes after 24 hours regardless of TOTP validity
         if timezone.now() - self.created_at > timedelta(hours=24):
             return False
+            
         # If code is provided, verify it
         if code:
             totp = pyotp.TOTP(self.secret_key, digits=digits, interval=interval)
             result = totp.verify(code)
+            if not result:
+                # Record failed attempt for wrong codes
+                self.record_failed_attempt()
             return bool(result)
 
         return True
