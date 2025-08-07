@@ -15,7 +15,8 @@ from django.test import TestCase, override_settings
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import CustomUser
+# Cross-app models will be loaded at runtime using apps.get_model()
+from django.apps import apps
 from finances.models import (
     PurchaseTransaction,
     StudentAccountBalance,
@@ -66,6 +67,7 @@ class PaymentServiceCreatePaymentIntentTests(TestCase):
         }
         
         # Create test user
+        CustomUser = apps.get_model('accounts', 'CustomUser')
         self.user = CustomUser.objects.create_user(
             email="student@test.com",
             name="Test Student"
@@ -268,6 +270,7 @@ class PaymentServiceConfirmPaymentCompletionTests(TestCase):
         }
         
         # Create test user
+        CustomUser = apps.get_model('accounts', 'CustomUser')
         self.user = CustomUser.objects.create_user(
             email="student@test.com",
             name="Test Student"
@@ -448,6 +451,7 @@ class PaymentServiceHandlePaymentFailureTests(TestCase):
         }
         
         # Create test user
+        CustomUser = apps.get_model('accounts', 'CustomUser')
         self.user = CustomUser.objects.create_user(
             email="student@test.com",
             name="Test Student"
@@ -598,6 +602,7 @@ class PaymentServiceFindBestSourceTransactionTests(TestCase):
     def setUp(self):
         """Set up test environment with multiple transactions."""
         # Create test user
+        CustomUser = apps.get_model('accounts', 'CustomUser')
         self.user = CustomUser.objects.create_user(
             email="student@test.com",
             name="Test Student"
@@ -681,6 +686,7 @@ class PaymentServiceFindBestSourceTransactionTests(TestCase):
     def test_find_best_source_transaction_no_available_transactions(self):
         """Test when no suitable transactions are available."""
         # Create a user with no transactions
+        CustomUser = apps.get_model('accounts', 'CustomUser')
         empty_user = CustomUser.objects.create_user(
             email="empty@test.com",
             name="Empty User"
@@ -705,6 +711,7 @@ class PaymentServiceConcurrencyTests(TestCase):
         }
         
         # Create test user
+        CustomUser = apps.get_model('accounts', 'CustomUser')
         self.user = CustomUser.objects.create_user(
             email="student@test.com",
             name="Test Student"
@@ -776,6 +783,7 @@ class PaymentServiceLoggingTests(TestCase):
         
         try:
             # Create test user
+            CustomUser = apps.get_model('accounts', 'CustomUser')
             user = CustomUser.objects.create_user(
                 email="student@test.com",
                 name="Test Student"

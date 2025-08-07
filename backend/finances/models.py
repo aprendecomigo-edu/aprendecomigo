@@ -1,7 +1,6 @@
 from decimal import Decimal
 from datetime import timedelta
 
-from accounts.models import CustomUser, School, TeacherProfile
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
@@ -79,7 +78,7 @@ class SchoolBillingSettings(models.Model):
     """Billing configuration settings for each school."""
 
     school: models.OneToOneField = models.OneToOneField(
-        School, on_delete=models.CASCADE, related_name="billing_settings", verbose_name=_("school")
+        "accounts.School", on_delete=models.CASCADE, related_name="billing_settings", verbose_name=_("school")
     )
 
     trial_cost_absorption: models.CharField = models.CharField(
@@ -126,14 +125,14 @@ class TeacherCompensationRule(models.Model):
     """Compensation rules for teachers based on different criteria."""
 
     teacher: models.ForeignKey = models.ForeignKey(
-        TeacherProfile,
+        "accounts.TeacherProfile",
         on_delete=models.CASCADE,
         related_name="compensation_rules",
         verbose_name=_("teacher"),
     )
 
     school: models.ForeignKey = models.ForeignKey(
-        School,
+        "accounts.School",
         on_delete=models.CASCADE,
         related_name="teacher_compensation_rules",
         verbose_name=_("school"),
@@ -235,14 +234,14 @@ class ClassSession(models.Model):
     """Individual class sessions taught by teachers."""
 
     teacher: models.ForeignKey = models.ForeignKey(
-        TeacherProfile,
+        "accounts.TeacherProfile",
         on_delete=models.CASCADE,
         related_name="class_sessions",
         verbose_name=_("teacher"),
     )
 
     school: models.ForeignKey = models.ForeignKey(
-        School, on_delete=models.CASCADE, related_name="class_sessions", verbose_name=_("school")
+        "accounts.School", on_delete=models.CASCADE, related_name="class_sessions", verbose_name=_("school")
     )
 
     # Session details
@@ -266,7 +265,7 @@ class ClassSession(models.Model):
     )
 
     students: models.ManyToManyField = models.ManyToManyField(
-        CustomUser,
+        "accounts.CustomUser",
         related_name="attended_sessions",
         blank=True,
         help_text=_("Students who attended this session"),
@@ -423,14 +422,14 @@ class TeacherPaymentEntry(models.Model):
     )
 
     teacher: models.ForeignKey = models.ForeignKey(
-        TeacherProfile,
+        "accounts.TeacherProfile",
         on_delete=models.CASCADE,
         related_name="payment_entries",
         verbose_name=_("teacher"),
     )
 
     school: models.ForeignKey = models.ForeignKey(
-        School,
+        "accounts.School",
         on_delete=models.CASCADE,
         related_name="teacher_payment_entries",
         verbose_name=_("school"),
@@ -507,7 +506,7 @@ class StudentAccountBalance(models.Model):
     """
 
     student: models.OneToOneField = models.OneToOneField(
-        CustomUser,
+        "accounts.CustomUser",
         on_delete=models.CASCADE,
         related_name="account_balance",
         verbose_name=_("student"),
@@ -589,7 +588,7 @@ class PurchaseTransaction(models.Model):
     """
 
     student: models.ForeignKey = models.ForeignKey(
-        CustomUser,
+        "accounts.CustomUser",
         on_delete=models.CASCADE,
         related_name="purchase_transactions",
         verbose_name=_("student"),
@@ -1068,7 +1067,7 @@ class Receipt(models.Model):
     """
     
     student: models.ForeignKey = models.ForeignKey(
-        CustomUser,
+        "accounts.CustomUser",
         on_delete=models.CASCADE,
         related_name="receipts",
         verbose_name=_("student"),
@@ -1188,7 +1187,7 @@ class StoredPaymentMethod(models.Model):
     """
     
     student: models.ForeignKey = models.ForeignKey(
-        CustomUser,
+        "accounts.CustomUser",
         on_delete=models.CASCADE,
         related_name="stored_payment_methods",
         verbose_name=_("student"),
@@ -1522,7 +1521,7 @@ class PurchaseApprovalRequest(models.Model):
     """
     
     student: models.ForeignKey = models.ForeignKey(
-        CustomUser,
+        "accounts.CustomUser",
         on_delete=models.CASCADE,
         related_name="purchase_requests",
         verbose_name=_("student"),
@@ -1530,7 +1529,7 @@ class PurchaseApprovalRequest(models.Model):
     )
     
     parent: models.ForeignKey = models.ForeignKey(
-        CustomUser,
+        "accounts.CustomUser",
         on_delete=models.CASCADE,
         related_name="pending_approvals",
         verbose_name=_("parent"),
@@ -2159,7 +2158,7 @@ class AdminAction(models.Model):
     
     # User who performed the action
     admin_user: models.ForeignKey = models.ForeignKey(
-        CustomUser,
+        "accounts.CustomUser",
         on_delete=models.PROTECT,
         related_name="admin_actions",
         verbose_name=_("admin user"),
@@ -2168,7 +2167,7 @@ class AdminAction(models.Model):
     
     # Target entities (optional, depends on action type)
     target_user: models.ForeignKey = models.ForeignKey(
-        CustomUser,
+        "accounts.CustomUser",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -2322,7 +2321,7 @@ class FraudAlert(models.Model):
     
     # Related entities
     target_user: models.ForeignKey = models.ForeignKey(
-        CustomUser,
+        "accounts.CustomUser",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -2357,7 +2356,7 @@ class FraudAlert(models.Model):
     
     # Investigation tracking
     assigned_to: models.ForeignKey = models.ForeignKey(
-        CustomUser,
+        "accounts.CustomUser",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -2434,7 +2433,7 @@ class FraudAlert(models.Model):
         delta = timezone.now() - self.created_at
         return delta.days
     
-    def assign_to_investigator(self, admin_user: CustomUser) -> None:
+    def assign_to_investigator(self, admin_user: "accounts.CustomUser") -> None:
         """Assign the alert to an investigator."""
         self.assigned_to = admin_user
         self.status = FraudAlertStatus.INVESTIGATING

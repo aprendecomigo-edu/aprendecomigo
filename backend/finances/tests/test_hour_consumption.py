@@ -11,7 +11,8 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import datetime, time, date
 
-from accounts.models import CustomUser, School, TeacherProfile
+# Cross-app models will be loaded at runtime using apps.get_model()
+from django.apps import apps
 from finances.models import (
     ClassSession, 
     StudentAccountBalance, 

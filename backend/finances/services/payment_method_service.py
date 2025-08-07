@@ -9,7 +9,8 @@ import logging
 from typing import Dict, Any, Optional, List
 
 from django.db import transaction
-from accounts.models import CustomUser
+# Cross-app models will be loaded at runtime using apps.get_model()
+from django.apps import apps
 from finances.models import StoredPaymentMethod
 from finances.services.stripe_base import StripeService
 
@@ -33,7 +34,7 @@ class PaymentMethodService:
         """Initialize the service with Stripe integration."""
         self.stripe_service = StripeService()
     
-    def add_payment_method(self, student_user: CustomUser, stripe_payment_method_id: str, 
+    def add_payment_method(self, student_user, stripe_payment_method_id: str, 
                           is_default: bool = False, auto_create_customer: bool = True) -> Dict[str, Any]:
         """
         Add a new payment method for a student using Stripe tokenization with Customer support.
@@ -127,7 +128,7 @@ class PaymentMethodService:
                 'message': f'Failed to add payment method: {str(e)}'
             }
     
-    def remove_payment_method(self, student_user: CustomUser, payment_method_id: int) -> Dict[str, Any]:
+    def remove_payment_method(self, student_user, payment_method_id: int) -> Dict[str, Any]:
         """
         Remove a stored payment method and detach from Stripe.
         
@@ -200,7 +201,7 @@ class PaymentMethodService:
                 'message': f'Failed to remove payment method: {str(e)}'
             }
     
-    def list_payment_methods(self, student_user: CustomUser, include_expired: bool = False) -> Dict[str, Any]:
+    def list_payment_methods(self, student_user, include_expired: bool = False) -> Dict[str, Any]:
         """
         List all stored payment methods for a student.
         
@@ -249,7 +250,7 @@ class PaymentMethodService:
                 'message': f'Failed to list payment methods: {str(e)}'
             }
     
-    def set_default_payment_method(self, student_user: CustomUser, payment_method_id: int) -> Dict[str, Any]:
+    def set_default_payment_method(self, student_user, payment_method_id: int) -> Dict[str, Any]:
         """
         Set a payment method as the default for a student.
         
@@ -312,7 +313,7 @@ class PaymentMethodService:
                 'message': f'Failed to update default payment method: {str(e)}'
             }
     
-    def get_default_payment_method(self, student_user: CustomUser) -> Optional[StoredPaymentMethod]:
+    def get_default_payment_method(self, student_user) -> Optional[StoredPaymentMethod]:
         """
         Get the default payment method for a student.
         
@@ -421,7 +422,7 @@ class PaymentMethodService:
                 'message': f'Failed to validate payment method: {str(e)}'
             }
     
-    def _get_or_create_stripe_customer(self, student_user: CustomUser, auto_create: bool = True) -> Dict[str, Any]:
+    def _get_or_create_stripe_customer(self, student_user, auto_create: bool = True) -> Dict[str, Any]:
         """
         Get or create a Stripe Customer for the student user.
         

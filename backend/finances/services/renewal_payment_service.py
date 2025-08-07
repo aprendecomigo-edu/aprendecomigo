@@ -13,7 +13,8 @@ import stripe
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import CustomUser
+# Cross-app models will be loaded at runtime using apps.get_model()
+from django.apps import apps
 from finances.models import (
     PurchaseTransaction,
     StudentAccountBalance,
@@ -55,7 +56,7 @@ class RenewalPaymentService:
 
     def renew_subscription(
         self, 
-        student_user: CustomUser, 
+        student_user, 
         original_transaction_id: int,
         payment_method_id: Optional[int] = None
     ) -> Dict[str, Any]:
@@ -129,7 +130,7 @@ class RenewalPaymentService:
 
     def quick_topup(
         self,
-        student_user: CustomUser,
+        student_user,
         hours: Decimal,
         payment_method_id: Optional[int] = None
     ) -> Dict[str, Any]:
@@ -227,7 +228,7 @@ class RenewalPaymentService:
 
     def _get_renewable_transaction(
         self, 
-        student_user: CustomUser, 
+        student_user, 
         transaction_id: int
     ) -> Dict[str, Any] | PurchaseTransaction:
         """
@@ -271,7 +272,7 @@ class RenewalPaymentService:
 
     def _get_payment_method_for_renewal(
         self,
-        student_user: CustomUser,
+        student_user,
         payment_method_id: Optional[int]
     ) -> Dict[str, Any] | StoredPaymentMethod:
         """
@@ -322,7 +323,7 @@ class RenewalPaymentService:
 
     def _create_renewal_payment_intent(
         self,
-        student_user: CustomUser,
+        student_user,
         original_transaction: PurchaseTransaction,
         payment_method: StoredPaymentMethod
     ) -> Dict[str, Any]:
@@ -399,7 +400,7 @@ class RenewalPaymentService:
 
     def _create_topup_payment_intent(
         self,
-        student_user: CustomUser,
+        student_user,
         hours: Decimal,
         price: Decimal,
         payment_method: StoredPaymentMethod

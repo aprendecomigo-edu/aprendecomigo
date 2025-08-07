@@ -13,7 +13,8 @@ from datetime import timedelta
 from django.db.models import Count, Sum, Q
 from django.utils import timezone
 
-from accounts.models import CustomUser
+# Cross-app models will be loaded at runtime using apps.get_model()
+from django.apps import apps
 from finances.models import (
     PurchaseTransaction,
     TransactionPaymentStatus,
@@ -82,7 +83,7 @@ class FraudDetectionService:
     def analyze_transaction(
         self,
         transaction: PurchaseTransaction,
-        admin_user: CustomUser = None
+        admin_user = None  # CustomUser instance
     ) -> Dict[str, Any]:
         """
         Analyze a single transaction for fraud indicators.
@@ -156,9 +157,9 @@ class FraudDetectionService:
 
     def analyze_user_activity(
         self,
-        user: CustomUser,
+        user,  # CustomUser instance
         days_back: int = 30,
-        admin_user: CustomUser = None
+        admin_user = None  # CustomUser instance
     ) -> Dict[str, Any]:
         """
         Analyze a user's activity for fraud patterns.
@@ -220,7 +221,7 @@ class FraudDetectionService:
     def run_batch_analysis(
         self,
         hours_back: int = 24,
-        admin_user: CustomUser = None
+        admin_user = None  # CustomUser instance
     ) -> Dict[str, Any]:
         """
         Run batch fraud analysis on recent transactions.
@@ -586,7 +587,7 @@ class FraudDetectionService:
 
     def _analyze_user_patterns(
         self,
-        user: CustomUser,
+        user,  # CustomUser instance
         transactions: List[PurchaseTransaction]
     ) -> Dict[str, Any]:
         """Analyze overall user patterns for fraud indicators."""
@@ -637,8 +638,8 @@ class FraudDetectionService:
         self,
         risk_data: Dict[str, Any],
         transaction: PurchaseTransaction = None,
-        user: CustomUser = None,
-        admin_user: CustomUser = None
+        user = None,  # CustomUser instance
+        admin_user = None  # CustomUser instance
     ) -> Optional[Dict[str, Any]]:
         """Generate a fraud alert based on risk data."""
         try:
@@ -715,9 +716,9 @@ class FraudDetectionService:
 
     def _log_admin_action(
         self,
-        admin_user: CustomUser,
+        admin_user,  # CustomUser instance
         action_type: AdminActionType,
-        target_user: CustomUser = None,
+        target_user = None,  # CustomUser instance
         success: bool = True,
         result_message: str = "",
         action_data: Dict[str, Any] = None

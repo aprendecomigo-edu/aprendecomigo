@@ -13,7 +13,8 @@ import stripe
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import CustomUser
+# Cross-app models will be loaded at runtime using apps.get_model()
+from django.apps import apps
 from finances.models import (
     PurchaseTransaction,
     TransactionPaymentStatus,
@@ -51,7 +52,7 @@ class RefundService:
         transaction_id: int,
         refund_amount: Optional[Decimal] = None,
         reason: str = "",
-        admin_user: CustomUser = None,
+        admin_user = None,
         metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
@@ -474,7 +475,7 @@ class RefundService:
 
     def _log_admin_action(
         self,
-        admin_user: CustomUser,
+        admin_user,
         action_type: AdminActionType,
         target_transaction: PurchaseTransaction = None,
         success: bool = True,

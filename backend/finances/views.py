@@ -7,8 +7,9 @@ import logging
 from datetime import timedelta
 from decimal import Decimal
 
-from accounts.models import School, TeacherProfile, TeacherCourse
+# Cross-app models will be loaded at runtime using apps.get_model()
 from accounts.permissions import SchoolPermissionMixin, IsTeacherInAnySchool
+from django.apps import apps
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import Sum, Q
@@ -90,6 +91,7 @@ class SchoolBillingSettingsViewSet(SchoolPermissionMixin, viewsets.ModelViewSet)
         If user manages multiple schools, returns the first one.
         Frontend can specify school_id parameter to override.
         """
+        School = apps.get_model('accounts', 'School')
         school_id = request.query_params.get("school_id")
         user_schools = self.get_user_schools()
 
@@ -555,6 +557,8 @@ class TeacherPaymentEntryViewSet(SchoolPermissionMixin, viewsets.ReadOnlyModelVi
     @action(detail=False, methods=["get"])
     def monthly_summary(self, request):
         """Get monthly payment summary for a teacher."""
+        TeacherProfile = apps.get_model('accounts', 'TeacherProfile')
+        
         teacher_id = request.query_params.get("teacher_id")
         year = request.query_params.get("year")
         month = request.query_params.get("month")
@@ -622,6 +626,8 @@ class TeacherPaymentEntryViewSet(SchoolPermissionMixin, viewsets.ReadOnlyModelVi
     @action(detail=False, methods=["get"])
     def generate_invoice(self, request):
         """Generate invoice data for a teacher for a specific period."""
+        TeacherProfile = apps.get_model('accounts', 'TeacherProfile')
+        
         teacher_id = request.query_params.get("teacher_id")
         billing_period = request.query_params.get("billing_period")  # YYYY-MM format
 
@@ -1386,7 +1392,7 @@ def _get_or_create_student_user(authenticated_user, student_info):
     Returns:
         CustomUser: The student user to use for the transaction
     """
-    from accounts.models import CustomUser
+    CustomUser = apps.get_model('accounts', 'CustomUser')
     
     student_email = student_info['email']
     student_name = student_info['name']
@@ -1483,7 +1489,7 @@ class StudentBalanceViewSet(viewsets.ViewSet):
                 student_user: The target student user object or None
                 error_response: Error response if any, or None
         """
-        from accounts.models import CustomUser
+        CustomUser = apps.get_model('accounts', 'CustomUser')
         from django.core.validators import EmailValidator
         
         email_param = request.query_params.get('email')
@@ -2419,6 +2425,8 @@ class TutorAnalyticsView(APIView):
         Returns comprehensive analytics data including revenue trends,
         student metrics, session analytics, and course performance.
         """
+        TeacherProfile = apps.get_model('accounts', 'TeacherProfile')
+        
         try:
             # Get and validate parameters
             params = self._validate_parameters(request)
@@ -2471,6 +2479,7 @@ class TutorAnalyticsView(APIView):
     def _validate_parameters(self, request):
         """Validate and parse request parameters."""
         from datetime import datetime
+        School = apps.get_model('accounts', 'School')
         
         start_date = None
         end_date = None
@@ -2520,7 +2529,9 @@ class TutorAnalyticsView(APIView):
     
     def _get_user_schools(self, user):
         """Get schools where user is a teacher."""
-        from accounts.models import SchoolMembership, SchoolRole
+        School = apps.get_model('accounts', 'School')
+        SchoolMembership = apps.get_model('accounts', 'SchoolMembership')
+        SchoolRole = apps.get_model('accounts', 'SchoolRole')
         
         return School.objects.filter(
             memberships__user=user,
@@ -2719,6 +2730,7 @@ class TutorAnalyticsView(APIView):
         """Calculate performance metrics by course."""
         from django.db.models import Count, Sum
         from collections import defaultdict
+        TeacherCourse = apps.get_model('accounts', 'TeacherCourse')
         
         course_metrics = defaultdict(lambda: {
             'sessions_count': 0,
@@ -2849,6 +2861,9 @@ class TutorAnalyticsAPIView(APIView):
         - trends: Period-over-period comparisons
         - projections: Revenue projections (if enabled)
         """
+        School = apps.get_model('accounts', 'School')
+        TeacherProfile = apps.get_model('accounts', 'TeacherProfile')
+        
         try:
             # Validate school ownership
             if not school_id:
@@ -3143,7 +3158,7 @@ class StudentPurchaseRequestView(APIView):
         """
         from .serializers import StudentPurchaseRequestSerializer
         from .models import FamilyBudgetControl, PurchaseApprovalRequest
-        from accounts.models import ParentChildRelationship
+        ParentChildRelationship = apps.get_model('accounts', 'ParentChildRelationship')
         
         # Validate input data
         serializer = StudentPurchaseRequestSerializer(data=request.data)
@@ -3268,7 +3283,7 @@ class ParentApprovalDashboardView(APIView):
         """
         from .serializers import ParentDashboardSerializer
         from .models import PurchaseApprovalRequest, FamilyBudgetControl, PurchaseTransaction
-        from accounts.models import ParentChildRelationship
+        ParentChildRelationship = apps.get_model('accounts', 'ParentChildRelationship')
         from django.utils import timezone
         from datetime import datetime
         

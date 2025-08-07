@@ -13,7 +13,8 @@ import stripe
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import CustomUser
+# Cross-app models will be loaded at runtime using apps.get_model()
+from django.apps import apps
 from finances.models import (
     PaymentDispute,
     PurchaseTransaction,
@@ -49,7 +50,7 @@ class DisputeService:
     def sync_dispute_from_stripe(
         self,
         stripe_dispute_id: str,
-        admin_user: CustomUser = None
+        admin_user = None
     ) -> Dict[str, Any]:
         """
         Sync a dispute from Stripe and create/update local record.
@@ -136,7 +137,7 @@ class DisputeService:
         self,
         dispute_id: int,
         evidence_data: Dict[str, Any],
-        admin_user: CustomUser = None
+        admin_user = None
     ) -> Dict[str, Any]:
         """
         Submit evidence for a dispute to Stripe.
@@ -348,7 +349,7 @@ class DisputeService:
         self,
         dispute_id: int,
         internal_notes: str,
-        admin_user: CustomUser = None
+        admin_user = None
     ) -> Dict[str, Any]:
         """
         Update internal notes for a dispute.
@@ -540,7 +541,7 @@ class DisputeService:
 
     def _log_admin_action(
         self,
-        admin_user: CustomUser,
+        admin_user,
         action_type: AdminActionType,
         target_dispute: PaymentDispute = None,
         success: bool = True,

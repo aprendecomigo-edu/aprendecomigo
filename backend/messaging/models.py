@@ -8,7 +8,6 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
-from finances.models import PurchaseTransaction
 
 
 class NotificationType(models.TextChoices):
@@ -67,7 +66,7 @@ class Notification(models.Model):
     )
     
     related_transaction = models.ForeignKey(
-        PurchaseTransaction,
+        "finances.PurchaseTransaction",
         on_delete=models.CASCADE,
         related_name="notifications",
         null=True,

@@ -34,11 +34,13 @@ class TutorDiscoveryIntegrationTestCase(TransactionTestCase):
         """Set up integration test data."""
         cache.clear()
         
-        # Create educational systems
-        self.edu_system_pt = EducationalSystem.objects.create(
-            name="Portugal",
+        # Get or create educational systems (to avoid unique constraint violations)
+        self.edu_system_pt, _ = EducationalSystem.objects.get_or_create(
             code=EducationalSystemType.PORTUGAL,
-            description="Portuguese education system"
+            defaults={
+                "name": "Portugal",
+                "description": "Portuguese education system"
+            }
         )
         
         # Create courses
@@ -62,6 +64,67 @@ class TutorDiscoveryIntegrationTestCase(TransactionTestCase):
         )
         
         self.client = APIClient()
+    
+    def _create_complete_tutor_profile(self, user, bio_text="Experienced tutor", specialty="Mathematics", 
+                                     hourly_rate="30.00", completion_level="high", additional_fields=None):
+        """
+        Helper method to create a tutor profile that meets completion criteria.
+        
+        Args:
+            completion_level: "high" (>90%), "medium" (~80%), "low" (~60%)
+        """
+        # Ensure bio is long enough (minimum 50 characters)
+        if len(bio_text) < 50:
+            bio_text = (
+                f"{bio_text}. I am an experienced educator with a passion for teaching "
+                "and helping students achieve their academic goals through personalized instruction."
+            )
+        
+        # Base profile data
+        profile_data = {
+            "user": user,
+            "bio": bio_text,
+            "specialty": specialty,
+            "teaching_subjects": ["Mathematics", "Physics", "Algebra"],
+            "hourly_rate": Decimal(hourly_rate),
+        }
+        
+        # Adjust fields based on desired completion level
+        if completion_level == "high":
+            # Full completion - all professional fields
+            profile_data.update({
+                "education": "PhD in Mathematics, MSc in Education",
+                "phone_number": "+351 123 456 789",
+                "address": "Lisbon, Portugal", 
+                "calendar_iframe": "https://calendly.com/high-score-tutor"
+            })
+        elif completion_level == "medium":
+            # Medium completion - some professional fields
+            profile_data.update({
+                "education": "BSc in Mathematics",
+                "phone_number": "+351 123 456 789",
+                "address": "Lisbon, Portugal",
+                # No calendar_iframe to reduce score slightly
+            })
+        elif completion_level == "low":
+            # Low completion - minimal fields (but still >80% to be discoverable)
+            profile_data.update({
+                "education": "BSc in Mathematics",
+                "phone_number": "+351 123 456 789",
+                # No address or calendar to reduce score
+            })
+        
+        profile = TeacherProfile.objects.create(**profile_data)
+        
+        # Apply any additional fields
+        if additional_fields:
+            for field, value in additional_fields.items():
+                setattr(profile, field, value)
+                
+        # Save once to establish the profile
+        profile.save()
+        
+        return profile
 
     def test_complete_tutor_onboarding_to_discovery_flow(self):
         """Test complete flow from tutor creation to public discovery."""
@@ -108,16 +171,27 @@ class TutorDiscoveryIntegrationTestCase(TransactionTestCase):
         tutor_names = [tutor['name'] for tutor in data['results']]
         self.assertNotIn('New Integration Tutor', tutor_names)
         
-        # Step 6: Complete the teacher profile
-        incomplete_profile.bio = "Experienced mathematics and physics tutor with passion for teaching."
+        # Step 6: Complete the teacher profile with sufficient detail
+        incomplete_profile.bio = (
+            "Experienced mathematics and physics tutor with passion for teaching. "
+            "I have been teaching students of all levels for over 5 years, helping "
+            "them achieve their academic goals through personalized instruction and "
+            "innovative teaching methods. My approach focuses on building strong "
+            "foundational knowledge while developing problem-solving skills."
+        )
         incomplete_profile.specialty = "Mathematics & Physics"
         incomplete_profile.education = "MSc in Mathematics, BSc in Physics"
-        incomplete_profile.is_profile_complete = True
-        incomplete_profile.profile_completion_score = 85.0
         incomplete_profile.teaching_subjects = ["Mathematics", "Physics", "Algebra"]
+        incomplete_profile.hourly_rate = Decimal('25.00')  # Ensure rate is set
+        
+        # Add professional information to boost score above 80%
+        incomplete_profile.phone_number = "+351 123 456 789"  # 15 points
+        incomplete_profile.address = "Lisbon, Portugal"  # 15 points
+        incomplete_profile.calendar_iframe = "https://calendly.com/tutor-integration"  # 30 points
+        
         incomplete_profile.save()
         
-        # Step 7: Add courses that the tutor can teach
+        # Step 7: Add courses that the tutor can teach (must be done before profile completion)
         math_course = TeacherCourse.objects.create(
             teacher=incomplete_profile,
             course=self.course_math,
@@ -132,7 +206,10 @@ class TutorDiscoveryIntegrationTestCase(TransactionTestCase):
             is_active=True
         )
         
-        # Step 8: Now tutor should appear in discovery
+        # Step 8: Now save the profile again to recalculate completion status
+        incomplete_profile.save()
+        
+        # Step 9: Now tutor should appear in discovery
         cache.clear()  # Clear cache to ensure fresh data
         response = self.client.get(discovery_url)
         
@@ -148,7 +225,7 @@ class TutorDiscoveryIntegrationTestCase(TransactionTestCase):
         
         # Verify all expected data is present
         self.assertEqual(our_tutor['specialty'], 'Mathematics & Physics')
-        self.assertEqual(our_tutor['profile_completion_score'], 85.0)
+        self.assertEqual(our_tutor['profile_completion_score'], 84.0)
         self.assertTrue(our_tutor['is_profile_complete'])
         self.assertEqual(len(our_tutor['subjects']), 2)  # Math and Physics courses
         
@@ -184,14 +261,11 @@ class TutorDiscoveryIntegrationTestCase(TransactionTestCase):
             is_active=True
         )
         
-        profile = TeacherProfile.objects.create(
+        profile = self._create_complete_tutor_profile(
             user=user,
-            bio="Mathematics specialist",
-            specialty="Mathematics",
-            hourly_rate=Decimal('35.00'),
-            is_profile_complete=True,
-            profile_completion_score=80.0,
-            teaching_subjects=["Mathematics", "Algebra"]
+            bio_text="Mathematics specialist with years of teaching experience",
+            specialty="Mathematics", 
+            hourly_rate="35.00"
         )
         
         # Add a math course
@@ -276,13 +350,11 @@ class TutorDiscoveryIntegrationTestCase(TransactionTestCase):
             is_active=True
         )
         
-        profile = TeacherProfile.objects.create(
+        profile = self._create_complete_tutor_profile(
             user=user,
-            bio="Physics specialist",
+            bio_text="Physics specialist with extensive teaching experience",
             specialty="Physics",
-            hourly_rate=Decimal('30.00'),
-            is_profile_complete=True,
-            profile_completion_score=75.0
+            hourly_rate="30.00"
         )
         
         TeacherCourse.objects.create(
@@ -334,13 +406,11 @@ class TutorDiscoveryIntegrationTestCase(TransactionTestCase):
             is_active=True
         )
         
-        profile = TeacherProfile.objects.create(
+        profile = self._create_complete_tutor_profile(
             user=user,
-            bio="Multi-subject tutor",
+            bio_text="Multi-subject tutor with comprehensive teaching experience",
             specialty="Mathematics & Physics",
-            hourly_rate=Decimal('30.00'),
-            is_profile_complete=True,
-            profile_completion_score=80.0
+            hourly_rate="30.00"
         )
         
         math_course = TeacherCourse.objects.create(
@@ -428,13 +498,11 @@ class TutorDiscoveryIntegrationTestCase(TransactionTestCase):
             is_active=True
         )
         
-        individual_profile = TeacherProfile.objects.create(
+        individual_profile = self._create_complete_tutor_profile(
             user=individual_user,
-            bio="Independent mathematics tutor",
+            bio_text="Independent mathematics tutor with excellent track record",
             specialty="Mathematics",
-            hourly_rate=Decimal('40.00'),
-            is_profile_complete=True,
-            profile_completion_score=90.0
+            hourly_rate="40.00"
         )
         
         # Create school teacher
@@ -450,13 +518,11 @@ class TutorDiscoveryIntegrationTestCase(TransactionTestCase):
             is_active=True
         )
         
-        teacher_profile = TeacherProfile.objects.create(
+        teacher_profile = self._create_complete_tutor_profile(
             user=school_teacher_user,
-            bio="Physics teacher at established school",
+            bio_text="Physics teacher at established school with advanced credentials",
             specialty="Physics",
-            hourly_rate=Decimal('35.00'),
-            is_profile_complete=True,
-            profile_completion_score=85.0
+            hourly_rate="35.00"
         )
         
         # Add courses for both

@@ -66,6 +66,12 @@ Your core responsibilities:
    - Maintain consistency with existing patterns in the codebase
    - Follow the project's authentication patterns (JWT, passwordless)
 
+9. **Cross-dependencies in Django apps** You apply best practices for dealing with x-dependencies:
+   - Use lazy references ("app.Model" strings or settings.AUTH_USER_MODEL) for compile-time relationships.
+   - Use the app-registry (apps.get_model() or AppConfig.ready()) for runtime wiring such as signals, admin registration, or feature flags.
+   - Declare migration dependencies explicitly—and conditionally—when automatic inference is not enough.
+   - If two apps constantly talk to each other, reconsider your boundaries or introduce an interface layer instead of direct imports.
+
 When writing or reviewing code:
 - Always consider the broader system architecture
 - Ensure backward compatibility when making changes

@@ -16,7 +16,8 @@ from django.db.models.functions import TruncMonth, TruncWeek, TruncDay, Coalesce
 from django.utils import timezone
 from django.core.cache import cache
 
-from accounts.models import School, TeacherProfile, SchoolMembership, SchoolRole
+# Cross-app models will be loaded at runtime using apps.get_model()
+from django.apps import apps
 from common.cache_utils import SecureCacheKeyGenerator
 from finances.models import (
     ClassSession, SessionStatus, SessionType,
@@ -37,8 +38,8 @@ class TutorAnalyticsService:
     @classmethod
     def get_tutor_analytics(
         cls, 
-        teacher: TeacherProfile, 
-        school: School,
+        teacher, # TeacherProfile instance 
+        school, # School instance
         time_range: str = "30d",
         include_projections: bool = True
     ) -> Dict[str, Any]:
@@ -46,8 +47,8 @@ class TutorAnalyticsService:
         Get comprehensive analytics for a tutor.
         
         Args:
-            teacher: TeacherProfile instance
-            school: School instance (must be owned by teacher)
+            teacher instance
+            school instance (must be owned by teacher)
             time_range: One of "7d", "30d", "90d", "1y"
             include_projections: Whether to include revenue projections
             
@@ -100,7 +101,7 @@ class TutorAnalyticsService:
         return analytics
     
     @classmethod
-    def _validate_teacher_school_ownership(cls, teacher: TeacherProfile, school: School) -> bool:
+    def _validate_teacher_school_ownership(cls, teacher, school) -> bool:
         """Validate that teacher owns or manages the school."""
         return SchoolMembership.objects.filter(
             user=teacher.user,
@@ -127,8 +128,8 @@ class TutorAnalyticsService:
     @classmethod
     def _get_overview_metrics(
         cls, 
-        teacher: TeacherProfile, 
-        school: School, 
+        teacher, 
+        school, 
         start_date: datetime.date, 
         end_date: datetime.date
     ) -> Dict[str, Any]:
@@ -182,8 +183,8 @@ class TutorAnalyticsService:
     @classmethod
     def _get_revenue_analytics(
         cls, 
-        teacher: TeacherProfile, 
-        school: School, 
+        teacher, 
+        school, 
         start_date: datetime.date, 
         end_date: datetime.date
     ) -> Dict[str, Any]:
@@ -248,8 +249,8 @@ class TutorAnalyticsService:
     @classmethod
     def _get_session_analytics(
         cls, 
-        teacher: TeacherProfile, 
-        school: School, 
+        teacher, 
+        school, 
         start_date: datetime.date, 
         end_date: datetime.date
     ) -> Dict[str, Any]:
@@ -314,8 +315,8 @@ class TutorAnalyticsService:
     @classmethod
     def _get_student_analytics(
         cls, 
-        teacher: TeacherProfile, 
-        school: School, 
+        teacher, 
+        school, 
         start_date: datetime.date, 
         end_date: datetime.date
     ) -> Dict[str, Any]:
@@ -381,8 +382,8 @@ class TutorAnalyticsService:
     @classmethod
     def _get_trend_analytics(
         cls, 
-        teacher: TeacherProfile, 
-        school: School, 
+        teacher, 
+        school, 
         start_date: datetime.date, 
         end_date: datetime.date
     ) -> Dict[str, Any]:
@@ -428,8 +429,8 @@ class TutorAnalyticsService:
     @classmethod
     def _get_period_metrics(
         cls, 
-        teacher: TeacherProfile, 
-        school: School, 
+        teacher, 
+        school, 
         start_date: datetime.date, 
         end_date: datetime.date
     ) -> Dict[str, float]:
@@ -471,8 +472,8 @@ class TutorAnalyticsService:
     @classmethod
     def _get_revenue_projections(
         cls, 
-        teacher: TeacherProfile, 
-        school: School
+        teacher, 
+        school
     ) -> Dict[str, Any]:
         """Get revenue projections based on historical data."""
         

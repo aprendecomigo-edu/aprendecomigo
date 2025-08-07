@@ -14,7 +14,8 @@ import stripe
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import CustomUser
+# Cross-app models will be loaded at runtime using apps.get_model()
+from django.apps import apps
 from finances.models import (
     PurchaseTransaction,
     StudentAccountBalance,
@@ -47,7 +48,7 @@ class PaymentService:
 
     def create_payment_intent(
         self,
-        user: CustomUser,
+        user,  # CustomUser instance
         pricing_plan_id: str,
         metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
@@ -302,7 +303,7 @@ class PaymentService:
                 'message': 'An unexpected error occurred while retrieving payment status'
             }
 
-    def _find_best_source_transaction(self, user: CustomUser) -> Optional[PurchaseTransaction]:
+    def _find_best_source_transaction(self, user) -> Optional[PurchaseTransaction]:  # user: CustomUser
         """
         Find the best source transaction for hour deduction using FIFO logic.
         
@@ -383,7 +384,7 @@ class PaymentService:
 
     def _create_purchase_transaction(
         self,
-        user: CustomUser,
+        user,  # CustomUser instance
         payment_intent: Any,
         transaction_type: str,
         amount: Decimal,
