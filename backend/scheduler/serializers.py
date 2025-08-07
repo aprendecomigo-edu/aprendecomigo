@@ -8,6 +8,7 @@ from rest_framework import serializers
 from .models import (
     ClassSchedule,
     ClassStatus,
+    ClassType,
     RecurringClassSchedule,
     TeacherAvailability,
     TeacherUnavailability,
@@ -194,6 +195,16 @@ class ClassScheduleSerializer(serializers.ModelSerializer):
     additional_students_names = serializers.SerializerMethodField()
     can_be_cancelled = serializers.BooleanField(read_only=True)
     is_past = serializers.BooleanField(read_only=True)
+    
+    # New computed fields for group classes
+    participant_count = serializers.SerializerMethodField()
+    participants = serializers.SerializerMethodField()
+    participants_names = serializers.SerializerMethodField()
+    is_full = serializers.SerializerMethodField()
+    
+    # Timezone-aware datetime fields
+    scheduled_datetime_utc = serializers.SerializerMethodField()
+    scheduled_datetime_local = serializers.SerializerMethodField()
 
     class Meta:
         model = ClassSchedule
@@ -228,8 +239,18 @@ class ClassScheduleSerializer(serializers.ModelSerializer):
             "is_past",
             "created_at",
             "updated_at",
+            # New fields
+            "max_participants",
+            "metadata",
+            "participant_count",
+            "participants",
+            "participants_names", 
+            "is_full",
+            "scheduled_datetime_utc",
+            "scheduled_datetime_local",
         ]
         read_only_fields: ClassVar = [
+            "booked_by",
             "booked_at",
             "cancelled_at",
             "completed_at",
@@ -237,10 +258,51 @@ class ClassScheduleSerializer(serializers.ModelSerializer):
             "updated_at",
             "can_be_cancelled",
             "is_past",
+            "participant_count",
+            "participants",
+            "participants_names",
+            "is_full",
+            "scheduled_datetime_utc", 
+            "scheduled_datetime_local",
         ]
 
     def get_additional_students_names(self, obj):
         return [student.name for student in obj.additional_students.all()]
+
+    def get_participant_count(self, obj):
+        return obj.get_total_participants()
+
+    def get_participants(self, obj):
+        """Return list of all participant IDs (main student + additional students)"""
+        participants = [obj.student.id]
+        participants.extend([student.id for student in obj.additional_students.all()])
+        return participants
+
+    def get_participants_names(self, obj):
+        """Return list of all participant names"""
+        names = [obj.student.name]
+        names.extend([student.name for student in obj.additional_students.all()])
+        return names
+
+    def get_is_full(self, obj):
+        """Return True if class is at capacity"""
+        return obj.is_at_capacity()
+
+    def get_scheduled_datetime_utc(self, obj):
+        """Return scheduled datetime in UTC timezone"""
+        try:
+            utc_dt = obj.get_scheduled_datetime_utc()
+            return utc_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+        except Exception:
+            return None
+
+    def get_scheduled_datetime_local(self, obj):
+        """Return scheduled datetime in teacher's local timezone"""
+        try:
+            local_dt = obj.get_scheduled_datetime_in_teacher_timezone()
+            return local_dt.strftime('%Y-%m-%dT%H:%M:%S%z')
+        except Exception:
+            return None
 
 
 class CreateClassScheduleSerializer(serializers.ModelSerializer):
@@ -249,6 +311,7 @@ class CreateClassScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassSchedule
         fields: ClassVar = [
+            "id",
             "teacher",
             "student",
             "school",
@@ -260,7 +323,12 @@ class CreateClassScheduleSerializer(serializers.ModelSerializer):
             "end_time",
             "duration_minutes",
             "additional_students",
+            "max_participants",
+            "metadata",
+            "teacher_notes",
+            "student_notes",
         ]
+        read_only_fields: ClassVar = ["id"]
 
     def validate(self, data):
         """Validate class schedule data"""
@@ -271,6 +339,24 @@ class CreateClassScheduleSerializer(serializers.ModelSerializer):
         # Check that start_time is before end_time
         if data["start_time"] >= data["end_time"]:
             raise serializers.ValidationError("End time must be after start time.")
+
+        # Validate max_participants for group classes
+        class_type = data.get("class_type")
+        max_participants = data.get("max_participants")
+        additional_students = data.get("additional_students", [])
+        
+        if class_type == ClassType.GROUP:
+            if not max_participants:
+                raise serializers.ValidationError("Max participants is required for group classes.")
+            
+            # Check if total participants exceed max_participants
+            total_participants = 1 + len(additional_students)  # main student + additional
+            if total_participants > max_participants:
+                raise serializers.ValidationError({
+                    "max_participants": f"Total participants ({total_participants}) exceeds max participants limit ({max_participants})."
+                })
+        elif class_type == ClassType.INDIVIDUAL and max_participants:
+            raise serializers.ValidationError("Individual classes should not have max_participants set.")
 
         # Check for teacher availability
         teacher = data["teacher"]

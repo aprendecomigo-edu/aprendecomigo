@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -177,7 +178,7 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
         # Permission checks
         if hasattr(user, "teacher_profile"):
             # Teachers cannot book classes
-            raise PermissionError("Teachers cannot book classes")
+            raise PermissionDenied("Teachers cannot book classes")
 
         student = serializer.validated_data.get("student")
 
@@ -187,12 +188,12 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
         ).exists()
 
         if not is_admin and student != user:
-            raise PermissionError("Students can only book classes for themselves")
+            raise PermissionDenied("Students can only book classes for themselves")
 
         # Ensure user has permission to book in this school
         school = serializer.validated_data.get("school")
         if not SchoolMembership.objects.filter(user=user, school=school, is_active=True).exists():
-            raise PermissionError("You don't have permission to book classes in this school")
+            raise PermissionDenied("You don't have permission to book classes in this school")
 
         serializer.save()
 
@@ -625,13 +626,13 @@ class RecurringClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet
         # Permission checks
         if hasattr(user, "teacher_profile"):
             # Teachers cannot create recurring schedules
-            raise PermissionError("Teachers cannot create recurring schedules")
+            raise PermissionDenied("Teachers cannot create recurring schedules")
 
         student = serializer.validated_data.get("student")
 
         # Students can only create recurring schedules for themselves
         if not user.is_admin and student != user:
-            raise PermissionError("Students can only create recurring schedules for themselves")
+            raise PermissionDenied("Students can only create recurring schedules for themselves")
 
         serializer.save()
 

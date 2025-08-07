@@ -35,8 +35,9 @@ class SchedulerAPITestCase(TestCase):
     def setUp(self):
         """Set up test data."""
         # Create educational system and school
-        self.edu_system = EducationalSystem.objects.create(
-            name="Test System", code="custom", description="Test educational system"
+        self.edu_system, _ = EducationalSystem.objects.get_or_create(
+            code="custom", 
+            defaults={"name": "Test System", "description": "Test educational system"}
         )
         self.school = School.objects.create(name="Test School", description="Test Description")
         self.school_settings = SchoolSettings.objects.create(
@@ -122,6 +123,7 @@ class ClassScheduleCRUDAPITests(SchedulerAPITestCase):
         url = reverse('class-schedules-list')
         data = {
             'teacher': self.teacher_profile.id,
+            'student': self.student1.id,  # Primary student
             'school': self.school.id,
             'title': 'Group Math Class',
             'class_type': ClassType.GROUP,
@@ -130,15 +132,24 @@ class ClassScheduleCRUDAPITests(SchedulerAPITestCase):
             'end_time': '15:00:00',
             'duration_minutes': 60,
             'max_participants': 3,
-            'participants': [self.student1.id, self.student2.id],
+            'additional_students': [self.student2.id],  # Additional students
+            'metadata': {  # Required metadata for group classes
+                'group_dynamics': 'collaborative',
+                'interaction_level': 'high',
+                'collaboration_type': 'peer_learning'
+            }
         }
         
         response = self.client.post(url, data, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['class_type'], ClassType.GROUP)
-        self.assertEqual(response.data['participant_count'], 2)
-        self.assertIn('Student One', response.data['participants_names'])
+        self.assertEqual(response.data['max_participants'], 3)
+        
+        # Verify the class was created correctly in database
+        class_schedule = ClassSchedule.objects.get(id=response.data['id'])
+        self.assertEqual(class_schedule.get_total_participants(), 2)  # student1 + student2
+        self.assertIn(self.student2, class_schedule.additional_students.all())
 
     def test_retrieve_class_schedule(self):
         """Test retrieving a specific class schedule."""
@@ -203,12 +214,18 @@ class GroupClassAPITests(SchedulerAPITestCase):
             'end_time': '11:00:00',
             'duration_minutes': 60,
             'max_participants': 2,
-            'participants': [self.student1.id, self.student2.id],  # At capacity
+            'student': self.student1.id,  # Primary student
+            'additional_students': [self.student2.id],  # Additional student (total: 2 students)
         }
         
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(response.data['is_full'])
+        
+        # Fetch the created class schedule to check is_full status
+        class_id = response.data['id']
+        detail_response = self.client.get(f'/api/scheduler/schedules/{class_id}/')
+        self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
+        self.assertTrue(detail_response.data['is_full'])
 
     def test_group_class_exceeds_capacity_fails(self):
         """Test that exceeding group capacity fails."""
@@ -232,7 +249,8 @@ class GroupClassAPITests(SchedulerAPITestCase):
             'end_time': '11:00:00',
             'duration_minutes': 60,
             'max_participants': 2,
-            'participants': [self.student1.id, self.student2.id, student3.id],  # Over capacity
+            'student': self.student1.id,  # Primary student
+            'additional_students': [self.student2.id, student3.id],  # Over capacity (total: 3 students)
         }
         
         response = self.client.post(url, data, format='json')
@@ -1890,3 +1908,469 @@ class AvailabilityPermissionTests(SchedulerAPITestCase):
         
         # Students should not have access to teacher unavailability management
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class Issue146NewFeaturesAPITests(SchedulerAPITestCase):
+    """
+    FAILING API Tests for GitHub Issue #146: Scheduling Models Refactor
+    
+    These tests are designed to FAIL initially until the new features are implemented:
+    1. Group classes with max_participants field enforcement
+    2. Proper timezone handling in API responses (UTC + local timezone conversion)
+    3. Enhanced metadata fields proper serialization in API responses
+    
+    Tests follow TDD red-green-refactor approach - they define the expected API behavior
+    and will fail until the corresponding features are implemented.
+    """
+
+    def setUp(self):
+        super().setUp()
+        # Set teacher timezone for timezone testing
+        self.teacher_profile.timezone = "America/New_York"
+        self.teacher_profile.save()
+        
+        # Create additional students for group class testing with unique emails
+        self.student3 = CustomUser.objects.create_user(
+            email="student3_issue146@test.com", name="Student Three", password="testpass123"
+        )
+        self.student4 = CustomUser.objects.create_user(
+            email="student4_issue146@test.com", name="Student Four", password="testpass123"
+        )
+        SchoolMembership.objects.create(
+            user=self.student3, school=self.school, role=SchoolRole.STUDENT
+        )
+        SchoolMembership.objects.create(
+            user=self.student4, school=self.school, role=SchoolRole.STUDENT
+        )
+
+    # ========================================
+    # MAX PARTICIPANTS GROUP CLASS TESTS  
+    # ========================================
+
+    def test_create_group_class_with_max_participants_field_fails(self):
+        """
+        FAILING TEST: Create group class with max_participants field.
+        
+        FAILS BECAUSE: max_participants field doesn't exist in ClassSchedule model yet.
+        SHOULD PASS WHEN: max_participants field added to model and serializer.
+        """
+        self.client.force_authenticate(user=self.admin_user)
+        
+        url = reverse('class-schedules-list')
+        data = {
+            'teacher': self.teacher_profile.id,
+            'student': self.student1.id,  # Primary student
+            'school': self.school.id,
+            'title': 'Group Math Class',
+            'class_type': ClassType.GROUP,
+            'scheduled_date': self.future_date.isoformat(),
+            'start_time': '14:00:00',
+            'end_time': '15:30:00',
+            'duration_minutes': 90,
+            'max_participants': 4,  # NEW FIELD - doesn't exist yet
+            'additional_students': [self.student2.id]  # Start with 2 total students
+        }
+        
+        response = self.client.post(url, data, format='json')
+        
+        # Will FAIL because max_participants field doesn't exist
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['max_participants'], 4)
+        self.assertEqual(response.data['class_type'], ClassType.GROUP)
+        
+        # Verify in database
+        class_schedule = ClassSchedule.objects.get(id=response.data['id'])
+        self.assertEqual(class_schedule.max_participants, 4)
+
+    def test_group_class_participant_limit_enforcement_fails(self):
+        """
+        FAILING TEST: Group class should enforce max_participants limit.
+        
+        FAILS BECAUSE: max_participants field and validation logic doesn't exist.
+        SHOULD PASS WHEN: Serializer validates participant count against max_participants.
+        """
+        self.client.force_authenticate(user=self.admin_user)
+        
+        url = reverse('class-schedules-list')
+        data = {
+            'teacher': self.teacher_profile.id,
+            'student': self.student1.id,
+            'school': self.school.id,
+            'title': 'Limited Group Class',
+            'class_type': ClassType.GROUP,
+            'scheduled_date': self.future_date.isoformat(),
+            'start_time': '16:00:00',
+            'end_time': '17:00:00',
+            'duration_minutes': 60,
+            'max_participants': 2,  # Limit to 2 participants
+            'additional_students': [self.student2.id, self.student3.id]  # 3 total = over limit
+        }
+        
+        response = self.client.post(url, data, format='json')
+        
+        # Will FAIL because validation doesn't exist yet
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('max_participants', str(response.data).lower())
+        self.assertIn('limit', str(response.data).lower())
+
+    def test_group_class_computed_fields_fail(self):
+        """
+        FAILING TEST: Group class API should return computed participant fields.
+        
+        FAILS BECAUSE: Computed fields don't exist in serializer yet.
+        SHOULD PASS WHEN: Serializer includes participant_count, is_full, participants fields.
+        """
+        # Create group class manually since max_participants doesn't exist yet
+        class_schedule = ClassSchedule.objects.create(
+            teacher=self.teacher_profile,
+            student=self.student1,
+            school=self.school,
+            title='Computed Fields Test',
+            class_type=ClassType.GROUP,
+            scheduled_date=self.future_date,
+            start_time=time(10, 0),
+            end_time=time(11, 0),
+            duration_minutes=60,
+            booked_by=self.admin_user
+        )
+        class_schedule.additional_students.add(self.student2, self.student3)
+        
+        self.client.force_authenticate(user=self.admin_user)
+        url = reverse('class-schedules-detail', kwargs={'pk': class_schedule.id})
+        response = self.client.get(url)
+        
+        # Will FAIL because these computed fields don't exist yet
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['participant_count'], 3)  # student + 2 additional
+        self.assertEqual(len(response.data['participants']), 3)
+        self.assertIn(self.student1.id, response.data['participants'])
+        self.assertIn(self.student2.id, response.data['participants'])
+        self.assertIn(self.student3.id, response.data['participants'])
+        self.assertIn('Student One', response.data['participants_names'])
+        
+        # If max_participants was 3, is_full should be True
+        # This will fail because max_participants and is_full don't exist
+        # self.assertTrue(response.data['is_full'])
+
+    # ========================================
+    # TIMEZONE HANDLING TESTS
+    # ========================================
+
+    def test_class_schedule_timezone_conversion_fields_fail(self):
+        """
+        FAILING TEST: API should return both UTC and local timezone datetime fields.
+        
+        FAILS BECAUSE: scheduled_datetime_utc and scheduled_datetime_local fields don't exist.
+        SHOULD PASS WHEN: Serializer includes timezone-aware datetime conversion.
+        """
+        class_schedule = ClassSchedule.objects.create(
+            teacher=self.teacher_profile,
+            student=self.student1,
+            school=self.school,
+            title='Timezone Test Class',
+            scheduled_date=self.future_date,
+            start_time=time(14, 0),  # 2 PM
+            end_time=time(15, 0),
+            duration_minutes=60,
+            booked_by=self.student1
+        )
+        
+        self.client.force_authenticate(user=self.student1)
+        url = reverse('class-schedules-detail', kwargs={'pk': class_schedule.id})
+        response = self.client.get(url)
+        
+        # Will FAIL because timezone conversion fields don't exist yet
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('scheduled_datetime_utc', response.data)
+        self.assertIn('scheduled_datetime_local', response.data)
+        
+        # Verify UTC format (should end with Z)
+        self.assertTrue(response.data['scheduled_datetime_utc'].endswith('Z'))
+        
+        # Verify local timezone conversion (teacher is in America/New_York)
+        # Local time should be offset from UTC
+        utc_dt = response.data['scheduled_datetime_utc']
+        local_dt = response.data['scheduled_datetime_local']
+        self.assertNotEqual(utc_dt, local_dt)
+
+    def test_utc_to_local_timezone_conversion_fails(self):
+        """
+        FAILING TEST: Local timezone should properly convert from UTC based on teacher timezone.
+        
+        FAILS BECAUSE: Timezone conversion logic doesn't exist in serializer.
+        SHOULD PASS WHEN: scheduled_datetime_local properly converts UTC to teacher's timezone.
+        """
+        # Set a specific date and time for predictable testing
+        test_date = date(2025, 8, 15)  # Summer date for EST/EDT testing
+        
+        class_schedule = ClassSchedule.objects.create(
+            teacher=self.teacher_profile,  # America/New_York timezone
+            student=self.student1,
+            school=self.school,
+            title='Summer Timezone Test',
+            scheduled_date=test_date,
+            start_time=time(18, 0),  # 6 PM
+            end_time=time(19, 0),
+            duration_minutes=60,
+            booked_by=self.student1
+        )
+        
+        self.client.force_authenticate(user=self.student1)
+        url = reverse('class-schedules-detail', kwargs={'pk': class_schedule.id})
+        response = self.client.get(url)
+        
+        # Will FAIL because timezone conversion doesn't exist
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Should have both timezone fields
+        self.assertIn('scheduled_datetime_utc', response.data)
+        self.assertIn('scheduled_datetime_local', response.data)
+        
+        # Local time should include timezone offset info
+        local_dt_str = response.data['scheduled_datetime_local']
+        self.assertTrue('+' in local_dt_str or '-' in local_dt_str or 'EST' in local_dt_str or 'EDT' in local_dt_str)
+
+    def test_different_teacher_timezones_fail(self):
+        """
+        FAILING TEST: Different teachers in different timezones should have correct local times.
+        
+        FAILS BECAUSE: Per-teacher timezone conversion doesn't exist.
+        SHOULD PASS WHEN: Each class uses its teacher's timezone for local conversion.
+        """
+        # Create another school with different timezone (Pacific)
+        from accounts.models import SchoolSettings, EducationalSystem
+        pacific_school = School.objects.create(
+            name="Pacific School", 
+            description="School in Pacific timezone"
+        )
+        SchoolSettings.objects.create(
+            school=pacific_school, 
+            timezone="America/Los_Angeles",
+            educational_system=self.edu_system
+        )
+        
+        # Create another teacher in the Pacific school
+        pacific_teacher_user = CustomUser.objects.create_user(
+            email="pacific_teacher@test.com", name="Pacific Teacher", password="testpass123"
+        )
+        pacific_teacher_profile = TeacherProfile.objects.create(
+            user=pacific_teacher_user, bio="Pacific timezone teacher"
+        )
+        SchoolMembership.objects.create(
+            user=pacific_teacher_user, school=pacific_school, role=SchoolRole.TEACHER
+        )
+        
+        # Create a student in the Pacific school
+        pacific_student = CustomUser.objects.create_user(
+            email="pacific_student@test.com", name="Pacific Student", password="testpass123"
+        )
+        SchoolMembership.objects.create(
+            user=pacific_student, school=pacific_school, role=SchoolRole.STUDENT
+        )
+        
+        # Add admin user to Pacific school so they can access both classes
+        SchoolMembership.objects.create(
+            user=self.admin_user, school=pacific_school, role=SchoolRole.SCHOOL_OWNER
+        )
+        
+        # Create classes with both teachers at same UTC time but different local times
+        same_date = self.future_date
+        
+        # Schedule Eastern class at 8 PM Eastern time
+        eastern_class = ClassSchedule.objects.create(
+            teacher=self.teacher_profile,  # America/New_York
+            student=self.student1,
+            school=self.school,
+            title='Eastern Class',
+            scheduled_date=same_date,
+            start_time=time(20, 0),  # 8 PM Eastern
+            end_time=time(21, 0),
+            duration_minutes=60,
+            booked_by=self.student1
+        )
+        
+        # Schedule Pacific class at 5 PM Pacific time (same UTC time as 8 PM Eastern)
+        pacific_class = ClassSchedule.objects.create(
+            teacher=pacific_teacher_profile,  # America/Los_Angeles
+            student=pacific_student,
+            school=pacific_school,
+            title='Pacific Class',
+            scheduled_date=same_date,
+            start_time=time(17, 0),  # 5 PM Pacific (same UTC time as 8 PM Eastern)
+            end_time=time(18, 0),
+            duration_minutes=60,
+            booked_by=pacific_student
+        )
+        
+        self.client.force_authenticate(user=self.admin_user)
+        
+        # Get both classes
+        eastern_url = reverse('class-schedules-detail', kwargs={'pk': eastern_class.id})
+        pacific_url = reverse('class-schedules-detail', kwargs={'pk': pacific_class.id})
+        
+        eastern_response = self.client.get(eastern_url)
+        pacific_response = self.client.get(pacific_url)
+        
+        # Will FAIL because timezone-specific conversion doesn't exist
+        self.assertEqual(eastern_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(pacific_response.status_code, status.HTTP_200_OK)
+        
+        # UTC times should be the same
+        self.assertEqual(
+            eastern_response.data['scheduled_datetime_utc'],
+            pacific_response.data['scheduled_datetime_utc']
+        )
+        
+        # Local times should be different (3 hour difference)
+        eastern_local = eastern_response.data['scheduled_datetime_local']
+        pacific_local = pacific_response.data['scheduled_datetime_local']
+        self.assertNotEqual(eastern_local, pacific_local)
+
+    # ========================================
+    # ENHANCED METADATA SERIALIZATION TESTS
+    # ========================================
+
+    def test_enhanced_metadata_serialization_fails(self):
+        """
+        FAILING TEST: All metadata fields should be properly serialized in API responses.
+        
+        FAILS BECAUSE: Some metadata fields may not be exposed or properly formatted.
+        SHOULD PASS WHEN: All metadata fields are included with proper formatting.
+        """
+        # Create class with full metadata
+        class_schedule = ClassSchedule.objects.create(
+            teacher=self.teacher_profile,
+            student=self.student1,
+            school=self.school,
+            title='Metadata Test Class',
+            scheduled_date=self.future_date,
+            start_time=time(15, 0),
+            end_time=time(16, 0),
+            duration_minutes=60,
+            booked_by=self.student1,
+            teacher_notes='Teacher preparation notes',
+            student_notes='Student requirements'
+        )
+        
+        # Add additional students to test group metadata
+        class_schedule.additional_students.add(self.student2)
+        
+        self.client.force_authenticate(user=self.admin_user)
+        url = reverse('class-schedules-detail', kwargs={'pk': class_schedule.id})
+        response = self.client.get(url)
+        
+        # Will FAIL if metadata fields are missing or improperly formatted
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Enhanced metadata fields that should be present
+        expected_fields = [
+            'booked_by', 'booked_by_name', 'booked_at',
+            'cancelled_at', 'cancellation_reason', 'completed_at',
+            'teacher_notes', 'student_notes',
+            'additional_students_names',  # This exists in current serializer
+            'can_be_cancelled', 'is_past'  # These exist in current serializer
+        ]
+        
+        for field in expected_fields:
+            self.assertIn(field, response.data, f"Missing field: {field}")
+        
+        # Verify specific metadata values
+        self.assertEqual(response.data['booked_by'], self.student1.id)
+        self.assertEqual(response.data['booked_by_name'], 'Student One')
+        self.assertIsNotNone(response.data['booked_at'])
+        self.assertEqual(response.data['teacher_notes'], 'Teacher preparation notes')
+        self.assertEqual(response.data['student_notes'], 'Student requirements')
+        self.assertIn('Student Two', response.data['additional_students_names'])
+
+    def test_computed_group_class_fields_fail(self):
+        """
+        FAILING TEST: Computed fields for group classes should work correctly.
+        
+        FAILS BECAUSE: Some computed fields may be missing or incorrect.
+        SHOULD PASS WHEN: All computed fields calculate correctly.
+        """
+        # Create group class with known participant count
+        group_class = ClassSchedule.objects.create(
+            teacher=self.teacher_profile,
+            student=self.student1,  # Primary student
+            school=self.school,
+            title='Group Computation Test',
+            class_type=ClassType.GROUP,
+            scheduled_date=self.future_date,
+            start_time=time(11, 0),
+            end_time=time(12, 30),
+            duration_minutes=90,
+            booked_by=self.admin_user
+        )
+        
+        # Add 2 additional students for total of 3
+        group_class.additional_students.add(self.student2, self.student3)
+        
+        self.client.force_authenticate(user=self.admin_user)
+        url = reverse('class-schedules-detail', kwargs={'pk': group_class.id})
+        response = self.client.get(url)
+        
+        # Will FAIL because computed fields don't exist yet
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # These fields should be computed correctly
+        self.assertEqual(response.data['participant_count'], 3)
+        self.assertEqual(len(response.data['participants']), 3)
+        self.assertEqual(len(response.data['participants_names']), 3)
+        
+        # Participants should include primary student + additional students
+        expected_participants = {self.student1.id, self.student2.id, self.student3.id}
+        actual_participants = set(response.data['participants'])
+        self.assertEqual(actual_participants, expected_participants)
+        
+        # Names should be included
+        expected_names = {'Student One', 'Student Two', 'Student Three'}
+        actual_names = set(response.data['participants_names'])
+        self.assertEqual(actual_names, expected_names)
+
+    def test_readonly_metadata_fields_fail(self):
+        """
+        FAILING TEST: Metadata fields should be properly marked as read-only.
+        
+        FAILS BECAUSE: Read-only field enforcement might not be complete.
+        SHOULD PASS WHEN: Metadata fields cannot be modified via API updates.
+        """
+        class_schedule = ClassSchedule.objects.create(
+            teacher=self.teacher_profile,
+            student=self.student1,
+            school=self.school,
+            title='Read-Only Test',
+            scheduled_date=self.future_date,
+            start_time=time(13, 0),
+            end_time=time(14, 0),
+            duration_minutes=60,
+            booked_by=self.student1
+        )
+        
+        original_booked_at = class_schedule.booked_at
+        
+        self.client.force_authenticate(user=self.admin_user)
+        url = reverse('class-schedules-detail', kwargs={'pk': class_schedule.id})
+        
+        # Attempt to modify read-only fields
+        update_data = {
+            'title': 'Updated Title',  # This should work
+            'booked_by': self.admin_user.id,  # This should be ignored (read-only)
+            'booked_at': '2025-01-01T00:00:00Z',  # This should be ignored (read-only)
+            'can_be_cancelled': False,  # This should be ignored (computed)
+            'is_past': True,  # This should be ignored (computed)
+        }
+        
+        response = self.client.patch(url, update_data, format='json')
+        
+        # Will FAIL if read-only fields are not properly protected
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['title'], 'Updated Title')  # Should change
+        self.assertEqual(response.data['booked_by'], self.student1.id)  # Should NOT change
+        self.assertNotEqual(response.data['booked_at'], '2025-01-01T00:00:00Z')  # Should NOT change
+        
+        # Verify in database
+        class_schedule.refresh_from_db()
+        self.assertEqual(class_schedule.title, 'Updated Title')
+        self.assertEqual(class_schedule.booked_by, self.student1)
+        self.assertEqual(class_schedule.booked_at, original_booked_at)

@@ -1,3 +1,5 @@
+import pytz
+from datetime import datetime, timedelta
 from typing import ClassVar
 
 from accounts.models import CustomUser, School, SchoolMembership, TeacherProfile
@@ -168,6 +170,22 @@ class ClassSchedule(models.Model):
     cancellation_reason = models.TextField(_("cancellation reason"), blank=True)
     completed_at = models.DateTimeField(_("completed at"), null=True, blank=True)
 
+    # Group class capacity management
+    max_participants = models.PositiveIntegerField(
+        _("maximum participants"),
+        null=True,
+        blank=True,
+        help_text=_("Maximum number of participants allowed for group classes")
+    )
+
+    # Enhanced metadata for structured data storage
+    metadata = models.JSONField(
+        _("metadata"),
+        default=dict,
+        blank=True,
+        help_text=_("Additional structured metadata for the class")
+    )
+
     # Notes
     teacher_notes = models.TextField(_("teacher notes"), blank=True)
     student_notes = models.TextField(_("student notes"), blank=True)
@@ -197,6 +215,20 @@ class ClassSchedule(models.Model):
         if self.scheduled_date < timezone.now().date():
             raise ValidationError({"scheduled_date": _("Cannot schedule classes in the past.")})
 
+        # Validate max_participants for group classes
+        if self.class_type == ClassType.GROUP:
+            if self.max_participants is None:
+                raise ValidationError({"max_participants": _("Max participants is required for group classes.")})
+            if self.max_participants <= 0:
+                raise ValidationError({"max_participants": _("Max participants must be a positive integer.")})
+        elif self.class_type == ClassType.INDIVIDUAL and self.max_participants:
+            # Individual classes should not have max_participants set
+            self.max_participants = None
+
+        # Validate metadata if provided
+        if self.metadata:
+            self._validate_metadata()
+
         # Check that student has a school membership
         if not SchoolMembership.objects.filter(
             user=self.student, school=self.school, is_active=True
@@ -208,12 +240,6 @@ class ClassSchedule(models.Model):
             user=self.teacher.user, school=self.school, is_active=True
         ).exists():
             raise ValidationError({"teacher": _("Teacher must be a member of the school.")})
-
-    @property
-    def is_past(self):
-        """Check if the class is in the past"""
-        scheduled_datetime = timezone.datetime.combine(self.scheduled_date, self.start_time)
-        return timezone.make_aware(scheduled_datetime) < timezone.now()
 
     @property
     def can_be_cancelled(self):
@@ -240,6 +266,172 @@ class ClassSchedule(models.Model):
         self.status = ClassStatus.COMPLETED
         self.completed_at = timezone.now()
         self.save()
+
+    # Group class capacity management methods
+    def get_total_participants(self):
+        """Get the total number of participants including main student and additional students"""
+        if self.class_type == ClassType.INDIVIDUAL:
+            return 1
+        # Count main student plus additional students
+        return 1 + self.additional_students.count()
+
+    def can_add_participant(self, user=None):
+        """Check if more participants can be added to this group class"""
+        if self.class_type == ClassType.INDIVIDUAL:
+            return False
+        if not self.max_participants:
+            return True  # No limit set
+        return self.get_total_participants() < self.max_participants
+
+    def add_participant(self, user):
+        """Add a participant to this group class if capacity allows"""
+        if self.class_type == ClassType.INDIVIDUAL:
+            raise ValidationError("Cannot add participants to individual classes.")
+        
+        if not self.can_add_participant():
+            raise ValidationError("Class has reached maximum capacity.")
+        
+        # Check if user is already the main student
+        if user == self.student:
+            raise ValidationError("User is already the main student in this class.")
+        
+        # Check if user is already an additional student
+        if self.additional_students.filter(id=user.id).exists():
+            raise ValidationError("User is already a participant in this class.")
+        
+        self.additional_students.add(user)
+
+    def is_at_capacity(self):
+        """Check if the class is at maximum capacity"""
+        if self.class_type == ClassType.INDIVIDUAL:
+            return True
+        if not self.max_participants:
+            return False  # No limit set
+        return self.get_total_participants() >= self.max_participants
+
+    def get_available_spots(self):
+        """Get the number of available spots remaining"""
+        if self.class_type == ClassType.INDIVIDUAL:
+            return 0
+        if not self.max_participants:
+            return float('inf')  # No limit
+        return max(0, self.max_participants - self.get_total_participants())
+
+    # Timezone-aware datetime methods
+    def get_scheduled_datetime_in_teacher_timezone(self):
+        """Get the scheduled datetime in the teacher's timezone (from school settings)"""
+        # Get school timezone from school settings
+        try:
+            school_timezone_str = self.school.settings.timezone
+        except:
+            school_timezone_str = 'UTC'
+        
+        school_tz = pytz.timezone(school_timezone_str)
+        
+        # Create naive datetime from date and start_time
+        naive_datetime = datetime.combine(self.scheduled_date, self.start_time)
+        
+        # Localize to school timezone
+        return school_tz.localize(naive_datetime)
+
+    def get_scheduled_datetime_utc(self):
+        """Get the scheduled datetime in UTC"""
+        local_dt = self.get_scheduled_datetime_in_teacher_timezone()
+        return local_dt.astimezone(pytz.UTC)
+
+    @property
+    def is_past(self):
+        """Check if the class is in the past (timezone-aware)"""
+        scheduled_dt_utc = self.get_scheduled_datetime_utc()
+        return scheduled_dt_utc < timezone.now()
+
+    def can_cancel_within_deadline(self, hours_before=2):
+        """Check if class can be cancelled within the deadline in teacher's timezone"""
+        if self.status in [ClassStatus.COMPLETED, ClassStatus.CANCELLED]:
+            return False
+        
+        scheduled_dt_utc = self.get_scheduled_datetime_utc()
+        deadline = scheduled_dt_utc - timedelta(hours=hours_before)
+        return timezone.now() < deadline
+
+    def get_class_duration_in_teacher_timezone(self):
+        """Get start and end datetime as timezone-aware objects in teacher's timezone"""
+        try:
+            school_timezone_str = self.school.settings.timezone
+        except:
+            school_timezone_str = 'UTC'
+        
+        school_tz = pytz.timezone(school_timezone_str)
+        
+        # Create naive datetimes
+        start_naive = datetime.combine(self.scheduled_date, self.start_time)
+        end_naive = datetime.combine(self.scheduled_date, self.end_time)
+        
+        # Localize to school timezone
+        start_dt = school_tz.localize(start_naive)
+        end_dt = school_tz.localize(end_naive)
+        
+        return start_dt, end_dt
+
+    # Metadata helper methods
+    def get_metadata_value(self, key, default=None):
+        """Safely get a metadata value with default fallback"""
+        if not self.metadata:
+            return default
+        return self.metadata.get(key, default)
+
+    def update_metadata(self, updates):
+        """Update specific metadata fields with validation"""
+        if not isinstance(updates, dict):
+            raise ValidationError("Metadata updates must be a dictionary")
+        
+        # Initialize metadata if it's empty
+        if not self.metadata:
+            self.metadata = {}
+        
+        # Update metadata with new values
+        self.metadata.update(updates)
+        
+        # Validate metadata structure based on class type
+        self._validate_metadata()
+        
+        self.save(update_fields=['metadata'])
+
+    def _validate_metadata(self):
+        """Validate metadata structure and required fields"""
+        if not self.metadata:
+            return
+        
+        errors = {}
+        
+        # Validate difficulty_level if present
+        if 'difficulty_level' in self.metadata:
+            valid_levels = ['beginner', 'intermediate', 'advanced']
+            if self.metadata['difficulty_level'] not in valid_levels:
+                errors['difficulty_level'] = f"Invalid difficulty level. Must be one of: {valid_levels}"
+        
+        # Validate topics as list of strings
+        if 'topics' in self.metadata:
+            topics = self.metadata['topics']
+            if not isinstance(topics, list):
+                errors['topics'] = "Topics must be a list of strings"
+            else:
+                for topic in topics:
+                    if not isinstance(topic, str):
+                        errors['topics'] = "Each topic must be a string"
+                        break
+        
+        # Additional validation for group classes
+        if self.class_type == ClassType.GROUP:
+            # Group classes require specific metadata fields when metadata is provided
+            if self.metadata:
+                required_group_fields = ['group_dynamics', 'interaction_level', 'collaboration_type']
+                missing_fields = [field for field in required_group_fields if field not in self.metadata]
+                if missing_fields:
+                    errors['metadata'] = f"Group classes must include the following metadata fields: {', '.join(missing_fields)}"
+        
+        if errors:
+            raise ValidationError(errors)
 
 
 class RecurringClassSchedule(models.Model):
