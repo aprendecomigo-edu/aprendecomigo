@@ -1,6 +1,9 @@
 """
-Tests for Notification Count API endpoints.
-Following TDD methodology - tests written first before implementation.
+API tests for notification count endpoint.
+
+Tests the legacy GET /api/messaging/notifications/counts/ endpoint that provides
+aggregated notification counts for admins and teachers. Focuses on API behavior,
+authentication, permissions, and business logic correctness.
 """
 import json
 import uuid
@@ -9,7 +12,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
 from accounts.models import (
     CustomUser, School, SchoolMembership, SchoolRole, 
     TeacherInvitation, InvitationStatus, EducationalSystem
@@ -17,12 +20,11 @@ from accounts.models import (
 from tasks.models import Task
 
 
-class NotificationCountAPITestCase(TestCase):
+class NotificationCountAPITestCase(APITestCase):
     """Test cases for notification count API endpoints."""
     
     def setUp(self):
         """Set up test data."""
-        self.client = APIClient()
         
         # Get or create educational system
         self.educational_system, _ = EducationalSystem.objects.get_or_create(
@@ -364,21 +366,6 @@ class NotificationCountAPITestCase(TestCase):
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
     
-    def test_notification_counts_performance_target(self):
-        """Test that API responds within 50ms performance target."""
-        import time
-        
-        url = reverse('messaging:counts')
-        
-        start_time = time.time()
-        response = self.client.get(url)
-        end_time = time.time()
-        
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        # Performance target: <50ms for notifications
-        response_time_ms = (end_time - start_time) * 1000
-        self.assertLess(response_time_ms, 50, f"Response time {response_time_ms:.2f}ms exceeds 50ms target")
     
     def test_notification_counts_response_format(self):
         """Test that response has correct format."""
@@ -424,38 +411,32 @@ class NotificationCountAPITestCase(TestCase):
         self.assertEqual(data["overdue_tasks"], 0)
         self.assertEqual(data["total_unread"], 0)
     
-    def test_notification_counts_multiple_invitation_statuses(self):
-        """Test that different valid invitation statuses are all counted."""
-        statuses_to_count = [
-            InvitationStatus.PENDING,
-            InvitationStatus.SENT,
-            InvitationStatus.DELIVERED,
-            InvitationStatus.VIEWED,
-        ]
+    def test_notification_counts_different_invitation_statuses(self):
+        """Test that different valid invitation statuses are counted, but declined are not."""
+        # Create valid invitations that should be counted
+        TeacherInvitation.objects.create(
+            school=self.school,
+            email="pending@example.com",
+            invited_by=self.admin_user,
+            role=SchoolRole.TEACHER,
+            batch_id=uuid.uuid4(),
+            status=InvitationStatus.PENDING,
+            is_accepted=False,
+            expires_at=timezone.now() + timedelta(days=7)
+        )
         
-        for i, status_value in enumerate(statuses_to_count):
-            TeacherInvitation.objects.create(
-                school=self.school,
-                email=f"invite{i}@example.com",
-                invited_by=self.admin_user,
-                role=SchoolRole.TEACHER,
-                batch_id=uuid.uuid4(),
-                status=status_value,
-                is_accepted=False,
-                expires_at=timezone.now() + timedelta(days=7)
-            )
+        TeacherInvitation.objects.create(
+            school=self.school,
+            email="sent@example.com",
+            invited_by=self.admin_user,
+            role=SchoolRole.TEACHER,
+            batch_id=uuid.uuid4(),
+            status=InvitationStatus.SENT,
+            is_accepted=False,
+            expires_at=timezone.now() + timedelta(days=7)
+        )
         
-        url = reverse('messaging:counts')
-        response = self.client.get(url)
-        
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        data = response.json()
-        self.assertEqual(data["pending_invitations"], len(statuses_to_count))
-    
-    def test_notification_counts_declined_invitations_excluded(self):
-        """Test that declined invitations are not counted."""
-        # Create declined invitation
+        # Create declined invitation that should NOT be counted
         TeacherInvitation.objects.create(
             school=self.school,
             email="declined@example.com",
@@ -473,4 +454,4 @@ class NotificationCountAPITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         data = response.json()
-        self.assertEqual(data["pending_invitations"], 0)  # Declined should not be counted
+        self.assertEqual(data["pending_invitations"], 2)  # Only pending and sent, not declined

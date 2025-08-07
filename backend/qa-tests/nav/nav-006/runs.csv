@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250802-053150,2025-08-02T04:31:50Z,PARTIAL_FAIL,5,7,Playwright Chrome,macOS development,Critical API URL issue and route warnings found

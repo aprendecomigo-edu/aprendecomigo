@@ -16,7 +16,6 @@ from .views import (
     SchoolMembershipViewSet,
     SchoolViewSet,
     StudentViewSet,
-    TeacherAnalyticsView,
     TeacherCourseViewSet,
     TeacherInvitationViewSet,
     TeacherProfileCompletionStatusView,
@@ -83,12 +82,6 @@ urlpatterns = [
         "teachers/bulk-actions/",
         BulkTeacherActionsView.as_view(),
         name="bulk-teacher-actions",
-    ),
-    # Teacher analytics endpoint
-    path(
-        "schools/<int:school_id>/teacher-analytics/",
-        TeacherAnalyticsView.as_view(),
-        name="teacher-analytics",
     ),
     # Teacher Profile Wizard endpoints
     path(

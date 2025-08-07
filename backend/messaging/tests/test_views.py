@@ -1,10 +1,13 @@
 """
-Test cases for notification API endpoints - Issue #107: Student Balance Monitoring & Notification System
+API tests for notification endpoints - Issue #107: Student Balance Monitoring & Notification System
 
-Tests for:
-- GET /api/notifications/ - List user notifications with pagination
-- POST /api/notifications/{id}/read/ - Mark notification as read
-- GET /api/notifications/unread-count/ - Get unread count for UI badge
+Tests comprehensive API behavior for notification endpoints:
+- GET /api/messaging/notifications/ - List user notifications with pagination and filtering
+- POST /api/messaging/notifications/{id}/read/ - Mark notification as read
+- GET /api/messaging/notifications/unread-count/ - Get unread count for UI badge
+- GET /api/messaging/notifications/{id}/ - Get notification details
+
+Focuses on API behavior, authentication, permissions, serialization, and edge cases.
 """
 
 from decimal import Decimal
@@ -12,7 +15,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
 from knox.models import AuthToken
 
 from accounts.models import CustomUser, School, SchoolMembership, SchoolRole
@@ -20,8 +23,8 @@ from finances.models import StudentAccountBalance, PurchaseTransaction, Transact
 from messaging.models import Notification, NotificationType
 
 
-class NotificationAPITestCase(TestCase):
-    """Base test case for notification API endpoints."""
+class NotificationAPITestCase(APITestCase):
+    """Base test case for notification API endpoints with DRF APITestCase."""
     
     def setUp(self):
         """Set up test data."""
@@ -64,10 +67,7 @@ class NotificationAPITestCase(TestCase):
             balance_amount=Decimal("50.00")
         )
         
-        # Set up API client
-        self.client = APIClient()
-        
-        # Create auth token for student
+        # Create auth token for student and authenticate client
         self.token = AuthToken.objects.create(self.student)[1]
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
         
@@ -228,6 +228,59 @@ class NotificationListAPITest(NotificationAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 1)
         self.assertEqual(response.data['results'][0]['id'], read_notification.id)
+
+
+class NotificationDetailAPITest(NotificationAPITestCase):
+    """Test case for notification detail API endpoint."""
+    
+    def test_get_notification_detail(self):
+        """Test retrieving a specific notification."""
+        notification = self.create_notification(
+            title="Detail Test Notification",
+            message="Test message for detail view",
+            notification_type=NotificationType.LOW_BALANCE
+        )
+        
+        url = reverse('messaging:notification-detail', kwargs={'pk': notification.pk})
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], notification.id)
+        self.assertEqual(response.data['title'], "Detail Test Notification")
+        self.assertEqual(response.data['message'], "Test message for detail view")
+        self.assertEqual(response.data['notification_type'], NotificationType.LOW_BALANCE)
+        self.assertFalse(response.data['is_read'])
+        
+    def test_get_notification_detail_not_found(self):
+        """Test retrieving non-existent notification returns 404."""
+        url = reverse('messaging:notification-detail', kwargs={'pk': 99999})
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        
+    def test_get_notification_detail_other_user(self):
+        """Test that users cannot access other users' notifications."""
+        other_notification = self.create_notification(
+            user=self.other_student,
+            title="Other User Notification",
+            message="Should not be accessible"
+        )
+        
+        url = reverse('messaging:notification-detail', kwargs={'pk': other_notification.pk})
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        
+    def test_get_notification_detail_unauthenticated(self):
+        """Test that unauthenticated users cannot access notification details."""
+        notification = self.create_notification()
+        
+        self.client.credentials()  # Remove authentication
+        
+        url = reverse('messaging:notification-detail', kwargs={'pk': notification.pk})
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class NotificationMarkAsReadAPITest(NotificationAPITestCase):

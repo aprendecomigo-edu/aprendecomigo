@@ -1,12 +1,12 @@
 """
-Comprehensive Security Tests for Email Template System
+Business security tests for email template system.
 
-This test suite verifies that all security vulnerabilities in the email template
-system have been properly addressed, including:
-- Template injection attacks
-- XSS vulnerabilities  
-- Input validation bypasses
-- Access control issues
+Critical business security requirements:
+- Template injection prevention (server compromise protection)
+- XSS prevention (user safety)
+- Input validation (data integrity)
+- Access control (tenant isolation)
+- Template size limits (resource protection)
 """
 
 import pytest
@@ -45,38 +45,40 @@ class SecureTemplateEngineTest(TestCase):
         )
         self.assertEqual(result, "Hello John Doe, welcome to Test School!")
     
-    def test_template_injection_prevention(self):
-        """Test that template injection attacks are prevented."""
-        malicious_templates = [
-            "{{ ''.__class__.__mro__[1].__subclasses__() }}",
-            "{% load os %}{{ os.system('ls') }}",
-            "{{ request.META }}",
-            "{{ settings.SECRET_KEY }}",
-            "{% import os %}",
-            "{{ eval('__import__(\"os\").system(\"ls\")') }}",
-            "{{ __import__('os').system('whoami') }}",
+    def test_prevent_server_compromise_via_template_injection(self):
+        """Test business security rule: prevent server compromise through template injection."""
+        # Business threat: malicious users attempting server compromise
+        server_compromise_attempts = [
+            "{{ ''.__class__.__mro__[1].__subclasses__() }}",  # Python introspection
+            "{% load os %}{{ os.system('ls') }}",              # OS command execution
+            "{{ request.META }}",                              # Server information leak
+            "{{ settings.SECRET_KEY }}",                       # Credential theft
+            "{% import os %}",                                 # Module import
+            "{{ eval('__import__(\"os\").system(\"ls\")') }}",  # Code evaluation
+            "{{ __import__('os').system('whoami') }}",         # Direct system access
         ]
         
-        for template in malicious_templates:
-            with self.subTest(template=template):
+        for attack_vector in server_compromise_attempts:
+            with self.subTest(attack_vector=attack_vector):
                 with self.assertRaises(ValidationError):
-                    SecureTemplateEngine.validate_template_content(template)
+                    SecureTemplateEngine.validate_template_content(attack_vector)
     
-    def test_dangerous_tag_prevention(self):
-        """Test that dangerous template tags are blocked."""
-        dangerous_templates = [
-            "{% load subprocess %}",
-            "{% load os %}",
-            "{% include '/etc/passwd' %}",
-            "{% extends '/etc/hosts' %}",
-            "{% ssi '/etc/passwd' %}",
-            "{% cycle 'eval' %}",
+    def test_block_system_access_template_tags(self):
+        """Test business security rule: block template tags that access system resources."""
+        # Business threat: unauthorized system resource access
+        system_access_attempts = [
+            "{% load subprocess %}",        # Process execution
+            "{% load os %}",               # Operating system access
+            "{% include '/etc/passwd' %}",  # Sensitive file access
+            "{% extends '/etc/hosts' %}",   # System configuration access
+            "{% ssi '/etc/passwd' %}",      # Server-side include attacks
+            "{% cycle 'eval' %}",          # Code evaluation
         ]
         
-        for template in dangerous_templates:
-            with self.subTest(template=template):
+        for attack_vector in system_access_attempts:
+            with self.subTest(attack_vector=attack_vector):
                 with self.assertRaises(ValidationError):
-                    SecureTemplateEngine.validate_template_content(template)
+                    SecureTemplateEngine.validate_template_content(attack_vector)
     
     def test_dangerous_filter_prevention(self):
         """Test that dangerous template filters are blocked."""
