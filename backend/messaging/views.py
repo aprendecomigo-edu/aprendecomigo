@@ -874,28 +874,26 @@ class CommunicationSettingsAPIView(APIView):
         settings, created = SchoolSettings.objects.get_or_create(
             school=school,
             defaults={
-                'communication_settings': {
-                    'default_from_email': school.contact_email,
-                    'email_signature': f'Best regards,\n{school.name} Team',
-                    'auto_sequence_enabled': True,
-                    'notification_preferences': {
-                        'email_delivery_notifications': True,
-                        'bounce_notifications': True
-                    }
-                }
+                'email_notifications_enabled': True,
+                'sms_notifications_enabled': False,
+                'enable_email_integration': False,
+                'email_integration_provider': 'none'
             }
         )
         
-        comm_settings = settings.communication_settings or {}
-        
         return Response({
-            'default_from_email': comm_settings.get('default_from_email', school.contact_email),
-            'email_signature': comm_settings.get('email_signature', f'Best regards,\n{school.name} Team'),
-            'auto_sequence_enabled': comm_settings.get('auto_sequence_enabled', True),
-            'notification_preferences': comm_settings.get('notification_preferences', {
-                'email_delivery_notifications': True,
-                'bounce_notifications': True
-            })
+            'default_from_email': school.contact_email,
+            'email_signature': f'Best regards,\n{school.name} Team',
+            'auto_sequence_enabled': True,  # Default value, could be added to model if needed
+            'notification_preferences': {
+                'email_delivery_notifications': settings.email_notifications_enabled,
+                'bounce_notifications': settings.email_notifications_enabled,
+                'sms_notifications': settings.sms_notifications_enabled
+            },
+            'email_integration': {
+                'enabled': settings.enable_email_integration,
+                'provider': settings.email_integration_provider
+            }
         }, status=status.HTTP_200_OK)
     
     def put(self, request, *args, **kwargs):
@@ -924,28 +922,63 @@ class CommunicationSettingsAPIView(APIView):
         # Get or create school settings
         settings, created = SchoolSettings.objects.get_or_create(
             school=school,
-            defaults={'communication_settings': {}}
+            defaults={
+                'email_notifications_enabled': True,
+                'sms_notifications_enabled': False,
+                'enable_email_integration': False,
+                'email_integration_provider': 'none'
+            }
         )
         
-        # Update communication settings
-        comm_settings = settings.communication_settings or {}
+        # Update fields based on request data
+        updated_fields = []
         
-        if 'default_from_email' in request.data:
-            comm_settings['default_from_email'] = request.data['default_from_email']
-        
-        if 'email_signature' in request.data:
-            comm_settings['email_signature'] = request.data['email_signature']
-        
-        if 'auto_sequence_enabled' in request.data:
-            comm_settings['auto_sequence_enabled'] = request.data['auto_sequence_enabled']
-        
+        # Handle notification preferences
         if 'notification_preferences' in request.data:
-            comm_settings['notification_preferences'] = request.data['notification_preferences']
+            prefs = request.data['notification_preferences']
+            if 'email_delivery_notifications' in prefs:
+                settings.email_notifications_enabled = prefs['email_delivery_notifications']
+                updated_fields.append('email_notifications_enabled')
+            if 'sms_notifications' in prefs:
+                settings.sms_notifications_enabled = prefs['sms_notifications']
+                updated_fields.append('sms_notifications_enabled')
         
-        settings.communication_settings = comm_settings
-        settings.save()
+        # Handle email integration settings
+        if 'email_integration' in request.data:
+            integration = request.data['email_integration']
+            if 'enabled' in integration:
+                settings.enable_email_integration = integration['enabled']
+                updated_fields.append('enable_email_integration')
+            if 'provider' in integration:
+                settings.email_integration_provider = integration['provider']
+                updated_fields.append('email_integration_provider')
+        
+        # Update school contact email if default_from_email is provided
+        if default_from_email and default_from_email != school.contact_email:
+            school.contact_email = default_from_email
+            school.save(update_fields=['contact_email'])
+        
+        # Save settings if any fields were updated
+        if updated_fields:
+            settings.save(update_fields=updated_fields)
+        
+        # Return updated settings
+        response_data = {
+            'default_from_email': school.contact_email,
+            'email_signature': f'Best regards,\n{school.name} Team',
+            'auto_sequence_enabled': True,  # Default value
+            'notification_preferences': {
+                'email_delivery_notifications': settings.email_notifications_enabled,
+                'bounce_notifications': settings.email_notifications_enabled,
+                'sms_notifications': settings.sms_notifications_enabled
+            },
+            'email_integration': {
+                'enabled': settings.enable_email_integration,
+                'provider': settings.email_integration_provider
+            }
+        }
         
         return Response({
             'message': 'Communication settings updated successfully',
-            'settings': comm_settings
+            'settings': response_data
         }, status=status.HTTP_200_OK)

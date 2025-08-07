@@ -1,9 +1,42 @@
 """
-API tests for notification count endpoint.
+API tests for legacy notification counts endpoint.
 
-Tests the legacy GET /api/messaging/notifications/counts/ endpoint that provides
-aggregated notification counts for admins and teachers. Focuses on API behavior,
-authentication, permissions, and business logic correctness.
+This module tests the legacy notification counts API that provides aggregated
+counts of various notification types for dashboard display in the Aprende Comigo
+tutoring platform.
+
+**API Endpoint Tested:**
+- GET /api/messaging/notifications/counts/ - Legacy aggregated notification counts
+
+**Response Format:**
+{
+    "pending_invitations": 2,       // Pending teacher invitations
+    "new_registrations": 1,         // Users who haven't completed first login
+    "incomplete_profiles": 1,       // Users with pending profile tasks
+    "overdue_tasks": 3,            // Overdue tasks for user/managed schools
+    "student_notifications": 2,     // Unread student balance notifications
+    "total_unread": 9              // Sum of all above counts
+}
+
+**Business Logic:**
+- School admins see counts for all managed schools
+- Teachers see only their own overdue tasks
+- Cross-school data isolation enforced
+- Expired/accepted invitations excluded from counts
+
+**Authentication & Permissions:**
+- Requires authentication (Token-based)
+- Role-based count visibility (admin vs teacher)
+
+**Note:** This is a legacy endpoint kept for backward compatibility.
+New implementations should use the dedicated notification endpoints in
+test_api_notifications.py for better granular control.
+
+**Testing Approach:**
+- Tests complete HTTP request/response cycles using APITestCase
+- Validates authentication, permissions, and role-based visibility
+- Tests business logic for count aggregation and filtering
+- Covers edge cases and data isolation scenarios
 """
 import json
 import uuid
@@ -115,7 +148,24 @@ class NotificationCountAPITestCase(APITestCase):
         self.client.force_authenticate(user=self.admin_user)
     
     def test_notification_counts_success_admin(self):
-        """Test GET /api/notifications/counts/ returns correct counts for admin."""
+        """
+        Test GET /api/messaging/notifications/counts/ returns correct counts for admin.
+        
+        **API Behavior:**
+        - Returns aggregated counts for all notification types
+        - School admins see data from all their managed schools
+        - Counts include pending invitations, new registrations, incomplete profiles,
+          overdue tasks, and student notifications
+        - Response includes total_unread as sum of all counts
+        
+        **Expected Response Structure:**
+        - pending_invitations: Count of non-expired, non-accepted teacher invitations
+        - new_registrations: Users who haven't completed first_login_completed
+        - incomplete_profiles: Users with pending "Complete Your Profile" tasks
+        - overdue_tasks: Tasks with due_date < now and status="pending"
+        - student_notifications: Unread student balance notifications
+        - total_unread: Sum of all above counts
+        """
         # Create pending invitations
         TeacherInvitation.objects.create(
             school=self.school,

@@ -1,13 +1,49 @@
 """
-API tests for notification endpoints - Issue #107: Student Balance Monitoring & Notification System
+API tests for student notification endpoints.
 
-Tests comprehensive API behavior for notification endpoints:
+This module tests the modern notification API for the Aprende Comigo tutoring platform,
+specifically designed for student balance monitoring and in-app notifications.
+
+**API Endpoints Tested:**
+
+Notification Management:
 - GET /api/messaging/notifications/ - List user notifications with pagination and filtering
+- GET /api/messaging/notifications/{id}/ - Get specific notification details
 - POST /api/messaging/notifications/{id}/read/ - Mark notification as read
-- GET /api/messaging/notifications/unread-count/ - Get unread count for UI badge
-- GET /api/messaging/notifications/{id}/ - Get notification details
+- GET /api/messaging/notifications/unread-count/ - Get unread notification count for UI badges
 
-Focuses on API behavior, authentication, permissions, serialization, and edge cases.
+**Notification Types:**
+- LOW_BALANCE: Student account running low on tutoring hours
+- PACKAGE_EXPIRING: Student package expiring soon
+- BALANCE_DEPLETED: Student account has no remaining hours
+
+**API Features:**
+- Pagination support with configurable page sizes
+- Filtering by notification_type and read status
+- Real-time unread count tracking for UI badges
+- Metadata support for rich notification data
+- Transaction relationship for package expiration tracking
+
+**Authentication & Permissions:**
+- All endpoints require authentication (Token-based)
+- Users can only access their own notifications
+- Cross-user data isolation strictly enforced
+
+**Business Context:**
+This notification system is critical for student engagement and retention in the 
+Aprende Comigo platform, alerting students about low balances and expiring packages
+to encourage timely renewals and continued learning.
+
+**Testing Approach:**
+- Tests complete HTTP request/response cycles using APITestCase
+- Validates authentication, permissions, and data isolation
+- Tests pagination, filtering, and sorting functionality
+- Covers integration scenarios and edge cases
+- Serves as executable API documentation for frontend developers
+
+**Integration with Legacy:**
+This modern API works alongside the legacy counts endpoint (test_notification_count_api.py)
+but provides more granular control and richer notification data for modern UI components.
 """
 
 from decimal import Decimal
@@ -90,7 +126,36 @@ class NotificationListAPITest(NotificationAPITestCase):
     """Test case for notification list API endpoint."""
     
     def test_list_user_notifications(self):
-        """Test listing notifications for authenticated user."""
+        """
+        Test GET /api/messaging/notifications/ - List user notifications.
+        
+        **API Behavior:**
+        - Returns paginated list of notifications for authenticated user only
+        - Results ordered by created_at descending (newest first)
+        - Includes full notification details: title, message, type, read status
+        - Enforces user isolation - cannot see other users' notifications
+        
+        **Response Format:**
+        {
+            "count": 2,
+            "next": null,
+            "previous": null,
+            "results": [
+                {
+                    "id": 2,
+                    "title": "Package Expiring",
+                    "message": "Your package expires soon",
+                    "notification_type": "package_expiring",
+                    "is_read": false,
+                    "read_at": null,
+                    "created_at": "2025-01-02T00:00:00Z",
+                    "metadata": {},
+                    "related_transaction": null
+                },
+                // ... more notifications
+            ]
+        }
+        """
         # Create notifications for the student
         notification1 = self.create_notification(
             title="Low Balance Alert", 
@@ -287,7 +352,26 @@ class NotificationMarkAsReadAPITest(NotificationAPITestCase):
     """Test case for mark notification as read API endpoint."""
     
     def test_mark_notification_as_read(self):
-        """Test marking a notification as read."""
+        """
+        Test POST /api/messaging/notifications/{id}/read/ - Mark notification as read.
+        
+        **API Behavior:**
+        - Changes notification is_read status from false to true
+        - Sets read_at timestamp to current datetime
+        - Returns success message with 200 OK status
+        - Only works for notifications owned by authenticated user
+        - Idempotent: safe to call multiple times on same notification
+        
+        **Response Format:**
+        {
+            "message": "Notification marked as read"
+        }
+        
+        **Side Effects:**
+        - Updates notification.is_read = True
+        - Sets notification.read_at = current timestamp
+        - Affects /api/messaging/notifications/unread-count/ endpoint
+        """
         notification = self.create_notification(
             title="Test Notification",
             message="Test message",
@@ -380,7 +464,25 @@ class NotificationUnreadCountAPITest(NotificationAPITestCase):
         self.assertEqual(response.data['unread_count'], 0)
         
     def test_get_unread_count_with_notifications(self):
-        """Test getting unread count with mixed read/unread notifications."""
+        """
+        Test GET /api/messaging/notifications/unread-count/ with mixed notifications.
+        
+        **API Behavior:**
+        - Returns count of unread notifications for authenticated user
+        - Only counts is_read=False notifications
+        - Excludes notifications from other users
+        - Used for UI badge display and real-time updates
+        
+        **Response Format:**
+        {
+            "unread_count": 3
+        }
+        
+        **Business Logic:**
+        - Critical for user engagement - shows pending notifications at a glance
+        - Updates in real-time as notifications are marked as read
+        - Used by frontend to display notification badges and counts
+        """
         # Create unread notifications
         self.create_notification(title="Unread 1", is_read=False)
         self.create_notification(title="Unread 2", is_read=False)
@@ -462,7 +564,31 @@ class NotificationAPIIntegrationTest(NotificationAPITestCase):
     """Integration tests for notification API endpoints."""
     
     def test_notification_api_workflow(self):
-        """Test complete notification API workflow."""
+        """
+        Test complete notification API workflow - End-to-End Integration.
+        
+        **Complete API Workflow:**
+        This test demonstrates the full lifecycle of notifications in the Aprende Comigo
+        platform, showing how a frontend application would interact with all endpoints.
+        
+        **Workflow Steps:**
+        1. Check initial state (no notifications)
+        2. Create notifications (simulates system-generated alerts)
+        3. List notifications (frontend fetches for display)
+        4. Check unread count (for UI badge)
+        5. Mark notifications as read (user interaction)
+        6. Filter notifications by read status
+        7. Verify final state consistency
+        
+        **API Endpoints Used:**
+        - GET /api/messaging/notifications/ (list and filter)
+        - GET /api/messaging/notifications/unread-count/ (badge count)
+        - POST /api/messaging/notifications/{id}/read/ (mark as read)
+        
+        **Business Scenario:**
+        Student logs into the platform and sees balance notifications, reads them,
+        and system updates accordingly for a seamless user experience.
+        """
         # 1. Initially no notifications
         list_url = reverse('messaging:notification-list')
         count_url = reverse('messaging:notification-unread-count')

@@ -1,14 +1,53 @@
 """
-API tests for communication endpoints in messaging app.
+API tests for messaging app communication endpoints.
 
-Tests the actual implemented communication API endpoints:
-- EmailTemplateViewSet (CRUD for email templates)
-- EmailSequenceViewSet (CRUD for email sequences)  
-- EmailCommunicationViewSet (Read-only for communication history)
-- Analytics endpoints for communication metrics
+This module tests the complete communication management API for the Aprende Comigo
+tutoring platform, covering email templates, sequences, and communications.
 
-Focuses on API behavior, DRF ViewSet functionality, authentication, permissions,
-serialization, and business logic validation.
+**API Endpoints Tested:**
+
+Email Templates (CRUD):
+- GET /api/messaging/email-templates/ - List school email templates with pagination
+- POST /api/messaging/email-templates/ - Create new email template
+- GET /api/messaging/email-templates/{id}/ - Retrieve specific template
+- PUT /api/messaging/email-templates/{id}/ - Update template
+- DELETE /api/messaging/email-templates/{id}/ - Delete template
+- POST /api/messaging/email-templates/{id}/preview/ - Preview template with variables
+- GET /api/messaging/email-templates/filter-options/ - Get template filter options
+
+Email Sequences (CRUD):
+- GET /api/messaging/email-sequences/ - List email sequences with steps count
+- POST /api/messaging/email-sequences/ - Create new sequence
+- POST /api/messaging/email-sequences/{id}/activate/ - Toggle sequence activation
+- GET /api/messaging/email-sequences/trigger-events/ - Get trigger event options
+
+Email Communications (Read-only):
+- GET /api/messaging/email-communications/ - List communication history with filtering
+- GET /api/messaging/email-communications/{id}/ - Get communication details
+- GET /api/messaging/email-communications/analytics/ - Get analytics data
+- GET /api/messaging/email-communications/communication-types/ - Get communication types
+
+Analytics & Settings:
+- GET /api/messaging/communication-analytics/ - Overall communication metrics
+- GET /api/messaging/template-analytics/ - Template usage statistics
+- GET/PUT /api/messaging/communication-settings/ - School communication settings
+
+**Authentication & Permissions:**
+- All endpoints require authentication (Token-based)
+- School-level permissions (IsSchoolOwnerOrAdmin)
+- Cross-school data isolation enforced
+
+**Testing Approach:**
+- Tests complete HTTP request/response cycles using APITestCase
+- Validates authentication, permissions, and data isolation
+- Tests all CRUD operations with proper status codes and response validation
+- Covers edge cases, error conditions, and business rule validation
+- Serves as executable documentation for API behavior
+
+**Business Context:**
+The communication system enables schools to manage email templates for teacher
+invitations, onboarding sequences, and student balance notifications in the
+Aprende Comigo tutoring platform.
 """
 
 from decimal import Decimal
@@ -109,7 +148,32 @@ class SchoolEmailTemplateAPITest(CommunicationAPITestCase):
         )
     
     def test_list_email_templates(self):
-        """Test GET /api/messaging/email-templates/ - List templates for user's school."""
+        """
+        Test GET /api/messaging/email-templates/ - List templates for user's school.
+        
+        **API Behavior:**
+        - Returns paginated list of email templates for authenticated user's school
+        - Only shows templates from schools user has admin access to
+        - Response includes count, next/previous pagination links, and results array
+        
+        **Response Format:**
+        {
+            "count": 1,
+            "next": null,
+            "previous": null,
+            "results": [
+                {
+                    "id": 1,
+                    "name": "Template Name",
+                    "template_type": "invitation",
+                    "school": 1,
+                    "created_by": 1,
+                    "created_at": "2025-01-01T00:00:00Z",
+                    ...
+                }
+            ]
+        }
+        """
         url = reverse('messaging:email-template-list')
         response = self.client.get(url)
         
@@ -122,7 +186,23 @@ class SchoolEmailTemplateAPITest(CommunicationAPITestCase):
         self.assertEqual(template_data['template_type'], EmailTemplateType.INVITATION)
     
     def test_create_email_template(self):
-        """Test POST /api/messaging/email-templates/ - Create new template."""
+        """
+        Test POST /api/messaging/email-templates/ - Create new template.
+        
+        **API Behavior:**
+        - Creates new email template for authenticated user's school
+        - Automatically sets created_by to current user
+        - Validates template content and variables
+        - Returns 201 CREATED with created template data
+        
+        **Required Fields:**
+        - school: School ID (must be user's managed school)
+        - template_type: Type from EmailTemplateType choices
+        - name: Human-readable template name
+        - subject_template: Email subject with variables like {{teacher_name}}
+        - html_content: HTML email content with variables
+        - text_content: Plain text version with variables
+        """
         url = reverse('messaging:email-template-list')
         data = {
             'school': self.school.id,
@@ -192,7 +272,32 @@ class SchoolEmailTemplateAPITest(CommunicationAPITestCase):
         )
     
     def test_template_preview_action(self):
-        """Test POST /api/messaging/email-templates/{id}/preview/ - Preview template."""
+        """
+        Test POST /api/messaging/email-templates/{id}/preview/ - Preview template.
+        
+        **API Behavior:**
+        - Renders template with provided variables for preview
+        - Validates template variables for security
+        - Returns rendered subject, HTML, and text content
+        - Used by frontend for template editing and testing
+        
+        **Request Body:**
+        {
+            "template_variables": {
+                "teacher_name": "John Doe",
+                "school_name": "Test School"
+            }
+        }
+        
+        **Response:**
+        {
+            "rendered_subject": "Join Test School as a Teacher",
+            "rendered_html": "<p>Welcome John Doe to Test School!</p>",
+            "rendered_text": "Welcome John Doe to Test School!",
+            "template_variables": {...},
+            "template_id": 1
+        }
+        """
         url = reverse('messaging:email-template-preview', kwargs={'pk': self.email_template.pk})
         data = {
             'template_variables': {
@@ -378,9 +483,8 @@ class EmailCommunicationAPITest(CommunicationAPITestCase):
             recipient_email="recipient@example.com",
             communication_type=EmailCommunicationType.MANUAL,
             template=self.email_template,
+            template_type=EmailTemplateType.INVITATION,
             subject="Test Email",
-            html_content="<p>Test email content</p>",
-            text_content="Test email content",
             created_by=self.admin_user
         )
     

@@ -102,6 +102,40 @@ class SecureTemplateEngine:
         r'\.save\(',
         r'\.create\(',
         r'\.update\(',
+        # XSS and script injection patterns
+        r'javascript\s*:',
+        r'<script[^>]*>',
+        r'<\/script>',
+        r'onerror\s*=',
+        r'onload\s*=',
+        r'onclick\s*=',
+        r'onmouseover\s*=',
+        r'<iframe[^>]*>',
+        r'<object[^>]*>',
+        r'<embed[^>]*>',
+        # CSS injection patterns
+        r'expression\s*\(',
+        r'@import\s+url',
+        r'-moz-binding',
+        r'behavior\s*:',
+        r'vbscript\s*:',
+        r'data\s*:',
+        # Command injection patterns
+        r';\s*rm\s+-rf',
+        r';\s*ls\s+',
+        r';\s*cat\s+',
+        r';\s*echo\s+',
+        r';\s*pwd',
+        r';\s*whoami',
+        r';\s*id\b',
+        r';\s*ps\s+',
+        r';\s*kill\s+',
+        r';\s*chmod\s+',
+        r';\s*chown\s+',
+        r'\$\([^)]+\)',  # Command substitution $(command)
+        r'`[^`]+`',  # Backtick command execution
+        r'&&\s*\w+',  # Command chaining
+        r'\|\|\s*\w+',  # Command chaining
     ]
     
     # Maximum template size (to prevent DoS)
@@ -186,13 +220,16 @@ class SecureTemplateEngine:
         depth = 0
         max_depth = 0
         
-        # Simple nesting depth check for basic tags
-        for line in template_content.split('\n'):
-            line = line.strip()
-            if line.startswith('{% for ') or line.startswith('{% if ') or line.startswith('{% with '):
+        # Parse template tags regardless of line breaks
+        # Find all opening and closing template tags
+        tag_pattern = r'\{\%\s*(\w+)(?:\s+[^%]+)?\s*\%\}'
+        tags = re.findall(tag_pattern, template_content)
+        
+        for tag in tags:
+            if tag in ['for', 'if', 'with', 'block', 'spaceless', 'autoescape', 'comment']:
                 depth += 1
                 max_depth = max(max_depth, depth)
-            elif line.startswith('{% endfor') or line.startswith('{% endif') or line.startswith('{% endwith'):
+            elif tag.startswith('end'):  # endfor, endif, endwith, etc.
                 depth -= 1
         
         if max_depth > cls.MAX_NESTING_DEPTH:

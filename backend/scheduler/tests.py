@@ -162,7 +162,7 @@ class AvailableSlotsAPITests(APITestCase):
         })
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('End date must be after', response.data['error'])
+        self.assertIn('date_end must be after', response.data['error'])
     
     def test_available_slots_new_response_format(self):
         """Test the new JSON response structure with ISO datetime format."""

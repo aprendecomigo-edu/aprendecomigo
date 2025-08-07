@@ -10,6 +10,7 @@ Focused on:
 
 from decimal import Decimal
 from django.test import TestCase
+import pytest
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -17,39 +18,20 @@ from django.db import IntegrityError
 from accounts.models import CustomUser, School, SchoolMembership, SchoolRole
 from finances.models import StudentAccountBalance, PurchaseTransaction, TransactionType, TransactionPaymentStatus
 from messaging.models import Notification, NotificationType
+from messaging.tests.test_base import MessagingTestBase
 
 
-class NotificationModelTest(TestCase):
+class NotificationModelTest(MessagingTestBase):
     """Test case for Notification model functionality."""
     
     def setUp(self):
         """Set up test data."""
-        # Create test school
-        self.school = School.objects.create(
-            name="Test School",
-            description="A test school",
-            address="123 Test Street, Test City"
-        )
-        
-        # Create test student user
-        self.student = CustomUser.objects.create_user(
-            email="student@test.com",
-            name="Test Student"
-        )
-        
-        # Create school membership for student
-        SchoolMembership.objects.create(
-            user=self.student,
-            school=self.school,
-            role=SchoolRole.STUDENT
-        )
-        
-        # Create student account balance
-        self.student_balance = StudentAccountBalance.objects.create(
-            student=self.student,
-            hours_purchased=Decimal("10.00"),
-            hours_consumed=Decimal("8.00"),
-            balance_amount=Decimal("50.00")
+        super().setUp()
+        # Create student account balance using base class utility
+        self.student_balance = self.create_student_balance(
+            hours_purchased=10.0,
+            hours_consumed=8.0,
+            balance_amount=50.0
         )
         
     def test_create_notification_with_required_fields(self):
@@ -141,8 +123,7 @@ class NotificationModelTest(TestCase):
         
         for notification_type, title in balance_monitoring_types:
             with self.subTest(notification_type=notification_type):
-                notification = Notification.objects.create(
-                    user=self.student,
+                notification = self.create_notification(
                     notification_type=notification_type,
                     title=title,
                     message=f"Business alert: {notification_type}"
@@ -153,21 +134,15 @@ class NotificationModelTest(TestCase):
     def test_link_notification_to_expiring_package(self):
         """Test business rule: package expiring notifications link to specific transaction."""
         # Business scenario: student has a package expiring in 7 days
-        transaction = PurchaseTransaction.objects.create(
-            student=self.student,
-            transaction_type=TransactionType.PACKAGE,
-            amount=Decimal("100.00"),
-            payment_status=TransactionPaymentStatus.COMPLETED,
-            expires_at=timezone.now() + timezone.timedelta(days=7)
-        )
+        transaction = self.create_purchase_transaction(expires_at_days=7)
         
-        notification = Notification.objects.create(
-            user=self.student,
+        notification = self.create_notification(
             notification_type=NotificationType.PACKAGE_EXPIRING,
             title="Package Expiring Soon",
-            message="Your package expires in 7 days",
-            related_transaction=transaction
+            message="Your package expires in 7 days"
         )
+        notification.related_transaction = transaction
+        notification.save()
         
         # Business rule: notification must reference the expiring transaction
         self.assertEqual(notification.related_transaction, transaction)
@@ -258,14 +233,104 @@ class NotificationModelTest(TestCase):
                 message="Test message"
             )
             notification.full_clean()
+    
+    def test_notification_metadata_preserves_business_context(self):
+        """Test business rule: notification metadata can store structured business data."""
+        # Business scenario: notification needs to store complex context
+        metadata = {
+            "alert_type": "low_balance",
+            "remaining_hours": 1.5,
+            "threshold_hours": 2.0,
+            "student_id": self.student.id,
+            "school_name": self.school.name,
+            "urgency_level": "medium",
+            "suggested_actions": ["purchase_hours", "contact_support"]
+        }
+        
+        notification = self.create_notification(
+            title="Low Balance with Context",
+            message="Your balance is low",
+            metadata=metadata
+        )
+        
+        # Business rule: metadata is preserved exactly as provided
+        self.assertEqual(notification.metadata["alert_type"], "low_balance")
+        self.assertEqual(notification.metadata["remaining_hours"], 1.5)
+        self.assertIn("purchase_hours", notification.metadata["suggested_actions"])
+    
+    def test_notification_read_status_persistence_across_sessions(self):
+        """Test business rule: read status persists across user sessions."""
+        notification = self.create_notification()
+        original_id = notification.id
+        
+        # Business action: mark as read
+        notification.mark_as_read()
+        read_timestamp = notification.read_at
+        
+        # Business rule: status persists when refetched from database
+        refetched_notification = Notification.objects.get(id=original_id)
+        self.assertTrue(refetched_notification.is_read)
+        self.assertEqual(refetched_notification.read_at, read_timestamp)
+        
+        # Business action: mark as unread
+        refetched_notification.mark_as_unread()
+        
+        # Business rule: unread status also persists
+        final_notification = Notification.objects.get(id=original_id)
+        self.assertFalse(final_notification.is_read)
+        self.assertIsNone(final_notification.read_at)
+    
+    def test_notification_ordering_shows_newest_first_for_user_experience(self):
+        """Test business rule: notifications are ordered newest first by default for better UX."""
+        # Business scenario: create notifications in sequence
+        first_notification = self.create_notification(title="First Alert")
+        second_notification = self.create_notification(title="Second Alert")
+        third_notification = self.create_notification(title="Third Alert")
+        
+        # Business rule: default ordering shows newest first
+        notifications_list = list(Notification.objects.all())
+        
+        self.assertEqual(notifications_list[0], third_notification)
+        self.assertEqual(notifications_list[1], second_notification)
+        self.assertEqual(notifications_list[2], first_notification)
+    
+    def test_notification_cascade_deletion_when_user_removed(self):
+        """Test business rule: notifications are cleaned up when user account is deleted."""
+        notification = self.create_notification()
+        notification_id = notification.id
+        
+        # Business action: remove user account
+        user_id = self.student.id
+        self.student.delete()
+        
+        # Business rule: associated notifications are automatically deleted
+        with self.assertRaises(Notification.DoesNotExist):
+            Notification.objects.get(id=notification_id)
+    
+    def test_notification_transaction_relationship_handles_transaction_deletion(self):
+        """Test business rule: notification handles related transaction deletion gracefully."""
+        transaction = self.create_purchase_transaction()
+        notification = self.create_notification(
+            notification_type=NotificationType.PACKAGE_EXPIRING,
+            title="Package Expiring"
+        )
+        notification.related_transaction = transaction
+        notification.save()
+        
+        # Business action: delete the related transaction
+        transaction.delete()
+        
+        # Business rule: notification is also deleted (cascade delete)
+        with self.assertRaises(Notification.DoesNotExist):
+            Notification.objects.get(id=notification.id)
             
 
 
 class NotificationTypeTest(TestCase):
     """Test business behavior of NotificationType enum."""
     
-    def test_balance_monitoring_notification_types(self):
-        """Test business requirement: support all balance monitoring notification types."""
+    def test_balance_monitoring_notification_types_completeness(self):
+        """Test business requirement: all essential balance monitoring notification types are available."""
         # Business domain: student balance monitoring notification types
         required_types = [
             NotificationType.LOW_BALANCE,
@@ -277,14 +342,28 @@ class NotificationTypeTest(TestCase):
         for notification_type in required_types:
             self.assertIn(notification_type, NotificationType.values)
             
-    def test_notification_type_display_labels(self):
-        """Test business requirement: notification types have clear display labels."""
+    def test_notification_type_display_labels_are_user_friendly(self):
+        """Test business requirement: notification types have clear, actionable display labels."""
         business_labels = {
             NotificationType.LOW_BALANCE: "Low Balance",
             NotificationType.PACKAGE_EXPIRING: "Package Expiring",
             NotificationType.BALANCE_DEPLETED: "Balance Depleted"
         }
         
-        # Business rule: labels must be user-friendly
+        # Business rule: labels must be user-friendly and immediately understandable
         for notification_type, expected_label in business_labels.items():
             self.assertEqual(notification_type.label, expected_label)
+    
+    def test_notification_type_values_are_database_safe(self):
+        """Test business rule: notification type values are suitable for database storage."""
+        # Business rule: enum values should be concise and database-friendly
+        for notification_type in NotificationType:
+            value = notification_type.value
+            
+            # Should be lowercase with underscores (database convention)
+            self.assertEqual(value, value.lower())
+            self.assertNotIn(' ', value)  # No spaces
+            self.assertNotIn('-', value)  # No hyphens, use underscores
+            
+            # Should not be excessively long
+            self.assertLessEqual(len(value), 30)

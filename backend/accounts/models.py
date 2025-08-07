@@ -1516,6 +1516,8 @@ class TeacherInvitation(models.Model):
             "email_delivery_status", 
             "email_sent_at", 
             "status", 
+            "retry_count",
+            "email_failure_reason",
             "updated_at"
         ])
     

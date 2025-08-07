@@ -19,31 +19,16 @@ from accounts.models import (
     TeacherInvitation, InvitationStatus
 )
 from tasks.models import Task
+from messaging.tests.test_base import MessagingTestBase
 
 
-class NotificationCountBusinessLogicTest(TestCase):
+class NotificationCountBusinessLogicTest(MessagingTestBase):
     """Test business logic for calculating notification counts."""
     
     def setUp(self):
         """Set up test data."""
-        # Create test school
-        self.school = School.objects.create(
-            name="Test School",
-            description="A test school"
-        )
-        
-        # Create school admin
-        self.admin_user = CustomUser.objects.create_user(
-            email="admin@testschool.com",
-            name="Test Admin",
-            first_login_completed=True
-        )
-        
-        SchoolMembership.objects.create(
-            user=self.admin_user,
-            school=self.school,
-            role=SchoolRole.SCHOOL_ADMIN
-        )
+        super().setUp()
+        # Base class provides self.school and self.admin_user
     
     def test_count_pending_teacher_invitations(self):
         """Test business rule: count only pending, non-expired teacher invitations."""
@@ -52,29 +37,21 @@ class NotificationCountBusinessLogicTest(TestCase):
         # Create pending invitations (should be counted)
         pending_invitations = []
         for i in range(3):
-            invitation = TeacherInvitation.objects.create(
-                school=self.school,
+            invitation = self.create_teacher_invitation(
                 email=f"teacher{i}@test.com",
-                invited_by=self.admin_user,
-                role=SchoolRole.TEACHER,
                 status=InvitationStatus.PENDING,
-                expires_at=timezone.now() + timedelta(days=7),
-                batch_id=uuid.uuid4()
+                expires_in_days=7
             )
             pending_invitations.append(invitation)
         
         # Create accepted invitation (should NOT be counted)
-        TeacherInvitation.objects.create(
-            school=self.school,
+        self.create_teacher_invitation(
             email="accepted@test.com",
-            invited_by=self.admin_user,
-            role=SchoolRole.TEACHER,
             status=InvitationStatus.ACCEPTED,
-            expires_at=timezone.now() + timedelta(days=7),
-            batch_id=uuid.uuid4()
+            expires_in_days=7
         )
         
-        # Create expired invitation (should NOT be counted)
+        # Create expired invitation (should NOT be counted)  
         TeacherInvitation.objects.create(
             school=self.school,
             email="expired@test.com",
@@ -101,28 +78,18 @@ class NotificationCountBusinessLogicTest(TestCase):
         # Create users who haven't completed first login (should be counted)
         new_users = []
         for i in range(2):
-            user = CustomUser.objects.create_user(
+            user = self.create_student_user(
                 email=f"newuser{i}@test.com",
                 name=f"New User {i}",
                 first_login_completed=False  # Key business state
             )
-            SchoolMembership.objects.create(
-                user=user,
-                school=self.school,
-                role=SchoolRole.STUDENT
-            )
             new_users.append(user)
         
         # Create user who has completed first login (should NOT be counted)
-        existing_user = CustomUser.objects.create_user(
+        existing_user = self.create_student_user(
             email="existing@test.com",
             name="Existing User",
             first_login_completed=True
-        )
-        SchoolMembership.objects.create(
-            user=existing_user,
-            school=self.school,
-            role=SchoolRole.STUDENT
         )
         
         # Business rule: count only users who haven't completed first login
@@ -140,15 +107,10 @@ class NotificationCountBusinessLogicTest(TestCase):
         # Create users with profile completion tasks (should be counted)
         users_with_incomplete_profiles = []
         for i in range(3):
-            user = CustomUser.objects.create_user(
+            user = self.create_teacher_user(
                 email=f"incomplete{i}@test.com",
                 name=f"Incomplete User {i}",
                 first_login_completed=True
-            )
-            SchoolMembership.objects.create(
-                user=user,
-                school=self.school,
-                role=SchoolRole.TEACHER
             )
             
             # Create profile completion task
@@ -162,15 +124,10 @@ class NotificationCountBusinessLogicTest(TestCase):
             users_with_incomplete_profiles.append(user)
         
         # Create user without profile tasks (should NOT be counted)
-        complete_user = CustomUser.objects.create_user(
+        complete_user = self.create_teacher_user(
             email="complete@test.com",
             name="Complete User",
             first_login_completed=True
-        )
-        SchoolMembership.objects.create(
-            user=complete_user,
-            school=self.school,
-            role=SchoolRole.TEACHER
         )
         
         # Business rule: count users with pending profile completion tasks
@@ -189,14 +146,9 @@ class NotificationCountBusinessLogicTest(TestCase):
         # Business scenario: school has tasks that are overdue
         
         # Create overdue task (should be counted)
-        overdue_user = CustomUser.objects.create_user(
+        overdue_user = self.create_teacher_user(
             email="overdue@test.com",
             name="Overdue User"
-        )
-        SchoolMembership.objects.create(
-            user=overdue_user,
-            school=self.school,
-            role=SchoolRole.TEACHER
         )
         Task.objects.create(
             user=overdue_user,
@@ -207,14 +159,9 @@ class NotificationCountBusinessLogicTest(TestCase):
         )
         
         # Create future task (should NOT be counted)
-        future_user = CustomUser.objects.create_user(
+        future_user = self.create_teacher_user(
             email="future@test.com",
             name="Future User"
-        )
-        SchoolMembership.objects.create(
-            user=future_user,
-            school=self.school,
-            role=SchoolRole.TEACHER
         )
         Task.objects.create(
             user=future_user,
@@ -225,14 +172,9 @@ class NotificationCountBusinessLogicTest(TestCase):
         )
         
         # Create completed overdue task (should NOT be counted)
-        completed_user = CustomUser.objects.create_user(
+        completed_user = self.create_teacher_user(
             email="completed@test.com",
             name="Completed User"
-        )
-        SchoolMembership.objects.create(
-            user=completed_user,
-            school=self.school,
-            role=SchoolRole.TEACHER
         )
         Task.objects.create(
             user=completed_user,
@@ -257,23 +199,9 @@ class NotificationCountBusinessLogicTest(TestCase):
         # Business scenario: system has multiple schools, counts should be isolated
         
         # Create another school with its own data
-        other_school = School.objects.create(
-            name="Other School",
-            description="Another school"
-        )
+        other_school, other_admin = self.create_other_school()
         
-        other_admin = CustomUser.objects.create_user(
-            email="other@school.com",
-            name="Other Admin"
-        )
-        
-        SchoolMembership.objects.create(
-            user=other_admin,
-            school=other_school,
-            role=SchoolRole.SCHOOL_ADMIN
-        )
-        
-        # Create invitation for other school
+        # Create invitation for other school  
         TeacherInvitation.objects.create(
             school=other_school,
             email="other_teacher@test.com",
@@ -285,14 +213,10 @@ class NotificationCountBusinessLogicTest(TestCase):
         )
         
         # Create invitation for our school
-        TeacherInvitation.objects.create(
-            school=self.school,
+        self.create_teacher_invitation(
             email="our_teacher@test.com",
-            invited_by=self.admin_user,
-            role=SchoolRole.TEACHER,
             status=InvitationStatus.PENDING,
-            expires_at=timezone.now() + timedelta(days=7),
-            batch_id=uuid.uuid4()
+            expires_in_days=7
         )
         
         # Business rule: counts should be scoped to specific school
@@ -318,38 +242,24 @@ class NotificationCountBusinessLogicTest(TestCase):
         # Create test data for each notification type
         
         # 1 pending invitation
-        TeacherInvitation.objects.create(
-            school=self.school,
+        self.create_teacher_invitation(
             email="teacher@test.com",
-            invited_by=self.admin_user,
-            role=SchoolRole.TEACHER,
             status=InvitationStatus.PENDING,
-            expires_at=timezone.now() + timedelta(days=7),
-            batch_id=uuid.uuid4()
+            expires_in_days=7
         )
         
         # 1 new registration
-        new_user = CustomUser.objects.create_user(
+        new_user = self.create_student_user(
             email="newuser@test.com",
             name="New User",
             first_login_completed=False
         )
-        SchoolMembership.objects.create(
-            user=new_user,
-            school=self.school,
-            role=SchoolRole.STUDENT
-        )
         
         # 1 incomplete profile
-        incomplete_user = CustomUser.objects.create_user(
+        incomplete_user = self.create_teacher_user(
             email="incomplete@test.com",
             name="Incomplete User",
             first_login_completed=True
-        )
-        SchoolMembership.objects.create(
-            user=incomplete_user,
-            school=self.school,
-            role=SchoolRole.TEACHER
         )
         Task.objects.create(
             user=incomplete_user,
@@ -360,14 +270,9 @@ class NotificationCountBusinessLogicTest(TestCase):
         )
         
         # 1 overdue task
-        overdue_user = CustomUser.objects.create_user(
+        overdue_user = self.create_teacher_user(
             email="overdue@test.com",
             name="Overdue User"
-        )
-        SchoolMembership.objects.create(
-            user=overdue_user,
-            school=self.school,
-            role=SchoolRole.TEACHER
         )
         Task.objects.create(
             user=overdue_user,
