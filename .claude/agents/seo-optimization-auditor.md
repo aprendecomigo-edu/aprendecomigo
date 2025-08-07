@@ -1,6 +1,7 @@
 ---
 name: seo-optimization-auditor
 description: Use this agent when you need to audit, implement, or optimize SEO elements for web applications, particularly for service-based businesses with local presence. Examples: <example>Context: The user has just finished building a new landing page for their tutoring platform and wants to ensure it's optimized for search engines. user: 'I just created a new landing page for our math tutoring services. Can you help me optimize it for SEO?' assistant: 'I'll use the seo-optimization-auditor agent to perform a comprehensive SEO audit and provide optimization recommendations for your math tutoring landing page.' <commentary>Since the user needs SEO optimization for a new landing page, use the seo-optimization-auditor agent to analyze and improve search engine visibility.</commentary></example> <example>Context: The user is launching location-specific pages and wants to ensure proper SEO implementation. user: 'We're expanding to three new cities and I need to make sure our location pages are properly optimized for local search' assistant: 'I'll deploy the seo-optimization-auditor agent to review your location-specific pages and ensure they follow local SEO best practices.' <commentary>Since the user needs local SEO optimization for multiple location pages, use the seo-optimization-auditor agent to implement location-specific SEO strategies.</commentary></example>
+tools: Bash, Glob, Grep, LS, Read, Edit, MultiEdit, Write, NotebookEdit, WebFetch, TodoWrite, WebSearch
 model: sonnet
 ---
 

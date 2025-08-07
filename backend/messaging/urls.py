@@ -16,19 +16,19 @@ router.register(r'enhanced-email-templates', views.EnhancedSchoolEmailTemplateVi
 
 urlpatterns = [
     # Email communication endpoints (moved from accounts)
-    path('api/', include(router.urls)),
+    path('', include(router.urls)),
     
     # Email communication analytics and settings
-    path('api/communication-analytics/', views.CommunicationAnalyticsAPIView.as_view(), name='communication-analytics'),
-    path('api/template-analytics/', views.TemplateAnalyticsAPIView.as_view(), name='template-analytics'),
-    path('api/communication-settings/', views.CommunicationSettingsAPIView.as_view(), name='communication-settings'),
+    path('communication-analytics/', views.CommunicationAnalyticsAPIView.as_view(), name='communication-analytics'),
+    path('template-analytics/', views.TemplateAnalyticsAPIView.as_view(), name='template-analytics'),
+    path('communication-settings/', views.CommunicationSettingsAPIView.as_view(), name='communication-settings'),
     
     # Notification endpoints
-    path('', views.NotificationListView.as_view(), name='notification-list'),
-    path('<int:pk>/', views.NotificationDetailView.as_view(), name='notification-detail'),
-    path('<int:pk>/read/', views.NotificationMarkReadView.as_view(), name='notification-mark-read'),
-    path('unread-count/', views.NotificationUnreadCountView.as_view(), name='notification-unread-count'),
+    path('notifications/', views.NotificationListView.as_view(), name='notification-list'),
+    path('notifications/<int:pk>/', views.NotificationDetailView.as_view(), name='notification-detail'),
+    path('notifications/<int:pk>/read/', views.NotificationMarkReadView.as_view(), name='notification-mark-read'),
+    path('notifications/unread-count/', views.NotificationUnreadCountView.as_view(), name='notification-unread-count'),
     
     # Legacy endpoint (kept for backward compatibility)
-    path('counts/', views.notification_counts, name='counts'),
+    path('notifications/counts/', views.notification_counts, name='counts'),
 ]

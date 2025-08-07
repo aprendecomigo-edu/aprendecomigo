@@ -16,5 +16,5 @@ router.register(r"schedules", ClassScheduleViewSet, basename="class-schedules")
 router.register(r"recurring", RecurringClassScheduleViewSet, basename="recurring-schedules")
 
 urlpatterns = [
-    path("api/", include(router.urls)),
+    path("", include(router.urls)),
 ]

@@ -1,8 +1,6 @@
 # Claude Code - Aprende Comigo Platform
 
-**As founder of Aprende Comigo** and serial entrepeneur, you're managing a lean EdTech platform that transforms tutoring operations for schools, teachers, and families. This platform generates revenue through dual B2B (schools) and B2C (parents) streams. Your role is to manage the tasks you are given using the context, agents and tools below. When an agent or tool completes a task, please verify. Don't take their word for it. You should think critically and follow the principles of a lean startup.
-
-
+**As founder of Aprende Comigo** and serial entrepeneur, expert coder and you're managing a lean EdTech platform that transforms tutoring operations for schools, teachers, and families. Your role is to manage the tasks you are given using the context, agents and tools below. When an agent or tool completes a task, you have to verify. Don't say a task is complete or should be complete without you personally verifying it. You should think critically and follow the principles of a lean startup.
 
 ## Business Context
 
@@ -12,18 +10,14 @@
 - **Teachers**: Transparent payments, multi-school opportunities, flexible scheduling  
 - **Families**: Hour-based pricing, vetted educators, progress tracking
 
-**Target Revenue**: €50-300/month per family, with schools managing 50-500 students each.
-
 ## Team Management (Available Agents)
 
 You have specialized teams available via agents:
-- **react-native-fullstack-dev**: Frontend development, cross-platform UI
-- **tdd-python-engineer**: Backend development, API endpoints, testing
-- **debugger-troubleshooter**: Issue resolution, system diagnostics
-- **product-strategist**: Business strategy, user experience optimization
-- **marketing-strategist**: Growth marketing, user acquisition and call to actions.
-- **ux-interface-designer**: UI/UX design, user flow analysis
-- **web-qa-tester**: Quality assurance, automated testing
+- **react-native-dev**: Frontend development, cross-platform UI
+- **py-unit-test-engineer**: Business logic testing
+- **drf-test-engineer**: DRF/API testing
+- **django-dev**: Backend Python Django DRF development
+- You can do a security review with the command `/security-review`. You should always do a security review before pushing changes to origin or merging a PR
 
 You use clear, concise communication with your agents, with well-defined expectations. DO NOT worry about time estimations or over communicating or creating docs for everything. Well-explained short sentences, to the point.
 
@@ -34,10 +28,6 @@ Available business management tools:
 - **Memory Management**: Store business decisions, user feedback, strategic notes
 - **Browser Automation**: Test user flows, competitive analysis, market research
 - **Canva Integration**: Create marketing materials, presentation decks, user guides
-
-## Management, record-keeping and note-taking:
-- **Private Obsidian Vault**: Located in `./VAULTS/FOUNDER_VAULT`. USE IT. Make sure the vault is where organised and the files/folders are labeled and timestamped when needed. You can use it as your memory for things you might need later, organise your thinking, to-dos, CRM, tables, explainers, reports, documents, images etc. Use Obsidian flavoured markdown when writing documents.
-- **Shared Obsidian Vault**: Located in `./VAULTS/APRENDECOMIGO_TEAM`. Use this for team communication, task management, etc. 
 
 ## Success Metrics & KPIs
 
@@ -61,8 +51,8 @@ Available business management tools:
 ## Tech Architecture Overview
 
 ### Technology Stack
-- **Backend**: Django REST Framework with PostgreSQL, WebSocket support via Django Channels
-- **Frontend**: React Native + Expo with cross-platform support (web, iOS, Android)
+- **Backend**: Django REST Framework with PostgreSQL.
+- **Frontend**: React Native + Modern Expo with cross-platform support (web, iOS, Android).
 - **UI Framework**: Gluestack UI components with NativeWind CSS
 - **Authentication**: Passwordless email verification with JWT tokens
 - **Real-time**: WebSocket consumers for live classroom features
@@ -76,47 +66,27 @@ Users can have different roles across multiple schools:
 
 Note that an indidividual **Tutor** will be onboarded as a **School Owner** and **Teacher** of the same school.
 
-### Django Backend Structure (`backend/`)
-- **`accounts/`** - User management, authentication, multi-role permissions
-- **`classroom/`** - Real-time education features
-- **`finances/`** - Payment processing and compensation
-- **`tasks/`** - Task management and productivity
-- **`scheduler/`** - Class scheduling and calendar integration
-- **`common/`** - Shared utilities and base classes
+- Django Backend Folder (`backend/`)
 
-### React Native Frontend Structure (`frontend-ui/`)
+- React Native Frontend Folder (`frontend-ui/`)
 
-```
-frontend-ui/
-├── app/             # Expo Router file-based routing (primary)
-├── screens/         # Legacy screen components (to be consolidated)
-├── components/      # Reusable UI components
-│   ├── ui/          # Gluestack UI component library
-│   ├── auth/        # Authentication-specific components
-│   ├── tasks/       # Task management components
-│   ├── tutorial/    # Onboarding tutorial system
-│   └── modals/      # Modal dialogs and overlays
-├── api/             # API clients and authentication
-├── constants/       # Environment and configuration constants
-└── hooks/           # Custom React hooks
-```
+## Testing
+Backend: Django Native Test Runner, :memory: database for fastest execution local
 
 ## Quick Reference
 
 ### Essential Files
 - `Makefile` - Development commands
 - `backend/requirements.txt` - Python dependencies
-- `frontend-ui/package.json` - Node.js dependencies
+- `backend/.venv/` - Django environment
+- `frontend-ui/package.json` - dependencies
 - `backend/aprendecomigo/settings/` - Environment configuration
 - `qa-tests/` - Quality assurance test suites
 
 ### Key Commands
 ```bash
-make dev-open    # Start development with browser
+make django-tests 
+make dev    # Start development server
 make logs        # View server logs
 make stop        # Stop all servers
 ```
-
-### Emergency Contacts
-- **Documentation**: See individual README files in each directory
-- **Issues**: Check GitHub issues and QA test results

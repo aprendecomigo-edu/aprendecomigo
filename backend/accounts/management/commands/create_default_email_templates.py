@@ -10,8 +10,9 @@ Usage:
 import logging
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from accounts.models import School, SchoolEmailTemplate, EmailTemplateType
-from accounts.services.default_templates import DefaultEmailTemplates
+from accounts.models import School
+from messaging.models import SchoolEmailTemplate, EmailTemplateType
+from messaging.services.default_templates import DefaultEmailTemplates
 
 logger = logging.getLogger(__name__)
 

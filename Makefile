@@ -1,9 +1,9 @@
-.PHONY: dev dev-open backend frontend stop logs open health check-deps create-test-data verify-test-data create-admin-calendar lint setup-hooks
+.PHONY: dev dev-open backend frontend stop logs open health check-deps create-test-data verify-test-data create-admin-calendar py-lint setup-hooks django-tests django-tests-dev django-tests-parallel django-tests-coverage frontend-tests
 
 backend:
 	@echo "Starting Django backend server..."
 	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; exit 1; fi
-	cd backend && source ../.venv/bin/activate && DJANGO_ENV=development DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development daphne -b 0.0.0.0 -p 8000 aprendecomigo.asgi:application
+	cd backend && source .venv/bin/activate && DJANGO_ENV=development DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development daphne -b 0.0.0.0 -p 8000 aprendecomigo.asgi:application
 
 frontend:
 	@echo "Starting Expo frontend server..."
@@ -11,7 +11,6 @@ frontend:
 
 dev:
 	@echo "Starting development servers..."
-	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; echo "Run: python3 -m venv .venv && source .venv/bin/activate && pip install -r backend/requirements.txt"; exit 1; fi
 	@mkdir -p logs
 	@TIMESTAMP=$$(date +"%Y%m%d-%H%M%S"); \
 	echo "Backend logs: logs/backend-$$TIMESTAMP.log"; \
@@ -22,7 +21,7 @@ dev:
 	sleep 2; \
 	echo "Please wait while servers start up..."; \
 	echo "Starting backend server..."; \
-	(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver > ../logs/backend-$$TIMESTAMP.log 2>&1) & \
+	(cd backend && source .venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver > ../logs/backend-$$TIMESTAMP.log 2>&1) & \
 	echo $$! > logs/backend.pid; \
 	sleep 3; \
 	echo "Starting frontend server..."; \
@@ -39,7 +38,6 @@ dev:
 
 dev-open:
 	@echo "Starting development servers with auto-browser opening..."
-	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; echo "Run: python3 -m venv .venv && source .venv/bin/activate && pip install -r backend/requirements.txt"; exit 1; fi
 	@mkdir -p logs
 	@TIMESTAMP=$$(date +"%Y%m%d-%H%M%S"); \
 	echo "Backend logs: logs/backend-$$TIMESTAMP.log"; \
@@ -50,7 +48,7 @@ dev-open:
 	sleep 2; \
 	echo "Please wait while servers start up..."; \
 	echo "Starting backend server..."; \
-	(cd backend && source ../.venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver > ../logs/backend-$$TIMESTAMP.log 2>&1) & \
+	(cd backend && source .venv/bin/activate && DJANGO_ENV=development python3 manage.py runserver > ../logs/backend-$$TIMESTAMP.log 2>&1) & \
 	echo $$! > logs/backend.pid; \
 	sleep 3; \
 	echo "Starting frontend server..."; \
@@ -133,8 +131,8 @@ health:
 check-deps:
 	@echo "Checking dependencies..."
 	@echo "Python virtual environment:"
-	@if [ -d ".venv" ]; then echo "✓ Virtual environment exists"; else echo "✗ Virtual environment missing"; fi
-	@if [ -d ".venv" ]; then source .venv/bin/activate && python3 --version; fi
+	@if [ -d "./backend/venv" ]; then echo "✓ Virtual environment exists"; else echo "✗ Virtual environment missing"; fi
+	@if [ -d "./backend/venv" ]; then source ./backend/venv/bin/activate && python3 --version; fi
 	@echo "Frontend dependencies:"
 	@cd frontend-ui && npm list --depth=0 expo || echo "✗ Expo not installed properly"
 	@echo "Environment variables:"
@@ -143,28 +141,24 @@ check-deps:
 
 create-test-data:
 	@echo "Creating school admin test data..."
-	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; exit 1; fi
-	@cd backend && source ../.venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development python3 manage.py create_school_admin_test_data --clear-existing
+	@cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development python3 manage.py create_school_admin_test_data --clear-existing
 	@echo "Test data created successfully!"
 	@echo "Admin email: ana.silva@example.com"
 	@echo "Verify data with: make verify-test-data"
 
 verify-test-data:
 	@echo "Verifying school admin test data..."
-	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; exit 1; fi
-	@cd backend && source ../.venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development python3 manage.py verify_test_data
+	@cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development python3 manage.py verify_test_data
 
 create-admin-calendar:
 	@echo "Creating admin calendar events..."
-	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; exit 1; fi
-	@cd backend && source ../.venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development python3 manage.py create_admin_calendar_events --school-admin-email ana.silva@example.com
+	@cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.development python3 manage.py create_admin_calendar_events --school-admin-email ana.silva@example.com
 	@echo "Admin calendar events created successfully!"
 	@echo "Admin can now see calendar events in dashboard and calendar pages"
 
-lint:
+py-lint:
 	@echo "Running linting checks..."
-	@if [ ! -d ".venv" ]; then echo "Virtual environment not found at .venv"; exit 1; fi
-	@cd backend && source ../.venv/bin/activate && \
+	@cd backend && source .venv/bin/activate && \
 		pip install flake8 > /dev/null 2>&1 && \
 		echo "Checking for syntax errors and undefined names..." && \
 		flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics && \
@@ -175,3 +169,23 @@ lint:
 setup-hooks:
 	@echo "Setting up Git hooks..."
 	@./setup-hooks.sh
+
+django-tests:
+	@echo "Running Django tests..."
+	@cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.testing python3 manage.py test --noinput
+
+django-tests-dev:
+	@echo "Running Django tests (development mode with database reuse)..."
+	@cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.testing python3 manage.py test --noinput --keepdb
+
+django-tests-parallel:
+	@echo "Running Django tests in parallel..."
+	@cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.testing python3 manage.py test --noinput --parallel
+
+django-tests-coverage:
+	@echo "Running Django tests with coverage..."
+	@cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.testing coverage run --source='.' manage.py test --noinput && coverage report
+
+frontend-tests:
+	@echo "Running frontend tests..."
+	@cd frontend-ui && npm test

@@ -5,7 +5,7 @@ This module provides default templates for low balance and package expiring noti
 These templates can be customized per school using the existing email template system.
 """
 
-from accounts.models import EmailTemplateType
+from messaging.models import EmailTemplateType
 
 
 DEFAULT_LOW_BALANCE_TEMPLATE = {

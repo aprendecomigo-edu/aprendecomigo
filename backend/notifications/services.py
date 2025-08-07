@@ -19,7 +19,7 @@ from django.db.models import Q
 
 from accounts.models import CustomUser, SchoolMembership, SchoolRole
 from accounts.services.enhanced_email_service import EnhancedEmailService
-from accounts.models import EmailTemplateType, EmailCommunicationType
+from messaging.models import EmailTemplateType, EmailCommunicationType
 from finances.models import StudentAccountBalance, PurchaseTransaction, TransactionType, TransactionPaymentStatus
 from .models import Notification, NotificationType
 

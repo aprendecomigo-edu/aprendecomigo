@@ -5,9 +5,6 @@ This module contains integration tests for the classroom app that verify
 the interaction between REST API endpoints and database models.
 """
 
-import os
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "aprendecomigo.test_settings"
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -119,22 +116,17 @@ class ChannelAPITest(TestCase):
             channel=self.channel, sender=self.user2, content="Test message from user2"
         )
 
-        # Set up URL - try all variations since we're not sure about the exact URL pattern
-        possible_urls = [
-            f"/api/channels/{self.channel.id}/messages/",  # DRF default with trailing slash
-            f"/api/channels/{self.channel.id}/messages",  # DRF default without trailing slash
-        ]
-
-        # Try each URL until we find one that works
-        for url in possible_urls:
-            response = self.client.get(url)
-            if response.status_code == 200:
-                # We found a working URL
-                self.assertEqual(len(response.data), 2)
-                break
-        else:
-            # None of the URLs worked, check if the endpoint exists
-            self.fail("Could not find a working URL for channel messages endpoint")
+        # Use the proper reverse URL lookup instead of hardcoded paths
+        url = reverse("channel-messages", args=[self.channel.id])
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 2)
+        
+        # Verify message content
+        contents = [msg["content"] for msg in response.data]
+        self.assertIn("Test message from user1", contents)
+        self.assertIn("Test message from user2", contents)
 
 
 class MessageModelTest(TestCase):
@@ -170,10 +162,3 @@ class MessageModelTest(TestCase):
         self.assertEqual(message.channel, self.channel)
 
 
-# Keep the dummy test for fallback
-class DummyIntegrationTest(TestCase):
-    """A placeholder test class to verify test discovery is working."""
-
-    def test_dummy(self):
-        """A dummy test that always passes."""
-        self.assertTrue(True)

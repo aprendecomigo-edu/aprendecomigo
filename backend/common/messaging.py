@@ -171,7 +171,8 @@ class TeacherInvitationEmailService:
             Dict with batch results and statistics
         """
         from django.utils import timezone
-        from accounts.models import EmailDeliveryStatus, InvitationStatus
+        from messaging.models import EmailDeliveryStatus
+        from accounts.models import InvitationStatus
         
         results = {
             'total_invitations': len(invitations),

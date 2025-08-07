@@ -11,12 +11,10 @@ from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta
 
-from ..models import (
-    TeacherInvitation, CustomUser, InvitationStatus, 
-    EmailTemplateType, EmailCommunicationType, School
-)
-from ..services.enhanced_email_service import EnhancedEmailService
-from ..services.email_sequence_service import EmailSequenceOrchestrationService
+from accounts.models import TeacherInvitation, CustomUser, InvitationStatus, School
+from .models import EmailTemplateType, EmailCommunicationType
+from .services.enhanced_email_service import EnhancedEmailService
+from .services.email_sequence_service import EmailSequenceOrchestrationService
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +194,7 @@ def handle_teacher_profile_updates(sender, instance, created, **kwargs):
         logger.exception(f"Error handling teacher profile updates for {instance.email}: {e}")
 
 
-def _prepare_invitation_context(invitation: TeacherInvitation) -> dict:
+def _prepare_invitation_context(invitation) -> dict:
     """Prepare context variables for invitation emails."""
     return {
         'teacher_name': invitation.email.split('@')[0].title(),  # Fallback name
@@ -213,7 +211,7 @@ def _prepare_invitation_context(invitation: TeacherInvitation) -> dict:
     }
 
 
-def _prepare_welcome_context(invitation: TeacherInvitation, teacher_user: CustomUser) -> dict:
+def _prepare_welcome_context(invitation, teacher_user) -> dict:
     """Prepare context variables for welcome emails."""
     return {
         'teacher_name': teacher_user.name or teacher_user.email.split('@')[0].title(),
@@ -229,7 +227,7 @@ def _prepare_welcome_context(invitation: TeacherInvitation, teacher_user: Custom
     }
 
 
-def _prepare_completion_context(user: CustomUser, teacher_profile, completion_data: dict) -> dict:
+def _prepare_completion_context(user, teacher_profile, completion_data: dict) -> dict:
     """Prepare context variables for profile completion emails."""
     return {
         'teacher_name': user.name or user.email.split('@')[0].title(),
@@ -242,7 +240,7 @@ def _prepare_completion_context(user: CustomUser, teacher_profile, completion_da
     }
 
 
-def _prepare_profile_reminder_context(user: CustomUser, teacher_profile, completion_data: dict) -> dict:
+def _prepare_profile_reminder_context(user, teacher_profile, completion_data: dict) -> dict:
     """Prepare context variables for profile reminder emails."""
     return {
         'teacher_name': user.name or user.email.split('@')[0].title(),
@@ -255,7 +253,7 @@ def _prepare_profile_reminder_context(user: CustomUser, teacher_profile, complet
     }
 
 
-def _calculate_profile_completion(user: CustomUser, teacher_profile) -> dict:
+def _calculate_profile_completion(user, teacher_profile) -> dict:
     """
     Calculate profile completion status and determine if reminders are needed.
     
@@ -320,7 +318,7 @@ def _calculate_profile_completion(user: CustomUser, teacher_profile) -> dict:
     }
 
 
-def _has_recent_profile_reminder(user: CustomUser, school: School, hours: int = 24) -> bool:
+def _has_recent_profile_reminder(user, school, hours: int = 24) -> bool:
     """
     Check if user has received a profile reminder email recently.
     
@@ -332,7 +330,7 @@ def _has_recent_profile_reminder(user: CustomUser, school: School, hours: int = 
     Returns:
         True if user has received a recent profile reminder
     """
-    from ..models import EmailCommunication
+    from .models import EmailCommunication
     
     cutoff_time = timezone.now() - timedelta(hours=hours)
     

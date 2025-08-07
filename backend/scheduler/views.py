@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date, time
+import pytz
 from typing import ClassVar
 
 from accounts.models import SchoolMembership, SchoolRole, TeacherProfile
@@ -46,15 +47,24 @@ class TeacherAvailabilityViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
 
         return queryset.order_by("day_of_week", "start_time")
 
+    def create(self, request, *args, **kwargs):
+        """Override create to handle teacher field properly"""
+        data = request.data.copy()
+        
+        # If teacher is not provided and user has teacher_profile, set it automatically
+        if 'teacher' not in data or data['teacher'] is None:
+            if hasattr(request.user, 'teacher_profile'):
+                data['teacher'] = request.user.teacher_profile.id
+                
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_create(self, serializer):
         """Ensure teacher and school are valid"""
-        # Only teachers can create their own availability
-        user = self.request.user
-        if hasattr(user, "teacher_profile"):
-            serializer.save(teacher=user.teacher_profile)
-        else:
-            # Admin can create availability for any teacher
-            serializer.save()
+        serializer.save()
 
 
 class TeacherUnavailabilityViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
@@ -76,15 +86,24 @@ class TeacherUnavailabilityViewSet(SchoolPermissionMixin, viewsets.ModelViewSet)
 
         return queryset.order_by("date", "start_time")
 
+    def create(self, request, *args, **kwargs):
+        """Override create to handle teacher field properly"""
+        data = request.data.copy()
+        
+        # If teacher is not provided and user has teacher_profile, set it automatically
+        if 'teacher' not in data or data['teacher'] is None:
+            if hasattr(request.user, 'teacher_profile'):
+                data['teacher'] = request.user.teacher_profile.id
+                
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_create(self, serializer):
         """Ensure teacher and school are valid"""
-        # Only teachers can create their own unavailability
-        user = self.request.user
-        if hasattr(user, "teacher_profile"):
-            serializer.save(teacher=user.teacher_profile)
-        else:
-            # Admin can create unavailability for any teacher
-            serializer.save()
+        serializer.save()
 
 
 class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
@@ -347,6 +366,232 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
                 {"error": "Unable to calculate available slots"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+        
+        # Extract optional parameters
+        try:
+            duration_minutes = int(request.query_params.get("duration_minutes", 60))
+        except ValueError:
+            return Response(
+                {"error": "duration_minutes must be a valid integer"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        date_end_str = request.query_params.get("date_end")
+        
+        # Validate teacher and dates
+        try:
+            teacher = TeacherProfile.objects.select_related("user").get(id=teacher_id)
+            start_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            
+            if date_end_str:
+                end_date = datetime.strptime(date_end_str, "%Y-%m-%d").date()
+                if end_date < start_date:
+                    return Response(
+                        {"error": "date_end must be after or equal to date"}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                end_date = start_date
+                
+        except (ValueError, TeacherProfile.DoesNotExist) as e:
+            if isinstance(e, TeacherProfile.DoesNotExist):
+                error_msg = "Teacher not found"
+            else:
+                error_msg = "Invalid date format. Use YYYY-MM-DD"
+            return Response(
+                {"error": error_msg}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate duration
+        if duration_minutes <= 0 or duration_minutes > 480:  # Max 8 hours
+            return Response(
+                {"error": "duration_minutes must be between 1 and 480"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get user's accessible schools
+        user_schools = self.get_user_schools()
+        if not user_schools:
+            return Response({"available_slots": []})
+        
+        # Check if teacher belongs to any of the user's accessible schools
+        teacher_schools = teacher.availabilities.filter(
+            school__in=user_schools
+        ).values_list('school_id', flat=True).distinct()
+        
+        if not teacher_schools:
+            return Response(
+                {"error": "You don't have permission to view availability for this teacher"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Generate date range
+        date_range = []
+        current_date = start_date
+        while current_date <= end_date:
+            date_range.append(current_date)
+            current_date += timedelta(days=1)
+        
+        # Calculate available slots for each date
+        all_available_slots = []
+        for target_date in date_range:
+            slots = self._calculate_available_slots_for_date(
+                teacher, user_schools, target_date, duration_minutes
+            )
+            all_available_slots.extend(slots)
+        
+        # Sort slots by start time
+        all_available_slots.sort(key=lambda x: x["start"])
+        
+        return Response({"available_slots": all_available_slots})
+    
+    def _calculate_available_slots_for_date(self, teacher, schools, target_date, duration_minutes):
+        """Calculate available slots for a specific date across schools"""
+        day_of_week = target_date.strftime("%A").lower()
+        
+        # Get teacher's availability patterns across all user schools
+        availabilities = TeacherAvailability.objects.filter(
+            teacher=teacher,
+            school__in=schools,
+            day_of_week=day_of_week,
+            is_active=True
+        ).select_related("school", "school__settings")
+        
+        if not availabilities.exists():
+            return []
+        
+        # Get all conflicting periods for this teacher on this date (for accessible schools)
+        conflicting_periods = self._get_conflicting_periods(teacher, target_date, schools)
+        
+        # Generate available slots for each availability pattern
+        all_slots = []
+        for availability in availabilities:
+            school_timezone = pytz.timezone(availability.school.settings.timezone)
+            slots = self._generate_time_slots(
+                availability, conflicting_periods, duration_minutes, school_timezone, target_date
+            )
+            all_slots.extend(slots)
+        
+        # Remove duplicate slots (same start/end time)
+        unique_slots = {}
+        for slot in all_slots:
+            key = f"{slot['start']}_{slot['end']}"
+            if key not in unique_slots:
+                unique_slots[key] = slot
+        
+        return list(unique_slots.values())
+    
+    def _get_conflicting_periods(self, teacher, target_date, schools=None):
+        """Get all conflicting periods (unavailability + bookings) for a teacher on a date"""
+        conflicts = []
+        
+        # Get unavailability periods
+        unavailability_filter = {
+            'teacher': teacher,
+            'date': target_date
+        }
+        if schools is not None:
+            unavailability_filter['school__in'] = schools
+            
+        unavailabilities = TeacherUnavailability.objects.filter(
+            **unavailability_filter
+        ).select_related("school", "school__settings")
+        
+        for unavail in unavailabilities:
+            if unavail.is_all_day:
+                # All-day unavailability blocks the entire day
+                conflicts.append({
+                    'start_time': time(0, 0),
+                    'end_time': time(23, 59),
+                    'timezone': unavail.school.settings.timezone
+                })
+            else:
+                conflicts.append({
+                    'start_time': unavail.start_time,
+                    'end_time': unavail.end_time,
+                    'timezone': unavail.school.settings.timezone
+                })
+        
+        # Get existing bookings
+        booking_filter = {
+            'teacher': teacher,
+            'scheduled_date': target_date,
+            'status__in': [ClassStatus.SCHEDULED, ClassStatus.CONFIRMED]
+        }
+        if schools is not None:
+            booking_filter['school__in'] = schools
+            
+        existing_classes = ClassSchedule.objects.filter(
+            **booking_filter
+        ).select_related("school", "school__settings")
+        
+        for booking in existing_classes:
+            conflicts.append({
+                'start_time': booking.start_time,
+                'end_time': booking.end_time,
+                'timezone': booking.school.settings.timezone
+            })
+        
+        return conflicts
+    
+    def _generate_time_slots(self, availability, conflicting_periods, duration_minutes, school_timezone, target_date):
+        """Generate available time slots given availability and conflicts"""
+        slots = []
+        
+        # Convert availability times to timezone-aware datetimes
+        availability_start = school_timezone.localize(
+            datetime.combine(target_date, availability.start_time)
+        )
+        availability_end = school_timezone.localize(
+            datetime.combine(target_date, availability.end_time)
+        )
+        
+        # Convert conflicting periods to the same timezone
+        normalized_conflicts = []
+        for conflict in conflicting_periods:
+            conflict_tz = pytz.timezone(conflict['timezone'])
+            conflict_start = conflict_tz.localize(
+                datetime.combine(target_date, conflict['start_time'])
+            ).astimezone(school_timezone)
+            conflict_end = conflict_tz.localize(
+                datetime.combine(target_date, conflict['end_time'])
+            ).astimezone(school_timezone)
+            normalized_conflicts.append((conflict_start, conflict_end))
+        
+        # Sort conflicts by start time
+        normalized_conflicts.sort(key=lambda x: x[0])
+        
+        # Generate slots
+        current_time = availability_start
+        slot_duration = timedelta(minutes=duration_minutes)
+        
+        while current_time + slot_duration <= availability_end:
+            slot_end = current_time + slot_duration
+            
+            # Check if this slot conflicts with any existing booking/unavailability
+            slot_available = True
+            for conflict_start, conflict_end in normalized_conflicts:
+                # Check for overlap: slot overlaps if it starts before conflict ends 
+                # and ends after conflict starts (proper overlap detection)
+                if current_time < conflict_end and slot_end > conflict_start:
+                    slot_available = False
+                    break
+            
+            if slot_available:
+                # Convert to UTC for API response
+                utc_start = current_time.astimezone(pytz.UTC)
+                utc_end = slot_end.astimezone(pytz.UTC)
+                
+                slots.append({
+                    "start": utc_start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "end": utc_end.strftime("%Y-%m-%dT%H:%M:%SZ")
+                })
+            
+            # Move to next potential slot
+            current_time += slot_duration
+        
+        return slots
 
 
 class RecurringClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):

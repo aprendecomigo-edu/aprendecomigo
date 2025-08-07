@@ -1,6 +1,8 @@
 """
-Email automation signals for teacher communications.
+Signals for the accounts app.
+
+Email automation signals have been moved to the messaging app.
 """
 
-# Import signals to ensure they are registered
-from .email_automation_signals import *
+# No signals currently defined in accounts app
+# Email signals have been migrated to messaging.signals.email_automation_signals

@@ -5,9 +5,6 @@ This module contains tests for the WebSocket consumers in the classroom app,
 specifically focusing on the ChatConsumer which handles real-time chat functionality.
 """
 
-import os
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "aprendecomigo.test_settings"
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -17,12 +14,12 @@ from classroom.models import Channel, Message, Reaction
 User = get_user_model()
 
 
-class ChatDatabaseTest(TestCase):
-    """Tests for the database operations related to chat.
+class ChatOperationsTest(TestCase):
+    """Tests for chat-related database operations.
 
-    These tests focus on directly manipulating the database
-    to ensure the model relationships and operations work correctly,
-    similar to what the ChatConsumer would do.
+    These tests focus on the database operations that support
+    real-time chat functionality, including user status tracking
+    and message/reaction management.
     """
 
     def setUp(self):
@@ -102,10 +99,3 @@ class ChatDatabaseTest(TestCase):
         self.assertEqual(reaction.message, message)
 
 
-# Keep the dummy test for fallback
-class DummyConsumerTest(TestCase):
-    """A placeholder test class to verify test discovery is working."""
-
-    def test_dummy(self):
-        """A dummy test that always passes."""
-        self.assertTrue(True)

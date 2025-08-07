@@ -19,11 +19,11 @@ SECRET_KEY = "django-insecure-test-key-not-used-in-production"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True  # String to boolean conversion for mypy
 
-# Override settings for tests
+# Override settings for tests - Use in-memory database for fastest execution
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "test_db.sqlite3",
+        "NAME": ":memory:",
     }
 }
 

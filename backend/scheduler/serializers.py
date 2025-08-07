@@ -1,5 +1,7 @@
 from typing import ClassVar
 
+from accounts.models import CustomUser, TeacherProfile
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -16,6 +18,11 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
     teacher_name = serializers.CharField(source="teacher.user.name", read_only=True)
     school_name = serializers.CharField(source="school.name", read_only=True)
     day_of_week_display = serializers.CharField(source="get_day_of_week_display", read_only=True)
+    teacher = serializers.PrimaryKeyRelatedField(
+        queryset=TeacherProfile.objects.all(),
+        required=False,  # Made optional so teachers can create their own availability
+        allow_null=True
+    )
 
     class Meta:
         model = TeacherAvailability
@@ -35,10 +42,69 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
         ]
         read_only_fields: ClassVar = ["created_at", "updated_at"]
 
+    def validate(self, data):
+        """Validate availability data using model validation"""
+        # For updates, merge with existing instance data to avoid incomplete validation
+        if self.instance:
+            # This is an update operation, merge with existing data
+            temp_data = {}
+            # Get existing instance data for model fields only
+            model_fields = [f.name for f in TeacherAvailability._meta.get_fields() if not f.many_to_many]
+            
+            for field_name in model_fields:
+                if field_name not in ['id']:  # Skip primary key and auto fields
+                    if hasattr(self.instance, field_name):
+                        value = getattr(self.instance, field_name)
+                        # Handle foreign key fields properly
+                        if hasattr(value, 'pk'):
+                            temp_data[field_name] = value
+                        else:
+                            temp_data[field_name] = value
+            
+            # Override with new data, resolving foreign key relationships
+            for field_name, value in data.items():
+                if field_name == 'teacher' and isinstance(value, int):
+                    # Convert teacher ID to TeacherProfile instance
+                    temp_data[field_name] = TeacherProfile.objects.get(id=value)
+                elif field_name == 'school' and isinstance(value, int):
+                    # Convert school ID to School instance  
+                    from accounts.models import School
+                    temp_data[field_name] = School.objects.get(id=value)
+                else:
+                    temp_data[field_name] = value
+            
+            # Create temporary instance with complete data
+            instance = TeacherAvailability(**temp_data)
+            instance.pk = self.instance.pk  # Preserve primary key for overlap checks
+        else:
+            # This is a create operation, resolve foreign key relationships
+            temp_data = data.copy()
+            
+            # Resolve foreign key fields to actual model instances
+            if 'teacher' in temp_data and isinstance(temp_data['teacher'], int):
+                temp_data['teacher'] = TeacherProfile.objects.get(id=temp_data['teacher'])
+            if 'school' in temp_data and isinstance(temp_data['school'], int):
+                from accounts.models import School
+                temp_data['school'] = School.objects.get(id=temp_data['school'])
+            
+            instance = TeacherAvailability(**temp_data)
+        
+        try:
+            instance.clean()
+        except ValidationError as e:
+            # Convert Django ValidationError to DRF ValidationError
+            raise serializers.ValidationError(e.message_dict if hasattr(e, 'message_dict') else str(e))
+        return data
+
 
 class TeacherUnavailabilitySerializer(serializers.ModelSerializer):
     teacher_name = serializers.CharField(source="teacher.user.name", read_only=True)
     school_name = serializers.CharField(source="school.name", read_only=True)
+    teacher = serializers.PrimaryKeyRelatedField(
+        queryset=TeacherProfile.objects.all(),
+        required=False,  # Made optional so teachers can create their own unavailability
+        allow_null=True
+    )
 
     class Meta:
         model = TeacherUnavailability
@@ -56,6 +122,66 @@ class TeacherUnavailabilitySerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields: ClassVar = ["created_at"]
+
+    def validate(self, data):
+        """Custom validation for unavailability"""
+        # If is_all_day is True, clear start_time and end_time
+        if data.get('is_all_day'):
+            data['start_time'] = None
+            data['end_time'] = None
+        
+        # For updates, merge with existing instance data to avoid incomplete validation
+        if self.instance:
+            # This is an update operation, merge with existing data
+            temp_data = {}
+            # Get existing instance data for model fields only
+            model_fields = [f.name for f in TeacherUnavailability._meta.get_fields() if not f.many_to_many]
+            
+            for field_name in model_fields:
+                if field_name not in ['id']:  # Skip primary key and auto fields
+                    if hasattr(self.instance, field_name):
+                        value = getattr(self.instance, field_name)
+                        # Handle foreign key fields properly
+                        if hasattr(value, 'pk'):
+                            temp_data[field_name] = value
+                        else:
+                            temp_data[field_name] = value
+            
+            # Override with new data, resolving foreign key relationships
+            for field_name, value in data.items():
+                if field_name == 'teacher' and isinstance(value, int):
+                    # Convert teacher ID to TeacherProfile instance
+                    temp_data[field_name] = TeacherProfile.objects.get(id=value)
+                elif field_name == 'school' and isinstance(value, int):
+                    # Convert school ID to School instance  
+                    from accounts.models import School
+                    temp_data[field_name] = School.objects.get(id=value)
+                else:
+                    temp_data[field_name] = value
+            
+            # Create temporary instance with complete data
+            instance = TeacherUnavailability(**temp_data)
+            instance.pk = self.instance.pk  # Preserve primary key for overlap checks
+        else:
+            # This is a create operation, resolve foreign key relationships
+            temp_data = data.copy()
+            
+            # Resolve foreign key fields to actual model instances
+            if 'teacher' in temp_data and isinstance(temp_data['teacher'], int):
+                temp_data['teacher'] = TeacherProfile.objects.get(id=temp_data['teacher'])
+            if 'school' in temp_data and isinstance(temp_data['school'], int):
+                from accounts.models import School
+                temp_data['school'] = School.objects.get(id=temp_data['school'])
+            
+            instance = TeacherUnavailability(**temp_data)
+        
+        try:
+            instance.clean()
+        except ValidationError as e:
+            # Convert Django ValidationError to DRF ValidationError
+            raise serializers.ValidationError(e.message_dict if hasattr(e, 'message_dict') else str(e))
+        
+        return data
 
 
 class ClassScheduleSerializer(serializers.ModelSerializer):

@@ -171,7 +171,7 @@ class SchoolEmailTemplate(models.Model):
     school = models.ForeignKey(
         "accounts.School",
         on_delete=models.CASCADE,
-        related_name="email_templates",
+        related_name="messaging_email_templates",
         help_text=_("School this template belongs to")
     )
     template_type = models.CharField(
@@ -250,7 +250,7 @@ class SchoolEmailTemplate(models.Model):
             models.UniqueConstraint(
                 fields=["school", "template_type"],
                 condition=models.Q(is_default=True),
-                name="unique_default_template_per_school_type"
+                name="messaging_unique_default_template_per_school_type"
             )
         ]
     
