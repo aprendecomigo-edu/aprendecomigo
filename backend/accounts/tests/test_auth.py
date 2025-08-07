@@ -33,74 +33,44 @@ class EmailAuthTests(APITestCase):
         self.client = APIClient()
         self.school = School.objects.create(name="Test School")
 
-        # Create a student user
-        self.student_user = CustomUser.objects.create_user(
-            email="student@test.com", password="testpass123", name="Test Student"
+        # Create a test user
+        self.test_user = CustomUser.objects.create_user(
+            email="test@example.com", password="testpass123", name="Test User"
         )
-        SchoolMembership.objects.create(user=self.student_user, school=self.school, role="student")
+        SchoolMembership.objects.create(user=self.test_user, school=self.school, role="student")
 
         self.request_code_url = reverse("accounts:request_code")
         self.verify_code_url = reverse("accounts:verify_code")
-        self.email = "test@example.com"
-
-        # Patch throttling
+        
+        # Bypass throttling for cleaner tests
         self.throttle_patcher = patch(
             "rest_framework.throttling.AnonRateThrottle.allow_request",
             return_value=True,
         )
         self.throttle_patcher.start()
 
-        # Store and override throttle rates
-        from common.throttles import (
-            EmailBasedThrottle,
-            EmailCodeRequestThrottle,
-            IPBasedThrottle,
-        )
-
-        self.original_email_code_rate = EmailCodeRequestThrottle.rate
-        self.original_email_based_rate = EmailBasedThrottle.rate
-        self.original_ip_based_rate = IPBasedThrottle.rate
-
-        # Set to valid values - using single letter time units
-        EmailCodeRequestThrottle.rate = "10/d"
-        EmailBasedThrottle.rate = "10/d"
-        IPBasedThrottle.rate = "10/d"
-
     def tearDown(self):
         """Clean up test environment."""
         self.throttle_patcher.stop()
 
-        # Restore original rates
-        from common.throttles import (
-            EmailBasedThrottle,
-            EmailCodeRequestThrottle,
-            IPBasedThrottle,
-        )
+    def test_request_email_code_success(self):
+        """Test successfully requesting an email verification code for existing user."""
+        data = {"email": self.test_user.email}
 
-        EmailCodeRequestThrottle.rate = self.original_email_code_rate
-        EmailBasedThrottle.rate = self.original_email_based_rate
-        IPBasedThrottle.rate = self.original_ip_based_rate
-
-    def test_request_email_code(self):
-        """Test requesting an email verification code."""
-        # Create a user with the test email
-        User.objects.create_user(email=self.email, password="testpass123", name="Test User")
-
-        data = {"email": self.email}
-
-        # Patch the send_mail method to avoid sending actual emails
         with patch("accounts.views.send_email_verification_code") as mock_send_mail:
             response = self.client.post(self.request_code_url, data, format="json")
 
+        # Verify API response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("message", response.data)
 
-        # Verify a code was generated in the database
-        code_obj = VerificationCode.objects.filter(email=self.email).first()
+        # Verify verification code was created
+        code_obj = VerificationCode.objects.filter(email=self.test_user.email).first()
         self.assertIsNotNone(code_obj)
         self.assertFalse(code_obj.is_used)
+        self.assertEqual(code_obj.failed_attempts, 0)
 
-        # Verify an email would have been sent
+        # Verify email sending was triggered
         mock_send_mail.assert_called_once()
 
     def test_verify_email_code(self):

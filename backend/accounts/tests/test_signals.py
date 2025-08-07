@@ -43,17 +43,17 @@ class SchoolActivitySignalsTest(TestCase):
         )
         
     def test_student_membership_creates_activity(self):
-        """Test that student membership creation triggers activity"""
+        """Test that student membership creation triggers activity logging business rule."""
         initial_count = SchoolActivity.objects.count()
         
-        # Create student membership
+        # Create student membership - should trigger signal
         SchoolMembership.objects.create(
             user=self.student_user,
             school=self.school,
             role=SchoolRole.STUDENT
         )
         
-        # Check activity was created
+        # Verify activity logging business rule was applied
         self.assertEqual(SchoolActivity.objects.count(), initial_count + 1)
         
         activity = SchoolActivity.objects.latest('timestamp')
@@ -64,17 +64,17 @@ class SchoolActivitySignalsTest(TestCase):
         self.assertIn('Student User joined as a student', activity.description)
         
     def test_teacher_membership_creates_activity(self):
-        """Test that teacher membership creation triggers activity"""
+        """Test that teacher onboarding triggers activity logging business rule."""
         initial_count = SchoolActivity.objects.count()
         
-        # Create teacher membership
+        # Create teacher membership - should trigger activity signal
         SchoolMembership.objects.create(
             user=self.teacher_user,
             school=self.school,
             role=SchoolRole.TEACHER
         )
         
-        # Check activity was created
+        # Verify teacher onboarding activity was logged
         self.assertEqual(SchoolActivity.objects.count(), initial_count + 1)
         
         activity = SchoolActivity.objects.latest('timestamp')
@@ -200,10 +200,10 @@ class SchoolActivitySignalsTest(TestCase):
         self.assertIn('Grade 7 class completed', activity.description)
         
     def test_inactive_membership_does_not_create_activity(self):
-        """Test that inactive membership doesn't trigger activity"""
+        """Test that inactive memberships do not trigger activity logging (business rule)."""
         initial_count = SchoolActivity.objects.count()
         
-        # Create inactive membership
+        # Create inactive membership - should not trigger activity signal
         SchoolMembership.objects.create(
             user=self.student_user,
             school=self.school,
@@ -211,19 +211,19 @@ class SchoolActivitySignalsTest(TestCase):
             is_active=False
         )
         
-        # Check no activity was created
+        # Verify business rule: only active memberships create activities
         self.assertEqual(SchoolActivity.objects.count(), initial_count)
         
     def test_admin_membership_does_not_create_activity(self):
-        """Test that admin/owner membership doesn't trigger activity"""
+        """Test that admin/owner memberships do not trigger activities (business rule)."""
         initial_count = SchoolActivity.objects.count()
         
-        # Create admin membership
+        # Create admin membership - should not trigger activity signal
         SchoolMembership.objects.create(
             user=self.teacher_user,
             school=self.school,
             role=SchoolRole.SCHOOL_ADMIN
         )
         
-        # Check no activity was created
+        # Verify business rule: admin roles don't create join activities
         self.assertEqual(SchoolActivity.objects.count(), initial_count)
