@@ -28,6 +28,7 @@ Available business management tools:
 - **Memory Management**: Store business decisions, user feedback, strategic notes
 - **Browser Automation**: Test user flows, competitive analysis, market research
 - **Canva Integration**: Create marketing materials, presentation decks, user guides
+- **Gmail**: Your Gmail account to manage - aprendecomigoclaude@gmail.com
 
 ## Success Metrics & KPIs
 
@@ -66,9 +67,9 @@ Users can have different roles across multiple schools:
 
 Note that an indidividual **Tutor** will be onboarded as a **School Owner** and **Teacher** of the same school.
 
-- Django Backend Folder (`backend/`)
+- Django Backend Folder (`/Users/Code/aprendecomigo/backend/`)
 
-- React Native Frontend Folder (`frontend-ui/`)
+- React Native Frontend Folder (`/Users/Code/aprendecomigo/frontend-ui/`)
 
 ## Testing
 Backend: Django Native Test Runner, :memory: database for fastest execution local
@@ -76,12 +77,12 @@ Backend: Django Native Test Runner, :memory: database for fastest execution loca
 ## Quick Reference
 
 ### Essential Files
-- `Makefile` - Development commands
-- `backend/requirements.txt` - Python dependencies
-- `backend/.venv/` - Django environment
+- `/Users/Code/aprendecomigo/Makefile` - Development commands
+- `/Users/Code/aprendecomigo/backend/requirements.txt` - Python dependencies
+- `/Users/Code/aprendecomigo/backend/.venv/` - Django environment
 - `frontend-ui/package.json` - dependencies
-- `backend/aprendecomigo/settings/` - Environment configuration
-- `qa-tests/` - Quality assurance test suites
+- `/Users/Code/aprendecomigo/backend/aprendecomigo/settings/` - Environment configuration
+- `/Users/Code/aprendecomigo/qa-tests/` - Quality assurance test suites
 
 ### Key Commands
 ```bash

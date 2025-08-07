@@ -1,3 +1,3 @@
-Can you please ask the drf engineer and py-unitest engineers to review the tests in `accounts`. We only want to keep good tests and make sure they 
+Can you please ask the drf engineer and py-unitest engineers to review the tests in `$ARGUMENTS`. We only want to keep good tests and make sure they 
   follow the principle of "serve as the documentation for the functionality". Each agent should do a review of the tests related to their expertise (Business logic for py-unitest and urls/views/serializers for drf test agent) and delete 
   or modify bad tests and keep or improve the good ones. Plan carefully and think sequentially. Give enough info and context to the agents. Our goal is a maintanable, clean and concise test folder
