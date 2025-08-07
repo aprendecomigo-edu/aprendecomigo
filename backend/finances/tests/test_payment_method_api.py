@@ -419,7 +419,12 @@ class PaymentMethodAPITest(APITestCase):
         )
     
     def test_add_payment_method_invalid_id(self):
-        """Test adding payment method with invalid Stripe ID."""
+        """
+        Test adding payment method with invalid Stripe ID format.
+        
+        **API Validation:** stripe_payment_method_id must start with 'pm_'
+        **Expected Response:** 400 Bad Request with specific validation error
+        """
         self.client.force_authenticate(user=self.student)
         
         url = reverse('finances:studentbalance-payment-methods')
@@ -430,6 +435,12 @@ class PaymentMethodAPITest(APITestCase):
         response = self.client.post(url, data)
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+        # Verify specific validation error message
+        error_data = response.json()
+        self.assertIn('stripe_payment_method_id', error_data)
+        error_message = str(error_data.get('stripe_payment_method_id', ''))
+        self.assertIn('Invalid Stripe payment method ID format', error_message)
     
     def test_add_payment_method_missing_data(self):
         """Test adding payment method with missing data."""

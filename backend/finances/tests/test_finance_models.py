@@ -500,6 +500,19 @@ class StudentAccountBalanceTestCase(TestCase):
         self.assertEqual(balance.balance_amount, Decimal("65.00"))
         self.assertEqual(balance.remaining_hours, Decimal("5.0"))
 
+    def test_negative_values_allowed(self):
+        """Test that negative values are allowed for overdraft scenarios."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("5.0"),
+            hours_consumed=Decimal("8.0"),  # More consumed than purchased
+            balance_amount=Decimal("-30.00")  # Negative balance
+        )
+        
+        self.assertEqual(balance.hours_consumed, Decimal("8.0"))
+        self.assertEqual(balance.balance_amount, Decimal("-30.00"))
+        self.assertEqual(balance.remaining_hours, Decimal("-3.0"))
+
     def test_multiple_users_can_have_accounts(self):
         """Test that multiple users can each have their own account balance."""
         user2 = CustomUser.objects.create_user(
@@ -526,6 +539,24 @@ class StudentAccountBalanceTestCase(TestCase):
         self.assertEqual(balance2.student, user2)
         self.assertEqual(balance1.remaining_hours, Decimal("8.0"))
         self.assertEqual(balance2.remaining_hours, Decimal("10.0"))
+
+    def test_cascade_delete_with_user(self):
+        """Test that StudentAccountBalance is deleted when User is deleted."""
+        balance = StudentAccountBalance.objects.create(
+            student=self.user,
+            hours_purchased=Decimal("10.0"),
+            hours_consumed=Decimal("3.5"),
+            balance_amount=Decimal("85.50")
+        )
+        
+        balance_id = balance.id
+        
+        # Delete the user
+        self.user.delete()
+        
+        # Verify the balance is also deleted
+        with self.assertRaises(StudentAccountBalance.DoesNotExist):
+            StudentAccountBalance.objects.get(id=balance_id)
 
 
 
@@ -739,6 +770,25 @@ class PurchaseTransactionTestCase(TestCase):
 
 
 
+
+    def test_cascade_delete_with_student(self):
+        """Test that PurchaseTransaction is deleted when student is deleted."""
+        
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal("100.00"),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        
+        transaction_id = transaction.id
+        
+        # Delete the user
+        self.user.delete()
+        
+        # Verify the transaction is also deleted
+        with self.assertRaises(PurchaseTransaction.DoesNotExist):
+            PurchaseTransaction.objects.get(id=transaction_id)
 
     def test_multiple_students_can_have_transactions(self):
         """Test that multiple students can each have their own transactions."""

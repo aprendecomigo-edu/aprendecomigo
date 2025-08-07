@@ -1,8 +1,32 @@
 """
-Tests for admin payment metrics API endpoints.
+DRF API Tests for Admin Payment Metrics Endpoints.
 
-This test suite covers the administrative payment monitoring API endpoints
-including metrics dashboard, transaction history, and webhook monitoring.
+This test suite provides comprehensive coverage of the administrative payment 
+monitoring API endpoints, serving as both test validation and API documentation.
+
+**API Endpoints Tested:**
+- GET /api/finances/admin/payments/metrics/ - Payment dashboard metrics
+- GET /api/finances/admin/payments/transactions/ - Transaction history with filters
+- GET /api/finances/admin/webhooks/status/ - Webhook processing status
+
+**Authentication & Permissions:**
+- All endpoints require superuser authentication (AdminOnlyPermission)
+- Regular authenticated users receive 403 Forbidden
+- Unauthenticated requests receive 401 Unauthorized
+
+**Response Formats:**
+- All responses include consistent error handling
+- Paginated endpoints follow DRF pagination standards
+- Timestamps in ISO 8601 format
+- Decimal amounts as strings for precision
+
+**Test Categories:**
+- Authentication & authorization testing
+- Response structure validation  
+- Query parameter filtering & validation
+- Pagination & ordering behavior
+- Performance & error handling
+- Edge cases & boundary conditions
 """
 
 import json
@@ -63,6 +87,178 @@ class AdminMetricsAPITest(TestCase):
         # Create test data
         self._create_test_transactions()
         self._create_test_webhook_logs()
+    
+    def assert_valid_payment_metrics_response(self, response_data):
+        """
+        Validate the structure and content of payment metrics API response.
+        
+        This method serves as living documentation for the payment metrics
+        API response format and ensures consistent validation across tests.
+        
+        Args:
+            response_data (dict): The JSON response data from the API
+            
+        Expected Response Structure:
+        {
+            "generated_at": "2025-01-01T12:00:00Z",
+            "time_period": {"hours": 24, "days": null},
+            "payment_success_rate": {
+                "total_transactions": 4,
+                "successful_transactions": 2,
+                "failed_transactions": 1,
+                "pending_transactions": 1,
+                "success_rate": 50.0
+            },
+            "revenue_summary": {
+                "total": "150.00",
+                "package": "100.00", 
+                "subscription": "50.00"
+            },
+            "transaction_metrics": {...},
+            "webhook_metrics": {
+                "total_events": 4,
+                "processed_events": 2,
+                "failed_events": 1,
+                "pending_events": 1,
+                "success_rate": 50.0
+            },
+            "failure_analysis": {...},
+            "recent_activity": [...]
+        }
+        """
+        # Validate top-level structure
+        required_top_level_fields = [
+            'generated_at', 'payment_success_rate', 'revenue_summary',
+            'transaction_metrics', 'webhook_metrics', 'failure_analysis', 
+            'recent_activity'
+        ]
+        for field in required_top_level_fields:
+            self.assertIn(field, response_data, f"Missing required field: {field}")
+        
+        # Validate payment success rate structure
+        success_rate = response_data['payment_success_rate']
+        success_rate_fields = [
+            'total_transactions', 'successful_transactions', 
+            'failed_transactions', 'pending_transactions', 'success_rate'
+        ]
+        for field in success_rate_fields:
+            self.assertIn(field, success_rate, f"Missing success rate field: {field}")
+        
+        # Validate webhook metrics structure  
+        webhook_metrics = response_data['webhook_metrics']
+        webhook_fields = [
+            'total_events', 'processed_events', 'failed_events', 
+            'pending_events', 'success_rate'
+        ]
+        for field in webhook_fields:
+            self.assertIn(field, webhook_metrics, f"Missing webhook field: {field}")
+        
+        # Validate revenue summary structure and format
+        revenue = response_data['revenue_summary']
+        self.assertIn('total', revenue)
+        # Revenue amounts should be decimal strings for precision
+        self.assertIsInstance(revenue['total'], (str, int, float))
+        
+        # Validate timestamp format
+        self.assertIsInstance(response_data['generated_at'], str)
+    
+    def assert_valid_transaction_list_response(self, response_data):
+        """
+        Validate the structure of paginated transaction list response.
+        
+        Expected Response Structure:
+        {
+            "count": 4,
+            "next": "http://example.com/api/path/?page=2",
+            "previous": null,
+            "results": [
+                {
+                    "id": 1,
+                    "student": 1,
+                    "amount": "150.00",
+                    "payment_status": "completed",
+                    "transaction_type": "package",
+                    "stripe_payment_intent_id": "pi_...",
+                    "created_at": "2025-01-01T12:00:00Z",
+                    "updated_at": "2025-01-01T12:00:00Z"
+                },
+                ...
+            ]
+        }
+        """
+        # Validate pagination structure
+        pagination_fields = ['count', 'results']
+        for field in pagination_fields:
+            self.assertIn(field, response_data, f"Missing pagination field: {field}")
+        
+        self.assertIsInstance(response_data['count'], int)
+        self.assertIsInstance(response_data['results'], list)
+        
+        # Validate transaction structure if results exist
+        if response_data['results']:
+            transaction = response_data['results'][0]
+            required_transaction_fields = [
+                'id', 'student', 'amount', 'payment_status', 
+                'transaction_type', 'stripe_payment_intent_id',
+                'created_at', 'updated_at'
+            ]
+            for field in required_transaction_fields:
+                self.assertIn(field, transaction, f"Missing transaction field: {field}")
+    
+    def assert_valid_webhook_status_response(self, response_data):
+        """
+        Validate the structure of webhook status response with summary.
+        
+        Expected Response Structure:
+        {
+            "count": 4,
+            "next": null,
+            "previous": null,
+            "results": [
+                {
+                    "id": 1,
+                    "stripe_event_id": "evt_...",
+                    "event_type": "payment_intent.succeeded",
+                    "status": "processed",
+                    "retry_count": 0,
+                    "error_message": null,
+                    "created_at": "2025-01-01T12:00:00Z",
+                    "processed_at": "2025-01-01T12:01:00Z"
+                },
+                ...
+            ],
+            "summary": {
+                "total_events": 4,
+                "processed_events": 2,
+                "failed_events": 1,
+                "pending_events": 1,
+                "average_processing_time": 1.5
+            }
+        }
+        """
+        # Validate pagination structure
+        self.assert_valid_transaction_list_response(response_data)
+        
+        # Validate webhook-specific summary
+        self.assertIn('summary', response_data)
+        summary = response_data['summary']
+        
+        summary_fields = [
+            'total_events', 'processed_events', 'failed_events',
+            'pending_events', 'average_processing_time'
+        ]
+        for field in summary_fields:
+            self.assertIn(field, summary, f"Missing summary field: {field}")
+        
+        # Validate webhook event structure if results exist
+        if response_data['results']:
+            webhook = response_data['results'][0]
+            required_webhook_fields = [
+                'id', 'stripe_event_id', 'event_type', 'status',
+                'retry_count', 'error_message', 'created_at', 'processed_at'
+            ]
+            for field in required_webhook_fields:
+                self.assertIn(field, webhook, f"Missing webhook field: {field}")
     
     def _create_test_transactions(self):
         """Create test transactions for metrics."""
@@ -141,7 +337,13 @@ class PaymentMetricsEndpointTest(AdminMetricsAPITest):
     """Test the /api/admin/payments/metrics/ endpoint."""
     
     def test_admin_can_access_metrics(self):
-        """Test that admin users can access payment metrics."""
+        """
+        Test admin users can access payment metrics with proper response structure.
+        
+        **API Endpoint:** GET /api/finances/admin/payments/metrics/
+        **Expected Response:** 200 OK with comprehensive payment analytics
+        **Authentication:** Requires superuser permissions
+        """
         self.client.force_authenticate(user=self.admin_user)
         url = reverse('finances:admin-payment-metrics')
         
@@ -149,17 +351,11 @@ class PaymentMetricsEndpointTest(AdminMetricsAPITest):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        # Verify response structure
+        # Use comprehensive response validation helper
         data = response.json()
-        self.assertIn('generated_at', data)
-        self.assertIn('payment_success_rate', data)
-        self.assertIn('revenue_summary', data)
-        self.assertIn('transaction_metrics', data)
-        self.assertIn('webhook_metrics', data)
-        self.assertIn('failure_analysis', data)
-        self.assertIn('recent_activity', data)
+        self.assert_valid_payment_metrics_response(data)
         
-        # Verify metrics values
+        # Verify calculated metrics match test data expectations
         success_rate = data['payment_success_rate']
         self.assertEqual(success_rate['total_transactions'], 4)
         self.assertEqual(success_rate['successful_transactions'], 2)
@@ -167,13 +363,13 @@ class PaymentMetricsEndpointTest(AdminMetricsAPITest):
         self.assertEqual(success_rate['pending_transactions'], 1)
         self.assertEqual(success_rate['success_rate'], 50.0)
         
-        # Verify revenue summary
+        # Verify revenue calculations (only completed transactions count)
         revenue = data['revenue_summary']
         self.assertEqual(float(revenue['total']), 150.00)  # Only successful transactions
         self.assertEqual(float(revenue['package']), 100.00)
         self.assertEqual(float(revenue['subscription']), 50.00)
         
-        # Verify webhook metrics
+        # Verify webhook metrics calculations
         webhook_metrics = data['webhook_metrics']
         self.assertEqual(webhook_metrics['total_events'], 4)
         self.assertEqual(webhook_metrics['processed_events'], 2)
@@ -182,13 +378,23 @@ class PaymentMetricsEndpointTest(AdminMetricsAPITest):
         self.assertEqual(webhook_metrics['success_rate'], 50.0)
     
     def test_non_admin_cannot_access_metrics(self):
-        """Test that non-admin users cannot access payment metrics."""
+        """
+        Test non-admin users receive 403 Forbidden when accessing metrics.
+        
+        **Security Test:** Verifies AdminOnlyPermission enforcement
+        **Expected Behavior:** Regular authenticated users are denied access
+        """
         self.client.force_authenticate(user=self.regular_user)
         url = reverse('finances:admin-payment-metrics')
         
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+        # Verify response structure for error cases
+        error_data = response.json()
+        self.assertIn('detail', error_data)
+        self.assertIn('permission', error_data['detail'].lower())
     
     def test_unauthenticated_cannot_access_metrics(self):
         """Test that unauthenticated users cannot access payment metrics."""
@@ -239,7 +445,13 @@ class TransactionHistoryEndpointTest(AdminMetricsAPITest):
     """Test the /api/admin/payments/transactions/ endpoint."""
     
     def test_admin_can_access_transaction_history(self):
-        """Test that admin users can access transaction history."""
+        """
+        Test admin users can access paginated transaction history.
+        
+        **API Endpoint:** GET /api/finances/admin/payments/transactions/
+        **Expected Response:** 200 OK with paginated transaction list
+        **Features Tested:** Pagination, response structure, data accuracy
+        """
         self.client.force_authenticate(user=self.admin_user)
         url = reverse('finances:admin-transaction-history')
         
@@ -247,22 +459,18 @@ class TransactionHistoryEndpointTest(AdminMetricsAPITest):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
+        # Use comprehensive response validation helper
         data = response.json()
-        self.assertIn('count', data)
-        self.assertIn('results', data)
+        self.assert_valid_transaction_list_response(data)
         
-        # Should return all 4 transactions
-        self.assertEqual(data['count'], 4)
+        # Verify data accuracy matches test setup
+        self.assertEqual(data['count'], 4)  # All test transactions
         self.assertEqual(len(data['results']), 4)
         
-        # Verify transaction structure
-        transaction = data['results'][0]
-        expected_fields = [
-            'id', 'student', 'amount', 'payment_status', 'transaction_type',
-            'stripe_payment_intent_id', 'created_at', 'updated_at'
-        ]
-        for field in expected_fields:
-            self.assertIn(field, transaction)
+        # Verify transactions are ordered by creation date (newest first)
+        results = data['results']
+        created_times = [result['created_at'] for result in results]
+        self.assertEqual(created_times, sorted(created_times, reverse=True))
     
     def test_transaction_history_filtering(self):
         """Test transaction history with filtering parameters."""
