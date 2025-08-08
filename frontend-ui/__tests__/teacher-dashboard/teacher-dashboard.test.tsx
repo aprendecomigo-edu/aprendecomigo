@@ -24,6 +24,10 @@ jest.mock('@/hooks/useTeacherDashboard', () => ({
   useTeacherDashboard: jest.fn(),
 }));
 
+jest.mock('@gluestack-ui/nativewind-utils/IsWeb', () => ({
+  isWeb: false,
+}));
+
 jest.mock('@/components/layouts/MainLayout', () => {
   return function MockMainLayout({ children, _title }: any) {
     return (
@@ -31,6 +35,39 @@ jest.mock('@/components/layouts/MainLayout', () => {
         {children}
       </div>
     );
+  };
+});
+
+// Mock Gluestack UI components that might not be properly mocked
+jest.mock('@/components/ui/badge', () => {
+  const React = require('react');
+  return {
+    Badge: ({ children, ...props }: any) => React.createElement('div', { ...props, className: 'mock-badge' }, children),
+    BadgeText: ({ children, ...props }: any) => React.createElement('span', { ...props, className: 'mock-badge-text' }, children),
+  };
+});
+
+jest.mock('@/components/ui/card', () => {
+  const React = require('react');
+  return {
+    Card: ({ children, ...props }: any) => React.createElement('div', { ...props, className: 'mock-card' }, children),
+    CardBody: ({ children, ...props }: any) => React.createElement('div', { ...props, className: 'mock-card-body' }, children),
+    CardHeader: ({ children, ...props }: any) => React.createElement('div', { ...props, className: 'mock-card-header' }, children),
+  };
+});
+
+jest.mock('@/components/ui/input', () => {
+  const React = require('react');
+  return {
+    Input: ({ children, ...props }: any) => React.createElement('div', { ...props, className: 'mock-input' }, children),
+    InputField: React.forwardRef((props: any, ref) => React.createElement('input', { ...props, ref, className: 'mock-input-field' })),
+  };
+});
+
+jest.mock('@/components/ui/icon', () => {
+  const React = require('react');
+  return {
+    Icon: ({ children, ...props }: any) => React.createElement('div', { ...props, className: 'mock-icon' }, children || '📄'),
   };
 });
 
@@ -156,7 +193,7 @@ const mockDashboardData = {
 describe('TeacherDashboard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (useAuth as jest.Mock).mockReturnValue({
+    (useUserProfile as jest.Mock).mockReturnValue({
       userProfile: mockUserProfile,
     });
   });
@@ -433,7 +470,7 @@ describe('TeacherDashboard', () => {
 describe('TeacherDashboard Integration', () => {
   it('should handle complete user interaction flow', async () => {
     const mockRefresh = jest.fn();
-    (useAuth as jest.Mock).mockReturnValue({
+    (useUserProfile as jest.Mock).mockReturnValue({
       userProfile: mockUserProfile,
     });
     (useTeacherDashboard as jest.Mock).mockReturnValue({

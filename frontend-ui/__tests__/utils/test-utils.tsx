@@ -1,4 +1,4 @@
-import { render, RenderOptions } from '@testing-library/react-native';
+import { render, RenderOptions, fireEvent, waitFor, act } from '@testing-library/react-native';
 import React, { ReactElement } from 'react';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
@@ -165,14 +165,14 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
 const customRender = (ui: ReactElement, options?: Omit<RenderOptions, 'wrapper'>) =>
   render(ui, { wrapper: AllTheProviders, ...options });
 
-// Re-export everything
+// Re-export everything from React Native Testing Library
 export * from '@testing-library/react-native';
-export { customRender as render };
+export { customRender as render, fireEvent, waitFor, act };
 
 // Test helper functions
 export const waitForAsyncUpdates = () => new Promise(resolve => setTimeout(resolve, 0));
 
-export const flushPromises = () => new Promise(resolve => setImmediate(resolve));
+export const flushPromises = () => new Promise(resolve => setTimeout(resolve, 0));
 
 export const mockApiResponse = (data: any, isError = false) => {
   if (isError) {
@@ -297,4 +297,134 @@ export const throwError = (message = 'Test error') => {
 
 export const expectErrorBoundary = (getByText: any, errorMessage: string) => {
   expect(getByText(errorMessage)).toBeTruthy();
+};
+
+// React Native-specific testing utilities
+export const mockScrollEvent = (contentOffset = { x: 0, y: 0 }) => ({
+  nativeEvent: {
+    contentOffset,
+    contentSize: { width: 1000, height: 1000 },
+    layoutMeasurement: { width: 300, height: 300 },
+  },
+});
+
+export const mockLayoutEvent = (layout = { x: 0, y: 0, width: 100, height: 100 }) => ({
+  nativeEvent: { layout },
+});
+
+export const mockTouchEvent = (location = { x: 0, y: 0 }) => ({
+  nativeEvent: {
+    touches: [{ locationX: location.x, locationY: location.y }],
+    changedTouches: [{ locationX: location.x, locationY: location.y }],
+  },
+});
+
+// Component testing utilities
+export const findElementByText = (getByText: any, text: string, exact = true) => {
+  if (exact) {
+    return getByText(text);
+  }
+  return getByText((content, element) => 
+    content.includes(text) && element?.tagName !== 'SCRIPT'
+  );
+};
+
+export const findElementsByTestId = (queryAllByTestId: any, testId: string) => {
+  return queryAllByTestId(testId);
+};
+
+// Accessibility testing helpers
+export const expectAccessibilityLabel = (element: any, label: string) => {
+  expect(element).toHaveProperty('props.accessibilityLabel', label);
+};
+
+export const expectAccessibilityRole = (element: any, role: string) => {
+  expect(element).toHaveProperty('props.accessibilityRole', role);
+};
+
+// Platform-specific testing
+export const expectPlatformStyles = (element: any, styles: Record<string, any>) => {
+  expect(element.props.style).toMatchObject(styles);
+};
+
+// Animation testing helpers
+export const mockAnimatedValue = (initialValue = 0) => ({
+  setValue: jest.fn(),
+  addListener: jest.fn(() => 'listener_id'),
+  removeListener: jest.fn(),
+  interpolate: jest.fn(() => initialValue),
+  _value: initialValue,
+});
+
+export const expectAnimationToStart = (mockAnimation: any) => {
+  expect(mockAnimation.start).toHaveBeenCalled();
+};
+
+// Gesture testing helpers
+export const mockGestureEvent = (translationX = 0, translationY = 0) => ({
+  nativeEvent: {
+    translationX,
+    translationY,
+    velocityX: 0,
+    velocityY: 0,
+    state: 2, // ACTIVE
+  },
+});
+
+// WebSocket testing helpers
+export const mockWebSocketConnection = () => {
+  const mockWs = {
+    send: jest.fn(),
+    close: jest.fn(),
+    readyState: 1, // OPEN
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  };
+  
+  global.WebSocket = jest.fn(() => mockWs) as any;
+  return mockWs;
+};
+
+// Deep linking testing
+export const mockDeepLink = (url: string) => {
+  const mockLinking = require('react-native').Linking;
+  mockLinking.getInitialURL.mockResolvedValue(url);
+  return mockLinking;
+};
+
+// Keyboard testing helpers
+export const mockKeyboardShow = (height = 300) => {
+  const mockKeyboard = require('react-native').Keyboard;
+  const listeners = new Map();
+  
+  mockKeyboard.addListener.mockImplementation((event, callback) => {
+    listeners.set(event, callback);
+    return { remove: jest.fn() };
+  });
+  
+  // Simulate keyboard show
+  const showCallback = listeners.get('keyboardDidShow');
+  if (showCallback) {
+    showCallback({ endCoordinates: { height } });
+  }
+  
+  return mockKeyboard;
+};
+
+export const mockKeyboardHide = () => {
+  const mockKeyboard = require('react-native').Keyboard;
+  const listeners = new Map();
+  
+  mockKeyboard.addListener.mockImplementation((event, callback) => {
+    listeners.set(event, callback);
+    return { remove: jest.fn() };
+  });
+  
+  // Simulate keyboard hide
+  const hideCallback = listeners.get('keyboardDidHide');
+  if (hideCallback) {
+    hideCallback();
+  }
+  
+  return mockKeyboard;
 };

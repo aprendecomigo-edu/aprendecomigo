@@ -18,10 +18,10 @@ def run_claude_loop(start_issue=43, end_issue=59, delay=5):
         i=start_issue
         while i<=end_issue:
 
-            code_user_story = f'backend-develop {i}'
-            code_user_story = f'frontend-add-test-cov {i}'
+            # code_user_story = f'backend-develop {i}'
+            frontend_tests = f'frontend-add-test-cov {i}'
             # plan_user_story = f'user-story-to-tech-plan {i}'
-            command_issue = code_user_story
+            command_issue = frontend_tests
             
             print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] Starting 'claude' command...")
             start_time = time.time()
@@ -68,4 +68,4 @@ if __name__ == "__main__":
     except ValueError:
         print("Error: <start_issue> must be an integer")
         sys.exit(1)
-    run_claude_loop(start_issue=start_issue, end_issue=155, delay=500)
+    run_claude_loop(start_issue=start_issue, end_issue=165, delay=500)
