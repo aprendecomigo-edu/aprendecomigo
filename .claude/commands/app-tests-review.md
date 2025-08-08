@@ -1,3 +1,7 @@
-Can you please ask the drf engineer and py-unitest engineers to review the tests in `$ARGUMENTS` app. We only want to keep good tests and make sure they 
-  follow the principle of serve as the documentation for the functionality in `$ARGUMENTS` app. Each agent should do a review of the tests related to their expertise (Business logic for py-unitest and urls/views/serializers for drf test agent) and delete 
-  or modify bad tests and keep or improve the good ones. Plan carefully and think sequentially. Give enough info and context to the agents. Our goal is a maintanable, clean and concise test folder. Your task is done when the refactor is complete and all tests within `$ARGUMENTS` app pass. If there are issues, coordinate with the same test agents to fix.
+Can you please ask the drf engineer and py-unitest engineers to review the tests in `$ARGUMENTS` app. We only want to keep good tests and make sure they follow the principle of serve as the documentation for the functionality in `$ARGUMENTS` app. Keep in mind that more tests isn't always better if the tests are bad quality.
+
+- Each agent should do a review of the tests related to their expertise (Business logic for py-unitest and urls/views/serializers for drf test agent) and delete or modify bad tests and keep or improve the good ones. Give enough info and context to the agents.
+-You should then run the tests with (make sure venv is on) `python manage.py test `$ARGUMENTS`` and check for any errors/failures.
+- Coordinate with the test agents and django-dev agent to fix any errors and failures found in the step before.
+
+Your task is done when the refactor is complete and all tests within `$ARGUMENTS` app pass. Plan carefully and think sequentially. Our goal is a maintanable, clean and concise test folder.

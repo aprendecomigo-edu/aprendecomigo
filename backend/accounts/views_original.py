@@ -5596,13 +5596,6 @@ class TutorDiscoveryAPIView(APIView):
             # Cache result (shorter timeout for public endpoint)  
             cache.set(cache_key, result, timeout=300)  # 5 minutes
             
-            # Track popular queries for future cache warming
-            try:
-                from accounts.services.tutor_discovery_cache import TutorDiscoveryCacheService
-                TutorDiscoveryCacheService.track_popular_query(filters, pagination, ordering)
-            except ImportError:
-                pass  # Service not available
-            
             return Response(result)
             
         except ValidationError as e:
