@@ -57,19 +57,19 @@ from .onboarding import (
 
 # Import remaining views from schools and teachers modules (not yet created)
 # These imports are commented out until the remaining views are refactored:
-# from .schools import (
-#     SchoolViewSet,
-#     SchoolMembershipViewSet,
-#     SchoolDashboardViewSet,
-#     SchoolBrandingAPIView,
-#     CommunicationSettingsAPIView,
-# )
-# from .teachers import (
-#     TeacherViewSet,
-#     TeacherProfileWizardViewSet,
-#     TeacherProfileStepValidationView,
-#     TeacherProfileCompletionStatusView,
-# )
+from .schools import (
+    SchoolViewSet,
+    SchoolMembershipViewSet,
+    SchoolDashboardViewSet,
+    SchoolBrandingAPIView,
+    CommunicationSettingsAPIView,
+)
+from .teachers import (
+    TeacherViewSet,
+    TeacherProfileWizardViewSet,
+    TeacherProfileStepValidationView,
+    TeacherProfileCompletionStatusView,
+)
 
 # For now, we'll keep these views in the existing schools.py and teachers.py files
 # But they are not yet implemented - this is marked as TODO for future refactoring
@@ -87,18 +87,18 @@ __all__ = [
     "ParentProfileViewSet",
     "ParentChildRelationshipViewSet",
     
-    # School Management - TODO: Move remaining views to schools.py
-    # "SchoolViewSet",
-    # "SchoolMembershipViewSet", 
-    # "SchoolDashboardViewSet",
-    # "SchoolBrandingAPIView",
-    # "CommunicationSettingsAPIView",
+    # School Management 
+    "SchoolViewSet",
+    "SchoolMembershipViewSet",
+    "SchoolDashboardViewSet",
+    "SchoolBrandingAPIView",
+    "CommunicationSettingsAPIView",
     
-    # Teacher Management - TODO: Move remaining views to teachers.py
-    # "TeacherViewSet",
-    # "TeacherProfileWizardViewSet",
-    # "TeacherProfileStepValidationView", 
-    # "TeacherProfileCompletionStatusView",
+    # Teacher Management 
+    "TeacherViewSet",
+    "TeacherProfileWizardViewSet",
+    "TeacherProfileStepValidationView", 
+    "TeacherProfileCompletionStatusView",
     
     # Student Management (refactored)
     "StudentViewSet",

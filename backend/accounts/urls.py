@@ -16,7 +16,7 @@ from .views import (
     SchoolMembershipViewSet,
     SchoolViewSet,
     StudentViewSet,
-    TeacherAnalyticsView,
+    # TeacherAnalyticsView,  # TODO: This view needs to be implemented
     TeacherCourseViewSet,
     TeacherInvitationViewSet,
     TeacherProfileCompletionStatusView,
@@ -84,12 +84,12 @@ urlpatterns = [
         BulkTeacherActionsView.as_view(),
         name="bulk-teacher-actions",
     ),
-    # Teacher analytics endpoint
-    path(
-        "schools/<int:school_id>/teacher-analytics/",
-        TeacherAnalyticsView.as_view(),
-        name="teacher-analytics",
-    ),
+    # Teacher analytics endpoint - TODO: Implement TeacherAnalyticsView
+    # path(
+    #     "schools/<int:school_id>/teacher-analytics/",
+    #     TeacherAnalyticsView.as_view(),
+    #     name="teacher-analytics",
+    # ),
     # Teacher Profile Wizard endpoints
     path(
         "teachers/profile-wizard/<str:action>/",

@@ -81,29 +81,313 @@ SECURE_REFERRER_POLICY = "same-origin"
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# Logging configuration
+# Production Logging Configuration
+# Optimized for production monitoring, security, and performance
+LOGS_DIR = BASE_DIR.parent / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
+        "json": {
+            "()": "common.logging_utils.JSONFormatter",
+        },
+        "security": {
+            "()": "common.logging_utils.SecurityFormatter",
+        },
         "verbose": {
-            "format": "{levelname} {asctime} {module} {message}",
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
             "style": "{",
         },
     },
-    "handlers": {
-        "file": {
-            "level": "ERROR",
-            "class": "logging.FileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/django-error.log"),
-            "formatter": "verbose",
+    "filters": {
+        "sensitive_data": {
+            "()": "common.logging_utils.SensitiveDataFilter",
+        },
+        "correlation": {
+            "()": "common.logging_utils.CorrelationFilter",
+        },
+        "rate_limit": {
+            "()": "common.logging_utils.RateLimitFilter",
+            "rate_limit_seconds": 30,  # Faster rate limiting in production
         },
     },
-    "loggers": {
-        "django": {
-            "handlers": ["file"],
+    "handlers": {
+        # Main application logs - JSON format for monitoring tools
+        "application_file": {
+            "level": "INFO",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": LOGS_DIR / "application.log",
+            "when": "H",  # Hourly rotation
+            "interval": 1,
+            "backupCount": 168,  # Keep 1 week of hourly logs
+            "formatter": "json",
+            "filters": ["sensitive_data", "correlation"],
+        },
+        
+        # Error logs - separate file for easier monitoring
+        "error_file": {
             "level": "ERROR",
-            "propagate": True,
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": LOGS_DIR / "errors.log",
+            "when": "D",
+            "interval": 1,
+            "backupCount": 30,
+            "formatter": "json",
+            "filters": ["sensitive_data", "correlation"],
+        },
+        
+        # Security events - long retention for compliance
+        "security_file": {
+            "level": "WARNING",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": LOGS_DIR / "security.log",
+            "when": "D",
+            "interval": 1,
+            "backupCount": 365,  # Keep 1 year for compliance
+            "formatter": "security",
+            "filters": ["correlation"],
+        },
+        
+        # Business events - JSON for analytics
+        "business_file": {
+            "level": "INFO",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": LOGS_DIR / "business-events.log",
+            "when": "H",
+            "interval": 6,  # Every 6 hours
+            "backupCount": 168,  # Keep 1 month
+            "formatter": "json",
+            "filters": ["sensitive_data", "correlation"],
+        },
+        
+        # Performance monitoring
+        "performance_file": {
+            "level": "INFO",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": LOGS_DIR / "performance.log",
+            "when": "H",
+            "interval": 1,
+            "backupCount": 72,  # Keep 3 days of hourly logs
+            "formatter": "json",
+            "filters": ["correlation"],
+        },
+        
+        # Audit trail - financial and educational events
+        "audit_file": {
+            "level": "INFO",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": LOGS_DIR / "audit-trail.log",
+            "when": "D",
+            "interval": 1,
+            "backupCount": 2555,  # Keep 7 years for compliance
+            "formatter": "json",
+            "filters": ["sensitive_data", "correlation"],
+        },
+        
+        # Console output for container environments
+        "console": {
+            "level": "WARNING",
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+            "filters": ["sensitive_data", "correlation", "rate_limit"],
+        },
+        
+        # Syslog integration for monitoring systems
+        "syslog": {
+            "level": "WARNING",
+            "class": "logging.handlers.SysLogHandler",
+            "address": "/dev/log",  # Unix socket
+            "formatter": "json",
+            "filters": ["sensitive_data", "correlation"],
+        },
+    },
+    "root": {
+        "handlers": ["application_file", "console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        # Django core - production levels
+        "django": {
+            "handlers": ["application_file", "error_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["error_file", "console", "syslog"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.db.backends": {
+            "handlers": ["performance_file"],
+            "level": "WARNING",  # Log slow queries
+            "propagate": False,
+        },
+        "django.channels": {
+            "handlers": ["performance_file", "error_file"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        
+        # Application loggers - business-focused levels
+        "accounts": {
+            "handlers": ["application_file", "business_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "accounts.auth": {
+            "handlers": ["security_file", "audit_file", "business_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "accounts.security": {
+            "handlers": ["security_file", "error_file", "syslog"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "accounts.throttles": {
+            "handlers": ["security_file", "console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        
+        # Financial operations - comprehensive logging
+        "finances": {
+            "handlers": ["business_file", "audit_file", "application_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "finances.payments": {
+            "handlers": ["audit_file", "business_file", "error_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "finances.stripe": {
+            "handlers": ["audit_file", "error_file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "finances.fraud": {
+            "handlers": ["security_file", "audit_file", "console", "syslog"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "finances.webhooks": {
+            "handlers": ["business_file", "error_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        
+        # Scheduling - business events
+        "scheduler": {
+            "handlers": ["business_file", "application_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "scheduler.bookings": {
+            "handlers": ["audit_file", "business_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "scheduler.conflicts": {
+            "handlers": ["business_file", "console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "scheduler.reminders": {
+            "handlers": ["business_file", "error_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        
+        # Communication
+        "messaging": {
+            "handlers": ["business_file", "application_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "messaging.email": {
+            "handlers": ["business_file", "error_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "messaging.invitations": {
+            "handlers": ["audit_file", "business_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        
+        # Multi-tenant operations
+        "common.permissions": {
+            "handlers": ["security_file", "console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        
+        # Classroom operations
+        "classroom": {
+            "handlers": ["business_file", "application_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "classroom.sessions": {
+            "handlers": ["audit_file", "business_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        
+        # Business event loggers
+        "business": {
+            "handlers": ["business_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "business.payments": {
+            "handlers": ["audit_file", "business_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "business.sessions": {
+            "handlers": ["audit_file", "business_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "business.authentication": {
+            "handlers": ["security_file", "audit_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        
+        # Security loggers
+        "security.events": {
+            "handlers": ["security_file", "syslog"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "security.auth_failures": {
+            "handlers": ["security_file", "console", "syslog"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        
+        # Performance monitoring
+        "performance": {
+            "handlers": ["performance_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        
+        # Third-party - errors only
+        "stripe": {
+            "handlers": ["error_file", "console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "knox": {
+            "handlers": ["security_file", "error_file"],
+            "level": "WARNING",
+            "propagate": False,
         },
     },
 }

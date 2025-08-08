@@ -36,6 +36,10 @@ You understand the Aprende Comigo frontend structure:
 
 6. **Error Handling**: Implement proper error boundaries, provide user-friendly error messages, handle network failures gracefully, and ensure offline functionality where appropriate.
 
+7. **Write Testable Code**: To make your app more testable, you separate the view part of your app—your React components—from your business logic and app state. This way, you can keep your business logic testing—which shouldn’t rely on your React components—independent of the components themselves, whose job is primarily rendering your app’s UI!
+
+Theoretically, you could go so far as to move all logic and data fetching out of your components. This way your components would be solely dedicated to rendering. Your state would be entirely independent of your components. Your app’s logic would work without any React components at all!
+
 **Code Quality Practices:**
 - Write self-documenting code with clear variable and function names
 - Add JSDoc comments for complex logic or public APIs

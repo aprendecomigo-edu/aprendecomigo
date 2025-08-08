@@ -77,6 +77,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # "common.logging_utils.setup_logging_context_middleware",  # Add logging context - disabled for now
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -315,6 +316,10 @@ CHANNEL_LAYERS = {
 }
 
 # Logging Configuration
+# Comprehensive logging setup for multi-tenant tutoring platform
+LOGS_DIR = BASE_DIR.parent / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)  # Ensure logs directory exists
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -327,37 +332,307 @@ LOGGING = {
             'format': '{levelname} {message}',
             'style': '{',
         },
+        'json': {
+            '()': 'common.logging_utils.JSONFormatter',
+        },
+        'development': {
+            '()': 'common.logging_utils.DevelopmentFormatter',
+            'format': '{asctime} {name} {levelname} {message}',
+            'style': '{',
+        },
+        'security': {
+            '()': 'common.logging_utils.SecurityFormatter',
+        },
+    },
+    'filters': {
+        'sensitive_data': {
+            '()': 'common.logging_utils.SensitiveDataFilter',
+        },
+        'correlation': {
+            '()': 'common.logging_utils.CorrelationFilter',
+        },
+        'rate_limit': {
+            '()': 'common.logging_utils.RateLimitFilter',
+            'rate_limit_seconds': 60,
+        },
     },
     'handlers': {
+        # General application logs
         'file': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR.parent / 'logs' / 'django.log',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'django.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
+            'backupCount': 5,
             'formatter': 'verbose',
+            'filters': ['sensitive_data', 'correlation'],
         },
+        # Error-only logs
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'django-error.log',
+            'maxBytes': 5 * 1024 * 1024,  # 5MB
+            'backupCount': 10,
+            'formatter': 'verbose',
+            'filters': ['sensitive_data', 'correlation'],
+        },
+        # Security events
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': LOGS_DIR / 'security.log',
+            'when': 'D',
+            'interval': 1,
+            'backupCount': 90,  # Keep 90 days for security events
+            'formatter': 'security',
+            'filters': ['correlation'],
+        },
+        # Business events and audit trail
+        'business_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': LOGS_DIR / 'business.log',
+            'when': 'D',
+            'interval': 1,
+            'backupCount': 30,
+            'formatter': 'json',
+            'filters': ['sensitive_data', 'correlation'],
+        },
+        # Performance monitoring
+        'performance_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'performance.log',
+            'maxBytes': 5 * 1024 * 1024,  # 5MB
+            'backupCount': 5,
+            'formatter': 'json',
+            'filters': ['correlation'],
+        },
+        # Console output
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
+            'filters': ['sensitive_data', 'rate_limit'],
         },
     },
     'root': {
-        'handlers': ['console'],
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
     },
     'loggers': {
+        # Django core loggers
         'django': {
             'handlers': ['file', 'console'],
             'level': 'INFO',
             'propagate': False,
         },
-        'scheduler': {
-            'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+        'django.request': {
+            'handlers': ['error_file', 'console'],
+            'level': 'WARNING',
             'propagate': False,
         },
+        'django.db.backends': {
+            'handlers': ['performance_file'],
+            'level': 'WARNING',  # Only log slow queries
+            'propagate': False,
+        },
+        'django.channels': {
+            'handlers': ['performance_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        
+        # Application-specific loggers
         'accounts': {
             'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'accounts.auth': {
+            'handlers': ['security_file', 'file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'accounts.security': {
+            'handlers': ['security_file', 'error_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'accounts.throttles': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        
+        # Financial operations
+        'finances': {
+            'handlers': ['business_file', 'file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'finances.payments': {
+            'handlers': ['business_file', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'finances.stripe': {
+            'handlers': ['business_file', 'error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'finances.fraud': {
+            'handlers': ['security_file', 'business_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'finances.audit': {
+            'handlers': ['business_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'finances.webhooks': {
+            'handlers': ['business_file', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        
+        # Scheduling system
+        'scheduler': {
+            'handlers': ['business_file', 'file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'scheduler.bookings': {
+            'handlers': ['business_file', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'scheduler.conflicts': {
+            'handlers': ['business_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'scheduler.availability': {
+            'handlers': ['business_file', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'scheduler.reminders': {
+            'handlers': ['business_file', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        
+        # Communication and messaging
+        'messaging': {
+            'handlers': ['business_file', 'file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'messaging.email': {
+            'handlers': ['business_file', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'messaging.templates': {
+            'handlers': ['file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'messaging.invitations': {
+            'handlers': ['business_file', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        
+        # Multi-tenant operations
+        'common': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'common.permissions': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        
+        # Classroom and sessions
+        'classroom': {
+            'handlers': ['business_file', 'file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'classroom.sessions': {
+            'handlers': ['business_file', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        
+        # Tasks and background jobs
+        'tasks': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        
+        # Business event loggers
+        'business': {
+            'handlers': ['business_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'business.payments': {
+            'handlers': ['business_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'business.sessions': {
+            'handlers': ['business_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'business.authentication': {
+            'handlers': ['business_file', 'security_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        
+        # Security event loggers
+        'security': {
+            'handlers': ['security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'security.events': {
+            'handlers': ['security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'security.auth_failures': {
+            'handlers': ['security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        
+        # Performance monitoring
+        'performance': {
+            'handlers': ['performance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        
+        # Third-party integrations
+        'stripe': {
+            'handlers': ['business_file', 'error_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'knox': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
             'propagate': False,
         },
     },

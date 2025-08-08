@@ -177,8 +177,8 @@ django-tests:
 	@cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.testing python3 manage.py test --noinput
 
 django-tests-dev:
-	@echo "Running Django tests (development mode with database reuse)..."
-	@cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.testing python3 manage.py test --noinput --keepdb
+	@echo "Running Django tests (optimized for development)..."
+	@cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=aprendecomigo.settings.testing python3 manage.py test --noinput
 
 django-tests-parallel:
 	@echo "Running Django tests in parallel..."

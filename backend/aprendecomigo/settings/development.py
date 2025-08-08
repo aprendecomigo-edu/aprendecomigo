@@ -25,7 +25,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
         "TEST": {
-            "NAME": BASE_DIR / "test_db.sqlite3",
+            "NAME": ":memory:",  # Use in-memory database for faster dev tests
         },
     }
 }
@@ -53,25 +53,46 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 SIMPLE_JWT = {**BASE_SIMPLE_JWT, "SIGNING_KEY": SECRET_KEY}
 
 # Development Logging Configuration
-# Set to DEBUG level to see all log messages during development
+# Optimized for development with enhanced visibility and debugging
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+        "development": {
+            "()": "common.logging_utils.DevelopmentFormatter",
+            "format": "{asctime} {name} {levelname} {message}",
             "style": "{",
         },
         "simple": {
             "format": "{levelname} {message}",
             "style": "{",
         },
+        "json": {
+            "()": "common.logging_utils.JSONFormatter",
+        },
+    },
+    "filters": {
+        "sensitive_data": {
+            "()": "common.logging_utils.SensitiveDataFilter",
+        },
+        "correlation": {
+            "()": "common.logging_utils.CorrelationFilter",
+        },
     },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
-            "formatter": "simple",
+            "formatter": "development",
+            "filters": ["sensitive_data", "correlation"],
+        },
+        # Optional file handler for debugging specific issues
+        "debug_file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR.parent / "logs" / "development-debug.log",
+            "formatter": "json",
+            "filters": ["sensitive_data", "correlation"],
         },
     },
     "root": {
@@ -79,24 +100,132 @@ LOGGING = {
         "level": "INFO",
     },
     "loggers": {
+        # Django core - reduced verbosity for development
         "django": {
             "handlers": ["console"],
             "level": "INFO",
             "propagate": False,
         },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "ERROR",  # Only show database errors in development
+            "propagate": False,
+        },
+        
+        # Application loggers - DEBUG level for development
         "accounts": {
             "handlers": ["console"],
             "level": "DEBUG",
             "propagate": False,
         },
+        "accounts.auth": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "accounts.security": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        
+        "finances": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "finances.payments": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "finances.stripe": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        
+        "scheduler": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "scheduler.bookings": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "scheduler.conflicts": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        
+        "messaging": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "messaging.email": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        
         "common": {
             "handlers": ["console"],
             "level": "DEBUG",
             "propagate": False,
         },
+        "common.permissions": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        
         "classroom": {
             "handlers": ["console"],
             "level": "DEBUG",
+            "propagate": False,
+        },
+        
+        "tasks": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        
+        # Business and security events - visible in development
+        "business": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "security.events": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "performance": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        
+        # Third-party - reduced noise
+        "stripe": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "knox": {
+            "handlers": ["console"],
+            "level": "WARNING",
             "propagate": False,
         },
     },
