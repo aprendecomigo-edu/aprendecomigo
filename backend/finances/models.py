@@ -1407,9 +1407,12 @@ class FamilyBudgetControl(models.Model):
     class Meta:
         verbose_name = _("Family Budget Control")
         verbose_name_plural = _("Family Budget Controls")
+        ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["parent_child_relationship", "is_active"]),
             models.Index(fields=["auto_approval_threshold"]),
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["is_active", "-created_at"]),
         ]
     
     def __str__(self) -> str:

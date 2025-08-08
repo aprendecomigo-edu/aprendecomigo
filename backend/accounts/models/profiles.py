@@ -259,6 +259,14 @@ class StudentProfile(models.Model):
     )
     calendar_iframe: models.TextField = models.TextField(_("calendar iframe"), blank=True)
 
+    class Meta:
+        ordering = ["user__name", "birth_date"]
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["educational_system", "school_year"]),
+            models.Index(fields=["birth_date"]),
+        ]
+
     def __str__(self) -> str:
         user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
         return f"Student Profile: {user_name}"

@@ -141,6 +141,16 @@ class CustomUser(AbstractUser):
     # but allows us to provide our custom manager
     objects = CustomUserManager()  # type: ignore[misc]
 
+    class Meta:
+        ordering = ["name", "email"]
+        indexes = [
+            models.Index(fields=["email"]),
+            models.Index(fields=["name"]),
+            models.Index(fields=["email_verified"]),
+            models.Index(fields=["onboarding_completed"]),
+            models.Index(fields=["date_joined"]),
+        ]
+
     def __str__(self) -> str:
         return str(self.email)
     
@@ -169,6 +179,7 @@ class VerificationCode(models.Model):
     max_attempts: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(default=5)
 
     class Meta:
+        ordering = ["-created_at"]
         indexes: ClassVar = [
             models.Index(fields=["email", "is_used"]),
             models.Index(fields=["email", "created_at"]),

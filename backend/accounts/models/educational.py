@@ -49,6 +49,13 @@ class EducationalSystem(models.Model):
     class Meta:
         verbose_name = _("Educational System")
         verbose_name_plural = _("Educational Systems")
+        ordering = ["name", "code"]
+        indexes = [
+            models.Index(fields=["code"]),
+            models.Index(fields=["name"]),
+            models.Index(fields=["is_active"]),
+            models.Index(fields=["created_at"]),
+        ]
 
     def __str__(self) -> str:
         return f"{self.name} ({self.code})"
@@ -128,6 +135,13 @@ class Course(models.Model):
 
     class Meta:
         unique_together: ClassVar = ["code", "educational_system"]
+        ordering = ["educational_system__name", "name"]
+        indexes = [
+            models.Index(fields=["educational_system", "education_level"]),
+            models.Index(fields=["code"]),
+            models.Index(fields=["name"]),
+            models.Index(fields=["created_at"]),
+        ]
 
     def __str__(self) -> str:
         return f"{self.name} ({self.code})"

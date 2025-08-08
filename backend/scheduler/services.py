@@ -213,6 +213,8 @@ class GroupClassCapacityService:
         
         class_schedule.add_participant(student)
         # Update booked_at timestamp for this joining
+        # Set changed_by for audit trail (participant addition, not status change)
+        class_schedule._changed_by_user = booked_by
         class_schedule.save()
         
         return class_schedule
@@ -754,6 +756,8 @@ class ClassStatusTransitionService:
             'confirmed_at': now.isoformat()
         })
         
+        # Set changed_by for audit trail
+        class_schedule._changed_by_user = confirmed_by
         class_schedule.save()
         
         return {
@@ -787,6 +791,8 @@ class ClassStatusTransitionService:
             'cancelled_at': now.isoformat()
         })
         
+        # Set changed_by for audit trail
+        class_schedule._changed_by_user = cancelled_by
         class_schedule.save()
         
         return {
@@ -822,6 +828,8 @@ class ClassStatusTransitionService:
             'rejected_at': now.isoformat()
         })
         
+        # Set changed_by for audit trail
+        class_schedule._changed_by_user = rejected_by
         class_schedule.save()
         
         return {
@@ -861,6 +869,8 @@ class ClassStatusTransitionService:
             'completed_at': now.isoformat()
         })
         
+        # Set changed_by for audit trail
+        class_schedule._changed_by_user = completed_by
         class_schedule.save()
         
         return {
@@ -954,6 +964,9 @@ class ClassMetadataTrackingService:
         
         class_schedule.confirmed_at = now
         class_schedule.confirmed_by = confirmed_by
+        
+        # Set changed_by for audit trail
+        class_schedule._changed_by_user = confirmed_by
         class_schedule.save()
         
         return {
@@ -976,6 +989,9 @@ class ClassMetadataTrackingService:
         class_schedule.cancelled_at = now
         class_schedule.cancelled_by = cancelled_by
         class_schedule.cancellation_reason = reason
+        
+        # Set changed_by for audit trail
+        class_schedule._changed_by_user = cancelled_by
         class_schedule.save()
         
         return {
@@ -998,6 +1014,9 @@ class ClassMetadataTrackingService:
         
         class_schedule.rejected_at = now
         class_schedule.rejected_by = rejected_by
+        
+        # Set changed_by for audit trail
+        class_schedule._changed_by_user = rejected_by
         class_schedule.save()
         
         return {
@@ -1178,6 +1197,8 @@ class ClassCompletionService:
             'completion_notes': notes
         })
         
+        # Set changed_by for audit trail
+        class_schedule._changed_by_user = completed_by
         class_schedule.save()
         
         return {
@@ -1244,6 +1265,8 @@ class ClassNoShowService:
             'no_show_notes': notes
         })
         
+        # Set changed_by for audit trail
+        class_schedule._changed_by_user = marked_by
         class_schedule.save()
         
         return {

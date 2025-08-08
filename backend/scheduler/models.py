@@ -879,17 +879,21 @@ class RecurringClassSchedule(models.Model):
         self.is_active = False
         self.save()
         
-        # Cancel all future instances
+        # Cancel all future instances (with proper signal emission)
         future_instances = self.generated_instances.filter(
             status=ClassStatus.SCHEDULED,
             scheduled_date__gte=timezone.now().date()
         )
-        future_instances.update(
-            status=ClassStatus.CANCELLED,
-            cancelled_at=timezone.now(),
-            cancelled_by=cancelled_by,
-            cancellation_reason=f"Recurring series cancelled: {reason}"
-        )
+        
+        # Loop through instances to properly trigger signals for audit trail
+        for instance in future_instances:
+            instance.status = ClassStatus.CANCELLED
+            instance.cancelled_at = timezone.now()
+            instance.cancelled_by = cancelled_by
+            instance.cancellation_reason = f"Recurring series cancelled: {reason}"
+            # Set changed_by for audit trail
+            instance._changed_by_user = cancelled_by
+            instance.save()
         
         return {'success': True}
 
@@ -907,6 +911,8 @@ class RecurringClassSchedule(models.Model):
             instance.cancelled_at = timezone.now()
             instance.cancelled_by = cancelled_by
             instance.cancellation_reason = reason
+            # Set changed_by for audit trail
+            instance._changed_by_user = cancelled_by
             instance.save()
         
         return {'cancelled_date': date, 'reason': reason}

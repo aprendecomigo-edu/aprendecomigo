@@ -35,6 +35,15 @@ class SchoolInvitation(models.Model):
     expires_at: models.DateTimeField = models.DateTimeField()
     is_accepted: models.BooleanField = models.BooleanField(_("is accepted"), default=False)
 
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["school", "is_accepted", "-created_at"]),
+            models.Index(fields=["email", "is_accepted"]),
+            models.Index(fields=["token"]),
+            models.Index(fields=["expires_at", "is_accepted"]),
+        ]
+
     def __str__(self) -> str:
         school_name = self.school.name if hasattr(self.school, "name") else str(self.school)
         return f"Invitation to {self.email} for {school_name} as {self.get_role_display()}"
@@ -74,6 +83,13 @@ class SchoolInvitationLink(models.Model):
 
     class Meta:
         unique_together: ClassVar = ["school", "role"]  # One active link per school per role
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["school", "role", "is_active"]),
+            models.Index(fields=["token"]),
+            models.Index(fields=["expires_at", "is_active"]),
+            models.Index(fields=["created_by", "-created_at"]),
+        ]
 
     def __str__(self) -> str:
         school_name = self.school.name if hasattr(self.school, "name") else str(self.school)
