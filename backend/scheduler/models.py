@@ -37,6 +37,7 @@ class ClassStatus(models.TextChoices):
     COMPLETED = "completed", _("Completed")
     CANCELLED = "cancelled", _("Cancelled")
     NO_SHOW = "no_show", _("No Show")
+    REJECTED = "rejected", _("Rejected")
 
 
 class TeacherAvailability(models.Model):
@@ -167,8 +168,60 @@ class ClassSchedule(models.Model):
 
     # Cancellation/completion info
     cancelled_at = models.DateTimeField(_("cancelled at"), null=True, blank=True)
+    cancelled_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cancelled_classes",
+        help_text=_("User who cancelled this class")
+    )
     cancellation_reason = models.TextField(_("cancellation reason"), blank=True)
     completed_at = models.DateTimeField(_("completed at"), null=True, blank=True)
+    completed_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="completed_classes",
+        help_text=_("User who marked this class as completed")
+    )
+    actual_duration_minutes = models.PositiveIntegerField(_("actual duration in minutes"), null=True, blank=True)
+    completion_notes = models.TextField(_("completion notes"), blank=True)
+    
+    # No-show info
+    no_show_at = models.DateTimeField(_("marked no-show at"), null=True, blank=True)
+    no_show_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="no_show_classes",
+        help_text=_("User who marked this class as no-show")
+    )
+    no_show_reason = models.TextField(_("no-show reason"), blank=True)
+    
+    # Confirmation info
+    confirmed_at = models.DateTimeField(_("confirmed at"), null=True, blank=True)
+    confirmed_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="confirmed_classes",
+        help_text=_("User who confirmed this class")
+    )
+    
+    # Rejection info
+    rejected_at = models.DateTimeField(_("rejected at"), null=True, blank=True)
+    rejected_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rejected_classes",
+        help_text=_("User who rejected this class")
+    )
 
     # Group class capacity management
     max_participants = models.PositiveIntegerField(
@@ -248,24 +301,6 @@ class ClassSchedule(models.Model):
             return False
         return not self.is_past
 
-    def cancel(self, reason="", cancelled_by=None):
-        """Cancel the class"""
-        if not self.can_be_cancelled:
-            raise ValidationError("This class cannot be cancelled.")
-
-        self.status = ClassStatus.CANCELLED
-        self.cancelled_at = timezone.now()
-        self.cancellation_reason = reason
-        self.save()
-
-    def complete(self):
-        """Mark the class as completed"""
-        if self.status != ClassStatus.CONFIRMED:
-            raise ValidationError("Only confirmed classes can be marked as completed.")
-
-        self.status = ClassStatus.COMPLETED
-        self.completed_at = timezone.now()
-        self.save()
 
     # Group class capacity management methods
     def get_total_participants(self):
@@ -323,7 +358,7 @@ class ClassSchedule(models.Model):
         # Get school timezone from school settings
         try:
             school_timezone_str = self.school.settings.timezone
-        except:
+        except (AttributeError, ValueError, TypeError):
             school_timezone_str = 'UTC'
         
         school_tz = pytz.timezone(school_timezone_str)
@@ -358,7 +393,7 @@ class ClassSchedule(models.Model):
         """Get start and end datetime as timezone-aware objects in teacher's timezone"""
         try:
             school_timezone_str = self.school.settings.timezone
-        except:
+        except (AttributeError, ValueError, TypeError):
             school_timezone_str = 'UTC'
         
         school_tz = pytz.timezone(school_timezone_str)
