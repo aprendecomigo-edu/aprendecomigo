@@ -18,8 +18,6 @@ from .views import (
     StudentPurchaseRequestView,
     TeacherCompensationRuleViewSet,
     TeacherPaymentEntryViewSet,
-    TutorAnalyticsAPIView,
-    TutorAnalyticsView,
     active_pricing_plans,
     purchase_initiate,
     stripe_config,
@@ -86,9 +84,6 @@ urlpatterns = [
     path("pricing-plans/", active_pricing_plans, name="pricing-plans-list"),
     # Purchase initiation endpoint
     path("purchase/initiate/", purchase_initiate, name="purchase-initiate"),
-    # Tutor analytics endpoint
-    path("tutor-analytics/<int:school_id>/", TutorAnalyticsAPIView.as_view(), name="tutor-analytics"),
-    
     # Parent-child approval system endpoints (Issues #111 & #112)
     path("student-purchase-request/", StudentPurchaseRequestView.as_view(), name="student-purchase-request"),
     path("parent-approval-dashboard/", ParentApprovalDashboardView.as_view(), name="parent-approval-dashboard"),

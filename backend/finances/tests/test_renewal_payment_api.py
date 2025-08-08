@@ -14,6 +14,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -75,7 +76,7 @@ class SavedPaymentMethodAPITests(TestCase):
         """Test listing payment methods for authenticated student."""
         self.client.force_authenticate(user=self.student)
         
-        url = '/api/finances/student-balance/payment-methods/'
+        url = reverse('finances:studentbalance-payment-methods')
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -90,7 +91,7 @@ class SavedPaymentMethodAPITests(TestCase):
 
     def test_list_payment_methods_unauthenticated(self):
         """Test listing payment methods without authentication."""
-        url = '/api/finances/student-balance/payment-methods/'
+        url = reverse('finances:studentbalance-payment-methods')
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -99,7 +100,7 @@ class SavedPaymentMethodAPITests(TestCase):
         """Test that users can only see their own payment methods."""
         self.client.force_authenticate(user=self.other_student)
         
-        url = '/api/finances/student-balance/payment-methods/'
+        url = reverse('finances:studentbalance-payment-methods')
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -135,7 +136,7 @@ class SavedPaymentMethodAPITests(TestCase):
                 'message': 'Payment method added successfully'
             }
             
-            url = '/api/finances/student-balance/payment-methods/'
+            url = reverse('finances:studentbalance-payment-methods')
             data = {
                 'stripe_payment_method_id': 'pm_test_new',
                 'is_default': False
@@ -157,7 +158,7 @@ class SavedPaymentMethodAPITests(TestCase):
         """Test adding payment method with invalid data."""
         self.client.force_authenticate(user=self.student)
         
-        url = '/api/finances/student-balance/payment-methods/'
+        url = reverse('finances:studentbalance-payment-methods')
         data = {
             'stripe_payment_method_id': 'invalid_format',  # Invalid format
             'is_default': False
@@ -179,7 +180,7 @@ class SavedPaymentMethodAPITests(TestCase):
                 'was_default': True
             }
             
-            url = f'/api/finances/student-balance/payment-methods/{self.payment_method.id}/'
+            url = reverse('finances:studentbalance-remove-payment-method', kwargs={'pk': self.payment_method.id})
             response = self.client.delete(url)
             
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -204,7 +205,7 @@ class SavedPaymentMethodAPITests(TestCase):
                 'message': 'Payment method not found'
             }
             
-            url = '/api/finances/student-balance/payment-methods/99999/'
+            url = reverse('finances:studentbalance-remove-payment-method', kwargs={'pk': 99999})
             response = self.client.delete(url)
             
             self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -221,7 +222,7 @@ class SavedPaymentMethodAPITests(TestCase):
                 'message': 'Default payment method updated successfully'
             }
             
-            url = f'/api/finances/student-balance/payment-methods/{self.payment_method.id}/set-default/'
+            url = reverse('finances:studentbalance-set-default-payment-method', kwargs={'pk': self.payment_method.id})
             response = self.client.post(url)
             
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -286,7 +287,7 @@ class RenewalPaymentAPITests(TestCase):
         """Test getting available top-up packages."""
         self.client.force_authenticate(user=self.student)
         
-        url = '/api/finances/student-balance/topup-packages/'
+        url = reverse('finances:studentbalance-topup-packages')
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -305,7 +306,7 @@ class RenewalPaymentAPITests(TestCase):
 
     def test_get_topup_packages_unauthenticated(self):
         """Test getting top-up packages without authentication."""
-        url = '/api/finances/student-balance/topup-packages/'
+        url = reverse('finances:studentbalance-topup-packages')
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -325,7 +326,7 @@ class RenewalPaymentAPITests(TestCase):
                 'message': 'Subscription renewed successfully'
             }
             
-            url = '/api/finances/student-balance/renew-subscription/'
+            url = reverse('finances:studentbalance-renew-subscription')
             data = {
                 'original_transaction_id': self.original_transaction.id,
                 'payment_method_id': self.payment_method.id
@@ -347,7 +348,7 @@ class RenewalPaymentAPITests(TestCase):
         """Test renewal with invalid original transaction."""
         self.client.force_authenticate(user=self.student)
         
-        url = '/api/finances/student-balance/renew-subscription/'
+        url = reverse('finances:studentbalance-renew-subscription')
         data = {
             'original_transaction_id': 99999,  # Non-existent
         }
@@ -359,7 +360,7 @@ class RenewalPaymentAPITests(TestCase):
         """Test renewal with invalid payment method."""
         self.client.force_authenticate(user=self.student)
         
-        url = '/api/finances/student-balance/renew-subscription/'
+        url = reverse('finances:studentbalance-renew-subscription')
         data = {
             'original_transaction_id': self.original_transaction.id,
             'payment_method_id': 99999  # Non-existent
@@ -386,7 +387,7 @@ class RenewalPaymentAPITests(TestCase):
         
         self.client.force_authenticate(user=self.student)
         
-        url = '/api/finances/student-balance/renew-subscription/'
+        url = reverse('finances:studentbalance-renew-subscription')
         data = {
             'original_transaction_id': other_transaction.id,
         }
@@ -411,7 +412,7 @@ class RenewalPaymentAPITests(TestCase):
                 'message': 'Successfully purchased 5 hours for €50'
             }
             
-            url = '/api/finances/student-balance/quick-topup/'
+            url = reverse('finances:studentbalance-quick-topup')
             data = {
                 'hours': '5.00',
                 'payment_method_id': self.payment_method.id
@@ -434,7 +435,7 @@ class RenewalPaymentAPITests(TestCase):
         """Test quick top-up with invalid hours package."""
         self.client.force_authenticate(user=self.student)
         
-        url = '/api/finances/student-balance/quick-topup/'
+        url = reverse('finances:studentbalance-quick-topup')
         data = {
             'hours': '3.00',  # Invalid package
         }
@@ -446,7 +447,7 @@ class RenewalPaymentAPITests(TestCase):
         """Test quick top-up without specifying hours."""
         self.client.force_authenticate(user=self.student)
         
-        url = '/api/finances/student-balance/quick-topup/'
+        url = reverse('finances:studentbalance-quick-topup')
         data = {}
         response = self.client.post(url, data)
         
@@ -456,7 +457,7 @@ class RenewalPaymentAPITests(TestCase):
         """Test quick top-up with invalid payment method."""
         self.client.force_authenticate(user=self.student)
         
-        url = '/api/finances/student-balance/quick-topup/'
+        url = reverse('finances:studentbalance-quick-topup')
         data = {
             'hours': '5.00',
             'payment_method_id': 99999  # Non-existent
@@ -478,7 +479,7 @@ class RenewalPaymentAPITests(TestCase):
                 'message': 'Payment method has expired. Please update your payment method.'
             }
             
-            url = '/api/finances/student-balance/renew-subscription/'
+            url = reverse('finances:studentbalance-renew-subscription')
             data = {
                 'original_transaction_id': self.original_transaction.id,
             }
@@ -533,7 +534,7 @@ class RenewalPaymentSecurityAPITests(TestCase):
         self.client.force_authenticate(user=self.student1)
         
         # Try to use student2's payment method for renewal
-        url = '/api/finances/student-balance/quick-topup/'
+        url = reverse('finances:studentbalance-quick-topup')
         data = {
             'hours': '5.00',
             'payment_method_id': self.payment_method2.id  # Different user's payment method
@@ -546,9 +547,9 @@ class RenewalPaymentSecurityAPITests(TestCase):
     def test_renewal_requires_authentication(self):
         """Test that renewal endpoints require authentication."""
         endpoints = [
-            ('/api/finances/student-balance/topup-packages/', 'get', {}),
-            ('/api/finances/student-balance/renew-subscription/', 'post', {'original_transaction_id': 1}),
-            ('/api/finances/student-balance/quick-topup/', 'post', {'hours': '5.00'}),
+            (reverse('finances:studentbalance-topup-packages'), 'get', {}),
+            (reverse('finances:studentbalance-renew-subscription'), 'post', {'original_transaction_id': 1}),
+            (reverse('finances:studentbalance-quick-topup'), 'post', {'hours': '5.00'}),
         ]
         
         for url, method, data in endpoints:
@@ -569,7 +570,7 @@ class RenewalPaymentSecurityAPITests(TestCase):
         self.client.force_authenticate(user=self.student1)
         
         # Test renewal endpoint
-        url = '/api/finances/student-balance/renew-subscription/'
+        url = reverse('finances:studentbalance-renew-subscription')
         data = {
             'original_transaction_id': 1,
             'payment_method_id': self.payment_method2.id  # Other user's method
@@ -578,7 +579,7 @@ class RenewalPaymentSecurityAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         
         # Test quick topup endpoint
-        url = '/api/finances/student-balance/quick-topup/'
+        url = reverse('finances:studentbalance-quick-topup')
         data = {
             'hours': '5.00',
             'payment_method_id': self.payment_method2.id  # Other user's method
@@ -591,7 +592,7 @@ class RenewalPaymentSecurityAPITests(TestCase):
         self.client.force_authenticate(user=self.student1)
         
         # Test negative hours
-        url = '/api/finances/student-balance/quick-topup/'
+        url = reverse('finances:studentbalance-quick-topup')
         data = {'hours': '-5.00'}
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -602,7 +603,7 @@ class RenewalPaymentSecurityAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
         # Test invalid transaction ID
-        url = '/api/finances/student-balance/renew-subscription/'
+        url = reverse('finances:studentbalance-renew-subscription')
         data = {'original_transaction_id': -1}
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -613,7 +614,7 @@ class RenewalPaymentSecurityAPITests(TestCase):
         # but for now we just ensure the endpoints respond correctly
         self.client.force_authenticate(user=self.student1)
         
-        url = '/api/finances/student-balance/topup-packages/'
+        url = reverse('finances:studentbalance-topup-packages')
         
         # Make multiple requests rapidly
         responses = []

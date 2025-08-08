@@ -8,6 +8,7 @@ transaction consistency management.
 
 import logging
 from decimal import Decimal
+from datetime import timedelta
 from typing import Dict, Any, Optional
 
 import stripe
@@ -73,6 +74,11 @@ class PaymentService:
             validation_result = self._validate_payment_metadata(metadata)
             if not validation_result['success']:
                 return validation_result
+            
+            # Check for duplicate payment intent prevention
+            duplicate_check = self._check_for_duplicate_request(user, pricing_plan_id, metadata)
+            if not duplicate_check['success']:
+                return duplicate_check
                 
             amount = Decimal(str(metadata['amount']))
             amount_cents = int(amount * 100)  # Convert to cents for Stripe
@@ -168,6 +174,16 @@ class PaymentService:
                     'success': False,
                     'error_type': 'transaction_not_found',
                     'message': 'Transaction record not found in database'
+                }
+            
+            # Check if transaction is already completed (idempotency)
+            if purchase_transaction.payment_status == TransactionPaymentStatus.COMPLETED:
+                logger.info(f"Transaction {purchase_transaction.id} is already completed - returning success (idempotent)")
+                return {
+                    'success': True,
+                    'transaction_id': purchase_transaction.id,
+                    'payment_intent_id': payment_intent_id,
+                    'message': 'Transaction already completed'
                 }
             
             # Use atomic transaction for consistency
@@ -351,12 +367,67 @@ class PaymentService:
                     'error_type': 'validation_error',
                     'message': 'Amount must be greater than zero'
                 }
+            
+            # Validate minimum amount (€0.50 as per Stripe requirements)
+            if amount < Decimal('0.50'):
+                return {
+                    'success': False,
+                    'error_type': 'validation_error',
+                    'message': 'Amount must be at least €0.50 (minimum payment amount)'
+                }
+            
+            # Validate maximum amount (€10,000 reasonable limit)
+            if amount > Decimal('10000.00'):
+                return {
+                    'success': False,
+                    'error_type': 'validation_error',
+                    'message': 'Amount cannot exceed €10,000 (maximum payment amount)'
+                }
+                
         except (ValueError, TypeError):
             return {
                 'success': False,
                 'error_type': 'validation_error',
                 'message': 'Invalid amount format'
             }
+        
+        return {'success': True}
+
+    def _check_for_duplicate_request(
+        self, 
+        user, 
+        pricing_plan_id: str, 
+        metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Check for duplicate payment requests to prevent multiple payment intents.
+        
+        Args:
+            user: The user making the request
+            pricing_plan_id: The pricing plan ID
+            metadata: Request metadata
+            
+        Returns:
+            Dict with validation result
+        """
+        # Look for existing pending transactions for the same user and plan
+        existing_transaction = PurchaseTransaction.objects.filter(
+            student=user,
+            payment_status=TransactionPaymentStatus.PROCESSING,
+            metadata__has_key='pricing_plan_id'
+        ).filter(
+            metadata__pricing_plan_id=pricing_plan_id
+        ).first()
+        
+        if existing_transaction:
+            # Check if the transaction was created recently (within 10 minutes)
+            recent_threshold = timezone.now() - timedelta(minutes=10)
+            if existing_transaction.created_at > recent_threshold:
+                return {
+                    'success': False,
+                    'error_type': 'duplicate_request',
+                    'message': 'A payment request for this plan is already in progress'
+                }
         
         return {'success': True}
 

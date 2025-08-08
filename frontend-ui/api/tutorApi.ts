@@ -3,36 +3,6 @@ import { EducationalSystem } from './userApi';
 
 import { Course } from '@/components/onboarding/CourseCatalogBrowser';
 
-// Tutor Discovery and Analytics Types
-export interface TutorAnalytics {
-  total_hours_taught: number;
-  total_students: number;
-  average_rating: number;
-  total_earnings: number;
-  monthly_growth: {
-    hours: number;
-    students: number;
-    earnings: number;
-  };
-  subject_breakdown: Array<{
-    subject: string;
-    hours_taught: number;
-    students: number;
-    earnings: number;
-  }>;
-  rating_distribution: {
-    '5_star': number;
-    '4_star': number;
-    '3_star': number;
-    '2_star': number;
-    '1_star': number;
-  };
-  performance_metrics: {
-    completion_rate: number;
-    on_time_rate: number;
-    student_retention: number;
-  };
-}
 
 // Course Catalog and Educational Systems
 export interface EnhancedCourse extends Course {
@@ -299,15 +269,6 @@ export interface ProfilePublishingResponse {
 // API Functions
 // ============================================================================
 
-/**
- * Get tutor business analytics
- */
-export const getTutorAnalytics = async (tutorId?: number): Promise<TutorAnalytics> => {
-  const endpoint = tutorId ? `/finances/tutor-analytics/${tutorId}/` : '/finances/tutor-analytics/';
-
-  const response = await apiClient.get<TutorAnalytics>(endpoint);
-  return response.data;
-};
 
 /**
  * Get enhanced course catalog with market data

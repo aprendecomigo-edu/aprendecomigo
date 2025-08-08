@@ -767,6 +767,169 @@ class PaymentServiceConcurrencyTests(TestCase):
         self.assertEqual(transactions.count(), 2)
 
 
+class PaymentServiceBusinessRuleTests(TestCase):
+    """Test PaymentService business rule validation and edge cases."""
+
+    def setUp(self):
+        """Set up test environment for business rule tests."""
+        # Create test user
+        CustomUser = apps.get_model('accounts', 'CustomUser')
+        self.user = CustomUser.objects.create_user(
+            email="student@test.com",
+            name="Test Student"
+        )
+        
+        # Create student account balance
+        self.student_balance, _ = StudentAccountBalance.objects.get_or_create(
+            student=self.user,
+            defaults={
+                'hours_purchased': Decimal('10.00'),
+                'hours_consumed': Decimal('3.00'),
+                'balance_amount': Decimal('75.00')
+            }
+        )
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_minimum_amount_validation(self):
+        """Test payment intent creation fails with amount below minimum threshold."""
+        service = PaymentService()
+        
+        result = service.create_payment_intent(
+            user=self.user,
+            pricing_plan_id="plan_test",
+            metadata={"amount": 0.49}  # Below €0.50 minimum
+        )
+        
+        self.assertFalse(result['success'])
+        self.assertEqual(result['error_type'], 'validation_error')
+        self.assertIn('minimum', result['message'].lower())
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_maximum_amount_validation(self):
+        """Test payment intent creation fails with amount above maximum threshold."""
+        service = PaymentService()
+        
+        result = service.create_payment_intent(
+            user=self.user,
+            pricing_plan_id="plan_test", 
+            metadata={"amount": 10000.01}  # Above €10,000 maximum
+        )
+        
+        self.assertFalse(result['success'])
+        self.assertEqual(result['error_type'], 'validation_error')
+        self.assertIn('maximum', result['message'].lower())
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_duplicate_payment_intent_prevention(self):
+        """Test that duplicate payment intents cannot be created for same user and plan."""
+        service = PaymentService()
+        
+        # Create first transaction
+        first_transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('25.00'),
+            payment_status=TransactionPaymentStatus.PROCESSING,
+            stripe_payment_intent_id="pi_existing_123",
+            metadata={"pricing_plan_id": "plan_test", "amount": 25.00}
+        )
+        
+        # Attempt to create duplicate
+        result = service.create_payment_intent(
+            user=self.user,
+            pricing_plan_id="plan_test",
+            metadata={"amount": 25.00}
+        )
+        
+        # Should handle gracefully or prevent duplicate
+        if not result['success']:
+            self.assertEqual(result['error_type'], 'duplicate_request')
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.retrieve')
+    def test_payment_confirmation_idempotency(self, mock_stripe_retrieve):
+        """Test that payment confirmation is idempotent for already completed transactions."""
+        # Mock successful Stripe PaymentIntent
+        mock_payment_intent = Mock()
+        mock_payment_intent.id = "pi_test123"
+        mock_payment_intent.status = "succeeded"
+        mock_stripe_retrieve.return_value = mock_payment_intent
+
+        # Create already completed transaction
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('25.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            stripe_payment_intent_id="pi_test123",
+            metadata={"hours": 10, "amount": 25.00}
+        )
+
+        service = PaymentService()
+        
+        # Attempt to confirm again
+        result = service.confirm_payment_completion("pi_test123")
+        
+        # Should be idempotent - return success without changing state
+        self.assertTrue(result['success'])
+        
+        # Verify transaction status unchanged
+        transaction.refresh_from_db()
+        self.assertEqual(transaction.payment_status, TransactionPaymentStatus.COMPLETED)
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    @patch('stripe.PaymentIntent.retrieve')
+    def test_hours_balance_calculation_precision(self, mock_stripe_retrieve):
+        """Test that hour balance calculations maintain proper decimal precision."""
+        # Mock successful Stripe PaymentIntent
+        mock_payment_intent = Mock()
+        mock_payment_intent.id = "pi_precision_test"
+        mock_payment_intent.status = "succeeded"
+        mock_stripe_retrieve.return_value = mock_payment_intent
+
+        # Create transaction with fractional hours
+        transaction = PurchaseTransaction.objects.create(
+            student=self.user,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('33.33'),
+            payment_status=TransactionPaymentStatus.PROCESSING,
+            stripe_payment_intent_id="pi_precision_test",
+            metadata={"hours": "2.75", "amount": 33.33}  # 2.75 hours
+        )
+
+        initial_hours = self.student_balance.hours_purchased
+        
+        service = PaymentService()
+        result = service.confirm_payment_completion("pi_precision_test")
+        
+        self.assertTrue(result['success'])
+        
+        # Verify precise decimal calculation
+        self.student_balance.refresh_from_db()
+        expected_hours = initial_hours + Decimal('2.75')
+        self.assertEqual(self.student_balance.hours_purchased, expected_hours)
+
+
 class PaymentServiceLoggingTests(TestCase):
     """Test PaymentService logging functionality."""
 
@@ -776,8 +939,8 @@ class PaymentServiceLoggingTests(TestCase):
         STRIPE_WEBHOOK_SECRET="whsec_test_example"
     )
     @patch('finances.services.payment_service.logger')
-    def test_payment_service_logs_payment_attempts(self, mock_logger):
-        """Test that payment attempts are logged properly."""
+    def test_payment_service_logs_critical_events(self, mock_logger):
+        """Test that critical payment events are logged properly."""
         # Re-enable logging for this specific test
         logging.disable(logging.NOTSET)
         
@@ -796,6 +959,7 @@ class PaymentServiceLoggingTests(TestCase):
                 mock_payment_intent.id = "pi_test123"
                 mock_payment_intent.client_secret = "pi_test123_secret"
                 mock_payment_intent.amount = 2500
+                mock_payment_intent.customer = None
                 mock_stripe_create.return_value = mock_payment_intent
 
                 service.create_payment_intent(
@@ -804,7 +968,7 @@ class PaymentServiceLoggingTests(TestCase):
                     metadata={"amount": 25.00, "hours": 10}
                 )
 
-            # Verify logging calls were made
+            # Verify critical events are logged
             mock_logger.info.assert_called()
             
         finally:

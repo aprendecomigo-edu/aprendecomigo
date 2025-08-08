@@ -70,7 +70,7 @@ class FamilyBudgetControlViewSetTest(TestCase):
 
     def test_create_budget_control(self):
         """Test creating a new budget control."""
-        url = reverse('familybudgetcontrol-list')
+        url = reverse('finances:familybudgetcontrol-list')
         data = {
             'parent_child_relationship': self.parent_child_relationship.id,
             'monthly_budget_limit': '200.00',
@@ -100,7 +100,7 @@ class FamilyBudgetControlViewSetTest(TestCase):
             auto_approval_threshold=Decimal('20.00')
         )
 
-        url = reverse('familybudgetcontrol-list')
+        url = reverse('finances:familybudgetcontrol-list')
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -117,7 +117,7 @@ class FamilyBudgetControlViewSetTest(TestCase):
             auto_approval_threshold=Decimal('20.00')
         )
 
-        url = reverse('familybudgetcontrol-detail', kwargs={'pk': budget_control.id})
+        url = reverse('finances:familybudgetcontrol-detail', kwargs={'pk': budget_control.id})
         data = {
             'monthly_budget_limit': '300.00',
             'auto_approval_threshold': '25.00'
@@ -138,7 +138,7 @@ class FamilyBudgetControlViewSetTest(TestCase):
             auto_approval_threshold=Decimal('20.00')
         )
 
-        url = reverse('familybudgetcontrol-check-budget-limits', kwargs={'pk': budget_control.id})
+        url = reverse('finances:familybudgetcontrol-check-budget-limits', kwargs={'pk': budget_control.id})
         data = {'amount': '15.00'}
 
         response = self.client.post(url, data, format='json')
@@ -157,7 +157,7 @@ class FamilyBudgetControlViewSetTest(TestCase):
             monthly_budget_limit=Decimal('200.00')
         )
 
-        url = reverse('familybudgetcontrol-list')
+        url = reverse('finances:familybudgetcontrol-list')
         response = self.child_client.get(url)
 
         # Should return empty list or 403, depending on permission implementation
@@ -216,7 +216,7 @@ class PurchaseApprovalRequestViewSetTest(TestCase):
         """Test creating a purchase approval request as a child."""
         self.child_client.credentials(HTTP_AUTHORIZATION=f'Token {self.child_token}')
 
-        url = reverse('purchaseapprovalrequest-list')
+        url = reverse('finances:purchaseapprovalrequest-list')
         data = {
             'student': self.child.id,
             'parent': self.parent.id,
@@ -252,7 +252,7 @@ class PurchaseApprovalRequestViewSetTest(TestCase):
             pricing_plan=self.pricing_plan
         )
 
-        url = reverse('purchaseapprovalrequest-list')
+        url = reverse('finances:purchaseapprovalrequest-list')
         response = self.parent_client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -274,7 +274,7 @@ class PurchaseApprovalRequestViewSetTest(TestCase):
             pricing_plan=self.pricing_plan
         )
 
-        url = reverse('purchaseapprovalrequest-approve', kwargs={'pk': approval_request.id})
+        url = reverse('finances:purchaseapprovalrequest-approve', kwargs={'pk': approval_request.id})
         data = {
             'action': 'approve',
             'parent_notes': 'Approved for educational purposes'
@@ -303,7 +303,7 @@ class PurchaseApprovalRequestViewSetTest(TestCase):
             pricing_plan=self.pricing_plan
         )
 
-        url = reverse('purchaseapprovalrequest-approve', kwargs={'pk': approval_request.id})
+        url = reverse('finances:purchaseapprovalrequest-approve', kwargs={'pk': approval_request.id})
         data = {
             'action': 'deny',
             'parent_notes': 'Too expensive this month'
@@ -332,7 +332,7 @@ class PurchaseApprovalRequestViewSetTest(TestCase):
             pricing_plan=self.pricing_plan
         )
 
-        url = reverse('purchaseapprovalrequest-cancel', kwargs={'pk': approval_request.id})
+        url = reverse('finances:purchaseapprovalrequest-cancel', kwargs={'pk': approval_request.id})
         response = self.child_client.post(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -368,7 +368,7 @@ class PurchaseApprovalRequestViewSetTest(TestCase):
         approved_request.approve()
 
         # Test filtering by pending status
-        url = reverse('purchaseapprovalrequest-list')
+        url = reverse('finances:purchaseapprovalrequest-list')
         response = self.parent_client.get(url, {'status': 'pending'})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -436,7 +436,7 @@ class StudentPurchaseRequestViewTest(TestCase):
 
     def test_create_purchase_request_auto_approved(self):
         """Test creating a purchase request that gets auto-approved."""
-        url = reverse('student-purchase-request')
+        url = reverse('finances:student-purchase-request')
         data = {
             'amount': '40.00',
             'description': 'Request for small hour package',
@@ -466,7 +466,7 @@ class StudentPurchaseRequestViewTest(TestCase):
             validity_days=30
         )
 
-        url = reverse('student-purchase-request')
+        url = reverse('finances:student-purchase-request')
         data = {
             'amount': '150.00',
             'description': 'Request for large hour package',
@@ -495,7 +495,7 @@ class StudentPurchaseRequestViewTest(TestCase):
         )
 
         # Try to create a request that would exceed monthly limit
-        url = reverse('student-purchase-request')
+        url = reverse('finances:student-purchase-request')
         data = {
             'amount': '100.00',
             'description': 'Request that exceeds budget',
@@ -517,7 +517,7 @@ class StudentPurchaseRequestViewTest(TestCase):
             name="Other User"
         )
 
-        url = reverse('student-purchase-request')
+        url = reverse('finances:student-purchase-request')
         data = {
             'amount': '40.00',
             'description': 'Request with invalid parent',
@@ -634,7 +634,7 @@ class ParentApprovalDashboardViewTest(TestCase):
             payment_status=TransactionPaymentStatus.COMPLETED
         )
 
-        url = reverse('parent-approval-dashboard')
+        url = reverse('finances:parent-approval-dashboard')
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -664,7 +664,7 @@ class ParentApprovalDashboardViewTest(TestCase):
             payment_status=TransactionPaymentStatus.COMPLETED
         )
 
-        url = reverse('parent-approval-dashboard')
+        url = reverse('finances:parent-approval-dashboard')
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -696,7 +696,7 @@ class ParentApprovalDashboardViewTest(TestCase):
             payment_status=TransactionPaymentStatus.COMPLETED
         )
 
-        url = reverse('parent-approval-dashboard')
+        url = reverse('finances:parent-approval-dashboard')
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -722,7 +722,7 @@ class ParentApprovalDashboardViewTest(TestCase):
         other_token = AuthToken.objects.create(other_parent)[1]
         other_client.credentials(HTTP_AUTHORIZATION=f'Token {other_token}')
 
-        url = reverse('parent-approval-dashboard')
+        url = reverse('finances:parent-approval-dashboard')
         response = other_client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)

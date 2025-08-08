@@ -72,21 +72,17 @@ class TutorOnboardingAPITestCase(TestCase):
 class TutorOnboardingGuidanceAPITest(TutorOnboardingAPITestCase):
     """Test the tutor onboarding guidance API endpoint."""
     
-    def test_guidance_endpoint_returns_404_initially(self):
-        """Test that the guidance endpoint currently returns 404 (missing implementation)."""
+    def test_guidance_endpoint_returns_guidance_data(self):
+        """Test that the guidance endpoint returns guidance data."""
         url = '/api/accounts/tutors/onboarding/guidance/'
         
-        data = {
-            'step_id': 'course_selection',
-            'context': {
-                'educational_system_id': self.educational_system.id
-            }
-        }
+        response = self.client.get(url)
         
-        response = self.client.post(url, data, format='json')
-        
-        # Should return 404 since endpoint doesn't exist yet
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        # Should return 200 with guidance data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('guidance', response.data)
+        self.assertIn('welcome_message', response.data['guidance'])
+        self.assertIn('steps', response.data['guidance'])
     
     def test_guidance_endpoint_success_after_implementation(self):
         """Test that the guidance endpoint returns proper guidance after implementation."""
@@ -99,94 +95,79 @@ class TutorOnboardingGuidanceAPITest(TutorOnboardingAPITestCase):
             }
         }
         
-        response = self.client.post(url, data, format='json')
+        response = self.client.get(url)
         
         # After implementation, should return success with guidance data
         if response.status_code != status.HTTP_404_NOT_FOUND:  # Skip if not implemented yet
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             
-            expected_fields = ['tips', 'recommendations', 'common_mistakes', 'estimated_time']
+            expected_fields = ['guidance']
             for field in expected_fields:
                 self.assertIn(field, response.data)
             
-            # Check structure of tips
-            if 'tips' in response.data and response.data['tips']:
-                tip = response.data['tips'][0]
-                self.assertIn('title', tip)
-                self.assertIn('description', tip)
-                self.assertIn('priority', tip)
-                self.assertIn('category', tip)
-                self.assertIn(tip['priority'], ['high', 'medium', 'low'])
-                self.assertIn(tip['category'], ['requirement', 'suggestion', 'best_practice'])
+            # Check structure of guidance
+            guidance = response.data['guidance']
+            self.assertIn('welcome_message', guidance)
+            self.assertIn('steps', guidance)
+            self.assertIsInstance(guidance['steps'], list)
 
 
 class TutorOnboardingStartAPITest(TutorOnboardingAPITestCase):
     """Test the tutor onboarding start API endpoint."""
     
-    def test_start_endpoint_returns_404_initially(self):
-        """Test that the start endpoint currently returns 404 (missing implementation)."""
+    def test_start_endpoint_processes_onboarding_start(self):
+        """Test that the start endpoint processes onboarding start request."""
         url = '/api/accounts/tutors/onboarding/start/'
         
-        response = self.client.post(url, {}, format='json')
+        data = {'step': 'create_profile'}
+        response = self.client.post(url, data, format='json')
         
-        # Should return 404 since endpoint doesn't exist yet
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        # Should return 200 with onboarding data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('success', response.data)
+        self.assertIn('step', response.data)
     
     def test_start_endpoint_success_after_implementation(self):
         """Test that the start endpoint initializes onboarding session after implementation."""
         url = '/api/accounts/tutors/onboarding/start/'
         
-        response = self.client.post(url, {}, format='json')
+        data = {'step': 'create_profile'}
+        response = self.client.post(url, data, format='json')
         
         # After implementation, should return success with onboarding data
         if response.status_code != status.HTTP_404_NOT_FOUND:  # Skip if not implemented yet
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             
-            expected_fields = ['onboarding_id', 'initial_progress']
+            expected_fields = ['success', 'step', 'message', 'next_step']
             for field in expected_fields:
                 self.assertIn(field, response.data)
             
-            # Check progress structure
-            progress = response.data['initial_progress']
-            progress_fields = [
-                'current_step', 'total_steps', 'completed_steps', 
-                'step_completion', 'overall_completion'
-            ]
-            for field in progress_fields:
-                self.assertIn(field, progress)
-            
-            self.assertEqual(progress['current_step'], 1)
-            self.assertGreater(progress['total_steps'], 0)
-            self.assertEqual(progress['overall_completion'], 0)
+            # Check response structure
+            self.assertTrue(response.data['success'])
+            self.assertEqual(response.data['step'], 'create_profile')
 
 
 class TutorOnboardingValidateStepAPITest(TutorOnboardingAPITestCase):
     """Test the tutor onboarding validate step API endpoint."""
     
-    def test_validate_endpoint_returns_404_initially(self):
-        """Test that the validate step endpoint currently returns 404 (missing implementation)."""
+    def test_validate_endpoint_validates_step_data(self):
+        """Test that the validate step endpoint validates step data."""
         url = '/api/accounts/tutors/onboarding/validate-step/'
         
         data = {
-            'step': 'course_selection',
+            'step': 'set_rate',
             'data': {
-                'course_selection': {
-                    'educational_system_id': self.educational_system.id,
-                    'selected_courses': [
-                        {
-                            'course_id': self.course1.id,
-                            'hourly_rate': 25.00,
-                            'expertise_level': 'intermediate'
-                        }
-                    ]
-                }
+                'hourly_rate': 25.00
             }
         }
         
         response = self.client.post(url, data, format='json')
         
-        # Should return 404 since endpoint doesn't exist yet
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        # Should return 200 with validation results
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('valid', response.data)
+        self.assertIn('errors', response.data)
+        self.assertIn('step', response.data)
     
     def test_validate_endpoint_success_after_implementation(self):
         """Test that the validate step endpoint validates step data after implementation."""
@@ -214,16 +195,13 @@ class TutorOnboardingValidateStepAPITest(TutorOnboardingAPITestCase):
         if response.status_code != status.HTTP_404_NOT_FOUND:  # Skip if not implemented yet
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             
-            expected_fields = ['is_valid', 'errors', 'warnings', 'completion_percentage']
+            expected_fields = ['valid', 'errors', 'step']
             for field in expected_fields:
                 self.assertIn(field, response.data)
             
             # For valid data, should be valid
-            self.assertTrue(response.data['is_valid'])
+            self.assertTrue(response.data['valid'])
             self.assertIsInstance(response.data['errors'], dict)
-            self.assertIsInstance(response.data['warnings'], dict)
-            self.assertGreaterEqual(response.data['completion_percentage'], 0)
-            self.assertLessEqual(response.data['completion_percentage'], 100)
     
     def test_validate_endpoint_invalid_data_after_implementation(self):
         """Test that the validate step endpoint properly validates invalid data."""
@@ -231,11 +209,9 @@ class TutorOnboardingValidateStepAPITest(TutorOnboardingAPITestCase):
         
         # Invalid data - missing required fields
         data = {
-            'step': 'course_selection',
+            'step': 'add_bio',
             'data': {
-                'course_selection': {
-                    'selected_courses': []  # Empty selection should be invalid
-                }
+                'bio': ''  # Empty bio should be invalid
             }
         }
         
@@ -246,7 +222,7 @@ class TutorOnboardingValidateStepAPITest(TutorOnboardingAPITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             
             # Should be invalid with errors
-            self.assertFalse(response.data['is_valid'])
+            self.assertFalse(response.data['valid'])
             self.assertTrue(len(response.data['errors']) > 0)
 
 

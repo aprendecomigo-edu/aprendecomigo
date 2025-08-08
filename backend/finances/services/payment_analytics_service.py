@@ -335,7 +335,7 @@ class PaymentAnalyticsService:
                 'success_rate': 0.0
             }
         
-        status_counts = queryset.values('status').annotate(
+        status_counts = queryset.order_by().values('status').annotate(
             count=Count('id')
         )
         

@@ -1,7 +1,13 @@
+"""
+Serializer tests for the Aprende Comigo platform.
+
+These tests verify serializer validation, field exposure, and data transformation
+for all API serializers. They focus on data structure validation rather than
+business logic, ensuring API contracts are properly enforced.
+"""
 import datetime
 
 from django.test import TestCase
-from rest_framework.test import APITestCase
 
 from accounts.models import CustomUser, StudentProfile, TeacherProfile
 from accounts.serializers import (

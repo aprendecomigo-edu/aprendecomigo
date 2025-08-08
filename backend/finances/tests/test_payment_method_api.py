@@ -516,6 +516,63 @@ class PaymentMethodAPITest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data['success'])
+    
+    def test_cross_user_payment_method_security(self):
+        """Test that users cannot access other users' payment methods."""
+        # Create another student with a payment method
+        other_student = User.objects.create_user(
+            email='other@example.com',
+            name='Other Student',
+            password='testpass123'
+        )
+        
+        other_payment_method = StoredPaymentMethod.objects.create(
+            student=other_student,
+            stripe_payment_method_id='pm_other_123',
+            card_brand='mastercard',
+            card_last4='5555',
+            is_default=True
+        )
+        
+        self.client.force_authenticate(user=self.student)
+        
+        # Try to remove other user's payment method
+        url = reverse('finances:studentbalance-remove-payment-method', kwargs={'pk': other_payment_method.id})
+        response = self.client.delete(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        
+        # Try to set other user's payment method as default
+        url = reverse('finances:studentbalance-set-default-payment-method', kwargs={'pk': other_payment_method.id})
+        response = self.client.post(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_add_payment_method_with_malformed_stripe_id(self):
+        """Test adding payment method with various malformed Stripe IDs."""
+        self.client.force_authenticate(user=self.student)
+        url = reverse('finances:studentbalance-payment-methods')
+        
+        malformed_ids = [
+            'invalid_id',  # Wrong prefix
+            'pm_',  # Too short
+            'pm_' + 'x' * 100,  # Too long
+            '',  # Empty
+            None,  # None value would be handled by serializer
+        ]
+        
+        for stripe_id in malformed_ids:
+            if stripe_id is None:
+                continue  # Skip None as it would be caught by required field validation
+                
+            data = {
+                'stripe_payment_method_id': stripe_id,
+                'is_default': False
+            }
+            response = self.client.post(url, data)
+            
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST,
+                           f"Should reject malformed ID: {stripe_id}")
 
 
 class StoredPaymentMethodModelTest(TestCase):

@@ -180,7 +180,7 @@ class AuthenticationProtectionTests(APITestCase):
             reverse("accounts:user-list"),
             # Note: school-list is intentionally public (AllowAny permission)
             reverse("accounts:student-list"),
-            reverse("accounts:teacher-list"),
+            # TODO: Add teacher-list when TeacherViewSet is implemented
             reverse("accounts:user-detail", kwargs={"pk": self.user.pk}),
             # Add more protected endpoints here
         ]
@@ -195,7 +195,7 @@ class AuthenticationProtectionTests(APITestCase):
             )
 
         # Also test a POST request to a protected endpoint
-        url = reverse("accounts:school-list")
-        data = {"name": "Test School"}
+        url = reverse("accounts:user-list")
+        data = {"email": "test@example.com", "name": "Test User"}
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

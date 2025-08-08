@@ -370,10 +370,13 @@ class TeacherInvitationEnumTest(TestCase):
         """Test EmailDeliveryStatus enum choices."""
         expected_choices = [
             ("not_sent", "Not Sent"),
+            ("queued", "Queued"),
+            ("sending", "Sending"),
             ("sent", "Sent"),
             ("delivered", "Delivered"),
+            ("opened", "Opened"),
+            ("clicked", "Clicked"),
             ("failed", "Failed"),
-            ("bounced", "Bounced"),
         ]
         
         self.assertEqual(EmailDeliveryStatus.choices, expected_choices)

@@ -382,6 +382,62 @@ class ReceiptAPITest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('Invalid start_date format', response.data['error'])
+    
+    def test_generate_receipt_for_other_users_transaction(self):
+        """Test that students cannot generate receipts for other users' transactions."""
+        # Create another student and their transaction
+        other_student = User.objects.create_user(
+            email='other@example.com',
+            name='Other Student',
+            password='testpass123'
+        )
+        
+        other_transaction = PurchaseTransaction.objects.create(
+            student=other_student,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('75.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            stripe_payment_intent_id='pi_other_123'
+        )
+        
+        self.client.force_authenticate(user=self.student)
+        
+        url = reverse('finances:studentbalance-generate-receipt')
+        data = {'transaction_id': other_transaction.id}
+        response = self.client.post(url, data)
+        
+        # Should either return 403 or 400 depending on permission implementation
+        self.assertIn(response.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_400_BAD_REQUEST])
+    
+    def test_download_receipt_cross_user_security(self):
+        """Test that users cannot download other users' receipts."""
+        # Create another student with a receipt
+        other_student = User.objects.create_user(
+            email='other@example.com',
+            name='Other Student', 
+            password='testpass123'
+        )
+        
+        other_transaction = PurchaseTransaction.objects.create(
+            student=other_student,
+            transaction_type=TransactionType.PACKAGE,
+            amount=Decimal('75.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        
+        other_receipt = Receipt.objects.create(
+            student=other_student,
+            transaction=other_transaction,
+            amount=Decimal('75.00')
+        )
+        
+        self.client.force_authenticate(user=self.student)
+        
+        url = reverse('finances:studentbalance-download-receipt', kwargs={'pk': other_receipt.id})
+        response = self.client.get(url)
+        
+        # Should return 403 or 404 for security
+        self.assertIn(response.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND])
 
 
 class ReceiptModelTest(TestCase):

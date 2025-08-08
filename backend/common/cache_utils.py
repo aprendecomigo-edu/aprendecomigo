@@ -58,42 +58,6 @@ class SecureCacheKeyGenerator:
         # Return prefixed hash key
         return f"secure_{prefix}_{key_hash}"
     
-    @staticmethod
-    def generate_analytics_key(
-        teacher_id: int,
-        school_id: int,
-        time_range: str,
-        start_date: str,
-        end_date: str,
-        session_token: Optional[str] = None
-    ) -> str:
-        """
-        Generate secure analytics cache key.
-        
-        Args:
-            teacher_id: Teacher profile ID
-            school_id: School ID
-            time_range: Time range string
-            start_date: Start date (ISO format)
-            end_date: End date (ISO format)
-            session_token: Optional session token
-            
-        Returns:
-            Secure analytics cache key
-        """
-        params = {
-            'school_id': school_id,
-            'time_range': time_range,
-            'start_date': start_date,
-            'end_date': end_date
-        }
-        
-        return SecureCacheKeyGenerator.generate_user_scoped_key(
-            'tutor_analytics',
-            teacher_id,
-            params,
-            session_token
-        )
     
     @staticmethod
     def generate_school_metrics_key(

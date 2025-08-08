@@ -34,7 +34,15 @@ SIMPLE_JWT = {**BASE_SIMPLE_JWT, "SIGNING_KEY": SECRET_KEY}
 REST_FRAMEWORK = {
     **BASE_REST_FRAMEWORK,
     "DEFAULT_THROTTLE_CLASSES": [],
-    "DEFAULT_THROTTLE_RATES": {},
+    "DEFAULT_THROTTLE_RATES": {
+        # Set very high rates for all throttle scopes used in tests
+        "purchase_initiation": "10000/minute",
+        "purchase_initiation_email": "10000/minute",
+        "auth_code_request": "10000/minute", 
+        "auth_signup_ip": "10000/minute",
+        "auth_code_verify_email": "10000/minute",
+        "auth_code_verify_ip": "10000/minute",
+    },
 }
 
 # Disable password hashing for faster tests
@@ -73,10 +81,10 @@ from .base import *  # noqa: F403, E402
 # Allow testserver for Django test client
 ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
 
-# Stripe Test Configuration
-STRIPE_SECRET_KEY = "sk_test_test_key_for_django_tests"
-STRIPE_PUBLIC_KEY = "pk_test_test_key_for_django_tests"
-STRIPE_WEBHOOK_SECRET = "whsec_test_key_for_django_tests"
+# Stripe Test Configuration - Use realistic test key formats
+STRIPE_SECRET_KEY = "sk_test_51234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
+STRIPE_PUBLIC_KEY = "pk_test_51234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
+STRIPE_WEBHOOK_SECRET = "whsec_1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
 
 # Override logging to use console only (no file handlers) for CI/testing
 LOGGING = {

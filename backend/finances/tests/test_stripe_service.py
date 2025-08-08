@@ -66,7 +66,7 @@ class StripeServiceConfigurationTests(TestCase):
 
     @override_settings(
         STRIPE_SECRET_KEY="sk_live_should_not_be_in_development",
-        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_live_example_key",
         STRIPE_WEBHOOK_SECRET="whsec_test_example"
     )
     def test_stripe_service_development_environment_validation(self):
@@ -453,3 +453,122 @@ class StripeServiceSecurityTests(TestCase):
         self.assertTrue(service._is_live_key("pk_live_example"))
         self.assertFalse(service._is_live_key("sk_test_example"))
         self.assertFalse(service._is_live_key("pk_test_example"))
+
+
+class StripeServiceBusinessLogicTests(TestCase):
+    """Test Stripe service business logic and edge cases specific to payment processing."""
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_currency_validation_for_eur_only(self):
+        """Test that service validates EUR currency for European market."""
+        service = StripeService()
+        
+        # Test EUR is accepted
+        self.assertTrue(service.is_currency_supported("eur"))
+        
+        # Test other currencies are rejected for business requirements
+        self.assertFalse(service.is_currency_supported("usd"))
+        self.assertFalse(service.is_currency_supported("gbp"))
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_payment_method_restrictions(self):
+        """Test that only approved payment methods are allowed."""
+        service = StripeService()
+        
+        # Business requirement: Only cards and SEPA are allowed for Portuguese market
+        allowed_methods = service.get_allowed_payment_methods()
+        
+        self.assertIn("card", allowed_methods)
+        self.assertIn("sepa_debit", allowed_methods)
+        
+        # Should not allow payment methods not suitable for European tutoring
+        self.assertNotIn("alipay", allowed_methods)
+        self.assertNotIn("wechat_pay", allowed_methods)
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_webhook_signature_timeout_validation(self):
+        """Test webhook signature timeout to prevent replay attacks."""
+        service = StripeService()
+        
+        # Create test payload with old timestamp (over 5 minutes ago)
+        import time
+        old_timestamp = int(time.time()) - 400  # 6+ minutes ago
+        payload = '{"test": "data"}'
+        
+        # This should fail signature validation due to timestamp tolerance
+        result = service.construct_webhook_event(payload, f"t={old_timestamp},v1=fakehash")
+        
+        # Business requirement: Reject old webhook events for security
+        self.assertFalse(result['success'])
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_amount_limits_for_educational_platform(self):
+        """Test amount validation specific to tutoring platform business rules."""
+        service = StripeService()
+        
+        # Test minimum amount for education services (€0.50)
+        self.assertFalse(service.validate_amount_for_education_service(49))  # €0.49
+        self.assertTrue(service.validate_amount_for_education_service(50))   # €0.50
+        
+        # Test maximum amount for individual purchases (€10,000)
+        self.assertTrue(service.validate_amount_for_education_service(999999))   # €9,999.99
+        self.assertFalse(service.validate_amount_for_education_service(1000001)) # €10,000.01
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_retry_logic_for_temporary_failures(self):
+        """Test that temporary API failures are handled with proper retry logic."""
+        service = StripeService()
+        
+        # Simulate temporary connection error
+        temp_error = stripe.error.APIConnectionError("Temporary connection problem")
+        
+        result = service.handle_stripe_error(temp_error)
+        
+        # Should indicate this is retryable
+        self.assertEqual(result['error_type'], 'api_connection_error')
+        self.assertTrue(result.get('retryable', False))
+
+    @override_settings(
+        STRIPE_SECRET_KEY="sk_test_example_key",
+        STRIPE_PUBLIC_KEY="pk_test_example_key",
+        STRIPE_WEBHOOK_SECRET="whsec_test_example"
+    )
+    def test_fraud_prevention_metadata_requirements(self):
+        """Test that required anti-fraud metadata is validated."""
+        service = StripeService()
+        
+        # Test metadata validation for educational transactions
+        valid_metadata = {
+            'user_id': '12345',
+            'transaction_type': 'package',
+            'hours_purchased': '10.0',
+            'school_context': 'tutoring'
+        }
+        
+        invalid_metadata = {
+            'user_id': '12345'
+            # Missing required fields
+        }
+        
+        self.assertTrue(service.validate_educational_metadata(valid_metadata))
+        self.assertFalse(service.validate_educational_metadata(invalid_metadata))

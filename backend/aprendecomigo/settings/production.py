@@ -115,5 +115,9 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 # Set JWT signing key
 SIMPLE_JWT = {**BASE_SIMPLE_JWT, "SIGNING_KEY": SECRET_KEY}
 
+# Production overrides for reminder system
+REMINDER_MOCK_MODE = False  # Disable mock mode in production
+COMMUNICATION_SERVICE_ENABLED = True  # Enable real communication service in production
+
 # Import all settings from base.py
 from .base import *  # noqa: F403, E402

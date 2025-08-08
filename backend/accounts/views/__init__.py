@@ -26,48 +26,53 @@ from .users import (
 # Import utility functions that were available in the original views module for backwards compatibility
 from common.messaging import send_email_verification_code
 
-# Import all remaining views from the original views file (renamed to views_original.py)
-from ..views_original import (
-    # School Management
-    SchoolViewSet,
-    SchoolMembershipViewSet,
-    SchoolDashboardViewSet,
-    SchoolBrandingAPIView,
-    CommunicationSettingsAPIView,
-    SchoolInvitationLinkView,
-    
-    # Teacher Management  
-    TeacherViewSet,
-    TeacherProfileWizardViewSet,
-    TeacherProfileStepValidationView,
-    TeacherProfileCompletionStatusView,
-    
-    # Student Management
-    StudentViewSet,
-    
-    # Course Management
+# Import student management views
+from .students import StudentViewSet
+
+# Import course management views
+from .courses import (
     CourseViewSet,
     EducationalSystemViewSet,
     TeacherCourseViewSet,
-    
-    # Invitations
+)
+
+# Import invitation views
+from .invitations import (
     InvitationViewSet,
+    SchoolInvitationLinkView,
     TeacherInvitationViewSet,
-    
-    # Search & Discovery
+)
+
+# Import onboarding and discovery views
+from .onboarding import (
+    BulkTeacherActionsView,
     GlobalSearchView,
     TutorDiscoveryAPIView,
-    
-    # Onboarding
     TutorOnboardingAPIView,
     TutorOnboardingGuidanceView,
+    TutorOnboardingSaveProgressView,
     TutorOnboardingStartView,
     TutorOnboardingValidateStepView,
-    TutorOnboardingSaveProgressView,
-    
-    # Bulk Operations
-    BulkTeacherActionsView,
 )
+
+# Import remaining views from schools and teachers modules (not yet created)
+# These imports are commented out until the remaining views are refactored:
+# from .schools import (
+#     SchoolViewSet,
+#     SchoolMembershipViewSet,
+#     SchoolDashboardViewSet,
+#     SchoolBrandingAPIView,
+#     CommunicationSettingsAPIView,
+# )
+# from .teachers import (
+#     TeacherViewSet,
+#     TeacherProfileWizardViewSet,
+#     TeacherProfileStepValidationView,
+#     TeacherProfileCompletionStatusView,
+# )
+
+# For now, we'll keep these views in the existing schools.py and teachers.py files
+# But they are not yet implemented - this is marked as TODO for future refactoring
 
 # Export all views for backward compatibility
 __all__ = [
@@ -82,44 +87,44 @@ __all__ = [
     "ParentProfileViewSet",
     "ParentChildRelationshipViewSet",
     
-    # School Management (from original file)
-    "SchoolViewSet",
-    "SchoolMembershipViewSet", 
-    "SchoolDashboardViewSet",
-    "SchoolBrandingAPIView",
-    "CommunicationSettingsAPIView",
-    "SchoolInvitationLinkView",
+    # School Management - TODO: Move remaining views to schools.py
+    # "SchoolViewSet",
+    # "SchoolMembershipViewSet", 
+    # "SchoolDashboardViewSet",
+    # "SchoolBrandingAPIView",
+    # "CommunicationSettingsAPIView",
     
-    # Teacher Management (from original file)
-    "TeacherViewSet",
-    "TeacherProfileWizardViewSet",
-    "TeacherProfileStepValidationView", 
-    "TeacherProfileCompletionStatusView",
+    # Teacher Management - TODO: Move remaining views to teachers.py
+    # "TeacherViewSet",
+    # "TeacherProfileWizardViewSet",
+    # "TeacherProfileStepValidationView", 
+    # "TeacherProfileCompletionStatusView",
     
-    # Student Management (from original file)
+    # Student Management (refactored)
     "StudentViewSet",
     
-    # Course Management (from original file)
+    # Course Management (refactored)
     "CourseViewSet",
     "EducationalSystemViewSet",
     "TeacherCourseViewSet",
     
-    # Invitations (from original file)
+    # Invitations (refactored)
     "InvitationViewSet",
+    "SchoolInvitationLinkView",
     "TeacherInvitationViewSet",
     
-    # Search & Discovery (from original file)
+    # Search & Discovery (refactored)
     "GlobalSearchView",
     "TutorDiscoveryAPIView",
     
-    # Onboarding (from original file)
+    # Onboarding (refactored)
     "TutorOnboardingAPIView",
     "TutorOnboardingGuidanceView",
     "TutorOnboardingStartView",
     "TutorOnboardingValidateStepView", 
     "TutorOnboardingSaveProgressView",
     
-    # Bulk Operations (from original file)
+    # Bulk Operations (refactored)
     "BulkTeacherActionsView",
     
     # Utility functions for backward compatibility

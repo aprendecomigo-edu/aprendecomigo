@@ -539,8 +539,7 @@ class PurchaseApprovalRequestModelTest(TestCase):
             name="Teacher User"
         )
         teacher_profile = TeacherProfile.objects.create(
-            user=teacher_user,
-            school=self.school
+            user=teacher_user
         )
 
         # Create class session

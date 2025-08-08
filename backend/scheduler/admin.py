@@ -58,24 +58,36 @@ class RecurringClassScheduleAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "teacher",
-        "student",
+        "get_students_display",
         "school",
+        "frequency_type",
+        "status",
         "day_of_week",
         "start_time",
         "is_active",
     )
-    list_filter = ("day_of_week", "is_active", "school", "class_type")
-    search_fields = ("title", "teacher__user__name", "student__name", "student__email")
+    list_filter = ("day_of_week", "status", "frequency_type", "is_active", "school", "class_type")
+    search_fields = ("title", "teacher__user__name", "students__name", "students__email")
     ordering = ("day_of_week", "start_time")
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("created_at", "updated_at", "cancelled_at", "paused_at")
+    filter_horizontal = ("students",)
+
+    def get_students_display(self, obj):
+        """Display students in a readable format"""
+        student_names = [student.name for student in obj.students.all()[:3]]
+        if obj.students.count() > 3:
+            student_names.append(f"... (+{obj.students.count() - 3} more)")
+        return ", ".join(student_names) if student_names else "No students"
+    get_students_display.short_description = "Students"
 
     fieldsets = (
-        ("Class Information", {"fields": ("title", "description", "class_type")}),
-        ("Participants", {"fields": ("teacher", "student")}),
+        ("Class Information", {"fields": ("title", "description", "class_type", "max_participants")}),
+        ("Participants", {"fields": ("teacher", "students")}),
         (
             "Schedule Pattern",
-            {"fields": ("school", "day_of_week", "start_time", "end_time", "duration_minutes")},
+            {"fields": ("school", "frequency_type", "day_of_week", "start_time", "end_time", "duration_minutes")},
         ),
-        ("Period", {"fields": ("start_date", "end_date", "is_active")}),
+        ("Status & Period", {"fields": ("status", "start_date", "end_date", "is_active")}),
+        ("Status Changes", {"fields": ("cancelled_at", "cancelled_by", "paused_at", "paused_by")}),
         ("Metadata", {"fields": ("created_by", "created_at", "updated_at")}),
     )

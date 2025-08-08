@@ -185,14 +185,6 @@ class CustomUser(AbstractUser):
 
     def __str__(self) -> str:
         return str(self.email)
-    
-    @property
-    def is_admin(self) -> bool:
-        """Check if user has admin role in any school"""
-        return self.school_memberships.filter(
-            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True
-        ).exists()
 
 
 class SchoolRole(models.TextChoices):
@@ -581,32 +573,6 @@ class TeacherProfile(models.Model):
         blank=True,
         help_text=_("When the teacher was last active in the system")
     )
-    
-    # Scheduling Rules - GitHub Issue #152
-    minimum_notice_minutes: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("minimum notice minutes"),
-        null=True,
-        blank=True,
-        help_text=_("Override minimum notice period in minutes (school default if null)")
-    )
-    buffer_time_minutes: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("buffer time minutes"),
-        null=True,
-        blank=True,
-        help_text=_("Buffer time between classes in minutes (school default if null)")
-    )
-    max_daily_bookings: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("maximum daily bookings"),
-        null=True,
-        blank=True,
-        help_text=_("Maximum classes per day (school default if null)")
-    )
-    max_weekly_bookings: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("maximum weekly bookings"),
-        null=True,
-        blank=True,
-        help_text=_("Maximum classes per week (school default if null)")
-    )
 
     class Meta:
         indexes = [
@@ -654,23 +620,6 @@ class TeacherProfile(models.Model):
         from django.utils import timezone
         self.last_activity = timezone.now()
         self.save(update_fields=['last_activity'])
-    
-    def save(self, *args, **kwargs):
-        """Override save to update completion score."""
-        # Avoid infinite recursion - skip completion update if we're already updating these fields
-        update_fields = kwargs.get('update_fields', [])
-        if update_fields and 'profile_completion_score' in update_fields:
-            return super().save(*args, **kwargs)
-        
-        # Save first, then update completion
-        super().save(*args, **kwargs)
-        
-        # Update completion score after saving
-        try:
-            self.update_completion_score()
-        except Exception as e:
-            logger.error(f"Failed to update completion score for teacher {self.id}: {e}")
-            # Don't fail the save if completion update fails
 
 
 class Course(models.Model):
@@ -912,18 +861,13 @@ class VerificationCode(models.Model):
 
         if self.failed_attempts >= self.max_attempts:
             return False
-            
         # Expire codes after 24 hours regardless of TOTP validity
         if timezone.now() - self.created_at > timedelta(hours=24):
             return False
-            
         # If code is provided, verify it
         if code:
             totp = pyotp.TOTP(self.secret_key, digits=digits, interval=interval)
             result = totp.verify(code)
-            if not result:
-                # Record failed attempt for wrong codes
-                self.record_failed_attempt()
             return bool(result)
 
         return True
@@ -1218,50 +1162,6 @@ class SchoolSettings(models.Model):
     activity_retention_days = models.PositiveIntegerField(
         default=90, 
         help_text="Days to retain activity logs"
-    )
-    
-    # Scheduling Rules Defaults - GitHub Issue #152
-    default_minimum_notice_minutes: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("default minimum notice minutes"),
-        default=120,
-        help_text=_("Default minimum notice period in minutes (2 hours)")
-    )
-    default_buffer_time_minutes: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("default buffer time minutes"),
-        default=15,
-        help_text=_("Default buffer time between classes in minutes")
-    )
-    default_max_daily_bookings: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("default max daily bookings"),
-        default=8,
-        help_text=_("Default maximum classes per day for teachers")
-    )
-    default_max_weekly_bookings: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("default max weekly bookings"),
-        default=30,
-        help_text=_("Default maximum classes per week for teachers")
-    )
-    student_max_daily_bookings: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("student max daily bookings"),
-        default=3,
-        help_text=_("Maximum classes per day for students")
-    )
-    student_max_weekly_bookings: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("student max weekly bookings"),
-        default=10,
-        help_text=_("Maximum classes per week for students")
-    )
-    
-    # Class-type specific buffer times
-    buffer_time_group: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("buffer time for group classes"),
-        default=20,
-        help_text=_("Buffer time in minutes for group classes")
-    )
-    buffer_time_trial: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("buffer time for trial classes"),
-        default=10,
-        help_text=_("Buffer time in minutes for trial classes")
     )
     
     # Timestamps
@@ -1594,8 +1494,6 @@ class TeacherInvitation(models.Model):
             "email_delivery_status", 
             "email_sent_at", 
             "status", 
-            "retry_count",
-            "email_failure_reason",
             "updated_at"
         ])
     
