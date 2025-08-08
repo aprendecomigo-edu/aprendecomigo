@@ -102,6 +102,94 @@ export const createMockToast = () => {
 export const flushPromises = () => new Promise(resolve => setImmediate(resolve));
 
 /**
+ * Mock user factory for testing
+ */
+export const createMockAuthUser = (overrides: any = {}) => ({
+  id: 1,
+  email: 'user@example.com',
+  name: 'Test User',
+  role: 'student',
+  isAuthenticated: true,
+  hasCompletedOnboarding: false,
+  createdAt: new Date().toISOString(),
+  ...overrides,
+});
+
+/**
+ * Mock token response factory
+ */
+export const createMockTokenResponse = (overrides: any = {}) => ({
+  success: true,
+  token: 'mock_jwt_token_' + Math.random(),
+  refreshToken: 'mock_refresh_token_' + Math.random(),
+  expiresAt: Date.now() + 3600000, // 1 hour from now
+  user: createMockAuthUser(),
+  ...overrides,
+});
+
+/**
+ * Create auth test wrapper component
+ */
+export const createAuthTestWrapper = (component: React.ReactElement) => {
+  const AuthTestWrapper = ({ children }: { children: React.ReactNode }) => (
+    <MockSafeAreaProvider>
+      <MockToastProvider>
+        <MockAuthProvider>
+          {children}
+        </MockAuthProvider>
+      </MockToastProvider>
+    </MockSafeAreaProvider>
+  );
+  
+  return React.cloneElement(component, { wrapper: AuthTestWrapper });
+};
+
+/**
+ * Mock authenticated user scenario
+ */
+export const mockAuthenticatedUser = (user = createMockAuthUser()) => {
+  // Mock auth context or state management
+  return {
+    user,
+    isAuthenticated: true,
+    token: 'valid_token',
+  };
+};
+
+/**
+ * Mock unauthenticated user scenario
+ */
+export const mockUnauthenticatedUser = () => {
+  return {
+    user: null,
+    isAuthenticated: false,
+    token: null,
+  };
+};
+
+/**
+ * Simulate token expiry scenario
+ */
+export const simulateTokenExpiry = () => {
+  return {
+    error: 'Token expired',
+    status: 401,
+    shouldRefresh: true,
+  };
+};
+
+/**
+ * Simulate session recovery
+ */
+export const simulateSessionRecovery = () => {
+  return {
+    success: true,
+    user: createMockAuthUser(),
+    token: createMockTokenResponse().token,
+  };
+};
+
+/**
  * Common test data for authentication
  */
 export const AUTH_TEST_DATA = {

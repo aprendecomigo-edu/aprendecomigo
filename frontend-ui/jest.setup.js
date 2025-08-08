@@ -85,6 +85,9 @@ jest.mock('@gluestack-ui/nativewind-utils/withStyleContextAndStates', () => ({
   withStyleContextAndStates: jest.fn(Component => Component),
 }));
 
+// Mock for useBreakpointValue is in __mocks__ directory
+// This allows better control and avoids module resolution issues
+
 // Mock additional Gluestack UI components and providers
 jest.mock('@gluestack-ui/overlay', () => {
   const React = require('react');
@@ -679,6 +682,8 @@ jest.mock('expo-asset', () => ({
   },
 }));
 
+// Mock for expo-notifications is in __mocks__ directory
+
 // Mock React Native SVG
 jest.mock('react-native-svg', () => {
   const React = require('react');
@@ -1007,6 +1012,18 @@ jest.mock('@/components/ui/vstack', () => {
   const React = require('react');
   return {
     VStack: ({ children, ...props }) => React.createElement('div', { ...props, className: 'vstack' }, children),
+  };
+});
+
+jest.mock('@/components/ui/grid', () => {
+  const React = require('react');
+  return {
+    Grid: React.forwardRef(({ children, ...props }, ref) => 
+      React.createElement('div', { ...props, ref, className: 'grid' }, children)
+    ),
+    GridItem: React.forwardRef(({ children, ...props }, ref) => 
+      React.createElement('div', { ...props, ref, className: 'grid-item' }, children)
+    ),
   };
 });
 

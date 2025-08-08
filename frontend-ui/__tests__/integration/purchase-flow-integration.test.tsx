@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@/__tests__/utils/test-utils';
 
 import { PurchaseFlow } from '@/components/purchase/PurchaseFlow';
 import { PurchaseApiClient } from '@/api/purchaseApi';
@@ -643,6 +643,354 @@ describe('Purchase Flow Integration Tests', () => {
 
       await waitFor(() => {
         expect(getByText('Payment')).toBeTruthy();
+      });
+    });
+  });
+
+  describe('Advanced Error Recovery Scenarios', () => {
+    it('handles payment failure → retry with different payment method', async () => {
+      const purchaseResponse = createMockPurchaseInitiationResponse();
+      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(purchaseResponse);
+
+      // Mock multiple saved payment methods
+      const multiplePaymentMethods = createMockPaymentMethods();
+      multiplePaymentMethods.push({
+        id: 'pm_test_789',
+        type: 'card',
+        card: { brand: 'amex', last4: '0005', exp_month: 10, exp_year: 2027, funding: 'credit' },
+        billing_details: { name: 'John Doe', email: 'john@example.com' },
+        is_default: false,
+        created_at: '2024-01-15T00:00:00Z',
+      });
+      mockPaymentMethodApiClient.getPaymentMethods.mockResolvedValue(multiplePaymentMethods);
+
+      const { getByText, getByPlaceholderText, queryByText } = render(<PurchaseFlow />);
+
+      // Complete flow to payment step
+      fireEvent.press(getByText('Standard Package'));
+      await waitFor(() => getByText('Student Information'));
+
+      fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
+      fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
+      fireEvent.press(getByText('Continue to Payment'));
+
+      await waitFor(() => getByText('Payment'));
+
+      // First payment attempt fails
+      mockStripe.confirmPayment.mockResolvedValue(createMockStripeError('Your card was declined.'));
+      fireEvent.press(getByText(/Pay €/));
+
+      await waitFor(() => {
+        expect(getByText('Purchase Failed')).toBeTruthy();
+        expect(getByText('Your card was declined.')).toBeTruthy();
+      });
+
+      // User selects different payment method
+      fireEvent.press(getByText('Try Again'));
+      await waitFor(() => getByText('Payment'));
+
+      // Should show payment method selection
+      expect(queryByText('•••• 4242')).toBeTruthy(); // Default card
+      expect(queryByText('•••• 5555')).toBeTruthy(); // Alternative card
+
+      // Select different payment method
+      fireEvent.press(getByText('•••• 5555'));
+
+      // Second attempt succeeds
+      mockStripe.confirmPayment.mockResolvedValue(createMockStripeSuccess());
+      fireEvent.press(getByText(/Pay €/));
+
+      await waitFor(() => {
+        expect(getByText('Purchase Successful!')).toBeTruthy();
+      });
+
+      // Verify both payment attempts were made
+      expect(mockStripe.confirmPayment).toHaveBeenCalledTimes(2);
+    });
+
+    it('handles app backgrounding during payment processing', async () => {
+      const purchaseResponse = createMockPurchaseInitiationResponse();
+      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(purchaseResponse);
+
+      // Mock long-running payment process
+      let resolvePayment: (value: any) => void;
+      const pendingPayment = new Promise(resolve => {
+        resolvePayment = resolve;
+      });
+      mockStripe.confirmPayment.mockReturnValue(pendingPayment);
+
+      const { getByText, getByPlaceholderText } = render(<PurchaseFlow />);
+
+      // Complete to payment step
+      fireEvent.press(getByText('Standard Package'));
+      await waitFor(() => getByText('Student Information'));
+
+      fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
+      fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
+      fireEvent.press(getByText('Continue to Payment'));
+
+      await waitFor(() => getByText('Payment'));
+
+      // Initiate payment
+      fireEvent.press(getByText(/Pay €/));
+
+      // Verify processing state
+      expect(getByText('Processing...')).toBeTruthy();
+
+      // Simulate app going to background during processing
+      act(() => {
+        require('react-native').AppState.currentState = 'background';
+        require('react-native').AppState._eventHandlers.change?.forEach((handler: any) => 
+          handler('background')
+        );
+      });
+
+      // App returns to foreground
+      act(() => {
+        require('react-native').AppState.currentState = 'active';
+        require('react-native').AppState._eventHandlers.change?.forEach((handler: any) => 
+          handler('active')
+        );
+      });
+
+      // Complete payment
+      act(() => {
+        resolvePayment!(createMockStripeSuccess());
+      });
+
+      // Should show success despite backgrounding
+      await waitFor(() => {
+        expect(getByText('Purchase Successful!')).toBeTruthy();
+      });
+    });
+
+    it('handles browser refresh during payment step', async () => {
+      // Mock web environment
+      Object.defineProperty(window, 'location', {
+        value: { reload: jest.fn() },
+        writable: true,
+      });
+
+      const mockLocalStorage = {
+        getItem: jest.fn(),
+        setItem: jest.fn(),
+        removeItem: jest.fn(),
+      };
+      Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
+
+      const purchaseResponse = createMockPurchaseInitiationResponse();
+      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(purchaseResponse);
+
+      // Mock saved payment step state
+      mockLocalStorage.getItem.mockImplementation((key) => {
+        if (key === 'purchase_flow_state') {
+          return JSON.stringify({
+            step: 'payment',
+            formData: {
+              selectedPlan: mockPlans[1],
+              studentName: VALID_TEST_DATA.studentName,
+              studentEmail: VALID_TEST_DATA.studentEmail,
+            },
+            paymentIntentSecret: purchaseResponse.client_secret,
+            transactionId: purchaseResponse.transaction_id,
+          });
+        }
+        return null;
+      });
+
+      const { getByText, queryByText } = render(<PurchaseFlow />);
+
+      // Should restore to payment step
+      await waitFor(() => {
+        expect(getByText('Payment')).toBeTruthy();
+        expect(getByText('Step 3 of 4')).toBeTruthy();
+        expect(queryByText('Select Plan')).toBeNull();
+      });
+
+      // Should be able to complete payment
+      mockStripe.confirmPayment.mockResolvedValue(createMockStripeSuccess());
+      fireEvent.press(getByText(/Pay €/));
+
+      await waitFor(() => {
+        expect(getByText('Purchase Successful!')).toBeTruthy();
+      });
+
+      // Verify state was restored from localStorage
+      expect(mockLocalStorage.getItem).toHaveBeenCalledWith('purchase_flow_state');
+
+      // Clean up
+      delete (window as any).localStorage;
+      delete (window as any).location;
+    });
+
+    it('handles simultaneous tab purchases with state conflicts', async () => {
+      // Mock web environment with shared localStorage
+      const mockLocalStorage = {
+        getItem: jest.fn(),
+        setItem: jest.fn(),
+        removeItem: jest.fn(),
+      };
+      Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
+
+      const purchaseResponse1 = createMockPurchaseInitiationResponse({ transaction_id: 1 });
+      const purchaseResponse2 = createMockPurchaseInitiationResponse({ transaction_id: 2 });
+
+      // First tab's purchase
+      mockPurchaseApiClient.initiatePurchase.mockResolvedValueOnce(purchaseResponse1);
+      
+      const { getByText: getByText1, getByPlaceholderText: getByPlaceholderText1 } = render(
+        <PurchaseFlow />
+      );
+
+      // Start first purchase
+      fireEvent.press(getByText1('Standard Package'));
+      await waitFor(() => getByText1('Student Information'));
+
+      fireEvent.changeText(getByPlaceholderText1('Student name'), VALID_TEST_DATA.studentName);
+      fireEvent.changeText(getByPlaceholderText1('Student email'), VALID_TEST_DATA.studentEmail);
+      fireEvent.press(getByText1('Continue to Payment'));
+
+      await waitFor(() => getByText1('Payment'));
+
+      // Simulate state conflict from another tab
+      mockLocalStorage.getItem.mockReturnValue(JSON.stringify({
+        step: 'payment',
+        transactionId: purchaseResponse2.transaction_id, // Different transaction
+      }));
+
+      // Trigger storage event (simulating another tab)
+      act(() => {
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'purchase_flow_state',
+          newValue: JSON.stringify({
+            step: 'success',
+            transactionId: purchaseResponse2.transaction_id,
+          }),
+        }));
+      });
+
+      // Should detect conflict and prompt user
+      await waitFor(() => {
+        expect(getByText1('Multiple purchase sessions detected')).toBeTruthy();
+      });
+
+      // Clean up
+      delete (window as any).localStorage;
+    });
+
+    it('recovers from Stripe service interruptions', async () => {
+      const purchaseResponse = createMockPurchaseInitiationResponse();
+      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(purchaseResponse);
+
+      const { getByText, getByPlaceholderText, queryByText } = render(<PurchaseFlow />);
+
+      // Complete to payment step
+      fireEvent.press(getByText('Standard Package'));
+      await waitFor(() => getByText('Student Information'));
+
+      fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
+      fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
+      fireEvent.press(getByText('Continue to Payment'));
+
+      await waitFor(() => getByText('Payment'));
+
+      // Mock Stripe service unavailable
+      mockStripe.confirmPayment.mockRejectedValue(new Error('Service temporarily unavailable'));
+      fireEvent.press(getByText(/Pay €/));
+
+      await waitFor(() => {
+        expect(getByText('Purchase Failed')).toBeTruthy();
+        expect(getByText('Service temporarily unavailable')).toBeTruthy();
+      });
+
+      // Stripe recovers
+      mockStripe.confirmPayment.mockResolvedValue(createMockStripeSuccess());
+      fireEvent.press(getByText('Try Again'));
+
+      await waitFor(() => {
+        expect(getByText('Purchase Successful!')).toBeTruthy();
+      });
+    });
+
+    it('handles payment method expiry during checkout', async () => {
+      const purchaseResponse = createMockPurchaseInitiationResponse();
+      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(purchaseResponse);
+
+      // Mock expired payment method
+      const expiredPaymentMethods = [{
+        id: 'pm_expired_123',
+        type: 'card',
+        card: { 
+          brand: 'visa', 
+          last4: '4242', 
+          exp_month: 1, 
+          exp_year: 2020, // Expired
+          funding: 'credit' 
+        },
+        billing_details: { name: 'John Doe', email: 'john@example.com' },
+        is_default: true,
+        created_at: '2024-01-01T00:00:00Z',
+      }];
+      mockPaymentMethodApiClient.getPaymentMethods.mockResolvedValue(expiredPaymentMethods);
+
+      const { getByText, getByPlaceholderText } = render(<PurchaseFlow />);
+
+      // Complete to payment step
+      fireEvent.press(getByText('Standard Package'));
+      await waitFor(() => getByText('Student Information'));
+
+      fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
+      fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
+      fireEvent.press(getByText('Continue to Payment'));
+
+      await waitFor(() => getByText('Payment'));
+
+      // Attempt payment with expired card
+      mockStripe.confirmPayment.mockResolvedValue(createMockStripeError('Your card has expired.'));
+      fireEvent.press(getByText(/Pay €/));
+
+      await waitFor(() => {
+        expect(getByText('Purchase Failed')).toBeTruthy();
+        expect(getByText('Your card has expired.')).toBeTruthy();
+      });
+
+      // Should suggest updating payment method
+      expect(getByText('Update Payment Method')).toBeTruthy();
+    });
+
+    it('handles race conditions in rapid user interactions', async () => {
+      const { getByText, getByPlaceholderText } = render(<PurchaseFlow />);
+
+      // Rapid plan selection changes
+      fireEvent.press(getByText('Standard Package'));
+      fireEvent.press(getByText('Starter Package'));
+      fireEvent.press(getByText('Premium Package'));
+      
+      // Should settle on the last selection
+      await waitFor(() => {
+        expect(getByText('Student Information')).toBeTruthy();
+        // Should be Premium Package (last selected)
+      });
+
+      // Rapid form input changes
+      const nameInput = getByPlaceholderText('Student name');
+      const emailInput = getByPlaceholderText('Student email');
+
+      fireEvent.changeText(nameInput, 'John');
+      fireEvent.changeText(nameInput, 'John D');
+      fireEvent.changeText(nameInput, 'John Doe');
+      fireEvent.changeText(emailInput, 'john');
+      fireEvent.changeText(emailInput, 'john@example.com');
+
+      // Rapid submission attempts
+      const continueButton = getByText('Continue to Payment');
+      fireEvent.press(continueButton);
+      fireEvent.press(continueButton);
+      fireEvent.press(continueButton);
+
+      // Should only trigger one API call
+      await waitFor(() => {
+        expect(mockPurchaseApiClient.initiatePurchase).toHaveBeenCalledTimes(1);
       });
     });
   });
