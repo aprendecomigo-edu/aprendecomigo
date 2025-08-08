@@ -15,22 +15,30 @@ Object.defineProperty(global, '__RNTLHostComponentNames', {
 });
 
 // Enhanced NativeWind and CSS interop mocking  
-jest.mock('react-native-css-interop', () => ({
-  cssInterop: jest.fn((Component, config) => Component),
-  remapProps: jest.fn((Component, config) => Component),
-  useColorScheme: jest.fn(() => 'light'),
-  vars: jest.fn(() => ({})),
-  createContext: jest.fn(() => ({
-    Provider: ({ children }) => children,
-    Consumer: ({ children }) => children({}),
-  })),
-  createInteropElement: jest.fn((component, props, ...children) => {
-    // Simply return the component without transformation for testing
-    return component;
-  }),
-  interop: jest.fn((Component) => Component),
-  styled: jest.fn((Component) => Component),
-}));
+jest.mock('react-native-css-interop', () => {
+  const cssInteropMock = jest.fn((Component, config) => Component);
+  
+  return {
+    __esModule: true,
+    cssInterop: cssInteropMock,
+    remapProps: jest.fn((Component, config) => Component),
+    useColorScheme: jest.fn(() => 'light'),
+    vars: jest.fn(() => ({})),
+    createContext: jest.fn(() => ({
+      Provider: ({ children }) => children,
+      Consumer: ({ children }) => children({}),
+    })),
+    createInteropElement: jest.fn((component, props, ...children) => {
+      // Simply return the component without transformation for testing
+      return component;
+    }),
+    interop: jest.fn((Component) => Component),
+    styled: jest.fn((Component) => Component),
+    default: {
+      cssInterop: cssInteropMock,
+    }
+  };
+});
 
 jest.mock('react-native-css-interop/jsx-runtime', () => {
   // Import the default React jsx-runtime to use normal React behavior
@@ -38,19 +46,30 @@ jest.mock('react-native-css-interop/jsx-runtime', () => {
   return originalRuntime;
 });
 
-// Mock NativeWind core functionality
-jest.mock('nativewind', () => ({
-  cssInterop: jest.fn((Component, config) => Component),
-  styled: jest.fn(Component => Component),
-  useColorScheme: jest.fn(() => ({
-    colorScheme: 'light',
-    setColorScheme: jest.fn(),
-    toggleColorScheme: jest.fn(),
-  })),
-  vars: jest.fn(() => ({})),
-  rem: jest.fn(value => `${value}rem`),
-  hairlineWidth: jest.fn(() => 1),
-}));
+// Mock NativeWind core functionality with explicit __esModule
+jest.mock('nativewind', () => {
+  const cssInteropMock = jest.fn((Component, config) => {
+    // Return the component unchanged for tests
+    return Component;
+  });
+  
+  return {
+    __esModule: true,
+    cssInterop: cssInteropMock,
+    styled: jest.fn(Component => Component),
+    useColorScheme: jest.fn(() => ({
+      colorScheme: 'light',
+      setColorScheme: jest.fn(),
+      toggleColorScheme: jest.fn(),
+    })),
+    vars: jest.fn(() => ({})),
+    rem: jest.fn(value => `${value}rem`),
+    hairlineWidth: jest.fn(() => 1),
+    default: {
+      cssInterop: cssInteropMock,
+    }
+  };
+});
 
 // Mock Gluestack UI NativeWind utilities
 jest.mock('@gluestack-ui/nativewind-utils/tva', () => ({
@@ -827,12 +846,94 @@ console.error = (...args) => {
   const errorString = args[0];
   if (
     typeof errorString === 'string' &&
-    errorString.includes('Warning: ReactDOM.render is no longer supported')
+    (errorString.includes('Warning: ReactDOM.render is no longer supported') ||
+     errorString.includes('Warning: An update to') ||
+     errorString.includes('was not wrapped in act'))
   ) {
     return;
   }
   originalConsoleError.apply(console, args);
 };
+
+// Mock UI components that cause cssInterop issues
+jest.mock('@/components/ui/badge', () => {
+  const React = require('react');
+  return {
+    Badge: ({ children, variant, ...props }) => React.createElement('div', { ...props, className: `badge ${variant || ''}` }, children),
+    BadgeText: ({ children, ...props }) => React.createElement('span', { ...props, className: 'badge-text' }, children),
+    BadgeIcon: ({ as: IconComponent, ...props }) => React.createElement('span', { ...props, className: 'badge-icon' }),
+  };
+});
+
+jest.mock('@/components/ui/button', () => {
+  const React = require('react');
+  return {
+    Button: React.forwardRef(({ children, onPress, disabled, ...props }, ref) => 
+      React.createElement('button', { ...props, ref, onClick: onPress, disabled, className: 'button' }, children)
+    ),
+    ButtonText: ({ children, ...props }) => React.createElement('span', { ...props, className: 'button-text' }, children),
+    ButtonIcon: ({ as: IconComponent, ...props }) => React.createElement('span', { ...props, className: 'button-icon' }),
+    ButtonSpinner: () => React.createElement('span', { className: 'button-spinner' }, 'Loading...'),
+  };
+});
+
+jest.mock('@/components/ui/card', () => {
+  const React = require('react');
+  return {
+    Card: ({ children, ...props }) => React.createElement('div', { ...props, className: 'card' }, children),
+  };
+});
+
+jest.mock('@/components/ui/box', () => {
+  const React = require('react');
+  return {
+    Box: ({ children, ...props }) => React.createElement('div', { ...props, className: 'box' }, children),
+  };
+});
+
+jest.mock('@/components/ui/hstack', () => {
+  const React = require('react');
+  return {
+    HStack: ({ children, ...props }) => React.createElement('div', { ...props, className: 'hstack' }, children),
+  };
+});
+
+jest.mock('@/components/ui/select', () => {
+  const React = require('react');
+  return {
+    Select: ({ children, ...props }) => React.createElement('div', { ...props, className: 'select' }, children),
+    SelectTrigger: ({ children, ...props }) => React.createElement('button', { ...props, className: 'select-trigger' }, children),
+    SelectInput: ({ children, ...props }) => React.createElement('div', { ...props, className: 'select-input' }, children),
+    SelectPortal: ({ children, ...props }) => React.createElement('div', { ...props, className: 'select-portal' }, children),
+    SelectBackdrop: ({ children, ...props }) => React.createElement('div', { ...props, className: 'select-backdrop' }, children),
+    SelectContent: ({ children, ...props }) => React.createElement('div', { ...props, className: 'select-content' }, children),
+    SelectDragIndicatorWrapper: ({ children, ...props }) => React.createElement('div', { ...props, className: 'select-drag-indicator' }, children),
+    SelectDragIndicator: ({ children, ...props }) => React.createElement('div', { ...props, className: 'select-drag-indicator' }, children),
+    SelectItem: ({ children, value, ...props }) => React.createElement('option', { ...props, value, className: 'select-item' }, children),
+  };
+});
+
+jest.mock('@/components/ui/spinner', () => {
+  const React = require('react');
+  return {
+    Spinner: ({ ...props }) => React.createElement('div', { ...props, className: 'spinner' }, 'Loading...'),
+  };
+});
+
+jest.mock('@/components/ui/progress', () => {
+  const React = require('react');
+  return {
+    Progress: ({ children, value, ...props }) => React.createElement('div', { ...props, className: 'progress', 'data-value': value }, children),
+    ProgressFilledTrack: ({ ...props }) => React.createElement('div', { ...props, className: 'progress-filled' }),
+  };
+});
+
+jest.mock('@/components/ui/divider', () => {
+  const React = require('react');
+  return {
+    Divider: ({ ...props }) => React.createElement('hr', { ...props, className: 'divider' }),
+  };
+});
 
 // Mock all Gluestack UI components
 jest.mock('@/components/ui/form-control', () => {
@@ -921,6 +1022,15 @@ jest.mock('@/components/ui/toast', () => ({
     return React.createElement('div', { className: 'toast-provider' }, children);
   },
 }));
+
+jest.mock('@/components/ui/alert', () => {
+  const React = require('react');
+  return {
+    Alert: ({ children, ...props }) => React.createElement('div', { ...props, className: 'alert' }, children),
+    AlertIcon: ({ as: IconComponent, ...props }) => React.createElement('div', { ...props, className: 'alert-icon' }),
+    AlertText: ({ children, ...props }) => React.createElement('div', { ...props, className: 'alert-text' }, children),
+  };
+});
 
 // Mock AuthLayout
 jest.mock('@/components/auth/AuthLayout', () => {

@@ -55,12 +55,19 @@ export function usePaymentMethods(email?: string): UsePaymentMethodsResult {
 
   // Refresh payment methods data
   const refreshPaymentMethods = useCallback(async () => {
+    if (!email) {
+      setLoading(false);
+      setPaymentMethods([]);
+      setError(null);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       const methodsData = await PaymentMethodApiClient.getPaymentMethods(email);
-      setPaymentMethods(methodsData);
+      setPaymentMethods(Array.isArray(methodsData) ? methodsData : []);
     } catch (error: any) {
       console.error('Error fetching payment methods:', error);
       setError(error.message || 'Failed to load payment methods');
@@ -97,11 +104,23 @@ export function usePaymentMethods(email?: string): UsePaymentMethodsResult {
   // Remove payment method
   const removePaymentMethod = useCallback(
     async (paymentMethodId: string): Promise<void> => {
+      if (!email) {
+        setOperationError('Email is required');
+        return;
+      }
+
       setRemoving(true);
       setOperationError(null);
 
       try {
-        await PaymentMethodApiClient.removePaymentMethod(paymentMethodId, email);
+        const result = await PaymentMethodApiClient.removePaymentMethod(paymentMethodId, email);
+        
+        // Handle API responses that return success/failure objects
+        if (result && typeof result === 'object' && 'success' in result && !result.success) {
+          const errorMessage = (result as any).message || 'Failed to remove payment method';
+          setOperationError(errorMessage);
+          throw new Error(errorMessage);
+        }
 
         // Refresh payment methods to get the updated list
         await refreshPaymentMethods();
@@ -119,11 +138,23 @@ export function usePaymentMethods(email?: string): UsePaymentMethodsResult {
   // Set default payment method
   const setDefaultPaymentMethod = useCallback(
     async (paymentMethodId: string): Promise<void> => {
+      if (!email) {
+        setOperationError('Email is required');
+        return;
+      }
+
       setSettingDefault(true);
       setOperationError(null);
 
       try {
-        await PaymentMethodApiClient.setDefaultPaymentMethod(paymentMethodId, email);
+        const result = await PaymentMethodApiClient.setDefaultPaymentMethod(paymentMethodId, email);
+        
+        // Handle API responses that return success/failure objects
+        if (result && typeof result === 'object' && 'success' in result && !result.success) {
+          const errorMessage = (result as any).message || 'Failed to set default payment method';
+          setOperationError(errorMessage);
+          throw new Error(errorMessage);
+        }
 
         // Refresh payment methods to get the updated default status
         await refreshPaymentMethods();
