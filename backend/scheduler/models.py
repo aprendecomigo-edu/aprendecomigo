@@ -4,7 +4,7 @@ from typing import ClassVar
 
 from accounts.models import CustomUser, School, SchoolMembership, TeacherProfile
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -239,6 +239,16 @@ class ClassSchedule(models.Model):
         help_text=_("Additional structured metadata for the class")
     )
 
+    # Link to recurring schedule template if generated from one
+    recurring_schedule = models.ForeignKey(
+        'RecurringClassSchedule',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="generated_instances",
+        help_text=_("Recurring schedule that generated this instance")
+    )
+
     # Notes
     teacher_notes = models.TextField(_("teacher notes"), blank=True)
     student_notes = models.TextField(_("student notes"), blank=True)
@@ -467,6 +477,81 @@ class ClassSchedule(models.Model):
         
         if errors:
             raise ValidationError(errors)
+    
+    def save(self, *args, **kwargs):
+        """Override save to emit signals on status changes"""
+        # Track status changes for signal emission
+        old_status = None
+        emit_signal = False
+        
+        if self.pk:
+            # Get old status if this is an update
+            try:
+                old_instance = ClassSchedule.objects.get(pk=self.pk)
+                old_status = old_instance.status
+                # Check if status has changed
+                if old_status != self.status:
+                    emit_signal = True
+            except ClassSchedule.DoesNotExist:
+                # New instance, no signal needed for creation
+                pass
+        
+        # Call parent save
+        super().save(*args, **kwargs)
+        
+        # Emit signal if status changed
+        if emit_signal:
+            from .signals import class_status_changed
+            # Get the user who made the change (from context if available)
+            changed_by = getattr(self, '_changed_by_user', None)
+            class_status_changed.send(
+                sender=self.__class__,
+                instance=self,
+                old_status=old_status,
+                new_status=self.status,
+                changed_by=changed_by
+            )
+
+
+class FrequencyType(models.TextChoices):
+    """Frequency types for recurring classes"""
+    WEEKLY = "WEEKLY", _("Weekly")
+    BIWEEKLY = "BIWEEKLY", _("Biweekly")  
+    MONTHLY = "MONTHLY", _("Monthly")
+
+
+class RecurringClassStatus(models.TextChoices):
+    """Status types for recurring class series"""
+    ACTIVE = "ACTIVE", _("Active")
+    PAUSED = "PAUSED", _("Paused")
+    CANCELLED = "CANCELLED", _("Cancelled")
+
+
+class ReminderType(models.TextChoices):
+    """Types of reminders that can be sent"""
+    CONFIRMATION = "confirmation", _("Confirmation")
+    REMINDER_24H = "reminder_24h", _("24 Hours Before")
+    REMINDER_1H = "reminder_1h", _("1 Hour Before")
+    REMINDER_15MIN = "reminder_15min", _("15 Minutes Before")
+    CANCELLATION = "cancellation", _("Cancellation")
+    CHANGE = "change", _("Schedule Change")
+    CUSTOM = "custom", _("Custom")
+
+
+class CommunicationChannel(models.TextChoices):
+    """Communication channels for sending reminders"""
+    EMAIL = "email", _("Email")
+    SMS = "sms", _("SMS")
+    PUSH = "push", _("Push Notification")
+    IN_APP = "in_app", _("In-App Notification")
+
+
+class ReminderStatus(models.TextChoices):
+    """Status of reminder delivery"""
+    PENDING = "pending", _("Pending")
+    SENT = "sent", _("Sent")
+    FAILED = "failed", _("Failed")
+    CANCELLED = "cancelled", _("Cancelled")
 
 
 class RecurringClassSchedule(models.Model):
@@ -478,14 +563,40 @@ class RecurringClassSchedule(models.Model):
     teacher = models.ForeignKey(
         TeacherProfile, on_delete=models.CASCADE, related_name="recurring_schedules"
     )
-    student = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name="recurring_schedules"
+    students = models.ManyToManyField(
+        CustomUser, 
+        related_name="recurring_schedules",
+        help_text=_("Students participating in this recurring class")
     )
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="recurring_schedules")
     title = models.CharField(_("title"), max_length=255)
     description = models.TextField(_("description"), blank=True)
     class_type = models.CharField(
         _("class type"), max_length=20, choices=ClassType.choices, default=ClassType.INDIVIDUAL
+    )
+
+    # Enhanced frequency options
+    frequency_type = models.CharField(
+        _("frequency type"), 
+        max_length=10, 
+        choices=FrequencyType.choices, 
+        default=FrequencyType.WEEKLY
+    )
+    
+    # Enhanced status management
+    status = models.CharField(
+        _("status"), 
+        max_length=10, 
+        choices=RecurringClassStatus.choices, 
+        default=RecurringClassStatus.ACTIVE
+    )
+
+    # Group class capacity
+    max_participants = models.PositiveIntegerField(
+        _("maximum participants"), 
+        null=True, 
+        blank=True,
+        help_text=_("Maximum number of participants for group classes")
     )
 
     # Recurrence pattern
@@ -498,19 +609,47 @@ class RecurringClassSchedule(models.Model):
     start_date = models.DateField(_("start date"))
     end_date = models.DateField(_("end date"), null=True, blank=True)
 
-    # Status
+    # Legacy compatibility - keep for backward compatibility
     is_active = models.BooleanField(_("is active"), default=True)
+    
+    # Creation and modification tracking
     created_by = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name="created_recurring_schedules"
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Status change tracking
+    cancelled_at = models.DateTimeField(_("cancelled at"), null=True, blank=True)
+    cancelled_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cancelled_recurring_schedules",
+        help_text=_("User who cancelled this recurring series")
+    )
+    paused_at = models.DateTimeField(_("paused at"), null=True, blank=True)
+    paused_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="paused_recurring_schedules",
+        help_text=_("User who paused this recurring series")
+    )
 
     class Meta:
         ordering: ClassVar = ["day_of_week", "start_time"]
+        indexes: ClassVar = [
+            models.Index(fields=["teacher", "status", "start_date"]),
+            models.Index(fields=["school", "status"]),
+            models.Index(fields=["frequency_type", "status"]),
+        ]
 
     def __str__(self):
-        return f"{self.title} - {self.get_day_of_week_display()} {self.start_time}"
+        frequency_display = self.get_frequency_type_display()
+        return f"{self.title} - {frequency_display} {self.get_day_of_week_display()} {self.start_time}"
 
     def clean(self):
         """Validate recurring schedule"""
@@ -519,12 +658,43 @@ class RecurringClassSchedule(models.Model):
 
         if self.end_date and self.end_date <= self.start_date:
             raise ValidationError({"end_date": _("End date must be after start date.")})
+            
+        # Validate max_participants for group classes
+        if self.class_type == ClassType.GROUP:
+            if self.max_participants is None or self.max_participants <= 0:
+                raise ValidationError({"max_participants": _("Max participants is required for group classes.")})
+        elif self.class_type == ClassType.INDIVIDUAL:
+            # Individual classes should not have max_participants set or only 1 student
+            if self.pk and self.students.count() > 1:
+                raise ValidationError({"students": _("Individual classes can only have one student.")})
 
-    def generate_class_schedules(self, weeks_ahead=4):
+    def get_student_count(self):
+        """Get the total number of students in this recurring class"""
+        return self.students.count()
+
+    def add_student(self, user):
+        """Add a student to this recurring class if capacity allows"""
+        if self.class_type == ClassType.INDIVIDUAL and self.students.count() >= 1:
+            raise ValidationError("Individual classes can only have one student.")
+        
+        if self.max_participants and self.get_student_count() >= self.max_participants:
+            raise ValidationError("Class has reached maximum capacity.")
+        
+        # Check if user is a school member
+        if not user.school_memberships.filter(school=self.school, is_active=True).exists():
+            raise ValidationError("Student must be a member of the school.")
+        
+        self.students.add(user)
+
+    def remove_student(self, user):
+        """Remove a student from this recurring class"""
+        self.students.remove(user)
+
+    def generate_instances(self, weeks_ahead=4):
         """Generate individual ClassSchedule instances for this recurring schedule"""
         from datetime import timedelta
 
-        if not self.is_active:
+        if self.status != RecurringClassStatus.ACTIVE:
             return []
 
         # Find the first occurrence
@@ -543,34 +713,568 @@ class RecurringClassSchedule(models.Model):
             end_generation_date = min(end_generation_date, self.end_date)
 
         created_schedules = []
-        while current_date <= end_generation_date:
-            # Check if a schedule already exists for this date
-            existing_schedule = ClassSchedule.objects.filter(
-                teacher=self.teacher,
-                student=self.student,
-                school=self.school,
-                scheduled_date=current_date,
-                start_time=self.start_time,
-            ).first()
+        interval_weeks = 1 if self.frequency_type == FrequencyType.WEEKLY else (
+            2 if self.frequency_type == FrequencyType.BIWEEKLY else 4
+        )
 
-            if not existing_schedule:
-                schedule = ClassSchedule.objects.create(
+        while current_date <= end_generation_date:
+            # Skip if there are conflicts
+            if not self._has_conflict_on_date(current_date):
+                # Check if a schedule already exists for this date
+                existing_schedule = ClassSchedule.objects.filter(
                     teacher=self.teacher,
-                    student=self.student,
                     school=self.school,
-                    title=self.title,
-                    description=self.description,
-                    class_type=self.class_type,
                     scheduled_date=current_date,
                     start_time=self.start_time,
-                    end_time=self.end_time,
-                    duration_minutes=self.duration_minutes,
-                    booked_by=self.created_by,
-                    status=ClassStatus.SCHEDULED,
-                )
-                created_schedules.append(schedule)
+                    recurring_schedule=self,
+                ).first()
 
-            # Move to next week
-            current_date += timedelta(weeks=1)
+                if not existing_schedule:
+                    # Create instance for each student
+                    for student in self.students.all():
+                        schedule = ClassSchedule.objects.create(
+                            teacher=self.teacher,
+                            student=student,
+                            school=self.school,
+                            title=self.title,
+                            description=self.description,
+                            class_type=self.class_type,
+                            scheduled_date=current_date,
+                            start_time=self.start_time,
+                            end_time=self.end_time,
+                            duration_minutes=self.duration_minutes,
+                            booked_by=self.created_by,
+                            status=ClassStatus.SCHEDULED,
+                            recurring_schedule=self,
+                            max_participants=self.max_participants,
+                        )
+                        # Add additional students for group classes
+                        if self.class_type == ClassType.GROUP:
+                            other_students = self.students.exclude(id=student.id)
+                            schedule.additional_students.set(other_students)
+                        
+                        created_schedules.append(schedule)
+                        break  # Only create one schedule per recurring class
+
+            # Move to next occurrence based on frequency
+            current_date += timedelta(weeks=interval_weeks)
 
         return created_schedules
+
+    def _has_conflict_on_date(self, target_date):
+        """Check if there are conflicts on a specific date"""
+        from datetime import datetime
+        
+        # Check for teacher unavailability
+        unavailabilities = TeacherUnavailability.objects.filter(
+            teacher=self.teacher,
+            school=self.school,
+            date=target_date,
+        )
+        
+        for unavailability in unavailabilities:
+            if unavailability.is_all_day:
+                return True
+            if (unavailability.start_time and unavailability.end_time and
+                not (self.end_time <= unavailability.start_time or 
+                     self.start_time >= unavailability.end_time)):
+                return True
+        
+        return False
+
+    def detect_schedule_conflicts(self, weeks_ahead=4):
+        """Detect conflicts in the schedule for upcoming weeks"""
+        from datetime import timedelta
+        
+        conflicts = []
+        current_date = self.start_date
+        target_weekday = list(WeekDay.values).index(self.day_of_week)
+
+        # Move to the first occurrence
+        days_ahead = target_weekday - current_date.weekday()
+        if days_ahead < 0:
+            days_ahead += 7
+        current_date += timedelta(days=days_ahead)
+
+        end_date = timezone.now().date() + timedelta(weeks=weeks_ahead)
+        if self.end_date:
+            end_date = min(end_date, self.end_date)
+
+        interval_weeks = 1 if self.frequency_type == FrequencyType.WEEKLY else (
+            2 if self.frequency_type == FrequencyType.BIWEEKLY else 4
+        )
+
+        while current_date <= end_date:
+            # Check teacher unavailability
+            unavailabilities = TeacherUnavailability.objects.filter(
+                teacher=self.teacher,
+                school=self.school,
+                date=current_date,
+            )
+            
+            for unavailability in unavailabilities:
+                if unavailability.is_all_day or (
+                    unavailability.start_time and unavailability.end_time and
+                    not (self.end_time <= unavailability.start_time or 
+                         self.start_time >= unavailability.end_time)
+                ):
+                    conflicts.append({
+                        'type': 'teacher_unavailability',
+                        'date': current_date,
+                        'details': unavailability,
+                    })
+
+            # Check existing class conflicts
+            existing_classes = ClassSchedule.objects.filter(
+                teacher=self.teacher,
+                school=self.school,
+                scheduled_date=current_date,
+            ).exclude(recurring_schedule=self)
+            
+            for existing_class in existing_classes:
+                if not (self.end_time <= existing_class.start_time or 
+                        self.start_time >= existing_class.end_time):
+                    conflicts.append({
+                        'type': 'existing_class',
+                        'date': current_date,
+                        'conflicting_class_id': existing_class.id,
+                        'details': existing_class,
+                    })
+
+            current_date += timedelta(weeks=interval_weeks)
+
+        return conflicts
+
+    def pause_series(self, reason="", paused_by=None):
+        """Pause the recurring series"""
+        if self.status == RecurringClassStatus.PAUSED:
+            return {'success': False, 'error': 'Series is already paused'}
+        
+        self.status = RecurringClassStatus.PAUSED
+        self.paused_at = timezone.now()
+        self.paused_by = paused_by
+        self.is_active = False
+        self.save()
+        
+        return {'success': True}
+
+    def resume_series(self, resumed_by=None):
+        """Resume the paused recurring series"""
+        if self.status != RecurringClassStatus.PAUSED:
+            return {'success': False, 'error': 'Series is not paused'}
+        
+        self.status = RecurringClassStatus.ACTIVE
+        self.paused_at = None
+        self.paused_by = None
+        self.is_active = True
+        self.save()
+        
+        return {'success': True}
+
+    def cancel_series(self, reason="", cancelled_by=None):
+        """Cancel the recurring series (soft delete)"""
+        self.status = RecurringClassStatus.CANCELLED
+        self.cancelled_at = timezone.now()
+        self.cancelled_by = cancelled_by
+        self.is_active = False
+        self.save()
+        
+        # Cancel all future instances
+        future_instances = self.generated_instances.filter(
+            status=ClassStatus.SCHEDULED,
+            scheduled_date__gte=timezone.now().date()
+        )
+        future_instances.update(
+            status=ClassStatus.CANCELLED,
+            cancelled_at=timezone.now(),
+            cancelled_by=cancelled_by,
+            cancellation_reason=f"Recurring series cancelled: {reason}"
+        )
+        
+        return {'success': True}
+
+    def cancel_occurrence(self, date, reason="", cancelled_by=None):
+        """Cancel a specific occurrence of the recurring class"""
+        # Check if the date matches the recurring pattern
+        target_weekday = list(WeekDay.values).index(self.day_of_week)
+        if date.weekday() != target_weekday:
+            raise ValidationError("Date does not match recurring pattern")
+        
+        # Find or create the specific instance
+        instance = self.generated_instances.filter(scheduled_date=date).first()
+        if instance:
+            instance.status = ClassStatus.CANCELLED
+            instance.cancelled_at = timezone.now()
+            instance.cancelled_by = cancelled_by
+            instance.cancellation_reason = reason
+            instance.save()
+        
+        return {'cancelled_date': date, 'reason': reason}
+
+    def get_cancelled_occurrences(self):
+        """Get list of cancelled occurrence dates"""
+        return list(
+            self.generated_instances.filter(status=ClassStatus.CANCELLED)
+            .values_list('scheduled_date', flat=True)
+        )
+
+    def get_future_instances(self):
+        """Get all future instances of this recurring class"""
+        return self.generated_instances.filter(
+            scheduled_date__gte=timezone.now().date()
+        )
+
+    # Legacy method for backward compatibility
+    def generate_class_schedules(self, weeks_ahead=4):
+        """Legacy method - calls generate_instances"""
+        return self.generate_instances(weeks_ahead)
+
+
+class ReminderPreference(models.Model):
+    """
+    User preferences for class reminders.
+    """
+    
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="reminder_preferences"
+    )
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="reminder_preferences",
+        null=True,
+        blank=True,
+        help_text=_("School-specific preferences (null for global preferences)")
+    )
+    
+    # Timing preferences (hours before class)
+    reminder_timing_hours = models.JSONField(
+        _("reminder timing hours"),
+        default=list,  # Default: empty list, will be handled by business logic
+        help_text=_("List of hours before class to send reminders (e.g., [24, 2, 0.5])")
+    )
+    
+    # Communication channels
+    communication_channels = models.JSONField(
+        _("communication channels"),
+        default=list,  # Default: empty list, will be handled by business logic
+        help_text=_("List of preferred communication channels")
+    )
+    
+    # Timezone preference (overrides school timezone)
+    timezone_preference = models.CharField(
+        _("timezone preference"),
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text=_("User's preferred timezone (e.g., 'America/New_York')")
+    )
+    
+    # Active status
+    is_active = models.BooleanField(
+        _("is active"),
+        default=True,
+        help_text=_("Whether reminders are enabled for this user")
+    )
+    
+    # School default indicator
+    is_school_default = models.BooleanField(
+        _("is school default"),
+        default=False,
+        help_text=_("Whether this is the default preference template for the school")
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ["user", "school"]
+        ordering = ["user", "school"]
+        indexes = [
+            models.Index(fields=["user", "is_active"]),
+            models.Index(fields=["school", "is_school_default"]),
+        ]
+    
+    def __str__(self):
+        school_name = self.school.name if self.school else "Global"
+        return f"{self.user.name} - {school_name} Preferences"
+    
+    def clean(self):
+        """Validate reminder preferences"""
+        errors = {}
+        
+        # Validate timing hours
+        if self.reminder_timing_hours:
+            if not isinstance(self.reminder_timing_hours, list):
+                errors["reminder_timing_hours"] = _("Must be a list of numbers")
+            else:
+                for hour in self.reminder_timing_hours:
+                    if not isinstance(hour, (int, float)) or hour < 0 or hour > 168:  # Max 1 week
+                        errors["reminder_timing_hours"] = _("Hours must be numbers between 0 and 168")
+                        break
+        
+        # Validate communication channels
+        if self.communication_channels:
+            if not isinstance(self.communication_channels, list):
+                errors["communication_channels"] = _("Must be a list of channel names")
+            else:
+                valid_channels = [choice[0] for choice in CommunicationChannel.choices]
+                for channel in self.communication_channels:
+                    if channel not in valid_channels:
+                        errors["communication_channels"] = _("Invalid channel. Must be one of: {}".format(valid_channels))
+                        break
+        
+        # Validate timezone
+        if self.timezone_preference:
+            try:
+                import pytz
+                pytz.timezone(self.timezone_preference)
+            except pytz.UnknownTimeZoneError:
+                errors["timezone_preference"] = _("Invalid timezone")
+        
+        if errors:
+            raise ValidationError(errors)
+    
+    @classmethod
+    def get_for_user(cls, user, school=None):
+        """Get preferences for a user, with fallback to defaults"""
+        try:
+            # Try school-specific preferences first
+            if school:
+                return cls.objects.get(user=user, school=school, is_active=True)
+            # Then try global preferences
+            return cls.objects.get(user=user, school=None, is_active=True)
+        except cls.DoesNotExist:
+            # Return default preferences
+            return cls.get_default_preferences(user, school)
+    
+    @classmethod
+    def get_default_preferences(cls, user, school=None):
+        """Get default preferences for a user"""
+        # Try school default first
+        if school:
+            try:
+                school_default = cls.objects.get(school=school, is_school_default=True)
+                return cls(
+                    user=user,
+                    school=school,
+                    reminder_timing_hours=school_default.reminder_timing_hours,
+                    communication_channels=school_default.communication_channels,
+                    timezone_preference=school_default.timezone_preference,
+                    is_active=True
+                )
+            except cls.DoesNotExist:
+                pass
+        
+        # Return system defaults
+        return cls(
+            user=user,
+            school=school,
+            reminder_timing_hours=[24, 1],  # 24h and 1h before
+            communication_channels=["email"],  # Use string value instead of enum
+            timezone_preference=None,
+            is_active=True
+        )
+
+
+class ClassReminder(models.Model):
+    """
+    Individual reminder instances for class schedules.
+    """
+    
+    class_schedule = models.ForeignKey(
+        ClassSchedule,
+        on_delete=models.CASCADE,
+        related_name="reminders"
+    )
+    
+    reminder_type = models.CharField(
+        _("reminder type"),
+        max_length=20,
+        choices=ReminderType.choices
+    )
+    
+    recipient = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="received_reminders",
+        help_text=_("User who will receive this reminder")
+    )
+    
+    recipient_type = models.CharField(
+        _("recipient type"),
+        max_length=20,
+        choices=[
+            ("teacher", _("Teacher")),
+            ("student", _("Student")),
+            ("parent", _("Parent")),
+            ("admin", _("Admin")),
+        ],
+        help_text=_("Role of the recipient in the class context")
+    )
+    
+    communication_channel = models.CharField(
+        _("communication channel"),
+        max_length=20,
+        choices=CommunicationChannel.choices,
+        help_text=_("Channel used to send this reminder")
+    )
+    
+    status = models.CharField(
+        _("status"),
+        max_length=20,
+        choices=ReminderStatus.choices,
+        default=ReminderStatus.PENDING
+    )
+    
+    # Timing
+    scheduled_for = models.DateTimeField(
+        _("scheduled for"),
+        help_text=_("When this reminder should be sent (UTC)")
+    )
+    
+    sent_at = models.DateTimeField(
+        _("sent at"),
+        null=True,
+        blank=True,
+        help_text=_("When this reminder was actually sent")
+    )
+    
+    # Message content
+    subject = models.CharField(
+        _("subject"),
+        max_length=255,
+        blank=True,
+        help_text=_("Email subject or notification title")
+    )
+    
+    message = models.TextField(
+        _("message"),
+        blank=True,
+        help_text=_("Reminder message content")
+    )
+    
+    # Error handling
+    error_message = models.TextField(
+        _("error message"),
+        blank=True,
+        help_text=_("Error message if sending failed")
+    )
+    
+    retry_count = models.PositiveIntegerField(
+        _("retry count"),
+        default=0,
+        help_text=_("Number of times sending was retried")
+    )
+    
+    max_retries = models.PositiveIntegerField(
+        _("max retries"),
+        default=3,
+        help_text=_("Maximum number of retry attempts")
+    )
+    
+    # External integration
+    external_message_id = models.CharField(
+        _("external message ID"),
+        max_length=255,
+        blank=True,
+        help_text=_("ID from external communication service")
+    )
+    
+    # Metadata
+    metadata = models.JSONField(
+        _("metadata"),
+        default=dict,
+        blank=True,
+        help_text=_("Additional data for the reminder")
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ["scheduled_for", "created_at"]
+        indexes = [
+            models.Index(fields=["class_schedule", "reminder_type"]),
+            models.Index(fields=["recipient", "status"]),
+            models.Index(fields=["status", "scheduled_for"]),
+            models.Index(fields=["communication_channel", "status"]),
+            models.Index(fields=["scheduled_for", "status"]),  # Performance index for queries
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["class_schedule", "reminder_type", "recipient", "communication_channel"],
+                name="unique_reminder_per_recipient_channel",
+                condition=models.Q(status__in=[ReminderStatus.PENDING, ReminderStatus.SENT])
+            ),
+        ]
+    
+    def __str__(self):
+        return f"{self.get_reminder_type_display()} - {self.recipient.name} ({self.class_schedule.title})"
+    
+    def clean(self):
+        """Validate reminder data"""
+        errors = {}
+        
+        # Validate scheduled_for is in the future (when creating)
+        if not self.pk and self.scheduled_for and self.scheduled_for <= timezone.now():
+            errors["scheduled_for"] = _("Scheduled time must be in the future")
+        
+        # Validate retry count doesn't exceed max
+        if self.retry_count > self.max_retries:
+            errors["retry_count"] = _("Retry count cannot exceed max retries")
+        
+        if errors:
+            raise ValidationError(errors)
+    
+    def can_retry(self):
+        """Check if this reminder can be retried"""
+        return (
+            self.status == ReminderStatus.FAILED and
+            self.retry_count < self.max_retries
+        )
+    
+    @transaction.atomic
+    def mark_sent(self, external_message_id=None):
+        """Mark reminder as sent"""
+        self.status = ReminderStatus.SENT
+        self.sent_at = timezone.now()
+        if external_message_id:
+            self.external_message_id = external_message_id
+        self.save(update_fields=['status', 'sent_at', 'external_message_id'])
+    
+    @transaction.atomic
+    def mark_failed(self, error_message=None, increment_retry=True):
+        """Mark reminder as failed"""
+        self.status = ReminderStatus.FAILED
+        if error_message:
+            self.error_message = error_message
+        if increment_retry:
+            self.retry_count += 1
+        self.save(update_fields=['status', 'error_message', 'retry_count'])
+    
+    @transaction.atomic
+    def mark_cancelled(self, reason=None):
+        """Mark reminder as cancelled"""
+        self.status = ReminderStatus.CANCELLED
+        if reason and self.metadata:
+            self.metadata['cancellation_reason'] = reason
+        elif reason:
+            self.metadata = {'cancellation_reason': reason}
+        self.save(update_fields=['status', 'metadata'])
+    
+    @property
+    def is_overdue(self):
+        """Check if reminder is overdue for sending"""
+        if self.status != ReminderStatus.PENDING:
+            return False
+        return timezone.now() > self.scheduled_for + timedelta(minutes=30)  # 30min grace period
+    
+    @property
+    def time_until_send(self):
+        """Get time until reminder should be sent"""
+        if self.status != ReminderStatus.PENDING:
+            return None
+        return self.scheduled_for - timezone.now()

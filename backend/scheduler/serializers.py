@@ -1,6 +1,6 @@
 from typing import ClassVar
 
-from accounts.models import CustomUser, TeacherProfile
+from accounts.models import CustomUser, TeacherProfile, School
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework import serializers
@@ -12,6 +12,11 @@ from .models import (
     RecurringClassSchedule,
     TeacherAvailability,
     TeacherUnavailability,
+    ClassReminder,
+    ReminderPreference,
+    ReminderType,
+    CommunicationChannel,
+    ReminderStatus,
 )
 
 
@@ -205,6 +210,13 @@ class ClassScheduleSerializer(serializers.ModelSerializer):
     # Timezone-aware datetime fields
     scheduled_datetime_utc = serializers.SerializerMethodField()
     scheduled_datetime_local = serializers.SerializerMethodField()
+    
+    # Completion and no-show metadata
+    completed_by_name = serializers.CharField(source="completed_by.name", read_only=True)
+    no_show_by_name = serializers.CharField(source="no_show_by.name", read_only=True)
+    
+    # Status history
+    status_history = serializers.SerializerMethodField()
 
     class Meta:
         model = ClassSchedule
@@ -233,6 +245,14 @@ class ClassScheduleSerializer(serializers.ModelSerializer):
             "cancelled_at",
             "cancellation_reason",
             "completed_at",
+            "completed_by",
+            "completed_by_name",
+            "actual_duration_minutes",
+            "completion_notes",
+            "no_show_at",
+            "no_show_by",
+            "no_show_by_name",
+            "no_show_reason",
             "teacher_notes",
             "student_notes",
             "can_be_cancelled",
@@ -248,12 +268,21 @@ class ClassScheduleSerializer(serializers.ModelSerializer):
             "is_full",
             "scheduled_datetime_utc",
             "scheduled_datetime_local",
+            "status_history",
         ]
         read_only_fields: ClassVar = [
             "booked_by",
             "booked_at",
             "cancelled_at",
             "completed_at",
+            "completed_by",
+            "completed_by_name",
+            "actual_duration_minutes",
+            "completion_notes",
+            "no_show_at",
+            "no_show_by",
+            "no_show_by_name",
+            "no_show_reason",
             "created_at",
             "updated_at",
             "can_be_cancelled",
@@ -264,6 +293,7 @@ class ClassScheduleSerializer(serializers.ModelSerializer):
             "is_full",
             "scheduled_datetime_utc", 
             "scheduled_datetime_local",
+            "status_history",
         ]
 
     def get_additional_students_names(self, obj):
@@ -303,22 +333,42 @@ class ClassScheduleSerializer(serializers.ModelSerializer):
             return local_dt.strftime('%Y-%m-%dT%H:%M:%S%z')
         except Exception:
             return None
+    
+    def get_status_history(self, obj):
+        """Return status change history for the class"""
+        from .services import ClassStatusHistoryService
+        
+        history_service = ClassStatusHistoryService()
+        history = history_service.get_status_history(obj)
+        
+        # Format timestamps for JSON serialization
+        for entry in history:
+            if entry.get('timestamp'):
+                entry['timestamp'] = entry['timestamp'].isoformat()
+        
+        return history
 
 
 class CreateClassScheduleSerializer(serializers.ModelSerializer):
     """Serializer for creating class schedules with validation"""
+    
+    # Support both API parameter names for backward compatibility
+    teacher_id = serializers.IntegerField(source='teacher', write_only=True, required=False)
+    date = serializers.DateField(source='scheduled_date', write_only=True, required=False)
 
     class Meta:
         model = ClassSchedule
         fields: ClassVar = [
             "id",
             "teacher",
+            "teacher_id",
             "student",
             "school",
             "title",
             "description",
             "class_type",
             "scheduled_date",
+            "date",
             "start_time",
             "end_time",
             "duration_minutes",
@@ -331,117 +381,131 @@ class CreateClassScheduleSerializer(serializers.ModelSerializer):
         read_only_fields: ClassVar = ["id"]
 
     def validate(self, data):
-        """Validate class schedule data"""
-        # Check that scheduled_date is not in the past
-        if data["scheduled_date"] < timezone.now().date():
-            raise serializers.ValidationError("Cannot schedule classes in the past.")
-
-        # Check that start_time is before end_time
-        if data["start_time"] >= data["end_time"]:
-            raise serializers.ValidationError("End time must be after start time.")
-
-        # Validate max_participants for group classes
-        class_type = data.get("class_type")
-        max_participants = data.get("max_participants")
-        additional_students = data.get("additional_students", [])
+        """Validate class schedule data using BookingOrchestratorService"""
+        from datetime import datetime, time as time_class, timedelta
+        from .services import BookingOrchestratorService
         
-        if class_type == ClassType.GROUP:
-            if not max_participants:
-                raise serializers.ValidationError("Max participants is required for group classes.")
-            
-            # Check if total participants exceed max_participants
-            total_participants = 1 + len(additional_students)  # main student + additional
-            if total_participants > max_participants:
-                raise serializers.ValidationError({
-                    "max_participants": f"Total participants ({total_participants}) exceeds max participants limit ({max_participants})."
-                })
-        elif class_type == ClassType.INDIVIDUAL and max_participants:
-            raise serializers.ValidationError("Individual classes should not have max_participants set.")
-
-        # Check for teacher availability
-        teacher = data["teacher"]
-        school = data["school"]
-        date = data["scheduled_date"]
-        start_time = data["start_time"]
-        end_time = data["end_time"]
-
-        # Check if teacher is available on this day of the week
-        day_of_week = date.strftime("%A").lower()
-        availability = TeacherAvailability.objects.filter(
-            teacher=teacher, school=school, day_of_week=day_of_week, is_active=True
-        ).first()
-
-        if not availability:
-            raise serializers.ValidationError(f"Teacher is not available on {day_of_week}s")
-
-        # Check if the time fits within available hours
-        if start_time < availability.start_time or end_time > availability.end_time:
-            raise serializers.ValidationError(
-                f"Class time must be within teacher's available hours "
-                f"({availability.start_time} - {availability.end_time})"
-            )
-
-        # Check for teacher unavailability
-        unavailability = TeacherUnavailability.objects.filter(
-            teacher=teacher, school=school, date=date
-        ).first()
-
-        if unavailability:
-            if unavailability.is_all_day:
-                raise serializers.ValidationError(f"Teacher is unavailable on {date}")
-            elif (
-                unavailability.start_time <= start_time < unavailability.end_time
-                or unavailability.start_time < end_time <= unavailability.end_time
-            ):
-                raise serializers.ValidationError(
-                    f"Teacher is unavailable from {unavailability.start_time} to {unavailability.end_time}"
-                )
-
-        # Check for conflicting classes
-        conflicting_classes = (
-            ClassSchedule.objects.filter(
-                teacher=teacher,
-                school=school,
-                scheduled_date=date,
-                status__in=[ClassStatus.SCHEDULED, ClassStatus.CONFIRMED],
-            )
-            .exclude(end_time__lte=start_time)
-            .exclude(start_time__gte=end_time)
-        )
-
-        if conflicting_classes.exists():
-            raise serializers.ValidationError("Teacher already has a class scheduled at this time")
-
+        # Set default duration if not provided
+        if 'duration_minutes' not in data or data['duration_minutes'] is None:
+            data['duration_minutes'] = 60
+        
+        # Handle start_time string input (support both time objects and strings)
+        start_time = data.get('start_time')
+        if isinstance(start_time, str):
+            from .services import BookingValidationService
+            validation_service = BookingValidationService()
+            data['start_time'] = validation_service.validate_time_format(start_time)
+        
+        # Calculate end_time if not provided
+        if 'end_time' not in data or not data['end_time']:
+            start_datetime = datetime.combine(data['scheduled_date'], data['start_time'])
+            end_datetime = start_datetime + timedelta(minutes=data['duration_minutes'])
+            data['end_time'] = end_datetime.time()
+        
+        # Prepare booking data for orchestrator validation
+        booking_data = {
+            'teacher': data['teacher'],
+            'student': data['student'], 
+            'school': data['school'],
+            'date': data['scheduled_date'],
+            'start_time': data['start_time'],
+            'duration_minutes': data['duration_minutes'],
+            'class_type': data.get('class_type', ClassType.INDIVIDUAL),
+            'max_participants': data.get('max_participants'),
+            'title': data.get('title', 'Class'),
+            'description': data.get('description', ''),
+            'booked_by': self.context['request'].user
+        }
+        
+        # Use orchestrator service for validation
+        orchestrator = BookingOrchestratorService()
+        validation_result = orchestrator.validate_booking_request(booking_data)
+        
+        if not validation_result['is_valid']:
+            # Convert validation errors to DRF ValidationError format
+            error_messages = validation_result['errors']
+            if len(error_messages) == 1:
+                raise serializers.ValidationError(error_messages[0])
+            else:
+                # Multiple errors - create a general error with details
+                combined_message = '; '.join(error_messages)
+                raise serializers.ValidationError(combined_message)
+        
         return data
 
     def create(self, validated_data):
-        """Create class schedule with booked_by set to current user"""
-        validated_data["booked_by"] = self.context["request"].user
-        return super().create(validated_data)
+        """Create class schedule using BookingOrchestratorService"""
+        from datetime import datetime, timedelta
+        from .services import BookingOrchestratorService
+        
+        # Prepare booking data for orchestrator
+        booking_data = {
+            'teacher': validated_data['teacher'],
+            'student': validated_data['student'],
+            'school': validated_data['school'],
+            'date': validated_data['scheduled_date'],
+            'start_time': validated_data['start_time'],
+            'duration_minutes': validated_data['duration_minutes'],
+            'class_type': validated_data.get('class_type', ClassType.INDIVIDUAL),
+            'max_participants': validated_data.get('max_participants'),
+            'title': validated_data.get('title', 'Class'),
+            'description': validated_data.get('description', ''),
+            'booked_by': self.context['request'].user
+        }
+        
+        # Use orchestrator service to create booking
+        orchestrator = BookingOrchestratorService()
+        result = orchestrator.create_booking(booking_data)
+        
+        return result['class_schedule']
 
 
 class RecurringClassScheduleSerializer(serializers.ModelSerializer):
     teacher_name = serializers.CharField(source="teacher.user.name", read_only=True)
-    student_name = serializers.CharField(source="student.name", read_only=True)
     school_name = serializers.CharField(source="school.name", read_only=True)
     created_by_name = serializers.CharField(source="created_by.name", read_only=True)
     day_of_week_display = serializers.CharField(source="get_day_of_week_display", read_only=True)
     class_type_display = serializers.CharField(source="get_class_type_display", read_only=True)
+    frequency_type_display = serializers.CharField(source="get_frequency_type_display", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    
+    # Student management fields
+    students = serializers.PrimaryKeyRelatedField(
+        many=True, 
+        queryset=CustomUser.objects.all(),
+        required=False
+    )
+    student_names = serializers.SerializerMethodField()
+    student_count = serializers.SerializerMethodField()
+    
+    # Generated instances tracking
+    generated_instances_count = serializers.SerializerMethodField()
+    future_instances_count = serializers.SerializerMethodField()
+    
+    # Status change tracking
+    cancelled_by_name = serializers.CharField(source="cancelled_by.name", read_only=True)
+    paused_by_name = serializers.CharField(source="paused_by.name", read_only=True)
 
     class Meta:
         model = RecurringClassSchedule
         fields: ClassVar = [
             "id",
             "teacher",
-            "teacher_name",
-            "student",
-            "student_name",
+            "teacher_name", 
+            "students",
+            "student_names",
+            "student_count",
             "school",
             "school_name",
             "title",
             "description",
             "class_type",
             "class_type_display",
+            "frequency_type",
+            "frequency_type_display",
+            "status",
+            "status_display",
+            "max_participants",
             "day_of_week",
             "day_of_week_display",
             "start_time",
@@ -454,13 +518,148 @@ class RecurringClassScheduleSerializer(serializers.ModelSerializer):
             "created_by_name",
             "created_at",
             "updated_at",
+            "cancelled_at",
+            "cancelled_by",
+            "cancelled_by_name",
+            "paused_at",
+            "paused_by",
+            "paused_by_name",
+            "generated_instances_count",
+            "future_instances_count",
         ]
-        read_only_fields: ClassVar = ["created_at", "updated_at"]
+        read_only_fields: ClassVar = [
+            "created_at", 
+            "updated_at", 
+            "cancelled_at", 
+            "cancelled_by",
+            "paused_at", 
+            "paused_by"
+        ]
+
+    def get_student_names(self, obj):
+        """Get list of student names"""
+        return [student.name for student in obj.students.all()]
+    
+    def get_student_count(self, obj):
+        """Get count of students"""
+        return obj.get_student_count()
+    
+    def get_generated_instances_count(self, obj):
+        """Get count of generated class instances"""
+        return obj.generated_instances.count()
+    
+    def get_future_instances_count(self, obj):
+        """Get count of future class instances"""
+        return obj.get_future_instances().count()
+
+    def validate(self, data):
+        """Validate recurring class schedule data"""
+        # Validate max_participants for group classes
+        class_type = data.get('class_type')
+        max_participants = data.get('max_participants')
+        
+        if class_type == ClassType.GROUP:
+            if not max_participants or max_participants <= 0:
+                raise serializers.ValidationError({
+                    "max_participants": "Max participants is required for group classes."
+                })
+        elif class_type == ClassType.INDIVIDUAL:
+            # Individual classes should have max 1 student
+            students = data.get('students', [])
+            if len(students) > 1:
+                raise serializers.ValidationError({
+                    "students": "Individual classes can only have one student."
+                })
+        
+        # Validate date range
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        
+        if end_date and start_date and end_date <= start_date:
+            raise serializers.ValidationError({
+                "end_date": "End date must be after start date."
+            })
+        
+        # Validate time range
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
+        
+        if start_time and end_time and start_time >= end_time:
+            raise serializers.ValidationError({
+                "end_time": "End time must be after start time."
+            })
+        
+        return data
 
     def create(self, validated_data):
         """Create recurring schedule with created_by set to current user"""
+        students_data = validated_data.pop('students', [])
         validated_data["created_by"] = self.context["request"].user
-        return super().create(validated_data)
+        
+        instance = super().create(validated_data)
+        
+        # Add students
+        if students_data:
+            instance.students.set(students_data)
+            
+        return instance
+
+    def update(self, instance, validated_data):
+        """Update recurring schedule"""
+        students_data = validated_data.pop('students', None)
+        
+        instance = super().update(instance, validated_data)
+        
+        # Update students if provided
+        if students_data is not None:
+            instance.students.set(students_data)
+            
+        return instance
+
+
+class CancelRecurringInstanceSerializer(serializers.Serializer):
+    """Serializer for cancelling specific recurring class instances"""
+    
+    date = serializers.DateField(
+        help_text="Date of the occurrence to cancel"
+    )
+    reason = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=500,
+        help_text="Reason for cancellation"
+    )
+
+
+class AddStudentToRecurringSerializer(serializers.Serializer):
+    """Serializer for adding students to recurring classes"""
+    
+    student_id = serializers.IntegerField(
+        help_text="ID of the student to add"
+    )
+
+
+class RemoveStudentFromRecurringSerializer(serializers.Serializer):
+    """Serializer for removing students from recurring classes"""
+    
+    student_id = serializers.IntegerField(
+        help_text="ID of the student to remove"
+    )
+
+
+class GenerateRecurringSchedulesSerializer(serializers.Serializer):
+    """Serializer for generating schedules from recurring template"""
+    
+    weeks_ahead = serializers.IntegerField(
+        default=4,
+        min_value=1,
+        max_value=52,
+        help_text="Number of weeks ahead to generate (1-52)"
+    )
+    skip_existing = serializers.BooleanField(
+        default=True,
+        help_text="Whether to skip existing schedules"
+    )
 
 
 class AvailableTimeSlotsSerializer(serializers.Serializer):
@@ -476,4 +675,196 @@ class AvailableTimeSlotsSerializer(serializers.Serializer):
 class CancelClassSerializer(serializers.Serializer):
     """Serializer for cancelling classes"""
 
-    reason = serializers.CharField(required=False, allow_blank=True)
+    reason = serializers.CharField(
+        required=False, 
+        allow_blank=True,
+        max_length=500,  # Add reasonable limit to prevent abuse
+        help_text="Reason for cancellation (max 500 characters)"
+    )
+
+
+class ReminderPreferenceSerializer(serializers.ModelSerializer):
+    """Serializer for user reminder preferences"""
+    
+    user_name = serializers.CharField(source="user.name", read_only=True)
+    school_name = serializers.CharField(source="school.name", read_only=True)
+    school = serializers.PrimaryKeyRelatedField(required=False, allow_null=True, queryset=School.objects.all())
+    
+    class Meta:
+        model = ReminderPreference
+        fields = [
+            "id",
+            "user",
+            "user_name",
+            "school",
+            "school_name",
+            "reminder_timing_hours",
+            "communication_channels",
+            "timezone_preference",
+            "is_active",
+            "is_school_default",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "user", "created_at", "updated_at"]
+    
+    def validate_reminder_timing_hours(self, value):
+        """Validate reminder timing hours"""
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Must be a list of numbers")
+        
+        for hour in value:
+            if not isinstance(hour, (int, float)):
+                raise serializers.ValidationError("Each value must be a number")
+            if hour < 0 or hour > 168:  # Max 1 week
+                raise serializers.ValidationError("Hours must be between 0 and 168 (1 week)")
+        
+        return value
+    
+    def validate_communication_channels(self, value):
+        """Validate communication channels"""
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Must be a list of channel names")
+        
+        valid_channels = [choice[0] for choice in CommunicationChannel.choices]
+        for channel in value:
+            if channel not in valid_channels:
+                raise serializers.ValidationError(
+                    f"Invalid channel '{channel}'. Must be one of: {valid_channels}"
+                )
+        
+        return value
+    
+    def validate_timezone_preference(self, value):
+        """Validate timezone preference"""
+        if value:
+            from .reminder_services import TimezoneValidationService
+            if not TimezoneValidationService.validate_timezone(value):
+                raise serializers.ValidationError("Invalid timezone")
+        return value
+
+
+class ClassReminderSerializer(serializers.ModelSerializer):
+    """Serializer for class reminders"""
+    
+    class_title = serializers.CharField(source="class_schedule.title", read_only=True)
+    recipient_name = serializers.CharField(source="recipient.name", read_only=True)
+    reminder_type_display = serializers.CharField(source="get_reminder_type_display", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    communication_channel_display = serializers.CharField(source="get_communication_channel_display", read_only=True)
+    is_overdue = serializers.BooleanField(read_only=True)
+    time_until_send = serializers.SerializerMethodField()
+    can_retry = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = ClassReminder
+        fields = [
+            "id",
+            "class_schedule",
+            "class_title",
+            "reminder_type",
+            "reminder_type_display",
+            "recipient",
+            "recipient_name",
+            "recipient_type",
+            "communication_channel",
+            "communication_channel_display",
+            "status",
+            "status_display",
+            "scheduled_for",
+            "sent_at",
+            "subject",
+            "message",
+            "error_message",
+            "retry_count",
+            "max_retries",
+            "external_message_id",
+            "metadata",
+            "is_overdue",
+            "time_until_send",
+            "can_retry",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "sent_at",
+            "error_message",
+            "retry_count",
+            "external_message_id",
+            "created_at",
+            "updated_at",
+            "is_overdue",
+            "can_retry",
+        ]
+    
+    def get_time_until_send(self, obj):
+        """Get time until reminder should be sent"""
+        delta = obj.time_until_send
+        if delta is None:
+            return None
+        
+        total_seconds = int(delta.total_seconds())
+        if total_seconds < 0:
+            return "Overdue"
+        
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        
+        if hours > 0:
+            return f"{hours}h {minutes}m"
+        else:
+            return f"{minutes}m"
+
+
+class TriggerReminderSerializer(serializers.Serializer):
+    """Serializer for manually triggering reminders"""
+    
+    reminder_type = serializers.ChoiceField(
+        choices=ReminderType.choices,
+        help_text="Type of reminder to send"
+    )
+    message = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=1000,
+        help_text="Custom message content (for custom reminders)"
+    )
+    channels = serializers.ListField(
+        child=serializers.ChoiceField(choices=CommunicationChannel.choices),
+        required=False,
+        help_text="Communication channels to use"
+    )
+    subject = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=255,
+        help_text="Custom subject/title"
+    )
+
+
+class ReminderQueueStatusSerializer(serializers.Serializer):
+    """Serializer for reminder queue status"""
+    
+    pending_reminders = serializers.IntegerField()
+    processing_reminders = serializers.IntegerField()
+    failed_reminders = serializers.IntegerField()
+    last_processed_at = serializers.DateTimeField(allow_null=True)
+    queue_health = serializers.CharField()
+    worker_status = serializers.CharField()
+
+
+class ProcessReminderQueueSerializer(serializers.Serializer):
+    """Serializer for processing reminder queue"""
+    
+    batch_size = serializers.IntegerField(
+        default=50,
+        min_value=1,
+        max_value=200,
+        help_text="Number of reminders to process per batch"
+    )
+    max_batches = serializers.IntegerField(
+        default=10,
+        min_value=1,
+        max_value=50,
+        help_text="Maximum number of batches to process"
+    )

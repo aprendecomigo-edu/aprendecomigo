@@ -6,6 +6,10 @@ from .views import (
     RecurringClassScheduleViewSet,
     TeacherAvailabilityViewSet,
     TeacherUnavailabilityViewSet,
+    ReminderPreferenceViewSet,
+    ClassReminderViewSet,
+    UserRemindersViewSet,
+    ReminderQueueViewSet,
 )
 
 # Create a router and register the viewsets
@@ -13,7 +17,11 @@ router = DefaultRouter()
 router.register(r"availability", TeacherAvailabilityViewSet, basename="teacher-availability")
 router.register(r"unavailability", TeacherUnavailabilityViewSet, basename="teacher-unavailability")
 router.register(r"schedules", ClassScheduleViewSet, basename="class-schedules")
-router.register(r"recurring", RecurringClassScheduleViewSet, basename="recurring-schedules")
+router.register(r"recurring-classes", RecurringClassScheduleViewSet, basename="recurring-classes")
+router.register(r"reminder-preferences", ReminderPreferenceViewSet, basename="reminder-preferences")
+router.register(r"class-reminders", ClassReminderViewSet, basename="class-reminders")
+router.register(r"reminders", UserRemindersViewSet, basename="reminders")
+router.register(r"reminder-queue", ReminderQueueViewSet, basename="reminder-queue-status")
 
 urlpatterns = [
     path("", include(router.urls)),
