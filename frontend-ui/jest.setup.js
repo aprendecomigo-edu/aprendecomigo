@@ -98,8 +98,161 @@ jest.mock('@gluestack-ui/toast', () => {
   };
 });
 
-// Note: React Native Reanimated mock removed as it's not installed
-// If needed later, uncomment and install the dependency first
+// Mock React Native Reanimated
+jest.mock('react-native-reanimated', () => {
+  const React = require('react');
+  
+  const View = React.forwardRef((props, ref) => {
+    const { children, ...otherProps } = props;
+    return React.createElement('div', { ...otherProps, ref }, children);
+  });
+  View.displayName = 'ReanimatedView';
+  
+  const Text = React.forwardRef((props, ref) => {
+    const { children, ...otherProps } = props;
+    return React.createElement('span', { ...otherProps, ref }, children);
+  });
+  Text.displayName = 'ReanimatedText';
+  
+  const ScrollView = React.forwardRef((props, ref) => {
+    const { children, ...otherProps } = props;
+    return React.createElement('div', { ...otherProps, ref, style: { overflow: 'auto', ...props.style } }, children);
+  });
+  ScrollView.displayName = 'ReanimatedScrollView';
+
+  const mockAnimatedValue = {
+    setValue: jest.fn(),
+    addListener: jest.fn(() => 'listener_id'),
+    removeListener: jest.fn(),
+    interpolate: jest.fn(() => 'interpolated_value'),
+    extractOffset: jest.fn(),
+    setOffset: jest.fn(),
+    flattenOffset: jest.fn(),
+    stopAnimation: jest.fn(),
+    resetAnimation: jest.fn(),
+    _value: 0,
+  };
+
+  const createAnimatedComponent = (Component) => {
+    const AnimatedComponent = React.forwardRef((props, ref) => {
+      const { style, ...otherProps } = props;
+      return React.createElement(Component, { 
+        ...otherProps, 
+        ref,
+        style: typeof style === 'object' ? style : undefined 
+      });
+    });
+    AnimatedComponent.displayName = `Animated(${Component.displayName || Component.name || 'Component'})`;
+    return AnimatedComponent;
+  };
+
+  return {
+    __esModule: true,
+    default: {
+      View,
+      Text,
+      ScrollView,
+      createAnimatedComponent,
+      Value: jest.fn(() => mockAnimatedValue),
+      timing: jest.fn(() => ({
+        start: jest.fn(callback => callback && callback({ finished: true })),
+        stop: jest.fn(),
+        reset: jest.fn(),
+      })),
+      spring: jest.fn(() => ({
+        start: jest.fn(callback => callback && callback({ finished: true })),
+        stop: jest.fn(),
+        reset: jest.fn(),
+      })),
+      sequence: jest.fn(() => ({
+        start: jest.fn(callback => callback && callback({ finished: true })),
+      })),
+      parallel: jest.fn(() => ({
+        start: jest.fn(callback => callback && callback({ finished: true })),
+      })),
+      decay: jest.fn(() => ({
+        start: jest.fn(callback => callback && callback({ finished: true })),
+      })),
+      loop: jest.fn(() => ({
+        start: jest.fn(callback => callback && callback({ finished: true })),
+      })),
+      delay: jest.fn(() => ({
+        start: jest.fn(callback => callback && callback({ finished: true })),
+      })),
+      event: jest.fn(() => jest.fn()),
+      add: jest.fn(() => mockAnimatedValue),
+      subtract: jest.fn(() => mockAnimatedValue),
+      multiply: jest.fn(() => mockAnimatedValue),
+      divide: jest.fn(() => mockAnimatedValue),
+      modulo: jest.fn(() => mockAnimatedValue),
+      diffClamp: jest.fn(() => mockAnimatedValue),
+      Extrapolate: {
+        EXTEND: 'extend',
+        CLAMP: 'clamp',
+        IDENTITY: 'identity',
+      },
+      Easing: {
+        linear: jest.fn(),
+        ease: jest.fn(),
+        quad: jest.fn(),
+        cubic: jest.fn(),
+        poly: jest.fn(),
+        sin: jest.fn(),
+        circle: jest.fn(),
+        exp: jest.fn(),
+        elastic: jest.fn(),
+        back: jest.fn(),
+        bounce: jest.fn(),
+        bezier: jest.fn(),
+        in: jest.fn(fn => fn),
+        out: jest.fn(fn => fn),
+        inOut: jest.fn(fn => fn),
+      },
+    },
+    // Export common Reanimated v2 components and functions
+    useSharedValue: jest.fn((initial) => ({ value: initial })),
+    useAnimatedStyle: jest.fn((styleFunction) => styleFunction()),
+    useAnimatedProps: jest.fn((propsFunction) => propsFunction()),
+    useAnimatedGestureHandler: jest.fn(() => ({})),
+    useAnimatedReaction: jest.fn(),
+    useAnimatedRef: jest.fn(() => ({ current: null })),
+    useDerivedValue: jest.fn((derivedFunction) => ({ value: derivedFunction() })),
+    useAnimatedScrollHandler: jest.fn(() => ({})),
+    useWorkletCallback: jest.fn((callback) => callback),
+    runOnJS: jest.fn((callback) => callback),
+    runOnUI: jest.fn((callback) => callback),
+    withTiming: jest.fn((toValue) => toValue),
+    withSpring: jest.fn((toValue) => toValue),
+    withDecay: jest.fn(() => 0),
+    withDelay: jest.fn((delay, animation) => animation),
+    withRepeat: jest.fn((animation) => animation),
+    withSequence: jest.fn((...animations) => animations[0]),
+    cancelAnimation: jest.fn(),
+    measure: jest.fn(() => null),
+    scrollTo: jest.fn(),
+    // Export entrance/exit animations
+    FadeIn: { duration: jest.fn().mockReturnThis() },
+    FadeOut: { duration: jest.fn().mockReturnThis() },
+    SlideInLeft: { duration: jest.fn().mockReturnThis() },
+    SlideInRight: { duration: jest.fn().mockReturnThis() },
+    SlideInUp: { duration: jest.fn().mockReturnThis() },
+    SlideInDown: { duration: jest.fn().mockReturnThis() },
+    SlideOutLeft: { duration: jest.fn().mockReturnThis() },
+    SlideOutRight: { duration: jest.fn().mockReturnThis() },
+    SlideOutUp: { duration: jest.fn().mockReturnThis() },
+    SlideOutDown: { duration: jest.fn().mockReturnThis() },
+    BounceIn: { duration: jest.fn().mockReturnThis() },
+    BounceOut: { duration: jest.fn().mockReturnThis() },
+    ZoomIn: { duration: jest.fn().mockReturnThis() },
+    ZoomOut: { duration: jest.fn().mockReturnThis() },
+    // Animated components
+    createAnimatedComponent,
+  };
+});
+
+// Mock React Native Reanimated core modules that might be directly imported
+jest.mock('react-native-reanimated/lib/reanimated2/core', () => ({}), { virtual: true });
+jest.mock('react-native-reanimated/lib/module/reanimated2/NativeReanimated', () => ({}), { virtual: true });
 
 // Note: React Native Gesture Handler mock removed as it's not installed
 // If needed later, uncomment and install the dependency first

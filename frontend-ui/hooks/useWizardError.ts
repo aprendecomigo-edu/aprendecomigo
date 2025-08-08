@@ -379,6 +379,3 @@ export function useValidationErrors() {
     getFieldErrors,
   };
 }
-
-// Import React for useEffect
-import React from 'react';
