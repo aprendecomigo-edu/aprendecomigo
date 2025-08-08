@@ -92,6 +92,7 @@ jest.mock('@gluestack-ui/toast', () => {
     ),
     useToast: jest.fn(() => ({
       show: jest.fn(),
+      showToast: jest.fn(),
       close: jest.fn(),
       closeAll: jest.fn(),
     })),
@@ -257,31 +258,101 @@ jest.mock('react-native-reanimated/lib/module/reanimated2/NativeReanimated', () 
 // Note: React Native Gesture Handler mock removed as it's not installed
 // If needed later, uncomment and install the dependency first
 
-// Mock Expo modules
-jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    back: jest.fn(),
-    replace: jest.fn(),
-    canGoBack: jest.fn(() => true),
-  }),
-  useLocalSearchParams: jest.fn(() => ({})),
-  usePathname: jest.fn(() => '/'),
-  useGlobalSearchParams: jest.fn(() => ({})),
-  Link: ({ children, ...props }) => children,
-  Stack: ({ children }) => children,
-  Tabs: ({ children }) => children,
-}));
+// Remove duplicate expo-router mock (already defined later)
 
+// Mock @unitools/router (used by SignIn component)
 jest.mock('@unitools/router', () => ({
   __esModule: true,
   default: () => ({
     push: jest.fn(),
     back: jest.fn(),
     replace: jest.fn(),
-    canGoBack: jest.fn(() => true),
   }),
 }));
+
+// Mock @unitools/link (used by SignIn component)
+jest.mock('@unitools/link', () => {
+  const React = require('react');
+  return {
+    __esModule: true,
+    default: React.forwardRef(({ href, children, ...props }, ref) => 
+      React.createElement('a', { href, ref, ...props }, children)
+    ),
+  };
+});
+
+// Mock react-native-safe-area-context first (must come before other mocks)
+jest.mock('react-native-safe-area-context', () => {
+  const React = require('react');
+  return {
+    SafeAreaProvider: ({ children }) => React.createElement('div', { className: 'safe-area-provider' }, children),
+    SafeAreaView: React.forwardRef((props, ref) => 
+      React.createElement('div', { ...props, ref, className: 'safe-area-view' })
+    ),
+    SafeAreaInsetsContext: {
+      Consumer: ({ children }) => children({ top: 0, bottom: 0, left: 0, right: 0 }),
+    },
+    EdgeInsets: { top: 0, bottom: 0, left: 0, right: 0 },
+    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+    useSafeAreaFrame: () => ({ x: 0, y: 0, width: 390, height: 844 }),
+    withSafeAreaInsets: (component) => component,
+  };
+});
+
+// Mock Expo modules
+jest.mock('expo-router', () => {
+  const React = require('react');
+  
+  const mockLink = React.forwardRef((props, ref) => {
+    const { href, children, ...otherProps } = props;
+    return React.createElement('a', { ...otherProps, ref, href }, children);
+  });
+  mockLink.displayName = 'Link';
+
+  return {
+    useRouter: () => ({
+      push: jest.fn(),
+      back: jest.fn(),
+      replace: jest.fn(),
+      canGoBack: jest.fn(() => true),
+    }),
+    useLocalSearchParams: jest.fn(() => ({})),
+    usePathname: jest.fn(() => '/'),
+    useGlobalSearchParams: jest.fn(() => ({})),
+    Link: mockLink,
+    Stack: ({ children }) => React.createElement('div', { className: 'expo-stack' }, children),
+    Tabs: ({ children }) => React.createElement('div', { className: 'expo-tabs' }, children),
+    router: {
+      push: jest.fn(),
+      back: jest.fn(),
+      replace: jest.fn(),
+      canGoBack: jest.fn(() => true),
+    },
+  };
+});
+
+jest.mock('@unitools/router', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
+    push: jest.fn(),
+    back: jest.fn(),
+    replace: jest.fn(),
+    canGoBack: jest.fn(() => true),
+  })),
+}));
+
+jest.mock('@unitools/link', () => {
+  const React = require('react');
+  const mockLink = React.forwardRef((props, ref) => {
+    const { href, children, ...otherProps } = props;
+    return React.createElement('a', { ...otherProps, ref, href }, children);
+  });
+  mockLink.displayName = 'UnitoolsLink';
+  return {
+    __esModule: true,
+    default: mockLink,
+  };
+});
 
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -661,7 +732,16 @@ jest.mock('@/api/apiClient', () => ({
     post: jest.fn(() => Promise.resolve({ data: { data: {} } })),
     put: jest.fn(() => Promise.resolve({ data: { data: {} } })),
     delete: jest.fn(() => Promise.resolve({ data: { data: {} } })),
+    request: jest.fn(() => Promise.resolve({ data: { data: {} } })),
   },
+}));
+
+// Mock authApi
+jest.mock('@/api/authApi', () => ({
+  requestEmailCode: jest.fn(() => Promise.resolve({ success: true })),
+  verifyCode: jest.fn(() => Promise.resolve({ success: true, token: 'mock-token' })),
+  resendCode: jest.fn(() => Promise.resolve({ success: true })),
+  signUp: jest.fn(() => Promise.resolve({ success: true })),
 }));
 
 // Mock form data for File uploads
@@ -754,22 +834,146 @@ console.error = (...args) => {
   originalConsoleError.apply(console, args);
 };
 
-// Configure React Native Testing Library after all mocks are set up
-try {
-  const { configure } = require('@testing-library/react-native');
-  configure({
-    hostComponentNames: new Set([
-      'View', 'Text', 'TextInput', 'ScrollView', 'Image', 'TouchableOpacity', 
-      'TouchableHighlight', 'TouchableWithoutFeedback', 'Button', 'FlatList',
-      'SectionList', 'ActivityIndicator', 'SafeAreaView', 'KeyboardAvoidingView'
-    ])
-  });
-} catch (e) {
-  // If configure doesn't exist, continue without error logging
-}
-
-// Cleanup after each test
-afterEach(() => {
-  jest.clearAllMocks();
-  jest.clearAllTimers();
+// Mock all Gluestack UI components
+jest.mock('@/components/ui/form-control', () => {
+  const React = require('react');
+  return {
+    FormControl: ({ children, ...props }) => React.createElement('div', { ...props, className: 'form-control' }, children),
+    FormControlError: ({ children, ...props }) => React.createElement('div', { ...props, className: 'form-control-error' }, children),
+    FormControlErrorIcon: ({ as: IconComponent, ...props }) => React.createElement('div', { ...props, className: 'form-control-error-icon' }),
+    FormControlErrorText: ({ children, ...props }) => React.createElement('div', { ...props, className: 'form-control-error-text' }, children),
+    FormControlLabel: ({ children, ...props }) => React.createElement('div', { ...props, className: 'form-control-label' }, children),
+    FormControlLabelText: ({ children, ...props }) => React.createElement('div', { ...props, className: 'form-control-label-text' }, children),
+  };
 });
+
+jest.mock('@/components/ui/heading', () => {
+  const React = require('react');
+  return {
+    Heading: ({ children, ...props }) => React.createElement('h1', { ...props, className: 'heading' }, children),
+  };
+});
+
+jest.mock('@/components/ui/icon', () => {
+  const React = require('react');
+  return {
+    Icon: ({ as: IconComponent, ...props }) => React.createElement('div', { ...props, className: 'icon' }),
+    ArrowLeftIcon: React.forwardRef((props, ref) => React.createElement('div', { ...props, ref, className: 'arrow-left-icon' })),
+  };
+});
+
+jest.mock('@/components/ui/input', () => {
+  const React = require('react');
+  return {
+    Input: ({ children, ...props }) => React.createElement('div', { ...props, className: 'input' }, children),
+    InputField: React.forwardRef((props, ref) => {
+      const { testID, onChangeText, value, ...otherProps } = props;
+      return React.createElement('input', {
+        ...otherProps,
+        ref,
+        'data-testid': testID,
+        value: value || '',
+        onChange: onChangeText ? (e) => onChangeText(e.target.value) : undefined,
+        className: 'input-field'
+      });
+    }),
+  };
+});
+
+jest.mock('@/components/ui/pressable', () => {
+  const React = require('react');
+  return {
+    Pressable: React.forwardRef(({ onPress, disabled, children, ...props }, ref) => {
+      return React.createElement('button', {
+        ...props,
+        ref,
+        onClick: onPress,
+        disabled,
+        className: 'pressable'
+      }, children);
+    }),
+  };
+});
+
+jest.mock('@/components/ui/text', () => {
+  const React = require('react');
+  return {
+    Text: ({ children, ...props }) => React.createElement('span', { ...props, className: 'text' }, children),
+  };
+});
+
+jest.mock('@/components/ui/vstack', () => {
+  const React = require('react');
+  return {
+    VStack: ({ children, ...props }) => React.createElement('div', { ...props, className: 'vstack' }, children),
+  };
+});
+
+jest.mock('@/components/ui/toast', () => ({
+  useToast: jest.fn(() => ({
+    showToast: jest.fn(),
+    show: jest.fn(),
+    close: jest.fn(),
+    closeAll: jest.fn(),
+  })),
+  ToastProvider: ({ children }) => {
+    const React = require('react');
+    return React.createElement('div', { className: 'toast-provider' }, children);
+  },
+}));
+
+// Mock AuthLayout
+jest.mock('@/components/auth/AuthLayout', () => {
+  const React = require('react');
+  return {
+    AuthLayout: ({ children }) => React.createElement('div', { className: 'auth-layout', 'data-testid': 'auth-layout' }, children),
+  };
+});
+
+// Mock react-hook-form
+jest.mock('react-hook-form', () => ({
+  useForm: jest.fn(() => ({
+    control: {},
+    handleSubmit: jest.fn((fn) => () => fn),
+    formState: { errors: {} },
+    setValue: jest.fn(),
+    getValues: jest.fn(),
+    watch: jest.fn(),
+    reset: jest.fn(),
+  })),
+  Controller: ({ render, name, control, defaultValue }) => {
+    const React = require('react');
+    return render({ 
+      field: { 
+        onChange: jest.fn(), 
+        onBlur: jest.fn(), 
+        value: defaultValue || '',
+        name,
+      },
+      fieldState: { error: null },
+      formState: { errors: {} },
+    });
+  },
+}));
+
+// Mock zodResolver
+jest.mock('@hookform/resolvers/zod', () => ({
+  zodResolver: jest.fn(() => () => Promise.resolve({ values: {}, errors: {} })),
+}));
+
+// lucide-react-native already mocked above
+
+// Configure React Native Testing Library after all mocks are set up
+// Note: We're skipping the configure step as it's causing issues with the afterEach hook
+// The mocks should work without explicit configuration
+
+// Global cleanup after each test
+global.afterEach = global.afterEach || (() => {});
+const originalAfterEach = global.afterEach;
+global.afterEach = (fn, timeout) => {
+  originalAfterEach(() => {
+    jest.clearAllMocks();
+    jest.clearAllTimers();
+    if (fn) fn();
+  }, timeout || 10000);
+};

@@ -4,7 +4,7 @@ module.exports = {
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@gluestack-ui/.*|@gluestack-style/.*|lucide-react-native|react-native-css-interop|nativewind|expo-modules-core)',
   ],
   setupFilesAfterEnv: [
-    '<rootDir>/jest.setup.js',
+    '<rootDir>/jest.setup.expo.js',
   ],
   testMatch: [
     '<rootDir>/__tests__/**/*.(test|spec).(js|jsx|ts|tsx)',
@@ -64,10 +64,8 @@ module.exports = {
       },
     },
   },
-  testEnvironment: 'jsdom',
-  testEnvironmentOptions: {
-    customExportConditions: ['node', 'node-addons'],
-  },
+  // Use jest-expo's default test environment for React Native
+  // testEnvironment is provided by jest-expo preset
   verbose: true,
   maxWorkers: '50%',
 };

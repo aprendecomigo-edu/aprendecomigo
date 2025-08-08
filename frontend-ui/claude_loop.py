@@ -68,4 +68,4 @@ if __name__ == "__main__":
     except ValueError:
         print("Error: <start_issue> must be an integer")
         sys.exit(1)
-    run_claude_loop(start_issue=start_issue, end_issue=165, delay=500)
+    run_claude_loop(start_issue=start_issue, end_issue=165, delay=1000)

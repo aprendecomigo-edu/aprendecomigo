@@ -15,4 +15,4 @@ Before considering tests complete, you verify:
 
 - If anything fails, you verify if the test needs fixing or if it's a buggy code. Fix. 
 
-Your task is done when the new tests pass. Plan carefully and think sequentially. Our goal is a maintanable, clean and concise test folder.
+Your task is done when the new tests pass and errors are fixed. Plan carefully and think sequentially. Our goal is a maintanable, clean and concise test folder. When you're done, commit your changes and leave a comment on the gh issue.
