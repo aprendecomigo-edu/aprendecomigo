@@ -161,10 +161,12 @@ py-lint:
 	@cd backend && source .venv/bin/activate && \
 		pip install flake8 > /dev/null 2>&1 && \
 		echo "Checking for syntax errors and undefined names..." && \
-		flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics && \
+		flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics \
+			--exclude=.venv,venv,migrations,__pycache__,.git,build,dist && \
 		echo "✓ Critical linting checks passed!" && \
 		echo "Running additional style checks..." && \
-		flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+		flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics \
+			--exclude=.venv,venv,migrations,__pycache__,.git,build,dist
 
 setup-hooks:
 	@echo "Setting up Git hooks..."
