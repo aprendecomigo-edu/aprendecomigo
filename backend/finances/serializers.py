@@ -1081,7 +1081,7 @@ class PurchaseApprovalRequestSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'student_name', 'parent_name', 'pricing_plan_name',
             'class_session_info', 'time_remaining_hours', 'is_expired',
-            'requested_at', 'responded_at', 'created_at', 'updated_at'
+            'requested_at', 'responded_at', 'expires_at', 'created_at', 'updated_at'
         ]
     
     def get_class_session_info(self, obj):

@@ -2428,23 +2428,39 @@ class FamilyBudgetControlViewSet(viewsets.ModelViewSet):
     for their children's purchases.
     """
     
+    # Don't define queryset attribute - force use of get_queryset() method
     serializer_class = 'FamilyBudgetControlSerializer'  # Set in get_serializer_class
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         """Filter budget controls by user permissions."""
         from .models import FamilyBudgetControl
+        from accounts.models import ParentChildRelationship
         
-        # Parents can access controls for their children
-        # Children can read controls that apply to them (read-only)
-        return FamilyBudgetControl.objects.filter(
-            Q(parent_child_relationship__parent=self.request.user) |
-            Q(parent_child_relationship__child=self.request.user)
-        ).select_related(
-            'parent_child_relationship__parent',
-            'parent_child_relationship__child',
-            'parent_child_relationship__school'
-        )
+        user = self.request.user
+        
+        # Check if user is a parent (has children relationships)
+        parent_relationships_exist = ParentChildRelationship.objects.filter(parent=user).exists()
+        
+        if parent_relationships_exist:
+            # Parents can access controls for their children only
+            return FamilyBudgetControl.objects.filter(
+                parent_child_relationship__parent=user
+            ).select_related(
+                'parent_child_relationship__parent',
+                'parent_child_relationship__child',
+                'parent_child_relationship__school'
+            )
+        else:
+            # Children and users without parent relationships should NOT be able to access ANY budget controls
+            # This is a security measure - only parents can view or modify budget settings
+            return FamilyBudgetControl.objects.none()
+
+    def list(self, request, *args, **kwargs):
+        """Override list method to ensure proper queryset filtering."""
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
     
     def get_serializer_class(self):
         """Return appropriate serializer class."""

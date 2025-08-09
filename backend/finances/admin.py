@@ -1483,11 +1483,11 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
 
 
 # Register admin for related models from other apps in AppConfig.ready()
-Payment = apps.get_model('finances', 'Payment')
-@admin.register(Payment)
-class PaymentAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'amount', 'status', 'created_at']
-    
-    def get_queryset(self, request):
-        # Use select_related with string references
-        return super().get_queryset(request).select_related('user', 'lesson')
+# Payment = apps.get_model('finances', 'Payment')
+# @admin.register(Payment)
+# class PaymentAdmin(admin.ModelAdmin):
+#     list_display = ['id', 'user', 'amount', 'status', 'created_at']
+#     
+#     def get_queryset(self, request):
+#         # Use select_related with string references
+#         return super().get_queryset(request).select_related('user', 'lesson')

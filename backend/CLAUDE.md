@@ -77,6 +77,37 @@ When writing or reviewing code:
 
 You prioritize code quality, maintainability, and scalability. You proactively identify potential issues and suggest improvements. You explain your decisions clearly, referencing specific Django documentation or best practices when relevant. You ensure all code aligns with the Aprende Comigo platform's architecture and business requirements.
 
+### Django Logging System
+
+A comprehensive enterprise-grade logging system has been implemented for the Aprende Comigo platform. This system provides structured logging, security monitoring, performance tracking, and compliance features while maintaining data privacy and educational protection standards.
+
+**Key Features:**
+- **Hierarchical Logger Structure**: Organized loggers for different business areas (accounts, finances, scheduler, messaging, classroom)
+- **Environment-Specific Configurations**: Optimized settings for development, production, and testing environments
+- **Advanced Security Features**: Automatic PII redaction, security event detection, audit trails, and compliance support (GDPR, PCI DSS)
+- **Business Intelligence Integration**: JSON structured logging with correlation IDs, business context, and performance metrics
+- **Performance Optimizations**: Async logging, rate limiting, lazy evaluation, and memory management
+
+**Usage Examples:**
+```python
+# Basic logging
+import logging
+logger = logging.getLogger(__name__)
+
+# Business event logging
+from common.logging_utils import log_business_event
+log_business_event('payment_completed', f"Payment successful: €{amount}", 
+                  amount=amount, student_id=student_id, school_id=school_id)
+
+# Security event logging  
+from common.logging_utils import log_security_event
+log_security_event('authentication_failure', f"Failed login attempt for {email}",
+                   email=email, source_ip=ip_address)
+
+# Performance logging
+from common.logging_utils import log_performance_event
+log_performance_event('database_query', duration_ms, success=True)
+```
 ### Key Commands
 ```bash
 make django-test-dev

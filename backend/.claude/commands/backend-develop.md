@@ -5,9 +5,9 @@ We're going to work on a streamlined TDD fashion. Please complete this backend i
 3) Ask the drf-test-engineer to review the issue and see if there's any DRF-related API tests (tests_api) to add that will validate the issue. The tests should fail at first. Please be specific about testing the new improvements from the issue ONLY to avoid over testing.
 4) Ask the py-unit-test-engineer to review the issue and see if there's any business logic tests to add that will validate the issue. The tests should fail at first. Please be specific about testing the new improvements from the issue ONLY to avoid over testing.
 Note: We should be at TDD red state at this point
-5) Ask the django-dev to implement the issue at a high standard and run the new tests to see if they pass
+5) You implement the issue at a high standard and run the new tests to see if they pass
 6) Verify all new tests pass and all issues are solved. Note: We should be at TDD green state at this point
-7) Ask the django-dev to do a code review of the changes.
+7) You do a code review of the changes and a security review using /security-review
 8) If here are any outstanding bugs or problems to fix, please coordinate with the agents to fix.
 9) Make sure the issue was completed at a high standard, for example use cases identified were reasonable and tests developed were reasonable. Be critical and efficient.
 

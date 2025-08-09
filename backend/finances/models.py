@@ -1433,14 +1433,19 @@ class FamilyBudgetControl(models.Model):
         """Calculate current month spending for this child."""
         from django.utils import timezone
         from datetime import datetime
+        from calendar import monthrange
         
         now = timezone.now()
         start_of_month = datetime(now.year, now.month, 1, tzinfo=now.tzinfo)
+        # Calculate end of current month  
+        last_day = monthrange(now.year, now.month)[1]
+        end_of_month = datetime(now.year, now.month, last_day, 23, 59, 59, 999999, tzinfo=now.tzinfo)
         
         return PurchaseTransaction.objects.filter(
             student=self.parent_child_relationship.child,
             payment_status=TransactionPaymentStatus.COMPLETED,
-            created_at__gte=start_of_month
+            created_at__gte=start_of_month,
+            created_at__lt=end_of_month
         ).aggregate(
             total=models.Sum('amount')
         )['total'] or Decimal('0.00')
@@ -1452,13 +1457,17 @@ class FamilyBudgetControl(models.Model):
         from datetime import timedelta
         
         now = timezone.now()
+        # Calculate start of current week (Monday)
         start_of_week = now - timedelta(days=now.weekday())
         start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+        # Calculate end of current week (Sunday 23:59:59) 
+        end_of_week = start_of_week + timedelta(days=6, hours=23, minutes=59, seconds=59)
         
         return PurchaseTransaction.objects.filter(
             student=self.parent_child_relationship.child,
             payment_status=TransactionPaymentStatus.COMPLETED,
-            created_at__gte=start_of_week
+            created_at__gte=start_of_week,
+            created_at__lt=end_of_week
         ).aggregate(
             total=models.Sum('amount')
         )['total'] or Decimal('0.00')
@@ -1471,7 +1480,7 @@ class FamilyBudgetControl(models.Model):
             amount: The purchase amount to check
             
         Returns:
-            dict: Dictionary with 'allowed', 'reasons' keys indicating if purchase is allowed
+            dict: Dictionary with 'allowed', 'can_auto_approve', 'reasons' keys indicating if purchase is allowed
         """
         reasons = []
         
@@ -1485,9 +1494,13 @@ class FamilyBudgetControl(models.Model):
             if self.current_weekly_spending + amount > self.weekly_budget_limit:
                 reasons.append(f"Would exceed weekly budget limit of €{self.weekly_budget_limit}")
         
+        # Auto-approval requires both: amount under threshold AND budget limits not exceeded
+        budget_limits_ok = len(reasons) == 0
+        can_auto_approve = amount <= self.auto_approval_threshold and budget_limits_ok
+        
         return {
-            'allowed': len(reasons) == 0,
-            'can_auto_approve': amount <= self.auto_approval_threshold,
+            'allowed': budget_limits_ok,
+            'can_auto_approve': can_auto_approve,
             'reasons': reasons
         }
     

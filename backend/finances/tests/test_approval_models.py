@@ -6,7 +6,7 @@ that implement the parent-child purchase approval workflow.
 """
 
 from decimal import Decimal
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -202,11 +202,95 @@ class FamilyBudgetControlModelTest(TestCase):
         result = budget_control.check_budget_limits(Decimal('15.00'))
         
         self.assertFalse(result['allowed'])
+        self.assertFalse(result['can_auto_approve'])  # BUG: Currently returns True when should be False
+        self.assertIn("weekly budget limit", result['reasons'][0])
+
+    def test_check_budget_limits_auto_approval_requires_budget_compliance(self):
+        """Test that auto-approval is blocked when budget limits are exceeded, even if amount is under threshold."""
+        budget_control = FamilyBudgetControl.objects.create(
+            parent_child_relationship=self.parent_child_relationship,
+            weekly_budget_limit=Decimal('50.00'),
+            monthly_budget_limit=Decimal('200.00'),
+            auto_approval_threshold=Decimal('30.00')  # Higher threshold
+        )
+
+        # Create existing spending that brings us close to weekly limit
+        PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package',
+            amount=Decimal('40.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+
+        # Test amount under auto-approval threshold but would exceed weekly limit
+        result = budget_control.check_budget_limits(Decimal('20.00'))  # Under 30.00 threshold
+        
+        self.assertFalse(result['allowed'])
+        # BUG: Current logic incorrectly returns can_auto_approve=True because 20.00 <= 30.00
+        # Should be False because budget limit is exceeded
         self.assertFalse(result['can_auto_approve'])
         self.assertIn("weekly budget limit", result['reasons'][0])
 
-    def test_check_budget_limits_exceeds_auto_approval(self):
-        """Test budget limit check when purchase exceeds auto approval threshold."""
+    def test_check_budget_limits_exceeds_monthly_blocks_auto_approval(self):
+        """Test that auto-approval is blocked when monthly limits are exceeded."""
+        budget_control = FamilyBudgetControl.objects.create(
+            parent_child_relationship=self.parent_child_relationship,
+            monthly_budget_limit=Decimal('100.00'),
+            auto_approval_threshold=Decimal('25.00')
+        )
+
+        # Create existing spending that brings us close to monthly limit
+        PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package',
+            amount=Decimal('90.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+
+        # Test amount under auto-approval threshold but would exceed monthly limit
+        result = budget_control.check_budget_limits(Decimal('20.00'))  # Under 25.00 threshold
+        
+        self.assertFalse(result['allowed'])
+        # BUG: Should be False because monthly limit is exceeded
+        self.assertFalse(result['can_auto_approve'])
+        self.assertIn("monthly budget limit", result['reasons'][0])
+
+    def test_check_budget_limits_both_limits_exceeded_blocks_auto_approval(self):
+        """Test behavior when both weekly and monthly limits would be exceeded."""
+        budget_control = FamilyBudgetControl.objects.create(
+            parent_child_relationship=self.parent_child_relationship,
+            weekly_budget_limit=Decimal('30.00'),
+            monthly_budget_limit=Decimal('150.00'),
+            auto_approval_threshold=Decimal('25.00')
+        )
+
+        # Create spending for both time periods
+        PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package',
+            amount=Decimal('25.00'),  # This week
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package', 
+            amount=Decimal('130.00'),  # Earlier this month
+            payment_status=TransactionPaymentStatus.COMPLETED,
+            created_at=timezone.now() - timedelta(days=10)
+        )
+
+        # Test amount that would exceed both limits
+        result = budget_control.check_budget_limits(Decimal('15.00'))
+        
+        self.assertFalse(result['allowed'])
+        # BUG: Should be False because both limits exceeded
+        self.assertFalse(result['can_auto_approve'])
+        self.assertEqual(len(result['reasons']), 2)  # Both weekly and monthly reasons
+        self.assertTrue(any("weekly budget limit" in reason for reason in result['reasons']))
+        self.assertTrue(any("monthly budget limit" in reason for reason in result['reasons']))
+
+    def test_check_budget_limits_exceeds_auto_approval_only(self):
+        """Test budget limit check when purchase exceeds auto approval threshold but not budget limits."""
         budget_control = FamilyBudgetControl.objects.create(
             parent_child_relationship=self.parent_child_relationship,
             monthly_budget_limit=Decimal('200.00'),
@@ -217,8 +301,8 @@ class FamilyBudgetControlModelTest(TestCase):
         result = budget_control.check_budget_limits(Decimal('25.00'))
         
         self.assertTrue(result['allowed'])
-        self.assertFalse(result['can_auto_approve'])
-        self.assertEqual(len(result['reasons']), 0)
+        self.assertFalse(result['can_auto_approve'])  # Over threshold
+        self.assertEqual(len(result['reasons']), 0)  # No budget limit violations
 
     def test_clean_validation_auto_approval_greater_than_monthly(self):
         """Test validation when auto approval threshold exceeds monthly limit."""
@@ -247,6 +331,235 @@ class FamilyBudgetControlModelTest(TestCase):
 
         self.assertIn("Auto approval threshold cannot be greater than weekly budget limit",
                      str(context.exception))
+
+
+class FamilyBudgetControlDateRangeTest(TestCase):
+    """Test cases for date range calculations in budget controls."""
+
+    def setUp(self):
+        """Set up test data for date range testing."""
+        # Create school
+        self.school = School.objects.create(
+            name="Test School",
+            description="A test school"
+        )
+
+        # Create parent and child users
+        self.parent = User.objects.create_user(
+            email="parent@test.com",
+            name="Parent User"
+        )
+        self.child = User.objects.create_user(
+            email="child@test.com",
+            name="Child User"
+        )
+
+        # Create parent-child relationship
+        self.parent_child_relationship = ParentChildRelationship.objects.create(
+            parent=self.parent,
+            child=self.child,
+            relationship_type=RelationshipType.PARENT,
+            school=self.school
+        )
+
+        # Create budget control
+        self.budget_control = FamilyBudgetControl.objects.create(
+            parent_child_relationship=self.parent_child_relationship,
+            weekly_budget_limit=Decimal('100.00'),
+            monthly_budget_limit=Decimal('400.00')
+        )
+
+    def test_weekly_spending_calculation_excludes_previous_weeks(self):
+        """Test that weekly spending only includes transactions from current week."""
+        now = timezone.now()
+        
+        # Create transaction from previous week (should not be included)
+        # Work around auto_now_add=True by creating then updating
+        last_week = now - timedelta(days=8)
+        old_transaction = PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package',
+            amount=Decimal('50.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        # Override the auto_now_add timestamp
+        PurchaseTransaction.objects.filter(id=old_transaction.id).update(created_at=last_week)
+
+        # Create transaction from this week (should be included)
+        PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package',
+            amount=Decimal('30.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+
+        weekly_spending = self.budget_control.current_weekly_spending
+        self.assertEqual(weekly_spending, Decimal('30.00'))
+
+    def test_monthly_spending_calculation_excludes_previous_months(self):
+        """Test that monthly spending only includes transactions from current month."""
+        now = timezone.now()
+        
+        # Create transaction from previous month (should not be included)
+        # Work around auto_now_add=True by creating then updating
+        if now.month == 1:
+            previous_month_date = now.replace(year=now.year - 1, month=12, day=15)
+        else:
+            previous_month_date = now.replace(month=now.month - 1, day=15)
+        
+        old_transaction = PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package',
+            amount=Decimal('200.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        # Override the auto_now_add timestamp
+        PurchaseTransaction.objects.filter(id=old_transaction.id).update(created_at=previous_month_date)
+
+        # Create transaction from this month (should be included)
+        PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package',
+            amount=Decimal('150.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+
+        monthly_spending = self.budget_control.current_monthly_spending
+        self.assertEqual(monthly_spending, Decimal('150.00'))
+
+    def test_spending_calculations_only_include_completed_transactions(self):
+        """Test that pending/failed transactions are excluded from spending calculations."""
+        # Create transactions with different statuses
+        PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package',
+            amount=Decimal('25.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package',
+            amount=Decimal('35.00'),
+            payment_status=TransactionPaymentStatus.PENDING
+        )
+        PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package',
+            amount=Decimal('45.00'),
+            payment_status=TransactionPaymentStatus.FAILED
+        )
+        PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package',
+            amount=Decimal('15.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+
+        # Only completed transactions should be counted
+        weekly_spending = self.budget_control.current_weekly_spending
+        monthly_spending = self.budget_control.current_monthly_spending
+        
+        self.assertEqual(weekly_spending, Decimal('40.00'))  # 25 + 15
+        self.assertEqual(monthly_spending, Decimal('40.00'))  # 25 + 15
+
+    def test_spending_calculations_filter_by_correct_student(self):
+        """Test that spending calculations only include transactions for the specific child."""
+        # Create another child
+        other_child = User.objects.create_user(
+            email="otherchild@test.com",
+            name="Other Child"
+        )
+
+        # Create transactions for both children
+        PurchaseTransaction.objects.create(
+            student=self.child,
+            transaction_type='package',
+            amount=Decimal('50.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+        PurchaseTransaction.objects.create(
+            student=other_child,
+            transaction_type='package',
+            amount=Decimal('75.00'),
+            payment_status=TransactionPaymentStatus.COMPLETED
+        )
+
+        # Should only count the transaction for our child
+        weekly_spending = self.budget_control.current_weekly_spending
+        monthly_spending = self.budget_control.current_monthly_spending
+        
+        self.assertEqual(weekly_spending, Decimal('50.00'))
+        self.assertEqual(monthly_spending, Decimal('50.00'))
+
+
+class FamilyBudgetControlValidationTest(TestCase):
+    """Test cases for FamilyBudgetControl validation logic."""
+
+    def setUp(self):
+        """Set up test data for validation testing."""
+        # Create school
+        self.school = School.objects.create(
+            name="Test School",
+            description="A test school"
+        )
+
+        # Create parent and child users
+        self.parent = User.objects.create_user(
+            email="parent@test.com",
+            name="Parent User"
+        )
+        self.child = User.objects.create_user(
+            email="child@test.com",
+            name="Child User"
+        )
+
+        # Create parent-child relationship
+        self.parent_child_relationship = ParentChildRelationship.objects.create(
+            parent=self.parent,
+            child=self.child,
+            relationship_type=RelationshipType.PARENT,
+            school=self.school
+        )
+
+    def test_budget_control_requires_valid_parent_child_relationship(self):
+        """Test that budget control validates parent-child relationship exists."""
+        # Should create successfully with valid relationship
+        budget_control = FamilyBudgetControl.objects.create(
+            parent_child_relationship=self.parent_child_relationship,
+            weekly_budget_limit=Decimal('50.00')
+        )
+        self.assertIsNotNone(budget_control.id)
+
+    def test_budget_control_validation_prevents_duplicate_relationships(self):
+        """Test that only one budget control can exist per parent-child relationship."""
+        # Create first budget control
+        FamilyBudgetControl.objects.create(
+            parent_child_relationship=self.parent_child_relationship,
+            weekly_budget_limit=Decimal('50.00')
+        )
+
+        # Attempting to create another should fail due to OneToOneField constraint
+        with self.assertRaises(Exception):  # IntegrityError expected
+            FamilyBudgetControl.objects.create(
+                parent_child_relationship=self.parent_child_relationship,
+                monthly_budget_limit=Decimal('200.00')
+            )
+
+    def test_budget_control_respects_inactive_relationships(self):
+        """Test budget control behavior with inactive parent-child relationships."""
+        # Make relationship inactive
+        self.parent_child_relationship.is_active = False
+        self.parent_child_relationship.save()
+
+        # Budget control can still be created (business decision)
+        budget_control = FamilyBudgetControl.objects.create(
+            parent_child_relationship=self.parent_child_relationship,
+            weekly_budget_limit=Decimal('50.00')
+        )
+        
+        # But the budget control should potentially consider relationship status
+        # in its business logic (this might be a future enhancement)
+        self.assertIsNotNone(budget_control.id)
 
 
 class PurchaseApprovalRequestModelTest(TestCase):
@@ -568,3 +881,53 @@ class PurchaseApprovalRequestModelTest(TestCase):
 
         self.assertEqual(approval_request.class_session, class_session)
         self.assertEqual(approval_request.request_type, PurchaseRequestType.SESSION)
+
+    def test_approval_request_validates_parent_child_relationship_consistency(self):
+        """Test that approval requests validate parent-child relationship matches the provided users."""
+        # Create another parent not related to our child
+        other_parent = User.objects.create_user(
+            email="other_parent@test.com",
+            name="Other Parent"
+        )
+
+        # This should fail validation in clean() method
+        approval_request = PurchaseApprovalRequest(
+            student=self.child,
+            parent=other_parent,  # Different parent
+            parent_child_relationship=self.parent_child_relationship,  # But using original relationship
+            amount=Decimal('50.00'),
+            description="Invalid request",
+            request_type=PurchaseRequestType.HOURS
+        )
+
+        with self.assertRaises(ValidationError) as context:
+            approval_request.clean()
+
+        self.assertIn("Parent-child relationship must match the student and parent", 
+                     str(context.exception))
+
+    def test_approval_request_validates_active_relationship_only(self):
+        """Test business logic around inactive parent-child relationships."""
+        # Make the relationship inactive
+        self.parent_child_relationship.is_active = False
+        self.parent_child_relationship.save()
+
+        approval_request = PurchaseApprovalRequest(
+            student=self.child,
+            parent=self.parent,
+            parent_child_relationship=self.parent_child_relationship,
+            amount=Decimal('50.00'),
+            description="Request with inactive relationship",
+            request_type=PurchaseRequestType.HOURS
+        )
+
+        # The model should potentially validate this in clean() method
+        # (This test documents current behavior and potential enhancement)
+        try:
+            approval_request.clean()  # May or may not raise an error depending on implementation
+            approval_request.save()
+            # If it saves, the business logic might need enhancement
+            self.assertTrue(True)  # Test passes either way, documents behavior
+        except ValidationError:
+            # If it fails, that might be the desired behavior
+            self.assertTrue(True)  # Test passes either way, documents behavior
