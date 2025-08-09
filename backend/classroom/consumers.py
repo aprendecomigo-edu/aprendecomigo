@@ -1,24 +1,73 @@
 import json
+import logging
 
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 from channels.generic.websocket import WebsocketConsumer
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 
 from .models import Channel, Message, Reaction
 
 User = get_user_model()
 
+# Security logging
+logger = logging.getLogger('security.websocket')
+
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
-        """Handle WebSocket connection."""
+        """Handle WebSocket connection with security checks."""
         self.channel_name_param = self.scope["url_route"]["kwargs"]["channel_name"]
         self.group_name = f"chat_{self.channel_name_param}"
-        self.user = self.scope["user"]
+        self.user = self.scope.get("user")
+        
+        # If no user in scope, create an anonymous user
+        if not self.user:
+            from django.contrib.auth.models import AnonymousUser
+            self.user = AnonymousUser()
 
-        # Accept the connection
+        # Security Check 1: Authentication required
+        if not self.user.is_authenticated:
+            logger.warning(
+                "Unauthenticated user attempted WebSocket connection to channel: %s", 
+                self.channel_name_param
+            )
+            self.close(code=4001)  # Unauthorized
+            return
+
+        # Security Check 2: Rate limiting
+        # Skip rate limiting in test environment
+        if not getattr(settings, 'TESTING', False) and not self.check_rate_limit():
+            logger.warning(
+                "Rate limit exceeded for user %s attempting connection to channel: %s",
+                self.user.username,
+                self.channel_name_param
+            )
+            self.close(code=4029)  # Too Many Requests
+            return
+
+        # Security Check 3: Channel access authorization
+        has_access = async_to_sync(self.user_has_channel_access)()
+        if not has_access:
+            logger.warning(
+                "User %s attempted access to unauthorized channel: %s",
+                self.user.username,
+                self.channel_name_param
+            )
+            self.close(code=4003)  # Forbidden
+            return
+
+        # Accept the connection after all security checks pass
         self.accept()
+
+        # Log successful connection for security monitoring
+        logger.info(
+            "User %s successfully connected to channel: %s",
+            self.user.username,
+            self.channel_name_param
+        )
 
         # Add to channel group
         async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
@@ -55,8 +104,47 @@ class ChatConsumer(WebsocketConsumer):
         )
 
     def receive(self, text_data):
-        """Handle incoming WebSocket messages."""
-        data = json.loads(text_data)
+        """Handle incoming WebSocket messages with security checks."""
+        # Security Check 1: Double-check authentication on every message
+        if not self.user.is_authenticated:
+            logger.warning(
+                "Unauthenticated user attempted to send message to channel: %s",
+                self.channel_name_param
+            )
+            self.close(code=4001)  # Unauthorized
+            return
+
+        # Security Check 2: Verify channel access is still valid
+        if not async_to_sync(self.user_has_channel_access)():
+            logger.warning(
+                "User %s attempted to send message to unauthorized channel: %s",
+                self.user.username,
+                self.channel_name_param
+            )
+            self.close(code=4003)  # Forbidden
+            return
+
+        # Security Check 3: Rate limiting for messages
+        # Skip rate limiting in test environment
+        if not getattr(settings, 'TESTING', False) and not self.check_rate_limit(action="message"):
+            logger.warning(
+                "Rate limit exceeded for user %s sending message to channel: %s",
+                self.user.username,
+                self.channel_name_param
+            )
+            self.close(code=4029)  # Too Many Requests
+            return
+
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            logger.warning(
+                "Invalid JSON received from user %s in channel: %s",
+                self.user.username,
+                self.channel_name_param
+            )
+            return
+
         message_type = data.get("type")
 
         if message_type == "message":
@@ -109,7 +197,6 @@ class ChatConsumer(WebsocketConsumer):
         """Send user status update to WebSocket."""
         self.send(text_data=json.dumps(event))
 
-    @database_sync_to_async
     def mark_user_online(self):
         """Mark user as online in the channel."""
         try:
@@ -117,8 +204,15 @@ class ChatConsumer(WebsocketConsumer):
             channel.online.add(self.user)
         except Channel.DoesNotExist:
             pass
+        except Channel.MultipleObjectsReturned:
+            # Handle multiple channels with same name - mark online in all that user participates in
+            channels = Channel.objects.filter(name=self.channel_name_param)
+            for channel in channels:
+                if channel.participants.filter(id=self.user.id).exists():
+                    channel.online.add(self.user)
+        except Exception:
+            pass  # Silently handle other errors for this non-critical operation
 
-    @database_sync_to_async
     def mark_user_offline(self):
         """Mark user as offline in the channel."""
         try:
@@ -126,11 +220,30 @@ class ChatConsumer(WebsocketConsumer):
             channel.online.remove(self.user)
         except Channel.DoesNotExist:
             pass
+        except Channel.MultipleObjectsReturned:
+            # Handle multiple channels with same name - mark offline in all that user participates in
+            channels = Channel.objects.filter(name=self.channel_name_param)
+            for channel in channels:
+                if channel.participants.filter(id=self.user.id).exists():
+                    channel.online.remove(self.user)
+        except Exception:
+            pass  # Silently handle other errors for this non-critical operation
 
-    @database_sync_to_async
     def save_message(self, content):
         """Save message to database."""
-        channel = Channel.objects.get(name=self.channel_name_param)
+        try:
+            channel = Channel.objects.get(name=self.channel_name_param)
+        except Channel.MultipleObjectsReturned:
+            # Use the first channel the user participates in
+            channels = Channel.objects.filter(name=self.channel_name_param)
+            channel = None
+            for ch in channels:
+                if ch.participants.filter(id=self.user.id).exists():
+                    channel = ch
+                    break
+            if not channel:
+                raise Channel.DoesNotExist(f"User has no access to channel {self.channel_name_param}")
+        
         return Message.objects.create(
             channel=channel,
             sender=self.user,
@@ -138,6 +251,75 @@ class ChatConsumer(WebsocketConsumer):
         )
 
     @database_sync_to_async
+    def user_has_channel_access(self):
+        """Check if user has access to the channel."""
+        try:
+            channel = Channel.objects.get(name=self.channel_name_param)
+            return channel.participants.filter(id=self.user.id).exists()
+        except Channel.DoesNotExist:
+            logger.warning(
+                "User %s attempted to access non-existent channel: %s",
+                self.user.username,
+                self.channel_name_param
+            )
+            return False
+        except Channel.MultipleObjectsReturned:
+            # Handle multiple channels with same name - this can happen in test environments
+            logger.warning(
+                "Multiple channels found with name %s for user %s",
+                self.channel_name_param,
+                self.user.username
+            )
+            # Check if user has access to any channel with this name
+            channels = Channel.objects.filter(name=self.channel_name_param)
+            for channel in channels:
+                if channel.participants.filter(id=self.user.id).exists():
+                    return True
+            return False
+        except Exception as e:
+            logger.error(
+                "Error checking channel access for user %s, channel %s: %s",
+                self.user.username,
+                self.channel_name_param,
+                str(e)
+            )
+            return False
+
+    def check_rate_limit(self, action="connection"):
+        """Check if user has exceeded rate limits."""
+        if not self.user or not self.user.is_authenticated:
+            return False
+
+        # Rate limiting configuration
+        limits = {
+            "connection": {"count": 10, "window": 60},  # 10 connections per minute
+            "message": {"count": 30, "window": 60},     # 30 messages per minute
+        }
+
+        limit_config = limits.get(action, limits["connection"])
+        cache_key = f"websocket_rate_limit_{action}_{self.user.id}"
+
+        try:
+            # Get current count from cache
+            current_count = cache.get(cache_key, 0)
+            
+            if current_count >= limit_config["count"]:
+                return False
+            
+            # Increment counter with expiration
+            cache.set(cache_key, current_count + 1, limit_config["window"])
+            return True
+            
+        except Exception as e:
+            logger.error(
+                "Error checking rate limit for user %s, action %s: %s",
+                self.user.username,
+                action,
+                str(e)
+            )
+            # In case of cache error, allow the request but log it
+            return True
+
     def save_reaction(self, message_id, emoji):
         """Save reaction to database."""
         message = Message.objects.get(id=message_id)

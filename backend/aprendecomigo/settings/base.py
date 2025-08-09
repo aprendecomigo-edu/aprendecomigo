@@ -616,6 +616,11 @@ LOGGING = {
             'level': 'WARNING',
             'propagate': False,
         },
+        'security.websocket': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
         
         # Performance monitoring
         'performance': {

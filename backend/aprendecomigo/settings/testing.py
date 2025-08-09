@@ -19,6 +19,9 @@ SECRET_KEY = "django-insecure-test-key-not-used-in-production"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True  # String to boolean conversion for mypy
 
+# Testing flag to skip rate limiting and other production-only security measures
+TESTING = True
+
 # Override settings for tests - Use in-memory database for fastest execution
 DATABASES = {
     "default": {
@@ -275,6 +278,11 @@ LOGGING = {
             'propagate': False,
         },
         'security.auth_failures': {
+            'handlers': ['memory'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'security.websocket': {
             'handlers': ['memory'],
             'level': 'WARNING',
             'propagate': False,
