@@ -20,9 +20,11 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
+from django.contrib.auth import get_user_model
 
-from accounts.models import CustomUser
 from ..models import PricingPlan, PlanType
+
+User = get_user_model()
 
 
 class PricingPlanModelTestCase(TestCase):
@@ -140,7 +142,7 @@ class PricingPlanAPITestCase(APITestCase):
     def setUp(self):
         """Set up test data for API tests."""
         # Create a test user
-        self.user = CustomUser.objects.create_user(
+        self.user = User.objects.create_user(
             email="test@example.com",
             name="Test User",
             password="testpass123"

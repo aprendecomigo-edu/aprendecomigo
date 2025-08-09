@@ -10,8 +10,9 @@ from datetime import timedelta
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
-from accounts.models import CustomUser, School, ParentChildRelationship, RelationshipType, TeacherProfile
+from accounts.models import School, ParentChildRelationship, RelationshipType, TeacherProfile
 from finances.models import (
     FamilyBudgetControl,
     PurchaseApprovalRequest,
@@ -24,6 +25,8 @@ from finances.models import (
     SessionType,
     PlanType,
 )
+
+User = get_user_model()
 
 
 class FamilyBudgetControlModelTest(TestCase):
@@ -38,11 +41,11 @@ class FamilyBudgetControlModelTest(TestCase):
         )
 
         # Create parent and child users
-        self.parent = CustomUser.objects.create_user(
+        self.parent = User.objects.create_user(
             email="parent@test.com",
             name="Parent User"
         )
-        self.child = CustomUser.objects.create_user(
+        self.child = User.objects.create_user(
             email="child@test.com",
             name="Child User"
         )
@@ -258,11 +261,11 @@ class PurchaseApprovalRequestModelTest(TestCase):
         )
 
         # Create parent and child users
-        self.parent = CustomUser.objects.create_user(
+        self.parent = User.objects.create_user(
             email="parent@test.com",
             name="Parent User"
         )
-        self.child = CustomUser.objects.create_user(
+        self.child = User.objects.create_user(
             email="child@test.com",
             name="Child User"
         )
@@ -511,7 +514,7 @@ class PurchaseApprovalRequestModelTest(TestCase):
     def test_clean_validation_mismatched_relationship(self):
         """Test validation that parent-child relationship matches users."""
         # Create another parent
-        other_parent = CustomUser.objects.create_user(
+        other_parent = User.objects.create_user(
             email="other_parent@test.com",
             name="Other Parent"
         )
@@ -534,7 +537,7 @@ class PurchaseApprovalRequestModelTest(TestCase):
     def test_approval_request_with_class_session(self):
         """Test creating approval request for a class session."""
         # Create teacher profile
-        teacher_user = CustomUser.objects.create_user(
+        teacher_user = User.objects.create_user(
             email="teacher@test.com",
             name="Teacher User"
         )

@@ -2972,3 +2972,254 @@ class FamilyMetricsView(APIView):
                 {'error': 'An error occurred while loading family metrics'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class PackageExpirationViewSet(viewsets.GenericViewSet):
+    """
+    ViewSet for package expiration management endpoints.
+    
+    Provides API endpoints for:
+    - Getting expired packages
+    - Getting expiration analytics  
+    - Extending package expiration
+    - Processing expired packages
+    - Sending expiration notifications
+    
+    Following GitHub Issue #167: Package Expiration Management API Endpoints
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        """Admin-only permissions for all actions."""
+        from rest_framework.permissions import IsAdminUser
+        return [IsAdminUser()]
+    
+    @action(detail=False, methods=['get'], url_path='expired')
+    def get_expired_packages(self, request):
+        """Get all expired packages."""
+        from .services.package_expiration_service import PackageExpirationService
+        from .serializers import PurchaseHistorySerializer
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        student_email = request.GET.get('student_email')
+        
+        try:
+            if student_email:
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                try:
+                    student = User.objects.get(email=student_email)
+                    expired_packages = PackageExpirationService.get_expired_packages_for_student(student)
+                except User.DoesNotExist:
+                    return Response(
+                        {'error': f'Student with email {student_email} not found'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            else:
+                expired_packages = PackageExpirationService.get_expired_packages()
+            
+            serializer = PurchaseHistorySerializer(expired_packages, many=True)
+            
+            return Response({
+                'expired_packages': serializer.data,
+                'count': len(expired_packages)
+            })
+            
+        except Exception as e:
+            logger.error(f"Error getting expired packages: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while retrieving expired packages'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'], url_path='analytics') 
+    def get_expiration_analytics(self, request):
+        """Get expiration analytics."""
+        from .services.package_expiration_service import PackageExpirationService
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # Create basic analytics from available methods
+            expired_packages = PackageExpirationService.get_expired_packages()
+            expiring_soon = PackageExpirationService.get_packages_expiring_soon(days_ahead=7)
+            
+            analytics = {
+                'total_packages': PurchaseTransaction.objects.filter(
+                    transaction_type=TransactionType.PACKAGE,
+                    payment_status=TransactionPaymentStatus.COMPLETED
+                ).count(),
+                'expired_packages': len(expired_packages),
+                'expiring_soon': len(expiring_soon),
+                'expired_package_ids': [p.id for p in expired_packages[:10]],  # Limit for response size
+                'expiring_soon_ids': [p.id for p in expiring_soon[:10]]
+            }
+            
+            return Response({
+                'summary': analytics,
+                'generated_at': timezone.now().isoformat()
+            })
+            
+        except Exception as e:
+            logger.error(f"Error getting expiration analytics: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while generating analytics'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'], url_path='extend')
+    def extend_package(self, request):
+        """Extend package expiration.""" 
+        from .services.package_expiration_service import PackageExpirationService
+        from .models import PurchaseTransaction
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        package_id = request.data.get('package_id')
+        if not package_id:
+            return Response(
+                {'error': 'package_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            package = PurchaseTransaction.objects.get(id=package_id)
+            
+            extension_days = request.data.get('extension_days')
+            if not extension_days:
+                return Response(
+                    {'error': 'extension_days is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            reason = request.data.get('reason', '')
+            extend_from_now = request.data.get('extend_from_now', False)
+            
+            result = PackageExpirationService.extend_package_expiration(
+                package=package,
+                extension_days=int(extension_days),
+                reason=reason,
+                extend_from_now=extend_from_now
+            )
+            
+            if result.success:
+                return Response({
+                    'success': True,
+                    'message': result.audit_log,
+                    'new_expiry_date': result.new_expiry.isoformat() if result.new_expiry else None
+                })
+            else:
+                return Response(
+                    {'error': result.error_message or 'Extension failed'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+        except PurchaseTransaction.DoesNotExist:
+            return Response(
+                {'error': f'Package with ID {package_id} not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error extending package {package_id}: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while extending the package'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'], url_path='process-expired')
+    def process_expired_packages(self, request):
+        """Process expired packages."""
+        from .services.package_expiration_service import PackageExpirationService
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        grace_hours = int(request.data.get('grace_hours', 24))
+        student_email = request.data.get('student_email')
+        
+        try:
+            if student_email:
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                try:
+                    student = User.objects.get(email=student_email)
+                    expired_packages = PackageExpirationService.get_expired_packages_for_student(student)
+                    results = []
+                    for package in expired_packages:
+                        result = PackageExpirationService.process_expired_package(package)
+                        results.append(result)
+                    processed_count = len([r for r in results if r.success])
+                except User.DoesNotExist:
+                    return Response(
+                        {'error': f'Student with email {student_email} not found'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            else:
+                results = PackageExpirationService.process_bulk_expiration(grace_hours=grace_hours)
+                processed_count = len([r for r in results if r.success])
+            
+            return Response({
+                'processed_count': processed_count,
+                'success': True,
+                'message': f'Successfully processed {processed_count} expired packages'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error processing expired packages: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while processing expired packages'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'], url_path='send-notifications')
+    def send_expiration_notifications(self, request):
+        """Send expiration notifications."""
+        from .services.package_expiration_service import PackageExpirationService
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        days_ahead = int(request.data.get('days_ahead', 7))
+        student_email = request.data.get('student_email')
+        
+        try:
+            if student_email:
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                try:
+                    student = User.objects.get(email=student_email)
+                    packages = PackageExpirationService.get_packages_expiring_soon(days_ahead=days_ahead)
+                    student_packages = [p for p in packages if p.student == student]
+                    notifications_sent = 0
+                    for package in student_packages:
+                        result = PackageExpirationService.send_expiration_warning(
+                            package=package,
+                            days_until_expiry=days_ahead
+                        )
+                        if result.success:
+                            notifications_sent += 1
+                except User.DoesNotExist:
+                    return Response(
+                        {'error': f'Student with email {student_email} not found'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            else:
+                packages = PackageExpirationService.get_packages_expiring_soon(days_ahead=days_ahead)
+                results = PackageExpirationService.send_batch_expiration_warnings(
+                    packages=packages,
+                    days_until_expiry=days_ahead
+                )
+                notifications_sent = len([r for r in results if r.success])
+            
+            return Response({
+                'notifications_sent': notifications_sent,
+                'success': True,
+                'message': f'Successfully sent {notifications_sent} expiration notifications'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error sending expiration notifications: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while sending notifications'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

@@ -7,6 +7,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
 if TYPE_CHECKING:
     from accounts.models import CustomUser
@@ -1960,7 +1961,7 @@ class DisputeStatus(models.TextChoices):
     UNDER_REVIEW = "under_review", _("Under Review")
     CHARGE_REFUNDED = "charge_refunded", _("Charge Refunded")
     WON = "won", _("Won")
-    LOST = "lost", _("Lost")
+    LOST = "lost"
 
 
 class DisputeReason(models.TextChoices):

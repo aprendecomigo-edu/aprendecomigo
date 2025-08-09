@@ -6,6 +6,17 @@ import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
+from django.apps import apps
+
+
+# Conditional dependencies for optional apps
+def get_optional_dependencies():
+    optional_deps = []
+    if apps.is_installed('classroom'):
+        optional_deps.append(('classroom', '0001_initial'))
+    if apps.is_installed('accounts'):
+        optional_deps.append(('accounts', '0001_initial'))
+    return optional_deps
 
 
 class Migration(migrations.Migration):
@@ -13,8 +24,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('accounts', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        *get_optional_dependencies(),
     ]
 
     operations = [

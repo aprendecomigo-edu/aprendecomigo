@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.apps import apps
 from django.db import models
 from django.utils.html import format_html
 from django.utils import timezone
@@ -1479,3 +1480,14 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
             "pricing_plan",
             "class_session"
         )
+
+
+# Register admin for related models from other apps in AppConfig.ready()
+Payment = apps.get_model('finances', 'Payment')
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'amount', 'status', 'created_at']
+    
+    def get_queryset(self, request):
+        # Use select_related with string references
+        return super().get_queryset(request).select_related('user', 'lesson')

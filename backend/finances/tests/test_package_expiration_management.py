@@ -25,7 +25,7 @@ from django.core.management import call_command
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
-from accounts.models import CustomUser, School
+from accounts.models import School
 from finances.models import (
     PurchaseTransaction,
     StudentAccountBalance,
@@ -938,7 +938,7 @@ class AdminAPIEndpointsTests(TestCase):
         client = APIClient()
         client.force_authenticate(user=self.admin_user)
         
-        response = client.get('/api/finances/api/admin/expired-packages/')
+        response = client.get('/api/finances/admin/expired-packages/')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreater(len(response.data), 0)
@@ -961,7 +961,7 @@ class AdminAPIEndpointsTests(TestCase):
         client = APIClient()
         client.force_authenticate(user=self.admin_user)
         
-        response = client.post('/api/finances/api/admin/process-expired-packages/')
+        response = client.post('/api/finances/admin/process-expired-packages/')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('processed_count', response.data)
@@ -988,7 +988,7 @@ class AdminAPIEndpointsTests(TestCase):
             'reason': 'Customer service extension'
         }
         
-        response = client.post(f'/api/finances/api/admin/packages/{package.id}/extend/', data)
+        response = client.post(f'/api/finances/admin/packages/{package.id}/extend/', data)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data['success'])
@@ -1011,7 +1011,7 @@ class AdminAPIEndpointsTests(TestCase):
         client = APIClient()
         client.force_authenticate(user=self.admin_user)
         
-        response = client.get('/api/finances/api/admin/expiration-analytics/')
+        response = client.get('/api/finances/admin/expiration-analytics/')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('summary', response.data)
@@ -1042,7 +1042,7 @@ class AdminAPIEndpointsTests(TestCase):
         with patch('finances.services.package_expiration_service.send_mail') as mock_send_mail:
             mock_send_mail.return_value = True
             
-            response = client.post('/api/finances/api/admin/send-expiration-notifications/', data)
+            response = client.post('/api/finances/admin/send-expiration-notifications/', data)
             
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertIn('notifications_sent', response.data)
@@ -1055,13 +1055,13 @@ class AdminAPIEndpointsTests(TestCase):
         client = APIClient()
         # No authentication
         
-        response = client.get('/api/finances/api/admin/expired-packages/')
+        response = client.get('/api/finances/admin/expired-packages/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         
         # Authenticate as regular student
         client.force_authenticate(user=self.student)
         
-        response = client.get('/api/finances/api/admin/expired-packages/')
+        response = client.get('/api/finances/admin/expired-packages/')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 

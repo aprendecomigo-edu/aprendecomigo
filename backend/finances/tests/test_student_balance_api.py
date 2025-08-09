@@ -9,7 +9,8 @@ import json
 from decimal import Decimal
 from unittest.mock import patch
 
-from accounts.models import CustomUser, School, TeacherProfile
+from django.contrib.auth import get_user_model
+from accounts.models import School, TeacherProfile
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -27,6 +28,8 @@ from ..models import (
     TransactionType,
 )
 
+User = get_user_model()
+
 
 class StudentBalanceAPITestCase(TestCase):
     """Base test case with common setup for student balance API tests."""
@@ -41,19 +44,19 @@ class StudentBalanceAPITestCase(TestCase):
         )
 
         # Create test users
-        self.student_user = CustomUser.objects.create_user(
+        self.student_user = User.objects.create_user(
             email="student@example.com",
             name="Test Student",
             password="testpass123"
         )
 
-        self.other_student = CustomUser.objects.create_user(
+        self.other_student = User.objects.create_user(
             email="other@example.com",
             name="Other Student",
             password="testpass123"
         )
 
-        self.admin_user = CustomUser.objects.create_user(
+        self.admin_user = User.objects.create_user(
             email="admin@example.com",
             name="Admin User",
             password="testpass123",
@@ -61,7 +64,7 @@ class StudentBalanceAPITestCase(TestCase):
         )
 
         # Create teacher user and profile
-        self.teacher_user = CustomUser.objects.create_user(
+        self.teacher_user = User.objects.create_user(
             email="teacher@example.com",
             name="Test Teacher",
             password="testpass123"
@@ -248,7 +251,7 @@ class StudentBalanceSummaryAPITests(StudentBalanceAPITestCase):
     def test_get_student_balance_no_balance_record(self):
         """Test response when student has no balance record."""
         # Create user without balance record
-        new_student = CustomUser.objects.create_user(
+        new_student = User.objects.create_user(
             email="newstudent@example.com",
             name="New Student",
             password="testpass123"
@@ -697,7 +700,7 @@ class StudentBalanceDataIntegrityTests(StudentBalanceAPITestCase):
     def test_empty_consumption_history(self):
         """Test handling when student has no consumption history."""
         # Create new student with purchases but no consumption
-        new_student = CustomUser.objects.create_user(
+        new_student = User.objects.create_user(
             email="noconsumption@example.com",
             name="No Consumption Student",
             password="testpass123"

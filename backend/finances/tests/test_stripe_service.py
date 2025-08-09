@@ -14,7 +14,10 @@ from django.conf import settings
 from django.test import TestCase, override_settings
 
 from finances.services.stripe_base import StripeService
-from accounts.models import CustomUser
+from django.contrib.auth import get_user_model
+from accounts.models import School
+
+User = get_user_model()
 
 
 class StripeServiceConfigurationTests(TestCase):

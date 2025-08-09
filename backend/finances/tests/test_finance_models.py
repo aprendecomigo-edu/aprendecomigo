@@ -2,9 +2,12 @@ from datetime import date, time, timedelta
 from decimal import Decimal
 
 from django.apps import apps
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
+
+User = get_user_model()
 
 from ..models import (
     ClassSession,
@@ -19,6 +22,7 @@ from ..models import (
     TransactionType,
     TrialCostAbsorption,
 )
+from ..services.payment_services import TeacherPaymentCalculator
 
 
 class TeacherPaymentCalculatorTestCase(TestCase):
@@ -35,7 +39,7 @@ class TeacherPaymentCalculatorTestCase(TestCase):
         self.school = School.objects.create(name="Test School", description="A test school")
 
         # Create user and teacher profile
-        self.user = CustomUser.objects.create_user(
+        self.user = User.objects.create_user(
             email="teacher.a@example.com", name="Teacher A", password="testpass123"
         )
         self.teacher = TeacherProfile.objects.create(
@@ -391,6 +395,7 @@ class SchoolBillingSettingsTestCase(TestCase):
 
     def test_payment_day_validation(self):
         """Test validation of payment day of month."""
+        School = apps.get_model('accounts', 'School')
         school = School.objects.create(name="Test School")
 
         # Valid payment day
@@ -417,7 +422,7 @@ class StudentAccountBalanceTestCase(TestCase):
     def setUp(self):
         """Set up test data for student account balance tests."""
         # Create a test user
-        self.user = CustomUser.objects.create_user(
+        self.user = User.objects.create_user(
             email="student@example.com", 
             name="Test Student", 
             password="testpass123"
@@ -526,7 +531,7 @@ class StudentAccountBalanceTestCase(TestCase):
 
     def test_multiple_users_can_have_accounts(self):
         """Test that multiple users can each have their own account balance."""
-        user2 = CustomUser.objects.create_user(
+        user2 = User.objects.create_user(
             email="student2@example.com",
             name="Student Two",
             password="testpass123"
@@ -577,7 +582,7 @@ class PurchaseTransactionTestCase(TestCase):
     def setUp(self):
         """Set up test data for purchase transaction tests."""
         # Create a test user with student account balance
-        self.user = CustomUser.objects.create_user(
+        self.user = User.objects.create_user(
             email="student@example.com", 
             name="Test Student", 
             password="testpass123"
@@ -804,7 +809,7 @@ class PurchaseTransactionTestCase(TestCase):
     def test_multiple_students_can_have_transactions(self):
         """Test that multiple students can each have their own transactions."""
         
-        user2 = CustomUser.objects.create_user(
+        user2 = User.objects.create_user(
             email="student2@example.com",
             name="Student Two",
             password="testpass123"
@@ -838,7 +843,7 @@ class BusinessLogicValidationTests(TestCase):
         CustomUser = apps.get_model('accounts', 'CustomUser')
         School = apps.get_model('accounts', 'School')
         
-        self.user = CustomUser.objects.create_user(
+        self.user = User.objects.create_user(
             email="student@test.com", 
             name="Test Student", 
             password="testpass123"
@@ -898,7 +903,7 @@ class BusinessLogicValidationTests(TestCase):
         TeacherProfile = apps.get_model('accounts', 'TeacherProfile')
         
         # Create teacher
-        teacher_user = CustomUser.objects.create_user(
+        teacher_user = User.objects.create_user(
             email="teacher@test.com",
             name="Test Teacher"
         )
@@ -999,7 +1004,7 @@ class BusinessLogicValidationTests(TestCase):
         CustomUser = apps.get_model('accounts', 'CustomUser')
         TeacherProfile = apps.get_model('accounts', 'TeacherProfile')
         
-        teacher_user = CustomUser.objects.create_user(
+        teacher_user = User.objects.create_user(
             email="teacher@test.com",
             name="Test Teacher"
         )

@@ -11,6 +11,7 @@ from .views import (
     ClassSessionViewSet,
     FamilyBudgetControlViewSet,
     FamilyMetricsView,
+    PackageExpirationViewSet,
     ParentApprovalDashboardView,
     PurchaseApprovalRequestViewSet,
     SchoolBillingSettingsViewSet,
@@ -76,6 +77,9 @@ router.register(r"studentbalance", StudentBalanceViewSet, basename="studentbalan
 # Parent-child approval system viewsets (Issues #111 & #112)
 router.register(r"budget-controls", FamilyBudgetControlViewSet, basename="familybudgetcontrol")
 router.register(r"approval-requests", PurchaseApprovalRequestViewSet, basename="purchaseapprovalrequest")
+
+# Package expiration management viewset (Issue #167)
+router.register(r'package-expiration', PackageExpirationViewSet, basename='package-expiration')
 
 # URL patterns
 urlpatterns = [

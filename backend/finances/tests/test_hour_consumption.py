@@ -13,6 +13,10 @@ from datetime import datetime, time, date
 
 # Cross-app models will be loaded at runtime using apps.get_model()
 from django.apps import apps
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 from finances.models import (
     ClassSession, 
     StudentAccountBalance, 
@@ -30,6 +34,10 @@ class HourConsumptionModelTest(TestCase):
 
     def setUp(self):
         """Set up test data for each test method."""
+        # Get models from accounts app
+        School = apps.get_model('accounts', 'School')
+        TeacherProfile = apps.get_model('accounts', 'TeacherProfile')
+        
         # Create school
         self.school = School.objects.create(
             name="Test School",
@@ -38,14 +46,14 @@ class HourConsumptionModelTest(TestCase):
         )
         
         # Create student user
-        self.student = CustomUser.objects.create_user(
+        self.student = User.objects.create_user(
             email="student@test.com",
             username="student1",
             name="Test Student"
         )
         
         # Create teacher user and profile
-        self.teacher_user = CustomUser.objects.create_user(
+        self.teacher_user = User.objects.create_user(
             email="teacher@test.com",
             username="teacher1",
             name="Test Teacher"
@@ -248,6 +256,10 @@ class HourConsumptionIntegrationTest(TestCase):
 
     def setUp(self):
         """Set up test data for integration tests."""
+        # Get models from accounts app
+        School = apps.get_model('accounts', 'School')
+        TeacherProfile = apps.get_model('accounts', 'TeacherProfile')
+        
         # Create school
         self.school = School.objects.create(
             name="Integration Test School",
@@ -255,14 +267,14 @@ class HourConsumptionIntegrationTest(TestCase):
         )
         
         # Create student
-        self.student = CustomUser.objects.create_user(
+        self.student = User.objects.create_user(
             email="student@integration.com",
             username="student_int",
             name="Integration Student"
         )
         
         # Create teacher
-        self.teacher_user = CustomUser.objects.create_user(
+        self.teacher_user = User.objects.create_user(
             email="teacher@integration.com",
             username="teacher_int",
             name="Integration Teacher"

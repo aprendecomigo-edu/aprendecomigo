@@ -19,7 +19,8 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from accounts.models import CustomUser
+from django.contrib.auth import get_user_model
+from accounts.models import School
 from finances.models import (
     StoredPaymentMethod,
     PurchaseTransaction,
@@ -40,13 +41,13 @@ class SavedPaymentMethodAPITests(TestCase):
         self.client = APIClient()
         
         # Create test student user
-        self.student = CustomUser.objects.create_user(
+        self.student = User.objects.create_user(
             email='student@test.com',
             name='Test Student'
         )
         
         # Create another student for cross-user security tests
-        self.other_student = CustomUser.objects.create_user(
+        self.other_student = User.objects.create_user(
             email='other@test.com',
             name='Other Student'
         )
@@ -243,7 +244,7 @@ class RenewalPaymentAPITests(TestCase):
         self.client = APIClient()
         
         # Create test student user
-        self.student = CustomUser.objects.create_user(
+        self.student = User.objects.create_user(
             email='student@test.com',
             name='Test Student'
         )
@@ -372,7 +373,7 @@ class RenewalPaymentAPITests(TestCase):
     def test_renew_subscription_cross_user_security(self):
         """Test that users cannot renew other users' subscriptions."""
         # Create another user's transaction
-        other_user = CustomUser.objects.create_user(
+        other_user = User.objects.create_user(
             email='other@test.com',
             name='Other User'
         )
@@ -498,12 +499,12 @@ class RenewalPaymentSecurityAPITests(TestCase):
         self.client = APIClient()
         
         # Create test users
-        self.student1 = CustomUser.objects.create_user(
+        self.student1 = User.objects.create_user(
             email='student1@test.com',
             name='Student One'
         )
         
-        self.student2 = CustomUser.objects.create_user(
+        self.student2 = User.objects.create_user(
             email='student2@test.com',
             name='Student Two'
         )

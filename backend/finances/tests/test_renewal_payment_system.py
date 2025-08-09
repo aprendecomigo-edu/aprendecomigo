@@ -18,7 +18,8 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
-from accounts.models import CustomUser
+from django.contrib.auth import get_user_model
+from accounts.models import School
 from finances.models import (
     StoredPaymentMethod,
     PurchaseTransaction,
@@ -29,13 +30,15 @@ from finances.models import (
 from finances.services.payment_method_service import PaymentMethodService
 from finances.services.renewal_payment_service import RenewalPaymentService
 
+User = get_user_model()
+
 
 class StoredPaymentMethodModelTests(TestCase):
     """Test suite for StoredPaymentMethod model enhancements."""
 
     def setUp(self):
         """Set up test data."""
-        self.student = CustomUser.objects.create_user(
+        self.student = User.objects.create_user(
             email='student@test.com',
             name='Test Student',
         )
@@ -134,7 +137,7 @@ class StoredPaymentMethodModelTests(TestCase):
         StoredPaymentMethod.objects.create(**self.payment_method_data)
         
         # Create another student
-        another_student = CustomUser.objects.create_user(
+        another_student = User.objects.create_user(
             email='another@test.com',
             name='Another Student',
         )
@@ -186,7 +189,7 @@ class PaymentMethodServiceTests(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.student = CustomUser.objects.create_user(
+        self.student = User.objects.create_user(
             email='student@test.com',
             name='Test Student',
         )
@@ -356,7 +359,7 @@ class RenewalPaymentServiceTests(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.student = CustomUser.objects.create_user(
+        self.student = User.objects.create_user(
             email='student@test.com',
             name='Test Student',
         )
@@ -559,12 +562,12 @@ class RenewalPaymentSecurityTests(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.student1 = CustomUser.objects.create_user(
+        self.student1 = User.objects.create_user(
             email='student1@test.com',
             name='Student One',
         )
         
-        self.student2 = CustomUser.objects.create_user(
+        self.student2 = User.objects.create_user(
             email='student2@test.com',
             name='Student Two',
         )

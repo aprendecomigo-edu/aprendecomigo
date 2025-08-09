@@ -15,8 +15,8 @@ from django.conf import settings
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
-from accounts.models import CustomUser
 from finances.models import (
     PurchaseTransaction,
     StudentAccountBalance,
@@ -25,6 +25,7 @@ from finances.models import (
 )
 from finances.services.stripe_base import StripeService
 
+User = get_user_model()
 
 @override_settings(
     STRIPE_SECRET_KEY="sk_test_fake_key_for_testing",
@@ -37,7 +38,7 @@ class StripeWebhookHandlerTestCase(TestCase):
     def setUp(self):
         """Set up test data for webhook tests."""
         # Create test student user
-        self.student = CustomUser.objects.create_user(
+        self.student = User.objects.create_user(
             email="student@test.com",
             name="Test Student"
         )
@@ -520,7 +521,7 @@ class WebhookModelIntegrationTestCase(TestCase):
 
     def setUp(self):
         """Set up test data for integration tests."""
-        self.student = CustomUser.objects.create_user(
+        self.student = User.objects.create_user(
             email="integration@test.com",
             name="Integration Test Student"
         )

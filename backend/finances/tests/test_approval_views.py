@@ -8,6 +8,7 @@ purchase approval workflow.
 import json
 from decimal import Decimal
 from datetime import timedelta
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -15,7 +16,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from knox.models import AuthToken
 
-from accounts.models import CustomUser, School, ParentChildRelationship, RelationshipType, TeacherProfile
+from accounts.models import School, ParentChildRelationship, RelationshipType, TeacherProfile
 from finances.models import (
     FamilyBudgetControl,
     PurchaseApprovalRequest,
@@ -28,6 +29,8 @@ from finances.models import (
     SessionType,
     PlanType,
 )
+
+User = get_user_model()
 
 
 class FamilyBudgetControlViewSetTest(TestCase):
@@ -42,11 +45,11 @@ class FamilyBudgetControlViewSetTest(TestCase):
         )
 
         # Create parent and child users
-        self.parent = CustomUser.objects.create_user(
+        self.parent = User.objects.create_user(
             email="parent@test.com",
             name="Parent User"
         )
-        self.child = CustomUser.objects.create_user(
+        self.child = User.objects.create_user(
             email="child@test.com",
             name="Child User"
         )
@@ -178,11 +181,11 @@ class PurchaseApprovalRequestViewSetTest(TestCase):
         )
 
         # Create parent and child users
-        self.parent = CustomUser.objects.create_user(
+        self.parent = User.objects.create_user(
             email="parent@test.com",
             name="Parent User"
         )
-        self.child = CustomUser.objects.create_user(
+        self.child = User.objects.create_user(
             email="child@test.com",
             name="Child User"
         )
@@ -395,11 +398,11 @@ class StudentPurchaseRequestViewTest(TestCase):
         )
 
         # Create parent and child users
-        self.parent = CustomUser.objects.create_user(
+        self.parent = User.objects.create_user(
             email="parent@test.com",
             name="Parent User"
         )
-        self.child = CustomUser.objects.create_user(
+        self.child = User.objects.create_user(
             email="child@test.com",
             name="Child User"
         )
@@ -512,7 +515,7 @@ class StudentPurchaseRequestViewTest(TestCase):
     def test_create_purchase_request_invalid_parent(self):
         """Test creating purchase request with invalid parent."""
         # Create another user who is not the parent
-        other_user = CustomUser.objects.create_user(
+        other_user = User.objects.create_user(
             email="other@test.com",
             name="Other User"
         )
@@ -544,15 +547,15 @@ class ParentApprovalDashboardViewTest(TestCase):
         )
 
         # Create parent and children users
-        self.parent = CustomUser.objects.create_user(
+        self.parent = User.objects.create_user(
             email="parent@test.com",
             name="Parent User"
         )
-        self.child1 = CustomUser.objects.create_user(
+        self.child1 = User.objects.create_user(
             email="child1@test.com",
             name="Child One"
         )
-        self.child2 = CustomUser.objects.create_user(
+        self.child2 = User.objects.create_user(
             email="child2@test.com",
             name="Child Two"
         )
@@ -712,7 +715,7 @@ class ParentApprovalDashboardViewTest(TestCase):
     def test_dashboard_permission_check(self):
         """Test that only the parent can access their dashboard."""
         # Create another parent
-        other_parent = CustomUser.objects.create_user(
+        other_parent = User.objects.create_user(
             email="other_parent@test.com",
             name="Other Parent"
         )

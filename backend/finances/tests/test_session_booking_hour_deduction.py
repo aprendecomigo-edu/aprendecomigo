@@ -22,7 +22,11 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from unittest.mock import patch, MagicMock
 
-from accounts.models import CustomUser, School, TeacherProfile
+from django.contrib.auth import get_user_model
+from accounts.models import School, TeacherProfile
+
+User = get_user_model()
+
 from finances.models import (
     ClassSession,
     StudentAccountBalance,
@@ -50,21 +54,21 @@ class SessionBookingHourDeductionTestCase(TestCase):
         )
         
         # Create student user
-        self.student = CustomUser.objects.create_user(
+        self.student = User.objects.create_user(
             email="student@test.com",
             username="student1",
             name="Test Student"
         )
         
         # Create additional student for group sessions
-        self.student2 = CustomUser.objects.create_user(
+        self.student2 = User.objects.create_user(
             email="student2@test.com",
             username="student2",
             name="Test Student 2"
         )
         
         # Create teacher user and profile
-        self.teacher_user = CustomUser.objects.create_user(
+        self.teacher_user = User.objects.create_user(
             email="teacher@test.com",
             username="teacher1",
             name="Test Teacher"
@@ -400,7 +404,7 @@ class SessionBookingHourDeductionTestCase(TestCase):
                 )
                 
                 # Create new student for each test to avoid balance conflicts
-                student = CustomUser.objects.create_user(
+                student = User.objects.create_user(
                     email=f"student{i}@test.com",
                     username=f"student{i}",
                     name=f"Test Student {i}"
@@ -667,14 +671,14 @@ class SessionBookingHourDeductionAPITestCase(APITestCase):
         )
         
         # Create student user
-        self.student = CustomUser.objects.create_user(
+        self.student = User.objects.create_user(
             email="student@api.test.com",
             username="api_student",
             name="API Test Student"
         )
         
         # Create teacher user and profile
-        self.teacher_user = CustomUser.objects.create_user(
+        self.teacher_user = User.objects.create_user(
             email="teacher@api.test.com",
             username="api_teacher",
             name="API Test Teacher"
@@ -822,7 +826,7 @@ class SessionBookingHourDeductionAPITestCase(APITestCase):
     def test_api_bulk_session_creation_atomic(self):
         """Test bulk session creation is atomic across all students."""
         # Create second student with insufficient balance
-        student2 = CustomUser.objects.create_user(
+        student2 = User.objects.create_user(
             email="student2@api.test.com",
             username="api_student2", 
             name="API Test Student 2"

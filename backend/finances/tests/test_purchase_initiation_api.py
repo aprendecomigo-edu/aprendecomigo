@@ -24,8 +24,8 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
+from django.contrib.auth import get_user_model
 
-from accounts.models import CustomUser
 from finances.models import (
     PricingPlan,
     PlanType,
@@ -35,6 +35,7 @@ from finances.models import (
     TransactionType,
 )
 
+User = get_user_model()
 
 # Disable logging during tests to reduce noise
 logging.disable(logging.CRITICAL)
@@ -48,7 +49,7 @@ class PurchaseInitiationAPITestCase(TestCase):
         self.client = APIClient()
         
         # Create test users
-        self.authenticated_user = CustomUser.objects.create_user(
+        self.authenticated_user = User.objects.create_user(
             email="student@test.com",
             name="Test Student",
             password="testpass123"
@@ -357,7 +358,7 @@ class PurchaseInitiationAPIGuestUserTests(PurchaseInitiationAPITestCase):
         self.assertEqual(response.data['client_secret'], "pi_test_guest_secret_xyz")
         
         # Verify guest user was created
-        guest_user = CustomUser.objects.get(email=self.guest_user_email)
+        guest_user = User.objects.get(email=self.guest_user_email)
         self.assertEqual(guest_user.name, "Guest Student")
         
         # Verify transaction record created for guest user
@@ -400,7 +401,7 @@ class PurchaseInitiationAPIGuestUserTests(PurchaseInitiationAPITestCase):
         self.assertEqual(transaction.student, self.authenticated_user)
         
         # Verify no duplicate user was created
-        user_count = CustomUser.objects.filter(email=self.authenticated_user.email).count()
+        user_count = User.objects.filter(email=self.authenticated_user.email).count()
         self.assertEqual(user_count, 1)
     
     def test_initiate_purchase_guest_invalid_email(self):
@@ -620,7 +621,7 @@ class PurchaseInitiationAPISecurityTests(PurchaseInitiationAPITestCase):
         
         # Verify tables still exist
         self.assertTrue(PricingPlan.objects.exists())
-        self.assertTrue(CustomUser.objects.exists())
+        self.assertTrue(User.objects.exists())
     
     def test_initiate_purchase_xss_attempt(self):
         """Test that API sanitizes potentially malicious input."""
