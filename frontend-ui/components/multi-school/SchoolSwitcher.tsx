@@ -47,6 +47,11 @@ export const SchoolSwitcher: React.FC<SchoolSwitcherProps> = ({
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [switchingSchool, setSwitchingSchool] = useState<number | null>(null);
+  
+  // Debug logging for testing
+  if (process.env.NODE_ENV === 'test') {
+    console.log('SchoolSwitcher - currentSchool:', currentSchool);
+  }
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -103,7 +108,14 @@ export const SchoolSwitcher: React.FC<SchoolSwitcherProps> = ({
   };
 
   if (!currentSchool) {
+    if (process.env.NODE_ENV === 'test') {
+      console.log('SchoolSwitcher - returning null, no currentSchool');
+    }
     return null;
+  }
+
+  if (process.env.NODE_ENV === 'test') {
+    console.log('SchoolSwitcher - rendering with compact:', compact);
   }
 
   // Compact version for headers/nav bars
