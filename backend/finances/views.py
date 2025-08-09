@@ -2030,7 +2030,14 @@ class StudentBalanceViewSet(viewsets.ViewSet):
         if error_response:
             return error_response
         
-        receipt_id = pk
+        # Convert string URL parameter to integer for service method
+        try:
+            receipt_id = int(pk)
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid receipt ID'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Get download URL using service
         result = ReceiptGenerationService.get_receipt_download_url(
@@ -2154,7 +2161,14 @@ class StudentBalanceViewSet(viewsets.ViewSet):
         if error_response:
             return error_response
         
-        payment_method_id = pk
+        # Convert string URL parameter to integer for service method
+        try:
+            payment_method_id = int(pk)
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid payment method ID'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Remove payment method using service
         payment_service = PaymentMethodService()
@@ -2194,7 +2208,14 @@ class StudentBalanceViewSet(viewsets.ViewSet):
         if error_response:
             return error_response
         
-        payment_method_id = pk
+        # Convert string URL parameter to integer for service method
+        try:
+            payment_method_id = int(pk)
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid payment method ID'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Set default payment method using service
         payment_service = PaymentMethodService()

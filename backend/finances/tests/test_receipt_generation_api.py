@@ -344,9 +344,10 @@ class ReceiptAPITest(APITestCase):
         self.assertTrue(response.data['success'])
         self.assertIn('download_url', response.data)
         
-        # Verify service was called with correct parameters
+        # CRITICAL: Verify service method receives INTEGER, not string (Issue #169)
+        # URL path parameter 'pk' is passed as string but service expects integer
         mock_download.assert_called_once_with(
-            receipt_id=self.receipt.id,
+            receipt_id=self.receipt.id,  # Should be integer, not '1'
             student_user=self.student
         )
     

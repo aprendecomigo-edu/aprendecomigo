@@ -187,10 +187,11 @@ class SavedPaymentMethodAPITests(TestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertTrue(response.data['success'])
             
-            # Verify service was called
+            # CRITICAL: Verify service method receives INTEGER, not string (Issue #169)
+            # URL path parameter 'pk' is passed as string but service expects integer
             mock_service.remove_payment_method.assert_called_once_with(
                 student_user=self.student,
-                payment_method_id=self.payment_method.id
+                payment_method_id=self.payment_method.id  # Should be integer, not '1'
             )
 
     def test_remove_payment_method_not_found(self):
@@ -229,10 +230,11 @@ class SavedPaymentMethodAPITests(TestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertTrue(response.data['success'])
             
-            # Verify service was called
+            # CRITICAL: Verify service method receives INTEGER, not string (Issue #169)
+            # URL path parameter 'pk' is passed as string but service expects integer
             mock_service.set_default_payment_method.assert_called_once_with(
                 student_user=self.student,
-                payment_method_id=self.payment_method.id
+                payment_method_id=self.payment_method.id  # Should be integer, not '1'
             )
 
 
