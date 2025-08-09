@@ -7,12 +7,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor, act } from '@/__tests__/utils/test-utils';
 
-import { PurchaseFlow } from '@/components/purchase/PurchaseFlow';
-import { PurchaseApiClient } from '@/api/purchaseApi';
-import { PaymentMethodApiClient } from '@/api/paymentMethodApi';
-import { NotificationApiClient } from '@/api/notificationApi';
 import {
   createMockPricingPlans,
   createMockStripeConfig,
@@ -25,14 +20,23 @@ import {
   VALID_TEST_DATA,
   cleanupMocks,
 } from '@/__tests__/utils/payment-test-utils';
+import { render, fireEvent, waitFor, act } from '@/__tests__/utils/test-utils';
+import { NotificationApiClient } from '@/api/notificationApi';
+import { PaymentMethodApiClient } from '@/api/paymentMethodApi';
+import { PurchaseApiClient } from '@/api/purchaseApi';
+import { PurchaseFlow } from '@/components/purchase/PurchaseFlow';
 
 // Mock APIs
 jest.mock('@/api/purchaseApi');
 jest.mock('@/api/paymentMethodApi');
 jest.mock('@/api/notificationApi');
 const mockPurchaseApiClient = PurchaseApiClient as jest.Mocked<typeof PurchaseApiClient>;
-const mockPaymentMethodApiClient = PaymentMethodApiClient as jest.Mocked<typeof PaymentMethodApiClient>;
-const mockNotificationApiClient = NotificationApiClient as jest.Mocked<typeof NotificationApiClient>;
+const mockPaymentMethodApiClient = PaymentMethodApiClient as jest.Mocked<
+  typeof PaymentMethodApiClient
+>;
+const mockNotificationApiClient = NotificationApiClient as jest.Mocked<
+  typeof NotificationApiClient
+>;
 
 // Mock Stripe
 jest.mock('@stripe/react-stripe-js', () => ({
@@ -108,9 +112,7 @@ const createMockApprovalResponse = (approved: boolean) => ({
   success: true,
   approved,
   approval_id: 1,
-  message: approved 
-    ? 'Purchase approved successfully' 
-    : 'Purchase request has been declined',
+  message: approved ? 'Purchase approved successfully' : 'Purchase request has been declined',
   transaction_id: approved ? 123 : null,
 });
 
@@ -118,12 +120,12 @@ describe('Parent Approval Integration Flow Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     cleanupMocks();
-    
+
     // Setup successful API responses
     mockPurchaseApiClient.getStripeConfig.mockResolvedValue(createMockStripeConfig());
     mockPurchaseApiClient.getPricingPlans.mockResolvedValue(mockPlans);
     mockPaymentMethodApiClient.getPaymentMethods.mockResolvedValue(createMockPaymentMethods());
-    
+
     // Reset notification mocks
     mockPushNotifications.scheduleNotificationAsync.mockReset();
     mockEmailService.sendParentApprovalRequest.mockReset();
@@ -132,7 +134,7 @@ describe('Parent Approval Integration Flow Tests', () => {
   describe('Student Purchase Request Flow', () => {
     it('creates parent approval request for minor student', async () => {
       const mockStudent = createMockStudentUser();
-      
+
       // Mock student authentication
       const mockAuth = {
         user: mockStudent,
@@ -146,7 +148,7 @@ describe('Parent Approval Integration Flow Tests', () => {
       // Complete purchase flow
       await waitFor(() => getByText('Select Plan'));
       fireEvent.press(getByText('Standard Package'));
-      
+
       await waitFor(() => getByText('Student Information'));
       fireEvent.changeText(getByPlaceholderText('Student name'), mockStudent.name);
       fireEvent.changeText(getByPlaceholderText('Student email'), mockStudent.email);
@@ -154,7 +156,7 @@ describe('Parent Approval Integration Flow Tests', () => {
       // Mock approval request creation instead of direct purchase
       const approvalRequest = createMockApprovalRequest();
       mockPurchaseApiClient.createApprovalRequest = jest.fn().mockResolvedValue(approvalRequest);
-      
+
       fireEvent.press(getByText('Request Parent Approval'));
 
       await waitFor(() => {
@@ -209,7 +211,9 @@ describe('Parent Approval Integration Flow Tests', () => {
       fireEvent.press(getByText('Yes, Cancel'));
 
       await waitFor(() => {
-        expect(mockPurchaseApiClient.cancelApprovalRequest).toHaveBeenCalledWith(approvalRequest.id);
+        expect(mockPurchaseApiClient.cancelApprovalRequest).toHaveBeenCalledWith(
+          approvalRequest.id
+        );
         expect(queryByText('Approval Request Pending')).toBeNull();
         expect(getByText('Select Plan')).toBeTruthy(); // Back to plan selection
       });
@@ -267,7 +271,7 @@ describe('Parent Approval Integration Flow Tests', () => {
           data: JSON.stringify({
             type: 'approval_response',
             data: approvalResponse,
-          })
+          }),
         } as any);
       });
 
@@ -279,7 +283,7 @@ describe('Parent Approval Integration Flow Tests', () => {
 
       // Should complete purchase automatically
       mockStripe.confirmPayment.mockResolvedValue(createMockStripeSuccess());
-      
+
       await waitFor(() => {
         expect(getByText('Purchase Successful!')).toBeTruthy();
         expect(onPurchaseComplete).toHaveBeenCalledWith(approvalResponse.transaction_id);
@@ -317,7 +321,7 @@ describe('Parent Approval Integration Flow Tests', () => {
               ...rejectionResponse,
               rejection_reason: 'Not needed at this time',
             },
-          })
+          }),
         } as any);
       });
 
@@ -346,7 +350,8 @@ describe('Parent Approval Integration Flow Tests', () => {
 
       // Mock parent payment methods
       const parentPaymentMethods = createMockPaymentMethods();
-      mockPaymentMethodApiClient.getParentPaymentMethods = jest.fn()
+      mockPaymentMethodApiClient.getParentPaymentMethods = jest
+        .fn()
         .mockResolvedValue(parentPaymentMethods);
 
       mockPurchaseApiClient.getApprovalRequest = jest.fn().mockResolvedValue(approvalRequest);
@@ -364,13 +369,13 @@ describe('Parent Approval Integration Flow Tests', () => {
               payment_method: 'parent_card_ending_4242',
               use_parent_payment: true,
             },
-          })
+          }),
         } as any);
       });
 
       await waitFor(() => {
         expect(getByText('Purchase Approved!')).toBeTruthy();
-        expect(getByText('Payment will be charged to parent\'s card •••• 4242')).toBeTruthy();
+        expect(getByText("Payment will be charged to parent's card •••• 4242")).toBeTruthy();
       });
 
       // Should complete purchase with parent's payment method
@@ -401,19 +406,22 @@ describe('Parent Approval Integration Flow Tests', () => {
         }),
       ];
 
-      mockPurchaseApiClient.getParentApprovalRequests = jest.fn()
+      mockPurchaseApiClient.getParentApprovalRequests = jest
+        .fn()
         .mockResolvedValue(pendingRequests);
 
       // Mock parent dashboard component
       const ParentDashboard = () => {
         const [requests, setRequests] = React.useState(pendingRequests);
-        
+
         return (
           <div>
             <h2>Pending Approvals</h2>
             {requests.map(request => (
               <div key={request.id} testID={`approval-request-${request.id}`}>
-                <span>{request.plan_name} - €{request.amount}</span>
+                <span>
+                  {request.plan_name} - €{request.amount}
+                </span>
                 <button onClick={() => handleApproval(request.id, true)}>Approve</button>
                 <button onClick={() => handleApproval(request.id, false)}>Decline</button>
               </div>
@@ -508,7 +516,7 @@ describe('Parent Approval Integration Flow Tests', () => {
       // Try to create approval request
       await waitFor(() => getByText('Select Plan'));
       fireEvent.press(getByText('Standard Package'));
-      
+
       // Should show email delivery error
       await waitFor(() => {
         expect(getByText('Unable to send approval request')).toBeTruthy();
@@ -552,7 +560,7 @@ describe('Parent Approval Integration Flow Tests', () => {
           data: JSON.stringify({
             type: 'approval_response',
             data: createMockApprovalResponse(true),
-          })
+          }),
         } as any);
       });
 
@@ -593,16 +601,15 @@ describe('Parent Approval Integration Flow Tests', () => {
         error: 'Invalid or expired approval token',
       };
 
-      mockPurchaseApiClient.validateApprovalToken = jest.fn()
+      mockPurchaseApiClient.validateApprovalToken = jest
+        .fn()
         .mockResolvedValue(invalidTokenResponse);
 
       // Mock parent clicking approval link with invalid token
       const mockApprovalLink = () => {
         return (
           <div>
-            <button onClick={() => handleApprovalClick('invalid_token')}>
-              Approve Purchase
-            </button>
+            <button onClick={() => handleApprovalClick('invalid_token')}>Approve Purchase</button>
           </div>
         );
       };
@@ -617,12 +624,14 @@ describe('Parent Approval Integration Flow Tests', () => {
       const { getByText } = render(mockApprovalLink());
 
       // Should reject invalid token
-      await expect(handleApprovalClick('invalid_token')).rejects.toThrow('Invalid or expired approval token');
+      await expect(handleApprovalClick('invalid_token')).rejects.toThrow(
+        'Invalid or expired approval token'
+      );
     });
 
     it('handles network failures during approval flow', async () => {
       const approvalRequest = createMockApprovalRequest();
-      
+
       // Mock network failure
       mockPurchaseApiClient.createApprovalRequest.mockRejectedValue(
         new Error('Network request failed')

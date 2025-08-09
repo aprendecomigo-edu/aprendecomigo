@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export const useTransactionWebSocket = (enabled: boolean) => {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [transactionUpdates, setTransactionUpdates] = useState<any[]>([]);
 
-  const clearUpdates = () => {
+  const clearUpdates = useCallback(() => {
     setTransactionUpdates([]);
-  };
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;

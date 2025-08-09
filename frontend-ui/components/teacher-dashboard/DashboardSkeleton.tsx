@@ -10,9 +10,9 @@ interface DashboardSkeletonProps {
   view?: 'overview' | 'students' | 'analytics' | 'quick-actions';
 }
 
-const SkeletonCard: React.FC<{ children: React.ReactNode; className?: string }> = ({ 
-  children, 
-  className = "" 
+const SkeletonCard: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = '',
 }) => (
   <Card variant="elevated" className={`bg-white shadow-sm ${className}`}>
     {children}

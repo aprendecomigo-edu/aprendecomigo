@@ -15,12 +15,12 @@ interface AuthGuardProps {
   redirectTo?: string;
 }
 
-export const AuthGuard: React.FC<AuthGuardProps> = ({ 
-  children, 
-  fallback, 
-  allowedRoles, 
-  allowedUserTypes, 
-  redirectTo = '/auth/signin' 
+export const AuthGuard: React.FC<AuthGuardProps> = ({
+  children,
+  fallback,
+  allowedRoles,
+  allowedUserTypes,
+  redirectTo = '/auth/signin',
 }) => {
   const { isLoggedIn, isLoading } = useAuth();
   const { userProfile } = useUserProfile();
@@ -51,7 +51,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
       if (allowedRoles && allowedRoles.length > 0) {
         const userRoles = userSchools.map(school => school.role);
         const hasAllowedRole = allowedRoles.some(role => userRoles.includes(role));
-        
+
         if (!hasAllowedRole) {
           setIsNavigating(true);
           router.replace('/dashboard' as any); // Redirect to smart dashboard router
@@ -62,7 +62,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
       // Check user type-based access if allowedUserTypes is specified
       if (allowedUserTypes && allowedUserTypes.length > 0 && userProfile) {
         const hasAllowedUserType = allowedUserTypes.includes(userProfile.user_type);
-        
+
         if (!hasAllowedUserType) {
           setIsNavigating(true);
           router.replace('/dashboard' as any); // Redirect to smart dashboard router
@@ -78,7 +78,16 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
       setNavigationError('Navigation failed');
       setIsNavigating(false);
     }
-  }, [isLoggedIn, isLoading, userProfile, userSchools, allowedRoles, allowedUserTypes, redirectTo, isNavigating]);
+  }, [
+    isLoggedIn,
+    isLoading,
+    userProfile,
+    userSchools,
+    allowedRoles,
+    allowedUserTypes,
+    redirectTo,
+    isNavigating,
+  ]);
 
   // Show loading state during auth check or navigation
   if (isLoading || isNavigating) {
@@ -101,12 +110,8 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
     return (
       <Center className="h-full w-full">
         <VStack className="items-center" space="md">
-          <Text className="text-red-500 text-center">
-            {navigationError}
-          </Text>
-          <Text className="text-gray-500 text-center text-sm">
-            Please try refreshing the page.
-          </Text>
+          <Text className="text-red-500 text-center">{navigationError}</Text>
+          <Text className="text-gray-500 text-center text-sm">Please try refreshing the page.</Text>
         </VStack>
       </Center>
     );

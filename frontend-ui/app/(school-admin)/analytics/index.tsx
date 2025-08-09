@@ -8,14 +8,10 @@ export default function SchoolAnalyticsPage() {
   return (
     <Box className="flex-1 p-6">
       <VStack space="lg">
-        <Text className="text-2xl font-bold text-typography-900">
-          School Analytics
-        </Text>
-        
+        <Text className="text-2xl font-bold text-typography-900">School Analytics</Text>
+
         <Box className="bg-background-50 p-4 rounded-lg">
-          <Text className="text-lg text-typography-700">
-            Analytics dashboard coming soon...
-          </Text>
+          <Text className="text-lg text-typography-700">Analytics dashboard coming soon...</Text>
           <Text className="text-sm text-typography-500 mt-2">
             This page will display comprehensive analytics for your school including:
           </Text>

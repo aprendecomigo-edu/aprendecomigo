@@ -1,5 +1,5 @@
 // Jest setup file optimized for jest-expo
-// This file works in conjunction with jest-expo preset which provides 
+// This file works in conjunction with jest-expo preset which provides
 // proper React Native and Expo SDK mocks
 
 import '@testing-library/jest-native/extend-expect';
@@ -116,23 +116,24 @@ jest.mock('@/api/apiClient', () => ({
 jest.mock('react-hook-form', () => ({
   useForm: jest.fn(() => ({
     control: {},
-    handleSubmit: jest.fn((fn) => () => fn),
+    handleSubmit: jest.fn(fn => () => fn),
     formState: { errors: {} },
     setValue: jest.fn(),
     getValues: jest.fn(),
     watch: jest.fn(),
     reset: jest.fn(),
   })),
-  Controller: ({ render }) => render({
-    field: {
-      onChange: jest.fn(),
-      onBlur: jest.fn(),
-      value: '',
-      name: 'test',
-    },
-    fieldState: { error: null },
-    formState: { errors: {} },
-  }),
+  Controller: ({ render }) =>
+    render({
+      field: {
+        onChange: jest.fn(),
+        onBlur: jest.fn(),
+        value: '',
+        name: 'test',
+      },
+      fieldState: { error: null },
+      formState: { errors: {} },
+    }),
 }));
 
 // Mock zodResolver
@@ -155,7 +156,7 @@ jest.mock('lucide-react-native', () => {
 
 // Mock NativeWind
 jest.mock('nativewind', () => ({
-  styled: (component) => component,
+  styled: component => component,
   useColorScheme: jest.fn(() => ({
     colorScheme: 'light',
     setColorScheme: jest.fn(),
@@ -165,8 +166,8 @@ jest.mock('nativewind', () => ({
 
 // Mock react-native-css-interop
 jest.mock('react-native-css-interop', () => ({
-  cssInterop: jest.fn((Component) => Component),
-  remapProps: jest.fn((Component) => Component),
+  cssInterop: jest.fn(Component => Component),
+  remapProps: jest.fn(Component => Component),
 }));
 
 // Global test utilities

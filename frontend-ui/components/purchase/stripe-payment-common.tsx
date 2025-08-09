@@ -50,13 +50,7 @@ export function LoadingState({ className }: { className?: string }) {
 }
 
 // Shared error state component
-export function ErrorState({ 
-  error, 
-  className 
-}: { 
-  error: string; 
-  className?: string;
-}) {
+export function ErrorState({ error, className }: { error: string; className?: string }) {
   return (
     <Card className={`p-6 ${className}`}>
       <Alert action="error" variant="solid">
@@ -197,8 +191,8 @@ export function SubmitButton({
 export function TermsNotice() {
   return (
     <Text className="text-xs text-typography-500 text-center">
-      By completing this purchase, you agree to our Terms of Service and acknowledge our
-      Privacy Policy. Your payment will be processed securely by Stripe.
+      By completing this purchase, you agree to our Terms of Service and acknowledge our Privacy
+      Policy. Your payment will be processed securely by Stripe.
     </Text>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+
 import { schedulerApi, ClassSchedule } from '@/api/schedulerApi';
 
 export interface UseSchedulesResult {
@@ -17,7 +18,7 @@ export const useSchedules = (autoFetch: boolean = true): UseSchedulesResult => {
   const fetchSchedules = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // Fetch user's classes (upcoming classes)
       const schedulesData = await schedulerApi.getMyClasses();
@@ -38,7 +39,7 @@ export const useSchedules = (autoFetch: boolean = true): UseSchedulesResult => {
   const getMyClasses = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const classesData = await schedulerApi.getMyClasses();
       setSchedules(classesData);

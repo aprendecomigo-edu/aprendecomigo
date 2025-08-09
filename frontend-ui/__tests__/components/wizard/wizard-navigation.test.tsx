@@ -3,8 +3,8 @@ import React from 'react';
 
 import { render, createMockCompletionData } from '../../utils/test-utils';
 
-import { WizardNavigation } from '@/components/wizard/WizardNavigation';
 import { WIZARD_STEPS } from '@/components/onboarding/constants';
+import { WizardNavigation } from '@/components/wizard/WizardNavigation';
 
 describe('WizardNavigation', () => {
   const mockOnStepClick = jest.fn();

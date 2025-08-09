@@ -35,8 +35,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
   const [isSelecting, setIsSelecting] = useState(false);
 
   const requestPermissions = async (): Promise<boolean> => {
-    const { status: mediaLibraryStatus } =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status: mediaLibraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
 
     if (mediaLibraryStatus !== 'granted' || cameraStatus !== 'granted') {

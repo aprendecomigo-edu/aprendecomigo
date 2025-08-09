@@ -15,12 +15,7 @@ import {
   CloseButtonFooter,
 } from './add-payment-method-common';
 
-import {
-  Modal,
-  ModalBackdrop,
-  ModalBody,
-  ModalContent,
-} from '@/components/ui/modal';
+import { Modal, ModalBackdrop, ModalBody, ModalContent } from '@/components/ui/modal';
 
 /**
  * Add Payment Method Modal Component - Native Implementation

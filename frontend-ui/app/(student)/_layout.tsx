@@ -6,10 +6,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 
 export default function StudentLayout() {
   return (
-    <AuthGuard 
-      allowedRoles={['student']}
-      redirectTo="/dashboard"
-    >
+    <AuthGuard allowedRoles={['student']} redirectTo="/dashboard">
       <Stack
         screenOptions={{
           headerShown: false,

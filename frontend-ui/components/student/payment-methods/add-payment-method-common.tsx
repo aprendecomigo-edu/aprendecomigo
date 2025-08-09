@@ -61,8 +61,8 @@ export function PlatformNotSupportedContent() {
           Web Only Feature
         </Heading>
         <Text className="text-typography-600 text-center">
-          Payment method management is currently available on the web version only. Please
-          visit our website to manage your payment methods.
+          Payment method management is currently available on the web version only. Please visit our
+          website to manage your payment methods.
         </Text>
       </VStack>
     </VStack>
@@ -80,13 +80,7 @@ export function LoadingContent() {
 }
 
 // Shared error content
-export function ErrorContent({ 
-  error, 
-  onRetry 
-}: { 
-  error: string; 
-  onRetry: () => void;
-}) {
+export function ErrorContent({ error, onRetry }: { error: string; onRetry: () => void }) {
   return (
     <VStack space="md" className="py-4">
       <Alert action="error" variant="solid">
@@ -98,12 +92,7 @@ export function ErrorContent({
           <Text className="text-error-800 text-sm">{error}</Text>
         </VStack>
       </Alert>
-      <Button
-        action="secondary"
-        variant="outline"
-        size="sm"
-        onPress={onRetry}
-      >
+      <Button action="secondary" variant="outline" size="sm" onPress={onRetry}>
         <ButtonText>Try Again</ButtonText>
       </Button>
     </VStack>
@@ -114,13 +103,7 @@ export function ErrorContent({
 export function CloseButtonFooter({ onClose }: { onClose: () => void }) {
   return (
     <ModalFooter className="pt-4">
-      <Button
-        action="secondary"
-        variant="outline"
-        size="md"
-        onPress={onClose}
-        className="w-full"
-      >
+      <Button action="secondary" variant="outline" size="md" onPress={onClose} className="w-full">
         <ButtonText>Close</ButtonText>
       </Button>
     </ModalFooter>

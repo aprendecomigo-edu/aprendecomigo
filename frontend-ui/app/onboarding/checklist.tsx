@@ -2,8 +2,6 @@ import useRouter from '@unitools/router';
 import React, { useState } from 'react';
 import { Platform } from 'react-native';
 
-import { Box } from '@/components/ui/box';
-import { VStack } from '@/components/ui/vstack';
 import {
   AddFirstTeacherFlow,
   AddFirstStudentFlow,
@@ -11,6 +9,8 @@ import {
 } from '@/components/onboarding/GuidedFlows';
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
 import { OnboardingTutorial } from '@/components/onboarding/OnboardingTutorial';
+import { Box } from '@/components/ui/box';
+import { VStack } from '@/components/ui/vstack';
 
 export default function OnboardingChecklistPage() {
   const router = useRouter();

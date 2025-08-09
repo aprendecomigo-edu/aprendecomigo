@@ -21,9 +21,7 @@ export type { StripePaymentFormProps };
  * Fallback Stripe payment form wrapper component.
  * Platform-specific implementations should override this.
  */
-export function StripePaymentForm({
-  className = '',
-}: StripePaymentFormProps) {
+export function StripePaymentForm({ className = '' }: StripePaymentFormProps) {
   // Fallback implementation
   if (Platform.OS === 'web') {
     return <LoadingState className={className} />;

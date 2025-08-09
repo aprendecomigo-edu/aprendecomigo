@@ -5,9 +5,7 @@
  * family budget controls, and account management options.
  */
 
-import React, { useState } from 'react';
 import { router } from 'expo-router';
-import { Alert } from 'react-native';
 import {
   Bell,
   Users,
@@ -20,6 +18,8 @@ import {
   Smartphone,
   Mail,
 } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { Alert } from 'react-native';
 
 import {
   SettingsLayout,
@@ -103,10 +103,7 @@ export const ParentSettings: React.FC = () => {
   };
 
   return (
-    <SettingsLayout 
-      title="Parent Settings" 
-      subtitle="Manage your family account preferences"
-    >
+    <SettingsLayout title="Parent Settings" subtitle="Manage your family account preferences">
       {/* Children & Family Section */}
       <SettingsSection
         title="Children & Family"
@@ -138,42 +135,42 @@ export const ParentSettings: React.FC = () => {
           description="Receive updates and reports via email"
           icon={Mail}
           value={settings.notifications.emailUpdates}
-          onValueChange={(value) => updateNotificationSetting('emailUpdates', value)}
+          onValueChange={value => updateNotificationSetting('emailUpdates', value)}
         />
         <SettingsToggleItem
           title="SMS Alerts"
           description="Get important alerts via SMS"
           icon={Smartphone}
           value={settings.notifications.smsAlerts}
-          onValueChange={(value) => updateNotificationSetting('smsAlerts', value)}
+          onValueChange={value => updateNotificationSetting('smsAlerts', value)}
         />
         <SettingsToggleItem
           title="Push Notifications"
           description="Receive notifications on your mobile device"
           icon={Bell}
           value={settings.notifications.pushNotifications}
-          onValueChange={(value) => updateNotificationSetting('pushNotifications', value)}
+          onValueChange={value => updateNotificationSetting('pushNotifications', value)}
         />
         <SettingsToggleItem
           title="Class Reminders"
           description="Reminders before your child's scheduled classes"
           icon={Clock}
           value={settings.notifications.classReminders}
-          onValueChange={(value) => updateNotificationSetting('classReminders', value)}
+          onValueChange={value => updateNotificationSetting('classReminders', value)}
         />
         <SettingsToggleItem
           title="Progress Reports"
           description="Weekly and monthly progress updates"
           icon={Bell}
           value={settings.notifications.progressReports}
-          onValueChange={(value) => updateNotificationSetting('progressReports', value)}
+          onValueChange={value => updateNotificationSetting('progressReports', value)}
         />
         <SettingsToggleItem
           title="Payment Reminders"
           description="Alerts about upcoming payments and low balance"
           icon={CreditCard}
           value={settings.notifications.paymentReminders}
-          onValueChange={(value) => updateNotificationSetting('paymentReminders', value)}
+          onValueChange={value => updateNotificationSetting('paymentReminders', value)}
         />
       </SettingsSection>
 
@@ -188,21 +185,21 @@ export const ParentSettings: React.FC = () => {
           description="Notify when approaching monthly spending limit"
           icon={DollarSign}
           value={settings.budget.monthlyBudgetAlerts}
-          onValueChange={(value) => updateBudgetSetting('monthlyBudgetAlerts', value)}
+          onValueChange={value => updateBudgetSetting('monthlyBudgetAlerts', value)}
         />
         <SettingsToggleItem
           title="Session Limit Alerts"
           description="Notify when child reaches session limits"
           icon={Clock}
           value={settings.budget.sessionLimitAlerts}
-          onValueChange={(value) => updateBudgetSetting('sessionLimitAlerts', value)}
+          onValueChange={value => updateBudgetSetting('sessionLimitAlerts', value)}
         />
         <SettingsToggleItem
           title="Auto Top-Up"
           description="Automatically add funds when balance is low"
           icon={CreditCard}
           value={settings.budget.autoTopUp}
-          onValueChange={(value) => updateBudgetSetting('autoTopUp', value)}
+          onValueChange={value => updateBudgetSetting('autoTopUp', value)}
         />
         <SettingsActionItem
           title="Payment Methods"
@@ -223,28 +220,28 @@ export const ParentSettings: React.FC = () => {
           description="Allow teachers to see detailed progress reports"
           icon={Users}
           value={settings.privacy.shareProgressWithTeachers}
-          onValueChange={(value) => updatePrivacySetting('shareProgressWithTeachers', value)}
+          onValueChange={value => updatePrivacySetting('shareProgressWithTeachers', value)}
         />
         <SettingsToggleItem
           title="Direct Teacher Contact"
           description="Allow teachers to contact you directly"
           icon={Mail}
           value={settings.privacy.allowDirectTeacherContact}
-          onValueChange={(value) => updatePrivacySetting('allowDirectTeacherContact', value)}
+          onValueChange={value => updatePrivacySetting('allowDirectTeacherContact', value)}
         />
         <SettingsToggleItem
           title="Anonymous Analytics"
           description="Help improve the platform with anonymous usage data"
           icon={Shield}
           value={settings.privacy.shareAnalytics}
-          onValueChange={(value) => updatePrivacySetting('shareAnalytics', value)}
+          onValueChange={value => updatePrivacySetting('shareAnalytics', value)}
         />
         <SettingsToggleItem
           title="Marketing Emails"
           description="Receive updates about new features and promotions"
           icon={Mail}
           value={settings.privacy.marketingEmails}
-          onValueChange={(value) => updatePrivacySetting('marketingEmails', value)}
+          onValueChange={value => updatePrivacySetting('marketingEmails', value)}
         />
       </SettingsSection>
 

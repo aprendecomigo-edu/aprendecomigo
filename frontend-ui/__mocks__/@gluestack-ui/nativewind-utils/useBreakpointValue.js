@@ -1,8 +1,10 @@
 module.exports = {
-  useBreakpointValue: jest.fn((values) => {
+  useBreakpointValue: jest.fn(values => {
     // Return the default or base value for testing
     if (typeof values === 'object') {
-      return values.base || values.sm || values.md || values.lg || values.xl || Object.values(values)[0];
+      return (
+        values.base || values.sm || values.md || values.lg || values.xl || Object.values(values)[0]
+      );
     }
     return values;
   }),

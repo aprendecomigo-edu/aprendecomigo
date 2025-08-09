@@ -1,6 +1,13 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeftIcon, SaveIcon, EyeIcon, SendIcon, TrashIcon, CopyIcon } from 'lucide-react-native';
+import {
+  ArrowLeftIcon,
+  SaveIcon,
+  EyeIcon,
+  SendIcon,
+  TrashIcon,
+  CopyIcon,
+} from 'lucide-react-native';
 import React, { useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 
@@ -51,11 +58,7 @@ const EditTemplatePage = () => {
     clearError,
   } = useTemplateEditor();
 
-  const { 
-    validateTemplate,
-    sendTestEmail,
-    loading: validationLoading 
-  } = useTemplatePreview();
+  const { validateTemplate, sendTestEmail, loading: validationLoading } = useTemplatePreview();
 
   // Load template on mount
   useEffect(() => {
@@ -69,8 +72,16 @@ const EditTemplatePage = () => {
     { value: 'invitation', label: 'Teacher Invitation', color: 'bg-blue-100 text-blue-800' },
     { value: 'reminder', label: 'Reminder', color: 'bg-yellow-100 text-yellow-800' },
     { value: 'welcome', label: 'Welcome', color: 'bg-green-100 text-green-800' },
-    { value: 'profile_reminder', label: 'Profile Reminder', color: 'bg-orange-100 text-orange-800' },
-    { value: 'completion_celebration', label: 'Completion Celebration', color: 'bg-purple-100 text-purple-800' },
+    {
+      value: 'profile_reminder',
+      label: 'Profile Reminder',
+      color: 'bg-orange-100 text-orange-800',
+    },
+    {
+      value: 'completion_celebration',
+      label: 'Completion Celebration',
+      color: 'bg-purple-100 text-purple-800',
+    },
     { value: 'ongoing_support', label: 'Ongoing Support', color: 'bg-gray-100 text-gray-800' },
   ];
 
@@ -79,11 +90,14 @@ const EditTemplatePage = () => {
   );
 
   // Update template field and mark as changed
-  const handleUpdateField = useCallback((field: keyof SchoolEmailTemplate, value: any) => {
-    updateTemplateField(field, value);
-    setHasUnsavedChanges(true);
-    clearError();
-  }, [updateTemplateField, clearError]);
+  const handleUpdateField = useCallback(
+    (field: keyof SchoolEmailTemplate, value: any) => {
+      updateTemplateField(field, value);
+      setHasUnsavedChanges(true);
+      clearError();
+    },
+    [updateTemplateField, clearError]
+  );
 
   // Validate template content
   const handleValidateTemplate = useCallback(async () => {
@@ -192,7 +206,7 @@ const EditTemplatePage = () => {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Duplicate',
-          onPress: async (newName) => {
+          onPress: async newName => {
             if (!newName?.trim()) {
               Alert.alert('Error', 'Please enter a valid name');
               return;
@@ -230,29 +244,25 @@ const EditTemplatePage = () => {
   // Go back with unsaved changes check
   const handleGoBack = useCallback(() => {
     if (hasUnsavedChanges) {
-      Alert.alert(
-        'Unsaved Changes',
-        'You have unsaved changes. What would you like to do?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Discard Changes', 
-            style: 'destructive',
-            onPress: () => router.back() 
-          },
-          {
-            text: 'Save & Exit',
-            onPress: async () => {
-              try {
-                await handleSaveTemplate();
-                router.back();
-              } catch (err) {
-                console.error('Error saving before exit:', err);
-              }
+      Alert.alert('Unsaved Changes', 'You have unsaved changes. What would you like to do?', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Discard Changes',
+          style: 'destructive',
+          onPress: () => router.back(),
+        },
+        {
+          text: 'Save & Exit',
+          onPress: async () => {
+            try {
+              await handleSaveTemplate();
+              router.back();
+            } catch (err) {
+              console.error('Error saving before exit:', err);
             }
           },
-        ]
-      );
+        },
+      ]);
     } else {
       router.back();
     }
@@ -265,7 +275,7 @@ const EditTemplatePage = () => {
         .replace(/<[^>]*>/g, '') // Remove HTML tags
         .replace(/\s+/g, ' ') // Normalize whitespace
         .trim();
-      
+
       handleUpdateField('text_content', textContent);
     }
   }, [currentTemplate?.html_content, handleUpdateField]);
@@ -338,12 +348,7 @@ const EditTemplatePage = () => {
         {/* Header */}
         <HStack className="justify-between items-center">
           <HStack space="md" className="items-center flex-1">
-            <Button
-              onPress={handleGoBack}
-              variant="outline"
-              size="sm"
-              className="p-2"
-            >
+            <Button onPress={handleGoBack} variant="outline" size="sm" className="p-2">
               <Icon as={ArrowLeftIcon} size="sm" className="text-gray-600" />
             </Button>
 
@@ -354,9 +359,7 @@ const EditTemplatePage = () => {
                 </Heading>
                 {currentTemplateType && (
                   <Badge className={currentTemplateType.color}>
-                    <Text className="text-xs font-medium">
-                      {currentTemplateType.label}
-                    </Text>
+                    <Text className="text-xs font-medium">{currentTemplateType.label}</Text>
                   </Badge>
                 )}
                 <Badge
@@ -414,9 +417,7 @@ const EditTemplatePage = () => {
             >
               <HStack space="xs" className="items-center">
                 <Icon as={SaveIcon} size="sm" className="text-white" />
-                <ButtonText className="text-white">
-                  {saving ? 'Saving...' : 'Save'}
-                </ButtonText>
+                <ButtonText className="text-white">{saving ? 'Saving...' : 'Save'}</ButtonText>
               </HStack>
             </Button>
           </HStack>
@@ -449,7 +450,7 @@ const EditTemplatePage = () => {
                 <InputField
                   placeholder="e.g., Teacher Welcome Email"
                   value={currentTemplate.name || ''}
-                  onChangeText={(value) => handleUpdateField('name', value)}
+                  onChangeText={value => handleUpdateField('name', value)}
                 />
               </Input>
             </VStack>
@@ -464,7 +465,7 @@ const EditTemplatePage = () => {
               </VStack>
               <Switch
                 value={currentTemplate.is_active}
-                onValueChange={(value) => handleUpdateField('is_active', value)}
+                onValueChange={value => handleUpdateField('is_active', value)}
               />
             </HStack>
 
@@ -478,7 +479,7 @@ const EditTemplatePage = () => {
               </VStack>
               <Switch
                 value={currentTemplate.use_school_branding}
-                onValueChange={(value) => handleUpdateField('use_school_branding', value)}
+                onValueChange={value => handleUpdateField('use_school_branding', value)}
               />
             </HStack>
           </VStack>
@@ -521,22 +522,22 @@ const EditTemplatePage = () => {
         <Card className="p-6">
           <VStack space="md">
             <Text className="font-medium text-gray-900">Template Actions</Text>
-            
+
             <HStack space="sm" className="flex-wrap">
               <Button
                 onPress={handleValidateTemplate}
                 variant="outline"
                 size="sm"
-                disabled={validationLoading || !currentTemplate.subject_template || !currentTemplate.html_content}
+                disabled={
+                  validationLoading ||
+                  !currentTemplate.subject_template ||
+                  !currentTemplate.html_content
+                }
               >
                 <ButtonText>{validationLoading ? 'Validating...' : 'Validate'}</ButtonText>
               </Button>
 
-              <Button
-                onPress={handleDuplicateTemplate}
-                variant="outline"
-                size="sm"
-              >
+              <Button onPress={handleDuplicateTemplate} variant="outline" size="sm">
                 <HStack space="xs" className="items-center">
                   <Icon as={CopyIcon} size="xs" className="text-gray-600" />
                   <ButtonText>Duplicate</ButtonText>
@@ -566,13 +567,9 @@ const EditTemplatePage = () => {
                 <Icon as={SaveIcon} size="sm" className="text-orange-600" />
                 <Text className="font-medium text-orange-800">You have unsaved changes</Text>
               </HStack>
-              
+
               <HStack space="sm">
-                <Button
-                  onPress={handleSaveTemplate}
-                  disabled={saving}
-                  className="bg-orange-600"
-                >
+                <Button onPress={handleSaveTemplate} disabled={saving} className="bg-orange-600">
                   <ButtonText className="text-white">
                     {saving ? 'Saving...' : 'Save Changes'}
                   </ButtonText>

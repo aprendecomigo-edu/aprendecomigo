@@ -77,21 +77,19 @@ const LoginForm = () => {
         >
           <Icon as={ArrowLeftIcon} className="text-typography-700" size="xl" />
         </Pressable>
-        
+
         {/* Brand logo */}
         <VStack className="items-center mb-2">
           <Text className="text-center text-gradient-primary font-brand text-md">
-          aprendecomigo
-        </Text>          
+            aprendecomigo
+          </Text>
         </VStack>
-        
+
         <VStack className="items-center" space="sm">
           <Heading className="text-center font-primary" size="3xl">
             <Text className="color-primary font-primary">Login</Text>
           </Heading>
-          <Text className="text-center text-typography-600 font-body text-base leading-relaxed">
-            
-          </Text>
+          <Text className="text-center text-typography-600 font-body text-base leading-relaxed"></Text>
         </VStack>
       </VStack>
 

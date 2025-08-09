@@ -1,11 +1,12 @@
 /**
  * Payment System Test Utilities
- * 
+ *
  * Comprehensive test utilities for testing payment-related components
  * including Stripe mocks, API response factories, and WebSocket mocks.
  */
 
 import React from 'react';
+
 import type {
   PricingPlan,
   StudentBalanceResponse,
@@ -85,7 +86,9 @@ export const createMockPricingPlans = (): PricingPlan[] => [
   }),
 ];
 
-export const createMockStudentBalance = (overrides: Partial<StudentBalanceResponse> = {}): StudentBalanceResponse => ({
+export const createMockStudentBalance = (
+  overrides: Partial<StudentBalanceResponse> = {}
+): StudentBalanceResponse => ({
   student_info: {
     id: 1,
     name: 'John Doe',
@@ -124,7 +127,7 @@ export const createMockStudentBalance = (overrides: Partial<StudentBalanceRespon
   ...overrides,
 });
 
-export const createMockLowBalanceStudent = (): StudentBalanceResponse => 
+export const createMockLowBalanceStudent = (): StudentBalanceResponse =>
   createMockStudentBalance({
     balance_summary: {
       hours_purchased: '10.0',
@@ -359,7 +362,9 @@ export const INVALID_TEST_DATA = {
 };
 
 // Mock usePurchaseFlow hook
-export const createMockUsePurchaseFlow = (overrides: Partial<UsePurchaseFlowResult> = {}): UsePurchaseFlowResult => ({
+export const createMockUsePurchaseFlow = (
+  overrides: Partial<UsePurchaseFlowResult> = {}
+): UsePurchaseFlowResult => ({
   state: createMockPurchaseFlowState(),
   actions: {
     selectPlan: jest.fn(),
@@ -382,7 +387,10 @@ export const simulateStripeCardInput = (element: any, cardNumber: string) => {
     if (event === 'change') {
       handler({
         complete: cardNumber === STRIPE_TEST_CARDS.VALID.VISA,
-        error: cardNumber === STRIPE_TEST_CARDS.DECLINED.GENERIC ? { message: 'Your card was declined.' } : null,
+        error:
+          cardNumber === STRIPE_TEST_CARDS.DECLINED.GENERIC
+            ? { message: 'Your card was declined.' }
+            : null,
       });
     }
   });

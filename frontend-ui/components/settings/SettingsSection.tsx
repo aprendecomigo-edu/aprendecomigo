@@ -1,6 +1,6 @@
 /**
  * SettingsSection Component
- * 
+ *
  * Provides grouped settings sections with:
  * - Clean visual hierarchy
  * - Proper spacing and layout
@@ -8,8 +8,8 @@
  * - Icon integration
  */
 
-import React from 'react';
 import type { LucideIcon } from 'lucide-react-native';
+import React from 'react';
 
 import { Box } from '@/components/ui/box';
 import { Heading } from '@/components/ui/heading';
@@ -55,9 +55,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
       </HStack>
 
       {/* Section Content */}
-      <VStack className="space-y-2">
-        {children}
-      </VStack>
+      <VStack className="space-y-2">{children}</VStack>
     </Box>
   );
 };

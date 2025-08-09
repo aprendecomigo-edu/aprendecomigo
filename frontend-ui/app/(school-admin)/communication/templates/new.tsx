@@ -44,19 +44,9 @@ const CreateTemplatePage = () => {
   const [showPreview, setShowPreview] = useState(false);
 
   // Hooks
-  const {
-    createTemplate,
-    saving,
-    error,
-    availableVariables,
-    clearError,
-  } = useTemplateEditor();
+  const { createTemplate, saving, error, availableVariables, clearError } = useTemplateEditor();
 
-  const { 
-    validateTemplate,
-    sendTestEmail,
-    loading: validationLoading 
-  } = useTemplatePreview();
+  const { validateTemplate, sendTestEmail, loading: validationLoading } = useTemplatePreview();
 
   // Template type options
   const templateTypeOptions = [
@@ -104,13 +94,16 @@ const CreateTemplatePage = () => {
   );
 
   // Update template field
-  const updateField = useCallback((field: keyof CreateTemplateRequest, value: any) => {
-    setTemplateData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-    clearError();
-  }, [clearError]);
+  const updateField = useCallback(
+    (field: keyof CreateTemplateRequest, value: any) => {
+      setTemplateData(prev => ({
+        ...prev,
+        [field]: value,
+      }));
+      clearError();
+    },
+    [clearError]
+  );
 
   // Validate template content
   const handleValidateTemplate = useCallback(async () => {
@@ -163,7 +156,7 @@ const CreateTemplatePage = () => {
 
     try {
       const template = await createTemplate(templateData as CreateTemplateRequest);
-      
+
       Alert.alert(
         'Template Created',
         'Your email template has been created successfully. What would you like to do next?',
@@ -174,11 +167,13 @@ const CreateTemplatePage = () => {
           },
           {
             text: 'Edit Template',
-            onPress: () => router.push(`/(school-admin)/communication/templates/${template.id}/edit`),
+            onPress: () =>
+              router.push(`/(school-admin)/communication/templates/${template.id}/edit`),
           },
           {
             text: 'Send Test Email',
-            onPress: () => router.push(`/(school-admin)/communication/templates/${template.id}/test`),
+            onPress: () =>
+              router.push(`/(school-admin)/communication/templates/${template.id}/test`),
           },
         ]
       );
@@ -204,10 +199,10 @@ const CreateTemplatePage = () => {
         'You have unsaved changes. Are you sure you want to go back?',
         [
           { text: 'Stay', style: 'cancel' },
-          { 
-            text: 'Go Back', 
+          {
+            text: 'Go Back',
             style: 'destructive',
-            onPress: () => router.back() 
+            onPress: () => router.back(),
           },
         ]
       );
@@ -224,7 +219,7 @@ const CreateTemplatePage = () => {
         .replace(/<[^>]*>/g, '') // Remove HTML tags
         .replace(/\s+/g, ' ') // Normalize whitespace
         .trim();
-      
+
       updateField('text_content', textContent);
     }
   }, [templateData.html_content, updateField]);
@@ -242,12 +237,7 @@ const CreateTemplatePage = () => {
         {/* Header */}
         <HStack className="justify-between items-center">
           <HStack space="md" className="items-center flex-1">
-            <Button
-              onPress={handleGoBack}
-              variant="outline"
-              size="sm"
-              className="p-2"
-            >
+            <Button onPress={handleGoBack} variant="outline" size="sm" className="p-2">
               <Icon as={ArrowLeftIcon} size="sm" className="text-gray-600" />
             </Button>
 
@@ -275,7 +265,12 @@ const CreateTemplatePage = () => {
 
             <Button
               onPress={handleSaveTemplate}
-              disabled={saving || !templateData.name || !templateData.subject_template || !templateData.html_content}
+              disabled={
+                saving ||
+                !templateData.name ||
+                !templateData.subject_template ||
+                !templateData.html_content
+              }
               className="bg-blue-600"
             >
               <HStack space="xs" className="items-center">
@@ -315,7 +310,7 @@ const CreateTemplatePage = () => {
                 <InputField
                   placeholder="e.g., Teacher Welcome Email"
                   value={templateData.name || ''}
-                  onChangeText={(value) => updateField('name', value)}
+                  onChangeText={value => updateField('name', value)}
                 />
               </Input>
               <Text className="text-xs text-gray-500">
@@ -326,17 +321,15 @@ const CreateTemplatePage = () => {
             {/* Template Type */}
             <VStack space="sm">
               <Text className="font-medium text-gray-900">Template Type</Text>
-              <Select 
-                value={templateData.template_type} 
-                onValueChange={(value) => updateField('template_type', value)}
+              <Select
+                value={templateData.template_type}
+                onValueChange={value => updateField('template_type', value)}
               >
                 <SelectTrigger>
                   <HStack space="sm" className="items-center">
                     {currentTemplateType && (
                       <Badge className={currentTemplateType.color}>
-                        <Text className="text-xs font-medium">
-                          {currentTemplateType.label}
-                        </Text>
+                        <Text className="text-xs font-medium">{currentTemplateType.label}</Text>
                       </Badge>
                     )}
                   </HStack>
@@ -348,16 +341,14 @@ const CreateTemplatePage = () => {
                 </SelectContent>
               </Select>
               {currentTemplateType && (
-                <Text className="text-xs text-gray-500">
-                  {currentTemplateType.description}
-                </Text>
+                <Text className="text-xs text-gray-500">{currentTemplateType.description}</Text>
               )}
             </VStack>
 
             {/* Template Options */}
             <VStack space="md">
               <Text className="font-medium text-gray-900">Template Options</Text>
-              
+
               <HStack className="justify-between items-center">
                 <VStack space="xs" className="flex-1">
                   <Text className="text-gray-900">Use School Branding</Text>
@@ -367,7 +358,7 @@ const CreateTemplatePage = () => {
                 </VStack>
                 <Switch
                   value={templateData.use_school_branding}
-                  onValueChange={(value) => updateField('use_school_branding', value)}
+                  onValueChange={value => updateField('use_school_branding', value)}
                 />
               </HStack>
             </VStack>
@@ -411,13 +402,15 @@ const CreateTemplatePage = () => {
         <Card className="p-4">
           <VStack space="md">
             <Text className="font-medium text-gray-900">Quick Actions</Text>
-            
+
             <HStack space="sm" className="flex-wrap">
               <Button
                 onPress={handleValidateTemplate}
                 variant="outline"
                 size="sm"
-                disabled={validationLoading || !templateData.subject_template || !templateData.html_content}
+                disabled={
+                  validationLoading || !templateData.subject_template || !templateData.html_content
+                }
               >
                 <ButtonText>{validationLoading ? 'Validating...' : 'Validate Template'}</ButtonText>
               </Button>
@@ -429,9 +422,9 @@ const CreateTemplatePage = () => {
                     'Need help creating your template? Check our documentation for examples and best practices.',
                     [
                       { text: 'Later', style: 'cancel' },
-                      { 
+                      {
                         text: 'View Help',
-                        onPress: () => router.push('/(school-admin)/communication/help')
+                        onPress: () => router.push('/(school-admin)/communication/help'),
                       },
                     ]
                   );
@@ -449,11 +442,16 @@ const CreateTemplatePage = () => {
         <Card className="p-6">
           <VStack space="md">
             <Text className="font-medium text-gray-900">Save & Next Steps</Text>
-            
+
             <VStack space="sm">
               <Button
                 onPress={handleSaveTemplate}
-                disabled={saving || !templateData.name || !templateData.subject_template || !templateData.html_content}
+                disabled={
+                  saving ||
+                  !templateData.name ||
+                  !templateData.subject_template ||
+                  !templateData.html_content
+                }
                 className="bg-blue-600"
               >
                 <ButtonText className="text-white">

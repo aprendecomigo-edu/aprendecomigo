@@ -9,8 +9,8 @@ import { z } from 'zod';
 
 import { AuthLayout } from './AuthLayout';
 
-import { createUser } from '@/api/authApi';
 import { useAuth, useUserProfile } from '@/api/auth';
+import { createUser } from '@/api/authApi';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -31,10 +31,10 @@ import { ArrowLeftIcon, Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
 import { Radio, RadioGroup, RadioIcon, RadioIndicator, RadioLabel } from '@/components/ui/radio';
+import { Tabs } from '@/components/ui/tabs';
 import { Text } from '@/components/ui/text';
 import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
-import { Tabs } from '@/components/ui/tabs';
 
 // Define user types with proper TypeScript safety
 export type UserType = 'tutor' | 'school';
@@ -198,12 +198,11 @@ const OnboardingForm = () => {
   // Handle user type changes - update school name field
   useEffect(() => {
     const currentUserName = watch('userName');
-    const newSchoolName = userType === 'tutor' 
-      ? generateSchoolName(currentUserName || '', userType) 
-      : '';
-    
+    const newSchoolName =
+      userType === 'tutor' ? generateSchoolName(currentUserName || '', userType) : '';
+
     setValue('schoolName', newSchoolName);
-    
+
     // Clear school-specific fields when switching to tutor
     if (userType === 'tutor') {
       setValue('schoolAddress', '');
@@ -365,7 +364,11 @@ const OnboardingForm = () => {
       <VStack className="w-full pb-10" space="xl">
         {/* Personal Information Section */}
         <VStack space="lg" className="mt-4">
-          <Heading size="lg" className="mb-1 font-primary text-typography-800" accessibilityRole="header">
+          <Heading
+            size="lg"
+            className="mb-1 font-primary text-typography-800"
+            accessibilityRole="header"
+          >
             Personal Information
           </Heading>
 
@@ -397,7 +400,9 @@ const OnboardingForm = () => {
               />
               <FormControlError>
                 <FormControlErrorIcon as={AlertTriangle} />
-                <FormControlErrorText className="font-body">{errors.userName?.message}</FormControlErrorText>
+                <FormControlErrorText className="font-body">
+                  {errors.userName?.message}
+                </FormControlErrorText>
               </FormControlError>
             </FormControl>
 
@@ -431,7 +436,9 @@ const OnboardingForm = () => {
               />
               <FormControlError>
                 <FormControlErrorIcon as={AlertTriangle} />
-                <FormControlErrorText className="font-body">{errors.userEmail?.message}</FormControlErrorText>
+                <FormControlErrorText className="font-body">
+                  {errors.userEmail?.message}
+                </FormControlErrorText>
               </FormControlError>
             </FormControl>
           </VStack>
@@ -468,7 +475,9 @@ const OnboardingForm = () => {
             />
             <FormControlError>
               <FormControlErrorIcon as={AlertTriangle} />
-              <FormControlErrorText className="font-body">{errors.userPhone?.message}</FormControlErrorText>
+              <FormControlErrorText className="font-body">
+                {errors.userPhone?.message}
+              </FormControlErrorText>
             </FormControlError>
           </FormControl>
 
@@ -621,7 +630,7 @@ const OnboardingForm = () => {
                   <FormControlErrorIcon as={AlertTriangle} />
                   <FormControlErrorText>{errors.schoolWebsite?.message}</FormControlErrorText>
                 </FormControlError>
-                </FormControl>
+              </FormControl>
             </>
           )}
         </VStack>

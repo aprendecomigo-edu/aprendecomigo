@@ -1,20 +1,20 @@
 import React from 'react';
 
+import MainLayout from '@/components/layouts/MainLayout';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import MainLayout from '@/components/layouts/MainLayout';
 
 interface TeacherProfileWizardProps {
   onComplete?: () => void;
   onExit?: () => void;
 }
 
-export const TeacherProfileWizard: React.FC<TeacherProfileWizardProps> = ({ 
-  onComplete, 
-  onExit 
+export const TeacherProfileWizard: React.FC<TeacherProfileWizardProps> = ({
+  onComplete,
+  onExit,
 }) => {
   return (
     <MainLayout _title="Teacher Profile Setup">
@@ -28,22 +28,13 @@ export const TeacherProfileWizard: React.FC<TeacherProfileWizardProps> = ({
               Help us create the perfect teaching environment for you.
             </Text>
           </VStack>
-          
+
           <VStack space="md" className="mt-8">
-            <Button
-              size="lg"
-              onPress={onComplete}
-              className="w-full"
-            >
+            <Button size="lg" onPress={onComplete} className="w-full">
               <ButtonText>Complete Setup</ButtonText>
             </Button>
-            
-            <Button
-              variant="outline"
-              size="lg"
-              onPress={onExit}
-              className="w-full"
-            >
+
+            <Button variant="outline" size="lg" onPress={onExit} className="w-full">
               <ButtonText>Exit for Now</ButtonText>
             </Button>
           </VStack>

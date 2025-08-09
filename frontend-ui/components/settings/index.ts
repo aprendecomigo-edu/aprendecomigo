@@ -1,6 +1,6 @@
 /**
  * Settings Components Barrel Export
- * 
+ *
  * Centralized exports for all settings-related components
  */
 

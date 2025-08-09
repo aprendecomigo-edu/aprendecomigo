@@ -324,9 +324,7 @@ export const findElementByText = (getByText: any, text: string, exact = true) =>
   if (exact) {
     return getByText(text);
   }
-  return getByText((content, element) => 
-    content.includes(text) && element?.tagName !== 'SCRIPT'
-  );
+  return getByText((content, element) => content.includes(text) && element?.tagName !== 'SCRIPT');
 };
 
 export const findElementsByTestId = (queryAllByTestId: any, testId: string) => {
@@ -380,7 +378,7 @@ export const mockWebSocketConnection = () => {
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
   };
-  
+
   global.WebSocket = jest.fn(() => mockWs) as any;
   return mockWs;
 };
@@ -396,35 +394,35 @@ export const mockDeepLink = (url: string) => {
 export const mockKeyboardShow = (height = 300) => {
   const mockKeyboard = require('react-native').Keyboard;
   const listeners = new Map();
-  
+
   mockKeyboard.addListener.mockImplementation((event, callback) => {
     listeners.set(event, callback);
     return { remove: jest.fn() };
   });
-  
+
   // Simulate keyboard show
   const showCallback = listeners.get('keyboardDidShow');
   if (showCallback) {
     showCallback({ endCoordinates: { height } });
   }
-  
+
   return mockKeyboard;
 };
 
 export const mockKeyboardHide = () => {
   const mockKeyboard = require('react-native').Keyboard;
   const listeners = new Map();
-  
+
   mockKeyboard.addListener.mockImplementation((event, callback) => {
     listeners.set(event, callback);
     return { remove: jest.fn() };
   });
-  
+
   // Simulate keyboard hide
   const hideCallback = listeners.get('keyboardDidHide');
   if (hideCallback) {
     hideCallback();
   }
-  
+
   return mockKeyboard;
 };

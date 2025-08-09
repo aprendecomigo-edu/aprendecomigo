@@ -109,14 +109,12 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
     (variableKey: string) => {
       const htmlContent = template.html_content || '';
       const variable = `{{${variableKey}}}`;
-      
-      const newContent = 
-        htmlContent.slice(0, cursorPosition) + 
-        variable + 
-        htmlContent.slice(cursorPosition);
-      
+
+      const newContent =
+        htmlContent.slice(0, cursorPosition) + variable + htmlContent.slice(cursorPosition);
+
       onChange('html_content', newContent);
-      
+
       // Update cursor position to after the inserted variable
       setCursorPosition(cursorPosition + variable.length);
       setShowVariables(false);
@@ -128,12 +126,12 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
   const formatText = useCallback(
     (tag: string) => {
       if (!selectedText) return;
-      
+
       const htmlContent = template.html_content || '';
       const openTag = `<${tag}>`;
       const closeTag = `</${tag}>`;
       const formattedText = `${openTag}${selectedText}${closeTag}`;
-      
+
       const newContent = htmlContent.replace(selectedText, formattedText);
       onChange('html_content', newContent);
     },
@@ -145,7 +143,7 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
     (element: string) => {
       const htmlContent = template.html_content || '';
       let elementHtml = '';
-      
+
       switch (element) {
         case 'link':
           elementHtml = '<a href="{{link_url}}">{{link_text}}</a>';
@@ -154,17 +152,16 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
           elementHtml = '<ul><li>{{list_item_1}}</li><li>{{list_item_2}}</li></ul>';
           break;
         case 'button':
-          elementHtml = '<button style="background-color: {{button_color}}; color: white; padding: 10px 20px; border: none; border-radius: 5px;">{{button_text}}</button>';
+          elementHtml =
+            '<button style="background-color: {{button_color}}; color: white; padding: 10px 20px; border: none; border-radius: 5px;">{{button_text}}</button>';
           break;
         default:
           return;
       }
-      
-      const newContent = 
-        htmlContent.slice(0, cursorPosition) + 
-        elementHtml + 
-        htmlContent.slice(cursorPosition);
-      
+
+      const newContent =
+        htmlContent.slice(0, cursorPosition) + elementHtml + htmlContent.slice(cursorPosition);
+
       onChange('html_content', newContent);
     },
     [template.html_content, cursorPosition, onChange]
@@ -173,10 +170,14 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
   // Get validation status color
   const getValidationColor = (type: 'error' | 'warning' | 'success') => {
     switch (type) {
-      case 'error': return 'text-red-600';
-      case 'warning': return 'text-yellow-600';
-      case 'success': return 'text-green-600';
-      default: return 'text-gray-600';
+      case 'error':
+        return 'text-red-600';
+      case 'warning':
+        return 'text-yellow-600';
+      case 'success':
+        return 'text-green-600';
+      default:
+        return 'text-gray-600';
     }
   };
 
@@ -198,7 +199,7 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
             <InputField
               placeholder="Enter email subject template..."
               value={template.subject_template || ''}
-              onChangeText={(value) => onChange('subject_template', value)}
+              onChangeText={value => onChange('subject_template', value)}
             />
           </Input>
           <Text className="text-xs text-gray-500">
@@ -212,7 +213,7 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
         <VStack space="md" className="h-full">
           {/* Tab Headers */}
           <HStack className="border-b border-gray-200">
-            {tabs.map((tab) => (
+            {tabs.map(tab => (
               <Pressable
                 key={tab.id}
                 onPress={() => setActiveTab(tab.id)}
@@ -270,18 +271,10 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
                   >
                     <Icon as={UnderlineIcon} size="xs" className="text-gray-600" />
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onPress={() => insertElement('link')}
-                  >
+                  <Button size="sm" variant="outline" onPress={() => insertElement('link')}>
                     <Icon as={LinkIcon} size="xs" className="text-gray-600" />
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onPress={() => insertElement('list')}
-                  >
+                  <Button size="sm" variant="outline" onPress={() => insertElement('list')}>
                     <Icon as={ListIcon} size="xs" className="text-gray-600" />
                   </Button>
                   <Button
@@ -301,9 +294,7 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
                 {showVariables && (
                   <Card className="p-3 bg-blue-50 border-blue-200">
                     <VStack space="sm">
-                      <Text className="text-sm font-medium text-blue-900">
-                        Available Variables
-                      </Text>
+                      <Text className="text-sm font-medium text-blue-900">Available Variables</Text>
                       <ScrollView className="max-h-32">
                         <VStack space="xs">
                           {Object.entries(variablesByCategory).map(([category, vars]) => (
@@ -312,7 +303,7 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
                                 {category.replace('_', ' ')}
                               </Text>
                               <HStack space="xs" className="flex-wrap">
-                                {vars.map((variable) => (
+                                {vars.map(variable => (
                                   <Pressable
                                     key={variable.key}
                                     onPress={() => insertVariable(variable.key)}
@@ -338,18 +329,19 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
                     <TextareaInput
                       placeholder="Enter your HTML email content here..."
                       value={template.html_content || ''}
-                      onChangeText={(value) => onChange('html_content', value)}
-                      onSelectionChange={(event) => {
+                      onChangeText={value => onChange('html_content', value)}
+                      onSelectionChange={event => {
                         setCursorPosition(event.nativeEvent.selection.start);
                       }}
                       multiline
                       className="h-full"
                     />
                   </Textarea>
-                  
+
                   {/* HTML Hints */}
                   <Text className="text-xs text-gray-500">
-                    Use HTML tags for formatting. Variables should be in the format {'{{variable_name}}'}
+                    Use HTML tags for formatting. Variables should be in the format{' '}
+                    {'{{variable_name}}'}
                   </Text>
                 </VStack>
               </VStack>
@@ -361,7 +353,7 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
                   <TextareaInput
                     placeholder="Enter the plain text version of your email..."
                     value={template.text_content || ''}
-                    onChangeText={(value) => onChange('text_content', value)}
+                    onChangeText={value => onChange('text_content', value)}
                     multiline
                     className="h-full"
                   />
@@ -407,7 +399,8 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
                           ) : (
                             <Box className="min-h-48 border border-gray-200 rounded-lg p-4 bg-white">
                               <Text className="text-gray-600">
-                                HTML preview not available on mobile. Use web version for full preview.
+                                HTML preview not available on mobile. Use web version for full
+                                preview.
                               </Text>
                             </Box>
                           )}
@@ -422,7 +415,7 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
                               Variables Used
                             </Text>
                             <HStack space="xs" className="flex-wrap">
-                              {preview.variables_used.map((variable) => (
+                              {preview.variables_used.map(variable => (
                                 <Badge key={variable} className="bg-green-100 text-green-800">
                                   <Text className="text-xs">{'{{' + variable + '}}'}</Text>
                                 </Badge>
@@ -440,7 +433,7 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
                               Missing Variables
                             </Text>
                             <HStack space="xs" className="flex-wrap">
-                              {preview.missing_variables.map((variable) => (
+                              {preview.missing_variables.map(variable => (
                                 <Badge key={variable} className="bg-yellow-100 text-yellow-800">
                                   <Text className="text-xs">{'{{' + variable + '}}'}</Text>
                                 </Badge>
@@ -480,7 +473,7 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
         <Card className="p-3">
           <VStack space="sm">
             <Text className="text-sm font-medium text-gray-900">Validation Status</Text>
-            
+
             {validation.errors.length > 0 && (
               <HStack space="xs" className="items-start">
                 <Icon as={XIcon} size="sm" className="text-red-600 mt-0.5" />

@@ -1,12 +1,12 @@
 /**
  * Authentication Testing Utilities
- * 
+ *
  * This file provides utilities and helpers specifically for testing authentication components.
  * It follows React Native Testing Library best practices for user-centric testing.
  */
 
-import React from 'react';
 import { render, RenderOptions } from '@testing-library/react-native';
+import React from 'react';
 
 // Mock providers for authentication tests
 const MockAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -32,9 +32,7 @@ export const renderWithProviders = (
     return (
       <MockSafeAreaProvider>
         <MockToastProvider>
-          <MockAuthProvider>
-            {children}
-          </MockAuthProvider>
+          <MockAuthProvider>{children}</MockAuthProvider>
         </MockToastProvider>
       </MockSafeAreaProvider>
     );
@@ -71,7 +69,7 @@ export const createMockRouter = () => {
       push: mockPush,
       back: mockBack,
       replace: mockReplace,
-    }
+    },
   };
 };
 
@@ -92,7 +90,7 @@ export const createMockToast = () => {
       showToast: mockShowToast,
       close: mockClose,
       closeAll: mockCloseAll,
-    }
+    },
   };
 };
 
@@ -134,13 +132,11 @@ export const createAuthTestWrapper = (component: React.ReactElement) => {
   const AuthTestWrapper = ({ children }: { children: React.ReactNode }) => (
     <MockSafeAreaProvider>
       <MockToastProvider>
-        <MockAuthProvider>
-          {children}
-        </MockAuthProvider>
+        <MockAuthProvider>{children}</MockAuthProvider>
       </MockToastProvider>
     </MockSafeAreaProvider>
   );
-  
+
   return React.cloneElement(component, { wrapper: AuthTestWrapper });
 };
 
@@ -197,26 +193,22 @@ export const AUTH_TEST_DATA = {
     'user@example.com',
     'test.email@domain.co.uk',
     'user+tag@example-domain.com',
-    'first.last@subdomain.example.org'
+    'first.last@subdomain.example.org',
   ],
   invalidEmails: [
     'invalid-email',
     '@domain.com',
     'user@',
     'user space@domain.com',
-    'user..double@domain.com'
+    'user..double@domain.com',
   ],
-  validCodes: [
-    '123456',
-    '000000',
-    '999999'
-  ],
+  validCodes: ['123456', '000000', '999999'],
   invalidCodes: [
-    '12345',   // too short
+    '12345', // too short
     '1234567', // too long
-    'abcdef',  // non-numeric
-    '12 456',  // contains space
-  ]
+    'abcdef', // non-numeric
+    '12 456', // contains space
+  ],
 };
 
 /**
@@ -231,14 +223,14 @@ export const testFormValidation = async (
   expectedErrorMessage: string
 ) => {
   const { fireEvent, waitFor } = require('@testing-library/react-native');
-  
+
   const input = getByTestId(inputTestId);
   const submitButton = getByText(submitText);
-  
+
   // Enter invalid value
   fireEvent.changeText(input, invalidValue);
   fireEvent.press(submitButton);
-  
+
   // Wait for validation error to appear
   await waitFor(() => {
     expect(getByText(expectedErrorMessage)).toBeTruthy();
@@ -255,20 +247,20 @@ export const testLoadingState = async (
   asyncAction: () => Promise<void>
 ) => {
   const { fireEvent, waitFor } = require('@testing-library/react-native');
-  
+
   const submitButton = getByText(submitText);
-  
+
   // Start async action
   fireEvent.press(submitButton);
-  
+
   // Check loading state appears
   await waitFor(() => {
     expect(getByText(loadingText)).toBeTruthy();
   });
-  
+
   // Wait for action to complete
   await asyncAction();
-  
+
   // Check loading state disappears
   await waitFor(() => {
     expect(getByText(submitText)).toBeTruthy();

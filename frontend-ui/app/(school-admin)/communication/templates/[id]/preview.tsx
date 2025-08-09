@@ -56,7 +56,7 @@ const TemplatePreviewPage = () => {
     loadTemplate,
   } = useTemplateEditor();
 
-  const { 
+  const {
     preview,
     loading: previewLoading,
     error: previewError,
@@ -101,8 +101,16 @@ const TemplatePreviewPage = () => {
     { value: 'invitation', label: 'Teacher Invitation', color: 'bg-blue-100 text-blue-800' },
     { value: 'reminder', label: 'Reminder', color: 'bg-yellow-100 text-yellow-800' },
     { value: 'welcome', label: 'Welcome', color: 'bg-green-100 text-green-800' },
-    { value: 'profile_reminder', label: 'Profile Reminder', color: 'bg-orange-100 text-orange-800' },
-    { value: 'completion_celebration', label: 'Completion Celebration', color: 'bg-purple-100 text-purple-800' },
+    {
+      value: 'profile_reminder',
+      label: 'Profile Reminder',
+      color: 'bg-orange-100 text-orange-800',
+    },
+    {
+      value: 'completion_celebration',
+      label: 'Completion Celebration',
+      color: 'bg-purple-100 text-purple-800',
+    },
     { value: 'ongoing_support', label: 'Ongoing Support', color: 'bg-gray-100 text-gray-800' },
   ];
 
@@ -208,12 +216,7 @@ const TemplatePreviewPage = () => {
         {/* Header */}
         <HStack className="justify-between items-center">
           <HStack space="md" className="items-center flex-1">
-            <Button
-              onPress={() => router.back()}
-              variant="outline"
-              size="sm"
-              className="p-2"
-            >
+            <Button onPress={() => router.back()} variant="outline" size="sm" className="p-2">
               <Icon as={ArrowLeftIcon} size="sm" className="text-gray-600" />
             </Button>
 
@@ -224,9 +227,7 @@ const TemplatePreviewPage = () => {
                 </Heading>
                 {currentTemplateType && (
                   <Badge className={currentTemplateType.color}>
-                    <Text className="text-xs font-medium">
-                      {currentTemplateType.label}
-                    </Text>
+                    <Text className="text-xs font-medium">{currentTemplateType.label}</Text>
                   </Badge>
                 )}
                 <Badge
@@ -253,30 +254,23 @@ const TemplatePreviewPage = () => {
               disabled={previewLoading}
             >
               <HStack space="xs" className="items-center">
-                <Icon 
-                  as={RefreshCwIcon} 
-                  size="sm" 
-                  className={`text-gray-600 ${previewLoading ? 'animate-spin' : ''}`} 
+                <Icon
+                  as={RefreshCwIcon}
+                  size="sm"
+                  className={`text-gray-600 ${previewLoading ? 'animate-spin' : ''}`}
                 />
                 <ButtonText>Refresh</ButtonText>
               </HStack>
             </Button>
 
-            <Button
-              onPress={handleSendTestEmail}
-              variant="outline"
-              size="sm"
-            >
+            <Button onPress={handleSendTestEmail} variant="outline" size="sm">
               <HStack space="xs" className="items-center">
                 <Icon as={SendIcon} size="sm" className="text-gray-600" />
                 <ButtonText>Send Test</ButtonText>
               </HStack>
             </Button>
 
-            <Button
-              onPress={handleEditTemplate}
-              className="bg-blue-600"
-            >
+            <Button onPress={handleEditTemplate} className="bg-blue-600">
               <HStack space="xs" className="items-center">
                 <Icon as={EditIcon} size="sm" className="text-white" />
                 <ButtonText className="text-white">Edit</ButtonText>
@@ -289,7 +283,7 @@ const TemplatePreviewPage = () => {
         <Card className="p-4">
           <VStack space="md">
             <Text className="font-medium text-gray-900">Preview Mode</Text>
-            
+
             <HStack space="sm" className="items-center">
               <Pressable
                 onPress={() => setPreviewMode('desktop')}
@@ -364,7 +358,9 @@ const TemplatePreviewPage = () => {
           {/* Context Variables Panel */}
           <Card className={`p-6 ${isWeb ? 'lg:w-1/3' : 'w-full'}`}>
             <VStack space="lg">
-              <Heading size="md" className="text-gray-900">Preview Context</Heading>
+              <Heading size="md" className="text-gray-900">
+                Preview Context
+              </Heading>
               <Text className="text-sm text-gray-600">
                 Adjust these values to see how your template will look with different data
               </Text>
@@ -390,7 +386,7 @@ const TemplatePreviewPage = () => {
                             { text: 'Cancel', style: 'cancel' },
                             {
                               text: 'Update',
-                              onPress: (newValue) => {
+                              onPress: newValue => {
                                 if (newValue !== undefined) {
                                   updateContextVariable(key, newValue);
                                 }
@@ -431,7 +427,9 @@ const TemplatePreviewPage = () => {
           <Card className={`p-6 ${isWeb ? 'lg:w-2/3' : 'w-full'}`}>
             <VStack space="lg">
               <HStack className="justify-between items-center">
-                <Heading size="md" className="text-gray-900">Email Preview</Heading>
+                <Heading size="md" className="text-gray-900">
+                  Email Preview
+                </Heading>
                 <HStack space="sm" className="items-center">
                   {previewLoading && <Spinner size="small" />}
                   <Text className="text-sm text-gray-500">
@@ -451,15 +449,19 @@ const TemplatePreviewPage = () => {
                   {/* Subject Preview */}
                   <Card className="p-4 bg-gray-50">
                     <VStack space="xs">
-                      <Text className="text-xs font-medium text-gray-600 uppercase">Subject Line</Text>
+                      <Text className="text-xs font-medium text-gray-600 uppercase">
+                        Subject Line
+                      </Text>
                       <Text className="font-medium text-gray-900">{preview.subject}</Text>
                     </VStack>
                   </Card>
 
                   {/* Email Content Preview */}
                   <VStack space="sm">
-                    <Text className="text-xs font-medium text-gray-600 uppercase">Email Content</Text>
-                    
+                    <Text className="text-xs font-medium text-gray-600 uppercase">
+                      Email Content
+                    </Text>
+
                     {isWeb ? (
                       <Box
                         className="border border-gray-300 rounded-lg overflow-hidden"
@@ -468,7 +470,8 @@ const TemplatePreviewPage = () => {
                         <div
                           dangerouslySetInnerHTML={{ __html: preview.html_content }}
                           style={{
-                            minHeight: previewMode === 'desktop' ? '500px' : getPreviewDimensions().height,
+                            minHeight:
+                              previewMode === 'desktop' ? '500px' : getPreviewDimensions().height,
                             padding: '0',
                             margin: '0',
                             fontFamily: 'Arial, sans-serif',
@@ -482,9 +485,16 @@ const TemplatePreviewPage = () => {
                         <VStack space="sm" className="items-center">
                           <Icon as={EyeIcon} size="xl" className="text-gray-400" />
                           <Text className="text-gray-600 text-center">
-                            HTML email preview is only available on web. Use the web version to see the full preview with styling.
+                            HTML email preview is only available on web. Use the web version to see
+                            the full preview with styling.
                           </Text>
-                          <Button onPress={() => router.push(`/(school-admin)/communication/templates/${templateId}/edit`)}>
+                          <Button
+                            onPress={() =>
+                              router.push(
+                                `/(school-admin)/communication/templates/${templateId}/edit`
+                              )
+                            }
+                          >
                             <ButtonText>Edit Template</ButtonText>
                           </Button>
                         </VStack>
@@ -495,9 +505,14 @@ const TemplatePreviewPage = () => {
                   {/* Plain Text Preview */}
                   {preview.text_content && (
                     <VStack space="sm">
-                      <Text className="text-xs font-medium text-gray-600 uppercase">Plain Text Version</Text>
+                      <Text className="text-xs font-medium text-gray-600 uppercase">
+                        Plain Text Version
+                      </Text>
                       <Card className="p-4 bg-gray-50">
-                        <Text className="text-sm text-gray-800" style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+                        <Text
+                          className="text-sm text-gray-800"
+                          style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}
+                        >
                           {preview.text_content}
                         </Text>
                       </Card>
@@ -508,9 +523,11 @@ const TemplatePreviewPage = () => {
                   <VStack space="md">
                     {preview.variables_used.length > 0 && (
                       <VStack space="sm">
-                        <Text className="text-xs font-medium text-gray-600 uppercase">Variables Used</Text>
+                        <Text className="text-xs font-medium text-gray-600 uppercase">
+                          Variables Used
+                        </Text>
                         <HStack space="xs" className="flex-wrap">
-                          {preview.variables_used.map((variable) => (
+                          {preview.variables_used.map(variable => (
                             <Badge key={variable} className="bg-green-100 text-green-800">
                               <Text className="text-xs">{'{{' + variable + '}}'}</Text>
                             </Badge>
@@ -521,9 +538,11 @@ const TemplatePreviewPage = () => {
 
                     {preview.missing_variables.length > 0 && (
                       <VStack space="sm">
-                        <Text className="text-xs font-medium text-gray-600 uppercase">Missing Variables</Text>
+                        <Text className="text-xs font-medium text-gray-600 uppercase">
+                          Missing Variables
+                        </Text>
                         <HStack space="xs" className="flex-wrap">
-                          {preview.missing_variables.map((variable) => (
+                          {preview.missing_variables.map(variable => (
                             <Badge key={variable} className="bg-yellow-100 text-yellow-800">
                               <Text className="text-xs">{'{{' + variable + '}}'}</Text>
                             </Badge>
@@ -561,23 +580,16 @@ const TemplatePreviewPage = () => {
         <Card className="p-6">
           <VStack space="md">
             <Text className="font-medium text-gray-900">Next Steps</Text>
-            
+
             <HStack space="sm" className="flex-wrap">
-              <Button
-                onPress={handleSendTestEmail}
-                className="bg-blue-600 flex-1"
-              >
+              <Button onPress={handleSendTestEmail} className="bg-blue-600 flex-1">
                 <HStack space="xs" className="items-center">
                   <Icon as={SendIcon} size="sm" className="text-white" />
                   <ButtonText className="text-white">Send Test Email</ButtonText>
                 </HStack>
               </Button>
 
-              <Button
-                onPress={handleEditTemplate}
-                variant="outline"
-                className="flex-1"
-              >
+              <Button onPress={handleEditTemplate} variant="outline" className="flex-1">
                 <HStack space="xs" className="items-center">
                   <Icon as={EditIcon} size="sm" className="text-gray-600" />
                   <ButtonText>Edit Template</ButtonText>

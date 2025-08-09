@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 
 import { setAuthErrorCallback } from '../apiClient';
 import { isAuthenticated, logout, UserProfile } from '../authApi';
+
 import { storage } from '@/utils/storage';
 
 // Global flag to prevent multiple simultaneous auth checks
@@ -73,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const authenticated = await isAuthenticated();
 
       setIsLoggedIn(authenticated);
-      
+
       // If not authenticated, clear cached user profile
       if (!authenticated) {
         setUserProfileState(null);
@@ -82,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // If authenticated but no cached profile, try to load from storage
         await loadCachedUserProfile();
       }
-      
+
       return authenticated;
     } catch (error: any) {
       // Check if this is a server connection error (server completely down)

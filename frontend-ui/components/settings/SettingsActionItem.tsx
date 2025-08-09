@@ -1,6 +1,6 @@
 /**
  * SettingsActionItem Component
- * 
+ *
  * Individual action setting item with:
  * - Clean navigation design
  * - Icon integration
@@ -8,9 +8,9 @@
  * - Badge support
  */
 
-import React from 'react';
 import type { LucideIcon } from 'lucide-react-native';
 import { ChevronRight } from 'lucide-react-native';
+import React from 'react';
 
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
@@ -46,7 +46,7 @@ export const SettingsActionItem: React.FC<SettingsActionItemProps> = ({
   className = '',
 }) => {
   return (
-    <Pressable 
+    <Pressable
       onPress={onPress}
       disabled={disabled}
       className={`glass-light rounded-2xl p-4 active:scale-98 transition-all ${
@@ -57,45 +57,33 @@ export const SettingsActionItem: React.FC<SettingsActionItemProps> = ({
         <HStack className="items-center space-x-3 flex-1">
           {icon && (
             <Box className="w-8 h-8 bg-gray-100 rounded-lg items-center justify-center">
-              <Icon 
-                as={icon} 
-                size="sm" 
-                className="text-gray-600" 
-              />
+              <Icon as={icon} size="sm" className="text-gray-600" />
             </Box>
           )}
           <VStack className="flex-1">
-            <Text className={`font-medium ${
-              disabled ? 'text-gray-400' : 'text-gray-900'
-            }`}>
+            <Text className={`font-medium ${disabled ? 'text-gray-400' : 'text-gray-900'}`}>
               {title}
             </Text>
             {description && (
-              <Text size="sm" className={`${
-                disabled ? 'text-gray-300' : 'text-gray-600'
-              }`}>
+              <Text size="sm" className={`${disabled ? 'text-gray-300' : 'text-gray-600'}`}>
                 {description}
               </Text>
             )}
           </VStack>
         </HStack>
-        
+
         <HStack className="items-center space-x-2">
           {badge && (
-            <Badge 
-              variant={badge.variant || 'outline'} 
-              action={badge.action || 'muted'}
-              size="sm"
-            >
+            <Badge variant={badge.variant || 'outline'} action={badge.action || 'muted'} size="sm">
               <BadgeText>{badge.text}</BadgeText>
             </Badge>
           )}
-          
+
           {showChevron && (
-            <Icon 
-              as={ChevronRight} 
-              size="sm" 
-              className={disabled ? 'text-gray-300' : 'text-gray-400'} 
+            <Icon
+              as={ChevronRight}
+              size="sm"
+              className={disabled ? 'text-gray-300' : 'text-gray-400'}
             />
           )}
         </HStack>

@@ -16,12 +16,7 @@ import {
   LoadingContent,
 } from './add-payment-method-common';
 
-import {
-  Modal,
-  ModalBackdrop,
-  ModalBody,
-  ModalContent,
-} from '@/components/ui/modal';
+import { Modal, ModalBackdrop, ModalBody, ModalContent } from '@/components/ui/modal';
 
 // Export types for external usage
 export type { AddPaymentMethodModalProps };
@@ -38,16 +33,10 @@ export function AddPaymentMethodModal({ isOpen, onClose }: AddPaymentMethodModal
         <PaymentMethodModalHeader onClose={onClose} />
 
         <ModalBody>
-          {Platform.OS === 'web' ? (
-            <LoadingContent />
-          ) : (
-            <PlatformNotSupportedContent />
-          )}
+          {Platform.OS === 'web' ? <LoadingContent /> : <PlatformNotSupportedContent />}
         </ModalBody>
 
-        {Platform.OS !== 'web' && (
-          <CloseButtonFooter onClose={onClose} />
-        )}
+        {Platform.OS !== 'web' && <CloseButtonFooter onClose={onClose} />}
       </ModalContent>
     </Modal>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Box } from '../box';
 import { HStack } from '../hstack';
 import { Icon } from '../icon';
@@ -31,19 +32,20 @@ export const Tabs: React.FC<TabsProps> = ({
   return (
     <Box className={`glass-nav rounded-2xl p-2 ${className}`}>
       <HStack space="xs">
-        {items.map((item) => {
+        {items.map(item => {
           const isActive = item.id === activeTab;
           const IconComponent = item.icon;
-          
+
           return (
             <Pressable
               key={item.id}
               onPress={() => onTabChange(item.id)}
               className={`
                 flex-1 rounded-xl px-4 py-3 items-center justify-center
-                ${isActive 
-                  ? `bg-primary-600 shadow-sm ${activeTabClassName}` 
-                  : `bg-transparent ${tabClassName}`
+                ${
+                  isActive
+                    ? `bg-primary-600 shadow-sm ${activeTabClassName}`
+                    : `bg-transparent ${tabClassName}`
                 }
               `}
               accessibilityRole="tab"

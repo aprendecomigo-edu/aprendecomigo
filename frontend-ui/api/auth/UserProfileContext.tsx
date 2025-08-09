@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-import { getDashboardInfo } from '../userApi';
 import { UserProfile } from '../authApi';
+import { getDashboardInfo } from '../userApi';
+
 import { useAuth } from './AuthContext';
 
 interface UserProfileContextType {

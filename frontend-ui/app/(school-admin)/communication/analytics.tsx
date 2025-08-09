@@ -92,7 +92,7 @@ const CommunicationAnalyticsPage = () => {
   // Export data (placeholder)
   const exportData = useCallback(() => {
     if (!analytics) return;
-    
+
     // In a real implementation, this would generate and download a CSV/Excel file
     const data = {
       summary: {
@@ -160,7 +160,7 @@ const CommunicationAnalyticsPage = () => {
     },
   ];
 
-  const applyPresetFilter = useCallback((preset: typeof presetFilters[0]) => {
+  const applyPresetFilter = useCallback((preset: (typeof presetFilters)[0]) => {
     setFilters(prev => ({
       ...prev,
       start_date: preset.start_date,
@@ -204,10 +204,7 @@ const CommunicationAnalyticsPage = () => {
           </VStack>
 
           <HStack space="sm">
-            <Button
-              onPress={() => setShowFilters(!showFilters)}
-              variant="outline"
-            >
+            <Button onPress={() => setShowFilters(!showFilters)} variant="outline">
               <HStack space="xs" className="items-center">
                 <Icon as={FilterIcon} size="sm" className="text-gray-600" />
                 <ButtonText>Filters</ButtonText>
@@ -216,10 +213,10 @@ const CommunicationAnalyticsPage = () => {
 
             <Button onPress={refreshAnalytics} variant="outline" disabled={loading}>
               <HStack space="xs" className="items-center">
-                <Icon 
-                  as={RefreshCwIcon} 
-                  size="sm" 
-                  className={`text-gray-600 ${loading ? 'animate-spin' : ''}`} 
+                <Icon
+                  as={RefreshCwIcon}
+                  size="sm"
+                  className={`text-gray-600 ${loading ? 'animate-spin' : ''}`}
                 />
                 <ButtonText>Refresh</ButtonText>
               </HStack>
@@ -242,7 +239,12 @@ const CommunicationAnalyticsPage = () => {
               <VStack space="xs" className="flex-1">
                 <Text className="font-medium text-red-800">Error Loading Analytics</Text>
                 <Text className="text-sm text-red-600">{error}</Text>
-                <Button onPress={refreshAnalytics} size="sm" variant="outline" className="border-red-300 self-start">
+                <Button
+                  onPress={refreshAnalytics}
+                  size="sm"
+                  variant="outline"
+                  className="border-red-300 self-start"
+                >
                   <ButtonText>Try Again</ButtonText>
                 </Button>
               </VStack>
@@ -255,7 +257,9 @@ const CommunicationAnalyticsPage = () => {
           <Card className="p-6">
             <VStack space="lg">
               <HStack className="justify-between items-center">
-                <Heading size="md" className="text-gray-900">Filters</Heading>
+                <Heading size="md" className="text-gray-900">
+                  Filters
+                </Heading>
                 <Button onPress={() => setShowFilters(false)} size="sm" variant="outline">
                   <ButtonText>Close</ButtonText>
                 </Button>
@@ -265,7 +269,7 @@ const CommunicationAnalyticsPage = () => {
               <VStack space="sm">
                 <Text className="font-medium text-gray-900">Quick Filters</Text>
                 <HStack space="sm" className="flex-wrap">
-                  {presetFilters.map((preset) => (
+                  {presetFilters.map(preset => (
                     <Button
                       key={preset.label}
                       onPress={() => applyPresetFilter(preset)}
@@ -288,7 +292,7 @@ const CommunicationAnalyticsPage = () => {
                       <InputField
                         type="date"
                         value={filters.start_date || ''}
-                        onChangeText={(value) => updateFilter('start_date', value)}
+                        onChangeText={value => updateFilter('start_date', value)}
                       />
                     </Input>
                   </VStack>
@@ -298,7 +302,7 @@ const CommunicationAnalyticsPage = () => {
                       <InputField
                         type="date"
                         value={filters.end_date || ''}
-                        onChangeText={(value) => updateFilter('end_date', value)}
+                        onChangeText={value => updateFilter('end_date', value)}
                       />
                     </Input>
                   </VStack>
@@ -308,13 +312,17 @@ const CommunicationAnalyticsPage = () => {
               {/* Template Type Filter */}
               <VStack space="sm">
                 <Text className="font-medium text-gray-900">Template Type</Text>
-                <Select 
-                  value={filters.template_type || 'all'} 
-                  onValueChange={(value) => updateFilter('template_type', value)}
+                <Select
+                  value={filters.template_type || 'all'}
+                  onValueChange={value => updateFilter('template_type', value)}
                 >
                   <SelectTrigger>
                     <Text>
-                      {templateTypeOptions.find(opt => opt.value === (filters.template_type || 'all'))?.label}
+                      {
+                        templateTypeOptions.find(
+                          opt => opt.value === (filters.template_type || 'all')
+                        )?.label
+                      }
                     </Text>
                   </SelectTrigger>
                   <SelectContent>
@@ -328,9 +336,9 @@ const CommunicationAnalyticsPage = () => {
               {/* Status Filter */}
               <VStack space="sm">
                 <Text className="font-medium text-gray-900">Email Status</Text>
-                <Select 
-                  value={filters.status || 'all'} 
-                  onValueChange={(value) => updateFilter('status', value)}
+                <Select
+                  value={filters.status || 'all'}
+                  onValueChange={value => updateFilter('status', value)}
                 >
                   <SelectTrigger>
                     <Text>
@@ -367,7 +375,11 @@ const CommunicationAnalyticsPage = () => {
                 <VStack space="md">
                   <HStack className="justify-between items-start">
                     <Icon as={SendIcon} size="lg" className="text-blue-600" />
-                    <Icon as={getTrendIcon(analytics.total_sent)} size="sm" className={getTrendColor(analytics.total_sent)} />
+                    <Icon
+                      as={getTrendIcon(analytics.total_sent)}
+                      size="sm"
+                      className={getTrendColor(analytics.total_sent)}
+                    />
                   </HStack>
                   <VStack space="xs">
                     <Text className="text-3xl font-bold text-gray-900">
@@ -383,10 +395,19 @@ const CommunicationAnalyticsPage = () => {
                 <VStack space="md">
                   <HStack className="justify-between items-start">
                     <Icon as={MailIcon} size="lg" className="text-green-600" />
-                    <Icon as={getTrendIcon(analytics.delivery_rate, 0.9)} size="sm" className={getTrendColor(analytics.delivery_rate, 0.9)} />
+                    <Icon
+                      as={getTrendIcon(analytics.delivery_rate, 0.9)}
+                      size="sm"
+                      className={getTrendColor(analytics.delivery_rate, 0.9)}
+                    />
                   </HStack>
                   <VStack space="xs">
-                    <Text className={`text-3xl font-bold ${getPerformanceColor(analytics.delivery_rate, 'delivery')}`}>
+                    <Text
+                      className={`text-3xl font-bold ${getPerformanceColor(
+                        analytics.delivery_rate,
+                        'delivery'
+                      )}`}
+                    >
                       {Math.round(analytics.delivery_rate * 100)}%
                     </Text>
                     <Text className="text-sm text-gray-600">Delivery Rate</Text>
@@ -402,10 +423,19 @@ const CommunicationAnalyticsPage = () => {
                 <VStack space="md">
                   <HStack className="justify-between items-start">
                     <Icon as={EyeIcon} size="lg" className="text-purple-600" />
-                    <Icon as={getTrendIcon(analytics.open_rate, 0.2)} size="sm" className={getTrendColor(analytics.open_rate, 0.2)} />
+                    <Icon
+                      as={getTrendIcon(analytics.open_rate, 0.2)}
+                      size="sm"
+                      className={getTrendColor(analytics.open_rate, 0.2)}
+                    />
                   </HStack>
                   <VStack space="xs">
-                    <Text className={`text-3xl font-bold ${getPerformanceColor(analytics.open_rate, 'open')}`}>
+                    <Text
+                      className={`text-3xl font-bold ${getPerformanceColor(
+                        analytics.open_rate,
+                        'open'
+                      )}`}
+                    >
                       {Math.round(analytics.open_rate * 100)}%
                     </Text>
                     <Text className="text-sm text-gray-600">Open Rate</Text>
@@ -421,10 +451,19 @@ const CommunicationAnalyticsPage = () => {
                 <VStack space="md">
                   <HStack className="justify-between items-start">
                     <Icon as={MousePointerClickIcon} size="lg" className="text-orange-600" />
-                    <Icon as={getTrendIcon(analytics.click_rate, 0.03)} size="sm" className={getTrendColor(analytics.click_rate, 0.03)} />
+                    <Icon
+                      as={getTrendIcon(analytics.click_rate, 0.03)}
+                      size="sm"
+                      className={getTrendColor(analytics.click_rate, 0.03)}
+                    />
                   </HStack>
                   <VStack space="xs">
-                    <Text className={`text-3xl font-bold ${getPerformanceColor(analytics.click_rate, 'click')}`}>
+                    <Text
+                      className={`text-3xl font-bold ${getPerformanceColor(
+                        analytics.click_rate,
+                        'click'
+                      )}`}
+                    >
                       {Math.round(analytics.click_rate * 100)}%
                     </Text>
                     <Text className="text-sm text-gray-600">Click Rate</Text>
@@ -440,7 +479,9 @@ const CommunicationAnalyticsPage = () => {
             <Card className="p-6">
               <VStack space="lg">
                 <HStack className="justify-between items-center">
-                  <Heading size="md" className="text-gray-900">Template Performance</Heading>
+                  <Heading size="md" className="text-gray-900">
+                    Template Performance
+                  </Heading>
                   <Button
                     onPress={() => router.push('/(school-admin)/communication/templates')}
                     variant="link"
@@ -457,7 +498,9 @@ const CommunicationAnalyticsPage = () => {
                         <HStack className="justify-between items-center">
                           <VStack space="xs" className="flex-1">
                             <Text className="font-medium text-gray-900">
-                              {template.template_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              {template.template_type
+                                .replace('_', ' ')
+                                .replace(/\b\w/g, l => l.toUpperCase())}
                             </Text>
                             <Text className="text-sm text-gray-600">
                               {template.sent_count.toLocaleString()} emails sent
@@ -466,14 +509,24 @@ const CommunicationAnalyticsPage = () => {
 
                           <HStack space="lg">
                             <VStack space="xs" className="items-center">
-                              <Text className={`font-bold ${getPerformanceColor(template.open_rate, 'open')}`}>
+                              <Text
+                                className={`font-bold ${getPerformanceColor(
+                                  template.open_rate,
+                                  'open'
+                                )}`}
+                              >
                                 {Math.round(template.open_rate * 100)}%
                               </Text>
                               <Text className="text-xs text-gray-500">Open Rate</Text>
                             </VStack>
 
                             <VStack space="xs" className="items-center">
-                              <Text className={`font-bold ${getPerformanceColor(template.click_rate, 'click')}`}>
+                              <Text
+                                className={`font-bold ${getPerformanceColor(
+                                  template.click_rate,
+                                  'click'
+                                )}`}
+                              >
                                 {Math.round(template.click_rate * 100)}%
                               </Text>
                               <Text className="text-xs text-gray-500">Click Rate</Text>
@@ -501,7 +554,9 @@ const CommunicationAnalyticsPage = () => {
             <Card className="p-6">
               <VStack space="lg">
                 <HStack className="justify-between items-center">
-                  <Heading size="md" className="text-gray-900">Recent Email Activity</Heading>
+                  <Heading size="md" className="text-gray-900">
+                    Recent Email Activity
+                  </Heading>
                   <Text className="text-sm text-gray-500">
                     Last {analytics.recent_activity.length} emails
                   </Text>
@@ -509,7 +564,7 @@ const CommunicationAnalyticsPage = () => {
 
                 {analytics.recent_activity.length > 0 ? (
                   <VStack space="md">
-                    {analytics.recent_activity.map((email) => (
+                    {analytics.recent_activity.map(email => (
                       <Card key={email.id} className="p-4 bg-gray-50">
                         <HStack className="justify-between items-start">
                           <VStack space="xs" className="flex-1">
@@ -517,20 +572,33 @@ const CommunicationAnalyticsPage = () => {
                               <Text className="font-medium text-gray-900">{email.subject}</Text>
                               <Badge
                                 className={
-                                  email.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                  email.status === 'opened' ? 'bg-blue-100 text-blue-800' :
-                                  email.status === 'clicked' ? 'bg-purple-100 text-purple-800' :
-                                  email.status === 'failed' ? 'bg-red-100 text-red-800' :
-                                  'bg-gray-100 text-gray-800'
+                                  email.status === 'delivered'
+                                    ? 'bg-green-100 text-green-800'
+                                    : email.status === 'opened'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : email.status === 'clicked'
+                                    ? 'bg-purple-100 text-purple-800'
+                                    : email.status === 'failed'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-gray-100 text-gray-800'
                                 }
                               >
-                                <Text className="text-xs font-medium capitalize">{email.status}</Text>
+                                <Text className="text-xs font-medium capitalize">
+                                  {email.status}
+                                </Text>
                               </Badge>
                             </HStack>
-                            <Text className="text-sm text-gray-600">To: {email.recipient_email}</Text>
+                            <Text className="text-sm text-gray-600">
+                              To: {email.recipient_email}
+                            </Text>
                             <Text className="text-xs text-gray-500">
-                              {email.template_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} •{' '}
-                              {email.sent_at ? new Date(email.sent_at).toLocaleDateString() : 'Not sent'}
+                              {email.template_type
+                                .replace('_', ' ')
+                                .replace(/\b\w/g, l => l.toUpperCase())}{' '}
+                              •{' '}
+                              {email.sent_at
+                                ? new Date(email.sent_at).toLocaleDateString()
+                                : 'Not sent'}
                             </Text>
                           </VStack>
                         </HStack>
@@ -554,8 +622,10 @@ const CommunicationAnalyticsPage = () => {
             {/* Performance Summary */}
             <Card className="p-6">
               <VStack space="lg">
-                <Heading size="md" className="text-gray-900">Performance Summary</Heading>
-                
+                <Heading size="md" className="text-gray-900">
+                  Performance Summary
+                </Heading>
+
                 <VStack space="md">
                   {/* Delivery Performance */}
                   <HStack className="justify-between items-center">
@@ -564,7 +634,12 @@ const CommunicationAnalyticsPage = () => {
                       <Text className="text-gray-700">Email Delivery</Text>
                     </HStack>
                     <VStack space="xs" className="items-end">
-                      <Text className={`font-semibold ${getPerformanceColor(analytics.delivery_rate, 'delivery')}`}>
+                      <Text
+                        className={`font-semibold ${getPerformanceColor(
+                          analytics.delivery_rate,
+                          'delivery'
+                        )}`}
+                      >
                         {Math.round(analytics.delivery_rate * 100)}%
                       </Text>
                       <Text className="text-xs text-gray-500">
@@ -580,10 +655,17 @@ const CommunicationAnalyticsPage = () => {
                       <Text className="text-gray-700">Email Engagement</Text>
                     </HStack>
                     <VStack space="xs" className="items-end">
-                      <Text className={`font-semibold ${getPerformanceColor(analytics.open_rate, 'open')}`}>
+                      <Text
+                        className={`font-semibold ${getPerformanceColor(
+                          analytics.open_rate,
+                          'open'
+                        )}`}
+                      >
                         {Math.round(analytics.open_rate * 100)}% open
                       </Text>
-                      <Text className={`text-xs ${getPerformanceColor(analytics.click_rate, 'click')}`}>
+                      <Text
+                        className={`text-xs ${getPerformanceColor(analytics.click_rate, 'click')}`}
+                      >
                         {Math.round(analytics.click_rate * 100)}% click
                       </Text>
                     </VStack>
@@ -595,7 +677,11 @@ const CommunicationAnalyticsPage = () => {
                       <Icon as={XCircleIcon} size="sm" className="text-gray-600" />
                       <Text className="text-gray-700">Bounce Rate</Text>
                     </HStack>
-                    <Text className={`font-semibold ${analytics.bounce_rate > 0.05 ? 'text-red-600' : 'text-green-600'}`}>
+                    <Text
+                      className={`font-semibold ${
+                        analytics.bounce_rate > 0.05 ? 'text-red-600' : 'text-green-600'
+                      }`}
+                    >
                       {Math.round(analytics.bounce_rate * 100)}%
                     </Text>
                   </HStack>

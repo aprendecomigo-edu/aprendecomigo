@@ -5,17 +5,17 @@
  * Tests balance display, real-time updates, low balance warnings, and user interactions.
  */
 
-import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import React from 'react';
 
-import { StudentBalanceCard } from '@/components/purchase/StudentBalanceCard';
-import { useStudentBalance } from '@/hooks/useStudentBalance';
 import {
   createMockStudentBalance,
   createMockLowBalanceStudent,
   createMockStudentBalanceCardProps,
   createBalanceUpdateMessage,
 } from '@/__tests__/utils/payment-test-utils';
+import { StudentBalanceCard } from '@/components/purchase/StudentBalanceCard';
+import { useStudentBalance } from '@/hooks/useStudentBalance';
 
 // Mock the hook
 jest.mock('@/hooks/useStudentBalance');
@@ -45,7 +45,7 @@ jest.mock('@/components/student/balance/BalanceStatusBar', () => ({
 
 describe('StudentBalanceCard Component', () => {
   const defaultProps = createMockStudentBalanceCardProps();
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockPush.mockClear();
@@ -59,9 +59,9 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('Loading balance information...')).toBeTruthy();
     });
 
@@ -72,9 +72,9 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByTestId('spinner')).toBeTruthy();
     });
   });
@@ -88,9 +88,9 @@ describe('StudentBalanceCard Component', () => {
         error: errorMessage,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('Unable to Load Balance')).toBeTruthy();
       expect(getByText(errorMessage)).toBeTruthy();
       expect(getByText('Try Again')).toBeTruthy();
@@ -104,11 +104,11 @@ describe('StudentBalanceCard Component', () => {
         error: 'Network error',
         refetch: mockRefetch,
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       fireEvent.press(getByText('Try Again'));
-      
+
       expect(mockRefetch).toHaveBeenCalled();
     });
   });
@@ -122,9 +122,9 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('Account Balance')).toBeTruthy();
       expect(getByText('John Doe (john@example.com)')).toBeTruthy();
       expect(getByText('10.0')).toBeTruthy(); // Remaining hours
@@ -143,11 +143,9 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
-      const { getByTestId } = render(
-        <StudentBalanceCard {...defaultProps} showStatusBar={true} />
-      );
-      
+
+      const { getByTestId } = render(<StudentBalanceCard {...defaultProps} showStatusBar={true} />);
+
       expect(getByTestId('balance-status-bar')).toBeTruthy();
     });
 
@@ -159,11 +157,11 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { queryByTestId } = render(
         <StudentBalanceCard {...defaultProps} showStatusBar={false} />
       );
-      
+
       expect(queryByTestId('balance-status-bar')).toBeNull();
     });
 
@@ -175,11 +173,11 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { queryByText } = render(
         <StudentBalanceCard {...defaultProps} showStudentInfo={false} />
       );
-      
+
       expect(queryByText('John Doe (john@example.com)')).toBeNull();
     });
 
@@ -191,11 +189,11 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId } = render(
         <StudentBalanceCard {...defaultProps} compact={false} showStatusBar={true} />
       );
-      
+
       expect(getByTestId('status-details')).toBeTruthy();
     });
   });
@@ -209,9 +207,9 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       // Should show remaining hours in error color
       expect(getByText('1.5')).toBeTruthy(); // Low balance hours
     });
@@ -224,9 +222,9 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('Buy Hours')).toBeTruthy();
     });
 
@@ -238,11 +236,11 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       fireEvent.press(getByText('Buy Hours'));
-      
+
       expect(mockPush).toHaveBeenCalledWith('/purchase');
     });
 
@@ -255,16 +253,16 @@ describe('StudentBalanceCard Component', () => {
           balance_amount: '150.00',
         },
       });
-      
+
       mockUseStudentBalance.mockReturnValue({
         balance,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { queryByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(queryByText('Buy Hours')).toBeNull();
     });
   });
@@ -278,9 +276,9 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('Active Packages')).toBeTruthy();
       expect(getByText('Standard Package')).toBeTruthy();
       expect(getByText('7.0 of 10.0 hours remaining')).toBeTruthy();
@@ -294,16 +292,16 @@ describe('StudentBalanceCard Component', () => {
           expired_packages: [],
         },
       });
-      
+
       mockUseStudentBalance.mockReturnValue({
         balance,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { queryByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(queryByText('Active Packages')).toBeNull();
     });
 
@@ -325,16 +323,16 @@ describe('StudentBalanceCard Component', () => {
           expired_packages: [],
         },
       });
-      
+
       mockUseStudentBalance.mockReturnValue({
         balance,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('3 days left')).toBeTruthy();
     });
   });
@@ -348,9 +346,9 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('Expiring Soon')).toBeTruthy();
       expect(getByText('7.0 hours remaining')).toBeTruthy();
       expect(getByText('30 days left')).toBeTruthy();
@@ -368,16 +366,16 @@ describe('StudentBalanceCard Component', () => {
           },
         ],
       });
-      
+
       mockUseStudentBalance.mockReturnValue({
         balance,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('2 days left')).toBeTruthy();
     });
 
@@ -385,16 +383,16 @@ describe('StudentBalanceCard Component', () => {
       const balance = createMockStudentBalance({
         upcoming_expirations: [],
       });
-      
+
       mockUseStudentBalance.mockReturnValue({
         balance,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { queryByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(queryByText('Expiring Soon')).toBeNull();
     });
   });
@@ -414,16 +412,16 @@ describe('StudentBalanceCard Component', () => {
         },
         upcoming_expirations: [],
       });
-      
+
       mockUseStudentBalance.mockReturnValue({
         balance,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('No Active Packages')).toBeTruthy();
       expect(getByText(/Purchase a tutoring package/)).toBeTruthy();
     });
@@ -436,9 +434,9 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { queryByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(queryByText('No Active Packages')).toBeNull();
     });
 
@@ -456,16 +454,16 @@ describe('StudentBalanceCard Component', () => {
           balance_amount: '30.00',
         },
       });
-      
+
       mockUseStudentBalance.mockReturnValue({
         balance,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { queryByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(queryByText('No Active Packages')).toBeNull();
     });
   });
@@ -474,55 +472,55 @@ describe('StudentBalanceCard Component', () => {
     it('calls refetch when refresh button is clicked', () => {
       const mockRefetch = jest.fn();
       const balance = createMockStudentBalance();
-      
+
       mockUseStudentBalance.mockReturnValue({
         balance,
         loading: false,
         error: null,
         refetch: mockRefetch,
       });
-      
+
       const { getByTestId } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       fireEvent.press(getByTestId('refresh-button'));
-      
+
       expect(mockRefetch).toHaveBeenCalled();
     });
 
     it('calls onRefresh prop when refresh button is clicked', () => {
       const mockOnRefresh = jest.fn();
       const balance = createMockStudentBalance();
-      
+
       mockUseStudentBalance.mockReturnValue({
         balance,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId } = render(
         <StudentBalanceCard {...defaultProps} onRefresh={mockOnRefresh} />
       );
-      
+
       fireEvent.press(getByTestId('refresh-button'));
-      
+
       expect(mockOnRefresh).toHaveBeenCalled();
     });
 
     it('handles refresh when no balance data', () => {
       const mockRefetch = jest.fn();
-      
+
       mockUseStudentBalance.mockReturnValue({
         balance: null,
         loading: false,
         error: null,
         refetch: mockRefetch,
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       fireEvent.press(getByText('Refresh'));
-      
+
       expect(mockRefetch).toHaveBeenCalled();
     });
   });
@@ -536,11 +534,11 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { queryByTestId } = render(
         <StudentBalanceCard {...defaultProps} compact={true} showStatusBar={true} />
       );
-      
+
       // In compact mode, details should be hidden from status bar
       expect(queryByTestId('status-details')).toBeNull();
     });
@@ -556,16 +554,16 @@ describe('StudentBalanceCard Component', () => {
           balance_amount: '125.50',
         },
       });
-      
+
       mockUseStudentBalance.mockReturnValue({
         balance,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('12.5')).toBeTruthy(); // Remaining hours
       expect(getByText('15.8')).toBeTruthy(); // Hours purchased (rounded)
       expect(getByText('3.3')).toBeTruthy(); // Hours consumed (rounded)
@@ -580,16 +578,16 @@ describe('StudentBalanceCard Component', () => {
           balance_amount: '0.00',
         },
       });
-      
+
       mockUseStudentBalance.mockReturnValue({
         balance,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('0.0')).toBeTruthy();
     });
   });
@@ -603,9 +601,9 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('Account Balance')).toBeTruthy();
       expect(getByText('Hours Summary')).toBeTruthy();
       expect(getByText('Active Packages')).toBeTruthy();
@@ -618,9 +616,9 @@ describe('StudentBalanceCard Component', () => {
         error: 'Network error',
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       expect(getByText('Unable to Load Balance')).toBeTruthy();
       expect(getByText('Network error')).toBeTruthy();
     });
@@ -635,11 +633,11 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const start = performance.now();
       render(<StudentBalanceCard {...defaultProps} />);
       const end = performance.now();
-      
+
       expect(end - start).toBeLessThan(100);
     });
 
@@ -651,13 +649,13 @@ describe('StudentBalanceCard Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { rerender } = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       const start = performance.now();
       rerender(<StudentBalanceCard {...defaultProps} />);
       const end = performance.now();
-      
+
       expect(end - start).toBeLessThan(50);
     });
   });
