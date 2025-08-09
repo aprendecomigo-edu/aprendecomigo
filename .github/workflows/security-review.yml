@@ -1,0 +1,211 @@
+name: Claude Security Review
+
+permissions:
+  pull-requests: write  # For PR comments
+  contents: read       # For code access
+  issues: write        # For creating security issues
+
+on:
+  pull_request:
+    branches:
+      - main  # Only run on PRs targeting main branch
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  security-review:
+    runs-on: ubuntu-latest
+    name: Automated Security Review
+    
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+
+      - name: Run Claude Security Review
+        id: security_scan
+        uses: anthropics/claude-code-security-review@main
+        with:
+          claude-api-key: ${{ secrets.CLAUDE_API_KEY }}
+          comment-pr: true
+          upload-results: true
+          claudecode-timeout: 30  # 30 minutes for larger PRs
+          custom-security-scan-instructions: .github/security-scan-instructions.md
+          exclude-directories: |
+            node_modules
+            .venv
+            __pycache__
+            build
+            dist
+            coverage
+            .expo
+          
+      - name: Download Security Results
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: security-review-results
+          path: ./security-results
+        continue-on-error: true
+
+      - name: Parse Security Findings
+        if: always()
+        id: parse_findings
+        run: |
+          # Check if security results exist
+          if [ -d "./security-results" ]; then
+            echo "Security results found, parsing..."
+            
+            # Create a script to parse findings
+            cat > parse_security.py << 'EOF'
+          import json
+          import sys
+          import os
+          
+          try:
+              # Look for the security review results file
+              results_file = None
+              for root, dirs, files in os.walk('./security-results'):
+                  for file in files:
+                      if file.endswith('.json'):
+                          results_file = os.path.join(root, file)
+                          break
+              
+              if not results_file:
+                  print("No JSON results file found")
+                  sys.exit(0)
+              
+              with open(results_file, 'r') as f:
+                  data = json.load(f)
+              
+              # Check for critical or high severity findings
+              has_critical = False
+              findings_summary = []
+              
+              if 'findings' in data:
+                  for finding in data['findings']:
+                      severity = finding.get('severity', 'unknown').lower()
+                      if severity in ['critical', 'high']:
+                          has_critical = True
+                          findings_summary.append({
+                              'severity': severity,
+                              'type': finding.get('type', 'Unknown'),
+                              'description': finding.get('description', ''),
+                              'file': finding.get('file', 'Unknown'),
+                              'line': finding.get('line', 'Unknown')
+                          })
+              
+              # Output for GitHub Actions
+              if has_critical:
+                  print(f"::set-output name=has_critical::true")
+                  print(f"::set-output name=findings_count::{len(findings_summary)}")
+                  
+                  # Create issue body
+                  issue_body = f"## Security Review Findings for PR #{os.environ.get('PR_NUMBER', 'Unknown')}\n\n"
+                  issue_body += f"Claude's automated security review found {len(findings_summary)} critical/high severity issue(s):\n\n"
+                  
+                  for finding in findings_summary:
+                      issue_body += f"### {finding['severity'].upper()}: {finding['type']}\n"
+                      issue_body += f"**File:** `{finding['file']}` (Line: {finding['line']})\n"
+                      issue_body += f"**Description:** {finding['description']}\n\n"
+                  
+                  issue_body += f"\n**PR Link:** #{os.environ.get('PR_NUMBER', 'Unknown')}\n"
+                  issue_body += f"**PR Author:** @{os.environ.get('PR_AUTHOR', 'unknown')}\n"
+                  
+                  # Save issue body to file
+                  with open('issue_body.md', 'w') as f:
+                      f.write(issue_body)
+              else:
+                  print(f"::set-output name=has_critical::false")
+                  print("No critical or high severity findings")
+                  
+          except Exception as e:
+              print(f"Error parsing security results: {e}")
+              print(f"::set-output name=has_critical::false")
+          EOF
+            
+            python3 parse_security.py
+          else
+            echo "No security results directory found"
+            echo "::set-output name=has_critical::false"
+          fi
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        continue-on-error: true
+
+      - name: Create Security Issue if Critical Findings
+        if: steps.parse_findings.outputs.has_critical == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let issueBody = '';
+            
+            try {
+              issueBody = fs.readFileSync('issue_body.md', 'utf8');
+            } catch (error) {
+              issueBody = `## Security Review Alert for PR #${{ github.event.pull_request.number }}\n\nCritical security findings detected. Please review the PR comments for details.`;
+            }
+            
+            // Create the security issue
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[SECURITY] Critical findings in PR #${{ github.event.pull_request.number }}`,
+              body: issueBody,
+              labels: ['security', 'priority-critical', 'automated-review'],
+              assignees: ['${{ github.event.pull_request.user.login }}']
+            });
+            
+            // Add a comment to the PR linking to the issue
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.pull_request.number }},
+              body: `⚠️ **Security Alert**: Critical security findings have been detected in this PR.\n\nA security issue has been created for tracking: #${issue.data.number}\n\nPlease address these findings before merging.`
+            });
+            
+            console.log(`Security issue created: #${issue.data.number}`);
+
+      - name: Add PR Label for Security Review
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const hasCritical = '${{ steps.parse_findings.outputs.has_critical }}' === 'true';
+            
+            // Add appropriate label based on findings
+            const label = hasCritical ? 'security-review-failed' : 'security-review-passed';
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.pull_request.number }},
+              labels: [label]
+            });
+            
+            console.log(`Added label: ${label}`);
+
+      - name: Summary Report
+        if: always()
+        run: |
+          echo "## Security Review Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**PR:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Author:** @${{ github.event.pull_request.user.login }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Target Branch:** main" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.parse_findings.outputs.has_critical }}" == "true" ]; then
+            echo "⚠️ **Status:** Critical/High severity findings detected" >> $GITHUB_STEP_SUMMARY
+            echo "**Action Required:** Security issue created for tracking" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **Status:** No critical findings detected" >> $GITHUB_STEP_SUMMARY
+          fi

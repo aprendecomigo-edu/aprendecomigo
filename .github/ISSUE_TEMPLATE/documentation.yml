@@ -1,0 +1,164 @@
+name: Documentation
+description: Suggest improvements or report issues with documentation
+title: "[DOCS] "
+labels: ["documentation", "good-first-issue"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve our documentation for developers and users!
+
+  - type: dropdown
+    id: doc_type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation needs improvement?
+      options:
+        - API Documentation
+        - User Guide
+        - Developer Documentation
+        - Setup/Installation Guide
+        - Code Comments
+        - README Files
+        - Architecture Documentation
+        - Contributing Guidelines
+        - Security Documentation
+        - Deployment Guide
+        - Integration Guide
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Issue Type
+      description: What kind of documentation issue is this?
+      options:
+        - Missing Documentation
+        - Outdated Information
+        - Incorrect Information
+        - Unclear/Confusing
+        - Missing Examples
+        - Broken Links
+        - Typos/Grammar
+        - Missing Translation
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: affected_page
+    attributes:
+      label: Affected Page/Section
+      description: Link or path to the documentation that needs improvement
+      placeholder: "https://docs.aprendecomigo.com/api/authentication or /README.md#installation"
+
+  - type: textarea
+    id: current_content
+    attributes:
+      label: Current Content
+      description: What does the documentation currently say? (if applicable)
+      placeholder: "The current documentation states..."
+
+  - type: textarea
+    id: issue_description
+    attributes:
+      label: Issue Description
+      description: Describe what's wrong or missing in the documentation
+      placeholder: "The authentication section doesn't explain how to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested_improvement
+    attributes:
+      label: Suggested Improvement
+      description: How should the documentation be improved?
+      placeholder: |
+        The documentation should include:
+        - Step-by-step guide for JWT token refresh
+        - Code examples in Python and JavaScript
+        - Common error messages and solutions
+    validations:
+      required: true
+
+  - type: textarea
+    id: code_examples
+    attributes:
+      label: Proposed Code Examples
+      description: If applicable, provide code examples that should be included
+      render: javascript
+      placeholder: |
+        // Example: Refreshing JWT token
+        const refreshToken = async () => {
+          const response = await fetch('/api/auth/refresh', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${refreshToken}`
+            }
+          });
+          return response.json();
+        };
+
+  - type: dropdown
+    id: target_audience
+    attributes:
+      label: Target Audience
+      description: Who is the intended audience for this documentation?
+      multiple: true
+      options:
+        - Developers
+        - School Administrators
+        - Teachers
+        - Students
+        - Parents
+        - System Administrators
+        - API Consumers
+        - Contributors
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this documentation update?
+      options:
+        - High - Blocking development/usage
+        - Medium - Causing confusion
+        - Low - Nice to have
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: documentation_areas
+    attributes:
+      label: Related Areas
+      description: Which areas need documentation updates?
+      options:
+        - label: Code examples needed
+        - label: API endpoints documentation
+        - label: Error handling documentation
+        - label: Configuration options
+        - label: Environment variables
+        - label: Database schema
+        - label: WebSocket events
+        - label: Authentication flow
+        - label: Deployment steps
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I can submit a PR with these documentation improvements
+        - label: I need help from maintainers to improve this
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Any other information that would help improve the documentation

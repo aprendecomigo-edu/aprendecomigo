@@ -49,7 +49,8 @@
       "WebFetch(domain:wix.github.io)",
       "WebFetch(domain:www.django-rest-framework.org)",
       "mcp__playwright__browser_network_requests",
-      "WebFetch(domain:docs.djangoproject.com)"
+      "WebFetch(domain:docs.djangoproject.com)",
+      "WebFetch(domain:www.anthropic.com)"
     ],
     "deny": []
   }

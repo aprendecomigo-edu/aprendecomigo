@@ -1,0 +1,180 @@
+name: Performance Issue
+description: Report slow loading times, API timeouts, or other performance problems
+title: "[PERFORMANCE] "
+labels: ["performance", "needs-investigation"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us identify and fix performance bottlenecks in the platform.
+
+  - type: dropdown
+    id: performance_area
+    attributes:
+      label: Performance Area
+      description: What type of performance issue are you experiencing?
+      options:
+        - Page Load Time
+        - API Response Time
+        - WebSocket Connection
+        - Database Query
+        - File Upload/Download
+        - Video Streaming
+        - Search Functionality
+        - Report Generation
+        - Mobile App Responsiveness
+        - Memory Usage
+        - Battery Drain (Mobile)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: affected_component
+    attributes:
+      label: Affected Component
+      description: Which part of the system is experiencing performance issues?
+      multiple: true
+      options:
+        - Student Dashboard
+        - Teacher Dashboard
+        - School Admin Panel
+        - Calendar/Scheduling
+        - Payment Processing
+        - Real-time Classroom
+        - Analytics/Reports
+        - User Authentication
+        - File Management
+        - Messaging System
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue_description
+    attributes:
+      label: Issue Description
+      description: Describe the performance issue you're experiencing
+      placeholder: "The dashboard takes over 10 seconds to load when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this performance issue?
+      placeholder: |
+        1. Log in as a teacher with 50+ students
+        2. Navigate to Analytics dashboard
+        3. Select "Monthly Report"
+        4. Observe loading time
+    validations:
+      required: true
+
+  - type: input
+    id: expected_performance
+    attributes:
+      label: Expected Performance
+      description: What performance do you expect?
+      placeholder: "Page should load in under 2 seconds"
+    validations:
+      required: true
+
+  - type: input
+    id: actual_performance
+    attributes:
+      label: Actual Performance
+      description: What performance are you experiencing?
+      placeholder: "Page takes 15-20 seconds to load"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Frequency
+      description: How often does this performance issue occur?
+      options:
+        - Always
+        - Frequently (>50% of the time)
+        - Sometimes (10-50% of the time)
+        - Rarely (<10% of the time)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: user_impact
+    attributes:
+      label: User Impact
+      description: How many users are affected?
+      options:
+        - All users
+        - Specific school(s)
+        - Specific user role
+        - Specific user accounts
+        - Unknown
+    validations:
+      required: true
+
+  - type: input
+    id: data_volume
+    attributes:
+      label: Data Volume
+      description: Relevant data volumes (e.g., number of students, records, files)
+      placeholder: "School with 500+ students, 10000+ records"
+
+  - type: textarea
+    id: environment_details
+    attributes:
+      label: Environment Details
+      description: Browser, device, network conditions
+      placeholder: |
+        - Browser: Chrome 120.0
+        - Device: MacBook Pro M1
+        - Network: 100 Mbps fiber
+        - Location: São Paulo, Brazil
+
+  - type: textarea
+    id: peak_times
+    attributes:
+      label: Peak Times
+      description: Are there specific times when performance is worse?
+      placeholder: "Performance degrades between 7-9 PM when most tutoring sessions occur"
+
+  - type: textarea
+    id: performance_metrics
+    attributes:
+      label: Performance Metrics
+      description: Any specific metrics or measurements you've captured
+      render: shell
+      placeholder: |
+        Network tab timings:
+        - DNS: 20ms
+        - Initial connection: 150ms
+        - Waiting (TTFB): 8500ms
+        - Content download: 500ms
+
+  - type: textarea
+    id: console_logs
+    attributes:
+      label: Console Logs/Errors
+      description: Any console warnings or errors during the performance issue
+      render: shell
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Current Workaround
+      description: Have you found any temporary solutions?
+      placeholder: "Refreshing the page sometimes helps..."
+
+  - type: checkboxes
+    id: regression
+    attributes:
+      label: Performance Regression
+      options:
+        - label: This was working fine before a recent update
+        - label: Performance has gradually degraded over time
+        - label: This is a new feature with performance issues
