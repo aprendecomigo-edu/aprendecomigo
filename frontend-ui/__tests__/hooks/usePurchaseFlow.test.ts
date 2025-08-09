@@ -7,8 +7,6 @@
 
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 
-import { PurchaseApiClient } from '@/api/purchaseApi';
-import { usePurchaseFlow } from '@/hooks/usePurchaseFlow';
 import {
   createMockPricingPlan,
   createMockStripeConfig,
@@ -21,6 +19,8 @@ import {
   VALID_TEST_DATA,
   INVALID_TEST_DATA,
 } from '@/__tests__/utils/payment-test-utils';
+import { PurchaseApiClient } from '@/api/purchaseApi';
+import { usePurchaseFlow } from '@/hooks/usePurchaseFlow';
 
 // Mock the API client
 jest.mock('@/api/purchaseApi');
@@ -109,7 +109,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.selectPlan(plan);
       });
-      
+
       expect(result.current.state.step).toBe('user-info');
     });
   });
@@ -124,7 +124,10 @@ describe('usePurchaseFlow Hook', () => {
       });
 
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       expect(result.current.state.formData.studentName).toBe(VALID_TEST_DATA.studentName);
@@ -146,7 +149,10 @@ describe('usePurchaseFlow Hook', () => {
 
       // Should still have error for too short name
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       expect(result.current.state.formData.errors.name).toBeUndefined();
@@ -162,13 +168,19 @@ describe('usePurchaseFlow Hook', () => {
       expect(result.current.state.formData.errors.email).toBe('Email is required');
 
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, INVALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          INVALID_TEST_DATA.studentEmail
+        );
       });
 
       expect(result.current.state.formData.errors.email).toBe('Please enter a valid email address');
 
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       expect(result.current.state.formData.errors.email).toBeUndefined();
@@ -178,7 +190,10 @@ describe('usePurchaseFlow Hook', () => {
       const { result } = renderHook(() => usePurchaseFlow());
 
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, '  JOHN@EXAMPLE.COM  ');
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          '  JOHN@EXAMPLE.COM  '
+        );
       });
 
       expect(result.current.state.formData.studentEmail).toBe('john@example.com');
@@ -196,7 +211,10 @@ describe('usePurchaseFlow Hook', () => {
       expect(result.current.canProceed).toBe(false);
 
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       expect(result.current.canProceed).toBe(true);
@@ -216,7 +234,10 @@ describe('usePurchaseFlow Hook', () => {
       });
 
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       await act(async () => {
@@ -287,7 +308,10 @@ describe('usePurchaseFlow Hook', () => {
       });
 
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       await act(async () => {
@@ -314,7 +338,10 @@ describe('usePurchaseFlow Hook', () => {
       });
 
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       await act(async () => {
@@ -341,7 +368,10 @@ describe('usePurchaseFlow Hook', () => {
       });
 
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       act(() => {
@@ -374,7 +404,10 @@ describe('usePurchaseFlow Hook', () => {
       });
 
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       // Manually set payment step with secret
@@ -517,7 +550,10 @@ describe('usePurchaseFlow Hook', () => {
       });
 
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       act(() => {
@@ -582,7 +618,10 @@ describe('usePurchaseFlow Hook', () => {
       expect(result.current.canProceed).toBe(false);
 
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       expect(result.current.canProceed).toBe(true);
@@ -651,7 +690,10 @@ describe('usePurchaseFlow Hook', () => {
 
       // Test validation with valid data
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       expect(Object.keys(result.current.state.formData.errors)).toHaveLength(0);
@@ -724,7 +766,10 @@ describe('usePurchaseFlow Hook', () => {
 
       // Fix email error
       act(() => {
-        result.current.actions.updateStudentInfo(VALID_TEST_DATA.studentName, VALID_TEST_DATA.studentEmail);
+        result.current.actions.updateStudentInfo(
+          VALID_TEST_DATA.studentName,
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       expect(result.current.state.formData.errors.name).toBeUndefined();
