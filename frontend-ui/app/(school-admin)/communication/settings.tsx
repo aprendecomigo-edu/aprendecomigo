@@ -34,43 +34,43 @@ import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 interface CommunicationSettings {
   id: number;
   school: number;
-  
+
   // Email sending settings
   default_send_time: string;
   max_emails_per_day: number;
   retry_failed_emails: boolean;
   retry_attempts: number;
   retry_delay_hours: number;
-  
+
   // Notification settings
   email_notifications_enabled: boolean;
   admin_notification_email: string;
   notify_on_delivery_failure: boolean;
   notify_on_low_engagement: boolean;
   engagement_threshold: number;
-  
+
   // Sequence settings
   invitation_sequence_enabled: boolean;
   invitation_follow_up_days: number[];
   reminder_sequence_enabled: boolean;
   reminder_intervals_days: number[];
-  
+
   // Template defaults
   default_invitation_template: number | null;
   default_reminder_template: number | null;
   default_welcome_template: number | null;
-  
+
   // Rate limiting
   rate_limit_enabled: boolean;
   max_emails_per_hour: number;
   burst_limit: number;
-  
+
   // Advanced settings
   track_email_opens: boolean;
   track_email_clicks: boolean;
   auto_suppress_bounces: boolean;
   suppress_after_bounces: number;
-  
+
   created_at: string;
   updated_at: string;
 }
@@ -122,15 +122,18 @@ const CommunicationSettingsPage = () => {
   }, []);
 
   // Update setting field
-  const updateSetting = useCallback((field: keyof CommunicationSettings, value: any) => {
-    if (settings) {
-      setSettings({
-        ...settings,
-        [field]: value,
-      });
-      setHasUnsavedChanges(true);
-    }
-  }, [settings]);
+  const updateSetting = useCallback(
+    (field: keyof CommunicationSettings, value: any) => {
+      if (settings) {
+        setSettings({
+          ...settings,
+          [field]: value,
+        });
+        setHasUnsavedChanges(true);
+      }
+    },
+    [settings]
+  );
 
   // Save settings
   const handleSaveSettings = useCallback(async () => {
@@ -142,7 +145,7 @@ const CommunicationSettingsPage = () => {
     try {
       // Mock API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       setHasUnsavedChanges(false);
       Alert.alert('Success', 'Communication settings saved successfully');
     } catch (err: any) {
@@ -155,57 +158,62 @@ const CommunicationSettingsPage = () => {
 
   // Reset settings
   const handleResetSettings = useCallback(() => {
-    Alert.alert(
-      'Reset Settings',
-      'Are you sure you want to discard all unsaved changes?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Reset', 
-          style: 'destructive',
-          onPress: () => {
-            // Reload settings
-            setHasUnsavedChanges(false);
-            // In real app, refetch from API
-          }
+    Alert.alert('Reset Settings', 'Are you sure you want to discard all unsaved changes?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reset',
+        style: 'destructive',
+        onPress: () => {
+          // Reload settings
+          setHasUnsavedChanges(false);
+          // In real app, refetch from API
         },
-      ]
-    );
+      },
+    ]);
   }, []);
 
   // Update follow-up days array
-  const updateFollowUpDays = useCallback((type: 'invitation' | 'reminder', index: number, value: string) => {
-    if (!settings) return;
+  const updateFollowUpDays = useCallback(
+    (type: 'invitation' | 'reminder', index: number, value: string) => {
+      if (!settings) return;
 
-    const field = type === 'invitation' ? 'invitation_follow_up_days' : 'reminder_intervals_days';
-    const currentArray = settings[field];
-    const newArray = [...currentArray];
-    newArray[index] = parseInt(value) || 0;
-    
-    updateSetting(field, newArray);
-  }, [settings, updateSetting]);
+      const field = type === 'invitation' ? 'invitation_follow_up_days' : 'reminder_intervals_days';
+      const currentArray = settings[field];
+      const newArray = [...currentArray];
+      newArray[index] = parseInt(value) || 0;
+
+      updateSetting(field, newArray);
+    },
+    [settings, updateSetting]
+  );
 
   // Add/remove follow-up day
-  const addFollowUpDay = useCallback((type: 'invitation' | 'reminder') => {
-    if (!settings) return;
+  const addFollowUpDay = useCallback(
+    (type: 'invitation' | 'reminder') => {
+      if (!settings) return;
 
-    const field = type === 'invitation' ? 'invitation_follow_up_days' : 'reminder_intervals_days';
-    const currentArray = settings[field];
-    
-    updateSetting(field, [...currentArray, 1]);
-  }, [settings, updateSetting]);
+      const field = type === 'invitation' ? 'invitation_follow_up_days' : 'reminder_intervals_days';
+      const currentArray = settings[field];
 
-  const removeFollowUpDay = useCallback((type: 'invitation' | 'reminder', index: number) => {
-    if (!settings) return;
+      updateSetting(field, [...currentArray, 1]);
+    },
+    [settings, updateSetting]
+  );
 
-    const field = type === 'invitation' ? 'invitation_follow_up_days' : 'reminder_intervals_days';
-    const currentArray = settings[field];
-    
-    if (currentArray.length > 1) {
-      const newArray = currentArray.filter((_, i) => i !== index);
-      updateSetting(field, newArray);
-    }
-  }, [settings, updateSetting]);
+  const removeFollowUpDay = useCallback(
+    (type: 'invitation' | 'reminder', index: number) => {
+      if (!settings) return;
+
+      const field = type === 'invitation' ? 'invitation_follow_up_days' : 'reminder_intervals_days';
+      const currentArray = settings[field];
+
+      if (currentArray.length > 1) {
+        const newArray = currentArray.filter((_, i) => i !== index);
+        updateSetting(field, newArray);
+      }
+    },
+    [settings, updateSetting]
+  );
 
   // Loading state
   if (loading) {
@@ -303,7 +311,12 @@ const CommunicationSettingsPage = () => {
                 <Button onPress={handleSaveSettings} size="sm" className="bg-orange-600">
                   <ButtonText className="text-white">Save</ButtonText>
                 </Button>
-                <Button onPress={handleResetSettings} size="sm" variant="outline" className="border-orange-300">
+                <Button
+                  onPress={handleResetSettings}
+                  size="sm"
+                  variant="outline"
+                  className="border-orange-300"
+                >
                   <ButtonText>Reset</ButtonText>
                 </Button>
               </HStack>
@@ -315,7 +328,9 @@ const CommunicationSettingsPage = () => {
         <Card className="p-6">
           <VStack space="lg">
             <VStack space="xs">
-              <Heading size="md" className="text-gray-900">Email Sending</Heading>
+              <Heading size="md" className="text-gray-900">
+                Email Sending
+              </Heading>
               <Text className="text-gray-600">Configure when and how emails are sent</Text>
             </VStack>
 
@@ -326,7 +341,7 @@ const CommunicationSettingsPage = () => {
                 <InputField
                   type="time"
                   value={settings.default_send_time}
-                  onChangeText={(value) => updateSetting('default_send_time', value)}
+                  onChangeText={value => updateSetting('default_send_time', value)}
                 />
               </Input>
               <Text className="text-xs text-gray-500">
@@ -342,7 +357,7 @@ const CommunicationSettingsPage = () => {
                   type="number"
                   placeholder="100"
                   value={settings.max_emails_per_day.toString()}
-                  onChangeText={(value) => updateSetting('max_emails_per_day', parseInt(value) || 0)}
+                  onChangeText={value => updateSetting('max_emails_per_day', parseInt(value) || 0)}
                 />
               </Input>
               <Text className="text-xs text-gray-500">
@@ -361,7 +376,7 @@ const CommunicationSettingsPage = () => {
                 </VStack>
                 <Switch
                   value={settings.retry_failed_emails}
-                  onValueChange={(value) => updateSetting('retry_failed_emails', value)}
+                  onValueChange={value => updateSetting('retry_failed_emails', value)}
                 />
               </HStack>
 
@@ -374,7 +389,9 @@ const CommunicationSettingsPage = () => {
                         type="number"
                         placeholder="3"
                         value={settings.retry_attempts.toString()}
-                        onChangeText={(value) => updateSetting('retry_attempts', parseInt(value) || 0)}
+                        onChangeText={value =>
+                          updateSetting('retry_attempts', parseInt(value) || 0)
+                        }
                       />
                     </Input>
                   </VStack>
@@ -385,7 +402,9 @@ const CommunicationSettingsPage = () => {
                         type="number"
                         placeholder="24"
                         value={settings.retry_delay_hours.toString()}
-                        onChangeText={(value) => updateSetting('retry_delay_hours', parseInt(value) || 0)}
+                        onChangeText={value =>
+                          updateSetting('retry_delay_hours', parseInt(value) || 0)
+                        }
                       />
                     </Input>
                   </VStack>
@@ -399,7 +418,9 @@ const CommunicationSettingsPage = () => {
         <Card className="p-6">
           <VStack space="lg">
             <VStack space="xs">
-              <Heading size="md" className="text-gray-900">Notifications</Heading>
+              <Heading size="md" className="text-gray-900">
+                Notifications
+              </Heading>
               <Text className="text-gray-600">Configure admin notifications and alerts</Text>
             </VStack>
 
@@ -413,7 +434,7 @@ const CommunicationSettingsPage = () => {
               </VStack>
               <Switch
                 value={settings.email_notifications_enabled}
-                onValueChange={(value) => updateSetting('email_notifications_enabled', value)}
+                onValueChange={value => updateSetting('email_notifications_enabled', value)}
               />
             </HStack>
 
@@ -427,7 +448,7 @@ const CommunicationSettingsPage = () => {
                       type="email"
                       placeholder="admin@school.com"
                       value={settings.admin_notification_email}
-                      onChangeText={(value) => updateSetting('admin_notification_email', value)}
+                      onChangeText={value => updateSetting('admin_notification_email', value)}
                     />
                   </Input>
                   <Text className="text-xs text-gray-500">
@@ -445,7 +466,7 @@ const CommunicationSettingsPage = () => {
                   </VStack>
                   <Switch
                     value={settings.notify_on_delivery_failure}
-                    onValueChange={(value) => updateSetting('notify_on_delivery_failure', value)}
+                    onValueChange={value => updateSetting('notify_on_delivery_failure', value)}
                   />
                 </HStack>
 
@@ -460,7 +481,7 @@ const CommunicationSettingsPage = () => {
                     </VStack>
                     <Switch
                       value={settings.notify_on_low_engagement}
-                      onValueChange={(value) => updateSetting('notify_on_low_engagement', value)}
+                      onValueChange={value => updateSetting('notify_on_low_engagement', value)}
                     />
                   </HStack>
 
@@ -472,7 +493,9 @@ const CommunicationSettingsPage = () => {
                           type="number"
                           placeholder="0.1"
                           value={settings.engagement_threshold.toString()}
-                          onChangeText={(value) => updateSetting('engagement_threshold', parseFloat(value) || 0)}
+                          onChangeText={value =>
+                            updateSetting('engagement_threshold', parseFloat(value) || 0)
+                          }
                         />
                       </Input>
                       <Text className="text-xs text-gray-500">
@@ -490,8 +513,12 @@ const CommunicationSettingsPage = () => {
         <Card className="p-6">
           <VStack space="lg">
             <VStack space="xs">
-              <Heading size="md" className="text-gray-900">Email Sequences</Heading>
-              <Text className="text-gray-600">Configure automated email sequences and follow-ups</Text>
+              <Heading size="md" className="text-gray-900">
+                Email Sequences
+              </Heading>
+              <Text className="text-gray-600">
+                Configure automated email sequences and follow-ups
+              </Text>
             </VStack>
 
             {/* Invitation Sequence */}
@@ -505,13 +532,15 @@ const CommunicationSettingsPage = () => {
                 </VStack>
                 <Switch
                   value={settings.invitation_sequence_enabled}
-                  onValueChange={(value) => updateSetting('invitation_sequence_enabled', value)}
+                  onValueChange={value => updateSetting('invitation_sequence_enabled', value)}
                 />
               </HStack>
 
               {settings.invitation_sequence_enabled && (
                 <VStack space="sm" className="ml-4">
-                  <Text className="text-sm text-gray-700">Follow-up Schedule (days after invitation)</Text>
+                  <Text className="text-sm text-gray-700">
+                    Follow-up Schedule (days after invitation)
+                  </Text>
                   <VStack space="xs">
                     {settings.invitation_follow_up_days.map((days, index) => (
                       <HStack key={index} space="sm" className="items-center">
@@ -520,7 +549,7 @@ const CommunicationSettingsPage = () => {
                             type="number"
                             placeholder="1"
                             value={days.toString()}
-                            onChangeText={(value) => updateFollowUpDays('invitation', index, value)}
+                            onChangeText={value => updateFollowUpDays('invitation', index, value)}
                           />
                         </Input>
                         <Text className="text-sm text-gray-600">days</Text>
@@ -559,7 +588,7 @@ const CommunicationSettingsPage = () => {
                 </VStack>
                 <Switch
                   value={settings.reminder_sequence_enabled}
-                  onValueChange={(value) => updateSetting('reminder_sequence_enabled', value)}
+                  onValueChange={value => updateSetting('reminder_sequence_enabled', value)}
                 />
               </HStack>
 
@@ -574,7 +603,7 @@ const CommunicationSettingsPage = () => {
                             type="number"
                             placeholder="1"
                             value={days.toString()}
-                            onChangeText={(value) => updateFollowUpDays('reminder', index, value)}
+                            onChangeText={value => updateFollowUpDays('reminder', index, value)}
                           />
                         </Input>
                         <Text className="text-sm text-gray-600">days</Text>
@@ -608,8 +637,12 @@ const CommunicationSettingsPage = () => {
         <Card className="p-6">
           <VStack space="lg">
             <VStack space="xs">
-              <Heading size="md" className="text-gray-900">Rate Limiting</Heading>
-              <Text className="text-gray-600">Control email sending rate to prevent overwhelming recipients</Text>
+              <Heading size="md" className="text-gray-900">
+                Rate Limiting
+              </Heading>
+              <Text className="text-gray-600">
+                Control email sending rate to prevent overwhelming recipients
+              </Text>
             </VStack>
 
             {/* Rate Limiting Enable */}
@@ -622,7 +655,7 @@ const CommunicationSettingsPage = () => {
               </VStack>
               <Switch
                 value={settings.rate_limit_enabled}
-                onValueChange={(value) => updateSetting('rate_limit_enabled', value)}
+                onValueChange={value => updateSetting('rate_limit_enabled', value)}
               />
             </HStack>
 
@@ -635,7 +668,9 @@ const CommunicationSettingsPage = () => {
                       type="number"
                       placeholder="50"
                       value={settings.max_emails_per_hour.toString()}
-                      onChangeText={(value) => updateSetting('max_emails_per_hour', parseInt(value) || 0)}
+                      onChangeText={value =>
+                        updateSetting('max_emails_per_hour', parseInt(value) || 0)
+                      }
                     />
                   </Input>
                   <Text className="text-xs text-gray-500">
@@ -650,7 +685,7 @@ const CommunicationSettingsPage = () => {
                       type="number"
                       placeholder="10"
                       value={settings.burst_limit.toString()}
-                      onChangeText={(value) => updateSetting('burst_limit', parseInt(value) || 0)}
+                      onChangeText={value => updateSetting('burst_limit', parseInt(value) || 0)}
                     />
                   </Input>
                   <Text className="text-xs text-gray-500">
@@ -666,7 +701,9 @@ const CommunicationSettingsPage = () => {
         <Card className="p-6">
           <VStack space="lg">
             <VStack space="xs">
-              <Heading size="md" className="text-gray-900">Advanced Settings</Heading>
+              <Heading size="md" className="text-gray-900">
+                Advanced Settings
+              </Heading>
               <Text className="text-gray-600">Additional configuration options</Text>
             </VStack>
 
@@ -680,7 +717,7 @@ const CommunicationSettingsPage = () => {
               </VStack>
               <Switch
                 value={settings.track_email_opens}
-                onValueChange={(value) => updateSetting('track_email_opens', value)}
+                onValueChange={value => updateSetting('track_email_opens', value)}
               />
             </HStack>
 
@@ -693,7 +730,7 @@ const CommunicationSettingsPage = () => {
               </VStack>
               <Switch
                 value={settings.track_email_clicks}
-                onValueChange={(value) => updateSetting('track_email_clicks', value)}
+                onValueChange={value => updateSetting('track_email_clicks', value)}
               />
             </HStack>
 
@@ -708,7 +745,7 @@ const CommunicationSettingsPage = () => {
                 </VStack>
                 <Switch
                   value={settings.auto_suppress_bounces}
-                  onValueChange={(value) => updateSetting('auto_suppress_bounces', value)}
+                  onValueChange={value => updateSetting('auto_suppress_bounces', value)}
                 />
               </HStack>
 
@@ -720,7 +757,9 @@ const CommunicationSettingsPage = () => {
                       type="number"
                       placeholder="3"
                       value={settings.suppress_after_bounces.toString()}
-                      onChangeText={(value) => updateSetting('suppress_after_bounces', parseInt(value) || 0)}
+                      onChangeText={value =>
+                        updateSetting('suppress_after_bounces', parseInt(value) || 0)
+                      }
                     />
                   </Input>
                   <Text className="text-xs text-gray-500">
@@ -736,7 +775,7 @@ const CommunicationSettingsPage = () => {
         <Card className="p-6">
           <VStack space="md">
             <Text className="font-medium text-gray-900">Save Your Settings</Text>
-            
+
             <HStack space="sm" className="flex-wrap">
               <Button
                 onPress={handleSaveSettings}

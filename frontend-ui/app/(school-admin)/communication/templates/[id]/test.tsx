@@ -65,11 +65,7 @@ const TestEmailPage = () => {
     loadTemplate,
   } = useTemplateEditor();
 
-  const { 
-    sendTestEmail,
-    loading: sendingEmail,
-    error: sendError,
-  } = useTemplatePreview();
+  const { sendTestEmail, loading: sendingEmail, error: sendError } = useTemplatePreview();
 
   // Load template on mount
   useEffect(() => {
@@ -82,7 +78,7 @@ const TestEmailPage = () => {
   useEffect(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const isValid = emailRegex.test(testEmail);
-    
+
     setEmailValidation({
       isValid,
       message: testEmail && !isValid ? 'Please enter a valid email address' : undefined,
@@ -94,8 +90,16 @@ const TestEmailPage = () => {
     { value: 'invitation', label: 'Teacher Invitation', color: 'bg-blue-100 text-blue-800' },
     { value: 'reminder', label: 'Reminder', color: 'bg-yellow-100 text-yellow-800' },
     { value: 'welcome', label: 'Welcome', color: 'bg-green-100 text-green-800' },
-    { value: 'profile_reminder', label: 'Profile Reminder', color: 'bg-orange-100 text-orange-800' },
-    { value: 'completion_celebration', label: 'Completion Celebration', color: 'bg-purple-100 text-purple-800' },
+    {
+      value: 'profile_reminder',
+      label: 'Profile Reminder',
+      color: 'bg-orange-100 text-orange-800',
+    },
+    {
+      value: 'completion_celebration',
+      label: 'Completion Celebration',
+      color: 'bg-purple-100 text-purple-800',
+    },
     { value: 'ongoing_support', label: 'Ongoing Support', color: 'bg-gray-100 text-gray-800' },
   ];
 
@@ -122,9 +126,9 @@ const TestEmailPage = () => {
       const result = await sendTestEmail(templateId, testEmail);
 
       // Update the status
-      setTestHistory(prev => 
-        prev.map(test => 
-          test.id === testId 
+      setTestHistory(prev =>
+        prev.map(test =>
+          test.id === testId
             ? { ...test, status: result.success ? 'sent' : 'failed', error_message: result.message }
             : test
         )
@@ -143,8 +147,8 @@ const TestEmailPage = () => {
       setTestEmail('');
     } catch (err: any) {
       // Update the failed test in history
-      setTestHistory(prev => 
-        prev.map(test => 
+      setTestHistory(prev =>
+        prev.map(test =>
           test.email === testEmail && test.status === 'sending'
             ? { ...test, status: 'failed', error_message: err.message }
             : test
@@ -245,12 +249,7 @@ const TestEmailPage = () => {
         {/* Header */}
         <HStack className="justify-between items-center">
           <HStack space="md" className="items-center flex-1">
-            <Button
-              onPress={() => router.back()}
-              variant="outline"
-              size="sm"
-              className="p-2"
-            >
+            <Button onPress={() => router.back()} variant="outline" size="sm" className="p-2">
               <Icon as={ArrowLeftIcon} size="sm" className="text-gray-600" />
             </Button>
 
@@ -261,9 +260,7 @@ const TestEmailPage = () => {
                 </Heading>
                 {currentTemplateType && (
                   <Badge className={currentTemplateType.color}>
-                    <Text className="text-xs font-medium">
-                      {currentTemplateType.label}
-                    </Text>
+                    <Text className="text-xs font-medium">{currentTemplateType.label}</Text>
                   </Badge>
                 )}
               </HStack>
@@ -289,7 +286,9 @@ const TestEmailPage = () => {
         <Card className="p-6">
           <VStack space="lg">
             <VStack space="xs">
-              <Heading size="md" className="text-gray-900">Send Test Email</Heading>
+              <Heading size="md" className="text-gray-900">
+                Send Test Email
+              </Heading>
               <Text className="text-gray-600">
                 Send a test email to see how your template will look in an actual email client
               </Text>
@@ -322,7 +321,7 @@ const TestEmailPage = () => {
               <Text className="text-sm text-gray-600">
                 Customize the data used in the test email to see different scenarios
               </Text>
-              
+
               <VStack space="sm">
                 {Object.entries(customVariables).map(([key, value]) => (
                   <VStack key={key} space="xs">
@@ -333,7 +332,7 @@ const TestEmailPage = () => {
                       <InputField
                         placeholder={`Enter ${key.replace(/_/g, ' ')}`}
                         value={value}
-                        onChangeText={(text) => updateCustomVariable(key, text)}
+                        onChangeText={text => updateCustomVariable(key, text)}
                       />
                     </Input>
                   </VStack>
@@ -411,14 +410,14 @@ const TestEmailPage = () => {
           <Card className="p-6">
             <VStack space="lg">
               <VStack space="xs">
-                <Heading size="md" className="text-gray-900">Test Email History</Heading>
-                <Text className="text-gray-600">
-                  Recent test emails sent for this template
-                </Text>
+                <Heading size="md" className="text-gray-900">
+                  Test Email History
+                </Heading>
+                <Text className="text-gray-600">Recent test emails sent for this template</Text>
               </VStack>
 
               <VStack space="md">
-                {testHistory.map((test) => {
+                {testHistory.map(test => {
                   const statusInfo = getStatusInfo(test.status);
                   return (
                     <Card key={test.id} className="p-4 bg-gray-50">
@@ -435,7 +434,7 @@ const TestEmailPage = () => {
                             </Badge>
                             <Text className="font-medium text-gray-900">{test.email}</Text>
                           </HStack>
-                          
+
                           <Text className="text-sm text-gray-600">
                             {new Date(test.sent_at).toLocaleString()}
                           </Text>
@@ -447,9 +446,7 @@ const TestEmailPage = () => {
                           )}
                         </VStack>
 
-                        {test.status === 'sending' && (
-                          <Spinner size="small" />
-                        )}
+                        {test.status === 'sending' && <Spinner size="small" />}
                       </HStack>
                     </Card>
                   );
@@ -474,10 +471,12 @@ const TestEmailPage = () => {
         <Card className="p-6">
           <VStack space="md">
             <Text className="font-medium text-gray-900">Next Steps</Text>
-            
+
             <HStack space="sm" className="flex-wrap">
               <Button
-                onPress={() => router.push(`/(school-admin)/communication/templates/${templateId}/preview`)}
+                onPress={() =>
+                  router.push(`/(school-admin)/communication/templates/${templateId}/preview`)
+                }
                 variant="outline"
                 className="flex-1"
               >
@@ -485,7 +484,9 @@ const TestEmailPage = () => {
               </Button>
 
               <Button
-                onPress={() => router.push(`/(school-admin)/communication/templates/${templateId}/edit`)}
+                onPress={() =>
+                  router.push(`/(school-admin)/communication/templates/${templateId}/edit`)
+                }
                 variant="outline"
                 className="flex-1"
               >
@@ -502,7 +503,8 @@ const TestEmailPage = () => {
             </HStack>
 
             <Text className="text-xs text-gray-500 text-center">
-              Once you're satisfied with the template, you can activate it for use in email sequences
+              Once you're satisfied with the template, you can activate it for use in email
+              sequences
             </Text>
           </VStack>
         </Card>

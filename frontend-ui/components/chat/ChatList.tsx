@@ -80,9 +80,7 @@ const ChannelListContent = () => {
         ) : (
           <VStack className="p-6" space="md">
             <Text className="text-xl font-bold text-gray-900">Mensagens</Text>
-            <Text className="text-gray-600">
-              Sistema de mensagens disponível em breve.
-            </Text>
+            <Text className="text-gray-600">Sistema de mensagens disponível em breve.</Text>
           </VStack>
         )}
       </View>

@@ -191,12 +191,7 @@ export function UsagePatternChart({ patterns, loading, timeRange }: UsagePattern
         </div>
 
         {/* Pattern Insights */}
-        {insights && (
-          <PatternInsightsCard 
-            insights={insights} 
-            chartData={chartData}
-          />
-        )}
+        {insights && <PatternInsightsCard insights={insights} chartData={chartData} />}
       </VStack>
     </Card>
   );

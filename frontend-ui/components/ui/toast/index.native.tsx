@@ -1,5 +1,6 @@
 import { withStyleContextAndStates } from '@gluestack-ui/nativewind-utils/withStyleContextAndStates';
 import { View } from 'react-native';
+
 import { SCOPE, createUIToast, createToastComponents, useToast } from './toast-common';
 
 // Native-specific Root component using withStyleContextAndStates

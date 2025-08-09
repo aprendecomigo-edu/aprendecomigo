@@ -7,14 +7,12 @@
  */
 
 import React from 'react';
-import { render } from '@/__tests__/utils/test-utils';
-import type {
-  PricingPlan,
-  StudentBalanceResponse,
-  PaymentMethod,
-  StripeConfig,
-  PurchaseInitiationResponse,
-} from '@/types/purchase';
+
+import {
+  createMockAuthUser,
+  createMockTokenResponse,
+  createAuthTestWrapper,
+} from './auth-test-utils';
 import {
   createMockPricingPlans,
   createMockPricingPlan,
@@ -29,11 +27,15 @@ import {
   createBalanceUpdateMessage,
   VALID_TEST_DATA,
 } from './payment-test-utils';
-import {
-  createMockAuthUser,
-  createMockTokenResponse,
-  createAuthTestWrapper,
-} from './auth-test-utils';
+
+import { render } from '@/__tests__/utils/test-utils';
+import type {
+  PricingPlan,
+  StudentBalanceResponse,
+  PaymentMethod,
+  StripeConfig,
+  PurchaseInitiationResponse,
+} from '@/types/purchase';
 
 // Integration scenario builders
 export interface IntegrationTestHelpers {
@@ -206,7 +208,7 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
 
       return {
         mockNewUser,
-        onAuthComplete: (callback) => {
+        onAuthComplete: callback => {
           authCompleteCallback = callback;
         },
         mockRegistrationFlow: () => {
@@ -282,18 +284,14 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
           if (typeof require !== 'undefined') {
             const AppState = require('react-native').AppState;
             AppState.currentState = 'background';
-            AppState._eventHandlers?.change?.forEach((handler: any) => 
-              handler('background')
-            );
+            AppState._eventHandlers?.change?.forEach((handler: any) => handler('background'));
           }
         },
         simulateAppForegrounding: () => {
           if (typeof require !== 'undefined') {
             const AppState = require('react-native').AppState;
             AppState.currentState = 'active';
-            AppState._eventHandlers?.change?.forEach((handler: any) => 
-              handler('active')
-            );
+            AppState._eventHandlers?.change?.forEach((handler: any) => handler('active'));
           }
         },
       };
@@ -317,7 +315,7 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
         mockStateRecovery: () => {
           // Mock localStorage state recovery
           if (typeof window !== 'undefined' && window.localStorage) {
-            window.localStorage.getItem = jest.fn().mockImplementation((key) => {
+            window.localStorage.getItem = jest.fn().mockImplementation(key => {
               if (key === 'purchase_flow_state') {
                 return JSON.stringify({
                   step: 'user-info',
@@ -350,7 +348,7 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
         simulateRealtimeUpdate: (type: string, data: any) => {
           setTimeout(() => {
             mockWebSocket.onmessage?.({
-              data: JSON.stringify({ type, data })
+              data: JSON.stringify({ type, data }),
             } as any);
           }, 50);
         },
@@ -411,33 +409,40 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
           // Mock all APIs to return successful responses
           const { PurchaseApiClient } = require('@/api/purchaseApi');
           const { PaymentMethodApiClient } = require('@/api/paymentMethodApi');
-          
+
           PurchaseApiClient.getStripeConfig = jest.fn().mockResolvedValue(createMockStripeConfig());
           PurchaseApiClient.getPricingPlans = jest.fn().mockResolvedValue(createMockPricingPlans());
-          PurchaseApiClient.initiatePurchase = jest.fn().mockResolvedValue(createMockPurchaseInitiationResponse());
-          PaymentMethodApiClient.getPaymentMethods = jest.fn().mockResolvedValue(createMockPaymentMethods());
-          
+          PurchaseApiClient.initiatePurchase = jest
+            .fn()
+            .mockResolvedValue(createMockPurchaseInitiationResponse());
+          PaymentMethodApiClient.getPaymentMethods = jest
+            .fn()
+            .mockResolvedValue(createMockPaymentMethods());
+
           const mockStripe = createMockStripe();
           mockStripe.confirmPayment.mockResolvedValue(createMockStripeSuccess());
         },
         mockValidFormData,
-        simulateCompleteFlow: async (helpers) => {
+        simulateCompleteFlow: async helpers => {
           const { getByText, getByPlaceholderText, waitFor, fireEvent } = helpers;
-          
+
           // Plan selection
           await waitFor(() => getByText('Select Plan'));
           fireEvent.press(getByText('Standard Package'));
-          
+
           // User info
           await waitFor(() => getByText('Student Information'));
           fireEvent.changeText(getByPlaceholderText('Student name'), mockValidFormData.studentName);
-          fireEvent.changeText(getByPlaceholderText('Student email'), mockValidFormData.studentEmail);
+          fireEvent.changeText(
+            getByPlaceholderText('Student email'),
+            mockValidFormData.studentEmail
+          );
           fireEvent.press(getByText('Continue to Payment'));
-          
+
           // Payment
           await waitFor(() => getByText('Payment'));
           fireEvent.press(getByText(/Pay €/));
-          
+
           // Success
           await waitFor(() => getByText('Purchase Successful!'));
         },
@@ -448,21 +453,29 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
       return {
         mockFailingApis: (failurePoints: string[]) => {
           const { PurchaseApiClient } = require('@/api/purchaseApi');
-          
+
           failurePoints.forEach(point => {
             switch (point) {
               case 'stripe_config':
-                PurchaseApiClient.getStripeConfig = jest.fn().mockRejectedValue(new Error('Stripe config failed'));
+                PurchaseApiClient.getStripeConfig = jest
+                  .fn()
+                  .mockRejectedValue(new Error('Stripe config failed'));
                 break;
               case 'pricing_plans':
-                PurchaseApiClient.getPricingPlans = jest.fn().mockRejectedValue(new Error('Plans loading failed'));
+                PurchaseApiClient.getPricingPlans = jest
+                  .fn()
+                  .mockRejectedValue(new Error('Plans loading failed'));
                 break;
               case 'purchase_initiation':
-                PurchaseApiClient.initiatePurchase = jest.fn().mockRejectedValue(new Error('Purchase initiation failed'));
+                PurchaseApiClient.initiatePurchase = jest
+                  .fn()
+                  .mockRejectedValue(new Error('Purchase initiation failed'));
                 break;
               case 'payment':
                 const mockStripe = createMockStripe();
-                mockStripe.confirmPayment.mockResolvedValue(createMockStripeError('Payment failed'));
+                mockStripe.confirmPayment.mockResolvedValue(
+                  createMockStripeError('Payment failed')
+                );
                 break;
             }
           });
@@ -471,19 +484,16 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
           // Reset mocks to successful state for recovery testing
           const { PurchaseApiClient } = require('@/api/purchaseApi');
           PurchaseApiClient.getStripeConfig = jest.fn().mockResolvedValue(createMockStripeConfig());
-          PurchaseApiClient.initiatePurchase = jest.fn().mockResolvedValue(createMockPurchaseInitiationResponse());
-          
+          PurchaseApiClient.initiatePurchase = jest
+            .fn()
+            .mockResolvedValue(createMockPurchaseInitiationResponse());
+
           const mockStripe = createMockStripe();
           mockStripe.confirmPayment.mockResolvedValue(createMockStripeSuccess());
         },
         simulateErrorScenarios: () => {
           // Simulate various error conditions
-          const scenarios = [
-            'network_error',
-            'validation_error',
-            'payment_error',
-            'timeout_error',
-          ];
+          const scenarios = ['network_error', 'validation_error', 'payment_error', 'timeout_error'];
           return scenarios;
         },
       };
@@ -521,8 +531,8 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
         mockPlatformSpecifics: () => {
           const Platform = require('react-native').Platform;
           Platform.OS = platform;
-          Platform.select = jest.fn((platforms: any) => 
-            platforms[platform] || platforms.native || platforms.default
+          Platform.select = jest.fn(
+            (platforms: any) => platforms[platform] || platforms.native || platforms.default
           );
         },
         setupPlatformMocks: () => {
@@ -604,7 +614,7 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
                   transaction_id: approved ? 123 : null,
                   message: approved ? 'Purchase approved' : 'Purchase declined',
                 },
-              })
+              }),
             } as any);
           }, 100);
         },
@@ -613,7 +623,7 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
 
     coordinateApiMocks(scenario: TestScenario): MockCoordinator {
       const callOrder: string[] = [];
-      
+
       return {
         setupMocks: () => {
           // Setup mocks based on scenario
@@ -635,7 +645,7 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
     },
 
     createUserJourneySimulator(): UserJourneySimulator {
-      let performanceMetrics: PerformanceMetrics = {
+      const performanceMetrics: PerformanceMetrics = {
         renderTime: 0,
         memoryUsage: 0,
         apiCallCount: 0,
@@ -684,7 +694,7 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
         stopMonitoring: () => {
           const endTime = performance.now();
           const endMemory = (performance as any).memory?.usedJSHeapSize || 0;
-          
+
           return {
             renderTime: endTime - startTime,
             memoryUsage: endMemory - startMemory,
@@ -709,11 +719,11 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
           // Verify all interactive elements have accessibility labels
           const buttons = component.queryAllByRole('button');
           const inputs = component.queryAllByRole('textbox');
-          
+
           buttons.forEach((button: any) => {
             expect(button).toHaveProperty('accessibilityLabel');
           });
-          
+
           inputs.forEach((input: any) => {
             expect(input).toHaveProperty('accessibilityLabel');
           });
@@ -749,12 +759,12 @@ export function createTestWrapper(props: any = {}) {
 
 export function expectTestToCompleteWithin(maxMs: number) {
   const startTime = performance.now();
-  
+
   return {
     verify: () => {
       const duration = performance.now() - startTime;
       expect(duration).toBeLessThan(maxMs);
-    }
+    },
   };
 }
 

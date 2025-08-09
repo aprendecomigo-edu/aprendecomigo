@@ -5,15 +5,15 @@
  * Tests plan display, selection, loading states, and error handling.
  */
 
-import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import React from 'react';
 
-import { PricingPlanSelector } from '@/components/purchase/PricingPlanSelector';
-import { usePricingPlans } from '@/hooks/usePricingPlans';
 import {
   createMockPricingPlans,
   createMockPricingPlan,
 } from '@/__tests__/utils/payment-test-utils';
+import { PricingPlanSelector } from '@/components/purchase/PricingPlanSelector';
+import { usePricingPlans } from '@/hooks/usePricingPlans';
 
 // Mock the hook
 jest.mock('@/hooks/usePricingPlans');
@@ -41,13 +41,13 @@ jest.mock('@/components/purchase/PricingPlanCard', () => ({
 describe('PricingPlanSelector Component', () => {
   const mockPlans = createMockPricingPlans();
   const mockOnPlanSelect = jest.fn();
-  
+
   const defaultProps = {
     onPlanSelect: mockOnPlanSelect,
     disabled: false,
     className: '',
   };
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -60,9 +60,9 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText, getByTestId } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByTestId('spinner')).toBeTruthy();
       expect(getByText('Loading pricing plans...')).toBeTruthy();
     });
@@ -74,9 +74,9 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByTestId('spinner')).toBeTruthy();
     });
   });
@@ -90,9 +90,9 @@ describe('PricingPlanSelector Component', () => {
         error: errorMessage,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByText('Failed to Load Pricing Plans')).toBeTruthy();
       expect(getByText(errorMessage)).toBeTruthy();
       expect(getByText('Try Again')).toBeTruthy();
@@ -106,11 +106,11 @@ describe('PricingPlanSelector Component', () => {
         error: 'Network error',
         refetch: mockRefetch,
       });
-      
+
       const { getByText } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       fireEvent.press(getByText('Try Again'));
-      
+
       expect(mockRefetch).toHaveBeenCalled();
     });
 
@@ -121,9 +121,9 @@ describe('PricingPlanSelector Component', () => {
         error: 'API Error',
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       // Error alert should be displayed with error styling
       expect(getByText('Failed to Load Pricing Plans')).toBeTruthy();
     });
@@ -137,11 +137,13 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByText('No Plans Available')).toBeTruthy();
-      expect(getByText('There are currently no pricing plans available. Please check back later.')).toBeTruthy();
+      expect(
+        getByText('There are currently no pricing plans available. Please check back later.')
+      ).toBeTruthy();
       expect(getByText('Refresh')).toBeTruthy();
     });
 
@@ -153,11 +155,11 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: mockRefetch,
       });
-      
+
       const { getByText } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       fireEvent.press(getByText('Refresh'));
-      
+
       expect(mockRefetch).toHaveBeenCalled();
     });
   });
@@ -170,12 +172,14 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId, getByText } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByText('Choose Your Plan')).toBeTruthy();
-      expect(getByText('Select the tutoring plan that best fits your learning needs and budget.')).toBeTruthy();
-      
+      expect(
+        getByText('Select the tutoring plan that best fits your learning needs and budget.')
+      ).toBeTruthy();
+
       mockPlans.forEach(plan => {
         expect(getByTestId(`plan-card-${plan.id}`)).toBeTruthy();
         expect(getByText(`${plan.name} - €${plan.price_eur}`)).toBeTruthy();
@@ -189,11 +193,15 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<PricingPlanSelector {...defaultProps} />);
-      
-      expect(getByText('Need help choosing? Contact us for personalized recommendations.')).toBeTruthy();
-      expect(getByText('All plans include access to qualified tutors and secure scheduling.')).toBeTruthy();
+
+      expect(
+        getByText('Need help choosing? Contact us for personalized recommendations.')
+      ).toBeTruthy();
+      expect(
+        getByText('All plans include access to qualified tutors and secure scheduling.')
+      ).toBeTruthy();
     });
 
     it('renders plans in responsive grid layout', () => {
@@ -203,9 +211,9 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       // All plans should be rendered
       mockPlans.forEach(plan => {
         expect(getByTestId(`plan-card-${plan.id}`)).toBeTruthy();
@@ -219,16 +227,16 @@ describe('PricingPlanSelector Component', () => {
         createMockPricingPlan({ id: 1, name: 'Package Plan', plan_type: 'package' }),
         createMockPricingPlan({ id: 2, name: 'Subscription Plan', plan_type: 'subscription' }),
       ];
-      
+
       mockUsePricingPlans.mockReturnValue({
         plans: plansWithPackage,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByTestId('popular-badge')).toBeTruthy();
       // Popular badge should be on the package plan
       const packageCard = getByTestId('plan-card-1');
@@ -240,16 +248,16 @@ describe('PricingPlanSelector Component', () => {
         createMockPricingPlan({ id: 1, name: 'Plan 1', plan_type: 'subscription' }),
         createMockPricingPlan({ id: 2, name: 'Plan 2', plan_type: 'subscription' }),
       ];
-      
+
       mockUsePricingPlans.mockReturnValue({
         plans: subscriptionPlans,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByTestId('popular-badge')).toBeTruthy();
     });
 
@@ -260,9 +268,9 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { queryByTestId } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(queryByTestId('popular-badge')).toBeNull();
     });
   });
@@ -275,12 +283,12 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       const firstPlan = mockPlans[0];
       fireEvent.press(getByTestId(`plan-card-${firstPlan.id}`));
-      
+
       expect(mockOnPlanSelect).toHaveBeenCalledWith(firstPlan);
     });
 
@@ -292,13 +300,13 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId } = render(
         <PricingPlanSelector {...defaultProps} selectedPlan={selectedPlan} />
       );
-      
+
       expect(getByTestId('selected-indicator')).toBeTruthy();
-      
+
       // Check that the correct plan is marked as selected
       const selectedCard = getByTestId(`plan-card-${selectedPlan.id}`);
       expect(selectedCard.style.border).toBe('2px solid blue');
@@ -312,15 +320,15 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId, rerender } = render(
         <PricingPlanSelector {...defaultProps} selectedPlan={initiallySelected} />
       );
-      
+
       // Select a different plan
       const newPlan = mockPlans[1];
       fireEvent.press(getByTestId(`plan-card-${newPlan.id}`));
-      
+
       expect(mockOnPlanSelect).toHaveBeenCalledWith(newPlan);
     });
 
@@ -331,13 +339,13 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId, queryByTestId } = render(
         <PricingPlanSelector {...defaultProps} selectedPlan={null} />
       );
-      
+
       expect(queryByTestId('selected-indicator')).toBeNull();
-      
+
       // All cards should have default styling
       mockPlans.forEach(plan => {
         const card = getByTestId(`plan-card-${plan.id}`);
@@ -354,11 +362,9 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
-      const { getByTestId } = render(
-        <PricingPlanSelector {...defaultProps} disabled={true} />
-      );
-      
+
+      const { getByTestId } = render(<PricingPlanSelector {...defaultProps} disabled={true} />);
+
       mockPlans.forEach(plan => {
         const card = getByTestId(`plan-card-${plan.id}`);
         expect(card).toHaveProperty('disabled', true);
@@ -372,11 +378,9 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
-      const { getByTestId } = render(
-        <PricingPlanSelector {...defaultProps} disabled={false} />
-      );
-      
+
+      const { getByTestId } = render(<PricingPlanSelector {...defaultProps} disabled={false} />);
+
       mockPlans.forEach(plan => {
         const card = getByTestId(`plan-card-${plan.id}`);
         expect(card).toHaveProperty('disabled', false);
@@ -390,14 +394,12 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
-      const { getByTestId } = render(
-        <PricingPlanSelector {...defaultProps} disabled={true} />
-      );
-      
+
+      const { getByTestId } = render(<PricingPlanSelector {...defaultProps} disabled={true} />);
+
       const firstPlan = mockPlans[0];
       fireEvent.press(getByTestId(`plan-card-${firstPlan.id}`));
-      
+
       // Should not call onPlanSelect when disabled
       expect(mockOnPlanSelect).not.toHaveBeenCalled();
     });
@@ -409,19 +411,19 @@ describe('PricingPlanSelector Component', () => {
         createMockPricingPlan({ id: 1, name: 'Package', plan_type: 'package' }),
         createMockPricingPlan({ id: 2, name: 'Subscription', plan_type: 'subscription' }),
       ];
-      
+
       mockUsePricingPlans.mockReturnValue({
         plans: mixedPlans,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId, getByText } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByText('Package - €100.00')).toBeTruthy();
       expect(getByText('Subscription - €100.00')).toBeTruthy();
-      
+
       // Package should be marked as popular
       expect(getByTestId('popular-badge')).toBeTruthy();
     });
@@ -431,16 +433,16 @@ describe('PricingPlanSelector Component', () => {
         createMockPricingPlan({ id: 1, name: 'Basic', price_eur: '50.00' }),
         createMockPricingPlan({ id: 2, name: 'Premium', price_eur: '150.00' }),
       ];
-      
+
       mockUsePricingPlans.mockReturnValue({
         plans: plansWithDifferentPrices,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByText('Basic - €50.00')).toBeTruthy();
       expect(getByText('Premium - €150.00')).toBeTruthy();
     });
@@ -454,11 +456,11 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { queryByTestId } = render(
         <PricingPlanSelector {...defaultProps} selectedPlan={undefined} />
       );
-      
+
       expect(queryByTestId('selected-indicator')).toBeNull();
     });
 
@@ -467,16 +469,16 @@ describe('PricingPlanSelector Component', () => {
         ...plan,
         display_order: undefined,
       }));
-      
+
       mockUsePricingPlans.mockReturnValue({
         plans: plansWithoutOrder as any,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       // Should still render all plans
       plansWithoutOrder.forEach(plan => {
         expect(getByTestId(`plan-card-${plan.id}`)).toBeTruthy();
@@ -488,16 +490,16 @@ describe('PricingPlanSelector Component', () => {
         id: 1,
         name: 'Super Ultra Mega Premium Professional Advanced Learning Package with Extended Features',
       });
-      
+
       mockUsePricingPlans.mockReturnValue({
         plans: [longNamePlan],
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByTestId } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByTestId('plan-card-1')).toBeTruthy();
     });
   });
@@ -510,12 +512,12 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const customClass = 'custom-pricing-selector';
       const { container } = render(
         <PricingPlanSelector {...defaultProps} className={customClass} />
       );
-      
+
       // Custom class should be applied to the root container
       expect(container).toBeTruthy();
     });
@@ -527,11 +529,9 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
-      const { getByText } = render(
-        <PricingPlanSelector {...defaultProps} className="" />
-      );
-      
+
+      const { getByText } = render(<PricingPlanSelector {...defaultProps} className="" />);
+
       expect(getByText('Choose Your Plan')).toBeTruthy();
     });
   });
@@ -541,18 +541,18 @@ describe('PricingPlanSelector Component', () => {
       const manyPlans = Array.from({ length: 10 }, (_, i) =>
         createMockPricingPlan({ id: i + 1, name: `Plan ${i + 1}` })
       );
-      
+
       mockUsePricingPlans.mockReturnValue({
         plans: manyPlans,
         loading: false,
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const start = performance.now();
       render(<PricingPlanSelector {...defaultProps} />);
       const end = performance.now();
-      
+
       expect(end - start).toBeLessThan(100);
     });
 
@@ -563,13 +563,13 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { rerender } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       const start = performance.now();
       rerender(<PricingPlanSelector {...defaultProps} />);
       const end = performance.now();
-      
+
       expect(end - start).toBeLessThan(50);
     });
   });
@@ -582,11 +582,13 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByText('Choose Your Plan')).toBeTruthy();
-      expect(getByText('Select the tutoring plan that best fits your learning needs and budget.')).toBeTruthy();
+      expect(
+        getByText('Select the tutoring plan that best fits your learning needs and budget.')
+      ).toBeTruthy();
     });
 
     it('provides accessible error messages', () => {
@@ -596,9 +598,9 @@ describe('PricingPlanSelector Component', () => {
         error: 'Failed to connect to server',
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByText('Failed to Load Pricing Plans')).toBeTruthy();
       expect(getByText('Failed to connect to server')).toBeTruthy();
     });
@@ -610,9 +612,9 @@ describe('PricingPlanSelector Component', () => {
         error: null,
         refetch: jest.fn(),
       });
-      
+
       const { getByText } = render(<PricingPlanSelector {...defaultProps} />);
-      
+
       expect(getByText('Loading pricing plans...')).toBeTruthy();
     });
   });

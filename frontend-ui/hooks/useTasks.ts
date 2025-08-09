@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+
 import { tasksApi, Task, CreateTaskData, UpdateTaskData, TaskSummary } from '@/api/tasksApi';
 
 export interface UseTasksResult {
@@ -22,13 +23,13 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const [tasksData, summaryData] = await Promise.all([
         tasksApi.getAllTasks(),
-        tasksApi.getTaskSummary()
+        tasksApi.getTaskSummary(),
       ]);
-      
+
       setTasks(tasksData);
       setTaskSummary(summaryData);
     } catch (err) {
@@ -49,7 +50,7 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
       setError(null);
       const newTask = await tasksApi.createTask(data);
       setTasks(prev => [...prev, newTask]);
-      
+
       // Refresh summary after creating
       try {
         const summary = await tasksApi.getTaskSummary();
@@ -57,7 +58,7 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
       } catch (summaryError) {
         console.warn('Failed to refresh task summary:', summaryError);
       }
-      
+
       return newTask;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create task';
@@ -71,8 +72,8 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
     try {
       setError(null);
       const updatedTask = await tasksApi.partialUpdateTask(id, data);
-      setTasks(prev => prev.map(task => task.id === id ? updatedTask : task));
-      
+      setTasks(prev => prev.map(task => (task.id === id ? updatedTask : task)));
+
       // Refresh summary after updating
       try {
         const summary = await tasksApi.getTaskSummary();
@@ -80,7 +81,7 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
       } catch (summaryError) {
         console.warn('Failed to refresh task summary:', summaryError);
       }
-      
+
       return updatedTask;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update task';
@@ -95,7 +96,7 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
       setError(null);
       await tasksApi.deleteTask(id);
       setTasks(prev => prev.filter(task => task.id !== id));
-      
+
       // Refresh summary after deleting
       try {
         const summary = await tasksApi.getTaskSummary();
@@ -103,7 +104,7 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
       } catch (summaryError) {
         console.warn('Failed to refresh task summary:', summaryError);
       }
-      
+
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete task';
@@ -113,39 +114,43 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
     }
   }, []);
 
-  const toggleTaskCompletion = useCallback(async (id: string): Promise<Task | null> => {
-    try {
-      setError(null);
-      const currentTask = tasks.find(task => task.id === id);
-      if (!currentTask) {
-        throw new Error('Task not found');
-      }
-
-      let updatedTask: Task;
-      if (currentTask.status === 'completed') {
-        updatedTask = await tasksApi.reopenTask(id);
-      } else {
-        updatedTask = await tasksApi.completeTask(id);
-      }
-      
-      setTasks(prev => prev.map(task => task.id === id ? updatedTask : task));
-      
-      // Refresh summary after toggling
+  const toggleTaskCompletion = useCallback(
+    async (id: string): Promise<Task | null> => {
       try {
-        const summary = await tasksApi.getTaskSummary();
-        setTaskSummary(summary);
-      } catch (summaryError) {
-        console.warn('Failed to refresh task summary:', summaryError);
+        setError(null);
+        const currentTask = tasks.find(task => task.id === id);
+        if (!currentTask) {
+          throw new Error('Task not found');
+        }
+
+        let updatedTask: Task;
+        if (currentTask.status === 'completed') {
+          updatedTask = await tasksApi.reopenTask(id);
+        } else {
+          updatedTask = await tasksApi.completeTask(id);
+        }
+
+        setTasks(prev => prev.map(task => (task.id === id ? updatedTask : task)));
+
+        // Refresh summary after toggling
+        try {
+          const summary = await tasksApi.getTaskSummary();
+          setTaskSummary(summary);
+        } catch (summaryError) {
+          console.warn('Failed to refresh task summary:', summaryError);
+        }
+
+        return updatedTask;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to toggle task completion';
+        setError(errorMessage);
+        console.error('Error toggling task completion:', err);
+        return null;
       }
-      
-      return updatedTask;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to toggle task completion';
-      setError(errorMessage);
-      console.error('Error toggling task completion:', err);
-      return null;
-    }
-  }, [tasks]);
+    },
+    [tasks]
+  );
 
   useEffect(() => {
     if (autoFetch) {

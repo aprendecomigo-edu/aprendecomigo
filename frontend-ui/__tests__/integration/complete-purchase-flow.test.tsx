@@ -6,12 +6,17 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor, act } from '@/__tests__/utils/test-utils';
 
-import { PurchaseFlow } from '@/components/purchase/PurchaseFlow';
-import { PurchaseApiClient } from '@/api/purchaseApi';
-import { PaymentMethodApiClient } from '@/api/paymentMethodApi';
-import { AuthApiClient } from '@/api/authApi';
+import {
+  createMockAuthUser,
+  createMockTokenResponse,
+  createAuthTestWrapper,
+  mockAuthenticatedUser,
+  mockUnauthenticatedUser,
+  simulateTokenExpiry,
+  simulateSessionRecovery,
+} from '@/__tests__/utils/auth-test-utils';
+import { createIntegrationTestHelpers } from '@/__tests__/utils/integration-test-helpers';
 import {
   createMockPricingPlans,
   createMockStripeConfig,
@@ -25,16 +30,11 @@ import {
   VALID_TEST_DATA,
   cleanupMocks,
 } from '@/__tests__/utils/payment-test-utils';
-import {
-  createMockAuthUser,
-  createMockTokenResponse,
-  createAuthTestWrapper,
-  mockAuthenticatedUser,
-  mockUnauthenticatedUser,
-  simulateTokenExpiry,
-  simulateSessionRecovery,
-} from '@/__tests__/utils/auth-test-utils';
-import { createIntegrationTestHelpers } from '@/__tests__/utils/integration-test-helpers';
+import { render, fireEvent, waitFor, act } from '@/__tests__/utils/test-utils';
+import { AuthApiClient } from '@/api/authApi';
+import { PaymentMethodApiClient } from '@/api/paymentMethodApi';
+import { PurchaseApiClient } from '@/api/purchaseApi';
+import { PurchaseFlow } from '@/components/purchase/PurchaseFlow';
 
 // Mock APIs
 jest.mock('@/api/purchaseApi');
@@ -48,8 +48,10 @@ jest.mock('@/api/authApi', () => ({
   },
 }));
 const mockPurchaseApiClient = PurchaseApiClient as jest.Mocked<typeof PurchaseApiClient>;
-const mockPaymentMethodApiClient = PaymentMethodApiClient as jest.Mocked<typeof PaymentMethodApiClient>;
-const mockAuthApiClient = (AuthApiClient as any) as {
+const mockPaymentMethodApiClient = PaymentMethodApiClient as jest.Mocked<
+  typeof PaymentMethodApiClient
+>;
+const mockAuthApiClient = AuthApiClient as any as {
   requestEmailVerification: jest.Mock;
   verifyEmailCode: jest.Mock;
   refreshToken: jest.Mock;
@@ -95,12 +97,12 @@ describe('Complete Purchase Flow Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     cleanupMocks();
-    
+
     // Reset AsyncStorage mocks
     mockAsyncStorage.getItem.mockReset();
     mockAsyncStorage.setItem.mockReset();
     mockAsyncStorage.removeItem.mockReset();
-    
+
     // Setup successful API responses
     mockPurchaseApiClient.getStripeConfig.mockResolvedValue(createMockStripeConfig());
     mockPurchaseApiClient.getPricingPlans.mockResolvedValue(mockPlans);
@@ -110,14 +112,14 @@ describe('Complete Purchase Flow Integration Tests', () => {
   describe('Authentication Integration Scenarios', () => {
     it('handles new user registration → purchase flow integration', async () => {
       const { mockNewUser, onAuthComplete } = testHelpers.setupNewUserScenario();
-      
+
       // Mock registration flow
       mockAuthApiClient.requestEmailVerification.mockResolvedValue({
         success: true,
         message: 'Verification email sent',
       });
       mockAuthApiClient.verifyEmailCode.mockResolvedValue(createMockTokenResponse());
-      
+
       const onPurchaseComplete = jest.fn();
       const onCancel = jest.fn();
 
@@ -150,7 +152,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
 
       // Step 1: Plan Selection
       fireEvent.press(getByText('Standard Package'));
-      
+
       // Step 2: User Information (should be pre-filled from auth)
       await waitFor(() => {
         expect(getByText('Student Information')).toBeTruthy();
@@ -187,30 +189,32 @@ describe('Complete Purchase Flow Integration Tests', () => {
       // Verify session persistence
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
         'user_session',
-        JSON.stringify(expect.objectContaining({
-          user: mockNewUser,
-          token: expect.any(String),
-        }))
+        JSON.stringify(
+          expect.objectContaining({
+            user: mockNewUser,
+            token: expect.any(String),
+          })
+        )
       );
     });
 
     it('handles returning user authentication → purchase flow', async () => {
       const { mockExistingUser } = testHelpers.setupReturningUserScenario();
-      
+
       // Mock existing session in storage
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify({
-        user: mockExistingUser,
-        token: 'valid_jwt_token',
-        refreshToken: 'valid_refresh_token',
-        expiresAt: Date.now() + 3600000, // 1 hour from now
-      }));
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify({
+          user: mockExistingUser,
+          token: 'valid_jwt_token',
+          refreshToken: 'valid_refresh_token',
+          expiresAt: Date.now() + 3600000, // 1 hour from now
+        })
+      );
 
       const onPurchaseComplete = jest.fn();
 
       const { getByText, getByPlaceholderText, queryByText } = render(
-        createAuthTestWrapper(
-          <PurchaseFlow onPurchaseComplete={onPurchaseComplete} />
-        )
+        createAuthTestWrapper(<PurchaseFlow onPurchaseComplete={onPurchaseComplete} />)
       );
 
       // Should immediately show purchase flow without auth prompt
@@ -221,11 +225,14 @@ describe('Complete Purchase Flow Integration Tests', () => {
 
       // User info should be pre-populated from session
       fireEvent.press(getByText('Standard Package'));
-      
+
       await waitFor(() => {
         expect(getByText('Student Information')).toBeTruthy();
         expect(getByPlaceholderText('Student name')).toHaveProperty('value', mockExistingUser.name);
-        expect(getByPlaceholderText('Student email')).toHaveProperty('value', mockExistingUser.email);
+        expect(getByPlaceholderText('Student email')).toHaveProperty(
+          'value',
+          mockExistingUser.email
+        );
       });
 
       // Verify session was restored
@@ -234,26 +241,26 @@ describe('Complete Purchase Flow Integration Tests', () => {
 
     it('handles authentication token expiry during checkout', async () => {
       const { mockExistingUser } = testHelpers.setupTokenExpiryScenario();
-      
+
       // Mock session with expired token
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify({
-        user: mockExistingUser,
-        token: 'expired_jwt_token',
-        refreshToken: 'valid_refresh_token',
-        expiresAt: Date.now() - 1000, // Expired
-      }));
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify({
+          user: mockExistingUser,
+          token: 'expired_jwt_token',
+          refreshToken: 'valid_refresh_token',
+          expiresAt: Date.now() - 1000, // Expired
+        })
+      );
 
       // Mock successful token refresh
       mockAuthApiClient.refreshToken.mockResolvedValue(createMockTokenResponse());
 
-      const { getByText, getByPlaceholderText } = render(
-        createAuthTestWrapper(<PurchaseFlow />)
-      );
+      const { getByText, getByPlaceholderText } = render(createAuthTestWrapper(<PurchaseFlow />));
 
       // Start purchase flow
       await waitFor(() => getByText('Select Plan'));
       fireEvent.press(getByText('Standard Package'));
-      
+
       await waitFor(() => getByText('Student Information'));
       fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
@@ -274,30 +281,32 @@ describe('Complete Purchase Flow Integration Tests', () => {
       // Verify new token was stored
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
         'user_session',
-        JSON.stringify(expect.objectContaining({
-          token: expect.not.stringMatching('expired_jwt_token'),
-        }))
+        JSON.stringify(
+          expect.objectContaining({
+            token: expect.not.stringMatching('expired_jwt_token'),
+          })
+        )
       );
     });
 
     it('handles session persistence across app backgrounding/foregrounding', async () => {
       const { mockExistingUser } = testHelpers.setupSessionPersistenceScenario();
-      
-      // Mock active session
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify({
-        user: mockExistingUser,
-        token: 'valid_token',
-        expiresAt: Date.now() + 3600000,
-      }));
 
-      const { getByText, getByPlaceholderText } = render(
-        createAuthTestWrapper(<PurchaseFlow />)
+      // Mock active session
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify({
+          user: mockExistingUser,
+          token: 'valid_token',
+          expiresAt: Date.now() + 3600000,
+        })
       );
+
+      const { getByText, getByPlaceholderText } = render(createAuthTestWrapper(<PurchaseFlow />));
 
       // Start purchase flow
       await waitFor(() => getByText('Select Plan'));
       fireEvent.press(getByText('Standard Package'));
-      
+
       await waitFor(() => getByText('Student Information'));
       fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
@@ -306,7 +315,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
       act(() => {
         // Trigger AppState change event
         require('react-native').AppState.currentState = 'background';
-        require('react-native').AppState._eventHandlers.change.forEach((handler: any) => 
+        require('react-native').AppState._eventHandlers.change.forEach((handler: any) =>
           handler('background')
         );
       });
@@ -314,7 +323,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
       // Simulate app foregrounding
       act(() => {
         require('react-native').AppState.currentState = 'active';
-        require('react-native').AppState._eventHandlers.change.forEach((handler: any) => 
+        require('react-native').AppState._eventHandlers.change.forEach((handler: any) =>
           handler('active')
         );
       });
@@ -322,12 +331,20 @@ describe('Complete Purchase Flow Integration Tests', () => {
       // Should maintain form state and user session
       await waitFor(() => {
         expect(getByText('Student Information')).toBeTruthy();
-        expect(getByPlaceholderText('Student name')).toHaveProperty('value', VALID_TEST_DATA.studentName);
-        expect(getByPlaceholderText('Student email')).toHaveProperty('value', VALID_TEST_DATA.studentEmail);
+        expect(getByPlaceholderText('Student name')).toHaveProperty(
+          'value',
+          VALID_TEST_DATA.studentName
+        );
+        expect(getByPlaceholderText('Student email')).toHaveProperty(
+          'value',
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       // Should still be able to complete purchase
-      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(createMockPurchaseInitiationResponse());
+      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(
+        createMockPurchaseInitiationResponse()
+      );
       fireEvent.press(getByText('Continue to Payment'));
 
       await waitFor(() => {
@@ -343,7 +360,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
       });
 
       const { mockExistingUser } = testHelpers.setupWebRecoveryScenario();
-      
+
       // Mock session persistence in localStorage (web)
       const mockLocalStorage = {
         getItem: jest.fn(),
@@ -352,7 +369,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
       };
       Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
-      mockLocalStorage.getItem.mockImplementation((key) => {
+      mockLocalStorage.getItem.mockImplementation(key => {
         if (key === 'user_session') {
           return JSON.stringify({
             user: mockExistingUser,
@@ -373,15 +390,19 @@ describe('Complete Purchase Flow Integration Tests', () => {
         return null;
       });
 
-      const { getByText, getByPlaceholderText } = render(
-        createAuthTestWrapper(<PurchaseFlow />)
-      );
+      const { getByText, getByPlaceholderText } = render(createAuthTestWrapper(<PurchaseFlow />));
 
       // Should recover to the saved state
       await waitFor(() => {
         expect(getByText('Student Information')).toBeTruthy();
-        expect(getByPlaceholderText('Student name')).toHaveProperty('value', VALID_TEST_DATA.studentName);
-        expect(getByPlaceholderText('Student email')).toHaveProperty('value', VALID_TEST_DATA.studentEmail);
+        expect(getByPlaceholderText('Student name')).toHaveProperty(
+          'value',
+          VALID_TEST_DATA.studentName
+        );
+        expect(getByPlaceholderText('Student email')).toHaveProperty(
+          'value',
+          VALID_TEST_DATA.studentEmail
+        );
       });
 
       // Verify state recovery from localStorage
@@ -394,10 +415,8 @@ describe('Complete Purchase Flow Integration Tests', () => {
       mockAuthApiClient.requestEmailVerification.mockRejectedValue(
         new Error('Email service unavailable')
       );
-      
-      const { getByText, queryByText } = render(
-        createAuthTestWrapper(<PurchaseFlow />)
-      );
+
+      const { getByText, queryByText } = render(createAuthTestWrapper(<PurchaseFlow />));
 
       // Should show authentication error
       await waitFor(() => {
@@ -411,19 +430,19 @@ describe('Complete Purchase Flow Integration Tests', () => {
     it('completes full authenticated purchase with real-time updates', async () => {
       const { mockExistingUser } = testHelpers.setupRealtimeUpdateScenario();
       const mockWs = createMockWebSocket();
-      
+
       // Mock authenticated user
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify({
-        user: mockExistingUser,
-        token: 'valid_token',
-        expiresAt: Date.now() + 3600000,
-      }));
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify({
+          user: mockExistingUser,
+          token: 'valid_token',
+          expiresAt: Date.now() + 3600000,
+        })
+      );
 
       const onPurchaseComplete = jest.fn();
       const { getByText, getByPlaceholderText } = render(
-        createAuthTestWrapper(
-          <PurchaseFlow onPurchaseComplete={onPurchaseComplete} />
-        )
+        createAuthTestWrapper(<PurchaseFlow onPurchaseComplete={onPurchaseComplete} />)
       );
 
       // Complete full flow
@@ -433,18 +452,18 @@ describe('Complete Purchase Flow Integration Tests', () => {
 
       await waitFor(() => getByText('Select Plan'));
       fireEvent.press(getByText('Standard Package'));
-      
+
       await waitFor(() => getByText('Student Information'));
       fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
       fireEvent.press(getByText('Continue to Payment'));
-      
+
       await waitFor(() => getByText('Payment'));
       fireEvent.press(getByText(/Pay €/));
 
       // Simulate real-time payment confirmation via WebSocket
       act(() => {
-        mockWs.onmessage?.({ 
+        mockWs.onmessage?.({
           data: JSON.stringify({
             type: 'payment_confirmed',
             data: {
@@ -452,7 +471,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
               status: 'success',
               user_id: mockExistingUser.id,
             },
-          })
+          }),
         } as any);
       });
 
@@ -466,12 +485,14 @@ describe('Complete Purchase Flow Integration Tests', () => {
   describe('Session Management Edge Cases', () => {
     it('handles concurrent session invalidation', async () => {
       const { mockExistingUser } = testHelpers.setupConcurrentSessionScenario();
-      
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify({
-        user: mockExistingUser,
-        token: 'valid_token',
-        expiresAt: Date.now() + 3600000,
-      }));
+
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify({
+          user: mockExistingUser,
+          token: 'valid_token',
+          expiresAt: Date.now() + 3600000,
+        })
+      );
 
       // Mock API returning 401 (session invalidated elsewhere)
       mockPurchaseApiClient.initiatePurchase.mockRejectedValue({
@@ -485,7 +506,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
 
       await waitFor(() => getByText('Select Plan'));
       fireEvent.press(getByText('Standard Package'));
-      
+
       await waitFor(() => getByText('Student Information'));
       fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
@@ -502,9 +523,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
     });
 
     it('preserves form data during auth flows', async () => {
-      const { getByText, getByPlaceholderText } = render(
-        createAuthTestWrapper(<PurchaseFlow />)
-      );
+      const { getByText, getByPlaceholderText } = render(createAuthTestWrapper(<PurchaseFlow />));
 
       // Fill form while unauthenticated
       await waitFor(() => {
@@ -523,17 +542,25 @@ describe('Complete Purchase Flow Integration Tests', () => {
       // Simulate successful auth
       const { mockExistingUser } = testHelpers.setupFormPreservationScenario();
       act(() => {
-        mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify({
-          user: mockExistingUser,
-          token: 'new_token',
-          expiresAt: Date.now() + 3600000,
-        }));
+        mockAsyncStorage.getItem.mockResolvedValue(
+          JSON.stringify({
+            user: mockExistingUser,
+            token: 'new_token',
+            expiresAt: Date.now() + 3600000,
+          })
+        );
       });
 
       // Form data should be preserved
       await waitFor(() => {
-        expect(getByPlaceholderText('Student name')).toHaveProperty('value', VALID_TEST_DATA.studentName);
-        expect(getByPlaceholderText('Student email')).toHaveProperty('value', VALID_TEST_DATA.studentEmail);
+        expect(getByPlaceholderText('Student name')).toHaveProperty(
+          'value',
+          VALID_TEST_DATA.studentName
+        );
+        expect(getByPlaceholderText('Student email')).toHaveProperty(
+          'value',
+          VALID_TEST_DATA.studentEmail
+        );
       });
     });
   });

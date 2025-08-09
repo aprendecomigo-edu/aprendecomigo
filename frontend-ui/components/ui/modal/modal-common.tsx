@@ -6,10 +6,7 @@ import { useStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext
 import { cssInterop } from 'nativewind';
 import React from 'react';
 import { Pressable, View, ScrollView } from 'react-native';
-import Animated, {
-  FadeIn,
-  FadeOut,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -140,28 +137,29 @@ export function createModalComponents(UIModal: any) {
     );
   });
 
-  const ModalContent = React.forwardRef<React.ElementRef<typeof UIModal.Content>, IModalContentProps>(
-    ({ className, size, ...props }, ref) => {
-      const { size: parentSize } = useStyleContext(SCOPE);
+  const ModalContent = React.forwardRef<
+    React.ElementRef<typeof UIModal.Content>,
+    IModalContentProps
+  >(({ className, size, ...props }, ref) => {
+    const { size: parentSize } = useStyleContext(SCOPE);
 
-      return (
-        <UIModal.Content
-          ref={ref}
-          entering={FadeIn.duration(250).springify().damping(18).stiffness(250)}
-          exiting={FadeOut.duration(250)}
-          {...props}
-          className={modalContentStyle({
-            parentVariants: {
-              size: parentSize,
-            },
-            size,
-            class: className,
-          })}
-          pointerEvents="auto"
-        />
-      );
-    }
-  );
+    return (
+      <UIModal.Content
+        ref={ref}
+        entering={FadeIn.duration(250).springify().damping(18).stiffness(250)}
+        exiting={FadeOut.duration(250)}
+        {...props}
+        className={modalContentStyle({
+          parentVariants: {
+            size: parentSize,
+          },
+          size,
+          class: className,
+        })}
+        pointerEvents="auto"
+      />
+    );
+  });
 
   const ModalHeader = React.forwardRef<React.ElementRef<typeof UIModal.Header>, IModalHeaderProps>(
     ({ className, ...props }, ref) => {

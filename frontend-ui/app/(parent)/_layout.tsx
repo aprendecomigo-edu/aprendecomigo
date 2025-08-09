@@ -15,10 +15,7 @@ import { Icon } from '@/components/ui/icon';
 
 export default function ParentLayout() {
   return (
-    <AuthGuard 
-      allowedUserTypes={['parent']}
-      redirectTo="/dashboard"
-    >
+    <AuthGuard allowedUserTypes={['parent']} redirectTo="/dashboard">
       <Tabs
         screenOptions={{
           headerShown: false,

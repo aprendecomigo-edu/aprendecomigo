@@ -60,20 +60,21 @@ const CommunicationHelpPage = () => {
   const [selectedArticle, setSelectedArticle] = useState<HelpArticle | null>(null);
 
   // Mock help content (in real app, this would come from API)
-  const helpCategories: HelpCategory[] = useMemo(() => [
-    {
-      id: 'getting-started',
-      name: 'Getting Started',
-      description: 'Learn the basics of teacher communication',
-      icon: PlayCircleIcon,
-      color: 'bg-blue-100 text-blue-800',
-      articles: [
-        {
-          id: 'first-template',
-          title: 'Creating Your First Email Template',
-          category: 'getting-started',
-          description: 'Step-by-step guide to creating your first teacher invitation template',
-          content: `# Creating Your First Email Template
+  const helpCategories: HelpCategory[] = useMemo(
+    () => [
+      {
+        id: 'getting-started',
+        name: 'Getting Started',
+        description: 'Learn the basics of teacher communication',
+        icon: PlayCircleIcon,
+        color: 'bg-blue-100 text-blue-800',
+        articles: [
+          {
+            id: 'first-template',
+            title: 'Creating Your First Email Template',
+            category: 'getting-started',
+            description: 'Step-by-step guide to creating your first teacher invitation template',
+            content: `# Creating Your First Email Template
 
 Welcome to the Teacher Communication System! This guide will walk you through creating your first email template.
 
@@ -116,17 +117,17 @@ Available variables:
 - Use your school's voice and tone
 - Always test before activating
 - Include clear next steps`,
-          tags: ['template', 'email', 'basic', 'setup'],
-          difficulty: 'beginner',
-          readTime: 5,
-          videoUrl: 'https://example.com/video1',
-        },
-        {
-          id: 'school-branding',
-          title: 'Setting Up School Branding',
-          category: 'getting-started',
-          description: 'Configure your school\'s visual identity for emails',
-          content: `# Setting Up School Branding
+            tags: ['template', 'email', 'basic', 'setup'],
+            difficulty: 'beginner',
+            readTime: 5,
+            videoUrl: 'https://example.com/video1',
+          },
+          {
+            id: 'school-branding',
+            title: 'Setting Up School Branding',
+            category: 'getting-started',
+            description: "Configure your school's visual identity for emails",
+            content: `# Setting Up School Branding
 
 Make your emails reflect your school's identity with custom branding.
 
@@ -167,25 +168,25 @@ Always preview how your branding looks:
 4. Save your changes
 
 Your branding will automatically apply to all new emails!`,
-          tags: ['branding', 'logo', 'colors', 'setup'],
-          difficulty: 'beginner',
-          readTime: 4,
-        },
-      ],
-    },
-    {
-      id: 'templates',
-      name: 'Email Templates',
-      description: 'Master template creation and management',
-      icon: MailIcon,
-      color: 'bg-green-100 text-green-800',
-      articles: [
-        {
-          id: 'template-variables',
-          title: 'Using Template Variables',
-          category: 'templates',
-          description: 'Learn how to personalize emails with dynamic variables',
-          content: `# Using Template Variables
+            tags: ['branding', 'logo', 'colors', 'setup'],
+            difficulty: 'beginner',
+            readTime: 4,
+          },
+        ],
+      },
+      {
+        id: 'templates',
+        name: 'Email Templates',
+        description: 'Master template creation and management',
+        icon: MailIcon,
+        color: 'bg-green-100 text-green-800',
+        articles: [
+          {
+            id: 'template-variables',
+            title: 'Using Template Variables',
+            category: 'templates',
+            description: 'Learn how to personalize emails with dynamic variables',
+            content: `# Using Template Variables
 
 Template variables make your emails personal and dynamic. Here's how to use them effectively.
 
@@ -238,16 +239,16 @@ Variables can include formatting:
 - Missing opening or closing braces
 - Using undefined variables
 - Not testing with different data`,
-          tags: ['variables', 'personalization', 'advanced'],
-          difficulty: 'intermediate',
-          readTime: 7,
-        },
-        {
-          id: 'email-sequences',
-          title: 'Creating Email Sequences',
-          category: 'templates',
-          description: 'Set up automated follow-up sequences for better engagement',
-          content: `# Creating Email Sequences
+            tags: ['variables', 'personalization', 'advanced'],
+            difficulty: 'intermediate',
+            readTime: 7,
+          },
+          {
+            id: 'email-sequences',
+            title: 'Creating Email Sequences',
+            category: 'templates',
+            description: 'Set up automated follow-up sequences for better engagement',
+            content: `# Creating Email Sequences
 
 Automated email sequences ensure no teacher falls through the cracks.
 
@@ -293,25 +294,25 @@ Track performance metrics:
 - Unsubscribe rates
 
 Optimize based on data!`,
-          tags: ['sequences', 'automation', 'follow-up'],
-          difficulty: 'intermediate',
-          readTime: 8,
-        },
-      ],
-    },
-    {
-      id: 'analytics',
-      name: 'Analytics & Reporting',
-      description: 'Understand your email performance',
-      icon: BarChart3Icon,
-      color: 'bg-purple-100 text-purple-800',
-      articles: [
-        {
-          id: 'understanding-metrics',
-          title: 'Understanding Email Metrics',
-          category: 'analytics',
-          description: 'Learn what each metric means and how to improve them',
-          content: `# Understanding Email Metrics
+            tags: ['sequences', 'automation', 'follow-up'],
+            difficulty: 'intermediate',
+            readTime: 8,
+          },
+        ],
+      },
+      {
+        id: 'analytics',
+        name: 'Analytics & Reporting',
+        description: 'Understand your email performance',
+        icon: BarChart3Icon,
+        color: 'bg-purple-100 text-purple-800',
+        articles: [
+          {
+            id: 'understanding-metrics',
+            title: 'Understanding Email Metrics',
+            category: 'analytics',
+            description: 'Learn what each metric means and how to improve them',
+            content: `# Understanding Email Metrics
 
 Email analytics help you improve your communication effectiveness.
 
@@ -379,25 +380,25 @@ Track individual email status:
 - Segment by engagement
 - Re-engage inactive contacts
 - Respect unsubscribe requests`,
-          tags: ['metrics', 'analytics', 'optimization'],
-          difficulty: 'intermediate',
-          readTime: 10,
-        },
-      ],
-    },
-    {
-      id: 'troubleshooting',
-      name: 'Troubleshooting',
-      description: 'Solve common issues and problems',
-      icon: HelpCircleIcon,
-      color: 'bg-red-100 text-red-800',
-      articles: [
-        {
-          id: 'common-issues',
-          title: 'Common Issues and Solutions',
-          category: 'troubleshooting',
-          description: 'Quick fixes for the most common problems',
-          content: `# Common Issues and Solutions
+            tags: ['metrics', 'analytics', 'optimization'],
+            difficulty: 'intermediate',
+            readTime: 10,
+          },
+        ],
+      },
+      {
+        id: 'troubleshooting',
+        name: 'Troubleshooting',
+        description: 'Solve common issues and problems',
+        icon: HelpCircleIcon,
+        color: 'bg-red-100 text-red-800',
+        articles: [
+          {
+            id: 'common-issues',
+            title: 'Common Issues and Solutions',
+            category: 'troubleshooting',
+            description: 'Quick fixes for the most common problems',
+            content: `# Common Issues and Solutions
 
 Quick solutions to frequent problems.
 
@@ -499,18 +500,20 @@ Quick solutions to frequent problems.
 - Try the troubleshooting steps
 - Test with different browsers
 - Ask colleagues if they see same issue`,
-          tags: ['troubleshooting', 'issues', 'fixes', 'support'],
-          difficulty: 'beginner',
-          readTime: 8,
-        },
-      ],
-    },
-  ], []);
+            tags: ['troubleshooting', 'issues', 'fixes', 'support'],
+            difficulty: 'beginner',
+            readTime: 8,
+          },
+        ],
+      },
+    ],
+    []
+  );
 
   // Filter articles based on search and category
   const filteredArticles = useMemo(() => {
     let articles: HelpArticle[] = [];
-    
+
     if (selectedCategory) {
       const category = helpCategories.find(cat => cat.id === selectedCategory);
       articles = category?.articles || [];
@@ -520,11 +523,12 @@ Quick solutions to frequent problems.
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      articles = articles.filter(article =>
-        article.title.toLowerCase().includes(query) ||
-        article.description.toLowerCase().includes(query) ||
-        article.tags.some(tag => tag.toLowerCase().includes(query)) ||
-        article.content.toLowerCase().includes(query)
+      articles = articles.filter(
+        article =>
+          article.title.toLowerCase().includes(query) ||
+          article.description.toLowerCase().includes(query) ||
+          article.tags.some(tag => tag.toLowerCase().includes(query)) ||
+          article.content.toLowerCase().includes(query)
       );
     }
 
@@ -537,18 +541,25 @@ Quick solutions to frequent problems.
   }, []);
 
   // Handle category selection
-  const selectCategory = useCallback((categoryId: string) => {
-    setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
-    setSelectedArticle(null);
-  }, [selectedCategory]);
+  const selectCategory = useCallback(
+    (categoryId: string) => {
+      setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
+      setSelectedArticle(null);
+    },
+    [selectedCategory]
+  );
 
   // Get difficulty badge color
   const getDifficultyColor = useCallback((difficulty: HelpArticle['difficulty']) => {
     switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'beginner':
+        return 'bg-green-100 text-green-800';
+      case 'intermediate':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'advanced':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   }, []);
 
@@ -585,7 +596,7 @@ Quick solutions to frequent problems.
                 >
                   <ButtonText>← Back to Help Center</ButtonText>
                 </Button>
-                
+
                 <HStack space="sm" className="items-center flex-wrap">
                   <Heading size="xl" className="text-gray-900">
                     {selectedArticle.title}
@@ -598,11 +609,9 @@ Quick solutions to frequent problems.
                 </HStack>
 
                 <Text className="text-gray-600">{selectedArticle.description}</Text>
-                
+
                 <HStack space="md" className="items-center">
-                  <Text className="text-sm text-gray-500">
-                    {selectedArticle.readTime} min read
-                  </Text>
+                  <Text className="text-sm text-gray-500">{selectedArticle.readTime} min read</Text>
                   {selectedArticle.videoUrl && (
                     <Button
                       onPress={() => openVideo(selectedArticle.videoUrl!)}
@@ -633,7 +642,7 @@ Quick solutions to frequent problems.
               <VStack space="sm">
                 <Text className="font-medium text-gray-900">Related Topics</Text>
                 <HStack space="xs" className="flex-wrap">
-                  {selectedArticle.tags.map((tag) => (
+                  {selectedArticle.tags.map(tag => (
                     <Badge key={tag} className="bg-gray-100 text-gray-700">
                       <Text className="text-xs">{tag}</Text>
                     </Badge>
@@ -646,7 +655,7 @@ Quick solutions to frequent problems.
             <Card className="p-6">
               <VStack space="md">
                 <Text className="font-medium text-gray-900">Quick Actions</Text>
-                
+
                 <HStack space="sm" className="flex-wrap">
                   <Button
                     onPress={() => router.push('/(school-admin)/communication/templates/new')}
@@ -727,9 +736,9 @@ Quick solutions to frequent problems.
           <Card className="p-6">
             <VStack space="lg">
               <Text className="font-medium text-gray-900">Browse by Category</Text>
-              
+
               <VStack space="md" className={isWeb ? 'lg:grid lg:grid-cols-2 lg:gap-4' : ''}>
-                {helpCategories.map((category) => (
+                {helpCategories.map(category => (
                   <Pressable
                     key={category.id}
                     onPress={() => selectCategory(category.id)}
@@ -763,24 +772,19 @@ Quick solutions to frequent problems.
             <VStack space="lg">
               <HStack className="justify-between items-center">
                 <Text className="font-medium text-gray-900">
-                  {selectedCategory 
+                  {selectedCategory
                     ? helpCategories.find(cat => cat.id === selectedCategory)?.name + ' Articles'
-                    : 'Search Results'
-                  }
+                    : 'Search Results'}
                 </Text>
                 {selectedCategory && (
-                  <Button
-                    onPress={() => setSelectedCategory(null)}
-                    variant="link"
-                    size="sm"
-                  >
+                  <Button onPress={() => setSelectedCategory(null)} variant="link" size="sm">
                     <ButtonText>View All Categories</ButtonText>
                   </Button>
                 )}
               </HStack>
 
               <VStack space="md">
-                {filteredArticles.map((article) => (
+                {filteredArticles.map(article => (
                   <Pressable
                     key={article.id}
                     onPress={() => selectArticle(article)}
@@ -808,11 +812,9 @@ Quick solutions to frequent problems.
                       </HStack>
                       <Text className="text-sm text-gray-600">{article.description}</Text>
                       <HStack space="md" className="items-center">
-                        <Text className="text-xs text-gray-500">
-                          {article.readTime} min read
-                        </Text>
+                        <Text className="text-xs text-gray-500">{article.readTime} min read</Text>
                         <HStack space="xs" className="items-center">
-                          {article.tags.slice(0, 3).map((tag) => (
+                          {article.tags.slice(0, 3).map(tag => (
                             <Text key={tag} className="text-xs text-blue-600">
                               #{tag}
                             </Text>
@@ -828,10 +830,9 @@ Quick solutions to frequent problems.
                   <VStack space="md" className="items-center py-8">
                     <Icon as={SearchIcon} size="xl" className="text-gray-400" />
                     <Text className="text-gray-600 text-center">
-                      {searchQuery 
+                      {searchQuery
                         ? `No articles found for "${searchQuery}"`
-                        : 'No articles in this category'
-                      }
+                        : 'No articles in this category'}
                     </Text>
                     <Button
                       onPress={() => {
@@ -887,7 +888,9 @@ Quick solutions to frequent problems.
                     size="sm"
                     className="flex-1 justify-start"
                   >
-                    <ButtonText className="text-blue-700">Create your first email template</ButtonText>
+                    <ButtonText className="text-blue-700">
+                      Create your first email template
+                    </ButtonText>
                   </Button>
                 </HStack>
 
@@ -899,7 +902,9 @@ Quick solutions to frequent problems.
                     size="sm"
                     className="flex-1 justify-start"
                   >
-                    <ButtonText className="text-blue-700">Configure communication settings</ButtonText>
+                    <ButtonText className="text-blue-700">
+                      Configure communication settings
+                    </ButtonText>
                   </Button>
                 </HStack>
 
@@ -911,7 +916,9 @@ Quick solutions to frequent problems.
                     size="sm"
                     className="flex-1 justify-start"
                   >
-                    <ButtonText className="text-blue-700">Read the getting started guide</ButtonText>
+                    <ButtonText className="text-blue-700">
+                      Read the getting started guide
+                    </ButtonText>
                   </Button>
                 </HStack>
               </VStack>
@@ -923,7 +930,7 @@ Quick solutions to frequent problems.
         <Card className="p-6">
           <VStack space="lg">
             <Text className="font-medium text-gray-900">Need More Help?</Text>
-            
+
             <VStack space="md">
               <Text className="text-sm text-gray-600">
                 Can't find what you're looking for? Our support team is here to help.
@@ -933,9 +940,13 @@ Quick solutions to frequent problems.
                 <Button
                   onPress={() => {
                     if (isWeb) {
-                      window.open('mailto:support@aprendecomigo.com?subject=Communication System Help');
+                      window.open(
+                        'mailto:support@aprendecomigo.com?subject=Communication System Help'
+                      );
                     } else {
-                      Linking.openURL('mailto:support@aprendecomigo.com?subject=Communication System Help');
+                      Linking.openURL(
+                        'mailto:support@aprendecomigo.com?subject=Communication System Help'
+                      );
                     }
                   }}
                   variant="outline"

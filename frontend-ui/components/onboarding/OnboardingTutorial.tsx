@@ -9,10 +9,10 @@ interface OnboardingTutorialProps {
   onSkip?: () => void;
 }
 
-export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ 
-  autoStart, 
-  onComplete, 
-  onSkip 
+export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
+  autoStart,
+  onComplete,
+  onSkip,
 }) => {
   // Placeholder implementation
   return (

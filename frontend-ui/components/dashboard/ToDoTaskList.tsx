@@ -8,6 +8,7 @@ import {
 } from 'lucide-react-native';
 import React, { useState, useMemo } from 'react';
 
+import { Task as ApiTask } from '@/api/tasksApi';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
@@ -19,7 +20,6 @@ import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useTasks } from '@/hooks/useTasks';
-import { Task as ApiTask } from '@/api/tasksApi';
 
 // UI Task interface (mapped from API Task)
 interface UITask {
@@ -47,7 +47,6 @@ interface ToDoTaskListProps {
   maxHeight?: number;
   onTasksChange?: (tasks: UITask[]) => void;
 }
-
 
 const PRIORITY_CONFIG: Record<TaskPriority, { color: string; label: string; icon: any }> = {
   high: {
@@ -121,9 +120,9 @@ const TaskItem: React.FC<{
         <Pressable
           onPress={() => onToggle(task.id)}
           disabled={isLoading}
-          className={`w-5 h-5 rounded border-2 items-center justify-center mt-0.5 ${isLoading ? 'opacity-50' : ''} ${
-            task.completed ? 'bg-success-600 border-success-600' : 'border-gray-300 bg-white'
-          }`}
+          className={`w-5 h-5 rounded border-2 items-center justify-center mt-0.5 ${
+            isLoading ? 'opacity-50' : ''
+          } ${task.completed ? 'bg-success-600 border-success-600' : 'border-gray-300 bg-white'}`}
         >
           {task.completed && <Icon as={CheckIcon} size="xs" className="text-white" />}
         </Pressable>
@@ -164,7 +163,9 @@ const TaskItem: React.FC<{
         <Pressable
           onPress={() => onDelete(task.id)}
           disabled={isLoading}
-          className={`p-2 rounded-lg active:scale-95 transition-transform ${isLoading ? 'opacity-50' : ''}`}
+          className={`p-2 rounded-lg active:scale-95 transition-transform ${
+            isLoading ? 'opacity-50' : ''
+          }`}
         >
           <Icon as={TrashIcon} size="xs" className="text-gray-400" />
         </Pressable>
@@ -253,13 +254,10 @@ const EmptyState: React.FC<{ onAddTask: () => void }> = ({ onAddTask }) => (
   </VStack>
 );
 
-const ToDoTaskList: React.FC<ToDoTaskListProps> = ({
-  onTasksChange,
-  maxHeight = 500,
-}) => {
+const ToDoTaskList: React.FC<ToDoTaskListProps> = ({ onTasksChange, maxHeight = 500 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  
+
   // Use the API hook
   const {
     tasks: apiTasks,
@@ -271,7 +269,7 @@ const ToDoTaskList: React.FC<ToDoTaskListProps> = ({
     toggleTaskCompletion,
     refreshTasks,
   } = useTasks();
-  
+
   // Convert API tasks to UI tasks
   const tasks = useMemo(() => {
     return apiTasks.map(mapApiTaskToUITask);
@@ -370,7 +368,7 @@ const ToDoTaskList: React.FC<ToDoTaskListProps> = ({
             <Text className="text-center font-body text-gray-500">Carregando tarefas...</Text>
           </VStack>
         )}
-        
+
         {/* Error State */}
         {error && (
           <VStack space="md" className="items-center py-4">

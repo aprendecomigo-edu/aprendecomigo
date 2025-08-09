@@ -6,11 +6,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor, act } from '@/__tests__/utils/test-utils';
 
-import { PurchaseFlow } from '@/components/purchase/PurchaseFlow';
-import { PurchaseApiClient } from '@/api/purchaseApi';
-import { PaymentMethodApiClient } from '@/api/paymentMethodApi';
 import {
   createMockPricingPlans,
   createMockPricingPlan,
@@ -28,12 +24,18 @@ import {
   INVALID_TEST_DATA,
   cleanupMocks,
 } from '@/__tests__/utils/payment-test-utils';
+import { render, fireEvent, waitFor, act } from '@/__tests__/utils/test-utils';
+import { PaymentMethodApiClient } from '@/api/paymentMethodApi';
+import { PurchaseApiClient } from '@/api/purchaseApi';
+import { PurchaseFlow } from '@/components/purchase/PurchaseFlow';
 
 // Mock APIs
 jest.mock('@/api/purchaseApi');
 jest.mock('@/api/paymentMethodApi');
 const mockPurchaseApiClient = PurchaseApiClient as jest.Mocked<typeof PurchaseApiClient>;
-const mockPaymentMethodApiClient = PaymentMethodApiClient as jest.Mocked<typeof PaymentMethodApiClient>;
+const mockPaymentMethodApiClient = PaymentMethodApiClient as jest.Mocked<
+  typeof PaymentMethodApiClient
+>;
 
 // Mock Stripe
 jest.mock('@stripe/react-stripe-js', () => ({
@@ -82,7 +84,7 @@ describe('Purchase Flow Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     cleanupMocks();
-    
+
     // Setup successful API responses
     mockPurchaseApiClient.getStripeConfig.mockResolvedValue(createMockStripeConfig());
     mockPurchaseApiClient.getPricingPlans.mockResolvedValue(mockPlans);
@@ -191,7 +193,7 @@ describe('Purchase Flow Integration Tests', () => {
 
     it('shows real-time balance updates via WebSocket', async () => {
       const mockWs = createMockWebSocket();
-      
+
       const { getByText, getByPlaceholderText } = render(<PurchaseFlow />);
 
       // Complete purchase flow
@@ -447,9 +449,7 @@ describe('Purchase Flow Integration Tests', () => {
 
     it('handles cancellation at any step', async () => {
       const onCancel = jest.fn();
-      const { getByText, getByPlaceholderText } = render(
-        <PurchaseFlow onCancel={onCancel} />
-      );
+      const { getByText, getByPlaceholderText } = render(<PurchaseFlow onCancel={onCancel} />);
 
       // Test cancellation from plan selection
       fireEvent.press(getByText('Cancel'));
@@ -460,7 +460,7 @@ describe('Purchase Flow Integration Tests', () => {
       // Test cancellation from user info
       fireEvent.press(getByText('Standard Package'));
       await waitFor(() => getByText('Student Information'));
-      
+
       fireEvent.press(getByText('Cancel'));
       expect(onCancel).toHaveBeenCalled();
 
@@ -472,7 +472,7 @@ describe('Purchase Flow Integration Tests', () => {
       fireEvent.press(getByText('Continue to Payment'));
 
       await waitFor(() => getByText('Payment'));
-      
+
       fireEvent.press(getByText('Cancel'));
       expect(onCancel).toHaveBeenCalled();
     });
@@ -487,14 +487,14 @@ describe('Purchase Flow Integration Tests', () => {
 
       // Test invalid email
       fireEvent.changeText(getByPlaceholderText('Student email'), INVALID_TEST_DATA.studentEmail);
-      
+
       await waitFor(() => {
         expect(getByText('Please enter a valid email address')).toBeTruthy();
       });
 
       // Test empty name
       fireEvent.changeText(getByPlaceholderText('Student name'), '');
-      
+
       await waitFor(() => {
         expect(getByText('Name is required')).toBeTruthy();
       });
@@ -516,7 +516,7 @@ describe('Purchase Flow Integration Tests', () => {
 
       // Fix email
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
-      
+
       await waitFor(() => {
         expect(queryByText('Please enter a valid email address')).toBeNull();
       });
@@ -560,7 +560,7 @@ describe('Purchase Flow Integration Tests', () => {
 
     it('performs well with complex interactions', async () => {
       const start = performance.now();
-      
+
       const { getByText, getByPlaceholderText } = render(<PurchaseFlow />);
 
       // Simulate rapid user interactions
@@ -572,9 +572,9 @@ describe('Purchase Flow Integration Tests', () => {
       fireEvent.press(getByText('Continue to Payment'));
 
       await waitFor(() => getByText('Payment'));
-      
+
       const end = performance.now();
-      
+
       expect(end - start).toBeLessThan(1000); // Should complete in under 1 second
     });
 
@@ -629,7 +629,7 @@ describe('Purchase Flow Integration Tests', () => {
 
       // Mock network failure
       mockPurchaseApiClient.initiatePurchase.mockRejectedValue(new Error('Network error'));
-      
+
       fireEvent.press(getByText('Continue to Payment'));
 
       await waitFor(() => {
@@ -637,8 +637,10 @@ describe('Purchase Flow Integration Tests', () => {
       });
 
       // Fix network and retry
-      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(createMockPurchaseInitiationResponse());
-      
+      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(
+        createMockPurchaseInitiationResponse()
+      );
+
       fireEvent.press(getByText('Try Again'));
 
       await waitFor(() => {
@@ -740,7 +742,7 @@ describe('Purchase Flow Integration Tests', () => {
       // Simulate app going to background during processing
       act(() => {
         require('react-native').AppState.currentState = 'background';
-        require('react-native').AppState._eventHandlers.change?.forEach((handler: any) => 
+        require('react-native').AppState._eventHandlers.change?.forEach((handler: any) =>
           handler('background')
         );
       });
@@ -748,7 +750,7 @@ describe('Purchase Flow Integration Tests', () => {
       // App returns to foreground
       act(() => {
         require('react-native').AppState.currentState = 'active';
-        require('react-native').AppState._eventHandlers.change?.forEach((handler: any) => 
+        require('react-native').AppState._eventHandlers.change?.forEach((handler: any) =>
           handler('active')
         );
       });
@@ -782,7 +784,7 @@ describe('Purchase Flow Integration Tests', () => {
       mockPurchaseApiClient.initiatePurchase.mockResolvedValue(purchaseResponse);
 
       // Mock saved payment step state
-      mockLocalStorage.getItem.mockImplementation((key) => {
+      mockLocalStorage.getItem.mockImplementation(key => {
         if (key === 'purchase_flow_state') {
           return JSON.stringify({
             step: 'payment',
@@ -837,7 +839,7 @@ describe('Purchase Flow Integration Tests', () => {
 
       // First tab's purchase
       mockPurchaseApiClient.initiatePurchase.mockResolvedValueOnce(purchaseResponse1);
-      
+
       const { getByText: getByText1, getByPlaceholderText: getByPlaceholderText1 } = render(
         <PurchaseFlow />
       );
@@ -853,20 +855,24 @@ describe('Purchase Flow Integration Tests', () => {
       await waitFor(() => getByText1('Payment'));
 
       // Simulate state conflict from another tab
-      mockLocalStorage.getItem.mockReturnValue(JSON.stringify({
-        step: 'payment',
-        transactionId: purchaseResponse2.transaction_id, // Different transaction
-      }));
+      mockLocalStorage.getItem.mockReturnValue(
+        JSON.stringify({
+          step: 'payment',
+          transactionId: purchaseResponse2.transaction_id, // Different transaction
+        })
+      );
 
       // Trigger storage event (simulating another tab)
       act(() => {
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'purchase_flow_state',
-          newValue: JSON.stringify({
-            step: 'success',
-            transactionId: purchaseResponse2.transaction_id,
-          }),
-        }));
+        window.dispatchEvent(
+          new StorageEvent('storage', {
+            key: 'purchase_flow_state',
+            newValue: JSON.stringify({
+              step: 'success',
+              transactionId: purchaseResponse2.transaction_id,
+            }),
+          })
+        );
       });
 
       // Should detect conflict and prompt user
@@ -917,20 +923,22 @@ describe('Purchase Flow Integration Tests', () => {
       mockPurchaseApiClient.initiatePurchase.mockResolvedValue(purchaseResponse);
 
       // Mock expired payment method
-      const expiredPaymentMethods = [{
-        id: 'pm_expired_123',
-        type: 'card',
-        card: { 
-          brand: 'visa', 
-          last4: '4242', 
-          exp_month: 1, 
-          exp_year: 2020, // Expired
-          funding: 'credit' 
+      const expiredPaymentMethods = [
+        {
+          id: 'pm_expired_123',
+          type: 'card',
+          card: {
+            brand: 'visa',
+            last4: '4242',
+            exp_month: 1,
+            exp_year: 2020, // Expired
+            funding: 'credit',
+          },
+          billing_details: { name: 'John Doe', email: 'john@example.com' },
+          is_default: true,
+          created_at: '2024-01-01T00:00:00Z',
         },
-        billing_details: { name: 'John Doe', email: 'john@example.com' },
-        is_default: true,
-        created_at: '2024-01-01T00:00:00Z',
-      }];
+      ];
       mockPaymentMethodApiClient.getPaymentMethods.mockResolvedValue(expiredPaymentMethods);
 
       const { getByText, getByPlaceholderText } = render(<PurchaseFlow />);
@@ -965,7 +973,7 @@ describe('Purchase Flow Integration Tests', () => {
       fireEvent.press(getByText('Standard Package'));
       fireEvent.press(getByText('Starter Package'));
       fireEvent.press(getByText('Premium Package'));
-      
+
       // Should settle on the last selection
       await waitFor(() => {
         expect(getByText('Student Information')).toBeTruthy();

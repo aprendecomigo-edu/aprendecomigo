@@ -38,7 +38,10 @@ export interface ImageUploadComponentProps {
 }
 
 // Shared validation logic
-export const validateImage = (image: ImagePicker.ImagePickerAsset, maxSizeInMB: number): string | null => {
+export const validateImage = (
+  image: ImagePicker.ImagePickerAsset,
+  maxSizeInMB: number
+): string | null => {
   // Check file size
   if (image.fileSize && image.fileSize > maxSizeInMB * 1024 * 1024) {
     return `Image must be smaller than ${maxSizeInMB}MB. Current size: ${(

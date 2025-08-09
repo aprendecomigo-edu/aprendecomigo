@@ -75,12 +75,10 @@ function AuthAwareNavigation() {
     <Stack screenOptions={{ headerShown: false }}>
       {/* Always accessible routes */}
       <Stack.Screen name="index" />
-      
+
       {/* Public routes - only show when NOT logged in */}
-      {!isLoggedIn && (
-        <Stack.Screen name="auth" />
-      )}
-      
+      {!isLoggedIn && <Stack.Screen name="auth" />}
+
       {/* Protected routes - only show when logged in */}
       {isLoggedIn && (
         <>

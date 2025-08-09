@@ -42,32 +42,41 @@ jest.mock('@/components/layouts/MainLayout', () => {
 jest.mock('@/components/ui/badge', () => {
   const React = require('react');
   return {
-    Badge: ({ children, ...props }: any) => React.createElement('div', { ...props, className: 'mock-badge' }, children),
-    BadgeText: ({ children, ...props }: any) => React.createElement('span', { ...props, className: 'mock-badge-text' }, children),
+    Badge: ({ children, ...props }: any) =>
+      React.createElement('div', { ...props, className: 'mock-badge' }, children),
+    BadgeText: ({ children, ...props }: any) =>
+      React.createElement('span', { ...props, className: 'mock-badge-text' }, children),
   };
 });
 
 jest.mock('@/components/ui/card', () => {
   const React = require('react');
   return {
-    Card: ({ children, ...props }: any) => React.createElement('div', { ...props, className: 'mock-card' }, children),
-    CardBody: ({ children, ...props }: any) => React.createElement('div', { ...props, className: 'mock-card-body' }, children),
-    CardHeader: ({ children, ...props }: any) => React.createElement('div', { ...props, className: 'mock-card-header' }, children),
+    Card: ({ children, ...props }: any) =>
+      React.createElement('div', { ...props, className: 'mock-card' }, children),
+    CardBody: ({ children, ...props }: any) =>
+      React.createElement('div', { ...props, className: 'mock-card-body' }, children),
+    CardHeader: ({ children, ...props }: any) =>
+      React.createElement('div', { ...props, className: 'mock-card-header' }, children),
   };
 });
 
 jest.mock('@/components/ui/input', () => {
   const React = require('react');
   return {
-    Input: ({ children, ...props }: any) => React.createElement('div', { ...props, className: 'mock-input' }, children),
-    InputField: React.forwardRef((props: any, ref) => React.createElement('input', { ...props, ref, className: 'mock-input-field' })),
+    Input: ({ children, ...props }: any) =>
+      React.createElement('div', { ...props, className: 'mock-input' }, children),
+    InputField: React.forwardRef((props: any, ref) =>
+      React.createElement('input', { ...props, ref, className: 'mock-input-field' })
+    ),
   };
 });
 
 jest.mock('@/components/ui/icon', () => {
   const React = require('react');
   return {
-    Icon: ({ children, ...props }: any) => React.createElement('div', { ...props, className: 'mock-icon' }, children || '📄'),
+    Icon: ({ children, ...props }: any) =>
+      React.createElement('div', { ...props, className: 'mock-icon' }, children || '📄'),
   };
 });
 

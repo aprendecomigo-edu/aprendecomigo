@@ -92,7 +92,7 @@ const QuickActionButton: React.FC<{
             </Box>
           )}
         </VStack>
-        
+
         <VStack className="items-center" space="xs">
           <Text className="text-sm font-semibold text-gray-900 text-center" numberOfLines={1}>
             {action.title}
@@ -288,7 +288,10 @@ const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
       </Card>
 
       {/* Quick Tips */}
-      <Card variant="elevated" className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-dashed border-blue-200">
+      <Card
+        variant="elevated"
+        className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-dashed border-blue-200"
+      >
         <CardBody>
           <VStack space="sm" className="items-center">
             <Icon as={ZapIcon} size="md" className="text-blue-600" />

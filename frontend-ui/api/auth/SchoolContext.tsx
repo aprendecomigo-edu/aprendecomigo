@@ -37,9 +37,11 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }));
 
       setUserSchools(schools);
-      
+
       // Set current school to first admin school, or first school if no admin schools
-      const adminSchools = schools.filter(s => s.role === 'school_owner' || s.role === 'school_admin');
+      const adminSchools = schools.filter(
+        s => s.role === 'school_owner' || s.role === 'school_admin'
+      );
       const defaultSchool = adminSchools.length > 0 ? adminSchools[0] : schools[0];
       if (defaultSchool && !currentSchool) {
         setCurrentSchoolState(defaultSchool);

@@ -28,7 +28,7 @@ const QuickActionsPanel = ({
       <Heading size="sm" className="font-primary text-gray-900">
         <Text className="bg-gradient-accent">Quick Actions</Text>
       </Heading>
-      
+
       <HStack space="md" className="justify-center flex-wrap">
         {/* Communication System */}
         <Pressable

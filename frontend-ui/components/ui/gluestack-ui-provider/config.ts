@@ -468,7 +468,7 @@ const createConfig = (isNative: boolean = false) => {
       dark: darkThemeHex,
     };
   }
-  
+
   // Use CSS variables for web platform
   return {
     light: vars(lightThemeHex),

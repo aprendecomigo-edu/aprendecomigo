@@ -225,11 +225,11 @@ export function InsightsSummary({ insights }: { insights: PatternInsights }) {
 }
 
 // Shared pattern insights component
-export function PatternInsightsCard({ 
-  insights, 
-  chartData 
-}: { 
-  insights: PatternInsights; 
+export function PatternInsightsCard({
+  insights,
+  chartData,
+}: {
+  insights: PatternInsights;
   chartData: ChartData;
 }) {
   return (
@@ -249,8 +249,8 @@ export function PatternInsightsCard({
           )}
           {chartData.subjects.length > 0 && (
             <Text className="text-sm text-primary-800">
-              • Your top subject is {chartData.subjects[0].label} with{' '}
-              {chartData.subjects[0].value} sessions
+              • Your top subject is {chartData.subjects[0].label} with {chartData.subjects[0].value}{' '}
+              sessions
             </Text>
           )}
         </VStack>

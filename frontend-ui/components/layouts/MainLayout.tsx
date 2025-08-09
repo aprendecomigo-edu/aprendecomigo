@@ -93,10 +93,7 @@ const MainLayout = ({
             </Box>
 
             {/* Main Content with bottom padding for mobile navigation */}
-            <VStack className="flex-1 w-full pb-20 md:pb-0">
-
-              {children}
-            </VStack>
+            <VStack className="flex-1 w-full pb-20 md:pb-0">{children}</VStack>
           </HStack>
         </VStack>
       </VStack>

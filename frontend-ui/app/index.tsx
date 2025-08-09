@@ -25,7 +25,6 @@ export default function Index() {
     return <Redirect href={'/dashboard' as Href} />;
   }
 
-
   // If not authenticated, redirect to signin page
-  return <Redirect href={"/auth/signin" as Href} />;
+  return <Redirect href={'/auth/signin' as Href} />;
 }

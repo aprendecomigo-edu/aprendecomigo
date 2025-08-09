@@ -16,11 +16,13 @@ const mockShowToast = jest.fn();
 
 // Setup mocks - using require to avoid circular dependency issues
 // eslint-disable-next-line @typescript-eslint/no-var-requires
+const unitoolsRouter = require('@unitools/router');
+const expoRouter = require('expo-router');
+
 const authApi = require('@/api/authApi');
 authApi.requestEmailCode = mockRequestEmailCode;
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const expoRouter = require('expo-router');
 expoRouter.useRouter = jest.fn(() => ({
   push: mockPush,
   back: mockBack,
@@ -28,7 +30,6 @@ expoRouter.useRouter = jest.fn(() => ({
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const unitoolsRouter = require('@unitools/router');
 unitoolsRouter.default = jest.fn(() => ({
   push: mockPush,
   back: mockBack,

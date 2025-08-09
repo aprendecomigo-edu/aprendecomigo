@@ -1,6 +1,6 @@
 /**
  * SettingsLayout Component
- * 
+ *
  * Provides a consistent layout for all settings pages with:
  * - Proper navigation header with back button
  * - Clean visual hierarchy following design guidelines
@@ -9,9 +9,9 @@
  */
 
 import { router } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
 import React from 'react';
 import { ScrollView, Platform } from 'react-native';
-import { ArrowLeft } from 'lucide-react-native';
 
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -69,21 +69,17 @@ export const SettingsLayout: React.FC<SettingsLayoutProps> = ({
               )}
             </VStack>
           </HStack>
-          {headerActions && (
-            <Box>{headerActions}</Box>
-          )}
+          {headerActions && <Box>{headerActions}</Box>}
         </HStack>
       </Box>
 
       {/* Content area */}
-      <ScrollView 
+      <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? 100 : 80 }}
         showsVerticalScrollIndicator={false}
       >
-        <Box className="px-4">
-          {children}
-        </Box>
+        <Box className="px-4">{children}</Box>
       </ScrollView>
     </SafeAreaView>
   );

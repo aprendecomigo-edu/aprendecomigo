@@ -54,10 +54,12 @@ describe('useProfileWizard', () => {
       };
 
       mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(cachedState));
-      
+
       // Mock API responses for loadProgress
       mockApiClient.get
-        .mockResolvedValueOnce(mockApiResponse({ user: { name: 'Cached User', email: 'cached@example.com' } }))
+        .mockResolvedValueOnce(
+          mockApiResponse({ user: { name: 'Cached User', email: 'cached@example.com' } })
+        )
         .mockResolvedValueOnce(mockApiResponse(cachedState.completionData));
 
       const { result } = renderHook(() => useProfileWizard());
@@ -67,7 +69,7 @@ describe('useProfileWizard', () => {
       });
 
       // The cached state should be loaded first, then API data merges in
-      expect(result.current.currentStep).toBe(2); // Cached step should persist 
+      expect(result.current.currentStep).toBe(2); // Cached step should persist
       expect(result.current.formData.first_name).toBe('Cached');
       expect(result.current.completionData).toEqual(cachedState.completionData);
     });
@@ -183,7 +185,7 @@ describe('useProfileWizard', () => {
     it('should cache updated state to AsyncStorage', async () => {
       // Use real timers for this test
       jest.useRealTimers();
-      
+
       const { result } = renderHook(() => useProfileWizard());
 
       await act(async () => {
@@ -199,7 +201,7 @@ describe('useProfileWizard', () => {
         '@teacher_profile_wizard',
         expect.stringContaining('"first_name":"John"')
       );
-      
+
       // Restore fake timers
       jest.useFakeTimers();
     });
@@ -265,7 +267,7 @@ describe('useProfileWizard', () => {
     it('should cache step changes to AsyncStorage', async () => {
       // Use real timers for this test
       jest.useRealTimers();
-      
+
       const { result } = renderHook(() => useProfileWizard());
 
       await act(async () => {
@@ -281,7 +283,7 @@ describe('useProfileWizard', () => {
         '@teacher_profile_wizard',
         expect.stringContaining('"currentStep":2')
       );
-      
+
       // Restore fake timers
       jest.useFakeTimers();
     });
@@ -573,7 +575,7 @@ describe('useProfileWizard', () => {
       const apiPromise = new Promise(resolve => {
         resolveApiCall = resolve;
       });
-      
+
       mockApiClient.get.mockImplementation(() => apiPromise);
 
       const { result, unmount } = renderHook(() => useProfileWizard());
@@ -631,7 +633,7 @@ describe('useProfileWizard', () => {
       // Mock both API calls for loadProgress (profile and completion)
       mockApiClient.get
         .mockReturnValueOnce(firstPromise) // First profile call
-        .mockReturnValueOnce(firstPromise) // First completion call  
+        .mockReturnValueOnce(firstPromise) // First completion call
         .mockReturnValueOnce(secondPromise) // Second profile call
         .mockReturnValueOnce(secondPromise); // Second completion call
 
@@ -665,7 +667,7 @@ describe('useProfileWizard', () => {
 
       // Mock axios.isCancel to return true for our cancel error
       const originalIsCancel = axios.isCancel;
-      (axios.isCancel as jest.Mock) = jest.fn((error) => error === cancelError);
+      (axios.isCancel as jest.Mock) = jest.fn(error => error === cancelError);
 
       const { result } = renderHook(() => useProfileWizard());
 
@@ -677,7 +679,7 @@ describe('useProfileWizard', () => {
       expect(result.current.error).toBeNull();
       // Loading state might still be true if request was cancelled before completion
       expect(result.current.isLoading).toBe(true);
-      
+
       // Restore original function
       axios.isCancel = originalIsCancel;
     });

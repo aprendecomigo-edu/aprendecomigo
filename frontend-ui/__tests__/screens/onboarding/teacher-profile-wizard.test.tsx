@@ -12,9 +12,9 @@ import {
   advanceTimersByTime,
 } from '../../utils/test-utils';
 
-import { useProfileWizard } from '@/hooks/useProfileWizard';
-import { TeacherProfileWizard } from '@/components/onboarding/TeacherProfileWizard';
 import { WIZARD_STEPS } from '@/components/onboarding/constants';
+import { TeacherProfileWizard } from '@/components/onboarding/TeacherProfileWizard';
+import { useProfileWizard } from '@/hooks/useProfileWizard';
 
 // Mock the hook
 jest.mock('@/hooks/useProfileWizard');

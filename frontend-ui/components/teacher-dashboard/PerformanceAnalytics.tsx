@@ -87,9 +87,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
           <VStack space="xs">
             <Text className="text-2xl font-bold text-gray-900">{displayValue}</Text>
             <Text className="text-sm text-gray-600">{title}</Text>
-            {changeLabel && (
-              <Text className="text-xs text-gray-500">{changeLabel}</Text>
-            )}
+            {changeLabel && <Text className="text-xs text-gray-500">{changeLabel}</Text>}
           </VStack>
         </VStack>
       </CardBody>
@@ -111,16 +109,11 @@ const ProgressBar: React.FC<{
       <HStack className="justify-between items-center">
         <Text className="text-sm text-gray-700">{label}</Text>
         {showPercentage && (
-          <Text className="text-sm font-semibold text-gray-900">
-            {Math.round(percentage)}%
-          </Text>
+          <Text className="text-sm font-semibold text-gray-900">{Math.round(percentage)}%</Text>
         )}
       </HStack>
       <Box className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-        <Box
-          className={`h-full rounded-full ${color}`}
-          style={{ width: `${percentage}%` }}
-        />
+        <Box className={`h-full rounded-full ${color}`} style={{ width: `${percentage}%` }} />
       </Box>
       <HStack className="justify-between">
         <Text className="text-xs text-gray-500">{value}</Text>
@@ -133,7 +126,9 @@ const ProgressBar: React.FC<{
 const EarningsBreakdown: React.FC<{ earnings: EarningsData }> = ({ earnings }) => {
   const monthlyChange = useMemo(() => {
     if (earnings.last_month_total === 0) return 0;
-    return ((earnings.current_month_total - earnings.last_month_total) / earnings.last_month_total) * 100;
+    return (
+      ((earnings.current_month_total - earnings.last_month_total) / earnings.last_month_total) * 100
+    );
   }, [earnings]);
 
   return (
@@ -154,13 +149,29 @@ const EarningsBreakdown: React.FC<{ earnings: EarningsData }> = ({ earnings }) =
               <Text className="text-sm text-gray-600">Este Mês</Text>
               <HStack space="xs" className="items-center">
                 <Icon
-                  as={monthlyChange > 0 ? TrendingUpIcon : monthlyChange < 0 ? TrendingDownIcon : MinusIcon}
+                  as={
+                    monthlyChange > 0
+                      ? TrendingUpIcon
+                      : monthlyChange < 0
+                      ? TrendingDownIcon
+                      : MinusIcon
+                  }
                   size="xs"
-                  className={monthlyChange > 0 ? 'text-green-600' : monthlyChange < 0 ? 'text-red-600' : 'text-gray-500'}
+                  className={
+                    monthlyChange > 0
+                      ? 'text-green-600'
+                      : monthlyChange < 0
+                      ? 'text-red-600'
+                      : 'text-gray-500'
+                  }
                 />
                 <Text
                   className={`text-xs font-medium ${
-                    monthlyChange > 0 ? 'text-green-600' : monthlyChange < 0 ? 'text-red-600' : 'text-gray-500'
+                    monthlyChange > 0
+                      ? 'text-green-600'
+                      : monthlyChange < 0
+                      ? 'text-red-600'
+                      : 'text-gray-500'
                   }`}
                 >
                   {Math.abs(Math.round(monthlyChange))}%
@@ -231,7 +242,7 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
     const efficiencyScore = Math.round(
       (quickStats.completion_rate + progressMetrics.average_student_progress) / 2
     );
-    
+
     return {
       avgSessionsPerWeek,
       efficiencyScore,
@@ -303,7 +314,7 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
                     icon={TrendingUpIcon}
                     color="text-yellow-600"
                     bgColor="bg-yellow-100"
-                    formatValue={(value) => value > 0 ? `${value.toFixed(1)}★` : 'N/A'}
+                    formatValue={value => (value > 0 ? `${value.toFixed(1)}★` : 'N/A')}
                   />
                 </Box>
               </HStack>
@@ -317,7 +328,7 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
                 maxValue={100}
                 color="bg-green-500"
               />
-              
+
               <ProgressBar
                 label="Estudantes que Melhoraram Este Mês"
                 value={progressMetrics.students_improved_this_month}
@@ -325,7 +336,7 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
                 color="bg-blue-500"
                 showPercentage={false}
               />
-              
+
               <ProgressBar
                 label="Avaliações Realizadas"
                 value={progressMetrics.total_assessments_given}
@@ -342,14 +353,17 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
       <EarningsBreakdown earnings={earnings} />
 
       {/* Performance Insights */}
-      <Card variant="elevated" className="bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-500">
+      <Card
+        variant="elevated"
+        className="bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-500"
+      >
         <CardBody>
           <VStack space="sm">
             <HStack space="sm" className="items-center">
               <Icon as={TrendingUpIcon} size="md" className="text-blue-600" />
               <Text className="text-lg font-semibold text-gray-900">Insights de Performance</Text>
             </HStack>
-            
+
             <VStack space="xs">
               {quickStats.completion_rate >= 80 && (
                 <HStack space="sm" className="items-center">
@@ -359,25 +373,36 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
                   </Text>
                 </HStack>
               )}
-              
+
               {progressMetrics.students_improved_this_month >= quickStats.total_students * 0.7 && (
                 <HStack space="sm" className="items-center">
                   <Icon as={TrendingUpIcon} size="xs" className="text-blue-600" />
                   <Text className="text-sm text-gray-700">
-                    Ótimo impacto: {Math.round((progressMetrics.students_improved_this_month / quickStats.total_students) * 100)}% dos estudantes melhoraram este mês.
+                    Ótimo impacto:{' '}
+                    {Math.round(
+                      (progressMetrics.students_improved_this_month / quickStats.total_students) *
+                        100
+                    )}
+                    % dos estudantes melhoraram este mês.
                   </Text>
                 </HStack>
               )}
-              
+
               {earnings.current_month_total > earnings.last_month_total && (
                 <HStack space="sm" className="items-center">
                   <Icon as={DollarSignIcon} size="xs" className="text-green-600" />
                   <Text className="text-sm text-gray-700">
-                    Rendimentos em crescimento: +{Math.round(((earnings.current_month_total - earnings.last_month_total) / earnings.last_month_total) * 100)}% este mês.
+                    Rendimentos em crescimento: +
+                    {Math.round(
+                      ((earnings.current_month_total - earnings.last_month_total) /
+                        earnings.last_month_total) *
+                        100
+                    )}
+                    % este mês.
                   </Text>
                 </HStack>
               )}
-              
+
               {quickStats.sessions_this_week < 5 && quickStats.total_students > 10 && (
                 <HStack space="sm" className="items-center">
                   <Icon as={ClockIcon} size="xs" className="text-orange-600" />

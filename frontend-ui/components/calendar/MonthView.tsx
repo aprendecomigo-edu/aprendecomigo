@@ -1,7 +1,9 @@
 import React from 'react';
-import { Calendar, DateData, MarkingProps } from 'react-native-calendars';
 import { View, Text } from 'react-native';
+import { Calendar, DateData, MarkingProps } from 'react-native-calendars';
+
 import { calendarTheme, darkCalendarTheme, DOT_COLORS, getMultiDotStyle } from './CalendarTheme';
+
 import { ClassSchedule } from '@/api/schedulerApi';
 import { Task } from '@/api/tasksApi';
 
@@ -20,18 +22,21 @@ interface MarkedDates {
 // Custom dot component for multi-dot marking
 const MultiDotMarking: React.FC<{ dots: { color: string; key: string }[] }> = ({ dots }) => {
   if (dots.length === 0) return null;
-  
+
   return (
-    <View style={{ 
-      flexDirection: 'row', 
-      justifyContent: 'center', 
-      alignItems: 'center',
-      position: 'absolute',
-      bottom: 2,
-      left: 0,
-      right: 0,
-    }}>
-      {dots.slice(0, 3).map((dot, index) => { // Limit to 3 dots max
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 2,
+        left: 0,
+        right: 0,
+      }}
+    >
+      {dots.slice(0, 3).map((dot, index) => {
+        // Limit to 3 dots max
         const dotStyle = getMultiDotStyle(Math.min(dots.length, 3), index);
         return (
           <View
@@ -52,18 +57,18 @@ const MultiDotMarking: React.FC<{ dots: { color: string; key: string }[] }> = ({
   );
 };
 
-export const MonthView: React.FC<MonthViewProps> = ({ 
-  currentDate, 
-  classes, 
-  tasks, 
+export const MonthView: React.FC<MonthViewProps> = ({
+  currentDate,
+  classes,
+  tasks,
   onDayPress,
-  isDarkMode = false 
+  isDarkMode = false,
 }) => {
   // Create marked dates object with dots for events
   const createMarkedDates = (): MarkedDates => {
     const marked: MarkedDates = {};
     const today = new Date().toISOString().split('T')[0];
-    
+
     // Add today's marking
     marked[today] = {
       customStyles: {
@@ -78,7 +83,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
         },
       },
     };
-    
+
     // Process classes
     const safeClasses = classes || [];
     safeClasses.forEach(classItem => {
@@ -86,17 +91,17 @@ export const MonthView: React.FC<MonthViewProps> = ({
       if (!marked[dateKey]) {
         marked[dateKey] = { dots: [], customStyles: {} };
       }
-      
+
       if (!marked[dateKey].dots) {
         marked[dateKey].dots = [];
       }
-      
+
       // Add class dot
       marked[dateKey].dots!.push({
         key: `class-${classItem.id}`,
         color: DOT_COLORS.class,
       });
-      
+
       // Override today's marking if it has events
       if (dateKey === today) {
         marked[dateKey].customStyles = {
@@ -112,21 +117,21 @@ export const MonthView: React.FC<MonthViewProps> = ({
         };
       }
     });
-    
+
     // Process tasks
     const safeTasks = tasks || [];
     safeTasks.forEach(task => {
       if (!task.due_date) return;
-      
+
       const dateKey = task.due_date.split('T')[0];
       if (!marked[dateKey]) {
         marked[dateKey] = { dots: [], customStyles: {} };
       }
-      
+
       if (!marked[dateKey].dots) {
         marked[dateKey].dots = [];
       }
-      
+
       // Determine dot color based on task properties
       let dotColor = DOT_COLORS.task;
       if (task.is_urgent) {
@@ -134,13 +139,13 @@ export const MonthView: React.FC<MonthViewProps> = ({
       } else if (task.status === 'completed') {
         dotColor = DOT_COLORS.completed;
       }
-      
+
       // Add task dot
       marked[dateKey].dots!.push({
         key: `task-${task.id}`,
         color: dotColor,
       });
-      
+
       // Override today's marking if it has events
       if (dateKey === today) {
         marked[dateKey].customStyles = {
@@ -156,23 +161,23 @@ export const MonthView: React.FC<MonthViewProps> = ({
         };
       }
     });
-    
+
     return marked;
   };
-  
+
   const markedDates = createMarkedDates();
-  
+
   return (
     <Calendar
       current={currentDate.toISOString().split('T')[0]}
       onDayPress={onDayPress}
       monthFormat="MMMM yyyy"
-      onMonthChange={(month) => {
+      onMonthChange={month => {
         // Handle month change if needed
         console.log('Month changed to:', month);
       }}
       hideArrows={false}
-      renderArrow={(direction) => direction === 'left' ? '←' : '→'}
+      renderArrow={direction => (direction === 'left' ? '←' : '→')}
       hideExtraDays={true}
       disableMonthChange={false}
       firstDay={1} // Monday as first day
@@ -194,12 +199,12 @@ export const MonthView: React.FC<MonthViewProps> = ({
         const isToday = date?.dateString === new Date().toISOString().split('T')[0];
         const isSelected = marking?.selected;
         const dots = marking?.dots || [];
-        
+
         let textColor = isDarkMode ? '#ffffff' : '#030712';
         let backgroundColor = 'transparent';
         let borderColor = 'transparent';
         let borderWidth = 0;
-        
+
         if (state === 'disabled') {
           textColor = isDarkMode ? '#6b7280' : '#9ca3af';
         } else if (isSelected) {
@@ -209,24 +214,28 @@ export const MonthView: React.FC<MonthViewProps> = ({
           borderColor = DOT_COLORS.class;
           borderWidth = 2;
         }
-        
+
         return (
-          <View style={{ 
-            width: 32, 
-            height: 32, 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            position: 'relative',
-            backgroundColor,
-            borderColor,
-            borderWidth,
-            borderRadius: 16,
-          }}>
-            <Text style={{ 
-              fontSize: 16, 
-              color: textColor,
-              fontWeight: isToday ? '600' : '400',
-            }}>
+          <View
+            style={{
+              width: 32,
+              height: 32,
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              backgroundColor,
+              borderColor,
+              borderWidth,
+              borderRadius: 16,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                color: textColor,
+                fontWeight: isToday ? '600' : '400',
+              }}
+            >
               {date?.day}
             </Text>
             {dots.length > 0 && <MultiDotMarking dots={dots} />}

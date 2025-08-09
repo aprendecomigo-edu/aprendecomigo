@@ -180,26 +180,25 @@ export function createToastComponents(UIToast: any) {
     }
   );
 
-  const ToastTitle = React.forwardRef<
-    React.ElementRef<typeof UIToast.Title>,
-    IToastTitleProps
-  >(({ className, size = 'md', ...props }, ref) => {
-    const { variant: parentVariant, action: parentAction } = useStyleContext(SCOPE);
-    return (
-      <UIToast.Title
-        ref={ref}
-        {...props}
-        className={toastTitleStyle({
-          size,
-          class: className,
-          parentVariants: {
-            variant: parentVariant,
-            action: parentAction,
-          },
-        })}
-      />
-    );
-  });
+  const ToastTitle = React.forwardRef<React.ElementRef<typeof UIToast.Title>, IToastTitleProps>(
+    ({ className, size = 'md', ...props }, ref) => {
+      const { variant: parentVariant, action: parentAction } = useStyleContext(SCOPE);
+      return (
+        <UIToast.Title
+          ref={ref}
+          {...props}
+          className={toastTitleStyle({
+            size,
+            class: className,
+            parentVariants: {
+              variant: parentVariant,
+              action: parentAction,
+            },
+          })}
+        />
+      );
+    }
+  );
 
   const ToastDescription = React.forwardRef<
     React.ElementRef<typeof UIToast.Description>,
