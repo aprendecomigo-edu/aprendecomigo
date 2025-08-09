@@ -223,14 +223,15 @@ class EnhancedSubscriptionAPITest(APITestCase):
         
         # Create subscription from January 15
         subscription_date = timezone.datetime(2025, 1, 15, tzinfo=dt_timezone.utc)
-        PurchaseTransaction.objects.create(
+        transaction = PurchaseTransaction.objects.create(
             student=self.student,
             transaction_type=TransactionType.SUBSCRIPTION,
             amount=Decimal('30.00'),
             payment_status=TransactionPaymentStatus.COMPLETED,
-            created_at=subscription_date,
             metadata={'plan_name': 'Monthly Subscription'}
         )
+        # Override auto_now_add=True by updating the field manually
+        PurchaseTransaction.objects.filter(id=transaction.id).update(created_at=subscription_date)
         
         self.client.force_authenticate(user=self.student)
         

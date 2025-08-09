@@ -44,6 +44,7 @@ from .models import (
 from .serializers import (
     BulkPaymentProcessorSerializer,
     ClassSessionSerializer,
+    EnhancedStudentBalanceSummarySerializer,
     MonthlyPaymentSummarySerializer,
     PaymentCalculationSerializer,
     PricingPlanSerializer,
@@ -1715,7 +1716,7 @@ class StudentBalanceViewSet(viewsets.ViewSet):
         
         return subscription_info
     
-    @action(detail=False, methods=['get'], url_path='')
+    @action(detail=False, methods=['get'], url_path='summary')
     def summary(self, request):
         """
         Get student account balance summary.
@@ -1760,7 +1761,7 @@ class StudentBalanceViewSet(viewsets.ViewSet):
             'subscription_info': subscription_info,
         }
         
-        serializer = StudentBalanceSummarySerializer(response_data)
+        serializer = EnhancedStudentBalanceSummarySerializer(response_data)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'], url_path='history')

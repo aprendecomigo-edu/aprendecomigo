@@ -182,7 +182,7 @@ class StudentBalanceSummaryAPITests(StudentBalanceAPITestCase):
     def test_get_student_balance_authenticated_user(self):
         """Test authenticated user can view their own balance summary."""
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-summary')
+        url = reverse('finances:studentbalance-summary')
         
         response = self.client.get(url)
         
@@ -216,7 +216,7 @@ class StudentBalanceSummaryAPITests(StudentBalanceAPITestCase):
     def test_get_student_balance_with_email_parameter_authenticated(self):
         """Test authenticated admin can view any student's balance using email parameter."""
         self.authenticate_as_admin()
-        url = reverse('finances:student-balance-summary')
+        url = reverse('finances:studentbalance-summary')
         
         response = self.client.get(url, {'email': self.student_user.email})
         
@@ -228,7 +228,7 @@ class StudentBalanceSummaryAPITests(StudentBalanceAPITestCase):
 
     def test_get_student_balance_with_email_parameter_unauthenticated(self):
         """Test unauthenticated user cannot access balance with email parameter."""
-        url = reverse('finances:student-balance-summary')
+        url = reverse('finances:studentbalance-summary')
         
         response = self.client.get(url, {'email': self.student_user.email})
         
@@ -238,7 +238,7 @@ class StudentBalanceSummaryAPITests(StudentBalanceAPITestCase):
         """Test that students cannot access other students' balances."""
         # Authenticate as other student
         self.client.force_authenticate(user=self.other_student)
-        url = reverse('finances:student-balance-summary')
+        url = reverse('finances:studentbalance-summary')
         
         # Try to access main student's balance via email parameter
         response = self.client.get(url, {'email': self.student_user.email})
@@ -254,7 +254,7 @@ class StudentBalanceSummaryAPITests(StudentBalanceAPITestCase):
             password="testpass123"
         )
         self.client.force_authenticate(user=new_student)
-        url = reverse('finances:student-balance-summary')
+        url = reverse('finances:studentbalance-summary')
         
         response = self.client.get(url)
         
@@ -271,7 +271,7 @@ class StudentBalanceSummaryAPITests(StudentBalanceAPITestCase):
     def test_get_student_balance_nonexistent_email(self):
         """Test error response for nonexistent email parameter."""
         self.authenticate_as_admin()
-        url = reverse('finances:student-balance-summary')
+        url = reverse('finances:studentbalance-summary')
         
         response = self.client.get(url, {'email': 'nonexistent@example.com'})
         
@@ -291,7 +291,7 @@ class StudentBalanceSummaryAPITests(StudentBalanceAPITestCase):
         )
         
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-summary')
+        url = reverse('finances:studentbalance-summary')
         
         response = self.client.get(url)
         data = response.json()
@@ -314,7 +314,7 @@ class StudentBalanceHistoryAPITests(StudentBalanceAPITestCase):
     def test_get_transaction_history_authenticated(self):
         """Test authenticated user can view their transaction history."""
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-history')
+        url = reverse('finances:studentbalance-history')
         
         response = self.client.get(url)
         
@@ -342,7 +342,7 @@ class StudentBalanceHistoryAPITests(StudentBalanceAPITestCase):
     def test_get_transaction_history_filtering_by_status(self):
         """Test filtering transaction history by payment status."""
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-history')
+        url = reverse('finances:studentbalance-history')
         
         # Filter by completed status
         response = self.client.get(url, {'payment_status': 'completed'})
@@ -357,7 +357,7 @@ class StudentBalanceHistoryAPITests(StudentBalanceAPITestCase):
     def test_get_transaction_history_filtering_by_type(self):
         """Test filtering transaction history by transaction type."""
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-history')
+        url = reverse('finances:studentbalance-history')
         
         # Filter by package type
         response = self.client.get(url, {'transaction_type': 'package'})
@@ -372,7 +372,7 @@ class StudentBalanceHistoryAPITests(StudentBalanceAPITestCase):
     def test_get_transaction_history_with_email_parameter(self):
         """Test admin can view any student's transaction history."""
         self.authenticate_as_admin()
-        url = reverse('finances:student-balance-history')
+        url = reverse('finances:studentbalance-history')
         
         response = self.client.get(url, {'email': self.student_user.email})
         
@@ -396,7 +396,7 @@ class StudentBalanceHistoryAPITests(StudentBalanceAPITestCase):
             )
         
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-history')
+        url = reverse('finances:studentbalance-history')
         
         response = self.client.get(url, {'page_size': 10})
         
@@ -414,7 +414,7 @@ class StudentBalancePurchasesAPITests(StudentBalanceAPITestCase):
     def test_get_purchase_history_authenticated(self):
         """Test authenticated user can view their purchase history."""
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-purchases')
+        url = reverse('finances:studentbalance-purchases')
         
         response = self.client.get(url)
         
@@ -446,7 +446,7 @@ class StudentBalancePurchasesAPITests(StudentBalanceAPITestCase):
     def test_get_purchase_history_with_consumption_details(self):
         """Test that purchase history includes consumption details."""
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-purchases')
+        url = reverse('finances:studentbalance-purchases')
         
         response = self.client.get(url, {'include_consumption': 'true'})
         
@@ -478,7 +478,7 @@ class StudentBalancePurchasesAPITests(StudentBalanceAPITestCase):
     def test_get_purchase_history_filtering_by_active_status(self):
         """Test filtering purchases by active/expired status."""
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-purchases')
+        url = reverse('finances:studentbalance-purchases')
         
         # Filter active packages only
         response = self.client.get(url, {'active_only': 'true'})
@@ -493,7 +493,7 @@ class StudentBalancePurchasesAPITests(StudentBalanceAPITestCase):
     def test_get_purchase_history_hours_remaining_calculation(self):
         """Test that hours remaining is correctly calculated per purchase."""
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-purchases')
+        url = reverse('finances:studentbalance-purchases')
         
         response = self.client.get(url, {'include_consumption': 'true'})
         
@@ -529,9 +529,9 @@ class StudentBalanceSecurityTests(StudentBalanceAPITestCase):
     def test_unauthenticated_access_denied(self):
         """Test that unauthenticated requests are denied."""
         endpoints = [
-            reverse('finances:student-balance-summary'),
-            reverse('finances:student-balance-history'),
-            reverse('finances:student-balance-purchases'),
+            reverse('finances:studentbalance-summary'),
+            reverse('finances:studentbalance-history'),
+            reverse('finances:studentbalance-purchases'),
         ]
         
         for url in endpoints:
@@ -544,9 +544,9 @@ class StudentBalanceSecurityTests(StudentBalanceAPITestCase):
         self.client.force_authenticate(user=self.other_student)
         
         endpoints_with_email = [
-            reverse('finances:student-balance-summary'),
-            reverse('finances:student-balance-history'),
-            reverse('finances:student-balance-purchases'),
+            reverse('finances:studentbalance-summary'),
+            reverse('finances:studentbalance-history'),
+            reverse('finances:studentbalance-purchases'),
         ]
         
         for url in endpoints_with_email:
@@ -558,9 +558,9 @@ class StudentBalanceSecurityTests(StudentBalanceAPITestCase):
         self.authenticate_as_admin()
         
         endpoints_with_email = [
-            reverse('finances:student-balance-summary'),
-            reverse('finances:student-balance-history'),
-            reverse('finances:student-balance-purchases'),
+            reverse('finances:studentbalance-summary'),
+            reverse('finances:studentbalance-history'),
+            reverse('finances:studentbalance-purchases'),
         ]
         
         for url in endpoints_with_email:
@@ -571,7 +571,7 @@ class StudentBalanceSecurityTests(StudentBalanceAPITestCase):
         """Test error handling for invalid email format in parameters."""
         self.authenticate_as_admin()
         
-        url = reverse('finances:student-balance-summary')
+        url = reverse('finances:studentbalance-summary')
         response = self.client.get(url, {'email': 'invalid-email-format'})
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -586,7 +586,7 @@ class StudentBalanceSecurityTests(StudentBalanceAPITestCase):
             "test@example.com'; SELECT * FROM finances_purchasetransaction; --"
         ]
         
-        url = reverse('finances:student-balance-summary')
+        url = reverse('finances:studentbalance-summary')
         
         for malicious_email in malicious_emails:
             response = self.client.get(url, {'email': malicious_email})
@@ -603,7 +603,7 @@ class StudentBalancePerformanceTests(StudentBalanceAPITestCase):
     def test_balance_summary_query_optimization(self):
         """Test that balance summary uses optimized queries."""
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-summary')
+        url = reverse('finances:studentbalance-summary')
         
         with self.assertNumQueries(10):  # Allow reasonable number of queries
             response = self.client.get(url)
@@ -625,7 +625,7 @@ class StudentBalancePerformanceTests(StudentBalanceAPITestCase):
         PurchaseTransaction.objects.bulk_create(transactions)
         
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-purchases')
+        url = reverse('finances:studentbalance-purchases')
         
         with self.assertNumQueries(23):  # Allow for serializer calculations
             response = self.client.get(url, {'page_size': 20})
@@ -642,7 +642,7 @@ class StudentBalanceDataIntegrityTests(StudentBalanceAPITestCase):
         self.student_balance.save()
         
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-summary')
+        url = reverse('finances:studentbalance-summary')
         
         response = self.client.get(url)
         
@@ -656,7 +656,7 @@ class StudentBalanceDataIntegrityTests(StudentBalanceAPITestCase):
     def test_expired_packages_not_counted_in_active_hours(self):
         """Test that expired packages are not counted in available hours."""
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-summary')
+        url = reverse('finances:studentbalance-summary')
         
         response = self.client.get(url)
         data = response.json()
@@ -678,7 +678,7 @@ class StudentBalanceDataIntegrityTests(StudentBalanceAPITestCase):
     def test_subscription_without_expiry_date(self):
         """Test handling of subscription transactions without expiry dates."""
         self.authenticate_as_student()
-        url = reverse('finances:student-balance-purchases')
+        url = reverse('finances:studentbalance-purchases')
         
         response = self.client.get(url)
         data = response.json()
@@ -720,7 +720,7 @@ class StudentBalanceDataIntegrityTests(StudentBalanceAPITestCase):
         )
         
         self.client.force_authenticate(user=new_student)
-        url = reverse('finances:student-balance-purchases')
+        url = reverse('finances:studentbalance-purchases')
         
         response = self.client.get(url, {'include_consumption': 'true'})
         

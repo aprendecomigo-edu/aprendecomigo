@@ -1,11 +1,15 @@
 from decimal import Decimal
 from datetime import timedelta
+from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+if TYPE_CHECKING:
+    from accounts.models import CustomUser
 
 
 class CompensationRuleType(models.TextChoices):
@@ -354,6 +358,9 @@ class ClassSession(models.Model):
     def save(self, *args, **kwargs):
         """Override save to handle status changes and timestamps for existing sessions."""
         from django.utils import timezone
+        
+        # Validate the model before saving
+        self.full_clean()
         
         is_new = self.pk is None
         old_status = None
@@ -2436,7 +2443,7 @@ class FraudAlert(models.Model):
         delta = timezone.now() - self.created_at
         return delta.days
     
-    def assign_to_investigator(self, admin_user: "accounts.CustomUser") -> None:
+    def assign_to_investigator(self, admin_user: "CustomUser") -> None:
         """Assign the alert to an investigator."""
         self.assigned_to = admin_user
         self.status = FraudAlertStatus.INVESTIGATING

@@ -192,8 +192,8 @@ class PaymentMethodServiceTests(TestCase):
         )
         self.service = PaymentMethodService()
 
-    @patch('finances.services.payment_method_service.stripe')
-    def test_add_payment_method_with_customer_creation(self, mock_stripe):
+    @patch('finances.services.payment_method_service.StripeService')
+    def test_add_payment_method_with_customer_creation(self, mock_stripe_service):
         """Test adding payment method with automatic customer creation."""
         # Mock Stripe responses
         mock_payment_method = Mock()
@@ -242,8 +242,8 @@ class PaymentMethodServiceTests(TestCase):
         self.assertEqual(payment_method.stripe_payment_method_id, 'pm_test_123456789')
         self.assertTrue(payment_method.is_default)
 
-    @patch('finances.services.payment_method_service.stripe')
-    def test_add_payment_method_with_existing_customer(self, mock_stripe):
+    @patch('finances.services.payment_method_service.StripeService')
+    def test_add_payment_method_with_existing_customer(self, mock_stripe_service):
         """Test adding payment method with existing customer."""
         # Create existing payment method with customer
         existing_pm = StoredPaymentMethod.objects.create(

@@ -42,31 +42,39 @@ class StripeService:
         'subscription.deleted',
     }
 
-    def __init__(self):
+    def __init__(self, force_environment_validation=False):
         """
         Initialize Stripe service with configuration validation.
+        
+        Args:
+            force_environment_validation: Whether to force environment validation even in tests
         
         Raises:
             ValueError: If required configuration is missing or invalid
         """
-        self._validate_configuration()
+        self._validate_configuration(force_environment_validation=force_environment_validation)
         self._configure_stripe()
 
-    def _validate_configuration(self) -> None:
+    def _validate_configuration(self, force_environment_validation=False) -> None:
         """
         Validate Stripe configuration including environment-specific key validation.
+        
+        Args:
+            force_environment_validation: Whether to force environment validation even in tests
         
         Raises:
             ValueError: If configuration is invalid or missing
         """
-        # Skip validation during tests (when using Django test runner)
-        if hasattr(settings, 'TESTING') or 'test' in os.environ.get('DJANGO_SETTINGS_MODULE', ''):
-            # Just check that keys exist for tests
-            required_settings = ['STRIPE_SECRET_KEY', 'STRIPE_PUBLIC_KEY', 'STRIPE_WEBHOOK_SECRET']
-            for setting_name in required_settings:
-                value = getattr(settings, setting_name, '')
-                if not value:
-                    raise ValueError(f"Missing required Stripe configuration: {setting_name}")
+        # Check required settings first
+        required_settings = ['STRIPE_SECRET_KEY', 'STRIPE_PUBLIC_KEY', 'STRIPE_WEBHOOK_SECRET']
+        for setting_name in required_settings:
+            value = getattr(settings, setting_name, '')
+            if not value:
+                raise ValueError(f"Missing required Stripe configuration: {setting_name}")
+        
+        # Skip environment validation during tests unless explicitly forced
+        if (not force_environment_validation and 
+            (hasattr(settings, 'TESTING') or 'test' in os.environ.get('DJANGO_SETTINGS_MODULE', ''))):
             return
         
         # Check required settings

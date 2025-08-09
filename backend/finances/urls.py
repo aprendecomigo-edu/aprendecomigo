@@ -71,7 +71,7 @@ router.register(
 )
 router.register(r"sessions", ClassSessionViewSet, basename="class-sessions")
 router.register(r"payments", TeacherPaymentEntryViewSet, basename="teacher-payments")
-router.register(r"student-balance", StudentBalanceViewSet, basename="student-balance")
+router.register(r"studentbalance", StudentBalanceViewSet, basename="studentbalance")
 
 # Parent-child approval system viewsets (Issues #111 & #112)
 router.register(r"budget-controls", FamilyBudgetControlViewSet, basename="familybudgetcontrol")

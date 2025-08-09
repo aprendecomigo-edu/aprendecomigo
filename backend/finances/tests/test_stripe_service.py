@@ -73,7 +73,7 @@ class StripeServiceConfigurationTests(TestCase):
         """Test that live keys are rejected in development environment."""
         with patch.dict(os.environ, {'DJANGO_ENV': 'development'}):
             with self.assertRaises(ValueError) as context:
-                StripeService()
+                StripeService(force_environment_validation=True)  # Force validation to run
             self.assertIn("live", str(context.exception).lower())
 
     @override_settings(
@@ -85,7 +85,7 @@ class StripeServiceConfigurationTests(TestCase):
         """Test that test keys are rejected in production environment."""
         with patch.dict(os.environ, {'DJANGO_ENV': 'production'}):
             with self.assertRaises(ValueError) as context:
-                StripeService()
+                StripeService(force_environment_validation=True)  # Force validation to run
             self.assertIn("test", str(context.exception).lower())
 
 

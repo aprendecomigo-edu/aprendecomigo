@@ -37,15 +37,7 @@ SIMPLE_JWT = {**BASE_SIMPLE_JWT, "SIGNING_KEY": SECRET_KEY}
 REST_FRAMEWORK = {
     **BASE_REST_FRAMEWORK,
     "DEFAULT_THROTTLE_CLASSES": [],
-    "DEFAULT_THROTTLE_RATES": {
-        # Set very high rates for all throttle scopes used in tests
-        "purchase_initiation": "10000/minute",
-        "purchase_initiation_email": "10000/minute",
-        "auth_code_request": "10000/minute", 
-        "auth_signup_ip": "10000/minute",
-        "auth_code_verify_email": "10000/minute",
-        "auth_code_verify_ip": "10000/minute",
-    },
+    "DEFAULT_THROTTLE_RATES": {},
 }
 
 # Disable password hashing for faster tests
@@ -80,6 +72,11 @@ SWAGGER_USE_COMPAT_RENDERERS = False
 
 # Import all settings from base.py
 from .base import *  # noqa: F403, E402
+
+# Add authtoken for messaging tests
+INSTALLED_APPS = list(INSTALLED_APPS) + [
+    'rest_framework.authtoken',
+]
 
 # Allow testserver for Django test client
 ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]

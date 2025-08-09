@@ -15,7 +15,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
-from rest_framework.authtoken.models import Token
+from knox.models import AuthToken
 
 from accounts.models import School, SchoolRole
 from messaging.models import SchoolEmailTemplate, EmailTemplateType
@@ -290,8 +290,8 @@ class EmailTemplateAPISecurityTest(APITestCase, SecurityTestMixin):
         )
         
         # Create tokens for authentication
-        self.token = Token.objects.create(user=self.user)
-        self.other_token = Token.objects.create(user=self.other_user)
+        _, self.token = AuthToken.objects.create(user=self.user)
+        _, self.other_token = AuthToken.objects.create(user=self.other_user)
         
         self.client = APIClient()
     
@@ -333,21 +333,21 @@ class EmailTemplateAPISecurityTest(APITestCase, SecurityTestMixin):
         )
         
         # User should see their template
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token.key}')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
         url = reverse('schoolemailtemplate-list')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         
         # Other user should not see it
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.other_token.key}')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.other_token}')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
     
     def test_malicious_template_creation_blocked_via_api(self):
         """Test business rule: malicious templates cannot be created via API."""
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token.key}')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
         
         malicious_data = {
             'school': self.school.id,
@@ -375,7 +375,7 @@ class EmailTemplateAPISecurityTest(APITestCase, SecurityTestMixin):
             created_by=self.other_user
         )
         
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token.key}')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
         
         # Try to access other user's template
         url = reverse('schoolemailtemplate-detail', kwargs={'pk': other_template.pk})

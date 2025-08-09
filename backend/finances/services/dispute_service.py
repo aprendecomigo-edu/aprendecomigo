@@ -12,6 +12,7 @@ from decimal import Decimal
 import stripe
 from django.db import transaction
 from django.utils import timezone
+from datetime import timezone as dt_timezone
 
 # Cross-app models will be loaded at runtime using apps.get_model()
 from django.apps import apps
@@ -500,7 +501,7 @@ class DisputeService:
             'reason': reason_mapping.get(stripe_dispute.reason, DisputeReason.GENERAL),
             'status': status_mapping.get(stripe_dispute.status, DisputeStatus.NEEDS_RESPONSE),
             'evidence_due_by': timezone.datetime.fromtimestamp(
-                stripe_dispute.evidence_details.due_by, tz=timezone.utc
+                stripe_dispute.evidence_details.due_by, tz=dt_timezone.utc
             ) if stripe_dispute.evidence_details and stripe_dispute.evidence_details.due_by else None,
             'stripe_metadata': stripe_dispute.to_dict_recursive()
         }

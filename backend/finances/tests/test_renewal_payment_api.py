@@ -107,8 +107,8 @@ class SavedPaymentMethodAPITests(TestCase):
         self.assertTrue(response.data['success'])
         self.assertEqual(len(response.data['payment_methods']), 0)
 
-    @patch('finances.services.payment_method_service.stripe')
-    def test_add_payment_method_success(self, mock_stripe):
+    @patch('finances.services.payment_method_service.StripeService')
+    def test_add_payment_method_success(self, mock_stripe_service):
         """Test successfully adding a new payment method."""
         self.client.force_authenticate(user=self.student)
         
