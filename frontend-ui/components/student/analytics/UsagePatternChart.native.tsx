@@ -52,13 +52,11 @@ function SimpleBarChart({
       <VStack space="xs">
         {data.slice(0, 5).map((item, index) => (
           <HStack key={index} className="items-center justify-between">
-            <Text className="text-sm text-typography-700 flex-shrink-0 min-w-16">
-              {item.label}
-            </Text>
+            <Text className="text-sm text-typography-700 flex-shrink-0 min-w-16">{item.label}</Text>
             <HStack space="xs" className="items-center flex-1">
               <View
                 className={`h-3 rounded-full min-w-1`}
-                style={{ 
+                style={{
                   width: `${Math.max((item.value / maxValue) * 100, 8)}%`,
                   backgroundColor: item.color || '#6366f1',
                 }}
@@ -103,39 +101,25 @@ export function UsagePatternChart({ patterns, loading, timeRange }: UsagePattern
           {/* Hourly Activity Chart */}
           {chartData.hourly.length > 0 && (
             <Card className="p-4">
-              <SimpleBarChart
-                data={chartData.hourly}
-                title="Activity by Hour"
-              />
+              <SimpleBarChart data={chartData.hourly} title="Activity by Hour" />
             </Card>
           )}
 
           {/* Weekly Activity Chart */}
           <Card className="p-4">
-            <SimpleBarChart
-              data={chartData.weekly}
-              title="Activity by Day"
-            />
+            <SimpleBarChart data={chartData.weekly} title="Activity by Day" />
           </Card>
 
           {/* Subject Distribution */}
           {chartData.subjects.length > 0 && (
             <Card className="p-4">
-              <SimpleBarChart
-                data={chartData.subjects}
-                title="Most Active Subjects"
-              />
+              <SimpleBarChart data={chartData.subjects} title="Most Active Subjects" />
             </Card>
           )}
         </VStack>
 
         {/* Pattern Insights */}
-        {insights && (
-          <PatternInsightsCard 
-            insights={insights} 
-            chartData={chartData}
-          />
-        )}
+        {insights && <PatternInsightsCard insights={insights} chartData={chartData} />}
       </VStack>
     </Card>
   );

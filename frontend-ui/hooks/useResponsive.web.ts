@@ -23,7 +23,7 @@ export function useResponsive(): ResponsiveState {
     };
 
     window.addEventListener('resize', handleResize);
-    
+
     // Set initial value
     setScreenWidth(window.innerWidth);
 

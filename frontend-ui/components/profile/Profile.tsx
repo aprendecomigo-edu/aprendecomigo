@@ -1,13 +1,13 @@
 import React from 'react';
 
 import { useUserProfile } from '@/api/auth';
+import MainLayout from '@/components/layouts/MainLayout';
 import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import MainLayout from '@/components/layouts/MainLayout';
 
 const ProfileContent = () => {
   const { userProfile } = useUserProfile();

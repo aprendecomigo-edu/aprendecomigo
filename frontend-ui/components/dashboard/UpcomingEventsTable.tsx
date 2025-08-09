@@ -9,6 +9,7 @@ import {
 } from 'lucide-react-native';
 import React, { useMemo, useState, useCallback } from 'react';
 
+import { ClassSchedule } from '@/api/schedulerApi';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
@@ -19,7 +20,6 @@ import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useSchedules } from '@/hooks/useSchedules';
-import { ClassSchedule } from '@/api/schedulerApi';
 
 // UI Event interface (mapped from API ClassSchedule)
 interface UIEvent {
@@ -36,8 +36,12 @@ interface UIEvent {
 // Helper function to map API ClassSchedule to UI Event
 const mapClassScheduleToUIEvent = (schedule: ClassSchedule): UIEvent => {
   // Calculate duration from start/end times or use duration_minutes
-  const duration = schedule.duration_minutes ? `${Math.floor(schedule.duration_minutes / 60)}h${schedule.duration_minutes % 60 > 0 ? schedule.duration_minutes % 60 + 'm' : ''}` : undefined;
-  
+  const duration = schedule.duration_minutes
+    ? `${Math.floor(schedule.duration_minutes / 60)}h${
+        schedule.duration_minutes % 60 > 0 ? (schedule.duration_minutes % 60) + 'm' : ''
+      }`
+    : undefined;
+
   return {
     id: schedule.id.toString(),
     date: schedule.scheduled_date,
@@ -49,7 +53,6 @@ const mapClassScheduleToUIEvent = (schedule: ClassSchedule): UIEvent => {
     duration,
   };
 };
-
 
 type FilterType = 'today' | 'week' | 'month';
 
@@ -245,19 +248,12 @@ const FilterButtons: React.FC<{
   </HStack>
 );
 
-const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({
-  onRefresh,
-}) => {
+const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({ onRefresh }) => {
   const [activeFilter, setActiveFilter] = useState<FilterType>('week');
-  
+
   // Use the API hook
-  const {
-    schedules,
-    loading,
-    error,
-    refreshSchedules,
-  } = useSchedules();
-  
+  const { schedules, loading, error, refreshSchedules } = useSchedules();
+
   // Convert API schedules to UI events
   const events = useMemo(() => {
     return schedules.map(mapClassScheduleToUIEvent);
@@ -270,7 +266,7 @@ const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({
       return dateA.getTime() - dateB.getTime();
     });
   }, [events, activeFilter]);
-  
+
   // Handle refresh - use API refresh or custom callback
   const handleRefresh = useCallback(async () => {
     if (onRefresh) {
@@ -318,7 +314,11 @@ const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({
           ) : filteredEvents.length === 0 ? (
             <EmptyState filter={activeFilter} />
           ) : (
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }} className="w-full">
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 400 }}
+              className="w-full"
+            >
               <VStack className="w-full">
                 {filteredEvents.map((event, index) => (
                   <EventRow

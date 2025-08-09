@@ -26,12 +26,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import {
-  Modal,
-  ModalBackdrop,
-  ModalBody,
-  ModalContent,
-} from '@/components/ui/modal';
+import { Modal, ModalBackdrop, ModalBody, ModalContent } from '@/components/ui/modal';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { View } from '@/components/ui/view';
@@ -283,12 +278,7 @@ export function AddPaymentMethodModal({ isOpen, onClose, onSuccess }: AddPayment
           {loading && <LoadingContent />}
 
           {/* Error state */}
-          {error && !loading && (
-            <ErrorContent 
-              error={error} 
-              onRetry={loadStripeConfiguration}
-            />
-          )}
+          {error && !loading && <ErrorContent error={error} onRetry={loadStripeConfiguration} />}
 
           {/* Stripe form */}
           {stripePromise && stripeConfig && !loading && !error && (

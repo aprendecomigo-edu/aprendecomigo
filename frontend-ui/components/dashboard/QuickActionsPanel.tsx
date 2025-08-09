@@ -66,19 +66,19 @@ const VARIANT_STYLES = {
 
 const QuickActionItem: React.FC<{ action: QuickAction }> = ({ action }) => {
   const styles = VARIANT_STYLES[action.variant];
-  
+
   return (
     <Pressable
       onPress={action.onPress}
       disabled={action.disabled}
-      className={`flex-1 min-w-0 ${action.disabled ? 'opacity-50' : 'active:scale-98 transition-transform'}`}
+      className={`flex-1 min-w-0 ${
+        action.disabled ? 'opacity-50' : 'active:scale-98 transition-transform'
+      }`}
     >
       <VStack
         space="sm"
         className={`p-4 rounded-xl ${
-          action.disabled
-            ? 'border-gray-200 bg-gray-50'
-            : styles.container
+          action.disabled ? 'border-gray-200 bg-gray-50' : styles.container
         }`}
       >
         <HStack space="sm" className="items-center">
@@ -91,11 +91,15 @@ const QuickActionItem: React.FC<{ action: QuickAction }> = ({ action }) => {
           </VStack>
           <VStack className="flex-1">
             <Text
-              className={`font-semibold font-primary ${action.disabled ? 'text-gray-500' : 'text-gray-900'}`}
+              className={`font-semibold font-primary ${
+                action.disabled ? 'text-gray-500' : 'text-gray-900'
+              }`}
             >
               {action.title}
             </Text>
-            <Text className={`text-sm font-body ${action.disabled ? 'text-gray-400' : 'text-gray-600'}`}>
+            <Text
+              className={`text-sm font-body ${action.disabled ? 'text-gray-400' : 'text-gray-600'}`}
+            >
               {action.description}
             </Text>
           </VStack>
@@ -182,7 +186,7 @@ const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
       <Heading size="md" className="font-primary text-gray-900">
         <Text className="bg-gradient-accent">Ações Rápidas</Text>
       </Heading>
-      
+
       <VStack space="md">
         {/* Render actions in pairs */}
         {Array.from({ length: Math.ceil(actions.length / 2) }, (_, rowIndex) => (

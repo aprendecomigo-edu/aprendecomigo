@@ -2,9 +2,9 @@ import { Stack, Redirect } from 'expo-router';
 import React from 'react';
 
 import { useSchool } from '@/api/auth';
+import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { Spinner } from '@/components/ui/spinner';
 
 export default function SchoolAdminLayout() {
   const { isSchoolAdmin, userSchools } = useSchool();

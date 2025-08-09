@@ -68,23 +68,25 @@ const SchoolBrandingPage = () => {
     setSelectedColor: setSecondaryColor,
   } = useColorPicker(branding?.secondary_color);
 
-  const {
-    previewData,
-    generateBrandingPreview,
-    closePreview,
-  } = useBrandingPreview();
+  const { previewData, generateBrandingPreview, closePreview } = useBrandingPreview();
 
   // Update primary color
-  const handlePrimaryColorChange = useCallback((color: string) => {
-    setPrimaryColor(color);
-    updateBrandingField('primary_color', color);
-  }, [setPrimaryColor, updateBrandingField]);
+  const handlePrimaryColorChange = useCallback(
+    (color: string) => {
+      setPrimaryColor(color);
+      updateBrandingField('primary_color', color);
+    },
+    [setPrimaryColor, updateBrandingField]
+  );
 
   // Update secondary color
-  const handleSecondaryColorChange = useCallback((color: string) => {
-    setSecondaryColor(color);
-    updateBrandingField('secondary_color', color);
-  }, [setSecondaryColor, updateBrandingField]);
+  const handleSecondaryColorChange = useCallback(
+    (color: string) => {
+      setSecondaryColor(color);
+      updateBrandingField('secondary_color', color);
+    },
+    [setSecondaryColor, updateBrandingField]
+  );
 
   // Handle logo upload
   const handleLogoUpload = useCallback(async () => {
@@ -100,7 +102,7 @@ const SchoolBrandingPage = () => {
     input.onchange = async (e: Event) => {
       const target = e.target as HTMLInputElement;
       const file = target.files?.[0];
-      
+
       if (file) {
         // Check file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
@@ -121,7 +123,7 @@ const SchoolBrandingPage = () => {
         }
       }
     };
-    
+
     input.click();
   }, [uploadLogo]);
 
@@ -136,18 +138,14 @@ const SchoolBrandingPage = () => {
 
   // Handle reset
   const handleReset = useCallback(() => {
-    Alert.alert(
-      'Reset Changes',
-      'Are you sure you want to discard all unsaved changes?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Reset', 
-          style: 'destructive',
-          onPress: resetChanges 
-        },
-      ]
-    );
+    Alert.alert('Reset Changes', 'Are you sure you want to discard all unsaved changes?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reset',
+        style: 'destructive',
+        onPress: resetChanges,
+      },
+    ]);
   }, [resetChanges]);
 
   // Generate preview
@@ -212,11 +210,7 @@ const SchoolBrandingPage = () => {
           </VStack>
 
           <HStack space="sm">
-            <Button
-              onPress={handleGeneratePreview}
-              variant="outline"
-              disabled={!branding}
-            >
+            <Button onPress={handleGeneratePreview} variant="outline" disabled={!branding}>
               <HStack space="xs" className="items-center">
                 <Icon as={EyeIcon} size="sm" className="text-gray-600" />
                 <ButtonText>Preview</ButtonText>
@@ -246,7 +240,12 @@ const SchoolBrandingPage = () => {
               <VStack space="xs" className="flex-1">
                 <Text className="font-medium text-red-800">Error Updating Branding</Text>
                 <Text className="text-sm text-red-600">{error}</Text>
-                <Button onPress={clearError} size="sm" variant="outline" className="border-red-300 self-start">
+                <Button
+                  onPress={clearError}
+                  size="sm"
+                  variant="outline"
+                  className="border-red-300 self-start"
+                >
                   <ButtonText>Dismiss</ButtonText>
                 </Button>
               </VStack>
@@ -266,7 +265,12 @@ const SchoolBrandingPage = () => {
                 <Button onPress={handleSave} size="sm" className="bg-orange-600">
                   <ButtonText className="text-white">Save</ButtonText>
                 </Button>
-                <Button onPress={handleReset} size="sm" variant="outline" className="border-orange-300">
+                <Button
+                  onPress={handleReset}
+                  size="sm"
+                  variant="outline"
+                  className="border-orange-300"
+                >
                   <ButtonText>Reset</ButtonText>
                 </Button>
               </HStack>
@@ -281,8 +285,12 @@ const SchoolBrandingPage = () => {
               <VStack space="lg">
                 <HStack className="justify-between items-center">
                   <VStack space="xs">
-                    <Heading size="md" className="text-gray-900">School Logo</Heading>
-                    <Text className="text-gray-600">Upload your school's logo for email headers</Text>
+                    <Heading size="md" className="text-gray-900">
+                      School Logo
+                    </Heading>
+                    <Text className="text-gray-600">
+                      Upload your school's logo for email headers
+                    </Text>
                   </VStack>
                   <Button onPress={handleLogoUpload} variant="outline" disabled={saving}>
                     <HStack space="xs" className="items-center">
@@ -339,8 +347,12 @@ const SchoolBrandingPage = () => {
             <Card className="p-6">
               <VStack space="lg">
                 <VStack space="xs">
-                  <Heading size="md" className="text-gray-900">Brand Colors</Heading>
-                  <Text className="text-gray-600">Set your school's primary and secondary colors</Text>
+                  <Heading size="md" className="text-gray-900">
+                    Brand Colors
+                  </Heading>
+                  <Text className="text-gray-600">
+                    Set your school's primary and secondary colors
+                  </Text>
                 </VStack>
 
                 {/* Primary Color */}
@@ -349,14 +361,14 @@ const SchoolBrandingPage = () => {
                   <Text className="text-sm text-gray-600">
                     Used for headers, buttons, and main accents in emails
                   </Text>
-                  
+
                   <HStack space="md" className="items-center">
                     <Pressable
                       onPress={openPrimaryPicker}
                       className="w-16 h-16 rounded-lg border-2 border-gray-300 shadow-sm"
                       style={{ backgroundColor: primaryColor }}
                     />
-                    
+
                     <VStack space="sm" className="flex-1">
                       <Input>
                         <InputField
@@ -375,7 +387,7 @@ const SchoolBrandingPage = () => {
                     <VStack space="sm">
                       <Text className="text-sm font-medium text-gray-900">Quick Colors</Text>
                       <HStack space="sm" className="flex-wrap">
-                        {presetColors.map((color) => (
+                        {presetColors.map(color => (
                           <Pressable
                             key={color}
                             onPress={() => {
@@ -399,14 +411,14 @@ const SchoolBrandingPage = () => {
                   <Text className="text-sm text-gray-600">
                     Used for text, borders, and secondary elements
                   </Text>
-                  
+
                   <HStack space="md" className="items-center">
                     <Pressable
                       onPress={openSecondaryPicker}
                       className="w-16 h-16 rounded-lg border-2 border-gray-300 shadow-sm"
                       style={{ backgroundColor: secondaryColor }}
                     />
-                    
+
                     <VStack space="sm" className="flex-1">
                       <Input>
                         <InputField
@@ -425,7 +437,7 @@ const SchoolBrandingPage = () => {
                     <VStack space="sm">
                       <Text className="text-sm font-medium text-gray-900">Quick Colors</Text>
                       <HStack space="sm" className="flex-wrap">
-                        {presetColors.map((color) => (
+                        {presetColors.map(color => (
                           <Pressable
                             key={color}
                             onPress={() => {
@@ -449,7 +461,9 @@ const SchoolBrandingPage = () => {
             <Card className="p-6">
               <VStack space="lg">
                 <VStack space="xs">
-                  <Heading size="md" className="text-gray-900">Custom Messaging</Heading>
+                  <Heading size="md" className="text-gray-900">
+                    Custom Messaging
+                  </Heading>
                   <Text className="text-gray-600">
                     Add a custom message to appear in highlighted sections of emails
                   </Text>
@@ -461,7 +475,7 @@ const SchoolBrandingPage = () => {
                     <TextareaInput
                       placeholder="e.g., 'Join our community of passionate educators committed to student success'"
                       value={branding.custom_messaging || ''}
-                      onChangeText={(value) => updateBrandingField('custom_messaging', value)}
+                      onChangeText={value => updateBrandingField('custom_messaging', value)}
                       multiline
                       numberOfLines={3}
                     />
@@ -477,7 +491,9 @@ const SchoolBrandingPage = () => {
             <Card className="p-6">
               <VStack space="lg">
                 <VStack space="xs">
-                  <Heading size="md" className="text-gray-900">Email Footer</Heading>
+                  <Heading size="md" className="text-gray-900">
+                    Email Footer
+                  </Heading>
                   <Text className="text-gray-600">
                     Set a custom footer message for all school emails
                   </Text>
@@ -489,7 +505,7 @@ const SchoolBrandingPage = () => {
                     <TextareaInput
                       placeholder="e.g., 'Best regards, The School Team'"
                       value={branding.email_footer || ''}
-                      onChangeText={(value) => updateBrandingField('email_footer', value)}
+                      onChangeText={value => updateBrandingField('email_footer', value)}
                       multiline
                       numberOfLines={2}
                     />
@@ -506,10 +522,10 @@ const SchoolBrandingPage = () => {
               <VStack space="lg">
                 <HStack className="justify-between items-center">
                   <VStack space="xs">
-                    <Heading size="md" className="text-gray-900">Email Preview</Heading>
-                    <Text className="text-gray-600">
-                      See how your branding will look in emails
-                    </Text>
+                    <Heading size="md" className="text-gray-900">
+                      Email Preview
+                    </Heading>
+                    <Text className="text-gray-600">See how your branding will look in emails</Text>
                   </VStack>
                   <Button onPress={handleGeneratePreview} variant="outline">
                     <HStack space="xs" className="items-center">
@@ -540,7 +556,8 @@ const SchoolBrandingPage = () => {
                         <VStack space="sm" className="items-center">
                           <Icon as={MailIcon} size="xl" className="text-gray-400" />
                           <Text className="text-gray-600 text-center">
-                            Email preview is only available on web. Use the web version to see how your branding will look in emails.
+                            Email preview is only available on web. Use the web version to see how
+                            your branding will look in emails.
                           </Text>
                         </VStack>
                       </Card>
@@ -565,7 +582,7 @@ const SchoolBrandingPage = () => {
             <Card className="p-6">
               <VStack space="md">
                 <Text className="font-medium text-gray-900">Save Your Changes</Text>
-                
+
                 <HStack space="sm" className="flex-wrap">
                   <Button
                     onPress={handleSave}

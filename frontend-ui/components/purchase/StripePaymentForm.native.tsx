@@ -8,18 +8,13 @@
 
 import React from 'react';
 
-import {
-  StripePaymentFormProps,
-  PlatformNotSupportedState,
-} from './stripe-payment-common';
+import { StripePaymentFormProps, PlatformNotSupportedState } from './stripe-payment-common';
 
 /**
  * Native payment form component - currently shows not supported message.
  * Future enhancement: Integrate with Apple Pay/Google Pay or native Stripe SDK.
  */
-export function StripePaymentForm({
-  className = '',
-}: StripePaymentFormProps) {
+export function StripePaymentForm({ className = '' }: StripePaymentFormProps) {
   // For native platforms, show not supported message
   // Future enhancement: Implement native payment sheets integration
   return <PlatformNotSupportedState className={className} />;

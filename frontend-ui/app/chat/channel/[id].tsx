@@ -14,9 +14,7 @@ export default function ChatRoomScreen() {
       <Box className="flex-1">
         <VStack className="p-6" space="md">
           <Text className="text-xl font-bold text-gray-900">Chat Room {id}</Text>
-          <Text className="text-gray-600">
-            Sistema de chat em tempo real disponível em breve.
-          </Text>
+          <Text className="text-gray-600">Sistema de chat em tempo real disponível em breve.</Text>
         </VStack>
       </Box>
     </MainLayout>

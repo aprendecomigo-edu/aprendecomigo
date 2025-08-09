@@ -1,6 +1,4 @@
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
 import {
   Settings,
   School,
@@ -14,19 +12,21 @@ import {
   Database,
   Smartphone,
 } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert } from 'react-native';
 
 import { useUserProfile } from '@/api/auth';
 import { getUserAdminSchools, SchoolMembership } from '@/api/userApi';
-import { Center } from '@/components/ui/center';
-import { Spinner } from '@/components/ui/spinner';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
 import {
   SettingsLayout,
   SettingsSection,
   SettingsToggleItem,
   SettingsActionItem,
 } from '@/components/settings';
+import { Center } from '@/components/ui/center';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 export default function SchoolSettingsPage() {
   const [adminSchools, setAdminSchools] = useState<SchoolMembership[]>([]);
@@ -154,9 +154,7 @@ export default function SchoolSettingsPage() {
       <SettingsLayout title="Settings" subtitle="Access Denied">
         <Center className="flex-1">
           <VStack space="lg" className="items-center px-6 max-w-md">
-            <Text className="text-center text-gray-600">
-              {authorizationError}
-            </Text>
+            <Text className="text-center text-gray-600">{authorizationError}</Text>
           </VStack>
         </Center>
       </SettingsLayout>
@@ -166,8 +164,8 @@ export default function SchoolSettingsPage() {
   const currentSchool = adminSchools.find(s => s.school.id === selectedSchoolId)?.school;
 
   return (
-    <SettingsLayout 
-      title="School Settings" 
+    <SettingsLayout
+      title="School Settings"
       subtitle={currentSchool?.name || 'Configure your school'}
     >
       {/* School Profile Section */}
@@ -201,35 +199,35 @@ export default function SchoolSettingsPage() {
           description="Receive updates and alerts via email"
           icon={Bell}
           value={settings.notifications.emailNotifications}
-          onValueChange={(value) => updateNotificationSetting('emailNotifications', value)}
+          onValueChange={value => updateNotificationSetting('emailNotifications', value)}
         />
         <SettingsToggleItem
           title="SMS Notifications"
           description="Get important alerts via SMS"
           icon={Smartphone}
           value={settings.notifications.smsNotifications}
-          onValueChange={(value) => updateNotificationSetting('smsNotifications', value)}
+          onValueChange={value => updateNotificationSetting('smsNotifications', value)}
         />
         <SettingsToggleItem
           title="Push Notifications"
           description="Receive notifications on your mobile device"
           icon={Bell}
           value={settings.notifications.pushNotifications}
-          onValueChange={(value) => updateNotificationSetting('pushNotifications', value)}
+          onValueChange={value => updateNotificationSetting('pushNotifications', value)}
         />
         <SettingsToggleItem
           title="Class Reminders"
           description="Automatic reminders before scheduled classes"
           icon={Clock}
           value={settings.notifications.classReminders}
-          onValueChange={(value) => updateNotificationSetting('classReminders', value)}
+          onValueChange={value => updateNotificationSetting('classReminders', value)}
         />
         <SettingsToggleItem
           title="Admin Alerts"
           description="Important administrative notifications"
           icon={Shield}
           value={settings.notifications.adminAlerts}
-          onValueChange={(value) => updateNotificationSetting('adminAlerts', value)}
+          onValueChange={value => updateNotificationSetting('adminAlerts', value)}
         />
       </SettingsSection>
 
@@ -244,28 +242,28 @@ export default function SchoolSettingsPage() {
           description="Allow students to enroll themselves in classes"
           icon={Users}
           value={settings.permissions.allowStudentSelfEnrollment}
-          onValueChange={(value) => updatePermissionSetting('allowStudentSelfEnrollment', value)}
+          onValueChange={value => updatePermissionSetting('allowStudentSelfEnrollment', value)}
         />
         <SettingsToggleItem
           title="Require Parent Approval"
           description="Parent consent required for student actions"
           icon={Shield}
           value={settings.permissions.requireParentApproval}
-          onValueChange={(value) => updatePermissionSetting('requireParentApproval', value)}
+          onValueChange={value => updatePermissionSetting('requireParentApproval', value)}
         />
         <SettingsToggleItem
           title="Auto-Assign Teachers"
           description="Automatically assign teachers to new classes"
           icon={Users}
           value={settings.permissions.autoAssignTeachers}
-          onValueChange={(value) => updatePermissionSetting('autoAssignTeachers', value)}
+          onValueChange={value => updatePermissionSetting('autoAssignTeachers', value)}
         />
         <SettingsToggleItem
           title="Guest Access"
           description="Allow guest users to view public content"
           icon={Globe}
           value={settings.permissions.enableGuestAccess}
-          onValueChange={(value) => updatePermissionSetting('enableGuestAccess', value)}
+          onValueChange={value => updatePermissionSetting('enableGuestAccess', value)}
         />
       </SettingsSection>
 
@@ -280,28 +278,28 @@ export default function SchoolSettingsPage() {
           description="Enable GDPR compliance features"
           icon={Shield}
           value={settings.privacy.gdprCompliance}
-          onValueChange={(value) => updatePrivacySetting('gdprCompliance', value)}
+          onValueChange={value => updatePrivacySetting('gdprCompliance', value)}
         />
         <SettingsToggleItem
           title="Allow Data Export"
           description="Users can request and download their data"
           icon={Database}
           value={settings.privacy.allowDataExport}
-          onValueChange={(value) => updatePrivacySetting('allowDataExport', value)}
+          onValueChange={value => updatePrivacySetting('allowDataExport', value)}
         />
         <SettingsToggleItem
           title="Require Data Consent"
           description="Explicit consent required for data processing"
           icon={Shield}
           value={settings.privacy.requireDataConsent}
-          onValueChange={(value) => updatePrivacySetting('requireDataConsent', value)}
+          onValueChange={value => updatePrivacySetting('requireDataConsent', value)}
         />
         <SettingsToggleItem
           title="Analytics"
           description="Collect anonymous usage data to improve the platform"
           icon={Database}
           value={settings.privacy.enableAnalytics}
-          onValueChange={(value) => updatePrivacySetting('enableAnalytics', value)}
+          onValueChange={value => updatePrivacySetting('enableAnalytics', value)}
         />
       </SettingsSection>
 
@@ -328,7 +326,7 @@ export default function SchoolSettingsPage() {
           description="Educational systems, schedules, and detailed settings"
           icon={Settings}
           onPress={handleAdvancedSettings}
-          badge={{ text: "Pro", variant: "solid", action: "primary" }}
+          badge={{ text: 'Pro', variant: 'solid', action: 'primary' }}
         />
       </SettingsSection>
     </SettingsLayout>

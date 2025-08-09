@@ -1,5 +1,6 @@
 import { withStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
 import { View } from 'react-native';
+
 import { SCOPE, createUITooltip, createTooltipComponents } from './tooltip-common';
 
 // Web-specific Root component using withStyleContext

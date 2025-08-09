@@ -287,7 +287,9 @@ export const ROUTE_PERMISSIONS: Record<string, string[]> = {
 // Navigation items getter based on user role
 export const getNavigationItems = (userRole: string): SidebarItem[] => {
   if (userRole === 'school_admin' || userRole === 'school_owner') {
-    return adminSidebarNavItems.filter(item => !item.permission || item.permission === 'school_admin');
+    return adminSidebarNavItems.filter(
+      item => !item.permission || item.permission === 'school_admin'
+    );
   }
   if (userRole === 'teacher') {
     return teacherSidebarNavItems.filter(

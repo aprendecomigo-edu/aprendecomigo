@@ -80,7 +80,7 @@ describe('StudentManagement', () => {
 
     // Total students
     expect(screen.getByText('3')).toBeTruthy();
-    
+
     // Should show average progress (85 + 45 + 92) / 3 = 74%
     expect(screen.getByText('74%')).toBeTruthy();
   });
@@ -142,7 +142,7 @@ describe('StudentManagement', () => {
 
     // João Santos should have attention alert (low progress)
     expect(screen.getByText('Progresso baixo - considere agendar sessões adicionais')).toBeTruthy();
-    
+
     // Maria Costa should have attention alert (no sessions)
     expect(screen.getByText('Sem aulas recentes - pode precisar de acompanhamento')).toBeTruthy();
   });

@@ -14,7 +14,7 @@ interface PlatformFeatures {
 
 export function usePlatformFeatures(): PlatformFeatures {
   const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  
+
   return {
     hasHover: true, // Web supports hover interactions
     hasKeyboard: true, // Web has keyboard support

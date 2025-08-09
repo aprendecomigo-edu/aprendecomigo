@@ -7,18 +7,20 @@
 
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 
-import { PaymentMethodApiClient } from '@/api/paymentMethodApi';
-import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 import {
   createMockPaymentMethods,
   createMockPaymentMethod,
   mockSuccessfulPurchaseApi,
   mockFailedPurchaseApi,
 } from '@/__tests__/utils/payment-test-utils';
+import { PaymentMethodApiClient } from '@/api/paymentMethodApi';
+import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 
 // Mock the API client
 jest.mock('@/api/paymentMethodApi');
-const mockPaymentMethodApiClient = PaymentMethodApiClient as jest.Mocked<typeof PaymentMethodApiClient>;
+const mockPaymentMethodApiClient = PaymentMethodApiClient as jest.Mocked<
+  typeof PaymentMethodApiClient
+>;
 
 // Mock React Native Alert
 jest.mock('react-native', () => ({
@@ -126,7 +128,7 @@ describe('usePaymentMethods Hook', () => {
 
       // Test with empty array
       mockPaymentMethodApiClient.getPaymentMethods.mockResolvedValue([]);
-      
+
       await act(async () => {
         await result.current.refreshPaymentMethods();
       });
@@ -203,7 +205,7 @@ describe('usePaymentMethods Hook', () => {
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
       });
-      
+
       // Make refresh fail
       mockPaymentMethodApiClient.getPaymentMethods.mockRejectedValue(new Error('Refresh failed'));
 
@@ -244,9 +246,12 @@ describe('usePaymentMethods Hook', () => {
         await result.current.removePaymentMethod(methodIdToRemove);
       });
 
-      expect(mockPaymentMethodApiClient.removePaymentMethod).toHaveBeenCalledWith(methodIdToRemove, mockEmail);
+      expect(mockPaymentMethodApiClient.removePaymentMethod).toHaveBeenCalledWith(
+        methodIdToRemove,
+        mockEmail
+      );
       expect(result.current.operationError).toBeNull();
-      
+
       // Should refresh payment methods after removal
       expect(mockPaymentMethodApiClient.getPaymentMethods).toHaveBeenCalledTimes(2);
     });
@@ -323,7 +328,9 @@ describe('usePaymentMethods Hook', () => {
         }
       });
 
-      expect(result.current.operationError).toBe('Payment method is being used in a pending transaction');
+      expect(result.current.operationError).toBe(
+        'Payment method is being used in a pending transaction'
+      );
     });
 
     it('prevents removal when email is not provided', async () => {
@@ -356,9 +363,12 @@ describe('usePaymentMethods Hook', () => {
         await result.current.setDefaultPaymentMethod(methodIdToSetDefault);
       });
 
-      expect(mockPaymentMethodApiClient.setDefaultPaymentMethod).toHaveBeenCalledWith(methodIdToSetDefault, mockEmail);
+      expect(mockPaymentMethodApiClient.setDefaultPaymentMethod).toHaveBeenCalledWith(
+        methodIdToSetDefault,
+        mockEmail
+      );
       expect(result.current.operationError).toBeNull();
-      
+
       // Should refresh payment methods after setting default
       expect(mockPaymentMethodApiClient.getPaymentMethods).toHaveBeenCalledTimes(2);
     });
@@ -464,7 +474,7 @@ describe('usePaymentMethods Hook', () => {
 
       // Set an error
       mockPaymentMethodApiClient.removePaymentMethod.mockRejectedValue(new Error('Test error'));
-      
+
       await act(async () => {
         try {
           await result.current.removePaymentMethod('pm_test_123');
@@ -493,7 +503,7 @@ describe('usePaymentMethods Hook', () => {
 
       // Create a loading error by making refresh fail
       mockPaymentMethodApiClient.getPaymentMethods.mockRejectedValue(new Error('Loading error'));
-      
+
       await act(async () => {
         await result.current.refreshPaymentMethods();
       });
@@ -501,7 +511,9 @@ describe('usePaymentMethods Hook', () => {
       expect(result.current.error).toBe('Loading error');
 
       // Simulate operation error
-      mockPaymentMethodApiClient.removePaymentMethod.mockRejectedValue(new Error('Operation error'));
+      mockPaymentMethodApiClient.removePaymentMethod.mockRejectedValue(
+        new Error('Operation error')
+      );
       await act(async () => {
         try {
           await result.current.removePaymentMethod('pm_test_123');
@@ -604,32 +616,34 @@ describe('usePaymentMethods Hook', () => {
 
   describe('Email Changes', () => {
     it('reloads payment methods when email changes', async () => {
-      const { result, rerender } = renderHook(
-        ({ email }) => usePaymentMethods(email),
-        { initialProps: { email: 'user1@example.com' } }
-      );
+      const { result, rerender } = renderHook(({ email }) => usePaymentMethods(email), {
+        initialProps: { email: 'user1@example.com' },
+      });
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(mockPaymentMethodApiClient.getPaymentMethods).toHaveBeenCalledWith('user1@example.com');
+      expect(mockPaymentMethodApiClient.getPaymentMethods).toHaveBeenCalledWith(
+        'user1@example.com'
+      );
 
       // Change email
       rerender({ email: 'user2@example.com' });
 
       await waitFor(() => {
-        expect(mockPaymentMethodApiClient.getPaymentMethods).toHaveBeenCalledWith('user2@example.com');
+        expect(mockPaymentMethodApiClient.getPaymentMethods).toHaveBeenCalledWith(
+          'user2@example.com'
+        );
       });
 
       expect(mockPaymentMethodApiClient.getPaymentMethods).toHaveBeenCalledTimes(2);
     });
 
     it('clears data when email becomes undefined', async () => {
-      const { result, rerender } = renderHook(
-        ({ email }) => usePaymentMethods(email),
-        { initialProps: { email: 'user@example.com' } }
-      );
+      const { result, rerender } = renderHook(({ email }) => usePaymentMethods(email), {
+        initialProps: { email: 'user@example.com' },
+      });
 
       await waitFor(() => {
         expect(result.current.hasPaymentMethods).toBe(true);

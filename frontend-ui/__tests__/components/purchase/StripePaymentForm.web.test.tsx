@@ -5,10 +5,9 @@
  * Tests payment element integration, form submission, and error handling.
  */
 
-import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import React from 'react';
 
-import { StripePaymentForm } from '@/components/purchase/StripePaymentForm.web';
 import {
   createMockStripePaymentFormProps,
   createMockStripe,
@@ -18,6 +17,7 @@ import {
   STRIPE_TEST_CARDS,
   waitForStripeToLoad,
 } from '@/__tests__/utils/payment-test-utils';
+import { StripePaymentForm } from '@/components/purchase/StripePaymentForm.web';
 
 // Mock @stripe/react-stripe-js
 const mockUseStripe = jest.fn();
@@ -37,10 +37,10 @@ jest.mock('@stripe/stripe-js', () => ({
 
 describe('StripePaymentForm.web Component', () => {
   const defaultProps = createMockStripePaymentFormProps();
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup default Stripe mocks
     const mockStripe = createMockStripe();
     const mockElements = {
@@ -52,7 +52,7 @@ describe('StripePaymentForm.web Component', () => {
       })),
       getElement: jest.fn(() => null),
     };
-    
+
     mockUseStripe.mockReturnValue(mockStripe);
     mockUseElements.mockReturnValue(mockElements);
     mockLoadStripe.mockResolvedValue(mockStripe);
@@ -66,16 +66,16 @@ describe('StripePaymentForm.web Component', () => {
         resolveStripe = resolve;
       });
       mockLoadStripe.mockReturnValue(pendingPromise);
-      
+
       const { getByText } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       expect(getByText('Loading payment processor...')).toBeTruthy();
-      
+
       // Resolve Stripe loading
       act(() => {
         resolveStripe!(createMockStripe());
       });
-      
+
       await waitFor(() => {
         expect(getByText(/Card Information/)).toBeTruthy();
       });
@@ -83,9 +83,9 @@ describe('StripePaymentForm.web Component', () => {
 
     it('shows error state when Stripe fails to load', async () => {
       mockLoadStripe.mockResolvedValue(null);
-      
+
       const { getByText } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       await waitFor(() => {
         expect(getByText('Failed to load payment processor')).toBeTruthy();
       });
@@ -95,9 +95,9 @@ describe('StripePaymentForm.web Component', () => {
       const props = createMockStripePaymentFormProps({
         stripeConfig: { public_key: '', success: true },
       });
-      
+
       const { getByText } = render(<StripePaymentForm {...props} />);
-      
+
       await waitFor(() => {
         expect(getByText('Payment configuration not available')).toBeTruthy();
       });
@@ -107,9 +107,9 @@ describe('StripePaymentForm.web Component', () => {
       const props = createMockStripePaymentFormProps({
         stripeConfig: { public_key: 'pk_test_custom_key', success: true },
       });
-      
+
       render(<StripePaymentForm {...props} />);
-      
+
       await waitFor(() => {
         expect(mockLoadStripe).toHaveBeenCalledWith('pk_test_custom_key');
       });
@@ -119,7 +119,7 @@ describe('StripePaymentForm.web Component', () => {
   describe('Form Rendering', () => {
     it('renders payment form with all required elements', async () => {
       const { getByText, getByTestId } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       await waitFor(() => {
         expect(getByText(/Card Information/)).toBeTruthy();
         expect(getByTestId('stripe-payment-element')).toBeTruthy();
@@ -130,7 +130,7 @@ describe('StripePaymentForm.web Component', () => {
 
     it('displays plan information correctly', async () => {
       const { getByText } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       await waitFor(() => {
         expect(getByText('Complete Payment')).toBeTruthy();
         expect(getByText('Standard Package')).toBeTruthy();
@@ -140,7 +140,7 @@ describe('StripePaymentForm.web Component', () => {
 
     it('shows security notice and terms', async () => {
       const { getByText } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       await waitFor(() => {
         expect(getByText(/Your payment information is secure/)).toBeTruthy();
         expect(getByText(/By clicking "Pay"/)).toBeTruthy();
@@ -150,7 +150,7 @@ describe('StripePaymentForm.web Component', () => {
     it('disables form when disabled prop is true', async () => {
       const props = createMockStripePaymentFormProps({ disabled: true });
       const { getByRole } = render(<StripePaymentForm {...props} />);
-      
+
       await waitFor(() => {
         const submitButton = getByRole('button');
         expect(submitButton).toHaveProperty('disabled', true);
@@ -166,19 +166,19 @@ describe('StripePaymentForm.web Component', () => {
         getElement: jest.fn(() => null),
       };
       const onPaymentSuccess = jest.fn();
-      
+
       mockUseStripe.mockReturnValue(mockStripe);
       mockUseElements.mockReturnValue(mockElements);
       mockStripe.confirmPayment.mockResolvedValue(createMockStripeSuccess());
-      
+
       const props = createMockStripePaymentFormProps({ onPaymentSuccess });
       const { getByRole } = render(<StripePaymentForm {...props} />);
-      
+
       await waitFor(() => {
         const form = getByRole('form');
         fireEvent.submit(form);
       });
-      
+
       await waitFor(() => {
         expect(mockStripe.confirmPayment).toHaveBeenCalledWith({
           elements: mockElements,
@@ -199,19 +199,19 @@ describe('StripePaymentForm.web Component', () => {
       };
       const onPaymentError = jest.fn();
       const errorMessage = 'Your card was declined';
-      
+
       mockUseStripe.mockReturnValue(mockStripe);
       mockUseElements.mockReturnValue(mockElements);
       mockStripe.confirmPayment.mockResolvedValue(createMockStripeError(errorMessage));
-      
+
       const props = createMockStripePaymentFormProps({ onPaymentError });
       const { getByRole, getByText } = render(<StripePaymentForm {...props} />);
-      
+
       await waitFor(() => {
         const form = getByRole('form');
         fireEvent.submit(form);
       });
-      
+
       await waitFor(() => {
         expect(getByText(errorMessage)).toBeTruthy();
         expect(onPaymentError).toHaveBeenCalledWith(errorMessage);
@@ -225,19 +225,19 @@ describe('StripePaymentForm.web Component', () => {
         getElement: jest.fn(() => null),
       };
       const onPaymentError = jest.fn();
-      
+
       mockUseStripe.mockReturnValue(mockStripe);
       mockUseElements.mockReturnValue(mockElements);
       mockStripe.confirmPayment.mockResolvedValue(createMockStripe3DSRequired());
-      
+
       const props = createMockStripePaymentFormProps({ onPaymentError });
       const { getByRole } = render(<StripePaymentForm {...props} />);
-      
+
       await waitFor(() => {
         const form = getByRole('form');
         fireEvent.submit(form);
       });
-      
+
       await waitFor(() => {
         expect(onPaymentError).toHaveBeenCalledWith('This payment requires authentication.');
       });
@@ -245,16 +245,16 @@ describe('StripePaymentForm.web Component', () => {
 
     it('prevents submission without Stripe instance', async () => {
       mockUseStripe.mockReturnValue(null);
-      
+
       const onPaymentSuccess = jest.fn();
       const props = createMockStripePaymentFormProps({ onPaymentSuccess });
       const { getByRole } = render(<StripePaymentForm {...props} />);
-      
+
       await waitFor(() => {
         const form = getByRole('form');
         fireEvent.submit(form);
       });
-      
+
       expect(onPaymentSuccess).not.toHaveBeenCalled();
     });
 
@@ -262,16 +262,16 @@ describe('StripePaymentForm.web Component', () => {
       const mockStripe = createMockStripe();
       mockUseStripe.mockReturnValue(mockStripe);
       mockUseElements.mockReturnValue(null);
-      
+
       const onPaymentSuccess = jest.fn();
       const props = createMockStripePaymentFormProps({ onPaymentSuccess });
       const { getByRole } = render(<StripePaymentForm {...props} />);
-      
+
       await waitFor(() => {
         const form = getByRole('form');
         fireEvent.submit(form);
       });
-      
+
       expect(onPaymentSuccess).not.toHaveBeenCalled();
     });
 
@@ -281,31 +281,31 @@ describe('StripePaymentForm.web Component', () => {
         create: jest.fn(),
         getElement: jest.fn(() => null),
       };
-      
+
       // Make payment confirmation hang
       let resolvePayment: (value: any) => void;
       const pendingPromise = new Promise(resolve => {
         resolvePayment = resolve;
       });
-      
+
       mockUseStripe.mockReturnValue(mockStripe);
       mockUseElements.mockReturnValue(mockElements);
       mockStripe.confirmPayment.mockReturnValue(pendingPromise);
-      
+
       const props = createMockStripePaymentFormProps();
       const { getByRole } = render(<StripePaymentForm {...props} />);
-      
+
       await waitFor(() => {
         const form = getByRole('form');
         fireEvent.submit(form);
-        
+
         // Try to submit again while processing
         fireEvent.submit(form);
       });
-      
+
       // Should only call confirmPayment once
       expect(mockStripe.confirmPayment).toHaveBeenCalledTimes(1);
-      
+
       // Resolve the payment
       act(() => {
         resolvePayment!(createMockStripeSuccess());
@@ -318,31 +318,31 @@ describe('StripePaymentForm.web Component', () => {
         create: jest.fn(),
         getElement: jest.fn(() => null),
       };
-      
+
       // Make payment confirmation hang
       let resolvePayment: (value: any) => void;
       const pendingPromise = new Promise(resolve => {
         resolvePayment = resolve;
       });
-      
+
       mockUseStripe.mockReturnValue(mockStripe);
       mockUseElements.mockReturnValue(mockElements);
       mockStripe.confirmPayment.mockReturnValue(pendingPromise);
-      
+
       const { getByRole, getByText } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       await waitFor(() => {
         const form = getByRole('form');
         fireEvent.submit(form);
       });
-      
+
       expect(getByText('Processing...')).toBeTruthy();
-      
+
       // Resolve the payment
       act(() => {
         resolvePayment!(createMockStripeSuccess());
       });
-      
+
       await waitFor(() => {
         expect(getByText(/Pay €100.00/)).toBeTruthy();
       });
@@ -356,19 +356,19 @@ describe('StripePaymentForm.web Component', () => {
       };
       const onPaymentError = jest.fn();
       const networkError = new Error('Network request failed');
-      
+
       mockUseStripe.mockReturnValue(mockStripe);
       mockUseElements.mockReturnValue(mockElements);
       mockStripe.confirmPayment.mockRejectedValue(networkError);
-      
+
       const props = createMockStripePaymentFormProps({ onPaymentError });
       const { getByRole } = render(<StripePaymentForm {...props} />);
-      
+
       await waitFor(() => {
         const form = getByRole('form');
         fireEvent.submit(form);
       });
-      
+
       await waitFor(() => {
         expect(onPaymentError).toHaveBeenCalledWith('Network request failed');
       });
@@ -383,18 +383,18 @@ describe('StripePaymentForm.web Component', () => {
         getElement: jest.fn(() => null),
       };
       const errorMessage = 'Insufficient funds';
-      
+
       mockUseStripe.mockReturnValue(mockStripe);
       mockUseElements.mockReturnValue(mockElements);
       mockStripe.confirmPayment.mockResolvedValue(createMockStripeError(errorMessage));
-      
+
       const { getByRole, getByText } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       await waitFor(() => {
         const form = getByRole('form');
         fireEvent.submit(form);
       });
-      
+
       await waitFor(() => {
         expect(getByText(errorMessage)).toBeTruthy();
       });
@@ -406,32 +406,32 @@ describe('StripePaymentForm.web Component', () => {
         create: jest.fn(),
         getElement: jest.fn(() => null),
       };
-      
+
       mockUseStripe.mockReturnValue(mockStripe);
       mockUseElements.mockReturnValue(mockElements);
-      
+
       const { getByRole, getByText, queryByText } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       // First submission with error
       mockStripe.confirmPayment.mockResolvedValueOnce(createMockStripeError('Card declined'));
-      
+
       await waitFor(() => {
         const form = getByRole('form');
         fireEvent.submit(form);
       });
-      
+
       await waitFor(() => {
         expect(getByText('Card declined')).toBeTruthy();
       });
-      
+
       // Second submission with success - should clear error
       mockStripe.confirmPayment.mockResolvedValueOnce(createMockStripeSuccess());
-      
+
       await waitFor(() => {
         const form = getByRole('form');
         fireEvent.submit(form);
       });
-      
+
       await waitFor(() => {
         expect(queryByText('Card declined')).toBeNull();
       });
@@ -441,7 +441,7 @@ describe('StripePaymentForm.web Component', () => {
   describe('Stripe Elements Configuration', () => {
     it('passes correct appearance options to Elements', async () => {
       render(<StripePaymentForm {...defaultProps} />);
-      
+
       await waitFor(() => {
         // Elements configuration is tested through the mock setup
         // In a real test environment, you'd verify the Elements component receives correct props
@@ -452,9 +452,9 @@ describe('StripePaymentForm.web Component', () => {
     it('uses client secret for payment intent', async () => {
       const clientSecret = 'pi_custom_secret_abc123';
       const props = createMockStripePaymentFormProps({ clientSecret });
-      
+
       render(<StripePaymentForm {...props} />);
-      
+
       await waitFor(() => {
         // Elements should be initialized with the client secret
         expect(mockLoadStripe).toHaveBeenCalled();
@@ -465,9 +465,9 @@ describe('StripePaymentForm.web Component', () => {
   describe('Form Validation', () => {
     it('disables submit button when form is invalid', async () => {
       mockUseStripe.mockReturnValue(null); // No Stripe instance
-      
+
       const { getByRole } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       await waitFor(() => {
         const submitButton = getByRole('button');
         expect(submitButton).toHaveProperty('disabled', true);
@@ -480,12 +480,12 @@ describe('StripePaymentForm.web Component', () => {
         create: jest.fn(),
         getElement: jest.fn(() => null),
       };
-      
+
       mockUseStripe.mockReturnValue(mockStripe);
       mockUseElements.mockReturnValue(mockElements);
-      
+
       const { getByRole } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       await waitFor(() => {
         const submitButton = getByRole('button');
         expect(submitButton).toHaveProperty('disabled', false);
@@ -496,7 +496,7 @@ describe('StripePaymentForm.web Component', () => {
   describe('Accessibility', () => {
     it('provides proper form structure for screen readers', async () => {
       const { getByRole } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       await waitFor(() => {
         expect(getByRole('form')).toBeTruthy();
         expect(getByRole('button')).toBeTruthy();
@@ -505,7 +505,7 @@ describe('StripePaymentForm.web Component', () => {
 
     it('has proper labels for form elements', async () => {
       const { getByText } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       await waitFor(() => {
         expect(getByText('Card Information')).toBeTruthy();
         expect(getByText(/Pay €100.00/)).toBeTruthy();
@@ -519,18 +519,18 @@ describe('StripePaymentForm.web Component', () => {
         getElement: jest.fn(() => null),
       };
       const errorMessage = 'Payment error';
-      
+
       mockUseStripe.mockReturnValue(mockStripe);
       mockUseElements.mockReturnValue(mockElements);
       mockStripe.confirmPayment.mockResolvedValue(createMockStripeError(errorMessage));
-      
+
       const { getByRole, getByText } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       await waitFor(() => {
         const form = getByRole('form');
         fireEvent.submit(form);
       });
-      
+
       await waitFor(() => {
         // Error should be displayed and accessible to screen readers
         expect(getByText(errorMessage)).toBeTruthy();
@@ -543,17 +543,17 @@ describe('StripePaymentForm.web Component', () => {
       const start = performance.now();
       render(<StripePaymentForm {...defaultProps} />);
       const end = performance.now();
-      
+
       expect(end - start).toBeLessThan(100);
     });
 
     it('memoizes expensive computations', async () => {
       const { rerender } = render(<StripePaymentForm {...defaultProps} />);
-      
+
       const start = performance.now();
       rerender(<StripePaymentForm {...defaultProps} />);
       const end = performance.now();
-      
+
       expect(end - start).toBeLessThan(50);
     });
   });

@@ -10,8 +10,8 @@ import { z } from 'zod';
 
 import { AuthLayout } from './AuthLayout';
 
-import { verifyEmailCode, requestEmailCode, AuthResponse } from '@/api/authApi';
 import { useAuth } from '@/api/auth';
+import { verifyEmailCode, requestEmailCode, AuthResponse } from '@/api/authApi';
 import { onboardingApi } from '@/api/onboardingApi';
 import { Button, ButtonText } from '@/components/ui/button';
 import {
@@ -98,7 +98,7 @@ const VerifyCodeForm = () => {
           : { phone: data.contact, code: data.code };
 
       console.log('Verification API params:', params);
-      
+
       // Step 1: API verification - handle specific errors
       let response: AuthResponse;
       try {
@@ -106,17 +106,18 @@ const VerifyCodeForm = () => {
         console.log('Verification response:', response);
       } catch (verifyError: any) {
         console.error('Verification API error:', verifyError);
-        
+
         // Handle specific verification errors
         if (verifyError.response?.status === 400) {
-          const errorMessage = verifyError.response?.data?.error || 'Invalid verification code. Please try again.';
+          const errorMessage =
+            verifyError.response?.data?.error || 'Invalid verification code. Please try again.';
           toast.showToast('error', errorMessage);
           return;
         } else if (verifyError.response?.status === 429) {
           toast.showToast('error', 'Too many attempts. Please wait and try again.');
           return;
         }
-        
+
         // Re-throw unexpected errors
         throw verifyError;
       }
@@ -154,7 +155,7 @@ const VerifyCodeForm = () => {
         // Auth succeeded but state update failed - still redirect with success message
         console.warn('Auth state update failed, but verification succeeded:', authUpdateError);
         toast.showToast('success', 'Verification successful!');
-        
+
         // Still proceed with redirect since verification actually succeeded
         if (nextRoute) {
           router.replace(decodeURIComponent(nextRoute));
@@ -271,7 +272,10 @@ const VerifyCodeForm = () => {
       </VStack>
       <VStack className="w-full">
         <VStack space="xl" className="w-full">
-          <FormControl isInvalid={hasAttemptedSubmit && !!verifyCodeForm.formState.errors?.code} className="w-full">
+          <FormControl
+            isInvalid={hasAttemptedSubmit && !!verifyCodeForm.formState.errors?.code}
+            className="w-full"
+          >
             <FormControlLabel>
               <FormControlLabelText>Verification Code</FormControlLabelText>
             </FormControlLabel>

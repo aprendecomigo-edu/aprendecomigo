@@ -114,7 +114,7 @@ export function usePaymentMethods(email?: string): UsePaymentMethodsResult {
 
       try {
         const result = await PaymentMethodApiClient.removePaymentMethod(paymentMethodId, email);
-        
+
         // Handle API responses that return success/failure objects
         if (result && typeof result === 'object' && 'success' in result && !result.success) {
           const errorMessage = (result as any).message || 'Failed to remove payment method';
@@ -148,7 +148,7 @@ export function usePaymentMethods(email?: string): UsePaymentMethodsResult {
 
       try {
         const result = await PaymentMethodApiClient.setDefaultPaymentMethod(paymentMethodId, email);
-        
+
         // Handle API responses that return success/failure objects
         if (result && typeof result === 'object' && 'success' in result && !result.success) {
           const errorMessage = (result as any).message || 'Failed to set default payment method';

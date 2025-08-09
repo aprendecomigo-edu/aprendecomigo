@@ -107,9 +107,7 @@ export const TopNavigation = ({
   // School selector component
   const SchoolSelector = () => {
     if (!currentSchool && userSchools.length === 0) {
-      return (
-        <Text className="text-2xl font-medium text-white">Loading...</Text>
-      );
+      return <Text className="text-2xl font-medium text-white">Loading...</Text>;
     }
 
     return (
@@ -118,12 +116,14 @@ export const TopNavigation = ({
           onPress={() => setShowSchoolMenu(!showSchoolMenu)}
           className="flex-row items-center"
         >
-          <Text className="text-2xl font-medium text-white">{currentSchool?.name || 'Select School'}</Text>
+          <Text className="text-2xl font-medium text-white">
+            {currentSchool?.name || 'Select School'}
+          </Text>
           <Icon as={ChevronDownIcon} size="sm" className="ml-2 mt-1 text-white" />
         </Pressable>
 
         {showSchoolMenu && (
-          <Box 
+          <Box
             className="absolute top-full left-0 mt-2 w-64 bg-background-0 border border-border-200 rounded-md shadow-lg z-50"
             style={{
               minWidth: 250,
@@ -160,10 +160,7 @@ export const TopNavigation = ({
 
         {/* Backdrop to close dropdown when clicking outside */}
         {showSchoolMenu && (
-          <Pressable
-            className="fixed inset-0 z-40"
-            onPress={() => setShowSchoolMenu(false)}
-          />
+          <Pressable className="fixed inset-0 z-40" onPress={() => setShowSchoolMenu(false)} />
         )}
       </Box>
     );

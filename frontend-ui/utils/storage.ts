@@ -25,19 +25,19 @@ class DefaultStorage implements StorageInterface {
   async getItem(key: string): Promise<string | null> {
     throw new Error('Platform-specific storage implementation not found');
   }
-  
+
   async setItem(key: string, value: string): Promise<void> {
     throw new Error('Platform-specific storage implementation not found');
   }
-  
+
   async removeItem(key: string): Promise<void> {
     throw new Error('Platform-specific storage implementation not found');
   }
-  
+
   async clear(): Promise<void> {
     throw new Error('Platform-specific storage implementation not found');
   }
-  
+
   async getAllKeys(): Promise<readonly string[]> {
     throw new Error('Platform-specific storage implementation not found');
   }

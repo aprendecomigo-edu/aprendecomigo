@@ -410,14 +410,16 @@ const CalendarScreen: React.FC = () => {
   const handleDayPress = (day: DateData) => {
     const selectedDate = new Date(day.dateString);
     setCurrentDate(selectedDate);
-    
+
     // Filter events for the selected day
     const dayClasses = classes.filter(c => c.scheduled_date === day.dateString);
     const dayTasks = tasks.filter(t => t.due_date && t.due_date.split('T')[0] === day.dateString);
-    
+
     // If there are events on this day, you could show them in a modal or navigate to a detail view
     if (dayClasses.length > 0 || dayTasks.length > 0) {
-      console.log(`Selected day ${day.dateString} has ${dayClasses.length} classes and ${dayTasks.length} tasks`);
+      console.log(
+        `Selected day ${day.dateString} has ${dayClasses.length} classes and ${dayTasks.length} tasks`
+      );
     }
   };
 

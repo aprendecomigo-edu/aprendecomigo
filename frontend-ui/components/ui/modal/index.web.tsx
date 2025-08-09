@@ -1,5 +1,6 @@
 import { withStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';
 import { View } from 'react-native';
+
 import { SCOPE, createUIModal, createModalComponents } from './modal-common';
 
 // Web-specific Root component using withStyleContext

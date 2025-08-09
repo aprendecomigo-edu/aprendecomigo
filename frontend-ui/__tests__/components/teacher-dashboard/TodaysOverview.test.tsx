@@ -63,7 +63,7 @@ describe('TodaysOverview', () => {
     jest.clearAllMocks();
   });
 
-  it('renders today\'s sessions correctly', () => {
+  it("renders today's sessions correctly", () => {
     render(<TodaysOverview {...mockProps} />);
 
     // Check if today's sessions are displayed
@@ -134,7 +134,9 @@ describe('TodaysOverview', () => {
     render(<TodaysOverview {...emptyProps} />);
 
     expect(screen.getByText('Sem Sessões Hoje')).toBeTruthy();
-    expect(screen.getByText('Que tal agendar uma sessão para hoje ou para os próximos dias?')).toBeTruthy();
+    expect(
+      screen.getByText('Que tal agendar uma sessão para hoje ou para os próximos dias?')
+    ).toBeTruthy();
   });
 
   it('displays session status badges correctly', () => {

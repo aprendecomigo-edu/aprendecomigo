@@ -3,7 +3,6 @@ import { EducationalSystem } from './userApi';
 
 import { Course } from '@/components/onboarding/CourseCatalogBrowser';
 
-
 // Course Catalog and Educational Systems
 export interface EnhancedCourse extends Course {
   market_data?: {
@@ -268,7 +267,6 @@ export interface ProfilePublishingResponse {
 // ============================================================================
 // API Functions
 // ============================================================================
-
 
 /**
  * Get enhanced course catalog with market data

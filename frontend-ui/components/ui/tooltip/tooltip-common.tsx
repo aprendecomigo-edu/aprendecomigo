@@ -111,7 +111,11 @@ export function createTooltipComponents(UITooltip: any) {
     ITooltipTextProps & { className?: string }
   >(({ size, className, ...props }, ref) => {
     return (
-      <UITooltip.Text ref={ref} className={tooltipTextStyle({ size, class: className })} {...props} />
+      <UITooltip.Text
+        ref={ref}
+        className={tooltipTextStyle({ size, class: className })}
+        {...props}
+      />
     );
   });
 

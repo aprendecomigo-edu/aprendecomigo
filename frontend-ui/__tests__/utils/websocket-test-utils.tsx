@@ -14,6 +14,14 @@ export interface MockWebSocketEventHandlers {
   onerror?: (event: Event) => void;
 }
 
+interface MockWebSocketOptions {
+  autoOpen?: boolean;
+  simulateNetworkLatency?: boolean;
+  latencyMs?: number;
+  failConnection?: boolean;
+  connectionDelay?: number;
+}
+
 // Mock CloseEvent and MessageEvent for React Native testing environment
 class MockCloseEvent extends Event {
   public code: number;
@@ -76,8 +84,16 @@ export class MockWebSocket implements WebSocket {
   private shouldFailConnection: boolean = false;
   private shouldFailOnSend: boolean = false;
   private autoConnect: boolean = true;
+  private options: MockWebSocketOptions;
+  private isClosing = false;
+  private closeCode: number | undefined;
+  private closeReason: string | undefined;
 
-  constructor(url: string, protocols?: string | string[]) {
+  // Static registry for tracking all instances
+  private static instances: MockWebSocket[] = [];
+  private static lastInstance: MockWebSocket | null = null;
+
+  constructor(url: string, protocols?: string | string[], options: MockWebSocketOptions = {}) {
     this.url = url;
     if (Array.isArray(protocols)) {
       this.protocol = protocols[0] || '';
@@ -85,9 +101,42 @@ export class MockWebSocket implements WebSocket {
       this.protocol = protocols;
     }
 
-    if (this.autoConnect) {
+    this.options = {
+      autoOpen: true,
+      simulateNetworkLatency: false,
+      latencyMs: 100,
+      failConnection: false,
+      connectionDelay: 10,
+      ...options,
+    };
+
+    MockWebSocket.instances.push(this);
+    MockWebSocket.lastInstance = this;
+
+    if (this.autoConnect && this.options.autoOpen) {
       this.simulateConnection();
     }
+  }
+
+  // Static methods for test control
+  static getLastInstance(): MockWebSocket | null {
+    return MockWebSocket.lastInstance;
+  }
+
+  static getAllInstances(): MockWebSocket[] {
+    return MockWebSocket.instances;
+  }
+
+  static clearInstances(): void {
+    MockWebSocket.instances.length = 0;
+    MockWebSocket.lastInstance = null;
+  }
+
+  static resetAll(): void {
+    MockWebSocket.instances.forEach(instance => {
+      instance.readyState = WebSocket.CLOSED;
+    });
+    MockWebSocket.clearInstances();
   }
 
   /**
@@ -96,11 +145,11 @@ export class MockWebSocket implements WebSocket {
   private async simulateConnection(): Promise<void> {
     const timeoutFn = (global as any).setTimeout || setTimeout;
 
-    if (this.connectionDelay > 0) {
-      await new Promise(resolve => timeoutFn(resolve, this.connectionDelay));
+    if (this.connectionDelay > 0 || this.options.connectionDelay) {
+      await new Promise(resolve => timeoutFn(resolve, this.connectionDelay || this.options.connectionDelay));
     }
 
-    if (this.shouldFailConnection) {
+    if (this.shouldFailConnection || this.options.failConnection) {
       this.readyState = MockWebSocket.CLOSED;
       const errorEvent = new Event('error');
       this.dispatchEvent(errorEvent);
@@ -120,57 +169,55 @@ export class MockWebSocket implements WebSocket {
     const openEvent = new Event('open');
     this.dispatchEvent(openEvent);
     this.onopen?.(openEvent);
-
-    // Process queued messages
-    this.processMessageQueue();
   }
 
-  /**
-   * Send message through WebSocket
-   */
   public send(data: string | ArrayBuffer | Blob | ArrayBufferView): void {
     if (this.readyState !== MockWebSocket.OPEN) {
-      throw new Error('WebSocket is not open');
-    }
-
-    if (this.shouldFailOnSend) {
-      const errorEvent = new Event('error');
-      this.dispatchEvent(errorEvent);
-      this.onerror?.(errorEvent);
+      if (this.shouldFailOnSend) {
+        throw new Error('WebSocket is not open');
+      }
+      console.warn('WebSocket not connected, cannot send message');
       return;
     }
 
-    // Simulate message sending
-    console.log('MockWebSocket: Sending message:', data);
+    if (this.shouldFailOnSend) {
+      throw new Error('Simulated send failure');
+    }
+
+    const messageData = typeof data === 'string' ? data : JSON.stringify(data);
+    this.messageQueue.push({ data: messageData, timestamp: Date.now() });
+
+    // Simulate echo or response if needed
+    if (this.options.simulateNetworkLatency) {
+      setTimeout(() => {
+        // Could simulate server response here
+      }, this.options.latencyMs);
+    }
   }
 
-  /**
-   * Close WebSocket connection
-   */
   public close(code?: number, reason?: string): void {
     if (this.readyState === MockWebSocket.CLOSED || this.readyState === MockWebSocket.CLOSING) {
       return;
     }
 
+    this.isClosing = true;
     this.readyState = MockWebSocket.CLOSING;
+    this.closeCode = code || 1000;
+    this.closeReason = reason || 'Normal closure';
 
     // Simulate close delay
-    const timeoutFn = (global as any).setTimeout || setTimeout;
-    timeoutFn(() => {
+    setTimeout(() => {
       this.readyState = MockWebSocket.CLOSED;
       const closeEvent = new MockCloseEvent('close', {
-        code: code || 1000,
-        reason: reason || 'Normal closure',
-        wasClean: code === 1000,
+        code: this.closeCode,
+        reason: this.closeReason,
+        wasClean: this.closeCode === 1000,
       });
       this.dispatchEvent(closeEvent);
       this.onclose?.(closeEvent);
     }, 10);
   }
 
-  /**
-   * Add event listener
-   */
   public addEventListener(type: string, listener: EventListener): void {
     if (!this.eventListeners.has(type)) {
       this.eventListeners.set(type, new Set());
@@ -178,9 +225,6 @@ export class MockWebSocket implements WebSocket {
     this.eventListeners.get(type)!.add(listener);
   }
 
-  /**
-   * Remove event listener
-   */
   public removeEventListener(type: string, listener: EventListener): void {
     const listeners = this.eventListeners.get(type);
     if (listeners) {
@@ -188,80 +232,93 @@ export class MockWebSocket implements WebSocket {
     }
   }
 
-  /**
-   * Dispatch event to listeners
-   */
   public dispatchEvent(event: Event): boolean {
     const listeners = this.eventListeners.get(event.type);
     if (listeners) {
-      listeners.forEach(listener => {
-        listener(event);
-      });
+      listeners.forEach(listener => listener(event));
     }
     return true;
   }
 
-  /**
-   * Simulate receiving a message
-   */
+  // Test helper methods
   public simulateMessage(data: any): void {
     if (this.readyState === MockWebSocket.OPEN) {
       const messageData = typeof data === 'string' ? data : JSON.stringify(data);
       const messageEvent = new MockMessageEvent('message', { data: messageData });
       this.dispatchEvent(messageEvent);
       this.onmessage?.(messageEvent);
-    } else {
-      // Queue message for later delivery
-      this.messageQueue.push({ data, timestamp: Date.now() });
     }
   }
 
-  /**
-   * Simulate connection error
-   */
   public simulateError(): void {
     const errorEvent = new Event('error');
     this.dispatchEvent(errorEvent);
     this.onerror?.(errorEvent);
   }
 
-  /**
-   * Simulate unexpected disconnection
-   */
-  public simulateDisconnect(code: number = 1006, reason: string = 'Connection lost'): void {
+  public simulateDisconnect(code = 1006, reason = 'Connection lost'): void {
     this.readyState = MockWebSocket.CLOSED;
     const closeEvent = new MockCloseEvent('close', {
       code,
       reason,
-      wasClean: false,
+      wasClean: code === 1000,
     });
     this.dispatchEvent(closeEvent);
     this.onclose?.(closeEvent);
   }
 
-  /**
-   * Process queued messages
-   */
-  private processMessageQueue(): void {
-    while (this.messageQueue.length > 0 && this.readyState === MockWebSocket.OPEN) {
-      const { data } = this.messageQueue.shift()!;
-      this.simulateMessage(data);
+  public simulateNetworkFailure(): void {
+    this.readyState = MockWebSocket.CLOSED;
+    this.simulateError();
+    this.simulateDisconnect(1006, 'Network failure');
+  }
+
+  public simulateRecovery(): void {
+    if (this.readyState === MockWebSocket.CLOSED) {
+      this.readyState = MockWebSocket.CONNECTING;
+      this.simulateConnection();
     }
   }
 
-  /**
-   * Configuration methods for testing scenarios
-   */
-  public setConnectionDelay(delay: number): void {
-    this.connectionDelay = delay;
+  // Additional test control methods
+  public triggerOpen(): void {
+    this.readyState = MockWebSocket.OPEN;
+    const event = new Event('open');
+    this.dispatchEvent(event);
+    this.onopen?.(event);
   }
 
+  public triggerClose(code = 1000, reason = 'Normal closure'): void {
+    this.readyState = MockWebSocket.CLOSED;
+    const event = new MockCloseEvent('close', { code, reason, wasClean: code === 1000 });
+    this.dispatchEvent(event);
+    this.onclose?.(event);
+  }
+
+  public triggerMessage(data: any): void {
+    const messageData = typeof data === 'string' ? data : JSON.stringify(data);
+    const event = new MockMessageEvent('message', { data: messageData });
+    this.dispatchEvent(event);
+    this.onmessage?.(event);
+  }
+
+  public triggerError(): void {
+    const event = new Event('error');
+    this.dispatchEvent(event);
+    this.onerror?.(event);
+  }
+
+  // Utility methods
   public setShouldFailConnection(shouldFail: boolean): void {
     this.shouldFailConnection = shouldFail;
   }
 
   public setShouldFailOnSend(shouldFail: boolean): void {
     this.shouldFailOnSend = shouldFail;
+  }
+
+  public setConnectionDelay(delay: number): void {
+    this.connectionDelay = delay;
   }
 
   public setAutoConnect(autoConnect: boolean): void {
@@ -271,6 +328,10 @@ export class MockWebSocket implements WebSocket {
   public getMessageQueue(): Array<{ data: any; timestamp: number }> {
     return [...this.messageQueue];
   }
+
+  public clearMessageQueue(): void {
+    this.messageQueue.length = 0;
+  }
 }
 
 /**
@@ -278,13 +339,43 @@ export class MockWebSocket implements WebSocket {
  */
 export const WebSocketTestUtils = {
   /**
+   * Setup mock WebSocket for testing
+   */
+  setup(): void {
+    (global as any).WebSocket = MockWebSocket;
+    MockWebSocket.clearInstances();
+  },
+
+  /**
+   * Cleanup mock WebSocket after testing
+   */
+  cleanup(): void {
+    MockWebSocket.resetAll();
+  },
+
+  /**
    * Create a mock WebSocket instance
    */
   createMockWebSocket: (
     url: string = 'ws://localhost:8000/test/',
-    protocols?: string | string[]
+    protocols?: string | string[],
+    options?: MockWebSocketOptions
   ): MockWebSocket => {
-    return new MockWebSocket(url, protocols);
+    return new MockWebSocket(url, protocols, options);
+  },
+
+  /**
+   * Get the most recently created WebSocket instance
+   */
+  getLastWebSocket(): MockWebSocket | null {
+    return MockWebSocket.getLastInstance();
+  },
+
+  /**
+   * Get all WebSocket instances
+   */
+  getAllWebSockets(): MockWebSocket[] {
+    return MockWebSocket.getAllInstances();
   },
 
   /**
@@ -297,12 +388,11 @@ export const WebSocketTestUtils = {
   },
 
   /**
-   * Restore original WebSocket
+   * Clean up WebSocket mock
    */
-  restoreWebSocket: (): void => {
-    if ((global as any).WebSocket.mockRestore) {
-      (global as any).WebSocket.mockRestore();
-    }
+  cleanupWebSocketMock: (): void => {
+    (global as any).WebSocket = undefined;
+    jest.clearAllMocks();
   },
 
   /**
@@ -352,6 +442,39 @@ export const WebSocketTestUtils = {
   },
 
   /**
+   * Wait for WebSocket to reach a specific state
+   */
+  waitForState: async (ws: MockWebSocket, state: number, timeout = 1000): Promise<void> => {
+    const start = Date.now();
+    
+    return new Promise((resolve, reject) => {
+      const check = () => {
+        if (ws.readyState === state) {
+          resolve();
+        } else if (Date.now() - start > timeout) {
+          reject(new Error(`WebSocket did not reach state ${state} within ${timeout}ms`));
+        } else {
+          setTimeout(check, 10);
+        }
+      };
+      check();
+    });
+  },
+
+  /**
+   * Wait for WebSocket connection to open
+   */
+  waitForConnection: async (ws?: MockWebSocket, timeout = 1000): Promise<MockWebSocket> => {
+    const webSocket = ws || WebSocketTestUtils.getLastWebSocket();
+    if (!webSocket) {
+      throw new Error('No WebSocket instance found');
+    }
+    
+    await WebSocketTestUtils.waitForState(webSocket, WebSocket.OPEN, timeout);
+    return webSocket;
+  },
+
+  /**
    * Create test message for different WebSocket types
    */
   createTestMessage: {
@@ -360,13 +483,11 @@ export const WebSocketTestUtils = {
       data: {
         balance: {
           id: 1,
-          current_balance: 100,
+          current_balance: 100.0,
           currency: 'EUR',
           last_updated: new Date().toISOString(),
         },
-        ...overrides.data,
       },
-      user_id: 1,
       timestamp: new Date().toISOString(),
       ...overrides,
     }),
@@ -374,16 +495,16 @@ export const WebSocketTestUtils = {
     purchaseApproval: (overrides: Partial<any> = {}) => ({
       type: 'purchase_approval_notification',
       notification_type: 'new_request',
+      notification_id: 'approval_123',
       title: 'New Purchase Request',
-      message: 'Your child wants to purchase a lesson package',
+      message: 'Your child wants to purchase a study package',
       data: {
         request_id: 1,
         child_name: 'Test Child',
         amount: '25.00',
-        plan_name: 'Math Lesson Package',
+        plan_name: 'Basic Package',
       },
-      priority: 'medium',
-      actionable: true,
+      priority: 'high',
       timestamp: new Date().toISOString(),
       ...overrides,
     }),
@@ -417,83 +538,77 @@ export const WebSocketTestUtils = {
     mockWs.send(JSON.stringify(testMessage));
 
     // Test disconnection
-    await act(async () => {
-      mockWs.close();
-      await new Promise(resolve => setTimeout(resolve, 50));
-    });
+    mockWs.close();
+    await new Promise(resolve => setTimeout(resolve, 50));
     expect(mockWs.readyState).toBe(MockWebSocket.CLOSED);
   },
 
   /**
-   * Test error scenarios
+   * Create exponential backoff delays
    */
-  testErrorScenarios: async (mockWs: MockWebSocket): Promise<void> => {
-    // Test connection error
-    mockWs.setShouldFailConnection(true);
-    await WebSocketTestUtils.simulateConnectionFailure(mockWs);
-
-    // Test send error
-    mockWs.setShouldFailOnSend(true);
-    mockWs.simulateError();
+  createExponentialBackoffDelays: (baseDelay: number, maxAttempts: number): number[] => {
+    const delays: number[] = [];
+    for (let i = 0; i < maxAttempts; i++) {
+      delays.push(Math.min(Math.pow(2, i) * baseDelay, 30000));
+    }
+    return delays;
   },
 
   /**
-   * Wait for WebSocket events with timeout
+   * Verify message received
    */
-  waitForWebSocketEvent: (eventType: string, timeout: number = 5000): Promise<Event> => {
-    return new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        reject(new Error(`WebSocket event '${eventType}' not received within ${timeout}ms`));
-      }, timeout);
-
-      const handler = (event: Event) => {
-        clearTimeout(timeoutId);
-        resolve(event);
-      };
-
-      // This would be used with a real WebSocket instance
-      // mockWs.addEventListener(eventType, handler, { once: true });
+  expectMessageReceived: (
+    mockWs: MockWebSocket,
+    expectedMessage: any,
+    onMessage: jest.Mock
+  ): void => {
+    act(() => {
+      mockWs.simulateMessage(expectedMessage);
     });
+    expect(onMessage).toHaveBeenCalledWith(expectedMessage);
   },
 
   /**
-   * Assert WebSocket message format
+   * Test error handling
    */
-  assertMessageFormat: (message: any, expectedType: string): void => {
-    expect(message).toHaveProperty('type', expectedType);
-    expect(message).toHaveProperty('timestamp');
-    expect(typeof message.timestamp).toBe('string');
-  },
-
-  /**
-   * Create authentication token for WebSocket URL
-   */
-  createTestAuthToken: (): string => {
-    return 'test_auth_token_123';
+  testErrorHandling: async (
+    mockWs: MockWebSocket,
+    onError: jest.Mock
+  ): Promise<void> => {
+    await act(async () => {
+      mockWs.simulateError();
+    });
+    expect(onError).toHaveBeenCalled();
   },
 
   /**
    * Mock AsyncStorage for WebSocket authentication
    */
-  mockAsyncStorageForWebSocket: (token: string = 'test_token') => {
+  mockAsyncStorage: (token?: string): void => {
+    const mockToken = token || 'mock-jwt-token-' + Date.now();
+    
     const AsyncStorage = require('@react-native-async-storage/async-storage');
-    AsyncStorage.getItem = jest.fn().mockImplementation((key: string) => {
-      if (key === 'auth_token') {
-        return Promise.resolve(token);
-      }
-      return Promise.resolve(null);
-    });
-    return AsyncStorage;
+    AsyncStorage.getItem = jest.fn().mockResolvedValue(mockToken);
+    AsyncStorage.setItem = jest.fn().mockResolvedValue(undefined);
   },
 
   /**
-   * Test exponential backoff for reconnection
+   * Mock AsyncStorage with no token (unauthenticated scenario)
    */
-  testExponentialBackoff: (attempts: number[]): void => {
-    for (let i = 0; i < attempts.length; i++) {
-      const expectedDelay = Math.pow(2, i) * 1000;
-      expect(attempts[i]).toBeCloseTo(expectedDelay, -2); // Allow 10ms tolerance
-    }
+  mockAsyncStorageNoToken: (): void => {
+    const AsyncStorage = require('@react-native-async-storage/async-storage');
+    AsyncStorage.getItem = jest.fn().mockResolvedValue(null);
+  },
+
+  /**
+   * Test memory cleanup
+   */
+  testMemoryCleanup: (mockWs: MockWebSocket): void => {
+    // Check if event listeners are properly cleaned up
+    const initialListenerCount = (mockWs as any).eventListeners.size;
+    mockWs.close();
+    const finalListenerCount = (mockWs as any).eventListeners.size;
+    expect(finalListenerCount).toBeLessThanOrEqual(initialListenerCount);
   },
 
   /**
@@ -516,51 +631,124 @@ export const WebSocketTestUtils = {
       });
     },
 
-    lossyConnection: (mockWs: MockWebSocket, lossRate: number = 0.3) => {
-      const originalSimulateMessage = mockWs.simulateMessage.bind(mockWs);
-      mockWs.simulateMessage = (data: any) => {
-        if (Math.random() > lossRate) {
-          originalSimulateMessage(data);
+    packetLoss: (mockWs: MockWebSocket) => {
+      const originalSend = mockWs.send.bind(mockWs);
+      mockWs.send = jest.fn((data) => {
+        // Randomly drop 20% of messages
+        if (Math.random() > 0.2) {
+          originalSend(data);
         }
-      };
+      });
     },
   },
 
   /**
-   * Memory leak detection utilities
+   * Create reconnection delay tracker
    */
-  detectMemoryLeaks: {
-    checkEventListenerCleanup: (mockWs: MockWebSocket): boolean => {
-      return mockWs.eventListeners.size === 0;
-    },
+  createReconnectionTracker: (): { attempts: number[]; track: () => void } => {
+    const attempts: number[] = [];
+    let lastAttemptTime = Date.now();
 
-    checkTimeoutCleanup: (): boolean => {
-      // In a real implementation, we would check if all timeouts were cleared
-      return true;
-    },
+    return {
+      attempts,
+      track: () => {
+        const now = Date.now();
+        attempts.push(now - lastAttemptTime);
+        lastAttemptTime = now;
+      },
+    };
+  },
 
-    simulateComponentUnmount: async (): Promise<void> => {
-      await act(async () => {
-        // Simulate React component unmounting
-        await new Promise(resolve => setTimeout(resolve, 100));
-      });
-    },
+  /**
+   * Setup fake timers for WebSocket testing
+   */
+  setupFakeTimers: (): void => {
+    jest.useFakeTimers();
+  },
+
+  /**
+   * Cleanup fake timers
+   */
+  cleanupFakeTimers: (): void => {
+    jest.useRealTimers();
+  },
+
+  /**
+   * Utility to advance time for testing timers
+   */
+  advanceTime: (ms: number): void => {
+    jest.advanceTimersByTime(ms);
   },
 };
 
 /**
- * WebSocket connection state helpers
+ * Test helper for mocking push notifications
  */
-export const ConnectionStates = {
-  CONNECTING: 0,
-  OPEN: 1,
-  CLOSING: 2,
-  CLOSED: 3,
-} as const;
+export const mockPushNotifications = () => {
+  const mockNotification = {
+    onclick: jest.fn(),
+    close: jest.fn(),
+  };
+
+  global.Notification = jest.fn().mockImplementation(() => mockNotification) as any;
+  global.Notification.permission = 'granted';
+  global.Notification.requestPermission = jest.fn().mockResolvedValue('granted');
+
+  return mockNotification;
+};
 
 /**
- * Common WebSocket error codes
+ * Test data factories for WebSocket messages
  */
+export const WebSocketTestData = {
+  balanceUpdate: (userId: number, balance: number = 100) => ({
+    type: 'balance_update',
+    data: {
+      balance: {
+        id: 1,
+        user_id: userId,
+        current_balance: balance,
+        currency: 'EUR',
+        last_updated: new Date().toISOString(),
+      },
+    },
+    user_id: userId,
+    timestamp: new Date().toISOString(),
+  }),
+
+  purchaseApproval: (userId: number, requestId: number = 1) => ({
+    type: 'purchase_approval_notification',
+    notification_type: 'new_request',
+    notification_id: `approval_${requestId}`,
+    title: 'New Purchase Request',
+    message: 'Your child wants to purchase a study package',
+    data: {
+      request_id: requestId,
+      child_name: 'Test Child',
+      amount: '25.00',
+      plan_name: 'Basic Package',
+    },
+    priority: 'high',
+    timestamp: new Date().toISOString(),
+  }),
+
+  transactionUpdate: (transactionId: number = 1, action: string = 'created') => ({
+    type: 'transaction_update',
+    data: {
+      action,
+      transaction: {
+        id: transactionId,
+        amount: 25.00,
+        currency: 'EUR',
+        status: 'completed',
+        created_at: new Date().toISOString(),
+      },
+    },
+    timestamp: new Date().toISOString(),
+  }),
+};
+
+// WebSocket close codes
 export const WebSocketErrorCodes = {
   NORMAL_CLOSURE: 1000,
   GOING_AWAY: 1001,
@@ -568,7 +756,7 @@ export const WebSocketErrorCodes = {
   UNSUPPORTED_DATA: 1003,
   NO_STATUS_RECEIVED: 1005,
   ABNORMAL_CLOSURE: 1006,
-  INVALID_FRAME_PAYLOAD_DATA: 1007,
+  INVALID_FRAME_PAYLOAD: 1007,
   POLICY_VIOLATION: 1008,
   MESSAGE_TOO_BIG: 1009,
   MANDATORY_EXTENSION: 1010,

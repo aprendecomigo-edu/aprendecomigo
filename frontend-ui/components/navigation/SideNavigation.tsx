@@ -41,7 +41,7 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
   // Get current route based on segments
   const getCurrentRoute = () => {
     if (segments.length === 0) return '/home';
-    
+
     // Handle grouped routes (e.g., (school-admin)/dashboard)
     if (segments[0].startsWith('(') && segments[0].endsWith(')')) {
       if (segments.length > 1) {
@@ -49,7 +49,7 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
       }
       return `/${segments[0]}`;
     }
-    
+
     const firstSegment = segments[0];
     return `/${firstSegment}`;
   };
@@ -57,10 +57,10 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
   // Update selected index based on current route
   useEffect(() => {
     const currentRoute = getCurrentRoute();
-    
+
     // Try exact match first
     let routeIndex = navItems.findIndex(item => item.route === currentRoute);
-    
+
     // If no exact match, try partial matching for grouped routes
     if (routeIndex === -1) {
       routeIndex = navItems.findIndex(item => {
@@ -71,10 +71,13 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
           return itemParts[1] === currentParts[1]; // Compare group names
         }
         // Handle simple routes
-        return item.route.endsWith(segments[0]) || currentRoute.endsWith(item.route.split('/').pop() || '');
+        return (
+          item.route.endsWith(segments[0]) ||
+          currentRoute.endsWith(item.route.split('/').pop() || '')
+        );
       });
     }
-    
+
     if (routeIndex !== -1) {
       setSelectedIndex(routeIndex);
     } else {
@@ -143,10 +146,12 @@ export const SideNavigation = ({ className = '' }: SideNavigationProps) => {
                 accessibilityLabel={`Navigate to ${item.label}`}
                 accessibilityState={{ selected: isSelected }}
               >
-                <Icon as={item.icon} size="md" className={`mr-3 ${
-                  isSelected ? 'text-white' : 'text-gray-700'
-                }`} />
-                <Text 
+                <Icon
+                  as={item.icon}
+                  size="md"
+                  className={`mr-3 ${isSelected ? 'text-white' : 'text-gray-700'}`}
+                />
+                <Text
                   className={`flex-1 font-primary font-medium ${
                     isSelected ? 'text-white' : 'text-gray-700'
                   }`}

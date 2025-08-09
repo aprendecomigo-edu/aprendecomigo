@@ -6,12 +6,8 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor, act } from '@/__tests__/utils/test-utils';
 import { Platform, Dimensions, AppState } from 'react-native';
 
-import { PurchaseFlow } from '@/components/purchase/PurchaseFlow';
-import { PurchaseApiClient } from '@/api/purchaseApi';
-import { PaymentMethodApiClient } from '@/api/paymentMethodApi';
 import {
   createMockPricingPlans,
   createMockStripeConfig,
@@ -24,12 +20,18 @@ import {
   VALID_TEST_DATA,
   cleanupMocks,
 } from '@/__tests__/utils/payment-test-utils';
+import { render, fireEvent, waitFor, act } from '@/__tests__/utils/test-utils';
+import { PaymentMethodApiClient } from '@/api/paymentMethodApi';
+import { PurchaseApiClient } from '@/api/purchaseApi';
+import { PurchaseFlow } from '@/components/purchase/PurchaseFlow';
 
 // Mock APIs
 jest.mock('@/api/purchaseApi');
 jest.mock('@/api/paymentMethodApi');
 const mockPurchaseApiClient = PurchaseApiClient as jest.Mocked<typeof PurchaseApiClient>;
-const mockPaymentMethodApiClient = PaymentMethodApiClient as jest.Mocked<typeof PaymentMethodApiClient>;
+const mockPaymentMethodApiClient = PaymentMethodApiClient as jest.Mocked<
+  typeof PaymentMethodApiClient
+>;
 
 // Mock Stripe
 jest.mock('@stripe/react-stripe-js', () => ({
@@ -63,7 +65,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     cleanupMocks();
-    
+
     // Setup successful API responses
     mockPurchaseApiClient.getStripeConfig.mockResolvedValue(createMockStripeConfig());
     mockPurchaseApiClient.getPricingPlans.mockResolvedValue(mockPlans);
@@ -80,7 +82,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       // Mock web platform
       Platform.OS = 'web';
       Platform.select = jest.fn((platforms: any) => platforms.web || platforms.default);
-      
+
       // Mock window object
       Object.defineProperty(global, 'window', {
         value: {
@@ -175,7 +177,9 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
 
-      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(createMockPurchaseInitiationResponse());
+      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(
+        createMockPurchaseInitiationResponse()
+      );
       fireEvent.press(getByText('Continue to Payment'));
 
       await waitFor(() => {
@@ -191,10 +195,10 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       const { getByText, getByPlaceholderText } = render(<PurchaseFlow />);
 
       await waitFor(() => getByText('Select Plan'));
-      
+
       // Test keyboard navigation
       const planButton = getByText('Standard Package');
-      
+
       // Simulate Enter key press
       fireEvent.press(planButton);
       await waitFor(() => getByText('Student Information'));
@@ -205,14 +209,14 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       // Test Tab navigation between inputs
       fireEvent.focus(nameInput);
       fireEvent.changeText(nameInput, VALID_TEST_DATA.studentName);
-      
+
       // Simulate Tab key to move to next field
       fireEvent.focus(emailInput);
       fireEvent.changeText(emailInput, VALID_TEST_DATA.studentEmail);
 
       // Test form submission with Enter key
       const continueButton = getByText('Continue to Payment');
-      
+
       // Should be accessible via keyboard
       expect(continueButton).toHaveProperty('accessible', true);
       expect(continueButton).toHaveProperty('accessibilityRole', 'button');
@@ -220,13 +224,13 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
 
     it('handles web localStorage state persistence', async () => {
       const mockLocalStorage = window.localStorage as jest.Mocked<Storage>;
-      
+
       const { getByText, getByPlaceholderText } = render(<PurchaseFlow />);
 
       // Fill form
       await waitFor(() => getByText('Select Plan'));
       fireEvent.press(getByText('Standard Package'));
-      
+
       await waitFor(() => getByText('Student Information'));
       fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
@@ -234,14 +238,16 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       // Verify state is saved to localStorage
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         'purchase_flow_state',
-        JSON.stringify(expect.objectContaining({
-          step: 'user-info',
-          formData: expect.objectContaining({
-            selectedPlan: expect.any(Object),
-            studentName: VALID_TEST_DATA.studentName,
-            studentEmail: VALID_TEST_DATA.studentEmail,
-          }),
-        }))
+        JSON.stringify(
+          expect.objectContaining({
+            step: 'user-info',
+            formData: expect.objectContaining({
+              selectedPlan: expect.any(Object),
+              studentName: VALID_TEST_DATA.studentName,
+              studentEmail: VALID_TEST_DATA.studentEmail,
+            }),
+          })
+        )
       );
     });
 
@@ -256,7 +262,9 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       // Mock iOS platform
       Platform.OS = 'ios';
       Platform.Version = '17.0';
-      Platform.select = jest.fn((platforms: any) => platforms.ios || platforms.native || platforms.default);
+      Platform.select = jest.fn(
+        (platforms: any) => platforms.ios || platforms.native || platforms.default
+      );
     });
 
     it('handles iOS safe area and navigation patterns', async () => {
@@ -282,13 +290,13 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
     it('handles iOS payment methods and Apple Pay integration', async () => {
       // Mock Apple Pay availability
       Object.defineProperty(Platform, 'isIOS', { value: true });
-      
+
       const { getByText, getByPlaceholderText, queryByText } = render(<PurchaseFlow />);
 
       // Complete flow to payment step
       await waitFor(() => getByText('Select Plan'));
       fireEvent.press(getByText('Standard Package'));
-      
+
       await waitFor(() => getByText('Student Information'));
       fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
@@ -303,10 +311,10 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
 
       // Test Apple Pay flow
       mockStripe.confirmPayment.mockResolvedValue(createMockStripeSuccess());
-      
+
       if (queryByText('Pay with Apple Pay')) {
         fireEvent.press(getByText('Pay with Apple Pay'));
-        
+
         await waitFor(() => {
           expect(getByText('Purchase Successful!')).toBeTruthy();
         });
@@ -319,7 +327,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       // Start purchase flow
       await waitFor(() => getByText('Select Plan'));
       fireEvent.press(getByText('Standard Package'));
-      
+
       await waitFor(() => getByText('Student Information'));
       fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
@@ -339,8 +347,14 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
 
       // Form should maintain state
       await waitFor(() => {
-        expect(getByPlaceholderText('Student name')).toHaveProperty('value', VALID_TEST_DATA.studentName);
-        expect(getByPlaceholderText('Student email')).toHaveProperty('value', VALID_TEST_DATA.studentEmail);
+        expect(getByPlaceholderText('Student name')).toHaveProperty(
+          'value',
+          VALID_TEST_DATA.studentName
+        );
+        expect(getByPlaceholderText('Student email')).toHaveProperty(
+          'value',
+          VALID_TEST_DATA.studentEmail
+        );
       });
     });
 
@@ -358,7 +372,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       // Plan selection should trigger selection haptic
       await waitFor(() => getByText('Select Plan'));
       fireEvent.press(getByText('Standard Package'));
-      
+
       expect(mockHaptic.selectionAsync).toHaveBeenCalled();
 
       // Successful purchase should trigger success haptic
@@ -366,11 +380,13 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
 
-      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(createMockPurchaseInitiationResponse());
+      mockPurchaseApiClient.initiatePurchase.mockResolvedValue(
+        createMockPurchaseInitiationResponse()
+      );
       fireEvent.press(getByText('Continue to Payment'));
 
       await waitFor(() => getByText('Payment'));
-      
+
       mockStripe.confirmPayment.mockResolvedValue(createMockStripeSuccess());
       fireEvent.press(getByText(/Pay €/));
 
@@ -386,7 +402,9 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       // Mock Android platform
       Platform.OS = 'android';
       Platform.Version = 33; // Android 13
-      Platform.select = jest.fn((platforms: any) => platforms.android || platforms.native || platforms.default);
+      Platform.select = jest.fn(
+        (platforms: any) => platforms.android || platforms.native || platforms.default
+      );
     });
 
     it('handles Android material design and navigation', async () => {
@@ -415,7 +433,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       // Complete flow to payment step
       await waitFor(() => getByText('Select Plan'));
       fireEvent.press(getByText('Standard Package'));
-      
+
       await waitFor(() => getByText('Student Information'));
       fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
@@ -430,10 +448,10 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
 
       // Test Google Pay flow
       mockStripe.confirmPayment.mockResolvedValue(createMockStripeSuccess());
-      
+
       if (queryByText('Pay with Google Pay')) {
         fireEvent.press(getByText('Pay with Google Pay'));
-        
+
         await waitFor(() => {
           expect(getByText('Purchase Successful!')).toBeTruthy();
         });
@@ -459,7 +477,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
         }),
         removeEventListener: jest.fn(),
       };
-      
+
       jest.doMock('react-native', () => ({
         ...jest.requireActual('react-native'),
         BackHandler: mockBackHandler,
@@ -485,7 +503,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
         setBackgroundColor: jest.fn(),
         setBarStyle: jest.fn(),
       };
-      
+
       jest.doMock('react-native', () => ({
         ...jest.requireActual('react-native'),
         StatusBar: mockStatusBar,
@@ -510,14 +528,14 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
           ANDROID: {
             CAMERA: 'android.permission.CAMERA',
             WRITE_EXTERNAL_STORAGE: 'android.permission.WRITE_EXTERNAL_STORAGE',
-          }
+          },
         },
         RESULTS: {
           GRANTED: 'granted',
           DENIED: 'denied',
-        }
+        },
       };
-      
+
       jest.doMock('react-native-permissions', () => mockPermissions);
 
       const { getByText, getByPlaceholderText } = render(<PurchaseFlow />);
@@ -525,7 +543,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       // Complete to payment step
       await waitFor(() => getByText('Select Plan'));
       fireEvent.press(getByText('Standard Package'));
-      
+
       await waitFor(() => getByText('Student Information'));
       fireEvent.changeText(getByPlaceholderText('Student name'), VALID_TEST_DATA.studentName);
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
@@ -541,12 +559,12 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
   describe('Cross-Platform Consistency Tests', () => {
     it('maintains consistent UX across all platforms', async () => {
       const platforms = ['web', 'ios', 'android'];
-      
+
       for (const platform of platforms) {
         // Set platform
         Platform.OS = platform as any;
-        Platform.select = jest.fn((platforms: any) => 
-          platforms[platform] || platforms.native || platforms.default
+        Platform.select = jest.fn(
+          (platforms: any) => platforms[platform] || platforms.native || platforms.default
         );
 
         const { getByText, getByPlaceholderText } = render(<PurchaseFlow />);
@@ -554,7 +572,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
         // Core flow should be identical
         await waitFor(() => getByText('Select Plan'));
         fireEvent.press(getByText('Standard Package'));
-        
+
         await waitFor(() => getByText('Student Information'));
         expect(getByText('Step 2 of 4')).toBeTruthy();
 
@@ -562,7 +580,9 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
         fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
         fireEvent.press(getByText('Continue to Payment'));
 
-        mockPurchaseApiClient.initiatePurchase.mockResolvedValue(createMockPurchaseInitiationResponse());
+        mockPurchaseApiClient.initiatePurchase.mockResolvedValue(
+          createMockPurchaseInitiationResponse()
+        );
         await waitFor(() => {
           expect(getByText('Payment')).toBeTruthy();
           expect(getByText('Step 3 of 4')).toBeTruthy();
@@ -580,10 +600,10 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
 
     it('handles platform-specific error messages consistently', async () => {
       const platforms = ['web', 'ios', 'android'];
-      
+
       for (const platform of platforms) {
         Platform.OS = platform as any;
-        
+
         // Mock platform-specific error
         let expectedErrorMessage = 'Payment failed';
         if (platform === 'ios') expectedErrorMessage = 'Apple Pay not available';
@@ -606,16 +626,16 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
 
     it('ensures accessibility standards across platforms', async () => {
       const platforms = ['web', 'ios', 'android'];
-      
+
       for (const platform of platforms) {
         Platform.OS = platform as any;
-        
+
         const { getByRole, getByLabelText, getByText } = render(<PurchaseFlow />);
 
         await waitFor(() => {
           // All platforms should have accessible elements
           expect(getByRole('heading')).toBeTruthy();
-          
+
           // Platform-specific accessibility
           if (platform === 'web') {
             expect(getByRole('button', { name: /Standard Package/i })).toBeTruthy();

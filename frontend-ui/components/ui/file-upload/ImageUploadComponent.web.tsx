@@ -145,7 +145,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
         maxSizeInMB={maxSizeInMB}
         className={className}
       />
-      
+
       {/* Hidden file input for web */}
       <input
         ref={fileInputRef}

@@ -103,7 +103,6 @@ interface UseSchoolDashboardProps {
   refreshInterval?: number;
 }
 
-
 export const useSchoolDashboard = ({
   schoolId,
   refreshInterval = 30000, // 30 seconds
@@ -122,7 +121,6 @@ export const useSchoolDashboard = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [totalActivities, setTotalActivities] = useState(0);
-
 
   // API functions
   const fetchMetrics = useCallback(async () => {
