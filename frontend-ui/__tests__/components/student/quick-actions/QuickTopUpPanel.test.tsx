@@ -9,9 +9,10 @@
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import React from 'react';
 
-import { QuickTopUpPanel } from '@/components/student/quick-actions/QuickTopUpPanel';
-import { usePaymentMethods } from '@/hooks/usePaymentMethods';
-import { useStudentBalance } from '@/hooks/useStudentBalance';
+import {
+  createMockPaymentMethods,
+  createMockPaymentMethod,
+} from '@/__tests__/utils/payment-test-utils';
 import {
   createMockQuickTopUpPanelProps,
   createMockTopUpPackages,
@@ -19,10 +20,9 @@ import {
   mockStudentApiCalls,
   cleanupStudentMocks,
 } from '@/__tests__/utils/student-test-utils';
-import {
-  createMockPaymentMethods,
-  createMockPaymentMethod,
-} from '@/__tests__/utils/payment-test-utils';
+import { QuickTopUpPanel } from '@/components/student/quick-actions/QuickTopUpPanel';
+import { usePaymentMethods } from '@/hooks/usePaymentMethods';
+import { useStudentBalance } from '@/hooks/useStudentBalance';
 
 // Mock the hooks
 jest.mock('@/hooks/usePaymentMethods');
@@ -159,11 +159,11 @@ describe('QuickTopUpPanel Component', () => {
 
     it('handles discount calculations correctly', () => {
       const packagesWithDiscounts = [
-        createMockTopUpPackage({ 
-          id: 1, 
+        createMockTopUpPackage({
+          id: 1,
           discount_percentage: 20,
           price_eur: '80.00',
-          price_per_hour: '8.00'
+          price_per_hour: '8.00',
         }),
       ];
       mockStudentApiCalls.getTopUpPackages.mockResolvedValue(packagesWithDiscounts);
@@ -189,7 +189,7 @@ describe('QuickTopUpPanel Component', () => {
       // Verify sorting logic can be applied
       const sorted = [...unsortedPackages].sort((a, b) => a.display_order - b.display_order);
       expect(sorted[0].id).toBe(2); // display_order 1
-      expect(sorted[1].id).toBe(3); // display_order 2  
+      expect(sorted[1].id).toBe(3); // display_order 2
       expect(sorted[2].id).toBe(1); // display_order 3
     });
   });

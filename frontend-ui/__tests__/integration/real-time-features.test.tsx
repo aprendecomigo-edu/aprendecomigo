@@ -15,11 +15,11 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
-import { useBalanceWebSocket } from '@/hooks/useBalanceWebSocket';
-import { usePurchaseApprovalWebSocket } from '@/hooks/usePurchaseApprovalWebSocket';
-import { usePaymentMonitoringWebSocket } from '@/hooks/usePaymentMonitoringWebSocket';
-import { useWebSocket, useWebSocketEnhanced } from '@/hooks/useWebSocket';
 import WebSocketTestUtils, { WebSocketTestData } from '@/__tests__/utils/websocket-test-utils';
+import { useBalanceWebSocket } from '@/hooks/useBalanceWebSocket';
+import { usePaymentMonitoringWebSocket } from '@/hooks/usePaymentMonitoringWebSocket';
+import { usePurchaseApprovalWebSocket } from '@/hooks/usePurchaseApprovalWebSocket';
+import { useWebSocket, useWebSocketEnhanced } from '@/hooks/useWebSocket';
 
 // Mock dependencies
 jest.mock('@/api/auth', () => ({
@@ -85,7 +85,7 @@ describe('Real-time WebSocket Features Integration', () => {
 
       // Simulate balance update message
       const balanceUpdate = WebSocketTestData.balanceUpdate(mockUserProfile.id, 150.75);
-      
+
       act(() => {
         mockWebSocketResult.lastMessage = JSON.stringify(balanceUpdate);
       });
@@ -121,7 +121,7 @@ describe('Real-time WebSocket Features Integration', () => {
       mockUseWebSocket.mockReturnValue(mockApprovalWS);
 
       const { result: balanceHook } = renderHook(() => useBalanceWebSocket({ enabled: true }));
-      const { result: approvalHook } = renderHook(() => 
+      const { result: approvalHook } = renderHook(() =>
         usePurchaseApprovalWebSocket({ parentId: 'parent123' })
       );
 
@@ -132,7 +132,7 @@ describe('Real-time WebSocket Features Integration', () => {
       act(() => {
         // Balance update
         mockBalanceWS.lastMessage = JSON.stringify(balanceUpdate);
-        
+
         // Approval notification
         const approvalMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
         approvalMessage(approvalNotification);
@@ -151,13 +151,9 @@ describe('Real-time WebSocket Features Integration', () => {
     it('should manage payment monitoring alongside other WebSocket connections', async () => {
       WebSocketTestUtils.mockAsyncStorage('admin-token');
 
-      const { result: paymentMonitoring } = renderHook(() => 
-        usePaymentMonitoringWebSocket(true)
-      );
+      const { result: paymentMonitoring } = renderHook(() => usePaymentMonitoringWebSocket(true));
 
-      const { result: balanceHook } = renderHook(() => 
-        useBalanceWebSocket({ enabled: true })
-      );
+      const { result: balanceHook } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
       await act(async () => {
         WebSocketTestUtils.advanceTime(100);
@@ -196,10 +192,12 @@ describe('Real-time WebSocket Features Integration', () => {
       mockUseWebSocket.mockReturnValue(mockApprovalWS);
 
       renderHook(() => useBalanceWebSocket({ enabled: true }));
-      renderHook(() => usePurchaseApprovalWebSocket({
-        parentId: 'parent123',
-        onNewRequest: onApprovalNotification,
-      }));
+      renderHook(() =>
+        usePurchaseApprovalWebSocket({
+          parentId: 'parent123',
+          onNewRequest: onApprovalNotification,
+        })
+      );
 
       // Simulate purchase approval workflow
       act(() => {
@@ -220,45 +218,43 @@ describe('Real-time WebSocket Features Integration', () => {
     it('should coordinate transaction monitoring with balance updates', async () => {
       WebSocketTestUtils.mockAsyncStorage('admin-token');
 
-      const { result: paymentMonitoring } = renderHook(() => 
-        usePaymentMonitoringWebSocket(true)
-      );
+      const { result: paymentMonitoring } = renderHook(() => usePaymentMonitoringWebSocket(true));
 
-      const { result: balanceHook } = renderHook(() => 
-        useBalanceWebSocket({ enabled: true })
-      );
+      const { result: balanceHook } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
       await act(async () => {
         WebSocketTestUtils.advanceTime(100);
       });
 
-      const paymentWS = WebSocketTestUtils.getAllWebSockets().find(ws => 
+      const paymentWS = WebSocketTestUtils.getAllWebSockets().find(ws =>
         ws.url.includes('/ws/admin/payments/')
       );
 
-      const balanceWS = WebSocketTestUtils.getAllWebSockets().find(ws => 
-        ws.url.includes('/balance/') || ws === WebSocketTestUtils.getLastWebSocket()
+      const balanceWS = WebSocketTestUtils.getAllWebSockets().find(
+        ws => ws.url.includes('/balance/') || ws === WebSocketTestUtils.getLastWebSocket()
       );
 
       // Simulate coordinated updates
       act(() => {
         if (paymentWS) {
           // New transaction processed
-          paymentWS.simulateMessage(JSON.stringify({
-            type: 'transaction_update',
-            data: {
-              action: 'created',
-              transaction: {
-                id: 'txn_123',
-                user_id: mockUserProfile.id,
-                amount: 25.00,
-                currency: 'EUR',
-                status: 'completed',
-                created_at: new Date().toISOString(),
+          paymentWS.simulateMessage(
+            JSON.stringify({
+              type: 'transaction_update',
+              data: {
+                action: 'created',
+                transaction: {
+                  id: 'txn_123',
+                  user_id: mockUserProfile.id,
+                  amount: 25.0,
+                  currency: 'EUR',
+                  status: 'completed',
+                  created_at: new Date().toISOString(),
+                },
               },
-            },
-            timestamp: new Date().toISOString(),
-          }));
+              timestamp: new Date().toISOString(),
+            })
+          );
         }
 
         // Corresponding balance update
@@ -277,11 +273,9 @@ describe('Real-time WebSocket Features Integration', () => {
 
   describe('Connection Resilience and Recovery', () => {
     it('should recover all connections after network interruption', async () => {
-      const { result: balanceHook } = renderHook(() => 
-        useBalanceWebSocket({ enabled: true })
-      );
+      const { result: balanceHook } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
-      const { result: approvalHook } = renderHook(() => 
+      const { result: approvalHook } = renderHook(() =>
         usePurchaseApprovalWebSocket({ parentId: 'parent123' })
       );
 
@@ -313,11 +307,9 @@ describe('Real-time WebSocket Features Integration', () => {
     });
 
     it('should handle partial connection failures gracefully', async () => {
-      const { result: balanceHook } = renderHook(() => 
-        useBalanceWebSocket({ enabled: true })
-      );
+      const { result: balanceHook } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
-      const { result: approvalHook } = renderHook(() => 
+      const { result: approvalHook } = renderHook(() =>
         usePurchaseApprovalWebSocket({ parentId: 'parent123' })
       );
 
@@ -391,13 +383,9 @@ describe('Real-time WebSocket Features Integration', () => {
 
   describe('Performance Under Load', () => {
     it('should handle high-frequency updates across multiple connections', async () => {
-      const { result: paymentMonitoring } = renderHook(() => 
-        usePaymentMonitoringWebSocket(true)
-      );
+      const { result: paymentMonitoring } = renderHook(() => usePaymentMonitoringWebSocket(true));
 
-      const { result: balanceHook } = renderHook(() => 
-        useBalanceWebSocket({ enabled: true })
-      );
+      const { result: balanceHook } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
       await act(async () => {
         WebSocketTestUtils.advanceTime(100);
@@ -409,23 +397,25 @@ describe('Real-time WebSocket Features Integration', () => {
       act(() => {
         // 100 payment monitoring updates
         for (let i = 0; i < 100; i++) {
-          const paymentWS = WebSocketTestUtils.getAllWebSockets().find(ws => 
+          const paymentWS = WebSocketTestUtils.getAllWebSockets().find(ws =>
             ws.url.includes('/ws/admin/payments/')
           );
-          
+
           if (paymentWS) {
-            paymentWS.simulateMessage(JSON.stringify({
-              type: 'transaction_update',
-              data: {
-                action: 'created',
-                transaction: {
-                  id: `txn_${i}`,
-                  amount: 10.0 + i,
-                  status: 'completed',
+            paymentWS.simulateMessage(
+              JSON.stringify({
+                type: 'transaction_update',
+                data: {
+                  action: 'created',
+                  transaction: {
+                    id: `txn_${i}`,
+                    amount: 10.0 + i,
+                    status: 'completed',
+                  },
                 },
-              },
-              timestamp: new Date().toISOString(),
-            }));
+                timestamp: new Date().toISOString(),
+              })
+            );
           }
         }
 
@@ -450,11 +440,9 @@ describe('Real-time WebSocket Features Integration', () => {
     it('should maintain responsive UI during message processing', async () => {
       const renderStartTime = Date.now();
 
-      const { result: balanceHook } = renderHook(() => 
-        useBalanceWebSocket({ enabled: true })
-      );
+      const { result: balanceHook } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
-      const { result: approvalHook } = renderHook(() => 
+      const { result: approvalHook } = renderHook(() =>
         usePurchaseApprovalWebSocket({ parentId: 'parent123' })
       );
 
@@ -500,13 +488,13 @@ describe('Real-time WebSocket Features Integration', () => {
     it('should support complete purchase approval workflow', async () => {
       const workflowSteps: string[] = [];
 
-      const { result: balanceHook } = renderHook(() => 
-        useBalanceWebSocket({ 
+      const { result: balanceHook } = renderHook(() =>
+        useBalanceWebSocket({
           enabled: true,
         })
       );
 
-      const { result: approvalHook } = renderHook(() => 
+      const { result: approvalHook } = renderHook(() =>
         usePurchaseApprovalWebSocket({
           parentId: 'parent123',
           onNewRequest: () => workflowSteps.push('approval_received'),
@@ -589,13 +577,9 @@ describe('Real-time WebSocket Features Integration', () => {
         .mockReturnValueOnce({ userProfile: user1 })
         .mockReturnValueOnce({ userProfile: user2 });
 
-      const { result: user1Balance } = renderHook(() => 
-        useBalanceWebSocket({ enabled: true })
-      );
+      const { result: user1Balance } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
-      const { result: user2Balance } = renderHook(() => 
-        useBalanceWebSocket({ enabled: true })
-      );
+      const { result: user2Balance } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
       // Simulate user-specific balance updates
       act(() => {
@@ -625,17 +609,13 @@ describe('Real-time WebSocket Features Integration', () => {
 
   describe('Resource Management', () => {
     it('should properly cleanup resources on component unmount', () => {
-      const { unmount: unmountBalance } = renderHook(() => 
-        useBalanceWebSocket({ enabled: true })
-      );
+      const { unmount: unmountBalance } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
-      const { unmount: unmountApproval } = renderHook(() => 
+      const { unmount: unmountApproval } = renderHook(() =>
         usePurchaseApprovalWebSocket({ parentId: 'parent123' })
       );
 
-      const { unmount: unmountPayment } = renderHook(() => 
-        usePaymentMonitoringWebSocket(true)
-      );
+      const { unmount: unmountPayment } = renderHook(() => usePaymentMonitoringWebSocket(true));
 
       // Unmount all components
       expect(() => {
@@ -679,11 +659,11 @@ describe('Real-time WebSocket Features Integration', () => {
 
   describe('Error Recovery Integration', () => {
     it('should coordinate error recovery across multiple features', async () => {
-      const { result: balanceHook } = renderHook(() => 
+      const { result: balanceHook } = renderHook(() =>
         useBalanceWebSocket({ enabled: true, maxReconnectAttempts: 2 })
       );
 
-      const { result: approvalHook } = renderHook(() => 
+      const { result: approvalHook } = renderHook(() =>
         usePurchaseApprovalWebSocket({ parentId: 'parent123' })
       );
 
@@ -772,17 +752,17 @@ describe('WebSocket Integration Performance Benchmarks', () => {
 
     act(() => {
       const ws = WebSocketTestUtils.getLastWebSocket()!;
-      
+
       for (let i = 0; i < 1000; i++) {
-        const messageType = i % 3 === 0 ? 'transaction_update' : 
-                           i % 3 === 1 ? 'fraud_alert' : 'webhook_status';
-        
+        const messageType =
+          i % 3 === 0 ? 'transaction_update' : i % 3 === 1 ? 'fraud_alert' : 'webhook_status';
+
         const message = {
           type: messageType,
           data: { id: i, test: true },
           timestamp: new Date().toISOString(),
         };
-        
+
         ws.simulateMessage(JSON.stringify(message));
       }
     });

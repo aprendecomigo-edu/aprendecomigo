@@ -201,10 +201,7 @@ export const securityTestScenarios = {
 export const mockApiResponses = {
   memberships: {
     success: {
-      results: [
-        createMockSchoolMembership(),
-        createMockSchoolOwnerMembership(),
-      ],
+      results: [createMockSchoolMembership(), createMockSchoolOwnerMembership()],
     },
     error: {
       detail: 'Erro ao carregar escolas',
@@ -240,17 +237,23 @@ export const mockApiResponses = {
 export const createMockApiClient = (responses: Record<string, any> = {}) => ({
   get: jest.fn((url: string) => {
     if (url.includes('/school-memberships/')) {
-      return Promise.resolve({ data: responses.memberships || mockApiResponses.memberships.success });
+      return Promise.resolve({
+        data: responses.memberships || mockApiResponses.memberships.success,
+      });
     }
     if (url.includes('/teacher-invitations/pending/')) {
-      return Promise.resolve({ data: responses.invitations || mockApiResponses.pendingInvitations.success });
+      return Promise.resolve({
+        data: responses.invitations || mockApiResponses.pendingInvitations.success,
+      });
     }
     if (url.includes('/stats/')) {
       return Promise.resolve({ data: responses.stats || mockApiResponses.schoolStats.success });
     }
     return Promise.resolve({ data: {} });
   }),
-  patch: jest.fn(() => Promise.resolve({ data: responses.switch || mockApiResponses.switchSchool.success })),
+  patch: jest.fn(() =>
+    Promise.resolve({ data: responses.switch || mockApiResponses.switchSchool.success })
+  ),
   delete: jest.fn(() => Promise.resolve({ data: { success: true } })),
   post: jest.fn(() => Promise.resolve({ data: { success: true } })),
 });
@@ -283,25 +286,27 @@ export const userInteractions = {
 
 // Assertion helpers for testing multi-school behavior
 export const multiSchoolAssertions = {
-  shouldDisplayCurrentSchool: (schoolName: string) => 
-    expect(schoolName).toBeTruthy(),
-  
-  shouldShowMultipleSchools: (count: number) => 
-    expect(count).toBeGreaterThan(1),
-  
+  shouldDisplayCurrentSchool: (schoolName: string) => expect(schoolName).toBeTruthy(),
+
+  shouldShowMultipleSchools: (count: number) => expect(count).toBeGreaterThan(1),
+
   shouldIsolateSchoolData: (school1Data: any, school2Data: any) => {
     expect(school1Data.students).not.toEqual(school2Data.students);
     expect(school1Data.sessions).not.toEqual(school2Data.sessions);
   },
-  
-  shouldRespectPermissions: (userRole: string, attemptedAction: string, expectedResult: boolean) => {
+
+  shouldRespectPermissions: (
+    userRole: string,
+    attemptedAction: string,
+    expectedResult: boolean
+  ) => {
     // This would check if the user can perform the action based on their role
     const rolePermissions: Record<string, string[]> = {
       teacher: ['view_students', 'create_sessions'],
       school_admin: ['manage_teachers', 'view_reports'],
       school_owner: ['manage_school', 'invite_teachers', 'manage_billing'],
     };
-    
+
     const hasPermission = rolePermissions[userRole]?.includes(attemptedAction) || false;
     expect(hasPermission).toBe(expectedResult);
   },

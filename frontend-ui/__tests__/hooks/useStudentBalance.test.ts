@@ -7,7 +7,6 @@
 
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 
-import { useStudentBalance } from '@/hooks/useStudentBalance';
 import {
   createMockStudentBalance,
   createMockLowBalanceStudent,
@@ -18,6 +17,7 @@ import {
   mockFailedStudentApi,
   cleanupStudentMocks,
 } from '@/__tests__/utils/student-test-utils';
+import { useStudentBalance } from '@/hooks/useStudentBalance';
 
 // Mock the PurchaseApiClient
 jest.mock('@/api/purchaseApi', () => ({
@@ -127,10 +127,9 @@ describe('useStudentBalance Hook', () => {
         .mockResolvedValueOnce(mockBalance1)
         .mockResolvedValueOnce(mockBalance2);
 
-      const { result, rerender } = renderHook(
-        ({ email }) => useStudentBalance(email),
-        { initialProps: { email: 'student1@test.com' } }
-      );
+      const { result, rerender } = renderHook(({ email }) => useStudentBalance(email), {
+        initialProps: { email: 'student1@test.com' },
+      });
 
       // Wait for initial load
       await waitFor(() => {
@@ -155,10 +154,9 @@ describe('useStudentBalance Hook', () => {
       const mockBalance = createMockStudentBalance();
       mockStudentApiCalls.getStudentBalance.mockResolvedValue(mockBalance);
 
-      const { result, rerender } = renderHook(
-        ({ email }) => useStudentBalance(email),
-        { initialProps: { email: undefined } }
-      );
+      const { result, rerender } = renderHook(({ email }) => useStudentBalance(email), {
+        initialProps: { email: undefined },
+      });
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -180,10 +178,9 @@ describe('useStudentBalance Hook', () => {
       const mockBalance = createMockStudentBalance();
       mockStudentApiCalls.getStudentBalance.mockResolvedValue(mockBalance);
 
-      const { result, rerender } = renderHook(
-        ({ email }) => useStudentBalance(email),
-        { initialProps: { email: 'student@test.com' } }
-      );
+      const { result, rerender } = renderHook(({ email }) => useStudentBalance(email), {
+        initialProps: { email: 'student@test.com' },
+      });
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);

@@ -14,8 +14,8 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
-import { useBalanceWebSocket, useBalanceUpdates } from '@/hooks/useBalanceWebSocket';
 import WebSocketTestUtils, { WebSocketTestData } from '@/__tests__/utils/websocket-test-utils';
+import { useBalanceWebSocket, useBalanceUpdates } from '@/hooks/useBalanceWebSocket';
 
 // Mock dependencies
 jest.mock('@/api/auth', () => ({
@@ -142,15 +142,17 @@ describe('useBalanceWebSocket Hook', () => {
         connect,
       });
 
-      renderHook(() => useBalanceWebSocket({
-        enabled: true,
-        maxReconnectAttempts: 3,
-        reconnectInterval: 1000,
-      }));
+      renderHook(() =>
+        useBalanceWebSocket({
+          enabled: true,
+          maxReconnectAttempts: 3,
+          reconnectInterval: 1000,
+        })
+      );
 
       // Get the onClose callback and call it
       const onCloseCallback = mockUseWebSocketEnhanced.mock.calls[0][1].onClose;
-      
+
       act(() => {
         onCloseCallback();
       });
@@ -174,7 +176,7 @@ describe('useBalanceWebSocket Hook', () => {
       // Get the onError callback and call it
       const onErrorCallback = mockUseWebSocketEnhanced.mock.calls[0][1].onError;
       const errorMessage = 'Connection failed';
-      
+
       act(() => {
         onErrorCallback(new Error(errorMessage));
       });
@@ -208,7 +210,7 @@ describe('useBalanceWebSocket Hook', () => {
       const mockBalance = {
         id: 1,
         user_id: mockUserProfile.id,
-        current_balance: 150.50,
+        current_balance: 150.5,
         currency: 'EUR',
         last_updated: new Date().toISOString(),
       };
@@ -265,7 +267,7 @@ describe('useBalanceWebSocket Hook', () => {
         ...mockWebSocketResult,
         lastMessage: JSON.stringify({
           type: 'low_balance_alert',
-          data: { 
+          data: {
             notification: mockNotification,
             remaining_hours: 2.5,
           },
@@ -292,7 +294,7 @@ describe('useBalanceWebSocket Hook', () => {
         ...mockWebSocketResult,
         lastMessage: JSON.stringify({
           type: 'package_expiring',
-          data: { 
+          data: {
             notification: mockNotification,
             days_until_expiry: 3,
           },
@@ -310,7 +312,7 @@ describe('useBalanceWebSocket Hook', () => {
       const mockBalance = {
         id: 1,
         user_id: 999, // Different user
-        current_balance: 150.50,
+        current_balance: 150.5,
         currency: 'EUR',
         last_updated: new Date().toISOString(),
       };
@@ -381,7 +383,7 @@ describe('useBalanceWebSocket Hook', () => {
     it('should provide manual reconnection function', async () => {
       const connect = jest.fn();
       const disconnect = jest.fn();
-      
+
       mockUseWebSocketEnhanced.mockReturnValue({
         ...mockWebSocketResult,
         connect,
@@ -402,7 +404,7 @@ describe('useBalanceWebSocket Hook', () => {
     it('should reset error state on manual reconnection', () => {
       const connect = jest.fn();
       const disconnect = jest.fn();
-      
+
       mockUseWebSocketEnhanced.mockReturnValue({
         ...mockWebSocketResult,
         connect,
@@ -437,11 +439,13 @@ describe('useBalanceWebSocket Hook', () => {
       });
 
       const maxAttempts = 3;
-      renderHook(() => useBalanceWebSocket({
-        enabled: true,
-        maxReconnectAttempts: maxAttempts,
-        reconnectInterval: 100,
-      }));
+      renderHook(() =>
+        useBalanceWebSocket({
+          enabled: true,
+          maxReconnectAttempts: maxAttempts,
+          reconnectInterval: 100,
+        })
+      );
 
       const onCloseCallback = mockUseWebSocketEnhanced.mock.calls[0][1].onClose;
 
@@ -496,7 +500,7 @@ describe('useBalanceUpdates Hook', () => {
     const mockBalance = {
       id: 1,
       user_id: mockUserProfile.id,
-      current_balance: 100.00,
+      current_balance: 100.0,
       currency: 'EUR',
       last_updated: new Date().toISOString(),
     };
@@ -573,7 +577,7 @@ describe('useBalanceUpdates Hook', () => {
     const mockBalance = {
       id: 1,
       user_id: mockUserProfile.id,
-      current_balance: 100.00,
+      current_balance: 100.0,
       currency: 'EUR',
       last_updated: new Date().toISOString(),
     };
@@ -613,7 +617,7 @@ describe('Cross-platform WebSocket Support', () => {
 
   it('should handle WebSocket not available gracefully', () => {
     const originalWebSocket = global.WebSocket;
-    
+
     // Temporarily remove WebSocket
     Object.defineProperty(global, 'WebSocket', {
       value: undefined,
@@ -622,7 +626,7 @@ describe('Cross-platform WebSocket Support', () => {
 
     // Mock the createBalanceWebSocket function behavior
     const { createBalanceWebSocket } = require('@/hooks/useBalanceWebSocket');
-    
+
     const result = createBalanceWebSocket('ws://test.com');
     expect(result).toBeNull();
 

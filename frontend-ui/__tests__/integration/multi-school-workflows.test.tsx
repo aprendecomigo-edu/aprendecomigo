@@ -1,18 +1,19 @@
-import React from 'react';
 import { render, fireEvent, waitFor, screen, act } from '@testing-library/react-native';
+import React from 'react';
 import { Alert } from 'react-native';
 
-import { SchoolSwitcher } from '@/components/multi-school/SchoolSwitcher';
-import { useMultiSchool } from '@/hooks/useMultiSchool';
-import { useSchool } from '@/api/auth/SchoolContext';
-import { useAuth } from '@/api/auth/AuthContext';
-import apiClient from '@/api/apiClient';
 import {
   multiSchoolScenarios,
   createMockSchoolMembership,
   createMockPendingInvitation,
   createMockSchoolStats,
 } from '../utils/multi-school-test-utils';
+
+import apiClient from '@/api/apiClient';
+import { useAuth } from '@/api/auth/AuthContext';
+import { useSchool } from '@/api/auth/SchoolContext';
+import { SchoolSwitcher } from '@/components/multi-school/SchoolSwitcher';
+import { useMultiSchool } from '@/hooks/useMultiSchool';
 
 // Mock all dependencies
 jest.mock('@/hooks/useMultiSchool');
@@ -50,7 +51,7 @@ jest.spyOn(Alert, 'alert');
 describe('Multi-School Workflow Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Default auth context
     mockUseAuth.mockReturnValue({
       userProfile: {
@@ -114,7 +115,7 @@ describe('Multi-School Workflow Integration Tests', () => {
             clearError: jest.fn(),
           };
         }
-        
+
         if (currentState === 'invitation_accepted') {
           const newSchoolMembership = createMockSchoolMembership({
             id: 2,
@@ -162,11 +163,13 @@ describe('Multi-School Workflow Integration Tests', () => {
       });
 
       // Render initial state with invitation
-      const { rerender } = render(<SchoolSwitcher showPendingInvitations onInvitationAccept={mockAcceptInvitation} />);
+      const { rerender } = render(
+        <SchoolSwitcher showPendingInvitations onInvitationAccept={mockAcceptInvitation} />
+      );
 
       // Step 2: Teacher sees pending invitation
       expect(screen.getByText('1 convite(s) pendente(s)')).toBeTruthy();
-      
+
       // Open modal to view invitation
       const viewButton = screen.getByText('Ver');
       fireEvent.press(viewButton);
@@ -229,14 +232,14 @@ describe('Multi-School Workflow Integration Tests', () => {
       });
 
       let switchAttempts = 0;
-      const mockSwitchSchool = jest.fn(async (school) => {
+      const mockSwitchSchool = jest.fn(async school => {
         switchAttempts++;
-        
+
         if (switchAttempts === 1) {
           // First attempt fails
           throw new Error('Network error');
         }
-        
+
         // Second attempt succeeds
         return Promise.resolve();
       });
@@ -246,11 +249,14 @@ describe('Multi-School Workflow Integration Tests', () => {
         currentSchool: school1,
         pendingInvitations: [],
         loading: false,
-        error: switchAttempts === 1 ? {
-          code: 'SWITCH_SCHOOL_ERROR',
-          message: 'Falha ao alterar escola. Tente novamente.',
-          retryable: true,
-        } : null,
+        error:
+          switchAttempts === 1
+            ? {
+                code: 'SWITCH_SCHOOL_ERROR',
+                message: 'Falha ao alterar escola. Tente novamente.',
+                retryable: true,
+              }
+            : null,
         switchSchool: mockSwitchSchool,
         refresh: jest.fn(),
         hasMultipleSchools: true,
@@ -313,7 +319,7 @@ describe('Multi-School Workflow Integration Tests', () => {
       });
 
       const mockSwitchSchool = jest.fn();
-      const mockGetSchoolStats = jest.fn().mockImplementation((schoolId) => {
+      const mockGetSchoolStats = jest.fn().mockImplementation(schoolId => {
         const statsMap: Record<number, any> = {
           1: createMockSchoolStats({ total_students: 150, monthly_revenue: 30000 }),
           2: createMockSchoolStats({ total_students: 200, monthly_revenue: 40000 }),
@@ -404,11 +410,11 @@ describe('Multi-School Workflow Integration Tests', () => {
 
       let currentSchoolIndex = 0;
       const switchingDelays = [100, 50, 75]; // Simulate different network delays
-      
-      const mockSwitchSchool = jest.fn(async (school) => {
+
+      const mockSwitchSchool = jest.fn(async school => {
         const delay = switchingDelays[school.id - 1] || 100;
         await new Promise(resolve => setTimeout(resolve, delay));
-        
+
         currentSchoolIndex = school.id - 1;
         return Promise.resolve();
       });
@@ -446,17 +452,26 @@ describe('Multi-School Workflow Integration Tests', () => {
       fireEvent.press(schoolC);
 
       // Wait for all switches to complete
-      await waitFor(() => {
-        expect(mockSwitchSchool).toHaveBeenCalledTimes(2);
-      }, { timeout: 300 });
+      await waitFor(
+        () => {
+          expect(mockSwitchSchool).toHaveBeenCalledTimes(2);
+        },
+        { timeout: 300 }
+      );
 
       // Should have called switch for both schools
-      expect(mockSwitchSchool).toHaveBeenNthCalledWith(1, expect.objectContaining({
-        school: expect.objectContaining({ name: 'School B' })
-      }));
-      expect(mockSwitchSchool).toHaveBeenNthCalledWith(2, expect.objectContaining({
-        school: expect.objectContaining({ name: 'School C' })
-      }));
+      expect(mockSwitchSchool).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          school: expect.objectContaining({ name: 'School B' }),
+        })
+      );
+      expect(mockSwitchSchool).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          school: expect.objectContaining({ name: 'School C' }),
+        })
+      );
     });
 
     it('should handle concurrent operations during school switch', async () => {
@@ -473,7 +488,7 @@ describe('Multi-School Workflow Integration Tests', () => {
       });
 
       let isSwitching = false;
-      const mockSwitchSchool = jest.fn(async (school) => {
+      const mockSwitchSchool = jest.fn(async school => {
         isSwitching = true;
         await new Promise(resolve => setTimeout(resolve, 100));
         isSwitching = false;
@@ -509,7 +524,7 @@ describe('Multi-School Workflow Integration Tests', () => {
       // Start school switch
       const currentSchool = screen.getByText('School A');
       fireEvent.press(currentSchool.parent!);
-      
+
       const schoolB = screen.getByText('School B');
       fireEvent.press(schoolB);
 
@@ -591,7 +606,7 @@ describe('Multi-School Workflow Integration Tests', () => {
       });
 
       let networkError = false;
-      const mockSwitchSchool = jest.fn(async (school) => {
+      const mockSwitchSchool = jest.fn(async school => {
         if (networkError) {
           throw new Error('Network unavailable');
         }
@@ -610,11 +625,13 @@ describe('Multi-School Workflow Integration Tests', () => {
         currentSchool: school,
         pendingInvitations: [],
         loading: false,
-        error: networkError ? {
-          code: 'NETWORK_ERROR',
-          message: 'Erro de rede. Verifique sua conexão.',
-          retryable: true,
-        } : null,
+        error: networkError
+          ? {
+              code: 'NETWORK_ERROR',
+              message: 'Erro de rede. Verifique sua conexão.',
+              retryable: true,
+            }
+          : null,
         switchSchool: mockSwitchSchool,
         refresh: mockRefresh,
         hasMultipleSchools: false,

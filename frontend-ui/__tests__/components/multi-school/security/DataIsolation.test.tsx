@@ -1,16 +1,17 @@
-import React from 'react';
 import { render, renderHook, waitFor, act } from '@testing-library/react-native';
+import React from 'react';
 
-import { useMultiSchool } from '@/hooks/useMultiSchool';
-import { useSchool } from '@/api/auth/SchoolContext';
-import { useAuth } from '@/api/auth/AuthContext';
-import apiClient from '@/api/apiClient';
 import {
   securityTestScenarios,
   multiSchoolAssertions,
   createMockSchoolMembership,
   createMockApiClient,
 } from '../../../utils/multi-school-test-utils';
+
+import apiClient from '@/api/apiClient';
+import { useAuth } from '@/api/auth/AuthContext';
+import { useSchool } from '@/api/auth/SchoolContext';
+import { useMultiSchool } from '@/hooks/useMultiSchool';
 
 // Mock dependencies
 jest.mock('@/hooks/useMultiSchool');
@@ -35,7 +36,7 @@ const mockedApiClient = apiClient as jest.Mocked<typeof apiClient>;
 describe('Multi-School Security - Data Isolation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Default auth context
     mockUseAuth.mockReturnValue({
       userProfile: {
@@ -62,7 +63,7 @@ describe('Multi-School Security - Data Isolation', () => {
         school: { id: 1, name: 'School 1' },
         is_active: true,
       });
-      
+
       const school2 = createMockSchoolMembership({
         id: 2,
         school: { id: 2, name: 'School 2' },
@@ -228,7 +229,7 @@ describe('Multi-School Security - Data Isolation', () => {
   describe('Permission Validation', () => {
     it('should enforce teacher permissions correctly', () => {
       const teacherPermissions = securityTestScenarios.permissionValidation.teacherPermissions;
-      
+
       teacherPermissions.forEach(permission => {
         multiSchoolAssertions.shouldRespectPermissions('teacher', permission, true);
       });
@@ -242,7 +243,7 @@ describe('Multi-School Security - Data Isolation', () => {
 
     it('should enforce school admin permissions correctly', () => {
       const adminPermissions = securityTestScenarios.permissionValidation.adminPermissions;
-      
+
       adminPermissions.forEach(permission => {
         multiSchoolAssertions.shouldRespectPermissions('school_admin', permission, true);
       });
@@ -256,7 +257,7 @@ describe('Multi-School Security - Data Isolation', () => {
 
     it('should enforce school owner permissions correctly', () => {
       const ownerPermissions = securityTestScenarios.permissionValidation.ownerPermissions;
-      
+
       ownerPermissions.forEach(permission => {
         multiSchoolAssertions.shouldRespectPermissions('school_owner', permission, true);
       });
@@ -264,7 +265,7 @@ describe('Multi-School Security - Data Isolation', () => {
 
     it('should prevent role escalation attacks', async () => {
       const { attemptedActions } = securityTestScenarios.roleEscalation;
-      
+
       // Simulate teacher trying to access owner-level functions
       const teacherMembership = createMockSchoolMembership({
         role: 'teacher',
@@ -334,7 +335,7 @@ describe('Multi-School Security - Data Isolation', () => {
         pendingInvitations: [],
         loading: false,
         error: null,
-        switchSchool: jest.fn((school) => {
+        switchSchool: jest.fn(school => {
           // Simulate backend validation
           const hasAccess = [validSchool].some(m => m.id === school.id);
           if (!hasAccess) {
@@ -392,11 +393,12 @@ describe('Multi-School Security - Data Isolation', () => {
         pendingInvitations: [],
         loading: false,
         error: null,
-        switchSchool: jest.fn(async (school) => {
+        switchSchool: jest.fn(async school => {
           // Simulate clearing data and loading new data
-          currentSchoolData = school.id === 1 
-            ? { students: ['school1_student1'], sessions: ['school1_session1'] }
-            : { students: ['school2_student1'], sessions: ['school2_session1'] };
+          currentSchoolData =
+            school.id === 1
+              ? { students: ['school1_student1'], sessions: ['school1_session1'] }
+              : { students: ['school2_student1'], sessions: ['school2_session1'] };
         }),
         refresh: jest.fn(),
         hasMultipleSchools: true,
@@ -451,7 +453,7 @@ describe('Multi-School Security - Data Isolation', () => {
         pendingInvitations: [],
         loading: false,
         error: null,
-        switchSchool: jest.fn(async (school) => {
+        switchSchool: jest.fn(async school => {
           currentSchoolToken = `school${school.id}_token`;
         }),
         refresh: jest.fn(),
@@ -515,11 +517,11 @@ describe('Multi-School Security - Data Isolation', () => {
       });
 
       await mockedApiClient.get('/students', {
-        headers: { 'X-School-Context': '1' }
+        headers: { 'X-School-Context': '1' },
       });
 
       expect(mockedApiClient.get).toHaveBeenCalledWith('/students', {
-        headers: { 'X-School-Context': '1' }
+        headers: { 'X-School-Context': '1' },
       });
     });
 
@@ -553,25 +555,25 @@ describe('Multi-School Security - Data Isolation', () => {
           students: [
             { id: 1, name: 'Student 1', school_id: 1 },
             { id: 2, name: 'Student 2', school_id: 2 }, // Wrong school!
-          ]
-        }
+          ],
+        },
       });
 
       const response = await mockedApiClient.get('/students');
-      
+
       // Validate that only current school data is present
       const currentSchoolStudents = response.data.students.filter(
         (student: any) => student.school_id === currentSchool.school.id
       );
-      
+
       expect(currentSchoolStudents).toHaveLength(1);
       expect(currentSchoolStudents[0].school_id).toBe(1);
-      
+
       // Should not contain data from other schools
       const wrongSchoolStudents = response.data.students.filter(
         (student: any) => student.school_id !== currentSchool.school.id
       );
-      
+
       // If this test finds wrong school data, it indicates a security issue
       if (wrongSchoolStudents.length > 0) {
         throw new Error(`Security violation: API returned data from unauthorized schools`);

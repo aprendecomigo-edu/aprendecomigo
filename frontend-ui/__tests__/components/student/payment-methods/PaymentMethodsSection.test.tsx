@@ -13,7 +13,7 @@ import {
   createMockPaymentMethods,
   createMockPaymentMethod,
 } from '@/__tests__/utils/payment-test-utils';
-import { 
+import {
   createMockStudentDashboardProps,
   cleanupStudentMocks,
 } from '@/__tests__/utils/student-test-utils';
@@ -49,9 +49,14 @@ jest.mock('@/components/student/payment-methods/PaymentMethodCard', () => ({
     canRemove,
   }: any) => (
     <div testID={`payment-method-${paymentMethod.id}`}>
-      <span>{paymentMethod.card.brand} ****{paymentMethod.card.last4}</span>
+      <span>
+        {paymentMethod.card.brand} ****{paymentMethod.card.last4}
+      </span>
       {paymentMethod.is_default && <span testID="default-badge">Default</span>}
-      <button testID={`set-default-${paymentMethod.id}`} onPress={() => onSetDefault(paymentMethod.id)}>
+      <button
+        testID={`set-default-${paymentMethod.id}`}
+        onPress={() => onSetDefault(paymentMethod.id)}
+      >
         Set Default
       </button>
       <button testID={`remove-${paymentMethod.id}`} onPress={() => onRemove(paymentMethod.id)}>

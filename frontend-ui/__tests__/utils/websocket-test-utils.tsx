@@ -146,7 +146,9 @@ export class MockWebSocket implements WebSocket {
     const timeoutFn = (global as any).setTimeout || setTimeout;
 
     if (this.connectionDelay > 0 || this.options.connectionDelay) {
-      await new Promise(resolve => timeoutFn(resolve, this.connectionDelay || this.options.connectionDelay));
+      await new Promise(resolve =>
+        timeoutFn(resolve, this.connectionDelay || this.options.connectionDelay)
+      );
     }
 
     if (this.shouldFailConnection || this.options.failConnection) {
@@ -446,7 +448,7 @@ export const WebSocketTestUtils = {
    */
   waitForState: async (ws: MockWebSocket, state: number, timeout = 1000): Promise<void> => {
     const start = Date.now();
-    
+
     return new Promise((resolve, reject) => {
       const check = () => {
         if (ws.readyState === state) {
@@ -469,7 +471,7 @@ export const WebSocketTestUtils = {
     if (!webSocket) {
       throw new Error('No WebSocket instance found');
     }
-    
+
     await WebSocketTestUtils.waitForState(webSocket, WebSocket.OPEN, timeout);
     return webSocket;
   },
@@ -571,10 +573,7 @@ export const WebSocketTestUtils = {
   /**
    * Test error handling
    */
-  testErrorHandling: async (
-    mockWs: MockWebSocket,
-    onError: jest.Mock
-  ): Promise<void> => {
+  testErrorHandling: async (mockWs: MockWebSocket, onError: jest.Mock): Promise<void> => {
     await act(async () => {
       mockWs.simulateError();
     });
@@ -586,7 +585,7 @@ export const WebSocketTestUtils = {
    */
   mockAsyncStorage: (token?: string): void => {
     const mockToken = token || 'mock-jwt-token-' + Date.now();
-    
+
     const AsyncStorage = require('@react-native-async-storage/async-storage');
     AsyncStorage.getItem = jest.fn().mockResolvedValue(mockToken);
     AsyncStorage.setItem = jest.fn().mockResolvedValue(undefined);
@@ -633,7 +632,7 @@ export const WebSocketTestUtils = {
 
     packetLoss: (mockWs: MockWebSocket) => {
       const originalSend = mockWs.send.bind(mockWs);
-      mockWs.send = jest.fn((data) => {
+      mockWs.send = jest.fn(data => {
         // Randomly drop 20% of messages
         if (Math.random() > 0.2) {
           originalSend(data);
@@ -738,7 +737,7 @@ export const WebSocketTestData = {
       action,
       transaction: {
         id: transactionId,
-        amount: 25.00,
+        amount: 25.0,
         currency: 'EUR',
         status: 'completed',
         created_at: new Date().toISOString(),

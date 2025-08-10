@@ -8,18 +8,18 @@
 import { render, fireEvent } from '@testing-library/react-native';
 import React from 'react';
 
-import { TransactionHistory } from '@/components/student/dashboard/TransactionHistory';
 import {
   createMockTransactionHistory,
   createMockTransactionItem,
   cleanupStudentMocks,
 } from '@/__tests__/utils/student-test-utils';
+import { TransactionHistory } from '@/components/student/dashboard/TransactionHistory';
 import type { TransactionFilterOptions } from '@/types/purchase';
 
 describe('TransactionHistory Component', () => {
   const mockTransactionHistory = createMockTransactionHistory();
   const defaultFilters: TransactionFilterOptions = {};
-  
+
   const defaultProps = {
     transactions: mockTransactionHistory,
     loading: false,
@@ -40,23 +40,14 @@ describe('TransactionHistory Component', () => {
   describe('Loading State', () => {
     it('renders loading state when transactions is null and loading', () => {
       const { toJSON } = render(
-        <TransactionHistory
-          {...defaultProps}
-          transactions={null}
-          loading={true}
-        />
+        <TransactionHistory {...defaultProps} transactions={null} loading={true} />
       );
 
       expect(toJSON()).toBeTruthy();
     });
 
     it('does not render loading state when transactions exist', () => {
-      const { toJSON } = render(
-        <TransactionHistory
-          {...defaultProps}
-          loading={true}
-        />
-      );
+      const { toJSON } = render(<TransactionHistory {...defaultProps} loading={true} />);
 
       expect(toJSON()).toBeTruthy();
     });
@@ -65,12 +56,7 @@ describe('TransactionHistory Component', () => {
   describe('Error State', () => {
     it('renders error state when error occurs', () => {
       const errorMessage = 'Failed to load transactions';
-      const { toJSON } = render(
-        <TransactionHistory
-          {...defaultProps}
-          error={errorMessage}
-        />
-      );
+      const { toJSON } = render(<TransactionHistory {...defaultProps} error={errorMessage} />);
 
       expect(toJSON()).toBeTruthy();
     });
@@ -78,11 +64,7 @@ describe('TransactionHistory Component', () => {
     it('calls onRefresh when retry is triggered', () => {
       const mockOnRefresh = jest.fn();
       const { toJSON } = render(
-        <TransactionHistory
-          {...defaultProps}
-          error="Network error"
-          onRefresh={mockOnRefresh}
-        />
+        <TransactionHistory {...defaultProps} error="Network error" onRefresh={mockOnRefresh} />
       );
 
       // Component should render
@@ -167,13 +149,11 @@ describe('TransactionHistory Component', () => {
   describe('Filter Functionality', () => {
     it('calls onFiltersChange when filters are updated', () => {
       const mockOnFiltersChange = jest.fn();
-      render(
-        <TransactionHistory {...defaultProps} onFiltersChange={mockOnFiltersChange} />
-      );
+      render(<TransactionHistory {...defaultProps} onFiltersChange={mockOnFiltersChange} />);
 
       // Test that the callback is defined and can be called
       expect(mockOnFiltersChange).toBeDefined();
-      
+
       // Simulate filter change
       mockOnFiltersChange({ payment_status: 'succeeded' });
       expect(mockOnFiltersChange).toHaveBeenCalledWith({ payment_status: 'succeeded' });
@@ -208,12 +188,10 @@ describe('TransactionHistory Component', () => {
 
     it('calls onLoadMore when needed', () => {
       const mockOnLoadMore = jest.fn();
-      render(
-        <TransactionHistory {...defaultProps} onLoadMore={mockOnLoadMore} />
-      );
+      render(<TransactionHistory {...defaultProps} onLoadMore={mockOnLoadMore} />);
 
       expect(mockOnLoadMore).toBeDefined();
-      
+
       // Simulate load more
       mockOnLoadMore();
       expect(mockOnLoadMore).toHaveBeenCalled();
@@ -223,12 +201,10 @@ describe('TransactionHistory Component', () => {
   describe('Refresh Functionality', () => {
     it('calls onRefresh when triggered', () => {
       const mockOnRefresh = jest.fn();
-      render(
-        <TransactionHistory {...defaultProps} onRefresh={mockOnRefresh} />
-      );
+      render(<TransactionHistory {...defaultProps} onRefresh={mockOnRefresh} />);
 
       expect(mockOnRefresh).toBeDefined();
-      
+
       // Simulate refresh
       mockOnRefresh();
       expect(mockOnRefresh).toHaveBeenCalled();
@@ -239,11 +215,15 @@ describe('TransactionHistory Component', () => {
     it('handles search query changes', () => {
       const mockOnSearchChange = jest.fn();
       render(
-        <TransactionHistory {...defaultProps} onSearchChange={mockOnSearchChange} searchQuery="test" />
+        <TransactionHistory
+          {...defaultProps}
+          onSearchChange={mockOnSearchChange}
+          searchQuery="test"
+        />
       );
 
       expect(mockOnSearchChange).toBeDefined();
-      
+
       // Simulate search change
       mockOnSearchChange('new search');
       expect(mockOnSearchChange).toHaveBeenCalledWith('new search');
@@ -259,7 +239,9 @@ describe('TransactionHistory Component', () => {
       });
 
       const start = performance.now();
-      const { toJSON } = render(<TransactionHistory {...defaultProps} transactions={manyTransactions} />);
+      const { toJSON } = render(
+        <TransactionHistory {...defaultProps} transactions={manyTransactions} />
+      );
       const end = performance.now();
 
       expect(toJSON()).toBeTruthy();

@@ -10,11 +10,14 @@ import { render } from '@testing-library/react-native';
 import React from 'react';
 
 import {
+  createMockBalanceStatusBarProps,
+  cleanupStudentMocks,
+} from '@/__tests__/utils/student-test-utils';
+import {
   BalanceStatusBar,
   CompactBalanceStatusBar,
   getBalanceStatus,
 } from '@/components/student/balance/BalanceStatusBar';
-import { createMockBalanceStatusBarProps, cleanupStudentMocks } from '@/__tests__/utils/student-test-utils';
 
 describe('BalanceStatusBar Component', () => {
   const defaultProps = createMockBalanceStatusBarProps();
@@ -27,7 +30,7 @@ describe('BalanceStatusBar Component', () => {
   describe('Balance Status Logic', () => {
     it('returns critical status when balance is depleted', () => {
       const status = getBalanceStatus(0, 10);
-      
+
       expect(status.level).toBe('critical');
       expect(status.message).toBe('Balance depleted');
       expect(status.urgency).toBe('urgent');
@@ -36,7 +39,7 @@ describe('BalanceStatusBar Component', () => {
 
     it('returns critical status when balance is very low (hours)', () => {
       const status = getBalanceStatus(1.5, 15);
-      
+
       expect(status.level).toBe('critical');
       expect(status.message).toBe('Critical balance');
       expect(status.urgency).toBe('urgent');
@@ -45,7 +48,7 @@ describe('BalanceStatusBar Component', () => {
 
     it('returns critical status when balance is very low (percentage)', () => {
       const status = getBalanceStatus(0.8, 10); // 8%
-      
+
       expect(status.level).toBe('critical');
       expect(status.message).toBe('Critical balance');
       expect(status.urgency).toBe('urgent');
@@ -53,7 +56,7 @@ describe('BalanceStatusBar Component', () => {
 
     it('returns low status when balance is low but not critical', () => {
       const status = getBalanceStatus(4, 20); // 20%
-      
+
       expect(status.level).toBe('low');
       expect(status.message).toBe('Low balance');
       expect(status.urgency).toBe('warning');
@@ -62,7 +65,7 @@ describe('BalanceStatusBar Component', () => {
 
     it('returns medium status when balance is moderate', () => {
       const status = getBalanceStatus(7.5, 15); // 50%
-      
+
       expect(status.level).toBe('medium');
       expect(status.message).toBe('Moderate balance');
       expect(status.urgency).toBe('info');
@@ -71,7 +74,7 @@ describe('BalanceStatusBar Component', () => {
 
     it('returns healthy status when balance is good', () => {
       const status = getBalanceStatus(12, 15); // 80%
-      
+
       expect(status.level).toBe('healthy');
       expect(status.message).toBe('Healthy balance');
       expect(status.urgency).toBe('success');
@@ -80,14 +83,14 @@ describe('BalanceStatusBar Component', () => {
 
     it('handles zero total hours edge case', () => {
       const status = getBalanceStatus(5, 0);
-      
+
       // With zero total hours, percentage is 0, which triggers the critical condition
       expect(status.level).toBe('critical');
     });
 
     it('handles negative hours edge case', () => {
       const status = getBalanceStatus(-1, 10);
-      
+
       expect(status.level).toBe('critical');
       expect(status.message).toBe('Balance depleted');
     });
@@ -346,7 +349,8 @@ describe('BalanceStatusBar Component', () => {
       const { toJSON } = render(<BalanceStatusBar {...props} />);
       expect(toJSON()).toBeTruthy();
 
-      const rawPercentage = props.totalHours > 0 ? (props.remainingHours / props.totalHours) * 100 : 0;
+      const rawPercentage =
+        props.totalHours > 0 ? (props.remainingHours / props.totalHours) * 100 : 0;
       const cappedPercentage = Math.min(rawPercentage, 100);
       expect(rawPercentage).toBe(150);
       expect(cappedPercentage).toBe(100);
@@ -409,9 +413,7 @@ describe('CompactBalanceStatusBar Component', () => {
 
   describe('Rendering', () => {
     it('renders compact balance status bar with healthy status data', () => {
-      const { toJSON } = render(
-        <CompactBalanceStatusBar remainingHours={8} totalHours={10} />
-      );
+      const { toJSON } = render(<CompactBalanceStatusBar remainingHours={8} totalHours={10} />);
 
       expect(toJSON()).toBeTruthy();
 
@@ -421,9 +423,7 @@ describe('CompactBalanceStatusBar Component', () => {
     });
 
     it('renders compact balance status bar with critical status data', () => {
-      const { toJSON } = render(
-        <CompactBalanceStatusBar remainingHours={0.5} totalHours={10} />
-      );
+      const { toJSON } = render(<CompactBalanceStatusBar remainingHours={0.5} totalHours={10} />);
 
       expect(toJSON()).toBeTruthy();
 
@@ -434,20 +434,14 @@ describe('CompactBalanceStatusBar Component', () => {
 
     it('renders with custom className', () => {
       const { toJSON } = render(
-        <CompactBalanceStatusBar 
-          remainingHours={5} 
-          totalHours={10} 
-          className="compact-custom" 
-        />
+        <CompactBalanceStatusBar remainingHours={5} totalHours={10} className="compact-custom" />
       );
 
       expect(toJSON()).toBeTruthy();
     });
 
     it('handles zero balance data', () => {
-      const { toJSON } = render(
-        <CompactBalanceStatusBar remainingHours={0} totalHours={10} />
-      );
+      const { toJSON } = render(<CompactBalanceStatusBar remainingHours={0} totalHours={10} />);
 
       expect(toJSON()).toBeTruthy();
 
@@ -457,9 +451,7 @@ describe('CompactBalanceStatusBar Component', () => {
     });
 
     it('handles perfect balance data (100%)', () => {
-      const { toJSON } = render(
-        <CompactBalanceStatusBar remainingHours={10} totalHours={10} />
-      );
+      const { toJSON } = render(<CompactBalanceStatusBar remainingHours={10} totalHours={10} />);
 
       expect(toJSON()).toBeTruthy();
 
@@ -471,9 +463,7 @@ describe('CompactBalanceStatusBar Component', () => {
 
   describe('Status Logic', () => {
     it('calculates correct status for healthy balance', () => {
-      const { toJSON } = render(
-        <CompactBalanceStatusBar remainingHours={8} totalHours={10} />
-      );
+      const { toJSON } = render(<CompactBalanceStatusBar remainingHours={8} totalHours={10} />);
 
       expect(toJSON()).toBeTruthy();
 
@@ -484,9 +474,7 @@ describe('CompactBalanceStatusBar Component', () => {
     });
 
     it('calculates correct status for critical balance', () => {
-      const { toJSON } = render(
-        <CompactBalanceStatusBar remainingHours={0.5} totalHours={10} />
-      );
+      const { toJSON } = render(<CompactBalanceStatusBar remainingHours={0.5} totalHours={10} />);
 
       expect(toJSON()).toBeTruthy();
 
@@ -497,9 +485,7 @@ describe('CompactBalanceStatusBar Component', () => {
     });
 
     it('calculates correct status for low balance', () => {
-      const { toJSON } = render(
-        <CompactBalanceStatusBar remainingHours={3} totalHours={10} />
-      );
+      const { toJSON } = render(<CompactBalanceStatusBar remainingHours={3} totalHours={10} />);
 
       expect(toJSON()).toBeTruthy();
 
@@ -514,7 +500,7 @@ describe('CompactBalanceStatusBar Component', () => {
 describe('Performance', () => {
   it('renders balance status bar quickly', () => {
     const props = createMockBalanceStatusBarProps();
-    
+
     const start = performance.now();
     render(<BalanceStatusBar {...props} />);
     const end = performance.now();

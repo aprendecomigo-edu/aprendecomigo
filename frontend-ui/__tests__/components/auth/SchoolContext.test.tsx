@@ -1,8 +1,8 @@
-import React from 'react';
 import { render, renderHook, act } from '@testing-library/react-native';
+import React from 'react';
 
-import { SchoolProvider, useSchool, UserSchool } from '@/api/auth/SchoolContext';
 import { useAuth } from '@/api/auth/AuthContext';
+import { SchoolProvider, useSchool, UserSchool } from '@/api/auth/SchoolContext';
 
 // Mock the AuthContext
 jest.mock('@/api/auth/AuthContext');
@@ -209,9 +209,7 @@ describe('SchoolContext', () => {
     it('should throw error when used outside provider', () => {
       const { result } = renderHook(() => useSchool());
 
-      expect(result.error).toEqual(
-        new Error('useSchool must be used within a SchoolProvider')
-      );
+      expect(result.error).toEqual(new Error('useSchool must be used within a SchoolProvider'));
     });
   });
 
@@ -302,7 +300,7 @@ describe('SchoolContext', () => {
 
       // User should be able to switch to any of their schools
       const authorizedSchools = result.current.userSchools;
-      
+
       authorizedSchools.forEach(school => {
         act(() => {
           result.current.setCurrentSchool(school);
@@ -343,7 +341,7 @@ describe('SchoolContext', () => {
       // This test demonstrates that the context itself doesn't prevent this,
       // but the business logic should validate that the school exists in userSchools
       const initialSchool = result.current.currentSchool;
-      
+
       act(() => {
         result.current.setCurrentSchool(unauthorizedSchool);
       });
@@ -351,7 +349,7 @@ describe('SchoolContext', () => {
       // The context will accept any school object, but validation should happen
       // at the business logic level to ensure the school is in userSchools
       expect(result.current.currentSchool).toEqual(unauthorizedSchool);
-      
+
       // Reset to initial state for other tests
       act(() => {
         result.current.setCurrentSchool(initialSchool!);
@@ -412,7 +410,7 @@ describe('SchoolContext', () => {
       const { result } = renderHook(() => useSchool(), { wrapper });
 
       const initialSchool = result.current.currentSchool;
-      
+
       // Simulate profile update that would normally trigger useEffect
       mockUseAuth.mockReturnValue({
         userProfile: {
