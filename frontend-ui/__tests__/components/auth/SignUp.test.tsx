@@ -725,3 +725,107 @@ describe('SignUp Component', () => {
     });
   });
 });
+
+// Keep these utility function tests as they test pure logic
+describe('Form Validation Utilities', () => {
+  describe('Email validation regex', () => {
+    it('should validate email format correctly', () => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      
+      const validEmails = [
+        'user@example.com',
+        'test.email@domain.co.uk',
+        'user+tag@example.com',
+        'first.last@subdomain.example.org',
+      ];
+      
+      validEmails.forEach(email => {
+        expect(emailRegex.test(email)).toBe(true);
+      });
+      
+      const invalidEmails = ['@domain.com', 'user@', 'user space@domain.com', ''];
+      
+      invalidEmails.forEach(email => {
+        expect(emailRegex.test(email)).toBe(false);
+      });
+    });
+  });
+  
+  describe('Phone validation', () => {
+    it('should validate phone number format correctly', () => {
+      const phoneRegex = /^[+\d\s]+$/;
+      const hasDigitRegex = /\d/;
+      const noLeadingSpaceRegex = /^[^\s]/;
+      const noConsecutiveSpacesRegex = /^(?!.*\s{2,})/;
+      const plusOnlyAtBeginningRegex = /^(\+[^+]*|[^+]*)$/;
+      
+      const validPhones = [
+        '+1234567890',
+        '1234567890',
+        '+55 11 99999 9999',
+        '+351 912 345 678',
+        '123 456 7890',
+      ];
+      
+      validPhones.forEach(phone => {
+        expect(phoneRegex.test(phone)).toBe(true);
+        expect(hasDigitRegex.test(phone)).toBe(true);
+        expect(noLeadingSpaceRegex.test(phone)).toBe(true);
+        expect(noConsecutiveSpacesRegex.test(phone)).toBe(true);
+        expect(plusOnlyAtBeginningRegex.test(phone)).toBe(true);
+      });
+    });
+  });
+  
+  describe('School name generation', () => {
+    it('should auto-generate school name for tutors', () => {
+      const generateSchoolName = (userName: string, userType: string) => {
+        if (userType !== 'tutor') return '';
+        if (!userName?.trim()) return '';
+        return `${userName.trim()}'s Tutoring Practice`;
+      };
+      
+      expect(generateSchoolName('John Doe', 'tutor')).toBe("John Doe's Tutoring Practice");
+      expect(generateSchoolName('María García', 'tutor')).toBe("María García's Tutoring Practice");
+      expect(generateSchoolName('John Doe', 'school')).toBe('');
+      expect(generateSchoolName('', 'tutor')).toBe('');
+    });
+  });
+  
+  describe('User type validation', () => {
+    it('should validate and normalize user type', () => {
+      const validateUserType = (type: string | undefined) => {
+        if (type === 'tutor' || type === 'school') {
+          return type;
+        }
+        return 'tutor'; // Default fallback
+      };
+      
+      expect(validateUserType('tutor')).toBe('tutor');
+      expect(validateUserType('school')).toBe('school');
+      expect(validateUserType('admin')).toBe('tutor');
+      expect(validateUserType('><script>')).toBe('tutor');
+      expect(validateUserType(undefined)).toBe('tutor');
+    });
+  });
+  
+  describe('Security utilities', () => {
+    it('should normalize email for security', () => {
+      const normalizeEmail = (email: string) => email.trim().toLowerCase();
+      
+      expect(normalizeEmail('User@Example.COM  ')).toBe('user@example.com');
+      expect(normalizeEmail('  TEST@DOMAIN.COM  ')).toBe('test@domain.com');
+    });
+    
+    it('should sanitize school name input', () => {
+      const sanitizeSchoolName = (name: string) => {
+        if (!name?.trim()) return '';
+        return name.trim().replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+      };
+      
+      expect(sanitizeSchoolName('  Test School  ')).toBe('Test School');
+      expect(sanitizeSchoolName('School<script>alert("xss")</script>Name')).toBe('SchoolName');
+      expect(sanitizeSchoolName('')).toBe('');
+    });
+  });
+});

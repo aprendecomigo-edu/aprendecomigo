@@ -188,6 +188,292 @@ jest.mock('@/components/ui/vstack', () => {
   };
 });
 
+// Mock additional UI components needed for auth tests
+jest.mock('@/components/ui/input', () => {
+  const React = require('react');
+  return {
+    Input: React.forwardRef((props, ref) =>
+      React.createElement('div', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-input ${props.className || ''}`,
+      })
+    ),
+    InputField: React.forwardRef((props, ref) =>
+      React.createElement('input', {
+        ...props,
+        ref,
+        'data-testid': props.testID || props.name,
+        placeholder: props.placeholder,
+        value: props.value,
+        onChange: e => props.onChangeText?.(e.target.value),
+        onBlur: props.onBlur,
+        type: props.type,
+        keyboardType: props.keyboardType,
+        maxLength: props.maxLength,
+        className: `gluestack-input-field ${props.className || ''}`,
+      })
+    ),
+  };
+});
+
+jest.mock('@/components/ui/form-control', () => {
+  const React = require('react');
+  return {
+    FormControl: React.forwardRef((props, ref) =>
+      React.createElement('div', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-form-control ${props.className || ''}`,
+      })
+    ),
+    FormControlLabel: React.forwardRef((props, ref) =>
+      React.createElement('label', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-form-control-label ${props.className || ''}`,
+      })
+    ),
+    FormControlLabelText: React.forwardRef((props, ref) =>
+      React.createElement('span', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-form-control-label-text ${props.className || ''}`,
+      })
+    ),
+    FormControlError: React.forwardRef((props, ref) =>
+      React.createElement('div', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-form-control-error ${props.className || ''}`,
+      })
+    ),
+    FormControlErrorIcon: React.forwardRef((props, ref) =>
+      React.createElement('span', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-form-control-error-icon ${props.className || ''}`,
+      })
+    ),
+    FormControlErrorText: React.forwardRef((props, ref) =>
+      React.createElement('span', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-form-control-error-text ${props.className || ''}`,
+      })
+    ),
+    FormControlHelper: React.forwardRef((props, ref) =>
+      React.createElement('div', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-form-control-helper ${props.className || ''}`,
+      })
+    ),
+    FormControlHelperText: React.forwardRef((props, ref) =>
+      React.createElement('span', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-form-control-helper-text ${props.className || ''}`,
+      })
+    ),
+  };
+});
+
+jest.mock('@/components/ui/pressable', () => {
+  const React = require('react');
+  return {
+    Pressable: React.forwardRef((props, ref) =>
+      React.createElement('button', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        onClick: props.onPress,
+        disabled: props.disabled,
+        className: `gluestack-pressable ${props.className || ''}`,
+      })
+    ),
+  };
+});
+
+jest.mock('@/components/ui/radio', () => {
+  const React = require('react');
+  return {
+    RadioGroup: React.forwardRef((props, ref) =>
+      React.createElement('div', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-radio-group ${props.className || ''}`,
+      })
+    ),
+    Radio: React.forwardRef((props, ref) =>
+      React.createElement('label', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        onClick: () => props.onChange?.(props.value),
+        className: `gluestack-radio ${props.className || ''}`,
+      })
+    ),
+    RadioIndicator: React.forwardRef((props, ref) =>
+      React.createElement('span', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-radio-indicator ${props.className || ''}`,
+      })
+    ),
+    RadioIcon: React.forwardRef((props, ref) =>
+      React.createElement('span', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-radio-icon ${props.className || ''}`,
+      })
+    ),
+    RadioLabel: React.forwardRef((props, ref) =>
+      React.createElement('span', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-radio-label ${props.className || ''}`,
+      })
+    ),
+  };
+});
+
+jest.mock('@/components/ui/tabs', () => {
+  const React = require('react');
+  return {
+    Tabs: React.forwardRef((props, ref) =>
+      React.createElement('div', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-tabs ${props.className || ''}`,
+      })
+    ),
+  };
+});
+
+jest.mock('@/components/ui/divider', () => {
+  const React = require('react');
+  return {
+    Divider: React.forwardRef((props, ref) =>
+      React.createElement('hr', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-divider ${props.className || ''}`,
+      })
+    ),
+  };
+});
+
+jest.mock('@/components/ui/toast', () => {
+  const React = require('react');
+  return {
+    useToast: jest.fn(() => ({
+      showToast: jest.fn(),
+    })),
+    Toast: React.forwardRef((props, ref) =>
+      React.createElement('div', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-toast ${props.className || ''}`,
+      })
+    ),
+  };
+});
+
+jest.mock('@/components/ui/link', () => {
+  const React = require('react');
+  return {
+    Link: React.forwardRef((props, ref) =>
+      React.createElement('a', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        href: props.href,
+        className: `gluestack-link ${props.className || ''}`,
+      })
+    ),
+    LinkText: React.forwardRef((props, ref) =>
+      React.createElement('span', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        className: `gluestack-link-text ${props.className || ''}`,
+      })
+    ),
+  };
+});
+
+// Mock AuthLayout and ErrorBoundary
+jest.mock('@/components/auth/AuthLayout', () => {
+  const React = require('react');
+  return {
+    AuthLayout: React.forwardRef(({ children, ...props }, ref) =>
+      React.createElement('div', {
+        ...props,
+        ref,
+        'data-testid': 'AuthLayout',
+        className: 'auth-layout',
+      }, children)
+    ),
+  };
+});
+
+jest.mock('@/components/ErrorBoundary', () => {
+  const React = require('react');
+  return {
+    ErrorBoundary: React.forwardRef(({ children, ...props }, ref) =>
+      React.createElement('div', {
+        ...props,
+        ref,
+        'data-testid': 'ErrorBoundary',
+        className: 'error-boundary',
+      }, children)
+    ),
+  };
+});
+
+// Mock @unitools/router and @unitools/link
+jest.mock('@unitools/router', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
+    push: jest.fn(),
+    back: jest.fn(),
+    replace: jest.fn(),
+    canGoBack: jest.fn(() => true),
+  })),
+}));
+
+jest.mock('@unitools/link', () => {
+  const React = require('react');
+  return {
+    __esModule: true,
+    default: React.forwardRef((props, ref) =>
+      React.createElement('a', {
+        ...props,
+        ref,
+        'data-testid': props.testID,
+        href: props.href,
+      })
+    ),
+  };
+});
+
 jest.mock('@/components/ui/gluestack-ui-provider', () => ({
   GluestackUIProvider: ({ children }) => children,
 }));

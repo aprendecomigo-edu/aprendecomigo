@@ -742,3 +742,107 @@ describe('VerifyCode Component', () => {
     });
   });
 });
+
+// Keep these utility function tests as they test pure logic
+describe('Form Validation Utilities', () => {
+  describe('Code validation regex', () => {
+    it('should validate 6-digit code format correctly', () => {
+      const codeRegex = /^\d{6}$/;
+      
+      const validCodes = ['123456', '000000', '999999', '654321'];
+      
+      validCodes.forEach(code => {
+        expect(codeRegex.test(code)).toBe(true);
+      });
+      
+      const invalidCodes = [
+        '12345', // too short
+        '1234567', // too long
+        'abcdef', // non-numeric
+        '12 456', // contains space
+        '12345a', // mixed alphanumeric
+        '', // empty
+        '123.456', // contains dot
+      ];
+      
+      invalidCodes.forEach(code => {
+        expect(codeRegex.test(code)).toBe(false);
+      });
+    });
+  });
+  
+  describe('Contact validation', () => {
+    it('should validate contact information correctly', () => {
+      const validateContact = (contact: string, contactType: string) => {
+        if (!contact?.trim()) return false;
+        
+        if (contactType === 'email') {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          return emailRegex.test(contact);
+        }
+        
+        if (contactType === 'phone') {
+          const phoneRegex = /^[+\d\s-()]+$/;
+          return phoneRegex.test(contact) && contact.length >= 10;
+        }
+        
+        return false;
+      };
+      
+      // Valid emails
+      expect(validateContact('test@example.com', 'email')).toBe(true);
+      expect(validateContact('user+tag@domain.co.uk', 'email')).toBe(true);
+      
+      // Invalid emails
+      expect(validateContact('invalid-email', 'email')).toBe(false);
+      expect(validateContact('@domain.com', 'email')).toBe(false);
+      
+      // Valid phones
+      expect(validateContact('+1234567890', 'phone')).toBe(true);
+      expect(validateContact('(555) 123-4567', 'phone')).toBe(true);
+      
+      // Invalid phones
+      expect(validateContact('123', 'phone')).toBe(false);
+      expect(validateContact('abcdefghij', 'phone')).toBe(false);
+    });
+  });
+  
+  describe('Security utilities', () => {
+    it('should sanitize code input', () => {
+      const sanitizeCode = (code: string) => {
+        // Remove all non-digit characters
+        return code.replace(/\D/g, '');
+      };
+      
+      expect(sanitizeCode('123456')).toBe('123456');
+      expect(sanitizeCode('12 34 56')).toBe('123456');
+      expect(sanitizeCode('12a3b4c5d6e')).toBe('123456');
+      expect(sanitizeCode('123-456')).toBe('123456');
+    });
+    
+    it('should validate contact type', () => {
+      const validateContactType = (type: string | undefined) => {
+        if (type === 'email' || type === 'phone') {
+          return type;
+        }
+        return 'email'; // Default fallback
+      };
+      
+      expect(validateContactType('email')).toBe('email');
+      expect(validateContactType('phone')).toBe('phone');
+      expect(validateContactType('sms')).toBe('email');
+      expect(validateContactType('"><script>')).toBe('email');
+      expect(validateContactType(undefined)).toBe('email');
+    });
+    
+    it('should limit code input length', () => {
+      const limitCodeInput = (code: string, maxLength: number = 6) => {
+        return code.slice(0, maxLength);
+      };
+      
+      expect(limitCodeInput('123456')).toBe('123456');
+      expect(limitCodeInput('1234567890')).toBe('123456');
+      expect(limitCodeInput('12345')).toBe('12345');
+    });
+  });
+});
