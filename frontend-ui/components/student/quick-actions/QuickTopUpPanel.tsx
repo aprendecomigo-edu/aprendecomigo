@@ -22,6 +22,7 @@ import { useToast } from '@/components/ui/toast';
 import { VStack } from '@/components/ui/vstack';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 import { useStudentBalance } from '@/hooks/useStudentBalance';
+import { useDependencies } from '@/services/di/context';
 import type {
   TopUpPackage,
   PaymentMethod,
@@ -55,6 +56,7 @@ export function QuickTopUpPanel({
   onClose,
 }: QuickTopUpPanelProps) {
   const toast = useToast();
+  const { paymentService } = useDependencies();
   const { paymentMethods, loading: paymentMethodsLoading } = usePaymentMethods(email);
   const { refetch: refetchBalance } = useStudentBalance(email);
 
@@ -108,11 +110,12 @@ export function QuickTopUpPanel({
     setError(null);
 
     try {
-      const request: QuickTopUpRequest = {
-        package_id: selectedPackage.id,
-        use_default_payment_method: true,
-        confirm_immediately: true,
-      };
+      // Use PaymentService to create the request
+      const request = await paymentService.processQuickTopUp(
+        selectedPackage.id,
+        null, // Use default payment method
+        email
+      );
 
       const response = await PurchaseApiClient.quickTopUp(request, email);
 

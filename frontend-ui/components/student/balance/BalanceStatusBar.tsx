@@ -16,6 +16,7 @@ import { Icon } from '@/components/ui/icon';
 import { Progress } from '@/components/ui/progress';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { useDependencies } from '@/services/di/context';
 
 interface BalanceStatusBarProps {
   /** Remaining hours */
@@ -41,7 +42,26 @@ export interface BalanceStatus {
 }
 
 /**
+ * Map BalanceStatusLevel to icon components
+ */
+const getIconComponent = (iconName: string) => {
+  switch (iconName) {
+    case 'AlertTriangle':
+      return AlertTriangle;
+    case 'Clock':
+      return Clock;
+    case 'TrendingUp':
+      return TrendingUp;
+    case 'CheckCircle':
+      return CheckCircle;
+    default:
+      return AlertTriangle;
+  }
+};
+
+/**
  * Determine balance status based on remaining hours and percentage
+ * @deprecated Use BalanceService.getBalanceStatus instead. This function is kept for backward compatibility.
  */
 export function getBalanceStatus(remainingHours: number, totalHours: number): BalanceStatus {
   const percentage = totalHours > 0 ? (remainingHours / totalHours) * 100 : 0;
@@ -115,7 +135,14 @@ export function BalanceStatusBar({
   showDetails = true,
   className = '',
 }: BalanceStatusBarProps) {
-  const status = getBalanceStatus(remainingHours, totalHours);
+  const { balanceService } = useDependencies();
+  
+  const balanceStatus = balanceService.getBalanceStatus(remainingHours, totalHours);
+  const status = {
+    ...balanceStatus,
+    icon: getIconComponent(balanceStatus.icon),
+  };
+  
   const percentage = totalHours > 0 ? Math.min((remainingHours / totalHours) * 100, 100) : 0;
 
   // Convert to progress value (0-100)
@@ -191,7 +218,14 @@ export function CompactBalanceStatusBar({
   totalHours,
   className = '',
 }: Pick<BalanceStatusBarProps, 'remainingHours' | 'totalHours' | 'className'>) {
-  const status = getBalanceStatus(remainingHours, totalHours);
+  const { balanceService } = useDependencies();
+  
+  const balanceStatus = balanceService.getBalanceStatus(remainingHours, totalHours);
+  const status = {
+    ...balanceStatus,
+    icon: getIconComponent(balanceStatus.icon),
+  };
+  
   const percentage = totalHours > 0 ? (remainingHours / totalHours) * 100 : 0;
 
   return (
