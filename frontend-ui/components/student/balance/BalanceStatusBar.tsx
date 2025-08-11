@@ -9,7 +9,6 @@ import { AlertTriangle, Clock, TrendingUp, CheckCircle } from 'lucide-react-nati
 import React from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Box } from '@/components/ui/box';
 import { Card } from '@/components/ui/card';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';

@@ -26,7 +26,6 @@ import { useDependencies } from '@/services/di/context';
 import type {
   TopUpPackage,
   PaymentMethod,
-  QuickTopUpRequest,
   QuickTopUpResponse,
 } from '@/types/purchase';
 
@@ -122,7 +121,7 @@ export function QuickTopUpPanel({
       if (response.success) {
         toast.show({
           placement: 'top',
-          render: ({ id }) => (
+          render: () => (
             <Alert mx="$3" action="success" variant="solid">
               <AlertIcon as={CheckCircle} />
               <AlertText>
@@ -154,7 +153,7 @@ export function QuickTopUpPanel({
 
       toast.show({
         placement: 'top',
-        render: ({ id }) => (
+        render: () => (
           <Alert mx="$3" action="error" variant="solid">
             <AlertIcon as={AlertCircle} />
             <AlertText>Purchase failed: {errorMessage}</AlertText>
