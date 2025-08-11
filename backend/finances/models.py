@@ -1283,8 +1283,10 @@ class StoredPaymentMethod(models.Model):
         ]
     
     def __str__(self) -> str:
+        from common.pci_utils import get_secure_card_display
         default_text = " (Default)" if self.is_default else ""
-        return f"{self.card_brand.title()} ****{self.card_last4} - {self.student.name}{default_text}"
+        card_display = get_secure_card_display(self.card_brand, self.card_last4)
+        return f"{card_display} - {self.student.name}{default_text}"
     
     @property
     def is_expired(self) -> bool:
@@ -1306,17 +1308,22 @@ class StoredPaymentMethod(models.Model):
     @property
     def card_display(self) -> str:
         """
-        Get a user-friendly display string for the payment method.
+        Get a PCI-compliant user-friendly display string for the payment method.
         
         Returns:
-            str: Formatted display string (e.g., "Visa ****1234")
+            str: Formatted display string (e.g., "Visa ****X242")
         """
-        if not self.card_brand or not self.card_last4:
-            return "Payment Method"
-        return f"{self.card_brand.title()} ****{self.card_last4}"
+        from common.pci_utils import get_secure_card_display
+        return get_secure_card_display(self.card_brand, self.card_last4)
     
     def save(self, *args, **kwargs):
-        """Override save to handle default payment method logic."""
+        """Override save to handle default payment method logic and PCI compliance."""
+        from common.pci_utils import sanitize_card_data
+        
+        # Sanitize card data for PCI compliance before saving
+        if self.card_last4:
+            self.card_last4 = sanitize_card_data(self.card_last4)
+        
         # If this is being set as default, unset other defaults for the same student
         if self.is_default:
             StoredPaymentMethod.objects.filter(
@@ -1327,7 +1334,8 @@ class StoredPaymentMethod(models.Model):
         super().save(*args, **kwargs)
     
     def clean(self) -> None:
-        """Validate payment method data."""
+        """Validate payment method data and ensure PCI compliance."""
+        from common.pci_utils import validate_pci_compliance, is_pci_compliant_field_value
         super().clean()
         
         # Validate expiration month
@@ -1336,11 +1344,29 @@ class StoredPaymentMethod(models.Model):
                 _("Card expiration month must be between 1 and 12")
             )
         
-        # Validate last 4 digits format
-        if self.card_last4 and not self.card_last4.isdigit():
-            raise ValidationError(
-                _("Card last 4 digits must contain only numbers")
-            )
+        # PCI Compliance validation
+        if self.card_last4:
+            # Check if card_last4 contains PCI-violating patterns
+            if not is_pci_compliant_field_value('card_last4', self.card_last4):
+                raise ValidationError(
+                    _("Card last 4 digits cannot be stored in raw format for PCI compliance. "
+                      "Use masked format (e.g., 'X242' instead of '4242').")
+                )
+            
+            # Validate format - should be either 4 digits (legacy) or masked format (Xnnn)
+            if not (self.card_last4.isdigit() and len(self.card_last4) == 4) and \
+               not (len(self.card_last4) == 4 and self.card_last4[0] == 'X' and self.card_last4[1:].isdigit()):
+                raise ValidationError(
+                    _("Card last 4 digits must be in format 'Xnnn' (masked) or legacy 4-digit format")
+                )
+        
+        # Validate that other fields don't contain sensitive data
+        for field_name in ['stripe_payment_method_id', 'stripe_customer_id', 'card_brand']:
+            field_value = getattr(self, field_name, '')
+            if field_value and not validate_pci_compliance(field_value):
+                raise ValidationError(
+                    _(f"Field '{field_name}' contains data that violates PCI compliance requirements")
+                )
 
 
 class FamilyBudgetControl(models.Model):

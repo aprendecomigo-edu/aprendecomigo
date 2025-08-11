@@ -722,7 +722,7 @@ class SessionBookingHourDeductionAPITestCase(APITestCase):
             "status": SessionStatus.SCHEDULED
         }
         
-        response = self.client.post('/api/finances/api/sessions/', session_data, format='json')
+        response = self.client.post('/api/finances/sessions/', session_data, format='json')
         
         # This test will initially fail until we implement the API integration
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -757,7 +757,7 @@ class SessionBookingHourDeductionAPITestCase(APITestCase):
             "status": SessionStatus.SCHEDULED
         }
         
-        response = self.client.post('/api/finances/api/sessions/', session_data, format='json')
+        response = self.client.post('/api/finances/sessions/', session_data, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
@@ -785,7 +785,7 @@ class SessionBookingHourDeductionAPITestCase(APITestCase):
         self.client.force_authenticate(user=self.teacher_user)
         
         # Call cancellation endpoint
-        response = self.client.post(f'/api/finances/api/sessions/{session.id}/cancel/', {
+        response = self.client.post(f'/api/finances/sessions/{session.id}/cancel/', {
             'reason': 'Teacher unavailable'
         })
         
@@ -809,7 +809,7 @@ class SessionBookingHourDeductionAPITestCase(APITestCase):
         """Test API endpoint for checking student balance before booking."""
         self.client.force_authenticate(user=self.student)
         
-        response = self.client.get('/api/finances/api/student-balance/check-booking/', {
+        response = self.client.get('/api/finances/studentbalance/check-booking/', {
             'duration_hours': '1.5',
             'session_type': SessionType.INDIVIDUAL
         })
@@ -854,7 +854,7 @@ class SessionBookingHourDeductionAPITestCase(APITestCase):
             "status": SessionStatus.SCHEDULED
         }
         
-        response = self.client.post('/api/finances/api/sessions/', session_data, format='json')
+        response = self.client.post('/api/finances/sessions/', session_data, format='json')
         
         # Should fail due to student2's insufficient balance
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

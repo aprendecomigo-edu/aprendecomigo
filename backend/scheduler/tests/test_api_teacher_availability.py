@@ -14,7 +14,7 @@ from datetime import time
 from django.urls import reverse
 from rest_framework import status
 
-from .models import TeacherAvailability, TeacherUnavailability, WeekDay
+from scheduler.models import TeacherAvailability, TeacherUnavailability, WeekDay
 from .test_base import SchedulerAPITestCase
 
 

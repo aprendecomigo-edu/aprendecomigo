@@ -815,7 +815,7 @@ class ReceiptGenerationRequestSerializer(serializers.Serializer):
 
 
 class StoredPaymentMethodSerializer(serializers.ModelSerializer):
-    """Serializer for StoredPaymentMethod model."""
+    """PCI-compliant serializer for StoredPaymentMethod model."""
     
     student_name = serializers.CharField(source="student.name", read_only=True)
     card_display = serializers.SerializerMethodField()
@@ -826,7 +826,6 @@ class StoredPaymentMethodSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "card_brand",
-            "card_last4",
             "card_exp_month",
             "card_exp_year",
             "is_default",
@@ -849,10 +848,19 @@ class StoredPaymentMethodSerializer(serializers.ModelSerializer):
         ]
     
     def get_card_display(self, obj):
-        """Get formatted card display string."""
-        if obj.card_brand and obj.card_last4:
-            return f"{obj.card_brand.title()} ****{obj.card_last4}"
-        return "Unknown Card"
+        """Get PCI-compliant formatted card display string."""
+        # Use the model's card_display property which is now PCI-compliant
+        return obj.card_display
+    
+    def to_representation(self, instance):
+        """Override to ensure PCI-compliant API responses."""
+        data = super().to_representation(instance)
+        
+        # Ensure no raw card data is exposed in API responses
+        # card_last4 is intentionally excluded from fields for PCI compliance
+        # Card information is available through the secure card_display field only
+        
+        return data
 
 
 class PaymentMethodCreationRequestSerializer(serializers.Serializer):

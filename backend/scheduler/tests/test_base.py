@@ -18,7 +18,7 @@ from accounts.models import (
     EducationalSystem,
 )
 from django.utils import timezone
-from .models import (
+from scheduler.models import (
     ClassSchedule,
     TeacherAvailability,
     TeacherUnavailability,

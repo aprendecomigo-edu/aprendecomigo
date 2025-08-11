@@ -17,7 +17,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 
-from .models import ClassSchedule, ClassType, ClassStatus
+from scheduler.models import ClassSchedule, ClassType, ClassStatus
 from .test_base import SchedulerAPITestCase
 
 

@@ -507,6 +507,44 @@ class ClassSessionViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        """Cancel a session and process hour refunds."""
+        from classroom.services.session_booking_service import SessionBookingService, SessionBookingError
+        
+        session = self.get_object()
+        reason = request.data.get('reason', '')
+        
+        try:
+            cancellation_info = SessionBookingService.cancel_session(
+                session_id=session.id,
+                reason=reason
+            )
+            
+            return Response({
+                'success': True,
+                'message': f'Session {session.id} cancelled successfully',
+                'cancellation_details': cancellation_info
+            }, status=status.HTTP_200_OK)
+            
+        except SessionBookingError as e:
+            return Response(
+                {
+                    'error': str(e),
+                    'error_type': 'booking_error'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(f"Error cancelling session {session.id}: {e}")
+            return Response(
+                {
+                    'error': 'An error occurred while cancelling the session',
+                    'error_type': 'internal_error'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class TeacherPaymentEntryViewSet(SchoolPermissionMixin, viewsets.ReadOnlyModelViewSet):
@@ -1547,6 +1585,20 @@ class StudentBalanceViewSet(viewsets.ViewSet):
             payment_status=TransactionPaymentStatus.COMPLETED
         ).prefetch_related('hour_consumptions').order_by('-created_at')
         
+        # Extract plan IDs from metadata to batch fetch pricing plans
+        plan_ids = []
+        for transaction in transactions:
+            metadata = transaction.metadata or {}
+            plan_id = metadata.get('plan_id')
+            if plan_id:
+                plan_ids.append(plan_id)
+        
+        # Batch fetch pricing plans to avoid N+1 queries
+        pricing_plans = {
+            plan.id: plan 
+            for plan in PricingPlan.objects.filter(id__in=plan_ids)
+        }
+        
         active_packages = []
         expired_packages = []
         
@@ -1563,13 +1615,10 @@ class StudentBalanceViewSet(viewsets.ViewSet):
             plan_name = metadata.get('plan_name', 'Unknown Plan')
             hours_included = Decimal(metadata.get('hours_included', '0'))
             
-            if plan_id:
-                try:
-                    plan = PricingPlan.objects.get(id=plan_id)
-                    plan_name = plan.name
-                    hours_included = plan.hours_included
-                except PricingPlan.DoesNotExist:
-                    pass
+            if plan_id and plan_id in pricing_plans:
+                plan = pricing_plans[plan_id]
+                plan_name = plan.name
+                hours_included = plan.hours_included
             
             hours_remaining = max(hours_included - consumed_hours, Decimal('0'))
             
@@ -1614,6 +1663,20 @@ class StudentBalanceViewSet(viewsets.ViewSet):
             expires_at__lte=cutoff_date
         ).prefetch_related('hour_consumptions').order_by('expires_at')
         
+        # Extract plan IDs from metadata to batch fetch pricing plans
+        plan_ids = []
+        for transaction in upcoming:
+            metadata = transaction.metadata or {}
+            plan_id = metadata.get('plan_id')
+            if plan_id:
+                plan_ids.append(plan_id)
+        
+        # Batch fetch pricing plans to avoid N+1 queries
+        pricing_plans = {
+            plan.id: plan 
+            for plan in PricingPlan.objects.filter(id__in=plan_ids)
+        }
+        
         result = []
         for transaction in upcoming:
             # Calculate remaining hours
@@ -1628,13 +1691,10 @@ class StudentBalanceViewSet(viewsets.ViewSet):
             
             # Try to get actual plan data
             plan_id = metadata.get('plan_id')
-            if plan_id:
-                try:
-                    plan = PricingPlan.objects.get(id=plan_id)
-                    plan_name = plan.name
-                    hours_included = plan.hours_included
-                except PricingPlan.DoesNotExist:
-                    pass
+            if plan_id and plan_id in pricing_plans:
+                plan = pricing_plans[plan_id]
+                plan_name = plan.name
+                hours_included = plan.hours_included
             
             hours_remaining = max(hours_included - consumed_hours, Decimal('0'))
             

@@ -32,7 +32,7 @@ from accounts.models import (
     SchoolSettings,
     EducationalSystem,
 )
-from .models import (
+from scheduler.models import (
     TeacherAvailability,
     WeekDay,
 )

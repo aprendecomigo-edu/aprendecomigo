@@ -48,7 +48,7 @@ class StoredPaymentMethodModelTests(TestCase):
             'stripe_payment_method_id': 'pm_test_123456789',
             'stripe_customer_id': 'cus_test_123456789',
             'card_brand': 'visa',
-            'card_last4': '4242',
+            'card_last4': 'X242',  # PCI-compliant masked format
             'card_exp_month': 12,
             'card_exp_year': 2025,
             'is_default': True,
@@ -63,7 +63,7 @@ class StoredPaymentMethodModelTests(TestCase):
         self.assertEqual(payment_method.stripe_payment_method_id, 'pm_test_123456789')
         self.assertEqual(payment_method.stripe_customer_id, 'cus_test_123456789')
         self.assertEqual(payment_method.card_brand, 'visa')
-        self.assertEqual(payment_method.card_last4, '4242')
+        self.assertEqual(payment_method.card_last4, 'X242')
         self.assertEqual(payment_method.card_exp_month, 12)
         self.assertEqual(payment_method.card_exp_year, 2025)
         self.assertTrue(payment_method.is_default)
@@ -84,7 +84,7 @@ class StoredPaymentMethodModelTests(TestCase):
         """Test the card_display property."""
         payment_method = StoredPaymentMethod.objects.create(**self.payment_method_data)
         
-        self.assertEqual(payment_method.card_display, 'Visa ****4242')
+        self.assertEqual(payment_method.card_display, 'Visa ****X242')
 
     def test_card_display_property_no_data(self):
         """Test card_display property when card data is missing."""
@@ -173,14 +173,14 @@ class StoredPaymentMethodModelTests(TestCase):
         """Test string representation of StoredPaymentMethod."""
         payment_method = StoredPaymentMethod.objects.create(**self.payment_method_data)
         
-        expected = "Visa ****4242 - Test Student (Default)"
+        expected = "Visa ****X242 - Test Student (Default)"
         self.assertEqual(str(payment_method), expected)
         
         # Test non-default
         payment_method.is_default = False
         payment_method.save()
         
-        expected = "Visa ****4242 - Test Student"
+        expected = "Visa ****X242 - Test Student"
         self.assertEqual(str(payment_method), expected)
 
 
@@ -204,7 +204,7 @@ class PaymentMethodServiceTests(TestCase):
         mock_payment_method.type = 'card'
         mock_payment_method.card = {
             'brand': 'visa',
-            'last4': '4242',
+            'last4': 'X242',
             'exp_month': 12,
             'exp_year': 2025
         }
@@ -265,7 +265,7 @@ class PaymentMethodServiceTests(TestCase):
         mock_payment_method.type = 'card'
         mock_payment_method.card = {
             'brand': 'visa',
-            'last4': '4242',
+            'last4': 'X242',
             'exp_month': 12,
             'exp_year': 2025
         }
@@ -303,7 +303,7 @@ class PaymentMethodServiceTests(TestCase):
             stripe_payment_method_id='pm_test_duplicate',
             stripe_customer_id='cus_test_123',
             card_brand='visa',
-            card_last4='4242',
+            card_last4='X242',
             is_default=False,
             is_active=True
         )
@@ -326,7 +326,7 @@ class PaymentMethodServiceTests(TestCase):
             stripe_payment_method_id='pm_default',
             stripe_customer_id='cus_test_123',
             card_brand='visa',
-            card_last4='4242',
+            card_last4='X242',
             is_default=True,
             is_active=True
         )
@@ -378,7 +378,7 @@ class RenewalPaymentServiceTests(TestCase):
             stripe_payment_method_id='pm_test_renewal',
             stripe_customer_id='cus_test_renewal',
             card_brand='visa',
-            card_last4='4242',
+            card_last4='X242',
             card_exp_month=12,
             card_exp_year=2025,
             is_default=True,
@@ -578,7 +578,7 @@ class RenewalPaymentSecurityTests(TestCase):
             stripe_payment_method_id='pm_student1',
             stripe_customer_id='cus_student1',
             card_brand='visa',
-            card_last4='4242',
+            card_last4='X242',
             is_default=True,
             is_active=True
         )
