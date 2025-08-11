@@ -1,12 +1,12 @@
 /**
  * TDD Tests for Component Migration to Dependency Injection
- * 
+ *
  * These tests will INITIALLY FAIL until components are migrated to use DI.
  * Shows how to migrate existing components and hooks to use dependency injection.
  */
 
-import React from 'react';
 import { render, fireEvent, waitFor, renderHook, act } from '@testing-library/react-native';
+import React from 'react';
 
 // These imports will fail until components are migrated to DI
 import { SignInWithDI } from '@/components/auth/SignInWithDI';
@@ -312,16 +312,11 @@ describe('Component Migration to Dependency Injection', () => {
       it('should use injected dependencies instead of direct imports', async () => {
         mockDependencies.authApi.requestEmailCode.mockResolvedValue({ success: true });
 
-        const { result } = renderHook(
-          () => useSignInLogicWithDI(),
-          {
-            wrapper: ({ children }) => (
-              <DependencyProvider dependencies={mockDependencies}>
-                {children}
-              </DependencyProvider>
-            ),
-          }
-        );
+        const { result } = renderHook(() => useSignInLogicWithDI(), {
+          wrapper: ({ children }) => (
+            <DependencyProvider dependencies={mockDependencies}>{children}</DependencyProvider>
+          ),
+        });
 
         await act(async () => {
           await result.current.submitEmail('hook@test.com');
@@ -340,16 +335,11 @@ describe('Component Migration to Dependency Injection', () => {
       });
 
       it('should be testable without React components', async () => {
-        const { result } = renderHook(
-          () => useSignInLogicWithDI(),
-          {
-            wrapper: ({ children }) => (
-              <DependencyProvider dependencies={mockDependencies}>
-                {children}
-              </DependencyProvider>
-            ),
-          }
-        );
+        const { result } = renderHook(() => useSignInLogicWithDI(), {
+          wrapper: ({ children }) => (
+            <DependencyProvider dependencies={mockDependencies}>{children}</DependencyProvider>
+          ),
+        });
 
         // Pure business logic testing
         expect(result.current.isRequesting).toBe(false);
@@ -372,16 +362,11 @@ describe('Component Migration to Dependency Injection', () => {
           },
         };
 
-        const { result } = renderHook(
-          () => useSignInLogicWithDI(),
-          {
-            wrapper: ({ children }) => (
-              <DependencyProvider dependencies={customDeps}>
-                {children}
-              </DependencyProvider>
-            ),
-          }
-        );
+        const { result } = renderHook(() => useSignInLogicWithDI(), {
+          wrapper: ({ children }) => (
+            <DependencyProvider dependencies={customDeps}>{children}</DependencyProvider>
+          ),
+        });
 
         // Test success case
         await act(async () => {
@@ -404,16 +389,11 @@ describe('Component Migration to Dependency Injection', () => {
           created: true,
         });
 
-        const { result } = renderHook(
-          () => useSignUpLogicWithDI({ userType: 'student' }),
-          {
-            wrapper: ({ children }) => (
-              <DependencyProvider dependencies={mockDependencies}>
-                {children}
-              </DependencyProvider>
-            ),
-          }
-        );
+        const { result } = renderHook(() => useSignUpLogicWithDI({ userType: 'student' }), {
+          wrapper: ({ children }) => (
+            <DependencyProvider dependencies={mockDependencies}>{children}</DependencyProvider>
+          ),
+        });
 
         await act(async () => {
           await result.current.submitRegistration({
@@ -439,9 +419,7 @@ describe('Component Migration to Dependency Injection', () => {
           () => useSignUpLogicWithDI({ userType: 'tutor' }),
           {
             wrapper: ({ children }) => (
-              <DependencyProvider dependencies={mockDependencies}>
-                {children}
-              </DependencyProvider>
+              <DependencyProvider dependencies={mockDependencies}>{children}</DependencyProvider>
             ),
           }
         );
@@ -470,15 +448,14 @@ describe('Component Migration to Dependency Injection', () => {
         });
 
         const { result } = renderHook(
-          () => useVerifyCodeLogicWithDI({
-            contact: 'verify@test.com',
-            contactType: 'email',
-          }),
+          () =>
+            useVerifyCodeLogicWithDI({
+              contact: 'verify@test.com',
+              contactType: 'email',
+            }),
           {
             wrapper: ({ children }) => (
-              <DependencyProvider dependencies={mockDependencies}>
-                {children}
-              </DependencyProvider>
+              <DependencyProvider dependencies={mockDependencies}>{children}</DependencyProvider>
             ),
           }
         );
@@ -502,15 +479,14 @@ describe('Component Migration to Dependency Injection', () => {
         });
 
         const { result } = renderHook(
-          () => useVerifyCodeLogicWithDI({
-            contact: '+1234567890',
-            contactType: 'phone',
-          }),
+          () =>
+            useVerifyCodeLogicWithDI({
+              contact: '+1234567890',
+              contactType: 'phone',
+            }),
           {
             wrapper: ({ children }) => (
-              <DependencyProvider dependencies={mockDependencies}>
-                {children}
-              </DependencyProvider>
+              <DependencyProvider dependencies={mockDependencies}>{children}</DependencyProvider>
             ),
           }
         );
@@ -535,7 +511,8 @@ describe('Component Migration to Dependency Injection', () => {
       const mockDeps = {
         ...mockDependencies,
         authApi: {
-          requestEmailCode: jest.fn()
+          requestEmailCode: jest
+            .fn()
             .mockResolvedValueOnce({ success: false, error: 'Rate limit' })
             .mockResolvedValue({ success: true }),
           verifyEmailCode: jest.fn(),
@@ -543,16 +520,11 @@ describe('Component Migration to Dependency Injection', () => {
         },
       };
 
-      const { result } = renderHook(
-        () => useSignInLogicWithDI(),
-        {
-          wrapper: ({ children }) => (
-            <DependencyProvider dependencies={mockDeps}>
-              {children}
-            </DependencyProvider>
-          ),
-        }
-      );
+      const { result } = renderHook(() => useSignInLogicWithDI(), {
+        wrapper: ({ children }) => (
+          <DependencyProvider dependencies={mockDeps}>{children}</DependencyProvider>
+        ),
+      });
 
       // Test first attempt (rate limited)
       await act(async () => {
@@ -574,7 +546,8 @@ describe('Component Migration to Dependency Injection', () => {
 
       fastApiMock.authApi.requestEmailCode.mockResolvedValue({ success: true, speed: 'fast' });
       slowApiMock.authApi.requestEmailCode.mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve({ success: true, speed: 'slow' }), 100))
+        () =>
+          new Promise(resolve => setTimeout(() => resolve({ success: true, speed: 'slow' }), 100))
       );
 
       // Each test can use different implementations
@@ -592,16 +565,11 @@ describe('Component Migration to Dependency Injection', () => {
         },
       };
 
-      const { result } = renderHook(
-        () => useSignInLogicWithDI(),
-        {
-          wrapper: ({ children }) => (
-            <DependencyProvider dependencies={analyticsSpyDeps}>
-              {children}
-            </DependencyProvider>
-          ),
-        }
-      );
+      const { result } = renderHook(() => useSignInLogicWithDI(), {
+        wrapper: ({ children }) => (
+          <DependencyProvider dependencies={analyticsSpyDeps}>{children}</DependencyProvider>
+        ),
+      });
 
       await act(async () => {
         await result.current.submitEmail('analytics@test.com');
@@ -646,7 +614,7 @@ describe('Component Migration to Dependency Injection', () => {
     it('should support gradual migration from old to new architecture', () => {
       // Components can be migrated one by one
       // Old components still work alongside new DI components
-      
+
       const { getByText: getNewText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <SignInWithDI />

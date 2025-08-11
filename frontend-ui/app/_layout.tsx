@@ -15,6 +15,7 @@ import { Text } from '@/components/ui/text';
 import { ToastProvider } from '@/components/ui/toast';
 import { View } from '@/components/ui/view';
 import { useColorScheme } from '@/components/useColorScheme';
+import { DependencyProvider, createDefaultDependencies } from '@/services/di';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -157,16 +158,18 @@ function RootLayoutNav() {
     <GluestackUIProvider mode={(colorScheme ?? 'light') as 'light' | 'dark'}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <ToastProvider>
-          <AuthProvider>
-            <UserProfileProvider>
-              <SchoolProvider>
-                <TutorialProvider>
-                  <AuthAwareNavigation />
-                  <TutorialOverlay />
-                </TutorialProvider>
-              </SchoolProvider>
-            </UserProfileProvider>
-          </AuthProvider>
+          <DependencyProvider dependencies={createDefaultDependencies()}>
+            <AuthProvider>
+              <UserProfileProvider>
+                <SchoolProvider>
+                  <TutorialProvider>
+                    <AuthAwareNavigation />
+                    <TutorialOverlay />
+                  </TutorialProvider>
+                </SchoolProvider>
+              </UserProfileProvider>
+            </AuthProvider>
+          </DependencyProvider>
         </ToastProvider>
       </ThemeProvider>
     </GluestackUIProvider>

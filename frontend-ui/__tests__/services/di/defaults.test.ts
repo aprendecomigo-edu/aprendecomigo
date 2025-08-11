@@ -1,6 +1,6 @@
 /**
  * TDD Tests for Default Implementations
- * 
+ *
  * These tests will INITIALLY FAIL until the new DI default implementations are created.
  * Tests that createDefaultDependencies returns all required services with proper implementations.
  */
@@ -53,15 +53,15 @@ const mockAuth = {
 // Setup mocks
 beforeEach(() => {
   jest.clearAllMocks();
-  
+
   require('@/api/authApi').requestEmailCode = mockAuthApi.requestEmailCode;
   require('@/api/authApi').verifyEmailCode = mockAuthApi.verifyEmailCode;
   require('@/api/authApi').createUser = mockAuthApi.createUser;
-  
+
   require('@/api/onboardingApi').onboardingApi = mockOnboardingApi;
-  
+
   require('@/utils/storage').storage = mockStorage;
-  
+
   require('@/components/ui/toast').useToast = () => mockToast;
   require('@unitools/router').default = () => mockRouter;
   require('@/api/auth').useAuth = () => mockAuth;
@@ -98,7 +98,7 @@ describe('Default Implementations', () => {
 
       // Should be different objects
       expect(deps1).not.toBe(deps2);
-      
+
       // But services might share singleton implementations
       // This is implementation-dependent
       expect(deps1.authApi).toBeDefined();
@@ -118,7 +118,7 @@ describe('Default Implementations', () => {
 
     it('should delegate to existing authApi module', async () => {
       mockAuthApi.requestEmailCode.mockResolvedValue({ success: true });
-      
+
       const dependencies = createDefaultDependencies();
       const result = await dependencies.authApi.requestEmailCode({ email: 'test@example.com' });
 
@@ -127,22 +127,22 @@ describe('Default Implementations', () => {
     });
 
     it('should handle email verification correctly', async () => {
-      const mockResponse = { 
+      const mockResponse = {
         user: { id: 1, email: 'test@example.com' },
         access_token: 'token',
-        refresh_token: 'refresh'
+        refresh_token: 'refresh',
       };
       mockAuthApi.verifyEmailCode.mockResolvedValue(mockResponse);
-      
+
       const dependencies = createDefaultDependencies();
-      const result = await dependencies.authApi.verifyEmailCode({ 
-        email: 'test@example.com', 
-        code: '123456' 
+      const result = await dependencies.authApi.verifyEmailCode({
+        email: 'test@example.com',
+        code: '123456',
       });
 
       expect(mockAuthApi.verifyEmailCode).toHaveBeenCalledWith({
         email: 'test@example.com',
-        code: '123456'
+        code: '123456',
       });
       expect(result).toEqual(mockResponse);
     });
@@ -151,11 +151,11 @@ describe('Default Implementations', () => {
       const userData = {
         name: 'Test User',
         email: 'test@example.com',
-        user_type: 'student'
+        user_type: 'student',
       };
       const mockResponse = { user: userData, created: true };
       mockAuthApi.createUser.mockResolvedValue(mockResponse);
-      
+
       const dependencies = createDefaultDependencies();
       const result = await dependencies.authApi.createUser(userData);
 
@@ -166,9 +166,9 @@ describe('Default Implementations', () => {
     it('should propagate API errors correctly', async () => {
       const apiError = new Error('Network error');
       mockAuthApi.requestEmailCode.mockRejectedValue(apiError);
-      
+
       const dependencies = createDefaultDependencies();
-      
+
       await expect(
         dependencies.authApi.requestEmailCode({ email: 'test@example.com' })
       ).rejects.toThrow('Network error');
@@ -189,7 +189,7 @@ describe('Default Implementations', () => {
       mockStorage.setItem.mockResolvedValue(undefined);
       mockStorage.getItem.mockResolvedValue('stored_value');
       mockStorage.removeItem.mockResolvedValue(undefined);
-      
+
       const dependencies = createDefaultDependencies();
       const storage = dependencies.storageService;
 
@@ -210,17 +210,17 @@ describe('Default Implementations', () => {
     it('should handle storage errors gracefully', async () => {
       const storageError = new Error('Storage unavailable');
       mockStorage.getItem.mockRejectedValue(storageError);
-      
+
       const dependencies = createDefaultDependencies();
-      
-      await expect(
-        dependencies.storageService.getItem('test_key')
-      ).rejects.toThrow('Storage unavailable');
+
+      await expect(dependencies.storageService.getItem('test_key')).rejects.toThrow(
+        'Storage unavailable'
+      );
     });
 
     it('should return null for non-existent keys', async () => {
       mockStorage.getItem.mockResolvedValue(null);
-      
+
       const dependencies = createDefaultDependencies();
       const value = await dependencies.storageService.getItem('non_existent');
 
@@ -253,9 +253,9 @@ describe('Default Implementations', () => {
     it('should log events in development mode', () => {
       const originalDev = (global as any).__DEV__;
       (global as any).__DEV__ = true;
-      
+
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-      
+
       const dependencies = createDefaultDependencies();
       const analytics = dependencies.analyticsService;
 
@@ -264,7 +264,9 @@ describe('Default Implementations', () => {
       analytics.screen('Dashboard');
 
       expect(consoleSpy).toHaveBeenCalledWith('Analytics Track:', 'test_event', { prop: 'value' });
-      expect(consoleSpy).toHaveBeenCalledWith('Analytics Identify:', 'user_123', { email: 'test@example.com' });
+      expect(consoleSpy).toHaveBeenCalledWith('Analytics Identify:', 'user_123', {
+        email: 'test@example.com',
+      });
       expect(consoleSpy).toHaveBeenCalledWith('Analytics Screen:', 'Dashboard', undefined);
 
       consoleSpy.mockRestore();
@@ -274,9 +276,9 @@ describe('Default Implementations', () => {
     it('should not log in production mode', () => {
       const originalDev = (global as any).__DEV__;
       (global as any).__DEV__ = false;
-      
+
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-      
+
       const dependencies = createDefaultDependencies();
       const analytics = dependencies.analyticsService;
 
@@ -369,7 +371,7 @@ describe('Default Implementations', () => {
       const mockAuthStatus = { authenticated: true, user: { id: 1, email: 'test@example.com' } };
       mockAuth.checkAuthStatus.mockResolvedValue(mockAuthStatus);
       mockAuth.userProfile = { id: 1, email: 'test@example.com' };
-      
+
       const dependencies = createDefaultDependencies();
       const authContext = dependencies.authContextService;
 
@@ -384,7 +386,7 @@ describe('Default Implementations', () => {
 
     it('should support optional setUserProfile method', async () => {
       mockAuth.setUserProfile = jest.fn().mockResolvedValue(undefined);
-      
+
       const dependencies = createDefaultDependencies();
       const authContext = dependencies.authContextService;
 
@@ -408,10 +410,10 @@ describe('Default Implementations', () => {
     it('should delegate to onboardingApi module', async () => {
       const mockNavPrefs = { show_onboarding: true, skip_welcome: false };
       const mockProgress = { completion_percentage: 75, current_step: 3 };
-      
+
       mockOnboardingApi.getNavigationPreferences.mockResolvedValue(mockNavPrefs);
       mockOnboardingApi.getOnboardingProgress.mockResolvedValue(mockProgress);
-      
+
       const dependencies = createDefaultDependencies();
       const onboardingApi = dependencies.onboardingApiService;
 
@@ -429,12 +431,12 @@ describe('Default Implementations', () => {
     it('should handle API errors in onboarding calls', async () => {
       const apiError = new Error('Onboarding API unavailable');
       mockOnboardingApi.getNavigationPreferences.mockRejectedValue(apiError);
-      
+
       const dependencies = createDefaultDependencies();
-      
-      await expect(
-        dependencies.onboardingApiService.getNavigationPreferences()
-      ).rejects.toThrow('Onboarding API unavailable');
+
+      await expect(dependencies.onboardingApiService.getNavigationPreferences()).rejects.toThrow(
+        'Onboarding API unavailable'
+      );
     });
   });
 
@@ -444,7 +446,7 @@ describe('Default Implementations', () => {
 
       // Mock successful API call
       mockAuthApi.requestEmailCode.mockResolvedValue({ success: true });
-      
+
       // Use multiple services together
       await dependencies.authApi.requestEmailCode({ email: 'test@example.com' });
       dependencies.toastService.showToast('success', 'Code sent');
@@ -464,7 +466,7 @@ describe('Default Implementations', () => {
       // Services should be independently replaceable
       expect(deps1.authApi).toBeDefined();
       expect(deps2.authApi).toBeDefined();
-      
+
       // Each dependency object should be its own instance
       expect(deps1).not.toBe(deps2);
     });
@@ -475,11 +477,11 @@ describe('Default Implementations', () => {
       mockAuthApi.verifyEmailCode.mockResolvedValue({
         user: { id: 1, email: 'test@example.com' },
         access_token: 'token',
-        refresh_token: 'refresh'
+        refresh_token: 'refresh',
       });
       mockAuth.setUserProfile = jest.fn().mockResolvedValue(undefined);
       mockAuth.checkAuthStatus.mockResolvedValue({ authenticated: true });
-      
+
       const dependencies = createDefaultDependencies();
 
       // Step 1: Request email code
@@ -490,7 +492,7 @@ describe('Default Implementations', () => {
       // Step 2: Verify code
       const verifyResult = await dependencies.authApi.verifyEmailCode({
         email: 'test@example.com',
-        code: '123456'
+        code: '123456',
       });
 
       // Step 3: Update auth context
@@ -504,7 +506,10 @@ describe('Default Implementations', () => {
 
       // All services should have been called correctly
       expect(mockAuthApi.requestEmailCode).toHaveBeenCalledWith({ email: 'test@example.com' });
-      expect(mockAuthApi.verifyEmailCode).toHaveBeenCalledWith({ email: 'test@example.com', code: '123456' });
+      expect(mockAuthApi.verifyEmailCode).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        code: '123456',
+      });
       expect(mockToast.showToast).toHaveBeenCalledWith('success', 'Code sent');
       expect(mockRouter.push).toHaveBeenCalledWith('/auth/verify-code');
       expect(mockRouter.replace).toHaveBeenCalledWith('/dashboard');
@@ -545,9 +550,9 @@ describe('Default Implementations', () => {
     it('should support fallback implementations for optional services', () => {
       // Mock missing optional service
       mockAuth.setUserProfile = undefined;
-      
+
       const dependencies = createDefaultDependencies();
-      
+
       // Should create service without the optional method
       expect(dependencies.authContextService.setUserProfile).toBeUndefined();
       expect(typeof dependencies.authContextService.checkAuthStatus).toBe('function');
@@ -581,7 +586,7 @@ describe('Default Implementations', () => {
     it('should support service swapping for different environments', () => {
       // Should be able to override specific services for testing
       const dependencies = createDefaultDependencies();
-      
+
       // This demonstrates how services can be swapped
       const testDependencies = {
         ...dependencies,

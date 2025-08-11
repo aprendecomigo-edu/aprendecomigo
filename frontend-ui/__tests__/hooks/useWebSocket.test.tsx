@@ -214,7 +214,7 @@ describe('useWebSocket Hook', () => {
         result.current.sendMessage(testMessage);
       });
 
-      const sentMessages = ws.getMessageQueue();
+      const sentMessages = ws.getSentMessages();
       expect(sentMessages).toContain(JSON.stringify(testMessage));
     });
 
@@ -302,7 +302,7 @@ describe('useWebSocket Hook', () => {
       const ws = WebSocketTestUtils.getLastWebSocket()!;
 
       act(() => {
-        ws.simulateNetworkFailure();
+        ws.simulateNetworkFailureWithReconnectBlocking();
       });
 
       // Fast-forward through all reconnection attempts
@@ -445,7 +445,7 @@ describe('useWebSocket Hook', () => {
       });
 
       const ws = WebSocketTestUtils.getLastWebSocket()!;
-      const errorEvent = new Error('WebSocket error');
+      const errorEvent = new Event('error');
 
       act(() => {
         ws.simulateError(errorEvent);
@@ -619,7 +619,7 @@ describe('useWebSocketEnhanced Hook', () => {
         result.current.sendMessage({ type: 'object', data: 'test' });
       });
 
-      const sentMessages = ws.getMessageQueue();
+      const sentMessages = ws.getSentMessages();
       expect(sentMessages).toContain('string message');
       expect(sentMessages).toContain('{"type":"object","data":"test"}');
     });
@@ -655,6 +655,9 @@ describe('useWebSocketEnhanced Hook', () => {
 
   describe('Connection Lifecycle', () => {
     it('should reconnect when URL changes', async () => {
+      // Ensure no global failures from previous tests
+      WebSocketTestUtils.setGlobalConnectionFailure(false);
+
       const { result, rerender } = renderHook(({ url }) => useWebSocketEnhanced(url), {
         initialProps: { url: 'ws://localhost:8000/ws/test1/' },
       });

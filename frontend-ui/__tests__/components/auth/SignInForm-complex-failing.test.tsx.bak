@@ -1,0 +1,394 @@
+/**
+ * TDD Tests for SignInForm Pure UI Component - NEW ARCHITECTURE
+ * 
+ * These tests will INITIALLY FAIL until the new architecture is implemented.
+ * The SignInForm should be a pure UI component that receives all logic via props.
+ */
+
+import React from 'react';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { SignInForm } from '@/components/auth/forms/SignInForm';
+
+// Mock UI dependencies
+jest.mock('@unitools/link');
+jest.mock('@/components/ui/toast');
+
+const mockLink = require('@unitools/link');
+mockLink.default = ({ children, href }: any) => children;
+
+describe('SignInForm Pure UI Component - New Architecture', () => {
+  const mockProps = {
+    isRequesting: false,
+    error: null,
+    onSubmitEmail: jest.fn(),
+    onKeyPress: jest.fn(),
+    onBackPress: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('Component Rendering', () => {
+    it('should render all UI elements correctly', () => {
+      const { getByTestId } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      // Header elements
+      expect(getByTestId('brand-logo')).toBeTruthy();
+      expect(getByTestId('login-title')).toBeTruthy();
+
+      // Form elements
+      expect(getByTestId('email-label')).toBeTruthy();
+      expect(getByTestId('email-input')).toBeTruthy();
+
+      // Action button
+      expect(getByTestId('submit-button-text')).toBeTruthy();
+
+      // Footer links
+      expect(getByTestId('signup-prompt')).toBeTruthy();
+      expect(getByTestId('signup-link')).toBeTruthy();
+    });
+
+    it('should show loading state when isRequesting is true', () => {
+      const { getByTestId } = render(
+        <SignInForm {...mockProps} isRequesting={true} />
+      );
+
+      const submitButton = getByTestId('submit-button-text');
+      expect(submitButton).toBeTruthy();
+      // Note: Loading text content can be verified through props or state testing
+    });
+
+    it('should disable submit button when isRequesting is true', () => {
+      const { getByTestId } = render(
+        <SignInForm {...mockProps} isRequesting={true} />
+      );
+
+      const submitButton = getByTestId('submit-button-text');
+      expect(submitButton).toBeTruthy();
+      // Note: Button disabled state can be verified through parent Pressable component
+    });
+
+    it('should display error message when error prop is provided', () => {
+      const errorMessage = 'Failed to send verification code';
+      
+      const { getByText } = render(
+        <SignInForm {...mockProps} error={new Error(errorMessage)} />
+      );
+
+      // The component should display the error in some way
+      // This might be through form validation or a toast notification
+      expect(mockProps.onSubmitEmail).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('User Interactions', () => {
+    it('should call onSubmitEmail when form is submitted with valid email', async () => {
+      const {  getByTestId } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      const emailInput = getByTestId('email-input');
+      const submitButton = getByTestId('submit-button-text');
+
+      // User types email
+      fireEvent.changeText(emailInput, 'test@example.com');
+      
+      // User clicks submit
+      fireEvent.press(submitButton);
+
+      await waitFor(() => {
+        expect(mockProps.onSubmitEmail).toHaveBeenCalledWith('test@example.com');
+      });
+    });
+
+    it('should not call onSubmitEmail when form is submitted with invalid email', async () => {
+      const {  getByTestId } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      const emailInput = getByTestId('email-input');
+      const submitButton = getByTestId('submit-button-text');
+
+      // User types invalid email
+      fireEvent.changeText(emailInput, 'invalid-email');
+      
+      // User clicks submit
+      fireEvent.press(submitButton);
+
+      await waitFor(() => {
+        expect(mockProps.onSubmitEmail).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should call onSubmitEmail when form is submitted via keyboard', async () => {
+      const { getByPlaceholderText } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      const emailInput = getByTestId('email-input');
+
+      // User types email and presses return
+      fireEvent.changeText(emailInput, 'test@example.com');
+      fireEvent(emailInput, 'submitEditing');
+
+      await waitFor(() => {
+        expect(mockProps.onKeyPress).toHaveBeenCalled();
+      });
+    });
+
+    it('should call onBackPress when back button is pressed', () => {
+      const { getByTestId } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      // On mobile, there should be a back button
+      try {
+        const backButton = getByTestId('back-button');
+        fireEvent.press(backButton);
+        expect(mockProps.onBackPress).toHaveBeenCalled();
+      } catch {
+        // Back button might not be rendered on desktop
+      }
+    });
+
+    it('should handle email input changes correctly', () => {
+      const { getByPlaceholderText } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      const emailInput = getByTestId('email-input');
+      
+      fireEvent.changeText(emailInput, 'user@test.com');
+      
+      // The component should store this value internally for form submission
+      expect(emailInput.props.value).toBe('user@test.com');
+    });
+
+    it('should clear input when form submission is successful', () => {
+      // This behavior would depend on the parent component resetting the form
+      // The pure component should accept a value prop to control this
+      const {  rerender } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      const emailInput = getByTestId('email-input');
+      fireEvent.changeText(emailInput, 'test@example.com');
+
+      // After successful submission, parent would reset the form
+      rerender(<SignInForm {...mockProps} />);
+      
+      // Input should be cleared
+      expect(emailInput.props.value).toBe('');
+    });
+  });
+
+  describe('Form Validation', () => {
+    it('should show validation error for empty email', async () => {
+      const { getByText, getByPlaceholderText } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      const submitButton = getByTestId('submit-button-text');
+      
+      // Try to submit without entering email
+      fireEvent.press(submitButton);
+
+      await waitFor(() => {
+        // Should show validation error
+        expect(getByText('Email is required')).toBeTruthy();
+      });
+    });
+
+    it('should show validation error for invalid email format', async () => {
+      const { getByText, getByPlaceholderText } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      const emailInput = getByTestId('email-input');
+      const submitButton = getByTestId('submit-button-text');
+
+      fireEvent.changeText(emailInput, 'invalid-email');
+      fireEvent.press(submitButton);
+
+      await waitFor(() => {
+        // Should show validation error (exact message may vary)
+        try {
+          expect(getByText('Please enter a valid email address')).toBeTruthy();
+        } catch {
+          expect(getByText('Invalid email format')).toBeTruthy();
+        }
+      });
+    });
+
+    it('should clear validation errors when user starts typing valid email', async () => {
+      const { getByText,  queryByText } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      const emailInput = getByTestId('email-input');
+      const submitButton = getByTestId('submit-button-text');
+
+      // First, trigger validation error
+      fireEvent.press(submitButton);
+      await waitFor(() => {
+        expect(getByText('Email is required')).toBeTruthy();
+      });
+
+      // Then, start typing valid email
+      fireEvent.changeText(emailInput, 'test@example.com');
+
+      await waitFor(() => {
+        expect(queryByText('Email is required')).toBeNull();
+      });
+    });
+
+    it('should prevent multiple submissions while request is in progress', () => {
+      const {  getByText } = render(
+        <SignInForm {...mockProps} isRequesting={true} />
+      );
+
+      const emailInput = getByTestId('email-input');
+      const submitButton = getByText('Sending Code...');
+
+      fireEvent.changeText(emailInput, 'test@example.com');
+      
+      // Multiple clicks should not trigger multiple calls
+      fireEvent.press(submitButton);
+      fireEvent.press(submitButton);
+      fireEvent.press(submitButton);
+
+      expect(mockProps.onSubmitEmail).toHaveBeenCalledTimes(0); // Should be disabled
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('should have proper accessibility labels', () => {
+      const { getByLabelText, getByRole } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      // Form fields should have labels
+      expect(getByLabelText('Email')).toBeTruthy();
+
+      // Submit button should have proper role and accessible name
+      try {
+        expect(getByRole('button', { name: /send login code/i })).toBeTruthy();
+      } catch {
+        // Fallback for different accessibility implementations
+        expect(getByText('Send Login Code')).toBeTruthy();
+      }
+    });
+
+    it('should support keyboard navigation', () => {
+      const { getByPlaceholderText } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      const emailInput = getByTestId('email-input');
+      
+      // Should have proper return key type for form submission
+      expect(emailInput.props.returnKeyType).toBe('done');
+    });
+
+    it('should announce form validation errors to screen readers', async () => {
+      const { getByText } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      const submitButton = getByTestId('submit-button-text');
+      fireEvent.press(submitButton);
+
+      await waitFor(() => {
+        const errorMessage = getByText('Email is required');
+        // Error should be properly associated with the input for screen readers
+        expect(errorMessage).toBeTruthy();
+      });
+    });
+  });
+
+  describe('Pure Component Properties', () => {
+    it('should be a pure UI component with no business logic', () => {
+      // This component should only handle UI rendering and user interactions
+      // All business logic should be handled by the parent component via props
+      
+      const {  getByText } = render(
+        <SignInForm {...mockProps} />
+      );
+
+      const emailInput = getByTestId('email-input');
+      const submitButton = getByTestId('submit-button-text');
+
+      fireEvent.changeText(emailInput, 'test@example.com');
+      fireEvent.press(submitButton);
+
+      // Component should only call the provided callback
+      expect(mockProps.onSubmitEmail).toHaveBeenCalledWith('test@example.com');
+      
+      // No API calls, navigation, or other business logic should happen in this component
+      // All of that should be handled by the hook and passed in as props
+    });
+
+    it('should re-render correctly when props change', () => {
+      const { getByText, rerender } = render(
+        <SignInForm {...mockProps} isRequesting={false} />
+      );
+
+      expect(getByText('Send Login Code')).toBeTruthy();
+
+      // Change props and re-render
+      rerender(<SignInForm {...mockProps} isRequesting={true} />);
+      
+      expect(getByText('Sending Code...')).toBeTruthy();
+    });
+
+    it('should not have any side effects during rendering', () => {
+      // Component should not make any API calls, navigate, or have other side effects
+      // just from being rendered
+      
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      render(<SignInForm {...mockProps} />);
+      
+      // No warnings should be generated from side effects
+      expect(consoleSpy).not.toHaveBeenCalled();
+      
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('Integration with Business Logic Hook', () => {
+    it('should work correctly when integrated with useSignInLogic hook', async () => {
+      // This test simulates how the pure component would work with the business logic hook
+      
+      const businessLogic = {
+        isRequesting: false,
+        error: null,
+        submitEmail: jest.fn(),
+        handleKeyPress: jest.fn(),
+      };
+
+      const {  getByText } = render(
+        <SignInForm
+          isRequesting={businessLogic.isRequesting}
+          error={businessLogic.error}
+          onSubmitEmail={businessLogic.submitEmail}
+          onKeyPress={businessLogic.handleKeyPress}
+          onBackPress={jest.fn()}
+        />
+      );
+
+      const emailInput = getByTestId('email-input');
+      const submitButton = getByTestId('submit-button-text');
+
+      fireEvent.changeText(emailInput, 'integration@test.com');
+      fireEvent.press(submitButton);
+
+      await waitFor(() => {
+        expect(businessLogic.submitEmail).toHaveBeenCalledWith('integration@test.com');
+      });
+    });
+  });
+});

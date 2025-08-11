@@ -1,15 +1,16 @@
 /**
  * Service Layer Integration Tests - TDD RED STATE
- * 
+ *
  * These tests verify that UI components properly integrate with the new service layer
  * through dependency injection. They will initially fail until the service integration is implemented.
  */
 
-import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
-import type { TopUpPackage, PaymentMethod, PackageInfo } from '@/types/purchase';
-import { QuickTopUpPanel } from '@/components/student/quick-actions/QuickTopUpPanel';
+import React from 'react';
+
 import { BalanceStatusBar } from '@/components/student/balance/BalanceStatusBar';
+import { QuickTopUpPanel } from '@/components/student/quick-actions/QuickTopUpPanel';
+import type { TopUpPackage, PaymentMethod, PackageInfo } from '@/types/purchase';
 
 // Mock the services - these will need to be implemented
 jest.mock('@/services/business/payment/PaymentService');
@@ -101,10 +102,10 @@ describe('Service Layer Integration', () => {
 
       // Setup PaymentService mocks
       mockPaymentService.calculatePackagePrice.mockReturnValue({
-        totalPrice: 95.00,
-        pricePerHour: 9.50,
-        originalPrice: 100.00,
-        discountAmount: 5.00,
+        totalPrice: 95.0,
+        pricePerHour: 9.5,
+        originalPrice: 100.0,
+        discountAmount: 5.0,
         discountPercentage: 5,
         hasDiscount: true,
       });
@@ -213,7 +214,9 @@ describe('Service Layer Integration', () => {
     });
 
     it('should handle PaymentService processing errors', async () => {
-      mockPaymentService.processQuickTopUp.mockRejectedValue(new Error('Payment processing failed'));
+      mockPaymentService.processQuickTopUp.mockRejectedValue(
+        new Error('Payment processing failed')
+      );
 
       render(<QuickTopUpPanel email="test@example.com" />);
 
@@ -377,8 +380,9 @@ describe('Service Layer Integration', () => {
   describe('Service Dependency Injection', () => {
     it('should inject services through DI context', () => {
       const TestComponent = () => {
-        const { paymentService, balanceService } = require('@/services/di/context').useDependencies();
-        
+        const { paymentService, balanceService } =
+          require('@/services/di/context').useDependencies();
+
         return (
           <>
             <text testID="payment-service-available">
@@ -393,14 +397,18 @@ describe('Service Layer Integration', () => {
 
       render(<TestComponent />);
 
-      expect(screen.getByTestId('payment-service-available')).toHaveTextContent('Payment Service Available');
-      expect(screen.getByTestId('balance-service-available')).toHaveTextContent('Balance Service Available');
+      expect(screen.getByTestId('payment-service-available')).toHaveTextContent(
+        'Payment Service Available'
+      );
+      expect(screen.getByTestId('balance-service-available')).toHaveTextContent(
+        'Balance Service Available'
+      );
     });
 
     it('should provide isolated service instances for testing', () => {
       // Each component should get its own service instance through DI
       // This ensures testability and prevents shared state issues
-      
+
       const TestComponent1 = () => {
         const { paymentService } = require('@/services/di/context').useDependencies();
         paymentService.calculatePackagePrice({ id: 1, hours: 5, price_eur: '50.00' });
@@ -428,7 +436,7 @@ describe('Service Layer Integration', () => {
 
       const TestComponent = () => {
         const { paymentService } = require('@/services/di/context').useDependencies();
-        
+
         React.useEffect(() => {
           paymentService.processQuickTopUp(1, 'pm_test', 'test@example.com');
         }, [paymentService]);
@@ -438,7 +446,11 @@ describe('Service Layer Integration', () => {
 
       render(<TestComponent />);
 
-      expect(mockPaymentService.processQuickTopUp).toHaveBeenCalledWith(1, 'pm_test', 'test@example.com');
+      expect(mockPaymentService.processQuickTopUp).toHaveBeenCalledWith(
+        1,
+        'pm_test',
+        'test@example.com'
+      );
     });
   });
 
@@ -476,7 +488,7 @@ describe('Service Layer Integration', () => {
 
       // All balance calculations should be delegated to BalanceService
       expect(mockBalanceService.getBalanceStatus).toHaveBeenCalledWith(8.5, 15.0);
-      
+
       // Component should only be concerned with rendering the results
       expect(screen.getByText('Moderate balance')).toBeTruthy();
     });
@@ -486,8 +498,8 @@ describe('Service Layer Integration', () => {
       const input2 = { id: 1, hours: 10, price_eur: '100.00' }; // Same input
 
       mockPaymentService.calculatePackagePrice.mockReturnValue({
-        totalPrice: 100.00,
-        pricePerHour: 10.00,
+        totalPrice: 100.0,
+        pricePerHour: 10.0,
         hasDiscount: false,
       });
 

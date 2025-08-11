@@ -59,17 +59,8 @@ jest.mock('@/components/ui/toast', () => ({
   useToast: () => mockToast,
 }));
 
-// Mock React Native components
-jest.mock('react-native', () => ({
-  ...jest.requireActual('react-native'),
-  Keyboard: {
-    dismiss: jest.fn(),
-  },
-  ScrollView: ({ children, ...props }: any) => {
-    const React = require('react');
-    return React.createElement('div', { ...props, className: 'scroll-view' }, children);
-  },
-}));
+// Use the global React Native mock from jest.setup.minimal.js
+// No need to mock react-native here as it's handled globally
 
 describe('Authentication Flow Integration Tests', () => {
   beforeEach(() => {
@@ -93,7 +84,20 @@ describe('Authentication Flow Integration Tests', () => {
       // Step 1: User enters email and requests code
       mockRequestEmailCode.mockResolvedValue({ success: true });
 
-      const { getByPlaceholderText, getByText } = renderWithProviders(<SignIn />);
+      const { getByPlaceholderText, getByText, getByTestId, debug } = renderWithProviders(
+        <SignIn />
+      );
+
+      console.log('SignIn component rendered:');
+      debug();
+
+      // Try testID first since we know it works
+      try {
+        const emailInput = getByTestId('email-input');
+        console.log('Found email input by testID:', !!emailInput);
+      } catch (e) {
+        console.log('Could not find email-input by testID:', e.message);
+      }
 
       const emailInput = getByPlaceholderText('your_email@example.com');
       const sendCodeButton = getByText('Send Login Code');

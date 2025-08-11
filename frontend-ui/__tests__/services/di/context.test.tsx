@@ -1,20 +1,20 @@
 /**
  * TDD Tests for DependencyContext and DependencyProvider
- * 
+ *
  * These tests will INITIALLY FAIL until the new DI infrastructure is implemented.
  * Tests the core dependency injection context and provider functionality.
  */
 
-import React from 'react';
 import { render, renderHook } from '@testing-library/react-native';
+import React from 'react';
 import { Text } from 'react-native';
 
 // These imports will fail until DI infrastructure is implemented
-import { 
-  DependencyContext, 
-  DependencyProvider, 
+import {
+  DependencyContext,
+  DependencyProvider,
   useDependencies,
-  createDefaultDependencies 
+  createDefaultDependencies,
 } from '@/services/di/context';
 import type { Dependencies } from '@/services/di/types';
 
@@ -64,7 +64,7 @@ describe('DependencyContext and Provider Infrastructure', () => {
       // Context should be created but with undefined default
       expect(DependencyContext).toBeDefined();
       expect(typeof DependencyContext).toBe('object');
-      
+
       // Context should have React context properties
       expect(DependencyContext).toHaveProperty('Provider');
       expect(DependencyContext).toHaveProperty('Consumer');
@@ -89,9 +89,9 @@ describe('DependencyContext and Provider Infrastructure', () => {
   describe('DependencyProvider Component', () => {
     it('should render children when dependencies are provided', () => {
       const mockDependencies = createMockDependencies();
-      
+
       const TestChild = () => <Text>Test Child Component</Text>;
-      
+
       const { getByText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <TestChild />
@@ -103,15 +103,15 @@ describe('DependencyContext and Provider Infrastructure', () => {
 
     it('should provide dependencies to child components through context', () => {
       const mockDependencies = createMockDependencies();
-      
+
       const TestComponent = () => {
         const dependencies = useDependencies();
-        
+
         // Should receive the provided dependencies
         expect(dependencies).toBe(mockDependencies);
         expect(dependencies.authApi).toBe(mockDependencies.authApi);
         expect(dependencies.routerService).toBe(mockDependencies.routerService);
-        
+
         return <Text>Dependencies Received</Text>;
       };
 
@@ -131,7 +131,7 @@ describe('DependencyContext and Provider Infrastructure', () => {
         verifyEmailCode: jest.fn(),
         createUser: jest.fn(),
       };
-      
+
       const overriddenDependencies = {
         ...baseDependencies,
         authApi: customAuthApi,
@@ -139,10 +139,10 @@ describe('DependencyContext and Provider Infrastructure', () => {
 
       const TestComponent = () => {
         const { authApi } = useDependencies();
-        
+
         expect(authApi).toBe(customAuthApi);
         expect(authApi).not.toBe(baseDependencies.authApi);
-        
+
         return <Text>Override Success</Text>;
       };
 
@@ -167,12 +167,12 @@ describe('DependencyContext and Provider Infrastructure', () => {
 
       const TestComponent = () => {
         const { toastService, authApi } = useDependencies();
-        
+
         // Should use inner toast service
         expect(toastService).toBe(innerToastService);
         // Should inherit other services from outer provider
         expect(authApi).toBe(outerDependencies.authApi);
-        
+
         return <Text>Nested Success</Text>;
       };
 
@@ -213,17 +213,12 @@ describe('DependencyContext and Provider Infrastructure', () => {
   describe('useDependencies Hook', () => {
     it('should return dependencies when used within DependencyProvider', () => {
       const mockDependencies = createMockDependencies();
-      
-      const { result } = renderHook(
-        () => useDependencies(),
-        {
-          wrapper: ({ children }) => (
-            <DependencyProvider dependencies={mockDependencies}>
-              {children}
-            </DependencyProvider>
-          ),
-        }
-      );
+
+      const { result } = renderHook(() => useDependencies(), {
+        wrapper: ({ children }) => (
+          <DependencyProvider dependencies={mockDependencies}>{children}</DependencyProvider>
+        ),
+      });
 
       expect(result.current).toBe(mockDependencies);
       expect(result.current.authApi).toBe(mockDependencies.authApi);
@@ -244,16 +239,13 @@ describe('DependencyContext and Provider Infrastructure', () => {
 
     it('should work with default dependencies when no custom provider is used', () => {
       // When DependencyProvider uses createDefaultDependencies()
-      const { result } = renderHook(
-        () => useDependencies(),
-        {
-          wrapper: ({ children }) => (
-            <DependencyProvider dependencies={createDefaultDependencies()}>
-              {children}
-            </DependencyProvider>
-          ),
-        }
-      );
+      const { result } = renderHook(() => useDependencies(), {
+        wrapper: ({ children }) => (
+          <DependencyProvider dependencies={createDefaultDependencies()}>
+            {children}
+          </DependencyProvider>
+        ),
+      });
 
       // Should return default implementations
       expect(result.current.authApi).toBeDefined();
@@ -267,23 +259,18 @@ describe('DependencyContext and Provider Infrastructure', () => {
 
     it('should maintain referential stability across re-renders', () => {
       const mockDependencies = createMockDependencies();
-      
-      const { result, rerender } = renderHook(
-        () => useDependencies(),
-        {
-          wrapper: ({ children }) => (
-            <DependencyProvider dependencies={mockDependencies}>
-              {children}
-            </DependencyProvider>
-          ),
-        }
-      );
+
+      const { result, rerender } = renderHook(() => useDependencies(), {
+        wrapper: ({ children }) => (
+          <DependencyProvider dependencies={mockDependencies}>{children}</DependencyProvider>
+        ),
+      });
 
       const firstResult = result.current;
-      
+
       // Re-render with same dependencies
       rerender();
-      
+
       // Should be the same reference
       expect(result.current).toBe(firstResult);
     });
@@ -323,8 +310,12 @@ describe('DependencyContext and Provider Infrastructure', () => {
 
       expect(typeof defaultDependencies.authContextService.checkAuthStatus).toBe('function');
 
-      expect(typeof defaultDependencies.onboardingApiService.getNavigationPreferences).toBe('function');
-      expect(typeof defaultDependencies.onboardingApiService.getOnboardingProgress).toBe('function');
+      expect(typeof defaultDependencies.onboardingApiService.getNavigationPreferences).toBe(
+        'function'
+      );
+      expect(typeof defaultDependencies.onboardingApiService.getOnboardingProgress).toBe(
+        'function'
+      );
     });
 
     it('should create new instances on each call', () => {
@@ -342,7 +333,7 @@ describe('DependencyContext and Provider Infrastructure', () => {
 
       // Auth API should use real implementation
       expect(defaultDependencies.authApi.requestEmailCode).toBeDefined();
-      
+
       // Storage should use real implementation
       expect(defaultDependencies.storageService.setItem).toBeDefined();
 
@@ -361,10 +352,10 @@ describe('DependencyContext and Provider Infrastructure', () => {
 
       const TestComponent = () => {
         const dependencies = useDependencies();
-        
+
         // Should be able to access custom services
         expect(dependencies).toBeDefined();
-        
+
         return <Text>Factory Pattern Success</Text>;
       };
 
@@ -398,11 +389,11 @@ describe('DependencyContext and Provider Infrastructure', () => {
 
     it('should support service composition and decoration', () => {
       const baseDependencies = createMockDependencies();
-      
+
       // Decorate the auth service
       const decoratedAuthApi = {
         ...baseDependencies.authApi,
-        requestEmailCode: jest.fn(async (params) => {
+        requestEmailCode: jest.fn(async params => {
           // Add logging decorator
           console.log('Auth API called with:', params);
           return baseDependencies.authApi.requestEmailCode(params);
@@ -416,9 +407,9 @@ describe('DependencyContext and Provider Infrastructure', () => {
 
       const TestComponent = () => {
         const { authApi } = useDependencies();
-        
+
         expect(authApi).toBe(decoratedAuthApi);
-        
+
         return <Text>Decoration Success</Text>;
       };
 
@@ -438,15 +429,15 @@ describe('DependencyContext and Provider Infrastructure', () => {
 
       const TestComponent = () => {
         const dependencies = useDependencies();
-        
+
         // TypeScript should infer correct types
         const authApi = dependencies.authApi;
         const routerService = dependencies.routerService;
-        
+
         // Should have correct method signatures
         authApi.requestEmailCode({ email: 'test@example.com' });
         routerService.push('/test-route');
-        
+
         return <Text>TypeScript Success</Text>;
       };
 

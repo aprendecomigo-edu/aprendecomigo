@@ -1,0 +1,364 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import Link from '@unitools/link';
+import useRouter from '@unitools/router';
+import { useLocalSearchParams } from 'expo-router';
+import { AlertTriangle } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { Keyboard } from 'react-native';
+import { z } from 'zod';
+
+import { AuthLayout } from './AuthLayout';
+
+import { useAuth } from '@/api/auth';
+import { verifyEmailCode, requestEmailCode, AuthResponse } from '@/api/authApi';
+import { onboardingApi } from '@/api/onboardingApi';
+import { Button, ButtonText } from '@/components/ui/button';
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorIcon,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from '@/components/ui/form-control';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { ArrowLeftIcon, Icon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
+import { LinkText } from '@/components/ui/link';
+import { Pressable } from '@/components/ui/pressable';
+import { Text } from '@/components/ui/text';
+import { useToast } from '@/components/ui/toast';
+import { VStack } from '@/components/ui/vstack';
+
+// Define the form schema
+const verifyCodeSchema = z.object({
+  contact: z.string().min(1, 'Contact information is required'),
+  contactType: z.enum(['email', 'phone']),
+  code: z.string().min(1, 'Verification code is required'),
+});
+
+type VerifyCodeSchemaType = z.infer<typeof verifyCodeSchema>;
+
+const VerifyCodeForm = () => {
+  const toast = useToast();
+  const router = useRouter();
+  const { contact, contactType, email, nextRoute } = useLocalSearchParams<{
+    contact: string;
+    contactType: 'email' | 'phone';
+    email: string;
+    nextRoute?: string;
+  }>();
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const { checkAuthStatus, setUserProfile } = useAuth();
+
+  // Verify code form
+  const verifyCodeForm = useForm<VerifyCodeSchemaType>({
+    resolver: zodResolver(verifyCodeSchema),
+    mode: 'onSubmit', // Only validate on submit, not on change
+    defaultValues: {
+      contact: contact || email || '',
+      contactType: (contactType as 'email' | 'phone') || 'email',
+      code: '',
+    },
+  });
+
+  // Update form when params change
+  useEffect(() => {
+    // Handle both 'contact' and 'email' parameters for backward compatibility
+    const contactValue = contact || email || '';
+    const contactTypeValue = contactType || 'email'; // Default to email
+
+    console.log('URL params:', { contact, email, contactType });
+    console.log('Using contact value:', contactValue);
+
+    if (contactValue) {
+      verifyCodeForm.setValue('contact', contactValue);
+    }
+    verifyCodeForm.setValue('contactType', contactTypeValue as 'email' | 'phone');
+
+    // Don't trigger validation on load - only after user submits
+  }, [contact, contactType, email, verifyCodeForm]);
+
+  // Handle verify code submit
+  const onVerifyCode = async (data: VerifyCodeSchemaType) => {
+    try {
+      setHasAttemptedSubmit(true);
+      setIsVerifying(true);
+      console.log('Verifying code with data:', data);
+
+      // Call the API to verify the code
+      // Adapt this to handle both email and phone verification
+      const params =
+        data.contactType === 'email'
+          ? { email: data.contact, code: data.code }
+          : { phone: data.contact, code: data.code };
+
+      console.log('Verification API params:', params);
+
+      // Step 1: API verification - handle specific errors
+      let response: AuthResponse;
+      try {
+        response = await verifyEmailCode(params);
+        console.log('Verification response:', response);
+      } catch (verifyError: any) {
+        console.error('Verification API error:', verifyError);
+
+        // Handle specific verification errors
+        if (verifyError.response?.status === 400) {
+          const errorMessage =
+            verifyError.response?.data?.error || 'Invalid verification code. Please try again.';
+          toast.showToast('error', errorMessage);
+          return;
+        } else if (verifyError.response?.status === 429) {
+          toast.showToast('error', 'Too many attempts. Please wait and try again.');
+          return;
+        }
+
+        // Re-throw unexpected errors
+        throw verifyError;
+      }
+
+      // Step 2: Store profile and update auth - handle separately to avoid false error messages
+      try {
+        // Store user profile data for immediate routing
+        await setUserProfile(response.user);
+        console.log('User profile stored with primary_role:', response.user.primary_role);
+
+        // Successfully verified - now explicitly update auth state
+        await checkAuthStatus();
+
+        // Show success message (verification definitely succeeded)
+        toast.showToast('success', 'Verification successful!');
+
+        // Check if there's a specific next route (e.g., for tutors)
+        if (nextRoute) {
+          console.log('Redirecting to specified next route:', nextRoute);
+          router.replace(decodeURIComponent(nextRoute));
+          return;
+        }
+
+        // Check if this is a new school admin that needs onboarding
+        const shouldShowOnboarding = await checkForOnboarding(response);
+
+        if (shouldShowOnboarding) {
+          console.log('Redirecting new school admin to onboarding welcome screen');
+          router.replace('/onboarding/welcome');
+        } else {
+          // Navigate to root after verification - auth context will handle redirect
+          router.replace('/');
+        }
+      } catch (authUpdateError) {
+        // Auth succeeded but state update failed - still redirect with success message
+        console.warn('Auth state update failed, but verification succeeded:', authUpdateError);
+        toast.showToast('success', 'Verification successful!');
+
+        // Still proceed with redirect since verification actually succeeded
+        if (nextRoute) {
+          router.replace(decodeURIComponent(nextRoute));
+        } else {
+          router.replace('/');
+        }
+      }
+    } catch (error) {
+      console.error('Unexpected verification error:', error);
+      toast.showToast('error', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // Check if user should see onboarding
+  const checkForOnboarding = async (authResponse: AuthResponse): Promise<boolean> => {
+    try {
+      // Only check for school admins
+      if (!authResponse.user.is_admin || authResponse.user.user_type !== 'school_admin') {
+        return false;
+      }
+
+      // Check if user has completed first login
+      if (authResponse.user.first_login_completed) {
+        return false;
+      }
+
+      // Check onboarding preferences
+      try {
+        const preferences = await onboardingApi.getNavigationPreferences();
+        const progress = await onboardingApi.getOnboardingProgress();
+
+        // Show onboarding if:
+        // 1. User hasn't disabled onboarding (show_onboarding is true)
+        // 2. User hasn't completed the onboarding process (completion < 100%)
+        // 3. This appears to be a new user (is_new_user flag or low completion)
+        return (
+          preferences.show_onboarding &&
+          progress.completion_percentage < 100 &&
+          (authResponse.is_new_user || progress.completion_percentage === 0)
+        );
+      } catch (apiError) {
+        // If we can't fetch onboarding data, default to showing onboarding for new admins
+        console.log('Could not fetch onboarding data, defaulting to show onboarding for new admin');
+        return authResponse.is_new_user || !authResponse.user.first_login_completed;
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      return false;
+    }
+  };
+
+  // Handle resending verification code
+  const handleResendCode = async () => {
+    try {
+      setIsResending(true);
+
+      // Get current values from form
+      const currentContact = verifyCodeForm.getValues('contact');
+      const currentContactType = verifyCodeForm.getValues('contactType');
+
+      // Call the API to request a new verification code
+      const params =
+        currentContactType === 'email' ? { email: currentContact } : { phone: currentContact };
+
+      await requestEmailCode(params);
+
+      toast.showToast('success', `New verification code sent to your ${currentContactType}!`);
+
+      // Reset the code field
+      verifyCodeForm.setValue('code', '');
+    } catch (error) {
+      console.error('Error resending verification code:', error);
+      toast.showToast('error', 'Failed to send new verification code. Please try again.');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleVerifyKeyPress = () => {
+    Keyboard.dismiss();
+    setHasAttemptedSubmit(true);
+    verifyCodeForm.handleSubmit(onVerifyCode)();
+  };
+
+  // Get the contact value to display
+  const watchedContact = verifyCodeForm.watch('contact');
+  const watchedContactType = verifyCodeForm.watch('contactType');
+
+  return (
+    <VStack className="max-w-[440px] w-full" space="md">
+      <VStack className="md:items-center" space="md">
+        <Pressable
+          onPress={() => {
+            router.back();
+          }}
+        >
+          <Icon as={ArrowLeftIcon} className="md:hidden text-background-800" size="xl" />
+        </Pressable>
+        <VStack>
+          <Heading className="md:text-center" size="3xl">
+            Verify Code
+          </Heading>
+          <Text className="md:text-center">
+            Enter the verification code sent to{' '}
+            {watchedContact ? (
+              <Text className="font-medium">{watchedContact}</Text>
+            ) : (
+              `your ${watchedContactType}`
+            )}
+          </Text>
+        </VStack>
+      </VStack>
+      <VStack className="w-full">
+        <VStack space="xl" className="w-full">
+          <FormControl
+            isInvalid={hasAttemptedSubmit && !!verifyCodeForm.formState.errors?.code}
+            className="w-full"
+          >
+            <FormControlLabel>
+              <FormControlLabelText>Verification Code</FormControlLabelText>
+            </FormControlLabel>
+            <Controller
+              name="code"
+              control={verifyCodeForm.control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input>
+                  <InputField
+                    name="code"
+                    testID="verification-code-input"
+                    placeholder="Enter the verification code"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    onSubmitEditing={handleVerifyKeyPress}
+                    returnKeyType="done"
+                    keyboardType="number-pad"
+                    maxLength={6}
+                  />
+                </Input>
+              )}
+            />
+            {hasAttemptedSubmit && (
+              <FormControlError>
+                <FormControlErrorIcon as={AlertTriangle} />
+                <FormControlErrorText>
+                  {verifyCodeForm.formState.errors?.code?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            )}
+          </FormControl>
+
+          <VStack className="w-full my-7" space="lg">
+            <Button
+              className="w-full"
+              onPress={() => {
+                console.log('Verify button clicked');
+                console.log('Form values:', verifyCodeForm.getValues());
+                console.log('Form errors:', verifyCodeForm.formState.errors);
+                setHasAttemptedSubmit(true);
+                verifyCodeForm.handleSubmit(onVerifyCode)();
+              }}
+              isDisabled={isVerifying}
+            >
+              <ButtonText className="font-medium">
+                {isVerifying ? 'Verifying...' : 'Verify Code'}
+              </ButtonText>
+            </Button>
+            <Button
+              variant="outline"
+              action="secondary"
+              className="w-full"
+              onPress={handleResendCode}
+              isDisabled={isResending}
+              testID="resend-code-button"
+            >
+              <ButtonText className="font-medium">
+                {isResending ? 'Sending...' : 'Try Again'}
+              </ButtonText>
+            </Button>
+          </VStack>
+        </VStack>
+        <HStack className="self-center" space="sm">
+          <Text size="md">Need help?</Text>
+          <Link href="/auth/signin">
+            <LinkText
+              className="font-medium text-primary-700 group-hover/link:text-primary-600 group-hover/pressed:text-primary-700"
+              size="md"
+            >
+              Contact Support
+            </LinkText>
+          </Link>
+        </HStack>
+      </VStack>
+    </VStack>
+  );
+};
+
+export const VerifyCode = () => {
+  return (
+    <AuthLayout>
+      <VerifyCodeForm />
+    </AuthLayout>
+  );
+};

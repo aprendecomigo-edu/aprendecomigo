@@ -73,10 +73,44 @@ export class MockWebSocket implements WebSocket {
   public binaryType: BinaryType = 'blob';
   public bufferedAmount: number = 0;
 
-  public onopen: ((event: Event) => void) | null = null;
-  public onclose: ((event: MockCloseEvent) => void) | null = null;
-  public onmessage: ((event: MockMessageEvent) => void) | null = null;
-  public onerror: ((event: Event) => void) | null = null;
+  private _onopen: ((event: Event) => void) | null = null;
+  private _onclose: ((event: MockCloseEvent) => void) | null = null;
+  private _onmessage: ((event: MockMessageEvent) => void) | null = null;
+  private _onerror: ((event: Event) => void) | null = null;
+
+  private pendingConnection: boolean = false;
+
+  public get onopen() {
+    return this._onopen;
+  }
+  public set onopen(handler: ((event: Event) => void) | null) {
+    this._onopen = handler;
+    this.checkPendingConnection();
+  }
+
+  public get onclose() {
+    return this._onclose;
+  }
+  public set onclose(handler: ((event: MockCloseEvent) => void) | null) {
+    this._onclose = handler;
+    this.checkPendingConnection();
+  }
+
+  public get onmessage() {
+    return this._onmessage;
+  }
+  public set onmessage(handler: ((event: MockMessageEvent) => void) | null) {
+    this._onmessage = handler;
+    this.checkPendingConnection();
+  }
+
+  public get onerror() {
+    return this._onerror;
+  }
+  public set onerror(handler: ((event: Event) => void) | null) {
+    this._onerror = handler;
+    this.checkPendingConnection();
+  }
 
   private eventListeners: Map<string, Set<EventListener>> = new Map();
   private messageQueue: Array<{ data: any; timestamp: number }> = [];
@@ -92,6 +126,7 @@ export class MockWebSocket implements WebSocket {
   // Static registry for tracking all instances
   private static instances: MockWebSocket[] = [];
   private static lastInstance: MockWebSocket | null = null;
+  private static globalShouldFailConnection: boolean = false;
 
   constructor(url: string, protocols?: string | string[], options: MockWebSocketOptions = {}) {
     this.url = url;
@@ -106,7 +141,7 @@ export class MockWebSocket implements WebSocket {
       simulateNetworkLatency: false,
       latencyMs: 100,
       failConnection: false,
-      connectionDelay: 10,
+      connectionDelay: 0,
       ...options,
     };
 
@@ -114,7 +149,7 @@ export class MockWebSocket implements WebSocket {
     MockWebSocket.lastInstance = this;
 
     if (this.autoConnect && this.options.autoOpen) {
-      this.simulateConnection();
+      this.pendingConnection = true;
     }
   }
 
@@ -137,40 +172,59 @@ export class MockWebSocket implements WebSocket {
       instance.readyState = WebSocket.CLOSED;
     });
     MockWebSocket.clearInstances();
+    MockWebSocket.globalShouldFailConnection = false;
+  }
+
+  static setGlobalConnectionFailure(shouldFail: boolean): void {
+    MockWebSocket.globalShouldFailConnection = shouldFail;
+  }
+
+  private checkPendingConnection(): void {
+    // If we have onopen handler and a pending connection, trigger it
+    if (this.pendingConnection && this._onopen) {
+      this.pendingConnection = false;
+      this.simulateConnection();
+    }
   }
 
   /**
    * Simulate WebSocket connection with optional delay
    */
-  private async simulateConnection(): Promise<void> {
-    const timeoutFn = (global as any).setTimeout || setTimeout;
+  private simulateConnection(): void {
+    const delay = this.connectionDelay || this.options.connectionDelay || 0;
 
-    if (this.connectionDelay > 0 || this.options.connectionDelay) {
-      await new Promise(resolve =>
-        timeoutFn(resolve, this.connectionDelay || this.options.connectionDelay)
-      );
+    const doConnection = () => {
+      if (
+        this.shouldFailConnection ||
+        this.options.failConnection ||
+        MockWebSocket.globalShouldFailConnection
+      ) {
+        this.readyState = MockWebSocket.CLOSED;
+        const errorEvent = new Event('error');
+        this.dispatchEvent(errorEvent);
+        this._onerror?.(errorEvent);
+
+        const closeEvent = new MockCloseEvent('close', {
+          code: 1006,
+          reason: 'Connection failed',
+          wasClean: false,
+        });
+        this.dispatchEvent(closeEvent);
+        this._onclose?.(closeEvent);
+        return;
+      }
+
+      this.readyState = MockWebSocket.OPEN;
+      const openEvent = new Event('open');
+      this.dispatchEvent(openEvent);
+      this._onopen?.(openEvent);
+    };
+
+    if (delay > 0) {
+      setTimeout(doConnection, delay);
+    } else {
+      doConnection();
     }
-
-    if (this.shouldFailConnection || this.options.failConnection) {
-      this.readyState = MockWebSocket.CLOSED;
-      const errorEvent = new Event('error');
-      this.dispatchEvent(errorEvent);
-      this.onerror?.(errorEvent);
-
-      const closeEvent = new MockCloseEvent('close', {
-        code: 1006,
-        reason: 'Connection failed',
-        wasClean: false,
-      });
-      this.dispatchEvent(closeEvent);
-      this.onclose?.(closeEvent);
-      return;
-    }
-
-    this.readyState = MockWebSocket.OPEN;
-    const openEvent = new Event('open');
-    this.dispatchEvent(openEvent);
-    this.onopen?.(openEvent);
   }
 
   public send(data: string | ArrayBuffer | Blob | ArrayBufferView): void {
@@ -216,7 +270,7 @@ export class MockWebSocket implements WebSocket {
         wasClean: this.closeCode === 1000,
       });
       this.dispatchEvent(closeEvent);
-      this.onclose?.(closeEvent);
+      this._onclose?.(closeEvent);
     }, 10);
   }
 
@@ -248,14 +302,14 @@ export class MockWebSocket implements WebSocket {
       const messageData = typeof data === 'string' ? data : JSON.stringify(data);
       const messageEvent = new MockMessageEvent('message', { data: messageData });
       this.dispatchEvent(messageEvent);
-      this.onmessage?.(messageEvent);
+      this._onmessage?.(messageEvent);
     }
   }
 
-  public simulateError(): void {
-    const errorEvent = new Event('error');
+  public simulateError(error?: Event): void {
+    const errorEvent = error || new Event('error');
     this.dispatchEvent(errorEvent);
-    this.onerror?.(errorEvent);
+    this._onerror?.(errorEvent);
   }
 
   public simulateDisconnect(code = 1006, reason = 'Connection lost'): void {
@@ -266,13 +320,18 @@ export class MockWebSocket implements WebSocket {
       wasClean: code === 1000,
     });
     this.dispatchEvent(closeEvent);
-    this.onclose?.(closeEvent);
+    this._onclose?.(closeEvent);
   }
 
   public simulateNetworkFailure(): void {
     this.readyState = MockWebSocket.CLOSED;
     this.simulateError();
     this.simulateDisconnect(1006, 'Network failure');
+  }
+
+  public simulateNetworkFailureWithReconnectBlocking(): void {
+    MockWebSocket.setGlobalConnectionFailure(true);
+    this.simulateNetworkFailure();
   }
 
   public simulateRecovery(): void {
@@ -287,27 +346,27 @@ export class MockWebSocket implements WebSocket {
     this.readyState = MockWebSocket.OPEN;
     const event = new Event('open');
     this.dispatchEvent(event);
-    this.onopen?.(event);
+    this._onopen?.(event);
   }
 
   public triggerClose(code = 1000, reason = 'Normal closure'): void {
     this.readyState = MockWebSocket.CLOSED;
     const event = new MockCloseEvent('close', { code, reason, wasClean: code === 1000 });
     this.dispatchEvent(event);
-    this.onclose?.(event);
+    this._onclose?.(event);
   }
 
   public triggerMessage(data: any): void {
     const messageData = typeof data === 'string' ? data : JSON.stringify(data);
     const event = new MockMessageEvent('message', { data: messageData });
     this.dispatchEvent(event);
-    this.onmessage?.(event);
+    this._onmessage?.(event);
   }
 
-  public triggerError(): void {
-    const event = new Event('error');
+  public triggerError(error?: Event): void {
+    const event = error || new Event('error');
     this.dispatchEvent(event);
-    this.onerror?.(event);
+    this._onerror?.(event);
   }
 
   // Utility methods
@@ -329,6 +388,10 @@ export class MockWebSocket implements WebSocket {
 
   public getMessageQueue(): Array<{ data: any; timestamp: number }> {
     return [...this.messageQueue];
+  }
+
+  public getSentMessages(): string[] {
+    return this.messageQueue.map(msg => msg.data);
   }
 
   public clearMessageQueue(): void {
@@ -353,6 +416,7 @@ export const WebSocketTestUtils = {
    */
   cleanup(): void {
     MockWebSocket.resetAll();
+    MockWebSocket.setGlobalConnectionFailure(false);
   },
 
   /**
@@ -395,6 +459,13 @@ export const WebSocketTestUtils = {
   cleanupWebSocketMock: (): void => {
     (global as any).WebSocket = undefined;
     jest.clearAllMocks();
+  },
+
+  /**
+   * Set global connection failure for all new WebSocket instances
+   */
+  setGlobalConnectionFailure: (shouldFail: boolean): void => {
+    MockWebSocket.setGlobalConnectionFailure(shouldFail);
   },
 
   /**
@@ -677,6 +748,34 @@ export const WebSocketTestUtils = {
    */
   advanceTime: (ms: number): void => {
     jest.advanceTimersByTime(ms);
+  },
+
+  /**
+   * Verify exponential backoff timing
+   */
+  verifyBackoffTiming: (
+    attempts: number[],
+    baseDelay: number,
+    toleranceMs: number = 100
+  ): boolean => {
+    if (attempts.length < 2) return true;
+
+    for (let i = 1; i < attempts.length; i++) {
+      const expectedDelay = Math.pow(2, i - 1) * baseDelay;
+      const actualDelay = attempts[i] - attempts[i - 1];
+      const tolerance = toleranceMs;
+
+      if (Math.abs(actualDelay - expectedDelay) > tolerance) {
+        console.log(`Backoff timing verification failed at attempt ${i}:`, {
+          expected: expectedDelay,
+          actual: actualDelay,
+          tolerance,
+          difference: Math.abs(actualDelay - expectedDelay),
+        });
+        return false;
+      }
+    }
+    return true;
   },
 };
 

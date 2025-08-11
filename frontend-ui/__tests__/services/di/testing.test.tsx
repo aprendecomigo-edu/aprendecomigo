@@ -1,22 +1,23 @@
 /**
  * TDD Tests for Test Utilities
- * 
+ *
  * These tests will INITIALLY FAIL until the new DI testing utilities are implemented.
  * Tests that createMockDependencies and testing helpers work correctly.
  */
 
 // These imports will fail until DI testing utilities are implemented
-import { 
+import { render, renderHook } from '@testing-library/react-native';
+import React from 'react';
+import { Text } from 'react-native';
+
+import {
   createMockDependencies,
   createPartialMockDependencies,
   withMockDependencies,
   MockDependencyBuilder,
-  TestDependencyProvider
+  TestDependencyProvider,
 } from '@/services/di/testing';
 import type { Dependencies, MockDependencies } from '@/services/di/types';
-import React from 'react';
-import { render, renderHook } from '@testing-library/react-native';
-import { Text } from 'react-native';
 
 describe('DI Testing Utilities', () => {
   beforeEach(() => {
@@ -71,7 +72,9 @@ describe('DI Testing Utilities', () => {
       expect(jest.isMockFunction(mockDeps.authContextService.setUserProfile)).toBe(true);
 
       // OnboardingApiService mocks
-      expect(jest.isMockFunction(mockDeps.onboardingApiService.getNavigationPreferences)).toBe(true);
+      expect(jest.isMockFunction(mockDeps.onboardingApiService.getNavigationPreferences)).toBe(
+        true
+      );
       expect(jest.isMockFunction(mockDeps.onboardingApiService.getOnboardingProgress)).toBe(true);
     });
 
@@ -168,7 +171,10 @@ describe('DI Testing Utilities', () => {
       expect(partialMocks.authApi?.verifyEmailCode).toBeUndefined();
       expect(partialMocks.authContextService?.checkAuthStatus).toBeDefined();
       expect(partialMocks.authContextService?.setUserProfile).toBeUndefined();
-      expect(partialMocks.authContextService?.userProfile).toEqual({ id: 1, email: 'test@example.com' });
+      expect(partialMocks.authContextService?.userProfile).toEqual({
+        id: 1,
+        email: 'test@example.com',
+      });
     });
   });
 
@@ -200,7 +206,7 @@ describe('DI Testing Utilities', () => {
 
     it('should support component props forwarding', () => {
       const mockDeps = createMockDependencies();
-      
+
       const TestComponent = ({ title }: { title: string }) => <Text>{title}</Text>;
       const WrappedComponent = withMockDependencies(TestComponent, mockDeps);
 
@@ -260,7 +266,7 @@ describe('DI Testing Utilities', () => {
 
       expect(mockDeps.authApi).toBe(customAuthApi);
       expect(mockDeps.toastService).toBe(customToastService);
-      
+
       // Other services should have default mocks
       expect(jest.isMockFunction(mockDeps.storageService.setItem)).toBe(true);
       expect(jest.isMockFunction(mockDeps.routerService.push)).toBe(true);
@@ -300,13 +306,15 @@ describe('DI Testing Utilities', () => {
       // Custom services should be used
       expect(mockDeps.authApi.requestEmailCode).toBeDefined();
       expect(mockDeps.authContextService.userProfile).toEqual({ id: 1, name: 'Builder User' });
-      
+
       // Default services should be provided
       expect(jest.isMockFunction(mockDeps.storageService.setItem)).toBe(true);
       expect(jest.isMockFunction(mockDeps.analyticsService.track)).toBe(true);
       expect(jest.isMockFunction(mockDeps.routerService.push)).toBe(true);
       expect(jest.isMockFunction(mockDeps.toastService.showToast)).toBe(true);
-      expect(jest.isMockFunction(mockDeps.onboardingApiService.getNavigationPreferences)).toBe(true);
+      expect(jest.isMockFunction(mockDeps.onboardingApiService.getNavigationPreferences)).toBe(
+        true
+      );
     });
 
     it('should support resetting and reusing builder', () => {
@@ -363,10 +371,7 @@ describe('DI Testing Utilities', () => {
       };
 
       const { getByText } = render(
-        <TestDependencyProvider 
-          dependencies={mockDeps}
-          overrides={{ authApi: customAuthApi }}
-        >
+        <TestDependencyProvider dependencies={mockDeps} overrides={{ authApi: customAuthApi }}>
           <TestComponent />
         </TestDependencyProvider>
       );
@@ -451,7 +456,7 @@ describe('DI Testing Utilities', () => {
 
       // Each scenario should have independent mocks
       expect(scenario1.authApi.requestEmailCode).not.toBe(scenario2.authApi.requestEmailCode);
-      
+
       // Can configure each independently
       scenario1.authApi.requestEmailCode.mockResolvedValue({ scenario: 1 });
       scenario2.authApi.requestEmailCode.mockResolvedValue({ scenario: 2 });
@@ -462,7 +467,7 @@ describe('DI Testing Utilities', () => {
     it('should support error scenario testing', async () => {
       const mockDeps = createMockDependencies();
       const networkError = new Error('Network failure');
-      
+
       mockDeps.authApi.requestEmailCode.mockRejectedValue(networkError);
 
       await expect(
@@ -481,7 +486,9 @@ describe('DI Testing Utilities', () => {
       mockDeps.toastService.showToast('success', 'Welcome!');
 
       // Verify interactions
-      expect(mockDeps.analyticsService.track).toHaveBeenCalledWith('user_signup', { source: 'test' });
+      expect(mockDeps.analyticsService.track).toHaveBeenCalledWith('user_signup', {
+        source: 'test',
+      });
       expect(mockDeps.analyticsService.track).toHaveBeenCalledTimes(1);
       expect(mockDeps.routerService.push).toHaveBeenCalledWith('/dashboard');
       expect(mockDeps.toastService.showToast).toHaveBeenCalledWith('success', 'Welcome!');
@@ -510,15 +517,13 @@ describe('DI Testing Utilities', () => {
     it('should work with renderHook for hook testing', () => {
       const mockDeps = createMockDependencies();
 
-      const { result } = renderHook(
-        () => {
-          // Simulate a hook that uses dependencies
-          return {
-            submitEmail: (email: string) => mockDeps.authApi.requestEmailCode({ email }),
-            showToast: (message: string) => mockDeps.toastService.showToast('info', message),
-          };
-        }
-      );
+      const { result } = renderHook(() => {
+        // Simulate a hook that uses dependencies
+        return {
+          submitEmail: (email: string) => mockDeps.authApi.requestEmailCode({ email }),
+          showToast: (message: string) => mockDeps.toastService.showToast('info', message),
+        };
+      });
 
       expect(typeof result.current.submitEmail).toBe('function');
       expect(typeof result.current.showToast).toBe('function');
@@ -526,15 +531,15 @@ describe('DI Testing Utilities', () => {
 
     it('should work with component testing', () => {
       const mockDeps = createMockDependencies();
-      
+
       const TestComponent = ({ onSubmit }: { onSubmit: () => void }) => (
         <Text onPress={onSubmit}>Submit</Text>
       );
 
       const { getByText } = render(
         <TestDependencyProvider dependencies={mockDeps}>
-          <TestComponent 
-            onSubmit={() => mockDeps.authApi.requestEmailCode({ email: 'test@example.com' })} 
+          <TestComponent
+            onSubmit={() => mockDeps.authApi.requestEmailCode({ email: 'test@example.com' })}
           />
         </TestDependencyProvider>
       );
@@ -553,9 +558,9 @@ describe('DI Testing Utilities', () => {
       }));
 
       const promise = result.current.submitEmail('test@example.com');
-      
+
       expect(promise).toBeInstanceOf(Promise);
-      
+
       const result1 = await promise;
       expect(result1).toEqual({ success: true, delay: 100 });
     });

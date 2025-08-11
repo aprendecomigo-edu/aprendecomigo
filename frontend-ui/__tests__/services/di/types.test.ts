@@ -1,6 +1,6 @@
 /**
  * TDD Tests for Service Interfaces and Types
- * 
+ *
  * These tests will INITIALLY FAIL until the new DI types are implemented.
  * Tests TypeScript interface definitions and service gateway contracts.
  */
@@ -16,7 +16,7 @@ import type {
   AuthContextService,
   OnboardingApiService,
   ServiceGateway,
-  MockDependencies
+  MockDependencies,
 } from '@/services/di/types';
 
 describe('Service Interfaces and Types', () => {
@@ -37,14 +37,14 @@ describe('Service Interfaces and Types', () => {
     it('should support email-based authentication flow', async () => {
       const mockAuthApiService: AuthApiService = {
         requestEmailCode: jest.fn().mockResolvedValue({ success: true }),
-        verifyEmailCode: jest.fn().mockResolvedValue({ 
+        verifyEmailCode: jest.fn().mockResolvedValue({
           user: { id: 1, email: 'test@example.com' },
           access_token: 'token',
-          refresh_token: 'refresh'
+          refresh_token: 'refresh',
         }),
-        createUser: jest.fn().mockResolvedValue({ 
+        createUser: jest.fn().mockResolvedValue({
           user: { id: 1, email: 'new@example.com' },
-          created: true
+          created: true,
         }),
       };
 
@@ -53,9 +53,9 @@ describe('Service Interfaces and Types', () => {
       expect(emailResult.success).toBe(true);
 
       // Test email code verification
-      const verifyResult = await mockAuthApiService.verifyEmailCode({ 
-        email: 'test@example.com', 
-        code: '123456' 
+      const verifyResult = await mockAuthApiService.verifyEmailCode({
+        email: 'test@example.com',
+        code: '123456',
       });
       expect(verifyResult.user.email).toBe('test@example.com');
       expect(verifyResult.access_token).toBe('token');
@@ -64,7 +64,7 @@ describe('Service Interfaces and Types', () => {
       const createResult = await mockAuthApiService.createUser({
         name: 'Test User',
         email: 'new@example.com',
-        user_type: 'student'
+        user_type: 'student',
       });
       expect(createResult.created).toBe(true);
     });
@@ -72,9 +72,9 @@ describe('Service Interfaces and Types', () => {
     it('should support phone-based authentication flow', async () => {
       const mockAuthApiService: AuthApiService = {
         requestEmailCode: jest.fn().mockResolvedValue({ success: true }),
-        verifyEmailCode: jest.fn().mockResolvedValue({ 
+        verifyEmailCode: jest.fn().mockResolvedValue({
           user: { id: 1, phone: '+1234567890' },
-          access_token: 'token'
+          access_token: 'token',
         }),
         createUser: jest.fn(),
       };
@@ -84,9 +84,9 @@ describe('Service Interfaces and Types', () => {
       expect(phoneResult.success).toBe(true);
 
       // Test phone code verification
-      const verifyResult = await mockAuthApiService.verifyEmailCode({ 
-        phone: '+1234567890', 
-        code: '123456' 
+      const verifyResult = await mockAuthApiService.verifyEmailCode({
+        phone: '+1234567890',
+        code: '123456',
       });
       expect(verifyResult.user.phone).toBe('+1234567890');
     });
@@ -158,31 +158,31 @@ describe('Service Interfaces and Types', () => {
       };
 
       // Test event tracking
-      mockAnalyticsService.track('user_signup', { 
-        user_type: 'student', 
-        source: 'web' 
+      mockAnalyticsService.track('user_signup', {
+        user_type: 'student',
+        source: 'web',
       });
       expect(mockAnalyticsService.track).toHaveBeenCalledWith('user_signup', {
         user_type: 'student',
-        source: 'web'
+        source: 'web',
       });
 
       // Test user identification
-      mockAnalyticsService.identify('user_123', { 
+      mockAnalyticsService.identify('user_123', {
         email: 'test@example.com',
-        plan: 'premium'
+        plan: 'premium',
       });
       expect(mockAnalyticsService.identify).toHaveBeenCalledWith('user_123', {
         email: 'test@example.com',
-        plan: 'premium'
+        plan: 'premium',
       });
 
       // Test screen tracking
-      mockAnalyticsService.screen('Dashboard', { 
-        user_role: 'teacher' 
+      mockAnalyticsService.screen('Dashboard', {
+        user_role: 'teacher',
       });
       expect(mockAnalyticsService.screen).toHaveBeenCalledWith('Dashboard', {
-        user_role: 'teacher'
+        user_role: 'teacher',
       });
     });
 
@@ -246,7 +246,9 @@ describe('Service Interfaces and Types', () => {
 
       // Test route with parameters
       mockRouterService.push('/auth/verify-code?email=test%40example.com');
-      expect(mockRouterService.push).toHaveBeenCalledWith('/auth/verify-code?email=test%40example.com');
+      expect(mockRouterService.push).toHaveBeenCalledWith(
+        '/auth/verify-code?email=test%40example.com'
+      );
 
       // Test dynamic routes
       mockRouterService.replace('/students/123');
@@ -274,7 +276,10 @@ describe('Service Interfaces and Types', () => {
       mockToastService.showToast('info', 'Information message');
       mockToastService.showToast('warning', 'Warning message');
 
-      expect(mockToastService.showToast).toHaveBeenCalledWith('success', 'Operation completed successfully');
+      expect(mockToastService.showToast).toHaveBeenCalledWith(
+        'success',
+        'Operation completed successfully'
+      );
       expect(mockToastService.showToast).toHaveBeenCalledWith('error', 'An error occurred');
       expect(mockToastService.showToast).toHaveBeenCalledWith('info', 'Information message');
       expect(mockToastService.showToast).toHaveBeenCalledWith('warning', 'Warning message');
@@ -551,7 +556,9 @@ describe('Service Interfaces and Types', () => {
       expect(jest.isMockFunction(mockDependencies.routerService.push)).toBe(true);
       expect(jest.isMockFunction(mockDependencies.toastService.showToast)).toBe(true);
       expect(jest.isMockFunction(mockDependencies.authContextService.checkAuthStatus)).toBe(true);
-      expect(jest.isMockFunction(mockDependencies.onboardingApiService.getNavigationPreferences)).toBe(true);
+      expect(
+        jest.isMockFunction(mockDependencies.onboardingApiService.getNavigationPreferences)
+      ).toBe(true);
     });
 
     it('should support partial mocking for testing flexibility', () => {
@@ -578,14 +585,14 @@ describe('Service Interfaces and Types', () => {
       // This test verifies TypeScript compilation and interface adherence
       const compliantDependencies: Dependencies = {
         authApi: {
-          requestEmailCode: async (params) => ({ success: true }),
-          verifyEmailCode: async (params) => ({ user: {}, access_token: 'token' }),
-          createUser: async (data) => ({ user: {}, created: true }),
+          requestEmailCode: async params => ({ success: true }),
+          verifyEmailCode: async params => ({ user: {}, access_token: 'token' }),
+          createUser: async data => ({ user: {}, created: true }),
         },
         storageService: {
           setItem: async (key, value) => undefined,
-          getItem: async (key) => 'value',
-          removeItem: async (key) => undefined,
+          getItem: async key => 'value',
+          removeItem: async key => undefined,
         },
         analyticsService: {
           track: (event, properties) => undefined,
@@ -593,9 +600,9 @@ describe('Service Interfaces and Types', () => {
           screen: (name, properties) => undefined,
         },
         routerService: {
-          push: (route) => undefined,
+          push: route => undefined,
           back: () => undefined,
-          replace: (route) => undefined,
+          replace: route => undefined,
         },
         toastService: {
           showToast: (type, message) => undefined,
