@@ -1,12 +1,13 @@
 /**
  * PaymentService Tests - TDD RED STATE
- * 
+ *
  * These tests define the expected behavior for payment business logic extraction
  * from UI components. They will initially fail until the PaymentService is implemented.
  */
 
-import type { TopUpPackage, PaymentMethod, QuickTopUpRequest } from '@/types/purchase';
 import { PaymentService } from '../PaymentService';
+
+import type { TopUpPackage, PaymentMethod, QuickTopUpRequest } from '@/types/purchase';
 
 describe('PaymentService', () => {
   let paymentService: PaymentService;
@@ -93,9 +94,9 @@ describe('PaymentService', () => {
     });
 
     it('should validate either payment method ID or default payment method flag', async () => {
-      await expect(
-        paymentService.processQuickTopUp(mockPackage.id, null, null)
-      ).rejects.toThrow('Either payment method ID or use default payment method must be specified');
+      await expect(paymentService.processQuickTopUp(mockPackage.id, null, null)).rejects.toThrow(
+        'Either payment method ID or use default payment method must be specified'
+      );
     });
   });
 
@@ -114,9 +115,9 @@ describe('PaymentService', () => {
       const result = paymentService.calculatePackagePrice(pkg);
 
       expect(result).toEqual({
-        totalPrice: 50.00,
-        pricePerHour: 10.00,
-        originalPrice: 50.00,
+        totalPrice: 50.0,
+        pricePerHour: 10.0,
+        originalPrice: 50.0,
         discountAmount: 0,
         discountPercentage: 0,
         hasDiscount: false,
@@ -138,10 +139,10 @@ describe('PaymentService', () => {
       const result = paymentService.calculatePackagePrice(pkg);
 
       expect(result).toEqual({
-        totalPrice: 180.00,
-        pricePerHour: 9.00,
-        originalPrice: 200.00, // 20 hours * 10.00 per hour
-        discountAmount: 20.00,
+        totalPrice: 180.0,
+        pricePerHour: 9.0,
+        originalPrice: 200.0, // 20 hours * 10.00 per hour
+        discountAmount: 20.0,
         discountPercentage: 10,
         hasDiscount: true,
       });
@@ -178,8 +179,8 @@ describe('PaymentService', () => {
 
       const result = paymentService.calculatePackagePrice(pkg);
 
-      expect(result.totalPrice).toBe(142.50);
-      expect(result.pricePerHour).toBe(9.50);
+      expect(result.totalPrice).toBe(142.5);
+      expect(result.pricePerHour).toBe(9.5);
       expect(result.hasDiscount).toBe(true);
       expect(result.discountPercentage).toBe(5);
     });
@@ -304,7 +305,7 @@ describe('PaymentService', () => {
       // PaymentService should not depend on React hooks, components, or UI state
       expect(typeof PaymentService).toBe('function');
       expect(paymentService).toBeInstanceOf(PaymentService);
-      
+
       // Should have all expected methods
       expect(typeof paymentService.processQuickTopUp).toBe('function');
       expect(typeof paymentService.calculatePackagePrice).toBe('function');
@@ -340,7 +341,7 @@ describe('PaymentService', () => {
       };
 
       const packageCopy = { ...originalPackage };
-      
+
       paymentService.calculatePackagePrice(originalPackage);
 
       // Original package should not be modified

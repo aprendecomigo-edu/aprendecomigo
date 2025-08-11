@@ -1,19 +1,21 @@
 /**
  * Default Service Implementations
- * 
+ *
  * This file provides default implementations of all service interfaces
  * using existing API clients and utilities from the codebase.
  */
 
-import { 
+import { createBusinessServices } from '../business/factory';
+
+import {
   Dependencies,
-  AuthApiService, 
-  StorageService, 
-  AnalyticsService, 
-  RouterService, 
-  ToastService, 
+  AuthApiService,
+  StorageService,
+  AnalyticsService,
+  RouterService,
+  ToastService,
   AuthContextService,
-  OnboardingApiService 
+  OnboardingApiService,
 } from './types';
 
 // Import existing API clients and utilities
@@ -22,7 +24,6 @@ import { onboardingApi } from '@/api/onboardingApi';
 import { storage } from '@/utils/storage';
 
 // Import business services
-import { createBusinessServices } from '../business/factory';
 
 // ==================== Default Auth API Service ====================
 
@@ -74,7 +75,10 @@ class DefaultStorageService implements StorageService {
 class DefaultAnalyticsService implements AnalyticsService {
   track(event: string, properties?: Record<string, any>): void {
     // Only log in development mode, check both __DEV__ and NODE_ENV
-    if ((__DEV__ || process.env.NODE_ENV === 'development') && process.env.NODE_ENV !== 'production') {
+    if (
+      (__DEV__ || process.env.NODE_ENV === 'development') &&
+      process.env.NODE_ENV !== 'production'
+    ) {
       console.log('Analytics Track:', event, properties);
     }
     // In production, this would send to actual analytics service
@@ -82,7 +86,10 @@ class DefaultAnalyticsService implements AnalyticsService {
 
   identify(userId: string, properties?: Record<string, any>): void {
     // Only log in development mode, check both __DEV__ and NODE_ENV
-    if ((__DEV__ || process.env.NODE_ENV === 'development') && process.env.NODE_ENV !== 'production') {
+    if (
+      (__DEV__ || process.env.NODE_ENV === 'development') &&
+      process.env.NODE_ENV !== 'production'
+    ) {
       console.log('Analytics Identify:', userId, properties);
     }
     // In production, this would send to actual analytics service
@@ -90,7 +97,10 @@ class DefaultAnalyticsService implements AnalyticsService {
 
   screen(name: string, properties?: Record<string, any>): void {
     // Only log in development mode, check both __DEV__ and NODE_ENV
-    if ((__DEV__ || process.env.NODE_ENV === 'development') && process.env.NODE_ENV !== 'production') {
+    if (
+      (__DEV__ || process.env.NODE_ENV === 'development') &&
+      process.env.NODE_ENV !== 'production'
+    ) {
       console.log('Analytics Screen:', name, properties);
     }
     // In production, this would send to actual analytics service
@@ -211,7 +221,7 @@ class DefaultOnboardingApiService implements OnboardingApiService {
 
 export const createDefaultDependencies = (): Dependencies => {
   const businessServices = createBusinessServices();
-  
+
   return {
     authApi: new DefaultAuthApiService(),
     storageService: new DefaultStorageService(),

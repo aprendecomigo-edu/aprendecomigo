@@ -1,6 +1,6 @@
 /**
  * Dependency Injection Types and Interfaces
- * 
+ *
  * This file defines all service interfaces and types used in the DI system.
  * These interfaces define the contracts that business logic expects from external services.
  */

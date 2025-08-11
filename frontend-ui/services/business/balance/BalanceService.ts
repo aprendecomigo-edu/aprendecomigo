@@ -1,13 +1,12 @@
 /**
  * BalanceService - Business Logic for Balance Calculations
- * 
+ *
  * This service handles all balance-related business logic including
  * remaining hours calculations, balance status determination, and expiry predictions.
- * 
+ *
  * Pure functions with no UI dependencies - suitable for testing and business logic isolation.
  */
 
-import type { PackageInfo } from '@/types/purchase';
 import type {
   RemainingHoursCalculation,
   PackageBreakdown,
@@ -16,6 +15,8 @@ import type {
   ExpiryPrediction,
   BalanceServiceInterface,
 } from '../types';
+
+import type { PackageInfo } from '@/types/purchase';
 
 export class BalanceService implements BalanceServiceInterface {
   /**
@@ -170,11 +171,16 @@ export class BalanceService implements BalanceServiceInterface {
 
     // Handle insufficient data
     if (consumptionHistory.length < 3) {
-      const dailyAverage = consumptionHistory.reduce((sum, record) => sum + record.hoursConsumed, 0) / consumptionHistory.length;
+      const dailyAverage =
+        consumptionHistory.reduce((sum, record) => sum + record.hoursConsumed, 0) /
+        consumptionHistory.length;
       const weeklyRate = dailyAverage * 7;
       const monthlyRate = dailyAverage * 30;
-      const daysUntilExpiry = dailyAverage > 0 ? Math.ceil(balance.totalRemainingHours / dailyAverage) : null;
-      const estimatedExpiryDate = daysUntilExpiry ? new Date(Date.now() + daysUntilExpiry * 24 * 60 * 60 * 1000) : null;
+      const daysUntilExpiry =
+        dailyAverage > 0 ? Math.ceil(balance.totalRemainingHours / dailyAverage) : null;
+      const estimatedExpiryDate = daysUntilExpiry
+        ? new Date(Date.now() + daysUntilExpiry * 24 * 60 * 60 * 1000)
+        : null;
 
       return {
         estimatedExpiryDate,
@@ -187,19 +193,24 @@ export class BalanceService implements BalanceServiceInterface {
     }
 
     // Calculate consumption rates
-    const totalHoursConsumed = consumptionHistory.reduce((sum, record) => sum + record.hoursConsumed, 0);
+    const totalHoursConsumed = consumptionHistory.reduce(
+      (sum, record) => sum + record.hoursConsumed,
+      0
+    );
     const averageDailyConsumption = totalHoursConsumed / consumptionHistory.length;
     const weeklyConsumptionRate = averageDailyConsumption * 7;
     const monthlyConsumptionRate = averageDailyConsumption * 30;
 
     // Calculate variance to determine consistency
-    const variance = consumptionHistory.reduce((sum, record) => {
-      const diff = record.hoursConsumed - averageDailyConsumption;
-      return sum + diff * diff;
-    }, 0) / consumptionHistory.length;
+    const variance =
+      consumptionHistory.reduce((sum, record) => {
+        const diff = record.hoursConsumed - averageDailyConsumption;
+        return sum + diff * diff;
+      }, 0) / consumptionHistory.length;
 
     const standardDeviation = Math.sqrt(variance);
-    const coefficientOfVariation = averageDailyConsumption > 0 ? standardDeviation / averageDailyConsumption : 0;
+    const coefficientOfVariation =
+      averageDailyConsumption > 0 ? standardDeviation / averageDailyConsumption : 0;
 
     // Determine confidence level based on data quality and consistency
     let confidence: 'high' | 'medium' | 'low';
@@ -210,7 +221,8 @@ export class BalanceService implements BalanceServiceInterface {
       reasoning = 'consistent usage pattern with sufficient data';
     } else if (consumptionHistory.length >= 7) {
       confidence = 'medium';
-      reasoning = coefficientOfVariation >= 0.6 ? 'irregular usage pattern' : 'moderate data available';
+      reasoning =
+        coefficientOfVariation >= 0.6 ? 'irregular usage pattern' : 'moderate data available';
     } else {
       confidence = 'low';
       reasoning = 'limited data available';

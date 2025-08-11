@@ -136,13 +136,13 @@ export function BalanceStatusBar({
   className = '',
 }: BalanceStatusBarProps) {
   const { balanceService } = useDependencies();
-  
+
   const balanceStatus = balanceService.getBalanceStatus(remainingHours, totalHours);
   const status = {
     ...balanceStatus,
     icon: getIconComponent(balanceStatus.icon),
   };
-  
+
   const percentage = totalHours > 0 ? Math.min((remainingHours / totalHours) * 100, 100) : 0;
 
   // Convert to progress value (0-100)
@@ -219,13 +219,13 @@ export function CompactBalanceStatusBar({
   className = '',
 }: Pick<BalanceStatusBarProps, 'remainingHours' | 'totalHours' | 'className'>) {
   const { balanceService } = useDependencies();
-  
+
   const balanceStatus = balanceService.getBalanceStatus(remainingHours, totalHours);
   const status = {
     ...balanceStatus,
     icon: getIconComponent(balanceStatus.icon),
   };
-  
+
   const percentage = totalHours > 0 ? (remainingHours / totalHours) * 100 : 0;
 
   return (

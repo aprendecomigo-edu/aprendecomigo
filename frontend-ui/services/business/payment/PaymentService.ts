@@ -1,22 +1,19 @@
 /**
  * PaymentService - Business Logic for Payment Processing
- * 
+ *
  * This service handles all payment-related business logic including
  * package pricing calculations, payment method validation, and quick top-up processing.
- * 
+ *
  * Pure functions with no UI dependencies - suitable for testing and business logic isolation.
  */
 
-import type {
-  TopUpPackage,
-  PaymentMethod,
-  QuickTopUpRequest,
-} from '@/types/purchase';
 import type {
   PaymentCalculationResult,
   PaymentMethodValidationResult,
   PaymentServiceInterface,
 } from '../types';
+
+import type { TopUpPackage, PaymentMethod, QuickTopUpRequest } from '@/types/purchase';
 
 export class PaymentService implements PaymentServiceInterface {
   /**
@@ -62,14 +59,14 @@ export class PaymentService implements PaymentServiceInterface {
   calculatePackagePrice(pkg: TopUpPackage): PaymentCalculationResult {
     const totalPrice = parseFloat(pkg.price_eur);
     const pricePerHour = parseFloat(pkg.price_per_hour);
-    
+
     // Calculate original price if there's a discount
     const hasDiscount = (pkg.discount_percentage || 0) > 0;
     const discountPercentage = pkg.discount_percentage || 0;
-    
+
     let originalPrice = totalPrice;
     let discountAmount = 0;
-    
+
     if (hasDiscount && discountPercentage > 0) {
       // If there's a discount, calculate the original price
       // totalPrice = originalPrice * (1 - discountPercentage / 100)
@@ -102,7 +99,12 @@ export class PaymentService implements PaymentServiceInterface {
     }
 
     // Validate card details
-    if (!method.card.brand || !method.card.last4 || !method.card.exp_month || !method.card.exp_year) {
+    if (
+      !method.card.brand ||
+      !method.card.last4 ||
+      !method.card.exp_month ||
+      !method.card.exp_year
+    ) {
       errors.push('Incomplete card details');
     }
 

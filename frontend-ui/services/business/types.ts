@@ -1,6 +1,6 @@
 /**
  * Business Service Types and Interfaces
- * 
+ *
  * This file defines the interfaces for business logic services
  * that handle payment processing, balance calculations, and other domain logic.
  */

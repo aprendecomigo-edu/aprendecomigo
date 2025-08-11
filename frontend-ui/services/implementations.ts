@@ -4,18 +4,18 @@
 
 import useRouter from '@unitools/router';
 
-import { 
-  AuthApiService, 
-  StorageService, 
-  AnalyticsService, 
-  RouterService, 
-  ToastService, 
+import {
+  AuthApiService,
+  StorageService,
+  AnalyticsService,
+  RouterService,
+  ToastService,
   AuthContextService,
-  OnboardingApiService 
+  OnboardingApiService,
 } from './types';
 
-import * as authApi from '@/api/authApi';
 import { useAuth } from '@/api/auth';
+import * as authApi from '@/api/authApi';
 import { onboardingApi } from '@/api/onboardingApi';
 import { useToast } from '@/components/ui/toast';
 import { storage } from '@/utils/storage';

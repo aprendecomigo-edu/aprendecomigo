@@ -1,14 +1,18 @@
 /**
  * Dependency Injection Testing Utilities
- * 
+ *
  * This file provides comprehensive utilities for testing with dependency injection,
  * including mock creation, test providers, and builder patterns.
  */
 
 import React, { ComponentType } from 'react';
-import { 
-  Dependencies, 
-  MockDependencies, 
+
+import type { PaymentServiceInterface, BalanceServiceInterface } from '../business/types';
+
+import { DependencyProvider } from './context';
+import {
+  Dependencies,
+  MockDependencies,
   PartialDependencies,
   AuthApiService,
   StorageService,
@@ -16,10 +20,8 @@ import {
   RouterService,
   ToastService,
   AuthContextService,
-  OnboardingApiService
+  OnboardingApiService,
 } from './types';
-import type { PaymentServiceInterface, BalanceServiceInterface } from '../business/types';
-import { DependencyProvider } from './context';
 
 // ==================== Mock Creation Functions ====================
 
@@ -89,9 +91,9 @@ export const withMockDependencies = <P extends object>(
       React.createElement(Component, props)
     );
   };
-  
+
   WrappedComponent.displayName = `withMockDependencies(${Component.displayName || Component.name})`;
-  
+
   return WrappedComponent;
 };
 
@@ -152,7 +154,7 @@ export class MockDependencyBuilder {
 
   build(): Dependencies {
     const mockDeps = createMockDependencies();
-    
+
     return {
       authApi: this.dependencies.authApi || mockDeps.authApi,
       storageService: this.dependencies.storageService || mockDeps.storageService,
@@ -185,11 +187,7 @@ export const TestDependencyProvider: React.FC<TestDependencyProviderProps> = ({
     ...overrides,
   };
 
-  return React.createElement(
-    DependencyProvider,
-    { dependencies: finalDependencies },
-    children
-  );
+  return React.createElement(DependencyProvider, { dependencies: finalDependencies }, children);
 };
 
 // ==================== Test Utilities and Helpers ====================
@@ -203,7 +201,7 @@ export const createTestDependencyProvider = (dependencies: Dependencies) => {
 export const createMockDependencyProvider = () => {
   const mockDependencies = createMockDependencies();
   return {
-    Provider: ({ children }: { children: React.ReactNode }) => 
+    Provider: ({ children }: { children: React.ReactNode }) =>
       React.createElement(DependencyProvider, { dependencies: mockDependencies }, children),
     mocks: mockDependencies,
   };
@@ -250,11 +248,11 @@ export const createAuthScenarioMocks = () => {
 export const createNetworkErrorScenario = (service: keyof Dependencies, method: string) => {
   const mocks = createMockDependencies();
   const networkError = new Error('Network error');
-  
+
   if (service in mocks && method in mocks[service]) {
     (mocks[service] as any)[method].mockRejectedValue(networkError);
   }
-  
+
   return { mocks, networkError };
 };
 
@@ -279,17 +277,11 @@ export const isMockFunction = (fn: any): fn is jest.MockedFunction<any> => {
   return jest.isMockFunction(fn);
 };
 
-export const assertMockCalled = (
-  mockFn: jest.MockedFunction<any>,
-  expectedCalls: number = 1
-) => {
+export const assertMockCalled = (mockFn: jest.MockedFunction<any>, expectedCalls: number = 1) => {
   expect(mockFn).toHaveBeenCalledTimes(expectedCalls);
 };
 
-export const assertMockCalledWith = (
-  mockFn: jest.MockedFunction<any>,
-  ...expectedArgs: any[]
-) => {
+export const assertMockCalledWith = (mockFn: jest.MockedFunction<any>, ...expectedArgs: any[]) => {
   expect(mockFn).toHaveBeenCalledWith(...expectedArgs);
 };
 
@@ -308,11 +300,11 @@ export const createAsyncTestScenario = (
   return scenarios.map(scenario => {
     const mocks = createMockDependencies();
     const service = mocks[serviceName] as any;
-    
+
     if (service && service[methodName]) {
       service[methodName].mockImplementation(scenario.mockImplementation);
     }
-    
+
     return {
       name: scenario.name,
       mocks,
@@ -330,13 +322,13 @@ export const createCombinedServiceScenario = (
   }>
 ) => {
   const mocks = createMockDependencies();
-  
+
   services.forEach(({ service, method, mockImplementation }) => {
     const serviceObj = mocks[service] as any;
     if (serviceObj && serviceObj[method]) {
       serviceObj[method].mockImplementation(mockImplementation);
     }
   });
-  
+
   return mocks;
 };

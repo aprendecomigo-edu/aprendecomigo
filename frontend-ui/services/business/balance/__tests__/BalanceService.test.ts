@@ -1,12 +1,13 @@
 /**
  * BalanceService Tests - TDD RED STATE
- * 
+ *
  * These tests define the expected behavior for balance calculation business logic
  * extraction from UI components. They will initially fail until the BalanceService is implemented.
  */
 
-import type { PackageInfo, BalanceSummary } from '@/types/purchase';
 import { BalanceService } from '../BalanceService';
+
+import type { PackageInfo, BalanceSummary } from '@/types/purchase';
 
 describe('BalanceService', () => {
   let balanceService: BalanceService;
@@ -303,9 +304,7 @@ describe('BalanceService', () => {
     });
 
     it('should handle insufficient consumption history', () => {
-      const limitedHistory = [
-        { date: '2024-01-01', hoursConsumed: 2 },
-      ];
+      const limitedHistory = [{ date: '2024-01-01', hoursConsumed: 2 }];
 
       const result = balanceService.predictExpiryDate(mockBalance, limitedHistory);
 
@@ -360,7 +359,7 @@ describe('BalanceService', () => {
       // BalanceService should not depend on React hooks, components, or UI state
       expect(typeof BalanceService).toBe('function');
       expect(balanceService).toBeInstanceOf(BalanceService);
-      
+
       // Should have all expected methods
       expect(typeof balanceService.calculateRemainingHours).toBe('function');
       expect(typeof balanceService.getBalanceStatus).toBe('function');
@@ -382,7 +381,7 @@ describe('BalanceService', () => {
       ];
 
       const packagesCopy = JSON.parse(JSON.stringify(originalPackages));
-      
+
       balanceService.calculateRemainingHours(originalPackages);
 
       // Original packages should not be modified

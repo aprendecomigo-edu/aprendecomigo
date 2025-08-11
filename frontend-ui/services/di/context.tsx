@@ -1,11 +1,12 @@
 /**
  * Dependency Injection Context and Provider
- * 
+ *
  * This file implements the React context and provider for dependency injection.
  * It provides a way to inject dependencies into React components through context.
  */
 
 import React, { createContext, useContext, ReactNode } from 'react';
+
 import { Dependencies } from './types';
 
 // ==================== Context Creation ====================
@@ -40,7 +41,7 @@ export const DependencyProvider: React.FC<DependencyProviderProps> = ({
     ];
 
     const missingServices = requiredServices.filter(service => !deps[service]);
-    
+
     if (missingServices.length > 0) {
       throw new Error(`Missing required dependencies: ${missingServices.join(', ')}`);
     }
@@ -48,22 +49,18 @@ export const DependencyProvider: React.FC<DependencyProviderProps> = ({
 
   validateDependencies(dependencies);
 
-  return (
-    <DependencyContext.Provider value={dependencies}>
-      {children}
-    </DependencyContext.Provider>
-  );
+  return <DependencyContext.Provider value={dependencies}>{children}</DependencyContext.Provider>;
 };
 
 // ==================== useDependencies Hook ====================
 
 export const useDependencies = (): Dependencies => {
   const context = useContext(DependencyContext);
-  
+
   if (context === undefined) {
     throw new Error('useDependencies must be used within a DependencyProvider');
   }
-  
+
   return context;
 };
 
