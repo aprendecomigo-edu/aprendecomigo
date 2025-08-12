@@ -16,12 +16,14 @@ import {
   ToastService,
   AuthContextService,
   OnboardingApiService,
+  WebSocketService,
 } from './types';
 
 // Import existing API clients and utilities
 import * as authApi from '@/api/authApi';
 import { onboardingApi } from '@/api/onboardingApi';
 import { storage } from '@/utils/storage';
+import { WebSocketClient } from '../websocket/WebSocketClient';
 
 // Import business services
 
@@ -217,6 +219,14 @@ class DefaultOnboardingApiService implements OnboardingApiService {
   }
 }
 
+// ==================== Default WebSocket Service ====================
+
+class DefaultWebSocketService implements WebSocketService {
+  createClient(config: any): any {
+    return new WebSocketClient(config);
+  }
+}
+
 // ==================== Create Default Dependencies Function ====================
 
 export const createDefaultDependencies = (): Dependencies => {
@@ -230,6 +240,7 @@ export const createDefaultDependencies = (): Dependencies => {
     toastService: new DefaultToastService(),
     authContextService: new DefaultAuthContextService(),
     onboardingApiService: new DefaultOnboardingApiService(),
+    websocket: new DefaultWebSocketService(),
     paymentService: businessServices.paymentService,
     balanceService: businessServices.balanceService,
   };

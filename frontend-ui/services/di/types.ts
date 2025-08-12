@@ -60,6 +60,10 @@ export interface OnboardingApiService {
   getOnboardingProgress(): Promise<any>;
 }
 
+export interface WebSocketService {
+  createClient(config: any): any;
+}
+
 // ==================== Dependencies Container ====================
 
 export interface Dependencies {
@@ -70,6 +74,7 @@ export interface Dependencies {
   toastService: ToastService;
   authContextService: AuthContextService;
   onboardingApiService: OnboardingApiService;
+  websocket: WebSocketService;
 }
 
 // ==================== Mock Dependencies for Testing ====================

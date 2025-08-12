@@ -409,6 +409,11 @@ export const WebSocketTestUtils = {
   setup(): void {
     (global as any).WebSocket = MockWebSocket;
     MockWebSocket.clearInstances();
+    
+    // Setup WebSocketClient mock registry
+    if (!(global as any).__mockWebSocketClients) {
+      (global as any).__mockWebSocketClients = [];
+    }
   },
 
   /**
@@ -417,6 +422,13 @@ export const WebSocketTestUtils = {
   cleanup(): void {
     MockWebSocket.resetAll();
     MockWebSocket.setGlobalConnectionFailure(false);
+    
+    // Clear WebSocketClient registry
+    if ((global as any).__mockWebSocketClients) {
+      (global as any).__mockWebSocketClients.length = 0;
+    }
+    (global as any).__lastMockWebSocketClient = null;
+    (global as any).__webSocketGlobalFailure = false;
   },
 
   /**
@@ -433,15 +445,19 @@ export const WebSocketTestUtils = {
   /**
    * Get the most recently created WebSocket instance
    */
-  getLastWebSocket(): MockWebSocket | null {
-    return MockWebSocket.getLastInstance();
+  getLastWebSocket(): any {
+    // For the new architecture, we need to get the mock client from the hook render
+    // This will be updated by the hook when it creates a client
+    return (global as any).__lastMockWebSocketClient || MockWebSocket.getLastInstance();
   },
 
   /**
    * Get all WebSocket instances
    */
-  getAllWebSockets(): MockWebSocket[] {
-    return MockWebSocket.getAllInstances();
+  getAllWebSockets(): any[] {
+    const clients = (global as any).__mockWebSocketClients || [];
+    const nativeWs = MockWebSocket.getAllInstances();
+    return [...clients, ...nativeWs];
   },
 
   /**
@@ -466,6 +482,8 @@ export const WebSocketTestUtils = {
    */
   setGlobalConnectionFailure: (shouldFail: boolean): void => {
     MockWebSocket.setGlobalConnectionFailure(shouldFail);
+    // Also set for the new WebSocketClient mock
+    (global as any).__webSocketGlobalFailure = shouldFail;
   },
 
   /**
