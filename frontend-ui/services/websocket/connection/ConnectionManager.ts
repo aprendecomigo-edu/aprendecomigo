@@ -1,12 +1,18 @@
 /**
  * ConnectionManager - Pure WebSocket Connection Handling
- * 
+ *
  * This class handles the raw WebSocket connection lifecycle with authentication
  * support. It delegates auth and reconnection to injected services, following
  * the Single Responsibility Principle.
  */
 
-import { AuthProvider, WebSocketConfig, ConnectionState, WebSocketMessage, EventEmitterInterface } from '../types';
+import {
+  AuthProvider,
+  WebSocketConfig,
+  ConnectionState,
+  WebSocketMessage,
+  EventEmitterInterface,
+} from '../types';
 
 export class ConnectionManager implements EventEmitterInterface {
   private ws: WebSocket | null = null;
@@ -75,22 +81,22 @@ export class ConnectionManager implements EventEmitterInterface {
   private attachListeners(): void {
     if (!this.ws) return;
 
-    this.ws.onopen = (event) => {
+    this.ws.onopen = event => {
       this.setState(ConnectionState.CONNECTED);
       this.emit('open');
     };
 
-    this.ws.onclose = (event) => {
+    this.ws.onclose = event => {
       this.setState(ConnectionState.DISCONNECTED);
       this.emit('close', event);
     };
 
-    this.ws.onerror = (event) => {
+    this.ws.onerror = event => {
       this.setState(ConnectionState.ERROR);
       this.emit('error', new Error('WebSocket connection error'));
     };
 
-    this.ws.onmessage = (event) => {
+    this.ws.onmessage = event => {
       try {
         const message = JSON.parse(event.data);
         this.emit('message', message);

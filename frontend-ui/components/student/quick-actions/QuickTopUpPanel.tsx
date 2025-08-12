@@ -23,11 +23,7 @@ import { VStack } from '@/components/ui/vstack';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 import { useStudentBalance } from '@/hooks/useStudentBalance';
 import { useDependencies } from '@/services/di/context';
-import type {
-  TopUpPackage,
-  PaymentMethod,
-  QuickTopUpResponse,
-} from '@/types/purchase';
+import type { TopUpPackage, PaymentMethod, QuickTopUpResponse } from '@/types/purchase';
 
 interface QuickTopUpPanelProps {
   /** Optional email for admin access */

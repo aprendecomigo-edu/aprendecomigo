@@ -409,7 +409,7 @@ export const WebSocketTestUtils = {
   setup(): void {
     (global as any).WebSocket = MockWebSocket;
     MockWebSocket.clearInstances();
-    
+
     // Setup WebSocketClient mock registry
     if (!(global as any).__mockWebSocketClients) {
       (global as any).__mockWebSocketClients = [];
@@ -422,7 +422,7 @@ export const WebSocketTestUtils = {
   cleanup(): void {
     MockWebSocket.resetAll();
     MockWebSocket.setGlobalConnectionFailure(false);
-    
+
     // Clear WebSocketClient registry
     if ((global as any).__mockWebSocketClients) {
       (global as any).__mockWebSocketClients.length = 0;

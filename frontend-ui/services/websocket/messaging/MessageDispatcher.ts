@@ -1,18 +1,18 @@
 /**
  * MessageDispatcher - Message Routing and Handling
- * 
+ *
  * This class handles message routing to specific handlers based on message types,
  * supporting wildcard patterns, filters, priorities, and middleware.
  */
 
-import { 
-  WebSocketMessage, 
-  MessageHandler, 
-  MessageHandlerOptions, 
+import {
+  WebSocketMessage,
+  MessageHandler,
+  MessageHandlerOptions,
   MessageFilter,
   MessageMiddleware,
   MessageDispatcherMetrics,
-  EventEmitterInterface 
+  EventEmitterInterface,
 } from '../types';
 
 interface HandlerEntry {
@@ -29,25 +29,33 @@ export class MessageDispatcher implements EventEmitterInterface {
     successfulDispatches: 0,
     failedDispatches: 0,
     handlerExecutionTime: {},
-    averageExecutionTime: 0
+    averageExecutionTime: 0,
   };
   private metricsEnabled: boolean = false;
   private maxQueueSize: number = 1000;
   private currentQueueSize: number = 0;
-  private errorCallback?: (error: Error, message: WebSocketMessage, handler: MessageHandler) => void;
+  private errorCallback?: (
+    error: Error,
+    message: WebSocketMessage,
+    handler: MessageHandler
+  ) => void;
 
-  addHandler(messageType: string, handler: MessageHandler, options: MessageHandlerOptions = {}): void {
+  addHandler(
+    messageType: string,
+    handler: MessageHandler,
+    options: MessageHandlerOptions = {}
+  ): void {
     if (!this.handlers.has(messageType)) {
       this.handlers.set(messageType, []);
     }
 
     const entry: HandlerEntry = { handler, options };
     const handlers = this.handlers.get(messageType)!;
-    
+
     // Insert based on priority (higher priority first)
     const priority = options.priority ?? 0;
     const insertIndex = handlers.findIndex(h => (h.options.priority ?? 0) < priority);
-    
+
     if (insertIndex === -1) {
       handlers.push(entry);
     } else {
@@ -75,7 +83,7 @@ export class MessageDispatcher implements EventEmitterInterface {
 
   getHandlers(messageType: string): MessageHandler[] {
     const matchingHandlers: MessageHandler[] = [];
-    
+
     // Find all matching patterns
     for (const [pattern, entries] of this.handlers) {
       if (this.matchesPattern(messageType, pattern)) {
@@ -97,7 +105,7 @@ export class MessageDispatcher implements EventEmitterInterface {
     }
 
     this.currentQueueSize++;
-    
+
     try {
       this.metrics.totalMessages++;
       const startTime = Date.now();
@@ -110,7 +118,7 @@ export class MessageDispatcher implements EventEmitterInterface {
 
       // Find all matching handlers
       const matchingEntries: HandlerEntry[] = [];
-      
+
       for (const [pattern, entries] of this.handlers) {
         if (this.matchesPattern(message.type, pattern)) {
           entries.forEach(entry => {
@@ -127,11 +135,11 @@ export class MessageDispatcher implements EventEmitterInterface {
 
       // Execute handlers
       const handlersToRemove: { pattern: string; handler: MessageHandler }[] = [];
-      
+
       for (const entry of matchingEntries) {
         try {
           await entry.handler(processedMessage);
-          
+
           // Mark for removal if it's a one-time handler
           if (entry.options.once) {
             // Find the pattern this handler belongs to
@@ -144,8 +152,9 @@ export class MessageDispatcher implements EventEmitterInterface {
           }
         } catch (error) {
           this.metrics.failedDispatches++;
-          const handlerError = error instanceof Error ? error : new Error('Handler execution failed');
-          
+          const handlerError =
+            error instanceof Error ? error : new Error('Handler execution failed');
+
           if (this.errorCallback) {
             this.errorCallback(handlerError, processedMessage, entry.handler);
           } else {
@@ -167,7 +176,6 @@ export class MessageDispatcher implements EventEmitterInterface {
         this.metrics.handlerExecutionTime[message.type] = executionTime;
         this.updateAverageExecutionTime();
       }
-
     } finally {
       this.currentQueueSize--;
     }
@@ -200,7 +208,9 @@ export class MessageDispatcher implements EventEmitterInterface {
     return this.currentQueueSize;
   }
 
-  onHandlerError(callback: (error: Error, message: WebSocketMessage, handler: MessageHandler) => void): void {
+  onHandlerError(
+    callback: (error: Error, message: WebSocketMessage, handler: MessageHandler) => void
+  ): void {
     this.errorCallback = callback;
   }
 
@@ -217,9 +227,7 @@ export class MessageDispatcher implements EventEmitterInterface {
 
     // Pattern matching with wildcards
     if (pattern.includes('*')) {
-      const regexPattern = pattern
-        .replace(/\./g, '\\.')
-        .replace(/\*/g, '.*');
+      const regexPattern = pattern.replace(/\./g, '\\.').replace(/\*/g, '.*');
       const regex = new RegExp(`^${regexPattern}$`);
       return regex.test(messageType);
     }
@@ -228,10 +236,12 @@ export class MessageDispatcher implements EventEmitterInterface {
   }
 
   private isValidMessage(message: any): message is WebSocketMessage {
-    return message && 
-           typeof message === 'object' && 
-           typeof message.type === 'string' && 
-           message.type.length > 0;
+    return (
+      message &&
+      typeof message === 'object' &&
+      typeof message.type === 'string' &&
+      message.type.length > 0
+    );
   }
 
   private updateAverageExecutionTime(): void {

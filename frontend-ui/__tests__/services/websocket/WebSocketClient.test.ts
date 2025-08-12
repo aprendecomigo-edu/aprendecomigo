@@ -1,10 +1,10 @@
 /**
  * Tests for WebSocketClient - Unified WebSocket Client Integration
- * 
+ *
  * This tests the new modular architecture where WebSocketClient integrates
  * ConnectionManager, ReconnectionStrategy, and MessageDispatcher to provide
  * a unified interface replacing the monolithic useWebSocket hook.
- * 
+ *
  * EXPECTED TO FAIL: These tests validate the new architecture that hasn't been implemented yet.
  */
 
@@ -17,7 +17,7 @@ import {
   ConnectionState,
   AuthProvider,
   ReconnectionConfig,
-  WebSocketMessage
+  WebSocketMessage,
 } from '@/services/websocket/types';
 
 // Mock dependencies
@@ -38,7 +38,9 @@ jest.mock('@/services/websocket/reconnection/strategies');
 
 const MockConnectionManager = ConnectionManager as jest.MockedClass<typeof ConnectionManager>;
 const MockMessageDispatcher = MessageDispatcher as jest.MockedClass<typeof MessageDispatcher>;
-const MockExponentialBackoffStrategy = ExponentialBackoffStrategy as jest.MockedClass<typeof ExponentialBackoffStrategy>;
+const MockExponentialBackoffStrategy = ExponentialBackoffStrategy as jest.MockedClass<
+  typeof ExponentialBackoffStrategy
+>;
 
 describe('WebSocketClient', () => {
   let client: WebSocketClient;
@@ -99,8 +101,8 @@ describe('WebSocketClient', () => {
         initialDelay: 1000,
         maxDelay: 30000,
         backoffFactor: 2,
-        maxAttempts: 5
-      }
+        maxAttempts: 5,
+      },
     };
 
     client = new WebSocketClient(config);
@@ -117,7 +119,7 @@ describe('WebSocketClient', () => {
     it('should use default configuration for missing options', () => {
       // Arrange
       const minimalConfig: WebSocketConfig = {
-        url: 'ws://localhost:8000/ws/minimal'
+        url: 'ws://localhost:8000/ws/minimal',
       };
 
       // Act
@@ -126,14 +128,14 @@ describe('WebSocketClient', () => {
       // Assert
       expect(MockConnectionManager).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: 'ws://localhost:8000/ws/minimal'
+          url: 'ws://localhost:8000/ws/minimal',
         })
       );
       expect(MockExponentialBackoffStrategy).toHaveBeenCalledWith(
         expect.objectContaining({
           strategy: 'exponential',
           initialDelay: 1000,
-          maxDelay: 30000
+          maxDelay: 30000,
         })
       );
     });
@@ -143,7 +145,7 @@ describe('WebSocketClient', () => {
       const invalidConfigs = [
         { url: '' },
         { url: 'invalid-url' },
-        { url: 'ws://test', reconnection: { maxAttempts: -1 } }
+        { url: 'ws://test', reconnection: { maxAttempts: -1 } },
       ];
 
       // Act & Assert
@@ -203,7 +205,7 @@ describe('WebSocketClient', () => {
       // Arrange
       const message: WebSocketMessage = {
         type: 'chat.message',
-        content: 'Hello world'
+        content: 'Hello world',
       };
 
       // Act
@@ -221,7 +223,11 @@ describe('WebSocketClient', () => {
       client.addMessageHandler('chat.message', handler);
 
       // Assert
-      expect(mockMessageDispatcher.addHandler).toHaveBeenCalledWith('chat.message', handler, undefined);
+      expect(mockMessageDispatcher.addHandler).toHaveBeenCalledWith(
+        'chat.message',
+        handler,
+        undefined
+      );
     });
 
     it('should remove message handlers through dispatcher', () => {
@@ -244,7 +250,11 @@ describe('WebSocketClient', () => {
       client.addMessageHandler('priority.message', handler, options);
 
       // Assert
-      expect(mockMessageDispatcher.addHandler).toHaveBeenCalledWith('priority.message', handler, options);
+      expect(mockMessageDispatcher.addHandler).toHaveBeenCalledWith(
+        'priority.message',
+        handler,
+        options
+      );
     });
   });
 
@@ -441,14 +451,16 @@ describe('WebSocketClient', () => {
       expect(mockMessageDispatcher.clearAllHandlers).toHaveBeenCalled();
     });
 
-    it('should prevent operations after disposal', () => {
+    it('should prevent operations after disposal', async () => {
       // Arrange
       client.dispose();
 
       // Act & Assert
       await expect(client.connect()).rejects.toThrow('WebSocketClient has been disposed');
       expect(() => client.send({ type: 'test' })).toThrow('WebSocketClient has been disposed');
-      expect(() => client.addMessageHandler('test', jest.fn())).toThrow('WebSocketClient has been disposed');
+      expect(() => client.addMessageHandler('test', jest.fn())).toThrow(
+        'WebSocketClient has been disposed'
+      );
     });
 
     it('should handle concurrent connect/disconnect calls', async () => {
@@ -494,8 +506,8 @@ describe('WebSocketClient', () => {
         reconnection: {
           strategy: 'linear',
           initialDelay: 2000,
-          maxAttempts: 10
-        }
+          maxAttempts: 10,
+        },
       };
 
       // Act
@@ -506,18 +518,14 @@ describe('WebSocketClient', () => {
         expect.objectContaining({
           url: config.url,
           auth: config.auth,
-          reconnection: expect.objectContaining(newConfig.reconnection)
+          reconnection: expect.objectContaining(newConfig.reconnection),
         })
       );
     });
 
     it('should validate configuration updates', () => {
       // Arrange
-      const invalidUpdates = [
-        { url: '' },
-        { reconnection: { maxAttempts: -1 } },
-        { auth: null }
-      ];
+      const invalidUpdates = [{ url: '' }, { reconnection: { maxAttempts: -1 } }, { auth: null }];
 
       // Act & Assert
       invalidUpdates.forEach(invalidUpdate => {
@@ -529,7 +537,7 @@ describe('WebSocketClient', () => {
       // Arrange
       const newAuth: AuthProvider = {
         getToken: jest.fn().mockResolvedValue('new-token'),
-        onAuthError: jest.fn()
+        onAuthError: jest.fn(),
       };
 
       // Act
@@ -578,7 +586,7 @@ describe('WebSocketClient', () => {
         onError: jest.fn(),
         onOpen: jest.fn(),
         onClose: jest.fn(),
-        shouldConnect: true
+        shouldConnect: true,
       };
 
       // Act
@@ -587,7 +595,7 @@ describe('WebSocketClient', () => {
       // Assert
       expect(migratedClient.isConnected()).toBeDefined();
       expect(typeof migratedClient.send).toBe('function');
-      
+
       // Should auto-connect if shouldConnect was true
       expect(mockConnectionManager.connect).toHaveBeenCalled();
     });

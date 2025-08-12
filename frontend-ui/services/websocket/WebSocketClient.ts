@@ -1,6 +1,6 @@
 /**
  * WebSocketClient - Unified WebSocket Client Integration
- * 
+ *
  * This class integrates ConnectionManager, ReconnectionStrategy, and MessageDispatcher
  * to provide a unified interface replacing the monolithic useWebSocket hook.
  */
@@ -16,7 +16,7 @@ import {
   MessageHandlerOptions,
   ReconnectionConfig,
   HookConfig,
-  EventEmitterInterface
+  EventEmitterInterface,
 } from './types';
 
 export class WebSocketClient implements EventEmitterInterface {
@@ -32,15 +32,15 @@ export class WebSocketClient implements EventEmitterInterface {
   constructor(config: WebSocketConfig) {
     this.validateConfig(config);
     this.config = this.mergeWithDefaults(config);
-    
+
     this.connectionManager = new ConnectionManager(this.config);
     this.messageDispatcher = new MessageDispatcher();
-    
+
     // Create reconnection strategy if config is provided
     if (this.config.reconnection) {
       this.reconnectionStrategy = new ExponentialBackoffStrategy(this.config.reconnection);
     }
-    
+
     this.setupEventIntegration();
   }
 
@@ -48,13 +48,13 @@ export class WebSocketClient implements EventEmitterInterface {
     if (this.disposed) {
       throw new Error('WebSocketClient has been disposed');
     }
-    
+
     // Prevent concurrent connections
     const currentState = this.connectionManager.getState();
     if (currentState === ConnectionState.CONNECTING || currentState === ConnectionState.CONNECTED) {
       return;
     }
-    
+
     try {
       await this.connectionManager.connect();
     } catch (error) {
@@ -64,12 +64,12 @@ export class WebSocketClient implements EventEmitterInterface {
 
   disconnect(): void {
     this.ensureNotDisposed();
-    
+
     if (this.reconnectTimeoutId) {
       clearTimeout(this.reconnectTimeoutId);
       this.reconnectTimeoutId = null;
     }
-    
+
     this.connectionManager.disconnect();
     this.reconnectAttempts = 0;
   }
@@ -87,7 +87,11 @@ export class WebSocketClient implements EventEmitterInterface {
     return this.connectionManager.getState();
   }
 
-  addMessageHandler(messageType: string, handler: MessageHandler, options?: MessageHandlerOptions): void {
+  addMessageHandler(
+    messageType: string,
+    handler: MessageHandler,
+    options?: MessageHandlerOptions
+  ): void {
     this.ensureNotDisposed();
     this.messageDispatcher.addHandler(messageType, handler, options);
   }
@@ -117,23 +121,23 @@ export class WebSocketClient implements EventEmitterInterface {
   updateConfig(partialConfig: Partial<WebSocketConfig>): void {
     this.ensureNotDisposed();
     this.validatePartialConfig(partialConfig);
-    
+
     this.config = { ...this.config, ...partialConfig };
-    
+
     // Recreate connection manager with new config if needed
     if (partialConfig.url || partialConfig.auth) {
       const wasConnected = this.isConnected();
       this.disconnect();
       this.connectionManager = new ConnectionManager(this.config);
       this.setupEventIntegration();
-      
+
       if (wasConnected) {
         this.connect().catch(error => {
           console.error('Failed to reconnect after config update:', error);
         });
       }
     }
-    
+
     // Update reconnection strategy if needed
     if (partialConfig.reconnection) {
       this.reconnectionStrategy = this.createReconnectionStrategy();
@@ -146,7 +150,7 @@ export class WebSocketClient implements EventEmitterInterface {
 
   dispose(): void {
     if (this.disposed) return;
-    
+
     this.disconnect();
     this.messageDispatcher.clearAllHandlers();
     this.listeners.clear();
@@ -162,8 +166,8 @@ export class WebSocketClient implements EventEmitterInterface {
         initialDelay: 1000,
         maxDelay: 30000,
         backoffFactor: 2,
-        maxAttempts: 5
-      }
+        maxAttempts: 5,
+      },
     };
 
     const client = new WebSocketClient(config);
@@ -198,12 +202,12 @@ export class WebSocketClient implements EventEmitterInterface {
       initialDelay: 1000,
       maxDelay: 30000,
       backoffFactor: 2,
-      maxAttempts: 5
+      maxAttempts: 5,
     };
 
     return {
       ...config,
-      reconnection: { ...defaultReconnection, ...config.reconnection }
+      reconnection: { ...defaultReconnection, ...config.reconnection },
     };
   }
 
@@ -218,7 +222,11 @@ export class WebSocketClient implements EventEmitterInterface {
       throw new Error('Invalid WebSocket URL format');
     }
 
-    if (config.reconnection && config.reconnection.maxAttempts !== undefined && config.reconnection.maxAttempts < 0) {
+    if (
+      config.reconnection &&
+      config.reconnection.maxAttempts !== undefined &&
+      config.reconnection.maxAttempts < 0
+    ) {
       throw new Error('Max attempts must be non-negative');
     }
   }
@@ -264,7 +272,7 @@ export class WebSocketClient implements EventEmitterInterface {
     this.connectionManager.on('close', (event: CloseEvent) => {
       if (this.reconnectionStrategy?.shouldReconnect(event, this.reconnectAttempts)) {
         const delay = this.reconnectionStrategy.getNextDelay(this.reconnectAttempts);
-        
+
         this.reconnectTimeoutId = setTimeout(async () => {
           this.reconnectAttempts++;
           try {

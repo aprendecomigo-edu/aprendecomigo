@@ -1,11 +1,12 @@
 /**
  * AsyncStorageAuthProvider - Authentication provider for WebSocket connections
- * 
+ *
  * This provider uses AsyncStorage to retrieve authentication tokens,
  * maintaining compatibility with the existing authentication system.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { AuthProvider } from '../types';
 
 export class AsyncStorageAuthProvider implements AuthProvider {

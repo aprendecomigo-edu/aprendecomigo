@@ -1,6 +1,6 @@
 /**
  * WebSocket Types - Core type definitions for the modular WebSocket architecture
- * 
+ *
  * This module defines all interfaces and types used across the WebSocket
  * services, providing a clean separation of concerns and type safety.
  */
@@ -61,17 +61,17 @@ export enum ConnectionState {
   CONNECTING = 'connecting',
   CONNECTED = 'connected',
   RECONNECTING = 'reconnecting',
-  ERROR = 'error'
+  ERROR = 'error',
 }
 
 export type WebSocketState = ConnectionState;
 
 export interface ConnectionEventMap {
-  'statechange': [ConnectionState];
-  'message': [WebSocketMessage];
-  'error': [Error];
-  'open': [];
-  'close': [CloseEvent];
+  statechange: [ConnectionState];
+  message: [WebSocketMessage];
+  error: [Error];
+  open: [];
+  close: [CloseEvent];
 }
 
 export interface MessageDispatcherMetrics {
@@ -91,10 +91,7 @@ export interface EventEmitterInterface {
     event: K,
     listener: (...args: ConnectionEventMap[K]) => void
   ): void;
-  emit<K extends keyof ConnectionEventMap>(
-    event: K,
-    ...args: ConnectionEventMap[K]
-  ): void;
+  emit<K extends keyof ConnectionEventMap>(event: K, ...args: ConnectionEventMap[K]): void;
 }
 
 // Legacy hook compatibility types

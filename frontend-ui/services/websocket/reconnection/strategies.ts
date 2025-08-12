@@ -1,6 +1,6 @@
 /**
  * Reconnection Strategies - Modular reconnection logic with different backoff algorithms
- * 
+ *
  * This module provides different reconnection strategies that can be configured
  * and swapped out as needed, following the Strategy pattern.
  */
@@ -98,7 +98,7 @@ export class LinearBackoffStrategy extends BaseReconnectionStrategy {
       attempts = 0;
     }
 
-    const delay = this.initialDelay + (attempts * this.increment);
+    const delay = this.initialDelay + attempts * this.increment;
     return Math.min(delay, this.maxDelay);
   }
 
@@ -143,7 +143,7 @@ export class ReconnectionStrategyFactory {
       increment: 1000,
       interval: 5000,
       maxAttempts: 5,
-      ...config
+      ...config,
     };
 
     switch (config.strategy) {

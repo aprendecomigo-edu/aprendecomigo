@@ -1,9 +1,9 @@
 /**
  * Tests for WebSocket Reconnection Strategies
- * 
+ *
  * This tests the new modular architecture where reconnection strategies are separated
  * from connection management, allowing for different backoff algorithms and policies.
- * 
+ *
  * EXPECTED TO FAIL: These tests validate the new architecture that hasn't been implemented yet.
  */
 
@@ -12,7 +12,7 @@ import {
   LinearBackoffStrategy,
   FixedIntervalStrategy,
   ReconnectionStrategy,
-  ReconnectionConfig
+  ReconnectionConfig,
 } from '@/services/websocket/reconnection/strategies';
 
 describe('ReconnectionStrategy Interface', () => {
@@ -24,7 +24,7 @@ describe('ReconnectionStrategy Interface', () => {
         initialDelay: 1000,
         maxDelay: 30000,
         backoffFactor: 2,
-        maxAttempts: 5
+        maxAttempts: 5,
       });
     });
 
@@ -68,7 +68,10 @@ describe('ReconnectionStrategy Interface', () => {
 
       it('should allow reconnection for server errors', () => {
         // Arrange
-        const serverError = new CloseEvent('close', { code: 1011, reason: 'Internal server error' });
+        const serverError = new CloseEvent('close', {
+          code: 1011,
+          reason: 'Internal server error',
+        });
 
         // Act & Assert
         expect(strategy.shouldReconnect(serverError, 0)).toBe(true);
@@ -102,7 +105,7 @@ describe('ReconnectionStrategy Interface', () => {
           initialDelay: 500,
           maxDelay: 10000,
           backoffFactor: 1.5,
-          maxAttempts: 5
+          maxAttempts: 5,
         });
 
         // Act & Assert
@@ -130,28 +133,37 @@ describe('ReconnectionStrategy Interface', () => {
     describe('Configuration Validation', () => {
       it('should handle invalid configurations gracefully', () => {
         // Test negative values
-        expect(() => new ExponentialBackoffStrategy({
-          initialDelay: -1000,
-          maxDelay: 30000,
-          backoffFactor: 2,
-          maxAttempts: 5
-        })).toThrow('Initial delay must be positive');
+        expect(
+          () =>
+            new ExponentialBackoffStrategy({
+              initialDelay: -1000,
+              maxDelay: 30000,
+              backoffFactor: 2,
+              maxAttempts: 5,
+            })
+        ).toThrow('Initial delay must be positive');
 
         // Test zero max attempts
-        expect(() => new ExponentialBackoffStrategy({
-          initialDelay: 1000,
-          maxDelay: 30000,
-          backoffFactor: 2,
-          maxAttempts: 0
-        })).toThrow('Max attempts must be positive');
+        expect(
+          () =>
+            new ExponentialBackoffStrategy({
+              initialDelay: 1000,
+              maxDelay: 30000,
+              backoffFactor: 2,
+              maxAttempts: 0,
+            })
+        ).toThrow('Max attempts must be positive');
 
         // Test invalid backoff factor
-        expect(() => new ExponentialBackoffStrategy({
-          initialDelay: 1000,
-          maxDelay: 30000,
-          backoffFactor: 0.5,
-          maxAttempts: 5
-        })).toThrow('Backoff factor must be greater than 1');
+        expect(
+          () =>
+            new ExponentialBackoffStrategy({
+              initialDelay: 1000,
+              maxDelay: 30000,
+              backoffFactor: 0.5,
+              maxAttempts: 5,
+            })
+        ).toThrow('Backoff factor must be greater than 1');
       });
     });
   });
@@ -164,7 +176,7 @@ describe('ReconnectionStrategy Interface', () => {
         initialDelay: 1000,
         maxDelay: 10000,
         increment: 2000,
-        maxAttempts: 4
+        maxAttempts: 4,
       });
     });
 
@@ -179,7 +191,7 @@ describe('ReconnectionStrategy Interface', () => {
 
       it('should cap delay at maxDelay', () => {
         // Act & Assert
-        expect(strategy.getNextDelay(4)).toBe(9000);  // 1000 + 4*2000
+        expect(strategy.getNextDelay(4)).toBe(9000); // 1000 + 4*2000
         expect(strategy.getNextDelay(5)).toBe(10000); // Capped at maxDelay
         expect(strategy.getNextDelay(10)).toBe(10000); // Still capped
       });
@@ -206,7 +218,7 @@ describe('ReconnectionStrategy Interface', () => {
     beforeEach(() => {
       strategy = new FixedIntervalStrategy({
         interval: 5000,
-        maxAttempts: 3
+        maxAttempts: 3,
       });
     });
 
@@ -241,7 +253,7 @@ describe('ReconnectionStrategy Interface', () => {
         initialDelay: 500,
         maxDelay: 20000,
         backoffFactor: 1.8,
-        maxAttempts: 8
+        maxAttempts: 8,
       };
 
       const linearConfig: ReconnectionConfig = {
@@ -249,13 +261,13 @@ describe('ReconnectionStrategy Interface', () => {
         initialDelay: 1500,
         maxDelay: 15000,
         increment: 3000,
-        maxAttempts: 6
+        maxAttempts: 6,
       };
 
       const fixedConfig: ReconnectionConfig = {
         strategy: 'fixed',
         interval: 3000,
-        maxAttempts: 5
+        maxAttempts: 5,
       };
 
       // Act
@@ -277,7 +289,7 @@ describe('ReconnectionStrategy Interface', () => {
     it('should provide sensible defaults for missing configuration', () => {
       // Arrange
       const minimalConfig: ReconnectionConfig = {
-        strategy: 'exponential'
+        strategy: 'exponential',
       };
 
       // Act
@@ -292,11 +304,13 @@ describe('ReconnectionStrategy Interface', () => {
       // Arrange
       const invalidConfig = {
         strategy: 'invalid-strategy',
-        maxAttempts: 5
+        maxAttempts: 5,
       } as any;
 
       // Act & Assert
-      expect(() => ReconnectionStrategy.create(invalidConfig)).toThrow('Unknown strategy type: invalid-strategy');
+      expect(() => ReconnectionStrategy.create(invalidConfig)).toThrow(
+        'Unknown strategy type: invalid-strategy'
+      );
     });
   });
 
@@ -307,7 +321,7 @@ describe('ReconnectionStrategy Interface', () => {
         initialDelay: 100,
         maxDelay: 5000,
         backoffFactor: 2,
-        maxAttempts: 4
+        maxAttempts: 4,
       });
 
       const rapidFailures = [
@@ -315,7 +329,7 @@ describe('ReconnectionStrategy Interface', () => {
         new CloseEvent('close', { code: 1006, reason: 'Network error' }),
         new CloseEvent('close', { code: 1006, reason: 'Network error' }),
         new CloseEvent('close', { code: 1006, reason: 'Network error' }),
-        new CloseEvent('close', { code: 1006, reason: 'Network error' })
+        new CloseEvent('close', { code: 1006, reason: 'Network error' }),
       ];
 
       // Act & Assert
@@ -341,7 +355,7 @@ describe('ReconnectionStrategy Interface', () => {
         initialDelay: 1000,
         maxDelay: 10000,
         backoffFactor: 2,
-        maxAttempts: 3
+        maxAttempts: 3,
       });
 
       // Different close codes and scenarios
@@ -352,7 +366,7 @@ describe('ReconnectionStrategy Interface', () => {
         { code: 1011, reason: 'Server error', shouldReconnect: true },
         { code: 4001, reason: 'Authentication failed', shouldReconnect: false },
         { code: 4403, reason: 'Forbidden', shouldReconnect: false },
-        { code: 4404, reason: 'Not found', shouldReconnect: false }
+        { code: 4404, reason: 'Not found', shouldReconnect: false },
       ];
 
       // Act & Assert
@@ -368,12 +382,12 @@ describe('ReconnectionStrategy Interface', () => {
         initialDelay: 1000,
         maxDelay: 5000,
         increment: 1000,
-        maxAttempts: 3
+        maxAttempts: 3,
       });
 
       // Simulate failed attempts with linear strategy
       const closeEvent = new CloseEvent('close', { code: 1006 });
-      
+
       // Act & Assert - Linear strategy
       expect(currentStrategy.shouldReconnect(closeEvent, 0)).toBe(true);
       expect(currentStrategy.getNextDelay(0)).toBe(1000);
@@ -385,7 +399,7 @@ describe('ReconnectionStrategy Interface', () => {
         initialDelay: 1000,
         maxDelay: 10000,
         backoffFactor: 2,
-        maxAttempts: 5
+        maxAttempts: 5,
       });
 
       // Act & Assert - Exponential strategy
@@ -404,7 +418,7 @@ describe('ReconnectionStrategy Interface', () => {
         initialDelay: 1000,
         maxDelay: 10000,
         backoffFactor: 2,
-        maxAttempts: 5
+        maxAttempts: 5,
       });
 
       // Act & Assert
@@ -418,7 +432,7 @@ describe('ReconnectionStrategy Interface', () => {
         initialDelay: 1000,
         maxDelay: 30000,
         backoffFactor: 2,
-        maxAttempts: 100
+        maxAttempts: 100,
       });
 
       // Act & Assert
@@ -433,7 +447,7 @@ describe('ReconnectionStrategy Interface', () => {
         initialDelay: 1000,
         maxDelay: 10000,
         backoffFactor: 2,
-        maxAttempts: 5
+        maxAttempts: 5,
       });
 
       // Act & Assert - Close event without specific code

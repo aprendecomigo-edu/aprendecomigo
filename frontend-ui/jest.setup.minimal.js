@@ -677,7 +677,7 @@ jest.mock('nativewind', () => ({
 // Mock WebSocket services for testing
 jest.mock('@/services/websocket/WebSocketClient', () => {
   const EventEmitter = require('events');
-  
+
   class MockWebSocketClient extends EventEmitter {
     constructor(config) {
       super();
@@ -690,24 +690,24 @@ jest.mock('@/services/websocket/WebSocketClient', () => {
       this.sentMessages = [];
       this._readyState = 3; // CLOSED by default
       this.canReconnect = !!config.reconnection; // Only allow reconnection if config supports it
-      
+
       // Register this instance globally for tests
       if (!global.__mockWebSocketClients) {
         global.__mockWebSocketClients = [];
       }
       global.__mockWebSocketClients.push(this);
       global.__lastMockWebSocketClient = this;
-      
+
       // Simulate async connection with token check
       setTimeout(async () => {
         if (this.disposed) return;
-        
+
         // Check global connection failure first
         if (global.__webSocketGlobalFailure) {
           this.emit('error', new Error('WebSocket creation failed'));
           return;
         }
-        
+
         // Check for auth token if auth provider exists
         if (config.auth) {
           try {
@@ -725,27 +725,27 @@ jest.mock('@/services/websocket/WebSocketClient', () => {
             return;
           }
         }
-        
+
         this.isConnectedState = true;
         this._readyState = 1; // OPEN
         this.emit('connect');
       }, 10);
     }
-    
+
     async connect() {
       if (this.disposed) {
         throw new Error('WebSocketClient has been disposed');
       }
       // Connection is handled in constructor with setTimeout
     }
-    
+
     disconnect() {
       this.isConnectedState = false;
       this._readyState = 2; // CLOSING
       this.emit('disconnect');
       // Don't auto-transition to CLOSED immediately for unmount tests
     }
-    
+
     send(message) {
       if (this.isConnectedState) {
         this.sentMessages.push(JSON.stringify(message));
@@ -753,37 +753,38 @@ jest.mock('@/services/websocket/WebSocketClient', () => {
         console.warn('WebSocket not connected, cannot send message');
       }
     }
-    
+
     isConnected() {
       return this.isConnectedState;
     }
-    
+
     onConnect(listener) {
       this.on('connect', listener);
     }
-    
+
     onDisconnect(listener) {
       this.on('disconnect', listener);
     }
-    
+
     onMessage(listener) {
       this.messageHandlers.set('*', listener);
       // Check if this looks like the useWebSocketEnhanced pattern
       const listenerString = listener.toString();
-      this.isEnhancedHook = listenerString.includes('setLastMessage') || listenerString.includes('typeof message');
+      this.isEnhancedHook =
+        listenerString.includes('setLastMessage') || listenerString.includes('typeof message');
     }
-    
+
     onError(listener) {
       this.on('error', listener);
     }
-    
+
     dispose() {
       this.disposed = true;
       this.isConnectedState = false;
       this._readyState = 2; // CLOSING when disposed
       this.removeAllListeners();
     }
-    
+
     // Test helper methods
     simulateMessage(data) {
       const listener = this.messageHandlers.get('*');
@@ -807,17 +808,17 @@ jest.mock('@/services/websocket/WebSocketClient', () => {
         }
       }
     }
-    
+
     simulateError(error) {
       this.emit('error', error || new Error('WebSocket error'));
     }
-    
+
     simulateNetworkFailure() {
       this.isConnectedState = false;
       this._readyState = 3; // CLOSED
       this.simulateError();
       this.emit('disconnect');
-      
+
       // Set up for reconnection simulation - simulate the reconnection logic
       if (!this.blockReconnection && this.canReconnect) {
         setTimeout(() => {
@@ -829,30 +830,30 @@ jest.mock('@/services/websocket/WebSocketClient', () => {
         }, 1000); // Match the reconnection delay expected by tests
       }
     }
-    
+
     getSentMessages() {
       return this.sentMessages;
     }
-    
+
     simulateNetworkFailureWithReconnectBlocking() {
       this.isConnectedState = false;
       this.simulateError();
       this.emit('disconnect');
-      
+
       // Set a flag to prevent auto-reconnection
       this.blockReconnection = true;
     }
-    
+
     // Additional test utilities that some tests might expect
     close(code = 1000, reason = 'Normal closure') {
       this.isConnectedState = false;
       this.emit('disconnect');
     }
-    
+
     get readyState() {
       return this._readyState;
     }
-    
+
     set readyState(value) {
       this._readyState = value;
       if (value === 1) {
@@ -862,18 +863,18 @@ jest.mock('@/services/websocket/WebSocketClient', () => {
         this.isConnectedState = false;
       }
     }
-    
+
     // Add missing test utility methods
     getMessageQueue() {
       return this.sentMessages.map((msg, index) => ({
         data: msg,
-        timestamp: Date.now() - (this.sentMessages.length - index) * 10
+        timestamp: Date.now() - (this.sentMessages.length - index) * 10,
       }));
     }
   }
-  
+
   return {
-    WebSocketClient: MockWebSocketClient
+    WebSocketClient: MockWebSocketClient,
   };
 });
 
@@ -888,28 +889,97 @@ jest.mock('@/services/websocket/auth/AsyncStorageAuthProvider', () => {
           throw new Error('No authentication token found');
         }
         return token;
-      })
-    }))
+      }),
+    })),
   };
 });
 
 // Mock WebSocket global objects that might be missing in Jest environment
-if (typeof global.CloseEvent === 'undefined') {
-  global.CloseEvent = class CloseEvent extends Event {
-    constructor(type, eventInitDict = {}) {
-      super(type);
-      this.code = eventInitDict.code || 1000;
-      this.reason = eventInitDict.reason || '';
-      this.wasClean = eventInitDict.wasClean || false;
-    }
-  };
-}
+// These mocks ensure compatibility with WebSocket-related tests in Node.js environment
 
-if (typeof global.MessageEvent === 'undefined') {
-  global.MessageEvent = class MessageEvent extends Event {
-    constructor(type, eventInitDict = {}) {
-      super(type);
-      this.data = eventInitDict.data;
+// Force override of DOM Event constructors for Jest environment
+// This ensures consistent behavior across different Node.js versions
+
+// Mock CloseEvent (WebSocket close event)
+global.CloseEvent = class CloseEvent extends Event {
+  constructor(type, eventInitDict = {}) {
+    super(type);
+    this.code = eventInitDict.code || 1000;
+    this.reason = eventInitDict.reason || '';
+    this.wasClean = eventInitDict.wasClean !== undefined ? eventInitDict.wasClean : false;
+    
+    // Additional WebSocket close code constants for reference
+    this.NORMAL_CLOSURE = 1000;
+    this.GOING_AWAY = 1001;
+    this.PROTOCOL_ERROR = 1002;
+    this.UNSUPPORTED_DATA = 1003;
+    this.NO_STATUS_RCVD = 1005;
+    this.ABNORMAL_CLOSURE = 1006;
+  }
+};
+
+// Add static constants to CloseEvent
+global.CloseEvent.NORMAL_CLOSURE = 1000;
+global.CloseEvent.GOING_AWAY = 1001;
+global.CloseEvent.PROTOCOL_ERROR = 1002;
+global.CloseEvent.UNSUPPORTED_DATA = 1003;
+global.CloseEvent.NO_STATUS_RCVD = 1005;
+global.CloseEvent.ABNORMAL_CLOSURE = 1006;
+
+// Mock MessageEvent (WebSocket message event)
+global.MessageEvent = class MessageEvent extends Event {
+  constructor(type, eventInitDict) {
+    super(type);
+    // If eventInitDict is undefined, set data to undefined
+    // If eventInitDict is provided but doesn't have data property, set data to undefined
+    // If eventInitDict has data property, use that value (even if it's null or undefined)
+    if (eventInitDict === undefined) {
+      this.data = undefined;
+    } else {
+      this.data = eventInitDict.hasOwnProperty('data') ? eventInitDict.data : undefined;
+    }
+    this.origin = (eventInitDict && eventInitDict.origin) || '';
+    this.lastEventId = (eventInitDict && eventInitDict.lastEventId) || '';
+    this.source = (eventInitDict && eventInitDict.source) || null;
+    this.ports = (eventInitDict && eventInitDict.ports) || [];
+  }
+};
+
+// Mock ErrorEvent (WebSocket error event)
+global.ErrorEvent = class ErrorEvent extends Event {
+  constructor(type, eventInitDict = {}) {
+    super(type);
+    this.message = eventInitDict.message || '';
+    this.filename = eventInitDict.filename || '';
+    this.lineno = eventInitDict.lineno || 0;
+    this.colno = eventInitDict.colno || 0;
+    this.error = eventInitDict.error || null;
+  }
+};
+
+// Mock WebSocket constants if not available
+if (typeof global.WebSocket === 'undefined') {
+  global.WebSocket = class MockWebSocket {
+    static CONNECTING = 0;
+    static OPEN = 1;
+    static CLOSING = 2;
+    static CLOSED = 3;
+    
+    constructor(url) {
+      this.url = url;
+      this.readyState = MockWebSocket.CONNECTING;
+      this.onopen = null;
+      this.onclose = null;
+      this.onerror = null;
+      this.onmessage = null;
+    }
+    
+    send() {
+      throw new Error('MockWebSocket: send() not implemented in Jest mock');
+    }
+    
+    close() {
+      this.readyState = MockWebSocket.CLOSED;
     }
   };
 }
@@ -928,7 +998,7 @@ jest.mock('expo-constants', () => ({
   },
 }));
 
-// Mock AsyncStorage  
+// Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => ({
   // This gets overridden by WebSocketTestUtils.mockAsyncStorage() in tests
   getItem: jest.fn(() => Promise.resolve(null)),

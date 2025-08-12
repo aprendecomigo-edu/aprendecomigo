@@ -1,10 +1,10 @@
 /**
  * Tests for WebSocket MessageDispatcher - Message Routing and Handling
- * 
+ *
  * This tests the new modular architecture where MessageDispatcher handles message
  * routing to specific handlers based on message types, replacing the monolithic
  * message handling in useWebSocket.
- * 
+ *
  * EXPECTED TO FAIL: These tests validate the new architecture that hasn't been implemented yet.
  */
 
@@ -141,7 +141,7 @@ describe('MessageDispatcher', () => {
         id: '123',
         content: 'Hello world',
         user: { id: 1, name: 'John' },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       // Act
@@ -155,17 +155,18 @@ describe('MessageDispatcher', () => {
 
     it('should not dispatch to handlers that dont match', async () => {
       // Arrange
-      dispatcher.addHandler('user.join', mockHandler1);
+      const nonMatchingHandler = jest.fn(); // Use fresh handler that's only for user.join
+      dispatcher.addHandler('user.join', nonMatchingHandler);
       const message: WebSocketMessage = {
         type: 'chat.message',
-        content: 'Hello'
+        content: 'Hello',
       };
 
       // Act
       await dispatcher.dispatch(message);
 
       // Assert
-      expect(mockHandler1).not.toHaveBeenCalled();
+      expect(nonMatchingHandler).not.toHaveBeenCalled(); // user.join handler should not be called
       expect(mockHandler2).toHaveBeenCalledWith(message); // chat.*
       expect(mockHandler3).toHaveBeenCalledWith(message); // *
     });
@@ -206,7 +207,7 @@ describe('MessageDispatcher', () => {
 
     it('should support async handlers', async () => {
       // Arrange
-      const asyncHandler = jest.fn().mockImplementation(async (message) => {
+      const asyncHandler = jest.fn().mockImplementation(async message => {
         await new Promise(resolve => setTimeout(resolve, 10));
         return `Processed: ${message.type}`;
       });
@@ -223,9 +224,9 @@ describe('MessageDispatcher', () => {
   });
 
   describe('Message Filtering', () => {
-    it('should support filtering based on message content', () => {
+    it('should support filtering based on message content', async () => {
       // Arrange
-      const filter: MessageFilter = (message) => {
+      const filter: MessageFilter = message => {
         return message.user?.id === 123;
       };
 
@@ -235,18 +236,18 @@ describe('MessageDispatcher', () => {
       const messageForUser123: WebSocketMessage = {
         type: 'chat.message',
         content: 'Hello',
-        user: { id: 123, name: 'John' }
+        user: { id: 123, name: 'John' },
       };
 
       const messageForUser456: WebSocketMessage = {
         type: 'chat.message',
         content: 'Hello',
-        user: { id: 456, name: 'Jane' }
+        user: { id: 456, name: 'Jane' },
       };
 
       // Act
-      dispatcher.dispatch(messageForUser123);
-      dispatcher.dispatch(messageForUser456);
+      await dispatcher.dispatch(messageForUser123);
+      await dispatcher.dispatch(messageForUser456);
 
       // Assert
       expect(mockHandler1).toHaveBeenCalledTimes(1);
@@ -273,7 +274,7 @@ describe('MessageDispatcher', () => {
       const callOrder = [
         highPriorityHandler.mock.invocationCallOrder[0],
         normalPriorityHandler.mock.invocationCallOrder[0],
-        lowPriorityHandler.mock.invocationCallOrder[0]
+        lowPriorityHandler.mock.invocationCallOrder[0],
       ];
 
       expect(callOrder).toEqual(callOrder.sort((a, b) => a - b));
@@ -306,7 +307,7 @@ describe('MessageDispatcher', () => {
       const message: WebSocketMessage = {
         type: 'classroom.student.join',
         room_id: 'room123',
-        student: { id: 456, name: 'Alice' }
+        student: { id: 456, name: 'Alice' },
       };
 
       // Act
@@ -320,14 +321,14 @@ describe('MessageDispatcher', () => {
 
     it('should handle message transformation in handlers', async () => {
       // Arrange
-      const transformingHandler = jest.fn().mockImplementation((message) => {
+      const transformingHandler = jest.fn().mockImplementation(message => {
         // Transform message and possibly dispatch new messages
         if (message.type === 'raw.data') {
           const transformedMessage: WebSocketMessage = {
             type: 'processed.data',
             originalType: message.type,
             processedContent: `Processed: ${message.content}`,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           };
           dispatcher.dispatch(transformedMessage);
         }
@@ -340,7 +341,7 @@ describe('MessageDispatcher', () => {
 
       const rawMessage: WebSocketMessage = {
         type: 'raw.data',
-        content: 'raw content'
+        content: 'raw content',
       };
 
       // Act
@@ -352,19 +353,19 @@ describe('MessageDispatcher', () => {
         expect.objectContaining({
           type: 'processed.data',
           originalType: 'raw.data',
-          processedContent: 'Processed: raw content'
+          processedContent: 'Processed: raw content',
         })
       );
     });
 
     it('should support middleware for message preprocessing', async () => {
       // Arrange
-      const middleware = jest.fn().mockImplementation((message) => {
+      const middleware = jest.fn().mockImplementation(message => {
         // Add metadata to all messages
         return {
           ...message,
           processedAt: Date.now(),
-          middleware: 'test'
+          middleware: 'test',
         };
       });
 
@@ -373,7 +374,7 @@ describe('MessageDispatcher', () => {
 
       const originalMessage: WebSocketMessage = {
         type: 'test.message',
-        content: 'original'
+        content: 'original',
       };
 
       // Act
@@ -386,7 +387,7 @@ describe('MessageDispatcher', () => {
           type: 'test.message',
           content: 'original',
           processedAt: expect.any(Number),
-          middleware: 'test'
+          middleware: 'test',
         })
       );
     });
@@ -421,7 +422,7 @@ describe('MessageDispatcher', () => {
       const messages: WebSocketMessage[] = Array.from({ length: 1000 }, (_, i) => ({
         type: 'high.frequency',
         id: i,
-        data: `message-${i}`
+        data: `message-${i}`,
       }));
 
       const startTime = Date.now();
@@ -455,7 +456,7 @@ describe('MessageDispatcher', () => {
 
       // Assert
       expect(dispatcher.getQueueSize()).toBeLessThanOrEqual(10);
-      
+
       // Cleanup
       dispatchPromises.forEach(promise => promise.catch(() => {}));
     });
@@ -494,11 +495,7 @@ describe('MessageDispatcher', () => {
       await dispatcher.dispatch(message);
 
       // Assert
-      expect(errorCallback).toHaveBeenCalledWith(
-        expect.any(Error),
-        message,
-        failingHandler
-      );
+      expect(errorCallback).toHaveBeenCalledWith(expect.any(Error), message, failingHandler);
     });
 
     it('should validate message format before dispatching', async () => {
@@ -511,7 +508,7 @@ describe('MessageDispatcher', () => {
         'string message',
         { data: 'no type field' },
         { type: null },
-        { type: '' }
+        { type: '' },
       ] as any[];
 
       // Act & Assert

@@ -1,9 +1,9 @@
 /**
  * Tests for Refactored QuickTopUpPanel - Dependency Injection Architecture
- * 
+ *
  * This tests the new architecture where QuickTopUpPanel uses injected services
  * instead of direct API calls, separating UI concerns from business logic.
- * 
+ *
  * EXPECTED TO FAIL: These tests validate the refactored architecture that hasn't been implemented yet.
  */
 
@@ -61,8 +61,8 @@ const mockPackages: TopUpPackage[] = [
     id: '5h-package',
     name: '5 Hours',
     hours: 5,
-    price_eur: 25.00,
-    price_per_hour: 5.00,
+    price_eur: 25.0,
+    price_per_hour: 5.0,
     discount_percentage: 0,
     is_popular: false,
     display_order: 1,
@@ -71,8 +71,8 @@ const mockPackages: TopUpPackage[] = [
     id: '10h-package',
     name: '10 Hours',
     hours: 10,
-    price_eur: 45.00,
-    price_per_hour: 4.50,
+    price_eur: 45.0,
+    price_per_hour: 4.5,
     discount_percentage: 10,
     is_popular: true,
     display_order: 2,
@@ -81,8 +81,8 @@ const mockPackages: TopUpPackage[] = [
     id: '20h-package',
     name: '20 Hours',
     hours: 20,
-    price_eur: 80.00,
-    price_per_hour: 4.00,
+    price_eur: 80.0,
+    price_per_hour: 4.0,
     discount_percentage: 20,
     is_popular: false,
     display_order: 3,
@@ -123,7 +123,7 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup default mock responses
     mockTopUpService.getAvailablePackages.mockResolvedValue(mockPackages);
     mockPaymentService.getPaymentMethods.mockResolvedValue(mockPaymentMethods);
@@ -260,9 +260,7 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
       // Assert - Package selection should be disabled
       const packages = screen.getAllByText(/Hours/);
       packages.forEach(pkg => {
-        expect(pkg.parent?.props.style).toEqual(
-          expect.objectContaining({ opacity: 0.5 })
-        );
+        expect(pkg.parent?.props.style).toEqual(expect.objectContaining({ opacity: 0.5 }));
       });
     });
   });
@@ -345,7 +343,7 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
       // Arrange
       mockTopUpService.validateTopUpRequest.mockResolvedValue({
         isValid: false,
-        errors: ['Insufficient payment method verification']
+        errors: ['Insufficient payment method verification'],
       });
 
       renderWithDependencies();
@@ -371,9 +369,7 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
   describe('Service Error Boundaries', () => {
     it('should handle TopUpService failures during load', async () => {
       // Arrange
-      mockTopUpService.getAvailablePackages.mockRejectedValue(
-        new Error('Failed to load packages')
-      );
+      mockTopUpService.getAvailablePackages.mockRejectedValue(new Error('Failed to load packages'));
 
       // Act
       renderWithDependencies();
@@ -403,9 +399,7 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
 
     it('should handle BalanceService failures gracefully', async () => {
       // Arrange
-      mockBalanceService.refreshBalance.mockRejectedValue(
-        new Error('Balance service error')
-      );
+      mockBalanceService.refreshBalance.mockRejectedValue(new Error('Balance service error'));
       mockTopUpService.processTopUpRequest.mockResolvedValue(mockSuccessResponse);
 
       renderWithDependencies();
@@ -447,17 +441,16 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
       const studentEmail = 'student@example.com';
 
       // Act
-      renderWithDependencies({ 
+      renderWithDependencies({
         email: studentEmail,
-        adminOverride: adminEmail 
+        adminOverride: adminEmail,
       });
 
       // Assert
       await waitFor(() => {
-        expect(mockTopUpService.getAvailablePackages).toHaveBeenCalledWith(
-          studentEmail,
-          { adminOverride: adminEmail }
-        );
+        expect(mockTopUpService.getAvailablePackages).toHaveBeenCalledWith(studentEmail, {
+          adminOverride: adminEmail,
+        });
       });
     });
 
@@ -467,9 +460,9 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
         ...mockDependencies,
         topUpService: {
           ...mockTopUpService,
-          getAvailablePackages: jest.fn().mockResolvedValue([
-            { ...mockPackages[0], name: 'Custom Package' }
-          ]),
+          getAvailablePackages: jest
+            .fn()
+            .mockResolvedValue([{ ...mockPackages[0], name: 'Custom Package' }]),
         },
       };
 
@@ -564,7 +557,7 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
 
       // Assert - Component should only use injected services
       expect(mockTopUpService.getAvailablePackages).toHaveBeenCalled();
-      
+
       // Should NOT access any global API clients directly
       // This would fail if the component still imports PurchaseApiClient
     });
@@ -592,7 +585,7 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
       });
       // 3. Call balance refresh service
       expect(mockBalanceService.refreshBalance).toHaveBeenCalled();
-      
+
       // But should NOT contain business logic itself
     });
 

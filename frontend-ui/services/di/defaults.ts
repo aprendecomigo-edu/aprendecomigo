@@ -6,6 +6,7 @@
  */
 
 import { createBusinessServices } from '../business/factory';
+import { WebSocketClient } from '../websocket/WebSocketClient';
 
 import {
   Dependencies,
@@ -23,7 +24,6 @@ import {
 import * as authApi from '@/api/authApi';
 import { onboardingApi } from '@/api/onboardingApi';
 import { storage } from '@/utils/storage';
-import { WebSocketClient } from '../websocket/WebSocketClient';
 
 // Import business services
 
