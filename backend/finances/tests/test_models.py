@@ -26,6 +26,7 @@ from unittest.mock import patch, MagicMock
 
 from django.test import TestCase
 
+from .base import FinanceBaseTestCase, FinanceMinimalTestCase, FixtureValidationMixin
 from ..models import (
     # Enums and Choices
     CompensationRuleType,
@@ -68,16 +69,10 @@ from ..models import (
 User = get_user_model()
 
 
-class SchoolBillingSettingsTestCase(TestCase):
+class SchoolBillingSettingsTestCase(FinanceMinimalTestCase):
     """Test cases for SchoolBillingSettings model."""
 
-    def setUp(self):
-        """Set up test data."""
-        School = apps.get_model('accounts', 'School')
-        self.school = School.objects.create(
-            name="Test School",
-            description="A test school for billing settings"
-        )
+    # Using FinanceMinimalTestCase provides self.school and self.educational_system
 
     def test_school_billing_settings_creation_with_defaults(self):
         """Test creating SchoolBillingSettings with default values."""
