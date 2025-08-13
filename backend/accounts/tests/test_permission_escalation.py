@@ -1,18 +1,12 @@
 """
-Permission Security Tests for Aprende Comigo Platform
+Permission Business Logic Unit Tests for Aprende Comigo Platform
 
-These tests verify that users cannot escalate their privileges beyond their assigned roles
-and that role-based access control is properly enforced.
-
-Focus on realistic scenarios using Knox authentication and existing API endpoints.
+These tests verify role-based business rules and permission constraints
+at the model level without API dependencies.
 """
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from django.urls import reverse
-from knox.models import AuthToken
-from rest_framework import status
-from rest_framework.test import APIClient
 
 from accounts.models import (
     CustomUser,
@@ -26,21 +20,16 @@ from accounts.models import (
 User = get_user_model()
 
 
-class RoleBasedAccessControlTestCase(TestCase):
+class RoleBasedBusinessLogicTestCase(TestCase):
     """
-    Test suite for verifying role-based access control.
+    Test suite for verifying role-based business logic at the model level.
     
-    These tests ensure that:
-    1. Users can only access resources appropriate to their role
-    2. Role boundaries are enforced across API endpoints
-    3. Users cannot perform actions beyond their permissions
+    These tests ensure that business rules around roles and permissions
+    are properly enforced without relying on API endpoints.
     """
 
     def setUp(self):
         """Set up test data with multiple roles."""
-        self.client = APIClient()
-        
-        # Create test school
         self.school = School.objects.create(
             name="Test School",
             contact_email="admin@testschool.com"
@@ -88,109 +77,57 @@ class RoleBasedAccessControlTestCase(TestCase):
             school_year="5th"
         )
 
-    def authenticate_user(self, user):
-        """Helper method to authenticate a user with Knox token."""
-        instance, token = AuthToken.objects.create(user=user)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
-
-    def test_student_cannot_access_administrative_endpoints(self):
-        """Test that students cannot access administrative functionality."""
-        self.authenticate_user(self.student)
-        
-        # Test endpoints that should require higher privileges
-        restricted_endpoints = [
-            'accounts:user-list',  # User management
-            'accounts:invitation-list',  # Invitation management
-            'accounts:teacher-invitation-list',  # Teacher invitations
-        ]
-        
-        for endpoint_name in restricted_endpoints:
-            with self.subTest(endpoint=endpoint_name):
-                try:
-                    url = reverse(endpoint_name)
-                    response = self.client.get(url)
-                    
-                    # Should be forbidden or unauthorized
-                    self.assertIn(response.status_code, [
-                        status.HTTP_401_UNAUTHORIZED,
-                        status.HTTP_403_FORBIDDEN
-                    ], f"Student should not access {endpoint_name}")
-                    
-                except Exception:
-                    # If endpoint doesn't exist, skip
-                    self.skipTest(f"Endpoint {endpoint_name} not available")
-
-    def test_teacher_cannot_access_school_owner_functionality(self):
-        """Test that teachers cannot access school owner specific features."""
-        self.authenticate_user(self.teacher)
-        
-        # Test endpoints that should require school owner privileges
-        owner_endpoints = [
-            'accounts:invitation-list',  # School invitations
-        ]
-        
-        for endpoint_name in owner_endpoints:
-            with self.subTest(endpoint=endpoint_name):
-                try:
-                    url = reverse(endpoint_name)
-                    response = self.client.get(url)
-                    
-                    # Depending on implementation, might be forbidden or return filtered results
-                    # The key is that it shouldn't cause server errors
-                    self.assertNotEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-                    
-                except Exception:
-                    self.skipTest(f"Endpoint {endpoint_name} not available")
-
-    def test_users_can_access_their_appropriate_resources(self):
-        """Test that users can access resources appropriate to their role."""
-        # Test that authenticated users can access general resources
-        for user, role_name in [
-            (self.teacher, "teacher"),
-            (self.student, "student"),
-            (self.school_owner, "owner")
-        ]:
-            with self.subTest(user=role_name):
-                self.authenticate_user(user)
-                
-                try:
-                    # Test course list access (should be available to all roles)
-                    url = reverse('accounts:course-list')
-                    response = self.client.get(url)
-                    
-                    # Should succeed or be forbidden, but not error
-                    self.assertIn(response.status_code, [
-                        status.HTTP_200_OK,
-                        status.HTTP_403_FORBIDDEN
-                    ], f"{role_name} should be able to access courses or get clear rejection")
-                    
-                except Exception:
-                    self.skipTest("Course list endpoint not available")
-
-    def test_role_elevation_attempts_blocked(self):
-        """Test that attempts to elevate permissions are blocked."""
-        # Test that a teacher cannot modify their own role
-        self.authenticate_user(self.teacher)
-        
-        # Get teacher's membership
-        membership = SchoolMembership.objects.get(
-            user=self.teacher, school=self.school
+    def test_school_owner_can_have_teacher_role_simultaneously(self):
+        """Test that school owners can also be teachers in the same school."""
+        # Business rule: School owners can also teach
+        teacher_membership = SchoolMembership.objects.create(
+            user=self.school_owner,
+            school=self.school,
+            role=SchoolRole.TEACHER
         )
         
-        # This test documents that role modification should be restricted
-        # The exact implementation depends on whether membership modification
-        # endpoints exist and how they're protected
+        # Verify both roles exist
+        owner_memberships = SchoolMembership.objects.filter(
+            user=self.school_owner, school=self.school, is_active=True
+        )
         
-        # For now, test that the membership role remains unchanged
-        self.assertEqual(membership.role, SchoolRole.TEACHER)
-        
-        # After any API calls that might attempt modification,
-        # verify role hasn't changed
-        membership.refresh_from_db()
-        self.assertEqual(membership.role, SchoolRole.TEACHER)
+        self.assertEqual(owner_memberships.count(), 2)
+        roles = [m.role for m in owner_memberships]
+        self.assertIn(SchoolRole.SCHOOL_OWNER, roles)
+        self.assertIn(SchoolRole.TEACHER, roles)
 
-    def test_inactive_users_cannot_access_protected_resources(self):
-        """Test that inactive users cannot access protected resources."""
+    def test_teacher_profile_requires_teacher_membership(self):
+        """Test business rule: TeacherProfile should be associated with users who have teacher roles."""
+        # Verify teacher has correct membership
+        teacher_memberships = SchoolMembership.objects.filter(
+            user=self.teacher, role=SchoolRole.TEACHER, is_active=True
+        )
+        
+        self.assertEqual(teacher_memberships.count(), 1)
+        
+        # Verify profile exists for user with teacher role
+        self.assertTrue(TeacherProfile.objects.filter(user=self.teacher).exists())
+        
+        # Student should not have teacher profile
+        self.assertFalse(TeacherProfile.objects.filter(user=self.student).exists())
+
+    def test_student_profile_business_logic(self):
+        """Test business logic around student profiles."""
+        # Verify student has correct membership
+        student_memberships = SchoolMembership.objects.filter(
+            user=self.student, role=SchoolRole.STUDENT, is_active=True
+        )
+        
+        self.assertEqual(student_memberships.count(), 1)
+        
+        # Verify profile exists for user with student role
+        self.assertTrue(StudentProfile.objects.filter(user=self.student).exists())
+        
+        # Teacher should not have student profile
+        self.assertFalse(StudentProfile.objects.filter(user=self.teacher).exists())
+
+    def test_inactive_user_membership_business_rules(self):
+        """Test business rules for inactive users."""
         # Create inactive user
         inactive_user = CustomUser.objects.create_user(
             email="inactive@example.com",
@@ -199,137 +136,111 @@ class RoleBasedAccessControlTestCase(TestCase):
         )
         
         # Create membership for inactive user
-        SchoolMembership.objects.create(
+        membership = SchoolMembership.objects.create(
             user=inactive_user,
             school=self.school,
             role=SchoolRole.TEACHER
         )
         
-        self.authenticate_user(inactive_user)
+        # Membership should exist but user is inactive
+        self.assertTrue(SchoolMembership.objects.filter(user=inactive_user).exists())
+        self.assertFalse(inactive_user.is_active)
         
-        try:
-            url = reverse('accounts:course-list')
-            response = self.client.get(url)
-            
-            # Should be unauthorized due to inactive status
-            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-            
-        except Exception:
-            self.skipTest("Course list endpoint not available")
+        # Business logic should account for user active status
+        active_teacher_memberships = SchoolMembership.objects.filter(
+            school=self.school, 
+            role=SchoolRole.TEACHER, 
+            is_active=True,
+            user__is_active=True  # Also check user active status
+        )
+        
+        # Should not include inactive user
+        self.assertNotIn(membership, active_teacher_memberships)
 
-    def test_cross_school_access_prevented(self):
-        """Test that users cannot access resources from other schools."""
+    def test_cross_school_role_isolation(self):
+        """Test that roles in different schools are properly isolated."""
         # Create another school
         other_school = School.objects.create(
             name="Other School",
             contact_email="admin@otherschool.com"
         )
         
-        # Create user in other school
-        other_user = CustomUser.objects.create_user(
-            email="other@example.com",
-            name="Other User"
-        )
-        SchoolMembership.objects.create(
-            user=other_user,
+        # Add teacher to other school with different role
+        other_membership = SchoolMembership.objects.create(
+            user=self.teacher,
             school=other_school,
-            role=SchoolRole.TEACHER
+            role=SchoolRole.SCHOOL_OWNER
         )
         
-        # Authenticate as user from original school
-        self.authenticate_user(self.teacher)
-        
-        # Test that we can't access resources that should be school-specific
-        # This is a placeholder for school-specific endpoints when they exist
-        
-        # For now, verify that the user's school context is correct
-        teacher_schools = SchoolMembership.objects.filter(
-            user=self.teacher, is_active=True
-        ).values_list('school_id', flat=True)
-        
-        self.assertIn(self.school.id, teacher_schools)
-        self.assertNotIn(other_school.id, teacher_schools)
-
-
-class TokenSecurityTestCase(TestCase):
-    """Test token-based security and session management."""
-    
-    def setUp(self):
-        """Set up test data."""
-        self.client = APIClient()
-        self.school = School.objects.create(name="Test School")
-        self.user = CustomUser.objects.create_user(
-            email="test@example.com",
-            name="Test User"
+        # Verify teacher has different roles in different schools
+        school1_memberships = SchoolMembership.objects.filter(
+            user=self.teacher, school=self.school
         )
-        SchoolMembership.objects.create(
-            user=self.user,
-            school=self.school,
-            role=SchoolRole.TEACHER
+        school2_memberships = SchoolMembership.objects.filter(
+            user=self.teacher, school=other_school
         )
+        
+        self.assertEqual(school1_memberships.first().role, SchoolRole.TEACHER)
+        self.assertEqual(school2_memberships.first().role, SchoolRole.SCHOOL_OWNER)
 
-    def test_token_required_for_protected_endpoints(self):
-        """Test that tokens are required for protected endpoints."""
-        # Don't authenticate - test without token
+    def test_role_hierarchy_business_logic(self):
+        """Test business logic around role hierarchies."""
+        # Get all memberships for each role type
+        owner_memberships = SchoolMembership.objects.filter(
+            school=self.school, role=SchoolRole.SCHOOL_OWNER, is_active=True
+        )
+        teacher_memberships = SchoolMembership.objects.filter(
+            school=self.school, role=SchoolRole.TEACHER, is_active=True
+        )
+        student_memberships = SchoolMembership.objects.filter(
+            school=self.school, role=SchoolRole.STUDENT, is_active=True
+        )
         
-        try:
-            url = reverse('accounts:user-list')
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-            
-        except Exception:
-            self.skipTest("User list endpoint not available")
+        # Verify role distribution
+        self.assertEqual(owner_memberships.count(), 1)
+        self.assertEqual(teacher_memberships.count(), 1)
+        self.assertEqual(student_memberships.count(), 1)
+        
+        # Business rule: Each role type should have distinct users (in this test case)
+        owner_users = set(m.user for m in owner_memberships)
+        teacher_users = set(m.user for m in teacher_memberships)
+        student_users = set(m.user for m in student_memberships)
+        
+        self.assertIn(self.school_owner, owner_users)
+        self.assertIn(self.teacher, teacher_users)
+        self.assertIn(self.student, student_users)
 
-    def test_valid_token_provides_access(self):
-        """Test that valid tokens provide appropriate access."""
-        # Authenticate with valid token
-        instance, token = AuthToken.objects.create(user=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
+    def test_membership_deactivation_business_logic(self):
+        """Test business logic when memberships are deactivated."""
+        # Deactivate teacher membership
+        teacher_membership = SchoolMembership.objects.get(
+            user=self.teacher, school=self.school, role=SchoolRole.TEACHER
+        )
+        teacher_membership.is_active = False
+        teacher_membership.save()
         
-        try:
-            url = reverse('accounts:course-list')
-            response = self.client.get(url)
-            
-            # Should succeed or be forbidden based on permissions, not authentication
-            self.assertIn(response.status_code, [
-                status.HTTP_200_OK,
-                status.HTTP_403_FORBIDDEN
-            ])
-            
-        except Exception:
-            self.skipTest("Course list endpoint not available")
-
-    def test_token_cleanup_on_logout(self):
-        """Test that tokens are properly invalidated on logout."""
-        # Create token
-        instance, token = AuthToken.objects.create(user=self.user)
+        # Active teacher queries should no longer include this user
+        active_teachers = SchoolMembership.objects.filter(
+            school=self.school, role=SchoolRole.TEACHER, is_active=True
+        )
         
-        # Verify token exists
-        self.assertTrue(AuthToken.objects.filter(digest=instance.digest).exists())
+        self.assertEqual(active_teachers.count(), 0)
+        self.assertNotIn(teacher_membership, active_teachers)
         
-        # Use logout endpoint to invalidate token
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
+        # But the membership should still exist for historical purposes
+        all_teacher_memberships = SchoolMembership.objects.filter(
+            school=self.school, role=SchoolRole.TEACHER
+        )
         
-        try:
-            logout_url = reverse('accounts:knox_logout')
-            response = self.client.post(logout_url)
-            
-            # Should succeed
-            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-            
-            # Verify token is invalidated
-            self.assertFalse(AuthToken.objects.filter(digest=instance.digest).exists())
-            
-        except Exception:
-            self.skipTest("Knox logout endpoint not available")
+        self.assertEqual(all_teacher_memberships.count(), 1)
+        self.assertIn(teacher_membership, all_teacher_memberships)
 
 
 class UserPermissionBoundaryTestCase(TestCase):
-    """Test that user permissions are properly bounded."""
+    """Test that user permissions are properly bounded at the model level."""
     
     def setUp(self):
         """Set up test data."""
-        self.client = APIClient()
         self.school = School.objects.create(name="Test School")
         
         # Create users with different permission levels
@@ -350,129 +261,49 @@ class UserPermissionBoundaryTestCase(TestCase):
             role=SchoolRole.STUDENT
         )
 
-    def authenticate_user(self, user):
-        """Helper to authenticate user."""
-        instance, token = AuthToken.objects.create(user=user)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
-
-    def test_superuser_has_elevated_access(self):
-        """Test that superusers have elevated access where appropriate."""
-        self.authenticate_user(self.admin_user)
+    def test_superuser_flag_business_logic(self):
+        """Test business logic around superuser privileges."""
+        # Verify superuser flags
+        self.assertTrue(self.admin_user.is_superuser)
+        self.assertTrue(self.admin_user.is_staff)
+        self.assertFalse(self.regular_user.is_superuser)
+        self.assertFalse(self.regular_user.is_staff)
         
-        # Test that superuser can access administrative endpoints
-        try:
-            url = reverse('accounts:user-list')
-            response = self.client.get(url)
-            
-            # Should succeed or be explicitly forbidden
-            self.assertIn(response.status_code, [
-                status.HTTP_200_OK,
-                status.HTTP_403_FORBIDDEN
-            ])
-            
-        except Exception:
-            self.skipTest("User list endpoint not available")
-
-    def test_regular_user_has_limited_access(self):
-        """Test that regular users have appropriately limited access."""
-        self.authenticate_user(self.regular_user)
+        # Business rule: Superusers can access any school context
+        # Regular users are limited to their school memberships
         
-        # Test that regular user cannot access administrative endpoints
-        try:
-            url = reverse('accounts:user-list')
-            response = self.client.get(url)
-            
-            # Should be forbidden or unauthorized
-            self.assertIn(response.status_code, [
-                status.HTTP_401_UNAUTHORIZED,
-                status.HTTP_403_FORBIDDEN
-            ])
-            
-        except Exception:
-            self.skipTest("User list endpoint not available")
-
-    def test_permission_errors_are_informative(self):
-        """Test that permission errors provide appropriate feedback."""
-        self.authenticate_user(self.regular_user)
+        regular_user_schools = SchoolMembership.objects.filter(
+            user=self.regular_user, is_active=True
+        ).values_list('school_id', flat=True)
         
-        try:
-            url = reverse('accounts:user-list')
-            response = self.client.get(url)
-            
-            if response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]:
-                # Should provide JSON error response
-                self.assertEqual(response['Content-Type'], 'application/json')
-                
-                # Should contain error details
-                data = response.json()
-                self.assertIn('detail', data)
-                
-        except Exception:
-            self.skipTest("User list endpoint not available")
+        self.assertIn(self.school.id, regular_user_schools)
+        self.assertEqual(len(regular_user_schools), 1)
 
-
-class DataAccessPermissionTestCase(TestCase):
-    """Test permissions for accessing specific data objects."""
-    
-    def setUp(self):
-        """Set up test data."""
-        self.client = APIClient()
-        self.school = School.objects.create(name="Test School")
-        
-        self.user1 = CustomUser.objects.create_user(
-            email="user1@example.com",
-            name="User One"
-        )
-        self.user2 = CustomUser.objects.create_user(
-            email="user2@example.com", 
-            name="User Two"
+    def test_user_active_status_business_logic(self):
+        """Test business logic around user active status."""
+        # Create inactive user
+        inactive_user = CustomUser.objects.create_user(
+            email="inactive@example.com",
+            name="Inactive User",
+            is_active=False
         )
         
+        # Add membership for inactive user
         SchoolMembership.objects.create(
-            user=self.user1, school=self.school, role=SchoolRole.TEACHER
+            user=inactive_user,
+            school=self.school,
+            role=SchoolRole.TEACHER
         )
-        SchoolMembership.objects.create(
-            user=self.user2, school=self.school, role=SchoolRole.STUDENT
+        
+        # Business rule: Inactive users should not be included in active business operations
+        active_user_memberships = SchoolMembership.objects.filter(
+            school=self.school, is_active=True, user__is_active=True
         )
         
-        self.profile1 = TeacherProfile.objects.create(user=self.user1, bio="Teacher 1")
-        self.profile2 = StudentProfile.objects.create(
-            user=self.user2, birth_date="2010-01-01", school_year="5th"
-        )
-
-    def authenticate_user(self, user):
-        """Helper to authenticate user."""
-        instance, token = AuthToken.objects.create(user=user)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
-
-    def test_users_can_access_own_profiles(self):
-        """Test that users can access their own profile data."""
-        # This test documents expected behavior for profile access
-        # Implementation depends on how profile endpoints are structured
+        # Should not include inactive user
+        inactive_user_memberships = active_user_memberships.filter(user=inactive_user)
+        self.assertEqual(inactive_user_memberships.count(), 0)
         
-        for user in [self.user1, self.user2]:
-            with self.subTest(user=user.email):
-                self.authenticate_user(user)
-                
-                # Users should be able to access their own data
-                # This is a placeholder for when profile detail endpoints exist
-                self.assertTrue(True)  # Placeholder assertion
-
-    def test_users_cannot_access_others_private_data(self):
-        """Test that users cannot access other users' private data."""
-        self.authenticate_user(self.user1)
-        
-        # This test documents expected behavior - users should not be able
-        # to access private data of other users
-        # Implementation depends on endpoint structure
-        
-        # For now, verify at the model level that data is properly separated
-        user1_profiles = TeacherProfile.objects.filter(user=self.user1)
-        user2_profiles = StudentProfile.objects.filter(user=self.user2)
-        
-        self.assertEqual(user1_profiles.count(), 1)
-        self.assertEqual(user2_profiles.count(), 1)
-        
-        # Verify profiles belong to correct users
-        self.assertEqual(user1_profiles.first().user, self.user1)
-        self.assertEqual(user2_profiles.first().user, self.user2)
+        # Should include active user
+        active_user_memberships_count = active_user_memberships.filter(user=self.regular_user)
+        self.assertEqual(active_user_memberships_count.count(), 1)

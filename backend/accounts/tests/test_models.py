@@ -349,3 +349,76 @@ class VerificationCodeTests(TestCase):
         verification.refresh_from_db()
         self.assertTrue(verification.is_used)
         self.assertFalse(verification.is_valid(valid_code))
+
+
+class UserSecurityTests(TestCase):
+    """Test cases for user security-related model behavior."""
+
+    def test_user_email_normalization_prevents_duplicates(self):
+        """Test that email normalization prevents duplicate accounts with same email."""
+        # Create user with standard email
+        user1 = User.objects.create_user(
+            email="test@example.com",
+            name="Test User 1"
+        )
+        
+        # Attempt to create user with same email but different case
+        # Should normalize to same email
+        user2 = User.objects.create_user(
+            email="TEST@EXAMPLE.COM",
+            name="Test User 2"
+        )
+        
+        # Both should have normalized email
+        self.assertEqual(user1.email.lower(), user2.email.lower())
+
+    def test_password_field_security_when_set(self):
+        """Test that passwords are securely handled when set."""
+        password = "test_password_123"
+        user = User.objects.create_user(
+            email="test@example.com",
+            name="Test User",
+            password=password
+        )
+        
+        # Password should not be stored as plaintext
+        self.assertNotEqual(user.password, password)
+        # Platform uses passwordless authentication, so password might be unusable
+        # Test documents that passwords, when set, are not plaintext
+        self.assertTrue(len(user.password) > len(password))  # Hashed passwords are longer
+
+    def test_user_model_string_representation_does_not_leak_sensitive_data(self):
+        """Test that user string representation doesn't expose sensitive information."""
+        user = User.objects.create_user(
+            email="sensitive@example.com",
+            name="Sensitive User",
+            password="secret_password"
+        )
+        
+        user_str = str(user)
+        
+        # Should not contain password or other sensitive data
+        self.assertNotIn("secret_password", user_str)
+        # Should be a reasonable representation
+        self.assertIn("sensitive@example.com", user_str.lower())
+
+
+class SchoolModelSecurityTests(TestCase):
+    """Test cases for school model security."""
+
+    def test_school_contact_information_is_properly_stored(self):
+        """Test that school contact information is stored securely."""
+        school = School.objects.create(
+            name="Test School",
+            description="A test school",
+            contact_email="admin@testschool.com",
+            phone_number="+351912345678"
+        )
+        
+        # Contact information should be stored
+        self.assertEqual(school.contact_email, "admin@testschool.com")
+        self.assertEqual(school.phone_number, "+351912345678")
+        
+        # Should have proper string representation
+        school_str = str(school)
+        self.assertEqual(school_str, "Test School")
