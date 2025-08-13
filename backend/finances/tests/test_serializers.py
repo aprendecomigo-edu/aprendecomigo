@@ -907,7 +907,7 @@ class TestReceiptSerializer(BaseAPITestCase):
         )
         self.transaction = PurchaseTransaction.objects.create(
             student=self.user,
-            transaction_type=TransactionType.HOURS,
+            transaction_type=TransactionType.PACKAGE,
             amount=Decimal('50.00'),
             payment_status=TransactionPaymentStatus.COMPLETED,
             metadata={'plan_name': 'Basic Plan'}
@@ -950,7 +950,7 @@ class TestReceiptSerializer(BaseAPITestCase):
         """Test plan name fallback for missing metadata."""
         transaction_no_metadata = PurchaseTransaction.objects.create(
             student=self.user,
-            transaction_type=TransactionType.HOURS,
+            transaction_type=TransactionType.PACKAGE,
             amount=Decimal('25.00'),
             payment_status=TransactionPaymentStatus.COMPLETED,
             metadata=None

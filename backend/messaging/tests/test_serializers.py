@@ -52,7 +52,7 @@ class TestNotificationSerializer(BaseAPITestCase):
         # Create related transaction for notification
         self.transaction = PurchaseTransaction.objects.create(
             student=self.user,
-            transaction_type=TransactionType.HOURS,
+            transaction_type=TransactionType.PACKAGE,
             amount=Decimal('25.00'),
             payment_status=TransactionPaymentStatus.COMPLETED
         )
@@ -1174,7 +1174,7 @@ class TestPurchaseTransactionSerializer(BaseAPITestCase):
         
         self.transaction = PurchaseTransaction.objects.create(
             student=self.user,
-            transaction_type=TransactionType.HOURS,
+            transaction_type=TransactionType.PACKAGE,
             amount=Decimal('50.00'),
             payment_status=TransactionPaymentStatus.COMPLETED
         )
@@ -1295,7 +1295,7 @@ class TestMessagingSerializersIntegration(BaseAPITestCase):
         # Create transaction
         transaction = PurchaseTransaction.objects.create(
             student=self.student,
-            transaction_type=TransactionType.HOURS,
+            transaction_type=TransactionType.PACKAGE,
             amount=Decimal('25.00'),
             payment_status=TransactionPaymentStatus.COMPLETED
         )
