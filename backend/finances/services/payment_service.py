@@ -44,8 +44,14 @@ class PaymentService:
         Raises:
             ValueError: If Stripe configuration is invalid
         """
-        self.stripe_service = StripeService()
-        logger.info("PaymentService initialized successfully")
+        try:
+            self.stripe_service = StripeService()
+            logger.info("PaymentService initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize StripeService: {e}")
+            # Ensure stripe_service attribute exists even if initialization fails
+            self.stripe_service = None
+            raise ValueError(f"PaymentService initialization failed: {e}") from e
 
     def create_payment_intent(
         self,
@@ -130,7 +136,15 @@ class PaymentService:
             
         except stripe.error.StripeError as e:
             logger.error(f"Stripe error creating payment intent: {e}")
-            return self.stripe_service.handle_stripe_error(e)
+            if hasattr(self, 'stripe_service') and self.stripe_service is not None:
+                return self.stripe_service.handle_stripe_error(e)
+            else:
+                logger.error("StripeService not available for error handling")
+                return {
+                    'success': False,
+                    'error_type': 'stripe_error',
+                    'message': 'Payment processing failed - service unavailable'
+                }
         except Exception as e:
             logger.error(f"Unexpected error creating payment intent: {e}")
             return {
@@ -209,7 +223,15 @@ class PaymentService:
             
         except stripe.error.StripeError as e:
             logger.error(f"Stripe error confirming payment: {e}")
-            return self.stripe_service.handle_stripe_error(e)
+            if hasattr(self, 'stripe_service') and self.stripe_service is not None:
+                return self.stripe_service.handle_stripe_error(e)
+            else:
+                logger.error("StripeService not available for error handling")
+                return {
+                    'success': False,
+                    'error_type': 'stripe_error',
+                    'message': 'Payment confirmation failed - service unavailable'
+                }
         except Exception as e:
             logger.error(f"Unexpected error confirming payment completion: {e}")
             return {
@@ -310,7 +332,15 @@ class PaymentService:
             
         except stripe.error.StripeError as e:
             logger.error(f"Stripe error retrieving payment status: {e}")
-            return self.stripe_service.handle_stripe_error(e)
+            if hasattr(self, 'stripe_service') and self.stripe_service is not None:
+                return self.stripe_service.handle_stripe_error(e)
+            else:
+                logger.error("StripeService not available for error handling")
+                return {
+                    'success': False,
+                    'error_type': 'stripe_error',
+                    'message': 'Payment status retrieval failed - service unavailable'
+                }
         except Exception as e:
             logger.error(f"Unexpected error retrieving payment status: {e}")
             return {
