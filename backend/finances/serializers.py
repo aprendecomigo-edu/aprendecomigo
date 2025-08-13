@@ -9,6 +9,7 @@ from typing import Any
 from django.core.validators import EmailValidator
 from rest_framework import serializers
 
+from common.security_utils import sanitize_name_field, sanitize_multiline_text
 from .models import (
     ClassSession,
     FamilyBudgetControl,
@@ -90,26 +91,23 @@ class TeacherCompensationRuleSerializer(serializers.ModelSerializer):
         grade_level = attrs.get("grade_level")
         rate_per_hour = attrs.get("rate_per_hour")
         fixed_amount = attrs.get("fixed_amount")
+        
+        errors = {}
 
         if rule_type == "grade_specific":
             if not grade_level:
-                raise serializers.ValidationError(
-                    {"grade_level": "Grade level is required for grade-specific rules."}
-                )
+                errors["grade_level"] = "Grade level is required for grade-specific rules."
             if not rate_per_hour:
-                raise serializers.ValidationError(
-                    {"rate_per_hour": "Rate per hour is required for grade-specific rules."}
-                )
+                errors["rate_per_hour"] = "Rate per hour is required for grade-specific rules."
         elif rule_type == "group_class":
             if not rate_per_hour:
-                raise serializers.ValidationError(
-                    {"rate_per_hour": "Rate per hour is required for group class rules."}
-                )
+                errors["rate_per_hour"] = "Rate per hour is required for group class rules."
         elif rule_type == "fixed_salary":
             if not fixed_amount:
-                raise serializers.ValidationError(
-                    {"fixed_amount": "Fixed amount is required for fixed salary rules."}
-                )
+                errors["fixed_amount"] = "Fixed amount is required for fixed salary rules."
+        
+        if errors:
+            raise serializers.ValidationError(errors)
 
         return attrs
 
@@ -339,7 +337,7 @@ class PricingPlanSerializer(serializers.ModelSerializer):
         """
         price_per_hour = obj.price_per_hour
         if price_per_hour is not None:
-            return str(price_per_hour)
+            return f"{price_per_hour:.2f}"
         return None
 
 
@@ -367,7 +365,7 @@ class StudentInfoSerializer(serializers.Serializer):
             value: The name to validate
             
         Returns:
-            Cleaned name string
+            Sanitized name string
             
         Raises:
             ValidationError: If name is invalid
@@ -375,18 +373,24 @@ class StudentInfoSerializer(serializers.Serializer):
         if not value or not value.strip():
             raise serializers.ValidationError("Name cannot be empty")
         
-        # Strip whitespace and limit length
-        cleaned_name = value.strip()[:150]
+        # Use smart sanitization from security utils
+        sanitized_name = sanitize_name_field(value)
         
-        # Basic sanitization - remove potentially dangerous characters
-        # Allow letters, spaces, hyphens, apostrophes, and dots
-        if not re.match(r"^[a-zA-ZÀ-ÿ\s\-'\.]+$", cleaned_name):
+        if not sanitized_name:
+            raise serializers.ValidationError("Name cannot be empty after sanitization")
+        
+        # Limit length after sanitization
+        if len(sanitized_name) > 150:
+            sanitized_name = sanitized_name[:150].strip()
+        
+        # Basic pattern validation - allow international characters including Cyrillic, Arabic, etc.
+        if not re.match(r"^[\w\sÀ-ÿ\u0100-\u017F\u0180-\u024F\u1E00-\u1EFF\u0400-\u04FF\u0370-\u03FF\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\u1100-\u11FF\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\-'\.]+$", sanitized_name):
             raise serializers.ValidationError(
                 "Name contains invalid characters. Only letters, spaces, hyphens, "
                 "apostrophes, and dots are allowed."
             )
         
-        return cleaned_name
+        return sanitized_name
     
     def validate_email(self, value: str) -> str:
         """
@@ -1151,19 +1155,17 @@ class PurchaseApprovalActionSerializer(serializers.Serializer):
         if not value:
             return value
         
-        # Basic HTML sanitization
-        import bleach
-        clean_value = bleach.clean(value, tags=[], strip=True).strip()
+        # Use smart sanitization from security utils
+        sanitized_notes = sanitize_multiline_text(value)
         
-        # Check for suspicious patterns
-        suspicious_patterns = ['<script', 'javascript:', 'data:', 'vbscript:']
-        clean_lower = clean_value.lower()
+        if not sanitized_notes:
+            return ""  # Return empty string if nothing remains after sanitization
         
-        for pattern in suspicious_patterns:
-            if pattern in clean_lower:
-                raise serializers.ValidationError("Notes contain invalid characters.")
+        # Ensure maximum length
+        if len(sanitized_notes) > 1000:
+            sanitized_notes = sanitized_notes[:1000].strip()
         
-        return clean_value
+        return sanitized_notes
 
 
 class StudentPurchaseRequestSerializer(serializers.Serializer):
@@ -1201,19 +1203,17 @@ class StudentPurchaseRequestSerializer(serializers.Serializer):
     
     def validate_description(self, value):
         """Validate and sanitize description."""
-        # Basic HTML sanitization
-        import bleach
-        clean_value = bleach.clean(value, tags=[], strip=True).strip()
+        # Use smart sanitization from security utils
+        sanitized_description = sanitize_multiline_text(value)
         
-        # Check for suspicious patterns
-        suspicious_patterns = ['<script', 'javascript:', 'data:', 'vbscript:']
-        clean_lower = clean_value.lower()
+        if not sanitized_description:
+            raise serializers.ValidationError("Description cannot be empty after sanitization")
         
-        for pattern in suspicious_patterns:
-            if pattern in clean_lower:
-                raise serializers.ValidationError("Description contains invalid characters.")
+        # Ensure maximum length
+        if len(sanitized_description) > 500:
+            sanitized_description = sanitized_description[:500].strip()
         
-        return clean_value
+        return sanitized_description
     
     def validate(self, data):
         """Validate the request data."""
