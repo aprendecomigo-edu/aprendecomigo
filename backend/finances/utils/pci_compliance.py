@@ -23,7 +23,7 @@ def mask_card_last4(card_last4: Optional[str]) -> Optional[str]:
         Masked version for safe storage/display (e.g., "X242")
         Returns None if input is None or empty
     """
-    if not card_last4:
+    if not card_last4 or not card_last4.strip():
         return None
         
     if len(card_last4) != 4 or not card_last4.isdigit():
@@ -114,8 +114,8 @@ def validate_pci_compliance(value: str) -> bool:
     if re.match(r'^\d{3,4}$', value_str):
         return False
         
-    # Check for full card number patterns (16 digits)
-    if re.match(r'\d{16}', value_str):
+    # Check for full card number patterns (16+ digits)
+    if re.search(r'\d{16}', value_str):
         return False
         
     # Check for common test card patterns that shouldn't be stored raw
@@ -146,7 +146,7 @@ def sanitize_card_data(card_last4: Optional[str]) -> Optional[str]:
     Returns:
         Sanitized version safe for storage (same as input for valid last4 digits)
     """
-    if not card_last4:
+    if not card_last4 or not card_last4.strip():
         return None
         
     # If it's valid 4-digit format, it's PCI DSS compliant - no masking needed

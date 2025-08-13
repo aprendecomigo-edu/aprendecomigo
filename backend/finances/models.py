@@ -1287,7 +1287,7 @@ class StoredPaymentMethod(models.Model):
         ]
     
     def __str__(self) -> str:
-        from common.pci_utils import get_secure_card_display
+        from finances.utils.pci_compliance import get_secure_card_display
         default_text = " (Default)" if self.is_default else ""
         card_display = get_secure_card_display(self.card_brand, self.card_last4)
         return f"{card_display} - {self.student.name}{default_text}"
@@ -1317,12 +1317,12 @@ class StoredPaymentMethod(models.Model):
         Returns:
             str: Formatted display string (e.g., "Visa ****X242")
         """
-        from common.pci_utils import get_secure_card_display
+        from finances.utils.pci_compliance import get_secure_card_display
         return get_secure_card_display(self.card_brand, self.card_last4)
     
     def save(self, *args, **kwargs):
         """Override save to handle default payment method logic and PCI compliance."""
-        from common.pci_utils import sanitize_card_data
+        from finances.utils.pci_compliance import sanitize_card_data
         
         # Sanitize card data for PCI compliance before saving
         if self.card_last4:
@@ -1339,7 +1339,7 @@ class StoredPaymentMethod(models.Model):
     
     def clean(self) -> None:
         """Validate payment method data and ensure PCI compliance."""
-        from common.pci_utils import validate_pci_compliance, is_pci_compliant_field_value
+        from finances.utils.pci_compliance import validate_pci_compliance, is_pci_compliant_field_value
         super().clean()
         
         # Validate expiration month

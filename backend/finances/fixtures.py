@@ -93,8 +93,8 @@ class FinanceTestFixtures:
             name='Test School',
             description='Test School Description',
             address='123 Test Street',
-            phone='+351912345678',
-            email='testschool@example.com'
+            phone_number='+351912345678',
+            contact_email='testschool@example.com'
         )
 
         # Create School Billing Settings
@@ -109,29 +109,25 @@ class FinanceTestFixtures:
         teacher_user = User.objects.create_user(
             email='teacher@test.com',
             password='testpass123',
-            name='Test Teacher',
-            is_verified=True
+            name='Test Teacher'
         )
 
         student_user = User.objects.create_user(
             email='student@test.com',
             password='testpass123',
-            name='Test Student',
-            is_verified=True
+            name='Test Student'
         )
 
         parent_user = User.objects.create_user(
             email='parent@test.com',
             password='testpass123',
-            name='Test Parent',
-            is_verified=True
+            name='Test Parent'
         )
 
         admin_user = User.objects.create_user(
             email='admin@test.com',
             password='testpass123',
             name='Test Admin',
-            is_verified=True,
             is_staff=True
         )
 
@@ -157,28 +153,25 @@ class FinanceTestFixtures:
         admin_membership = SchoolMembership.objects.create(
             user=admin_user,
             school=school,
-            role=SchoolRole.OWNER
+            role=SchoolRole.SCHOOL_OWNER
         )
 
         # Create Profiles
         teacher_profile = TeacherProfile.objects.create(
             user=teacher_user,
             bio='Test teacher bio',
-            experience_years=5,
-            hourly_rate=Decimal('25.00')
+                        hourly_rate=Decimal('25.00')
         )
 
         student_profile = StudentProfile.objects.create(
             user=student_user,
-            school=school,  # Required field that was missing in many tests
             educational_system=educational_system,  # Required field
             school_year='7',
-            date_of_birth=date(2008, 5, 15)
+            birth_date=date(2008, 5, 15)
         )
 
         parent_profile = ParentProfile.objects.create(
-            user=parent_user,
-            phone_number='+351912345679'
+            user=parent_user
         )
 
         # Create Parent-Child Relationship
@@ -187,8 +180,7 @@ class FinanceTestFixtures:
             child=student_user,
             school=school,
             relationship_type=RelationshipType.PARENT,
-            is_verified=True
-        )
+                    )
 
         # Create Course
         course = Course.objects.create(
@@ -397,8 +389,7 @@ class FinanceTestFixtures:
             email=email,
             password='testpass123',
             name='Teacher User',
-            is_verified=True
-        )
+                    )
 
         teacher_membership = SchoolMembership.objects.create(
             user=teacher_user,
@@ -409,8 +400,7 @@ class FinanceTestFixtures:
         teacher_profile = TeacherProfile.objects.create(
             user=teacher_user,
             bio='Teacher bio',
-            experience_years=3,
-            hourly_rate=Decimal('20.00')
+                        hourly_rate=Decimal('20.00')
         )
 
         return {
@@ -451,8 +441,7 @@ class FinanceTestFixtures:
             email=email,
             password='testpass123',
             name='Student User',
-            is_verified=True
-        )
+                    )
 
         student_membership = SchoolMembership.objects.create(
             user=student_user,
@@ -462,10 +451,9 @@ class FinanceTestFixtures:
 
         student_profile = StudentProfile.objects.create(
             user=student_user,
-            school=school,
             educational_system=educational_system,
             school_year='7',
-            date_of_birth=date(2008, 5, 15)
+            birth_date=date(2008, 5, 15)
         )
 
         student_account_balance = StudentAccountBalance.objects.create(
@@ -535,15 +523,13 @@ class FinanceTestFixtures:
             email=parent_email,
             password='testpass123',
             name='Parent User',
-            is_verified=True
-        )
+                    )
 
         child_user = User.objects.create_user(
             email=child_email,
             password='testpass123',
             name='Child User',
-            is_verified=True
-        )
+                    )
 
         parent_membership = SchoolMembership.objects.create(
             user=parent_user,
@@ -558,16 +544,14 @@ class FinanceTestFixtures:
         )
 
         parent_profile = ParentProfile.objects.create(
-            user=parent_user,
-            phone_number='+351912345679'
+            user=parent_user
         )
 
         child_profile = StudentProfile.objects.create(
             user=child_user,
-            school=school,
             educational_system=educational_system,
             school_year='7',
-            date_of_birth=date(2008, 5, 15)
+            birth_date=date(2008, 5, 15)
         )
 
         parent_child_relationship = ParentChildRelationship.objects.create(
@@ -575,8 +559,7 @@ class FinanceTestFixtures:
             child=child_user,
             school=school,
             relationship_type=RelationshipType.PARENT,
-            is_verified=True
-        )
+                    )
 
         return {
             'school': school,
