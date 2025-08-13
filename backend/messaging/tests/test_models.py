@@ -1,22 +1,17 @@
 """
-Business logic tests for notification models.
+Business logic tests for messaging models.
 
-Focused on:
-- Notification model business rules and validation
-- Domain methods (mark_as_read/unread)  
+Tests core business rules for:
+- Notification lifecycle and state management
+- Business domain methods and constraints
 - NotificationType enum business behavior
-- Business constraints and relationships
 """
 
-from decimal import Decimal
 from django.test import TestCase
-import pytest
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from accounts.models import CustomUser, School, SchoolMembership, SchoolRole
-from finances.models import StudentAccountBalance, PurchaseTransaction, TransactionType, TransactionPaymentStatus
 from messaging.models import Notification, NotificationType
 from messaging.tests.test_base import MessagingTestBase
 
@@ -27,18 +22,10 @@ class NotificationModelTest(MessagingTestBase):
     def setUp(self):
         """Set up test data."""
         super().setUp()
-        # Create student account balance using base class utility
-        self.student_balance = self.create_student_balance(
-            hours_purchased=10.0,
-            hours_consumed=8.0,
-            balance_amount=50.0
-        )
         
     def test_create_notification_with_required_fields(self):
         """Test business rule: notification can be created with required fields."""
-        notification = Notification.objects.create(
-            user=self.student,
-            notification_type=NotificationType.LOW_BALANCE,
+        notification = self.create_notification(
             title="Low Balance Alert",
             message="Your balance is running low"
         )
@@ -53,9 +40,7 @@ class NotificationModelTest(MessagingTestBase):
         
     def test_notification_display_includes_business_context(self):
         """Test business requirement: notification display includes user and type context."""
-        notification = Notification.objects.create(
-            user=self.student,
-            notification_type=NotificationType.LOW_BALANCE,
+        notification = self.create_notification(
             title="Low Balance Alert",
             message="Your balance is running low"
         )
@@ -68,12 +53,7 @@ class NotificationModelTest(MessagingTestBase):
         
     def test_mark_as_read_business_rule(self):
         """Test business rule: marking notification as read sets timestamp and persists."""
-        notification = Notification.objects.create(
-            user=self.student,
-            notification_type=NotificationType.LOW_BALANCE,
-            title="Low Balance Alert",
-            message="Your balance is running low"
-        )
+        notification = self.create_notification()
         
         # Business rule: new notifications are unread
         self.assertFalse(notification.is_read)
@@ -92,14 +72,11 @@ class NotificationModelTest(MessagingTestBase):
         
     def test_mark_as_unread_business_rule(self):
         """Test business rule: marking notification as unread clears timestamp and persists."""
-        notification = Notification.objects.create(
-            user=self.student,
-            notification_type=NotificationType.LOW_BALANCE,
-            title="Low Balance Alert",
-            message="Your balance is running low",
-            is_read=True,
-            read_at=timezone.now()
+        notification = self.create_notification(
+            is_read=True
         )
+        notification.read_at = timezone.now()
+        notification.save()
         
         # Business rule: mark_as_unread clears both status and timestamp
         notification.mark_as_unread()
@@ -149,7 +126,6 @@ class NotificationModelTest(MessagingTestBase):
         
     def test_store_business_context_in_metadata(self):
         """Test business rule: notifications store relevant business context in metadata."""
-        # Business context for low balance alert
         business_context = {
             "remaining_hours": 1.5,
             "balance_amount": "25.50",
@@ -157,9 +133,7 @@ class NotificationModelTest(MessagingTestBase):
             "alert_type": "low_balance"
         }
         
-        notification = Notification.objects.create(
-            user=self.student,
-            notification_type=NotificationType.LOW_BALANCE,
+        notification = self.create_notification(
             title="Low Balance Alert",
             message="Your balance is running low",
             metadata=business_context
@@ -172,19 +146,10 @@ class NotificationModelTest(MessagingTestBase):
         
     def test_notification_display_order_business_rule(self):
         """Test business rule: notifications appear newest first for user experience."""
-        # Business scenario: user receives multiple notifications
-        notification1 = Notification.objects.create(
-            user=self.student,
-            notification_type=NotificationType.LOW_BALANCE,
-            title="First Notification",
-            message="First message"
-        )
-        
-        notification2 = Notification.objects.create(
-            user=self.student,
+        notification1 = self.create_notification(title="First Notification")
+        notification2 = self.create_notification(
             notification_type=NotificationType.PACKAGE_EXPIRING,
-            title="Second Notification",
-            message="Second message"
+            title="Second Notification"
         )
         
         notifications = list(Notification.objects.all())
@@ -234,65 +199,6 @@ class NotificationModelTest(MessagingTestBase):
             )
             notification.full_clean()
     
-    def test_notification_metadata_preserves_business_context(self):
-        """Test business rule: notification metadata can store structured business data."""
-        # Business scenario: notification needs to store complex context
-        metadata = {
-            "alert_type": "low_balance",
-            "remaining_hours": 1.5,
-            "threshold_hours": 2.0,
-            "student_id": self.student.id,
-            "school_name": self.school.name,
-            "urgency_level": "medium",
-            "suggested_actions": ["purchase_hours", "contact_support"]
-        }
-        
-        notification = self.create_notification(
-            title="Low Balance with Context",
-            message="Your balance is low",
-            metadata=metadata
-        )
-        
-        # Business rule: metadata is preserved exactly as provided
-        self.assertEqual(notification.metadata["alert_type"], "low_balance")
-        self.assertEqual(notification.metadata["remaining_hours"], 1.5)
-        self.assertIn("purchase_hours", notification.metadata["suggested_actions"])
-    
-    def test_notification_read_status_persistence_across_sessions(self):
-        """Test business rule: read status persists across user sessions."""
-        notification = self.create_notification()
-        original_id = notification.id
-        
-        # Business action: mark as read
-        notification.mark_as_read()
-        read_timestamp = notification.read_at
-        
-        # Business rule: status persists when refetched from database
-        refetched_notification = Notification.objects.get(id=original_id)
-        self.assertTrue(refetched_notification.is_read)
-        self.assertEqual(refetched_notification.read_at, read_timestamp)
-        
-        # Business action: mark as unread
-        refetched_notification.mark_as_unread()
-        
-        # Business rule: unread status also persists
-        final_notification = Notification.objects.get(id=original_id)
-        self.assertFalse(final_notification.is_read)
-        self.assertIsNone(final_notification.read_at)
-    
-    def test_notification_ordering_shows_newest_first_for_user_experience(self):
-        """Test business rule: notifications are ordered newest first by default for better UX."""
-        # Business scenario: create notifications in sequence
-        first_notification = self.create_notification(title="First Alert")
-        second_notification = self.create_notification(title="Second Alert")
-        third_notification = self.create_notification(title="Third Alert")
-        
-        # Business rule: default ordering shows newest first
-        notifications_list = list(Notification.objects.all())
-        
-        self.assertEqual(notifications_list[0], third_notification)
-        self.assertEqual(notifications_list[1], second_notification)
-        self.assertEqual(notifications_list[2], first_notification)
     
     def test_notification_cascade_deletion_when_user_removed(self):
         """Test business rule: notifications are cleaned up when user account is deleted."""
@@ -300,7 +206,6 @@ class NotificationModelTest(MessagingTestBase):
         notification_id = notification.id
         
         # Business action: remove user account
-        user_id = self.student.id
         self.student.delete()
         
         # Business rule: associated notifications are automatically deleted

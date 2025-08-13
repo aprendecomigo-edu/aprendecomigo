@@ -180,39 +180,14 @@ class MessagingTestBase(TestCase):
             expires_at=timezone.now() + timedelta(days=expires_in_days)
         )
     
-    def create_student_user(self, email, name, first_login_completed=True):
+    def create_school_user(self, email, name, role=SchoolRole.STUDENT, first_login_completed=True):
         """
-        Create a student user with school membership.
-        
-        Args:
-            email: User email
-            name: User name  
-            first_login_completed: Whether first login is completed
-            
-        Returns:
-            CustomUser instance
-        """
-        user = CustomUser.objects.create_user(
-            email=email,
-            name=name,
-            first_login_completed=first_login_completed
-        )
-        
-        SchoolMembership.objects.create(
-            user=user,
-            school=self.school,
-            role=SchoolRole.STUDENT
-        )
-        
-        return user
-    
-    def create_teacher_user(self, email, name, first_login_completed=True):
-        """
-        Create a teacher user with school membership.
+        Create a user with school membership.
         
         Args:
             email: User email
             name: User name
+            role: School role (default: STUDENT)  
             first_login_completed: Whether first login is completed
             
         Returns:
@@ -227,10 +202,18 @@ class MessagingTestBase(TestCase):
         SchoolMembership.objects.create(
             user=user,
             school=self.school,
-            role=SchoolRole.TEACHER
+            role=role
         )
         
         return user
+    
+    def create_student_user(self, email, name, first_login_completed=True):
+        """Create a student user with school membership."""
+        return self.create_school_user(email, name, SchoolRole.STUDENT, first_login_completed)
+    
+    def create_teacher_user(self, email, name, first_login_completed=True):
+        """Create a teacher user with school membership."""
+        return self.create_school_user(email, name, SchoolRole.TEACHER, first_login_completed)
     
     def create_other_school(self, name="Other School", description="Another test school"):
         """

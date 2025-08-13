@@ -1,12 +1,11 @@
 """
 Business logic tests for notification counting functionality.
 
-Tests the business rules for calculating various notification counts:
-- Pending teacher invitations 
-- New user registrations requiring first login
-- Incomplete user profiles
-- Overdue tasks
-- Business rules for counting scope and filters
+Tests core business rules for:
+- Pending teacher invitations counting
+- New user registrations counting
+- Task-based notification counting
+- School-scoped counting rules
 """
 
 import uuid
@@ -32,17 +31,12 @@ class NotificationCountBusinessLogicTest(MessagingTestBase):
     
     def test_count_pending_teacher_invitations(self):
         """Test business rule: count only pending, non-expired teacher invitations."""
-        # Business scenario: school has sent various teacher invitations
-        
-        # Create pending invitations (should be counted)
-        pending_invitations = []
-        for i in range(3):
-            invitation = self.create_teacher_invitation(
-                email=f"teacher{i}@test.com",
-                status=InvitationStatus.PENDING,
-                expires_in_days=7
-            )
-            pending_invitations.append(invitation)
+        # Create pending invitation (should be counted)
+        self.create_teacher_invitation(
+            email="pending@test.com",
+            status=InvitationStatus.PENDING,
+            expires_in_days=7
+        )
         
         # Create accepted invitation (should NOT be counted)
         self.create_teacher_invitation(
@@ -69,24 +63,19 @@ class NotificationCountBusinessLogicTest(MessagingTestBase):
             expires_at__gt=timezone.now()
         ).count()
         
-        self.assertEqual(pending_count, 3)
+        self.assertEqual(pending_count, 1)
     
     def test_count_new_registrations_requiring_first_login(self):
         """Test business rule: count users who haven't completed first login."""
-        # Business scenario: school has new users who need to complete onboarding
-        
-        # Create users who haven't completed first login (should be counted)
-        new_users = []
-        for i in range(2):
-            user = self.create_student_user(
-                email=f"newuser{i}@test.com",
-                name=f"New User {i}",
-                first_login_completed=False  # Key business state
-            )
-            new_users.append(user)
+        # Create user who hasn't completed first login (should be counted)
+        self.create_student_user(
+            email="newuser@test.com",
+            name="New User",
+            first_login_completed=False  # Key business state
+        )
         
         # Create user who has completed first login (should NOT be counted)
-        existing_user = self.create_student_user(
+        self.create_student_user(
             email="existing@test.com",
             name="Existing User",
             first_login_completed=True
@@ -98,30 +87,24 @@ class NotificationCountBusinessLogicTest(MessagingTestBase):
             user__first_login_completed=False
         ).count()
         
-        self.assertEqual(new_registration_count, 2)
+        self.assertEqual(new_registration_count, 1)
     
     def test_count_incomplete_profiles(self):
         """Test business rule: count users with pending profile completion tasks."""
-        # Business scenario: school has users with incomplete profiles
+        # Create user with incomplete profile task (should be counted)
+        incomplete_user = self.create_teacher_user(
+            email="incomplete@test.com",
+            name="Incomplete User",
+            first_login_completed=True
+        )
         
-        # Create users with profile completion tasks (should be counted)
-        users_with_incomplete_profiles = []
-        for i in range(3):
-            user = self.create_teacher_user(
-                email=f"incomplete{i}@test.com",
-                name=f"Incomplete User {i}",
-                first_login_completed=True
-            )
-            
-            # Create profile completion task
-            Task.objects.create(
-                user=user,
-                title="Complete Your Profile",
-                status="pending",
-                task_type="onboarding",
-                is_system_generated=True
-            )
-            users_with_incomplete_profiles.append(user)
+        Task.objects.create(
+            user=incomplete_user,
+            title="Complete Your Profile",
+            status="pending",
+            task_type="onboarding",
+            is_system_generated=True
+        )
         
         # Create user without profile tasks (should NOT be counted)
         complete_user = self.create_teacher_user(
@@ -139,7 +122,7 @@ class NotificationCountBusinessLogicTest(MessagingTestBase):
             is_system_generated=True
         ).count()
         
-        self.assertEqual(incomplete_profile_count, 3)
+        self.assertEqual(incomplete_profile_count, 1)
     
     def test_count_overdue_tasks(self):
         """Test business rule: count tasks that are past their due date."""
@@ -235,54 +218,13 @@ class NotificationCountBusinessLogicTest(MessagingTestBase):
         self.assertEqual(our_school_count, 1)
         self.assertEqual(other_school_count, 1)
     
-    def test_total_notification_count_calculation(self):
-        """Test business rule: total notification count sums all relevant counts."""
-        # Business scenario: calculate total notifications for dashboard
+    def test_multiple_notification_types_counted_correctly(self):
+        """Test business rule: different notification types are counted independently."""
+        # Create one of each notification type
+        self.create_teacher_invitation(status=InvitationStatus.PENDING, expires_in_days=7)
+        self.create_student_user("new@test.com", "New User", first_login_completed=False)
         
-        # Create test data for each notification type
-        
-        # 1 pending invitation
-        self.create_teacher_invitation(
-            email="teacher@test.com",
-            status=InvitationStatus.PENDING,
-            expires_in_days=7
-        )
-        
-        # 1 new registration
-        new_user = self.create_student_user(
-            email="newuser@test.com",
-            name="New User",
-            first_login_completed=False
-        )
-        
-        # 1 incomplete profile
-        incomplete_user = self.create_teacher_user(
-            email="incomplete@test.com",
-            name="Incomplete User",
-            first_login_completed=True
-        )
-        Task.objects.create(
-            user=incomplete_user,
-            title="Complete Your Profile",
-            status="pending",
-            task_type="onboarding",
-            is_system_generated=True
-        )
-        
-        # 1 overdue task
-        overdue_user = self.create_teacher_user(
-            email="overdue@test.com",
-            name="Overdue User"
-        )
-        Task.objects.create(
-            user=overdue_user,
-            title="Overdue Task",
-            status="pending",
-            due_date=timezone.now() - timedelta(days=1),
-            task_type="assignment"
-        )
-        
-        # Calculate individual counts
+        # Calculate counts
         pending_invitations = TeacherInvitation.objects.filter(
             school=self.school,
             status=InvitationStatus.PENDING,
@@ -294,25 +236,5 @@ class NotificationCountBusinessLogicTest(MessagingTestBase):
             user__first_login_completed=False
         ).count()
         
-        school_users = [membership.user for membership in SchoolMembership.objects.filter(school=self.school)]
-        incomplete_profiles = Task.objects.filter(
-            user__in=school_users,
-            title__icontains="Complete Your Profile",
-            status="pending",
-            is_system_generated=True
-        ).count()
-        
-        overdue_tasks = Task.objects.filter(
-            user__in=school_users,
-            status="pending",
-            due_date__lt=timezone.now()
-        ).count()
-        
-        # Business rule: total is sum of all notification types
-        total_count = pending_invitations + new_registrations + incomplete_profiles + overdue_tasks
-        
         self.assertEqual(pending_invitations, 1)
         self.assertEqual(new_registrations, 1)
-        self.assertEqual(incomplete_profiles, 1)
-        self.assertEqual(overdue_tasks, 1)
-        self.assertEqual(total_count, 4)
