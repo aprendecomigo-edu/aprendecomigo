@@ -7,6 +7,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from datetime import date
 from django.conf import settings
 
 if TYPE_CHECKING:
@@ -33,6 +34,7 @@ class SessionStatus(models.TextChoices):
     """Status of class sessions."""
 
     SCHEDULED = "scheduled", _("Scheduled")
+    IN_PROGRESS = "in_progress", _("In Progress")
     COMPLETED = "completed", _("Completed")
     CANCELLED = "cancelled", _("Cancelled")
     NO_SHOW = "no_show", _("No Show")
@@ -188,7 +190,7 @@ class TeacherCompensationRule(models.Model):
 
     effective_from: models.DateField = models.DateField(
         _("effective from"),
-        default=timezone.now,
+        default=date.today,
         help_text=_("Date from which this rule is effective"),
     )
 
@@ -1094,6 +1096,8 @@ class Receipt(models.Model):
         _("receipt number"),
         max_length=50,
         unique=True,
+        null=True,
+        blank=True,
         help_text=_("Unique receipt identifier"),
     )
     
@@ -1349,15 +1353,14 @@ class StoredPaymentMethod(models.Model):
             # Check if card_last4 contains PCI-violating patterns
             if not is_pci_compliant_field_value('card_last4', self.card_last4):
                 raise ValidationError(
-                    _("Card last 4 digits cannot be stored in raw format for PCI compliance. "
-                      "Use masked format (e.g., 'X242' instead of '4242').")
+                    _("Card last 4 digits format is not PCI compliant.")
                 )
             
-            # Validate format - should be either 4 digits (legacy) or masked format (Xnnn)
+            # Validate format - should be either 4 digits or masked format (Xnnn)
             if not (self.card_last4.isdigit() and len(self.card_last4) == 4) and \
                not (len(self.card_last4) == 4 and self.card_last4[0] == 'X' and self.card_last4[1:].isdigit()):
                 raise ValidationError(
-                    _("Card last 4 digits must be in format 'Xnnn' (masked) or legacy 4-digit format")
+                    _("Card last 4 digits must be in 4-digit format ('4242') or masked format ('X242')")
                 )
         
         # Validate that other fields don't contain sensitive data

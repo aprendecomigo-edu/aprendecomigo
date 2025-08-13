@@ -25,6 +25,7 @@ from rest_framework.test import APIClient, APITestCase
 from unittest.mock import Mock, patch
 
 from accounts.models import School
+from finances.tests.stripe_test_utils import comprehensive_stripe_mocks_decorator
 from finances.models import (
     StoredPaymentMethod,
     StudentAccountBalance,
@@ -32,11 +33,13 @@ from finances.models import (
     TransactionPaymentStatus,
     TransactionType
 )
+from .stripe_test_utils import StripeTestMixin
 
 User = get_user_model()
 
 
-class PaymentMethodIDTypeConversionTests(APITestCase):
+@comprehensive_stripe_mocks_decorator(apply_to_class=True)
+class PaymentMethodIDTypeConversionTests(StripeTestMixin, APITestCase):
     """
     Test payment method ID type conversion handling.
     
@@ -46,15 +49,16 @@ class PaymentMethodIDTypeConversionTests(APITestCase):
 
     def setUp(self):
         """Set up test data for payment method type conversion tests."""
+        super().setUp()
+        self.setup_stripe_mocks()
+        
         self.student = User.objects.create_user(
             email='student@test.com',
             name='Test Student',
         )
         
         self.school = School.objects.create(
-            name='Test School',
-            owner=self.student,
-            time_zone='UTC'
+            name='Test School'
         )
         
         # Create payment method
@@ -80,6 +84,11 @@ class PaymentMethodIDTypeConversionTests(APITestCase):
         
         self.client = APIClient()
         self.client.force_authenticate(user=self.student)
+    
+    def tearDown(self):
+        """Clean up after each test."""
+        self.teardown_stripe_mocks()
+        super().tearDown()
 
     def test_payment_method_string_id_parameter_handling_fails(self):
         """
@@ -296,8 +305,7 @@ class PaymentMethodIDTypeConversionTests(APITestCase):
                     f"Got: {error_data}. Check error handling in payment method validation."
                 )
 
-    @patch('finances.services.payment_method_service.StripeService')
-    def test_payment_method_id_in_stripe_integration_fails(self, mock_stripe_service):
+    def test_payment_method_id_in_stripe_integration_fails(self):
         """
         Test that payment method ID type conversion works with Stripe integration.
         
@@ -306,50 +314,51 @@ class PaymentMethodIDTypeConversionTests(APITestCase):
         
         Expected to FAIL initially due to type issues in Stripe integration.
         """
-        # Mock Stripe responses
-        mock_stripe_service.return_value.detach_payment_method.return_value = {
-            'success': True,
-            'message': 'Payment method detached'
-        }
-        
-        # Test with different ID types
-        id_formats = [
-            str(self.payment_method.id),    # String
-            int(self.payment_method.id),    # Integer
-            f"{self.payment_method.id}",    # Formatted string
-        ]
-        
-        remove_url = '/api/finances/studentbalance/remove-payment-method/'
-        
-        for id_format in id_formats:
-            with self.subTest(id_format=type(id_format).__name__):
-                remove_data = {
-                    'payment_method_id': id_format,
-                    'reason': f'Testing ID format: {type(id_format).__name__}'
-                }
-                
-                response = self.client.post(remove_url, remove_data, format='json')
-                
-                # All formats should work consistently
-                if response.status_code not in [status.HTTP_200_OK, status.HTTP_202_ACCEPTED]:
-                    error_data = response.json()
-                    error_message = str(error_data).lower()
+        # Configure mock Stripe service responses via patching
+        with patch('finances.services.payment_method_service.StripeService') as mock_stripe_service:
+            mock_stripe_service.return_value.detach_payment_method.return_value = {
+                'success': True,
+                'message': 'Payment method detached'
+            }
+            
+            # Test with different ID types
+            id_formats = [
+                str(self.payment_method.id),    # String
+                int(self.payment_method.id),    # Integer
+                f"{self.payment_method.id}",    # Formatted string
+            ]
+            
+            remove_url = '/api/finances/studentbalance/remove-payment-method/'
+            
+            for id_format in id_formats:
+                with self.subTest(id_format=type(id_format).__name__):
+                    remove_data = {
+                        'payment_method_id': id_format,
+                        'reason': f'Testing ID format: {type(id_format).__name__}'
+                    }
                     
-                    # Should not fail due to ID type issues
-                    type_error_indicators = [
-                        'type error',
-                        'expected int',
-                        'expected string',
-                        'cannot convert'
-                    ]
+                    response = self.client.post(remove_url, remove_data, format='json')
                     
-                    for indicator in type_error_indicators:
-                        self.assertNotIn(
-                            indicator,
-                            error_message,
-                            f"ID format {type(id_format).__name__} should not cause type errors. "
-                            f"Got: {error_data}. Check Stripe integration type handling."
-                        )
+                    # All formats should work consistently
+                    if response.status_code not in [status.HTTP_200_OK, status.HTTP_202_ACCEPTED]:
+                        error_data = response.json()
+                        error_message = str(error_data).lower()
+                        
+                        # Should not fail due to ID type issues
+                        type_error_indicators = [
+                            'type error',
+                            'expected int',
+                            'expected string',
+                            'cannot convert'
+                        ]
+                        
+                        for indicator in type_error_indicators:
+                            self.assertNotIn(
+                                indicator,
+                                error_message,
+                                f"ID format {type(id_format).__name__} should not cause type errors. "
+                                f"Got: {error_data}. Check Stripe integration type handling."
+                            )
 
     def test_payment_method_query_parameter_type_handling_fails(self):
         """
@@ -391,7 +400,8 @@ class PaymentMethodIDTypeConversionTests(APITestCase):
             )
 
 
-class PaymentMethodRetrievalTypeTests(APITestCase):
+@comprehensive_stripe_mocks_decorator(apply_to_class=True)
+class PaymentMethodRetrievalTypeTests(StripeTestMixin, APITestCase):
     """
     Test payment method retrieval with different ID parameter types.
     
@@ -401,6 +411,9 @@ class PaymentMethodRetrievalTypeTests(APITestCase):
 
     def setUp(self):
         """Set up test data for retrieval type tests."""
+        super().setUp()
+        self.setup_stripe_mocks()
+        
         self.student = User.objects.create_user(
             email='student@test.com',
             name='Test Student',
@@ -420,6 +433,11 @@ class PaymentMethodRetrievalTypeTests(APITestCase):
         
         self.client = APIClient()
         self.client.force_authenticate(user=self.student)
+    
+    def tearDown(self):
+        """Clean up after each test."""
+        self.teardown_stripe_mocks()
+        super().tearDown()
 
     def test_payment_method_detail_retrieval_type_conversion_fails(self):
         """

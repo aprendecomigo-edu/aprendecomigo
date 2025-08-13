@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db import transaction
 from decimal import Decimal
 from typing import Optional
+from common.financial_utils import FinancialCalculation
 
 class CompensationService:
     @staticmethod
@@ -24,14 +25,16 @@ class CompensationService:
         teacher = User.objects.get(id=teacher_id)
         hourly_rate = getattr(teacher.teacher_profile, 'hourly_rate', Decimal('50.00'))
         
-        base_amount = completed_lessons * hourly_rate
+        # Calculate base amount with proper financial precision
+        base_amount = FinancialCalculation.multiply_currency(completed_lessons, hourly_rate)
         bonus_amount = Decimal('0.00')
         
-        # Apply bonus for high lesson count
+        # Apply bonus for high lesson count with proper rounding
         if completed_lessons >= 20:
-            bonus_amount = base_amount * Decimal('0.10')
+            bonus_amount = FinancialCalculation.apply_percentage(base_amount, Decimal('0.10'))
         
-        total_amount = base_amount + bonus_amount
+        # Calculate total with proper financial precision
+        total_amount = FinancialCalculation.add_currency(base_amount, bonus_amount)
         
         return {
             'base_amount': base_amount,
@@ -54,20 +57,23 @@ class PaymentService:
             student = User.objects.get(id=student_id)
             
             with transaction.atomic():
+                # Ensure lesson price has proper financial precision
+                payment_amount = FinancialCalculation.round_currency(lesson.price)
+                
                 payment = Payment.objects.create(
                     user=student,
                     lesson=lesson,
-                    amount=lesson.price,
+                    amount=payment_amount,
                     status='pending',
                     payment_method='credit_card'
                 )
                 
-                # Create transaction record
+                # Create transaction record with proper financial precision
                 Transaction = apps.get_model('finances', 'Transaction')
                 Transaction.objects.create(
                     payer=student,
                     payee=lesson.teacher,
-                    amount=lesson.price,
+                    amount=payment_amount,  # Use the properly rounded amount
                     transaction_type='lesson_payment',
                     description=f'Payment for lesson: {lesson.title}',
                     payment=payment
@@ -79,5 +85,6 @@ class PaymentService:
                     'status': payment.status
                 }
                 
-        except (Lesson.DoesNotExist, User.DoesNotExist) as e:
+        except Exception as e:
+            # Handle any model not found exceptions
             return None

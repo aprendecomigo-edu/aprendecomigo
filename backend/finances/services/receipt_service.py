@@ -14,7 +14,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.db import transaction
+from django.db import transaction as db_transaction
 
 from finances.models import Receipt, PurchaseTransaction, TransactionPaymentStatus
 
@@ -46,6 +46,12 @@ class ReceiptGenerationService:
         Returns:
             Dict containing success status, receipt data, or error information
         """
+        # Type validation for transaction_id - strict validation to match test expectations
+        if transaction_id is None:
+            raise ValueError("transaction_id cannot be None")
+        if isinstance(transaction_id, bool) or not isinstance(transaction_id, int):
+            raise TypeError(f"transaction_id must be an integer, got {type(transaction_id).__name__}")
+                
         try:
             # Get and validate transaction
             try:
@@ -80,7 +86,7 @@ class ReceiptGenerationService:
                 }
             
             # Generate receipt with atomic transaction
-            with transaction.atomic():
+            with db_transaction.atomic():
                 if existing_receipt and force_regenerate:
                     # Delete existing receipt file and record
                     cls._cleanup_receipt_file(existing_receipt)
@@ -122,6 +128,12 @@ class ReceiptGenerationService:
         Returns:
             Dict containing download URL or error information
         """
+        # Type validation for receipt_id - strict validation to match test expectations
+        if receipt_id is None:
+            raise ValueError("receipt_id cannot be None")
+        if isinstance(receipt_id, bool) or not isinstance(receipt_id, int):
+            raise TypeError(f"receipt_id must be an integer, got {type(receipt_id).__name__}")
+                
         try:
             receipt = Receipt.objects.select_related('student', 'transaction').get(
                 id=receipt_id

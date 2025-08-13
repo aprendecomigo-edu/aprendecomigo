@@ -6,7 +6,7 @@ storing, listing, and managing payment methods with Stripe integration.
 """
 
 from decimal import Decimal
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -16,16 +16,18 @@ from rest_framework.test import APITestCase
 
 from finances.models import StoredPaymentMethod
 from finances.services.payment_method_service import PaymentMethodService
+from finances.tests.stripe_test_utils import SimpleStripeTestCase, mock_stripe_services_decorator, comprehensive_stripe_mocks_decorator
 
 
 User = get_user_model()
 
 
-class PaymentMethodServiceTest(TestCase):
+class PaymentMethodServiceTest(SimpleStripeTestCase):
     """Test cases for the PaymentMethodService."""
     
     def setUp(self):
         """Set up test data."""
+        super().setUp()
         self.student = User.objects.create_user(
             email='student@example.com',
             name='Test Student',
@@ -33,26 +35,11 @@ class PaymentMethodServiceTest(TestCase):
         )
         
         self.service = PaymentMethodService()
+        # Manually set the stripe_service to our mock after construction
+        self.service.stripe_service = self.get_mock_stripe_service()
     
-    @patch('finances.services.payment_method_service.StripeService')
-    def test_add_payment_method_success(self, mock_stripe_service):
+    def test_add_payment_method_success(self):
         """Test successful payment method addition."""
-        # Mock Stripe service
-        mock_stripe_instance = MagicMock()
-        mock_stripe_service.return_value = mock_stripe_instance
-        
-        mock_stripe_instance.retrieve_payment_method.return_value = {
-            'success': True,
-            'payment_method': {
-                'type': 'card',
-                'card': {
-                    'brand': 'visa',
-                    'last4': '4242',
-                    'exp_month': 12,
-                    'exp_year': 2025
-                }
-            }
-        }
         
         result = self.service.add_payment_method(
             student_user=self.student,
@@ -64,25 +51,33 @@ class PaymentMethodServiceTest(TestCase):
         self.assertIn('payment_method_id', result)
         self.assertTrue(result['is_default'])
         
-        # Check payment method was created in database
-        payment_method = StoredPaymentMethod.objects.get(id=result['payment_method_id'])
-        self.assertEqual(payment_method.student, self.student)
-        self.assertEqual(payment_method.stripe_payment_method_id, 'pm_test_123')
-        self.assertEqual(payment_method.card_brand, 'visa')
-        self.assertEqual(payment_method.card_last4, '4242')
-        self.assertTrue(payment_method.is_default)
-    
-    @patch('finances.services.payment_method_service.StripeService')
-    def test_add_payment_method_stripe_error(self, mock_stripe_service):
-        """Test payment method addition with Stripe error."""
-        # Mock Stripe service error
-        mock_stripe_instance = MagicMock()
-        mock_stripe_service.return_value = mock_stripe_instance
+        # Test that payment method was successfully added
+        self.assertTrue(result['success'])
+        self.assertIn('payment_method_id', result)
+        self.assertTrue(result['is_default'])
+        self.assertEqual(result['stripe_customer_id'], 'cus_mock_test_123')
         
-        mock_stripe_instance.retrieve_payment_method.return_value = {
+        # Check that the payment method was actually created in database
+        stored_pm = StoredPaymentMethod.objects.get(id=result['payment_method_id'])
+        self.assertEqual(stored_pm.student, self.student)
+        self.assertEqual(stored_pm.stripe_payment_method_id, 'pm_test_123')
+        self.assertEqual(stored_pm.card_brand, 'visa')
+        self.assertTrue(stored_pm.is_default)
+    
+    def test_add_payment_method_stripe_error(self):
+        """Test payment method addition with Stripe error."""
+        
+        result = self.service.add_payment_method(
+            student_user=self.student,
+            stripe_payment_method_id='pm_invalid_123',
+            is_default=False
+        )
+        
+        # Test error handling by configuring mock to return error
+        self.service.stripe_service.retrieve_payment_method = Mock(return_value={
             'success': False,
             'message': 'Invalid payment method'
-        }
+        })
         
         result = self.service.add_payment_method(
             student_user=self.student,
@@ -172,8 +167,7 @@ class PaymentMethodServiceTest(TestCase):
         self.assertTrue(result['success'])
         self.assertEqual(result['count'], 1)  # Only non-expired
     
-    @patch('finances.services.payment_method_service.StripeService')
-    def test_remove_payment_method_success(self, mock_stripe_service):
+    def test_remove_payment_method_success(self):
         """Test successful payment method removal."""
         # Create payment method
         pm = StoredPaymentMethod.objects.create(
@@ -182,11 +176,6 @@ class PaymentMethodServiceTest(TestCase):
             card_brand='visa',
             card_last4='4242'
         )
-        
-        # Mock Stripe service
-        mock_stripe_instance = MagicMock()
-        mock_stripe_service.return_value = mock_stripe_instance
-        mock_stripe_instance.detach_payment_method.return_value = {'success': True}
         
         result = self.service.remove_payment_method(self.student, pm.id)
         
@@ -222,12 +211,7 @@ class PaymentMethodServiceTest(TestCase):
             is_default=False
         )
         
-        with patch('finances.services.payment_method_service.StripeService') as mock_stripe_service:
-            mock_stripe_instance = MagicMock()
-            mock_stripe_service.return_value = mock_stripe_instance
-            mock_stripe_instance.detach_payment_method.return_value = {'success': True}
-            
-            result = self.service.remove_payment_method(self.student, pm1.id)
+        result = self.service.remove_payment_method(self.student, pm1.id)
         
         self.assertTrue(result['success'])
         self.assertTrue(result['was_default'])
@@ -343,11 +327,13 @@ class PaymentMethodServiceTest(TestCase):
         self.assertTrue(valid_pm.is_active)
 
 
+@comprehensive_stripe_mocks_decorator(apply_to_class=True)
 class PaymentMethodAPITest(APITestCase):
     """Test cases for payment method API endpoints."""
     
     def setUp(self):
         """Set up test data."""
+        super().setUp()
         self.student = User.objects.create_user(
             email='student@example.com',
             name='Test Student',
@@ -377,7 +363,7 @@ class PaymentMethodAPITest(APITestCase):
         payment_method_data = response.data['payment_methods'][0]
         self.assertEqual(payment_method_data['id'], self.payment_method.id)
         self.assertEqual(payment_method_data['card_brand'], 'visa')
-        self.assertEqual(payment_method_data['card_last4'], '4242')
+        self.assertEqual(payment_method_data['card_display'], 'Visa ****X242')
         self.assertTrue(payment_method_data['is_default'])
     
     def test_list_payment_methods_unauthenticated(self):
@@ -603,7 +589,7 @@ class StoredPaymentMethodModelTest(TestCase):
         self.assertEqual(payment_method.student, self.student)
         self.assertEqual(payment_method.stripe_payment_method_id, 'pm_test_123')
         self.assertEqual(payment_method.card_brand, 'visa')
-        self.assertEqual(payment_method.card_last4, '4242')
+        self.assertEqual(payment_method.card_last4, 'X242')
         self.assertTrue(payment_method.is_default)
         self.assertTrue(payment_method.is_active)
     
@@ -617,7 +603,7 @@ class StoredPaymentMethodModelTest(TestCase):
             is_default=True
         )
         
-        expected_str = f"Visa ****4242 - {self.student.name} (Default)"
+        expected_str = f"Visa ****X242 - {self.student.name} (Default)"
         self.assertEqual(str(payment_method), expected_str)
     
     def test_payment_method_is_expired_property(self):
@@ -674,10 +660,10 @@ class StoredPaymentMethodModelTest(TestCase):
             payment_method.full_clean()
         
         # Test invalid card_last4
-        with self.assertRaisesMessage(Exception, 'Card last 4 digits must contain only numbers'):
+        with self.assertRaisesMessage(Exception, "Card last 4 digits must be in format 'Xnnn' (masked) or legacy 4-digit format"):
             payment_method = StoredPaymentMethod(
                 student=self.student,
                 stripe_payment_method_id='pm_test',
-                card_last4='abcd'  # Should be digits
+                card_last4='abcd'  # Should be digits or Xnnn format
             )
             payment_method.full_clean()

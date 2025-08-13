@@ -2126,39 +2126,16 @@ class StudentBalanceViewSet(viewsets.ViewSet):
                 status=http_status
             )
     
-    @action(detail=False, methods=['get'], url_path='payment-methods')
+    @action(detail=False, methods=['get', 'post'], url_path='payment-methods')
     def payment_methods(self, request):
         """
-        List all stored payment methods for the authenticated student.
+        Handle payment method operations for authenticated student.
         
+        GET: List all stored payment methods
         Query parameters:
         - include_expired: true/false - include expired payment methods
-        """
-        from finances.services.payment_method_service import PaymentMethodService
         
-        student_user, error_response = self._get_target_student(request)
-        if error_response:
-            return error_response
-        
-        include_expired = request.query_params.get('include_expired', 'false').lower() == 'true'
-        
-        # Get payment methods using service
-        payment_service = PaymentMethodService()
-        result = payment_service.list_payment_methods(student_user, include_expired)
-        
-        if result['success']:
-            return Response(result)
-        else:
-            return Response(
-                {'error': result['message']},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    @action(detail=False, methods=['post'], url_path='payment-methods')
-    def add_payment_method(self, request):
-        """
-        Add a new stored payment method using Stripe tokenization.
-        
+        POST: Add a new stored payment method using Stripe tokenization
         Request body:
         {
             "stripe_payment_method_id": "pm_1234567890",
@@ -2166,47 +2143,64 @@ class StudentBalanceViewSet(viewsets.ViewSet):
         }
         """
         from finances.services.payment_method_service import PaymentMethodService
-        from finances.serializers import PaymentMethodCreationRequestSerializer
         
         student_user, error_response = self._get_target_student(request)
         if error_response:
             return error_response
         
-        # Validate request data
-        serializer = PaymentMethodCreationRequestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        stripe_payment_method_id = serializer.validated_data['stripe_payment_method_id']
-        is_default = serializer.validated_data.get('is_default', False)
-        
-        # Add payment method using service
         payment_service = PaymentMethodService()
-        result = payment_service.add_payment_method(
-            student_user=student_user,
-            stripe_payment_method_id=stripe_payment_method_id,
-            is_default=is_default
-        )
         
-        if result['success']:
-            return Response(result, status=status.HTTP_201_CREATED)
-        else:
-            error_status_map = {
-                'already_exists': status.HTTP_400_BAD_REQUEST,
-                'stripe_error': status.HTTP_400_BAD_REQUEST,
-                'validation_error': status.HTTP_400_BAD_REQUEST,
-                'creation_error': status.HTTP_500_INTERNAL_SERVER_ERROR
-            }
+        if request.method == 'GET':
+            # List payment methods
+            include_expired = request.query_params.get('include_expired', 'false').lower() == 'true'
+            result = payment_service.list_payment_methods(student_user, include_expired)
             
-            http_status = error_status_map.get(
-                result.get('error_type'), 
-                status.HTTP_500_INTERNAL_SERVER_ERROR
+            if result['success']:
+                return Response(result)
+            else:
+                return Response(
+                    {'error': result['message']},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+        elif request.method == 'POST':
+            # Add payment method
+            from finances.serializers import PaymentMethodCreationRequestSerializer
+            
+            # Validate request data
+            serializer = PaymentMethodCreationRequestSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            stripe_payment_method_id = serializer.validated_data['stripe_payment_method_id']
+            is_default = serializer.validated_data.get('is_default', False)
+            
+            # Add payment method using service
+            result = payment_service.add_payment_method(
+                student_user=student_user,
+                stripe_payment_method_id=stripe_payment_method_id,
+                is_default=is_default
             )
             
-            return Response(
-                {'error': result['message']},
-                status=http_status
-            )
+            if result['success']:
+                return Response(result, status=status.HTTP_201_CREATED)
+            else:
+                error_status_map = {
+                    'already_exists': status.HTTP_400_BAD_REQUEST,
+                    'stripe_error': status.HTTP_400_BAD_REQUEST,
+                    'validation_error': status.HTTP_400_BAD_REQUEST,
+                    'creation_error': status.HTTP_500_INTERNAL_SERVER_ERROR
+                }
+                
+                http_status = error_status_map.get(
+                    result.get('error_type'), 
+                    status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+                return Response(
+                    {'error': result['message']},
+                    status=http_status
+                )
     
     @action(detail=True, methods=['delete'])
     def remove_payment_method(self, request, pk=None):

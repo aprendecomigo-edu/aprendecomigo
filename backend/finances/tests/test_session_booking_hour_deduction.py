@@ -631,24 +631,29 @@ class SessionBookingHourDeductionTestCase(TestCase):
         self.student2_balance.hours_consumed = Decimal("4.50")  # Only 0.5 hours left
         self.student2_balance.save()
         
+        # Create session first
+        session = ClassSession.objects.create(
+            teacher=self.teacher,
+            school=self.school,
+            date=date.today(),
+            start_time=time(14, 0),
+            end_time=time(15, 0),
+            session_type=SessionType.GROUP,
+            grade_level="10",
+            student_count=2,
+            status=SessionStatus.SCHEDULED
+        )
+        session.students.add(self.student, self.student2)
+        
         # Mock a database error during the second student's deduction
+        from finances.services.hour_deduction_service import HourDeductionService
         with patch('finances.models.StudentAccountBalance.save') as mock_save:
             # Make save fail on second call (for student2)
             mock_save.side_effect = [None, Exception("Database error")]
             
             with self.assertRaises(Exception):
-                session = ClassSession.objects.create(
-                    teacher=self.teacher,
-                    school=self.school,
-                    date=date.today(),
-                    start_time=time(14, 0),
-                    end_time=time(15, 0),
-                    session_type=SessionType.GROUP,
-                    grade_level="10",
-                    student_count=2,
-                    status=SessionStatus.SCHEDULED
-                )
-                session.students.add(self.student, self.student2)
+                # Explicitly call hour deduction service which should fail atomically
+                HourDeductionService.validate_and_deduct_hours_for_session(session)
         
         # Verify that no changes were committed due to transaction rollback
         self.student_balance.refresh_from_db()
@@ -686,6 +691,21 @@ class SessionBookingHourDeductionAPITestCase(APITestCase):
         self.teacher = TeacherProfile.objects.create(
             user=self.teacher_user,
             bio="API test teacher"
+        )
+        
+        # Create school memberships (required for school permissions)
+        from accounts.models import SchoolMembership, SchoolRole
+        SchoolMembership.objects.create(
+            user=self.student,
+            school=self.school,
+            role=SchoolRole.STUDENT,
+            is_active=True
+        )
+        SchoolMembership.objects.create(
+            user=self.teacher_user,
+            school=self.school,
+            role=SchoolRole.TEACHER,
+            is_active=True
         )
         
         # Create student balance
@@ -768,24 +788,28 @@ class SessionBookingHourDeductionAPITestCase(APITestCase):
 
     def test_api_session_cancellation_endpoint(self):
         """Test API endpoint for session cancellation with hour refund."""
-        # First create a session
-        session = ClassSession.objects.create(
-            teacher=self.teacher,
-            school=self.school,
-            date=date.today(),
-            start_time=time(14, 0),
-            end_time=time(15, 0),
-            session_type=SessionType.INDIVIDUAL,
-            grade_level="10",
-            student_count=1,
-            status=SessionStatus.SCHEDULED
-        )
-        session.students.add(self.student)
-        
         self.client.force_authenticate(user=self.teacher_user)
         
+        # Create a session first through the API to ensure hour deduction
+        session_data = {
+            "teacher": self.teacher.id,
+            "school": self.school.id,
+            "date": date.today().isoformat(),
+            "start_time": "14:00:00",
+            "end_time": "15:00:00",
+            "session_type": SessionType.INDIVIDUAL,
+            "grade_level": "10",
+            "student_count": 1,
+            "students": [self.student.id],
+            "status": SessionStatus.SCHEDULED
+        }
+        
+        create_response = self.client.post('/api/finances/sessions/', session_data, format='json')
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+        session_id = create_response.data['id']
+        
         # Call cancellation endpoint
-        response = self.client.post(f'/api/finances/sessions/{session.id}/cancel/', {
+        response = self.client.post(f'/api/finances/sessions/{session_id}/cancel/', {
             'reason': 'Teacher unavailable'
         })
         
@@ -793,7 +817,8 @@ class SessionBookingHourDeductionAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         # Verify session is cancelled
-        session.refresh_from_db()
+        from finances.models import ClassSession
+        session = ClassSession.objects.get(id=session_id)
         self.assertEqual(session.status, SessionStatus.CANCELLED)
         
         # Verify hours were refunded
@@ -802,8 +827,9 @@ class SessionBookingHourDeductionAPITestCase(APITestCase):
         
         # Verify response includes refund information
         response_data = response.json()
-        self.assertIn('refund', response_data)
-        self.assertEqual(response_data['refund']['hours_refunded'], "1.00")
+        self.assertIn('cancellation_details', response_data)
+        self.assertIn('refund_info', response_data['cancellation_details'])
+        self.assertEqual(response_data['cancellation_details']['refund_info']['refunded_hours'], "1.00")
 
     def test_api_balance_check_endpoint(self):
         """Test API endpoint for checking student balance before booking."""

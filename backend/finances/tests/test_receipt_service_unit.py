@@ -11,6 +11,7 @@ Tests should initially FAIL (TDD RED state) if there are type handling issues in
 from decimal import Decimal
 from unittest.mock import patch, MagicMock
 from django.test import TestCase
+from .stripe_test_utils import SimpleStripeTestCase
 from django.contrib.auth import get_user_model
 
 from finances.models import (
@@ -25,7 +26,7 @@ from finances.services.receipt_service import ReceiptGenerationService, ReceiptV
 User = get_user_model()
 
 
-class ReceiptServiceIDParameterTest(TestCase):
+class ReceiptServiceIDParameterTest(SimpleStripeTestCase):
     """
     Test ReceiptGenerationService business logic for ID parameter type handling.
     
@@ -35,6 +36,7 @@ class ReceiptServiceIDParameterTest(TestCase):
 
     def setUp(self):
         """Set up test data."""
+        super().setUp()
         self.student = User.objects.create_user(
             email='student@example.com',
             name='Test Student'
@@ -72,7 +74,8 @@ class ReceiptServiceIDParameterTest(TestCase):
         
         # Call service method with integer ID (correct type)
         result = self.service.generate_receipt(
-            transaction_id=self.completed_transaction.id  # integer
+            transaction_id=self.completed_transaction.id,  # integer
+            force_regenerate=True
         )
         
         self.assertTrue(result['success'])
@@ -229,7 +232,7 @@ class ReceiptServiceIDParameterTest(TestCase):
         self.assertEqual(result['error_type'], 'not_found')
 
 
-class ReceiptServiceTransactionValidationTest(TestCase):
+class ReceiptServiceTransactionValidationTest(SimpleStripeTestCase):
     """
     Test ReceiptGenerationService transaction validation for ID-related business logic.
     
@@ -238,6 +241,7 @@ class ReceiptServiceTransactionValidationTest(TestCase):
 
     def setUp(self):
         """Set up test data."""
+        super().setUp()
         self.student = User.objects.create_user(
             email='student@example.com',
             name='Test Student'
@@ -283,7 +287,7 @@ class ReceiptServiceTransactionValidationTest(TestCase):
             )
 
 
-class ReceiptServiceTypeValidationTest(TestCase):
+class ReceiptServiceTypeValidationTest(SimpleStripeTestCase):
     """
     Test ReceiptGenerationService business logic for comprehensive type validation.
     
@@ -292,6 +296,7 @@ class ReceiptServiceTypeValidationTest(TestCase):
 
     def setUp(self):
         """Set up test data."""
+        super().setUp()
         self.student = User.objects.create_user(
             email='student@example.com',
             name='Test Student'

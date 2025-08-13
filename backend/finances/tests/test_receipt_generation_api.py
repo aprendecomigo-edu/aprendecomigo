@@ -12,6 +12,7 @@ from unittest.mock import patch, MagicMock
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.test import TestCase, override_settings
+from .stripe_test_utils import SimpleStripeTestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -28,11 +29,12 @@ from finances.services.receipt_service import ReceiptGenerationService
 User = get_user_model()
 
 
-class ReceiptGenerationServiceTest(TestCase):
+class ReceiptGenerationServiceTest(SimpleStripeTestCase):
     """Test cases for the ReceiptGenerationService."""
     
     def setUp(self):
         """Set up test data."""
+        super().setUp()
         self.student = User.objects.create_user(
             email='student@example.com',
             name='Test Student',
@@ -230,11 +232,12 @@ class ReceiptGenerationServiceTest(TestCase):
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
-class ReceiptAPITest(APITestCase):
+class ReceiptAPITest(SimpleStripeTestCase, APITestCase):
     """Test cases for receipt API endpoints."""
     
     def setUp(self):
         """Set up test data."""
+        super().setUp()
         self.student = User.objects.create_user(
             email='student@example.com',
             name='Test Student',
@@ -441,11 +444,12 @@ class ReceiptAPITest(APITestCase):
         self.assertIn(response.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND])
 
 
-class ReceiptModelTest(TestCase):
+class ReceiptModelTest(SimpleStripeTestCase):
     """Test cases for the Receipt model."""
     
     def setUp(self):
         """Set up test data."""
+        super().setUp()
         self.student = User.objects.create_user(
             email='student@example.com',
             name='Test Student',
@@ -490,7 +494,7 @@ class ReceiptModelTest(TestCase):
         # Receipt number should be generated after saving
         self.assertIsNotNone(receipt.receipt_number)
         self.assertTrue(receipt.receipt_number.startswith('RCP-2025-'))
-        self.assertEqual(len(receipt.receipt_number), 13)  # RCP-YYYY-XXXXXXXX
+        self.assertEqual(len(receipt.receipt_number), 17)  # RCP-YYYY-XXXXXXXX
     
     def test_receipt_str_representation(self):
         """Test string representation of receipt."""

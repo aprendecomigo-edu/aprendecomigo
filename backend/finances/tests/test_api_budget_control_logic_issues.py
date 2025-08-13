@@ -24,21 +24,24 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from accounts.models import School, StudentProfile
+from accounts.models import School, StudentProfile, ParentChildRelationship, RelationshipType
+from finances.tests.stripe_test_utils import comprehensive_stripe_mocks_decorator
 from finances.models import (
     FamilyBudgetControl,
     PurchaseApprovalRequest,
-    ApprovalStatus,
+    PurchaseApprovalStatus,
     StudentAccountBalance,
     PricingPlan,
     PurchaseTransaction,
     TransactionPaymentStatus,
-    TransactionType
+    TransactionType,
+    PlanType
 )
 
 User = get_user_model()
 
 
+@comprehensive_stripe_mocks_decorator(apply_to_class=True)
 class FamilyBudgetControlApprovalLogicTests(APITestCase):
     """
     Test Family Budget Control approval logic and validation.
@@ -68,35 +71,42 @@ class FamilyBudgetControlApprovalLogicTests(APITestCase):
         # Create school
         self.school = School.objects.create(
             name='Test School',
-            owner=self.school_owner,
-            time_zone='UTC'
+            description='Test School for Budget Control Testing'
         )
         
         # Create student profile
         self.student_profile = StudentProfile.objects.create(
             user=self.student,
-            school=self.school,
-            parent_email=self.parent.email,
-            grade_level='elementary'
+            school_year='5th grade',
+            birth_date='2015-01-01'
+        )
+        
+        # Create parent-child relationship
+        self.parent_child_relationship = ParentChildRelationship.objects.create(
+            parent=self.parent,
+            child=self.student,
+            relationship_type=RelationshipType.PARENT,
+            school=self.school
         )
         
         # Create family budget control
         self.budget_control = FamilyBudgetControl.objects.create(
-            parent=self.parent,
-            student=self.student,
-            school=self.school,
+            parent_child_relationship=self.parent_child_relationship,
             monthly_budget_limit=Decimal('100.00'),
-            requires_approval=True,
-            approval_threshold=Decimal('25.00'),
+            weekly_budget_limit=Decimal('25.00'),
+            auto_approval_threshold=Decimal('25.00'),
             is_active=True
         )
         
         # Create pricing plan for testing
         self.pricing_plan = PricingPlan.objects.create(
             name='Test Plan',
-            hours=Decimal('5.00'),
-            price=Decimal('50.00'),
-            school=self.school,
+            description='Test pricing plan for budget control testing',
+            plan_type=PlanType.PACKAGE,
+            hours_included=Decimal('5.00'),
+            price_eur=Decimal('50.00'),
+            validity_days=30,
+            display_order=1,
             is_active=True
         )
         
@@ -129,7 +139,7 @@ class FamilyBudgetControlApprovalLogicTests(APITestCase):
             # Should be auto-approved for below threshold purchases
             self.assertEqual(
                 data.get('status'),
-                ApprovalStatus.APPROVED,
+                PurchaseApprovalStatus.APPROVED,
                 f"Purchase below approval threshold should be auto-approved. "
                 f"Got status: {data.get('status')}. "
                 f"Check approval logic in FamilyBudgetControlViewSet."
@@ -149,7 +159,7 @@ class FamilyBudgetControlApprovalLogicTests(APITestCase):
             # Should remain pending for above threshold purchases
             self.assertEqual(
                 data.get('status'),
-                ApprovalStatus.PENDING,
+                PurchaseApprovalStatus.PENDING,
                 f"Purchase above approval threshold should remain pending. "
                 f"Got status: {data.get('status')}. "
                 f"Check approval threshold logic in budget control system."
@@ -198,7 +208,7 @@ class FamilyBudgetControlApprovalLogicTests(APITestCase):
             # If created, should have special status indicating budget exceeded
             self.assertIn(
                 data.get('status'),
-                [ApprovalStatus.PENDING, ApprovalStatus.REQUIRES_REVIEW],
+                [PurchaseApprovalStatus.PENDING, PurchaseApprovalStatus.REQUIRES_REVIEW],
                 f"Over-budget purchase should require special approval. "
                 f"Got status: {data.get('status')}. "
                 f"Check monthly budget enforcement logic."
@@ -231,7 +241,7 @@ class FamilyBudgetControlApprovalLogicTests(APITestCase):
             school=self.school,
             requested_amount=Decimal('50.00'),
             pricing_plan=self.pricing_plan,
-            status=ApprovalStatus.PENDING,
+            status=PurchaseApprovalStatus.PENDING,
             notes='Test approval request'
         )
         
@@ -283,13 +293,19 @@ class FamilyBudgetControlApprovalLogicTests(APITestCase):
             name='Other Student'
         )
         
-        other_budget_control = FamilyBudgetControl.objects.create(
+        # Create parent-child relationship for the other family
+        other_parent_child_relationship = ParentChildRelationship.objects.create(
             parent=other_parent,
-            student=other_student,
-            school=self.school,
+            child=other_student,
+            relationship_type=RelationshipType.PARENT,
+            school=self.school
+        )
+        
+        other_budget_control = FamilyBudgetControl.objects.create(
+            parent_child_relationship=other_parent_child_relationship,
             monthly_budget_limit=Decimal('200.00'),
-            requires_approval=True,
-            approval_threshold=Decimal('50.00'),
+            weekly_budget_limit=Decimal('50.00'),
+            auto_approval_threshold=Decimal('50.00'),
             is_active=True
         )
         
@@ -334,18 +350,23 @@ class FamilyBudgetControlApprovalLogicTests(APITestCase):
         # Create another school
         other_school = School.objects.create(
             name='Other School',
-            owner=self.school_owner,
-            time_zone='UTC'
+            description='Another test school'
+        )
+        
+        # Create parent-child relationship for the same family at different school
+        other_school_relationship = ParentChildRelationship.objects.create(
+            parent=self.parent,
+            child=self.student,
+            relationship_type=RelationshipType.PARENT,
+            school=other_school
         )
         
         # Create budget control for same family at different school
         multi_school_budget = FamilyBudgetControl.objects.create(
-            parent=self.parent,
-            student=self.student,
-            school=other_school,
+            parent_child_relationship=other_school_relationship,
             monthly_budget_limit=Decimal('150.00'),
-            requires_approval=True,
-            approval_threshold=Decimal('30.00'),
+            weekly_budget_limit=Decimal('30.00'),
+            auto_approval_threshold=Decimal('30.00'),
             is_active=True
         )
         
@@ -372,6 +393,7 @@ class FamilyBudgetControlApprovalLogicTests(APITestCase):
             )
 
 
+@comprehensive_stripe_mocks_decorator(apply_to_class=True)
 class FamilyBudgetControlEdgeCaseTests(APITestCase):
     """
     Test edge cases in Family Budget Control logic.
@@ -399,16 +421,22 @@ class FamilyBudgetControlEdgeCaseTests(APITestCase):
         
         self.school = School.objects.create(
             name='Test School',
-            owner=self.school_owner,
-            time_zone='UTC'
+            description='Test School for Edge Case Testing'
         )
         
         # Create student profile
         self.student_profile = StudentProfile.objects.create(
             user=self.student,
-            school=self.school,
-            parent_email=self.parent.email,
-            grade_level='elementary'
+            school_year='5th grade',
+            birth_date='2015-01-01'
+        )
+        
+        # Create parent-child relationship
+        self.parent_child_relationship = ParentChildRelationship.objects.create(
+            parent=self.parent,
+            child=self.student,
+            relationship_type=RelationshipType.PARENT,
+            school=self.school
         )
         
         self.client = APIClient()
@@ -424,12 +452,10 @@ class FamilyBudgetControlEdgeCaseTests(APITestCase):
         """
         # Create budget control with zero threshold
         zero_threshold_budget = FamilyBudgetControl.objects.create(
-            parent=self.parent,
-            student=self.student,
-            school=self.school,
+            parent_child_relationship=self.parent_child_relationship,
             monthly_budget_limit=Decimal('100.00'),
-            requires_approval=True,
-            approval_threshold=Decimal('0.00'),  # All purchases need approval
+            weekly_budget_limit=Decimal('25.00'),
+            auto_approval_threshold=Decimal('0.00'),  # All purchases need approval
             is_active=True
         )
         
@@ -459,7 +485,7 @@ class FamilyBudgetControlEdgeCaseTests(APITestCase):
             # Should require approval even for small amounts
             self.assertEqual(
                 data.get('status'),
-                ApprovalStatus.PENDING,
+                PurchaseApprovalStatus.PENDING,
                 f"With zero approval threshold, all purchases should require approval. "
                 f"Got status: {data.get('status')}. "
                 f"Check zero threshold logic in approval validation."
@@ -476,12 +502,10 @@ class FamilyBudgetControlEdgeCaseTests(APITestCase):
         """
         # Create inactive budget control
         inactive_budget = FamilyBudgetControl.objects.create(
-            parent=self.parent,
-            student=self.student,
-            school=self.school,
+            parent_child_relationship=self.parent_child_relationship,
             monthly_budget_limit=Decimal('10.00'),  # Very low limit
-            requires_approval=True,
-            approval_threshold=Decimal('5.00'),
+            weekly_budget_limit=Decimal('5.00'),
+            auto_approval_threshold=Decimal('5.00'),
             is_active=False  # Inactive
         )
         
@@ -562,7 +586,7 @@ class FamilyBudgetControlEdgeCaseTests(APITestCase):
             # Should be auto-approved if approval request is created
             self.assertEqual(
                 data.get('status'),
-                ApprovalStatus.APPROVED,
+                PurchaseApprovalStatus.APPROVED,
                 f"Without budget control, purchases should be auto-approved. "
                 f"Got status: {data.get('status')}. "
                 f"Check no-budget-control logic in approval system."
@@ -588,12 +612,10 @@ class FamilyBudgetControlEdgeCaseTests(APITestCase):
         """
         # Create budget control
         budget_control = FamilyBudgetControl.objects.create(
-            parent=self.parent,
-            student=self.student,
-            school=self.school,
+            parent_child_relationship=self.parent_child_relationship,
             monthly_budget_limit=Decimal('100.00'),
-            requires_approval=True,
-            approval_threshold=Decimal('25.00'),
+            weekly_budget_limit=Decimal('25.00'),
+            auto_approval_threshold=Decimal('25.00'),
             is_active=True
         )
         

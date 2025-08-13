@@ -10,5 +10,6 @@ Note: We should be at TDD red state at this point
 7) You do a code review of the changes and a security review using /security-review
 8) If here are any outstanding bugs or problems to fix, please coordinate with the agents to fix.
 9) Make sure the issue was completed at a high standard, for example use cases identified were reasonable and tests developed were reasonable. Be critical and efficient.
+10) Commit your changes,  leave a comment on the gh issue and close it 
 
-This is a  complex flow so plan well and use your sequential thinking mcp about this project the steps to take for each issue and track your progress.
+This is a  complex flow so plan well and use your sequential thinking mcp about this project the steps to take for each issue and create a todo list and track your progress and remain on track.

@@ -222,15 +222,16 @@ class PaymentMethodService:
                 if pm.is_expired and not include_expired:
                     continue
                 
+                # Use PCI-compliant response format
                 payment_methods.append({
                     'id': pm.id,
                     'card_brand': pm.card_brand,
-                    'card_last4': pm.card_last4,
                     'card_exp_month': pm.card_exp_month,
                     'card_exp_year': pm.card_exp_year,
-                    'card_display': pm.card_display,
+                    'card_display': pm.card_display,  # PCI-compliant display only
                     'is_default': pm.is_default,
                     'is_expired': pm.is_expired,
+                    'stripe_customer_id': pm.stripe_customer_id,
                     'created_at': pm.created_at.isoformat(),
                 })
             

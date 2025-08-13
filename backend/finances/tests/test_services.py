@@ -4,7 +4,7 @@ from django.conf import settings
 from unittest.mock import patch, Mock
 from decimal import Decimal
 from datetime import date, timedelta
-from ..services import CompensationService, PaymentService
+from ..services.business_logic_services import CompensationService, PaymentService
 
 class CompensationServiceTest(TestCase):
     def setUp(self):
@@ -19,7 +19,7 @@ class CompensationServiceTest(TestCase):
         self.period_start = date.today().replace(day=1)
         self.period_end = date.today()
 
-    @patch('finances.services.apps.get_model')
+    @patch('finances.services.business_logic_services.apps.get_model')
     def test_calculate_teacher_compensation_with_bonus_returns_correct_amount(self, mock_get_model):
         # Arrange: Mock 25 completed lessons (should trigger bonus)
         mock_lesson_model = Mock()
@@ -34,7 +34,8 @@ class CompensationServiceTest(TestCase):
         
         mock_get_model.side_effect = lambda app, model: {
             ('classroom', 'Lesson'): mock_lesson_model,
-            ('auth', 'User'): mock_user_model,
+            ('accounts', 'CustomUser'): mock_user_model,
+            ('finances', 'TeacherCompensation'): Mock(),
         }[(app, model)]
 
         # Act
@@ -54,7 +55,7 @@ class CompensationServiceTest(TestCase):
         self.assertEqual(result['total_amount'], expected_total)
         self.assertEqual(result['lessons_count'], 25)
 
-    @patch('finances.services.apps.get_model')
+    @patch('finances.services.business_logic_services.apps.get_model')
     def test_calculate_teacher_compensation_no_bonus_for_low_lesson_count(self, mock_get_model):
         # Arrange: Mock 15 completed lessons (no bonus)
         mock_lesson_model = Mock()
@@ -69,7 +70,8 @@ class CompensationServiceTest(TestCase):
         
         mock_get_model.side_effect = lambda app, model: {
             ('classroom', 'Lesson'): mock_lesson_model,
-            ('auth', 'User'): mock_user_model,
+            ('accounts', 'CustomUser'): mock_user_model,
+            ('finances', 'TeacherCompensation'): Mock(),
         }[(app, model)]
 
         # Act
@@ -104,8 +106,8 @@ class PaymentServiceTest(TestCase):
             password='testpass123'
         )
 
-    @patch('finances.services.apps.get_model')
-    @patch('finances.services.transaction.atomic')
+    @patch('finances.services.business_logic_services.apps.get_model')
+    @patch('finances.services.business_logic_services.transaction.atomic')
     def test_process_lesson_payment_creates_payment_and_transaction(self, mock_atomic, mock_get_model):
         # Arrange: Mock lesson and models
         mock_lesson = Mock()
@@ -132,7 +134,7 @@ class PaymentServiceTest(TestCase):
         
         mock_get_model.side_effect = lambda app, model: {
             ('classroom', 'Lesson'): mock_lesson_model,
-            ('auth', 'User'): mock_user_model,
+            ('accounts', 'CustomUser'): mock_user_model,
             ('finances', 'Payment'): mock_payment_model,
             ('finances', 'Transaction'): mock_transaction_model,
         }[(app, model)]
@@ -158,7 +160,7 @@ class PaymentServiceTest(TestCase):
         # Verify transaction creation
         mock_transaction_model.objects.create.assert_called_once()
 
-    @patch('finances.services.apps.get_model')
+    @patch('finances.services.business_logic_services.apps.get_model')
     def test_process_lesson_payment_handles_missing_lesson(self, mock_get_model):
         # Arrange: Mock lesson not found
         from django.core.exceptions import ObjectDoesNotExist
@@ -172,7 +174,8 @@ class PaymentServiceTest(TestCase):
         
         mock_get_model.side_effect = lambda app, model: {
             ('classroom', 'Lesson'): mock_lesson_model,
-            ('auth', 'User'): mock_user_model,
+            ('accounts', 'CustomUser'): mock_user_model,
+            ('finances', 'Payment'): Mock(),
         }[(app, model)]
 
         # Act

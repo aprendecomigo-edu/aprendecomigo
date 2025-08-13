@@ -30,6 +30,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from accounts.models import School
+from finances.tests.stripe_test_utils import comprehensive_stripe_mocks_decorator
 from finances.models import (
     StoredPaymentMethod,
     PurchaseTransaction,
@@ -41,6 +42,7 @@ from finances.models import (
 User = get_user_model()
 
 
+@comprehensive_stripe_mocks_decorator(apply_to_class=True)
 class PCIComplianceErrorHandlingTests(APITestCase):
     """
     Test PCI compliance in error scenarios and exception handling.
@@ -250,6 +252,7 @@ class PCIComplianceErrorHandlingTests(APITestCase):
                 )
 
 
+@comprehensive_stripe_mocks_decorator(apply_to_class=True)
 class PCIComplianceAdminEndpointTests(APITestCase):
     """
     Test PCI compliance in admin/management endpoints.
@@ -412,6 +415,7 @@ class PCIComplianceAdminEndpointTests(APITestCase):
                 )
 
 
+@comprehensive_stripe_mocks_decorator(apply_to_class=True)
 class PCIComplianceBulkOperationTests(APITestCase):
     """
     Test PCI compliance in bulk operations and batch processing.

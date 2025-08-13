@@ -130,14 +130,14 @@ class SessionBookingService:
             try:
                 consumption_records = HourDeductionService.validate_and_deduct_hours_for_session(session)
                 hour_deduction_info = {
-                    "hours_deducted": str(session.duration_hours),
+                    "hours_deducted": f"{session.duration_hours:.2f}",
                     "students_affected": len(consumption_records),
                     "consumption_records": [
                         {
-                            "student_id": record.student.id,
-                            "student_name": record.student.name,
-                            "hours_consumed": str(record.hours_consumed),
-                            "package_id": record.package.id
+                            "student_id": record.student_account.student.id,
+                            "student_name": record.student_account.student.name,
+                            "hours_consumed": f"{record.hours_consumed:.2f}",
+                            "package_id": record.purchase_transaction.id
                         }
                         for record in consumption_records
                     ]
@@ -207,37 +207,38 @@ class SessionBookingService:
             raise SessionBookingError("Cannot cancel a completed session")
         
         old_status = session.status
+        
+        # Calculate refund info before changing status (since model.save() will handle refunds)
+        refund_info = {"refunded_hours": "0.00", "students_affected": 0, "refund_records": []}
+        
+        if not session.is_trial:
+            # Get consumption records to build refund info before they're processed
+            from finances.models import HourConsumption
+            consumption_records = list(HourConsumption.objects.filter(
+                class_session=session,
+                is_refunded=False
+            ).select_related('student_account__student'))
+            
+            if consumption_records:
+                total_refunded = sum(record.hours_consumed for record in consumption_records)
+                refund_info = {
+                    "refunded_hours": str(total_refunded),
+                    "students_affected": len(consumption_records),
+                    "refund_records": [
+                        {
+                            "student_name": record.student_account.student.name,
+                            "hours_refunded": str(record.hours_consumed)
+                        }
+                        for record in consumption_records
+                    ]
+                }
+        
+        # Update session status (this will automatically trigger refund processing via model.save())
         session.status = SessionStatus.CANCELLED
         session.cancelled_at = timezone.now()
         if reason:
             session.notes = f"{session.notes}\nCancellation reason: {reason}".strip()
-        session.save()
-        
-        # Process hour refunds
-        refund_info = {"refunded_hours": "0.00", "students_affected": 0, "refund_records": []}
-        
-        if not session.is_trial:
-            try:
-                refund_records = HourDeductionService.refund_hours_for_session(
-                    session, 
-                    reason=f"Session cancelled (was {old_status}): {reason}"
-                )
-                refund_info = {
-                    "refunded_hours": str(session.duration_hours),
-                    "students_affected": len(refund_records),
-                    "refund_records": [
-                        {
-                            "student_id": record.student.id,
-                            "student_name": record.student.name,
-                            "hours_refunded": str(record.hours_consumed),
-                            "package_id": record.package.id
-                        }
-                        for record in refund_records
-                    ]
-                }
-            except Exception as e:
-                logger.error(f"Failed to process refund for session {session_id}: {e}")
-                # Don't roll back cancellation, but log the error
+        session.save()  # This will automatically process refunds via _handle_session_status_change
         
         logger.info(f"Session {session_id} cancelled successfully")
         return {

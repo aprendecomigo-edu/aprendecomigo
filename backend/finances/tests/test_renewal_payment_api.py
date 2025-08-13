@@ -14,6 +14,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from .stripe_test_utils import SimpleStripeTestCase
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -33,11 +34,12 @@ from finances.models import (
 User = get_user_model()
 
 
-class SavedPaymentMethodAPITests(TestCase):
+class SavedPaymentMethodAPITests(SimpleStripeTestCase):
     """Test suite for saved payment methods API endpoints."""
 
     def setUp(self):
         """Set up test data."""
+        super().setUp()
         self.client = APIClient()
         
         # Create test student user
@@ -86,7 +88,7 @@ class SavedPaymentMethodAPITests(TestCase):
         
         payment_method_data = response.data['payment_methods'][0]
         self.assertEqual(payment_method_data['id'], self.payment_method.id)
-        self.assertEqual(payment_method_data['card_display'], 'Visa ****4242')
+        self.assertEqual(payment_method_data['card_display'], 'Visa ****X242')
         self.assertTrue(payment_method_data['is_default'])
         self.assertIn('stripe_customer_id', payment_method_data)
 
@@ -238,11 +240,12 @@ class SavedPaymentMethodAPITests(TestCase):
             )
 
 
-class RenewalPaymentAPITests(TestCase):
+class RenewalPaymentAPITests(SimpleStripeTestCase):
     """Test suite for renewal payment API endpoints."""
 
     def setUp(self):
         """Set up test data."""
+        super().setUp()
         self.client = APIClient()
         
         # Create test student user
@@ -493,11 +496,12 @@ class RenewalPaymentAPITests(TestCase):
             self.assertIn('error_type', response.data)
 
 
-class RenewalPaymentSecurityAPITests(TestCase):
+class RenewalPaymentSecurityAPITests(SimpleStripeTestCase):
     """Test suite for security aspects of the renewal payment API."""
 
     def setUp(self):
         """Set up test data."""
+        super().setUp()
         self.client = APIClient()
         
         # Create test users

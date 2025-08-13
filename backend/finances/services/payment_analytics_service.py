@@ -127,17 +127,16 @@ class PaymentAnalyticsService:
             date = transaction.created_at.date()
             daily_revenue[date] = daily_revenue.get(date, Decimal('0.00')) + transaction.amount
         
-        # Convert to list format for API response
+        # Convert to list format for API response - work backwards from today
         daily_data = []
-        current_date = cutoff_date.date()
-        end_date = timezone.now().date()
+        today = timezone.now().date()
         
-        while current_date <= end_date:
+        for i in range(days):
+            current_date = today - timedelta(days=days - 1 - i)
             daily_data.append({
                 'date': current_date,
                 'revenue': daily_revenue.get(current_date, Decimal('0.00'))
             })
-            current_date += timedelta(days=1)
         
         return {
             'total_revenue': total_revenue,
@@ -172,7 +171,8 @@ class PaymentAnalyticsService:
         result = {
             'package': Decimal('0.00'),
             'subscription': Decimal('0.00'),
-            'total': Decimal('0.00')
+            'total': Decimal('0.00'),
+            'total_revenue': Decimal('0.00')
         }
         
         for item in type_breakdown:
@@ -185,6 +185,7 @@ class PaymentAnalyticsService:
                 result['subscription'] = revenue
             
             result['total'] += revenue
+            result['total_revenue'] += revenue  # Compatibility for dashboard
         
         return result
     
@@ -262,17 +263,16 @@ class PaymentAnalyticsService:
             date = transaction.created_at.date()
             daily_failures[date] = daily_failures.get(date, 0) + 1
         
-        # Convert to list format
+        # Convert to list format - work backwards from today
         daily_data = []
-        current_date = cutoff_date.date()
-        end_date = timezone.now().date()
+        today = timezone.now().date()
         
-        while current_date <= end_date:
+        for i in range(days):
+            current_date = today - timedelta(days=days - 1 - i)
             daily_data.append({
                 'date': current_date,
                 'failures': daily_failures.get(current_date, 0)
             })
-            current_date += timedelta(days=1)
         
         return {
             'total_failures': total_failures,
@@ -294,10 +294,13 @@ class PaymentAnalyticsService:
         """
         cutoff_date = timezone.now() - timedelta(days=days)
         
-        # Get failed webhook events that might indicate payment failures
+        # Get webhook events that indicate payment failures
         failed_events = WebhookEventLog.objects.filter(
-            created_at__gte=cutoff_date,
-            event_type__icontains='failed'
+            created_at__gte=cutoff_date
+        ).filter(
+            Q(event_type__icontains='failed') |
+            Q(event_type__icontains='declined') |
+            Q(event_type__icontains='error')
         )
         
         # Count event types
