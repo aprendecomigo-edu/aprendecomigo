@@ -93,6 +93,10 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
                 from accounts.models import School
                 temp_data['school'] = School.objects.get(id=temp_data['school'])
             
+            # Skip model validation if teacher is missing (handled in view)
+            if 'teacher' not in temp_data or temp_data['teacher'] is None:
+                return data
+                
             instance = TeacherAvailability(**temp_data)
         
         try:
@@ -401,6 +405,21 @@ class CreateClassScheduleSerializer(serializers.ModelSerializer):
             start_datetime = datetime.combine(data['scheduled_date'], data['start_time'])
             end_datetime = start_datetime + timedelta(minutes=data['duration_minutes'])
             data['end_time'] = end_datetime.time()
+        else:
+            # If end_time is provided, validate it's after start_time
+            if data['start_time'] >= data['end_time']:
+                raise serializers.ValidationError("End time must be after start time.")
+        
+        # Validate group class capacity if additional students are provided
+        if data.get('class_type') == ClassType.GROUP:
+            max_participants = data.get('max_participants')
+            additional_students = data.get('additional_students', [])
+            total_participants = 1 + len(additional_students)  # 1 primary + additional
+            
+            if max_participants and total_participants > max_participants:
+                raise serializers.ValidationError(
+                    f"Total participants ({total_participants}) exceeds maximum allowed ({max_participants})"
+                )
         
         # Prepare booking data for orchestrator validation
         booking_data = {

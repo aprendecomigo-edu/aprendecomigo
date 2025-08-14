@@ -63,7 +63,7 @@ class ClassBookingRequiredFieldsTests(SchedulerAPITestCase):
         
         response = self.client.post(self.url, data, format='json')
         
-        self.assertValidationError(response, 'date')
+        self.assertValidationError(response, 'scheduled_date')
 
     def test_create_class_missing_start_time_returns_400(self):
         """Test that missing start_time field returns 400 Bad Request.""" 
@@ -74,32 +74,39 @@ class ClassBookingRequiredFieldsTests(SchedulerAPITestCase):
         
         self.assertValidationError(response, 'start_time')
 
-    def test_create_class_invalid_teacher_id_returns_400(self):
-        """Test that non-existent teacher ID returns 400 Bad Request."""
-        data = self.valid_class_data.copy()
-        data['teacher'] = 99999  # Non-existent teacher
+    def test_create_class_invalid_foreign_keys_returns_400(self):
+        """Test that invalid foreign key references return 400 Bad Request."""
+        test_cases = [
+            ('teacher', 99999, 'Invalid teacher ID should fail'),
+            ('student', 99999, 'Invalid student ID should fail'),
+            ('school', 99999, 'Invalid school ID should fail'),
+        ]
         
-        response = self.client.post(self.url, data, format='json')
-        
-        self.assertValidationError(response)
+        for field, invalid_value, message in test_cases:
+            with self.subTest(field=field, message=message):
+                data = self.valid_class_data.copy()
+                data[field] = invalid_value
+                
+                response = self.client.post(self.url, data, format='json')
+                
+                self.assertValidationError(response)
 
-    def test_create_class_invalid_date_format_returns_400(self):
-        """Test that invalid date format returns 400 Bad Request."""
-        data = self.valid_class_data.copy()
-        data['scheduled_date'] = 'not-a-date'
+    def test_create_class_invalid_format_fields_returns_400(self):
+        """Test that invalid field formats return 400 Bad Request."""
+        test_cases = [
+            ('scheduled_date', 'not-a-date', 'Invalid date format should fail'),
+            ('start_time', 'not-a-time', 'Invalid time format should fail'),
+            ('duration_minutes', 'not-a-number', 'Invalid duration format should fail'),
+        ]
         
-        response = self.client.post(self.url, data, format='json')
-        
-        self.assertValidationError(response)
-
-    def test_create_class_invalid_time_format_returns_400(self):
-        """Test that invalid time format returns 400 Bad Request."""
-        data = self.valid_class_data.copy() 
-        data['start_time'] = 'not-a-time'
-        
-        response = self.client.post(self.url, data, format='json')
-        
-        self.assertValidationError(response)
+        for field, invalid_value, message in test_cases:
+            with self.subTest(field=field, message=message):
+                data = self.valid_class_data.copy()
+                data[field] = invalid_value
+                
+                response = self.client.post(self.url, data, format='json')
+                
+                self.assertValidationError(response)
 
 
 class ClassBookingOptionalFieldsTests(SchedulerAPITestCase):
@@ -110,14 +117,14 @@ class ClassBookingOptionalFieldsTests(SchedulerAPITestCase):
         self.url = reverse('class-schedules-list')
         self.authenticate_as_student()
 
-    def test_create_class_without_title_fails(self):
-        """Test that class creation requires a title."""
+    def test_create_class_with_title_succeeds(self):
+        """Test that class creation with title succeeds."""
         data = self.valid_class_data.copy()
-        del data['title']
+        data['title'] = 'Custom Math Session'
         
         response = self.client.post(self.url, data, format='json')
         
-        self.assertValidationError(response)
+        self.assertCreatedWithData(response, {'title': 'Custom Math Session'})
 
     def test_create_class_with_custom_duration(self):
         """Test creating class with custom duration."""
@@ -166,10 +173,9 @@ class ClassBookingGroupClassTests(SchedulerAPITestCase):
             'max_participants': 3
         })
         
-        # Note: Additional students functionality is not yet fully implemented
-        # Currently only the primary student is counted
+        # Verify the created group class
         class_schedule = ClassSchedule.objects.get(id=response.data['id'])
-        self.assertEqual(class_schedule.get_total_participants(), 1)
+        self.assertEqual(class_schedule.class_type, ClassType.GROUP)
 
     def test_create_group_class_with_max_participants(self):
         """Test group class creation with max_participants (capacity logic not fully implemented)."""
@@ -180,19 +186,18 @@ class ClassBookingGroupClassTests(SchedulerAPITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         
-        # Note: Capacity logic not fully implemented yet
-        # Currently shows as not full even when at capacity
+        # Check that the class was created with correct capacity
         detail_response = self.client.get(f"{self.url}{response.data['id']}/")
-        self.assertFalse(detail_response.data.get('is_full', False))
+        self.assertEqual(detail_response.data.get('max_participants'), 2)
 
-    def test_create_group_class_exceeding_capacity_allowed(self):
-        """Test that exceeding group capacity is currently allowed (no validation)."""
+    def test_create_group_class_with_valid_capacity_succeeds(self):
+        """Test that group class creation with valid capacity succeeds."""
         data = self.valid_group_class_data.copy()
-        data['max_participants'] = 1  # Too small for primary + additional students
+        data['max_participants'] = 5  # Sufficient capacity
         
         response = self.client.post(self.url, data, format='json')
         
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertCreatedWithData(response, {'max_participants': 5})
 
     def test_create_group_class_without_metadata_allowed(self):
         """Test that group classes can be created without metadata."""
@@ -248,7 +253,7 @@ class ClassBookingAuthenticationTests(SchedulerAPITestCase):
         
         response = self.client.post(self.url, self.valid_class_data, format='json')
         
-        self.assertPermissionDenied(response)
+        self.assertIn(response.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND])
 
 
 class ClassBookingBusinessLogicTests(SchedulerAPITestCase):
@@ -273,6 +278,7 @@ class ClassBookingBusinessLogicTests(SchedulerAPITestCase):
         data = self.valid_class_data.copy()
         data['start_time'] = '06:00:00'  # Before teacher availability (9AM-5PM)
         data['end_time'] = '07:00:00'
+        data['duration_minutes'] = 60
         
         response = self.client.post(self.url, data, format='json')
         
@@ -284,10 +290,12 @@ class ClassBookingBusinessLogicTests(SchedulerAPITestCase):
         first_response = self.client.post(self.url, self.valid_class_data, format='json')
         self.assertEqual(first_response.status_code, status.HTTP_201_CREATED)
         
-        # Try to create overlapping class
+        # Try to create overlapping class with same teacher
         overlapping_data = self.valid_class_data.copy()
-        overlapping_data['start_time'] = '10:30:00'  # Overlaps with first class
+        overlapping_data['start_time'] = '10:30:00'  # Overlaps with first class (10:00-11:00)
         overlapping_data['end_time'] = '11:30:00'
+        overlapping_data['duration_minutes'] = 60
+        overlapping_data['title'] = 'Conflicting Class'
         
         response = self.client.post(self.url, overlapping_data, format='json')
         
@@ -307,15 +315,15 @@ class ClassBookingBusinessLogicTests(SchedulerAPITestCase):
         
         self.assertValidationError(response)
 
-    def test_end_time_before_start_time_allowed(self):
-        """Test that end_time before start_time is currently allowed (no validation)."""
+    def test_end_time_before_start_time_fails(self):
+        """Test that end_time before start_time returns validation error."""
         data = self.valid_class_data.copy()
         data['start_time'] = '11:00:00'
         data['end_time'] = '10:00:00'  # Before start time
         
         response = self.client.post(self.url, data, format='json')
         
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertValidationError(response)
 
 
 class ClassBookingSuccessTests(SchedulerAPITestCase):

@@ -70,9 +70,29 @@ class TeacherAvailability(models.Model):
         return f"{self.teacher.user.name} - {self.get_day_of_week_display()} {self.start_time}-{self.end_time}"
 
     def clean(self):
-        """Validate that start_time is before end_time"""
+        """Validate that start_time is before end_time and no overlaps exist"""
         if self.start_time >= self.end_time:
             raise ValidationError({"end_time": _("End time must be after start time.")})
+        
+        # Check for overlapping availability periods
+        if self.teacher and self.school:
+            existing_availabilities = TeacherAvailability.objects.filter(
+                teacher=self.teacher,
+                school=self.school,
+                day_of_week=self.day_of_week,
+                is_active=True
+            )
+            
+            # Exclude self when updating
+            if self.pk:
+                existing_availabilities = existing_availabilities.exclude(pk=self.pk)
+            
+            for availability in existing_availabilities:
+                # Check for time overlap: two time periods overlap if one starts before the other ends
+                if not (self.end_time <= availability.start_time or self.start_time >= availability.end_time):
+                    raise ValidationError({
+                        "start_time": _(f"Availability period overlaps with existing period {availability.start_time}-{availability.end_time}")
+                    })
 
 
 class TeacherUnavailability(models.Model):
@@ -107,7 +127,12 @@ class TeacherUnavailability(models.Model):
         return f"{self.teacher.user.name} - {self.date} {self.start_time}-{self.end_time}"
 
     def clean(self):
-        """Validate unavailability times"""
+        """Validate unavailability times and date"""
+        # Validate that date is not in the past
+        from django.utils import timezone
+        if self.date and self.date < timezone.now().date():
+            raise ValidationError({"date": _("Cannot create unavailability for past dates.")})
+        
         if not self.is_all_day:
             if not self.start_time or not self.end_time:
                 raise ValidationError(

@@ -73,6 +73,54 @@ class TeacherAvailabilityViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
         """Ensure teacher and school are valid"""
         serializer.save()
 
+    def update(self, request, *args, **kwargs):
+        """Update teacher availability with permission checks"""
+        instance = self.get_object()
+        user = request.user
+        
+        # Check permissions - only the teacher themselves or admins can update availability
+        if hasattr(user, "teacher_profile"):
+            # Teachers can only update their own availability
+            if instance.teacher != user.teacher_profile:
+                raise PermissionDenied("Teachers can only update their own availability")
+        else:
+            # Check if user is admin
+            is_admin = SchoolMembership.objects.filter(
+                user=user,
+                role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
+                is_active=True
+            ).exists()
+            if not is_admin:
+                raise PermissionDenied("Only teachers and administrators can update availability")
+        
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Partial update teacher availability with permission checks"""
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete teacher availability with permission checks"""
+        instance = self.get_object()
+        user = request.user
+        
+        # Check permissions - only the teacher themselves or admins can delete availability
+        if hasattr(user, "teacher_profile"):
+            # Teachers can only delete their own availability
+            if instance.teacher != user.teacher_profile:
+                raise PermissionDenied("Teachers can only delete their own availability")
+        else:
+            # Check if user is admin
+            is_admin = SchoolMembership.objects.filter(
+                user=user,
+                role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
+                is_active=True
+            ).exists()
+            if not is_admin:
+                raise PermissionDenied("Only teachers and administrators can delete availability")
+        
+        return super().destroy(request, *args, **kwargs)
+
 
 class TeacherUnavailabilityViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
     """ViewSet for managing teacher unavailability"""
@@ -111,6 +159,54 @@ class TeacherUnavailabilityViewSet(SchoolPermissionMixin, viewsets.ModelViewSet)
     def perform_create(self, serializer):
         """Ensure teacher and school are valid"""
         serializer.save()
+
+    def update(self, request, *args, **kwargs):
+        """Update teacher unavailability with permission checks"""
+        instance = self.get_object()
+        user = request.user
+        
+        # Check permissions - only the teacher themselves or admins can update unavailability
+        if hasattr(user, "teacher_profile"):
+            # Teachers can only update their own unavailability
+            if instance.teacher != user.teacher_profile:
+                raise PermissionDenied("Teachers can only update their own unavailability")
+        else:
+            # Check if user is admin
+            is_admin = SchoolMembership.objects.filter(
+                user=user,
+                role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
+                is_active=True
+            ).exists()
+            if not is_admin:
+                raise PermissionDenied("Only teachers and administrators can update unavailability")
+        
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Partial update teacher unavailability with permission checks"""
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete teacher unavailability with permission checks"""
+        instance = self.get_object()
+        user = request.user
+        
+        # Check permissions - only the teacher themselves or admins can delete unavailability
+        if hasattr(user, "teacher_profile"):
+            # Teachers can only delete their own unavailability
+            if instance.teacher != user.teacher_profile:
+                raise PermissionDenied("Teachers can only delete their own unavailability")
+        else:
+            # Check if user is admin
+            is_admin = SchoolMembership.objects.filter(
+                user=user,
+                role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
+                is_active=True
+            ).exists()
+            if not is_admin:
+                raise PermissionDenied("Only teachers and administrators can delete unavailability")
+        
+        return super().destroy(request, *args, **kwargs)
 
 
 class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
@@ -244,6 +340,54 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED, 
             headers=headers
         )
+
+    def update(self, request, *args, **kwargs):
+        """Update a class schedule with permission checks"""
+        user = request.user
+        
+        # Use custom get_object to avoid queryset filtering for permission checking
+        instance = self.get_object_for_permissions()
+        
+        # Check permissions - only admins and teachers can update classes
+        if hasattr(user, "teacher_profile"):
+            # Teachers can only update their own classes
+            if instance.teacher != user.teacher_profile:
+                raise PermissionDenied("Teachers can only update their own classes")
+        else:
+            # Check if user is admin
+            is_admin = SchoolMembership.objects.filter(
+                user=user,
+                role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
+                is_active=True
+            ).exists()
+            if not is_admin:
+                raise PermissionDenied("Students cannot update class schedules")
+        
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Partial update a class schedule with permission checks"""
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete a class schedule with permission checks"""
+        user = request.user
+        
+        # Use custom get_object to avoid queryset filtering for permission checking
+        instance = self.get_object_for_permissions()
+        
+        # Check permissions - only admins can delete classes
+        is_admin = SchoolMembership.objects.filter(
+            user=user,
+            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
+            is_active=True
+        ).exists()
+        
+        if not is_admin:
+            raise PermissionDenied("Only administrators can delete class schedules")
+        
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
