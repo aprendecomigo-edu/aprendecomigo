@@ -7,7 +7,6 @@
 
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 
-import { useStudentDashboard } from '@/hooks/useStudentDashboard';
 import {
   createMockStudentBalance,
   createMockTransactionHistory,
@@ -18,6 +17,7 @@ import {
   mockFailedStudentApi,
   cleanupStudentMocks,
 } from '@/__tests__/utils/student-test-utils';
+import { useStudentDashboard } from '@/hooks/useStudentDashboard';
 
 // Mock the PurchaseApiClient
 jest.mock('@/api/purchaseApi', () => ({
@@ -269,7 +269,7 @@ describe('useStudentDashboard Hook', () => {
         results: [{ id: 'txn_1' } as any],
         next: 'http://api.example.com/transactions?page=2',
       });
-      
+
       const page2Transactions = createMockTransactionHistory({
         results: [{ id: 'txn_2' } as any],
         next: null,
@@ -400,7 +400,7 @@ describe('useStudentDashboard Hook', () => {
         results: [{ id: 1 } as any],
         next: 'http://api.example.com/purchases?page=2',
       });
-      
+
       const page2Purchases = createMockPurchaseHistory({
         results: [{ id: 2 } as any],
         next: null,
@@ -765,7 +765,7 @@ describe('useStudentDashboard Hook', () => {
       const { result } = renderHook(() => useStudentDashboard());
 
       const start = performance.now();
-      
+
       // Rapid state changes
       act(() => {
         result.current.actions.setActiveTab('transactions');

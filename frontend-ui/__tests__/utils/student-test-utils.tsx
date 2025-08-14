@@ -48,35 +48,35 @@ interface UseStudentDashboardResult {
 
 // Student Test Data Pattern as specified in the issue
 export const StudentTestData = {
-  profile: { 
-    id: '123', 
-    name: 'Test Student', 
-    email: 'student@test.com' 
+  profile: {
+    id: '123',
+    name: 'Test Student',
+    email: 'student@test.com',
   },
-  balance: { 
-    current: 5000, 
-    currency: 'BRL', 
-    lastUpdated: new Date() 
+  balance: {
+    current: 5000,
+    currency: 'BRL',
+    lastUpdated: new Date(),
   },
   transactions: [
-    { 
-      id: '1', 
-      type: 'top-up' as const, 
-      amount: 2000, 
-      date: '2025-01-01' 
+    {
+      id: '1',
+      type: 'top-up' as const,
+      amount: 2000,
+      date: '2025-01-01',
     },
-    { 
-      id: '2', 
-      type: 'usage' as const, 
-      amount: -500, 
-      date: '2025-01-02' 
-    }
+    {
+      id: '2',
+      type: 'usage' as const,
+      amount: -500,
+      date: '2025-01-02',
+    },
   ],
-  analytics: { 
-    sessionsThisWeek: 5, 
-    totalHours: 10, 
-    streak: 3 
-  }
+  analytics: {
+    sessionsThisWeek: 5,
+    totalHours: 10,
+    streak: 3,
+  },
 };
 
 // Mock student balance data factory
@@ -347,9 +347,7 @@ export const createMockPurchaseHistory = (
 });
 
 // Mock top-up package factory
-export const createMockTopUpPackage = (
-  overrides: Partial<TopUpPackage> = {}
-): TopUpPackage => ({
+export const createMockTopUpPackage = (overrides: Partial<TopUpPackage> = {}): TopUpPackage => ({
   id: 1,
   name: '5 Hour Package',
   hours: 5,
@@ -472,7 +470,7 @@ export const mockSuccessfulStudentApi = () => {
     message: 'Purchase completed successfully',
     transaction_id: 'txn_success_123',
   });
-  
+
   return mockStudentApiCalls;
 };
 
@@ -483,7 +481,7 @@ export const mockFailedStudentApi = () => {
   mockStudentApiCalls.getPurchaseHistory.mockRejectedValue(error);
   mockStudentApiCalls.getTopUpPackages.mockRejectedValue(error);
   mockStudentApiCalls.quickTopUp.mockRejectedValue(error);
-  
+
   return mockStudentApiCalls;
 };
 
@@ -548,24 +546,27 @@ export const createMockAnalyticsData = (overrides = {}) => ({
 // Test helper functions
 export const simulateBalanceUpdate = (mockWs: any, newBalance: Partial<StudentBalanceResponse>) => {
   const message = createBalanceUpdateWebSocketMessage(newBalance);
-  
+
   // Simulate WebSocket message
   const messageHandler = mockWs.addEventListener.mock.calls.find(
     call => call[0] === 'message'
   )?.[1];
-  
+
   if (messageHandler) {
     messageHandler({ data: JSON.stringify(message) });
   }
 };
 
-export const simulateTransactionUpdate = (mockWs: any, transaction: Partial<TransactionHistoryItem>) => {
+export const simulateTransactionUpdate = (
+  mockWs: any,
+  transaction: Partial<TransactionHistoryItem>
+) => {
   const message = createTransactionUpdateWebSocketMessage(transaction);
-  
+
   const messageHandler = mockWs.addEventListener.mock.calls.find(
     call => call[0] === 'message'
   )?.[1];
-  
+
   if (messageHandler) {
     messageHandler({ data: JSON.stringify(message) });
   }
@@ -601,7 +602,7 @@ export const expectBalanceStatusAccessibility = (container: any) => {
 export const cleanupStudentMocks = () => {
   jest.clearAllMocks();
   delete (global as any).WebSocket;
-  
+
   // Reset API mocks
   Object.values(mockStudentApiCalls).forEach(mock => {
     if (typeof mock === 'function' && 'mockReset' in mock) {
@@ -647,7 +648,7 @@ export const createEdgeCaseBalanceScenarios = () => ({
     package_status: { active_packages: [], expired_packages: [] },
     upcoming_expirations: [],
   }),
-  
+
   expiredPackages: createMockStudentBalance({
     package_status: {
       active_packages: [],
@@ -666,7 +667,7 @@ export const createEdgeCaseBalanceScenarios = () => ({
     },
     upcoming_expirations: [],
   }),
-  
+
   multipleActivePackages: createMockStudentBalance({
     package_status: {
       active_packages: [

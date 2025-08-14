@@ -6,7 +6,7 @@ We're going to work on a streamlined TDD fashion. Please complete this backend i
 Note: We should be at TDD red state at this point
 5) Ask the react-native-dev to implement the issue at a high standard and run the new tests to see if they pass
 6) Verify all new tests pass and all issues are solved. Note: We should be at TDD green state at this point
-7) Ask the django-dev to do a code review of the changes.
+7) You should to do a thourough code review of the changes.
 8) If here are any outstanding bugs or problems to fix, please coordinate with the agents to fix.
 9) Make sure the issue was completed at a high standard, for example use cases identified were reasonable and tests developed were reasonable. Be critical and efficient.
 

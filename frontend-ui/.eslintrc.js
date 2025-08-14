@@ -68,5 +68,21 @@ module.exports = {
     ],
     'import/no-duplicates': 'error',
   },
+  overrides: [
+    {
+      files: ['**/__tests__/**/*', '**/*.test.*', '**/*.spec.*'],
+      rules: {
+        '@typescript-eslint/no-require-imports': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-empty-function': 'off',
+        'react-hooks/rules-of-hooks': 'off',
+        'react/no-unknown-property': 'off',
+        'react-native/no-raw-text': 'off',
+        'import/order': 'off',
+        'no-useless-escape': 'off',
+      },
+    },
+  ],
   ignorePatterns: ['node_modules/', 'build/', 'dist/', '*.config.js'],
 };

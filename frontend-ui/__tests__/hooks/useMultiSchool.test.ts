@@ -1,14 +1,15 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
-import { useMultiSchool } from '@/hooks/useMultiSchool';
-import apiClient from '@/api/apiClient';
 import {
   multiSchoolScenarios,
   mockApiResponses,
   createMockApiClient,
   createMockSchoolMembership,
 } from '../utils/multi-school-test-utils';
+
+import apiClient from '@/api/apiClient';
+import { useMultiSchool } from '@/hooks/useMultiSchool';
 
 // Mock the API client
 jest.mock('@/api/apiClient', () => ({
@@ -80,7 +81,7 @@ describe('useMultiSchool Hook', () => {
       mockedApiClient.get.mockImplementation((url: string) => {
         if (url.includes('/school-memberships/')) {
           return Promise.resolve({
-            data: { results: mockApiResponses.memberships.success.results }
+            data: { results: mockApiResponses.memberships.success.results },
           });
         }
         return Promise.resolve({ data: {} });
@@ -112,10 +113,9 @@ describe('useMultiSchool Hook', () => {
         await result.current.switchSchool(newSchool);
       });
 
-      expect(mockedApiClient.patch).toHaveBeenCalledWith(
-        '/accounts/school-memberships/2/',
-        { is_active: true }
-      );
+      expect(mockedApiClient.patch).toHaveBeenCalledWith('/accounts/school-memberships/2/', {
+        is_active: true,
+      });
       expect(result.current.currentSchool).toEqual(newSchool);
       expect(Alert.alert).toHaveBeenCalledWith(
         'Escola Alterada',
@@ -171,8 +171,11 @@ describe('useMultiSchool Hook', () => {
 
     it('should show loading state while switching', async () => {
       let resolveSwitch: (value: any) => void;
-      mockedApiClient.patch.mockImplementation(() => 
-        new Promise(resolve => { resolveSwitch = resolve; })
+      mockedApiClient.patch.mockImplementation(
+        () =>
+          new Promise(resolve => {
+            resolveSwitch = resolve;
+          })
       );
 
       const { result } = renderHook(() => useMultiSchool());
@@ -313,7 +316,7 @@ describe('useMultiSchool Hook', () => {
       mockedApiClient.get.mockImplementation((url: string) => {
         if (url.includes('/school-memberships/')) {
           return Promise.reject({
-            response: { data: { detail: 'Access denied' } }
+            response: { data: { detail: 'Access denied' } },
           });
         }
         return Promise.resolve({ data: [] });
@@ -437,18 +440,18 @@ describe('useMultiSchool Hook', () => {
       const inactiveMembership = createMockSchoolMembership({
         id: 1,
         is_active: false,
-        school: { id: 1, name: 'Inactive School' }
+        school: { id: 1, name: 'Inactive School' },
       });
       const activeMembership = createMockSchoolMembership({
         id: 2,
         is_active: true,
-        school: { id: 2, name: 'Active School' }
+        school: { id: 2, name: 'Active School' },
       });
 
       mockedApiClient.get.mockImplementation((url: string) => {
         if (url.includes('/school-memberships/')) {
           return Promise.resolve({
-            data: { results: [inactiveMembership, activeMembership] }
+            data: { results: [inactiveMembership, activeMembership] },
           });
         }
         return Promise.resolve({ data: [] });

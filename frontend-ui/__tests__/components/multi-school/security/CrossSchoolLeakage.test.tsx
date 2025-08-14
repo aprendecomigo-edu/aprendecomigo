@@ -1,13 +1,14 @@
-import React from 'react';
 import { renderHook, waitFor, act } from '@testing-library/react-native';
+import React from 'react';
 
-import { useMultiSchool } from '@/hooks/useMultiSchool';
-import { useSchool } from '@/api/auth/SchoolContext';
-import apiClient from '@/api/apiClient';
 import {
   createMockSchoolMembership,
   securityTestScenarios,
 } from '../../../utils/multi-school-test-utils';
+
+import apiClient from '@/api/apiClient';
+import { useSchool } from '@/api/auth/SchoolContext';
+import { useMultiSchool } from '@/hooks/useMultiSchool';
 
 // Mock dependencies
 jest.mock('@/hooks/useMultiSchool');
@@ -60,7 +61,7 @@ describe('Cross-School Data Leakage Prevention', () => {
       });
 
       // Mock interceptor to verify school context
-      const mockInterceptor = jest.fn((config) => {
+      const mockInterceptor = jest.fn(config => {
         expect(config.headers).toHaveProperty('X-School-Context', '1');
         return config;
       });
@@ -71,14 +72,14 @@ describe('Cross-School Data Leakage Prevention', () => {
       });
 
       await mockedApiClient.get('/students', {
-        headers: { 'X-School-Context': '1' }
+        headers: { 'X-School-Context': '1' },
       });
 
       expect(mockInterceptor).toHaveBeenCalledWith(
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-School-Context': '1'
-          })
+            'X-School-Context': '1',
+          }),
         })
       );
     });
@@ -108,7 +109,7 @@ describe('Cross-School Data Leakage Prevention', () => {
 
       // Request with school context should succeed
       const validResponse = await mockedApiClient.get('/students', {
-        headers: { 'X-School-Context': '1' }
+        headers: { 'X-School-Context': '1' },
       });
       expect(validResponse.data.success).toBe(true);
     });
@@ -154,14 +155,14 @@ describe('Cross-School Data Leakage Prevention', () => {
 
       // Authorized school request should succeed
       const authorizedResponse = await mockedApiClient.get('/students', {
-        headers: { 'X-School-Context': '1' }
+        headers: { 'X-School-Context': '1' },
       });
       expect(authorizedResponse.data.school_id).toBe('1');
 
       // Unauthorized school request should fail
       try {
         await mockedApiClient.get('/students', {
-          headers: { 'X-School-Context': '999' } // Unauthorized school
+          headers: { 'X-School-Context': '999' }, // Unauthorized school
         });
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
@@ -204,8 +205,8 @@ describe('Cross-School Data Leakage Prevention', () => {
             { id: 2, name: 'Student B', school_id: 2 }, // Unauthorized - should be filtered
             { id: 3, name: 'Student C', school_id: 1 }, // Authorized
             { id: 4, name: 'Student D', school_id: 3 }, // Unauthorized - should be filtered
-          ]
-        }
+          ],
+        },
       });
 
       const response = await mockedApiClient.get('/students');
@@ -215,7 +216,7 @@ describe('Cross-School Data Leakage Prevention', () => {
       const authorizedStudents = allStudents.filter(
         (student: any) => student.school_id === authorizedSchool.school.id
       );
-      
+
       const unauthorizedStudents = allStudents.filter(
         (student: any) => student.school_id !== authorizedSchool.school.id
       );
@@ -225,13 +226,13 @@ describe('Cross-School Data Leakage Prevention', () => {
 
       // This test identifies a potential security vulnerability
       if (unauthorizedStudents.length > 0) {
-        console.warn(`Security Alert: API returned ${unauthorizedStudents.length} unauthorized records`);
-        
+        console.warn(
+          `Security Alert: API returned ${unauthorizedStudents.length} unauthorized records`
+        );
+
         // In a real application, this should trigger security logging
         expect(unauthorizedStudents).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({ school_id: expect.not.toEqual(1) })
-          ])
+          expect.arrayContaining([expect.objectContaining({ school_id: expect.not.toEqual(1) })])
         );
       }
     });
@@ -239,39 +240,33 @@ describe('Cross-School Data Leakage Prevention', () => {
     it('should detect and prevent data contamination attacks', async () => {
       // Simulate a malicious response that tries to inject unauthorized data
       const attackPayload = {
-        students: [
-          { id: 1, name: 'Legitimate Student', school_id: 1 },
-        ],
+        students: [{ id: 1, name: 'Legitimate Student', school_id: 1 }],
         // Malicious data hidden in unexpected fields
         __metadata: {
           leaked_schools: [
             { id: 2, name: 'Victim School', revenue: 50000 },
             { id: 3, name: 'Another School', student_count: 200 },
-          ]
+          ],
         },
         // Attempt to inject unauthorized records
         related_data: {
-          other_school_students: [
-            { id: 999, name: 'Leaked Student', school_id: 2 },
-          ]
-        }
+          other_school_students: [{ id: 999, name: 'Leaked Student', school_id: 2 }],
+        },
       };
 
       mockedApiClient.get.mockResolvedValue({ data: attackPayload });
 
       const response = await mockedApiClient.get('/students');
-      
+
       // Security validation - check for unauthorized data
       const responseKeys = Object.keys(response.data);
-      const suspiciousKeys = responseKeys.filter(key => 
-        key.includes('leaked') || 
-        key.includes('other_school') || 
-        key.startsWith('__')
+      const suspiciousKeys = responseKeys.filter(
+        key => key.includes('leaked') || key.includes('other_school') || key.startsWith('__')
       );
 
       if (suspiciousKeys.length > 0) {
         console.warn(`Security Alert: Suspicious data keys detected: ${suspiciousKeys.join(', ')}`);
-        
+
         // In production, this should trigger security monitoring
         expect(suspiciousKeys).toContain('__metadata');
         expect(response.data.__metadata?.leaked_schools).toBeDefined();
@@ -281,7 +276,7 @@ describe('Cross-School Data Leakage Prevention', () => {
       const authorizedStudents = response.data.students.filter(
         (student: any) => student.school_id === 1
       );
-      
+
       expect(authorizedStudents).toHaveLength(1);
       expect(authorizedStudents[0].name).toBe('Legitimate Student');
     });
@@ -306,15 +301,17 @@ describe('Cross-School Data Leakage Prevention', () => {
         sessions: [{ id: 1, title: 'School A Session', school_id: 1 }],
       };
 
-      const mockSwitchSchool = jest.fn(async (school) => {
+      const mockSwitchSchool = jest.fn(async school => {
         // Simulate clearing and reloading data
         currentSchoolData = {
-          students: school.id === 1 
-            ? [{ id: 1, name: 'School A Student', school_id: 1 }]
-            : [{ id: 2, name: 'School B Student', school_id: 2 }],
-          sessions: school.id === 1
-            ? [{ id: 1, title: 'School A Session', school_id: 1 }]
-            : [{ id: 2, title: 'School B Session', school_id: 2 }],
+          students:
+            school.id === 1
+              ? [{ id: 1, name: 'School A Student', school_id: 1 }]
+              : [{ id: 2, name: 'School B Student', school_id: 2 }],
+          sessions:
+            school.id === 1
+              ? [{ id: 1, title: 'School A Session', school_id: 1 }]
+              : [{ id: 2, title: 'School B Session', school_id: 2 }],
         };
       });
 
@@ -358,7 +355,7 @@ describe('Cross-School Data Leakage Prevention', () => {
 
     it('should prevent data persistence across school switches', async () => {
       // Simulate a cache or state that might leak data
-      let applicationCache = new Map();
+      const applicationCache = new Map();
 
       const school1 = createMockSchoolMembership({
         id: 1,
@@ -370,10 +367,10 @@ describe('Cross-School Data Leakage Prevention', () => {
         school: { id: 2, name: 'School B' },
       });
 
-      const mockSwitchSchool = jest.fn(async (school) => {
+      const mockSwitchSchool = jest.fn(async school => {
         // Simulate proper cache clearing
         applicationCache.clear();
-        
+
         // Set new school data
         applicationCache.set('currentSchoolId', school.id);
         applicationCache.set('schoolData', {
@@ -452,7 +449,7 @@ describe('Cross-School Data Leakage Prevention', () => {
       const validateSchoolInUrl = (url: string, userSchools: any[]) => {
         const schoolIdMatch = url.match(/\/schools\/(\d+)/);
         if (!schoolIdMatch) return true; // No school context in URL
-        
+
         const urlSchoolId = parseInt(schoolIdMatch[1]);
         return userSchools.some(school => school.school.id === urlSchoolId);
       };
@@ -470,12 +467,12 @@ describe('Cross-School Data Leakage Prevention', () => {
 
     it('should prevent school ID manipulation in API calls', async () => {
       // Mock API that validates school ID parameter
-      mockedApiClient.get.mockImplementation((url) => {
+      mockedApiClient.get.mockImplementation(url => {
         const schoolId = url.match(/\/schools\/(\d+)/)?.[1];
-        
+
         // Simulate backend validation
         const authorizedSchools = ['1'];
-        
+
         if (schoolId && !authorizedSchools.includes(schoolId)) {
           return Promise.reject({
             response: {
@@ -484,9 +481,9 @@ describe('Cross-School Data Leakage Prevention', () => {
             },
           });
         }
-        
+
         return Promise.resolve({
-          data: { school_id: schoolId, data: 'authorized data' }
+          data: { school_id: schoolId, data: 'authorized data' },
         });
       });
 
@@ -496,7 +493,7 @@ describe('Cross-School Data Leakage Prevention', () => {
 
       // Unauthorized requests should fail
       const unauthorizedSchools = ['999', '2', '0', '-1'];
-      
+
       for (const schoolId of unauthorizedSchools) {
         try {
           await mockedApiClient.get(`/schools/${schoolId}/students`);
@@ -546,7 +543,7 @@ describe('Cross-School Data Leakage Prevention', () => {
 
       // When switching schools, all subscriptions should be cleared
       mockWebSocketManager.unsubscribeAll();
-      
+
       // Subscribe to School B channels
       mockWebSocketManager.subscribe('students', 2);
       mockWebSocketManager.subscribe('sessions', 2);
@@ -562,16 +559,16 @@ describe('Cross-School Data Leakage Prevention', () => {
 
     it('should validate real-time message school context', () => {
       const authorizedSchoolId = 1;
-      
+
       // Mock WebSocket message handler
       const handleWebSocketMessage = (message: any) => {
         const { type, data, school_id } = message;
-        
+
         // Validate school context
         if (school_id !== authorizedSchoolId) {
           throw new Error(`Unauthorized message from school ${school_id}`);
         }
-        
+
         return { type, data, school_id };
       };
 

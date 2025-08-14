@@ -12,8 +12,8 @@
 
 import { renderHook, act } from '@testing-library/react-native';
 
-import { useTransactionWebSocket } from '@/hooks/useTransactionWebSocket';
 import WebSocketTestUtils from '@/__tests__/utils/websocket-test-utils';
+import { useTransactionWebSocket } from '@/hooks/useTransactionWebSocket';
 
 describe('useTransactionWebSocket Hook', () => {
   beforeEach(() => {
@@ -72,10 +72,9 @@ describe('useTransactionWebSocket Hook', () => {
 
   describe('Connection State Management', () => {
     it('should update connection state when enabled changes from false to true', async () => {
-      const { result, rerender } = renderHook(
-        ({ enabled }) => useTransactionWebSocket(enabled),
-        { initialProps: { enabled: false } }
-      );
+      const { result, rerender } = renderHook(({ enabled }) => useTransactionWebSocket(enabled), {
+        initialProps: { enabled: false },
+      });
 
       expect(result.current.isConnected).toBe(false);
 
@@ -89,10 +88,9 @@ describe('useTransactionWebSocket Hook', () => {
     });
 
     it('should disconnect when enabled changes from true to false', async () => {
-      const { result, rerender } = renderHook(
-        ({ enabled }) => useTransactionWebSocket(enabled),
-        { initialProps: { enabled: true } }
-      );
+      const { result, rerender } = renderHook(({ enabled }) => useTransactionWebSocket(enabled), {
+        initialProps: { enabled: true },
+      });
 
       await act(async () => {
         WebSocketTestUtils.advanceTime(100);
@@ -110,10 +108,9 @@ describe('useTransactionWebSocket Hook', () => {
     });
 
     it('should maintain connection state across re-renders when enabled remains true', async () => {
-      const { result, rerender } = renderHook(
-        ({ enabled }) => useTransactionWebSocket(enabled),
-        { initialProps: { enabled: true } }
-      );
+      const { result, rerender } = renderHook(({ enabled }) => useTransactionWebSocket(enabled), {
+        initialProps: { enabled: true },
+      });
 
       await act(async () => {
         WebSocketTestUtils.advanceTime(100);
@@ -171,10 +168,9 @@ describe('useTransactionWebSocket Hook', () => {
     });
 
     it('should maintain consistent state even with rapid enable/disable changes', async () => {
-      const { result, rerender } = renderHook(
-        ({ enabled }) => useTransactionWebSocket(enabled),
-        { initialProps: { enabled: false } }
-      );
+      const { result, rerender } = renderHook(({ enabled }) => useTransactionWebSocket(enabled), {
+        initialProps: { enabled: false },
+      });
 
       // Rapidly toggle enabled state
       for (let i = 0; i < 10; i++) {
@@ -224,15 +220,14 @@ describe('useTransactionWebSocket Hook', () => {
     it('should handle rapid state changes efficiently', async () => {
       const startTime = Date.now();
 
-      const { result, rerender } = renderHook(
-        ({ enabled }) => useTransactionWebSocket(enabled),
-        { initialProps: { enabled: true } }
-      );
+      const { result, rerender } = renderHook(({ enabled }) => useTransactionWebSocket(enabled), {
+        initialProps: { enabled: true },
+      });
 
       // Perform 100 state changes
       for (let i = 0; i < 100; i++) {
         rerender({ enabled: i % 2 === 0 });
-        
+
         if (i % 10 === 0) {
           await act(async () => {
             WebSocketTestUtils.advanceTime(1);
@@ -269,7 +264,7 @@ describe('useTransactionWebSocket Hook', () => {
   describe('Hook Dependencies and Effects', () => {
     it('should only re-run effect when enabled prop changes', () => {
       const effectRunCount = { count: 0 };
-      
+
       // We can't directly count effect runs, but we can verify behavior
       const { result, rerender } = renderHook(
         ({ enabled }) => {
@@ -295,8 +290,10 @@ describe('useTransactionWebSocket Hook', () => {
 
     it('should work correctly with default parameter values', () => {
       // Test calling without any parameters (should default to enabled: true)
-      const { result: resultWithDefault } = renderHook(() => useTransactionWebSocket(undefined as any));
-      
+      const { result: resultWithDefault } = renderHook(() =>
+        useTransactionWebSocket(undefined as any)
+      );
+
       // Undefined should be falsy, so should not connect
       expect(resultWithDefault.current.isConnected).toBe(false);
     });
@@ -305,7 +302,7 @@ describe('useTransactionWebSocket Hook', () => {
   describe('Console Logging', () => {
     it('should log connection message when enabled', async () => {
       const consoleSpy = jest.spyOn(console, 'log');
-      
+
       renderHook(() => useTransactionWebSocket(true));
 
       await act(async () => {
@@ -317,7 +314,7 @@ describe('useTransactionWebSocket Hook', () => {
 
     it('should not log connection message when disabled', async () => {
       const consoleSpy = jest.spyOn(console, 'log');
-      
+
       renderHook(() => useTransactionWebSocket(false));
 
       await act(async () => {
@@ -344,10 +341,9 @@ describe('useTransactionWebSocket Hook', () => {
     });
 
     it('should maintain object reference stability for functions', () => {
-      const { result, rerender } = renderHook(
-        ({ enabled }) => useTransactionWebSocket(enabled),
-        { initialProps: { enabled: true } }
-      );
+      const { result, rerender } = renderHook(({ enabled }) => useTransactionWebSocket(enabled), {
+        initialProps: { enabled: true },
+      });
 
       const clearUpdatesRef = result.current.clearUpdates;
 
@@ -376,14 +372,13 @@ describe('useTransactionWebSocket Hook', () => {
     });
 
     it('should work correctly when enabled changes multiple times rapidly', async () => {
-      const { result, rerender } = renderHook(
-        ({ enabled }) => useTransactionWebSocket(enabled),
-        { initialProps: { enabled: false } }
-      );
+      const { result, rerender } = renderHook(({ enabled }) => useTransactionWebSocket(enabled), {
+        initialProps: { enabled: false },
+      });
 
       // Rapidly toggle enabled state
       const toggleSequence = [true, false, true, false, true];
-      
+
       for (const enabled of toggleSequence) {
         rerender({ enabled });
         await act(async () => {

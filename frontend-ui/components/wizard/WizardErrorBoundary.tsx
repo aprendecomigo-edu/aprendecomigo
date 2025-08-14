@@ -82,7 +82,7 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
       componentStack: errorInfo.componentStack,
       timestamp: Date.now(),
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
-      url: typeof window !== 'undefined' ? window.location.href : 'unknown',
+      url: typeof window !== 'undefined' && window.location ? window.location.href : 'unknown',
     };
 
     // Log to console in development
@@ -222,8 +222,8 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
     }
 
     return {
-      title: 'Unexpected Error',
-      description: 'Something went wrong while setting up your profile.',
+      title: 'Something went wrong',
+      description: 'We encountered an unexpected error while processing your profile.',
       suggestions: [
         'Try the action again',
         'Save your current progress',
@@ -246,7 +246,10 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
       const canRetry = retryCount < maxRetries;
 
       return (
-        <Box className="flex-1 items-center justify-center p-6 bg-gray-50">
+        <Box
+          className="flex-1 items-center justify-center p-6 bg-gray-50"
+          testID="error-boundary-container"
+        >
           <Card className="max-w-md w-full p-6">
             <VStack space="lg" className="items-center">
               {/* Error Icon */}
@@ -256,9 +259,24 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
 
               {/* Error Content */}
               <VStack space="md" className="items-center">
-                <Heading size="lg" className="text-gray-900 text-center">
+                <Heading
+                  size="lg"
+                  className="text-gray-900 text-center"
+                  testID="error-heading"
+                  accessibilityRole="heading"
+                  accessibilityLevel={1}
+                >
                   {title}
                 </Heading>
+
+                {/* Accessibility announcement for screen readers */}
+                <Text
+                  testID="error-announcement"
+                  accessibilityLiveRegion="assertive"
+                  className="sr-only"
+                >
+                  Error occurred: {title}
+                </Text>
 
                 <Text className="text-gray-600 text-center">{description}</Text>
 
@@ -274,7 +292,7 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
 
                 {/* Development Info */}
                 {__DEV__ && (
-                  <Box className="w-full p-3 bg-gray-100 rounded-lg">
+                  <Box className="w-full p-3 bg-gray-100 rounded-lg" testID="error-details">
                     <Text className="text-xs font-mono text-gray-800">{error.message}</Text>
                     {retryCount > 0 && (
                       <Text className="text-xs text-gray-600 mt-1">
@@ -289,8 +307,11 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
               <VStack space="sm" className="w-full">
                 {canRetry && (
                   <Button
+                    testID="retry-button"
                     onPress={this.handleRetry}
+                    disabled={!this.props.onReset}
                     className="w-full bg-blue-600 hover:bg-blue-700"
+                    accessibilityLabel="Try again to reload the wizard"
                   >
                     <ButtonIcon as={RefreshCw} className="text-white mr-2" />
                     <ButtonText className="text-white">
@@ -300,12 +321,24 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
                 )}
 
                 <HStack space="sm" className="w-full">
-                  <Button variant="outline" onPress={this.handleSaveAndExit} className="flex-1">
+                  <Button
+                    testID="save-exit-button"
+                    variant="outline"
+                    onPress={this.handleSaveAndExit}
+                    className="flex-1"
+                    accessibilityLabel="Save progress and exit wizard"
+                  >
                     <ButtonIcon as={Save} className="text-gray-600 mr-1" />
                     <ButtonText className="text-gray-600">Save & Exit</ButtonText>
                   </Button>
 
-                  <Button variant="outline" onPress={this.handleGoToDashboard} className="flex-1">
+                  <Button
+                    testID="dashboard-button"
+                    variant="outline"
+                    onPress={this.handleGoToDashboard}
+                    className="flex-1"
+                    accessibilityLabel="Go to dashboard"
+                  >
                     <ButtonIcon as={Home} className="text-gray-600 mr-1" />
                     <ButtonText className="text-gray-600">Dashboard</ButtonText>
                   </Button>

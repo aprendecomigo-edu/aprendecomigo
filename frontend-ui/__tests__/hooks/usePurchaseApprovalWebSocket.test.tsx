@@ -13,8 +13,11 @@
 
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 
-import { usePurchaseApprovalWebSocket, usePurchaseApprovalPreferences } from '@/hooks/usePurchaseApprovalWebSocket';
 import WebSocketTestUtils, { mockPushNotifications } from '@/__tests__/utils/websocket-test-utils';
+import {
+  usePurchaseApprovalWebSocket,
+  usePurchaseApprovalPreferences,
+} from '@/hooks/usePurchaseApprovalWebSocket';
 
 // Mock the useWebSocket hook
 jest.mock('@/hooks/useWebSocket', () => ({
@@ -53,9 +56,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
 
   describe('Initialization', () => {
     it('should initialize with empty notifications and disconnected state', () => {
-      const { result } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      const { result } = renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       expect(result.current.isConnected).toBe(false);
       expect(result.current.notifications).toEqual([]);
@@ -63,9 +64,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
     });
 
     it('should build correct WebSocket URL for parent approvals', () => {
-      renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       expect(mockUseWebSocket).toHaveBeenCalledWith({
         url: `ws://localhost:8000/ws/parent/${mockParentId}/approvals/`,
@@ -76,9 +75,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
     });
 
     it('should not connect when parentId is not provided', () => {
-      renderHook(() =>
-        usePurchaseApprovalWebSocket({})
-      );
+      renderHook(() => usePurchaseApprovalWebSocket({}));
 
       expect(mockUseWebSocket).toHaveBeenCalledWith({
         url: '',
@@ -93,9 +90,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         delete process.env.EXPO_PUBLIC_WS_URL;
       }
 
-      renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       expect(mockUseWebSocket).toHaveBeenCalledWith({
         url: `ws://localhost:8000/ws/parent/${mockParentId}/approvals/`,
@@ -149,10 +144,12 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         actionable: false,
       });
       expect(result.current.unreadCount).toBe(1);
-      expect(onNewRequest).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'new_request',
-        title: 'New Purchase Request',
-      }));
+      expect(onNewRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'new_request',
+          title: 'New Purchase Request',
+        })
+      );
     });
 
     it('should process request status change notifications', () => {
@@ -186,9 +183,11 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
 
       expect(result.current.notifications).toHaveLength(1);
       expect(result.current.notifications[0].type).toBe('request_approved');
-      expect(onRequestStatusChange).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'request_approved',
-      }));
+      expect(onRequestStatusChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'request_approved',
+        })
+      );
     });
 
     it('should process budget alert notifications', () => {
@@ -222,9 +221,11 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
 
       expect(result.current.notifications).toHaveLength(1);
       expect(result.current.notifications[0].type).toBe('budget_alert');
-      expect(onBudgetAlert).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'budget_alert',
-      }));
+      expect(onBudgetAlert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'budget_alert',
+        })
+      );
     });
 
     it('should process auto-approval notifications', () => {
@@ -259,17 +260,17 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
 
       expect(result.current.notifications).toHaveLength(1);
       expect(result.current.notifications[0].type).toBe('auto_approved');
-      expect(onAutoApproval).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'auto_approved',
-      }));
+      expect(onAutoApproval).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'auto_approved',
+        })
+      );
     });
 
     it('should handle malformed notification data gracefully', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      const { result } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      const { result } = renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
 
@@ -293,9 +294,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
     });
 
     it('should limit notifications to maximum of 50', () => {
-      const { result } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      const { result } = renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
 
@@ -422,9 +421,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
 
   describe('Notification Management', () => {
     it('should mark individual notification as read', () => {
-      const { result } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      const { result } = renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
 
@@ -453,9 +450,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
     });
 
     it('should mark all notifications as read', () => {
-      const { result } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      const { result } = renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
 
@@ -486,9 +481,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
     });
 
     it('should clear individual notification', () => {
-      const { result } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      const { result } = renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
 
@@ -526,9 +519,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
     });
 
     it('should clear all notifications', () => {
-      const { result } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      const { result } = renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
 
@@ -566,9 +557,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         isConnected: true,
       });
 
-      const { result } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      const { result } = renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       act(() => {
         result.current.sendAcknowledgment('req_123', 'received');
@@ -588,9 +577,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         isConnected: false,
       });
 
-      const { result } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      const { result } = renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       act(() => {
         result.current.sendAcknowledgment('req_123', 'viewed');
@@ -605,9 +592,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         isConnected: true,
       });
 
-      const { result } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      const { result } = renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       expect(result.current.isConnected).toBe(true);
     });
@@ -615,9 +600,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
 
   describe('Performance and Edge Cases', () => {
     it('should handle rapid notification processing efficiently', () => {
-      const { result } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      const { result } = renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
       const startTime = Date.now();
@@ -643,9 +626,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
     });
 
     it('should handle notification ID generation for notifications without IDs', () => {
-      const { result } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: mockParentId })
-      );
+      const { result } = renderHook(() => usePurchaseApprovalWebSocket({ parentId: mockParentId }));
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
 

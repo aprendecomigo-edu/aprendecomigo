@@ -8,9 +8,6 @@
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
-import { StudentAccountDashboard } from '@/components/student/StudentAccountDashboard';
-import { useUserProfile } from '@/api/auth';
-import { useStudentDashboard } from '@/hooks/useStudentDashboard';
 import {
   createMockStudentDashboardProps,
   createMockUseStudentDashboard,
@@ -19,6 +16,9 @@ import {
   createMockPurchaseHistory,
   cleanupStudentMocks,
 } from '@/__tests__/utils/student-test-utils';
+import { useUserProfile } from '@/api/auth';
+import { StudentAccountDashboard } from '@/components/student/StudentAccountDashboard';
+import { useStudentDashboard } from '@/hooks/useStudentDashboard';
 
 // Mock the hooks
 jest.mock('@/api/auth');
@@ -35,7 +35,9 @@ jest.mock('@unitools/router', () => ({
 
 // Mock child components to focus on main component logic
 jest.mock('@/components/student/balance/BalanceAlertProvider', () => ({
-  BalanceAlertProvider: ({ children }: any) => <div testID="balance-alert-provider">{children}</div>,
+  BalanceAlertProvider: ({ children }: any) => (
+    <div testID="balance-alert-provider">{children}</div>
+  ),
 }));
 
 jest.mock('@/components/student/dashboard/DashboardOverview', () => ({
@@ -44,36 +46,70 @@ jest.mock('@/components/student/dashboard/DashboardOverview', () => ({
       <span>Balance: {balance ? 'Available' : 'None'}</span>
       <span>Loading: {loading.toString()}</span>
       <span>Error: {error || 'None'}</span>
-      <button testID="overview-refresh" onPress={onRefresh}>Refresh</button>
-      <button testID="overview-purchase" onPress={onPurchase}>Purchase</button>
-      <button testID="overview-tab-change" onPress={() => onTabChange('transactions')}>Change Tab</button>
+      <button testID="overview-refresh" onPress={onRefresh}>
+        Refresh
+      </button>
+      <button testID="overview-purchase" onPress={onPurchase}>
+        Purchase
+      </button>
+      <button testID="overview-tab-change" onPress={() => onTabChange('transactions')}>
+        Change Tab
+      </button>
     </div>
   ),
 }));
 
 jest.mock('@/components/student/dashboard/TransactionHistory', () => ({
-  TransactionHistory: ({ transactions, loading, error, filters, onFiltersChange, onRefresh, onLoadMore, searchQuery, onSearchChange }: any) => (
+  TransactionHistory: ({
+    transactions,
+    loading,
+    error,
+    filters,
+    onFiltersChange,
+    onRefresh,
+    onLoadMore,
+    searchQuery,
+    onSearchChange,
+  }: any) => (
     <div testID="transaction-history">
       <span>Transactions: {transactions ? 'Available' : 'None'}</span>
       <span>Loading: {loading.toString()}</span>
       <span>Error: {error || 'None'}</span>
       <span>Search: {searchQuery}</span>
-      <button testID="transactions-refresh" onPress={onRefresh}>Refresh</button>
-      <button testID="transactions-load-more" onPress={onLoadMore}>Load More</button>
+      <button testID="transactions-refresh" onPress={onRefresh}>
+        Refresh
+      </button>
+      <button testID="transactions-load-more" onPress={onLoadMore}>
+        Load More
+      </button>
       <input testID="transactions-search" onChangeText={onSearchChange} value={searchQuery} />
     </div>
   ),
 }));
 
 jest.mock('@/components/student/dashboard/PurchaseHistory', () => ({
-  PurchaseHistory: ({ purchases, loading, error, filters, onFiltersChange, onRefresh, onLoadMore, searchQuery, onSearchChange }: any) => (
+  PurchaseHistory: ({
+    purchases,
+    loading,
+    error,
+    filters,
+    onFiltersChange,
+    onRefresh,
+    onLoadMore,
+    searchQuery,
+    onSearchChange,
+  }: any) => (
     <div testID="purchase-history">
       <span>Purchases: {purchases ? 'Available' : 'None'}</span>
       <span>Loading: {loading.toString()}</span>
       <span>Error: {error || 'None'}</span>
       <span>Search: {searchQuery}</span>
-      <button testID="purchases-refresh" onPress={onRefresh}>Refresh</button>
-      <button testID="purchases-load-more" onPress={onLoadMore}>Load More</button>
+      <button testID="purchases-refresh" onPress={onRefresh}>
+        Refresh
+      </button>
+      <button testID="purchases-load-more" onPress={onLoadMore}>
+        Load More
+      </button>
       <input testID="purchases-search" onChangeText={onSearchChange} value={searchQuery} />
     </div>
   ),
@@ -94,7 +130,9 @@ jest.mock('@/components/student/dashboard/AccountSettings', () => ({
     <div testID="account-settings">
       <span>Profile: {userProfile ? 'Available' : 'None'}</span>
       <span>Balance: {balance ? 'Available' : 'None'}</span>
-      <button testID="settings-refresh" onPress={onRefresh}>Refresh</button>
+      <button testID="settings-refresh" onPress={onRefresh}>
+        Refresh
+      </button>
     </div>
   ),
 }));
@@ -103,13 +141,17 @@ jest.mock('@/components/purchase/StudentBalanceCard', () => ({
   StudentBalanceCard: ({ email, onRefresh }: any) => (
     <div testID="student-balance-card">
       <span>Email: {email || 'None'}</span>
-      <button testID="balance-card-refresh" onPress={onRefresh}>Refresh</button>
+      <button testID="balance-card-refresh" onPress={onRefresh}>
+        Refresh
+      </button>
     </div>
   ),
 }));
 
 const mockUseUserProfile = useUserProfile as jest.MockedFunction<typeof useUserProfile>;
-const mockUseStudentDashboard = useStudentDashboard as jest.MockedFunction<typeof useStudentDashboard>;
+const mockUseStudentDashboard = useStudentDashboard as jest.MockedFunction<
+  typeof useStudentDashboard
+>;
 
 describe('StudentAccountDashboard Component', () => {
   const defaultProps = createMockStudentDashboardProps();
@@ -122,7 +164,7 @@ describe('StudentAccountDashboard Component', () => {
 
   beforeEach(() => {
     cleanupStudentMocks();
-    
+
     // Setup default mock returns
     mockUseUserProfile.mockReturnValue({
       userProfile: mockUserProfile,
@@ -228,9 +270,7 @@ describe('StudentAccountDashboard Component', () => {
     });
 
     it('hides quick stats when no balance data available', () => {
-      mockUseStudentDashboard.mockReturnValue(
-        createMockUseStudentDashboard({ balance: null })
-      );
+      mockUseStudentDashboard.mockReturnValue(createMockUseStudentDashboard({ balance: null }));
 
       const { queryByText } = render(<StudentAccountDashboard {...defaultProps} />);
 
@@ -413,7 +453,9 @@ describe('StudentAccountDashboard Component', () => {
 
       // The error boundary should show fallback UI
       expect(getByText('Something went wrong')).toBeTruthy();
-      expect(getByText('Unable to load this section. Please try refreshing or switching tabs.')).toBeTruthy();
+      expect(
+        getByText('Unable to load this section. Please try refreshing or switching tabs.')
+      ).toBeTruthy();
       expect(getByText('Refresh Dashboard')).toBeTruthy();
 
       consoleSpy.mockRestore();
@@ -502,7 +544,9 @@ describe('StudentAccountDashboard Component', () => {
     });
 
     it('applies responsive classes correctly', () => {
-      const { getByTestId } = render(<StudentAccountDashboard {...defaultProps} testID="dashboard" />);
+      const { getByTestId } = render(
+        <StudentAccountDashboard {...defaultProps} testID="dashboard" />
+      );
 
       const dashboard = getByTestId('dashboard');
       expect(dashboard.props.className).toContain('max-w-6xl');
@@ -543,7 +587,9 @@ describe('StudentAccountDashboard Component', () => {
 
       const overviewTab = getByText('Overview');
       expect(overviewTab.closest('*').props.accessibilityRole).toBe('tab');
-      expect(overviewTab.closest('*').props.accessibilityLabel).toContain('Overview - Account summary');
+      expect(overviewTab.closest('*').props.accessibilityLabel).toContain(
+        'Overview - Account summary'
+      );
     });
 
     it('provides accessible action buttons', () => {

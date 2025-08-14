@@ -8,6 +8,45 @@
 import { render, RenderOptions } from '@testing-library/react-native';
 import React from 'react';
 
+// Alternative render function that bypasses host component detection issues
+export const renderWithoutHostDetection = (component: React.ReactElement) => {
+  // Use React Test Renderer directly for components that fail with RNTL
+  const renderer = require('react-test-renderer');
+  const tree = renderer.create(component);
+
+  return {
+    toJSON: () => tree.toJSON(),
+    getInstance: () => tree.getInstance(),
+    unmount: () => tree.unmount(),
+    update: (element: React.ReactElement) => tree.update(element),
+    // Custom query functions that work with the rendered tree
+    findByTestId: (testId: string) => {
+      const instance = tree.root;
+      try {
+        return instance.findByProps({ testID: testId });
+      } catch {
+        return null;
+      }
+    },
+    findAllByTestId: (testId: string) => {
+      const instance = tree.root;
+      try {
+        return instance.findAllByProps({ testID: testId });
+      } catch {
+        return [];
+      }
+    },
+    findByType: (type: any) => {
+      const instance = tree.root;
+      try {
+        return instance.findByType(type);
+      } catch {
+        return null;
+      }
+    },
+  };
+};
+
 // Mock providers for authentication tests
 const MockAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;

@@ -1,14 +1,15 @@
-import React from 'react';
 import { render, renderHook, fireEvent, waitFor, act } from '@testing-library/react-native';
+import React from 'react';
 
-import { useMultiSchool } from '@/hooks/useMultiSchool';
-import { useSchool } from '@/api/auth/SchoolContext';
-import apiClient from '@/api/apiClient';
 import {
   multiSchoolScenarios,
   createMockSchoolMembership,
   createMockSchoolStats,
 } from '../../utils/multi-school-test-utils';
+
+import apiClient from '@/api/apiClient';
+import { useSchool } from '@/api/auth/SchoolContext';
+import { useMultiSchool } from '@/hooks/useMultiSchool';
 
 // Mock dependencies
 jest.mock('@/hooks/useMultiSchool');
@@ -31,7 +32,7 @@ const mockedApiClient = apiClient as jest.Mocked<typeof apiClient>;
 describe('Teacher Multi-School Experience', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Default API responses
     mockedApiClient.get.mockResolvedValue({ data: [] });
     mockedApiClient.patch.mockResolvedValue({ data: { success: true } });
@@ -79,7 +80,7 @@ describe('Teacher Multi-School Experience', () => {
       expect(result.current.memberships).toHaveLength(2);
       expect(result.current.hasMultipleSchools).toBe(true);
       expect(result.current.currentSchool?.school.name).toBe('Elementary School A');
-      
+
       // All memberships should have teacher role
       result.current.memberships.forEach(membership => {
         expect(membership.role).toBe('teacher');
@@ -191,7 +192,7 @@ describe('Teacher Multi-School Experience', () => {
       });
 
       let currentSchool = school1;
-      const mockSwitchSchool = jest.fn(async (school) => {
+      const mockSwitchSchool = jest.fn(async school => {
         currentSchool = school;
       });
 
@@ -221,8 +222,8 @@ describe('Teacher Multi-School Experience', () => {
               students: [
                 { id: 1, name: 'Alice Smith', school_id: 1 },
                 { id: 2, name: 'Bob Johnson', school_id: 1 },
-              ]
-            }
+              ],
+            },
           });
         }
         if (url.includes('/students') && currentSchool.id === 2) {
@@ -231,8 +232,8 @@ describe('Teacher Multi-School Experience', () => {
               students: [
                 { id: 3, name: 'Carol Brown', school_id: 2 },
                 { id: 4, name: 'David Wilson', school_id: 2 },
-              ]
-            }
+              ],
+            },
           });
         }
         return Promise.resolve({ data: { students: [] } });
@@ -301,8 +302,8 @@ describe('Teacher Multi-School Experience', () => {
               students: [
                 { id: 1, name: 'Assigned Student 1', teacher_id: 1 },
                 { id: 2, name: 'Assigned Student 2', teacher_id: 1 },
-              ]
-            }
+              ],
+            },
           });
         }
         if (url.includes('/students/all')) {
@@ -373,7 +374,7 @@ describe('Teacher Multi-School Experience', () => {
               sessions_count: 20,
               average_per_session: 75,
               school_id: 1,
-            }
+            },
           });
         }
         if (url.includes('/teacher-earnings') && schoolId === '2') {
@@ -383,7 +384,7 @@ describe('Teacher Multi-School Experience', () => {
               sessions_count: 30,
               average_per_session: 73.33,
               school_id: 2,
-            }
+            },
           });
         }
         return Promise.resolve({ data: {} });
@@ -400,10 +401,13 @@ describe('Teacher Multi-School Experience', () => {
       expect(school2Earnings.data.school_id).toBe(2);
 
       // Earnings should be different
-      expect(school1Earnings.data.monthly_earnings).not.toEqual(school2Earnings.data.monthly_earnings);
+      expect(school1Earnings.data.monthly_earnings).not.toEqual(
+        school2Earnings.data.monthly_earnings
+      );
 
       // Total earnings calculation should be separate
-      const totalEarnings = school1Earnings.data.monthly_earnings + school2Earnings.data.monthly_earnings;
+      const totalEarnings =
+        school1Earnings.data.monthly_earnings + school2Earnings.data.monthly_earnings;
       expect(totalEarnings).toBe(3700);
     });
 
@@ -449,8 +453,8 @@ describe('Teacher Multi-School Experience', () => {
               status: 'pending',
               due_date: '2024-03-01T00:00:00Z',
             },
-          ]
-        }
+          ],
+        },
       });
 
       const paymentHistory = await mockedApiClient.get('/teacher/payment-history');
@@ -508,7 +512,7 @@ describe('Teacher Multi-School Experience', () => {
               allowed_hours: { start: '08:00', end: '12:00' },
               max_sessions_per_day: 4,
               break_between_sessions: 15, // minutes
-            }
+            },
           });
         }
         if (url.includes('/schedule-rules') && schoolId === '2') {
@@ -517,7 +521,7 @@ describe('Teacher Multi-School Experience', () => {
               allowed_hours: { start: '18:00', end: '22:00' },
               max_sessions_per_day: 3,
               break_between_sessions: 10, // minutes
-            }
+            },
           });
         }
         return Promise.resolve({ data: {} });
@@ -529,7 +533,7 @@ describe('Teacher Multi-School Experience', () => {
       // Schools should have different scheduling rules
       expect(school1Rules.data.allowed_hours.start).toBe('08:00');
       expect(school2Rules.data.allowed_hours.start).toBe('18:00');
-      
+
       expect(school1Rules.data.max_sessions_per_day).toBe(4);
       expect(school2Rules.data.max_sessions_per_day).toBe(3);
     });
@@ -578,8 +582,8 @@ describe('Teacher Multi-School Experience', () => {
                   start_time: '10:30',
                   end_time: '11:30',
                 },
-              ]
-            }
+              ],
+            },
           });
         }
         return Promise.resolve({ data: {} });
@@ -601,7 +605,7 @@ describe('Teacher Multi-School Experience', () => {
             const existingStart = new Date(`${session.date} ${session.start_time}`);
             const existingEnd = new Date(`${session.date} ${session.end_time}`);
 
-            return (newStart < existingEnd && newEnd > existingStart);
+            return newStart < existingEnd && newEnd > existingStart;
           });
 
           if (hasConflict) {
@@ -704,22 +708,26 @@ describe('Teacher Multi-School Experience', () => {
       });
 
       let currentSchool = school1;
-      const mockSwitchSchool = jest.fn(async (school) => {
+      const mockSwitchSchool = jest.fn(async school => {
         currentSchool = school;
       });
 
       const mockGetSchoolStats = jest.fn().mockImplementation((schoolId: number) => {
         if (schoolId === 1) {
-          return Promise.resolve(createMockSchoolStats({
-            total_students: 20,
-            active_sessions_count: 3,
-          }));
+          return Promise.resolve(
+            createMockSchoolStats({
+              total_students: 20,
+              active_sessions_count: 3,
+            })
+          );
         }
         if (schoolId === 2) {
-          return Promise.resolve(createMockSchoolStats({
-            total_students: 35,
-            active_sessions_count: 8,
-          }));
+          return Promise.resolve(
+            createMockSchoolStats({
+              total_students: 35,
+              active_sessions_count: 8,
+            })
+          );
         }
         return Promise.resolve(null);
       });

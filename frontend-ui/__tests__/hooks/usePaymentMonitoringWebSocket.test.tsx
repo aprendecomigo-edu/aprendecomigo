@@ -12,15 +12,15 @@
  * - Performance with high-frequency updates
  */
 
-import { renderHook, act, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { renderHook, act, waitFor } from '@testing-library/react-native';
 
+import WebSocketTestUtils, { WebSocketTestData } from '@/__tests__/utils/websocket-test-utils';
 import {
   usePaymentMonitoringWebSocket,
   useTransactionWebSocket,
   useWebhookMonitoringWebSocket,
 } from '@/hooks/usePaymentMonitoringWebSocket';
-import WebSocketTestUtils, { WebSocketTestData } from '@/__tests__/utils/websocket-test-utils';
 
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -104,11 +104,13 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
 
       const ws = WebSocketTestUtils.getLastWebSocket()!;
       const sentMessages = ws.getMessageQueue();
-      
-      expect(sentMessages).toContain(JSON.stringify({
-        type: 'subscribe',
-        channels: ['metrics', 'transactions', 'webhooks', 'fraud_alerts', 'disputes'],
-      }));
+
+      expect(sentMessages).toContain(
+        JSON.stringify({
+          type: 'subscribe',
+          channels: ['metrics', 'transactions', 'webhooks', 'fraud_alerts', 'disputes'],
+        })
+      );
     });
   });
 
@@ -125,11 +127,11 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
         type: 'metrics_update',
         data: {
           metrics: {
-            total_revenue: 15000.00,
+            total_revenue: 15000.0,
             successful_transactions: 1250,
             failed_transactions: 35,
             success_rate: 97.3,
-            avg_transaction_value: 12.00,
+            avg_transaction_value: 12.0,
           },
           trend_data: {
             daily_revenue: [120, 135, 148, 162, 155],
@@ -144,7 +146,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
       });
 
       expect(result.current.metrics).toMatchObject({
-        total_revenue: 15000.00,
+        total_revenue: 15000.0,
         successful_transactions: 1250,
         success_rate: 97.3,
       });
@@ -163,11 +165,11 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
       // Set initial metrics using the provided setter
       act(() => {
         result.current.setMetrics({
-          total_revenue: 10000.00,
+          total_revenue: 10000.0,
           successful_transactions: 1000,
           failed_transactions: 20,
           success_rate: 98.0,
-          avg_transaction_value: 10.00,
+          avg_transaction_value: 10.0,
         });
       });
 
@@ -176,7 +178,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
         type: 'metrics_update',
         data: {
           metrics: {
-            total_revenue: 15000.00,
+            total_revenue: 15000.0,
             successful_transactions: 1250,
           },
         },
@@ -188,7 +190,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
       });
 
       expect(result.current.metrics).toMatchObject({
-        total_revenue: 15000.00,
+        total_revenue: 15000.0,
         successful_transactions: 1250,
         failed_transactions: 20, // Should retain original value
         success_rate: 98.0, // Should retain original value
@@ -211,7 +213,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
           action: 'created',
           transaction: {
             id: 'txn_123',
-            amount: 25.00,
+            amount: 25.0,
             currency: 'EUR',
             status: 'pending',
             created_at: new Date().toISOString(),
@@ -228,7 +230,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
       expect(result.current.recentTransactions).toHaveLength(1);
       expect(result.current.recentTransactions[0]).toMatchObject({
         id: 'txn_123',
-        amount: 25.00,
+        amount: 25.0,
         status: 'pending',
       });
     });
@@ -243,7 +245,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
       // Set initial transaction
       const initialTransaction = {
         id: 'txn_123',
-        amount: 25.00,
+        amount: 25.0,
         currency: 'EUR',
         status: 'pending',
         created_at: new Date().toISOString(),
@@ -292,7 +294,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
               action: 'created',
               transaction: {
                 id: `txn_${i}`,
-                amount: 25.00,
+                amount: 25.0,
                 currency: 'EUR',
                 status: 'completed',
                 created_at: new Date().toISOString(),
@@ -563,7 +565,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
           dispute: {
             id: 'dispute_001',
             transaction_id: 'txn_disputed',
-            amount: 50.00,
+            amount: 50.0,
             currency: 'EUR',
             reason: 'unauthorized',
             status: 'open',
@@ -583,7 +585,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
         id: 'dispute_001',
         status: 'open',
         reason: 'unauthorized',
-        amount: 50.00,
+        amount: 50.0,
       });
     });
 
@@ -598,7 +600,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
         id: 'dispute_001',
         status: 'open',
         reason: 'unauthorized',
-        amount: 50.00,
+        amount: 50.0,
       };
 
       act(() => {
@@ -637,7 +639,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
       const initialDispute = {
         id: 'dispute_001',
         status: 'open',
-        amount: 50.00,
+        amount: 50.0,
       };
 
       act(() => {
@@ -728,11 +730,13 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
       const consoleSpy = jest.spyOn(console, 'warn');
 
       act(() => {
-        ws.simulateMessage(JSON.stringify({
-          type: 'unknown_message_type',
-          data: {},
-          timestamp: new Date().toISOString(),
-        }));
+        ws.simulateMessage(
+          JSON.stringify({
+            type: 'unknown_message_type',
+            data: {},
+            timestamp: new Date().toISOString(),
+          })
+        );
       });
 
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -802,7 +806,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
               action: 'created',
               transaction: {
                 id: `txn_${i}`,
-                amount: 25.00,
+                amount: 25.0,
                 currency: 'EUR',
                 status: 'completed',
                 created_at: new Date().toISOString(),
@@ -892,7 +896,7 @@ describe('useTransactionWebSocket Hook (Enhanced)', () => {
     });
 
     const ws = WebSocketTestUtils.getLastWebSocket()!;
-    
+
     // Send multiple transaction updates
     act(() => {
       for (let i = 0; i < 5; i++) {
@@ -903,7 +907,7 @@ describe('useTransactionWebSocket Hook (Enhanced)', () => {
             transaction: {
               id: `txn_${i}`,
               status: 'completed',
-              amount: 25.00 * (i + 1),
+              amount: 25.0 * (i + 1),
             },
           },
           timestamp: new Date().toISOString(),
@@ -931,7 +935,7 @@ describe('useTransactionWebSocket Hook (Enhanced)', () => {
           type: 'transaction_update',
           data: {
             action: 'created',
-            transaction: { id: `txn_${i}`, amount: 25.00 },
+            transaction: { id: `txn_${i}`, amount: 25.0 },
           },
           timestamp: new Date().toISOString(),
         };

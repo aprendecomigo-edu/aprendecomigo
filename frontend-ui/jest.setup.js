@@ -15,8 +15,8 @@ configure({
     image: 'Image',
     switch: 'Switch',
     scrollView: 'ScrollView',
-    modal: 'Modal'
-  }
+    modal: 'Modal',
+  },
 });
 
 // Enhanced NativeWind and CSS interop mocking
@@ -509,7 +509,7 @@ jest.mock('react-native', () => {
       'data-testid': testID,
       className: 'mock-switch',
       onChange: onValueChange ? e => onValueChange(e.target.checked) : undefined,
-      disabled
+      disabled,
     });
   });
   mockSwitch.displayName = 'Switch';
@@ -1193,7 +1193,7 @@ jest.mock('@/components/ui/responsive', () => {
     TouchFriendly: ({ children, ...props }) =>
       React.createElement('div', { ...props, className: 'touch-friendly' }, children),
     isMobile: jest.fn(() => false),
-    getResponsiveTextSize: jest.fn((size) => size || 'base'),
+    getResponsiveTextSize: jest.fn(size => size || 'base'),
   };
 });
 

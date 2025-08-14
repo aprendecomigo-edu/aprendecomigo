@@ -8,12 +8,9 @@
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import React from 'react';
 
+import { createMockAnalyticsData, cleanupStudentMocks } from '@/__tests__/utils/student-test-utils';
 import { UsageAnalyticsSection } from '@/components/student/analytics/UsageAnalyticsSection';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import {
-  createMockAnalyticsData,
-  cleanupStudentMocks,
-} from '@/__tests__/utils/student-test-utils';
 
 // Mock the analytics hook
 jest.mock('@/hooks/useAnalytics');
@@ -49,7 +46,7 @@ describe('UsageAnalyticsSection Component', () => {
 
   beforeEach(() => {
     cleanupStudentMocks();
-    
+
     // Default successful mock return
     mockUseAnalytics.mockReturnValue({
       usageStats: {
@@ -169,7 +166,9 @@ describe('UsageAnalyticsSection Component', () => {
 
       expect(getByText('Usage Analytics')).toBeTruthy();
       expect(getByText('No Analytics Data')).toBeTruthy();
-      expect(getByText('Start attending tutoring sessions to see your learning analytics here')).toBeTruthy();
+      expect(
+        getByText('Start attending tutoring sessions to see your learning analytics here')
+      ).toBeTruthy();
     });
   });
 
@@ -404,7 +403,9 @@ describe('UsageAnalyticsSection Component', () => {
       timeRange = mockRefreshUsageStats.mock.calls[0][0];
       const quarterStart = new Date(timeRange.start_date);
       const quarterEnd = new Date(timeRange.end_date);
-      const quarterDays = Math.ceil((quarterEnd.getTime() - quarterStart.getTime()) / (1000 * 60 * 60 * 24));
+      const quarterDays = Math.ceil(
+        (quarterEnd.getTime() - quarterStart.getTime()) / (1000 * 60 * 60 * 24)
+      );
       expect(quarterDays).toBeLessThanOrEqual(90);
     });
 

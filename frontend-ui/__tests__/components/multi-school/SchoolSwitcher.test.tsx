@@ -1,14 +1,15 @@
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { Alert } from 'react-native';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 
-import { SchoolSwitcher } from '@/components/multi-school/SchoolSwitcher';
-import { useMultiSchool } from '@/hooks/useMultiSchool';
 import {
   multiSchoolScenarios,
   createMockSchoolMembership,
   createMockPendingInvitation,
 } from '../../utils/multi-school-test-utils';
+
+import { SchoolSwitcher } from '@/components/multi-school/SchoolSwitcher';
+import { useMultiSchool } from '@/hooks/useMultiSchool';
 
 // Mock the useMultiSchool hook
 jest.mock('@/hooks/useMultiSchool');
@@ -57,21 +58,21 @@ describe('SchoolSwitcher Component', () => {
       // Since the component is having issues with rendering, let's just verify
       // that the hook is being called with the right data
       const { toJSON } = render(<SchoolSwitcher />);
-      
+
       // Verify the hook was called
       expect(mockUseMultiSchool).toHaveBeenCalled();
-      
+
       // Verify component renders something (not null)
       const tree = toJSON();
       expect(tree).not.toBeNull();
-      
+
       // TODO: Fix component rendering issues in test environment
       // The component uses complex UI components that need better mocking
     });
 
     it('should not show chevron when user has only one school', () => {
       render(<SchoolSwitcher />);
-      
+
       // Verify the hook was called with single school scenario
       expect(mockUseMultiSchool).toHaveBeenCalled();
       const lastCall = mockUseMultiSchool.mock.results[mockUseMultiSchool.mock.results.length - 1];
@@ -80,10 +81,11 @@ describe('SchoolSwitcher Component', () => {
 
     it('should not be pressable when user has only one school', () => {
       render(<SchoolSwitcher />);
-      
+
       // Verify single school scenario doesn't enable multi-school features
       expect(mockUseMultiSchool).toHaveBeenCalled();
-      const hookResult = mockUseMultiSchool.mock.results[mockUseMultiSchool.mock.results.length - 1].value;
+      const hookResult =
+        mockUseMultiSchool.mock.results[mockUseMultiSchool.mock.results.length - 1].value;
       expect(hookResult.hasMultipleSchools).toBe(false);
       expect(hookResult.totalSchools).toBe(1);
     });
@@ -263,9 +265,7 @@ describe('SchoolSwitcher Component', () => {
     });
 
     it('should show loading spinner while switching schools', async () => {
-      mockSwitchSchool.mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 100))
-      );
+      mockSwitchSchool.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
 
       render(<SchoolSwitcher />);
 
@@ -311,7 +311,9 @@ describe('SchoolSwitcher Component', () => {
       render(<SchoolSwitcher />);
 
       expect(screen.getByText('2 convite(s) pendente(s)')).toBeTruthy();
-      expect(screen.getByText('Você tem convites de outras escolas aguardando resposta.')).toBeTruthy();
+      expect(
+        screen.getByText('Você tem convites de outras escolas aguardando resposta.')
+      ).toBeTruthy();
     });
 
     it('should display pending invitations in modal', () => {
@@ -466,7 +468,11 @@ describe('SchoolSwitcher Component', () => {
       fireEvent.press(pressable!);
 
       expect(screen.getByText('Nenhuma escola encontrada')).toBeTruthy();
-      expect(screen.getByText('Aguarde um convite de uma escola ou entre em contato com o administrador.')).toBeTruthy();
+      expect(
+        screen.getByText(
+          'Aguarde um convite de uma escola ou entre em contato com o administrador.'
+        )
+      ).toBeTruthy();
     });
   });
 
@@ -484,7 +490,7 @@ describe('SchoolSwitcher Component', () => {
 
       const pressable = screen.getByText('Escola Vila Nova').parent;
       expect(pressable).toBeTruthy();
-      
+
       // The component should be focusable
       fireEvent.press(pressable!);
     });
