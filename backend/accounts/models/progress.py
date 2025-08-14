@@ -6,6 +6,7 @@ assessments, and educational outcomes.
 """
 
 from decimal import Decimal
+from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -94,13 +95,13 @@ class StudentProgress(models.Model):
     class Meta:
         verbose_name = _("Student Progress")
         verbose_name_plural = _("Student Progress Records")
-        ordering = ["-updated_at"]
-        constraints = [
+        ordering: ClassVar = ["-updated_at"]
+        constraints: ClassVar = [
             models.UniqueConstraint(
                 fields=["student", "teacher", "course"], name="unique_student_teacher_course_progress"
             )
         ]
-        indexes = [
+        indexes: ClassVar = [
             models.Index(fields=["student", "course"]),
             models.Index(fields=["teacher", "-updated_at"]),
             models.Index(fields=["school", "course"]),
@@ -200,8 +201,8 @@ class ProgressAssessment(models.Model):
     class Meta:
         verbose_name = _("Progress Assessment")
         verbose_name_plural = _("Progress Assessments")
-        ordering = ["-assessment_date", "-created_at"]
-        indexes = [
+        ordering: ClassVar = ["-assessment_date", "-created_at"]
+        indexes: ClassVar = [
             models.Index(fields=["student_progress", "-assessment_date"]),
             models.Index(fields=["assessment_type", "-assessment_date"]),
             models.Index(fields=["is_graded", "-assessment_date"]),
@@ -211,6 +212,16 @@ class ProgressAssessment(models.Model):
     def __str__(self) -> str:
         percentage = self.percentage
         return f"{self.title} - {self.student_progress.student.name} ({percentage:.2f}%)"
+
+    def save(self, *args, **kwargs):
+        """Override save to update related progress record."""
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+
+        # Update the student progress last assessment date
+        if is_new or self.assessment_date != self.__class__.objects.get(pk=self.pk).assessment_date:
+            self.student_progress.last_assessment_date = self.assessment_date
+            self.student_progress.save(update_fields=["last_assessment_date", "updated_at"])
 
     @property
     def percentage(self) -> Decimal:
@@ -249,13 +260,3 @@ class ProgressAssessment(models.Model):
         # Validate max_score is positive
         if self.max_score <= Decimal("0.00"):
             raise ValidationError(_("Maximum score must be greater than 0"))
-
-    def save(self, *args, **kwargs):
-        """Override save to update related progress record."""
-        is_new = self.pk is None
-        super().save(*args, **kwargs)
-
-        # Update the student progress last assessment date
-        if is_new or self.assessment_date != self.__class__.objects.get(pk=self.pk).assessment_date:
-            self.student_progress.last_assessment_date = self.assessment_date
-            self.student_progress.save(update_fields=["last_assessment_date", "updated_at"])

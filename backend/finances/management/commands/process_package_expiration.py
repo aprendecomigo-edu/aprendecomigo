@@ -89,7 +89,7 @@ class Command(BaseCommand):
         student_email = options["student_email"]
         send_notifications = options["send_notifications"]
         notification_days = options["notification_days"]
-        force = options["force"]
+        options["force"]
 
         if verbosity >= 1:
             mode_str = "DRY RUN - " if dry_run else ""

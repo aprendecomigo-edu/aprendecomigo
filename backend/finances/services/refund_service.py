@@ -343,7 +343,7 @@ class RefundService:
             refund_data = {
                 "payment_intent": purchase_transaction.stripe_payment_intent_id,
                 "amount": int(refund_amount * 100),  # Convert to cents
-                "reason": "requested_by_customer" if not reason else "requested_by_customer",
+                "reason": "requested_by_customer",
                 "metadata": {
                     "transaction_id": str(purchase_transaction.id),
                     "student_id": str(purchase_transaction.student.id),
@@ -447,10 +447,10 @@ class RefundService:
         action_type: AdminActionType,
         target_transaction: PurchaseTransaction = None,
         success: bool = True,
-        amount_impacted: Decimal = None,
+        amount_impacted: Decimal | None = None,
         result_message: str = "",
         stripe_reference_id: str = "",
-        ip_address: str = None,
+        ip_address: str | None = None,
         user_agent: str = "",
     ) -> None:
         """

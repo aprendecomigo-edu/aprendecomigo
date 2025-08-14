@@ -2,6 +2,8 @@
 Serializers for messaging API endpoints - Issue #107: Student Balance Monitoring & Notification System + Email Communication
 """
 
+from typing import ClassVar
+
 from rest_framework import serializers
 
 from finances.models import PurchaseTransaction
@@ -14,7 +16,7 @@ class PurchaseTransactionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PurchaseTransaction
-        fields = ["id", "transaction_type", "amount", "payment_status", "expires_at", "created_at"]
+        fields: ClassVar = ["id", "transaction_type", "amount", "payment_status", "expires_at", "created_at"]
         read_only_fields = fields
 
 
@@ -30,7 +32,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
-        fields = [
+        fields: ClassVar = [
             "id",
             "notification_type",
             "notification_type_display",
@@ -57,7 +59,7 @@ class NotificationListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
-        fields = [
+        fields: ClassVar = [
             "id",
             "notification_type",
             "notification_type_display",
@@ -101,7 +103,7 @@ class SchoolEmailTemplateSerializer(serializers.ModelSerializer):
         from messaging.models import SchoolEmailTemplate
 
         model = SchoolEmailTemplate
-        fields = [
+        fields: ClassVar = [
             "id",
             "school",
             "template_type",
@@ -120,7 +122,7 @@ class SchoolEmailTemplateSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "id",
             "created_by",
             "created_by_name",
@@ -149,7 +151,7 @@ class SchoolEmailTemplateSerializer(serializers.ModelSerializer):
         for content in [obj.subject_template, obj.html_content, obj.text_content]:
             if content:
                 variables.update(re.findall(r"\{\{(\w+)\}\}", content))
-        return sorted(list(variables))
+        return sorted(variables)
 
     def create(self, validated_data):
         """Create a new email template."""
@@ -172,7 +174,7 @@ class EmailSequenceStepSerializer(serializers.ModelSerializer):
         from messaging.models import EmailSequenceStep
 
         model = EmailSequenceStep
-        fields = [
+        fields: ClassVar = [
             "id",
             "sequence",
             "template",
@@ -182,7 +184,7 @@ class EmailSequenceStepSerializer(serializers.ModelSerializer):
             "send_condition",
             "is_active",
         ]
-        read_only_fields = ["id", "template_name"]
+        read_only_fields: ClassVar = ["id", "template_name"]
 
     def get_template_name(self, obj):
         """Get the name of the email template."""
@@ -202,7 +204,7 @@ class EmailSequenceSerializer(serializers.ModelSerializer):
         from messaging.models import EmailSequence
 
         model = EmailSequence
-        fields = [
+        fields: ClassVar = [
             "id",
             "school",
             "school_name",
@@ -214,7 +216,7 @@ class EmailSequenceSerializer(serializers.ModelSerializer):
             "steps",
             "steps_count",
         ]
-        read_only_fields = ["id", "school_name", "steps", "steps_count"]
+        read_only_fields: ClassVar = ["id", "school_name", "steps", "steps_count"]
 
     def get_steps_count(self, obj):
         """Get the number of steps in this sequence."""
@@ -240,7 +242,7 @@ class EmailCommunicationSerializer(serializers.ModelSerializer):
         from messaging.models import EmailCommunication
 
         model = EmailCommunication
-        fields = [
+        fields: ClassVar = [
             "id",
             "school",
             "school_name",
@@ -265,7 +267,7 @@ class EmailCommunicationSerializer(serializers.ModelSerializer):
             "retry_count",
             "max_retries",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "id",
             "school_name",
             "template_name",

@@ -239,7 +239,7 @@ class MinimumNoticeService:
         return DEFAULT_MINIMUM_NOTICE_HOURS
 
     def meets_minimum_notice_period(
-        self, booking_date, booking_time: time, school: School, minimum_hours: int = None
+        self, booking_date, booking_time: time, school: School, minimum_hours: int | None = None
     ) -> bool:
         """Check if booking meets minimum notice period."""
         if minimum_hours is None:
@@ -547,7 +547,7 @@ class AvailableSlotsService:
         self.schools = schools
 
     def get_available_slots(
-        self, start_date, duration_minutes: int, end_date=None, class_type: str = None, requesting_student=None
+        self, start_date, duration_minutes: int, end_date=None, class_type: str | None = None, requesting_student=None
     ):
         """Calculate available slots for the given parameters with scheduling rules."""
         if end_date is None:
@@ -879,11 +879,8 @@ class ClassPermissionService:
             return False
 
         # Admins can confirm any class in their school
-        if membership.role in [SchoolRole.SCHOOL_ADMIN, SchoolRole.SCHOOL_OWNER]:
-            return True
-
         # Students cannot confirm classes
-        return False
+        return membership.role in [SchoolRole.SCHOOL_ADMIN, SchoolRole.SCHOOL_OWNER]
 
     def can_cancel_class(self, class_schedule: "ClassSchedule", user: CustomUser) -> bool:
         """Check if user can cancel a class."""
@@ -906,10 +903,7 @@ class ClassPermissionService:
             return class_schedule.student == user or class_schedule.additional_students.filter(id=user.id).exists()
 
         # Admins can cancel any class in their school
-        if membership.role in [SchoolRole.SCHOOL_ADMIN, SchoolRole.SCHOOL_OWNER]:
-            return True
-
-        return False
+        return membership.role in [SchoolRole.SCHOOL_ADMIN, SchoolRole.SCHOOL_OWNER]
 
     def can_reject_class(self, class_schedule: "ClassSchedule", user: CustomUser) -> bool:
         """Check if user can reject a class."""
@@ -985,7 +979,7 @@ class CancellationDeadlineService:
         """Get default cancellation deadline in hours."""
         return DEFAULT_CANCELLATION_DEADLINE_HOURS
 
-    def can_cancel_within_deadline(self, class_schedule: "ClassSchedule", hours_before: int = None) -> bool:
+    def can_cancel_within_deadline(self, class_schedule: "ClassSchedule", hours_before: int | None = None) -> bool:
         """Check if class can be cancelled within deadline."""
         from .models import ClassStatus
 
@@ -1013,7 +1007,9 @@ class CancellationDeadlineService:
         deadline = class_datetime_utc - timedelta(hours=hours_before)
         return now_utc < deadline
 
-    def get_remaining_cancellation_time(self, class_schedule: "ClassSchedule", hours_before: int = None) -> float:
+    def get_remaining_cancellation_time(
+        self, class_schedule: "ClassSchedule", hours_before: int | None = None
+    ) -> float:
         """Get remaining time until cancellation deadline (in hours)."""
         if hours_before is None:
             hours_before = self.get_default_cancellation_deadline_hours()
@@ -1035,7 +1031,7 @@ class CancellationDeadlineService:
         try:
             # Use model's timezone conversion method - this handles school timezone correctly
             return class_schedule.get_scheduled_datetime_utc()
-        except:
+        except (AttributeError, TypeError, ValueError):
             # Fallback: treat as UTC (primarily for edge cases and some test scenarios)
             naive_datetime = datetime.combine(class_schedule.scheduled_date, class_schedule.start_time)
             return timezone.make_aware(naive_datetime, pytz.UTC)
@@ -1107,16 +1103,13 @@ class ClassCompletionService:
             return False
 
         # Cannot mark future classes as completed
-        if not class_schedule.is_past:
-            return False
-
-        return True
+        return class_schedule.is_past
 
     def mark_as_completed(
         self,
         class_schedule: "ClassSchedule",
         completed_by: CustomUser,
-        actual_duration_minutes: int = None,
+        actual_duration_minutes: int | None = None,
         notes: str = "",
     ) -> dict[str, Any]:
         """Mark a class as completed with metadata tracking."""
@@ -1190,10 +1183,7 @@ class ClassNoShowService:
             return False
 
         # Cannot mark future classes as no-show
-        if not class_schedule.is_past:
-            return False
-
-        return True
+        return class_schedule.is_past
 
     def mark_as_no_show(
         self,
@@ -1398,11 +1388,8 @@ class ClassCompletionPermissionService:
             return False
 
         # Admins can complete any class in their school
-        if membership.role in [SchoolRole.SCHOOL_ADMIN, SchoolRole.SCHOOL_OWNER]:
-            return True
-
         # Students cannot complete classes
-        return False
+        return membership.role in [SchoolRole.SCHOOL_ADMIN, SchoolRole.SCHOOL_OWNER]
 
     def can_mark_no_show(self, class_schedule: "ClassSchedule", user: CustomUser) -> bool:
         """Check if user can mark a class as no-show."""
@@ -1421,7 +1408,11 @@ class ClassCompletionOrchestratorService:
         self.permission_service = ClassCompletionPermissionService()
 
     def complete_class(
-        self, class_schedule: "ClassSchedule", user: CustomUser, actual_duration_minutes: int = None, notes: str = ""
+        self,
+        class_schedule: "ClassSchedule",
+        user: CustomUser,
+        actual_duration_minutes: int | None = None,
+        notes: str = "",
     ) -> dict[str, Any]:
         """Complete a class with full validation and permission checks."""
 

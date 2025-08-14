@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -202,7 +202,7 @@ class TeacherCompensationRule(models.Model):
         verbose_name = _("Teacher Compensation Rule")
         verbose_name_plural = _("Teacher Compensation Rules")
         # Ensure only one active rule per teacher per school per rule type per grade
-        constraints = [
+        constraints: ClassVar = [
             models.UniqueConstraint(
                 fields=["teacher", "school", "rule_type", "grade_level"],
                 condition=models.Q(is_active=True),
@@ -318,34 +318,10 @@ class ClassSession(models.Model):
     class Meta:
         verbose_name = _("Class Session")
         verbose_name_plural = _("Class Sessions")
-        ordering = ["-date", "-start_time"]
+        ordering: ClassVar = ["-date", "-start_time"]
 
     def __str__(self) -> str:
         return f"{self.teacher.user.name} - {self.get_session_type_display()} Grade {self.grade_level} on {self.date}"
-
-    @property
-    def duration_hours(self) -> Decimal:
-        """Calculate session duration in hours."""
-        from datetime import datetime, timedelta
-
-        # Create datetime objects for calculation
-        start_datetime = datetime.combine(self.date, self.start_time)
-        end_datetime = datetime.combine(self.date, self.end_time)
-
-        # Handle sessions that cross midnight
-        if end_datetime < start_datetime:
-            end_datetime += timedelta(days=1)
-
-        duration = end_datetime - start_datetime
-        return Decimal(str(duration.total_seconds() / 3600))
-
-    def clean(self) -> None:
-        """Validate session data."""
-        if self.end_time <= self.start_time:
-            raise ValidationError(_("End time must be after start time"))
-
-        if self.session_type == SessionType.INDIVIDUAL and self.student_count > 1:
-            raise ValidationError(_("Individual sessions can only have 1 student"))
 
     def save(self, *args, **kwargs):
         """Override save to handle status changes and timestamps for existing sessions."""
@@ -382,6 +358,14 @@ class ClassSession(models.Model):
         if not is_new and old_status != self.status:
             self._handle_session_status_change(old_status)
 
+    def clean(self) -> None:
+        """Validate session data."""
+        if self.end_time <= self.start_time:
+            raise ValidationError(_("End time must be after start time"))
+
+        if self.session_type == SessionType.INDIVIDUAL and self.student_count > 1:
+            raise ValidationError(_("Individual sessions can only have 1 student"))
+
     def _handle_session_status_change(self, old_status):
         """Handle status changes for existing sessions."""
         from finances.services.hour_deduction_service import HourDeductionService
@@ -406,6 +390,22 @@ class ClassSession(models.Model):
         from finances.services.hour_deduction_service import HourDeductionService
 
         return HourDeductionService.validate_and_deduct_hours_for_session(self)
+
+    @property
+    def duration_hours(self) -> Decimal:
+        """Calculate session duration in hours."""
+        from datetime import datetime, timedelta
+
+        # Create datetime objects for calculation
+        start_datetime = datetime.combine(self.date, self.start_time)
+        end_datetime = datetime.combine(self.date, self.end_time)
+
+        # Handle sessions that cross midnight
+        if end_datetime < start_datetime:
+            end_datetime += timedelta(days=1)
+
+        duration = end_datetime - start_datetime
+        return Decimal(str(duration.total_seconds() / 3600))
 
 
 class TeacherPaymentEntry(models.Model):
@@ -490,7 +490,7 @@ class TeacherPaymentEntry(models.Model):
     class Meta:
         verbose_name = _("Teacher Payment Entry")
         verbose_name_plural = _("Teacher Payment Entries")
-        ordering = ["-created_at"]
+        ordering: ClassVar = ["-created_at"]
 
     def __str__(self) -> str:
         return f"{self.teacher.user.name} - €{self.amount_earned} for {self.session.date} session"
@@ -541,7 +541,7 @@ class StudentAccountBalance(models.Model):
     class Meta:
         verbose_name = _("Student Account Balance")
         verbose_name_plural = _("Student Account Balances")
-        ordering = ["-updated_at"]
+        ordering: ClassVar = ["-updated_at"]
 
     def __str__(self) -> str:
         remaining = self.remaining_hours
@@ -663,8 +663,8 @@ class PurchaseTransaction(models.Model):
     class Meta:
         verbose_name = _("Purchase Transaction")
         verbose_name_plural = _("Purchase Transactions")
-        ordering = ["-created_at"]
-        indexes = [
+        ordering: ClassVar = ["-created_at"]
+        indexes: ClassVar = [
             models.Index(fields=["student", "payment_status"]),
             models.Index(fields=["payment_status"]),
             models.Index(fields=["created_at"]),
@@ -797,8 +797,8 @@ class PricingPlan(models.Model):
     class Meta:
         verbose_name = _("Pricing Plan")
         verbose_name_plural = _("Pricing Plans")
-        ordering = ["display_order", "name"]
-        indexes = [
+        ordering: ClassVar = ["display_order", "name"]
+        indexes: ClassVar = [
             models.Index(fields=["is_active", "display_order"]),
             models.Index(fields=["plan_type", "is_active"]),
             models.Index(fields=["is_featured", "is_active"]),
@@ -919,13 +919,13 @@ class HourConsumption(models.Model):
     class Meta:
         verbose_name = _("Hour Consumption")
         verbose_name_plural = _("Hour Consumptions")
-        ordering = ["-consumed_at"]
-        constraints = [
+        ordering: ClassVar = ["-consumed_at"]
+        constraints: ClassVar = [
             models.UniqueConstraint(
                 fields=["student_account", "class_session"], name="unique_student_session_consumption"
             )
         ]
-        indexes = [
+        indexes: ClassVar = [
             models.Index(fields=["student_account", "consumed_at"]),
             models.Index(fields=["class_session"]),
             models.Index(fields=["purchase_transaction"]),
@@ -937,6 +937,19 @@ class HourConsumption(models.Model):
             f"Hour consumption: {self.student_account.student.name} - "
             f"{self.hours_consumed}h consumed for session on {self.class_session.date}"
         )
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to update student account balance when consumption is created.
+        """
+        is_new = self.pk is None
+
+        super().save(*args, **kwargs)
+
+        # Update student account balance on creation
+        if is_new:
+            self.student_account.hours_consumed += self.hours_consumed
+            self.student_account.save(update_fields=["hours_consumed", "updated_at"])
 
     @property
     def hours_difference(self) -> Decimal:
@@ -983,19 +996,6 @@ class HourConsumption(models.Model):
 
         # No refund due
         return Decimal("0.00")
-
-    def save(self, *args, **kwargs):
-        """
-        Override save to update student account balance when consumption is created.
-        """
-        is_new = self.pk is None
-
-        super().save(*args, **kwargs)
-
-        # Update student account balance on creation
-        if is_new:
-            self.student_account.hours_consumed += self.hours_consumed
-            self.student_account.save(update_fields=["hours_consumed", "updated_at"])
 
     def clean(self) -> None:
         """Validate consumption data."""
@@ -1090,8 +1090,8 @@ class Receipt(models.Model):
     class Meta:
         verbose_name = _("Receipt")
         verbose_name_plural = _("Receipts")
-        ordering = ["-generated_at"]
-        indexes = [
+        ordering: ClassVar = ["-generated_at"]
+        indexes: ClassVar = [
             models.Index(fields=["student", "generated_at"]),
             models.Index(fields=["receipt_number"]),
             models.Index(fields=["transaction"]),
@@ -1208,15 +1208,15 @@ class StoredPaymentMethod(models.Model):
     class Meta:
         verbose_name = _("Stored Payment Method")
         verbose_name_plural = _("Stored Payment Methods")
-        ordering = ["-is_default", "-created_at"]
-        constraints = [
+        ordering: ClassVar = ["-is_default", "-created_at"]
+        constraints: ClassVar = [
             models.UniqueConstraint(
                 fields=["student"],
                 condition=models.Q(is_default=True),
                 name="unique_default_payment_method_per_student",
             )
         ]
-        indexes = [
+        indexes: ClassVar = [
             models.Index(fields=["student", "is_active"]),
             models.Index(fields=["stripe_payment_method_id"]),
             models.Index(fields=["stripe_customer_id"]),
@@ -1228,34 +1228,6 @@ class StoredPaymentMethod(models.Model):
         default_text = " (Default)" if self.is_default else ""
         card_display = get_secure_card_display(self.card_brand, self.card_last4)
         return f"{card_display} - {self.student.name}{default_text}"
-
-    @property
-    def is_expired(self) -> bool:
-        """Check if the payment method is expired."""
-        if not self.card_exp_month or not self.card_exp_year:
-            return False
-
-        from django.utils import timezone
-
-        now = timezone.now()
-
-        # Card expires at the end of the expiration month
-        if self.card_exp_year < now.year or (self.card_exp_year == now.year and self.card_exp_month < now.month):
-            return True
-
-        return False
-
-    @property
-    def card_display(self) -> str:
-        """
-        Get a PCI-compliant user-friendly display string for the payment method.
-
-        Returns:
-            str: Formatted display string (e.g., "Visa ****X242")
-        """
-        from finances.utils.pci_compliance import get_secure_card_display
-
-        return get_secure_card_display(self.card_brand, self.card_last4)
 
     def save(self, *args, **kwargs):
         """Override save to handle default payment method logic and PCI compliance."""
@@ -1272,6 +1244,33 @@ class StoredPaymentMethod(models.Model):
             )
 
         super().save(*args, **kwargs)
+
+    @property
+    def is_expired(self) -> bool:
+        """Check if the payment method is expired."""
+        if not self.card_exp_month or not self.card_exp_year:
+            return False
+
+        from django.utils import timezone
+
+        now = timezone.now()
+
+        # Card expires at the end of the expiration month
+        return bool(
+            self.card_exp_year < now.year or (self.card_exp_year == now.year and self.card_exp_month < now.month)
+        )
+
+    @property
+    def card_display(self) -> str:
+        """
+        Get a PCI-compliant user-friendly display string for the payment method.
+
+        Returns:
+            str: Formatted display string (e.g., "Visa ****X242")
+        """
+        from finances.utils.pci_compliance import get_secure_card_display
+
+        return get_secure_card_display(self.card_brand, self.card_last4)
 
     def clean(self) -> None:
         """Validate payment method data and ensure PCI compliance."""
@@ -1376,8 +1375,8 @@ class FamilyBudgetControl(models.Model):
     class Meta:
         verbose_name = _("Family Budget Control")
         verbose_name_plural = _("Family Budget Controls")
-        ordering = ["-created_at"]
-        indexes = [
+        ordering: ClassVar = ["-created_at"]
+        indexes: ClassVar = [
             models.Index(fields=["parent_child_relationship", "is_active"]),
             models.Index(fields=["auto_approval_threshold"]),
             models.Index(fields=["created_at"]),
@@ -1444,14 +1443,12 @@ class FamilyBudgetControl(models.Model):
         reasons = []
 
         # Check monthly limit
-        if self.monthly_budget_limit is not None:
-            if self.current_monthly_spending + amount > self.monthly_budget_limit:
-                reasons.append(f"Would exceed monthly budget limit of €{self.monthly_budget_limit}")
+        if self.monthly_budget_limit is not None and self.current_monthly_spending + amount > self.monthly_budget_limit:
+            reasons.append(f"Would exceed monthly budget limit of €{self.monthly_budget_limit}")
 
         # Check weekly limit
-        if self.weekly_budget_limit is not None:
-            if self.current_weekly_spending + amount > self.weekly_budget_limit:
-                reasons.append(f"Would exceed weekly budget limit of €{self.weekly_budget_limit}")
+        if self.weekly_budget_limit is not None and self.current_weekly_spending + amount > self.weekly_budget_limit:
+            reasons.append(f"Would exceed weekly budget limit of €{self.weekly_budget_limit}")
 
         # Auto-approval requires both: amount under threshold AND budget limits not exceeded
         budget_limits_ok = len(reasons) == 0
@@ -1599,8 +1596,8 @@ class PurchaseApprovalRequest(models.Model):
     class Meta:
         verbose_name = _("Purchase Approval Request")
         verbose_name_plural = _("Purchase Approval Requests")
-        ordering = ["-requested_at"]
-        indexes = [
+        ordering: ClassVar = ["-requested_at"]
+        indexes: ClassVar = [
             models.Index(fields=["student", "status", "-requested_at"]),
             models.Index(fields=["parent", "status", "-requested_at"]),
             models.Index(fields=["parent_child_relationship", "-requested_at"]),
@@ -1810,8 +1807,8 @@ class WebhookEventLog(models.Model):
     class Meta:
         verbose_name = _("Webhook Event Log")
         verbose_name_plural = _("Webhook Event Logs")
-        ordering = ["-created_at"]
-        indexes = [
+        ordering: ClassVar = ["-created_at"]
+        indexes: ClassVar = [
             models.Index(fields=["stripe_event_id"]),
             models.Index(fields=["event_type", "status"]),
             models.Index(fields=["status", "retry_count"]),
@@ -1864,10 +1861,7 @@ class WebhookEventLog(models.Model):
             return False
 
         # Don't retry if exceeded max retry count
-        if self.retry_count >= 5:
-            return False
-
-        return True
+        return not self.retry_count >= 5
 
     def get_processing_duration(self) -> timedelta | None:
         """
@@ -2027,8 +2021,8 @@ class PaymentDispute(models.Model):
     class Meta:
         verbose_name = _("Payment Dispute")
         verbose_name_plural = _("Payment Disputes")
-        ordering = ["-created_at"]
-        indexes = [
+        ordering: ClassVar = ["-created_at"]
+        indexes: ClassVar = [
             models.Index(fields=["stripe_dispute_id"]),
             models.Index(fields=["purchase_transaction"]),
             models.Index(fields=["status", "evidence_due_by"]),
@@ -2167,8 +2161,8 @@ class AdminAction(models.Model):
     class Meta:
         verbose_name = _("Admin Action")
         verbose_name_plural = _("Admin Actions")
-        ordering = ["-created_at"]
-        indexes = [
+        ordering: ClassVar = ["-created_at"]
+        indexes: ClassVar = [
             models.Index(fields=["admin_user", "-created_at"]),
             models.Index(fields=["action_type", "-created_at"]),
             models.Index(fields=["target_user", "-created_at"]),
@@ -2283,8 +2277,8 @@ class FraudAlert(models.Model):
     class Meta:
         verbose_name = _("Fraud Alert")
         verbose_name_plural = _("Fraud Alerts")
-        ordering = ["-created_at"]
-        indexes = [
+        ordering: ClassVar = ["-created_at"]
+        indexes: ClassVar = [
             models.Index(fields=["alert_id"]),
             models.Index(fields=["severity", "status", "-created_at"]),
             models.Index(fields=["target_user", "-created_at"]),
@@ -2330,7 +2324,7 @@ class FraudAlert(models.Model):
         self.status = FraudAlertStatus.INVESTIGATING
         self.save(update_fields=["assigned_to", "status", "updated_at"])
 
-    def mark_resolved(self, resolution_notes: str, actions_taken: list = None) -> None:
+    def mark_resolved(self, resolution_notes: str, actions_taken: list | None = None) -> None:
         """Mark the alert as resolved."""
         self.status = FraudAlertStatus.RESOLVED
         self.investigated_at = timezone.now()

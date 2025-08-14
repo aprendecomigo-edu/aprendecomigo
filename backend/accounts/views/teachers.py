@@ -7,6 +7,7 @@ and teacher dashboard functionality.
 """
 
 import logging
+from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -193,15 +194,15 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
-            permission_classes = [IsAuthenticated]
+            permission_classes: ClassVar = [IsAuthenticated]
         elif self.action in ["update", "partial_update"]:
-            permission_classes = [IsAuthenticated, IsOwnerOrSchoolAdmin]
+            permission_classes: ClassVar = [IsAuthenticated, IsOwnerOrSchoolAdmin]
         elif self.action == "onboarding":
-            permission_classes = [IsAuthenticated]
+            permission_classes: ClassVar = [IsAuthenticated]
         elif self.action in ["invite_new", "invite_existing", "invite_bulk"]:
-            permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+            permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
         else:
-            permission_classes = [IsAuthenticated, IsTeacherInAnySchool]
+            permission_classes: ClassVar = [IsAuthenticated, IsTeacherInAnySchool]
         return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=["post"])
@@ -343,7 +344,7 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        photo = request.FILES["photo"]
+        request.FILES["photo"]
         teacher_profile = request.user.teacher_profile
 
         # Save the photo to the profile (assuming there's a photo field or similar)
@@ -912,7 +913,7 @@ class TeacherProfileWizardViewSet(KnoxAuthenticatedAPIView):
 
         validated_data = serializer.validated_data
         step = validated_data["step"]
-        data = validated_data["data"]
+        validated_data["data"]
 
         logger.info(f"Validated step {step} for user {request.user.id}")
 
@@ -933,7 +934,7 @@ class TeacherProfileWizardViewSet(KnoxAuthenticatedAPIView):
 
         try:
             teacher_profile = request.user.teacher_profile
-            profile_data = request.data.get("profile_data", {})
+            request.data.get("profile_data", {})
 
             # Save all the profile data (this would be a more comprehensive update)
             # For now, just update completion score
@@ -996,7 +997,7 @@ class TeacherProfileWizardViewSet(KnoxAuthenticatedAPIView):
         # Apply file upload throttling
         if hasattr(self, "throttle_classes"):
             # Add file upload throttle to existing throttles
-            self.throttle_classes = self.throttle_classes + [FileUploadThrottle]
+            self.throttle_classes = [*self.throttle_classes, FileUploadThrottle]
 
         # Check if user has a teacher profile
         if not hasattr(request.user, "teacher_profile") or request.user.teacher_profile is None:
@@ -1079,19 +1080,12 @@ class TeacherProfileWizardViewSet(KnoxAuthenticatedAPIView):
         # Convert all values to strings and check patterns
         data_str = str(data).lower()
 
-        for pattern in suspicious_patterns:
-            if pattern.lower() in data_str:
-                return True
-
-        return False
+        return any(pattern.lower() in data_str for pattern in suspicious_patterns)
 
     def _get_client_ip(self, request):
         """Get the client IP address from request headers."""
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(",")[0]
-        else:
-            ip = request.META.get("REMOTE_ADDR")
+        ip = x_forwarded_for.split(",")[0] if x_forwarded_for else request.META.get("REMOTE_ADDR")
         return ip
 
 

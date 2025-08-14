@@ -24,7 +24,7 @@ Run `ch ctx summarize`
 ### Django apps structure
 Run `ch ctx focus <app_name>/ 1`
 
-**Django Commands (Replaces Makefile):**
+**Django Commands**
 Usage: `ch django <command>` or `ch dj <command>`
 
 Server Management:
@@ -40,10 +40,16 @@ Testing:
   test --fast             Run tests with --keepdb
 
 Code Quality:
-  lint                    Run linting
-  lint --fix              Run linting with auto-fi
-  format                  Format code with ruff/black
+  lint                    Run linting with ruff (checks for code issues)
+  lint --fix              Run linting with auto-fix for safe issues  
+  format                  Format code with ruff formatter
   typecheck               Type checking with mypy
+  lint check - Check for issues
+  lint fix - Auto-fix safe issues  # ALWAYS RUN THIS FIRST
+  lint fix-unsafe - Auto-fix including unsafe fixes # DO NOT USE THIS
+  lint diff - Preview fixes
+  lint stats - View statistics
+  lint explain CODE - Explain specific rules
 
 Dependencies:
   install                 Install dependencies
@@ -112,6 +118,7 @@ Project location: /Users/anapmc/Code/aprendecomigo/backend
 - Clear documentation for complex logic
 - Descriptive variable and function names
 - Proper logging for debugging
+- Use ch commands for linting and code quality
 
 ### Multi-Tenancy Considerations
 - Users can have multiple roles across different schools

@@ -154,9 +154,9 @@ class RoleBasedBusinessLogicTestCase(TestCase):
         self.assertEqual(student_memberships.count(), 1)
 
         # Business rule: Each role type should have distinct users (in this test case)
-        owner_users = set(m.user for m in owner_memberships)
-        teacher_users = set(m.user for m in teacher_memberships)
-        student_users = set(m.user for m in student_memberships)
+        owner_users = {m.user for m in owner_memberships}
+        teacher_users = {m.user for m in teacher_memberships}
+        student_users = {m.user for m in student_memberships}
 
         self.assertIn(self.school_owner, owner_users)
         self.assertIn(self.teacher, teacher_users)

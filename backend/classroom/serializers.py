@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
@@ -9,7 +11,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "email", "first_name", "last_name"]
+        fields: ClassVar = ["id", "username", "email", "first_name", "last_name"]
 
 
 class ReactionSerializer(serializers.ModelSerializer):
@@ -17,15 +19,15 @@ class ReactionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reaction
-        fields = ["id", "user", "emoji", "created_at"]
-        read_only_fields = ["user", "created_at"]
+        fields: ClassVar = ["id", "user", "emoji", "created_at"]
+        read_only_fields: ClassVar = ["user", "created_at"]
 
 
 class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachment
-        fields = ["id", "file", "filename", "file_type", "size", "uploaded_at"]
-        read_only_fields = ["filename", "file_type", "size", "uploaded_at"]
+        fields: ClassVar = ["id", "file", "filename", "file_type", "size", "uploaded_at"]
+        read_only_fields: ClassVar = ["filename", "file_type", "size", "uploaded_at"]
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -36,7 +38,7 @@ class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = [
+        fields: ClassVar = [
             "id",
             "channel",
             "sender",
@@ -46,7 +48,7 @@ class MessageSerializer(serializers.ModelSerializer):
             "reactions",
             "attachments",
         ]
-        read_only_fields = ["sender", "timestamp"]
+        read_only_fields: ClassVar = ["sender", "timestamp"]
 
 
 class ChannelSerializer(serializers.ModelSerializer):
@@ -61,7 +63,7 @@ class ChannelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Channel
-        fields = [
+        fields: ClassVar = [
             "id",
             "name",
             "is_direct",
@@ -72,7 +74,7 @@ class ChannelSerializer(serializers.ModelSerializer):
             "last_message",
             "participant_ids",
         ]
-        read_only_fields = ["created_at", "updated_at", "online"]
+        read_only_fields: ClassVar = ["created_at", "updated_at", "online"]
 
     def get_last_message(self, obj):
         last_message = obj.messages.order_by("-timestamp").first()
@@ -124,7 +126,7 @@ class ChannelSerializer(serializers.ModelSerializer):
         if participant_ids:
             if is_direct and current_user:
                 # For DMs, add both current user and target user
-                channel.participants.set([current_user.id] + participant_ids)
+                channel.participants.set([current_user.id, *participant_ids])
             else:
                 # For group channels, just add the specified participants
                 channel.participants.set(participant_ids)

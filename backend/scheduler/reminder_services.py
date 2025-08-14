@@ -18,8 +18,6 @@ from django.db import transaction
 from django.utils import timezone
 import pytz
 
-logger = logging.getLogger(__name__)
-
 from accounts.models import SchoolMembership, SchoolRole
 
 from .models import (
@@ -32,6 +30,8 @@ from .models import (
     ReminderStatus,
     ReminderType,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ReminderCalculationService:
@@ -220,7 +220,7 @@ class CommunicationPayloadService:
 
         # Validate class_id
         if "class_id" in payload:
-            if not isinstance(payload["class_id"], (int, str)):
+            if not isinstance(payload["class_id"], int | str):
                 errors.append("class_id must be an integer or string")
             elif isinstance(payload["class_id"], str) and not payload["class_id"].isdigit():
                 errors.append("class_id string must contain only digits")
@@ -474,7 +474,7 @@ class TimezoneValidationService:
         # Validate recipients
         if not recipients:
             errors.append("recipients is required")
-        elif not isinstance(recipients, (list, tuple)):
+        elif not isinstance(recipients, list | tuple):
             errors.append("recipients must be a list or tuple")
         elif len(recipients) == 0:
             errors.append("recipients cannot be empty")

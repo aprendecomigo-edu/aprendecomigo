@@ -180,7 +180,7 @@ class TeacherDashboardService:
         """Get sessions data organized by time periods."""
         today = timezone.now().date()
         week_start = today - timedelta(days=today.weekday())
-        week_end = week_start + timedelta(days=6)
+        week_start + timedelta(days=6)
 
         # Base queryset for teacher's sessions
         base_sessions = ClassSession.objects.filter(teacher=self.teacher_profile).prefetch_related("students")

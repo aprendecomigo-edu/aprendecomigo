@@ -43,25 +43,25 @@ class EmailTemplateRenderingService:
             --school-text-color: {{ school_text_color }};
             --school-background-color: {{ school_background_color }};
         }
-        
+
         .school-branded {
             color: var(--school-primary-color) !important;
         }
-        
+
         .school-branded-bg {
             background-color: var(--school-primary-color) !important;
         }
-        
+
         .school-button {
             background-color: var(--school-primary-color) !important;
             border-color: var(--school-primary-color) !important;
         }
-        
+
         .school-button:hover {
             background-color: var(--school-secondary-color) !important;
             border-color: var(--school-secondary-color) !important;
         }
-        
+
         .school-border {
             border-color: var(--school-primary-color) !important;
         }

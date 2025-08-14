@@ -7,7 +7,7 @@ quick hour top-up purchases using saved payment methods with Stripe Customer obj
 
 from decimal import Decimal
 import logging
-from typing import Any
+from typing import Any, ClassVar
 
 # Cross-app models will be loaded at runtime using apps.get_model()
 from django.db import transaction
@@ -41,7 +41,7 @@ class RenewalPaymentService:
     """
 
     # Predefined quick top-up packages (hours: price)
-    QUICK_TOPUP_PACKAGES = {
+    QUICK_TOPUP_PACKAGES: ClassVar = {
         Decimal("5.00"): Decimal("50.00"),  # 5 hours for €50
         Decimal("10.00"): Decimal("95.00"),  # 10 hours for €95 (5% discount)
         Decimal("20.00"): Decimal("180.00"),  # 20 hours for €180 (10% discount)

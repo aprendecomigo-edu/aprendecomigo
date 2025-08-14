@@ -12,7 +12,7 @@ import logging
 import re
 import threading
 import time
-from typing import Any
+from typing import Any, ClassVar
 import uuid
 
 # Thread-local storage for correlation IDs
@@ -75,7 +75,7 @@ class SensitiveDataFilter(logging.Filter):
     """Filter to remove or redact sensitive information from log records."""
 
     # Patterns for sensitive data detection
-    PATTERNS = {
+    PATTERNS: ClassVar = {
         "email": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"),
         "phone": re.compile(r"\b\+?[\d\s\-\(\)]{10,15}\b"),
         "card_number": re.compile(r"\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b"),
@@ -236,7 +236,7 @@ class DevelopmentFormatter(logging.Formatter):
     """Human-readable formatter for development with colors."""
 
     # ANSI color codes
-    COLORS = {
+    COLORS: ClassVar = {
         "DEBUG": "\033[36m",  # Cyan
         "INFO": "\033[32m",  # Green
         "WARNING": "\033[33m",  # Yellow
@@ -339,7 +339,7 @@ def setup_logging_context_middleware():
                 if hasattr(request.user, "get_role_for_school"):
                     try:
                         role = request.user.get_role_for_school(school_id)
-                    except:
+                    except Exception:
                         role = "unknown"
 
                 BusinessContext.set_context(school_id=school_id, user_id=user_id, role=role)

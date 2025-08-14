@@ -6,6 +6,7 @@ including school invitations, teacher invitations, and invitation links.
 """
 
 import logging
+from typing import ClassVar
 
 from django.db import models, transaction
 from django.utils import timezone
@@ -53,20 +54,15 @@ class InvitationViewSet(viewsets.ModelViewSet):
 
     queryset = SchoolInvitation.objects.all()
     serializer_class = SchoolInvitationSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated]
     lookup_field = "token"  # Use token instead of id for lookups
 
     def get_permissions(self):
         """
         Different permissions for different actions.
         """
-        if self.action == "details":
-            # Anyone can view invitation details (for sharing links)
-            permission_classes = [AllowAny]
-        else:
-            # All other actions require authentication
-            permission_classes = [IsAuthenticated]
+        permission_classes = [AllowAny] if self.action == "details" else [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
@@ -404,13 +400,11 @@ class InvitationViewSet(viewsets.ModelViewSet):
                 )
 
         # Check if the user is authenticated (optional for decline)
-        if request.user.is_authenticated:
-            # Verify the current user is the intended recipient
-            if invitation.email != request.user.email:
-                return Response(
-                    {"error": "This invitation is not for your account"},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+        if request.user.is_authenticated and invitation.email != request.user.email:
+            return Response(
+                {"error": "This invitation is not for your account"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         try:
             with transaction.atomic():
@@ -467,7 +461,7 @@ class SchoolInvitationLinkView(APIView):
     This is a public endpoint (no auth required) for sharing links.
     """
 
-    permission_classes = [AllowAny]
+    permission_classes: ClassVar = [AllowAny]
 
     def get(self, request, token):
         """
@@ -519,8 +513,8 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
 
     queryset = TeacherInvitation.objects.all()
     serializer_class = TeacherInvitationSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated]
     lookup_field = "token"  # Use token instead of id for lookups
 
     def get_queryset(self):
@@ -742,9 +736,10 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
                 # Update existing profile with new data if provided
                 if not profile_created and validated_profile_data:
                     for field, value in validated_profile_data.items():
-                        if field != "profile_photo" and field != "course_ids":  # Handle these separately
-                            if value is not None:  # Only update if value is provided
-                                setattr(teacher_profile, field, value)
+                        if (
+                            field != "profile_photo" and field != "course_ids" and value is not None
+                        ):  # Handle these separately and only update if value is provided
+                            setattr(teacher_profile, field, value)
                     teacher_profile.save()
 
                 # Handle profile photo upload for CustomUser

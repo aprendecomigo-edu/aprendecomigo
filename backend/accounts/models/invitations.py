@@ -34,8 +34,8 @@ class SchoolInvitation(models.Model):
     is_accepted: models.BooleanField = models.BooleanField(_("is accepted"), default=False)
 
     class Meta:
-        ordering = ["-created_at"]
-        indexes = [
+        ordering: ClassVar = ["-created_at"]
+        indexes: ClassVar = [
             models.Index(fields=["school", "is_accepted", "-created_at"]),
             models.Index(fields=["email", "is_accepted"]),
             models.Index(fields=["token"]),
@@ -77,8 +77,8 @@ class SchoolInvitationLink(models.Model):
 
     class Meta:
         unique_together: ClassVar = ["school", "role"]  # One active link per school per role
-        ordering = ["-created_at"]
-        indexes = [
+        ordering: ClassVar = ["-created_at"]
+        indexes: ClassVar = [
             models.Index(fields=["school", "role", "is_active"]),
             models.Index(fields=["token"]),
             models.Index(fields=["expires_at", "is_active"]),
@@ -95,9 +95,7 @@ class SchoolInvitationLink(models.Model):
             return False
         if timezone.now() > self.expires_at:
             return False
-        if self.max_uses and self.usage_count >= self.max_uses:
-            return False
-        return True
+        return not (self.max_uses and self.usage_count >= self.max_uses)
 
     def increment_usage(self) -> None:
         """Increment the usage count."""
@@ -196,8 +194,8 @@ class TeacherInvitation(models.Model):
     class Meta:
         verbose_name = _("Teacher Invitation")
         verbose_name_plural = _("Teacher Invitations")
-        ordering = ["-created_at"]
-        indexes = [
+        ordering: ClassVar = ["-created_at"]
+        indexes: ClassVar = [
             models.Index(fields=["school", "status", "-created_at"]),
             models.Index(fields=["batch_id", "-created_at"]),
             models.Index(fields=["email", "school", "is_accepted"]),
@@ -205,7 +203,7 @@ class TeacherInvitation(models.Model):
             models.Index(fields=["expires_at", "is_accepted"]),
             models.Index(fields=["email_delivery_status", "retry_count"]),
         ]
-        constraints = [
+        constraints: ClassVar = [
             models.UniqueConstraint(
                 fields=["email", "school"],
                 condition=models.Q(
@@ -221,6 +219,9 @@ class TeacherInvitation(models.Model):
                 name="unique_active_teacher_invitation_per_school",
             )
         ]
+
+    def __str__(self) -> str:
+        return f"Teacher invitation to {self.email} for {self.school.name}"
 
     def save(self, *args, **kwargs):
         """Override save to auto-generate token and expiry."""
@@ -255,9 +256,6 @@ class TeacherInvitation(models.Model):
             if existing:
                 raise ValidationError("An active invitation already exists for this email and school")
 
-    def __str__(self) -> str:
-        return f"Teacher invitation to {self.email} for {self.school.name}"
-
     def is_valid(self) -> bool:
         """Check if the invitation is still valid."""
         if self.is_accepted:
@@ -266,10 +264,7 @@ class TeacherInvitation(models.Model):
         if timezone.now() > self.expires_at:
             return False
 
-        if self.status in [InvitationStatus.CANCELLED, InvitationStatus.EXPIRED, InvitationStatus.DECLINED]:
-            return False
-
-        return True
+        return self.status not in [InvitationStatus.CANCELLED, InvitationStatus.EXPIRED, InvitationStatus.DECLINED]
 
     def is_expired(self) -> bool:
         """Check if the invitation has expired."""
@@ -326,7 +321,7 @@ class TeacherInvitation(models.Model):
         self.status = InvitationStatus.DELIVERED
         self.save(update_fields=["email_delivery_status", "email_delivered_at", "status", "updated_at"])
 
-    def mark_email_failed(self, reason: str = None):
+    def mark_email_failed(self, reason: str | None = None):
         """Mark email as failed and increment retry count."""
         self.email_delivery_status = EmailDeliveryStatus.FAILED
         self.email_failure_reason = reason

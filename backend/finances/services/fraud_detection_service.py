@@ -8,7 +8,7 @@ to detect potentially fraudulent activities and generate appropriate alerts.
 from datetime import timedelta
 from decimal import Decimal
 import logging
-from typing import Any
+from typing import Any, ClassVar
 
 # Cross-app models will be loaded at runtime using apps.get_model()
 from django.utils import timezone
@@ -36,7 +36,7 @@ class FraudDetectionService:
     """
 
     # Fraud detection thresholds - these could be moved to Django settings
-    THRESHOLDS = {
+    THRESHOLDS: ClassVar = {
         "multiple_cards_24h": {
             "count": 5,
             "severity": FraudAlertSeverity.HIGH,
@@ -532,11 +532,7 @@ class FraudDetectionService:
         variance = sum((x - mean_amount) ** 2 for x in amounts) / len(amounts)
         std_dev = variance ** Decimal("0.5")
 
-        if std_dev == 0:
-            # All transactions are the same amount
-            deviation = Decimal("0.00")
-        else:
-            deviation = abs(transaction.amount - mean_amount) / std_dev
+        deviation = Decimal("0.00") if std_dev == 0 else abs(transaction.amount - mean_amount) / std_dev
 
         threshold = self.THRESHOLDS["unusual_amount_patterns"]
         risk_score = Decimal("0.00")
@@ -692,7 +688,7 @@ class FraudDetectionService:
         target_user=None,  # CustomUser instance
         success: bool = True,
         result_message: str = "",
-        action_data: dict[str, Any] = None,
+        action_data: dict[str, Any] | None = None,
     ) -> None:
         """Log administrative action for audit trail."""
         try:

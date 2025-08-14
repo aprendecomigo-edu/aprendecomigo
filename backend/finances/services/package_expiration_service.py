@@ -427,10 +427,7 @@ class PackageExpirationService:
             original_expiry = package.expires_at
 
             # Calculate new expiry date
-            if extend_from_now:
-                base_date = timezone.now()
-            else:
-                base_date = original_expiry
+            base_date = timezone.now() if extend_from_now else original_expiry
 
             new_expiry = base_date + timedelta(days=extension_days)
 

@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
@@ -23,7 +25,7 @@ class Channel(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-updated_at"]
+        ordering: ClassVar = ["-updated_at"]
 
     def __str__(self):
         if self.is_direct:
@@ -51,7 +53,7 @@ class Message(models.Model):
     )
 
     class Meta:
-        ordering = ["timestamp"]
+        ordering: ClassVar = ["timestamp"]
 
     def __str__(self):
         return f"{self.sender.username}: {self.content[:50]}"
@@ -66,8 +68,8 @@ class Reaction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ["message", "user", "emoji"]
-        ordering = ["created_at"]
+        unique_together: ClassVar = ["message", "user", "emoji"]
+        ordering: ClassVar = ["created_at"]
 
     def __str__(self):
         return f"{self.user.username} reacted with {self.emoji} to message {self.message.id}"
@@ -87,7 +89,7 @@ class Attachment(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["-uploaded_at"]
+        ordering: ClassVar = ["-uploaded_at"]
 
     def __str__(self):
         return f"{self.filename} ({self.file_type})"

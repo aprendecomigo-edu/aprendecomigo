@@ -127,8 +127,8 @@ class CustomUser(AbstractUser):
     objects = CustomUserManager()  # type: ignore[misc]
 
     class Meta:
-        ordering = ["name", "email"]
-        indexes = [
+        ordering: ClassVar = ["name", "email"]
+        indexes: ClassVar = [
             models.Index(fields=["email"]),
             models.Index(fields=["name"]),
             models.Index(fields=["email_verified"]),
@@ -161,11 +161,14 @@ class VerificationCode(models.Model):
     max_attempts: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(default=5)
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering: ClassVar = ["-created_at"]
         indexes: ClassVar = [
             models.Index(fields=["email", "is_used"]),
             models.Index(fields=["email", "created_at"]),
         ]
+
+    def __str__(self) -> str:
+        return f"Verification code for {self.email} ({'used' if self.is_used else 'active'})"
 
     @classmethod
     def generate_code(cls, email: str) -> "VerificationCode":

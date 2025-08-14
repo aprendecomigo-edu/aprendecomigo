@@ -1,3 +1,4 @@
+import contextlib
 import logging
 
 from django.apps import AppConfig
@@ -14,11 +15,9 @@ class FinancesConfig(AppConfig):
         Initialize runtime utilities for cross-app dependencies.
         This method is called when Django starts up and all apps are loaded.
         """
-        try:
-            # Import signals after app registry is ready to avoid circular imports
+        # Import signals after app registry is ready to avoid circular imports
+        with contextlib.suppress(ImportError):
             from . import signals
-        except ImportError:
-            pass
 
         # Register cross-app signal connections using app registry
         from django.db.models.signals import post_save

@@ -6,6 +6,7 @@ global search, and bulk operations.
 """
 
 import logging
+from typing import ClassVar
 
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -319,8 +320,8 @@ class TutorDiscoveryAPIView(APIView):
     Only exposes public profile information with proper privacy controls.
     """
 
-    permission_classes = [AllowAny]  # Public endpoint
-    throttle_classes = [IPBasedThrottle]  # Rate limiting for public endpoint
+    permission_classes: ClassVar = [AllowAny]  # Public endpoint
+    throttle_classes: ClassVar = [IPBasedThrottle]  # Rate limiting for public endpoint
 
     def get(self, request):
         """
@@ -418,9 +419,8 @@ class TutorDiscoveryAPIView(APIView):
             raise ValidationError("Invalid rate_max format")
 
         # Validate rate range
-        if "rate_min" in filters and "rate_max" in filters:
-            if filters["rate_min"] > filters["rate_max"]:
-                raise ValidationError("rate_min cannot be greater than rate_max")
+        if "rate_min" in filters and "rate_max" in filters and filters["rate_min"] > filters["rate_max"]:
+            raise ValidationError("rate_min cannot be greater than rate_max")
 
         # Education level filtering
         education_level = params.get("education_level")

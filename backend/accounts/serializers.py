@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import re
 from typing import ClassVar
@@ -419,14 +420,13 @@ class TeacherSerializer(serializers.ModelSerializer):
         # Optional validation for expected fields
         expected_fields = ["degree", "institution", "field", "year"]
         for field in expected_fields:
-            if field in value and value[field] is not None:
-                if field == "year":
-                    try:
-                        year = int(value[field])
-                        if year < 1900 or year > 2030:
-                            raise serializers.ValidationError(f"Invalid year: {year}")
-                    except (ValueError, TypeError):
-                        raise serializers.ValidationError("Year must be a valid integer")
+            if field in value and value[field] is not None and field == "year":
+                try:
+                    year = int(value[field])
+                    if year < 1900 or year > 2030:
+                        raise serializers.ValidationError(f"Invalid year: {year}")
+                except (ValueError, TypeError):
+                    raise serializers.ValidationError("Year must be a valid integer")
 
         return value
 
@@ -444,7 +444,7 @@ class TeacherSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Each subject must be a non-empty string")
 
         # Remove duplicates and empty strings
-        cleaned_subjects = list(set(s.strip() for s in value if s.strip()))
+        cleaned_subjects = list({s.strip() for s in value if s.strip()})
 
         if len(cleaned_subjects) > 20:
             raise serializers.ValidationError("Maximum 20 subjects allowed")
@@ -1065,7 +1065,7 @@ class ComprehensiveTeacherProfileCreationSerializer(serializers.Serializer):
         # Validate total_years if present
         if "total_years" in value:
             total_years = value["total_years"]
-            if not isinstance(total_years, (int, float)) or total_years < 0:
+            if not isinstance(total_years, int | float) or total_years < 0:
                 raise serializers.ValidationError("Total years must be a non-negative number.")
 
             if total_years > 80:  # Reasonable maximum
@@ -1213,7 +1213,7 @@ class SchoolSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SchoolSettings
-        fields = [
+        fields: ClassVar = [
             # Basic operational settings
             "trial_cost_absorption",
             "default_session_duration",
@@ -1285,10 +1285,8 @@ class SchoolSettingsSerializer(serializers.ModelSerializer):
         if self.instance:
             educational_system = self.instance.educational_system
         elif "educational_system" in self.initial_data:
-            try:
+            with contextlib.suppress(EducationalSystem.DoesNotExist):
                 educational_system = EducationalSystem.objects.get(id=self.initial_data["educational_system"])
-            except EducationalSystem.DoesNotExist:
-                pass
 
         if educational_system:
             valid_levels = dict(educational_system.school_year_choices)
@@ -1355,7 +1353,7 @@ class SchoolProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = School
-        fields = [
+        fields: ClassVar = [
             "id",
             "name",
             "description",
@@ -1402,7 +1400,7 @@ class ComprehensiveSchoolSettingsSerializer(BaseNestedModelSerializer):
 
     class Meta:
         model = SchoolSettings
-        fields = ["school_profile", "settings"]
+        fields: ClassVar = ["school_profile", "settings"]
 
 
 class SchoolActivityActorSerializer(serializers.ModelSerializer):
@@ -1412,7 +1410,7 @@ class SchoolActivityActorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "name", "email", "role"]
+        fields: ClassVar = ["id", "name", "email", "role"]
 
     def get_role(self, obj):
         """Get the user's role in the school context"""
@@ -1441,7 +1439,7 @@ class SchoolActivitySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SchoolActivity
-        fields = ["id", "activity_type", "timestamp", "actor", "target", "metadata", "description"]
+        fields: ClassVar = ["id", "activity_type", "timestamp", "actor", "target", "metadata", "description"]
 
     def get_target(self, obj):
         """Get target information based on activity type"""
@@ -1506,7 +1504,7 @@ class EnhancedSchoolSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = School
-        fields = [
+        fields: ClassVar = [
             "id",
             "name",
             "description",
@@ -1557,7 +1555,7 @@ class TeacherInvitationSerializer(BaseNestedModelSerializer):
 
     class Meta:
         model = TeacherInvitation
-        fields = [
+        fields: ClassVar = [
             "id",
             "school",
             "school_id",
@@ -1584,7 +1582,7 @@ class TeacherInvitationSerializer(BaseNestedModelSerializer):
             "declined_at",
             "viewed_at",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "id",
             "invited_by",
             "status",
@@ -1691,8 +1689,8 @@ class BulkTeacherInvitationSerializer(serializers.Serializer):
 
     def validate(self, data):
         """Additional validation across fields."""
-        school_id = data.get("school_id")
-        emails = [inv["email"] for inv in data.get("invitations", [])]
+        data.get("school_id")
+        [inv["email"] for inv in data.get("invitations", [])]
 
         # Note: We don't validate existing invitations here anymore to allow partial success
         # This validation is moved to the view level for better error handling
@@ -2212,7 +2210,7 @@ class ProgressAssessmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProgressAssessment
-        fields = [
+        fields: ClassVar = [
             "id",
             "assessment_type",
             "title",
@@ -2238,7 +2236,7 @@ class StudentProgressDashboardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentProgress
-        fields = [
+        fields: ClassVar = [
             "id",
             "student_name",
             "student_email",
@@ -2354,7 +2352,7 @@ class ParentProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ParentProfile
-        fields = [
+        fields: ClassVar = [
             "id",
             "user",
             "user_name",
@@ -2367,7 +2365,15 @@ class ParentProfileSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "user", "user_name", "user_email", "children_count", "created_at", "updated_at"]
+        read_only_fields: ClassVar = [
+            "id",
+            "user",
+            "user_name",
+            "user_email",
+            "children_count",
+            "created_at",
+            "updated_at",
+        ]
 
     def get_children_count(self, obj):
         """Get the number of children this parent manages."""
@@ -2389,7 +2395,7 @@ class ParentChildRelationshipSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ParentChildRelationship
-        fields = [
+        fields: ClassVar = [
             "id",
             "parent",
             "parent_name",
@@ -2408,7 +2414,7 @@ class ParentChildRelationshipSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "id",
             "parent_name",
             "parent_email",
@@ -2454,8 +2460,8 @@ class SchoolBrandingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = School
-        fields = ["id", "name", "primary_color", "secondary_color", "text_color", "background_color", "logo"]
-        read_only_fields = ["id", "name"]
+        fields: ClassVar = ["id", "name", "primary_color", "secondary_color", "text_color", "background_color", "logo"]
+        read_only_fields: ClassVar = ["id", "name"]
 
     def validate_primary_color(self, value):
         """Validate primary color format."""

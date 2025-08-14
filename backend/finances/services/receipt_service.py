@@ -307,7 +307,7 @@ class ReceiptGenerationService:
                 margin: 2cm;
             }
         }
-        
+
         body {
             font-family: 'Arial', sans-serif;
             font-size: 14px;
@@ -318,69 +318,69 @@ class ReceiptGenerationService:
             padding: 20px;
             background-color: #fff;
         }
-        
+
         .header {
             text-align: center;
             margin-bottom: 30px;
             border-bottom: 2px solid #007bff;
             padding-bottom: 20px;
         }
-        
+
         .company-name {
             font-size: 24px;
             font-weight: bold;
             color: #007bff;
             margin-bottom: 10px;
         }
-        
+
         .receipt-title {
             font-size: 18px;
             font-weight: bold;
             margin: 20px 0;
         }
-        
+
         .receipt-number {
             font-size: 16px;
             color: #666;
             margin-bottom: 20px;
         }
-        
+
         .info-section {
             margin: 20px 0;
         }
-        
+
         .info-table {
             width: 100%;
             border-collapse: collapse;
             margin: 10px 0;
         }
-        
+
         .info-table th,
         .info-table td {
             padding: 8px 12px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
-        
+
         .info-table th {
             background-color: #f8f9fa;
             font-weight: bold;
         }
-        
+
         .amount-section {
             margin: 30px 0;
             padding: 20px;
             background-color: #f8f9fa;
             border-radius: 5px;
         }
-        
+
         .total-amount {
             font-size: 20px;
             font-weight: bold;
             color: #007bff;
             text-align: right;
         }
-        
+
         .footer {
             margin-top: 40px;
             text-align: center;

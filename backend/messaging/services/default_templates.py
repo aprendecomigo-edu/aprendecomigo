@@ -16,31 +16,31 @@ DEFAULT_LOW_BALANCE_TEMPLATE = {
         <div style="background-color: #f8f9fa; padding: 20px; text-align: center;">
             <h1 style="color: #dc3545; margin: 0;">⚠️ Saldo Baixo</h1>
         </div>
-        
+
         <div style="padding: 30px 20px;">
             <p>Olá <strong>{{student_name}}</strong>,</p>
-            
+
             <p>O seu saldo de horas está a ficar baixo. Tem apenas <strong>{{remaining_hours}} horas</strong> restantes na sua conta.</p>
-            
+
             <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0;">
                 <p style="margin: 0; color: #856404;">
                     <strong>💡 Para continuar as suas aulas:</strong><br>
                     Por favor, recarregue o seu saldo para não interromper o seu aprendizado.
                 </p>
             </div>
-            
+
             <div style="text-align: center; margin: 30px 0;">
                 <a href="#" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">
                     Recarregar Saldo
                 </a>
             </div>
-            
+
             <p>Se tiver dúvidas, não hesite em contactar-nos.</p>
-            
+
             <p>Cumprimentos,<br>
             <strong>{{school_name}}</strong></p>
         </div>
-        
+
         <div style="background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #6c757d;">
             <p>Este é um email automático. Para suporte, contacte: {{support_email}}</p>
         </div>
@@ -75,12 +75,12 @@ DEFAULT_PACKAGE_EXPIRING_TEMPLATE = {
         <div style="background-color: #f8f9fa; padding: 20px; text-align: center;">
             <h1 style="color: #fd7e14; margin: 0;">⏰ Pacote a Expirar</h1>
         </div>
-        
+
         <div style="padding: 30px 20px;">
             <p>Olá <strong>{{student_name}}</strong>,</p>
-            
+
             <p>O seu pacote de aprendizagem vai expirar em <strong>{{days_until_expiry}} dias</strong> ({{expiry_date}}).</p>
-            
+
             <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 5px; padding: 15px; margin: 20px 0;">
                 <p style="margin: 0; color: #0c5460;">
                     <strong>📦 Detalhes do Pacote:</strong><br>
@@ -88,21 +88,21 @@ DEFAULT_PACKAGE_EXPIRING_TEMPLATE = {
                     Expira: {{expiry_date}}
                 </p>
             </div>
-            
+
             <p>Para continuar a ter acesso às suas aulas, renove o seu pacote antes da data de expiração.</p>
-            
+
             <div style="text-align: center; margin: 30px 0;">
                 <a href="#" style="background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">
                     Renovar Pacote
                 </a>
             </div>
-            
+
             <p>Se tiver dúvidas, não hesite em contactar-nos.</p>
-            
+
             <p>Cumprimentos,<br>
             <strong>{{school_name}}</strong></p>
         </div>
-        
+
         <div style="background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #6c757d;">
             <p>Este é um email automático. Para suporte, contacte: {{support_email}}</p>
         </div>

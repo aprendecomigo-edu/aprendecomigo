@@ -6,6 +6,7 @@ including student profiles, onboarding, and student creation.
 """
 
 import logging
+from typing import ClassVar
 
 from django.db import transaction
 from rest_framework import status
@@ -93,12 +94,12 @@ class StudentViewSet(KnoxAuthenticatedViewSet):
     def get_permissions(self):
         if self.action == "create":
             # Only authenticated users can create their own student profile
-            permission_classes = [IsAuthenticated]
+            permission_classes: ClassVar = [IsAuthenticated]
         elif self.action in ["update", "partial_update", "destroy"]:
             # Only student themselves, or school admin can modify student records
-            permission_classes = [IsAuthenticated, IsOwnerOrSchoolAdmin]
+            permission_classes: ClassVar = [IsAuthenticated, IsOwnerOrSchoolAdmin]
         else:
-            permission_classes = [IsAuthenticated]
+            permission_classes: ClassVar = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=["post"])

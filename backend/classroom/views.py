@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth import get_user_model
@@ -20,7 +22,7 @@ User = get_user_model()
 
 class ChannelViewSet(viewsets.ModelViewSet):
     serializer_class = ChannelSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes: ClassVar = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         """Return channels where the user is a participant."""
@@ -90,7 +92,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes: ClassVar = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         """Return messages from channels where the user is a participant."""
@@ -128,7 +130,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
 class UserSearchViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes: ClassVar = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         """Search users by username, first name, or last name."""
@@ -154,7 +156,7 @@ class SessionBookingViewSet(viewsets.GenericViewSet):
     Following GitHub Issue #173: Session Booking API Endpoints Return 404
     """
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes: ClassVar = [permissions.IsAuthenticated]
 
     @action(detail=False, methods=["post"], url_path="book")
     def book_session(self, request):

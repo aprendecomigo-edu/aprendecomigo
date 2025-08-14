@@ -9,7 +9,7 @@ from datetime import datetime
 from functools import wraps
 import logging
 import time
-from typing import Any
+from typing import Any, ClassVar
 
 from django.conf import settings
 from django.core.cache import cache
@@ -29,7 +29,7 @@ class StripeRateLimiter:
     # Read operations: 100 requests per second
     # Write operations: 100 requests per second
     # These are conservative limits to ensure we stay well under Stripe's thresholds
-    DEFAULT_LIMITS = {
+    DEFAULT_LIMITS: ClassVar = {
         "read_operations": {
             "requests_per_second": 80,  # Conservative limit
             "burst_allowance": 10,
@@ -255,7 +255,7 @@ def reset_stripe_rate_limits(identifier: str = "default") -> dict[str, Any]:
     cache_prefix = stripe_rate_limiter.cache_prefix
     reset_count = 0
 
-    for operation_type in stripe_rate_limiter.limits.keys():
+    for operation_type in stripe_rate_limiter.limits:
         cache_key = f"{cache_prefix}:{operation_type}:{identifier}"
         if cache.delete(cache_key):
             reset_count += 1

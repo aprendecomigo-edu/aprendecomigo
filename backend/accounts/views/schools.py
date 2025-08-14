@@ -7,6 +7,7 @@ branding, and invitation links.
 """
 
 import logging
+from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -63,8 +64,8 @@ class SchoolViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = SchoolSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get_queryset(self):
         """Filter schools based on user permissions."""
@@ -85,10 +86,7 @@ class SchoolViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """Allow anyone to view schools, but only authorized users to modify."""
-        if self.action in ["list", "retrieve"]:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAuthenticated]
+        permission_classes = [AllowAny] if self.action in ["list", "retrieve"] else [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
@@ -264,18 +262,18 @@ class SchoolViewSet(viewsets.ModelViewSet):
 
                 if school_serializer.is_valid(raise_exception=True):
                     # Store old school values for logging
-                    for field in profile_data.keys():
+                    for field in profile_data:
                         if hasattr(school, field):
                             old_values[f"school.{field}"] = getattr(school, field)
 
                     school_serializer.save()
-                    changed_fields.extend([f"school.{field}" for field in profile_data.keys()])
+                    changed_fields.extend([f"school.{field}" for field in profile_data])
 
             # Process settings updates
             settings_data = request.data.get("settings", request.data)
             if settings_data:
                 # Store old settings values for logging
-                for field in settings_data.keys():
+                for field in settings_data:
                     if hasattr(settings_obj, field):
                         old_values[f"settings.{field}"] = getattr(settings_obj, field)
 
@@ -285,7 +283,7 @@ class SchoolViewSet(viewsets.ModelViewSet):
 
                 if settings_serializer.is_valid(raise_exception=True):
                     settings_serializer.save()
-                    changed_fields.extend([f"settings.{field}" for field in settings_data.keys()])
+                    changed_fields.extend([f"settings.{field}" for field in settings_data])
 
             # Create activity log for settings update
             if changed_fields:
@@ -454,8 +452,8 @@ class SchoolMembershipViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = SchoolMembershipSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -485,8 +483,8 @@ class SchoolMembershipViewSet(viewsets.ModelViewSet):
 class SchoolDashboardViewSet(viewsets.ModelViewSet):
     """ViewSet for school dashboard functionality"""
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
     serializer_class = EnhancedSchoolSerializer
 
     def get_queryset(self):
@@ -611,7 +609,7 @@ class SchoolInvitationLinkView(APIView):
     This is a public endpoint (no auth required) for sharing links.
     """
 
-    permission_classes = [AllowAny]
+    permission_classes: ClassVar = [AllowAny]
 
     def get(self, request, token):
         """
@@ -682,10 +680,8 @@ class SchoolInvitationLinkView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        # Check if the user is authenticated (optional for decline)
-        if request.user.is_authenticated:
-            # Verify the current user is the intended recipient
-            if invitation.email != request.user.email:
+        # Check if the user is authenticated and verify they are the intended recipient
+        if request.user.is_authenticated and invitation.email != request.user.email:
                 return Response(
                     {"error": "This invitation is not for your account"},
                     status=status.HTTP_403_FORBIDDEN,
@@ -743,8 +739,8 @@ class SchoolBrandingAPIView(APIView):
     API for managing school branding settings for email templates.
     """
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def get(self, request, *args, **kwargs):
         """Get school branding settings."""
@@ -790,8 +786,8 @@ class CommunicationSettingsAPIView(APIView):
     API for managing communication settings and preferences.
     """
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def get(self, request, *args, **kwargs):
         """Get communication settings for user's school."""

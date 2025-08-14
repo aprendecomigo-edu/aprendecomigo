@@ -56,9 +56,8 @@ class TeacherAvailabilityViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
         data = request.data.copy()
 
         # If teacher is not provided and user has teacher_profile, set it automatically
-        if "teacher" not in data or data["teacher"] is None:
-            if hasattr(request.user, "teacher_profile"):
-                data["teacher"] = request.user.teacher_profile.id
+        if ("teacher" not in data or data["teacher"] is None) and hasattr(request.user, "teacher_profile"):
+            data["teacher"] = request.user.teacher_profile.id
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -139,9 +138,8 @@ class TeacherUnavailabilityViewSet(SchoolPermissionMixin, viewsets.ModelViewSet)
         data = request.data.copy()
 
         # If teacher is not provided and user has teacher_profile, set it automatically
-        if "teacher" not in data or data["teacher"] is None:
-            if hasattr(request.user, "teacher_profile"):
-                data["teacher"] = request.user.teacher_profile.id
+        if ("teacher" not in data or data["teacher"] is None) and hasattr(request.user, "teacher_profile"):
+            data["teacher"] = request.user.teacher_profile.id
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -366,7 +364,7 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
         user = request.user
 
         # Use custom get_object to avoid queryset filtering for permission checking
-        instance = self.get_object_for_permissions()
+        self.get_object_for_permissions()
 
         # Check permissions - only admins can delete classes
         is_admin = SchoolMembership.objects.filter(
@@ -403,7 +401,7 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
             # Check and execute status transition
             transition_service = ClassStatusTransitionService()
             try:
-                result = transition_service.cancel_class(class_schedule, user, reason)
+                transition_service.cancel_class(class_schedule, user, reason)
                 return Response({"message": "Class cancelled successfully"}, status=status.HTTP_200_OK)
             except ValidationError as e:
                 return Response(
@@ -433,7 +431,7 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
         # Check and execute status transition
         transition_service = ClassStatusTransitionService()
         try:
-            result = transition_service.confirm_class(class_schedule, user)
+            transition_service.confirm_class(class_schedule, user)
             return Response({"message": "Class confirmed successfully"}, status=status.HTTP_200_OK)
         except ValidationError as e:
             return Response(
@@ -467,7 +465,7 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
         # Use orchestrator service for completion
         orchestrator = ClassCompletionOrchestratorService()
         try:
-            result = orchestrator.complete_class(class_schedule, user, actual_duration_minutes, notes)
+            orchestrator.complete_class(class_schedule, user, actual_duration_minutes, notes)
             return Response({"message": "Class marked as completed successfully"}, status=status.HTTP_200_OK)
         except PermissionDenied as e:
             return Response({"error": str(e)}, status=status.HTTP_403_FORBIDDEN)
@@ -491,7 +489,7 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
         # Use orchestrator service for no-show marking (handles all validation)
         orchestrator = ClassCompletionOrchestratorService()
         try:
-            result = orchestrator.mark_no_show(class_schedule, user, reason, no_show_type, notes)
+            orchestrator.mark_no_show(class_schedule, user, reason, no_show_type, notes)
             return Response({"message": "Class marked as no-show successfully"}, status=status.HTTP_200_OK)
         except PermissionDenied as e:
             return Response({"error": str(e)}, status=status.HTTP_403_FORBIDDEN)
@@ -518,7 +516,7 @@ class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
         # Check and execute status transition
         transition_service = ClassStatusTransitionService()
         try:
-            result = transition_service.reject_class(class_schedule, user)
+            transition_service.reject_class(class_schedule, user)
             return Response({"message": "Class rejected successfully"}, status=status.HTTP_200_OK)
         except ValidationError as e:
             return Response(
@@ -860,7 +858,7 @@ class RecurringClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet
         serializer.is_valid(raise_exception=True)
 
         weeks_ahead = serializer.validated_data.get("weeks_ahead", 4)
-        skip_existing = serializer.validated_data.get("skip_existing", True)
+        serializer.validated_data.get("skip_existing", True)
 
         created_schedules = recurring_schedule.generate_instances(weeks_ahead)
 

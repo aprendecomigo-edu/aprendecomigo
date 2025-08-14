@@ -3,6 +3,7 @@ Messaging API views - Issue #107: Student Balance Monitoring & Notification Syst
 """
 
 import logging
+from typing import ClassVar
 
 from django.db.models import Q
 from django.utils import timezone
@@ -61,8 +62,8 @@ class NotificationListView(generics.ListAPIView):
     """
 
     serializer_class = NotificationSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get_queryset(self):
         """Return notifications for the authenticated user with filtering support."""
@@ -94,8 +95,8 @@ class NotificationDetailView(generics.RetrieveAPIView):
     """
 
     serializer_class = NotificationSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get_queryset(self):
         """Return notifications for the authenticated user only."""
@@ -110,8 +111,8 @@ class NotificationMarkReadView(APIView):
     Users can only mark their own notifications as read.
     """
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def post(self, request, pk):
         """Mark notification as read."""
@@ -137,8 +138,8 @@ class NotificationUnreadCountView(APIView):
     Used for UI badge display.
     """
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get(self, request):
         """Return unread notification count."""
@@ -258,8 +259,8 @@ class SchoolEmailTemplateViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = SchoolEmailTemplateSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def get_queryset(self):
         """Filter templates by user's schools."""
@@ -450,8 +451,8 @@ class EmailSequenceViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = EmailSequenceSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def get_queryset(self):
         """Filter sequences by user's schools."""
@@ -524,8 +525,8 @@ class EmailCommunicationViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     serializer_class = EmailCommunicationSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def get_queryset(self):
         """Filter communications by user's schools."""
@@ -636,8 +637,8 @@ class EnhancedSchoolEmailTemplateViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = SchoolEmailTemplateSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def get_queryset(self):
         """Filter templates by user's schools."""
@@ -752,8 +753,8 @@ class CommunicationAnalyticsAPIView(APIView):
     API for communication analytics and performance metrics.
     """
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def get(self, request, *args, **kwargs):
         """Get email performance metrics for user's schools."""
@@ -808,8 +809,8 @@ class TemplateAnalyticsAPIView(APIView):
     API for template-specific analytics and usage statistics.
     """
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def get(self, request, *args, **kwargs):
         """Get template usage and performance statistics."""
@@ -853,8 +854,8 @@ class CommunicationSettingsAPIView(APIView):
     API for managing communication settings and preferences.
     """
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes: ClassVar = [TokenAuthentication]
+    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def get(self, request, *args, **kwargs):
         """Get communication settings for user's school."""

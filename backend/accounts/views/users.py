@@ -6,6 +6,7 @@ parent profiles, parent-child relationships, and user onboarding.
 """
 
 import logging
+from typing import ClassVar
 
 from django.db import transaction
 from django.utils import timezone
@@ -57,21 +58,21 @@ class UserViewSet(KnoxAuthenticatedViewSet):
     def get_permissions(self):
         if self.action == "create":
             # Only school owners/admins and system admins can create users
-            permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+            permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
         elif self.action == "signup":
             # Anyone can sign up
-            permission_classes = [AllowAny]
+            permission_classes: ClassVar = [AllowAny]
         elif self.action == "list":
             # Any authenticated user can list, but queryset is filtered appropriately
-            permission_classes = [IsAuthenticated]
+            permission_classes: ClassVar = [IsAuthenticated]
         elif self.action in ["update", "partial_update", "destroy"]:
             # Only owner or school admin can modify user records
-            permission_classes = [IsAuthenticated, IsOwnerOrSchoolAdmin]
+            permission_classes: ClassVar = [IsAuthenticated, IsOwnerOrSchoolAdmin]
         elif self.action in ["retrieve", "school_profile", "dashboard_info"]:
             # Any authenticated user can retrieve, but queryset is filtered appropriately
-            permission_classes = [IsAuthenticated]
+            permission_classes: ClassVar = [IsAuthenticated]
         else:
-            permission_classes = [IsAuthenticated, IsOwnerOrSchoolAdmin]
+            permission_classes: ClassVar = [IsAuthenticated, IsOwnerOrSchoolAdmin]
         return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=["get"])
@@ -535,29 +536,23 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             update_data = request.data
 
             # Validation
-            if "quick_actions" in update_data:
-                if not isinstance(update_data["quick_actions"], list):
-                    return Response({"error": "quick_actions must be a list"}, status=status.HTTP_400_BAD_REQUEST)
+            if "quick_actions" in update_data and not isinstance(update_data["quick_actions"], list):
+                return Response({"error": "quick_actions must be a list"}, status=status.HTTP_400_BAD_REQUEST)
 
-            if "default_landing_page" in update_data:
-                if update_data["default_landing_page"] not in valid_landing_pages:
-                    return Response(
-                        {"error": f"default_landing_page must be one of: {', '.join(valid_landing_pages)}"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
+            if "default_landing_page" in update_data and update_data["default_landing_page"] not in valid_landing_pages:
+                return Response(
+                    {"error": f"default_landing_page must be one of: {', '.join(valid_landing_pages)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-            if "navigation_style" in update_data:
-                if update_data["navigation_style"] not in valid_navigation_styles:
-                    return Response(
-                        {"error": f"navigation_style must be one of: {', '.join(valid_navigation_styles)}"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
+            if "navigation_style" in update_data and update_data["navigation_style"] not in valid_navigation_styles:
+                return Response(
+                    {"error": f"navigation_style must be one of: {', '.join(valid_navigation_styles)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-            if "tutorial_auto_start" in update_data:
-                if not isinstance(update_data["tutorial_auto_start"], bool):
-                    return Response(
-                        {"error": "tutorial_auto_start must be a boolean"}, status=status.HTTP_400_BAD_REQUEST
-                    )
+            if "tutorial_auto_start" in update_data and not isinstance(update_data["tutorial_auto_start"], bool):
+                return Response({"error": "tutorial_auto_start must be a boolean"}, status=status.HTTP_400_BAD_REQUEST)
 
             # Update preferences (merge with existing)
             current_preferences.update(update_data)
@@ -576,7 +571,7 @@ class ParentProfileViewSet(KnoxAuthenticatedViewSet):
     """
 
     serializer_class = ParentProfileSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get_queryset(self):
         """Return only the current user's parent profile."""
@@ -611,7 +606,7 @@ class ParentChildRelationshipViewSet(KnoxAuthenticatedViewSet):
     """
 
     serializer_class = ParentChildRelationshipSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get_queryset(self):
         """Filter relationships based on user role and permissions."""

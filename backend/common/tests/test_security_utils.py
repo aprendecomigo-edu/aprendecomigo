@@ -289,7 +289,7 @@ class TestSanitizeMultilineText(unittest.TestCase):
         - <script>alert('xss')</script>
         - Needs help with Portuguese
         - <iframe src="evil.com"></iframe>
-        
+
         Teacher comments:
         - Excellent behavior in class"""
 

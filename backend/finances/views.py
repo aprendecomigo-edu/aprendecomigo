@@ -5,6 +5,7 @@ API views for the finances app.
 from datetime import timedelta
 from decimal import Decimal
 import logging
+from typing import ClassVar
 
 from django.apps import apps
 from django.core.cache import cache
@@ -60,7 +61,7 @@ class SchoolBillingSettingsViewSet(SchoolPermissionMixin, viewsets.ModelViewSet)
     """ViewSet for managing school billing settings."""
 
     serializer_class = SchoolBillingSettingsSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get_queryset(self):
         """Filter settings by user's schools."""
@@ -123,7 +124,7 @@ class TeacherCompensationRuleViewSet(SchoolPermissionMixin, viewsets.ModelViewSe
     """ViewSet for managing teacher compensation rules."""
 
     serializer_class = TeacherCompensationRuleSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get_queryset(self):
         """Filter rules by user's schools."""
@@ -180,7 +181,7 @@ class ClassSessionViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
     """ViewSet for managing class sessions."""
 
     serializer_class = ClassSessionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get_queryset(self):
         """Filter sessions by user's schools."""
@@ -502,7 +503,7 @@ class TeacherPaymentEntryViewSet(SchoolPermissionMixin, viewsets.ReadOnlyModelVi
     """ViewSet for viewing teacher payment entries (read-only)."""
 
     serializer_class = TeacherPaymentEntrySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get_queryset(self):
         """Filter payment entries by user's schools."""
@@ -1417,7 +1418,7 @@ class StudentBalanceViewSet(viewsets.ViewSet):
     users and admin email parameter lookups with proper security validation.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def list(self, request):
         """
@@ -2182,9 +2183,7 @@ class StudentBalanceViewSet(viewsets.ViewSet):
             from finances.models import StoredPaymentMethod
 
             try:
-                payment_method = StoredPaymentMethod.objects.get(
-                    id=payment_method_id, student=student_user, is_active=True
-                )
+                StoredPaymentMethod.objects.get(id=payment_method_id, student=student_user, is_active=True)
             except StoredPaymentMethod.DoesNotExist:
                 return Response(
                     {"error": "Payment method not found or not accessible"}, status=status.HTTP_404_NOT_FOUND
@@ -2252,9 +2251,7 @@ class StudentBalanceViewSet(viewsets.ViewSet):
             from finances.models import StoredPaymentMethod
 
             try:
-                payment_method = StoredPaymentMethod.objects.get(
-                    id=payment_method_id, student=student_user, is_active=True
-                )
+                StoredPaymentMethod.objects.get(id=payment_method_id, student=student_user, is_active=True)
             except StoredPaymentMethod.DoesNotExist:
                 return Response(
                     {"error": "Payment method not found or not accessible"}, status=status.HTTP_404_NOT_FOUND
@@ -2301,7 +2298,7 @@ class FamilyBudgetControlViewSet(viewsets.ModelViewSet):
 
     # Don't define queryset attribute - force use of get_queryset() method
     serializer_class = "FamilyBudgetControlSerializer"  # Set in get_serializer_class
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get_queryset(self):
         """Filter budget controls by user permissions."""
@@ -2392,10 +2389,10 @@ class PurchaseApprovalRequestViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = "PurchaseApprovalRequestSerializer"  # Set in get_serializer_class
-    permission_classes = [IsAuthenticated]
-    filter_backends = [OrderingFilter]
-    ordering_fields = ["requested_at", "amount"]
-    ordering = ["-requested_at"]
+    permission_classes: ClassVar = [IsAuthenticated]
+    filter_backends: ClassVar = [OrderingFilter]
+    ordering_fields: ClassVar = ["requested_at", "amount"]
+    ordering: ClassVar = ["-requested_at"]
 
     def get_queryset(self):
         """Filter approval requests by user permissions and query parameters."""
@@ -2514,7 +2511,7 @@ class StudentPurchaseRequestView(APIView):
     Handles budget limit checking, auto-approval logic, and parent notification.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def post(self, request):
         """
@@ -2646,7 +2643,7 @@ class ParentApprovalDashboardView(APIView):
     and budget alerts in a single comprehensive response.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get(self, request):
         """
@@ -2822,7 +2819,7 @@ class FamilyMetricsView(APIView):
     for family accounts across different timeframes.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get(self, request):
         """
@@ -2898,7 +2895,7 @@ class PackageExpirationViewSet(viewsets.GenericViewSet):
     Following GitHub Issue #167: Package Expiration Management API Endpoints
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     def get_permissions(self):
         """Admin-only permissions for all actions."""

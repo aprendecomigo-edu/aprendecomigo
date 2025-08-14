@@ -92,7 +92,6 @@ class Command(BaseCommand):
                 self.stdout.write(f"Active: {membership.is_active}")
 
                 # Verify what the dashboard_info endpoint would return
-                admin_school_ids = []  # Teacher won't have admin schools
                 user_type = None
                 is_admin = False
 

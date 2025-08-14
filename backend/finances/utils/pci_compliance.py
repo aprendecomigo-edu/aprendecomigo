@@ -124,11 +124,7 @@ def validate_pci_compliance(value: str) -> bool:
         r"5555555555554444",  # Mastercard test card
     ]
 
-    for pattern in test_patterns:
-        if re.search(pattern, value_str):
-            return False
-
-    return True
+    return all(not re.search(pattern, value_str) for pattern in test_patterns)
 
 
 def sanitize_card_data(card_last4: str | None) -> str | None:

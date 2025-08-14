@@ -502,7 +502,7 @@ class DisputeService:
         success: bool = True,
         result_message: str = "",
         stripe_reference_id: str = "",
-        ip_address: str = None,
+        ip_address: str | None = None,
         user_agent: str = "",
     ) -> None:
         """

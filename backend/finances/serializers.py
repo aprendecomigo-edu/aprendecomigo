@@ -4,7 +4,7 @@ Serializers for the finances app.
 
 from decimal import Decimal
 import re
-from typing import Any
+from typing import Any, ClassVar
 
 from django.core.validators import EmailValidator
 from rest_framework import serializers
@@ -33,7 +33,7 @@ class SchoolBillingSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SchoolBillingSettings
-        fields = [
+        fields: ClassVar = [
             "id",
             "school",
             "school_name",
@@ -43,7 +43,7 @@ class SchoolBillingSettingsSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "school_name", "created_at", "updated_at"]
+        read_only_fields: ClassVar = ["id", "school_name", "created_at", "updated_at"]
 
 
 class TeacherCompensationRuleSerializer(serializers.ModelSerializer):
@@ -56,7 +56,7 @@ class TeacherCompensationRuleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherCompensationRule
-        fields = [
+        fields: ClassVar = [
             "id",
             "teacher",
             "teacher_name",
@@ -75,7 +75,7 @@ class TeacherCompensationRuleSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "id",
             "teacher_name",
             "teacher_email",
@@ -125,7 +125,7 @@ class ClassSessionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClassSession
-        fields = [
+        fields: ClassVar = [
             "id",
             "teacher",
             "teacher_name",
@@ -150,7 +150,7 @@ class ClassSessionSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "id",
             "teacher_name",
             "school_name",
@@ -188,7 +188,7 @@ class TeacherPaymentEntrySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherPaymentEntry
-        fields = [
+        fields: ClassVar = [
             "id",
             "session",
             "session_date",
@@ -211,7 +211,7 @@ class TeacherPaymentEntrySerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "id",
             "session",
             "session_date",
@@ -307,7 +307,7 @@ class PricingPlanSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PricingPlan
-        fields = [
+        fields: ClassVar = [
             "id",
             "name",
             "description",
@@ -320,7 +320,7 @@ class PricingPlanSerializer(serializers.ModelSerializer):
             "is_featured",
             "price_per_hour",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "id",
             "plan_type_display",
             "price_per_hour",
@@ -567,7 +567,7 @@ class TransactionHistorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PurchaseTransaction
-        fields = [
+        fields: ClassVar = [
             "id",
             "transaction_type",
             "transaction_type_display",
@@ -580,7 +580,7 @@ class TransactionHistorySerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        read_only_fields: ClassVar = ["id", "created_at", "updated_at"]
 
 
 class HourConsumptionSerializer(serializers.ModelSerializer):
@@ -591,7 +591,7 @@ class HourConsumptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = HourConsumption
-        fields = [
+        fields: ClassVar = [
             "id",
             "hours_consumed",
             "hours_originally_reserved",
@@ -601,7 +601,7 @@ class HourConsumptionSerializer(serializers.ModelSerializer):
             "is_refunded",
             "refund_reason",
         ]
-        read_only_fields = ["id", "consumed_at"]
+        read_only_fields: ClassVar = ["id", "consumed_at"]
 
 
 class PlanDetailsSerializer(serializers.Serializer):
@@ -627,7 +627,7 @@ class PurchaseHistorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PurchaseTransaction
-        fields = [
+        fields: ClassVar = [
             "id",
             "transaction_type",
             "transaction_type_display",
@@ -642,7 +642,7 @@ class PurchaseHistorySerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        read_only_fields: ClassVar = ["id", "created_at", "updated_at"]
 
     def get_plan_details(self, obj):
         """Get plan details from metadata."""
@@ -706,7 +706,7 @@ class ReceiptSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Receipt
-        fields = [
+        fields: ClassVar = [
             "id",
             "receipt_number",
             "amount",
@@ -721,7 +721,7 @@ class ReceiptSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "id",
             "receipt_number",
             "generated_at",
@@ -763,7 +763,7 @@ class StoredPaymentMethodSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StoredPaymentMethod
-        fields = [
+        fields: ClassVar = [
             "id",
             "card_brand",
             "card_exp_month",
@@ -777,7 +777,7 @@ class StoredPaymentMethodSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "id",
             "student_name",
             "card_display",
@@ -976,7 +976,7 @@ class FamilyBudgetControlSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FamilyBudgetControl
-        fields = [
+        fields: ClassVar = [
             "id",
             "parent_child_relationship",
             "parent_name",
@@ -993,7 +993,7 @@ class FamilyBudgetControlSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "id",
             "parent_name",
             "child_name",
@@ -1026,7 +1026,7 @@ class PurchaseApprovalRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PurchaseApprovalRequest
-        fields = [
+        fields: ClassVar = [
             "id",
             "student",
             "student_name",
@@ -1051,7 +1051,7 @@ class PurchaseApprovalRequestSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "id",
             "student_name",
             "parent_name",

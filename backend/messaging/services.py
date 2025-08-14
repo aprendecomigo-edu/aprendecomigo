@@ -71,7 +71,7 @@ class BalanceMonitoringService:
             return []
 
     @classmethod
-    def check_expiring_packages(cls, days_ahead: int = None) -> list[PurchaseTransaction]:
+    def check_expiring_packages(cls, days_ahead: int | None = None) -> list[PurchaseTransaction]:
         """
         Get packages expiring within specified days.
 
@@ -104,7 +104,7 @@ class BalanceMonitoringService:
 
     @classmethod
     def has_recent_notification(
-        cls, user: CustomUser, notification_type: NotificationType, cooldown_hours: int = None
+        cls, user: CustomUser, notification_type: NotificationType, cooldown_hours: int | None = None
     ) -> bool:
         """
         Check if user has received a recent notification of the same type.

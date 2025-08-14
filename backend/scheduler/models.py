@@ -281,6 +281,41 @@ class ClassSchedule(models.Model):
     def __str__(self):
         return f"{self.title} - {self.scheduled_date} {self.start_time}"
 
+    def save(self, *args, **kwargs):
+        """Override save to emit signals on status changes"""
+        # Track status changes for signal emission
+        old_status = None
+        emit_signal = False
+
+        if self.pk:
+            # Get old status if this is an update
+            try:
+                old_instance = ClassSchedule.objects.get(pk=self.pk)
+                old_status = old_instance.status
+                # Check if status has changed
+                if old_status != self.status:
+                    emit_signal = True
+            except ClassSchedule.DoesNotExist:
+                # New instance, no signal needed for creation
+                pass
+
+        # Call parent save
+        super().save(*args, **kwargs)
+
+        # Emit signal if status changed
+        if emit_signal:
+            from .signals import class_status_changed
+
+            # Get the user who made the change (from context if available)
+            changed_by = getattr(self, "_changed_by_user", None)
+            class_status_changed.send(
+                sender=self.__class__,
+                instance=self,
+                old_status=old_status,
+                new_status=self.status,
+                changed_by=changed_by,
+            )
+
     def clean(self):
         """Validate class schedule"""
         # Check that start_time is before end_time
@@ -475,9 +510,7 @@ class ClassSchedule(models.Model):
                         break
 
         # Additional validation for group classes
-        if self.class_type == ClassType.GROUP:
-            # Group classes require specific metadata fields when metadata is provided
-            if self.metadata:
+        if self.class_type == ClassType.GROUP and self.metadata:
                 required_group_fields = ["group_dynamics", "interaction_level", "collaboration_type"]
                 missing_fields = [field for field in required_group_fields if field not in self.metadata]
                 if missing_fields:
@@ -487,41 +520,6 @@ class ClassSchedule(models.Model):
 
         if errors:
             raise ValidationError(errors)
-
-    def save(self, *args, **kwargs):
-        """Override save to emit signals on status changes"""
-        # Track status changes for signal emission
-        old_status = None
-        emit_signal = False
-
-        if self.pk:
-            # Get old status if this is an update
-            try:
-                old_instance = ClassSchedule.objects.get(pk=self.pk)
-                old_status = old_instance.status
-                # Check if status has changed
-                if old_status != self.status:
-                    emit_signal = True
-            except ClassSchedule.DoesNotExist:
-                # New instance, no signal needed for creation
-                pass
-
-        # Call parent save
-        super().save(*args, **kwargs)
-
-        # Emit signal if status changed
-        if emit_signal:
-            from .signals import class_status_changed
-
-            # Get the user who made the change (from context if available)
-            changed_by = getattr(self, "_changed_by_user", None)
-            class_status_changed.send(
-                sender=self.__class__,
-                instance=self,
-                old_status=old_status,
-                new_status=self.status,
-                changed_by=changed_by,
-            )
 
 
 class FrequencyType(models.TextChoices):
@@ -667,9 +665,7 @@ class RecurringClassSchedule(models.Model):
         if self.class_type == ClassType.GROUP:
             if self.max_participants is None or self.max_participants <= 0:
                 raise ValidationError({"max_participants": _("Max participants is required for group classes.")})
-        elif self.class_type == ClassType.INDIVIDUAL:
-            # Individual classes should not have max_participants set or only 1 student
-            if self.pk and self.students.count() > 1:
+        elif self.class_type == ClassType.INDIVIDUAL and self.pk and self.students.count() > 1:
                 raise ValidationError({"students": _("Individual classes can only have one student.")})
 
     def get_student_count(self):
@@ -998,9 +994,9 @@ class ReminderPreference(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ["user", "school"]
-        ordering = ["user", "school"]
-        indexes = [
+        unique_together: ClassVar = ["user", "school"]
+        ordering: ClassVar = ["user", "school"]
+        indexes: ClassVar = [
             models.Index(fields=["user", "is_active"]),
             models.Index(fields=["school", "is_school_default"]),
         ]
@@ -1019,7 +1015,7 @@ class ReminderPreference(models.Model):
                 errors["reminder_timing_hours"] = _("Must be a list of numbers")
             else:
                 for hour in self.reminder_timing_hours:
-                    if not isinstance(hour, (int, float)) or hour < 0 or hour > 168:  # Max 1 week
+                    if not isinstance(hour, int | float) or hour < 0 or hour > 168:  # Max 1 week
                         errors["reminder_timing_hours"] = _("Hours must be numbers between 0 and 168")
                         break
 
@@ -1168,15 +1164,15 @@ class ClassReminder(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["scheduled_for", "created_at"]
-        indexes = [
+        ordering: ClassVar = ["scheduled_for", "created_at"]
+        indexes: ClassVar = [
             models.Index(fields=["class_schedule", "reminder_type"]),
             models.Index(fields=["recipient", "status"]),
             models.Index(fields=["status", "scheduled_for"]),
             models.Index(fields=["communication_channel", "status"]),
             models.Index(fields=["scheduled_for", "status"]),  # Performance index for queries
         ]
-        constraints = [
+        constraints: ClassVar = [
             models.UniqueConstraint(
                 fields=["class_schedule", "reminder_type", "recipient", "communication_channel"],
                 name="unique_reminder_per_recipient_channel",

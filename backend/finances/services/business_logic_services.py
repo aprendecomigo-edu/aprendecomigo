@@ -14,7 +14,7 @@ class CompensationService:
         # Get models at runtime to avoid circular imports
         Lesson = apps.get_model("classroom", "Lesson")
         User = apps.get_model(*settings.AUTH_USER_MODEL.split("."))
-        TeacherCompensation = apps.get_model("finances", "TeacherCompensation")
+        apps.get_model("finances", "TeacherCompensation")
 
         # Calculate completed lessons
         completed_lessons = Lesson.objects.filter(

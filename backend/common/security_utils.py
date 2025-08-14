@@ -307,11 +307,7 @@ def is_safe_url(url: str | None) -> bool:
 
     url_lower = url.lower().strip()
 
-    for protocol in DANGEROUS_PROTOCOLS:
-        if url_lower.startswith(protocol):
-            return False
-
-    return True
+    return all(not url_lower.startswith(protocol) for protocol in DANGEROUS_PROTOCOLS)
 
 
 def sanitize_html_attributes(html_content: str) -> str:

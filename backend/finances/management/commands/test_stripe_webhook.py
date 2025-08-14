@@ -257,36 +257,36 @@ class Command(BaseCommand):
         instructions = f"""
 1. Install Stripe CLI:
    Download from: https://stripe.com/docs/stripe-cli
-   
+
 2. Login to Stripe CLI:
    stripe login
-   
+
 3. Forward events to your local webhook endpoint:
    stripe listen --forward-to {full_webhook_url}
-   
+
 4. Copy the webhook signing secret from the CLI output and add to your .env:
    STRIPE_WEBHOOK_SECRET=whsec_...
-   
+
 5. Test specific events:
    # Test successful payment
    stripe trigger payment_intent.succeeded
-   
+
    # Test failed payment
    stripe trigger payment_intent.payment_failed
-   
+
    # Test canceled payment
    stripe trigger payment_intent.canceled
-   
+
 6. Monitor webhook events:
    # Watch Django logs
    tail -f logs/django.log
-   
+
    # Check Stripe dashboard
    https://dashboard.stripe.com/test/events
-   
+
 7. Test with real payment intent (replace pi_xxx with actual ID):
    stripe events resend evt_xxx
-   
+
 8. Test idempotency by sending the same event twice:
    stripe events resend evt_xxx
    stripe events resend evt_xxx

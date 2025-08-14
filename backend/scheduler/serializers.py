@@ -56,8 +56,7 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
             model_fields = [f.name for f in TeacherAvailability._meta.get_fields() if not f.many_to_many]
 
             for field_name in model_fields:
-                if field_name not in ["id"]:  # Skip primary key and auto fields
-                    if hasattr(self.instance, field_name):
+                if field_name not in ["id"] and hasattr(self.instance, field_name):  # Skip primary key and auto fields
                         value = getattr(self.instance, field_name)
                         # Handle foreign key fields properly
                         if hasattr(value, "pk"):
@@ -148,8 +147,7 @@ class TeacherUnavailabilitySerializer(serializers.ModelSerializer):
             model_fields = [f.name for f in TeacherUnavailability._meta.get_fields() if not f.many_to_many]
 
             for field_name in model_fields:
-                if field_name not in ["id"]:  # Skip primary key and auto fields
-                    if hasattr(self.instance, field_name):
+                if field_name not in ["id"] and hasattr(self.instance, field_name):  # Skip primary key and auto fields
                         value = getattr(self.instance, field_name)
                         # Handle foreign key fields properly
                         if hasattr(value, "pk"):
@@ -687,7 +685,7 @@ class ReminderPreferenceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ReminderPreference
-        fields = [
+        fields: ClassVar = [
             "id",
             "user",
             "user_name",
@@ -701,7 +699,7 @@ class ReminderPreferenceSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "user", "created_at", "updated_at"]
+        read_only_fields: ClassVar = ["id", "user", "created_at", "updated_at"]
 
     def validate_reminder_timing_hours(self, value):
         """Validate reminder timing hours"""
@@ -709,7 +707,7 @@ class ReminderPreferenceSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Must be a list of numbers")
 
         for hour in value:
-            if not isinstance(hour, (int, float)):
+            if not isinstance(hour, int | float):
                 raise serializers.ValidationError("Each value must be a number")
             if hour < 0 or hour > 168:  # Max 1 week
                 raise serializers.ValidationError("Hours must be between 0 and 168 (1 week)")
@@ -752,7 +750,7 @@ class ClassReminderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClassReminder
-        fields = [
+        fields: ClassVar = [
             "id",
             "class_schedule",
             "class_title",
@@ -780,7 +778,7 @@ class ClassReminderSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
+        read_only_fields: ClassVar = [
             "sent_at",
             "error_message",
             "retry_count",

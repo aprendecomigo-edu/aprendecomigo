@@ -6,6 +6,7 @@ including analytics dashboard, transaction history, and webhook monitoring.
 """
 
 import logging
+from typing import ClassVar
 
 from django.db.models import Q
 from django.utils import timezone
@@ -112,7 +113,7 @@ class TransactionHistoryView(ListAPIView):
     """
 
     serializer_class = AdminTransactionSerializer
-    permission_classes = [AdminOnlyPermission]
+    permission_classes: ClassVar = [AdminOnlyPermission]
     pagination_class = AdminPagination
 
     def get_queryset(self):
@@ -210,7 +211,7 @@ class WebhookStatusView(ListAPIView):
     """
 
     serializer_class = AdminWebhookEventSerializer
-    permission_classes = [AdminOnlyPermission]
+    permission_classes: ClassVar = [AdminOnlyPermission]
     pagination_class = AdminPagination
 
     def get_queryset(self):
@@ -348,7 +349,7 @@ def student_analytics(request: Request, student_id: int) -> Response:
         User = get_user_model()
 
         try:
-            student = User.objects.get(id=student_id)
+            User.objects.get(id=student_id)
         except User.DoesNotExist:
             return Response({"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
 

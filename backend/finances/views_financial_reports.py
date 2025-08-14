@@ -23,6 +23,8 @@ except ImportError:
     HAS_OPENPYXL = False
     openpyxl = None
 
+from typing import ClassVar
+
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum
 from django.http import HttpResponse
@@ -56,7 +58,7 @@ logger = logging.getLogger(__name__)
 class FinancialAnalyticsAPIView(APIView):
     """API views for financial analytics and reporting."""
 
-    permission_classes = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
+    permission_classes: ClassVar = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def _get_user_schools(self):
         """Get schools that the user has access to."""
@@ -240,10 +242,7 @@ def teacher_compensation_report(request: Request) -> Response:
 
         # Calculate date range
         end_date = timezone.now()
-        if period == "monthly":
-            start_date = end_date - timedelta(days=30)
-        else:  # quarterly
-            start_date = end_date - timedelta(days=90)
+        start_date = end_date - timedelta(days=30) if period == "monthly" else end_date - timedelta(days=90)
 
         # Get teacher's completed sessions
         sessions = ClassSession.objects.filter(teacher_id=teacher_id, status="completed", date__gte=start_date.date())
@@ -370,7 +369,7 @@ def revenue_trends_analysis(request: Request) -> Response:
 class FinancialExportAPIView(APIView):
     """API views for exporting financial data in various formats."""
 
-    permission_classes = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
+    permission_classes: ClassVar = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
 
 
 @api_view(["GET", "POST"])
@@ -386,10 +385,7 @@ def export_transactions_fixed(request: Request) -> Response:
     """
     try:
         # Support both GET query params and POST body data
-        if request.method == "POST":
-            params = request.data
-        else:
-            params = request.query_params
+        params = request.data if request.method == "POST" else request.query_params
         # Handle format parameter
         format_type = params.get("format", "csv")
         if format_type != "csv":
@@ -490,7 +486,7 @@ def test_export_endpoint(request: Request) -> Response:
 class ExportStudentBalancesAPIView(APIView):
     """API view for exporting student balance data as Excel."""
 
-    permission_classes = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
+    permission_classes: ClassVar = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def _export_balances(self, params):
         """Shared logic for exporting student balances."""
@@ -575,7 +571,7 @@ class ExportStudentBalancesAPIView(APIView):
 class ExportTeacherSessionsAPIView(APIView):
     """API view for exporting teacher session data as HTML report."""
 
-    permission_classes = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
+    permission_classes: ClassVar = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def _export_teacher_sessions(self, params):
         """Shared logic for exporting teacher sessions."""
@@ -624,7 +620,7 @@ class ExportTeacherSessionsAPIView(APIView):
         <div class="info">Teacher ID: {teacher_id}</div>
         <div class="info">Period: {month:02d}/{year}</div>
     </div>
-    <p>This is a sample HTML report for teacher sessions. In a full implementation, 
+    <p>This is a sample HTML report for teacher sessions. In a full implementation,
     this would contain detailed session data, statistics, and analytics.</p>
 </body>
 </html>"""
@@ -673,7 +669,7 @@ class ExportTeacherSessionsAPIView(APIView):
 class ReceiptAPIView(APIView):
     """API views for receipt generation and management."""
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes: ClassVar = [permissions.IsAuthenticated]
 
 
 @api_view(["POST"])

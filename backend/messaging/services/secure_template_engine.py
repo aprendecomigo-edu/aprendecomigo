@@ -7,7 +7,7 @@ template injection attacks, XSS vulnerabilities, and unauthorized code execution
 
 import logging
 import re
-from typing import Any
+from typing import Any, ClassVar
 
 from django.core.exceptions import ValidationError
 from django.template import Context, Template, TemplateSyntaxError
@@ -23,7 +23,7 @@ class SecureTemplateEngine:
     """
 
     # Allowed template tags and filters (whitelist approach)
-    ALLOWED_TAGS = {
+    ALLOWED_TAGS: ClassVar = {
         "if",
         "endif",
         "else",
@@ -50,7 +50,7 @@ class SecureTemplateEngine:
         "endautoescape",
     }
 
-    ALLOWED_FILTERS = {
+    ALLOWED_FILTERS: ClassVar = {
         "add",
         "addslashes",
         "capfirst",
@@ -107,7 +107,7 @@ class SecureTemplateEngine:
     }
 
     # Dangerous patterns to detect and block
-    DANGEROUS_PATTERNS = [
+    DANGEROUS_PATTERNS: ClassVar = [
         r"__import__",
         r"eval\s*\(",
         r"exec\s*\(",
@@ -220,7 +220,7 @@ class SecureTemplateEngine:
 
         # Validate Django template syntax
         try:
-            template = Template(template_content)
+            Template(template_content)
         except TemplateSyntaxError as e:
             raise ValidationError(f"Invalid template syntax: {e!s}")
 
@@ -345,10 +345,7 @@ class SecureTemplateEngine:
             "dir",
             "import",
         }
-        if name.lower() in reserved_names:
-            return False
-
-        return True
+        return name.lower() not in reserved_names
 
     @classmethod
     def _sanitize_value(cls, value: Any) -> Any:
@@ -364,10 +361,10 @@ class SecureTemplateEngine:
         if isinstance(value, str):
             # Escape HTML entities to prevent XSS
             return escape(value)
-        elif isinstance(value, (int, float, bool, type(None))):
+        elif isinstance(value, int | float | bool | type(None)):
             # Safe primitive types
             return value
-        elif isinstance(value, (list, tuple)):
+        elif isinstance(value, list | tuple):
             # Recursively sanitize list/tuple items
             return type(value)(cls._sanitize_value(item) for item in value)
         elif isinstance(value, dict):
@@ -424,7 +421,7 @@ class HTMLSanitizer:
     """
 
     # Allowed HTML tags for email content
-    ALLOWED_TAGS = {
+    ALLOWED_TAGS: ClassVar = {
         "p",
         "br",
         "strong",
@@ -457,7 +454,7 @@ class HTMLSanitizer:
     }
 
     # Allowed attributes for specific tags
-    ALLOWED_ATTRIBUTES = {
+    ALLOWED_ATTRIBUTES: ClassVar = {
         "a": {"href", "title", "target"},
         "img": {"src", "alt", "width", "height", "style"},
         "span": {"style", "class"},
@@ -475,7 +472,7 @@ class HTMLSanitizer:
     }
 
     # Allowed CSS properties
-    ALLOWED_CSS_PROPERTIES = {
+    ALLOWED_CSS_PROPERTIES: ClassVar = {
         "color",
         "background-color",
         "font-family",
@@ -595,7 +592,6 @@ class HTMLSanitizer:
         def replace_tag(match):
             full_tag = match.group(0)
             tag_name = match.group(2).lower()
-            is_closing = match.group(1) == "/"
 
             if tag_name in cls.ALLOWED_TAGS:
                 return full_tag
@@ -631,10 +627,8 @@ class HTMLSanitizer:
                     property_name = property_name.strip().lower()
                     property_value = property_value.strip()
 
-                    if property_name in cls.ALLOWED_CSS_PROPERTIES:
-                        # Basic validation of property value
-                        if cls._is_safe_css_value(property_value):
-                            sanitized_styles.append(f"{property_name}: {property_value}")
+                    if property_name in cls.ALLOWED_CSS_PROPERTIES and cls._is_safe_css_value(property_value):
+                        sanitized_styles.append(f"{property_name}: {property_value}")
 
             return f'style="{"; ".join(sanitized_styles)}"'
 
@@ -668,11 +662,7 @@ class HTMLSanitizer:
         ]
 
         value_lower = value.lower()
-        for pattern in dangerous_patterns:
-            if pattern in value_lower:
-                return False
-
-        return True
+        return all(pattern not in value_lower for pattern in dangerous_patterns)
 
 
 class TemplateVariableValidator:
@@ -725,12 +715,12 @@ class TemplateVariableValidator:
                 if not isinstance(key, str):
                     raise ValidationError("Dictionary keys must be strings")
                 cls._validate_object(value, depth + 1)
-        elif isinstance(obj, (list, tuple)):
+        elif isinstance(obj, list | tuple):
             for item in obj:
                 cls._validate_object(item, depth + 1)
         elif callable(obj):
             raise ValidationError("Callable objects are not allowed in template context")
-        elif hasattr(obj, "__dict__") and not isinstance(obj, (int, float, bool, type(None))):
+        elif hasattr(obj, "__dict__") and not isinstance(obj, int | float | bool | type(None)):
             # Custom objects - validate their attributes
             for attr_name in dir(obj):
                 if not attr_name.startswith("_"):  # Skip private attributes

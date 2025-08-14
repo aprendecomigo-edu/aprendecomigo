@@ -289,7 +289,7 @@ class PurchaseApprovalRequestAPITests(ApprovalAPITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data_to_check = response.data["results"] if "results" in response.data else response.data
+        data_to_check = response.data.get("results", response.data)
         self.assertEqual(len(data_to_check), 1)
         self.assertEqual(data_to_check[0]["id"], approval_request.id)
         self.assertEqual(data_to_check[0]["student_name"], "Test Student")
@@ -406,7 +406,7 @@ class PurchaseApprovalRequestAPITests(ApprovalAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Use correct data structure for assertion
-        data_to_check = response.data["results"] if "results" in response.data else response.data
+        data_to_check = response.data.get("results", response.data)
         self.assertEqual(len(data_to_check), 1)
         self.assertEqual(data_to_check[0]["id"], pending_request.id)
 
@@ -414,7 +414,7 @@ class PurchaseApprovalRequestAPITests(ApprovalAPITestCase):
         response = self.client.get(url, {"status": "approved"})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data_to_check_approved = response.data["results"] if "results" in response.data else response.data
+        data_to_check_approved = response.data.get("results", response.data)
         self.assertEqual(len(data_to_check_approved), 1)
         self.assertEqual(data_to_check_approved[0]["id"], approved_request.id)
 
