@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250802-105348,2025-08-02T10:53:48Z,MAJOR_PROGRESS,8,3,Playwright Chrome,macOS development,API endpoints fixed - major breakthrough in integration

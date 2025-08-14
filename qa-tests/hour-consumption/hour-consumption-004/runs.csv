@@ -1,2 +1,0 @@
-timestamp,result,duration_seconds,notes,tester,environment,critical_failures,screenshot_count
-# Format: YYYY-MM-DD HH:MM:SS,PASS/FAIL,duration,notes,tester_name,environment,failure_details,screenshot_count

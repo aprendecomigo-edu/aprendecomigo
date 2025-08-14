@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250728-165328,2025-07-28T16:53:28Z,IN_PROGRESS,3,1,Playwright Chrome,macOS development,Steps 1-3 PASS breadcrumb nav working Steps 4 partial pass search frontend good API failing Step 5 in progress

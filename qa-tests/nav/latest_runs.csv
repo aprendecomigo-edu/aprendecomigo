@@ -1,7 +1,0 @@
-test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
-nav-001,School Manager Users Tab Access and Role-Based Permissions,Verify that a school manager can access the /users route and see appropriate tabs with correct permissions,2025-07-05T22:17:43Z,FAIL,1,0,1
-nav-002,Main Navigation Links Functionality,Verify that all main navigation links work correctly and navigate to the expected pages,2025-07-06T08:08:52Z,PASS,1,1,0
-nav-003,Navigation Menu Highlighting and Active States,Verify that navigation menu items are properly highlighted when selected and maintain correct active states,2025-07-06T02:08:27Z,FAIL,1,0,1
-nav-004,Responsive Navigation (Web vs Mobile),Verify that navigation switches correctly between desktop side navigation and mobile bottom navigation,2025-07-06T01:51:47Z,PASS,1,1,0
-nav-005,Landing Page Navigation Flow and URL Parameter Handling,Verify that the new landing page routing works correctly with proper URL parameter preservation and state management,,,0,0,0
-nav-006,Comprehensive Navigation System - Issue #40,Verify all navigation system features work correctly including breadcrumbs global search quick actions notification badges and responsive navigation,20250728-165328,IN_PROGRESS,1,0,0

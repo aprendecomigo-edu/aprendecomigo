@@ -1,6 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250703-110500,2025-07-03T11:05:00Z,FAIL,2,5,Playwright Chrome,macOS development,Multiple UI/API issues
-run-20250703-132957,2025-07-03T13:29:57Z,FAIL,3,4,Playwright Chrome,macOS development,Backend connection issues
-run-20250703-164633,2025-07-03T16:46:33Z,FAIL,4,3,Playwright Chrome,macOS development,Toast notification errors
-run-20250703-183739,2025-07-03T18:37:39Z,FAIL,5,2,Playwright Chrome,macOS development,Authentication flow incomplete
-run-20250704-115445,2025-07-04T11:54:45Z,PASS,7,0,Playwright Chrome,macOS development,Toast implementation fixed - all steps pass

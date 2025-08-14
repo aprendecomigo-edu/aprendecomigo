@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250802-041226,2025-08-02T04:12:26Z,PASS_WITH_ISSUES,9,1,Playwright Chrome,macOS development,Form functional but needs error feedback UX improvements

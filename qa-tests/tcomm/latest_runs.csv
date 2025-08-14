@@ -1,9 +1,0 @@
-test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
-tcomm-001,Email Template System Test,Test creating and managing email templates with school branding,20250801-144411,FAIL,1,0,1
-tcomm-002,Automated Communication Workflow Test,Test email sequences triggered by invitation status changes,,,0,0,0
-tcomm-003,School Admin Communication Dashboard Test,Test template management interface and analytics,,,0,0,0
-tcomm-004,Teacher Invitation Experience Test,Test enhanced invitation acceptance with communication features,,,0,0,0
-tcomm-005,FAQ System Integration Test,Test contextual help and search functionality,,,0,0,0
-tcomm-006,Progress Tracking Test,Test milestone notifications and celebration system,,,0,0,0
-tcomm-007,Cross-Platform Responsiveness Test,Test communication features on web tablet mobile,,,0,0,0
-tcomm-008,End-to-End Integration Test,Test complete teacher communication workflow from invitation to completion,,,0,0,0

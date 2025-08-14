@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250705-221743,2025-07-05T22:17:43Z,FAIL,11,1,Playwright Chrome,macOS development,Navigation highlighting broken - fixed by updating route detection logic

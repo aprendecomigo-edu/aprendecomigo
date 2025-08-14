@@ -1,5 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250801-110737,2025-08-01T11:07:37Z,FAIL,3,15,Playwright Chrome,macOS development,Critical component import errors prevent dashboard access
-run-20250801-112330,2025-08-01T11:23:30Z,FAIL,3,15,Playwright Chrome,macOS development,User routed to wrong dashboard - role routing failure + component errors still present
-run-20250801-115122,2025-08-01T11:51:22Z,FAIL,4,14,Playwright Chrome,macOS development,Component import errors FIXED - blocked by user role configuration (admin instead of teacher)
-run-20250801-124451,2025-08-01T12:44:51Z,FAIL,2,2,Playwright Chrome,macOS development,Critical authentication state persistence issue - teacher cannot access dashboard despite successful auth

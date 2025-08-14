@@ -1,4 +1,0 @@
-test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
-landing-001,Modern Landing Page Layout and Content Verification,Verify redesigned modern landing page loads correctly with all new sections and displays proper content and styling,,,0,0,0
-landing-002,Modern Landing Page Navigation and Interactions,Verify all interactive elements work correctly including navigation buttons and contact form functionality,,,0,0,0
-landing-003,Modern Landing Page Responsive Design Testing,Verify redesigned landing page displays correctly across different screen sizes with new design elements,,,0,0,0

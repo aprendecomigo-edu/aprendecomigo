@@ -1,7 +1,0 @@
-test_id,test_name,last_run_date,last_run_time,result,notes
-transactions-001,Django Admin Interface Tests for PurchaseTransaction Model,,,READY,Comprehensive admin interface testing with status management and validation
-transactions-002,Payment Lifecycle and Status Management Tests,,,READY,Payment status transitions and mark_completed() method functionality  
-transactions-003,Stripe Integration and Payment Intent Tests,,,READY,Stripe payment intent ID constraints and integration workflow
-transactions-004,Package Expiration and Business Logic Tests,,,READY,Expiration management with timezone handling and business rules
-transactions-005,Transaction History and Query Performance Tests,,,READY,Query optimization and performance testing with large datasets
-transactions-006,Metadata Handling and Validation Tests,,,READY,JSONField metadata operations and extensible data storage

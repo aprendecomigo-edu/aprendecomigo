@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250706-020827,2025-07-06T02:08:27Z,FAIL,2,13,Playwright Chrome,macOS development,Infrastructure failure - Playwright browser connection failed

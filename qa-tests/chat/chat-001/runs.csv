@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250704-182121,2025-07-04T18:21:21Z,PASS,8,0,Playwright Chrome,macOS development,All steps completed successfully after fixing compilation and API issues

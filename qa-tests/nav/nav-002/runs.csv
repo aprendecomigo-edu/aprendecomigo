@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250706-080852,2025-07-06T08:08:52Z,PASS,13,0,Playwright Chrome,macOS development,All navigation links functional. Fixed critical layout white gap issue - viewport height constraints added to HTML root and main layout components.

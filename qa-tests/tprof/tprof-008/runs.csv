@@ -1,4 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250731-162756,2025-07-31T16:27:56Z,PARTIAL_PASS,4,1,Playwright Chrome,macOS development,Frontend excellent backend APIs missing 404 errors
-run-20250731-163518,2025-07-31T16:35:18Z,PASS,5,0,API Validation,macOS development,Backend APIs fixed all endpoints return 401 not 404
-run-20250731-180540,2025-07-31T18:05:40Z,PASS,10,0,Playwright Chrome,macOS development,All GitHub #46 acceptance criteria satisfied comprehensive wizard functional

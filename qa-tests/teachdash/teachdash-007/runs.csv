@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250802-093910,2025-08-02T08:39:10Z,PASS,16,0,Backend Test Suite,macOS development,All consolidated dashboard API tests passing

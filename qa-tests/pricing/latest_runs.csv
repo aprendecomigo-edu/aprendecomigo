@@ -1,7 +1,0 @@
-test_id,test_name,last_run,result,tester,duration_minutes,issues_found,notes
-PRICING-001,Django Admin Pricing Plan Management Interface,never,pending,none,0,0,Django Admin interface testing for business users
-PRICING-002,Business Logic Validation for Pricing Plan System,never,pending,none,0,0,Model validation and business rules testing
-PRICING-003,Public API Endpoint Testing with Caching Validation,never,pending,none,0,0,Public API endpoint and caching functionality
-PRICING-004,Management Command create_default_pricing_plans Testing,never,pending,none,0,0,Management command functionality and options
-PRICING-005,User Experience and Error Handling,never,pending,none,0,0,UX testing and error message validation
-PRICING-006,Integration Testing - API-Frontend and Database Consistency,never,pending,none,0,0,End-to-end integration testing

@@ -1,7 +1,0 @@
-test_id,run_timestamp,result,duration_seconds,notes
-expiry-001,never,NEVER_RUN,0,Package Expiration Detection and Processing
-expiry-002,never,NEVER_RUN,0,Management Command Batch Operations
-expiry-003,never,NEVER_RUN,0,Admin API Endpoints and Security
-expiry-004,never,NEVER_RUN,0,Student Notification System
-expiry-005,never,NEVER_RUN,0,Package Extension and Renewal Workflows
-expiry-006,never,NEVER_RUN,0,Analytics and Reporting Accuracy

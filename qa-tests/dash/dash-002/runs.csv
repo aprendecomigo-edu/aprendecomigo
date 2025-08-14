@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250802-020803,2025-08-02T02:08:03Z,FAIL,1,1,N/A,macOS development,Critical: Activity feed API endpoint missing (404)

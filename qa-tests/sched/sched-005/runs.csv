@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250705-125543,2025-07-05 12:55:43,FAIL,2,8,Playwright Chrome,macOS development,Frontend calendar not displaying classes despite successful backend creation. Critical UI issue prevents class management testing.

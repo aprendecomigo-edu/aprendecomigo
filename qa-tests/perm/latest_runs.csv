@@ -1,5 +1,0 @@
-test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
-perm-001,Multi-Role User Authentication,Verify multi-role user authentication and dashboard display,2025-07-04T12:59:41,PASS,1,1,0
-perm-002,Cross-School Access Control,Verify users cannot access data from schools where they have no membership,2025-07-04T13:09:52,FAIL,1,0,1
-perm-003,Role-Based Permissions Verification,Test that different roles (owner/teacher/student) have appropriate permissions within their schools,,,0,0,0
-perm-004,School Context Switching,Test ability to switch between different school contexts and role-based views,,,0,0,0

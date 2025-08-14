@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250704-125941,2025-07-04T12:59:41,PASS,10,0,Playwright Chrome,macOS development,Multi-role authentication successful with context switching. Fixed server startup issue.

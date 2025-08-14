@@ -1,9 +1,0 @@
-test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
-sched-001,Basic Class Scheduling,Basic functionality for creating and viewing class schedules,2024-12-20T10:30:00,PASS,3,2,1
-sched-002,Recurring Class Management,Test recurring class creation and management features,2024-12-20T11:15:00,PASS,2,2,0
-sched-003,Class Cancellation Flow,Test class cancellation process and notifications,2024-12-20T14:20:00,FAIL,2,1,1
-sched-004,Teacher Schedule View,Test teacher's view of their schedule and availability,2024-12-20T15:45:00,PASS,1,1,0
-sched-005,Student Booking Process,Test student's ability to book and manage classes,2024-12-20T16:30:00,FAIL,3,1,2
-sched-006,Schedule Conflict Detection,Test system's ability to detect and prevent scheduling conflicts,2024-12-21T09:00:00,PASS,2,2,0
-sched-007,Teacher Availability System and Time Slot Generation,Test teacher availability management and time slot generation,2025-01-05T16:53:28,PASS,1,1,0
-sched-008,Multi-School Schedule Management,Test schedule management across multiple schools,2024-12-21T11:30:00,PASS,1,1,0

@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250706-015147,2025-07-06T01:51:47Z,PASS,14,0,Playwright Chrome,macOS development,All responsive navigation tests passed with fixes applied

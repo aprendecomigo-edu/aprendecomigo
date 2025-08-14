@@ -1,7 +1,0 @@
-test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
-form-001,Invite Teacher Modal and Invitation Link Generation,Verify that school managers can successfully invite teachers using the invitation modal and generate invitation links,,,0,0,0
-form-002,Add Teacher Profile Self-Registration Modal,Verify that school managers can add themselves as teachers through the teacher onboarding form,,,0,0,0
-form-003,Add Student Profile Modal and Registration,Verify that school managers can successfully add new student profiles through the add student modal,,,0,0,0
-form-004,"Add me as teacher" Button Visibility Logic,Verify that the "Add me as teacher" button displays correctly based on user's existing teacher profile status,,,0,0,0
-form-005,Enhanced Student Creation Modal UX,Verify that the enhanced student creation modal provides comprehensive user feedback including loading states and success notifications,,,0,0,0
-form-006,Teacher Registration on School Platform,Verify that a new teacher can successfully register on a school using the teacher onboarding process,,,0,0,0

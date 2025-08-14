@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250801-193300,2025-08-01T19:33:00Z,PARTIAL_PASS,11,4,Playwright Chrome,macOS development,Backend notifications working perfectly but API configuration issues prevent full testing

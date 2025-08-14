@@ -1,6 +1,0 @@
-test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
-studreg-001,Receipt Download Testing,Test receipt generation and PDF download functionality for purchase transactions,,,0,0,0
-studreg-002,Payment Method Management,Test adding removing and managing payment methods with Stripe integration,,,0,0,0
-studreg-003,Enhanced Notifications and Analytics,Test low balance notifications usage analytics and renewal prompts,,,0,0,0
-studreg-004,Subscription Status Management,Test subscription status display and next billing date functionality,,,0,0,0
-studreg-005,Complete Student Onboarding Integration,Test complete student registration and onboarding flow end-to-end,,,0,0,0

@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250801-101447,2025-08-01T10:14:47Z,PASS,15,0,Playwright Chrome,macOS development,Backend API fix verified - serializer_class issue resolved

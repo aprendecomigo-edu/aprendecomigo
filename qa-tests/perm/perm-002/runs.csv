@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250704-130952,2025-07-04T13:09:52,FAIL,3,4,Playwright Chrome,macOS development,Critical access control issues: API user filtering overly restrictive; student data not visible; inconsistent teacher access. Immediate fixes required for user management functionality.

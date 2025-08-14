@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250802-101847,2025-08-02T10:18:47Z,FAIL,2,3,Playwright Chrome,macOS development,Frontend UI missing for communication features

@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250708-141848,2025-07-08T14:18:48Z,PASS,18,0,Playwright Chrome,macOS development,Initial FAIL fixed - tasks calendar integration working perfectly

@@ -1,6 +1,0 @@
-test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
-tchr-001,Teacher Directory Management,Comprehensive test for teacher listing with profile completion status,2025-01-28,READY,0,0,0
-tchr-002,Individual Teacher Profile View,Test individual teacher profile with admin editing capabilities,2025-01-28,READY,0,0,0
-tchr-003,Bulk Teacher Operations,Test bulk messaging and status management operations,2025-01-28,READY,0,0,0
-tchr-004,Teacher Analytics Dashboard,Test analytics view with completion statistics and insights,2025-01-28,READY,0,0,0
-tchr-005,Teacher Communication Tools,Test communication panel and message templates,2025-01-28,READY,0,0,0

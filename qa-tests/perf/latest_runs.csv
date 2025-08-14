@@ -1,4 +1,0 @@
-test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
-perf-001,Dashboard Redirect Performance Verification,Verify dashboard router performance fix achieves <1 second redirect times,20250805-093728,PARTIAL_PASS,1,0,1
-perf-002,API Call Pattern Verification,Verify elimination of duplicate API calls and cross-role API calls,,,0,0,0
-perf-003,Role-Based Dashboard Routing Verification,Verify all user roles redirect to correct dashboards using cached primary_role,,,0,0,0

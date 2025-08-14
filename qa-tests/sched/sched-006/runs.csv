@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250705-135307,2025-07-05T13:53:07,PASS,8,0,Playwright Chrome,macOS development,Perfect multi-platform functionality with excellent responsive design
