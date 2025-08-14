@@ -78,13 +78,11 @@ class TutorOnboardingGuidanceAPITest(TutorOnboardingAPITestCase):
         
         response = self.client.get(url)
         
-        # If endpoint exists, should return guidance data
-        if response.status_code != status.HTTP_404_NOT_FOUND:
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            self.assertIn('guidance', response.data)
-            self.assertIn('welcome_message', response.data['guidance'])
-            self.assertIn('steps', response.data['guidance'])
-        # If endpoint doesn't exist, test passes (endpoint is optional)
+        # Endpoint should exist and return guidance data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('guidance', response.data)
+        self.assertIn('welcome_message', response.data['guidance'])
+        self.assertIn('steps', response.data['guidance'])
 
 
 class TutorOnboardingStartAPITest(TutorOnboardingAPITestCase):
@@ -97,16 +95,14 @@ class TutorOnboardingStartAPITest(TutorOnboardingAPITestCase):
         data = {'step': 'create_profile'}
         response = self.client.post(url, data, format='json')
         
-        # If endpoint exists, should return onboarding data
-        if response.status_code != status.HTTP_404_NOT_FOUND:
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            self.assertIn('success', response.data)
-            self.assertIn('step', response.data)
-            
-            # Check response structure
-            self.assertTrue(response.data['success'])
-            self.assertEqual(response.data['step'], 'create_profile')
-        # If endpoint doesn't exist, test passes (endpoint is optional)
+        # Endpoint should exist and return onboarding data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('success', response.data)
+        self.assertIn('step', response.data)
+        
+        # Check response structure
+        self.assertTrue(response.data['success'])
+        self.assertEqual(response.data['step'], 'create_profile')
 
 
 class TutorOnboardingValidateStepAPITest(TutorOnboardingAPITestCase):
@@ -135,17 +131,16 @@ class TutorOnboardingValidateStepAPITest(TutorOnboardingAPITestCase):
         response = self.client.post(url, data, format='json')
         
         # If endpoint exists, should return validation results
-        if response.status_code != status.HTTP_404_NOT_FOUND:
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            
-            expected_fields = ['valid', 'errors', 'step']
-            for field in expected_fields:
-                self.assertIn(field, response.data)
-            
-            # For valid data, should be valid
-            self.assertTrue(response.data['valid'])
-            self.assertIsInstance(response.data['errors'], dict)
-        # If endpoint doesn't exist, test passes (endpoint is optional)
+        # Endpoint should exist and validate step data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        expected_fields = ['valid', 'errors', 'step']
+        for field in expected_fields:
+            self.assertIn(field, response.data)
+        
+        # For valid data, should be valid
+        self.assertTrue(response.data['valid'])
+        self.assertIsInstance(response.data['errors'], dict)
     
     def test_validate_endpoint_invalid_data(self):
         """Test that the validate step endpoint properly validates invalid data."""
@@ -161,14 +156,12 @@ class TutorOnboardingValidateStepAPITest(TutorOnboardingAPITestCase):
         
         response = self.client.post(url, data, format='json')
         
-        # If endpoint exists, should return validation errors
-        if response.status_code != status.HTTP_404_NOT_FOUND:
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            
-            # Should be invalid with errors
-            self.assertFalse(response.data['valid'])
-            self.assertTrue(len(response.data['errors']) > 0)
-        # If endpoint doesn't exist, test passes (endpoint is optional)
+        # Endpoint should exist and return validation errors
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Should be invalid with errors
+        self.assertFalse(response.data['valid'])
+        self.assertTrue(len(response.data['errors']) > 0)
 
 
 class TutorOnboardingAuthenticationTest(TutorOnboardingAPITestCase):

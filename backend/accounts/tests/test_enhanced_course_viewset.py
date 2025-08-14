@@ -351,7 +351,6 @@ class EnhancedCourseViewSetTestCase(BaseTestCase):
                 # English should have no teachers
                 elif course_data['name'] == 'English':
                     self.assertEqual(len(teachers), 0)
-            # If teacher info feature is not implemented, test passes (feature is optional)
     
     def test_courses_with_market_data(self):
         """Test courses endpoint with market data."""

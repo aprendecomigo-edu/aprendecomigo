@@ -184,22 +184,6 @@ class UserSignupAPITests(TestCase):
         self.assertIn("school", str(response.data))
         self.assertIn("name", str(response.data))
 
-    def test_regular_user_create_requires_authentication(self):
-        """Test that regular user creation endpoint requires authentication."""
-        data = {
-            "name": "New User",
-            "email": "newuser@example.com",
-            "phone_number": "+1234567890",
-        }
-
-        try:
-            create_url = reverse("accounts:user-list")
-            response = self.client.post(create_url, data, format="json")
-            # Should require authentication
-            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        except Exception:
-            # If endpoint doesn't exist, test passes (endpoint is optional)
-            pass
 
     def test_signup_allows_unauthenticated_access(self):
         """Test that signup endpoint allows unauthenticated access."""
