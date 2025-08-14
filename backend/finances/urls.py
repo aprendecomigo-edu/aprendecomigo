@@ -2,6 +2,7 @@
 URL configuration for the finances app.
 """
 
+from django.http import HttpResponse
 from django.urls import include, path
 
 app_name = 'finances'
@@ -60,6 +61,20 @@ from .views_admin import (
     system_health,
 )
 
+from .views_financial_reports import (
+    student_spending_analytics,
+    school_financial_overview,
+    teacher_compensation_report,
+    revenue_trends_analysis,
+    export_transactions_fixed,
+    test_export_endpoint,
+    ExportStudentBalancesAPIView,
+    ExportTeacherSessionsAPIView,
+    generate_receipt,
+    list_receipts,
+    download_receipt,
+)
+
 # Create a router and register our viewsets
 router = DefaultRouter()
 
@@ -96,6 +111,23 @@ urlpatterns = [
     path("stripe/config/", stripe_config, name="stripe-config"),
     path("stripe/test-connection/", stripe_connection_test, name="stripe-connection-test"),
     path("webhooks/stripe/", stripe_webhook, name="stripe-webhook"),
+    
+    # Analytics endpoints
+    path("analytics/school-overview/", school_financial_overview, name="analytics-school-overview"),
+    path("analytics/teacher-compensation/", teacher_compensation_report, name="analytics-teacher-compensation"),
+    path("analytics/revenue-trends/", revenue_trends_analysis, name="analytics-revenue-trends"),
+    path("analytics/student-spending/", student_spending_analytics, name="analytics-student-spending"),
+    
+    # Export endpoints
+    path("export/transactions/", export_transactions_fixed, name="export-transactions"),
+    path("test-export/", test_export_endpoint, name="test-export"),
+    path("export/student-balances/", ExportStudentBalancesAPIView.as_view(), name="export-student-balances"),
+    path("export/teacher-sessions/", ExportTeacherSessionsAPIView.as_view(), name="export-teacher-sessions"),
+    
+    # Receipt endpoints
+    path("receipts/generate/", generate_receipt, name="receipt-generate"),
+    path("receipts/", list_receipts, name="receipt-list"),
+    path("receipts/<int:pk>/download/", download_receipt, name="receipt-download"),
     
     # Package Expiration Management Admin Endpoints
     path("admin/expired-packages/", get_expired_packages, name="admin-expired-packages"),

@@ -128,6 +128,32 @@ When reviewing existing tests, you identify and fix:
 
 Your tests serve as executable documentation, clearly demonstrating how the code should be used and what guarantees it provides. After you are done, 1) count how many tests you have created or modified for the task at hand and 2) justify your decisions in 1-2 sentences, according to the rules in this document. If no new tests or changes were needed, provide a short 1-2 explanation according to the rules in this document.
 
+## Stripe Integration Testing
+
+The project has a comprehensive Stripe mocking system for all payment-related business logic:
+
+**Standard Mocking Approach:**
+- Use `MockStripeServiceInstance` from `finances.tests.stripe_test_utils` for service layer testing
+- All Stripe service calls are automatically mocked without making real API requests
+- Mock services handle realistic business logic scenarios and error conditions
+- Use `@comprehensive_stripe_mocks_decorator` for automatic service mocking
+
+**Key Patterns:**
+```python
+from finances.tests.stripe_test_utils import MockStripeServiceInstance, comprehensive_stripe_mocks_decorator
+
+@comprehensive_stripe_mocks_decorator
+class PaymentServiceTests(TestCase):
+    def test_service_logic(self):
+        # All Stripe services are automatically mocked
+        # Focus on business logic testing
+        pass
+```
+
+**Never:**
+- Make actual calls to Stripe APIs in unit tests
+- Import external pdf or other printing packages (use HTML generation for reports)
+- Create new Stripe mocking - use the existing comprehensive system
 
 ## Test Setup
 - `backend/aprendecomigo/settings/testing.py` - Environment configuration

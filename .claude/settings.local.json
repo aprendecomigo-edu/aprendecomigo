@@ -52,6 +52,7 @@
       "WebFetch(domain:docs.djangoproject.com)",
       "WebFetch(domain:www.anthropic.com)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }

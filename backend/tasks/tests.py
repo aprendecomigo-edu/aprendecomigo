@@ -603,7 +603,7 @@ class TaskCustomActionUnitTest(BaseTestCase):
             title="Due Today",
             user=self.user,
             status="pending",
-            due_date=today_start + timedelta(hours=10)
+            due_date=today_start + timedelta(hours=23)  # 11 PM today - should not be overdue
         )
         
         # Create viewset and mock request

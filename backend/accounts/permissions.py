@@ -187,15 +187,19 @@ class IsSchoolOwnerOrAdmin(permissions.BasePermission):
     message = "You must be a school owner or administrator to perform this action."
 
     def has_permission(self, request, _view):
-        return (
-            request.user
-            and request.user.is_authenticated
-            and SchoolMembership.objects.filter(
+        # Allow superusers and staff for admin purposes
+        if request.user and request.user.is_authenticated:
+            if request.user.is_superuser or request.user.is_staff:
+                return True
+            
+            # Check school membership roles
+            return SchoolMembership.objects.filter(
                 user=request.user,
                 role__in=["school_owner", "school_admin"],
                 is_active=True,
             ).exists()
-        )
+        
+        return False
 
     def has_object_permission(self, request, _view, obj):
         # If it's a Django superuser or staff, allow access for admin purposes

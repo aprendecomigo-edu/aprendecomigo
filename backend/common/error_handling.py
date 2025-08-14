@@ -22,6 +22,9 @@ class APIErrorCode(str, Enum):
     Example: INVITATION_NOT_FOUND, VALIDATION_FAILED
     """
     
+    def __str__(self):
+        return self.value
+    
     # Generic errors
     VALIDATION_FAILED = "VALIDATION_FAILED"
     AUTHENTICATION_REQUIRED = "AUTHENTICATION_REQUIRED"

@@ -73,11 +73,6 @@ SWAGGER_USE_COMPAT_RENDERERS = False
 # Import all settings from base.py
 from .base import *  # noqa: F403, E402
 
-# Add authtoken for messaging tests
-INSTALLED_APPS = list(INSTALLED_APPS) + [
-    'rest_framework.authtoken',
-]
-
 # Allow testserver for Django test client
 ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
 

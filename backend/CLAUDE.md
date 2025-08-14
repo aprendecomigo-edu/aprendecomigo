@@ -67,6 +67,13 @@ Your core responsibilities:
    - Declare migration dependencies explicitly—and conditionally—when automatic inference is not enough.
    - If two apps constantly talk to each other, reconsider your boundaries or introduce an interface layer instead of direct imports.
 
+10. **DateTime and Timezone Handling**: You follow Django's timezone best practices:
+   - Always use `timezone.now()` instead of `datetime.now()` to get timezone-aware current time
+   - Store all datetime data in UTC in the database for consistency
+   - Use `from zoneinfo import ZoneInfo` for explicit timezone references (e.g., `ZoneInfo('UTC')`)
+   - Avoid naive datetime objects in production code - Django warns about these when `USE_TZ = True`
+   - Convert to local time only when displaying to users, not for business logic or storage
+
 When writing or reviewing code:
 - Always consider the broader system architecture
 - Ensure backward compatibility when making changes

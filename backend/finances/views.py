@@ -24,6 +24,7 @@ from rest_framework.decorators import action, api_view, permission_classes, thro
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.filters import OrderingFilter
 from common.throttles import PurchaseInitiationThrottle, PurchaseInitiationEmailThrottle
 
 from .models import (
@@ -2582,22 +2583,33 @@ class PurchaseApprovalRequestViewSet(viewsets.ModelViewSet):
     
     serializer_class = 'PurchaseApprovalRequestSerializer'  # Set in get_serializer_class
     permission_classes = [IsAuthenticated]
-    filterset_fields = ['status', 'request_type']
+    filter_backends = [OrderingFilter]
+    ordering_fields = ['requested_at', 'amount']
     ordering = ['-requested_at']
     
     def get_queryset(self):
-        """Filter approval requests by user permissions."""
+        """Filter approval requests by user permissions and query parameters."""
         from .models import PurchaseApprovalRequest
         
-        # Parents see requests they need to approve
-        # Children see their own requests
-        return PurchaseApprovalRequest.objects.filter(
+        # Base queryset - Parents see requests they need to approve, Children see their own requests
+        queryset = PurchaseApprovalRequest.objects.filter(
             Q(parent=self.request.user) |
             Q(student=self.request.user)
         ).select_related(
             'student', 'parent', 'parent_child_relationship',
             'pricing_plan', 'class_session'
         )
+        
+        # Apply manual filtering for status and request_type
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+            
+        request_type_filter = self.request.query_params.get('request_type')  
+        if request_type_filter:
+            queryset = queryset.filter(request_type=request_type_filter)
+            
+        return queryset
     
     def get_serializer_class(self):
         """Return appropriate serializer class."""

@@ -245,14 +245,14 @@ The `login` method is appropriate for testing APIs that use session authenticati
 #### .credentials(**kwargs)
 
 The `credentials` method can be used to set headers that will then be included on all subsequent requests by the test client.
-
-    from rest_framework.authtoken.models import Token
+(tokens are imported from Knox)
     from rest_framework.test import APIClient
+    from knox.models import AuthToken
 
     # Include an appropriate `Authorization:` header on all requests.
-    token = Token.objects.get(user__username='lauren')
+    token = AuthToken.objects.get(user__username='lauren')
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+    client.credentials(HTTP_AUTHORIZATION='Token ' + token.token_key)
 
 Note that calling `credentials` a second time overwrites any existing credentials.  You can unset any existing credentials by calling the method with no arguments.
 
@@ -505,3 +505,30 @@ For example, to add support for using `format='html'` in test requests, you migh
 
 
 Your tests serve as executable documentation, clearly demonstrating how the code should be used and what guarantees it provides. After you are done, 1) count how many tests you have created or modified for the task at hand and 2) justify your decisions in 1-2 sentences, according to the rules in this document. If no new tests or changes were needed, provide a short 1-2 explanation according to the rules in this document.
+
+## Stripe Integration Testing
+
+The project has a comprehensive Stripe mocking system for all payment-related functionality:
+
+**Standard Mocking Approach:**
+- Use `@comprehensive_stripe_mocks_decorator(apply_to_class=True)` for test classes that need Stripe functionality
+- Import from `finances.tests.stripe_test_utils` for all Stripe mocking utilities
+- The system automatically mocks all Stripe API calls (PaymentIntent, Customer, etc.) without making real API requests
+- Mock services return realistic test data and handle both success and error scenarios
+
+**Key Patterns:**
+```python
+from finances.tests.stripe_test_utils import comprehensive_stripe_mocks_decorator
+
+@comprehensive_stripe_mocks_decorator(apply_to_class=True)
+class PaymentAPITests(APITestCase):
+    def test_payment_functionality(self):
+        # All Stripe calls are automatically mocked
+        # Use standard DRF testing patterns
+        pass
+```
+
+**Never:**
+- Make actual calls to Stripe APIs in tests
+- Import external pdf or other printing packages (use HTML generation for reports)
+- Create new Stripe mocking patterns - use the existing comprehensive system

@@ -294,7 +294,8 @@ class TestErrorResponseConsistency(TestCase):
     @patch('django.utils.timezone.now')
     def test_timestamp_consistency(self, mock_now):
         """Test that timestamps are consistently formatted."""
-        test_time = timezone.datetime(2025, 8, 1, 10, 30, 0, tzinfo=timezone.utc)
+        from zoneinfo import ZoneInfo
+        test_time = datetime(2025, 8, 1, 10, 30, 0, tzinfo=ZoneInfo('UTC'))
         mock_now.return_value = test_time
 
         response = create_error_response(APIErrorCode.VALIDATION_FAILED, "Test")

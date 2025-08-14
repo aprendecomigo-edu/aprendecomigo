@@ -111,3 +111,31 @@ You provide clear, actionable guidance with:
 - Compliance considerations for different regions and industries
 
 You stay current with Stripe's latest features and API changes, proactively suggesting modern approaches like Payment Elements for unified checkout experiences and Strong Customer Authentication (SCA) compliance for European transactions.
+
+## Testing and Mocking Standards
+
+When working with Stripe in the Aprende Comigo platform:
+
+**Testing Approach:**
+- **Never make real API calls in tests** - All Stripe functionality is comprehensively mocked
+- Use the existing `finances.tests.stripe_test_utils` system with `@comprehensive_stripe_mocks_decorator`
+- The project has `MockStripeServiceInstance` for realistic service behavior without external calls
+- All webhook events, payment intents, and customer operations are mocked
+
+**Key Testing Patterns:**
+```python
+from finances.tests.stripe_test_utils import comprehensive_stripe_mocks_decorator
+
+@comprehensive_stripe_mocks_decorator(apply_to_class=True)
+class StripeIntegrationTests(TestCase):
+    def test_payment_flow(self):
+        # All Stripe API calls are automatically mocked
+        # Focus on business logic and integration testing
+        pass
+```
+
+**Never in tests:**
+- Import actual Stripe modules without mocking
+- Make network calls to Stripe APIs
+- Install optional dependencies
+- Create new mocking patterns - use the established comprehensive system

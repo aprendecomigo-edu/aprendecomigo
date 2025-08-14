@@ -83,23 +83,18 @@ class StudentBalanceAPITestCase(FinanceBaseTestCase, APITestCase):
             metadata={"plan_id": self.pricing_plan.id}
         )
 
-        # Use existing hour consumption from base class or update it
-        try:
-            self.hour_consumption = self.hour_consumption
-            # Update with our test values
-            self.hour_consumption.purchase_transaction = self.completed_transaction
-            self.hour_consumption.hours_consumed = Decimal("1.5")
-            self.hour_consumption.hours_originally_reserved = Decimal("2.0")
-            self.hour_consumption.save()
-        except AttributeError:
-            # If hour_consumption doesn't exist from base class, create a new one
-            self.hour_consumption = HourConsumption.objects.create(
-                student_account=self.student_balance,
-                class_session=self.class_session,
-                purchase_transaction=self.completed_transaction,
-                hours_consumed=Decimal("1.5"),
-                hours_originally_reserved=Decimal("2.0")
-            )
+        # Delete existing hour consumption from base class to start fresh
+        if hasattr(self, 'hour_consumption') and self.hour_consumption:
+            self.hour_consumption.delete()
+        
+        # Create a new hour consumption record to trigger balance update
+        self.hour_consumption = HourConsumption.objects.create(
+            student_account=self.student_balance,
+            class_session=self.class_session,
+            purchase_transaction=self.completed_transaction,
+            hours_consumed=Decimal("1.5"),
+            hours_originally_reserved=Decimal("2.0")
+        )
 
     def authenticate_as_student(self):
         """Authenticate client as the test student."""

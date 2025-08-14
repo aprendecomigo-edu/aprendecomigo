@@ -77,7 +77,7 @@ Two different documentation interfaces are available:
 
 ### Authentication
 
-The API uses JWT (JSON Web Token) for authentication. To authenticate:
+The API uses Knox token authentication for secure access. To authenticate:
 
 1. Request an email verification code at `/api/auth/request-code/`
 2. Verify the code at `/api/auth/verify-code/`
@@ -85,7 +85,7 @@ The API uses JWT (JSON Web Token) for authentication. To authenticate:
 
 Example:
 ```
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b
 ```
 
 ### Available Resources

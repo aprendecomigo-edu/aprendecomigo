@@ -587,6 +587,73 @@ class MockStripeServiceInstance:
     def get_webhook_secret(self) -> str:
         """Mock webhook secret retrieval."""
         return 'whsec_test_mock_secret'
+    
+    def construct_webhook_event(self, payload: str, sig_header: str) -> Dict[str, Any]:
+        """
+        Mock webhook event construction for testing.
+        
+        This method simulates the behavior of the real StripeService.construct_webhook_event()
+        method, returning a mock event structure that webhook tests can use.
+        
+        Args:
+            payload: The raw webhook payload (JSON string)
+            sig_header: The Stripe signature header
+            
+        Returns:
+            Dict containing success status and mock event data
+        """
+        import json
+        
+        try:
+            # Parse the payload to get event data
+            event_data = json.loads(payload)
+            
+            # Return successful mock response with the parsed event
+            return {
+                'success': True,
+                'event': event_data,
+                'event_type': event_data.get('type'),
+                'event_id': event_data.get('id', 'evt_test_mock')
+            }
+            
+        except json.JSONDecodeError:
+            # Return error for invalid JSON payload
+            return {
+                'success': False,
+                'error_type': 'invalid_payload',
+                'message': 'Invalid JSON payload'
+            }
+        except Exception as e:
+            # Return general error for other issues
+            return {
+                'success': False,
+                'error_type': 'construction_error',
+                'message': f'Mock webhook construction error: {str(e)}'
+            }
+    
+    def is_webhook_event_type_supported(self, event_type: str) -> bool:
+        """
+        Mock webhook event type support check.
+        
+        Returns True for the same event types that the real StripeService supports.
+        
+        Args:
+            event_type: The webhook event type to check
+            
+        Returns:
+            bool: True if the event type is supported
+        """
+        # Match the SUPPORTED_WEBHOOK_EVENTS from the real StripeService
+        supported_events = {
+            'payment_intent.succeeded',
+            'payment_intent.payment_failed',
+            'payment_intent.created',
+            'payment_intent.canceled',
+            'customer.created',
+            'customer.updated',
+            'payment_method.attached'
+        }
+        return event_type in supported_events
 
 
 class MockPaymentMethodServiceInstance:
@@ -612,6 +679,13 @@ class MockPaymentMethodServiceInstance:
     
     def remove_payment_method(self, student_user, payment_method_id: int) -> Dict[str, Any]:
         """Mock payment method removal."""
+        # Support dynamic test data configuration for error scenarios
+        if hasattr(self.__class__, '_remove_error_data'):
+            result = self.__class__._remove_error_data.copy()
+            # Clear test data after use for isolation
+            delattr(self.__class__, '_remove_error_data')
+            return result
+        
         return {
             'success': True,
             'message': 'Payment method removed successfully',
@@ -620,6 +694,17 @@ class MockPaymentMethodServiceInstance:
     
     def list_payment_methods(self, student_user, include_expired: bool = False) -> Dict[str, Any]:
         """Mock payment method listing."""
+        # Support dynamic test data configuration
+        if hasattr(self.__class__, '_test_data'):
+            result = {
+                'success': True,
+                'payment_methods': self.__class__._test_data.get('payment_methods', []),
+                'count': self.__class__._test_data.get('count', 0)
+            }
+            # Clear test data after use for isolation
+            delattr(self.__class__, '_test_data')
+            return result
+        
         return {
             'success': True,
             'payment_methods': [],
@@ -650,10 +735,39 @@ class MockPaymentServiceInstance:
     """
     Mock instance of PaymentService with realistic return values.
     """
+    _instance = None
+    _global_simulate_error = False
+    _global_error_response = {
+        'success': False,
+        'error_type': 'stripe_error',
+        'message': 'Mock Stripe error for testing'
+    }
     
     def __init__(self, *args, **kwargs):
         """Initialize mock service without dependencies."""
         self.stripe_service = MockStripeServiceInstance()
+        # Store reference to this instance for test access
+        MockPaymentServiceInstance._instance = self
+    
+    @classmethod
+    def get_current_instance(cls):
+        """Get the current mock instance for configuration."""
+        return cls._instance
+    
+    @classmethod
+    def simulate_stripe_error(cls, error_type='stripe_error', message='Mock Stripe error for testing'):
+        """Configure error simulation for all future instances."""
+        cls._global_simulate_error = True
+        cls._global_error_response = {
+            'success': False,
+            'error_type': error_type,
+            'message': message
+        }
+    
+    @classmethod
+    def reset_error_simulation(cls):
+        """Reset error simulation back to normal operation."""
+        cls._global_simulate_error = False
     
     def process_payment(self, student_user, plan_id: int, payment_method_id: int = None) -> Dict[str, Any]:
         """Mock payment processing."""
@@ -668,29 +782,155 @@ class MockPaymentServiceInstance:
     
     def create_payment_intent(self, user, pricing_plan_id: str, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Mock payment intent creation with correct signature."""
+        # Check if we should simulate an error
+        if self._global_simulate_error:
+            return self._global_error_response
+            
+        # Create a real transaction in the database for the test
+        from decimal import Decimal
+        from finances.models import PurchaseTransaction, TransactionType, TransactionPaymentStatus, PricingPlan
+        
+        try:
+            pricing_plan = PricingPlan.objects.get(id=int(pricing_plan_id))
+        except PricingPlan.DoesNotExist:
+            return {
+                'success': False,
+                'error_type': 'validation_error',
+                'message': f'Pricing plan with ID {pricing_plan_id} not found'
+            }
+        
+        # Import the model constants  
+        from finances.models import PlanType
+        
+        # Create a mock transaction
+        transaction = PurchaseTransaction.objects.create(
+            student=user,
+            transaction_type=TransactionType.PACKAGE if pricing_plan.plan_type == PlanType.PACKAGE else TransactionType.SUBSCRIPTION,
+            amount=pricing_plan.price_eur,
+            payment_status=TransactionPaymentStatus.PROCESSING,
+            stripe_payment_intent_id='pi_mock_payment_123',
+            stripe_customer_id=getattr(user, 'stripe_customer_id', None) or 'cus_mock_test_123'
+        )
+        
         return {
             'success': True,
             'client_secret': 'pi_mock_payment_intent_secret',
-            'transaction_id': 12345,
+            'transaction_id': transaction.id,
             'payment_intent_id': 'pi_mock_payment_123'
         }
     
     def confirm_payment_completion(self, payment_intent_id: str) -> Dict[str, Any]:
-        """Mock payment completion confirmation."""
-        return {
-            'success': True,
-            'payment_intent_id': payment_intent_id,
-            'transaction_id': 12345,
-            'message': 'Payment completed successfully'
-        }
+        """Mock payment completion confirmation with actual database updates."""
+        try:
+            from finances.models import PurchaseTransaction, TransactionPaymentStatus, StudentAccountBalance
+            from decimal import Decimal
+            
+            # Find transaction by payment intent ID
+            try:
+                transaction = PurchaseTransaction.objects.get(
+                    stripe_payment_intent_id=payment_intent_id
+                )
+            except PurchaseTransaction.DoesNotExist:
+                return {
+                    'success': False,
+                    'error_type': 'transaction_not_found',
+                    'message': 'Transaction not found for payment intent ID'
+                }
+            
+            # Check if already completed (idempotency)
+            if transaction.payment_status == TransactionPaymentStatus.COMPLETED:
+                return {
+                    'success': True,
+                    'payment_intent_id': payment_intent_id,
+                    'transaction_id': transaction.id,
+                    'message': 'Payment already completed (idempotent)',
+                    'error_type': 'invalid_transaction_state'
+                }
+            
+            # Update transaction status to completed
+            transaction.payment_status = TransactionPaymentStatus.COMPLETED
+            transaction.save()
+            
+            # Credit hours to student account (simplified mock logic)
+            student_balance, created = StudentAccountBalance.objects.get_or_create(
+                student=transaction.student,
+                defaults={
+                    'hours_purchased': Decimal('0.00'),
+                    'hours_consumed': Decimal('0.00'),
+                    'balance_amount': Decimal('0.00')
+                }
+            )
+            
+            # For mock purposes, just add some hours (this would normally be calculated)
+            hours_to_add = Decimal('10.00')  # Mock hours based on transaction
+            student_balance.hours_purchased += hours_to_add
+            student_balance.balance_amount = student_balance.hours_purchased - student_balance.hours_consumed
+            student_balance.save()
+            
+            return {
+                'success': True,
+                'payment_intent_id': payment_intent_id,
+                'transaction_id': transaction.id,
+                'hours_credited': float(hours_to_add),
+                'message': 'Payment completed successfully'
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error_type': 'processing_error',
+                'message': f'Error confirming payment completion: {str(e)}'
+            }
     
     def handle_payment_failure(self, payment_intent_id: str, error_message: str = None) -> Dict[str, Any]:
-        """Mock payment failure handling."""
-        return {
-            'success': True,
-            'payment_intent_id': payment_intent_id,
-            'message': 'Payment failure handled successfully'
-        }
+        """Mock payment failure handling with actual database updates."""
+        try:
+            from finances.models import PurchaseTransaction, TransactionPaymentStatus
+            
+            # Find transaction by payment intent ID
+            try:
+                transaction = PurchaseTransaction.objects.get(
+                    stripe_payment_intent_id=payment_intent_id
+                )
+            except PurchaseTransaction.DoesNotExist:
+                return {
+                    'success': False,
+                    'error_type': 'transaction_not_found',
+                    'message': 'Transaction not found for payment intent ID'
+                }
+            
+            # Check if already failed (idempotency)
+            if transaction.payment_status == TransactionPaymentStatus.FAILED:
+                return {
+                    'success': True,
+                    'payment_intent_id': payment_intent_id,
+                    'transaction_id': transaction.id,
+                    'message': 'Payment already marked as failed (idempotent)',
+                    'error_type': 'invalid_transaction_state'
+                }
+            
+            # Update transaction status to failed
+            transaction.payment_status = TransactionPaymentStatus.FAILED
+            if error_message:
+                # In a real implementation, this would store the error message
+                # For mock purposes, we'll just update the status
+                pass
+            transaction.save()
+            
+            return {
+                'success': True,
+                'payment_intent_id': payment_intent_id,
+                'transaction_id': transaction.id,
+                'error_message': error_message or 'Payment failed',
+                'message': 'Payment failure handled successfully'
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error_type': 'processing_error',
+                'message': f'Error handling payment failure: {str(e)}'
+            }
     
     def get_payment_status(self, payment_intent_id: str) -> Dict[str, Any]:
         """Mock payment status retrieval."""
@@ -794,18 +1034,136 @@ class MockReceiptGenerationServiceInstance:
     Mock instance of ReceiptGenerationService with realistic return values.
     """
     
+    @classmethod
+    def _generate_html_content(cls, receipt) -> str:
+        """Mock HTML generation."""
+        return '<html><body>Fake HTML receipt for testing</body></html>'
+    
+    @classmethod
+    def _create_receipt_record(cls, transaction):
+        """Mock receipt record creation."""
+        from finances.models import Receipt
+        from django.apps import apps
+        from decimal import Decimal
+        
+        receipt = Receipt.objects.create(
+            transaction=transaction,
+            student=transaction.student,
+            amount=transaction.amount_eur or Decimal('100.00'),
+            receipt_number=f'RCP-2025-MOCK{transaction.id}',
+        )
+        return receipt
+    
+    @classmethod
+    def _save_html_file(cls, receipt, html_content):
+        """Mock HTML file saving."""
+        from django.core.files.base import ContentFile
+        receipt.pdf_file.save(
+            f'receipt_{receipt.receipt_number}.html',
+            ContentFile(html_content.encode('utf-8')),
+            save=True
+        )
+    
+    @classmethod
+    def _cleanup_receipt_file(cls, receipt):
+        """Mock cleanup of receipt file."""
+        if receipt.pdf_file:
+            receipt.pdf_file.delete(save=False)
+    
+    @classmethod  
+    def _prepare_template_context(cls, receipt):
+        """Mock template context preparation."""
+        return {
+            'receipt': receipt,
+            'transaction': receipt.transaction,
+            'student': receipt.student,
+            'amount': receipt.amount,
+            'date': receipt.created_at,
+        }
+    
+    @classmethod
+    def _get_receipt_css(cls):
+        """Mock CSS for receipt."""
+        return """
+            body { font-family: Arial, sans-serif; }
+            .receipt { margin: 20px; }
+        """
+    
+    @classmethod
+    def generate_receipt(cls, transaction_id: int, force_regenerate: bool = False) -> Dict[str, Any]:
+        """Mock receipt generation with complete database interaction."""
+        from finances.models import PurchaseTransaction, Receipt, TransactionPaymentStatus
+        from django.db import transaction as db_transaction
+        
+        # Type validation to match real service
+        if transaction_id is None:
+            raise ValueError("transaction_id cannot be None")
+        if isinstance(transaction_id, bool) or not isinstance(transaction_id, int):
+            raise TypeError(f"transaction_id must be an integer, got {type(transaction_id).__name__}")
+                
+        try:
+            # Get transaction
+            try:
+                transaction = PurchaseTransaction.objects.select_related('student').get(
+                    id=transaction_id
+                )
+            except PurchaseTransaction.DoesNotExist:
+                return {
+                    'success': False,
+                    'error_type': 'not_found', 
+                    'message': 'Transaction not found'
+                }
+            
+            # Validate transaction status
+            if transaction.payment_status != TransactionPaymentStatus.COMPLETED:
+                return {
+                    'success': False,
+                    'error_type': 'invalid_status',
+                    'message': 'Can only generate receipts for completed transactions'
+                }
+            
+            # Check existing receipt
+            existing_receipt = Receipt.objects.filter(transaction=transaction).first()
+            if existing_receipt and not force_regenerate:
+                return {
+                    'success': True,
+                    'receipt_id': existing_receipt.id,
+                    'receipt_number': existing_receipt.receipt_number,
+                    'amount': float(existing_receipt.amount),
+                    'already_existed': True,
+                    'message': 'Receipt already exists'
+                }
+            
+            # Generate receipt with atomic transaction
+            with db_transaction.atomic():
+                if existing_receipt and force_regenerate:
+                    cls._cleanup_receipt_file(existing_receipt)
+                    existing_receipt.delete()
+                
+                receipt = cls._create_receipt_record(transaction)
+                html_content = cls._generate_html_content(receipt)
+                cls._save_html_file(receipt, html_content)
+            
+            return {
+                'success': True,
+                'receipt_id': receipt.id,
+                'receipt_number': receipt.receipt_number,
+                'amount': float(receipt.amount),
+                'html_file_url': receipt.pdf_file.url if receipt.pdf_file else None,
+                'message': 'Receipt generated successfully'
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error_type': 'generation_error',
+                'message': f'Failed to generate receipt: {str(e)}'
+            }
+    
     def __init__(self, *args, **kwargs):
         """Initialize mock service without dependencies."""
         pass
     
-    def generate_receipt(self, transaction) -> Dict[str, Any]:
-        """Mock receipt generation."""
-        return {
-            'success': True,
-            'receipt_number': 'REC-2024-001',
-            'pdf_path': '/tmp/mock_receipt.pdf',
-            'message': 'Receipt generated successfully'
-        }
 
 
 class MockPackageExpirationServiceInstance:
@@ -1007,7 +1365,7 @@ def mock_stripe_services():
             MockHourDeductionServiceInstance
         )
         patches.append(hour_deduction_service_patch)
-        
+                
         # Mock Django settings for Stripe configuration
         settings_patch = patch.multiple(
             'django.conf.settings',
@@ -1094,7 +1452,25 @@ def mock_stripe_services_decorator(test_func=None, *, apply_to_class=False):
                     patch('finances.services.receipt_service.ReceiptGenerationService', MockReceiptGenerationServiceInstance),
                     patch('finances.services.package_expiration_service.PackageExpirationService', MockPackageExpirationServiceInstance),
                     patch('finances.services.hour_deduction_service.HourDeductionService', MockHourDeductionServiceInstance),
+                    # Also patch the views that import services locally
+                    patch('finances.views.PaymentService', MockPaymentServiceInstance),
+                    patch('finances.views.StripeService', MockStripeServiceInstance),
+                    # Patch receipt service at all possible import locations
+                    patch('finances.views_financial_reports.ReceiptGenerationService', MockReceiptGenerationServiceInstance),
                 ]
+                
+                # Patch import locations in function-based views after they're imported
+                import_patches = []
+                try:
+                    # These patches target local imports that happen at runtime
+                    import_patches.extend([
+                        patch('finances.views_financial_reports.generate_receipt.ReceiptGenerationService', MockReceiptGenerationServiceInstance),
+                    ])
+                except AttributeError:
+                    # Function may not have been imported yet
+                    pass
+                
+                additional_service_patches.extend(import_patches)
                 self._stripe_patches.extend(additional_service_patches)
                 
                 # Mock Django settings
@@ -1295,18 +1671,21 @@ def comprehensive_stripe_service_mocks():
     patches = []
     
     try:
-        # Mock all Stripe-related services at their source modules
+        # Mock all Stripe-related services at their source modules and import locations
         service_patches = [
             patch('finances.services.stripe_base.StripeService', MockStripeServiceInstance),
             patch('finances.services.payment_method_service.PaymentMethodService', MockPaymentMethodServiceInstance),
             patch('finances.services.renewal_payment_service.RenewalPaymentService', MockRenewalPaymentServiceInstance),
             patch('finances.services.payment_service.PaymentService', MockPaymentServiceInstance),
+            # Also patch the imported references in views.py
+            patch('finances.views.PaymentService', MockPaymentServiceInstance),
+            patch('finances.views.StripeService', MockStripeServiceInstance),
         ]
         patches.extend(service_patches)
         
         # Services are imported from their full module paths, so we patch the service modules themselves
         # which should be sufficient to catch all instantiations
-        
+                
         # Mock Django settings to prevent configuration validation
         settings_patch = patch.multiple(
             'django.conf.settings',
@@ -1378,12 +1757,15 @@ def comprehensive_stripe_mocks_decorator(test_func=None, *, apply_to_class=False
                     patch('finances.services.receipt_service.ReceiptGenerationService', MockReceiptGenerationServiceInstance),
                     patch('finances.services.package_expiration_service.PackageExpirationService', MockPackageExpirationServiceInstance),
                     patch('finances.services.hour_deduction_service.HourDeductionService', MockHourDeductionServiceInstance),
+                    # Also patch the imported references in views.py
+                    patch('finances.views.PaymentService', MockPaymentServiceInstance),
+                    patch('finances.views.StripeService', MockStripeServiceInstance),
                 ]
                 self._comprehensive_patches.extend(service_patches)
                 
                 # Services are imported from their full module paths, so patching the service modules
                 # themselves should catch all instantiations
-                
+                                
                 # Mock Django settings
                 settings_patch = patch.multiple(
                     'django.conf.settings',

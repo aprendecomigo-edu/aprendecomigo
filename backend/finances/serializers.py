@@ -795,25 +795,10 @@ class ReceiptGenerationRequestSerializer(serializers.Serializer):
     )
     
     def validate_transaction_id(self, value):
-        """Validate that transaction exists and belongs to the requesting user."""
-        from .models import PurchaseTransaction, TransactionPaymentStatus
-        
-        request = self.context.get('request')
-        if not request or not request.user:
-            raise serializers.ValidationError("Authentication required")
-        
-        try:
-            transaction = PurchaseTransaction.objects.get(id=value)
-        except PurchaseTransaction.DoesNotExist:
-            raise serializers.ValidationError("Transaction not found")
-        
-        # Check if transaction belongs to the requesting user
-        if transaction.student != request.user:
-            raise serializers.ValidationError("You can only generate receipts for your own transactions")
-        
-        # Check if transaction is completed
-        if transaction.payment_status != TransactionPaymentStatus.COMPLETED:
-            raise serializers.ValidationError("Can only generate receipts for completed transactions")
+        """Basic validation for transaction ID format."""
+        # Only validate the format, let the view handle existence and ownership checks
+        if not isinstance(value, int) or value <= 0:
+            raise serializers.ValidationError("Transaction ID must be a positive integer")
         
         return value
 
@@ -882,8 +867,20 @@ class PaymentMethodCreationRequestSerializer(serializers.Serializer):
     
     def validate_stripe_payment_method_id(self, value):
         """Validate Stripe payment method ID format."""
+        # Check for proper Stripe payment method ID format
+        if not value or not isinstance(value, str):
+            raise serializers.ValidationError("Payment method ID is required")
+        
         if not value.startswith('pm_'):
             raise serializers.ValidationError("Invalid Stripe payment method ID format")
+        
+        # Stripe payment method IDs should be at least 'pm_' + 24 characters
+        if len(value) < 27:
+            raise serializers.ValidationError("Invalid Stripe payment method ID format")
+        
+        # Check for reasonable length limit (Stripe IDs are typically ~30 characters)
+        if len(value) > 50:
+            raise serializers.ValidationError("Payment method ID too long")
         
         # Check if payment method already exists
         from .models import StoredPaymentMethod

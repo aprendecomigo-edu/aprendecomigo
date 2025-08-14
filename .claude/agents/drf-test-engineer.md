@@ -246,7 +246,7 @@ The `login` method is appropriate for testing APIs that use session authenticati
 
 The `credentials` method can be used to set headers that will then be included on all subsequent requests by the test client.
 
-    from rest_framework.authtoken.models import Token
+(Tokens are imported from Knox)
     from rest_framework.test import APIClient
 
     # Include an appropriate `Authorization:` header on all requests.
@@ -261,19 +261,6 @@ Note that calling `credentials` a second time overwrites any existing credential
 
 The `credentials` method is appropriate for testing APIs that require authentication headers, such as basic authentication, OAuth1a and OAuth2 authentication, and simple token authentication schemes.
 
-#### .force_authenticate(user=None, token=None)
-
-Sometimes you may want to bypass authentication entirely and force all requests by the test client to be automatically treated as authenticated.
-
-This can be a useful shortcut if you're testing the API but don't want to have to construct valid authentication credentials in order to make test requests.
-
-    user = User.objects.get(username='lauren')
-    client = APIClient()
-    client.force_authenticate(user=user)
-
-To unauthenticate subsequent requests, call `force_authenticate` setting the user and/or token to `None`.
-
-    client.force_authenticate(user=None)
 
 ## CSRF validation
 

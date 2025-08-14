@@ -1,7 +1,7 @@
 """
 Receipt Generation Service for the finances app.
 
-Handles PDF receipt generation using WeasyPrint with professional templates.
+Handles HTML receipt generation with professional templates.
 Provides comprehensive receipt creation, validation, and file management.
 """
 
@@ -24,10 +24,10 @@ logger = logging.getLogger(__name__)
 
 class ReceiptGenerationService:
     """
-    Service for generating PDF receipts for student purchases.
+    Service for generating HTML receipts for student purchases.
     
     Features:
-    - Professional PDF templates with WeasyPrint
+    - Professional HTML templates
     - Automatic receipt numbering
     - File storage and cleanup
     - Comprehensive error handling
@@ -37,7 +37,7 @@ class ReceiptGenerationService:
     @classmethod
     def generate_receipt(cls, transaction_id: int, force_regenerate: bool = False) -> Dict[str, Any]:
         """
-        Generate a PDF receipt for a completed transaction.
+        Generate an HTML receipt for a completed transaction.
         
         Args:
             transaction_id: ID of the transaction to generate receipt for
@@ -93,8 +93,8 @@ class ReceiptGenerationService:
                     existing_receipt.delete()
                 
                 receipt = cls._create_receipt_record(transaction)
-                pdf_content = cls._generate_pdf_content(receipt)
-                cls._save_pdf_file(receipt, pdf_content)
+                html_content = cls._generate_html_content(receipt)
+                cls._save_html_file(receipt, html_content)
             
             logger.info(f"Successfully generated receipt {receipt.receipt_number} for transaction {transaction_id}")
             
@@ -102,7 +102,7 @@ class ReceiptGenerationService:
                 'success': True,
                 'receipt_id': receipt.id,
                 'receipt_number': receipt.receipt_number,
-                'pdf_file_url': receipt.pdf_file.url if receipt.pdf_file else None,
+                'html_file_url': receipt.pdf_file.url if receipt.pdf_file else None,
                 'amount': float(receipt.amount),
                 'generated_at': receipt.generated_at.isoformat(),
                 'message': 'Receipt generated successfully'
@@ -155,17 +155,17 @@ class ReceiptGenerationService:
                     'message': 'This receipt is no longer valid'
                 }
             
-            # Check if PDF file exists
+            # Check if HTML file exists
             if not receipt.pdf_file:
                 # Try to regenerate if missing
-                logger.warning(f"PDF file missing for receipt {receipt.id}, attempting regeneration")
+                logger.warning(f"HTML file missing for receipt {receipt.id}, attempting regeneration")
                 generation_result = cls.generate_receipt(receipt.transaction.id, force_regenerate=True)
                 
                 if not generation_result['success']:
                     return {
                         'success': False,
                         'error_type': 'file_missing',
-                        'message': 'Receipt PDF file is missing and could not be regenerated'
+                        'message': 'Receipt HTML file is missing and could not be regenerated'
                     }
                 
                 # Refresh receipt from database
@@ -175,7 +175,7 @@ class ReceiptGenerationService:
                 'success': True,
                 'download_url': receipt.pdf_file.url,
                 'receipt_number': receipt.receipt_number,
-                'filename': f"receipt_{receipt.receipt_number}.pdf"
+                'filename': f"receipt_{receipt.receipt_number}.html"
             }
             
         except Receipt.DoesNotExist:
@@ -231,7 +231,7 @@ class ReceiptGenerationService:
                     'transaction_id': receipt.transaction.id,
                     'transaction_type': receipt.transaction.get_transaction_type_display(),
                     'plan_name': receipt.transaction.metadata.get('plan_name', 'Unknown Plan') if receipt.transaction.metadata else 'Unknown Plan',
-                    'has_pdf': bool(receipt.pdf_file),
+                    'has_html': bool(receipt.pdf_file),
                     'download_url': receipt.pdf_file.url if receipt.pdf_file else None
                 })
             
@@ -267,27 +267,32 @@ class ReceiptGenerationService:
         return receipt
     
     @classmethod
-    def _generate_pdf_content(cls, receipt: Receipt) -> bytes:
-        """Generate PDF content using WeasyPrint."""
-        try:
-            import weasyprint
-            from weasyprint import HTML, CSS
-        except ImportError:
-            raise ImportError("WeasyPrint is required for PDF generation. Install with: pip install weasyprint")
-        
+    def _generate_html_content(cls, receipt: Receipt) -> str:
+        """Generate HTML content with embedded styles."""
         # Prepare template context
         context = cls._prepare_template_context(receipt)
         
         # Render HTML template
         html_content = render_to_string('emails/receipt_template.html', context)
         
-        # Generate PDF
-        html = HTML(string=html_content, base_url=settings.MEDIA_URL)
-        css = CSS(string=cls._get_receipt_css())
-        pdf_bytes = html.write_pdf(stylesheets=[css])
+        # Add embedded CSS styles
+        css_styles = cls._get_receipt_css()
+        html_with_styles = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Receipt {receipt.receipt_number}</title>
+    <style>
+{css_styles}
+    </style>
+</head>
+<body>
+{html_content[html_content.find('<body>') + 6:html_content.find('</body>')]}
+</body>
+</html>"""
         
-        logger.info(f"Generated PDF content for receipt {receipt.receipt_number} ({len(pdf_bytes)} bytes)")
-        return pdf_bytes
+        logger.info(f"Generated HTML content for receipt {receipt.receipt_number} ({len(html_with_styles.encode('utf-8'))} bytes)")
+        return html_with_styles
     
     @classmethod
     def _prepare_template_context(cls, receipt: Receipt) -> Dict[str, Any]:
@@ -324,18 +329,24 @@ class ReceiptGenerationService:
     
     @classmethod
     def _get_receipt_css(cls) -> str:
-        """Get CSS styles for PDF receipt."""
+        """Get CSS styles for HTML receipt."""
         return """
-        @page {
-            size: A4;
-            margin: 2cm;
+        @media print {
+            @page {
+                size: A4;
+                margin: 2cm;
+            }
         }
         
         body {
             font-family: 'Arial', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 14px;
+            line-height: 1.6;
             color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
         }
         
         .header {
@@ -411,26 +422,26 @@ class ReceiptGenerationService:
         """
     
     @classmethod
-    def _save_pdf_file(cls, receipt: Receipt, pdf_content: bytes) -> None:
-        """Save PDF content to file field."""
-        filename = f"receipt_{receipt.receipt_number}.pdf"
+    def _save_html_file(cls, receipt: Receipt, html_content: str) -> None:
+        """Save HTML content to file field."""
+        filename = f"receipt_{receipt.receipt_number}.html"
         receipt.pdf_file.save(
             filename,
-            ContentFile(pdf_content),
+            ContentFile(html_content.encode('utf-8')),
             save=True
         )
         
-        logger.info(f"Saved PDF file for receipt {receipt.receipt_number}")
+        logger.info(f"Saved HTML file for receipt {receipt.receipt_number}")
     
     @classmethod
     def _cleanup_receipt_file(cls, receipt: Receipt) -> None:
-        """Clean up PDF file for a receipt."""
+        """Clean up HTML file for a receipt."""
         if receipt.pdf_file:
             try:
                 receipt.pdf_file.delete()
-                logger.info(f"Cleaned up PDF file for receipt {receipt.receipt_number}")
+                logger.info(f"Cleaned up HTML file for receipt {receipt.receipt_number}")
             except Exception as e:
-                logger.warning(f"Failed to cleanup PDF file for receipt {receipt.receipt_number}: {e}")
+                logger.warning(f"Failed to cleanup HTML file for receipt {receipt.receipt_number}: {e}")
 
 
 class ReceiptValidationError(Exception):
