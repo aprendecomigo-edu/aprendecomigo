@@ -5,7 +5,6 @@ This module provides default professional email templates for all communication 
 Templates are designed to be responsive, accessible, and consistent across email clients.
 """
 
-from typing import Dict, Any
 from ..models import EmailTemplateType
 
 
@@ -13,7 +12,7 @@ class DefaultEmailTemplates:
     """
     Provider of default email templates for different communication types.
     """
-    
+
     # Base HTML template structure for consistent styling
     BASE_HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -140,15 +139,15 @@ class DefaultEmailTemplates:
     </div>
 </body>
 </html>"""
-    
+
     @classmethod
-    def get_default_template(cls, template_type: str) -> Dict[str, str]:
+    def get_default_template(cls, template_type: str) -> dict[str, str]:
         """
         Get the default template for a specific type.
-        
+
         Args:
             template_type: Type of email template
-            
+
         Returns:
             Dictionary with template data
         """
@@ -160,19 +159,21 @@ class DefaultEmailTemplates:
             EmailTemplateType.COMPLETION_CELEBRATION: cls._get_completion_celebration_template,
             EmailTemplateType.ONGOING_SUPPORT: cls._get_ongoing_support_template,
         }
-        
+
         if template_type in template_methods:
             return template_methods[template_type]()
         else:
             raise ValueError(f"Unknown template type: {template_type}")
-    
+
     @classmethod
-    def _get_invitation_template(cls) -> Dict[str, str]:
+    def _get_invitation_template(cls) -> dict[str, str]:
         """Get the default teacher invitation template."""
         return {
-            'name': 'Default Teacher Invitation',
-            'subject': 'Teacher Invitation: Join {{ school_name }} on {{ platform_name }}',
-            'html': cls.BASE_HTML_TEMPLATE.replace('{CONTENT}', '''
+            "name": "Default Teacher Invitation",
+            "subject": "Teacher Invitation: Join {{ school_name }} on {{ platform_name }}",
+            "html": cls.BASE_HTML_TEMPLATE.replace(
+                "{CONTENT}",
+                """
                 <h1 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">You're Invited to Join as a Teacher!</h1>
                 
                 <p>Hello,</p>
@@ -218,8 +219,9 @@ class DefaultEmailTemplates:
                 <p>If you have any questions about this invitation or the platform, please don't hesitate to contact {{ invited_by_name }} at {{ invited_by_email }}.</p>
                 
                 <p>Welcome to the {{ platform_name }} community!</p>
-            '''),
-            'text': '''You're Invited to Join {{ school_name }} as a Teacher!
+            """,
+            ),
+            "text": """You're Invited to Join {{ school_name }} as a Teacher!
 
 Hello,
 
@@ -256,16 +258,18 @@ The {{ school_name }} Team
 ---
 This email was sent to {{ recipient_email }} from {{ school_name }}.
 If you didn't expect this invitation, you can safely ignore this email.
-'''
+""",
         }
-    
+
     @classmethod
-    def _get_reminder_template(cls) -> Dict[str, str]:
+    def _get_reminder_template(cls) -> dict[str, str]:
         """Get the default reminder template."""
         return {
-            'name': 'Default Invitation Reminder',
-            'subject': 'Reminder: Your invitation to join {{ school_name }} expires soon',
-            'html': cls.BASE_HTML_TEMPLATE.replace('{CONTENT}', '''
+            "name": "Default Invitation Reminder",
+            "subject": "Reminder: Your invitation to join {{ school_name }} expires soon",
+            "html": cls.BASE_HTML_TEMPLATE.replace(
+                "{CONTENT}",
+                """
                 <h1 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">Reminder: Your Teacher Invitation</h1>
                 
                 <p>Hello,</p>
@@ -296,8 +300,9 @@ If you didn't expect this invitation, you can safely ignore this email.
                 <p>If you have any questions or concerns, please reach out to {{ invited_by_name }} at {{ invited_by_email }}.</p>
                 
                 <p>We hope to welcome you to our team soon!</p>
-            '''),
-            'text': '''Reminder: Your Teacher Invitation Expires Soon
+            """,
+            ),
+            "text": """Reminder: Your Teacher Invitation Expires Soon
 
 Hello,
 
@@ -323,16 +328,18 @@ We hope to welcome you to our team soon!
 
 Best regards,
 The {{ school_name }} Team
-'''
+""",
         }
-    
+
     @classmethod
-    def _get_welcome_template(cls) -> Dict[str, str]:
+    def _get_welcome_template(cls) -> dict[str, str]:
         """Get the default welcome template."""
         return {
-            'name': 'Default Welcome Message',
-            'subject': 'Welcome to {{ school_name }}! Your journey begins now',
-            'html': cls.BASE_HTML_TEMPLATE.replace('{CONTENT}', '''
+            "name": "Default Welcome Message",
+            "subject": "Welcome to {{ school_name }}! Your journey begins now",
+            "html": cls.BASE_HTML_TEMPLATE.replace(
+                "{CONTENT}",
+                """
                 <h1 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">🎉 Welcome to {{ school_name }}!</h1>
                 
                 <p>Dear {{ teacher_name }},</p>
@@ -368,8 +375,9 @@ The {{ school_name }} Team
                 <p>We're excited to see the positive impact you'll make on our students' learning journey!</p>
                 
                 <p>Best regards,<br>The {{ school_name }} Team</p>
-            '''),
-            'text': '''🎉 Welcome to {{ school_name }}!
+            """,
+            ),
+            "text": """🎉 Welcome to {{ school_name }}!
 
 Dear {{ teacher_name }},
 
@@ -397,16 +405,18 @@ We're excited to see the positive impact you'll make on our students' learning j
 
 Best regards,
 The {{ school_name }} Team
-'''
+""",
         }
-    
+
     @classmethod
-    def _get_profile_reminder_template(cls) -> Dict[str, str]:
+    def _get_profile_reminder_template(cls) -> dict[str, str]:
         """Get the default profile completion reminder template."""
         return {
-            'name': 'Default Profile Completion Reminder',
-            'subject': 'Complete your {{ school_name }} teacher profile to get started',
-            'html': cls.BASE_HTML_TEMPLATE.replace('{CONTENT}', '''
+            "name": "Default Profile Completion Reminder",
+            "subject": "Complete your {{ school_name }} teacher profile to get started",
+            "html": cls.BASE_HTML_TEMPLATE.replace(
+                "{CONTENT}",
+                """
                 <h1 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">Complete Your Teacher Profile</h1>
                 
                 <p>Hello {{ teacher_name }},</p>
@@ -449,8 +459,9 @@ The {{ school_name }} Team
                 <p>If you need help completing your profile, don't hesitate to contact us at {{ support_email }} or reach out to {{ invited_by_name }}.</p>
                 
                 <p>We're here to support your teaching journey!</p>
-            '''),
-            'text': '''Complete Your {{ school_name }} Teacher Profile
+            """,
+            ),
+            "text": """Complete Your {{ school_name }} Teacher Profile
 
 Hello {{ teacher_name }},
 
@@ -478,16 +489,18 @@ We're here to support your teaching journey!
 
 Best regards,
 The {{ school_name }} Team
-'''
+""",
         }
-    
+
     @classmethod
-    def _get_completion_celebration_template(cls) -> Dict[str, str]:
+    def _get_completion_celebration_template(cls) -> dict[str, str]:
         """Get the default profile completion celebration template."""
         return {
-            'name': 'Default Profile Completion Celebration',
-            'subject': 'Profile Complete! You\'re ready to teach at {{ school_name }}',
-            'html': cls.BASE_HTML_TEMPLATE.replace('{CONTENT}', '''
+            "name": "Default Profile Completion Celebration",
+            "subject": "Profile Complete! You're ready to teach at {{ school_name }}",
+            "html": cls.BASE_HTML_TEMPLATE.replace(
+                "{CONTENT}",
+                """
                 <h1 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">🎉 Congratulations, {{ teacher_name }}!</h1>
                 
                 <p>Fantastic news! You've successfully completed your teacher profile at {{ school_name }}. You're now ready to start your teaching journey with us.</p>
@@ -522,8 +535,9 @@ The {{ school_name }} Team
                 <p>The {{ school_name }} team is excited to have you aboard. If you have any questions or need support, please don't hesitate to reach out to us.</p>
                 
                 <p>Happy teaching!</p>
-            '''),
-            'text': '''🎉 Congratulations, {{ teacher_name }}!
+            """,
+            ),
+            "text": """🎉 Congratulations, {{ teacher_name }}!
 
 Fantastic news! You've successfully completed your teacher profile at {{ school_name }}. You're now ready to start your teaching journey with us.
 
@@ -550,16 +564,18 @@ Happy teaching!
 
 Best regards,
 The {{ school_name }} Team
-'''
+""",
         }
-    
+
     @classmethod
-    def _get_ongoing_support_template(cls) -> Dict[str, str]:
+    def _get_ongoing_support_template(cls) -> dict[str, str]:
         """Get the default ongoing support template."""
         return {
-            'name': 'Default Ongoing Support',
-            'subject': 'How are you doing at {{ school_name }}? We are here to help!',
-            'html': cls.BASE_HTML_TEMPLATE.replace('{CONTENT}', '''
+            "name": "Default Ongoing Support",
+            "subject": "How are you doing at {{ school_name }}? We are here to help!",
+            "html": cls.BASE_HTML_TEMPLATE.replace(
+                "{CONTENT}",
+                """
                 <h1 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">We are Here to Support You!</h1>
                 
                 <p>Hello {{ teacher_name }},</p>
@@ -606,8 +622,9 @@ The {{ school_name }} Team
                 <p>Your success as a teacher is our priority. We're committed to providing you with everything you need to excel in your teaching journey.</p>
                 
                 <p>Keep up the great work!</p>
-            '''),
-            'text': '''We're Here to Support You! 🤝
+            """,
+            ),
+            "text": """We're Here to Support You! 🤝
 
 Hello {{ teacher_name }},
 
@@ -644,14 +661,14 @@ Keep up the great work!
 
 Best regards,
 The {{ school_name }} Team
-'''
+""",
         }
-    
+
     @classmethod
-    def get_all_default_templates(cls) -> Dict[str, Dict[str, str]]:
+    def get_all_default_templates(cls) -> dict[str, dict[str, str]]:
         """
         Get all default templates for easy access.
-        
+
         Returns:
             Dictionary mapping template types to template data
         """

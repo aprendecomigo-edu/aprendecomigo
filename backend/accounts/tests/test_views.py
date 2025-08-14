@@ -4,6 +4,7 @@ API view tests for the Aprende Comigo platform.
 Tests focus on API endpoint behavior, request/response patterns, and
 user signup flows. Authentication tests are covered in test_auth.py.
 """
+
 from unittest.mock import patch
 
 from django.test import TestCase
@@ -16,7 +17,7 @@ from accounts.models import CustomUser, School, SchoolMembership, VerificationCo
 
 class UserSignupAPITests(TestCase):
     """Test user signup API endpoint behavior.
-    
+
     Covers successful signups, validation errors, and edge cases
     for the public user registration endpoint.
     """
@@ -27,10 +28,7 @@ class UserSignupAPITests(TestCase):
         self.signup_url = reverse("accounts:user-signup")
 
         # Bypass throttling for cleaner test focus
-        self.throttle_patcher = patch(
-            "rest_framework.throttling.AnonRateThrottle.allow_request",
-            return_value=True
-        )
+        self.throttle_patcher = patch("rest_framework.throttling.AnonRateThrottle.allow_request", return_value=True)
         self.throttle_patcher.start()
 
     def tearDown(self):
@@ -78,10 +76,7 @@ class UserSignupAPITests(TestCase):
     def test_signup_existing_email(self):
         """Test signup with existing email returns appropriate error."""
         # Create existing user
-        CustomUser.objects.create_user(
-            email="existing@example.com",
-            name="Existing User"
-        )
+        CustomUser.objects.create_user(email="existing@example.com", name="Existing User")
 
         data = {
             "name": "New User",
@@ -129,7 +124,7 @@ class UserSignupAPITests(TestCase):
         response = self.client.post(self.signup_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
+
         # Verify user created with phone as primary contact
         user = CustomUser.objects.get(email="phoneuser@example.com")
         self.assertEqual(user.primary_contact, "phone")
@@ -184,12 +179,11 @@ class UserSignupAPITests(TestCase):
         self.assertIn("school", str(response.data))
         self.assertIn("name", str(response.data))
 
-
     def test_signup_allows_unauthenticated_access(self):
         """Test that signup endpoint allows unauthenticated access."""
         # Clear any authentication
         self.client.credentials()
-        
+
         data = {
             "name": "Anonymous User",
             "email": "anon@example.com",
@@ -204,7 +198,3 @@ class UserSignupAPITests(TestCase):
 
         # Should succeed without authentication
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-
-
-

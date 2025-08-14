@@ -6,6 +6,7 @@ These tests focus on model relationships and business rules.
 """
 
 from django.test import TestCase
+
 from accounts.models import (
     Course,
     CustomUser,
@@ -28,17 +29,12 @@ class MultiSchoolBusinessLogicTest(TestCase):
             name="Test System", code="test", description="Test system", is_active=True
         )
         self.course = Course.objects.create(
-            name="Test Math", code="TEST_635",
-            educational_system=self.educational_system, education_level="elementary"
+            name="Test Math", code="TEST_635", educational_system=self.educational_system, education_level="elementary"
         )
 
         # Create test schools
-        self.school1 = School.objects.create(
-            name="School 1", description="Test school 1", address="Address 1"
-        )
-        self.school2 = School.objects.create(
-            name="School 2", description="Test school 2", address="Address 2"
-        )
+        self.school1 = School.objects.create(name="School 1", description="Test school 1", address="Address 1")
+        self.school2 = School.objects.create(name="School 2", description="Test school 2", address="Address 2")
 
     def create_user(self, email, name, phone="+351912000000"):
         """Factory method to create user."""
@@ -51,20 +47,16 @@ class MultiSchoolBusinessLogicTest(TestCase):
     def test_same_user_teacher_in_multiple_schools_business_logic(self):
         """Test business rule: same user can be a teacher in multiple schools."""
         user = self.create_user("teacher@example.com", "Multi School Teacher")
-        
+
         # Create teacher profile first
-        teacher_profile = TeacherProfile.objects.create(
-            user=user, bio="Multi-school teacher", specialty="Mathematics"
-        )
+        teacher_profile = TeacherProfile.objects.create(user=user, bio="Multi-school teacher", specialty="Mathematics")
 
         # Add as teacher to both schools
         membership1 = self.create_school_membership(user, self.school1, SchoolRole.TEACHER)
         membership2 = self.create_school_membership(user, self.school2, SchoolRole.TEACHER)
 
         # Verify business logic: user can teach at multiple schools
-        teacher_memberships = SchoolMembership.objects.filter(
-            user=user, role=SchoolRole.TEACHER, is_active=True
-        )
+        teacher_memberships = SchoolMembership.objects.filter(user=user, role=SchoolRole.TEACHER, is_active=True)
         self.assertEqual(teacher_memberships.count(), 2)
 
         # Verify teacher profile method returns both memberships
@@ -131,23 +123,19 @@ class MultiSchoolBusinessLogicTest(TestCase):
         """Test business rule: inactive memberships don't appear in active queries."""
         user = self.create_user("user@example.com", "Test User")
         TeacherProfile.objects.create(user=user, bio="Teacher bio", specialty="Math")
-        
+
         # Create active membership
         active_membership = self.create_school_membership(user, self.school1, SchoolRole.TEACHER)
-        
+
         # Create inactive membership with different role to avoid unique constraint
         inactive_membership = SchoolMembership.objects.create(
             user=user, school=self.school1, role=SchoolRole.STUDENT, is_active=False
         )
 
         # Business rule: only active memberships appear in active queries
-        active_memberships = SchoolMembership.objects.filter(
-            school=self.school1, user=user, is_active=True
-        )
-        inactive_memberships = SchoolMembership.objects.filter(
-            school=self.school1, user=user, is_active=False
-        )
-        
+        active_memberships = SchoolMembership.objects.filter(school=self.school1, user=user, is_active=True)
+        inactive_memberships = SchoolMembership.objects.filter(school=self.school1, user=user, is_active=False)
+
         self.assertEqual(active_memberships.count(), 1)
         self.assertEqual(inactive_memberships.count(), 1)
         self.assertEqual(active_memberships.first(), active_membership)
@@ -156,24 +144,24 @@ class MultiSchoolBusinessLogicTest(TestCase):
     def test_teacher_course_association_business_logic(self):
         """Test business rule: teachers can be associated with multiple courses."""
         user = self.create_user("teacher@example.com", "Course Teacher")
-        teacher_profile = TeacherProfile.objects.create(
-            user=user, bio="Multi-course teacher", specialty="STEM"
-        )
-        
+        teacher_profile = TeacherProfile.objects.create(user=user, bio="Multi-course teacher", specialty="STEM")
+
         # Create additional course
         course2 = Course.objects.create(
-            name="Test Physics", code="TEST_PHY",
-            educational_system=self.educational_system, education_level="secondary"
+            name="Test Physics",
+            code="TEST_PHY",
+            educational_system=self.educational_system,
+            education_level="secondary",
         )
-        
+
         # Associate teacher with multiple courses
         TeacherCourse.objects.create(teacher=teacher_profile, course=self.course)
         TeacherCourse.objects.create(teacher=teacher_profile, course=course2)
-        
+
         # Verify business logic: teacher can teach multiple courses
         teacher_courses = TeacherCourse.objects.filter(teacher=teacher_profile, is_active=True)
         self.assertEqual(teacher_courses.count(), 2)
-        
+
         course_names = [tc.course.name for tc in teacher_courses]
         self.assertIn(self.course.name, course_names)
         self.assertIn(course2.name, course_names)

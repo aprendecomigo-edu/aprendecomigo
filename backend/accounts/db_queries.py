@@ -1,5 +1,5 @@
-import secrets
 from datetime import timedelta
+import secrets
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -42,25 +42,21 @@ def create_school_owner(
     )
 
     # Create school owner membership
-    SchoolMembership.objects.create(
-        user=user, school=school, role=SchoolRole.SCHOOL_OWNER, is_active=True
-    )
-    
+    SchoolMembership.objects.create(user=user, school=school, role=SchoolRole.SCHOOL_OWNER, is_active=True)
+
     # For individual tutors, also create teacher role and profile
     if is_tutor:
         # Create teacher membership
-        SchoolMembership.objects.create(
-            user=user, school=school, role=SchoolRole.TEACHER, is_active=True
-        )
-        
+        SchoolMembership.objects.create(user=user, school=school, role=SchoolRole.TEACHER, is_active=True)
+
         # Create teacher profile
         TeacherProfile.objects.create(
             user=user,
-            bio='',  # Empty bio initially
-            specialty='',  # Empty specialty initially
+            bio="",  # Empty bio initially
+            specialty="",  # Empty specialty initially
             # Other fields will use their default values
         )
-    
+
     return user, school
 
 
@@ -75,15 +71,15 @@ def list_users_by_request_permissions(user) -> QuerySet:
     # School owners and admins can see all users in their schools
     admin_school_ids = list_school_ids_owned_or_managed(user)
     if len(admin_school_ids) > 0:
-        school_user_ids = SchoolMembership.objects.filter(
-            school_id__in=admin_school_ids, is_active=True
-        ).values_list("user_id", flat=True)
+        school_user_ids = SchoolMembership.objects.filter(school_id__in=admin_school_ids, is_active=True).values_list(
+            "user_id", flat=True
+        )
         return User.objects.filter(id__in=school_user_ids)
 
     # Teachers can see themselves + students they teach (via ClassSession)
-    if SchoolMembership.objects.filter(
-        user=user, role=SchoolRole.TEACHER, is_active=True
-    ).exists() and hasattr(user, "teacher_profile"):
+    if SchoolMembership.objects.filter(user=user, role=SchoolRole.TEACHER, is_active=True).exists() and hasattr(
+        user, "teacher_profile"
+    ):
         # Get students from class sessions this teacher taught
         from finances.models import ClassSession
 
@@ -92,9 +88,7 @@ def list_users_by_request_permissions(user) -> QuerySet:
         )
 
         # Include the teacher themselves + students they teach
-        return User.objects.filter(
-            models.Q(id=user.id) | models.Q(id__in=taught_student_ids)
-        ).distinct()
+        return User.objects.filter(models.Q(id=user.id) | models.Q(id__in=taught_student_ids)).distinct()
 
     # All other users (including students) can only see themselves
     return User.objects.filter(id=user.id)
@@ -107,7 +101,7 @@ def list_school_ids_owned_or_managed(user) -> list[int]:
     # Handle anonymous users
     if not user or not user.is_authenticated:
         return []
-        
+
     admin_school_ids = SchoolMembership.objects.filter(
         user=user,
         role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
@@ -184,9 +178,7 @@ def get_or_create_school_invitation_link(
     """
     # Try to get existing valid link
     try:
-        invitation_link = SchoolInvitationLink.objects.get(
-            school_id=school_id, role=role, is_active=True
-        )
+        invitation_link = SchoolInvitationLink.objects.get(school_id=school_id, role=role, is_active=True)
 
         # Check if it's still valid (not expired)
         if invitation_link.is_valid():

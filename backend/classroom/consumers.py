@@ -13,7 +13,7 @@ from .models import Channel, Message, Reaction
 User = get_user_model()
 
 # Security logging
-logger = logging.getLogger('security.websocket')
+logger = logging.getLogger("security.websocket")
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -22,28 +22,28 @@ class ChatConsumer(WebsocketConsumer):
         self.channel_name_param = self.scope["url_route"]["kwargs"]["channel_name"]
         self.group_name = f"chat_{self.channel_name_param}"
         self.user = self.scope.get("user")
-        
+
         # If no user in scope, create an anonymous user
         if not self.user:
             from django.contrib.auth.models import AnonymousUser
+
             self.user = AnonymousUser()
 
         # Security Check 1: Authentication required
         if not self.user.is_authenticated:
             logger.warning(
-                "Unauthenticated user attempted WebSocket connection to channel: %s", 
-                self.channel_name_param
+                "Unauthenticated user attempted WebSocket connection to channel: %s", self.channel_name_param
             )
             self.close(code=4001)  # Unauthorized
             return
 
         # Security Check 2: Rate limiting
         # Skip rate limiting in test environment
-        if not getattr(settings, 'TESTING', False) and not self.check_rate_limit():
+        if not getattr(settings, "TESTING", False) and not self.check_rate_limit():
             logger.warning(
                 "Rate limit exceeded for user %s attempting connection to channel: %s",
                 self.user.username,
-                self.channel_name_param
+                self.channel_name_param,
             )
             self.close(code=4029)  # Too Many Requests
             return
@@ -52,9 +52,7 @@ class ChatConsumer(WebsocketConsumer):
         has_access = async_to_sync(self.user_has_channel_access)()
         if not has_access:
             logger.warning(
-                "User %s attempted access to unauthorized channel: %s",
-                self.user.username,
-                self.channel_name_param
+                "User %s attempted access to unauthorized channel: %s", self.user.username, self.channel_name_param
             )
             self.close(code=4003)  # Forbidden
             return
@@ -63,11 +61,7 @@ class ChatConsumer(WebsocketConsumer):
         self.accept()
 
         # Log successful connection for security monitoring
-        logger.info(
-            "User %s successfully connected to channel: %s",
-            self.user.username,
-            self.channel_name_param
-        )
+        logger.info("User %s successfully connected to channel: %s", self.user.username, self.channel_name_param)
 
         # Add to channel group
         async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
@@ -107,10 +101,7 @@ class ChatConsumer(WebsocketConsumer):
         """Handle incoming WebSocket messages with security checks."""
         # Security Check 1: Double-check authentication on every message
         if not self.user.is_authenticated:
-            logger.warning(
-                "Unauthenticated user attempted to send message to channel: %s",
-                self.channel_name_param
-            )
+            logger.warning("Unauthenticated user attempted to send message to channel: %s", self.channel_name_param)
             self.close(code=4001)  # Unauthorized
             return
 
@@ -119,18 +110,18 @@ class ChatConsumer(WebsocketConsumer):
             logger.warning(
                 "User %s attempted to send message to unauthorized channel: %s",
                 self.user.username,
-                self.channel_name_param
+                self.channel_name_param,
             )
             self.close(code=4003)  # Forbidden
             return
 
         # Security Check 3: Rate limiting for messages
         # Skip rate limiting in test environment
-        if not getattr(settings, 'TESTING', False) and not self.check_rate_limit(action="message"):
+        if not getattr(settings, "TESTING", False) and not self.check_rate_limit(action="message"):
             logger.warning(
                 "Rate limit exceeded for user %s sending message to channel: %s",
                 self.user.username,
-                self.channel_name_param
+                self.channel_name_param,
             )
             self.close(code=4029)  # Too Many Requests
             return
@@ -139,9 +130,7 @@ class ChatConsumer(WebsocketConsumer):
             data = json.loads(text_data)
         except json.JSONDecodeError:
             logger.warning(
-                "Invalid JSON received from user %s in channel: %s",
-                self.user.username,
-                self.channel_name_param
+                "Invalid JSON received from user %s in channel: %s", self.user.username, self.channel_name_param
             )
             return
 
@@ -243,7 +232,7 @@ class ChatConsumer(WebsocketConsumer):
                     break
             if not channel:
                 raise Channel.DoesNotExist(f"User has no access to channel {self.channel_name_param}")
-        
+
         return Message.objects.create(
             channel=channel,
             sender=self.user,
@@ -258,17 +247,13 @@ class ChatConsumer(WebsocketConsumer):
             return channel.participants.filter(id=self.user.id).exists()
         except Channel.DoesNotExist:
             logger.warning(
-                "User %s attempted to access non-existent channel: %s",
-                self.user.username,
-                self.channel_name_param
+                "User %s attempted to access non-existent channel: %s", self.user.username, self.channel_name_param
             )
             return False
         except Channel.MultipleObjectsReturned:
             # Handle multiple channels with same name - this can happen in test environments
             logger.warning(
-                "Multiple channels found with name %s for user %s",
-                self.channel_name_param,
-                self.user.username
+                "Multiple channels found with name %s for user %s", self.channel_name_param, self.user.username
             )
             # Check if user has access to any channel with this name
             channels = Channel.objects.filter(name=self.channel_name_param)
@@ -281,7 +266,7 @@ class ChatConsumer(WebsocketConsumer):
                 "Error checking channel access for user %s, channel %s: %s",
                 self.user.username,
                 self.channel_name_param,
-                str(e)
+                str(e),
             )
             return False
 
@@ -293,7 +278,7 @@ class ChatConsumer(WebsocketConsumer):
         # Rate limiting configuration
         limits = {
             "connection": {"count": 10, "window": 60},  # 10 connections per minute
-            "message": {"count": 30, "window": 60},     # 30 messages per minute
+            "message": {"count": 30, "window": 60},  # 30 messages per minute
         }
 
         limit_config = limits.get(action, limits["connection"])
@@ -302,21 +287,16 @@ class ChatConsumer(WebsocketConsumer):
         try:
             # Get current count from cache
             current_count = cache.get(cache_key, 0)
-            
+
             if current_count >= limit_config["count"]:
                 return False
-            
+
             # Increment counter with expiration
             cache.set(cache_key, current_count + 1, limit_config["window"])
             return True
-            
+
         except Exception as e:
-            logger.error(
-                "Error checking rate limit for user %s, action %s: %s",
-                self.user.username,
-                action,
-                str(e)
-            )
+            logger.error("Error checking rate limit for user %s, action %s: %s", self.user.username, action, str(e))
             # In case of cache error, allow the request but log it
             return True
 

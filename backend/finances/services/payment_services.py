@@ -61,9 +61,7 @@ class TeacherPaymentCalculator:
             school=session.school,
             is_active=True,
             effective_from__lte=session.date,
-        ).filter(
-            models.Q(effective_until__isnull=True) | models.Q(effective_until__gte=session.date)
-        )
+        ).filter(models.Q(effective_until__isnull=True) | models.Q(effective_until__gte=session.date))
 
         # Priority 1: Group class rate (if it's a group session)
         if session.session_type == "group":
@@ -82,9 +80,7 @@ class TeacherPaymentCalculator:
         if session.grade_level == "mixed":
             # For mixed grade sessions, use the highest grade-specific rate available
             highest_grade_rule = (
-                rules.filter(
-                    rule_type=CompensationRuleType.GRADE_SPECIFIC, rate_per_hour__isnull=False
-                )
+                rules.filter(rule_type=CompensationRuleType.GRADE_SPECIFIC, rate_per_hour__isnull=False)
                 .order_by("-rate_per_hour")
                 .first()
             )

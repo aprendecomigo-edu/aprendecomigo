@@ -5,8 +5,7 @@ Django production settings for aprendecomigo project.
 import os
 
 # Import specific settings from base
-from .base import BASE_DIR
-from .base import SIMPLE_JWT as BASE_SIMPLE_JWT
+from .base import BASE_DIR, SIMPLE_JWT as BASE_SIMPLE_JWT
 
 # SECURITY WARNING: keep the secret key used in production secret!
 secret_key = os.getenv("SECRET_KEY")
@@ -83,7 +82,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # Production Logging Configuration
 # Optimized for production monitoring, security, and performance
-LOGS_DIR = BASE_DIR.parent / 'logs'
+LOGS_DIR = BASE_DIR.parent / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
 
 LOGGING = {
@@ -125,7 +124,6 @@ LOGGING = {
             "formatter": "json",
             "filters": ["sensitive_data", "correlation"],
         },
-        
         # Error logs - separate file for easier monitoring
         "error_file": {
             "level": "ERROR",
@@ -137,7 +135,6 @@ LOGGING = {
             "formatter": "json",
             "filters": ["sensitive_data", "correlation"],
         },
-        
         # Security events - long retention for compliance
         "security_file": {
             "level": "WARNING",
@@ -149,7 +146,6 @@ LOGGING = {
             "formatter": "security",
             "filters": ["correlation"],
         },
-        
         # Business events - JSON for analytics
         "business_file": {
             "level": "INFO",
@@ -161,7 +157,6 @@ LOGGING = {
             "formatter": "json",
             "filters": ["sensitive_data", "correlation"],
         },
-        
         # Performance monitoring
         "performance_file": {
             "level": "INFO",
@@ -173,7 +168,6 @@ LOGGING = {
             "formatter": "json",
             "filters": ["correlation"],
         },
-        
         # Audit trail - financial and educational events
         "audit_file": {
             "level": "INFO",
@@ -185,7 +179,6 @@ LOGGING = {
             "formatter": "json",
             "filters": ["sensitive_data", "correlation"],
         },
-        
         # Console output for container environments
         "console": {
             "level": "WARNING",
@@ -193,7 +186,6 @@ LOGGING = {
             "formatter": "json",
             "filters": ["sensitive_data", "correlation", "rate_limit"],
         },
-        
         # Syslog integration for monitoring systems
         "syslog": {
             "level": "WARNING",
@@ -229,7 +221,6 @@ LOGGING = {
             "level": "WARNING",
             "propagate": False,
         },
-        
         # Application loggers - business-focused levels
         "accounts": {
             "handlers": ["application_file", "business_file"],
@@ -251,7 +242,6 @@ LOGGING = {
             "level": "WARNING",
             "propagate": False,
         },
-        
         # Financial operations - comprehensive logging
         "finances": {
             "handlers": ["business_file", "audit_file", "application_file"],
@@ -278,7 +268,6 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        
         # Scheduling - business events
         "scheduler": {
             "handlers": ["business_file", "application_file"],
@@ -300,7 +289,6 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        
         # Communication
         "messaging": {
             "handlers": ["business_file", "application_file"],
@@ -317,14 +305,12 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        
         # Multi-tenant operations
         "common.permissions": {
             "handlers": ["security_file", "console"],
             "level": "WARNING",
             "propagate": False,
         },
-        
         # Classroom operations
         "classroom": {
             "handlers": ["business_file", "application_file"],
@@ -336,7 +322,6 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        
         # Business event loggers
         "business": {
             "handlers": ["business_file"],
@@ -358,7 +343,6 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        
         # Security loggers
         "security.events": {
             "handlers": ["security_file", "syslog"],
@@ -370,14 +354,12 @@ LOGGING = {
             "level": "WARNING",
             "propagate": False,
         },
-        
         # Performance monitoring
         "performance": {
             "handlers": ["performance_file"],
             "level": "INFO",
             "propagate": False,
         },
-        
         # Third-party - errors only
         "stripe": {
             "handlers": ["error_file", "console"],
@@ -404,4 +386,4 @@ REMINDER_MOCK_MODE = False  # Disable mock mode in production
 COMMUNICATION_SERVICE_ENABLED = True  # Enable real communication service in production
 
 # Import all settings from base.py
-from .base import *  # noqa: F403, E402
+from .base import *  # noqa: E402

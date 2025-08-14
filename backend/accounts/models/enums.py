@@ -117,7 +117,7 @@ class EducationalSystemType(models.TextChoices):
 
 class ActivityType(models.TextChoices):
     """Types of activities that can occur in a school"""
-    
+
     INVITATION_SENT = "invitation_sent", _("Invitation Sent")
     INVITATION_ACCEPTED = "invitation_accepted", _("Invitation Accepted")
     INVITATION_DECLINED = "invitation_declined", _("Invitation Declined")
@@ -131,7 +131,7 @@ class ActivityType(models.TextChoices):
 
 class TrialCostAbsorption(models.TextChoices):
     """Options for who absorbs trial class costs"""
-    
+
     SCHOOL = "school", _("School")
     TEACHER = "teacher", _("Teacher")
     SPLIT = "split", _("Split")
@@ -139,7 +139,7 @@ class TrialCostAbsorption(models.TextChoices):
 
 class CurrencyChoices(models.TextChoices):
     """Currency options for school billing"""
-    
+
     EUR = "EUR", _("Euro")
     USD = "USD", _("US Dollar")
     BRL = "BRL", _("Brazilian Real")
@@ -148,7 +148,7 @@ class CurrencyChoices(models.TextChoices):
 
 class LanguageChoices(models.TextChoices):
     """Language options for school interface"""
-    
+
     PT = "pt", _("Portuguese")
     EN = "en", _("English")
     ES = "es", _("Spanish")
@@ -157,7 +157,7 @@ class LanguageChoices(models.TextChoices):
 
 class CalendarIntegrationChoices(models.TextChoices):
     """Calendar integration options"""
-    
+
     GOOGLE = "google", _("Google Calendar")
     OUTLOOK = "outlook", _("Microsoft Outlook")
     CALDAV = "caldav", _("CalDAV")
@@ -165,7 +165,7 @@ class CalendarIntegrationChoices(models.TextChoices):
 
 class EmailIntegrationChoices(models.TextChoices):
     """Email integration provider options"""
-    
+
     NONE = "none", _("None")
     SMTP = "smtp", _("SMTP")
     SENDGRID = "sendgrid", _("SendGrid")
@@ -174,7 +174,7 @@ class EmailIntegrationChoices(models.TextChoices):
 
 class DataRetentionChoices(models.TextChoices):
     """Data retention policy options"""
-    
+
     ONE_YEAR = "1_year", _("1 Year")
     TWO_YEARS = "2_years", _("2 Years")
     FIVE_YEARS = "5_years", _("5 Years")
@@ -183,7 +183,7 @@ class DataRetentionChoices(models.TextChoices):
 
 class EmailDeliveryStatus(models.TextChoices):
     """Email delivery status options with comprehensive tracking"""
-    
+
     NOT_SENT = "not_sent", _("Not Sent")
     QUEUED = "queued", _("Queued")
     SENDING = "sending", _("Sending")
@@ -196,7 +196,7 @@ class EmailDeliveryStatus(models.TextChoices):
 
 class InvitationStatus(models.TextChoices):
     """Status options for teacher invitations"""
-    
+
     PENDING = "pending", _("Pending")
     SENT = "sent", _("Sent")
     DELIVERED = "delivered", _("Delivered")
@@ -209,7 +209,7 @@ class InvitationStatus(models.TextChoices):
 
 class StudentProgressLevel(models.TextChoices):
     """Progress levels for student learning."""
-    
+
     BEGINNER = "beginner", _("Beginner")
     ELEMENTARY = "elementary", _("Elementary")
     INTERMEDIATE = "intermediate", _("Intermediate")
@@ -219,7 +219,7 @@ class StudentProgressLevel(models.TextChoices):
 
 class AssessmentType(models.TextChoices):
     """Types of assessments that can be recorded."""
-    
+
     QUIZ = "quiz", _("Quiz")
     TEST = "test", _("Test")
     HOMEWORK = "homework", _("Homework")
@@ -232,7 +232,7 @@ class AssessmentType(models.TextChoices):
 
 class RelationshipType(models.TextChoices):
     """Types of parent-child relationships."""
-    
+
     PARENT = "parent", _("Parent")
     GUARDIAN = "guardian", _("Guardian")
     OTHER = "other", _("Other")

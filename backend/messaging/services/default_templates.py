@@ -7,12 +7,11 @@ These templates can be customized per school using the existing email template s
 
 from messaging.models import EmailTemplateType
 
-
 DEFAULT_LOW_BALANCE_TEMPLATE = {
-    'name': 'Low Balance Alert',
-    'template_type': EmailTemplateType.LOW_BALANCE_ALERT,
-    'subject': 'Saldo Baixo - {{student_name}} | {{school_name}}',
-    'html_content': '''
+    "name": "Low Balance Alert",
+    "template_type": EmailTemplateType.LOW_BALANCE_ALERT,
+    "subject": "Saldo Baixo - {{student_name}} | {{school_name}}",
+    "html_content": """
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background-color: #f8f9fa; padding: 20px; text-align: center;">
             <h1 style="color: #dc3545; margin: 0;">⚠️ Saldo Baixo</h1>
@@ -46,8 +45,8 @@ DEFAULT_LOW_BALANCE_TEMPLATE = {
             <p>Este é um email automático. Para suporte, contacte: {{support_email}}</p>
         </div>
     </div>
-    ''',
-    'text_content': '''
+    """,
+    "text_content": """
 Olá {{student_name}},
 
 O seu saldo de horas está a ficar baixo. Tem apenas {{remaining_hours}} horas restantes na sua conta.
@@ -61,17 +60,17 @@ Cumprimentos,
 
 ---
 Este é um email automático. Para suporte, contacte: {{support_email}}
-    ''',
-    'is_default': True,
-    'description': 'Template para alertas de saldo baixo enviados automaticamente aos estudantes.'
+    """,
+    "is_default": True,
+    "description": "Template para alertas de saldo baixo enviados automaticamente aos estudantes.",
 }
 
 
 DEFAULT_PACKAGE_EXPIRING_TEMPLATE = {
-    'name': 'Package Expiring Alert',
-    'template_type': EmailTemplateType.PACKAGE_EXPIRING_ALERT,
-    'subject': 'Pacote a Expirar - {{student_name}} | {{school_name}}',
-    'html_content': '''
+    "name": "Package Expiring Alert",
+    "template_type": EmailTemplateType.PACKAGE_EXPIRING_ALERT,
+    "subject": "Pacote a Expirar - {{student_name}} | {{school_name}}",
+    "html_content": """
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background-color: #f8f9fa; padding: 20px; text-align: center;">
             <h1 style="color: #fd7e14; margin: 0;">⏰ Pacote a Expirar</h1>
@@ -108,8 +107,8 @@ DEFAULT_PACKAGE_EXPIRING_TEMPLATE = {
             <p>Este é um email automático. Para suporte, contacte: {{support_email}}</p>
         </div>
     </div>
-    ''',
-    'text_content': '''
+    """,
+    "text_content": """
 Olá {{student_name}},
 
 O seu pacote de aprendizagem vai expirar em {{days_until_expiry}} dias ({{expiry_date}}).
@@ -127,20 +126,17 @@ Cumprimentos,
 
 ---
 Este é um email automático. Para suporte, contacte: {{support_email}}
-    ''',
-    'is_default': True,
-    'description': 'Template para alertas de pacotes prestes a expirar enviados automaticamente aos estudantes.'
+    """,
+    "is_default": True,
+    "description": "Template para alertas de pacotes prestes a expirar enviados automaticamente aos estudantes.",
 }
 
 
 def get_default_templates():
     """
     Get all default notification templates.
-    
+
     Returns:
         List of default template dictionaries
     """
-    return [
-        DEFAULT_LOW_BALANCE_TEMPLATE,
-        DEFAULT_PACKAGE_EXPIRING_TEMPLATE
-    ]
+    return [DEFAULT_LOW_BALANCE_TEMPLATE, DEFAULT_PACKAGE_EXPIRING_TEMPLATE]

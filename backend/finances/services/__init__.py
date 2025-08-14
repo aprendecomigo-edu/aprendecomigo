@@ -1,19 +1,18 @@
 # Services package for finances app
 
 # Import payment services
-from .payment_services import TeacherPaymentCalculator, BulkPaymentProcessor
+# Import business logic services
+from .business_logic_services import CompensationService, PaymentService
+from .payment_services import BulkPaymentProcessor, TeacherPaymentCalculator
 
 # Import Stripe services
 from .stripe_base import StripeService
 
-# Import business logic services
-from .business_logic_services import CompensationService, PaymentService
-
 # Make services available at package level
 __all__ = [
-    'TeacherPaymentCalculator',
-    'BulkPaymentProcessor', 
-    'StripeService',
-    'CompensationService',
-    'PaymentService',
+    "BulkPaymentProcessor",
+    "CompensationService",
+    "PaymentService",
+    "StripeService",
+    "TeacherPaymentCalculator",
 ]

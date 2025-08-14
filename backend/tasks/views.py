@@ -52,12 +52,8 @@ class TaskViewSet(viewsets.ModelViewSet):
             "pending_tasks": queryset.filter(status="pending").count(),
             "in_progress_tasks": queryset.filter(status="in_progress").count(),
             "completed_tasks": queryset.filter(status="completed").count(),
-            "overdue_tasks": queryset.filter(
-                due_date__lt=now, status__in=["pending", "in_progress"]
-            ).count(),
-            "urgent_tasks": queryset.filter(
-                is_urgent=True, status__in=["pending", "in_progress"]
-            ).count(),
+            "overdue_tasks": queryset.filter(due_date__lt=now, status__in=["pending", "in_progress"]).count(),
+            "urgent_tasks": queryset.filter(is_urgent=True, status__in=["pending", "in_progress"]).count(),
             "tasks_due_today": queryset.filter(
                 due_date__gte=today_start,
                 due_date__lt=today_end,
@@ -84,9 +80,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     def overdue(self, request):
         """Get overdue tasks"""
         now = timezone.now()
-        queryset = self.get_queryset().filter(
-            due_date__lt=now, status__in=["pending", "in_progress"]
-        )
+        queryset = self.get_queryset().filter(due_date__lt=now, status__in=["pending", "in_progress"])
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 

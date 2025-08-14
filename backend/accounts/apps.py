@@ -9,4 +9,4 @@ class AccountsConfig(AppConfig):
 
     def ready(self):
         # Import signals to ensure they are registered
-        import accounts.signals
+        pass

@@ -7,8 +7,6 @@ parent profiles, parent-child relationships, and user onboarding.
 
 import logging
 
-from common.messaging import send_email_verification_code
-from common.throttles import EmailCodeRequestThrottle, IPSignupThrottle
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import status
@@ -16,7 +14,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .auth import KnoxAuthenticatedViewSet
+from common.messaging import send_email_verification_code
+from common.throttles import EmailCodeRequestThrottle, IPSignupThrottle
+
 from ..db_queries import (
     create_school_owner,
     list_school_ids_owned_or_managed,
@@ -38,6 +38,7 @@ from ..serializers import (
     ParentProfileSerializer,
     UserSerializer,
 )
+from .auth import KnoxAuthenticatedViewSet
 
 logger = logging.getLogger(__name__)
 
@@ -119,14 +120,10 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             user_type = "admin"
             is_admin = True
         # Check if user is a teacher in any school
-        elif SchoolMembership.objects.filter(
-            user=user, role=SchoolRole.TEACHER, is_active=True
-        ).exists():
+        elif SchoolMembership.objects.filter(user=user, role=SchoolRole.TEACHER, is_active=True).exists():
             user_type = "teacher"
         # Check if user is a student in any school
-        elif SchoolMembership.objects.filter(
-            user=user, role=SchoolRole.STUDENT, is_active=True
-        ).exists():
+        elif SchoolMembership.objects.filter(user=user, role=SchoolRole.STUDENT, is_active=True).exists():
             user_type = "student"
         else:
             user_type = "student"  # Default fallback
@@ -155,9 +152,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
             }
 
         # If user is a teacher in any school
-        elif SchoolMembership.objects.filter(
-            user=user, role=SchoolRole.TEACHER, is_active=True
-        ).exists():
+        elif SchoolMembership.objects.filter(user=user, role=SchoolRole.TEACHER, is_active=True).exists():
             # Teacher stats
             stats = {
                 "today_classes": 0,  # Would need to calculate from scheduling models
@@ -175,9 +170,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
                 user_info["calendar_iframe"] = user.teacher_profile.calendar_iframe
 
         # If user is a student in any school
-        elif SchoolMembership.objects.filter(
-            user=user, role=SchoolRole.STUDENT, is_active=True
-        ).exists():
+        elif SchoolMembership.objects.filter(user=user, role=SchoolRole.STUDENT, is_active=True).exists():
             # Student stats
             stats = {
                 "upcoming_classes": 0,
@@ -232,9 +225,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         if not (
             request.user.is_superuser
             or request.user.is_staff
-            or SchoolMembership.objects.filter(
-                user=request.user, school=school, is_active=True
-            ).exists()
+            or SchoolMembership.objects.filter(user=request.user, school=school, is_active=True).exists()
         ):
             return Response(
                 {"error": "You don't have access to this school"},
@@ -243,12 +234,8 @@ class UserViewSet(KnoxAuthenticatedViewSet):
 
         # School statistics
         stats = {
-            "students": SchoolMembership.objects.filter(
-                school=school, role=SchoolRole.STUDENT, is_active=True
-            ).count(),
-            "teachers": SchoolMembership.objects.filter(
-                school=school, role=SchoolRole.TEACHER, is_active=True
-            ).count(),
+            "students": SchoolMembership.objects.filter(school=school, role=SchoolRole.STUDENT, is_active=True).count(),
+            "teachers": SchoolMembership.objects.filter(school=school, role=SchoolRole.TEACHER, is_active=True).count(),
             "classes": 0,  # Would need to calculate from scheduling models
             "class_types": 0,
         }
@@ -293,15 +280,11 @@ class UserViewSet(KnoxAuthenticatedViewSet):
         # Check for verification code
         try:
             if contact_type == "email":
-                verification = VerificationCode.objects.filter(
-                    email=contact_value, is_used=False
-                ).latest("created_at")
+                verification = VerificationCode.objects.filter(email=contact_value, is_used=False).latest("created_at")
             else:
                 # For phone verification, we would need a similar model for phone codes
                 # This example assumes we're using the same model for simplicity
-                verification = VerificationCode.objects.filter(
-                    email=contact_value, is_used=False
-                ).latest("created_at")
+                verification = VerificationCode.objects.filter(email=contact_value, is_used=False).latest("created_at")
         except VerificationCode.DoesNotExist:
             return Response(
                 {"error": f"No verification code found for this {contact_type}."},
@@ -400,12 +383,14 @@ class UserViewSet(KnoxAuthenticatedViewSet):
 
         # Use explicit user type instead of vulnerable pattern matching
         is_tutor = user_type == "tutor"
-        
+
         # Wrap all database operations in a transaction for rollback protection
         try:
             with transaction.atomic():
-                user, school = create_school_owner(email, name, phone_number, primary_contact, school_data, is_tutor=is_tutor)
-                
+                user, school = create_school_owner(
+                    email, name, phone_number, primary_contact, school_data, is_tutor=is_tutor
+                )
+
                 # Generate verification code for primary contact
                 if primary_contact == "email":
                     verification = VerificationCode.generate_code(email)
@@ -425,7 +410,7 @@ class UserViewSet(KnoxAuthenticatedViewSet):
                 except Exception as e:
                     # This will cause the transaction to rollback automatically
                     raise Exception(f"Failed to send verification code: {e!s}")
-                    
+
         except Exception as e:
             # Transaction automatically rolled back, return error
             return Response(
@@ -452,75 +437,65 @@ class UserViewSet(KnoxAuthenticatedViewSet):
     def onboarding_progress(self, request):
         """
         GET/POST /api/accounts/onboarding-progress/
-        
+
         GET: Returns current user's onboarding progress
         POST: Updates user's onboarding progress
         """
         user = request.user
-        
+
         if request.method == "GET":
             # Return current onboarding progress
             progress_data = user.onboarding_progress or {}
-            
+
             response_data = {
                 "steps_completed": progress_data.get("steps_completed", []),
                 "current_step": progress_data.get("current_step", "profile"),
                 "completion_percentage": progress_data.get("completion_percentage", 0),
                 "skipped": progress_data.get("skipped", False),
                 "completed_at": progress_data.get("completed_at"),
-                "onboarding_completed": user.onboarding_completed
+                "onboarding_completed": user.onboarding_completed,
             }
-            
+
             return Response(response_data, status=status.HTTP_200_OK)
-        
+
         elif request.method == "POST":
             # Validate input data
             steps_completed = request.data.get("steps_completed")
             current_step = request.data.get("current_step")
             completion_percentage = request.data.get("completion_percentage")
             skipped = request.data.get("skipped", False)
-            
+
             # Validation
             if not isinstance(steps_completed, list):
-                return Response(
-                    {"error": "steps_completed must be a list"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
+                return Response({"error": "steps_completed must be a list"}, status=status.HTTP_400_BAD_REQUEST)
+
             if not current_step:
-                return Response(
-                    {"error": "current_step is required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
+                return Response({"error": "current_step is required"}, status=status.HTTP_400_BAD_REQUEST)
+
             if completion_percentage is None:
-                return Response(
-                    {"error": "completion_percentage is required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
+                return Response({"error": "completion_percentage is required"}, status=status.HTTP_400_BAD_REQUEST)
+
             if not (0 <= completion_percentage <= 100):
                 return Response(
-                    {"error": "completion_percentage must be between 0 and 100"},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"error": "completion_percentage must be between 0 and 100"}, status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             # Update user's onboarding progress
             progress_data = {
                 "steps_completed": steps_completed,
                 "current_step": current_step,
                 "completion_percentage": completion_percentage,
-                "skipped": skipped
+                "skipped": skipped,
             }
-            
+
             # Mark as completed if percentage is 100 or current_step is "completed"
             if completion_percentage == 100 or current_step == "completed":
                 user.onboarding_completed = True
                 progress_data["completed_at"] = timezone.now().isoformat()
-            
+
             user.onboarding_progress = progress_data
             user.save(update_fields=["onboarding_progress", "onboarding_completed"])
-            
+
             # Return updated progress
             response_data = {
                 "steps_completed": steps_completed,
@@ -528,72 +503,68 @@ class UserViewSet(KnoxAuthenticatedViewSet):
                 "completion_percentage": completion_percentage,
                 "skipped": skipped,
                 "completed_at": progress_data.get("completed_at"),
-                "onboarding_completed": user.onboarding_completed
+                "onboarding_completed": user.onboarding_completed,
             }
-            
+
             return Response(response_data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get", "post"])
     def navigation_preferences(self, request):
         """
         GET/POST /api/accounts/navigation-preferences/
-        
+
         GET: Returns current user's navigation preferences
         POST: Updates user's navigation preferences
         """
         user = request.user
-        
+
         if request.method == "GET":
             # Return current navigation preferences
             preferences = user.tutorial_preferences or {}
-            
+
             return Response(preferences, status=status.HTTP_200_OK)
-        
+
         elif request.method == "POST":
             # Validate and update navigation preferences
             current_preferences = user.tutorial_preferences or {}
-            
+
             # Define valid values for specific fields
             valid_landing_pages = ["dashboard", "students", "teachers", "reports", "billing"]
             valid_navigation_styles = ["sidebar", "top_nav", "compact"]
-            
+
             update_data = request.data
-            
+
             # Validation
             if "quick_actions" in update_data:
                 if not isinstance(update_data["quick_actions"], list):
-                    return Response(
-                        {"error": "quick_actions must be a list"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            
+                    return Response({"error": "quick_actions must be a list"}, status=status.HTTP_400_BAD_REQUEST)
+
             if "default_landing_page" in update_data:
                 if update_data["default_landing_page"] not in valid_landing_pages:
                     return Response(
                         {"error": f"default_landing_page must be one of: {', '.join(valid_landing_pages)}"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
-            
+
             if "navigation_style" in update_data:
                 if update_data["navigation_style"] not in valid_navigation_styles:
                     return Response(
                         {"error": f"navigation_style must be one of: {', '.join(valid_navigation_styles)}"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
-            
+
             if "tutorial_auto_start" in update_data:
                 if not isinstance(update_data["tutorial_auto_start"], bool):
                     return Response(
-                        {"error": "tutorial_auto_start must be a boolean"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        {"error": "tutorial_auto_start must be a boolean"}, status=status.HTTP_400_BAD_REQUEST
                     )
-            
+
             # Update preferences (merge with existing)
             current_preferences.update(update_data)
-            
+
             user.tutorial_preferences = current_preferences
             user.save(update_fields=["tutorial_preferences"])
-            
+
             # Return updated preferences
             return Response(current_preferences, status=status.HTTP_200_OK)
 
@@ -603,32 +574,32 @@ class ParentProfileViewSet(KnoxAuthenticatedViewSet):
     ViewSet for managing parent profiles.
     Allows parents to manage their profile settings and preferences.
     """
-    
+
     serializer_class = ParentProfileSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         """Return only the current user's parent profile."""
         return ParentProfile.objects.filter(user=self.request.user)
-    
+
     def perform_create(self, serializer):
         """Ensure parent profile is created for the current user."""
         serializer.save(user=self.request.user)
-    
-    @action(detail=True, methods=['patch'])
+
+    @action(detail=True, methods=["patch"])
     def update_notification_preferences(self, request, pk=None):
         """Update notification preferences for parent."""
         parent_profile = self.get_object()
-        
+
         # Validate and update notification preferences
-        notification_data = request.data.get('notification_preferences', {})
-        
+        notification_data = request.data.get("notification_preferences", {})
+
         # Update the preferences
         current_preferences = parent_profile.notification_preferences or {}
         current_preferences.update(notification_data)
         parent_profile.notification_preferences = current_preferences
-        parent_profile.save(update_fields=['notification_preferences', 'updated_at'])
-        
+        parent_profile.save(update_fields=["notification_preferences", "updated_at"])
+
         serializer = self.get_serializer(parent_profile)
         return Response(serializer.data)
 
@@ -638,69 +609,60 @@ class ParentChildRelationshipViewSet(KnoxAuthenticatedViewSet):
     ViewSet for managing parent-child relationships.
     Allows parents to manage their children and school administrators to oversee relationships.
     """
-    
+
     serializer_class = ParentChildRelationshipSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         """Filter relationships based on user role and permissions."""
         user = self.request.user
-        
+
         # School administrators can see all relationships in their schools
-        if user.school_memberships.filter(
-            role__in=['school_owner', 'school_admin'], 
-            is_active=True
-        ).exists():
-            admin_school_ids = list(user.school_memberships.filter(
-                role__in=['school_owner', 'school_admin'], 
-                is_active=True
-            ).values_list('school_id', flat=True))
-            return ParentChildRelationship.objects.filter(
-                school_id__in=admin_school_ids,
-                is_active=True
+        if user.school_memberships.filter(role__in=["school_owner", "school_admin"], is_active=True).exists():
+            admin_school_ids = list(
+                user.school_memberships.filter(role__in=["school_owner", "school_admin"], is_active=True).values_list(
+                    "school_id", flat=True
+                )
             )
-        
+            return ParentChildRelationship.objects.filter(school_id__in=admin_school_ids, is_active=True)
+
         # Parents can see their own relationships
-        return ParentChildRelationship.objects.filter(
-            parent=user,
-            is_active=True
-        )
-    
+        return ParentChildRelationship.objects.filter(parent=user, is_active=True)
+
     def perform_create(self, serializer):
         """Ensure relationships are created with proper validation."""
         # Additional validation could be added here
         serializer.save()
-    
-    @action(detail=True, methods=['patch'])
+
+    @action(detail=True, methods=["patch"])
     def update_permissions(self, request, pk=None):
         """Update permissions for a specific parent-child relationship."""
         relationship = self.get_object()
-        
+
         # Validate user can modify this relationship
         user = request.user
-        if not (relationship.parent == user or 
-                user.school_memberships.filter(
-                    school=relationship.school,
-                    role__in=['school_owner', 'school_admin'],
-                    is_active=True
-                ).exists()):
+        if not (
+            relationship.parent == user
+            or user.school_memberships.filter(
+                school=relationship.school, role__in=["school_owner", "school_admin"], is_active=True
+            ).exists()
+        ):
             return Response(
-                {"error": "You don't have permission to modify this relationship"},
-                status=status.HTTP_403_FORBIDDEN
+                {"error": "You don't have permission to modify this relationship"}, status=status.HTTP_403_FORBIDDEN
             )
-        
+
         # Update permissions
-        permissions_data = request.data.get('permissions', {})
+        permissions_data = request.data.get("permissions", {})
         relationship.permissions = permissions_data
-        
+
         # Update approval settings if provided
-        if 'requires_purchase_approval' in request.data:
-            relationship.requires_purchase_approval = request.data['requires_purchase_approval']
-        
-        if 'requires_session_approval' in request.data:
-            relationship.requires_session_approval = request.data['requires_session_approval']
-        
+        if "requires_purchase_approval" in request.data:
+            relationship.requires_purchase_approval = request.data["requires_purchase_approval"]
+
+        if "requires_session_approval" in request.data:
+            relationship.requires_session_approval = request.data["requires_session_approval"]
+
         relationship.save()
-        
+
         serializer = self.get_serializer(relationship)
         return Response(serializer.data)

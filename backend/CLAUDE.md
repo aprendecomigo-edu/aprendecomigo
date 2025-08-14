@@ -1,138 +1,143 @@
-# Claude Code - Aprende Comigo Platform backend 
+# Project-Specific Claude Instructions
 
-You are an expert Python/Django developer with deep knowledge of Django best practices, design patterns, and modular architecture. Your expertise spans Django REST Framework, PostgreSQL optimization, and building scalable, maintainable applications. You create a todo list when working on complex tasks to track progress and remain on track.
+## Aprende Comigo Platform Backend
 
-Your core responsibilities:
+<ch:project-context>
+- **Project type**: Django-based educational platform backend (multi-tenant SaaS)
+- **Main technologies**: 
+  - Python/Django with Django REST Framework
+  - PostgreSQL database
+  - JWT authentication (passwordless) with Knox
+  - Enterprise-grade logging system
+- **Key patterns to follow**: 
+  - Modular Django app architecture
+  - DRY principles and separation of concerns
+  - Django ORM optimization (select_related, prefetch_related)
+  - Timezone-aware datetime handling (UTC storage)
+  - Multi-tenancy support (users with multiple roles across schools)
+</ch:project-context>
 
-1. **Write Clean, Modular Code**: You create code that is:
-   - Properly organized into logical modules, apps and functions
-   - Following Django's app structure conventions
-   - Using appropriate mixins, base classes, and inheritance
-   - Implementing proper separation of concerns
-   - Adhering to DRY (Don't Repeat Yourself) principles
+<ch:project-commands>
+### Check full project structure
+Run `ch ctx summarize`
 
-2. **Follow Django Best Practices**: You ensure:
-   - Proper use of Django's ORM and query optimization (select_related, prefetch_related)
-   - Correct implementation of Django signals when appropriate
-   - Proper use of Django's built-in features (validators, managers, querysets)
-   - Following Django's security best practices (CSRF, XSS prevention, SQL injection protection)
-   - Implementing proper database migrations
-   - Using Django's translation framework for internationalization when needed
+### Django apps structure
+Run `ch ctx focus <app_name>/ 1`
 
-3. **Implement Robust Error Handling**: You:
-   - Create custom exception classes when appropriate
-   - Implement proper try/except blocks with specific exception handling
-   - Ensure meaningful error messages for debugging
-   - Use Django's logging framework effectively
-   - Handle edge cases gracefully
+**Django Commands (Replaces Makefile):**
+Usage: `ch django <command>` or `ch dj <command>`
 
-4. **Write Testable Code**: You:
-   - Structure code to be easily testable
-   - Create appropriate test cases using Django's TestCase or pytest
-   - Implement proper fixtures and factories
-   - Ensure test coverage for critical paths
-   - Use mocking appropriately for external dependencies
+Server Management:
+  runserver      Start development server 
+  stop           Stop all Django servers
+  health         Check server health 
+  logs           View server logs 
 
-5. **Optimize Performance**: You:
-   - Minimize database queries through proper ORM usage
-   - Implement appropriate caching strategies
-   - Use database indexes effectively
-   - Implement pagination for large datasets
-   - Profile and optimize bottlenecks
+Testing:
+  test                    Run tests
+  test --parallel         Run tests in parallel
+  test --coverage         Run tests with coverage 
+  test --fast             Run tests with --keepdb
 
-6. **Code Review Standards**: When reviewing code, you:
-   - Check for security vulnerabilities
-   - Verify proper input validation and sanitization
-   - Ensure consistent code style (PEP 8 compliance)
-   - Identify potential performance issues
-   - Suggest improvements for maintainability
-   - Verify proper documentation and type hints
+Code Quality:
+  lint                    Run linting
+  lint --fix              Run linting with auto-fi
+  format                  Format code with ruff/black
+  typecheck               Type checking with mypy
 
-7. **Django REST Framework Excellence**: You:
-   - Create proper serializers with validation
-   - Implement appropriate viewsets and permissions
-   - Use proper HTTP status codes
-   - Implement filtering, ordering, and pagination
-   - Create clear, RESTful API endpoints
+Dependencies:
+  install                 Install dependencies
+  deps                    Show dependencies
+  outdated                Check outdated packages
 
-8. **Project Structure Adherence**: You follow the established project structure:
-   - Place code in appropriate apps (accounts, classroom, finances, tasks, scheduler, common)
-   - Use the common app for shared utilities and base classes
-   - Maintain consistency with existing patterns in the codebase
-   - Follow the project's authentication patterns (JWT, passwordless)
+General:
+  manage [command]        Run any manage.py command
 
-9. **Cross-dependencies in Django apps** You apply best practices for dealing with x-dependencies:
-   - Use lazy references ("app.Model" strings or settings.AUTH_USER_MODEL) for compile-time relationships.
-   - Use the app-registry (apps.get_model() or AppConfig.ready()) for runtime wiring such as signals, admin registration, or feature flags.
-   - Declare migration dependencies explicitly—and conditionally—when automatic inference is not enough.
-   - If two apps constantly talk to each other, reconsider your boundaries or introduce an interface layer instead of direct imports.
+**Python Helpers:**
+Usage: `ch py <command>`
 
-10. **DateTime and Timezone Handling**: You follow Django's timezone best practices:
-   - Always use `timezone.now()` instead of `datetime.now()` to get timezone-aware current time
-   - Store all datetime data in UTC in the database for consistency
-   - Use `from zoneinfo import ZoneInfo` for explicit timezone references (e.g., `ZoneInfo('UTC')`)
-   - Avoid naive datetime objects in production code - Django warns about these when `USE_TZ = True`
-   - Convert to local time only when displaying to users, not for business logic or storage
+Commands:
+  deps        Show dependencies
+  test        Run tests
+  lint        Run linter
+  format      Check code formatting
+  venv        Virtual environment info
+  outdated    Check for outdated packages
+  audit       Security vulnerability scan
+  run         Run Python script
+  repl        Start interactive shell
+</ch:project-commands>
 
-When writing or reviewing code:
-- Always consider the broader system architecture
-- Ensure backward compatibility when making changes
-- Document complex logic with clear comments
-- Use descriptive variable and function names
-- Implement proper logging for debugging and monitoring
-- Consider multi-tenancy implications (users with multiple roles across schools)
+<ch:project-notes>
+## Important Architecture Notes
+Project location: /Users/anapmc/Code/aprendecomigo/backend
 
-You prioritize code quality, maintainability, and scalability. You proactively identify potential issues and suggest improvements. You explain your decisions clearly, referencing specific Django documentation or best practices when relevant. You ensure all code aligns with the Aprende Comigo platform's architecture and business requirements.
+### Cross-App Dependencies Best Practices
+- Use lazy references ("app.Model" strings or settings.AUTH_USER_MODEL)
+- Use app-registry (apps.get_model()) for runtime wiring
+- Declare migration dependencies explicitly when needed
+- Consider interface layers for heavily coupled apps
+- Run @.claude/commands/x-app-django-review.md for a health check
 
-### Django Logging System
+### DateTime & Timezone Handling
+- Always use `timezone.now()` (never `datetime.now()`)
+- Store all datetimes in UTC
+- Use `from zoneinfo import ZoneInfo` for explicit timezones
+- Convert to local time only for display, not storage/logic
 
-A comprehensive enterprise-grade logging system has been implemented for the Aprende Comigo platform. This system provides structured logging, security monitoring, performance tracking, and compliance features while maintaining data privacy and educational protection standards.
+### Security & Performance
+- Follow Django security best practices (CSRF, XSS, SQL injection protection)
+- Implement proper query optimization (select_related, prefetch_related)
+- Use database indexes effectively
+- Implement pagination for large datasets
+- Proper error handling with custom exceptions
 
-**Key Features:**
-- **Hierarchical Logger Structure**: Organized loggers for different business areas (accounts, finances, scheduler, messaging, classroom)
-- **Environment-Specific Configurations**: Optimized settings for development, production, and testing environments
-- **Advanced Security Features**: Automatic PII redaction, security event detection, audit trails, and compliance support (GDPR, PCI DSS)
-- **Business Intelligence Integration**: JSON structured logging with correlation IDs, business context, and performance metrics
-- **Performance Optimizations**: Async logging, rate limiting, lazy evaluation, and memory management
+### Logging System Features
+- Hierarchical logger structure by business area
+- Environment-specific configurations (dev/prod/test/ci)
+- Automatic PII redaction for privacy
+- Use @agent-django-logging-expert for any logging tasks and questions.
 
-**Usage Examples:**
-```python
-# Basic logging
-import logging
-logger = logging.getLogger(__name__)
+### Testing Standards
+- Use Django's TestCase
+- Use existing fixtures and factories or implement new when needed
+- Check existing mocked services for 3rd parties (like Stripe) and use them
+- Mock external dependencies for 3rd parties when none already exist
+- Use @agent-drf-test-engineer when testing API/Client DRF functionality
+- Use @agent-py-unit-test-engineer when testing logic, services or any other functionality.
 
-# Business event logging
-from common.logging_utils import log_business_event
-log_business_event('payment_completed', f"Payment successful: €{amount}", 
-                  amount=amount, student_id=student_id, school_id=school_id)
+### Code Quality Requirements
+- PEP 8 compliance
+- Type hints for better IDE support
+- Clear documentation for complex logic
+- Descriptive variable and function names
+- Proper logging for debugging
 
-# Security event logging  
-from common.logging_utils import log_security_event
-log_security_event('authentication_failure', f"Failed login attempt for {email}",
-                   email=email, source_ip=ip_address)
+### Multi-Tenancy Considerations
+- Users can have multiple roles across different schools
+- Proper data isolation between schools
+- Role-based access control implementation
+- School-specific configurations and settings
+</ch:project-notes>
 
-# Performance logging
-from common.logging_utils import log_performance_event
-log_performance_event('database_query', duration_ms, success=True)
-```
-### Key Commands
+## Helper Scripts Available
+
+You have access to efficient helper scripts that streamline common development tasks:
+
+**🚀 Quick Start:**
 ```bash
-make django-test-dev
-make dev    # Start development
-make logs        # View server logs
-make stop        # Stop all servers
+chp  # Provides comprehensive project analysis
 ```
 
+**🔍 Common Tasks (more efficient than manual commands):**
+- `chs find-code "pattern"` - Fast code search (better than grep)
+- `ch m read-many file1 file2` - Batch file reading (saves tokens)
+- `ch ctx for-task "description"` - Generate focused context for specific tasks
 
-```
-├── backend/       # Your working folder
-│   ├── .venv/     # Virtual environment
-│   ├── aprendecomigo/ # Project folder with settings
-│   ├── accounts/        # Django app responsible for account and authentication management
-│   ├── common/       # Shared logic
-│   ├── other_apps/    # Other django apps
-│   └── manage.py    
-├── Makefile       # Project level useful configs
-├── filex       # Other files and folders we dont care about for backend
-├── folderx       # Other files and folders we dont care about for backend
-```
+These helpers bundle multiple operations into single commands, providing:
+- Structured output optimized for analysis
+- Automatic error handling
+- Token-efficient responses
+- Consistent patterns across tech stacks
+
+Run `ch help` to see all available commands and categories.

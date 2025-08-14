@@ -40,20 +40,14 @@ class Message(models.Model):
     """A message in a channel."""
 
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE, related_name="messages")
-    sender = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="messages"
-    )
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="messages")
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     file = models.FileField(
         upload_to="chat_attachments/",
         null=True,
         blank=True,
-        validators=[
-            FileExtensionValidator(
-                allowed_extensions=["pdf", "doc", "docx", "jpg", "jpeg", "png", "gif"]
-            )
-        ],
+        validators=[FileExtensionValidator(allowed_extensions=["pdf", "doc", "docx", "jpg", "jpeg", "png", "gif"])],
     )
 
     class Meta:
@@ -67,9 +61,7 @@ class Reaction(models.Model):
     """A reaction (emoji) to a message."""
 
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="reactions")
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reactions"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reactions")
     emoji = models.CharField(max_length=10)  # Most emojis are 2-4 bytes
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -87,11 +79,7 @@ class Attachment(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="attachments")
     file = models.FileField(
         upload_to="chat_attachments/",
-        validators=[
-            FileExtensionValidator(
-                allowed_extensions=["pdf", "doc", "docx", "jpg", "jpeg", "png", "gif"]
-            )
-        ],
+        validators=[FileExtensionValidator(allowed_extensions=["pdf", "doc", "docx", "jpg", "jpeg", "png", "gif"])],
     )
     filename = models.CharField(max_length=255)
     file_type = models.CharField(max_length=50)

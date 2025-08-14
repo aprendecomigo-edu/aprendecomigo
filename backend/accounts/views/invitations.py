@@ -11,25 +11,23 @@ from django.db import models, transaction
 from django.utils import timezone
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from knox.auth import TokenAuthentication
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from knox.auth import TokenAuthentication
 
 from ..db_queries import (
     can_user_manage_school,
     list_school_ids_owned_or_managed,
 )
 from ..models import (
-    CustomUser,
     EmailDeliveryStatus,
     InvitationStatus,
     SchoolInvitation,
     SchoolInvitationLink,
     SchoolMembership,
-    SchoolRole,
     TeacherInvitation,
     TeacherProfile,
 )
@@ -80,9 +78,7 @@ class InvitationViewSet(viewsets.ModelViewSet):
             return SchoolInvitation.objects.all()
 
         # Users can see invitations sent to them or sent by them
-        return SchoolInvitation.objects.filter(
-            models.Q(email=user.email) | models.Q(invited_by=user)
-        )
+        return SchoolInvitation.objects.filter(models.Q(email=user.email) | models.Q(invited_by=user))
 
     @action(detail=True, methods=["post"])
     def accept(self, request, token=None):
@@ -139,14 +135,9 @@ class InvitationViewSet(viewsets.ModelViewSet):
                 else:
                     # Create teacher profile with provided data
                     from ..models import TeacherCourse
-                    profile_data = {
-                        key: value
-                        for key, value in validated_data.items()
-                        if key not in ["course_ids"]
-                    }
-                    teacher_profile = TeacherProfile.objects.create(
-                        user=request.user, **profile_data
-                    )
+
+                    profile_data = {key: value for key, value in validated_data.items() if key not in ["course_ids"]}
+                    teacher_profile = TeacherProfile.objects.create(user=request.user, **profile_data)
 
                 # Create school membership if it doesn't exist
                 membership, created = SchoolMembership.objects.get_or_create(
@@ -163,6 +154,7 @@ class InvitationViewSet(viewsets.ModelViewSet):
 
                 # Associate courses if provided
                 from ..models import TeacherCourse
+
                 course_ids = validated_data.get("course_ids", [])
                 teacher_courses = []
                 if course_ids:
@@ -235,7 +227,7 @@ class InvitationViewSet(viewsets.ModelViewSet):
         # Check if user can accept this invitation
         can_accept = True
         reason = None
-        
+
         if not request.user.is_authenticated:
             can_accept = False
             reason = "Authentication required"
@@ -262,11 +254,11 @@ class InvitationViewSet(viewsets.ModelViewSet):
                     "role": invitation.role,
                     "status": "pending",  # SchoolInvitation doesn't have status field
                     "token": invitation.token,
-                    "custom_message": getattr(invitation, 'custom_message', None),
+                    "custom_message": getattr(invitation, "custom_message", None),
                     "created_at": invitation.created_at.isoformat(),
                     "expires_at": invitation.expires_at.isoformat(),
                     "is_accepted": invitation.is_accepted,
-                    "invitation_link": f"https://aprendecomigo.com/accept-invitation/{invitation.token}"
+                    "invitation_link": f"https://aprendecomigo.com/accept-invitation/{invitation.token}",
                 },
                 "can_accept": can_accept,
                 "reason": reason,
@@ -315,24 +307,25 @@ class InvitationViewSet(viewsets.ModelViewSet):
         if send_email:
             try:
                 from ..services.teacher_invitation_email_service import TeacherInvitationEmailService
+
                 # For resending, we use the retry method if the invitation previously failed
                 if invitation.email_delivery_status == EmailDeliveryStatus.FAILED:
                     email_result = TeacherInvitationEmailService.retry_failed_invitation_email(invitation)
                 else:
                     email_result = TeacherInvitationEmailService.send_invitation_email(invitation)
-                
-                if email_result['success']:
+
+                if email_result["success"]:
                     notifications_sent["email"] = True
                     if invitation.email_delivery_status != EmailDeliveryStatus.SENT:
                         invitation.mark_email_sent()
                     logger.info(f"Invitation email resent to {invitation.email}")
                 else:
                     logger.warning(f"Failed to resend invitation email: {email_result.get('error', 'Unknown error')}")
-                    invitation.mark_email_failed(email_result.get('error', 'Unknown error'))
-                    
+                    invitation.mark_email_failed(email_result.get("error", "Unknown error"))
+
             except Exception as e:
                 logger.warning(f"Failed to resend invitation email: {e}")
-                invitation.mark_email_failed(f"Resend exception: {str(e)}")
+                invitation.mark_email_failed(f"Resend exception: {e!s}")
 
         # Send SMS if requested
         if send_sms:
@@ -434,13 +427,14 @@ class InvitationViewSet(viewsets.ModelViewSet):
                     pass  # Not a teacher invitation
 
                 # Log the activity
-                from ..models import SchoolActivity, ActivityType
+                from ..models import ActivityType, SchoolActivity
+
                 SchoolActivity.objects.create(
                     school=invitation.school,
                     activity_type=ActivityType.INVITATION_DECLINED,
                     actor=request.user if request.user.is_authenticated else None,
                     target_invitation=invitation,
-                    description=f"Invitation to {invitation.email} was declined"
+                    description=f"Invitation to {invitation.email} was declined",
                 )
 
                 return Response(
@@ -453,8 +447,8 @@ class InvitationViewSet(viewsets.ModelViewSet):
                                 "id": invitation.school.id,
                                 "name": invitation.school.name,
                             },
-                            "status": "declined"
-                        }
+                            "status": "declined",
+                        },
                     },
                     status=status.HTTP_200_OK,
                 )
@@ -522,31 +516,31 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
     Simplified API endpoints for teacher invitation management.
     Provides clean REST endpoints without WebSocket complexity.
     """
-    
+
     queryset = TeacherInvitation.objects.all()
     serializer_class = TeacherInvitationSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     lookup_field = "token"  # Use token instead of id for lookups
-    
+
     def get_queryset(self):
         """Filter invitations based on user permissions."""
         user = self.request.user
-        
+
         # System admins can see all invitations
         if user.is_staff or user.is_superuser:
             return TeacherInvitation.objects.all()
-        
+
         # Get schools where user is admin
         admin_school_ids = list_school_ids_owned_or_managed(user)
-        
+
         if admin_school_ids:
             # School admins can see invitations for their schools
             return TeacherInvitation.objects.filter(school_id__in=admin_school_ids)
-        
+
         # Users can see invitations sent to them
         return TeacherInvitation.objects.filter(email=user.email)
-    
+
     def get_permissions(self):
         """Different permissions for different actions."""
         if self.action in ["accept", "decline", "status"]:
@@ -559,57 +553,57 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
             # All other actions require authentication
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
-    
+
     @swagger_auto_schema(
-        method='post',
+        method="post",
         operation_summary="Accept Teacher Invitation",
         operation_description="Accept a teacher invitation and create/update teacher profile",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'bio': openapi.Schema(type=openapi.TYPE_STRING, description='Teacher bio (max 1000 chars)', maxLength=1000),
-                'specialty': openapi.Schema(type=openapi.TYPE_STRING, description='Teaching specialty'),
-                'hourly_rate': openapi.Schema(type=openapi.TYPE_NUMBER, description='Hourly rate (5.00-200.00)', minimum=5.0, maximum=200.0),
-                'phone_number': openapi.Schema(type=openapi.TYPE_STRING, description='Phone number in international format'),
-                'address': openapi.Schema(type=openapi.TYPE_STRING, description='Physical address'),
-                'teaching_subjects': openapi.Schema(
+                "bio": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Teacher bio (max 1000 chars)", maxLength=1000
+                ),
+                "specialty": openapi.Schema(type=openapi.TYPE_STRING, description="Teaching specialty"),
+                "hourly_rate": openapi.Schema(
+                    type=openapi.TYPE_NUMBER, description="Hourly rate (5.00-200.00)", minimum=5.0, maximum=200.0
+                ),
+                "phone_number": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Phone number in international format"
+                ),
+                "address": openapi.Schema(type=openapi.TYPE_STRING, description="Physical address"),
+                "teaching_subjects": openapi.Schema(
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Schema(type=openapi.TYPE_STRING),
-                    description='Array of teaching subjects (max 10)'
+                    description="Array of teaching subjects (max 10)",
                 ),
-                'education_background': openapi.Schema(
+                "education_background": openapi.Schema(
                     type=openapi.TYPE_OBJECT,
-                    description='Education background information',
+                    description="Education background information",
                     properties={
-                        'degree': openapi.Schema(type=openapi.TYPE_STRING),
-                        'university': openapi.Schema(type=openapi.TYPE_STRING),
-                        'graduation_year': openapi.Schema(type=openapi.TYPE_INTEGER),
-                    }
+                        "degree": openapi.Schema(type=openapi.TYPE_STRING),
+                        "university": openapi.Schema(type=openapi.TYPE_STRING),
+                        "graduation_year": openapi.Schema(type=openapi.TYPE_INTEGER),
+                    },
                 ),
-                'teaching_experience': openapi.Schema(
+                "teaching_experience": openapi.Schema(
                     type=openapi.TYPE_OBJECT,
-                    description='Teaching experience details',
+                    description="Teaching experience details",
                     properties={
-                        'years': openapi.Schema(type=openapi.TYPE_INTEGER),
-                        'description': openapi.Schema(type=openapi.TYPE_STRING),
-                    }
+                        "years": openapi.Schema(type=openapi.TYPE_INTEGER),
+                        "description": openapi.Schema(type=openapi.TYPE_STRING),
+                    },
                 ),
             },
             example={
-                'bio': 'Experienced mathematics teacher with passion for helping students',
-                'specialty': 'Mathematics, Physics',
-                'hourly_rate': 45.00,
-                'phone_number': '+1234567890',
-                'teaching_subjects': ['Mathematics', 'Physics'],
-                'education_background': {
-                    'degree': 'Masters in Mathematics',
-                    'university': 'University Name'
-                },
-                'teaching_experience': {
-                    'years': 5,
-                    'description': '5 years teaching high school mathematics'
-                }
-            }
+                "bio": "Experienced mathematics teacher with passion for helping students",
+                "specialty": "Mathematics, Physics",
+                "hourly_rate": 45.00,
+                "phone_number": "+1234567890",
+                "teaching_subjects": ["Mathematics", "Physics"],
+                "education_background": {"degree": "Masters in Mathematics", "university": "University Name"},
+                "teaching_experience": {"years": 5, "description": "5 years teaching high school mathematics"},
+            },
         ),
         responses={
             200: openapi.Response(
@@ -617,12 +611,12 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
                 schema=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        'success': openapi.Schema(type=openapi.TYPE_BOOLEAN),
-                        'invitation_accepted': openapi.Schema(type=openapi.TYPE_BOOLEAN),
-                        'teacher_profile': openapi.Schema(type=openapi.TYPE_OBJECT),
-                        'school_membership': openapi.Schema(type=openapi.TYPE_OBJECT),
-                    }
-                )
+                        "success": openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                        "invitation_accepted": openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                        "teacher_profile": openapi.Schema(type=openapi.TYPE_OBJECT),
+                        "school_membership": openapi.Schema(type=openapi.TYPE_OBJECT),
+                    },
+                ),
             ),
             400: openapi.Response(
                 description="Bad request - validation errors, invitation expired/accepted/declined",
@@ -642,56 +636,47 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
         },
         manual_parameters=[
             openapi.Parameter(
-                'token',
-                openapi.IN_PATH,
-                description="Unique invitation token",
-                type=openapi.TYPE_STRING,
-                required=True
+                "token", openapi.IN_PATH, description="Unique invitation token", type=openapi.TYPE_STRING, required=True
             )
         ],
-        tags=['Teacher Invitations'],
+        tags=["Teacher Invitations"],
     )
     @action(detail=True, methods=["post"], permission_classes=[AllowAny])
     def accept(self, request, token=None):
         """
         Accept a teacher invitation with comprehensive profile creation support.
         """
-        
+
         from common.error_handling import (
-            create_invitation_not_found_response,
-            create_invitation_expired_response,
+            APIErrorCode,
+            create_authentication_error_response,
             create_invitation_already_accepted_response,
             create_invitation_already_declined_response,
-            create_authentication_error_response,
+            create_invitation_expired_response,
             create_invitation_invalid_recipient_response,
+            create_invitation_not_found_response,
             create_validation_error_response,
-            APIErrorCode
         )
-        
+
         # Get invitation with proper error handling
         try:
-            invitation = TeacherInvitation.objects.select_related('school', 'invited_by').get(token=token)
+            invitation = TeacherInvitation.objects.select_related("school", "invited_by").get(token=token)
         except TeacherInvitation.DoesNotExist:
             return create_invitation_not_found_response(request_path=request.path)
-        
+
         # Check if invitation is valid with specific error responses
         if not invitation.is_valid():
             if invitation.is_accepted:
                 return create_invitation_already_accepted_response(
-                    request_path=request.path,
-                    accepted_at=invitation.accepted_at
+                    request_path=request.path, accepted_at=invitation.accepted_at
                 )
-            elif hasattr(invitation, 'declined_at') and invitation.declined_at:
+            elif hasattr(invitation, "declined_at") and invitation.declined_at:
                 return create_invitation_already_declined_response(
-                    request_path=request.path,
-                    declined_at=invitation.declined_at
+                    request_path=request.path, declined_at=invitation.declined_at
                 )
             else:
-                return create_invitation_expired_response(
-                    request_path=request.path,
-                    expires_at=invitation.expires_at
-                )
-        
+                return create_invitation_expired_response(request_path=request.path, expires_at=invitation.expires_at)
+
         # Check authentication with invitation context
         if not request.user.is_authenticated:
             return create_authentication_error_response(
@@ -702,35 +687,34 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
                         "school_name": invitation.school.name,
                         "email": invitation.email,
                         "expires_at": invitation.expires_at.isoformat(),
-                        "role": invitation.get_role_display()
+                        "role": invitation.get_role_display(),
                     }
-                }
+                },
             )
-        
+
         # Verify recipient with standardized error
         if invitation.email != request.user.email:
             return create_invitation_invalid_recipient_response(
-                expected_email=invitation.email,
-                request_path=request.path
+                expected_email=invitation.email, request_path=request.path
             )
-        
+
         # Validate profile data with improved error handling
         profile_serializer = ComprehensiveTeacherProfileCreationSerializer(data=request.data)
-        
+
         if not profile_serializer.is_valid():
             return create_validation_error_response(
                 serializer_errors=profile_serializer.errors,
                 message="Invalid teacher profile data provided",
-                request_path=request.path
+                request_path=request.path,
             )
-        
+
         validated_profile_data = profile_serializer.validated_data
-        
+
         # Process the acceptance with comprehensive profile creation
         try:
             with transaction.atomic():
                 profile_created = False
-                
+
                 # Check if user already has a teacher profile
                 if hasattr(request.user, "teacher_profile"):
                     teacher_profile = request.user.teacher_profile
@@ -738,36 +722,36 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
                     # Create teacher profile with comprehensive data or minimal defaults
                     teacher_profile = TeacherProfile.objects.create(
                         user=request.user,
-                        bio=validated_profile_data.get('bio', ''),
-                        specialty=validated_profile_data.get('specialty', ''),
-                        hourly_rate=validated_profile_data.get('hourly_rate'),
-                        availability=validated_profile_data.get('availability', ''),
-                        phone_number=validated_profile_data.get('phone_number', ''),
-                        address=validated_profile_data.get('address', ''),
-                        education_background=validated_profile_data.get('education_background', {}),
-                        teaching_subjects=validated_profile_data.get('teaching_subjects', []),
-                        rate_structure=validated_profile_data.get('rate_structure', {}),
-                        weekly_availability=validated_profile_data.get('weekly_availability', {}),
-                        grade_level_preferences=validated_profile_data.get('grade_level_preferences', []),
-                        teaching_experience=validated_profile_data.get('teaching_experience', {}),
-                        credentials_documents=validated_profile_data.get('credentials_documents', []),
-                        availability_schedule=validated_profile_data.get('availability_schedule', {}),
+                        bio=validated_profile_data.get("bio", ""),
+                        specialty=validated_profile_data.get("specialty", ""),
+                        hourly_rate=validated_profile_data.get("hourly_rate"),
+                        availability=validated_profile_data.get("availability", ""),
+                        phone_number=validated_profile_data.get("phone_number", ""),
+                        address=validated_profile_data.get("address", ""),
+                        education_background=validated_profile_data.get("education_background", {}),
+                        teaching_subjects=validated_profile_data.get("teaching_subjects", []),
+                        rate_structure=validated_profile_data.get("rate_structure", {}),
+                        weekly_availability=validated_profile_data.get("weekly_availability", {}),
+                        grade_level_preferences=validated_profile_data.get("grade_level_preferences", []),
+                        teaching_experience=validated_profile_data.get("teaching_experience", {}),
+                        credentials_documents=validated_profile_data.get("credentials_documents", []),
+                        availability_schedule=validated_profile_data.get("availability_schedule", {}),
                     )
                     profile_created = True
-                
+
                 # Update existing profile with new data if provided
                 if not profile_created and validated_profile_data:
                     for field, value in validated_profile_data.items():
-                        if field != 'profile_photo' and field != 'course_ids':  # Handle these separately
+                        if field != "profile_photo" and field != "course_ids":  # Handle these separately
                             if value is not None:  # Only update if value is provided
                                 setattr(teacher_profile, field, value)
                     teacher_profile.save()
-                
+
                 # Handle profile photo upload for CustomUser
-                if 'profile_photo' in validated_profile_data and validated_profile_data['profile_photo']:
-                    request.user.profile_photo = validated_profile_data['profile_photo']
-                    request.user.save(update_fields=['profile_photo'])
-                
+                if validated_profile_data.get("profile_photo"):
+                    request.user.profile_photo = validated_profile_data["profile_photo"]
+                    request.user.save(update_fields=["profile_photo"])
+
                 # Create or activate school membership
                 membership, membership_created = SchoolMembership.objects.get_or_create(
                     user=request.user,
@@ -775,18 +759,19 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
                     role=invitation.role,
                     defaults={"is_active": True},
                 )
-                
+
                 if not membership_created and not membership.is_active:
                     membership.is_active = True
                     membership.save()
-                
+
                 # Mark invitation as accepted
                 invitation.is_accepted = True
                 invitation.accepted_at = timezone.now()
                 invitation.save()
-                
+
                 # Return comprehensive success response
                 from ..serializers import UserSerializer
+
                 response_data = {
                     "success": True,
                     "invitation_accepted": True,
@@ -798,18 +783,19 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
                         "id": invitation.school.id,
                         "name": invitation.school.name,
                         "description": invitation.school.description,
-                    }
+                    },
                 }
-                
+
                 return Response(response_data, status=status.HTTP_201_CREATED)
-                
+
         except Exception as e:
             logger.error(f"Teacher invitation acceptance failed for token {token}: {e}")
             from common.error_handling import create_error_response
+
             return create_error_response(
                 error_code=APIErrorCode.PROFILE_CREATION_FAILED,
                 message="Failed to accept invitation and create profile",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 request_path=request.path,
-                details={"error": str(e)}
+                details={"error": str(e)},
             )

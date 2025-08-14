@@ -184,9 +184,7 @@ class SchoolMembershipAdmin(admin.ModelAdmin):
 class VerificationCodeAdmin(admin.ModelAdmin):
     list_display = ("email", "secret_key", "created_at", "is_used", "failed_attempts")
     search_fields = ("email", "secret_key")
-    fieldsets = (
-        (None, {"fields": ("email", "secret_key", "created_at", "is_used", "failed_attempts")}),
-    )
+    fieldsets = ((None, {"fields": ("email", "secret_key", "created_at", "is_used", "failed_attempts")}),)
 
 
 @admin.register(Course)
@@ -244,12 +242,12 @@ class TeacherCourseAdmin(admin.ModelAdmin):
 @admin.register(ParentProfile)
 class ParentProfileAdmin(admin.ModelAdmin):
     """Admin interface for ParentProfile model."""
-    
+
     list_display = ("get_name", "get_email", "email_notifications_enabled", "sms_notifications_enabled", "created_at")
     list_filter = ("email_notifications_enabled", "sms_notifications_enabled", "created_at")
     search_fields = ("user__name", "user__email")
     readonly_fields = ("created_at", "updated_at")
-    
+
     fieldsets = (
         (None, {"fields": ("user",)}),
         (
@@ -264,17 +262,9 @@ class ParentProfileAdmin(admin.ModelAdmin):
         ),
         (
             "Approval Settings",
-            {
-                "fields": ("default_approval_settings",)
-            },
+            {"fields": ("default_approval_settings",)},
         ),
-        (
-            "Timestamps",
-            {
-                "fields": ("created_at", "updated_at"),
-                "classes": ("collapse",)
-            }
-        ),
+        ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
 
     @admin.display(
@@ -295,15 +285,15 @@ class ParentProfileAdmin(admin.ModelAdmin):
 @admin.register(ParentChildRelationship)
 class ParentChildRelationshipAdmin(admin.ModelAdmin):
     """Admin interface for ParentChildRelationship model."""
-    
+
     list_display = (
         "get_parent_name",
-        "get_child_name", 
+        "get_child_name",
         "relationship_type",
         "school",
         "is_active",
         "requires_purchase_approval",
-        "created_at"
+        "created_at",
     )
     list_filter = (
         "relationship_type",
@@ -311,52 +301,23 @@ class ParentChildRelationshipAdmin(admin.ModelAdmin):
         "requires_purchase_approval",
         "requires_session_approval",
         "school",
-        "created_at"
+        "created_at",
     )
-    search_fields = (
-        "parent__name",
-        "parent__email",
-        "child__name", 
-        "child__email",
-        "school__name"
-    )
+    search_fields = ("parent__name", "parent__email", "child__name", "child__email", "school__name")
     readonly_fields = ("created_at", "updated_at")
-    
+
     fieldsets = (
-        (
-            "Relationship Details",
-            {
-                "fields": (
-                    "parent",
-                    "child",
-                    "relationship_type",
-                    "school",
-                    "is_active"
-                )
-            }
-        ),
+        ("Relationship Details", {"fields": ("parent", "child", "relationship_type", "school", "is_active")}),
         (
             "Permissions & Approval Settings",
-            {
-                "fields": (
-                    "requires_purchase_approval",
-                    "requires_session_approval",
-                    "permissions"
-                )
-            }
+            {"fields": ("requires_purchase_approval", "requires_session_approval", "permissions")},
         ),
-        (
-            "Timestamps",
-            {
-                "fields": ("created_at", "updated_at"),
-                "classes": ("collapse",)
-            }
-        ),
+        ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
-    
+
     # Filters for easier navigation
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('parent', 'child', 'school')
+        return super().get_queryset(request).select_related("parent", "child", "school")
 
     @admin.display(
         description="Parent",

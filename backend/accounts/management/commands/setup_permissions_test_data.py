@@ -1,5 +1,5 @@
-import logging
 from datetime import date
+import logging
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -55,9 +55,7 @@ class Command(BaseCommand):
 
         if not self.dry_run:
             # Delete test schools (this will cascade to memberships)
-            test_schools = School.objects.filter(
-                name__in=["Test School", "Test School 2", "Test School 3"]
-            )
+            test_schools = School.objects.filter(name__in=["Test School", "Test School 2", "Test School 3"])
             for school in test_schools:
                 self.stdout.write(f"  Deleting school: {school.name}")
                 school.delete()
@@ -222,9 +220,7 @@ class Command(BaseCommand):
         for user_data in users_data:
             email = user_data["email"]
             role = user_data.pop("role")  # Remove role from user_data
-            user_data.update(
-                {"email_verified": True, "phone_verified": True, "primary_contact": "email"}
-            )
+            user_data.update({"email_verified": True, "phone_verified": True, "primary_contact": "email"})
 
             self.stdout.write(f"  Creating user: {email} ({role})")
             if not self.dry_run:
@@ -249,9 +245,7 @@ class Command(BaseCommand):
         for school_name, role, description in main_memberships:
             self.stdout.write(f"    {school_name}: {role} ({description})")
             if not self.dry_run:
-                SchoolMembership.objects.create(
-                    user=main_user, school=schools[school_name], role=role, is_active=True
-                )
+                SchoolMembership.objects.create(user=main_user, school=schools[school_name], role=role, is_active=True)
 
         # Supporting user memberships
         supporting_memberships = [

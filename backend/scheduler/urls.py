@@ -2,14 +2,14 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    ClassReminderViewSet,
     ClassScheduleViewSet,
     RecurringClassScheduleViewSet,
+    ReminderPreferenceViewSet,
+    ReminderQueueViewSet,
     TeacherAvailabilityViewSet,
     TeacherUnavailabilityViewSet,
-    ReminderPreferenceViewSet,
-    ClassReminderViewSet,
     UserRemindersViewSet,
-    ReminderQueueViewSet,
 )
 
 # Create a router and register the viewsets

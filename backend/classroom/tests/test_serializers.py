@@ -8,7 +8,6 @@ and security for the real-time messaging and classroom features.
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-from rest_framework.exceptions import ValidationError
 
 from classroom.models import Attachment, Channel, Message, Reaction
 from classroom.serializers import (
@@ -78,25 +77,17 @@ class ReactionSerializerTest(TestCase):
 
     def setUp(self):
         """Set up test data for reactions."""
-        self.user1 = User.objects.create_user(
-            email="user1@example.com", username="user1", password="password"
-        )
-        self.user2 = User.objects.create_user(
-            email="user2@example.com", username="user2", password="password"
-        )
+        self.user1 = User.objects.create_user(email="user1@example.com", username="user1", password="password")
+        self.user2 = User.objects.create_user(email="user2@example.com", username="user2", password="password")
 
         self.channel = Channel.objects.create(name="test-channel")
         self.channel.participants.add(self.user1, self.user2)
 
-        self.message = Message.objects.create(
-            channel=self.channel, sender=self.user1, content="Test message"
-        )
+        self.message = Message.objects.create(channel=self.channel, sender=self.user1, content="Test message")
 
     def test_reaction_serialization_structure(self):
         """Test reaction serialization includes required fields."""
-        reaction = Reaction.objects.create(
-            message=self.message, user=self.user2, emoji="👍"
-        )
+        reaction = Reaction.objects.create(message=self.message, user=self.user2, emoji="👍")
 
         serializer = ReactionSerializer(reaction)
         data = serializer.data
@@ -139,21 +130,15 @@ class AttachmentSerializerTest(TestCase):
 
     def setUp(self):
         """Set up test file data."""
-        self.test_file = SimpleUploadedFile(
-            "test_document.pdf", b"file_content", content_type="application/pdf"
-        )
+        self.test_file = SimpleUploadedFile("test_document.pdf", b"file_content", content_type="application/pdf")
 
     def test_attachment_serialization_structure(self):
         """Test attachment serialization includes required fields."""
         # Create required dependencies
-        user = User.objects.create_user(
-            email="test@example.com", username="testuser", password="password"
-        )
+        user = User.objects.create_user(email="test@example.com", username="testuser", password="password")
         channel = Channel.objects.create(name="test-channel")
-        message = Message.objects.create(
-            channel=channel, sender=user, content="Test message"
-        )
-        
+        message = Message.objects.create(channel=channel, sender=user, content="Test message")
+
         attachment = Attachment.objects.create(
             message=message,
             file=self.test_file,
@@ -203,21 +188,15 @@ class MessageSerializerTest(TestCase):
 
     def setUp(self):
         """Set up test data for messages."""
-        self.user1 = User.objects.create_user(
-            email="user1@example.com", username="user1", password="password"
-        )
-        self.user2 = User.objects.create_user(
-            email="user2@example.com", username="user2", password="password"
-        )
+        self.user1 = User.objects.create_user(email="user1@example.com", username="user1", password="password")
+        self.user2 = User.objects.create_user(email="user2@example.com", username="user2", password="password")
 
         self.channel = Channel.objects.create(name="test-channel")
         self.channel.participants.add(self.user1, self.user2)
 
     def test_message_serialization_structure(self):
         """Test message serialization includes all expected fields."""
-        message = Message.objects.create(
-            channel=self.channel, sender=self.user1, content="Test message"
-        )
+        message = Message.objects.create(channel=self.channel, sender=self.user1, content="Test message")
 
         serializer = MessageSerializer(message)
         data = serializer.data
@@ -249,9 +228,7 @@ class MessageSerializerTest(TestCase):
 
     def test_message_validation_with_file_only(self):
         """Test message with file attachment but no content."""
-        test_file = SimpleUploadedFile(
-            "test.pdf", b"file content", content_type="application/pdf"
-        )
+        test_file = SimpleUploadedFile("test.pdf", b"file content", content_type="application/pdf")
         data = {"channel": self.channel.id, "content": "", "file": test_file}
 
         serializer = MessageSerializer(data=data)
@@ -279,9 +256,7 @@ class MessageSerializerTest(TestCase):
 
     def test_message_nested_serializers(self):
         """Test that nested serializers work correctly."""
-        message = Message.objects.create(
-            channel=self.channel, sender=self.user1, content="Test message"
-        )
+        message = Message.objects.create(channel=self.channel, sender=self.user1, content="Test message")
 
         # Add a reaction
         Reaction.objects.create(message=message, user=self.user2, emoji="👍")
@@ -300,15 +275,9 @@ class ChannelSerializerTest(TestCase):
 
     def setUp(self):
         """Set up test users and channel data."""
-        self.user1 = User.objects.create_user(
-            email="user1@example.com", username="user1", password="password"
-        )
-        self.user2 = User.objects.create_user(
-            email="user2@example.com", username="user2", password="password"
-        )
-        self.user3 = User.objects.create_user(
-            email="user3@example.com", username="user3", password="password"
-        )
+        self.user1 = User.objects.create_user(email="user1@example.com", username="user1", password="password")
+        self.user2 = User.objects.create_user(email="user2@example.com", username="user2", password="password")
+        self.user3 = User.objects.create_user(email="user3@example.com", username="user3", password="password")
 
     def test_channel_serialization_structure(self):
         """Test channel serialization includes all expected fields."""
@@ -395,9 +364,7 @@ class ChannelSerializerTest(TestCase):
         channel.participants.add(self.user1, self.user2)
 
         # Add a message
-        Message.objects.create(
-            channel=channel, sender=self.user1, content="Last message"
-        )
+        Message.objects.create(channel=channel, sender=self.user1, content="Last message")
 
         serializer = ChannelSerializer(channel)
         data = serializer.data
@@ -436,9 +403,7 @@ class SerializerSecurityTest(TestCase):
 
     def setUp(self):
         """Set up test data for security tests."""
-        self.user = User.objects.create_user(
-            email="test@example.com", username="testuser", password="password"
-        )
+        self.user = User.objects.create_user(email="test@example.com", username="testuser", password="password")
         self.channel = Channel.objects.create(name="test-channel")
         self.channel.participants.add(self.user)
 
@@ -455,10 +420,7 @@ class SerializerSecurityTest(TestCase):
             with self.subTest(content=content):
                 data = {"channel": self.channel.id, "content": content}
                 serializer = MessageSerializer(data=data)
-                self.assertTrue(
-                    serializer.is_valid(),
-                    f"Should accept content: {content}. Errors: {serializer.errors}"
-                )
+                self.assertTrue(serializer.is_valid(), f"Should accept content: {content}. Errors: {serializer.errors}")
 
     def test_channel_name_basic_validation(self):
         """Test channel name validation."""
@@ -477,16 +439,11 @@ class SerializerSecurityTest(TestCase):
                     "participant_ids": [self.user.id],
                 }
                 serializer = ChannelSerializer(data=data)
-                self.assertTrue(
-                    serializer.is_valid(),
-                    f"Should accept name: {name}. Errors: {serializer.errors}"
-                )
+                self.assertTrue(serializer.is_valid(), f"Should accept name: {name}. Errors: {serializer.errors}")
 
     def test_reaction_emoji_validation(self):
         """Test reaction emoji validation."""
-        message = Message.objects.create(
-            channel=self.channel, sender=self.user, content="Test"
-        )
+        message = Message.objects.create(channel=self.channel, sender=self.user, content="Test")
 
         valid_emojis = ["👍", "❤️", "😂", "🎉", "✅"]
 
@@ -494,10 +451,7 @@ class SerializerSecurityTest(TestCase):
             with self.subTest(emoji=emoji):
                 data = {"message": message.id, "emoji": emoji}
                 serializer = ReactionSerializer(data=data)
-                self.assertTrue(
-                    serializer.is_valid(),
-                    f"Should accept emoji: {emoji}. Errors: {serializer.errors}"
-                )
+                self.assertTrue(serializer.is_valid(), f"Should accept emoji: {emoji}. Errors: {serializer.errors}")
 
     def test_file_upload_basic_validation(self):
         """Test file upload basic validation."""

@@ -74,19 +74,17 @@ class StudentViewSet(KnoxAuthenticatedViewSet):
             ).distinct()
             return (own_profile | admin_accessible).distinct()
 
-        elif SchoolMembership.objects.filter(
-            user=user, role=SchoolRole.TEACHER, is_active=True
-        ).exists() and hasattr(user, "teacher_profile"):
+        elif SchoolMembership.objects.filter(user=user, role=SchoolRole.TEACHER, is_active=True).exists() and hasattr(
+            user, "teacher_profile"
+        ):
             # Teachers can only see students they actually teach (via ClassSession)
             from finances.models import ClassSession
 
-            taught_student_ids = ClassSession.objects.filter(
-                teacher=user.teacher_profile
-            ).values_list("students", flat=True)
+            taught_student_ids = ClassSession.objects.filter(teacher=user.teacher_profile).values_list(
+                "students", flat=True
+            )
 
-            teacher_accessible = StudentProfile.objects.filter(
-                user_id__in=taught_student_ids
-            ).distinct()
+            teacher_accessible = StudentProfile.objects.filter(user_id__in=taught_student_ids).distinct()
             return (own_profile | teacher_accessible).distinct()
 
         # For students and other users, only show their own profile

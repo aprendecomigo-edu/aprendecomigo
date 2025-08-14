@@ -6,18 +6,18 @@ courses, and the relationships between teachers and courses.
 """
 
 from typing import ClassVar
-from django.core.exceptions import ValidationError
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from .enums import (
-    EducationalSystemType,
-    PortugueseSchoolYear,
-    PortugueseEducationLevel,
-    CustomSchoolYear,
-    CustomEducationLevel,
-    BrazilianSchoolYear,
     BrazilianEducationLevel,
+    BrazilianSchoolYear,
+    CustomEducationLevel,
+    CustomSchoolYear,
+    EducationalSystemType,
+    PortugueseEducationLevel,
+    PortugueseSchoolYear,
 )
 
 
@@ -172,9 +172,7 @@ class TeacherCourse(models.Model):
     teacher: models.ForeignKey = models.ForeignKey(
         "TeacherProfile", on_delete=models.CASCADE, related_name="teacher_courses"
     )
-    course: models.ForeignKey = models.ForeignKey(
-        Course, on_delete=models.CASCADE, related_name="course_teachers"
-    )
+    course: models.ForeignKey = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="course_teachers")
     # Optional fields for teacher-specific course information
     hourly_rate: models.DecimalField = models.DecimalField(
         _("hourly rate for this course"),
@@ -185,18 +183,16 @@ class TeacherCourse(models.Model):
         help_text=_("Specific hourly rate for this course (overrides teacher's default rate)"),
     )
     is_active: models.BooleanField = models.BooleanField(_("is actively teaching"), default=True)
-    started_teaching: models.DateField = models.DateField(
-        _("started teaching date"), auto_now_add=True
-    )
+    started_teaching: models.DateField = models.DateField(_("started teaching date"), auto_now_add=True)
 
     class Meta:
         unique_together: ClassVar = ["teacher", "course"]
         indexes = [
             # Indexes for tutor discovery filtering
-            models.Index(fields=['hourly_rate']),
-            models.Index(fields=['is_active', 'hourly_rate']),
-            models.Index(fields=['course', 'is_active']),
-            models.Index(fields=['teacher', 'is_active']),
+            models.Index(fields=["hourly_rate"]),
+            models.Index(fields=["is_active", "hourly_rate"]),
+            models.Index(fields=["course", "is_active"]),
+            models.Index(fields=["teacher", "is_active"]),
         ]
 
     def __str__(self) -> str:

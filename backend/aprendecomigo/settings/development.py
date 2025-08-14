@@ -5,13 +5,10 @@ Django development settings for aprendecomigo project.
 import os
 
 # Import specific settings from base
-from .base import BASE_DIR
-from .base import SIMPLE_JWT as BASE_SIMPLE_JWT
+from .base import BASE_DIR, SIMPLE_JWT as BASE_SIMPLE_JWT
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv(
-    "SECRET_KEY", "django-insecure-r0i5j27-gmjj&c6v@0mf5=mz$oi%e75o%iw8-i1ma6ej0m7=^q"
-)
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-r0i5j27-gmjj&c6v@0mf5=mz$oi%e75o%iw8-i1ma6ej0m7=^q")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -116,7 +113,6 @@ LOGGING = {
             "level": "ERROR",  # Only show database errors in development
             "propagate": False,
         },
-        
         # Application loggers - DEBUG level for development
         "accounts": {
             "handlers": ["console"],
@@ -133,7 +129,6 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        
         "finances": {
             "handlers": ["console"],
             "level": "DEBUG",
@@ -149,7 +144,6 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
-        
         "scheduler": {
             "handlers": ["console"],
             "level": "DEBUG",
@@ -165,7 +159,6 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
-        
         "messaging": {
             "handlers": ["console"],
             "level": "DEBUG",
@@ -176,7 +169,6 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
-        
         "common": {
             "handlers": ["console"],
             "level": "DEBUG",
@@ -187,19 +179,16 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        
         "classroom": {
             "handlers": ["console"],
             "level": "DEBUG",
             "propagate": False,
         },
-        
         "tasks": {
             "handlers": ["console"],
             "level": "DEBUG",
             "propagate": False,
         },
-        
         # Business and security events - visible in development
         "business": {
             "handlers": ["console"],
@@ -216,7 +205,6 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        
         # Third-party - reduced noise
         "stripe": {
             "handlers": ["console"],
@@ -233,7 +221,7 @@ LOGGING = {
 
 
 # Import all settings from base.py
-from .base import *  # noqa: F403, E402
+from .base import *  # noqa: E402
 
 # Development-specific overrides
 # Disable throttling for development/testing to avoid rate limiting during QA tests

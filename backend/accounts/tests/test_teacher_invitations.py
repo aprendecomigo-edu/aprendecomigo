@@ -8,6 +8,7 @@ This module focuses on testing teacher invitation creation and acceptance:
 """
 
 from datetime import timedelta
+
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -20,7 +21,6 @@ from accounts.models import (
     CustomUser,
     EducationalSystem,
     School,
-    SchoolInvitation,
     SchoolMembership,
     SchoolRole,
     TeacherCourse,
@@ -40,18 +40,17 @@ class TeacherInvitationBaseTest(TestCase):
             name="Test System", code="test", description="Test system", is_active=True
         )
         self.course1 = Course.objects.create(
-            name="Test Math", code="TEST_635",
-            educational_system=self.educational_system, education_level="elementary"
+            name="Test Math", code="TEST_635", educational_system=self.educational_system, education_level="elementary"
         )
         self.course2 = Course.objects.create(
-            name="Test Portuguese", code="TEST_639",
-            educational_system=self.educational_system, education_level="elementary"
+            name="Test Portuguese",
+            code="TEST_639",
+            educational_system=self.educational_system,
+            education_level="elementary",
         )
 
         # Create test school
-        self.school = School.objects.create(
-            name="Test School", description="Test school", address="Test Address"
-        )
+        self.school = School.objects.create(name="Test School", description="Test school", address="Test Address")
 
     def create_user_with_token(self, email, name, phone="+351912000000"):
         """Factory method to create user with auth token."""
@@ -61,14 +60,12 @@ class TeacherInvitationBaseTest(TestCase):
 
     def create_school_membership(self, user, role):
         """Factory method to create school membership."""
-        return SchoolMembership.objects.create(
-            user=user, school=self.school, role=role, is_active=True
-        )
+        return SchoolMembership.objects.create(user=user, school=self.school, role=role, is_active=True)
 
     def create_invitation(self, email, invited_by, expires_in_days=7):
         """Factory method to create a school invitation."""
         from accounts.db_queries import create_school_invitation
-        
+
         return create_school_invitation(
             school_id=self.school.id,
             email=email,
@@ -85,23 +82,20 @@ class TeacherInvitationBaseTest(TestCase):
         self.client.credentials()
 
 
-
 class InvitationAcceptanceTest(TeacherInvitationBaseTest):
     """Tests for invitation acceptance endpoints."""
 
     def setUp(self):
         super().setUp()
-        
+
         # Create school owner and invitee
-        self.owner, _ = self.create_user_with_token(
-            "owner@example.com", "School Owner", "+351912000001"
-        )
+        self.owner, _ = self.create_user_with_token("owner@example.com", "School Owner", "+351912000001")
         self.create_school_membership(self.owner, SchoolRole.SCHOOL_OWNER)
 
         self.invitee, self.invitee_token = self.create_user_with_token(
             "invitee@example.com", "Invitee User", "+351912000002"
         )
-        
+
         self.wrong_user, self.wrong_user_token = self.create_user_with_token(
             "wrong@example.com", "Wrong User", "+351912000003"
         )
@@ -157,9 +151,7 @@ class InvitationAcceptanceTest(TeacherInvitationBaseTest):
         self.assertEqual(teacher_profile.specialty, data["specialty"])
 
         # Check school membership was created
-        membership = SchoolMembership.objects.get(
-            user=self.invitee, school=self.school, role=SchoolRole.TEACHER
-        )
+        membership = SchoolMembership.objects.get(user=self.invitee, school=self.school, role=SchoolRole.TEACHER)
         self.assertTrue(membership.is_active)
 
         # Check course associations
@@ -239,9 +231,7 @@ class InvitationAcceptanceTest(TeacherInvitationBaseTest):
     def test_accept_invitation_existing_teacher_profile(self):
         """Test accepting invitation when user already has teacher profile."""
         # Create teacher profile first
-        TeacherProfile.objects.create(
-            user=self.invitee, bio="Existing bio", specialty="Existing specialty"
-        )
+        TeacherProfile.objects.create(user=self.invitee, bio="Existing bio", specialty="Existing specialty")
 
         self.authenticate_user(self.invitee_token)
 

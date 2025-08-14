@@ -39,8 +39,10 @@ Examples:
 - `test_enrollment_validation_rejects_duplicate_students`
 
 ### Mocking Strategy
+- Check existing mocked services for 3rd parties (like Stripe) first and use them
+- Mock external dependencies for 3rd parties when none already exist
 - Mock only external collaborators (databases, APIs, file systems)
-- Use `unittest.mock` or `pytest-mock` appropriately
+- Use `unittest.mock` appropriately
 - Prefer dependency injection over patching when possible
 - Assert on outcomes, not call choreography (unless the calls ARE the behavior)
 - Use `freezegun` for time-dependent logic

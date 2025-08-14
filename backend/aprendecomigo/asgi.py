@@ -21,18 +21,21 @@ django_asgi_app = get_asgi_application()
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
-from classroom.consumers import ChatConsumer
 from django.urls import path
+
+from classroom.consumers import ChatConsumer
 
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
         "websocket": AllowedHostsOriginValidator(
             AuthMiddlewareStack(
-                URLRouter([
-                    # Only chat functionality uses websockets
-                    path("ws/chat/<str:channel_name>/", ChatConsumer.as_asgi()),
-                ])
+                URLRouter(
+                    [
+                        # Only chat functionality uses websockets
+                        path("ws/chat/<str:channel_name>/", ChatConsumer.as_asgi()),
+                    ]
+                )
             )
         ),
     }

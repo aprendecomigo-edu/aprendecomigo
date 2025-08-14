@@ -5,8 +5,7 @@ Django staging settings for aprendecomigo project.
 import os
 
 # Import specific settings from base
-from .base import BASE_DIR
-from .base import SIMPLE_JWT as BASE_SIMPLE_JWT
+from .base import BASE_DIR, SIMPLE_JWT as BASE_SIMPLE_JWT
 
 # SECURITY WARNING: keep the secret key used in production secret!
 secret_key = os.getenv("SECRET_KEY")
@@ -83,4 +82,4 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 SIMPLE_JWT = {**BASE_SIMPLE_JWT, "SIGNING_KEY": SECRET_KEY}
 
 # Import all settings from base.py
-from .base import *  # noqa: F403, E402
+from .base import *  # noqa: E402

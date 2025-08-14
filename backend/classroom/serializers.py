@@ -84,9 +84,7 @@ class ChannelSerializer(serializers.ModelSerializer):
         if data.get("is_direct", False):
             participant_ids = data.get("participant_ids", [])
             if len(participant_ids) != 1:
-                raise serializers.ValidationError(
-                    "Direct messages must have exactly one other participant"
-                )
+                raise serializers.ValidationError("Direct messages must have exactly one other participant")
         return data
 
     def create(self, validated_data):

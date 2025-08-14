@@ -1,14 +1,12 @@
+from datetime import date, timedelta
 from decimal import Decimal
-from datetime import timedelta
 from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from datetime import date
-from django.conf import settings
 
 if TYPE_CHECKING:
     from accounts.models import CustomUser
@@ -68,7 +66,7 @@ class WebhookEventStatus(models.TextChoices):
     """Status of webhook event processing."""
 
     RECEIVED = "received", _("Received")
-    PROCESSING = "processing", _("Processing") 
+    PROCESSING = "processing", _("Processing")
     PROCESSED = "processed", _("Processed")
     FAILED = "failed", _("Failed")
     RETRYING = "retrying", _("Retrying")
@@ -123,9 +121,7 @@ class SchoolBillingSettings(models.Model):
     def clean(self) -> None:
         """Validate payment day is between 1 and 28."""
         if self.payment_day_of_month < 1 or self.payment_day_of_month > 28:
-            raise ValidationError(
-                _("Payment day must be between 1 and 28 to ensure it exists in all months")
-            )
+            raise ValidationError(_("Payment day must be between 1 and 28 to ensure it exists in all months"))
 
 
 class TeacherCompensationRule(models.Model):
@@ -145,9 +141,7 @@ class TeacherCompensationRule(models.Model):
         verbose_name=_("school"),
     )
 
-    rule_type: models.CharField = models.CharField(
-        _("rule type"), max_length=20, choices=CompensationRuleType.choices
-    )
+    rule_type: models.CharField = models.CharField(_("rule type"), max_length=20, choices=CompensationRuleType.choices)
 
     # For grade-specific rules
     grade_level: models.CharField = models.CharField(
@@ -256,9 +250,7 @@ class ClassSession(models.Model):
     start_time: models.TimeField = models.TimeField(_("start time"))
     end_time: models.TimeField = models.TimeField(_("end time"))
 
-    session_type: models.CharField = models.CharField(
-        _("session type"), max_length=20, choices=SessionType.choices
-    )
+    session_type: models.CharField = models.CharField(_("session type"), max_length=20, choices=SessionType.choices)
 
     grade_level: models.CharField = models.CharField(
         _("grade level"),
@@ -300,14 +292,14 @@ class ClassSession(models.Model):
         blank=True,
         help_text=_("Actual duration in hours when session was completed"),
     )
-    
+
     booking_confirmed_at: models.DateTimeField = models.DateTimeField(
         _("booking confirmed at"),
         null=True,
         blank=True,
         help_text=_("Timestamp when the session booking was confirmed"),
     )
-    
+
     cancelled_at: models.DateTimeField = models.DateTimeField(
         _("cancelled at"),
         null=True,
@@ -329,10 +321,7 @@ class ClassSession(models.Model):
         ordering = ["-date", "-start_time"]
 
     def __str__(self) -> str:
-        return (
-            f"{self.teacher.user.name} - {self.get_session_type_display()} "
-            f"Grade {self.grade_level} on {self.date}"
-        )
+        return f"{self.teacher.user.name} - {self.get_session_type_display()} Grade {self.grade_level} on {self.date}"
 
     @property
     def duration_hours(self) -> Decimal:
@@ -361,13 +350,13 @@ class ClassSession(models.Model):
     def save(self, *args, **kwargs):
         """Override save to handle status changes and timestamps for existing sessions."""
         from django.utils import timezone
-        
+
         # Validate the model before saving
         self.full_clean()
-        
+
         is_new = self.pk is None
         old_status = None
-        
+
         if not is_new:
             # Get the old status to detect status changes
             try:
@@ -375,7 +364,7 @@ class ClassSession(models.Model):
                 old_status = old_session.status
             except ClassSession.DoesNotExist:
                 pass
-        
+
         # Handle timestamp updates based on status changes
         if old_status != self.status:
             if self.status == SessionStatus.SCHEDULED and not self.booking_confirmed_at:
@@ -385,10 +374,10 @@ class ClassSession(models.Model):
             elif self.status == SessionStatus.COMPLETED and not self.actual_duration_hours:
                 # Set actual duration to calculated duration if not specified
                 self.actual_duration_hours = self.duration_hours
-        
+
         # Save the session first
         super().save(*args, **kwargs)
-        
+
         # Handle status changes for existing sessions
         if not is_new and old_status != self.status:
             self._handle_session_status_change(old_status)
@@ -396,28 +385,26 @@ class ClassSession(models.Model):
     def _handle_session_status_change(self, old_status):
         """Handle status changes for existing sessions."""
         from finances.services.hour_deduction_service import HourDeductionService
-        
+
         # Handle cancellation
         if self.status == SessionStatus.CANCELLED and old_status != SessionStatus.CANCELLED:
-            HourDeductionService.refund_hours_for_session(
-                self, 
-                reason=f"Session cancelled (changed from {old_status})"
-            )
+            HourDeductionService.refund_hours_for_session(self, reason=f"Session cancelled (changed from {old_status})")
 
     def process_hour_deduction(self):
         """
         Process hour deduction for this session.
-        
+
         This method is called explicitly after students are added to handle
         hour deduction logic properly.
         """
         if self.is_trial:
             return []
-        
+
         if self.status != SessionStatus.SCHEDULED:
             return []
-        
+
         from finances.services.hour_deduction_service import HourDeductionService
+
         return HourDeductionService.validate_and_deduct_hours_for_session(self)
 
 
@@ -548,12 +535,8 @@ class StudentAccountBalance(models.Model):
     )
 
     # Audit timestamps
-    created_at: models.DateTimeField = models.DateTimeField(
-        _("created at"), auto_now_add=True
-    )
-    updated_at: models.DateTimeField = models.DateTimeField(
-        _("updated at"), auto_now=True
-    )
+    created_at: models.DateTimeField = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(_("updated at"), auto_now=True)
 
     class Meta:
         verbose_name = _("Student Account Balance")
@@ -661,25 +644,21 @@ class PurchaseTransaction(models.Model):
         blank=True,
         help_text=_("Additional transaction data in JSON format"),
     )
-    
+
     # Parent approval integration
     approval_request: models.ForeignKey = models.ForeignKey(
-        'PurchaseApprovalRequest',
+        "PurchaseApprovalRequest",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="purchase_transactions",
         verbose_name=_("approval request"),
-        help_text=_("Approval request that authorized this transaction (if applicable)")
+        help_text=_("Approval request that authorized this transaction (if applicable)"),
     )
 
     # Audit timestamps
-    created_at: models.DateTimeField = models.DateTimeField(
-        _("created at"), auto_now_add=True
-    )
-    updated_at: models.DateTimeField = models.DateTimeField(
-        _("updated at"), auto_now=True
-    )
+    created_at: models.DateTimeField = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(_("updated at"), auto_now=True)
 
     class Meta:
         verbose_name = _("Purchase Transaction")
@@ -720,116 +699,101 @@ class PurchaseTransaction(models.Model):
     def clean(self) -> None:
         """Validate transaction data."""
         super().clean()
-        
+
         # Ensure amount is not negative
         if self.amount < Decimal("0.00"):
             raise ValidationError(_("Transaction amount cannot be negative"))
-        
+
         # For subscriptions, expires_at should be null
         if self.transaction_type == TransactionType.SUBSCRIPTION and self.expires_at is not None:
-            raise ValidationError(
-                _("Subscription transactions should not have an expiration date")
-            )
+            raise ValidationError(_("Subscription transactions should not have an expiration date"))
 
 
 class PricingPlanManager(models.Manager):
     """Manager for PricingPlan model."""
-    
+
     def get_queryset(self):
         """Return queryset ordered by display_order and name."""
-        return super().get_queryset().order_by('display_order', 'name')
+        return super().get_queryset().order_by("display_order", "name")
 
 
 class ActivePricingPlanManager(models.Manager):
     """Manager for active pricing plans only."""
-    
+
     def get_queryset(self):
         """Return only active plans ordered by display_order and name."""
-        return super().get_queryset().filter(is_active=True).order_by('display_order', 'name')
+        return super().get_queryset().filter(is_active=True).order_by("display_order", "name")
 
 
 class PricingPlan(models.Model):
     """
     Pricing plan configuration model for different tutoring packages and subscriptions.
-    
+
     This model allows business users to configure pricing plans through the Django Admin
     interface without requiring code changes. Supports both package-based plans with
     validity periods and subscription-based plans.
     """
-    
+
     name: models.CharField = models.CharField(
-        _("plan name"),
-        max_length=100,
-        help_text=_("Display name for the pricing plan")
+        _("plan name"), max_length=100, help_text=_("Display name for the pricing plan")
     )
-    
+
     description: models.TextField = models.TextField(
-        _("description"),
-        help_text=_("Detailed description of what the plan includes")
+        _("description"), help_text=_("Detailed description of what the plan includes")
     )
-    
+
     plan_type: models.CharField = models.CharField(
         _("plan type"),
         max_length=20,
         choices=PlanType.choices,
-        help_text=_("Type of plan: package (expires) or subscription (recurring)")
+        help_text=_("Type of plan: package (expires) or subscription (recurring)"),
     )
-    
+
     hours_included: models.DecimalField = models.DecimalField(
         _("hours included"),
         max_digits=5,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.01"))],
-        help_text=_("Number of tutoring hours included in this plan")
+        help_text=_("Number of tutoring hours included in this plan"),
     )
-    
+
     price_eur: models.DecimalField = models.DecimalField(
         _("price (EUR)"),
         max_digits=6,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.01"))],
-        help_text=_("Price of the plan in euros")
+        help_text=_("Price of the plan in euros"),
     )
-    
+
     validity_days: models.PositiveIntegerField = models.PositiveIntegerField(
         _("validity days"),
         null=True,
         blank=True,
         validators=[MinValueValidator(1)],
-        help_text=_("Number of days the plan is valid (null for subscriptions)")
+        help_text=_("Number of days the plan is valid (null for subscriptions)"),
     )
-    
+
     # Display and organization fields
     display_order: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("display order"),
-        default=1,
-        help_text=_("Order in which plans should be displayed (lower numbers first)")
+        _("display order"), default=1, help_text=_("Order in which plans should be displayed (lower numbers first)")
     )
-    
+
     is_featured: models.BooleanField = models.BooleanField(
-        _("is featured"),
-        default=False,
-        help_text=_("Whether this plan should be highlighted as featured/recommended")
+        _("is featured"), default=False, help_text=_("Whether this plan should be highlighted as featured/recommended")
     )
-    
+
     is_active: models.BooleanField = models.BooleanField(
-        _("is active"),
-        default=True,
-        help_text=_("Whether this plan is currently available for purchase")
+        _("is active"), default=True, help_text=_("Whether this plan is currently available for purchase")
     )
-    
+
     # Audit timestamps
-    created_at: models.DateTimeField = models.DateTimeField(
-        _("created at"), auto_now_add=True
-    )
-    updated_at: models.DateTimeField = models.DateTimeField(
-        _("updated at"), auto_now=True
-    )
-    
+    created_at: models.DateTimeField = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(_("updated at"), auto_now=True)
+
     # Managers
     objects = PricingPlanManager()
     active = ActivePricingPlanManager()
-    
+
     class Meta:
         verbose_name = _("Pricing Plan")
         verbose_name_plural = _("Pricing Plans")
@@ -839,63 +803,53 @@ class PricingPlan(models.Model):
             models.Index(fields=["plan_type", "is_active"]),
             models.Index(fields=["is_featured", "is_active"]),
         ]
-    
+
     def __str__(self) -> str:
         validity_str = f"{self.validity_days} days" if self.validity_days else "subscription"
         return f"{self.name} - €{self.price_eur} ({self.hours_included}h, {validity_str})"
-    
+
     @property
     def price_per_hour(self) -> Decimal | None:
         """
         Calculate the price per hour for this plan.
-        
+
         Returns:
             Decimal: Price per hour, or None if hours_included is zero
         """
         if self.hours_included > 0:
             return self.price_eur / self.hours_included
         return None
-    
+
     def clean(self) -> None:
         """Validate the pricing plan configuration."""
         super().clean()
-        
+
         # Package plans must have validity_days specified
         if self.plan_type == PlanType.PACKAGE and not self.validity_days:
-            raise ValidationError(
-                _("Package plans must have validity_days specified")
-            )
-        
+            raise ValidationError(_("Package plans must have validity_days specified"))
+
         # Subscription plans should not have validity_days
         if self.plan_type == PlanType.SUBSCRIPTION and self.validity_days is not None:
-            raise ValidationError(
-                _("Subscription plans should not have validity_days")
-            )
-        
+            raise ValidationError(_("Subscription plans should not have validity_days"))
+
         # Ensure price is positive
         if self.price_eur <= Decimal("0"):
-            raise ValidationError(
-                _("Price must be greater than 0")
-            )
-        
+            raise ValidationError(_("Price must be greater than 0"))
+
         # Ensure hours_included is positive
         if self.hours_included <= Decimal("0"):
-            raise ValidationError(
-                _("Hours included must be greater than 0")
-            )
-        
+            raise ValidationError(_("Hours included must be greater than 0"))
+
         # Ensure validity_days is positive when specified
         if self.validity_days is not None and self.validity_days <= 0:
-            raise ValidationError(
-                _("Validity days must be greater than 0")
-            )
+            raise ValidationError(_("Validity days must be greater than 0"))
 
 
 class HourConsumption(models.Model):
     """
     Hour consumption tracking model that links sessions to hour usage.
-    
-    This model maintains an audit trail linking consumption back to original purchase 
+
+    This model maintains an audit trail linking consumption back to original purchase
     transactions and provides refund functionality for early session endings.
     """
 
@@ -959,12 +913,8 @@ class HourConsumption(models.Model):
     )
 
     # Audit timestamps
-    created_at: models.DateTimeField = models.DateTimeField(
-        _("created at"), auto_now_add=True
-    )
-    updated_at: models.DateTimeField = models.DateTimeField(
-        _("updated at"), auto_now=True
-    )
+    created_at: models.DateTimeField = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(_("updated at"), auto_now=True)
 
     class Meta:
         verbose_name = _("Hour Consumption")
@@ -972,8 +922,7 @@ class HourConsumption(models.Model):
         ordering = ["-consumed_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=["student_account", "class_session"],
-                name="unique_student_session_consumption"
+                fields=["student_account", "class_session"], name="unique_student_session_consumption"
             )
         ]
         indexes = [
@@ -993,7 +942,7 @@ class HourConsumption(models.Model):
     def hours_difference(self) -> Decimal:
         """
         Calculate the difference between originally reserved and actually consumed hours.
-        
+
         Returns:
             Decimal: Positive value indicates refund due (early ending),
                     negative value indicates overtime,
@@ -1004,34 +953,34 @@ class HourConsumption(models.Model):
     def process_refund(self, reason: str) -> Decimal:
         """
         Process a refund for this consumption record.
-        
+
         Args:
             reason: The reason for the refund
-            
+
         Returns:
             Decimal: The amount of hours refunded (0 if no refund due)
-            
+
         Raises:
             ValueError: If consumption has already been refunded
         """
         if self.is_refunded:
             raise ValueError("This consumption has already been refunded")
-        
+
         refund_hours = self.hours_difference
-        
+
         # Only process refund if there are hours to refund (positive difference)
         if refund_hours > Decimal("0.00"):
             # Update the student account balance
             self.student_account.hours_consumed -= refund_hours
             self.student_account.save(update_fields=["hours_consumed", "updated_at"])
-            
+
             # Mark this consumption as refunded
             self.is_refunded = True
             self.refund_reason = reason
             self.save(update_fields=["is_refunded", "refund_reason", "updated_at"])
-            
+
             return refund_hours
-        
+
         # No refund due
         return Decimal("0.00")
 
@@ -1040,9 +989,9 @@ class HourConsumption(models.Model):
         Override save to update student account balance when consumption is created.
         """
         is_new = self.pk is None
-        
+
         super().save(*args, **kwargs)
-        
+
         # Update student account balance on creation
         if is_new:
             self.student_account.hours_consumed += self.hours_consumed
@@ -1051,31 +1000,29 @@ class HourConsumption(models.Model):
     def clean(self) -> None:
         """Validate consumption data."""
         super().clean()
-        
+
         # Ensure hours are not negative (already handled by validators, but double-check)
         if self.hours_consumed < Decimal("0.00"):
             raise ValidationError(_("Hours consumed cannot be negative"))
-        
+
         if self.hours_originally_reserved < Decimal("0.00"):
             raise ValidationError(_("Hours originally reserved cannot be negative"))
-        
+
         # Ensure the student account belongs to one of the session students
-        if hasattr(self, 'class_session') and hasattr(self, 'student_account'):
+        if hasattr(self, "class_session") and hasattr(self, "student_account"):
             session_students = self.class_session.students.all()
             if self.student_account.student not in session_students:
-                raise ValidationError(
-                    _("Student account must belong to a student in the class session")
-                )
+                raise ValidationError(_("Student account must belong to a student in the class session"))
 
 
 class Receipt(models.Model):
     """
     Receipt model for tracking generated receipts for student purchases.
-    
+
     Provides audit trail and PDF storage for all generated receipts,
     supporting both automatic and manual receipt generation.
     """
-    
+
     student: models.ForeignKey = models.ForeignKey(
         "accounts.CustomUser",
         on_delete=models.CASCADE,
@@ -1083,7 +1030,7 @@ class Receipt(models.Model):
         verbose_name=_("student"),
         help_text=_("Student who received this receipt"),
     )
-    
+
     transaction: models.ForeignKey = models.ForeignKey(
         PurchaseTransaction,
         on_delete=models.CASCADE,
@@ -1091,7 +1038,7 @@ class Receipt(models.Model):
         verbose_name=_("transaction"),
         help_text=_("Purchase transaction this receipt is for"),
     )
-    
+
     receipt_number: models.CharField = models.CharField(
         _("receipt number"),
         max_length=50,
@@ -1100,7 +1047,7 @@ class Receipt(models.Model):
         blank=True,
         help_text=_("Unique receipt identifier"),
     )
-    
+
     amount: models.DecimalField = models.DecimalField(
         _("amount"),
         max_digits=8,
@@ -1108,13 +1055,13 @@ class Receipt(models.Model):
         validators=[MinValueValidator(Decimal("0.00"))],
         help_text=_("Receipt amount in euros"),
     )
-    
+
     generated_at: models.DateTimeField = models.DateTimeField(
         _("generated at"),
         auto_now_add=True,
         help_text=_("When the receipt was generated"),
     )
-    
+
     pdf_file: models.FileField = models.FileField(
         _("PDF file"),
         upload_to="receipts/%Y/%m/",
@@ -1122,28 +1069,24 @@ class Receipt(models.Model):
         blank=True,
         help_text=_("Generated PDF receipt file"),
     )
-    
+
     is_valid: models.BooleanField = models.BooleanField(
         _("is valid"),
         default=True,
         help_text=_("Whether this receipt is still valid"),
     )
-    
+
     metadata: models.JSONField = models.JSONField(
         _("metadata"),
         default=dict,
         blank=True,
         help_text=_("Additional receipt data in JSON format"),
     )
-    
+
     # Audit timestamps
-    created_at: models.DateTimeField = models.DateTimeField(
-        _("created at"), auto_now_add=True
-    )
-    updated_at: models.DateTimeField = models.DateTimeField(
-        _("updated at"), auto_now=True
-    )
-    
+    created_at: models.DateTimeField = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(_("updated at"), auto_now=True)
+
     class Meta:
         verbose_name = _("Receipt")
         verbose_name_plural = _("Receipts")
@@ -1153,51 +1096,48 @@ class Receipt(models.Model):
             models.Index(fields=["receipt_number"]),
             models.Index(fields=["transaction"]),
         ]
-    
+
     def __str__(self) -> str:
         return f"Receipt {self.receipt_number} - €{self.amount} for {self.student.name}"
-    
+
     def save(self, *args, **kwargs):
         """Override save to auto-generate receipt number if not provided."""
         if not self.receipt_number:
             self.receipt_number = self._generate_receipt_number()
         super().save(*args, **kwargs)
-    
+
     def _generate_receipt_number(self) -> str:
         """Generate unique receipt number."""
         import uuid
+
         from django.utils import timezone
-        
+
         # Format: RCP-YYYY-XXXXXXXX (e.g., RCP-2025-A1B2C3D4)
         year = timezone.now().year
-        unique_id = str(uuid.uuid4()).replace('-', '').upper()[:8]
+        unique_id = str(uuid.uuid4()).replace("-", "").upper()[:8]
         return f"RCP-{year}-{unique_id}"
-    
+
     def clean(self) -> None:
         """Validate receipt data."""
         super().clean()
-        
+
         # Ensure amount matches transaction amount
         if self.transaction and self.amount != self.transaction.amount:
-            raise ValidationError(
-                _("Receipt amount must match transaction amount")
-            )
-        
+            raise ValidationError(_("Receipt amount must match transaction amount"))
+
         # Ensure transaction belongs to the same student
         if self.transaction and self.student != self.transaction.student:
-            raise ValidationError(
-                _("Receipt student must match transaction student")
-            )
+            raise ValidationError(_("Receipt student must match transaction student"))
 
 
 class StoredPaymentMethod(models.Model):
     """
     Stored payment method model for secure payment method management.
-    
+
     Uses Stripe tokenization to securely store payment methods without
     handling sensitive card data directly, maintaining PCI compliance.
     """
-    
+
     student: models.ForeignKey = models.ForeignKey(
         "accounts.CustomUser",
         on_delete=models.CASCADE,
@@ -1205,14 +1145,14 @@ class StoredPaymentMethod(models.Model):
         verbose_name=_("student"),
         help_text=_("Student who owns this payment method"),
     )
-    
+
     stripe_payment_method_id: models.CharField = models.CharField(
         _("Stripe payment method ID"),
         max_length=255,
         unique=True,
         help_text=_("Stripe PaymentMethod ID for secure storage"),
     )
-    
+
     stripe_customer_id: models.CharField = models.CharField(
         _("Stripe customer ID"),
         max_length=255,
@@ -1220,55 +1160,51 @@ class StoredPaymentMethod(models.Model):
         blank=True,
         help_text=_("Stripe Customer ID associated with this payment method"),
     )
-    
+
     card_brand: models.CharField = models.CharField(
         _("card brand"),
         max_length=20,
         blank=True,
         help_text=_("Card brand (e.g., visa, mastercard)"),
     )
-    
+
     card_last4: models.CharField = models.CharField(
         _("card last 4 digits"),
         max_length=4,
         blank=True,
         help_text=_("Last 4 digits of the card for display"),
     )
-    
+
     card_exp_month: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(
         _("card expiration month"),
         null=True,
         blank=True,
         help_text=_("Card expiration month (1-12)"),
     )
-    
+
     card_exp_year: models.PositiveIntegerField = models.PositiveIntegerField(
         _("card expiration year"),
         null=True,
         blank=True,
         help_text=_("Card expiration year"),
     )
-    
+
     is_default: models.BooleanField = models.BooleanField(
         _("is default"),
         default=False,
         help_text=_("Whether this is the default payment method"),
     )
-    
+
     is_active: models.BooleanField = models.BooleanField(
         _("is active"),
         default=True,
         help_text=_("Whether this payment method is active"),
     )
-    
+
     # Audit timestamps
-    created_at: models.DateTimeField = models.DateTimeField(
-        _("created at"), auto_now_add=True
-    )
-    updated_at: models.DateTimeField = models.DateTimeField(
-        _("updated at"), auto_now=True
-    )
-    
+    created_at: models.DateTimeField = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(_("updated at"), auto_now=True)
+
     class Meta:
         verbose_name = _("Stored Payment Method")
         verbose_name_plural = _("Stored Payment Methods")
@@ -1277,7 +1213,7 @@ class StoredPaymentMethod(models.Model):
             models.UniqueConstraint(
                 fields=["student"],
                 condition=models.Q(is_default=True),
-                name="unique_default_payment_method_per_student"
+                name="unique_default_payment_method_per_student",
             )
         ]
         indexes = [
@@ -1285,87 +1221,85 @@ class StoredPaymentMethod(models.Model):
             models.Index(fields=["stripe_payment_method_id"]),
             models.Index(fields=["stripe_customer_id"]),
         ]
-    
+
     def __str__(self) -> str:
         from finances.utils.pci_compliance import get_secure_card_display
+
         default_text = " (Default)" if self.is_default else ""
         card_display = get_secure_card_display(self.card_brand, self.card_last4)
         return f"{card_display} - {self.student.name}{default_text}"
-    
+
     @property
     def is_expired(self) -> bool:
         """Check if the payment method is expired."""
         if not self.card_exp_month or not self.card_exp_year:
             return False
-        
+
         from django.utils import timezone
+
         now = timezone.now()
-        
+
         # Card expires at the end of the expiration month
-        if self.card_exp_year < now.year:
+        if self.card_exp_year < now.year or (self.card_exp_year == now.year and self.card_exp_month < now.month):
             return True
-        elif self.card_exp_year == now.year and self.card_exp_month < now.month:
-            return True
-        
+
         return False
-    
+
     @property
     def card_display(self) -> str:
         """
         Get a PCI-compliant user-friendly display string for the payment method.
-        
+
         Returns:
             str: Formatted display string (e.g., "Visa ****X242")
         """
         from finances.utils.pci_compliance import get_secure_card_display
+
         return get_secure_card_display(self.card_brand, self.card_last4)
-    
+
     def save(self, *args, **kwargs):
         """Override save to handle default payment method logic and PCI compliance."""
         from finances.utils.pci_compliance import sanitize_card_data
-        
+
         # Sanitize card data for PCI compliance before saving
         if self.card_last4:
             self.card_last4 = sanitize_card_data(self.card_last4)
-        
+
         # If this is being set as default, unset other defaults for the same student
         if self.is_default:
-            StoredPaymentMethod.objects.filter(
-                student=self.student,
-                is_default=True
-            ).exclude(pk=self.pk).update(is_default=False)
-        
+            StoredPaymentMethod.objects.filter(student=self.student, is_default=True).exclude(pk=self.pk).update(
+                is_default=False
+            )
+
         super().save(*args, **kwargs)
-    
+
     def clean(self) -> None:
         """Validate payment method data and ensure PCI compliance."""
-        from finances.utils.pci_compliance import validate_pci_compliance, is_pci_compliant_field_value
+        from finances.utils.pci_compliance import is_pci_compliant_field_value, validate_pci_compliance
+
         super().clean()
-        
+
         # Validate expiration month
         if self.card_exp_month is not None and (self.card_exp_month < 1 or self.card_exp_month > 12):
-            raise ValidationError(
-                _("Card expiration month must be between 1 and 12")
-            )
-        
+            raise ValidationError(_("Card expiration month must be between 1 and 12"))
+
         # PCI Compliance validation
         if self.card_last4:
             # Check if card_last4 contains PCI-violating patterns
-            if not is_pci_compliant_field_value('card_last4', self.card_last4):
-                raise ValidationError(
-                    _("Card last 4 digits format is not PCI compliant.")
-                )
-            
+            if not is_pci_compliant_field_value("card_last4", self.card_last4):
+                raise ValidationError(_("Card last 4 digits format is not PCI compliant."))
+
             # Validate format - should be either 4 digits or masked format (Xnnn)
-            if not (self.card_last4.isdigit() and len(self.card_last4) == 4) and \
-               not (len(self.card_last4) == 4 and self.card_last4[0] == 'X' and self.card_last4[1:].isdigit()):
+            if not (self.card_last4.isdigit() and len(self.card_last4) == 4) and not (
+                len(self.card_last4) == 4 and self.card_last4[0] == "X" and self.card_last4[1:].isdigit()
+            ):
                 raise ValidationError(
                     _("Card last 4 digits must be in 4-digit format ('4242') or masked format ('X242')")
                 )
-        
+
         # Validate that other fields don't contain sensitive data
-        for field_name in ['stripe_payment_method_id', 'stripe_customer_id', 'card_brand']:
-            field_value = getattr(self, field_name, '')
+        for field_name in ["stripe_payment_method_id", "stripe_customer_id", "card_brand"]:
+            field_value = getattr(self, field_name, "")
             if field_value and not validate_pci_compliance(field_value):
                 raise ValidationError(
                     _(f"Field '{field_name}' contains data that violates PCI compliance requirements")
@@ -1377,15 +1311,15 @@ class FamilyBudgetControl(models.Model):
     Budget control settings for parent-child relationships.
     Defines spending limits and automatic approval thresholds.
     """
-    
+
     parent_child_relationship: models.OneToOneField = models.OneToOneField(
-        'accounts.ParentChildRelationship',
+        "accounts.ParentChildRelationship",
         on_delete=models.CASCADE,
         related_name="budget_control",
         verbose_name=_("parent-child relationship"),
-        help_text=_("The parent-child relationship this budget control applies to")
+        help_text=_("The parent-child relationship this budget control applies to"),
     )
-    
+
     # Budget limits
     monthly_budget_limit: models.DecimalField = models.DecimalField(
         _("monthly budget limit"),
@@ -1394,9 +1328,9 @@ class FamilyBudgetControl(models.Model):
         null=True,
         blank=True,
         validators=[MinValueValidator(Decimal("0.00"))],
-        help_text=_("Maximum amount child can spend per month (null for no limit)")
+        help_text=_("Maximum amount child can spend per month (null for no limit)"),
     )
-    
+
     weekly_budget_limit: models.DecimalField = models.DecimalField(
         _("weekly budget limit"),
         max_digits=10,
@@ -1404,9 +1338,9 @@ class FamilyBudgetControl(models.Model):
         null=True,
         blank=True,
         validators=[MinValueValidator(Decimal("0.00"))],
-        help_text=_("Maximum amount child can spend per week (null for no limit)")
+        help_text=_("Maximum amount child can spend per week (null for no limit)"),
     )
-    
+
     # Automatic approval threshold
     auto_approval_threshold: models.DecimalField = models.DecimalField(
         _("auto approval threshold"),
@@ -1414,33 +1348,31 @@ class FamilyBudgetControl(models.Model):
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
-        help_text=_("Maximum amount that can be automatically approved without parent intervention")
+        help_text=_("Maximum amount that can be automatically approved without parent intervention"),
     )
-    
+
     # Session-specific controls
     require_approval_for_sessions: models.BooleanField = models.BooleanField(
         _("require approval for sessions"),
         default=True,
-        help_text=_("Whether parent approval is required for booking individual sessions")
+        help_text=_("Whether parent approval is required for booking individual sessions"),
     )
-    
+
     require_approval_for_packages: models.BooleanField = models.BooleanField(
         _("require approval for packages"),
         default=True,
-        help_text=_("Whether parent approval is required for purchasing hour packages")
+        help_text=_("Whether parent approval is required for purchasing hour packages"),
     )
-    
+
     # Activity tracking
     is_active: models.BooleanField = models.BooleanField(
-        _("is active"),
-        default=True,
-        help_text=_("Whether budget controls are currently active")
+        _("is active"), default=True, help_text=_("Whether budget controls are currently active")
     )
-    
+
     # Audit timestamps
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = _("Family Budget Control")
         verbose_name_plural = _("Family Budget Controls")
@@ -1451,115 +1383,105 @@ class FamilyBudgetControl(models.Model):
             models.Index(fields=["created_at"]),
             models.Index(fields=["is_active", "-created_at"]),
         ]
-    
+
     def __str__(self) -> str:
         parent_name = self.parent_child_relationship.parent.name
         child_name = self.parent_child_relationship.child.name
         return f"Budget Control: {parent_name} -> {child_name}"
-    
+
     @property
     def current_monthly_spending(self) -> Decimal:
         """Calculate current month spending for this child."""
-        from django.utils import timezone
-        from datetime import datetime
         from calendar import monthrange
-        
+        from datetime import datetime
+
+        from django.utils import timezone
+
         now = timezone.now()
         start_of_month = datetime(now.year, now.month, 1, tzinfo=now.tzinfo)
-        # Calculate end of current month  
+        # Calculate end of current month
         last_day = monthrange(now.year, now.month)[1]
         end_of_month = datetime(now.year, now.month, last_day, 23, 59, 59, 999999, tzinfo=now.tzinfo)
-        
+
         return PurchaseTransaction.objects.filter(
             student=self.parent_child_relationship.child,
             payment_status=TransactionPaymentStatus.COMPLETED,
             created_at__gte=start_of_month,
-            created_at__lt=end_of_month
-        ).aggregate(
-            total=models.Sum('amount')
-        )['total'] or Decimal('0.00')
-    
-    @property 
+            created_at__lt=end_of_month,
+        ).aggregate(total=models.Sum("amount"))["total"] or Decimal("0.00")
+
+    @property
     def current_weekly_spending(self) -> Decimal:
         """Calculate current week spending for this child."""
-        from django.utils import timezone
         from datetime import timedelta
-        
+
+        from django.utils import timezone
+
         now = timezone.now()
         # Calculate start of current week (Monday)
         start_of_week = now - timedelta(days=now.weekday())
         start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
-        # Calculate end of current week (Sunday 23:59:59) 
+        # Calculate end of current week (Sunday 23:59:59)
         end_of_week = start_of_week + timedelta(days=6, hours=23, minutes=59, seconds=59)
-        
+
         return PurchaseTransaction.objects.filter(
             student=self.parent_child_relationship.child,
             payment_status=TransactionPaymentStatus.COMPLETED,
             created_at__gte=start_of_week,
-            created_at__lt=end_of_week
-        ).aggregate(
-            total=models.Sum('amount')
-        )['total'] or Decimal('0.00')
-    
+            created_at__lt=end_of_week,
+        ).aggregate(total=models.Sum("amount"))["total"] or Decimal("0.00")
+
     def check_budget_limits(self, amount: Decimal) -> dict:
         """
         Check if a purchase amount would exceed budget limits.
-        
+
         Args:
             amount: The purchase amount to check
-            
+
         Returns:
             dict: Dictionary with 'allowed', 'can_auto_approve', 'reasons' keys indicating if purchase is allowed
         """
         reasons = []
-        
+
         # Check monthly limit
         if self.monthly_budget_limit is not None:
             if self.current_monthly_spending + amount > self.monthly_budget_limit:
                 reasons.append(f"Would exceed monthly budget limit of €{self.monthly_budget_limit}")
-        
+
         # Check weekly limit
         if self.weekly_budget_limit is not None:
             if self.current_weekly_spending + amount > self.weekly_budget_limit:
                 reasons.append(f"Would exceed weekly budget limit of €{self.weekly_budget_limit}")
-        
+
         # Auto-approval requires both: amount under threshold AND budget limits not exceeded
         budget_limits_ok = len(reasons) == 0
         can_auto_approve = amount <= self.auto_approval_threshold and budget_limits_ok
-        
-        return {
-            'allowed': budget_limits_ok,
-            'can_auto_approve': can_auto_approve,
-            'reasons': reasons
-        }
-    
+
+        return {"allowed": budget_limits_ok, "can_auto_approve": can_auto_approve, "reasons": reasons}
+
     def clean(self):
         """Validate budget control settings."""
         super().clean()
-        
+
         # Ensure auto approval threshold is not greater than budget limits
         if self.monthly_budget_limit and self.auto_approval_threshold > self.monthly_budget_limit:
-            raise ValidationError(
-                _("Auto approval threshold cannot be greater than monthly budget limit")  
-            )
-        
+            raise ValidationError(_("Auto approval threshold cannot be greater than monthly budget limit"))
+
         if self.weekly_budget_limit and self.auto_approval_threshold > self.weekly_budget_limit:
-            raise ValidationError(
-                _("Auto approval threshold cannot be greater than weekly budget limit")
-            )
+            raise ValidationError(_("Auto approval threshold cannot be greater than weekly budget limit"))
 
 
 class PurchaseRequestType(models.TextChoices):
     """Types of purchase requests that require approval."""
-    
+
     HOURS = "hours", _("Hour Package")
-    SESSION = "session", _("Individual Session") 
+    SESSION = "session", _("Individual Session")
     SUBSCRIPTION = "subscription", _("Subscription")
 
 
 class PurchaseApprovalStatus(models.TextChoices):
     """Status of purchase approval requests."""
-    
+
     PENDING = "pending", _("Pending")
     APPROVED = "approved", _("Approved")
     DENIED = "denied", _("Denied")
@@ -1572,61 +1494,60 @@ class PurchaseApprovalRequest(models.Model):
     Purchase approval requests from students to parents.
     Handles the approval workflow for purchases that exceed auto-approval thresholds.
     """
-    
+
     student: models.ForeignKey = models.ForeignKey(
         "accounts.CustomUser",
         on_delete=models.CASCADE,
         related_name="purchase_requests",
         verbose_name=_("student"),
-        help_text=_("Student requesting the purchase")
+        help_text=_("Student requesting the purchase"),
     )
-    
+
     parent: models.ForeignKey = models.ForeignKey(
         "accounts.CustomUser",
         on_delete=models.CASCADE,
         related_name="pending_approvals",
         verbose_name=_("parent"),
-        help_text=_("Parent who needs to approve the purchase")
+        help_text=_("Parent who needs to approve the purchase"),
     )
-    
+
     parent_child_relationship: models.ForeignKey = models.ForeignKey(
-        'accounts.ParentChildRelationship',
+        "accounts.ParentChildRelationship",
         on_delete=models.CASCADE,
         related_name="purchase_requests",
         verbose_name=_("parent-child relationship"),
-        help_text=_("The parent-child relationship this request is under")
+        help_text=_("The parent-child relationship this request is under"),
     )
-    
+
     # Purchase details
     amount: models.DecimalField = models.DecimalField(
         _("amount"),
         max_digits=10,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.01"))],
-        help_text=_("Amount of the purchase request")
+        help_text=_("Amount of the purchase request"),
     )
-    
+
     description: models.TextField = models.TextField(
-        _("description"),
-        help_text=_("Description of what the student wants to purchase")
+        _("description"), help_text=_("Description of what the student wants to purchase")
     )
-    
+
     request_type: models.CharField = models.CharField(
         _("request type"),
         max_length=20,
         choices=PurchaseRequestType.choices,
-        help_text=_("Type of purchase being requested")
+        help_text=_("Type of purchase being requested"),
     )
-    
+
     # Approval status and workflow
     status: models.CharField = models.CharField(
         _("status"),
         max_length=20,
         choices=PurchaseApprovalStatus.choices,
         default=PurchaseApprovalStatus.PENDING,
-        help_text=_("Current status of the approval request")
+        help_text=_("Current status of the approval request"),
     )
-    
+
     # Metadata about the requested purchase
     pricing_plan: models.ForeignKey = models.ForeignKey(
         PricingPlan,
@@ -1635,9 +1556,9 @@ class PurchaseApprovalRequest(models.Model):
         blank=True,
         related_name="approval_requests",
         verbose_name=_("pricing plan"),
-        help_text=_("Pricing plan being requested (if applicable)")
+        help_text=_("Pricing plan being requested (if applicable)"),
     )
-    
+
     class_session: models.ForeignKey = models.ForeignKey(
         ClassSession,
         on_delete=models.SET_NULL,
@@ -1645,47 +1566,36 @@ class PurchaseApprovalRequest(models.Model):
         blank=True,
         related_name="approval_requests",
         verbose_name=_("class session"),
-        help_text=_("Class session being requested (if applicable)")
+        help_text=_("Class session being requested (if applicable)"),
     )
-    
+
     # Additional request data
     request_metadata: models.JSONField = models.JSONField(
-        _("request metadata"),
-        default=dict,
-        blank=True,
-        help_text=_("Additional data about the purchase request")
+        _("request metadata"), default=dict, blank=True, help_text=_("Additional data about the purchase request")
     )
-    
+
     # Timestamps
     requested_at: models.DateTimeField = models.DateTimeField(
-        _("requested at"),
-        auto_now_add=True,
-        help_text=_("When the request was made")
+        _("requested at"), auto_now_add=True, help_text=_("When the request was made")
     )
-    
+
     responded_at: models.DateTimeField = models.DateTimeField(
-        _("responded at"),
-        null=True,
-        blank=True,
-        help_text=_("When the parent responded to the request")
+        _("responded at"), null=True, blank=True, help_text=_("When the parent responded to the request")
     )
-    
+
     expires_at: models.DateTimeField = models.DateTimeField(
-        _("expires at"),
-        help_text=_("When this request expires if not responded to")
+        _("expires at"), help_text=_("When this request expires if not responded to")
     )
-    
+
     # Parent response
     parent_notes: models.TextField = models.TextField(
-        _("parent notes"),
-        blank=True,
-        help_text=_("Optional notes from the parent about their decision")
+        _("parent notes"), blank=True, help_text=_("Optional notes from the parent about their decision")
     )
-    
+
     # Audit timestamps
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = _("Purchase Approval Request")
         verbose_name_plural = _("Purchase Approval Requests")
@@ -1697,215 +1607,206 @@ class PurchaseApprovalRequest(models.Model):
             models.Index(fields=["status", "expires_at"]),
             models.Index(fields=["request_type", "status"]),
         ]
-    
+
     def __str__(self) -> str:
         return f"Purchase Request: {self.student.name} -> {self.parent.name} (€{self.amount})"
-    
+
     def save(self, *args, **kwargs):
         """Override save to set expiration time if not provided."""
         if not self.expires_at:
-            from django.utils import timezone
             from datetime import timedelta
+
+            from django.utils import timezone
+
             # Default to 24 hours expiration
             self.expires_at = timezone.now() + timedelta(hours=24)
-        
+
         super().save(*args, **kwargs)
-    
+
     @property
     def is_expired(self) -> bool:
         """Check if the request has expired."""
         from django.utils import timezone
+
         return timezone.now() > self.expires_at
-    
-    @property 
+
+    @property
     def time_remaining(self) -> timedelta:
         """Get time remaining before expiration."""
         from django.utils import timezone
+
         if self.is_expired:
             return timedelta(0)
         return self.expires_at - timezone.now()
-    
+
     def approve(self, parent_notes: str = "") -> None:
         """
         Approve the purchase request.
-        
+
         Args:
             parent_notes: Optional notes from the parent
         """
         if self.status != PurchaseApprovalStatus.PENDING:
             raise ValidationError(_("Only pending requests can be approved"))
-        
+
         if self.is_expired:
             raise ValidationError(_("Cannot approve an expired request"))
-        
+
         from django.utils import timezone
+
         self.status = PurchaseApprovalStatus.APPROVED
         self.responded_at = timezone.now()
         self.parent_notes = parent_notes
         self.save(update_fields=["status", "responded_at", "parent_notes", "updated_at"])
-    
+
     def deny(self, parent_notes: str = "") -> None:
         """
         Deny the purchase request.
-        
+
         Args:
             parent_notes: Optional notes from the parent explaining denial
         """
         if self.status != PurchaseApprovalStatus.PENDING:
             raise ValidationError(_("Only pending requests can be denied"))
-        
+
         from django.utils import timezone
+
         self.status = PurchaseApprovalStatus.DENIED
         self.responded_at = timezone.now()
         self.parent_notes = parent_notes
         self.save(update_fields=["status", "responded_at", "parent_notes", "updated_at"])
-    
+
     def cancel(self) -> None:
         """Cancel the purchase request (student-initiated)."""
         if self.status not in [PurchaseApprovalStatus.PENDING]:
             raise ValidationError(_("Only pending requests can be cancelled"))
-        
+
         from django.utils import timezone
+
         self.status = PurchaseApprovalStatus.CANCELLED
         self.responded_at = timezone.now()
         self.save(update_fields=["status", "responded_at", "updated_at"])
-    
+
     def mark_expired(self) -> None:
         """Mark the request as expired (system-initiated)."""
         if self.status != PurchaseApprovalStatus.PENDING:
             return  # Already processed
-        
+
         from django.utils import timezone
+
         self.status = PurchaseApprovalStatus.EXPIRED
         self.responded_at = timezone.now()
         self.save(update_fields=["status", "responded_at", "updated_at"])
-    
+
     def clean(self):
         """Validate the approval request."""
         super().clean()
-        
+
         # Ensure student and parent are different users
         if self.student == self.parent:
             raise ValidationError(_("Student and parent cannot be the same user"))
-        
+
         # Ensure the parent-child relationship matches the student and parent
-        if (self.parent_child_relationship and 
-            (self.parent_child_relationship.parent != self.parent or 
-             self.parent_child_relationship.child != self.student)):
-            raise ValidationError(
-                _("Parent-child relationship must match the student and parent")
-            )
+        if self.parent_child_relationship and (
+            self.parent_child_relationship.parent != self.parent or self.parent_child_relationship.child != self.student
+        ):
+            raise ValidationError(_("Parent-child relationship must match the student and parent"))
 
 
 class WebhookEventLogManager(models.Manager):
     """Manager for WebhookEventLog model."""
-    
+
     def get_queryset(self):
         """Return queryset ordered by creation date."""
-        return super().get_queryset().order_by('-created_at')
+        return super().get_queryset().order_by("-created_at")
 
 
 class FailedWebhookEventManager(models.Manager):
     """Manager for failed webhook events only."""
-    
+
     def get_queryset(self):
         """Return only failed webhook events."""
-        return super().get_queryset().filter(
-            status=WebhookEventStatus.FAILED
-        ).order_by('-created_at')
+        return super().get_queryset().filter(status=WebhookEventStatus.FAILED).order_by("-created_at")
 
 
 class RetryableWebhookEventManager(models.Manager):
     """Manager for webhook events that can be retried."""
-    
+
     def get_queryset(self):
         """Return only retryable webhook events."""
-        return super().get_queryset().filter(
-            status__in=[WebhookEventStatus.FAILED, WebhookEventStatus.RETRYING],
-            retry_count__lt=5  # Max 5 retries
-        ).order_by('-created_at')
+        return (
+            super()
+            .get_queryset()
+            .filter(
+                status__in=[WebhookEventStatus.FAILED, WebhookEventStatus.RETRYING],
+                retry_count__lt=5,  # Max 5 retries
+            )
+            .order_by("-created_at")
+        )
 
 
 class RecentWebhookEventManager(models.Manager):
     """Manager for recent webhook events (last 24 hours)."""
-    
+
     def get_queryset(self):
         """Return webhook events from the last 24 hours."""
         from datetime import timedelta
+
         cutoff_time = timezone.now() - timedelta(hours=24)
-        return super().get_queryset().filter(
-            created_at__gte=cutoff_time
-        ).order_by('-created_at')
+        return super().get_queryset().filter(created_at__gte=cutoff_time).order_by("-created_at")
 
 
 class WebhookEventLog(models.Model):
     """
     Webhook event log model for tracking Stripe webhook processing.
-    
+
     This model provides comprehensive logging and monitoring of webhook events
     including processing status, retry logic, and error tracking for administrative
     oversight of the payment system.
     """
-    
+
     stripe_event_id: models.CharField = models.CharField(
-        _("Stripe event ID"),
-        max_length=255,
-        unique=True,
-        help_text=_("Unique Stripe event identifier")
+        _("Stripe event ID"), max_length=255, unique=True, help_text=_("Unique Stripe event identifier")
     )
-    
+
     event_type: models.CharField = models.CharField(
-        _("event type"),
-        max_length=100,
-        help_text=_("Type of Stripe webhook event (e.g., payment_intent.succeeded)")
+        _("event type"), max_length=100, help_text=_("Type of Stripe webhook event (e.g., payment_intent.succeeded)")
     )
-    
+
     status: models.CharField = models.CharField(
         _("status"),
         max_length=20,
         choices=WebhookEventStatus.choices,
         default=WebhookEventStatus.RECEIVED,
-        help_text=_("Current processing status of the webhook event")
+        help_text=_("Current processing status of the webhook event"),
     )
-    
+
     payload: models.JSONField = models.JSONField(
-        _("payload"),
-        help_text=_("Complete webhook event payload from Stripe")
+        _("payload"), help_text=_("Complete webhook event payload from Stripe")
     )
-    
+
     processed_at: models.DateTimeField = models.DateTimeField(
-        _("processed at"),
-        null=True,
-        blank=True,
-        help_text=_("Timestamp when the event was successfully processed")
+        _("processed at"), null=True, blank=True, help_text=_("Timestamp when the event was successfully processed")
     )
-    
+
     error_message: models.TextField = models.TextField(
-        _("error message"),
-        blank=True,
-        help_text=_("Error message if processing failed")
+        _("error message"), blank=True, help_text=_("Error message if processing failed")
     )
-    
+
     retry_count: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("retry count"),
-        default=0,
-        help_text=_("Number of times processing has been retried")
+        _("retry count"), default=0, help_text=_("Number of times processing has been retried")
     )
-    
+
     # Audit timestamps
-    created_at: models.DateTimeField = models.DateTimeField(
-        _("created at"), auto_now_add=True
-    )
-    updated_at: models.DateTimeField = models.DateTimeField(
-        _("updated at"), auto_now=True
-    )
-    
+    created_at: models.DateTimeField = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(_("updated at"), auto_now=True)
+
     # Managers
     objects = WebhookEventLogManager()
     failed = FailedWebhookEventManager()
     retryable = RetryableWebhookEventManager()
     recent = RecentWebhookEventManager()
-    
+
     class Meta:
         verbose_name = _("Webhook Event Log")
         verbose_name_plural = _("Webhook Event Logs")
@@ -1917,26 +1818,26 @@ class WebhookEventLog(models.Model):
             models.Index(fields=["created_at"]),
             models.Index(fields=["processed_at"]),
         ]
-    
+
     def __str__(self) -> str:
         return f"Webhook Event: {self.stripe_event_id} ({self.event_type}) - {self.get_status_display()}"
-    
+
     def mark_as_processing(self) -> None:
         """Mark the webhook event as currently being processed."""
         self.status = WebhookEventStatus.PROCESSING
         self.processed_at = timezone.now()
         self.save(update_fields=["status", "processed_at", "updated_at"])
-    
+
     def mark_as_processed(self) -> None:
         """Mark the webhook event as successfully processed."""
         self.status = WebhookEventStatus.PROCESSED
         self.processed_at = timezone.now()
         self.save(update_fields=["status", "processed_at", "updated_at"])
-    
+
     def mark_as_failed(self, error_message: str) -> None:
         """
         Mark the webhook event as failed with error message.
-        
+
         Args:
             error_message: Description of the error that occurred
         """
@@ -1944,48 +1845,48 @@ class WebhookEventLog(models.Model):
         self.error_message = error_message
         self.processed_at = timezone.now()
         self.save(update_fields=["status", "error_message", "processed_at", "updated_at"])
-    
+
     def increment_retry_count(self) -> None:
         """Increment the retry count and mark as retrying."""
         self.retry_count += 1
         self.status = WebhookEventStatus.RETRYING
         self.save(update_fields=["retry_count", "status", "updated_at"])
-    
+
     def is_retryable(self) -> bool:
         """
         Check if the webhook event can be retried.
-        
+
         Returns:
             bool: True if the event can be retried, False otherwise
         """
         # Don't retry if already processed
         if self.status == WebhookEventStatus.PROCESSED:
             return False
-        
+
         # Don't retry if exceeded max retry count
         if self.retry_count >= 5:
             return False
-        
+
         return True
-    
+
     def get_processing_duration(self) -> timedelta | None:
         """
         Calculate the processing duration if event has been processed.
-        
+
         Returns:
             timedelta: Duration between creation and processing, or None if not processed
         """
         if not self.processed_at:
             return None
-        
+
         return self.processed_at - self.created_at
-    
+
     @property
     def is_recent(self) -> bool:
         """Check if the event was created in the last 24 hours."""
         cutoff_time = timezone.now() - timedelta(hours=24)
         return self.created_at >= cutoff_time
-    
+
     @property
     def processing_time_seconds(self) -> float | None:
         """Get processing time in seconds, or None if not processed."""
@@ -1995,7 +1896,7 @@ class WebhookEventLog(models.Model):
 
 class DisputeStatus(models.TextChoices):
     """Status choices for payment disputes."""
-    
+
     WARNING_NEEDS_RESPONSE = "warning_needs_response", _("Warning - Needs Response")
     WARNING_UNDER_REVIEW = "warning_under_review", _("Warning - Under Review")
     WARNING_CLOSED = "warning_closed", _("Warning - Closed")
@@ -2008,7 +1909,7 @@ class DisputeStatus(models.TextChoices):
 
 class DisputeReason(models.TextChoices):
     """Reason choices for payment disputes."""
-    
+
     DUPLICATE = "duplicate", _("Duplicate")
     FRAUDULENT = "fraudulent", _("Fraudulent")
     SUBSCRIPTION_CANCELED = "subscription_canceled", _("Subscription Canceled")
@@ -2021,7 +1922,7 @@ class DisputeReason(models.TextChoices):
 
 class AdminActionType(models.TextChoices):
     """Types of administrative actions."""
-    
+
     REFUND_CREATED = "refund_created", _("Refund Created")
     REFUND_FAILED = "refund_failed", _("Refund Failed")
     DISPUTE_RESPONSE = "dispute_response", _("Dispute Response")
@@ -2033,7 +1934,7 @@ class AdminActionType(models.TextChoices):
 
 class FraudAlertSeverity(models.TextChoices):
     """Severity levels for fraud alerts."""
-    
+
     LOW = "low", _("Low")
     MEDIUM = "medium", _("Medium")
     HIGH = "high", _("High")
@@ -2042,7 +1943,7 @@ class FraudAlertSeverity(models.TextChoices):
 
 class FraudAlertStatus(models.TextChoices):
     """Status choices for fraud alerts."""
-    
+
     ACTIVE = "active", _("Active")
     INVESTIGATING = "investigating", _("Investigating")
     RESOLVED = "resolved", _("Resolved")
@@ -2052,105 +1953,77 @@ class FraudAlertStatus(models.TextChoices):
 class PaymentDispute(models.Model):
     """
     Local tracking of payment disputes from Stripe.
-    
+
     This model maintains dispute information locally for faster access
     and provides additional metadata and processing status tracking.
     """
-    
+
     # Stripe dispute information
     stripe_dispute_id: models.CharField = models.CharField(
-        _("Stripe dispute ID"),
-        max_length=255,
-        unique=True,
-        help_text=_("Unique Stripe dispute identifier")
+        _("Stripe dispute ID"), max_length=255, unique=True, help_text=_("Unique Stripe dispute identifier")
     )
-    
+
     # Related transaction
     purchase_transaction: models.ForeignKey = models.ForeignKey(
         PurchaseTransaction,
         on_delete=models.CASCADE,
         related_name="disputes",
         verbose_name=_("purchase transaction"),
-        help_text=_("The purchase transaction being disputed")
+        help_text=_("The purchase transaction being disputed"),
     )
-    
+
     # Dispute details
     amount: models.DecimalField = models.DecimalField(
         _("dispute amount"),
         max_digits=8,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.01"))],
-        help_text=_("Amount being disputed in euros")
+        help_text=_("Amount being disputed in euros"),
     )
-    
+
     currency: models.CharField = models.CharField(
-        _("currency"),
-        max_length=3,
-        default="eur",
-        help_text=_("Currency of the disputed amount")
+        _("currency"), max_length=3, default="eur", help_text=_("Currency of the disputed amount")
     )
-    
+
     reason: models.CharField = models.CharField(
-        _("dispute reason"),
-        max_length=50,
-        choices=DisputeReason.choices,
-        help_text=_("Reason for the dispute")
+        _("dispute reason"), max_length=50, choices=DisputeReason.choices, help_text=_("Reason for the dispute")
     )
-    
+
     status: models.CharField = models.CharField(
-        _("status"),
-        max_length=50,
-        choices=DisputeStatus.choices,
-        help_text=_("Current status of the dispute")
+        _("status"), max_length=50, choices=DisputeStatus.choices, help_text=_("Current status of the dispute")
     )
-    
+
     # Evidence and response
     evidence_details: models.JSONField = models.JSONField(
-        _("evidence details"),
-        default=dict,
-        blank=True,
-        help_text=_("Evidence details and documentation")
+        _("evidence details"), default=dict, blank=True, help_text=_("Evidence details and documentation")
     )
-    
+
     evidence_due_by: models.DateTimeField = models.DateTimeField(
-        _("evidence due by"),
-        null=True,
-        blank=True,
-        help_text=_("Deadline for submitting evidence")
+        _("evidence due by"), null=True, blank=True, help_text=_("Deadline for submitting evidence")
     )
-    
+
     # Internal tracking
     is_responded: models.BooleanField = models.BooleanField(
-        _("is responded"),
-        default=False,
-        help_text=_("Whether we have responded to this dispute")
+        _("is responded"), default=False, help_text=_("Whether we have responded to this dispute")
     )
-    
+
     response_submitted_at: models.DateTimeField = models.DateTimeField(
-        _("response submitted at"),
-        null=True,
-        blank=True,
-        help_text=_("When our response was submitted")
+        _("response submitted at"), null=True, blank=True, help_text=_("When our response was submitted")
     )
-    
+
     internal_notes: models.TextField = models.TextField(
-        _("internal notes"),
-        blank=True,
-        help_text=_("Internal notes about this dispute")
+        _("internal notes"), blank=True, help_text=_("Internal notes about this dispute")
     )
-    
+
     # Metadata from Stripe
     stripe_metadata: models.JSONField = models.JSONField(
-        _("Stripe metadata"),
-        default=dict,
-        blank=True,
-        help_text=_("Complete metadata from Stripe dispute object")
+        _("Stripe metadata"), default=dict, blank=True, help_text=_("Complete metadata from Stripe dispute object")
     )
-    
+
     # Audit timestamps
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = _("Payment Dispute")
         verbose_name_plural = _("Payment Disputes")
@@ -2162,17 +2035,17 @@ class PaymentDispute(models.Model):
             models.Index(fields=["reason", "status"]),
             models.Index(fields=["is_responded", "evidence_due_by"]),
         ]
-    
+
     def __str__(self) -> str:
         return f"Dispute {self.stripe_dispute_id} - €{self.amount} ({self.get_status_display()})"
-    
+
     @property
     def is_evidence_overdue(self) -> bool:
         """Check if evidence submission is overdue."""
         if not self.evidence_due_by:
             return False
         return timezone.now() > self.evidence_due_by
-    
+
     @property
     def days_until_evidence_due(self) -> int:
         """Calculate days remaining until evidence is due."""
@@ -2180,7 +2053,7 @@ class PaymentDispute(models.Model):
             return 0
         delta = self.evidence_due_by - timezone.now()
         return max(0, delta.days)
-    
+
     def mark_responded(self) -> None:
         """Mark the dispute as responded to."""
         self.is_responded = True
@@ -2191,33 +2064,32 @@ class PaymentDispute(models.Model):
 class AdminAction(models.Model):
     """
     Comprehensive audit trail for all administrative actions.
-    
+
     This model provides complete tracking of administrative operations
     for compliance, security, and operational monitoring.
     """
-    
+
     # Action identification
     action_type: models.CharField = models.CharField(
         _("action type"),
         max_length=50,
         choices=AdminActionType.choices,
-        help_text=_("Type of administrative action performed")
+        help_text=_("Type of administrative action performed"),
     )
-    
+
     action_description: models.TextField = models.TextField(
-        _("action description"),
-        help_text=_("Detailed description of the action performed")
+        _("action description"), help_text=_("Detailed description of the action performed")
     )
-    
+
     # User who performed the action
     admin_user: models.ForeignKey = models.ForeignKey(
         "accounts.CustomUser",
         on_delete=models.PROTECT,
         related_name="admin_actions",
         verbose_name=_("admin user"),
-        help_text=_("Administrator who performed this action")
+        help_text=_("Administrator who performed this action"),
     )
-    
+
     # Target entities (optional, depends on action type)
     target_user: models.ForeignKey = models.ForeignKey(
         "accounts.CustomUser",
@@ -2226,9 +2098,9 @@ class AdminAction(models.Model):
         blank=True,
         related_name="admin_actions_targeting_me",
         verbose_name=_("target user"),
-        help_text=_("User affected by this action (if applicable)")
+        help_text=_("User affected by this action (if applicable)"),
     )
-    
+
     target_transaction: models.ForeignKey = models.ForeignKey(
         PurchaseTransaction,
         on_delete=models.CASCADE,
@@ -2236,9 +2108,9 @@ class AdminAction(models.Model):
         blank=True,
         related_name="admin_actions",
         verbose_name=_("target transaction"),
-        help_text=_("Transaction affected by this action (if applicable)")
+        help_text=_("Transaction affected by this action (if applicable)"),
     )
-    
+
     target_dispute: models.ForeignKey = models.ForeignKey(
         PaymentDispute,
         on_delete=models.CASCADE,
@@ -2246,21 +2118,16 @@ class AdminAction(models.Model):
         blank=True,
         related_name="admin_actions",
         verbose_name=_("target dispute"),
-        help_text=_("Dispute affected by this action (if applicable)")
+        help_text=_("Dispute affected by this action (if applicable)"),
     )
-    
+
     # Action results
-    success: models.BooleanField = models.BooleanField(
-        _("success"),
-        help_text=_("Whether the action was successful")
-    )
-    
+    success: models.BooleanField = models.BooleanField(_("success"), help_text=_("Whether the action was successful"))
+
     result_message: models.TextField = models.TextField(
-        _("result message"),
-        blank=True,
-        help_text=_("Result message or error details")
+        _("result message"), blank=True, help_text=_("Result message or error details")
     )
-    
+
     # Financial impact
     amount_impacted: models.DecimalField = models.DecimalField(
         _("amount impacted"),
@@ -2268,48 +2135,35 @@ class AdminAction(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
-        help_text=_("Financial amount impacted by this action")
+        help_text=_("Financial amount impacted by this action"),
     )
-    
+
     # Detailed action data
     action_data: models.JSONField = models.JSONField(
-        _("action data"),
-        default=dict,
-        blank=True,
-        help_text=_("Detailed data about the action performed")
+        _("action data"), default=dict, blank=True, help_text=_("Detailed data about the action performed")
     )
-    
+
     # External system references
     stripe_reference_id: models.CharField = models.CharField(
-        _("Stripe reference ID"),
-        max_length=255,
-        blank=True,
-        help_text=_("Related Stripe object ID (if applicable)")
+        _("Stripe reference ID"), max_length=255, blank=True, help_text=_("Related Stripe object ID (if applicable)")
     )
-    
+
     # Security and compliance
     ip_address: models.GenericIPAddressField = models.GenericIPAddressField(
-        _("IP address"),
-        null=True,
-        blank=True,
-        help_text=_("IP address from which the action was performed")
+        _("IP address"), null=True, blank=True, help_text=_("IP address from which the action was performed")
     )
-    
+
     user_agent: models.TextField = models.TextField(
-        _("user agent"),
-        blank=True,
-        help_text=_("User agent of the client that performed the action")
+        _("user agent"), blank=True, help_text=_("User agent of the client that performed the action")
     )
-    
+
     two_factor_verified: models.BooleanField = models.BooleanField(
-        _("two factor verified"),
-        default=False,
-        help_text=_("Whether two-factor authentication was verified")
+        _("two factor verified"), default=False, help_text=_("Whether two-factor authentication was verified")
     )
-    
+
     # Audit timestamps
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         verbose_name = _("Admin Action")
         verbose_name_plural = _("Admin Actions")
@@ -2323,7 +2177,7 @@ class AdminAction(models.Model):
             models.Index(fields=["stripe_reference_id"]),
             models.Index(fields=["two_factor_verified", "-created_at"]),
         ]
-    
+
     def __str__(self) -> str:
         status = "✓" if self.success else "✗"
         return f"{status} {self.get_action_type_display()} by {self.admin_user.name} at {self.created_at}"
@@ -2332,46 +2186,40 @@ class AdminAction(models.Model):
 class FraudAlert(models.Model):
     """
     Fraud detection alerts for suspicious payment patterns.
-    
+
     This model tracks potentially fraudulent activities and provides
     a system for investigating and resolving security concerns.
     """
-    
+
     # Alert identification
     alert_id: models.CharField = models.CharField(
-        _("alert ID"),
-        max_length=50,
-        unique=True,
-        help_text=_("Unique identifier for this fraud alert")
+        _("alert ID"), max_length=50, unique=True, help_text=_("Unique identifier for this fraud alert")
     )
-    
+
     # Alert details
     severity: models.CharField = models.CharField(
         _("severity"),
         max_length=20,
         choices=FraudAlertSeverity.choices,
-        help_text=_("Severity level of the fraud alert")
+        help_text=_("Severity level of the fraud alert"),
     )
-    
+
     status: models.CharField = models.CharField(
         _("status"),
         max_length=20,
         choices=FraudAlertStatus.choices,
         default=FraudAlertStatus.ACTIVE,
-        help_text=_("Current status of the fraud alert")
+        help_text=_("Current status of the fraud alert"),
     )
-    
+
     alert_type: models.CharField = models.CharField(
-        _("alert type"),
-        max_length=100,
-        help_text=_("Type of fraud pattern detected")
+        _("alert type"), max_length=100, help_text=_("Type of fraud pattern detected")
     )
-    
+
     description: models.TextField = models.TextField(
-        _("description"),
-        help_text=_("Detailed description of the suspicious activity")
+        _("description"), help_text=_("Detailed description of the suspicious activity")
     )
-    
+
     # Related entities
     target_user: models.ForeignKey = models.ForeignKey(
         "accounts.CustomUser",
@@ -2380,33 +2228,30 @@ class FraudAlert(models.Model):
         blank=True,
         related_name="fraud_alerts",
         verbose_name=_("target user"),
-        help_text=_("User associated with this fraud alert")
+        help_text=_("User associated with this fraud alert"),
     )
-    
+
     related_transactions: models.ManyToManyField = models.ManyToManyField(
         PurchaseTransaction,
         blank=True,
         related_name="fraud_alerts",
         verbose_name=_("related transactions"),
-        help_text=_("Transactions that triggered this alert")
+        help_text=_("Transactions that triggered this alert"),
     )
-    
+
     # Detection data
     detection_data: models.JSONField = models.JSONField(
-        _("detection data"),
-        default=dict,
-        blank=True,
-        help_text=_("Data used to detect this fraud pattern")
+        _("detection data"), default=dict, blank=True, help_text=_("Data used to detect this fraud pattern")
     )
-    
+
     risk_score: models.DecimalField = models.DecimalField(
         _("risk score"),
         max_digits=5,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.00")), MaxValueValidator(Decimal("100.00"))],
-        help_text=_("Risk assessment score (0-100)")
+        help_text=_("Risk assessment score (0-100)"),
     )
-    
+
     # Investigation tracking
     assigned_to: models.ForeignKey = models.ForeignKey(
         "accounts.CustomUser",
@@ -2415,34 +2260,26 @@ class FraudAlert(models.Model):
         blank=True,
         related_name="assigned_fraud_alerts",
         verbose_name=_("assigned to"),
-        help_text=_("Administrator assigned to investigate this alert")
+        help_text=_("Administrator assigned to investigate this alert"),
     )
-    
+
     investigated_at: models.DateTimeField = models.DateTimeField(
-        _("investigated at"),
-        null=True,
-        blank=True,
-        help_text=_("When the alert was investigated")
+        _("investigated at"), null=True, blank=True, help_text=_("When the alert was investigated")
     )
-    
+
     resolution_notes: models.TextField = models.TextField(
-        _("resolution notes"),
-        blank=True,
-        help_text=_("Notes about how this alert was resolved")
+        _("resolution notes"), blank=True, help_text=_("Notes about how this alert was resolved")
     )
-    
+
     # Actions taken
     actions_taken: models.JSONField = models.JSONField(
-        _("actions taken"),
-        default=list,
-        blank=True,
-        help_text=_("List of actions taken in response to this alert")
+        _("actions taken"), default=list, blank=True, help_text=_("List of actions taken in response to this alert")
     )
-    
+
     # Audit timestamps
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = _("Fraud Alert")
         verbose_name_plural = _("Fraud Alerts")
@@ -2455,43 +2292,44 @@ class FraudAlert(models.Model):
             models.Index(fields=["risk_score", "-created_at"]),
             models.Index(fields=["alert_type", "status"]),
         ]
-    
+
     def __str__(self) -> str:
         return f"Fraud Alert {self.alert_id} - {self.get_severity_display()} ({self.get_status_display()})"
-    
+
     def save(self, *args, **kwargs):
         """Override save to auto-generate alert ID if not provided."""
         if not self.alert_id:
             self.alert_id = self._generate_alert_id()
         super().save(*args, **kwargs)
-    
+
     def _generate_alert_id(self) -> str:
         """Generate unique alert ID."""
         import uuid
+
         from django.utils import timezone
-        
+
         # Format: FA-YYYY-XXXXXXXX (e.g., FA-2025-A1B2C3D4)
         year = timezone.now().year
-        unique_id = str(uuid.uuid4()).replace('-', '').upper()[:8]
+        unique_id = str(uuid.uuid4()).replace("-", "").upper()[:8]
         return f"FA-{year}-{unique_id}"
-    
+
     @property
     def is_high_priority(self) -> bool:
         """Check if this is a high priority alert."""
         return self.severity in [FraudAlertSeverity.HIGH, FraudAlertSeverity.CRITICAL]
-    
+
     @property
     def days_since_created(self) -> int:
         """Calculate days since the alert was created."""
         delta = timezone.now() - self.created_at
         return delta.days
-    
+
     def assign_to_investigator(self, admin_user: "CustomUser") -> None:
         """Assign the alert to an investigator."""
         self.assigned_to = admin_user
         self.status = FraudAlertStatus.INVESTIGATING
         self.save(update_fields=["assigned_to", "status", "updated_at"])
-    
+
     def mark_resolved(self, resolution_notes: str, actions_taken: list = None) -> None:
         """Mark the alert as resolved."""
         self.status = FraudAlertStatus.RESOLVED
@@ -2500,7 +2338,7 @@ class FraudAlert(models.Model):
         if actions_taken:
             self.actions_taken = actions_taken
         self.save(update_fields=["status", "investigated_at", "resolution_notes", "actions_taken", "updated_at"])
-    
+
     def mark_false_positive(self, resolution_notes: str) -> None:
         """Mark the alert as a false positive."""
         self.status = FraudAlertStatus.FALSE_POSITIVE

@@ -78,6 +78,7 @@ class RecurringClassScheduleAdmin(admin.ModelAdmin):
         if obj.students.count() > 3:
             student_names.append(f"... (+{obj.students.count() - 3} more)")
         return ", ".join(student_names) if student_names else "No students"
+
     get_students_display.short_description = "Students"
 
     fieldsets = (

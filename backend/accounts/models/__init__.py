@@ -6,6 +6,12 @@ to maintain backward compatibility with the original models.py structure.
 """
 
 # Import all enums
+# Import educational system models
+from .educational import (
+    Course,
+    EducationalSystem,
+    TeacherCourse,
+)
 from .enums import (
     ActivityType,
     AssessmentType,
@@ -29,26 +35,12 @@ from .enums import (
     TrialCostAbsorption,
 )
 
-# Import user and authentication models
-from .users import (
-    CustomUser,
-    CustomUserManager,
-    VerificationCode,
-)
-
-# Import educational system models
-from .educational import (
-    Course,
-    EducationalSystem,
-    TeacherCourse,
-)
-
-# Import school models
-from .schools import (
-    School,
-    SchoolActivity,
-    SchoolMembership,
-    SchoolSettings,
+# Import invitation models
+from .invitations import (
+    SchoolInvitation,
+    SchoolInvitationLink,
+    TeacherInvitation,
+    TeacherInvitationManager,
 )
 
 # Import profile models
@@ -59,25 +51,32 @@ from .profiles import (
     TeacherProfile,
 )
 
-# Import invitation models
-from .invitations import (
-    SchoolInvitation,
-    SchoolInvitationLink,
-    TeacherInvitation,
-    TeacherInvitationManager,
-)
-
 # Import progress tracking models
 from .progress import (
     ProgressAssessment,
     StudentProgress,
 )
 
+# Import school models
+from .schools import (
+    School,
+    SchoolActivity,
+    SchoolMembership,
+    SchoolSettings,
+)
+
+# Import user and authentication models
+from .users import (
+    CustomUser,
+    CustomUserManager,
+    VerificationCode,
+)
+
 # Define __all__ for explicit exports
 __all__ = [
     # Enums
     "ActivityType",
-    "AssessmentType", 
+    "AssessmentType",
     "BrazilianEducationLevel",
     "BrazilianSchoolYear",
     "CalendarIntegrationChoices",
@@ -96,35 +95,29 @@ __all__ = [
     "SchoolRole",
     "StudentProgressLevel",
     "TrialCostAbsorption",
-    
     # User and authentication
     "CustomUser",
     "CustomUserManager",
     "VerificationCode",
-    
     # Educational system
     "Course",
     "EducationalSystem",
     "TeacherCourse",
-    
     # Schools
     "School",
     "SchoolActivity",
-    "SchoolMembership", 
+    "SchoolMembership",
     "SchoolSettings",
-    
     # Profiles
     "ParentChildRelationship",
     "ParentProfile",
     "StudentProfile",
     "TeacherProfile",
-    
     # Invitations
     "SchoolInvitation",
     "SchoolInvitationLink",
     "TeacherInvitation",
     "TeacherInvitationManager",
-    
     # Progress tracking
     "ProgressAssessment",
     "StudentProgress",

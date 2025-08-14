@@ -5,16 +5,15 @@ This module contains the core user model, custom user manager,
 and authentication-related models like verification codes.
 """
 
-import logging
-import pyotp
 from datetime import timedelta
+import logging
 from typing import Any, ClassVar, TypeVar
 
 from django.contrib.auth.models import AbstractUser, UserManager
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+import pyotp
 
 from .enums import SchoolRole
 
@@ -92,20 +91,14 @@ class CustomUser(AbstractUser):
     Application roles are managed through SchoolMembership model.
     """
 
-    username: models.CharField = models.CharField(
-        _("username"), max_length=150, blank=True, null=True
-    )
+    username: models.CharField = models.CharField(_("username"), max_length=150, blank=True, null=True)
     email: models.EmailField = models.EmailField(_("email address"), unique=True)
     name: models.CharField = models.CharField(_("name"), max_length=150)
     phone_number: models.CharField = models.CharField(_("phone number"), max_length=20, blank=True)
-    
+
     # Profile information
     profile_photo: models.ImageField = models.ImageField(
-        _("profile photo"),
-        upload_to="profile_photos/",
-        blank=True,
-        null=True,
-        help_text=_("User profile photo")
+        _("profile photo"), upload_to="profile_photos/", blank=True, null=True, help_text=_("User profile photo")
     )
 
     # Contact verification fields
@@ -119,18 +112,10 @@ class CustomUser(AbstractUser):
     phone_verified: models.BooleanField = models.BooleanField(_("phone verified"), default=False)
 
     # Tutorial and onboarding fields
-    first_login_completed: models.BooleanField = models.BooleanField(
-        _("first login completed"), default=False
-    )
-    onboarding_completed: models.BooleanField = models.BooleanField(
-        _("onboarding completed"), default=False
-    )
-    onboarding_progress: models.JSONField = models.JSONField(
-        _("onboarding progress"), default=dict, blank=True
-    )
-    tutorial_preferences: models.JSONField = models.JSONField(
-        _("tutorial preferences"), default=dict, blank=True
-    )
+    first_login_completed: models.BooleanField = models.BooleanField(_("first login completed"), default=False)
+    onboarding_completed: models.BooleanField = models.BooleanField(_("onboarding completed"), default=False)
+    onboarding_progress: models.JSONField = models.JSONField(_("onboarding progress"), default=dict, blank=True)
+    tutorial_preferences: models.JSONField = models.JSONField(_("tutorial preferences"), default=dict, blank=True)
 
     # user_type field is removed - roles are now in SchoolMembership
 
@@ -153,13 +138,12 @@ class CustomUser(AbstractUser):
 
     def __str__(self) -> str:
         return str(self.email)
-    
+
     @property
     def is_admin(self) -> bool:
         """Check if user has admin role in any school"""
         return self.school_memberships.filter(
-            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN],
-            is_active=True
+            role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN], is_active=True
         ).exists()
 
 
@@ -169,9 +153,7 @@ class VerificationCode(models.Model):
     """
 
     email: models.EmailField = models.EmailField()
-    secret_key: models.CharField = models.CharField(
-        max_length=32
-    )  # For TOTP - unique for each instance, no default
+    secret_key: models.CharField = models.CharField(max_length=32)  # For TOTP - unique for each instance, no default
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     last_code_generated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
     is_used: models.BooleanField = models.BooleanField(default=False)
@@ -220,11 +202,11 @@ class VerificationCode(models.Model):
 
         if self.failed_attempts >= self.max_attempts:
             return False
-            
+
         # Expire codes after 24 hours regardless of TOTP validity
         if timezone.now() - self.created_at > timedelta(hours=24):
             return False
-            
+
         # If code is provided, verify it
         if code:
             totp = pyotp.TOTP(self.secret_key, digits=digits, interval=interval)

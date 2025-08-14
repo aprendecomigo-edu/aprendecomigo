@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "/Users/anapmc/.claude/scripts"
+    ]
+  }
+}

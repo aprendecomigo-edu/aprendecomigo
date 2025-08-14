@@ -4,12 +4,7 @@ Django test settings for aprendecomigo project.
 
 # Import specific settings from base
 from .base import (
-    BASE_DIR,
-)
-from .base import (
     REST_FRAMEWORK as BASE_REST_FRAMEWORK,
-)
-from .base import (
     SIMPLE_JWT as BASE_SIMPLE_JWT,
 )
 
@@ -71,7 +66,7 @@ SWAGGER_USE_COMPAT_RENDERERS = False
 
 
 # Import all settings from base.py
-from .base import *  # noqa: F403, E402
+from .base import *  # noqa: E402
 
 # Allow testserver for Django test client
 ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
@@ -84,220 +79,208 @@ STRIPE_WEBHOOK_SECRET = "whsec_1234567890123456789012345678901234567890123456789
 # Testing Logging Configuration
 # Optimized for test execution with minimal I/O and noise reduction
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
         },
-        'test_detailed': {
-            'format': '{levelname} {asctime} {name}:{lineno} {message}',
-            'style': '{',
-        },
-    },
-    'filters': {
-        'sensitive_data': {
-            '()': 'common.logging_utils.SensitiveDataFilter',
-        },
-        'correlation': {
-            '()': 'common.logging_utils.CorrelationFilter',
+        "test_detailed": {
+            "format": "{levelname} {asctime} {name}:{lineno} {message}",
+            "style": "{",
         },
     },
-    'handlers': {
+    "filters": {
+        "sensitive_data": {
+            "()": "common.logging_utils.SensitiveDataFilter",
+        },
+        "correlation": {
+            "()": "common.logging_utils.CorrelationFilter",
+        },
+    },
+    "handlers": {
         # Console handler with higher threshold to reduce test noise
-        'console': {
-            'level': 'WARNING',  # Only warnings and errors in tests
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-            'filters': ['sensitive_data'],
+        "console": {
+            "level": "WARNING",  # Only warnings and errors in tests
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "filters": ["sensitive_data"],
         },
         # Memory handler for capturing logs during tests
-        'memory': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.MemoryHandler',
-            'capacity': 1000,
-            'target': 'console',
-            'formatter': 'test_detailed',
-            'filters': ['sensitive_data', 'correlation'],
+        "memory": {
+            "level": "DEBUG",
+            "class": "logging.handlers.MemoryHandler",
+            "capacity": 1000,
+            "target": "console",
+            "formatter": "test_detailed",
+            "filters": ["sensitive_data", "correlation"],
         },
         # Null handler to discard logs entirely
-        'null': {
-            'class': 'logging.NullHandler',
+        "null": {
+            "class": "logging.NullHandler",
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'WARNING',
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
     },
-    'loggers': {
+    "loggers": {
         # Django core - minimal logging during tests
-        'django': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
+        "django": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        'django.request': {
-            'handlers': ['null'],  # Discard request logs during tests
-            'level': 'ERROR',
-            'propagate': False,
+        "django.request": {
+            "handlers": ["null"],  # Discard request logs during tests
+            "level": "ERROR",
+            "propagate": False,
         },
-        'django.db.backends': {
-            'handlers': ['null'],  # Discard database logs during tests
-            'level': 'ERROR',
-            'propagate': False,
+        "django.db.backends": {
+            "handlers": ["null"],  # Discard database logs during tests
+            "level": "ERROR",
+            "propagate": False,
         },
-        'django.channels': {
-            'handlers': ['null'],
-            'level': 'ERROR',
-            'propagate': False,
+        "django.channels": {
+            "handlers": ["null"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        
         # Application loggers - reduced levels for testing
-        'accounts': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
+        "accounts": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        'accounts.auth': {
-            'handlers': ['memory'],  # Capture auth events for test verification
-            'level': 'INFO',
-            'propagate': False,
+        "accounts.auth": {
+            "handlers": ["memory"],  # Capture auth events for test verification
+            "level": "INFO",
+            "propagate": False,
         },
-        'accounts.security': {
-            'handlers': ['memory'],  # Capture security events for test verification
-            'level': 'WARNING',
-            'propagate': False,
+        "accounts.security": {
+            "handlers": ["memory"],  # Capture security events for test verification
+            "level": "WARNING",
+            "propagate": False,
         },
-        
-        'finances': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
+        "finances": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        'finances.payments': {
-            'handlers': ['memory'],  # Capture payment events for test verification
-            'level': 'INFO',
-            'propagate': False,
+        "finances.payments": {
+            "handlers": ["memory"],  # Capture payment events for test verification
+            "level": "INFO",
+            "propagate": False,
         },
-        'finances.stripe': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
+        "finances.stripe": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        'finances.fraud': {
-            'handlers': ['memory'],  # Capture fraud events for test verification
-            'level': 'WARNING',
-            'propagate': False,
+        "finances.fraud": {
+            "handlers": ["memory"],  # Capture fraud events for test verification
+            "level": "WARNING",
+            "propagate": False,
         },
-        
-        'scheduler': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
+        "scheduler": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        'scheduler.bookings': {
-            'handlers': ['memory'],  # Capture booking events for test verification
-            'level': 'INFO',
-            'propagate': False,
+        "scheduler.bookings": {
+            "handlers": ["memory"],  # Capture booking events for test verification
+            "level": "INFO",
+            "propagate": False,
         },
-        'scheduler.conflicts': {
-            'handlers': ['console'],
-            'level': 'WARNING',
-            'propagate': False,
+        "scheduler.conflicts": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
         },
-        
-        'messaging': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
+        "messaging": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        'messaging.email': {
-            'handlers': ['memory'],  # Capture email events for test verification
-            'level': 'INFO',
-            'propagate': False,
+        "messaging.email": {
+            "handlers": ["memory"],  # Capture email events for test verification
+            "level": "INFO",
+            "propagate": False,
         },
-        
-        'common': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
+        "common": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        'common.permissions': {
-            'handlers': ['memory'],  # Capture permission events for test verification
-            'level': 'WARNING',
-            'propagate': False,
+        "common.permissions": {
+            "handlers": ["memory"],  # Capture permission events for test verification
+            "level": "WARNING",
+            "propagate": False,
         },
-        
-        'classroom': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
+        "classroom": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        
-        'tasks': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
+        "tasks": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        
         # Business event loggers - memory handlers for test verification
-        'business': {
-            'handlers': ['memory'],
-            'level': 'INFO',
-            'propagate': False,
+        "business": {
+            "handlers": ["memory"],
+            "level": "INFO",
+            "propagate": False,
         },
-        'business.payments': {
-            'handlers': ['memory'],
-            'level': 'INFO',
-            'propagate': False,
+        "business.payments": {
+            "handlers": ["memory"],
+            "level": "INFO",
+            "propagate": False,
         },
-        'business.sessions': {
-            'handlers': ['memory'],
-            'level': 'INFO',
-            'propagate': False,
+        "business.sessions": {
+            "handlers": ["memory"],
+            "level": "INFO",
+            "propagate": False,
         },
-        'business.authentication': {
-            'handlers': ['memory'],
-            'level': 'INFO',
-            'propagate': False,
+        "business.authentication": {
+            "handlers": ["memory"],
+            "level": "INFO",
+            "propagate": False,
         },
-        
         # Security event loggers
-        'security.events': {
-            'handlers': ['memory'],
-            'level': 'WARNING',
-            'propagate': False,
+        "security.events": {
+            "handlers": ["memory"],
+            "level": "WARNING",
+            "propagate": False,
         },
-        'security.auth_failures': {
-            'handlers': ['memory'],
-            'level': 'WARNING',
-            'propagate': False,
+        "security.auth_failures": {
+            "handlers": ["memory"],
+            "level": "WARNING",
+            "propagate": False,
         },
-        'security.websocket': {
-            'handlers': ['memory'],
-            'level': 'WARNING',
-            'propagate': False,
+        "security.websocket": {
+            "handlers": ["memory"],
+            "level": "WARNING",
+            "propagate": False,
         },
-        
         # Performance - disabled during tests
-        'performance': {
-            'handlers': ['null'],
-            'level': 'ERROR',
-            'propagate': False,
+        "performance": {
+            "handlers": ["null"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        
         # Third-party - errors only
-        'stripe': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
+        "stripe": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        'knox': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
+        "knox": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
         },
     },
 }
-

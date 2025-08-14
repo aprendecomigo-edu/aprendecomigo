@@ -122,16 +122,12 @@ class IsTeacherInAnySchool(permissions.BasePermission):
         return (
             request.user
             and request.user.is_authenticated
-            and SchoolMembership.objects.filter(
-                user=request.user, role="teacher", is_active=True
-            ).exists()
+            and SchoolMembership.objects.filter(user=request.user, role="teacher", is_active=True).exists()
         )
 
     def has_object_permission(self, request, _view, obj):
         # First check if user is a teacher in any school
-        if not SchoolMembership.objects.filter(
-            user=request.user, role="teacher", is_active=True
-        ).exists():
+        if not SchoolMembership.objects.filter(user=request.user, role="teacher", is_active=True).exists():
             return False
 
         # If object has a school attribute, check if user is a teacher in that school
@@ -156,16 +152,12 @@ class IsStudentInAnySchool(permissions.BasePermission):
         return (
             request.user
             and request.user.is_authenticated
-            and SchoolMembership.objects.filter(
-                user=request.user, role="student", is_active=True
-            ).exists()
+            and SchoolMembership.objects.filter(user=request.user, role="student", is_active=True).exists()
         )
 
     def has_object_permission(self, request, _view, obj):
         # First check if user is a student in any school
-        if not SchoolMembership.objects.filter(
-            user=request.user, role="student", is_active=True
-        ).exists():
+        if not SchoolMembership.objects.filter(user=request.user, role="student", is_active=True).exists():
             return False
 
         # If object has a school attribute, check if user is a student in that school
@@ -191,14 +183,14 @@ class IsSchoolOwnerOrAdmin(permissions.BasePermission):
         if request.user and request.user.is_authenticated:
             if request.user.is_superuser or request.user.is_staff:
                 return True
-            
+
             # Check school membership roles
             return SchoolMembership.objects.filter(
                 user=request.user,
                 role__in=["school_owner", "school_admin"],
                 is_active=True,
             ).exists()
-        
+
         return False
 
     def has_object_permission(self, request, _view, obj):
@@ -226,11 +218,7 @@ class IsSchoolOwnerOrAdmin(permissions.BasePermission):
         elif hasattr(obj, "user"):
             return obj.user == request.user
         # If object is a user, check if it's the requester
-        elif (
-            hasattr(obj, "id")
-            and hasattr(request.user, "id")
-            and obj._meta.model_name == "customuser"
-        ):
+        elif hasattr(obj, "id") and hasattr(request.user, "id") and obj._meta.model_name == "customuser":
             return obj.id == request.user.id
         return False
 
@@ -271,11 +259,7 @@ class IsOwnerOrSchoolAdmin(permissions.BasePermission):
             return obj.owner == request.user
         elif hasattr(obj, "user"):
             return obj.user == request.user
-        elif (
-            hasattr(obj, "id")
-            and hasattr(request.user, "id")
-            and obj._meta.model_name == "customuser"
-        ):
+        elif hasattr(obj, "id") and hasattr(request.user, "id") and obj._meta.model_name == "customuser":
             return obj.id == request.user.id
         return False
 
@@ -290,11 +274,7 @@ class IsSuperUserOrSystemAdmin(permissions.BasePermission):
     message = "This action requires system administrator privileges."
 
     def has_permission(self, request, _view):
-        return (
-            request.user
-            and request.user.is_authenticated
-            and (request.user.is_superuser or request.user.is_staff)
-        )
+        return request.user and request.user.is_authenticated and (request.user.is_superuser or request.user.is_staff)
 
 
 class SchoolPermissionMixin:
@@ -320,9 +300,9 @@ class SchoolPermissionMixin:
             return School.objects.all()
 
         # Get schools where user has any active membership
-        user_memberships = SchoolMembership.objects.filter(
-            user=self.request.user, is_active=True
-        ).values_list("school_id", flat=True)
+        user_memberships = SchoolMembership.objects.filter(user=self.request.user, is_active=True).values_list(
+            "school_id", flat=True
+        )
 
         return School.objects.filter(id__in=user_memberships)
 
@@ -348,9 +328,7 @@ class SchoolPermissionMixin:
         if role:
             query_filter["role"] = role
 
-        user_memberships = SchoolMembership.objects.filter(**query_filter).values_list(
-            "school_id", flat=True
-        )
+        user_memberships = SchoolMembership.objects.filter(**query_filter).values_list("school_id", flat=True)
 
         return School.objects.filter(id__in=user_memberships)
 
@@ -394,16 +372,12 @@ class IsParentInAnySchool(permissions.BasePermission):
         return (
             request.user
             and request.user.is_authenticated
-            and SchoolMembership.objects.filter(
-                user=request.user, role="parent", is_active=True
-            ).exists()
+            and SchoolMembership.objects.filter(user=request.user, role="parent", is_active=True).exists()
         )
 
     def has_object_permission(self, request, _view, obj):
         # First check if user is a parent in any school
-        if not SchoolMembership.objects.filter(
-            user=request.user, role="parent", is_active=True
-        ).exists():
+        if not SchoolMembership.objects.filter(user=request.user, role="parent", is_active=True).exists():
             return False
 
         # If object has a school attribute, check if user is a parent in that school
@@ -431,31 +405,25 @@ class IsParentOfStudent(permissions.BasePermission):
 
     def has_object_permission(self, request, _view, obj):
         from .models import ParentChildRelationship
-        
+
         # If the object has a student attribute, check parent-child relationship
         if hasattr(obj, "student"):
             return ParentChildRelationship.objects.filter(
-                parent=request.user,
-                child=obj.student,
-                is_active=True
+                parent=request.user, child=obj.student, is_active=True
             ).exists()
-        
+
         # If the object has a child attribute, check parent-child relationship
         if hasattr(obj, "child"):
-            return ParentChildRelationship.objects.filter(
-                parent=request.user,
-                child=obj.child,
-                is_active=True
-            ).exists()
-        
+            return ParentChildRelationship.objects.filter(parent=request.user, child=obj.child, is_active=True).exists()
+
         # If the object IS a parent-child relationship, check if user is the parent
         if hasattr(obj, "parent") and hasattr(obj, "child"):
             return obj.parent == request.user
-        
+
         # If object is linked to a user, check if that user is the requester
         if hasattr(obj, "user"):
             return obj.user == request.user
-        
+
         return False
 
 
@@ -472,32 +440,26 @@ class IsStudentOrParent(permissions.BasePermission):
 
     def has_object_permission(self, request, _view, obj):
         from .models import ParentChildRelationship
-        
+
         # If the object has a student attribute
         if hasattr(obj, "student"):
             # Allow if user is the student
             if obj.student == request.user:
                 return True
-            
+
             # Allow if user is a parent of the student
             return ParentChildRelationship.objects.filter(
-                parent=request.user,
-                child=obj.student,
-                is_active=True
+                parent=request.user, child=obj.student, is_active=True
             ).exists()
-        
+
         # If object is linked to a user, check if that user is the requester
         if hasattr(obj, "user"):
             if obj.user == request.user:
                 return True
-            
+
             # Check if user is a parent of the user
-            return ParentChildRelationship.objects.filter(
-                parent=request.user,
-                child=obj.user,
-                is_active=True
-            ).exists()
-        
+            return ParentChildRelationship.objects.filter(parent=request.user, child=obj.user, is_active=True).exists()
+
         return False
 
 
@@ -513,23 +475,21 @@ class CanManageChildPurchases(permissions.BasePermission):
 
     def has_object_permission(self, request, _view, obj):
         from .models import ParentChildRelationship
-        
+
         # For purchase approval requests
         if hasattr(obj, "parent") and hasattr(obj, "student"):
             return obj.parent == request.user
-        
+
         # For budget controls
         if hasattr(obj, "parent_child_relationship"):
             return obj.parent_child_relationship.parent == request.user
-        
+
         # For purchase transactions involving children
         if hasattr(obj, "student"):
             return ParentChildRelationship.objects.filter(
-                parent=request.user,
-                child=obj.student,
-                is_active=True
+                parent=request.user, child=obj.student, is_active=True
             ).exists()
-        
+
         return False
 
 
@@ -544,43 +504,31 @@ class IsParentWithChildren(permissions.BasePermission):
     def has_permission(self, request, _view):
         if not (request.user and request.user.is_authenticated):
             return False
-            
+
         from .models import ParentChildRelationship
-        
+
         # Check if user has any active parent-child relationships
-        return ParentChildRelationship.objects.filter(
-            parent=request.user,
-            is_active=True
-        ).exists()
+        return ParentChildRelationship.objects.filter(parent=request.user, is_active=True).exists()
 
     def has_object_permission(self, request, _view, obj):
         from .models import ParentChildRelationship
-        
+
         # First check if user is a parent with children
-        if not ParentChildRelationship.objects.filter(
-            parent=request.user,
-            is_active=True
-        ).exists():
+        if not ParentChildRelationship.objects.filter(parent=request.user, is_active=True).exists():
             return False
-        
+
         # If object relates to a specific child, verify parent-child relationship
         if hasattr(obj, "child"):
-            return ParentChildRelationship.objects.filter(
-                parent=request.user,
-                child=obj.child,
-                is_active=True
-            ).exists()
-        
+            return ParentChildRelationship.objects.filter(parent=request.user, child=obj.child, is_active=True).exists()
+
         # If object relates to a student, verify parent-child relationship
         if hasattr(obj, "student"):
             return ParentChildRelationship.objects.filter(
-                parent=request.user,
-                child=obj.student,
-                is_active=True
+                parent=request.user, child=obj.student, is_active=True
             ).exists()
-        
+
         # If object is linked to a user, check if that user is the requester
         if hasattr(obj, "user"):
             return obj.user == request.user
-        
+
         return True  # User is a parent with children, allow general access

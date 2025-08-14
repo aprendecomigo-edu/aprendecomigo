@@ -99,13 +99,13 @@ urlpatterns = [
     path(
         "teachers/profile-completion-score/",
         TeacherProfileWizardViewSet.as_view(),
-        {'action': 'profile-completion-score'},
+        {"action": "profile-completion-score"},
         name="teacher-profile-completion-score",
     ),
     path(
         "teachers/rate-suggestions/",
         TeacherProfileWizardViewSet.as_view(),
-        {'action': 'rate-suggestions'},
+        {"action": "rate-suggestions"},
         name="teacher-rate-suggestions",
     ),
     # Tutor Discovery endpoint (public)

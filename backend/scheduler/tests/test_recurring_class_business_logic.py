@@ -13,22 +13,23 @@ Business Logic Areas Covered:
 """
 
 from datetime import date, time, timedelta
-from django.test import TestCase
+
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.test import TestCase
 
 from accounts.models import (
     CustomUser,
+    EducationalSystem,
     School,
     SchoolMembership,
-    TeacherProfile,
     SchoolRole,
     SchoolSettings,
-    EducationalSystem,
+    TeacherProfile,
 )
 from scheduler.models import (
-    RecurringClassSchedule,
     ClassType,
+    RecurringClassSchedule,
     WeekDay,
 )
 
@@ -38,77 +39,56 @@ class RecurringClassBusinessLogicBaseTestCase(TestCase):
 
     def setUp(self):
         """Set up minimal test data for recurring class business logic tests"""
-        
+
         # Create educational system
         self.edu_system, _ = EducationalSystem.objects.get_or_create(
-            code="custom",
-            defaults={"name": "Custom Education System"}
+            code="custom", defaults={"name": "Custom Education System"}
         )
 
         # Create school
-        self.school = School.objects.create(
-            name="Test School",
-            contact_email="test@school.com"
-        )
-        
+        self.school = School.objects.create(name="Test School", contact_email="test@school.com")
+
         # Create school settings
         self.school_settings = SchoolSettings.objects.create(
-            school=self.school,
-            educational_system=self.edu_system,
-            timezone="America/Sao_Paulo"
+            school=self.school, educational_system=self.edu_system, timezone="America/Sao_Paulo"
         )
 
         # Create admin user
-        self.admin_user = CustomUser.objects.create_user(
-            email="admin@test.com",
-            name="Admin User"
-        )
-        
+        self.admin_user = CustomUser.objects.create_user(email="admin@test.com", name="Admin User")
+
         # Create teacher user and profile
-        self.teacher_user = CustomUser.objects.create_user(
-            email="teacher@test.com",
-            name="Teacher User"
-        )
-        
-        self.teacher_profile = TeacherProfile.objects.create(
-            user=self.teacher_user,
-            bio="Test teacher"
-        )
+        self.teacher_user = CustomUser.objects.create_user(email="teacher@test.com", name="Teacher User")
+
+        self.teacher_profile = TeacherProfile.objects.create(user=self.teacher_user, bio="Test teacher")
 
         # Create school memberships
         SchoolMembership.objects.create(
-            user=self.admin_user,
-            school=self.school,
-            role=SchoolRole.SCHOOL_ADMIN,
-            is_active=True
+            user=self.admin_user, school=self.school, role=SchoolRole.SCHOOL_ADMIN, is_active=True
         )
-        
+
         SchoolMembership.objects.create(
-            user=self.teacher_user,
-            school=self.school,
-            role=SchoolRole.TEACHER,
-            is_active=True
+            user=self.teacher_user, school=self.school, role=SchoolRole.TEACHER, is_active=True
         )
 
     def create_sample_recurring_class(self, **kwargs):
         """Helper to create a recurring class with default values"""
         defaults = {
-            'teacher': self.teacher_profile,
-            'school': self.school,
-            'title': 'Weekly Math Class',
-            'description': 'Regular math tutoring session',
-            'class_type': ClassType.INDIVIDUAL,
-            'day_of_week': WeekDay.MONDAY,
-            'start_time': time(14, 0),
-            'end_time': time(15, 0),
-            'duration_minutes': 60,
-            'start_date': date.today() + timedelta(days=1),
-            'end_date': date.today() + timedelta(days=30),
-            'is_active': True,
-            'created_by': self.admin_user
+            "teacher": self.teacher_profile,
+            "school": self.school,
+            "title": "Weekly Math Class",
+            "description": "Regular math tutoring session",
+            "class_type": ClassType.INDIVIDUAL,
+            "day_of_week": WeekDay.MONDAY,
+            "start_time": time(14, 0),
+            "end_time": time(15, 0),
+            "duration_minutes": 60,
+            "start_date": date.today() + timedelta(days=1),
+            "end_date": date.today() + timedelta(days=30),
+            "is_active": True,
+            "created_by": self.admin_user,
         }
         defaults.update(kwargs)
-        
+
         return RecurringClassSchedule.objects.create(**defaults)
 
 
@@ -119,10 +99,10 @@ class RecurringClassModelTests(RecurringClassBusinessLogicBaseTestCase):
         """Test creating a recurring class with required fields succeeds"""
         # Act
         recurring_class = self.create_sample_recurring_class()
-        
+
         # Assert
         self.assertIsNotNone(recurring_class.id)
-        self.assertEqual(recurring_class.title, 'Weekly Math Class')
+        self.assertEqual(recurring_class.title, "Weekly Math Class")
         self.assertEqual(recurring_class.teacher, self.teacher_profile)
         self.assertEqual(recurring_class.school, self.school)
         self.assertEqual(recurring_class.class_type, ClassType.INDIVIDUAL)
@@ -133,7 +113,7 @@ class RecurringClassModelTests(RecurringClassBusinessLogicBaseTestCase):
         """Test recurring class allows null end_date for indefinite recurrence"""
         # Act
         recurring_class = self.create_sample_recurring_class(end_date=None)
-        
+
         # Assert
         self.assertIsNone(recurring_class.end_date)
         self.assertIsNotNone(recurring_class.id)  # Should save successfully
@@ -155,7 +135,7 @@ class RecurringClassBusinessRulesTests(RecurringClassBusinessLogicBaseTestCase):
                 end_time=time(15, 0),
                 duration_minutes=60,
                 start_date=date.today(),
-                created_by=self.admin_user
+                created_by=self.admin_user,
             )
             recurring_class.save()
 
@@ -172,7 +152,7 @@ class RecurringClassBusinessRulesTests(RecurringClassBusinessLogicBaseTestCase):
                 end_time=time(15, 0),
                 duration_minutes=60,
                 start_date=date.today(),
-                created_by=self.admin_user
+                created_by=self.admin_user,
             )
             recurring_class.save()
 
@@ -187,14 +167,14 @@ class RecurringClassBusinessValidationTests(RecurringClassBusinessLogicBaseTestC
             recurring_class = RecurringClassSchedule(
                 teacher=self.teacher_profile,
                 school=self.school,
-                title='Invalid Time Class',
+                title="Invalid Time Class",
                 class_type=ClassType.INDIVIDUAL,
                 day_of_week=WeekDay.MONDAY,
                 start_time=time(15, 0),  # Later time
-                end_time=time(14, 0),    # Earlier time - should fail
+                end_time=time(14, 0),  # Earlier time - should fail
                 duration_minutes=60,
                 start_date=date.today() + timedelta(days=1),
-                created_by=self.admin_user
+                created_by=self.admin_user,
             )
             recurring_class.full_clean()  # Trigger validation
 
@@ -204,7 +184,7 @@ class RecurringClassBusinessValidationTests(RecurringClassBusinessLogicBaseTestC
             recurring_class = RecurringClassSchedule(
                 teacher=self.teacher_profile,
                 school=self.school,
-                title='Invalid Date Class',
+                title="Invalid Date Class",
                 class_type=ClassType.INDIVIDUAL,
                 day_of_week=WeekDay.MONDAY,
                 start_time=time(14, 0),
@@ -212,7 +192,7 @@ class RecurringClassBusinessValidationTests(RecurringClassBusinessLogicBaseTestC
                 duration_minutes=60,
                 start_date=date.today() + timedelta(days=7),
                 end_date=date.today() + timedelta(days=1),  # Before start date
-                created_by=self.admin_user
+                created_by=self.admin_user,
             )
             recurring_class.full_clean()  # Trigger validation
 
@@ -221,34 +201,28 @@ class RecurringClassBusinessValidationTests(RecurringClassBusinessLogicBaseTestC
         recurring_class = RecurringClassSchedule(
             teacher=self.teacher_profile,
             school=self.school,
-            title='Valid Duration Class',
+            title="Valid Duration Class",
             class_type=ClassType.INDIVIDUAL,
             day_of_week=WeekDay.MONDAY,
             start_time=time(14, 0),
             end_time=time(15, 0),
             duration_minutes=60,
             start_date=date.today() + timedelta(days=1),
-            created_by=self.admin_user
+            created_by=self.admin_user,
         )
         recurring_class.full_clean()
         recurring_class.save()
-        
+
         self.assertEqual(recurring_class.duration_minutes, 60)
 
     def test_recurring_class_respects_school_boundaries(self):
         """Test recurring classes are filtered by school"""
-        other_school = School.objects.create(
-            name="Other School",
-            contact_email="other@school.com"
-        )
-        
+        other_school = School.objects.create(name="Other School", contact_email="other@school.com")
+
         class1 = self.create_sample_recurring_class(title="School 1 Class")
-        self.create_sample_recurring_class(
-            title="School 2 Class",
-            school=other_school
-        )
-        
+        self.create_sample_recurring_class(title="School 2 Class", school=other_school)
+
         school1_classes = RecurringClassSchedule.objects.filter(school=self.school)
-        
+
         self.assertEqual(school1_classes.count(), 1)
         self.assertEqual(school1_classes.first(), class1)

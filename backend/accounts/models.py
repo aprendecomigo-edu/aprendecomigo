@@ -1,15 +1,15 @@
-import logging
-import uuid
 from datetime import timedelta
 from decimal import Decimal
+import logging
 from typing import Any, ClassVar, TypeVar
+import uuid
 
-import pyotp
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+import pyotp
 
 # Define type variables
 T = TypeVar("T", bound="CustomUser")
@@ -85,36 +85,29 @@ class School(models.Model):
     contact_email: models.EmailField = models.EmailField(_("contact email"), blank=True)
     phone_number: models.CharField = models.CharField(_("phone number"), max_length=20, blank=True)
     website: models.URLField = models.URLField(_("website"), blank=True)
-    
+
     # Branding and visual identity
     logo: models.ImageField = models.ImageField(
-        _("logo"), 
-        upload_to="school_logos/", 
-        blank=True, 
-        null=True,
-        help_text=_("School logo image")
+        _("logo"), upload_to="school_logos/", blank=True, null=True, help_text=_("School logo image")
     )
     primary_color: models.CharField = models.CharField(
         _("primary color"),
         max_length=7,
         default="#3B82F6",
         blank=True,
-        help_text=_("Primary brand color in hex format")
+        help_text=_("Primary brand color in hex format"),
     )
     secondary_color: models.CharField = models.CharField(
         _("secondary color"),
         max_length=7,
         default="#1F2937",
         blank=True,
-        help_text=_("Secondary brand color in hex format")
+        help_text=_("Secondary brand color in hex format"),
     )
     email_domain: models.CharField = models.CharField(
-        _("email domain"),
-        max_length=100,
-        blank=True,
-        help_text=_("Official email domain for the school")
+        _("email domain"), max_length=100, blank=True, help_text=_("Official email domain for the school")
     )
-    
+
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
@@ -134,20 +127,14 @@ class CustomUser(AbstractUser):
     Application roles are managed through SchoolMembership model.
     """
 
-    username: models.CharField = models.CharField(
-        _("username"), max_length=150, blank=True, null=True
-    )
+    username: models.CharField = models.CharField(_("username"), max_length=150, blank=True, null=True)
     email: models.EmailField = models.EmailField(_("email address"), unique=True)
     name: models.CharField = models.CharField(_("name"), max_length=150)
     phone_number: models.CharField = models.CharField(_("phone number"), max_length=20, blank=True)
-    
+
     # Profile information
     profile_photo: models.ImageField = models.ImageField(
-        _("profile photo"),
-        upload_to="profile_photos/",
-        blank=True,
-        null=True,
-        help_text=_("User profile photo")
+        _("profile photo"), upload_to="profile_photos/", blank=True, null=True, help_text=_("User profile photo")
     )
 
     # Contact verification fields
@@ -161,18 +148,10 @@ class CustomUser(AbstractUser):
     phone_verified: models.BooleanField = models.BooleanField(_("phone verified"), default=False)
 
     # Tutorial and onboarding fields
-    first_login_completed: models.BooleanField = models.BooleanField(
-        _("first login completed"), default=False
-    )
-    onboarding_completed: models.BooleanField = models.BooleanField(
-        _("onboarding completed"), default=False
-    )
-    onboarding_progress: models.JSONField = models.JSONField(
-        _("onboarding progress"), default=dict, blank=True
-    )
-    tutorial_preferences: models.JSONField = models.JSONField(
-        _("tutorial preferences"), default=dict, blank=True
-    )
+    first_login_completed: models.BooleanField = models.BooleanField(_("first login completed"), default=False)
+    onboarding_completed: models.BooleanField = models.BooleanField(_("onboarding completed"), default=False)
+    onboarding_progress: models.JSONField = models.JSONField(_("onboarding progress"), default=dict, blank=True)
+    tutorial_preferences: models.JSONField = models.JSONField(_("tutorial preferences"), default=dict, blank=True)
 
     # user_type field is removed - roles are now in SchoolMembership
 
@@ -214,12 +193,8 @@ class SchoolMembership(models.Model):
     roles from Django's built-in permissions system.
     """
 
-    user: models.ForeignKey = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name="school_memberships"
-    )
-    school: models.ForeignKey = models.ForeignKey(
-        School, on_delete=models.CASCADE, related_name="memberships"
-    )
+    user: models.ForeignKey = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="school_memberships")
+    school: models.ForeignKey = models.ForeignKey(School, on_delete=models.CASCADE, related_name="memberships")
     role: models.CharField = models.CharField(_("role"), max_length=20, choices=SchoolRole.choices)
     is_active: models.BooleanField = models.BooleanField(_("is active"), default=True)
     joined_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
@@ -227,8 +202,8 @@ class SchoolMembership(models.Model):
     class Meta:
         unique_together: ClassVar[list[str]] = ["user", "school", "role"]
         indexes = [
-            models.Index(fields=['school', 'role', 'is_active']),
-            models.Index(fields=['school', 'joined_at']),
+            models.Index(fields=["school", "role", "is_active"]),
+            models.Index(fields=["school", "joined_at"]),
         ]
 
     def __str__(self) -> str:
@@ -462,7 +437,7 @@ class TeacherProfile(models.Model):
     """
     Teacher profile with additional information.
     A user can have this profile regardless of which schools they belong to as a teacher.
-    
+
     Enhanced with structured data fields for better profile management and completion tracking.
     """
 
@@ -494,132 +469,115 @@ class TeacherProfile(models.Model):
     )
     phone_number: models.CharField = models.CharField(_("teacher phone"), max_length=20, blank=True)
     calendar_iframe: models.TextField = models.TextField(_("calendar iframe"), blank=True)
-    
+
     # New structured data fields for enhanced profile management
     education_background: models.JSONField = models.JSONField(
         _("education background"),
         default=dict,
         blank=True,
-        help_text=_("Structured educational background data (degree, institution, field, year)")
+        help_text=_("Structured educational background data (degree, institution, field, year)"),
     )
     teaching_subjects: models.JSONField = models.JSONField(
-        _("teaching subjects"),
-        default=list,
-        blank=True,
-        help_text=_("List of subjects the teacher specializes in")
+        _("teaching subjects"), default=list, blank=True, help_text=_("List of subjects the teacher specializes in")
     )
     rate_structure: models.JSONField = models.JSONField(
-        _("rate structure"),
-        default=dict,
-        blank=True,
-        help_text=_("Detailed rate structure for different class types")
+        _("rate structure"), default=dict, blank=True, help_text=_("Detailed rate structure for different class types")
     )
     weekly_availability: models.JSONField = models.JSONField(
-        _("weekly availability"),
-        default=dict,
-        blank=True,
-        help_text=_("Structured weekly availability schedule")
+        _("weekly availability"), default=dict, blank=True, help_text=_("Structured weekly availability schedule")
     )
-    
+
     # Enhanced profile fields for comprehensive teacher profile creation
     grade_level_preferences: models.JSONField = models.JSONField(
         _("grade level preferences"),
         default=list,
         blank=True,
-        help_text=_("List of preferred grade levels (elementary, middle, high school, university)")
+        help_text=_("List of preferred grade levels (elementary, middle, high school, university)"),
     )
     teaching_experience: models.JSONField = models.JSONField(
         _("teaching experience"),
         default=dict,
         blank=True,
-        help_text=_("Structured teaching experience data (years, institutions, specializations)")
+        help_text=_("Structured teaching experience data (years, institutions, specializations)"),
     )
     credentials_documents: models.JSONField = models.JSONField(
         _("credentials documents"),
         default=list,
         blank=True,
-        help_text=_("List of uploaded credential document references")
+        help_text=_("List of uploaded credential document references"),
     )
     availability_schedule: models.JSONField = models.JSONField(
         _("availability schedule"),
         default=dict,
         blank=True,
-        help_text=_("Detailed availability schedule with time slots and preferences")
+        help_text=_("Detailed availability schedule with time slots and preferences"),
     )
-    
+
     # Profile completion tracking fields
     profile_completion_score: models.DecimalField = models.DecimalField(
         _("profile completion score"),
         max_digits=5,
         decimal_places=2,
         default=0.0,
-        help_text=_("Calculated profile completion percentage (0-100)")
+        help_text=_("Calculated profile completion percentage (0-100)"),
     )
     is_profile_complete: models.BooleanField = models.BooleanField(
-        _("is profile complete"),
-        default=False,
-        help_text=_("Whether the profile meets completion requirements")
+        _("is profile complete"), default=False, help_text=_("Whether the profile meets completion requirements")
     )
     last_profile_update: models.DateTimeField = models.DateTimeField(
-        _("last profile update"),
-        auto_now=True,
-        help_text=_("When the profile was last updated")
+        _("last profile update"), auto_now=True, help_text=_("When the profile was last updated")
     )
-    
+
     # Activity tracking for school administrators
     last_activity: models.DateTimeField = models.DateTimeField(
-        _("last activity"),
-        null=True,
-        blank=True,
-        help_text=_("When the teacher was last active in the system")
+        _("last activity"), null=True, blank=True, help_text=_("When the teacher was last active in the system")
     )
 
     class Meta:
         indexes = [
-            models.Index(fields=['profile_completion_score']),
-            models.Index(fields=['is_profile_complete']),
-            models.Index(fields=['last_profile_update']),
-            models.Index(fields=['last_activity']),
+            models.Index(fields=["profile_completion_score"]),
+            models.Index(fields=["is_profile_complete"]),
+            models.Index(fields=["last_profile_update"]),
+            models.Index(fields=["last_activity"]),
             # Indexes for tutor discovery optimization
-            models.Index(fields=['specialty']),
-            models.Index(fields=['hourly_rate']),
-            models.Index(fields=['is_profile_complete', '-profile_completion_score']),
-            models.Index(fields=['is_profile_complete', 'hourly_rate']),
+            models.Index(fields=["specialty"]),
+            models.Index(fields=["hourly_rate"]),
+            models.Index(fields=["is_profile_complete", "-profile_completion_score"]),
+            models.Index(fields=["is_profile_complete", "hourly_rate"]),
         ]
 
     def __str__(self) -> str:
         user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
         return f"Teacher Profile: {user_name}"
-    
+
     def update_completion_score(self) -> None:
         """Update the profile completion score using ProfileCompletionService."""
         from .services.profile_completion import ProfileCompletionService
-        
+
         try:
             completion_data = ProfileCompletionService.calculate_completion(self)
-            self.profile_completion_score = completion_data['completion_percentage']
-            self.is_profile_complete = completion_data['is_complete']
-            self.save(update_fields=['profile_completion_score', 'is_profile_complete', 'last_profile_update'])
+            self.profile_completion_score = completion_data["completion_percentage"]
+            self.is_profile_complete = completion_data["is_complete"]
+            self.save(update_fields=["profile_completion_score", "is_profile_complete", "last_profile_update"])
         except Exception as e:
             logger.error(f"Failed to update completion score for teacher {self.id}: {e}")
-    
+
     def get_school_memberships(self):
         """Get all school memberships for this teacher."""
-        return self.user.school_memberships.filter(
-            role=SchoolRole.TEACHER,
-            is_active=True
-        ).select_related('school')
-    
+        return self.user.school_memberships.filter(role=SchoolRole.TEACHER, is_active=True).select_related("school")
+
     def get_completion_data(self) -> dict:
         """Get detailed completion data for this profile."""
         from .services.profile_completion import ProfileCompletionService
+
         return ProfileCompletionService.calculate_completion(self)
-    
+
     def mark_activity(self) -> None:
         """Mark that the teacher was active."""
         from django.utils import timezone
+
         self.last_activity = timezone.now()
-        self.save(update_fields=['last_activity'])
+        self.save(update_fields=["last_activity"])
 
 
 class Course(models.Model):
@@ -686,9 +644,7 @@ class TeacherCourse(models.Model):
     teacher: models.ForeignKey = models.ForeignKey(
         TeacherProfile, on_delete=models.CASCADE, related_name="teacher_courses"
     )
-    course: models.ForeignKey = models.ForeignKey(
-        Course, on_delete=models.CASCADE, related_name="course_teachers"
-    )
+    course: models.ForeignKey = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="course_teachers")
     # Optional fields for teacher-specific course information
     hourly_rate: models.DecimalField = models.DecimalField(
         _("hourly rate for this course"),
@@ -699,18 +655,16 @@ class TeacherCourse(models.Model):
         help_text=_("Specific hourly rate for this course (overrides teacher's default rate)"),
     )
     is_active: models.BooleanField = models.BooleanField(_("is actively teaching"), default=True)
-    started_teaching: models.DateField = models.DateField(
-        _("started teaching date"), auto_now_add=True
-    )
+    started_teaching: models.DateField = models.DateField(_("started teaching date"), auto_now_add=True)
 
     class Meta:
         unique_together: ClassVar = ["teacher", "course"]
         indexes = [
             # Indexes for tutor discovery filtering
-            models.Index(fields=['hourly_rate']),
-            models.Index(fields=['is_active', 'hourly_rate']),
-            models.Index(fields=['course', 'is_active']),
-            models.Index(fields=['teacher', 'is_active']),
+            models.Index(fields=["hourly_rate"]),
+            models.Index(fields=["is_active", "hourly_rate"]),
+            models.Index(fields=["course", "is_active"]),
+            models.Index(fields=["teacher", "is_active"]),
         ]
 
     def __str__(self) -> str:
@@ -727,9 +681,7 @@ class SchoolInvitation(models.Model):
     Invitation for a user to join a school with a specific role
     """
 
-    school: models.ForeignKey = models.ForeignKey(
-        School, on_delete=models.CASCADE, related_name="invitations"
-    )
+    school: models.ForeignKey = models.ForeignKey(School, on_delete=models.CASCADE, related_name="invitations")
     email: models.EmailField = models.EmailField(_("email address"))
     invited_by: models.ForeignKey = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name="sent_invitations"
@@ -759,9 +711,7 @@ class SchoolInvitationLink(models.Model):
     Anyone with the link can join the school in the specified role.
     """
 
-    school: models.ForeignKey = models.ForeignKey(
-        School, on_delete=models.CASCADE, related_name="invitation_links"
-    )
+    school: models.ForeignKey = models.ForeignKey(School, on_delete=models.CASCADE, related_name="invitation_links")
     role: models.CharField = models.CharField(_("role"), max_length=20, choices=SchoolRole.choices)
     token: models.CharField = models.CharField(_("token"), max_length=64, unique=True)
     created_by: models.ForeignKey = models.ForeignKey(
@@ -770,9 +720,7 @@ class SchoolInvitationLink(models.Model):
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     expires_at: models.DateTimeField = models.DateTimeField()
     is_active: models.BooleanField = models.BooleanField(_("is active"), default=True)
-    usage_count: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("usage count"), default=0
-    )
+    usage_count: models.PositiveIntegerField = models.PositiveIntegerField(_("usage count"), default=0)
     max_uses: models.PositiveIntegerField = models.PositiveIntegerField(
         _("max uses"), null=True, blank=True, help_text=_("Leave blank for unlimited uses")
     )
@@ -811,9 +759,7 @@ class VerificationCode(models.Model):
     """
 
     email: models.EmailField = models.EmailField()
-    secret_key: models.CharField = models.CharField(
-        max_length=32
-    )  # For TOTP - unique for each instance, no default
+    secret_key: models.CharField = models.CharField(max_length=32)  # For TOTP - unique for each instance, no default
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     last_code_generated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
     is_used: models.BooleanField = models.BooleanField(default=False)
@@ -886,7 +832,7 @@ class VerificationCode(models.Model):
 
 class ActivityType(models.TextChoices):
     """Types of activities that can occur in a school"""
-    
+
     INVITATION_SENT = "invitation_sent", _("Invitation Sent")
     INVITATION_ACCEPTED = "invitation_accepted", _("Invitation Accepted")
     INVITATION_DECLINED = "invitation_declined", _("Invitation Declined")
@@ -902,33 +848,35 @@ class SchoolActivity(models.Model):
     """
     Model to track all school-related activities for admin dashboard
     """
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="activities")
     activity_type = models.CharField(max_length=30, choices=ActivityType.choices)
     timestamp = models.DateTimeField(auto_now_add=True)
     actor = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name="activities_performed")
-    target_user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name="activities_targeted")
-    target_class = models.ForeignKey('finances.ClassSession', on_delete=models.SET_NULL, null=True, blank=True)
+    target_user = models.ForeignKey(
+        CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name="activities_targeted"
+    )
+    target_class = models.ForeignKey("finances.ClassSession", on_delete=models.SET_NULL, null=True, blank=True)
     target_invitation = models.ForeignKey(SchoolInvitation, on_delete=models.SET_NULL, null=True, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
     description = models.TextField()
-    
+
     class Meta:
-        ordering = ['-timestamp']
+        ordering = ["-timestamp"]
         indexes = [
-            models.Index(fields=['school', '-timestamp']),
-            models.Index(fields=['school', 'activity_type', '-timestamp']),
-            models.Index(fields=['actor', '-timestamp']),
+            models.Index(fields=["school", "-timestamp"]),
+            models.Index(fields=["school", "activity_type", "-timestamp"]),
+            models.Index(fields=["actor", "-timestamp"]),
         ]
-        
+
     def __str__(self) -> str:
         return f"{self.school.name}: {self.activity_type} at {self.timestamp}"
 
 
 class TrialCostAbsorption(models.TextChoices):
     """Options for who absorbs trial class costs"""
-    
+
     SCHOOL = "school", _("School")
     TEACHER = "teacher", _("Teacher")
     SPLIT = "split", _("Split")
@@ -936,7 +884,7 @@ class TrialCostAbsorption(models.TextChoices):
 
 class CurrencyChoices(models.TextChoices):
     """Currency options for school billing"""
-    
+
     EUR = "EUR", _("Euro")
     USD = "USD", _("US Dollar")
     BRL = "BRL", _("Brazilian Real")
@@ -945,7 +893,7 @@ class CurrencyChoices(models.TextChoices):
 
 class LanguageChoices(models.TextChoices):
     """Language options for school interface"""
-    
+
     PT = "pt", _("Portuguese")
     EN = "en", _("English")
     ES = "es", _("Spanish")
@@ -954,7 +902,7 @@ class LanguageChoices(models.TextChoices):
 
 class CalendarIntegrationChoices(models.TextChoices):
     """Calendar integration options"""
-    
+
     GOOGLE = "google", _("Google Calendar")
     OUTLOOK = "outlook", _("Microsoft Outlook")
     CALDAV = "caldav", _("CalDAV")
@@ -962,7 +910,7 @@ class CalendarIntegrationChoices(models.TextChoices):
 
 class EmailIntegrationChoices(models.TextChoices):
     """Email integration provider options"""
-    
+
     NONE = "none", _("None")
     SMTP = "smtp", _("SMTP")
     SENDGRID = "sendgrid", _("SendGrid")
@@ -971,7 +919,7 @@ class EmailIntegrationChoices(models.TextChoices):
 
 class DataRetentionChoices(models.TextChoices):
     """Data retention policy options"""
-    
+
     ONE_YEAR = "1_year", _("1 Year")
     TWO_YEARS = "2_years", _("2 Years")
     FIVE_YEARS = "5_years", _("5 Years")
@@ -982,9 +930,9 @@ class SchoolSettings(models.Model):
     """
     Comprehensive settings for schools including operational, billing, and configuration options
     """
-    
+
     school = models.OneToOneField(School, on_delete=models.CASCADE, related_name="settings")
-    
+
     # Educational system configuration
     educational_system: models.ForeignKey = models.ForeignKey(
         EducationalSystem,
@@ -992,226 +940,175 @@ class SchoolSettings(models.Model):
         related_name="schools_using_system",
         help_text=_("Educational system used by this school"),
         verbose_name=_("educational system"),
-        default=1  # Portugal system as default
+        default=1,  # Portugal system as default
     )
     grade_levels: models.JSONField = models.JSONField(
-        _("grade levels"),
-        default=list,
-        blank=True,
-        help_text=_("List of grade levels offered by this school")
+        _("grade levels"), default=list, blank=True, help_text=_("List of grade levels offered by this school")
     )
-    
+
     # Operational settings
     trial_cost_absorption = models.CharField(
-        max_length=20, 
-        choices=TrialCostAbsorption.choices, 
-        default=TrialCostAbsorption.SCHOOL
+        max_length=20, choices=TrialCostAbsorption.choices, default=TrialCostAbsorption.SCHOOL
     )
-    default_session_duration = models.PositiveIntegerField(
-        default=60, 
-        help_text="Default session duration in minutes"
-    )
+    default_session_duration = models.PositiveIntegerField(default=60, help_text="Default session duration in minutes")
     timezone = models.CharField(max_length=50, default="UTC")
-    
+
     # Billing configuration
     billing_contact_name: models.CharField = models.CharField(
-        _("billing contact name"),
-        max_length=100,
-        blank=True,
-        help_text=_("Name of billing contact person")
+        _("billing contact name"), max_length=100, blank=True, help_text=_("Name of billing contact person")
     )
     billing_contact_email: models.EmailField = models.EmailField(
-        _("billing contact email"),
-        blank=True,
-        help_text=_("Email for billing-related communications")
+        _("billing contact email"), blank=True, help_text=_("Email for billing-related communications")
     )
     billing_address: models.TextField = models.TextField(
-        _("billing address"),
-        blank=True,
-        help_text=_("Billing address for invoices and payments")
+        _("billing address"), blank=True, help_text=_("Billing address for invoices and payments")
     )
     tax_id: models.CharField = models.CharField(
-        _("tax ID"),
-        max_length=50,
-        blank=True,
-        help_text=_("Tax identification number for billing")
+        _("tax ID"), max_length=50, blank=True, help_text=_("Tax identification number for billing")
     )
     currency_code: models.CharField = models.CharField(
         _("currency"),
         max_length=3,
         choices=CurrencyChoices.choices,
         default=CurrencyChoices.EUR,
-        help_text=_("Default currency for pricing and billing")
+        help_text=_("Default currency for pricing and billing"),
     )
-    
+
     # Localization settings
     language: models.CharField = models.CharField(
         _("language"),
         max_length=5,
         choices=LanguageChoices.choices,
         default=LanguageChoices.PT,
-        help_text=_("Default language for the school interface")
+        help_text=_("Default language for the school interface"),
     )
-    
+
     # Schedule and availability settings
     working_hours_start: models.TimeField = models.TimeField(
-        _("working hours start"),
-        default="08:00",
-        help_text=_("School working hours start time")
+        _("working hours start"), default="08:00", help_text=_("School working hours start time")
     )
     working_hours_end: models.TimeField = models.TimeField(
-        _("working hours end"),
-        default="18:00",
-        help_text=_("School working hours end time")
+        _("working hours end"), default="18:00", help_text=_("School working hours end time")
     )
     working_days: models.JSONField = models.JSONField(
-        _("working days"),
-        default=list,
-        help_text=_("List of working days (0=Monday, 6=Sunday)")
+        _("working days"), default=list, help_text=_("List of working days (0=Monday, 6=Sunday)")
     )
-    
+
     # Communication preferences
     email_notifications_enabled: models.BooleanField = models.BooleanField(
-        _("email notifications enabled"),
-        default=True,
-        help_text=_("Enable email notifications for school events")
+        _("email notifications enabled"), default=True, help_text=_("Enable email notifications for school events")
     )
     sms_notifications_enabled: models.BooleanField = models.BooleanField(
-        _("SMS notifications enabled"),
-        default=False,
-        help_text=_("Enable SMS notifications for school events")
+        _("SMS notifications enabled"), default=False, help_text=_("Enable SMS notifications for school events")
     )
-    
+
     # User permissions and access control
     allow_student_self_enrollment: models.BooleanField = models.BooleanField(
-        _("allow student self-enrollment"),
-        default=False,
-        help_text=_("Allow students to enroll themselves")
+        _("allow student self-enrollment"), default=False, help_text=_("Allow students to enroll themselves")
     )
     require_parent_approval: models.BooleanField = models.BooleanField(
-        _("require parent approval"),
-        default=True,
-        help_text=_("Require parental approval for student actions")
+        _("require parent approval"), default=True, help_text=_("Require parental approval for student actions")
     )
     auto_assign_teachers: models.BooleanField = models.BooleanField(
-        _("auto assign teachers"),
-        default=False,
-        help_text=_("Automatically assign available teachers to classes")
+        _("auto assign teachers"), default=False, help_text=_("Automatically assign available teachers to classes")
     )
     class_reminder_hours: models.PositiveIntegerField = models.PositiveIntegerField(
-        _("class reminder hours"),
-        default=24,
-        help_text=_("Hours before class to send reminder notifications")
+        _("class reminder hours"), default=24, help_text=_("Hours before class to send reminder notifications")
     )
-    
+
     # Integration settings
     enable_calendar_integration: models.BooleanField = models.BooleanField(
         _("enable calendar integration"),
         default=False,
-        help_text=_("Enable integration with external calendar systems")
+        help_text=_("Enable integration with external calendar systems"),
     )
     calendar_integration_type: models.CharField = models.CharField(
         _("calendar integration type"),
         max_length=20,
         choices=CalendarIntegrationChoices.choices,
         blank=True,
-        help_text=_("Type of calendar integration")
+        help_text=_("Type of calendar integration"),
     )
     enable_email_integration: models.BooleanField = models.BooleanField(
-        _("enable email integration"),
-        default=False,
-        help_text=_("Enable integration with external email systems")
+        _("enable email integration"), default=False, help_text=_("Enable integration with external email systems")
     )
     email_integration_provider: models.CharField = models.CharField(
         _("email integration provider"),
         max_length=20,
         choices=EmailIntegrationChoices.choices,
         blank=True,
-        help_text=_("Email integration provider")
+        help_text=_("Email integration provider"),
     )
-    
+
     # Privacy and data handling
     data_retention_policy: models.CharField = models.CharField(
         _("data retention policy"),
         max_length=20,
         choices=DataRetentionChoices.choices,
         default=DataRetentionChoices.TWO_YEARS,
-        help_text=_("How long to retain student and class data")
+        help_text=_("How long to retain student and class data"),
     )
     gdpr_compliance_enabled: models.BooleanField = models.BooleanField(
-        _("GDPR compliance enabled"),
-        default=True,
-        help_text=_("Enable GDPR compliance features")
+        _("GDPR compliance enabled"), default=True, help_text=_("Enable GDPR compliance features")
     )
     allow_data_export: models.BooleanField = models.BooleanField(
-        _("allow data export"),
-        default=True,
-        help_text=_("Allow users to export their personal data")
+        _("allow data export"), default=True, help_text=_("Allow users to export their personal data")
     )
     require_data_processing_consent: models.BooleanField = models.BooleanField(
-        _("require data processing consent"),
-        default=True,
-        help_text=_("Require explicit consent for data processing")
+        _("require data processing consent"), default=True, help_text=_("Require explicit consent for data processing")
     )
-    
+
     # Dashboard preferences
     dashboard_refresh_interval = models.PositiveIntegerField(
-        default=30, 
-        help_text="Dashboard refresh interval in seconds"
+        default=30, help_text="Dashboard refresh interval in seconds"
     )
-    activity_retention_days = models.PositiveIntegerField(
-        default=90, 
-        help_text="Days to retain activity logs"
-    )
-    
+    activity_retention_days = models.PositiveIntegerField(default=90, help_text="Days to retain activity logs")
+
     # Timestamps
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True, null=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True, null=True)
-    
+
     class Meta:
         verbose_name = _("School Settings")
         verbose_name_plural = _("School Settings")
         indexes = [
-            models.Index(fields=['school']),
-            models.Index(fields=['educational_system']),
-            models.Index(fields=['language']),
-            models.Index(fields=['timezone']),
+            models.Index(fields=["school"]),
+            models.Index(fields=["educational_system"]),
+            models.Index(fields=["language"]),
+            models.Index(fields=["timezone"]),
         ]
-    
+
     def __str__(self) -> str:
         return f"Settings for {self.school.name}"
-    
+
     def save(self, *args, **kwargs):
         """Override save to set default working days if not provided"""
         if not self.working_days:
             # Default to Monday-Friday (0-4)
             self.working_days = [0, 1, 2, 3, 4]
         super().save(*args, **kwargs)
-    
+
     def get_working_days_display(self) -> list[str]:
         """Get human-readable working days"""
-        day_names = [
-            _("Monday"), _("Tuesday"), _("Wednesday"), 
-            _("Thursday"), _("Friday"), _("Saturday"), _("Sunday")
-        ]
+        day_names = [_("Monday"), _("Tuesday"), _("Wednesday"), _("Thursday"), _("Friday"), _("Saturday"), _("Sunday")]
         return [str(day_names[day]) for day in self.working_days if 0 <= day <= 6]
-    
+
     def is_working_day(self, weekday: int) -> bool:
         """Check if a given weekday (0=Monday) is a working day"""
         return weekday in self.working_days
-    
+
     def get_grade_levels_display(self) -> list[str]:
         """Get human-readable grade levels"""
         if not self.grade_levels or not self.educational_system:
             return []
-        
+
         choices_dict = dict(self.educational_system.school_year_choices)
         return [choices_dict.get(level, level) for level in self.grade_levels]
 
 
 class EmailDeliveryStatus(models.TextChoices):
     """Email delivery status options with comprehensive tracking"""
-    
+
     NOT_SENT = "not_sent", _("Not Sent")
     QUEUED = "queued", _("Queued")
     SENDING = "sending", _("Sending")
@@ -1224,7 +1121,7 @@ class EmailDeliveryStatus(models.TextChoices):
 
 class InvitationStatus(models.TextChoices):
     """Status options for teacher invitations"""
-    
+
     PENDING = "pending", _("Pending")
     SENT = "sent", _("Sent")
     DELIVERED = "delivered", _("Delivered")
@@ -1237,7 +1134,7 @@ class InvitationStatus(models.TextChoices):
 
 class TeacherInvitationManager(models.Manager):
     """Custom manager for TeacherInvitation model."""
-    
+
     def active_invitations(self):
         """Return only active (valid) invitations."""
         return self.filter(
@@ -1248,13 +1145,13 @@ class TeacherInvitationManager(models.Manager):
                 InvitationStatus.SENT,
                 InvitationStatus.DELIVERED,
                 InvitationStatus.VIEWED,
-            ]
+            ],
         )
-    
+
     def for_school(self, school):
         """Return invitations for a specific school."""
         return self.filter(school=school)
-    
+
     def for_batch(self, batch_id):
         """Return invitations for a specific batch."""
         return self.filter(batch_id=batch_id)
@@ -1265,113 +1162,59 @@ class TeacherInvitation(models.Model):
     Enhanced teacher invitation model with bulk processing support,
     email delivery tracking, and real-time status updates.
     """
-    
+
     # Core invitation fields
-    school = models.ForeignKey(
-        School, 
-        on_delete=models.CASCADE, 
-        related_name="teacher_invitations"
-    )
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="teacher_invitations")
     email = models.EmailField(_("email address"))
-    invited_by = models.ForeignKey(
-        CustomUser, 
-        on_delete=models.CASCADE, 
-        related_name="sent_teacher_invitations"
-    )
-    role = models.CharField(
-        _("role"), 
-        max_length=20, 
-        choices=SchoolRole.choices,
-        default=SchoolRole.TEACHER
-    )
-    
+    invited_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="sent_teacher_invitations")
+    role = models.CharField(_("role"), max_length=20, choices=SchoolRole.choices, default=SchoolRole.TEACHER)
+
     # Enhanced invitation fields
     custom_message = models.TextField(
         _("custom message"),
         max_length=1000,
         blank=True,
         null=True,
-        help_text=_("Personal message to include in the invitation")
+        help_text=_("Personal message to include in the invitation"),
     )
-    batch_id = models.UUIDField(
-        _("batch ID"),
-        help_text=_("UUID to group related invitations together")
-    )
-    
+    batch_id = models.UUIDField(_("batch ID"), help_text=_("UUID to group related invitations together"))
+
     # Status tracking
     status = models.CharField(
-        _("status"),
-        max_length=20,
-        choices=InvitationStatus.choices,
-        default=InvitationStatus.PENDING
+        _("status"), max_length=20, choices=InvitationStatus.choices, default=InvitationStatus.PENDING
     )
-    
+
     # Email delivery tracking
     email_delivery_status = models.CharField(
         _("email delivery status"),
         max_length=20,
         choices=EmailDeliveryStatus.choices,
-        default=EmailDeliveryStatus.NOT_SENT
+        default=EmailDeliveryStatus.NOT_SENT,
     )
-    email_sent_at = models.DateTimeField(
-        _("email sent at"),
-        null=True,
-        blank=True
-    )
-    email_delivered_at = models.DateTimeField(
-        _("email delivered at"),
-        null=True,
-        blank=True
-    )
-    email_failure_reason = models.TextField(
-        _("email failure reason"),
-        blank=True,
-        null=True
-    )
-    retry_count = models.PositiveSmallIntegerField(
-        _("retry count"),
-        default=0
-    )
-    max_retries = models.PositiveSmallIntegerField(
-        _("max retries"),
-        default=3
-    )
-    
+    email_sent_at = models.DateTimeField(_("email sent at"), null=True, blank=True)
+    email_delivered_at = models.DateTimeField(_("email delivered at"), null=True, blank=True)
+    email_failure_reason = models.TextField(_("email failure reason"), blank=True, null=True)
+    retry_count = models.PositiveSmallIntegerField(_("retry count"), default=0)
+    max_retries = models.PositiveSmallIntegerField(_("max retries"), default=3)
+
     # Core invitation tracking
-    token = models.CharField(
-        _("token"), 
-        max_length=64, 
-        unique=True
-    )
+    token = models.CharField(_("token"), max_length=64, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     expires_at = models.DateTimeField()
-    is_accepted = models.BooleanField(
-        _("is accepted"), 
-        default=False
-    )
-    accepted_at = models.DateTimeField(
-        _("accepted at"),
-        null=True,
-        blank=True
-    )
+    is_accepted = models.BooleanField(_("is accepted"), default=False)
+    accepted_at = models.DateTimeField(_("accepted at"), null=True, blank=True)
     declined_at = models.DateTimeField(
-        _("declined at"),
-        null=True,
-        blank=True,
-        help_text=_("When the invitation was declined")
+        _("declined at"), null=True, blank=True, help_text=_("When the invitation was declined")
     )
-    
+
     # Performance fields
     viewed_at = models.DateTimeField(
-        _("viewed at"),
-        null=True,
-        blank=True,
-        help_text=_("When the invitation was first viewed")
+        _("viewed at"), null=True, blank=True, help_text=_("When the invitation was first viewed")
     )
-    
+
     objects = TeacherInvitationManager()
-    
+
     class Meta:
         verbose_name = _("Teacher Invitation")
         verbose_name_plural = _("Teacher Invitations")
@@ -1395,28 +1238,29 @@ class TeacherInvitation(models.Model):
                         InvitationStatus.SENT,
                         InvitationStatus.DELIVERED,
                         InvitationStatus.VIEWED,
-                    ]
+                    ],
                 ),
-                name="unique_active_teacher_invitation_per_school"
+                name="unique_active_teacher_invitation_per_school",
             )
         ]
-    
+
     def save(self, *args, **kwargs):
         """Override save to auto-generate token and expiry."""
         if not self.token:
             # Generate a cryptographically secure 64-character token
             import secrets
+
             self.token = secrets.token_hex(32)  # 32 bytes = 64 hex characters
-        
+
         if not self.expires_at:
             self.expires_at = timezone.now() + timedelta(days=7)
-        
+
         super().save(*args, **kwargs)
-    
+
     def clean(self):
         """Validate the invitation."""
         super().clean()
-        
+
         # Check for duplicate active invitations
         if not self.pk:  # Only check for new invitations
             existing = TeacherInvitation.objects.filter(
@@ -1429,34 +1273,32 @@ class TeacherInvitation(models.Model):
                     InvitationStatus.SENT,
                     InvitationStatus.DELIVERED,
                     InvitationStatus.VIEWED,
-                ]
+                ],
             ).exists()
-            
+
             if existing:
-                raise ValidationError(
-                    "An active invitation already exists for this email and school"
-                )
-    
+                raise ValidationError("An active invitation already exists for this email and school")
+
     def __str__(self) -> str:
         return f"Teacher invitation to {self.email} for {self.school.name}"
-    
+
     def is_valid(self) -> bool:
         """Check if the invitation is still valid."""
         if self.is_accepted:
             return False
-        
+
         if timezone.now() > self.expires_at:
             return False
-        
+
         if self.status in [InvitationStatus.CANCELLED, InvitationStatus.EXPIRED, InvitationStatus.DECLINED]:
             return False
-        
+
         return True
-    
+
     def is_expired(self) -> bool:
         """Check if the invitation has expired."""
         return timezone.now() > self.expires_at
-    
+
     def accept(self):
         """Mark invitation as accepted."""
         if not self.is_accepted:
@@ -1464,67 +1306,52 @@ class TeacherInvitation(models.Model):
             self.status = InvitationStatus.ACCEPTED
             self.accepted_at = timezone.now()
             self.save(update_fields=["is_accepted", "status", "accepted_at", "updated_at"])
-    
+
     def decline(self):
         """Mark invitation as declined."""
         if self.is_accepted:
             raise ValidationError("Cannot decline an already accepted invitation")
-        
+
         if self.status == InvitationStatus.DECLINED:
             raise ValidationError("This invitation has already been declined")
-        
+
         self.status = InvitationStatus.DECLINED
         self.declined_at = timezone.now()
         self.save(update_fields=["status", "declined_at", "updated_at"])
-    
+
     def cancel(self):
         """Cancel the invitation."""
         if self.is_accepted:
             raise ValidationError("Cannot cancel an already accepted invitation")
-        
+
         self.status = InvitationStatus.CANCELLED
         self.save(update_fields=["status", "updated_at"])
-    
+
     def mark_email_sent(self):
         """Mark email as sent."""
         self.email_delivery_status = EmailDeliveryStatus.SENT
         self.email_sent_at = timezone.now()
         self.status = InvitationStatus.SENT
-        self.save(update_fields=[
-            "email_delivery_status", 
-            "email_sent_at", 
-            "status", 
-            "updated_at"
-        ])
-    
+        self.save(update_fields=["email_delivery_status", "email_sent_at", "status", "updated_at"])
+
     def mark_email_delivered(self):
         """Mark email as delivered."""
         self.email_delivery_status = EmailDeliveryStatus.DELIVERED
         self.email_delivered_at = timezone.now()
         self.status = InvitationStatus.DELIVERED
-        self.save(update_fields=[
-            "email_delivery_status", 
-            "email_delivered_at", 
-            "status", 
-            "updated_at"
-        ])
-    
+        self.save(update_fields=["email_delivery_status", "email_delivered_at", "status", "updated_at"])
+
     def mark_email_failed(self, reason: str = None):
         """Mark email as failed and increment retry count."""
         self.email_delivery_status = EmailDeliveryStatus.FAILED
         self.email_failure_reason = reason
         self.retry_count += 1
-        self.save(update_fields=[
-            "email_delivery_status", 
-            "email_failure_reason", 
-            "retry_count", 
-            "updated_at"
-        ])
-    
+        self.save(update_fields=["email_delivery_status", "email_failure_reason", "retry_count", "updated_at"])
+
     def can_retry(self) -> bool:
         """Check if email sending can be retried."""
         return self.retry_count < self.max_retries
-    
+
     def mark_viewed(self):
         """Mark invitation as viewed."""
         if not self.viewed_at:
@@ -1537,7 +1364,7 @@ class TeacherInvitation(models.Model):
 
 class StudentProgressLevel(models.TextChoices):
     """Progress levels for student learning."""
-    
+
     BEGINNER = "beginner", _("Beginner")
     ELEMENTARY = "elementary", _("Elementary")
     INTERMEDIATE = "intermediate", _("Intermediate")
@@ -1548,110 +1375,87 @@ class StudentProgressLevel(models.TextChoices):
 class StudentProgress(models.Model):
     """
     Student progress tracking model for individual learning progress.
-    
+
     Tracks a student's progress in a specific course under a specific teacher,
     including skill mastery, completion percentage, and learning notes.
     """
-    
+
     student = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
         related_name="learning_progress",
         verbose_name=_("student"),
-        help_text=_("Student whose progress is being tracked")
+        help_text=_("Student whose progress is being tracked"),
     )
-    
+
     teacher = models.ForeignKey(
         TeacherProfile,
         on_delete=models.CASCADE,
         related_name="student_progress_records",
         verbose_name=_("teacher"),
-        help_text=_("Teacher tracking this student's progress")
+        help_text=_("Teacher tracking this student's progress"),
     )
-    
+
     school = models.ForeignKey(
         School,
         on_delete=models.CASCADE,
         related_name="student_progress_records",
         verbose_name=_("school"),
-        help_text=_("School where progress is being tracked")
+        help_text=_("School where progress is being tracked"),
     )
-    
+
     course = models.ForeignKey(
         Course,
         on_delete=models.CASCADE,
         related_name="student_progress_records",
         verbose_name=_("course"),
-        help_text=_("Course for which progress is being tracked")
+        help_text=_("Course for which progress is being tracked"),
     )
-    
+
     current_level = models.CharField(
         _("current level"),
         max_length=20,
         choices=StudentProgressLevel.choices,
         default=StudentProgressLevel.BEGINNER,
-        help_text=_("Current learning level of the student")
+        help_text=_("Current learning level of the student"),
     )
-    
+
     completion_percentage = models.DecimalField(
         _("completion percentage"),
         max_digits=5,
         decimal_places=2,
         default=Decimal("0.00"),
-        help_text=_("Percentage of course completed (0-100)")
+        help_text=_("Percentage of course completed (0-100)"),
     )
-    
+
     skills_mastered = models.JSONField(
-        _("skills mastered"),
-        default=list,
-        blank=True,
-        help_text=_("List of skills the student has mastered")
+        _("skills mastered"), default=list, blank=True, help_text=_("List of skills the student has mastered")
     )
-    
+
     current_topics = models.JSONField(
-        _("current topics"),
-        default=list,
-        blank=True,
-        help_text=_("Topics currently being studied")
+        _("current topics"), default=list, blank=True, help_text=_("Topics currently being studied")
     )
-    
+
     learning_goals = models.JSONField(
-        _("learning goals"),
-        default=list,
-        blank=True,
-        help_text=_("Specific learning goals for this student")
+        _("learning goals"), default=list, blank=True, help_text=_("Specific learning goals for this student")
     )
-    
-    notes = models.TextField(
-        _("progress notes"),
-        blank=True,
-        help_text=_("Teacher's notes about student progress")
-    )
-    
+
+    notes = models.TextField(_("progress notes"), blank=True, help_text=_("Teacher's notes about student progress"))
+
     last_assessment_date = models.DateField(
-        _("last assessment date"),
-        null=True,
-        blank=True,
-        help_text=_("Date of the most recent assessment")
+        _("last assessment date"), null=True, blank=True, help_text=_("Date of the most recent assessment")
     )
-    
-    created_at = models.DateTimeField(
-        _("created at"), 
-        auto_now_add=True
-    )
-    updated_at = models.DateTimeField(
-        _("updated at"), 
-        auto_now=True
-    )
-    
+
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+
     class Meta:
         verbose_name = _("Student Progress")
         verbose_name_plural = _("Student Progress Records")
         ordering = ["-updated_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=["student", "teacher", "course"],
-                name="unique_student_teacher_course_progress"
+                fields=["student", "teacher", "course"], name="unique_student_teacher_course_progress"
             )
         ]
         indexes = [
@@ -1661,35 +1465,33 @@ class StudentProgress(models.Model):
             models.Index(fields=["completion_percentage"]),
             models.Index(fields=["current_level"]),
         ]
-    
+
     def __str__(self) -> str:
         return f"{self.student.name} - {self.course.name} (Teacher: {self.teacher.user.name})"
-    
+
     def clean(self):
         """Validate the progress data."""
         super().clean()
-        
+
         # Validate completion percentage is between 0 and 100
         if self.completion_percentage < Decimal("0.00") or self.completion_percentage > Decimal("100.00"):
-            raise ValidationError(
-                _("Completion percentage must be between 0 and 100")
-            )
-    
+            raise ValidationError(_("Completion percentage must be between 0 and 100"))
+
     @property
     def recent_assessments(self):
         """Get recent assessments for this progress record."""
         return self.assessments.order_by("-assessment_date")[:5]
-    
+
     @property
     def average_assessment_score(self) -> Decimal | None:
         """Calculate average assessment score percentage."""
         assessments = self.assessments.filter(is_graded=True)
         if not assessments.exists():
             return None
-        
+
         total_percentage = sum(assessment.percentage for assessment in assessments)
         return Decimal(str(total_percentage / assessments.count()))
-    
+
     def update_completion_from_assessments(self):
         """Update completion percentage based on recent assessments."""
         avg_score = self.average_assessment_score
@@ -1700,7 +1502,7 @@ class StudentProgress(models.Model):
 
 class AssessmentType(models.TextChoices):
     """Types of assessments that can be recorded."""
-    
+
     QUIZ = "quiz", _("Quiz")
     TEST = "test", _("Test")
     HOMEWORK = "homework", _("Homework")
@@ -1714,99 +1516,58 @@ class AssessmentType(models.TextChoices):
 class ProgressAssessment(models.Model):
     """
     Assessment records for student progress tracking.
-    
+
     Records individual assessments, scores, and teacher feedback
     for specific students in their learning journey.
     """
-    
+
     student_progress = models.ForeignKey(
         StudentProgress,
         on_delete=models.CASCADE,
         related_name="assessments",
         verbose_name=_("student progress"),
-        help_text=_("Progress record this assessment belongs to")
+        help_text=_("Progress record this assessment belongs to"),
     )
-    
+
     assessment_type = models.CharField(
-        _("assessment type"),
-        max_length=20,
-        choices=AssessmentType.choices,
-        help_text=_("Type of assessment conducted")
+        _("assessment type"), max_length=20, choices=AssessmentType.choices, help_text=_("Type of assessment conducted")
     )
-    
-    title = models.CharField(
-        _("assessment title"),
-        max_length=200,
-        help_text=_("Title or name of the assessment")
-    )
-    
-    description = models.TextField(
-        _("description"),
-        blank=True,
-        help_text=_("Detailed description of the assessment")
-    )
-    
+
+    title = models.CharField(_("assessment title"), max_length=200, help_text=_("Title or name of the assessment"))
+
+    description = models.TextField(_("description"), blank=True, help_text=_("Detailed description of the assessment"))
+
     score = models.DecimalField(
-        _("score"),
-        max_digits=6,
-        decimal_places=2,
-        help_text=_("Score achieved by the student")
+        _("score"), max_digits=6, decimal_places=2, help_text=_("Score achieved by the student")
     )
-    
+
     max_score = models.DecimalField(
-        _("maximum score"),
-        max_digits=6,
-        decimal_places=2,
-        help_text=_("Maximum possible score for this assessment")
+        _("maximum score"), max_digits=6, decimal_places=2, help_text=_("Maximum possible score for this assessment")
     )
-    
-    assessment_date = models.DateField(
-        _("assessment date"),
-        help_text=_("Date when the assessment was conducted")
-    )
-    
+
+    assessment_date = models.DateField(_("assessment date"), help_text=_("Date when the assessment was conducted"))
+
     skills_assessed = models.JSONField(
-        _("skills assessed"),
-        default=list,
-        blank=True,
-        help_text=_("List of specific skills that were assessed")
+        _("skills assessed"), default=list, blank=True, help_text=_("List of specific skills that were assessed")
     )
-    
-    teacher_notes = models.TextField(
-        _("teacher notes"),
-        blank=True,
-        help_text=_("Teacher's observations and feedback")
-    )
-    
+
+    teacher_notes = models.TextField(_("teacher notes"), blank=True, help_text=_("Teacher's observations and feedback"))
+
     is_graded = models.BooleanField(
-        _("is graded"),
-        default=True,
-        help_text=_("Whether this assessment contributes to grades")
+        _("is graded"), default=True, help_text=_("Whether this assessment contributes to grades")
     )
-    
+
     improvement_areas = models.JSONField(
-        _("improvement areas"),
-        default=list,
-        blank=True,
-        help_text=_("Areas where the student needs improvement")
+        _("improvement areas"), default=list, blank=True, help_text=_("Areas where the student needs improvement")
     )
-    
+
     strengths = models.JSONField(
-        _("strengths"),
-        default=list,
-        blank=True,
-        help_text=_("Areas where the student performed well")
+        _("strengths"), default=list, blank=True, help_text=_("Areas where the student performed well")
     )
-    
-    created_at = models.DateTimeField(
-        _("created at"), 
-        auto_now_add=True
-    )
-    updated_at = models.DateTimeField(
-        _("updated at"), 
-        auto_now=True
-    )
-    
+
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+
     class Meta:
         verbose_name = _("Progress Assessment")
         verbose_name_plural = _("Progress Assessments")
@@ -1817,18 +1578,18 @@ class ProgressAssessment(models.Model):
             models.Index(fields=["is_graded", "-assessment_date"]),
             models.Index(fields=["assessment_date"]),
         ]
-    
+
     def __str__(self) -> str:
         percentage = self.percentage
         return f"{self.title} - {self.student_progress.student.name} ({percentage:.2f}%)"
-    
+
     @property
     def percentage(self) -> Decimal:
         """Calculate the percentage score for this assessment."""
         if self.max_score > 0:
             return (self.score / self.max_score) * Decimal("100.00")
         return Decimal("0.00")
-    
+
     @property
     def grade_letter(self) -> str:
         """Convert percentage to letter grade."""
@@ -1843,34 +1604,28 @@ class ProgressAssessment(models.Model):
             return "D"
         else:
             return "F"
-    
+
     def clean(self):
         """Validate the assessment data."""
         super().clean()
-        
+
         # Validate score is not greater than max_score
         if self.score > self.max_score:
-            raise ValidationError(
-                _("Score cannot be greater than maximum score")
-            )
-        
+            raise ValidationError(_("Score cannot be greater than maximum score"))
+
         # Validate score is not negative
         if self.score < Decimal("0.00"):
-            raise ValidationError(
-                _("Score cannot be negative")
-            )
-        
+            raise ValidationError(_("Score cannot be negative"))
+
         # Validate max_score is positive
         if self.max_score <= Decimal("0.00"):
-            raise ValidationError(
-                _("Maximum score must be greater than 0")
-            )
-    
+            raise ValidationError(_("Maximum score must be greater than 0"))
+
     def save(self, *args, **kwargs):
         """Override save to update related progress record."""
         is_new = self.pk is None
         super().save(*args, **kwargs)
-        
+
         # Update the student progress last assessment date
         if is_new or self.assessment_date != self.__class__.objects.get(pk=self.pk).assessment_date:
             self.student_progress.last_assessment_date = self.assessment_date
@@ -1878,6 +1633,7 @@ class ProgressAssessment(models.Model):
 
 
 # Email Communication System Models (Issues #99 & #100)
+
 
 class ParentProfile(models.Model):
     """
@@ -1888,43 +1644,39 @@ class ParentProfile(models.Model):
     user: models.OneToOneField = models.OneToOneField(
         CustomUser, on_delete=models.CASCADE, related_name="parent_profile"
     )
-    
+
     # Notification preferences for parent communications
     notification_preferences: models.JSONField = models.JSONField(
         _("notification preferences"),
         default=dict,
         blank=True,
-        help_text=_("Parent notification preferences (email, SMS, in-app)")
+        help_text=_("Parent notification preferences (email, SMS, in-app)"),
     )
-    
+
     # Default approval settings for all children
     default_approval_settings: models.JSONField = models.JSONField(
         _("default approval settings"),
         default=dict,
         blank=True,
-        help_text=_("Default purchase approval settings for all children")
+        help_text=_("Default purchase approval settings for all children"),
     )
-    
+
     # Communication preferences
     email_notifications_enabled: models.BooleanField = models.BooleanField(
-        _("email notifications enabled"),
-        default=True,
-        help_text=_("Enable email notifications for parent alerts")
+        _("email notifications enabled"), default=True, help_text=_("Enable email notifications for parent alerts")
     )
-    
+
     sms_notifications_enabled: models.BooleanField = models.BooleanField(
-        _("SMS notifications enabled"),
-        default=False,
-        help_text=_("Enable SMS notifications for parent alerts")
+        _("SMS notifications enabled"), default=False, help_text=_("Enable SMS notifications for parent alerts")
     )
-    
+
     # Audit timestamps
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = _("Parent Profile")
-        verbose_name_plural = _("Parent Profiles") 
+        verbose_name_plural = _("Parent Profiles")
         indexes = [
             models.Index(fields=["created_at"]),
             models.Index(fields=["email_notifications_enabled"]),
@@ -1937,7 +1689,7 @@ class ParentProfile(models.Model):
 
 class RelationshipType(models.TextChoices):
     """Types of parent-child relationships."""
-    
+
     PARENT = "parent", _("Parent")
     GUARDIAN = "guardian", _("Guardian")
     OTHER = "other", _("Other")
@@ -1948,65 +1700,58 @@ class ParentChildRelationship(models.Model):
     Model to represent parent-child relationships within the school system.
     Allows parents to manage their children's accounts with appropriate permissions.
     """
-    
+
     parent: models.ForeignKey = models.ForeignKey(
-        CustomUser, 
-        on_delete=models.CASCADE, 
-        related_name='children_relationships',
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="children_relationships",
         verbose_name=_("parent"),
-        help_text=_("Parent user who manages the child account")
+        help_text=_("Parent user who manages the child account"),
     )
-    
+
     child: models.ForeignKey = models.ForeignKey(
-        CustomUser, 
-        on_delete=models.CASCADE, 
-        related_name='parent_relationships',
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="parent_relationships",
         verbose_name=_("child"),
-        help_text=_("Child user whose account is managed by the parent")
+        help_text=_("Child user whose account is managed by the parent"),
     )
-    
+
     relationship_type: models.CharField = models.CharField(
         _("relationship type"),
         max_length=20,
         choices=RelationshipType.choices,
         default=RelationshipType.PARENT,
-        help_text=_("Type of relationship (parent, guardian, etc.)")
+        help_text=_("Type of relationship (parent, guardian, etc.)"),
     )
-    
+
     school: models.ForeignKey = models.ForeignKey(
-        School, 
+        School,
         on_delete=models.CASCADE,
         verbose_name=_("school"),
-        help_text=_("School where this relationship is established")
+        help_text=_("School where this relationship is established"),
     )
-    
+
     # Permissions that the parent has for this child
     permissions: models.JSONField = models.JSONField(
-        _("permissions"),
-        default=dict,
-        blank=True,
-        help_text=_("Specific permissions the parent has for this child")
+        _("permissions"), default=dict, blank=True, help_text=_("Specific permissions the parent has for this child")
     )
-    
+
     is_active: models.BooleanField = models.BooleanField(
-        _("is active"),
-        default=True,
-        help_text=_("Whether this relationship is currently active")
+        _("is active"), default=True, help_text=_("Whether this relationship is currently active")
     )
-    
+
     # Approval settings specific to this parent-child relationship
     requires_purchase_approval: models.BooleanField = models.BooleanField(
-        _("requires purchase approval"),
-        default=True,
-        help_text=_("Whether parent approval is required for purchases")
+        _("requires purchase approval"), default=True, help_text=_("Whether parent approval is required for purchases")
     )
-    
+
     requires_session_approval: models.BooleanField = models.BooleanField(
-        _("requires session approval"), 
+        _("requires session approval"),
         default=True,
-        help_text=_("Whether parent approval is required for booking sessions")
+        help_text=_("Whether parent approval is required for booking sessions"),
     )
-    
+
     # Audit timestamps
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
@@ -2017,16 +1762,11 @@ class ParentChildRelationship(models.Model):
         unique_together = [["parent", "child", "school"]]
         indexes = [
             models.Index(fields=["parent", "is_active"]),
-            models.Index(fields=["child", "is_active"]), 
+            models.Index(fields=["child", "is_active"]),
             models.Index(fields=["school", "is_active"]),
             models.Index(fields=["relationship_type"]),
         ]
-        constraints = [
-            models.CheckConstraint(
-                check=~models.Q(parent=models.F('child')),
-                name='parent_cannot_be_child'
-            )
-        ]
+        constraints = [models.CheckConstraint(check=~models.Q(parent=models.F("child")), name="parent_cannot_be_child")]
 
     def __str__(self) -> str:
         parent_name = self.parent.name if hasattr(self.parent, "name") else str(self.parent)
@@ -2036,20 +1776,14 @@ class ParentChildRelationship(models.Model):
     def clean(self):
         """Validate the relationship data."""
         super().clean()
-        
+
         # Ensure parent and child are different users
         if self.parent == self.child:
             raise ValidationError(_("Parent and child cannot be the same user"))
-        
+
         # Ensure both parent and child have memberships at the school
-        if not SchoolMembership.objects.filter(
-            user=self.parent, school=self.school, is_active=True
-        ).exists():
+        if not SchoolMembership.objects.filter(user=self.parent, school=self.school, is_active=True).exists():
             raise ValidationError(_("Parent must be a member of the school"))
-            
-        if not SchoolMembership.objects.filter(
-            user=self.child, school=self.school, is_active=True
-        ).exists():
+
+        if not SchoolMembership.objects.filter(user=self.child, school=self.school, is_active=True).exists():
             raise ValidationError(_("Child must be a member of the school"))
-
-

@@ -1,4 +1,5 @@
 import logging
+
 from django.apps import AppConfig
 
 logger = logging.getLogger(__name__)
@@ -38,9 +39,7 @@ class FinancesConfig(AppConfig):
 
         # Connect to user creation for payment setup
         try:
-            User = apps.get_model(
-                *self.get_model("auth", "User")._meta.label.split(".")
-            )
+            User = apps.get_model(*self.get_model("auth", "User")._meta.label.split("."))
             post_save.connect(
                 signals.setup_user_payment_profile,
                 sender=User,

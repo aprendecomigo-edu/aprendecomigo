@@ -10,7 +10,7 @@ class EmailCodeRequestThrottle(AnonRateThrottle):
 
     def allow_request(self, request, view):
         # Disable throttling in test environment
-        if getattr(settings, 'TESTING', False):
+        if getattr(settings, "TESTING", False):
             return True
         return super().allow_request(request, view)
 
@@ -27,7 +27,7 @@ class IPSignupThrottle(AnonRateThrottle):
 
     def allow_request(self, request, view):
         # Disable throttling in test environment
-        if getattr(settings, 'TESTING', False):
+        if getattr(settings, "TESTING", False):
             return True
         return super().allow_request(request, view)
 
@@ -40,7 +40,7 @@ class EmailBasedThrottle(AnonRateThrottle):
 
     def allow_request(self, request, view):
         # Disable throttling in test environment
-        if getattr(settings, 'TESTING', False):
+        if getattr(settings, "TESTING", False):
             return True
         return super().allow_request(request, view)
 
@@ -58,40 +58,40 @@ class IPBasedThrottle(AnonRateThrottle):
 
     def allow_request(self, request, view):
         # Disable throttling in test environment
-        if getattr(settings, 'TESTING', False):
+        if getattr(settings, "TESTING", False):
             return True
         return super().allow_request(request, view)
 
 
 class PurchaseInitiationThrottle(AnonRateThrottle):
     """Rate limit for purchase initiation API - based on IP address"""
-    
+
     rate = "10/h"  # 10 purchase attempts per hour per IP
     scope = "purchase_initiation"
 
     def allow_request(self, request, view):
         # Disable throttling in test environment
-        if getattr(settings, 'TESTING', False):
+        if getattr(settings, "TESTING", False):
             return True
         return super().allow_request(request, view)
 
 
 class PurchaseInitiationEmailThrottle(AnonRateThrottle):
     """Rate limit for purchase initiation API - based on email address"""
-    
+
     rate = "5/h"  # 5 purchase attempts per hour per email
     scope = "purchase_initiation_email"
 
     def allow_request(self, request, view):
         # Disable throttling in test environment
-        if getattr(settings, 'TESTING', False):
+        if getattr(settings, "TESTING", False):
             return True
         return super().allow_request(request, view)
-    
+
     def get_cache_key(self, request, _view):
         # Extract email from student_info in the request data
         student_info = request.data.get("student_info", {})
-        
+
         # Handle case where student_info might be a string or other type
         if isinstance(student_info, dict):
             email = student_info.get("email", "")
@@ -101,7 +101,7 @@ class PurchaseInitiationEmailThrottle(AnonRateThrottle):
         else:
             # For any other type, fallback to empty string
             email = ""
-            
+
         if not email:
             # Fallback to IP-based if no email provided
             return None
@@ -110,38 +110,38 @@ class PurchaseInitiationEmailThrottle(AnonRateThrottle):
 
 class BulkInvitationThrottle(UserRateThrottle):
     """Rate limit for bulk teacher invitations - based on authenticated user"""
-    
+
     rate = "100/h"  # 100 invitations per hour per user (reasonable for school admins)
     scope = "bulk_invitations"
 
     def allow_request(self, request, view):
         # Disable throttling in test environment
-        if getattr(settings, 'TESTING', False):
+        if getattr(settings, "TESTING", False):
             return True
         return super().allow_request(request, view)
 
 
 class BulkInvitationIPThrottle(AnonRateThrottle):
     """Rate limit for bulk teacher invitations - based on IP address (backup protection)"""
-    
+
     rate = "200/h"  # 200 invitations per hour per IP (allows multiple users from same network)
     scope = "bulk_invitations_ip"
 
     def allow_request(self, request, view):
         # Disable throttling in test environment
-        if getattr(settings, 'TESTING', False):
+        if getattr(settings, "TESTING", False):
             return True
         return super().allow_request(request, view)
 
 
 class IndividualInvitationThrottle(UserRateThrottle):
     """Rate limit for individual teacher invitations - based on authenticated user"""
-    
+
     rate = "50/h"  # 50 individual invitations per hour per user
     scope = "individual_invitations"
 
     def allow_request(self, request, view):
         # Disable throttling in test environment
-        if getattr(settings, 'TESTING', False):
+        if getattr(settings, "TESTING", False):
             return True
         return super().allow_request(request, view)

@@ -7,8 +7,6 @@ code verification, and base classes for authenticated views.
 
 import logging
 
-from common.messaging import send_email_verification_code
-from common.throttles import EmailBasedThrottle, EmailCodeRequestThrottle, IPBasedThrottle
 from django.contrib.auth import login
 from knox.auth import TokenAuthentication
 from knox.models import AuthToken
@@ -16,6 +14,9 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from common.messaging import send_email_verification_code
+from common.throttles import EmailBasedThrottle, EmailCodeRequestThrottle, IPBasedThrottle
 
 from ..db_queries import get_user_by_email, user_exists
 from ..models import VerificationCode
@@ -84,9 +85,7 @@ class RequestCodeView(APIView):
             dummy_code = VerificationCode.generate_code("dummy@example.com")
             _ = dummy_code.get_current_code()
             return Response(
-                {
-                    "message": "If an account exists with this email, a verification code has been sent."
-                },
+                {"message": "If an account exists with this email, a verification code has been sent."},
                 status=status.HTTP_200_OK,
             )
 
@@ -141,17 +140,13 @@ class VerifyCodeView(APIView):
             dummy_code = VerificationCode.generate_code("dummy@example.com")
             _ = dummy_code.get_current_code()
             return Response(
-                {
-                    "message": "If an account exists with this email, a verification code has been sent."
-                },
+                {"message": "If an account exists with this email, a verification code has been sent."},
                 status=status.HTTP_200_OK,
             )
 
         # Try to get the latest verification code for this email
         try:
-            verification = VerificationCode.objects.filter(email=email, is_used=False).latest(
-                "created_at"
-            )
+            verification = VerificationCode.objects.filter(email=email, is_used=False).latest("created_at")
         except VerificationCode.DoesNotExist:
             return Response(
                 {"error": "No verification code found for this email."},

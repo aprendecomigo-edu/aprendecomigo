@@ -5,8 +5,9 @@ This module defines signals that are emitted when class status changes occur,
 allowing the reminder system to react to these events.
 """
 
-from django.dispatch import Signal, receiver
 import logging
+
+from django.dispatch import Signal, receiver
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +24,13 @@ def handle_class_status_change(sender, instance, old_status, new_status, changed
     try:
         # Import here to avoid circular imports
         from .reminder_services import ReminderService
-        
+
         if changed_by:
-            ReminderService.handle_class_status_change(
-                instance, old_status, new_status, changed_by
-            )
+            ReminderService.handle_class_status_change(instance, old_status, new_status, changed_by)
         else:
-            logger.warning(f"Class status changed from {old_status} to {new_status} for {instance} but no changed_by user provided")
-            
+            logger.warning(
+                f"Class status changed from {old_status} to {new_status} for {instance} but no changed_by user provided"
+            )
+
     except Exception as e:
         logger.error(f"Error handling class status change signal: {e}", exc_info=True)

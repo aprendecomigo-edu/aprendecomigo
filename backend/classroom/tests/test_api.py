@@ -21,23 +21,17 @@ class ChannelAPITest(APITestCase):
 
     def setUp(self):
         """Set up test users and authentication."""
-        self.user1 = User.objects.create_user(
-            username="user1", email="user1@example.com", password="password"
-        )
-        self.user2 = User.objects.create_user(
-            username="user2", email="user2@example.com", password="password"
-        )
-        self.user3 = User.objects.create_user(
-            username="user3", email="user3@example.com", password="password"
-        )
+        self.user1 = User.objects.create_user(username="user1", email="user1@example.com", password="password")
+        self.user2 = User.objects.create_user(username="user2", email="user2@example.com", password="password")
+        self.user3 = User.objects.create_user(username="user3", email="user3@example.com", password="password")
         self.client.force_authenticate(user=self.user1)
 
     def test_channel_list_authentication_required(self):
         """Test that channel list requires authentication."""
         self.client.force_authenticate(user=None)
-        
+
         response = self.client.get(reverse("channel-list"))
-        
+
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_channel_list_returns_user_channels_only(self):
@@ -45,12 +39,12 @@ class ChannelAPITest(APITestCase):
         # Create channels
         channel1 = Channel.objects.create(name="User1 Channel")
         channel1.participants.add(self.user1)
-        
+
         channel2 = Channel.objects.create(name="Other User Channel")
         channel2.participants.add(self.user2)
-        
+
         response = self.client.get(reverse("channel-list"))
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data.get("results", response.data)
         self.assertEqual(len(data), 1)
@@ -61,9 +55,9 @@ class ChannelAPITest(APITestCase):
         # Create channel for user2 only
         channel = Channel.objects.create(name="Private Channel")
         channel.participants.add(self.user2)
-        
+
         response = self.client.get(reverse("channel-detail", args=[channel.id]))
-        
+
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_group_channel_success(self):
@@ -73,13 +67,13 @@ class ChannelAPITest(APITestCase):
             "is_direct": False,
             "participant_ids": [self.user2.id, self.user3.id],
         }
-        
+
         response = self.client.post(reverse("channel-list"), data, format="json")
-        
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["name"], "Math Study Group")
         self.assertFalse(response.data["is_direct"])
-        
+
         # Verify participants in database
         channel = Channel.objects.get(id=response.data["id"])
         participant_ids = set(channel.participants.values_list("id", flat=True))
@@ -94,12 +88,12 @@ class ChannelAPITest(APITestCase):
             "is_direct": True,
             "participant_ids": [self.user2.id],
         }
-        
+
         response = self.client.post(reverse("channel-list"), data, format="json")
-        
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(response.data["is_direct"])
-        
+
         # Verify exactly 2 participants
         channel = Channel.objects.get(id=response.data["id"])
         self.assertEqual(channel.participants.count(), 2)
@@ -111,9 +105,9 @@ class ChannelAPITest(APITestCase):
             "is_direct": True,
             "participant_ids": [self.user2.id, self.user3.id],  # Too many
         }
-        
+
         response = self.client.post(reverse("channel-list"), data, format="json")
-        
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("Direct messages must have exactly one other participant", str(response.data))
 
@@ -124,17 +118,17 @@ class ChannelAPITest(APITestCase):
             "is_direct": True,
             "participant_ids": [self.user2.id],
         }
-        
+
         # Create first DM
         response1 = self.client.post(reverse("channel-list"), data, format="json")
         self.assertEqual(response1.status_code, status.HTTP_201_CREATED)
         first_id = response1.data["id"]
-        
+
         # Try to create duplicate
         response2 = self.client.post(reverse("channel-list"), data, format="json")
         self.assertEqual(response2.status_code, status.HTTP_201_CREATED)
         second_id = response2.data["id"]
-        
+
         self.assertEqual(first_id, second_id)
 
 
@@ -143,34 +137,28 @@ class ChannelMessagesAPITest(APITestCase):
 
     def setUp(self):
         """Set up test data for message testing."""
-        self.user1 = User.objects.create_user(
-            username="user1", email="user1@example.com", password="password"
-        )
-        self.user2 = User.objects.create_user(
-            username="user2", email="user2@example.com", password="password"
-        )
-        
+        self.user1 = User.objects.create_user(username="user1", email="user1@example.com", password="password")
+        self.user2 = User.objects.create_user(username="user2", email="user2@example.com", password="password")
+
         self.channel = Channel.objects.create(name="Test Channel")
         self.channel.participants.add(self.user1, self.user2)
-        
+
         self.client.force_authenticate(user=self.user1)
 
     def test_channel_messages_authentication_required(self):
         """Test that listing messages requires authentication."""
         self.client.force_authenticate(user=None)
-        
+
         response = self.client.get(reverse("channel-messages", args=[self.channel.id]))
-        
+
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_channel_messages_list_success(self):
         """Test listing messages in a channel."""
-        Message.objects.create(
-            channel=self.channel, sender=self.user1, content="Test message"
-        )
-        
+        Message.objects.create(channel=self.channel, sender=self.user1, content="Test message")
+
         response = self.client.get(reverse("channel-messages", args=[self.channel.id]))
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data.get("results", response.data)
         self.assertEqual(len(data), 1)
@@ -180,14 +168,12 @@ class ChannelMessagesAPITest(APITestCase):
     def test_send_message_success(self):
         """Test sending a message to a channel."""
         data = {"content": "Hello world!"}
-        
-        response = self.client.post(
-            reverse("channel-send-message", args=[self.channel.id]), data, format="json"
-        )
-        
+
+        response = self.client.post(reverse("channel-send-message", args=[self.channel.id]), data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["content"], "Hello world!")
-        
+
         # Verify message was created in database
         message = Message.objects.get(id=response.data["id"])
         self.assertEqual(message.content, "Hello world!")
@@ -195,34 +181,26 @@ class ChannelMessagesAPITest(APITestCase):
 
     def test_send_message_with_file_attachment(self):
         """Test sending a message with file attachment."""
-        test_file = SimpleUploadedFile(
-            "test.pdf", b"file content", content_type="application/pdf"
-        )
+        test_file = SimpleUploadedFile("test.pdf", b"file content", content_type="application/pdf")
         data = {"content": "Check this file", "file": test_file}
-        
-        response = self.client.post(
-            reverse("channel-send-message", args=[self.channel.id]), data, format="multipart"
-        )
-        
+
+        response = self.client.post(reverse("channel-send-message", args=[self.channel.id]), data, format="multipart")
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["content"], "Check this file")
-        
+
         # Verify file was attached
         message = Message.objects.get(id=response.data["id"])
         self.assertTrue(message.file)
 
     def test_send_message_non_participant_forbidden(self):
         """Test that non-participants cannot send messages."""
-        user3 = User.objects.create_user(
-            username="user3", email="user3@example.com", password="password"
-        )
+        user3 = User.objects.create_user(username="user3", email="user3@example.com", password="password")
         self.client.force_authenticate(user=user3)
-        
+
         data = {"content": "Unauthorized message"}
-        response = self.client.post(
-            reverse("channel-send-message", args=[self.channel.id]), data, format="json"
-        )
-        
+        response = self.client.post(reverse("channel-send-message", args=[self.channel.id]), data, format="json")
+
         # Non-participants get 404 (not found) due to queryset filtering
         # This is actually better for security - don't reveal channel existence
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -233,28 +211,22 @@ class MessageReactionsAPITest(APITestCase):
 
     def setUp(self):
         """Set up test data for reaction testing."""
-        self.user1 = User.objects.create_user(
-            username="user1", email="user1@example.com", password="password"
-        )
-        self.user2 = User.objects.create_user(
-            username="user2", email="user2@example.com", password="password"
-        )
-        
+        self.user1 = User.objects.create_user(username="user1", email="user1@example.com", password="password")
+        self.user2 = User.objects.create_user(username="user2", email="user2@example.com", password="password")
+
         self.channel = Channel.objects.create(name="Test Channel")
         self.channel.participants.add(self.user1, self.user2)
-        
-        self.message = Message.objects.create(
-            channel=self.channel, sender=self.user2, content="React to this!"
-        )
-        
+
+        self.message = Message.objects.create(channel=self.channel, sender=self.user2, content="React to this!")
+
         self.client.force_authenticate(user=self.user1)
 
     def test_list_message_reactions_success(self):
         """Test listing reactions for a message."""
         Reaction.objects.create(message=self.message, user=self.user1, emoji="👍")
-        
+
         response = self.client.get(reverse("message-reactions", args=[self.message.id]))
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["emoji"], "👍")
@@ -263,14 +235,12 @@ class MessageReactionsAPITest(APITestCase):
     def test_add_reaction_success(self):
         """Test adding a reaction to a message."""
         data = {"emoji": "❤️"}
-        
-        response = self.client.post(
-            reverse("message-reactions", args=[self.message.id]), data, format="json"
-        )
-        
+
+        response = self.client.post(reverse("message-reactions", args=[self.message.id]), data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["emoji"], "❤️")
-        
+
         # Verify reaction was created
         reaction = Reaction.objects.get(message=self.message, user=self.user1)
         self.assertEqual(reaction.emoji, "❤️")
@@ -278,27 +248,21 @@ class MessageReactionsAPITest(APITestCase):
     def test_remove_reaction_success(self):
         """Test removing a reaction from a message."""
         Reaction.objects.create(message=self.message, user=self.user1, emoji="👍")
-        
+
         data = {"emoji": "👍"}
-        response = self.client.delete(
-            reverse("message-reactions", args=[self.message.id]), data, format="json"
-        )
-        
+        response = self.client.delete(reverse("message-reactions", args=[self.message.id]), data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        
+
         # Verify reaction was deleted
-        self.assertFalse(
-            Reaction.objects.filter(message=self.message, user=self.user1, emoji="👍").exists()
-        )
+        self.assertFalse(Reaction.objects.filter(message=self.message, user=self.user1, emoji="👍").exists())
 
     def test_remove_nonexistent_reaction_not_found(self):
         """Test removing a reaction that doesn't exist."""
         data = {"emoji": "👎"}
-        
-        response = self.client.delete(
-            reverse("message-reactions", args=[self.message.id]), data, format="json"
-        )
-        
+
+        response = self.client.delete(reverse("message-reactions", args=[self.message.id]), data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn("Reaction not found", str(response.data))
 
@@ -317,7 +281,7 @@ class UserSearchAPITest(APITestCase):
         )
         self.user2 = User.objects.create_user(
             username="jane_smith",
-            email="jane@example.com", 
+            email="jane@example.com",
             password="password",
             first_name="Jane",
             last_name="Smith",
@@ -327,15 +291,15 @@ class UserSearchAPITest(APITestCase):
     def test_user_search_authentication_required(self):
         """Test that user search requires authentication."""
         self.client.force_authenticate(user=None)
-        
+
         response = self.client.get(reverse("user-list") + "?search=john")
-        
+
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_user_search_by_username(self):
         """Test searching users by username."""
         response = self.client.get(reverse("user-list") + "?search=jane")
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data.get("results", response.data)
         self.assertEqual(len(data), 1)
@@ -344,7 +308,7 @@ class UserSearchAPITest(APITestCase):
     def test_user_search_by_first_name(self):
         """Test searching users by first name."""
         response = self.client.get(reverse("user-list") + "?search=Jane")
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data.get("results", response.data)
         self.assertEqual(len(data), 1)
@@ -353,7 +317,7 @@ class UserSearchAPITest(APITestCase):
     def test_user_search_excludes_current_user(self):
         """Test that search results exclude the current user."""
         response = self.client.get(reverse("user-list") + "?search=john")
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data.get("results", response.data)
         # Should not include current user (john_doe)
@@ -363,7 +327,7 @@ class UserSearchAPITest(APITestCase):
     def test_user_search_empty_query(self):
         """Test search with empty query returns no results."""
         response = self.client.get(reverse("user-list") + "?search=")
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data.get("results", response.data)
         self.assertEqual(len(data), 0)
@@ -371,10 +335,10 @@ class UserSearchAPITest(APITestCase):
     def test_user_search_response_structure(self):
         """Test that user search returns proper data structure."""
         response = self.client.get(reverse("user-list") + "?search=jane")
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data.get("results", response.data)
-        
+
         if data:
             user_data = data[0]
             expected_fields = ["id", "username", "email", "first_name", "last_name"]

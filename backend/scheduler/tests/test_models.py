@@ -17,98 +17,71 @@ Coverage Areas:
 - Status workflow validation
 """
 
-from datetime import date, datetime, time, timedelta
-from django.test import TestCase
+from datetime import date, time, timedelta
+
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from django.utils import timezone
+from django.test import TestCase
 
 from accounts.models import (
     CustomUser,
+    EducationalSystem,
     School,
     SchoolMembership,
-    TeacherProfile,
     SchoolRole,
     SchoolSettings,
-    EducationalSystem,
+    TeacherProfile,
 )
 from scheduler.models import (
-    WeekDay,
-    ClassType,
+    ClassSchedule,
     ClassStatus,
+    ClassType,
+    RecurringClassSchedule,
     TeacherAvailability,
     TeacherUnavailability,
-    ClassSchedule,
-    RecurringClassSchedule,
+    WeekDay,
 )
 
 
 class SchedulerModelBaseTestCase(TestCase):
     """Base test case with minimal setup for scheduler model tests"""
-    
+
     def setUp(self):
         """Set up minimal test data for scheduler model tests"""
         # Create educational system
         self.edu_system, _ = EducationalSystem.objects.get_or_create(
-            code="test_system",
-            defaults={"name": "Test Educational System"}
+            code="test_system", defaults={"name": "Test Educational System"}
         )
 
         # Create school
-        self.school = School.objects.create(
-            name="Test School",
-            contact_email="test@school.com"
-        )
-        
+        self.school = School.objects.create(name="Test School", contact_email="test@school.com")
+
         # Create school settings
         self.school_settings = SchoolSettings.objects.create(
-            school=self.school,
-            educational_system=self.edu_system,
-            timezone="America/New_York"
+            school=self.school, educational_system=self.edu_system, timezone="America/New_York"
         )
 
         # Create users
-        self.admin_user = CustomUser.objects.create_user(
-            email="admin@test.com",
-            name="Admin User"
-        )
-        
-        self.teacher_user = CustomUser.objects.create_user(
-            email="teacher@test.com",
-            name="Teacher User"
-        )
-        
-        self.student_user = CustomUser.objects.create_user(
-            email="student@test.com",
-            name="Student User"
-        )
-        
+        self.admin_user = CustomUser.objects.create_user(email="admin@test.com", name="Admin User")
+
+        self.teacher_user = CustomUser.objects.create_user(email="teacher@test.com", name="Teacher User")
+
+        self.student_user = CustomUser.objects.create_user(email="student@test.com", name="Student User")
+
         # Create teacher profile
-        self.teacher_profile = TeacherProfile.objects.create(
-            user=self.teacher_user,
-            bio="Test teacher profile"
-        )
+        self.teacher_profile = TeacherProfile.objects.create(user=self.teacher_user, bio="Test teacher profile")
 
         # Create school memberships
         SchoolMembership.objects.create(
-            user=self.admin_user,
-            school=self.school,
-            role=SchoolRole.SCHOOL_ADMIN,
-            is_active=True
+            user=self.admin_user, school=self.school, role=SchoolRole.SCHOOL_ADMIN, is_active=True
         )
-        
+
         SchoolMembership.objects.create(
-            user=self.teacher_user,
-            school=self.school,
-            role=SchoolRole.TEACHER,
-            is_active=True
+            user=self.teacher_user, school=self.school, role=SchoolRole.TEACHER, is_active=True
         )
-        
+
         SchoolMembership.objects.create(
-            user=self.student_user,
-            school=self.school,
-            role=SchoolRole.STUDENT,
-            is_active=True
+            user=self.student_user, school=self.school, role=SchoolRole.STUDENT, is_active=True
         )
 
 
@@ -123,8 +96,8 @@ class TeacherAvailabilityBusinessLogicTests(SchedulerModelBaseTestCase):
                 school=self.school,
                 day_of_week=WeekDay.MONDAY,
                 start_time=time(17, 0),  # 5 PM
-                end_time=time(9, 0),     # 9 AM - invalid
-                is_active=True
+                end_time=time(9, 0),  # 9 AM - invalid
+                is_active=True,
             )
             availability.full_clean()
 
@@ -137,7 +110,7 @@ class TeacherAvailabilityBusinessLogicTests(SchedulerModelBaseTestCase):
                 day_of_week=WeekDay.MONDAY,
                 start_time=time(9, 0),
                 end_time=time(17, 0),
-                is_active=True
+                is_active=True,
             )
 
     def test_availability_supports_multiple_windows_per_day(self):
@@ -149,9 +122,9 @@ class TeacherAvailabilityBusinessLogicTests(SchedulerModelBaseTestCase):
             day_of_week=WeekDay.MONDAY,
             start_time=time(9, 0),
             end_time=time(12, 0),
-            is_active=True
+            is_active=True,
         )
-        
+
         # Create afternoon window
         afternoon = TeacherAvailability.objects.create(
             teacher=self.teacher_profile,
@@ -159,14 +132,11 @@ class TeacherAvailabilityBusinessLogicTests(SchedulerModelBaseTestCase):
             day_of_week=WeekDay.MONDAY,
             start_time=time(14, 0),
             end_time=time(17, 0),
-            is_active=True
+            is_active=True,
         )
-        
+
         # Both should exist
-        monday_windows = TeacherAvailability.objects.filter(
-            teacher=self.teacher_profile,
-            day_of_week=WeekDay.MONDAY
-        )
+        monday_windows = TeacherAvailability.objects.filter(teacher=self.teacher_profile, day_of_week=WeekDay.MONDAY)
         self.assertEqual(monday_windows.count(), 2)
 
 
@@ -181,9 +151,9 @@ class TeacherUnavailabilityBusinessLogicTests(SchedulerModelBaseTestCase):
                 school=self.school,
                 date=date.today() + timedelta(days=1),
                 start_time=time(16, 0),  # 4 PM
-                end_time=time(14, 0),    # 2 PM - invalid
+                end_time=time(14, 0),  # 2 PM - invalid
                 is_all_day=False,
-                reason="Invalid time window"
+                reason="Invalid time window",
             )
             unavailability.full_clean()
 
@@ -195,9 +165,9 @@ class TeacherUnavailabilityBusinessLogicTests(SchedulerModelBaseTestCase):
             school=self.school,
             date=date.today() + timedelta(days=1),
             is_all_day=True,
-            reason="Sick day"
+            reason="Sick day",
         )
-        
+
         self.assertTrue(unavailability.is_all_day)
         self.assertIsNone(unavailability.start_time)
         self.assertIsNone(unavailability.end_time)
@@ -212,9 +182,9 @@ class TeacherUnavailabilityBusinessLogicTests(SchedulerModelBaseTestCase):
             start_time=time(14, 0),
             end_time=time(16, 0),
             is_all_day=False,
-            reason="Doctor appointment"
+            reason="Doctor appointment",
         )
-        
+
         self.assertFalse(unavailability.is_all_day)
         self.assertEqual(unavailability.start_time, time(14, 0))
         self.assertEqual(unavailability.end_time, time(16, 0))
@@ -233,11 +203,11 @@ class ClassScheduleBusinessLogicTests(SchedulerModelBaseTestCase):
                 title="Invalid Time Class",
                 scheduled_date=date.today() + timedelta(days=1),
                 start_time=time(15, 0),  # 3 PM
-                end_time=time(14, 0),    # 2 PM - invalid
+                end_time=time(14, 0),  # 2 PM - invalid
                 duration_minutes=60,
                 class_type=ClassType.INDIVIDUAL,
                 status=ClassStatus.SCHEDULED,
-                booked_by=self.admin_user
+                booked_by=self.admin_user,
             )
             class_schedule.full_clean()
 
@@ -254,11 +224,11 @@ class ClassScheduleBusinessLogicTests(SchedulerModelBaseTestCase):
             duration_minutes=60,
             class_type=ClassType.INDIVIDUAL,
             status=ClassStatus.SCHEDULED,
-            booked_by=self.admin_user
+            booked_by=self.admin_user,
         )
         class_schedule.full_clean()
         class_schedule.save()
-        
+
         self.assertEqual(class_schedule.duration_minutes, 60)
 
     def test_class_schedule_past_date_validation(self):
@@ -275,7 +245,7 @@ class ClassScheduleBusinessLogicTests(SchedulerModelBaseTestCase):
                 duration_minutes=60,
                 class_type=ClassType.INDIVIDUAL,
                 status=ClassStatus.SCHEDULED,
-                booked_by=self.admin_user
+                booked_by=self.admin_user,
             )
             class_schedule.full_clean()
 
@@ -292,12 +262,12 @@ class ClassScheduleBusinessLogicTests(SchedulerModelBaseTestCase):
             duration_minutes=60,
             class_type=ClassType.INDIVIDUAL,
             status=ClassStatus.SCHEDULED,
-            booked_by=self.admin_user
+            booked_by=self.admin_user,
         )
-        
+
         class_schedule.status = ClassStatus.COMPLETED
         class_schedule.save()
-        
+
         self.assertEqual(class_schedule.status, ClassStatus.COMPLETED)
 
     def test_group_class_stores_metadata(self):
@@ -315,12 +285,12 @@ class ClassScheduleBusinessLogicTests(SchedulerModelBaseTestCase):
             max_participants=5,
             status=ClassStatus.SCHEDULED,
             booked_by=self.admin_user,
-            metadata={'group_dynamics': 'collaborative'}
+            metadata={"group_dynamics": "collaborative"},
         )
-        
+
         self.assertEqual(group_class.class_type, ClassType.GROUP)
         self.assertEqual(group_class.max_participants, 5)
-        self.assertIn('group_dynamics', group_class.metadata)
+        self.assertIn("group_dynamics", group_class.metadata)
 
 
 class RecurringClassScheduleBusinessLogicTests(SchedulerModelBaseTestCase):
@@ -336,10 +306,10 @@ class RecurringClassScheduleBusinessLogicTests(SchedulerModelBaseTestCase):
                 class_type=ClassType.INDIVIDUAL,
                 day_of_week=WeekDay.MONDAY,
                 start_time=time(15, 0),  # 3 PM
-                end_time=time(14, 0),    # 2 PM - invalid
+                end_time=time(14, 0),  # 2 PM - invalid
                 duration_minutes=60,
                 start_date=date.today() + timedelta(days=1),
-                created_by=self.admin_user
+                created_by=self.admin_user,
             )
             recurring_class.full_clean()
 
@@ -357,7 +327,7 @@ class RecurringClassScheduleBusinessLogicTests(SchedulerModelBaseTestCase):
                 duration_minutes=60,
                 start_date=date.today() + timedelta(days=7),
                 end_date=date.today() + timedelta(days=1),  # Before start
-                created_by=self.admin_user
+                created_by=self.admin_user,
             )
             recurring_class.full_clean()
 
@@ -374,9 +344,9 @@ class RecurringClassScheduleBusinessLogicTests(SchedulerModelBaseTestCase):
             duration_minutes=60,
             start_date=date.today() + timedelta(days=1),
             end_date=None,  # Indefinite
-            created_by=self.admin_user
+            created_by=self.admin_user,
         )
-        
+
         self.assertIsNone(recurring_class.end_date)
         self.assertIsNotNone(recurring_class.id)
 
@@ -386,41 +356,35 @@ class SchedulerModelMultiTenantTests(SchedulerModelBaseTestCase):
 
     def test_teacher_availability_respects_school_boundaries(self):
         """Test availability queries are filtered by school"""
-        other_school = School.objects.create(
-            name="Other School",
-            contact_email="other@school.com"
-        )
-        
+        other_school = School.objects.create(name="Other School", contact_email="other@school.com")
+
         school1_availability = TeacherAvailability.objects.create(
             teacher=self.teacher_profile,
             school=self.school,
             day_of_week=WeekDay.MONDAY,
             start_time=time(9, 0),
             end_time=time(17, 0),
-            is_active=True
+            is_active=True,
         )
-        
+
         TeacherAvailability.objects.create(
             teacher=self.teacher_profile,
             school=other_school,
             day_of_week=WeekDay.MONDAY,
             start_time=time(10, 0),
             end_time=time(16, 0),
-            is_active=True
+            is_active=True,
         )
-        
+
         school1_slots = TeacherAvailability.objects.filter(school=self.school)
-        
+
         self.assertEqual(school1_slots.count(), 1)
         self.assertEqual(school1_slots.first(), school1_availability)
 
     def test_class_schedule_respects_school_boundaries(self):
         """Test class schedule queries are filtered by school"""
-        other_school = School.objects.create(
-            name="Other School",
-            contact_email="other@school.com"
-        )
-        
+        other_school = School.objects.create(name="Other School", contact_email="other@school.com")
+
         school1_class = ClassSchedule.objects.create(
             teacher=self.teacher_profile,
             student=self.student_user,
@@ -432,9 +396,9 @@ class SchedulerModelMultiTenantTests(SchedulerModelBaseTestCase):
             duration_minutes=60,
             class_type=ClassType.INDIVIDUAL,
             status=ClassStatus.SCHEDULED,
-            booked_by=self.admin_user
+            booked_by=self.admin_user,
         )
-        
+
         ClassSchedule.objects.create(
             teacher=self.teacher_profile,
             student=self.student_user,
@@ -446,10 +410,10 @@ class SchedulerModelMultiTenantTests(SchedulerModelBaseTestCase):
             duration_minutes=60,
             class_type=ClassType.INDIVIDUAL,
             status=ClassStatus.SCHEDULED,
-            booked_by=self.admin_user
+            booked_by=self.admin_user,
         )
-        
+
         school1_classes = ClassSchedule.objects.filter(school=self.school)
-        
+
         self.assertEqual(school1_classes.count(), 1)
         self.assertEqual(school1_classes.first(), school1_class)

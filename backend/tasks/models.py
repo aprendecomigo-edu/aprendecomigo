@@ -1,7 +1,8 @@
-from accounts.models import CustomUser
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+from accounts.models import CustomUser
 
 
 class Task(models.Model):
@@ -33,17 +34,11 @@ class Task(models.Model):
     description = models.TextField(blank=True, verbose_name=_("Description"))
 
     # Relationships
-    user = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name="tasks", verbose_name=_("User")
-    )
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="tasks", verbose_name=_("User"))
 
     # Status and priority
-    status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="pending", verbose_name=_("Status")
-    )
-    priority = models.CharField(
-        max_length=20, choices=PRIORITY_CHOICES, default="medium", verbose_name=_("Priority")
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending", verbose_name=_("Status"))
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="medium", verbose_name=_("Priority"))
     task_type = models.CharField(
         max_length=20, choices=TASK_TYPE_CHOICES, default="personal", verbose_name=_("Task Type")
     )
@@ -131,9 +126,7 @@ class TaskComment(models.Model):
     Comments/notes for tasks
     """
 
-    task = models.ForeignKey(
-        Task, on_delete=models.CASCADE, related_name="comments", verbose_name=_("Task")
-    )
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="comments", verbose_name=_("Task"))
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name=_("User"))
     comment = models.TextField(verbose_name=_("Comment"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))

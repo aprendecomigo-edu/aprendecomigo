@@ -5,8 +5,8 @@ This module contains all views related to course management,
 including courses, educational systems, and teacher-course relationships.
 """
 
-import logging
 from collections import defaultdict
+import logging
 
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 class CourseViewSet(KnoxAuthenticatedViewSet):
     """
     Enhanced API endpoint for courses with advanced filtering, popularity metrics, and market data.
-    
+
     Features:
     - Advanced filtering by educational system, education level, and search
     - Popularity metrics based on session data
@@ -58,28 +58,28 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
         """
         Get courses with optional filtering and enhanced data.
         """
-        queryset = Course.objects.select_related('educational_system').all()
-        
+        queryset = Course.objects.select_related("educational_system").all()
+
         # Apply filters
         queryset = self._apply_filters(queryset)
-        
+
         # Apply search
-        search_query = self.request.query_params.get('search')
+        search_query = self.request.query_params.get("search")
         if search_query:
             queryset = queryset.filter(
-                models.Q(name__icontains=search_query) |
-                models.Q(description__icontains=search_query) |
-                models.Q(code__icontains=search_query)
+                models.Q(name__icontains=search_query)
+                | models.Q(description__icontains=search_query)
+                | models.Q(code__icontains=search_query)
             )
-        
+
         # Apply ordering
-        ordering = self.request.query_params.get('ordering')
+        ordering = self.request.query_params.get("ordering")
         if ordering:
             # Handle special ordering cases
-            if ordering in ['popularity_score', '-popularity_score']:
+            if ordering in ["popularity_score", "-popularity_score"]:
                 # Popularity ordering will be handled in list() method
                 pass
-            elif ordering in ['avg_hourly_rate', '-avg_hourly_rate']:
+            elif ordering in ["avg_hourly_rate", "-avg_hourly_rate"]:
                 # Price ordering will be handled in list() method
                 pass
             else:
@@ -88,10 +88,10 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
                     queryset = queryset.order_by(ordering)
                 except Exception:
                     # Invalid ordering, use default
-                    queryset = queryset.order_by('name')
+                    queryset = queryset.order_by("name")
         else:
-            queryset = queryset.order_by('name')
-        
+            queryset = queryset.order_by("name")
+
         return queryset
 
     def get_permissions(self):
@@ -102,7 +102,7 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
             # Anyone can view courses
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
-    
+
     def list(self, request, *args, **kwargs):
         """
         Enhanced list method with popularity metrics, market data, and teacher info.
@@ -114,43 +114,40 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
                 cached_data = cache.get(cache_key)
                 if cached_data:
                     return Response(cached_data)
-            
+
             # Get base queryset
             queryset = self.filter_queryset(self.get_queryset())
-            
+
             # Serialize base course data
             serializer = self.get_serializer(queryset, many=True)
             courses_data = serializer.data
-            
+
             # Enhance with additional data if requested
             if self._needs_enhancement(request):
                 courses_data = self._enhance_courses_data(courses_data, request)
-            
+
             # Apply custom ordering if needed
-            ordering = request.query_params.get('ordering')
-            if ordering in ['popularity_score', '-popularity_score', 'avg_hourly_rate', '-avg_hourly_rate']:
+            ordering = request.query_params.get("ordering")
+            if ordering in ["popularity_score", "-popularity_score", "avg_hourly_rate", "-avg_hourly_rate"]:
                 courses_data = self._apply_custom_ordering(courses_data, ordering)
-            
+
             # Cache results if appropriate
             if self._should_use_cache(request):
                 cache.set(cache_key, courses_data, timeout=900)  # 15 minutes
-            
+
             return Response(courses_data)
-            
+
         except DRFValidationError:
             # Re-raise validation errors so they return proper 400 responses
             raise
         except Exception as e:
             logger.error(f"Error in CourseViewSet.list for user {request.user.id}: {e}")
-            return Response(
-                {'error': 'Failed to retrieve course data'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
+            return Response({"error": "Failed to retrieve course data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def _apply_filters(self, queryset):
         """Apply filtering based on query parameters."""
         # Filter by educational system
-        educational_system_id = self.request.query_params.get('educational_system')
+        educational_system_id = self.request.query_params.get("educational_system")
         if educational_system_id:
             try:
                 educational_system_id = int(educational_system_id)
@@ -160,244 +157,230 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
             except (ValueError, ValidationError):
                 # Invalid ID - raise a 400 error
                 raise DRFValidationError({"educational_system": "Invalid educational system ID"})
-        
+
         # Filter by education level
-        education_level = self.request.query_params.get('education_level')
+        education_level = self.request.query_params.get("education_level")
         if education_level:
             queryset = queryset.filter(education_level=education_level)
-        
+
         return queryset
-    
+
     def _needs_enhancement(self, request):
         """Check if enhanced data is requested."""
-        return any([
-            request.query_params.get('include_popularity') == 'true',
-            request.query_params.get('include_teachers') == 'true',
-            request.query_params.get('include_market_data') == 'true'
-        ])
-    
+        return any(
+            [
+                request.query_params.get("include_popularity") == "true",
+                request.query_params.get("include_teachers") == "true",
+                request.query_params.get("include_market_data") == "true",
+            ]
+        )
+
     def _should_use_cache(self, request):
         """Determine if caching should be used."""
         return self._needs_enhancement(request)
-    
+
     def _get_cache_key(self, request):
         """Generate cache key based on request parameters."""
-        key_parts = ['courses_enhanced']
-        
+        key_parts = ["courses_enhanced"]
+
         # Add filter parameters
-        for param in ['educational_system', 'education_level', 'search', 'ordering']:
+        for param in ["educational_system", "education_level", "search", "ordering"]:
             value = request.query_params.get(param)
             if value:
-                key_parts.append(f'{param}_{value}')
-        
+                key_parts.append(f"{param}_{value}")
+
         # Add enhancement flags
-        for param in ['include_popularity', 'include_teachers', 'include_market_data']:
-            if request.query_params.get(param) == 'true':
+        for param in ["include_popularity", "include_teachers", "include_market_data"]:
+            if request.query_params.get(param) == "true":
                 key_parts.append(param)
-        
-        return '_'.join(key_parts)
-    
+
+        return "_".join(key_parts)
+
     def _enhance_courses_data(self, courses_data, request):
         """Add enhanced data to courses."""
-        from finances.models import ClassSession, TeacherPaymentEntry
-        from django.db.models import Count, Avg, Min, Max, Sum
-        
+
         # Get course IDs for efficient querying
-        course_ids = [course['id'] for course in courses_data]
-        
+        course_ids = [course["id"] for course in courses_data]
+
         # Prepare enhancement data
         popularity_data = {}
         teacher_data = {}
         market_data = {}
-        
+
         # Calculate popularity metrics if requested
-        if request.query_params.get('include_popularity') == 'true':
+        if request.query_params.get("include_popularity") == "true":
             popularity_data = self._calculate_popularity_metrics(course_ids)
-        
+
         # Get teacher information if requested
-        if request.query_params.get('include_teachers') == 'true':
+        if request.query_params.get("include_teachers") == "true":
             teacher_data = self._get_teacher_information(course_ids)
-        
+
         # Calculate market data if requested
-        if request.query_params.get('include_market_data') == 'true':
+        if request.query_params.get("include_market_data") == "true":
             market_data = self._calculate_market_data(course_ids)
-        
+
         # Enhance each course with additional data
         for course in courses_data:
-            course_id = course['id']
-            
+            course_id = course["id"]
+
             if course_id in popularity_data:
-                course['popularity_metrics'] = popularity_data[course_id]
-            
+                course["popularity_metrics"] = popularity_data[course_id]
+
             if course_id in teacher_data:
-                course['available_teachers'] = teacher_data[course_id]
-            
+                course["available_teachers"] = teacher_data[course_id]
+
             if course_id in market_data:
-                course['market_data'] = market_data[course_id]
-        
+                course["market_data"] = market_data[course_id]
+
         return courses_data
-    
+
     def _calculate_popularity_metrics(self, course_ids):
         """Calculate popularity metrics for courses."""
         from finances.models import ClassSession, SessionStatus
-        
+
         # NOTE: This is a simplified implementation that counts all sessions for teachers
         # who teach a course, regardless of which specific course the session was for.
         # In practice, you might want to track session-to-course relationships more precisely.
-        
+
         # Get course associations through teacher-course relationships
-        teacher_courses = TeacherCourse.objects.filter(
-            course_id__in=course_ids
-        ).select_related('teacher', 'course')
-        
+        teacher_courses = TeacherCourse.objects.filter(course_id__in=course_ids).select_related("teacher", "course")
+
         # Map courses to teachers
         course_teachers = defaultdict(list)
         for tc in teacher_courses:
             course_teachers[tc.course_id].append(tc.teacher_id)
-        
+
         # Calculate metrics per course
         course_metrics = {}
         for course_id in course_ids:
             teachers = course_teachers.get(course_id, [])
-            
+
             if not teachers:
                 # No teachers for this course
                 course_metrics[course_id] = {
-                    'total_sessions': 0,
-                    'unique_students': 0,
-                    'popularity_score': 0,
-                    'rank': 0
+                    "total_sessions": 0,
+                    "unique_students": 0,
+                    "popularity_score": 0,
+                    "rank": 0,
                 }
                 continue
-            
+
             # Get sessions for teachers of this course
             sessions = ClassSession.objects.filter(
-                teacher_id__in=teachers,
-                status=SessionStatus.COMPLETED
-            ).prefetch_related('students')
-            
+                teacher_id__in=teachers, status=SessionStatus.COMPLETED
+            ).prefetch_related("students")
+
             total_sessions = sessions.count()
             unique_students = set()
             for session in sessions:
                 for student in session.students.all():
                     unique_students.add(student.id)
-            
+
             # Calculate popularity score (sessions * 2 + unique_students * 3)
             popularity_score = total_sessions * 2 + len(unique_students) * 3
-            
+
             course_metrics[course_id] = {
-                'total_sessions': total_sessions,
-                'unique_students': len(unique_students),
-                'popularity_score': popularity_score,
-                'rank': 0  # Will be calculated after all scores are computed
+                "total_sessions": total_sessions,
+                "unique_students": len(unique_students),
+                "popularity_score": popularity_score,
+                "rank": 0,  # Will be calculated after all scores are computed
             }
-        
+
         # Calculate ranks
-        sorted_courses = sorted(
-            course_metrics.items(),
-            key=lambda x: x[1]['popularity_score'],
-            reverse=True
-        )
-        
+        sorted_courses = sorted(course_metrics.items(), key=lambda x: x[1]["popularity_score"], reverse=True)
+
         for rank, (course_id, metrics) in enumerate(sorted_courses, 1):
-            course_metrics[course_id]['rank'] = rank
-        
+            course_metrics[course_id]["rank"] = rank
+
         return course_metrics
-    
+
     def _get_teacher_information(self, course_ids):
         """Get teacher information for courses."""
         teacher_data = {}
-        
+
         # Get teacher-course relationships
-        teacher_courses = TeacherCourse.objects.filter(
-            course_id__in=course_ids,
-            is_active=True
-        ).select_related('teacher__user', 'course')
-        
+        teacher_courses = TeacherCourse.objects.filter(course_id__in=course_ids, is_active=True).select_related(
+            "teacher__user", "course"
+        )
+
         # Group by course
         for tc in teacher_courses:
             course_id = tc.course_id
             if course_id not in teacher_data:
                 teacher_data[course_id] = []
-            
+
             teacher_info = {
-                'id': tc.teacher.id,
-                'name': tc.teacher.user.name,
-                'email': tc.teacher.user.email,
-                'hourly_rate': float(tc.hourly_rate) if tc.hourly_rate else float(tc.teacher.hourly_rate or 0),
-                'profile_completion_score': float(tc.teacher.profile_completion_score),
-                'is_profile_complete': tc.teacher.is_profile_complete,
-                'specialty': tc.teacher.specialty
+                "id": tc.teacher.id,
+                "name": tc.teacher.user.name,
+                "email": tc.teacher.user.email,
+                "hourly_rate": float(tc.hourly_rate) if tc.hourly_rate else float(tc.teacher.hourly_rate or 0),
+                "profile_completion_score": float(tc.teacher.profile_completion_score),
+                "is_profile_complete": tc.teacher.is_profile_complete,
+                "specialty": tc.teacher.specialty,
             }
-            
+
             teacher_data[course_id].append(teacher_info)
-        
+
         return teacher_data
-    
+
     def _calculate_market_data(self, course_ids):
         """Calculate market data for courses."""
-        from django.db.models import Avg, Min, Max, Count
-        
+
         market_data = {}
-        
+
         # Get aggregated data from teacher-course relationships
         for course_id in course_ids:
-            teacher_courses = TeacherCourse.objects.filter(
-                course_id=course_id,
-                is_active=True
-            ).exclude(hourly_rate__isnull=True)
-            
+            teacher_courses = TeacherCourse.objects.filter(course_id=course_id, is_active=True).exclude(
+                hourly_rate__isnull=True
+            )
+
             if teacher_courses.exists():
                 # Use teacher-course specific rates where available
                 rates = [float(tc.hourly_rate) for tc in teacher_courses if tc.hourly_rate]
-                
+
                 # Fallback to teacher profile rates if no course-specific rates
                 if not rates:
-                    rates = [
-                        float(tc.teacher.hourly_rate) 
-                        for tc in teacher_courses 
-                        if tc.teacher.hourly_rate
-                    ]
-                
+                    rates = [float(tc.teacher.hourly_rate) for tc in teacher_courses if tc.teacher.hourly_rate]
+
                 if rates:
                     avg_rate = sum(rates) / len(rates)
                     min_rate = min(rates)
                     max_rate = max(rates)
                 else:
                     avg_rate = min_rate = max_rate = 0.0
-                
+
                 total_teachers = teacher_courses.count()
-                
+
                 # Calculate demand score based on teacher availability and sessions
                 # This is a simplified calculation - in production, you might want more sophisticated scoring
                 demand_score = min(100, total_teachers * 10)  # Cap at 100
-                
+
             else:
                 avg_rate = min_rate = max_rate = 0.0
                 total_teachers = 0
                 demand_score = 0
-            
+
             market_data[course_id] = {
-                'avg_hourly_rate': avg_rate,
-                'min_hourly_rate': min_rate,
-                'max_hourly_rate': max_rate,
-                'total_teachers': total_teachers,
-                'demand_score': demand_score
+                "avg_hourly_rate": avg_rate,
+                "min_hourly_rate": min_rate,
+                "max_hourly_rate": max_rate,
+                "total_teachers": total_teachers,
+                "demand_score": demand_score,
             }
-        
+
         return market_data
-    
+
     def _apply_custom_ordering(self, courses_data, ordering):
         """Apply custom ordering for enhanced data."""
-        if ordering == 'popularity_score':
-            courses_data.sort(key=lambda x: x.get('popularity_metrics', {}).get('popularity_score', 0))
-        elif ordering == '-popularity_score':
-            courses_data.sort(key=lambda x: x.get('popularity_metrics', {}).get('popularity_score', 0), reverse=True)
-        elif ordering == 'avg_hourly_rate':
-            courses_data.sort(key=lambda x: x.get('market_data', {}).get('avg_hourly_rate', 0))
-        elif ordering == '-avg_hourly_rate':
-            courses_data.sort(key=lambda x: x.get('market_data', {}).get('avg_hourly_rate', 0), reverse=True)
-        
+        if ordering == "popularity_score":
+            courses_data.sort(key=lambda x: x.get("popularity_metrics", {}).get("popularity_score", 0))
+        elif ordering == "-popularity_score":
+            courses_data.sort(key=lambda x: x.get("popularity_metrics", {}).get("popularity_score", 0), reverse=True)
+        elif ordering == "avg_hourly_rate":
+            courses_data.sort(key=lambda x: x.get("market_data", {}).get("avg_hourly_rate", 0))
+        elif ordering == "-avg_hourly_rate":
+            courses_data.sort(key=lambda x: x.get("market_data", {}).get("avg_hourly_rate", 0), reverse=True)
+
         return courses_data
 
 
@@ -491,10 +474,7 @@ class TeacherCourseViewSet(KnoxAuthenticatedViewSet):
 
         # Teachers can only modify their own relationships
         if self.action in ["update", "partial_update", "destroy"]:
-            if (
-                hasattr(request.user, "teacher_profile")
-                and obj.teacher == request.user.teacher_profile
-            ):
+            if hasattr(request.user, "teacher_profile") and obj.teacher == request.user.teacher_profile:
                 return
 
             # School admins can modify relationships of teachers in their schools
@@ -508,6 +488,4 @@ class TeacherCourseViewSet(KnoxAuthenticatedViewSet):
                 return
 
             # If none of the above, deny permission
-            raise PermissionDenied(
-                "You don't have permission to modify this teacher-course relationship"
-            )
+            raise PermissionDenied("You don't have permission to modify this teacher-course relationship")
