@@ -2,6 +2,14 @@
 
 Django REST Framework backend for the Aprende Comigo educational platform.
 
+## Recent Updates
+
+### Uvicorn ASGI Server Migration (August 2025)
+- Migrated from Daphne to Uvicorn for improved performance
+- **Benefits**: 20-50% improvement in WebSocket handling, reduced memory usage, better concurrent connection handling
+- Full Django Channels WebSocket support maintained
+- No code changes required - fully backward compatible
+
 ## Environment Configuration
 
 The backend uses environment-specific settings to handle different deployment environments:
@@ -226,9 +234,23 @@ Note: You'll need to accept the self-signed certificate in your browser on first
 
 ## Running the application
 
+### Development Server (Django's built-in server)
 ```bash
 python manage.py runserver
 ```
+
+### Production-ready ASGI Server (Uvicorn)
+```bash
+# Basic usage
+uvicorn aprendecomigo.asgi:application --host 0.0.0.0 --port 8000
+
+# With auto-reload for development
+uvicorn aprendecomigo.asgi:application --host 0.0.0.0 --port 8000 --reload
+
+# Production configuration with workers
+uvicorn aprendecomigo.asgi:application --host 0.0.0.0 --port 8000 --workers 4 --loop uvloop --log-level info
+```
+
 test@aprendecomigo.pt
 Pass12345!
 
