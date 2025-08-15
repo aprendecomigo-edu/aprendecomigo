@@ -54,8 +54,7 @@ describe('SignInForm - Working Tests', () => {
 
     it('should handle optional onBackPress prop', () => {
       const propsWithBack = { ...mockProps, onBackPress: jest.fn() };
-      const propsWithoutBack = { ...mockProps };
-      delete propsWithoutBack.onBackPress;
+      const { onBackPress, ...propsWithoutBack } = mockProps;
 
       expect(() => {
         render(<SignInForm {...propsWithBack} />);

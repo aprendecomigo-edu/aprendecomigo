@@ -69,6 +69,16 @@ export const createMockDependencies = (): MockDependencies => {
       getBalanceStatus: jest.fn(),
       predictExpiryDate: jest.fn(),
     },
+    websocket: {
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      send: jest.fn(),
+      onMessage: jest.fn(),
+      onConnect: jest.fn(),
+      onDisconnect: jest.fn(),
+      onError: jest.fn(),
+      isConnected: jest.fn(),
+    },
   };
 };
 
@@ -165,6 +175,7 @@ export class MockDependencyBuilder {
       onboardingApiService: this.dependencies.onboardingApiService || mockDeps.onboardingApiService,
       paymentService: this.dependencies.paymentService || mockDeps.paymentService,
       balanceService: this.dependencies.balanceService || mockDeps.balanceService,
+      websocket: this.dependencies.websocket || mockDeps.websocket,
     };
   }
 }

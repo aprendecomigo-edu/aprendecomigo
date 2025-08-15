@@ -24,6 +24,7 @@ describe('SignUpForm Pure UI Component - New Architecture', () => {
     onUserTypeChange: jest.fn(),
     onBackPress: jest.fn(),
     generateSchoolName: jest.fn(name => `${name}'s Tutoring Practice`),
+    logic: jest.fn(),
   };
 
   const mockSchoolProps = {
@@ -35,6 +36,7 @@ describe('SignUpForm Pure UI Component - New Architecture', () => {
     onUserTypeChange: jest.fn(),
     onBackPress: jest.fn(),
     generateSchoolName: jest.fn(() => ''),
+    logic: jest.fn(),
   };
 
   beforeEach(() => {

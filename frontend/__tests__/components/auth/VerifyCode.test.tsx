@@ -250,7 +250,7 @@ describe('VerifyCode Component Tests', () => {
   });
 
   it('should validate contact information', () => {
-    const validateContact = (contact, contactType) => {
+    const validateContact = (contact: string, contactType: string) => {
       if (!contact?.trim()) return false;
 
       if (contactType === 'email') {
