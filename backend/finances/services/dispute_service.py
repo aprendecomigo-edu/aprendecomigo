@@ -8,7 +8,7 @@ and local dispute record maintenance with comprehensive audit logging.
 from datetime import UTC
 from decimal import Decimal
 import logging
-from typing import Optional, Any
+from typing import Any
 
 # Cross-app models will be loaded at runtime using apps.get_model()
 from django.db import transaction
@@ -498,7 +498,7 @@ class DisputeService:
         self,
         admin_user,
         action_type: AdminActionType,
-        target_dispute: Optional[PaymentDispute] = None,
+        target_dispute: PaymentDispute | None = None,
         success: bool = True,
         result_message: str = "",
         stripe_reference_id: str = "",

@@ -6,7 +6,7 @@ to eliminate duplicate code throughout the scheduling system.
 """
 
 from datetime import time
-from typing import Optional, Any
+from typing import Any
 
 from django.db.models import Q
 
@@ -39,9 +39,9 @@ class ClassScheduleConflictDetector:
 
     def get_conflicting_classes_query(
         self,
-        teacher: Optional[TeacherProfile] = None,
-        student: Optional[CustomUser] = None,
-        school: Optional[School] = None,
+        teacher: TeacherProfile | None = None,
+        student: CustomUser | None = None,
+        school: School | None = None,
         date=None,
         start_time: time | None = None,
         end_time: time | None = None,

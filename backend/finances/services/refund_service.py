@@ -7,7 +7,7 @@ local transaction updates, student balance adjustments, and comprehensive audit 
 
 from decimal import Decimal
 import logging
-from typing import Optional, Any
+from typing import Any
 
 # Cross-app models will be loaded at runtime using apps.get_model()
 from django.db import transaction
@@ -445,7 +445,7 @@ class RefundService:
         self,
         admin_user,
         action_type: AdminActionType,
-        target_transaction: Optional[PurchaseTransaction] = None,
+        target_transaction: PurchaseTransaction | None = None,
         success: bool = True,
         amount_impacted: Decimal | None = None,
         result_message: str = "",

@@ -156,7 +156,7 @@ class CustomUser(AbstractUser):
     # user_type field is removed - roles are now in SchoolMembership
 
     USERNAME_FIELD: str = "email"  # type: ignore[assignment]
-    REQUIRED_FIELDS[list[str]] = ["name"]
+    REQUIRED_FIELDS: list[str] = ["name"]
 
     # Use a type annotation that doesn't conflict with the parent class
     # but allows us to provide our custom manager
