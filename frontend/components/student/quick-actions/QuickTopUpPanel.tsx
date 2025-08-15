@@ -67,7 +67,17 @@ export function QuickTopUpPanel({
     const loadData = async () => {
       try {
         setLoading(true);
-        const [packagesData] = await Promise.all([PurchaseApiClient.getTopUpPackages(email)]);
+        // For this component, we only have one API call, but we'll prepare for future additions
+        const results = await Promise.allSettled([PurchaseApiClient.getTopUpPackages(email)]);
+        
+        const packagesData = results[0].status === 'fulfilled' 
+          ? results[0].value 
+          : [];
+
+        if (results[0].status === 'rejected') {
+          console.error('Failed to load top-up packages:', results[0].reason);
+          throw results[0].reason;
+        }
 
         setPackages(packagesData.sort((a, b) => a.display_order - b.display_order));
       } catch (err: any) {

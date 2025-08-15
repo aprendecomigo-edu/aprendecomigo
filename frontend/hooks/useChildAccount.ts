@@ -66,18 +66,46 @@ export const useChildAccount = (childId: string) => {
           error: null,
         }));
 
-        // Load all child data in parallel
-        const [profile, balance, budgetControl] = await Promise.all([
+        // Load core child data in parallel with graceful degradation
+        const coreResults = await Promise.allSettled([
           getChildProfile(childId),
           getChildAccountBalance(childId),
           getBudgetControlForChild(childId).catch(() => null), // Budget control might not exist
         ]);
 
-        // Load initial transaction and purchase history
-        const [transactionHistory, purchaseHistory] = await Promise.all([
+        // Extract core data with defaults
+        const profile = coreResults[0].status === 'fulfilled' ? coreResults[0].value : null;
+        const balance = coreResults[1].status === 'fulfilled' ? coreResults[1].value : null;
+        const budgetControl = coreResults[2].status === 'fulfilled' ? coreResults[2].value : null;
+
+        // Log core data failures
+        if (coreResults[0].status === 'rejected') {
+          console.error('Failed to load child profile:', coreResults[0].reason);
+        }
+        if (coreResults[1].status === 'rejected') {
+          console.error('Failed to load child balance:', coreResults[1].reason);
+        }
+
+        // Load initial transaction and purchase history (these are less critical)
+        const historyResults = await Promise.allSettled([
           getChildTransactionHistory(childId, { limit: 20 }),
           getChildPurchaseHistory(childId, { limit: 20 }),
         ]);
+
+        const transactionHistory = historyResults[0].status === 'fulfilled' 
+          ? historyResults[0].value 
+          : { results: [] };
+        const purchaseHistory = historyResults[1].status === 'fulfilled' 
+          ? historyResults[1].value 
+          : { results: [] };
+
+        // Log history failures
+        if (historyResults[0].status === 'rejected') {
+          console.error('Failed to load child transaction history:', historyResults[0].reason);
+        }
+        if (historyResults[1].status === 'rejected') {
+          console.error('Failed to load child purchase history:', historyResults[1].reason);
+        }
 
         setState(prev => ({
           ...prev,

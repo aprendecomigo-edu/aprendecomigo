@@ -196,14 +196,25 @@ export function useAnalytics(email?: string): UseAnalyticsResult {
     [email]
   );
 
-  // Refresh all data
+  // Refresh all data with graceful degradation
   const refreshAll = useCallback(async () => {
-    await Promise.all([
+    const results = await Promise.allSettled([
       refreshUsageStats(),
       refreshInsights(10),
       refreshPatterns(),
       refreshPreferences(),
     ]);
+
+    // Log any failures for monitoring
+    const operations = ['usage statistics', 'learning insights', 'usage patterns', 'notification preferences'];
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`Failed to refresh ${operations[index]}:`, result.reason);
+      }
+    });
+
+    // All operations are independent, so we continue even if some fail
+    // Individual error states are handled by the respective functions
   }, [refreshUsageStats, refreshInsights, refreshPatterns, refreshPreferences]);
 
   // Clear all errors

@@ -193,9 +193,22 @@ export const useMultiSchool = () => {
     }
   }, []);
 
-  // Refresh all data
+  // Refresh all data with graceful degradation
   const refresh = useCallback(async () => {
-    await Promise.all([fetchMemberships(), fetchPendingInvitations()]);
+    const results = await Promise.allSettled([
+      fetchMemberships(), 
+      fetchPendingInvitations()
+    ]);
+
+    // Log any failures for monitoring
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        const operation = index === 0 ? 'memberships' : 'pending invitations';
+        console.error(`Failed to refresh ${operation}:`, result.reason);
+      }
+    });
+
+    // Continue with available data even if some operations failed
   }, [fetchMemberships, fetchPendingInvitations]);
 
   // Clear error state

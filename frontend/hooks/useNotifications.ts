@@ -135,12 +135,27 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   }, [userProfile]);
 
   /**
-   * Refresh notifications (reset to page 1)
+   * Refresh notifications (reset to page 1) with graceful degradation
    */
   const refresh = useCallback(async () => {
     setRefreshing(true);
     setCurrentPage(1);
-    await Promise.all([fetchNotifications(1, false), fetchUnreadCount()]);
+    
+    // Use Promise.allSettled for graceful degradation
+    const results = await Promise.allSettled([
+      fetchNotifications(1, false), 
+      fetchUnreadCount()
+    ]);
+
+    // Log any failures for monitoring
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        const operation = index === 0 ? 'notifications' : 'unread count';
+        console.error(`Failed to refresh ${operation}:`, result.reason);
+      }
+    });
+
+    // Continue with available data even if some operations failed
   }, [fetchNotifications, fetchUnreadCount]);
 
   /**

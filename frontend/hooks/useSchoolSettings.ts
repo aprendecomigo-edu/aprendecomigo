@@ -270,10 +270,22 @@ export const useSchoolSettings = (): UseSchoolSettingsReturn => {
 
   const refreshSettings = useCallback(async () => {
     if (currentSchoolId) {
-      await Promise.all([
+      // Use Promise.allSettled for graceful degradation
+      const results = await Promise.allSettled([
         fetchSchoolSettings(currentSchoolId),
         fetchEducationalSystems(currentSchoolId),
       ]);
+
+      // Log any failures for monitoring
+      const operations = ['school settings', 'educational systems'];
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.error(`Failed to refresh ${operations[index]}:`, result.reason);
+        }
+      });
+
+      // School settings is critical, educational systems is optional
+      // Individual error handling is done in the respective functions
     }
   }, [currentSchoolId, fetchSchoolSettings, fetchEducationalSystems]);
 

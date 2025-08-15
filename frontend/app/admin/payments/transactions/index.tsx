@@ -218,7 +218,7 @@ export default function TransactionManagement() {
       try {
         setActionLoading(true);
 
-        // Process each selected transaction
+        // Process each selected transaction with graceful degradation
         const promises = state.selectedTransactions.map(async transactionId => {
           switch (action) {
             case 'refund':
@@ -239,7 +239,27 @@ export default function TransactionManagement() {
           }
         });
 
-        await Promise.all(promises);
+        const results = await Promise.allSettled(promises);
+        
+        // Count successful and failed operations
+        const successful = results.filter(result => result.status === 'fulfilled').length;
+        const failed = results.filter(result => result.status === 'rejected').length;
+        
+        // Log failed operations for monitoring
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`Bulk action ${action} failed for transaction ${state.selectedTransactions[index]}:`, result.reason);
+          }
+        });
+
+        // Show appropriate feedback to user
+        if (failed === 0) {
+          setError(null);
+        } else if (successful === 0) {
+          setError(`All ${action} operations failed. Please try again.`);
+        } else {
+          setError(`${action} completed with ${successful} successful and ${failed} failed operations.`);
+        }
 
         // Refresh data and clear selection
         loadTransactions();

@@ -80,19 +80,41 @@ export default function PaymentMonitoringDashboard() {
       setError(null);
       setLoading(true);
 
-      // Load metrics and trend data in parallel
-      const [metricsResponse, trendsResponse] = await Promise.all([
+      // Load metrics and trend data in parallel with graceful degradation
+      const results = await Promise.allSettled([
         PaymentMonitoringApiClient.getDashboardMetrics(state.timeRange),
         PaymentMonitoringApiClient.getPaymentTrends(state.timeRange),
       ]);
 
-      setMetrics(metricsResponse);
-      setTrendData(trendsResponse);
+      const [metricsResult, trendsResult] = results;
+
+      // Handle metrics result
+      if (metricsResult.status === 'fulfilled') {
+        setMetrics(metricsResult.value);
+        setWsMetrics(metricsResult.value);
+      } else {
+        console.error('Failed to load payment metrics:', metricsResult.reason);
+        setMetrics(null);
+      }
+
+      // Handle trends result
+      if (trendsResult.status === 'fulfilled') {
+        setTrendData(trendsResult.value);
+        setWsTrendData(trendsResult.value);
+      } else {
+        console.error('Failed to load payment trends:', trendsResult.reason);
+        setTrendData(null);
+      }
+
       setLastUpdated(new Date());
 
-      // Set initial data for WebSocket updates
-      setWsMetrics(metricsResponse);
-      setWsTrendData(trendsResponse);
+      // Set error if both operations failed
+      const failedCount = results.filter(result => result.status === 'rejected').length;
+      if (failedCount === results.length) {
+        setError('Failed to load dashboard data. Please try again.');
+      } else if (failedCount > 0) {
+        setError(`Some dashboard data could not be loaded. ${failedCount} of ${results.length} operations failed.`);
+      }
     } catch (err: any) {
       if (__DEV__) {
         console.error('Error loading dashboard data:', err); // TODO: Review for sensitive data

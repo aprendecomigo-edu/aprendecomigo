@@ -61,12 +61,25 @@ export const useParentDashboard = () => {
           error: null,
         }));
 
-        // Load all data in parallel
-        const [dashboardData, familyMetrics, children] = await Promise.all([
+        // Load all data in parallel with graceful degradation
+        const results = await Promise.allSettled([
           getParentApprovalDashboard(),
           getFamilyMetrics(timeframe),
           getChildrenProfiles(),
         ]);
+
+        // Extract data with defaults
+        const dashboardData = results[0].status === 'fulfilled' ? results[0].value : null;
+        const familyMetrics = results[1].status === 'fulfilled' ? results[1].value : null;
+        const children = results[2].status === 'fulfilled' ? results[2].value : [];
+
+        // Log any failures for monitoring
+        const operations = ['dashboard data', 'family metrics', 'children profiles'];
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`Failed to load ${operations[index]}:`, result.reason);
+          }
+        });
 
         setState(prev => ({
           ...prev,

@@ -153,7 +153,19 @@ export function UsageAnalyticsSection({ email }: UsageAnalyticsSectionProps) {
       end_date: now.toISOString().split('T')[0],
     };
 
-    await Promise.all([refreshUsageStats(timeRange), refreshPatterns(timeRange)]);
+    // Refresh data with graceful degradation
+    const results = await Promise.allSettled([
+      refreshUsageStats(timeRange), 
+      refreshPatterns(timeRange)
+    ]);
+    
+    // Log any failures for monitoring
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        const operation = index === 0 ? 'usage statistics' : 'usage patterns';
+        console.error(`Failed to refresh ${operation} for time range ${range}:`, result.reason);
+      }
+    });
   };
 
   if (usageStatsLoading && !usageStats) {

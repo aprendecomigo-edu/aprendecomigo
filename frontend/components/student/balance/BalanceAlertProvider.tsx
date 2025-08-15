@@ -180,10 +180,27 @@ export function BalanceAlertProvider({
       setLoading(true);
       setError(null);
 
-      const [notificationsResponse, unreadResponse] = await Promise.all([
+      // Fetch notifications with graceful degradation
+      const results = await Promise.allSettled([
         NotificationApiClient.getNotifications({ is_read: false }, 1, 50),
         NotificationApiClient.getUnreadCount(),
       ]);
+
+      // Extract data with defaults
+      const notificationsResponse = results[0].status === 'fulfilled' 
+        ? results[0].value 
+        : { results: [] };
+      const unreadResponse = results[1].status === 'fulfilled' 
+        ? results[1].value 
+        : { unread_count: 0 };
+
+      // Log any failures for monitoring
+      if (results[0].status === 'rejected') {
+        console.error('Failed to fetch notifications:', results[0].reason);
+      }
+      if (results[1].status === 'rejected') {
+        console.error('Failed to fetch unread count:', results[1].reason);
+      }
 
       setNotifications(notificationsResponse.results);
       setUnreadCount(unreadResponse.unread_count);

@@ -63,7 +63,22 @@ const CommunicationDashboard = () => {
   const handleRefreshAll = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refreshAnalytics(), refreshTemplates(), fetchBranding()]);
+      // Use Promise.allSettled for graceful degradation
+      const results = await Promise.allSettled([
+        refreshAnalytics(),
+        refreshTemplates(),
+        fetchBranding()
+      ]);
+
+      // Log any failures for monitoring
+      const operations = ['analytics', 'templates', 'branding'];
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.error(`Failed to refresh ${operations[index]}:`, result.reason);
+        }
+      });
+
+      // Continue with available data even if some operations failed
     } catch (error) {
       if (__DEV__) {
         console.error('Error refreshing data:', error); // TODO: Review for sensitive data

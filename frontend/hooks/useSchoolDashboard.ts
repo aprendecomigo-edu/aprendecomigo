@@ -216,9 +216,23 @@ export const useSchoolDashboard = ({
     setIsLoading(true);
 
     try {
-      await Promise.all([fetchMetrics(), fetchSchoolInfo(), fetchActivities(1, false)]);
+      // Use Promise.allSettled for graceful degradation
+      const results = await Promise.allSettled([
+        fetchMetrics(),
+        fetchSchoolInfo(),
+        fetchActivities(1, false)
+      ]);
+
+      // Log any failures for monitoring
+      const operations = ['metrics', 'school info', 'activities'];
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.error(`Failed to refresh ${operations[index]}:`, result.reason);
+        }
+      });
+
+      // Individual error states are handled by the respective functions
     } catch (err) {
-      // Individual errors are handled in the fetch functions
       // This catch is for any unexpected errors during parallel execution
       console.error('Error refreshing dashboard data:', err);
     } finally {
@@ -293,7 +307,20 @@ export const useSchoolDashboard = ({
 
     try {
       await retryOperation(async () => {
-        await Promise.all([fetchMetrics(), fetchSchoolInfo(), fetchActivities(1, false)]);
+        // Use Promise.allSettled for graceful degradation even within retry
+        const results = await Promise.allSettled([
+          fetchMetrics(),
+          fetchSchoolInfo(),
+          fetchActivities(1, false)
+        ]);
+
+        // Log any failures for monitoring
+        const operations = ['metrics', 'school info', 'activities'];
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`Failed to refresh ${operations[index]} during retry:`, result.reason);
+          }
+        });
       });
     } catch (err) {
       // Error is already set by individual fetch functions

@@ -125,10 +125,28 @@ export function useOnboarding(): OnboardingState & OnboardingActions {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      const [progress, preferences] = await Promise.all([
+      // Load onboarding data with graceful degradation
+      const results = await Promise.allSettled([
         onboardingApi.getOnboardingProgress(),
         onboardingApi.getNavigationPreferences(),
       ]);
+
+      // Extract data with defaults
+      const progress = results[0].status === 'fulfilled' ? results[0].value : null;
+      const preferences = results[1].status === 'fulfilled' ? results[1].value : null;
+
+      // Log any failures for monitoring
+      if (results[0].status === 'rejected') {
+        console.error('Failed to load onboarding progress:', results[0].reason);
+      }
+      if (results[1].status === 'rejected') {
+        console.error('Failed to load navigation preferences:', results[1].reason);
+      }
+
+      // Only proceed if we have at least the progress data
+      if (!progress) {
+        throw new Error('Failed to load essential onboarding data');
+      }
 
       const currentStep = progress.completed_steps.length;
       const isCompleted = progress.completion_percentage >= 100;

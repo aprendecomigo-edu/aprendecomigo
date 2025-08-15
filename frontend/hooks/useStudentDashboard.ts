@@ -223,9 +223,24 @@ export function useStudentDashboard(email?: string): UseStudentDashboardResult {
     [state.purchaseFilters, debouncedSearchQuery, email]
   );
 
-  // Refresh all data
+  // Refresh all data with graceful degradation
   const refreshAll = useCallback(async () => {
-    await Promise.all([refreshBalance(), refreshTransactions(1), refreshPurchases(1)]);
+    const results = await Promise.allSettled([
+      refreshBalance(),
+      refreshTransactions(1),
+      refreshPurchases(1),
+    ]);
+
+    // Log any failures for monitoring
+    const operations = ['balance', 'transactions', 'purchases'];
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`Failed to refresh ${operations[index]}:`, result.reason);
+      }
+    });
+
+    // All operations are independent, so we continue even if some fail
+    // Individual error states are handled by the respective functions
   }, [refreshBalance, refreshTransactions, refreshPurchases]);
 
   // Load more data for pagination
