@@ -8,7 +8,7 @@ to detect potentially fraudulent activities and generate appropriate alerts.
 from datetime import timedelta
 from decimal import Decimal
 import logging
-from typing import Any, ClassVar
+from typing import Any
 
 # Cross-app models will be loaded at runtime using apps.get_model()
 from django.utils import timezone
@@ -36,7 +36,7 @@ class FraudDetectionService:
     """
 
     # Fraud detection thresholds - these could be moved to Django settings
-    THRESHOLDS: ClassVar = {
+    THRESHOLDS = {
         "multiple_cards_24h": {
             "count": 5,
             "severity": FraudAlertSeverity.HIGH,

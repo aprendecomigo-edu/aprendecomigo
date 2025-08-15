@@ -7,7 +7,6 @@ school invitations, school invitation links, and teacher invitations.
 
 from datetime import timedelta
 import secrets
-from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -34,8 +33,8 @@ class SchoolInvitation(models.Model):
     is_accepted: models.BooleanField = models.BooleanField(_("is accepted"), default=False)
 
     class Meta:
-        ordering: ClassVar = ["-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-created_at"]
+        indexes = [
             models.Index(fields=["school", "is_accepted", "-created_at"]),
             models.Index(fields=["email", "is_accepted"]),
             models.Index(fields=["token"]),
@@ -76,9 +75,9 @@ class SchoolInvitationLink(models.Model):
     )
 
     class Meta:
-        unique_together: ClassVar = ["school", "role"]  # One active link per school per role
-        ordering: ClassVar = ["-created_at"]
-        indexes: ClassVar = [
+        unique_together = ["school", "role"]  # One active link per school per role
+        ordering = ["-created_at"]
+        indexes = [
             models.Index(fields=["school", "role", "is_active"]),
             models.Index(fields=["token"]),
             models.Index(fields=["expires_at", "is_active"]),
@@ -194,8 +193,8 @@ class TeacherInvitation(models.Model):
     class Meta:
         verbose_name = _("Teacher Invitation")
         verbose_name_plural = _("Teacher Invitations")
-        ordering: ClassVar = ["-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-created_at"]
+        indexes = [
             models.Index(fields=["school", "status", "-created_at"]),
             models.Index(fields=["batch_id", "-created_at"]),
             models.Index(fields=["email", "school", "is_accepted"]),
@@ -203,7 +202,7 @@ class TeacherInvitation(models.Model):
             models.Index(fields=["expires_at", "is_accepted"]),
             models.Index(fields=["email_delivery_status", "retry_count"]),
         ]
-        constraints: ClassVar = [
+        constraints = [
             models.UniqueConstraint(
                 fields=["email", "school"],
                 condition=models.Q(

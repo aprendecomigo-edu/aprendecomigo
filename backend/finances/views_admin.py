@@ -6,7 +6,6 @@ including analytics dashboard, transaction history, and webhook monitoring.
 """
 
 import logging
-from typing import ClassVar
 
 from django.db.models import Q
 from django.utils import timezone
@@ -113,7 +112,7 @@ class TransactionHistoryView(ListAPIView):
     """
 
     serializer_class = AdminTransactionSerializer
-    permission_classes: ClassVar = [AdminOnlyPermission]
+    permission_classes = [AdminOnlyPermission]
     pagination_class = AdminPagination
 
     def get_queryset(self):
@@ -211,7 +210,7 @@ class WebhookStatusView(ListAPIView):
     """
 
     serializer_class = AdminWebhookEventSerializer
-    permission_classes: ClassVar = [AdminOnlyPermission]
+    permission_classes = [AdminOnlyPermission]
     pagination_class = AdminPagination
 
     def get_queryset(self):

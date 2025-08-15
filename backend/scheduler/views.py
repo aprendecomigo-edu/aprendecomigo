@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils import timezone
@@ -38,7 +36,7 @@ class TeacherAvailabilityViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
     """ViewSet for managing teacher availability"""
 
     serializer_class = TeacherAvailabilitySerializer
-    permission_classes: ClassVar = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user_schools = self.get_user_schools()
@@ -118,7 +116,7 @@ class TeacherUnavailabilityViewSet(SchoolPermissionMixin, viewsets.ModelViewSet)
     """ViewSet for managing teacher unavailability"""
 
     serializer_class = TeacherUnavailabilitySerializer
-    permission_classes: ClassVar = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user_schools = self.get_user_schools()
@@ -199,7 +197,7 @@ class TeacherUnavailabilityViewSet(SchoolPermissionMixin, viewsets.ModelViewSet)
 class ClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
     """ViewSet for managing class schedules"""
 
-    permission_classes: ClassVar = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -764,7 +762,7 @@ class RecurringClassScheduleViewSet(SchoolPermissionMixin, viewsets.ModelViewSet
     """ViewSet for managing recurring class schedules"""
 
     serializer_class = RecurringClassScheduleSerializer
-    permission_classes: ClassVar = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user_schools = self.get_user_schools()
@@ -963,7 +961,7 @@ class ReminderPreferenceViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
     """ViewSet for managing user reminder preferences"""
 
     serializer_class = ReminderPreferenceSerializer
-    permission_classes: ClassVar = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """Return user's own reminder preferences"""
@@ -988,7 +986,7 @@ class ClassReminderViewSet(SchoolPermissionMixin, viewsets.ReadOnlyModelViewSet)
     """ViewSet for viewing class reminders"""
 
     serializer_class = ClassReminderSerializer
-    permission_classes: ClassVar = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """Return reminders based on user role"""
@@ -1045,7 +1043,7 @@ class UserRemindersViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for user's own reminders"""
 
     serializer_class = ClassReminderSerializer
-    permission_classes: ClassVar = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """Return only current user's reminders"""
@@ -1059,7 +1057,7 @@ class UserRemindersViewSet(viewsets.ReadOnlyModelViewSet):
 class ReminderQueueViewSet(viewsets.ViewSet):
     """ViewSet for managing reminder queue (admin only)"""
 
-    permission_classes: ClassVar = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def list(self, request):
         """Get reminder queue status"""

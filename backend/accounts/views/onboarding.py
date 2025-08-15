@@ -6,7 +6,6 @@ global search, and bulk operations.
 """
 
 import logging
-from typing import ClassVar
 
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -320,8 +319,8 @@ class TutorDiscoveryAPIView(APIView):
     Only exposes public profile information with proper privacy controls.
     """
 
-    permission_classes: ClassVar = [AllowAny]  # Public endpoint
-    throttle_classes: ClassVar = [IPBasedThrottle]  # Rate limiting for public endpoint
+    permission_classes = [AllowAny]  # Public endpoint
+    throttle_classes = [IPBasedThrottle]  # Rate limiting for public endpoint
 
     def get(self, request):
         """

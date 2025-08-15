@@ -7,7 +7,7 @@ and authentication-related models like verification codes.
 
 from datetime import timedelta
 import logging
-from typing import Any, ClassVar, TypeVar
+from typing import Any, TypeVar
 
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
@@ -120,15 +120,15 @@ class CustomUser(AbstractUser):
     # user_type field is removed - roles are now in SchoolMembership
 
     USERNAME_FIELD: str = "email"  # type: ignore[assignment]
-    REQUIRED_FIELDS: ClassVar[list[str]] = ["name"]
+    REQUIRED_FIELDS: list[str] = ["name"]
 
     # Use a type annotation that doesn't conflict with the parent class
     # but allows us to provide our custom manager
     objects = CustomUserManager()  # type: ignore[misc]
 
     class Meta:
-        ordering: ClassVar = ["name", "email"]
-        indexes: ClassVar = [
+        ordering = ["name", "email"]
+        indexes = [
             models.Index(fields=["email"]),
             models.Index(fields=["name"]),
             models.Index(fields=["email_verified"]),
@@ -161,8 +161,8 @@ class VerificationCode(models.Model):
     max_attempts: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(default=5)
 
     class Meta:
-        ordering: ClassVar = ["-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-created_at"]
+        indexes = [
             models.Index(fields=["email", "is_used"]),
             models.Index(fields=["email", "created_at"]),
         ]

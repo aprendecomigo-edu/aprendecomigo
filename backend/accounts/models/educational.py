@@ -5,8 +5,6 @@ This module contains models related to educational systems,
 courses, and the relationships between teachers and courses.
 """
 
-from typing import ClassVar
-
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -49,8 +47,8 @@ class EducationalSystem(models.Model):
     class Meta:
         verbose_name = _("Educational System")
         verbose_name_plural = _("Educational Systems")
-        ordering: ClassVar = ["name", "code"]
-        indexes: ClassVar = [
+        ordering = ["name", "code"]
+        indexes = [
             models.Index(fields=["code"]),
             models.Index(fields=["name"]),
             models.Index(fields=["is_active"]),
@@ -134,9 +132,9 @@ class Course(models.Model):
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together: ClassVar = ["code", "educational_system"]
-        ordering: ClassVar = ["educational_system__name", "name"]
-        indexes: ClassVar = [
+        unique_together = ["code", "educational_system"]
+        ordering = ["educational_system__name", "name"]
+        indexes = [
             models.Index(fields=["educational_system", "education_level"]),
             models.Index(fields=["code"]),
             models.Index(fields=["name"]),
@@ -189,8 +187,8 @@ class TeacherCourse(models.Model):
     started_teaching: models.DateField = models.DateField(_("started teaching date"), auto_now_add=True)
 
     class Meta:
-        unique_together: ClassVar = ["teacher", "course"]
-        indexes: ClassVar = [
+        unique_together = ["teacher", "course"]
+        indexes = [
             # Indexes for tutor discovery filtering
             models.Index(fields=["hourly_rate"]),
             models.Index(fields=["is_active", "hourly_rate"]),

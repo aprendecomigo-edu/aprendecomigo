@@ -106,26 +106,43 @@ Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b
   - **Location**: Contains the teacher's name
   - **Description**: Contains a price code (hourly rate)
 
-## Setup
+## Installation
+
+### Quick Start (Recommended)
+```bash
+# Run the automated setup script for development
+./scripts/setup-dev.sh
+```
+
+### Manual Setup
 
 1. Create a virtual environment:
 ```bash
-python3 -m venv venv
+python3.13 -m venv .venv
 ```
 
 2. Activate the virtual environment:
 ```bash
 # On Unix or MacOS
-source venv/bin/activate
+source .venv/bin/activate
 
 # On Windows
-venv\Scripts\activate
+.venv\Scripts\activate
 ```
 
-3. Install dependencies:
+3. Install dependencies based on your environment:
 ```bash
-pip install -r requirements.txt
+# For Development (includes linting, type checking, etc.)
+pip install -r requirements/dev.txt
+
+# For Production (optimized dependencies only)
+pip install -r requirements/prod.txt
+
+# For CI/CD Testing (uses dev.txt for linting & type checking)
+pip install -r requirements/dev.txt
 ```
+
+**Note**: See `requirements/README.md` for detailed information about the requirements structure.
 
 4. Configure PostgreSQL database:
 - Create a database named `aprendecomigo`
@@ -189,7 +206,9 @@ When developing with Google OAuth, you need HTTPS even on your local development
 
 1. Install requirements which include django-sslserver:
    ```
-   pip install -r requirements.txt
+   pip install -r requirements/dev.txt  # For development
+# OR
+pip install -r requirements/prod.txt  # For production
    ```
 
 2. Configure Google OAuth in Google Cloud Console:

@@ -40,10 +40,10 @@ Testing:
   test --fast             Run tests with --keepdb
 
 Code Quality:
-  lint                    Run linting with ruff (checks for code issues)
+  lint                    Run linting instead of ruff (checks for code issues)
   lint --fix              Run linting with auto-fix for safe issues  
-  format                  Format code with ruff formatter
-  typecheck               Type checking with mypy
+  format                  Format code instead of ruff formatter
+  typecheck               Type checking instead of mypy
   lint check - Check for issues
   lint fix - Auto-fix safe issues  # ALWAYS RUN THIS FIRST
   lint fix-unsafe - Auto-fix including unsafe fixes # DO NOT USE THIS

@@ -1,7 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 import logging
-from typing import Any, ClassVar, TypeVar
+from typing import Any, TypeVar
 import uuid
 
 from django.contrib.auth.models import AbstractUser, UserManager
@@ -156,7 +156,7 @@ class CustomUser(AbstractUser):
     # user_type field is removed - roles are now in SchoolMembership
 
     USERNAME_FIELD: str = "email"  # type: ignore[assignment]
-    REQUIRED_FIELDS: ClassVar[list[str]] = ["name"]
+    REQUIRED_FIELDS[list[str]] = ["name"]
 
     # Use a type annotation that doesn't conflict with the parent class
     # but allows us to provide our custom manager
@@ -200,8 +200,8 @@ class SchoolMembership(models.Model):
     joined_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together: ClassVar = ["user", "school", "role"]
-        indexes: ClassVar = [
+        unique_together = ["user", "school", "role"]
+        indexes = [
             models.Index(fields=["school", "role", "is_active"]),
             models.Index(fields=["school", "joined_at"]),
         ]
@@ -537,7 +537,7 @@ class TeacherProfile(models.Model):
     )
 
     class Meta:
-        indexes: ClassVar = [
+        indexes = [
             models.Index(fields=["profile_completion_score"]),
             models.Index(fields=["is_profile_complete"]),
             models.Index(fields=["last_profile_update"]),
@@ -616,7 +616,7 @@ class Course(models.Model):
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together: ClassVar = ["code", "educational_system"]
+        unique_together = ["code", "educational_system"]
 
     def __str__(self) -> str:
         return f"{self.name} ({self.code})"
@@ -664,8 +664,8 @@ class TeacherCourse(models.Model):
     started_teaching: models.DateField = models.DateField(_("started teaching date"), auto_now_add=True)
 
     class Meta:
-        unique_together: ClassVar = ["teacher", "course"]
-        indexes: ClassVar = [
+        unique_together = ["teacher", "course"]
+        indexes = [
             # Indexes for tutor discovery filtering
             models.Index(fields=["hourly_rate"]),
             models.Index(fields=["is_active", "hourly_rate"]),
@@ -732,7 +732,7 @@ class SchoolInvitationLink(models.Model):
     )
 
     class Meta:
-        unique_together: ClassVar = ["school", "role"]  # One active link per school per role
+        unique_together = ["school", "role"]  # One active link per school per role
 
     def __str__(self) -> str:
         school_name = self.school.name if hasattr(self.school, "name") else str(self.school)
@@ -771,7 +771,7 @@ class VerificationCode(models.Model):
     max_attempts: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(default=5)
 
     class Meta:
-        indexes: ClassVar = [
+        indexes = [
             models.Index(fields=["email", "is_used"]),
             models.Index(fields=["email", "created_at"]),
         ]
@@ -870,8 +870,8 @@ class SchoolActivity(models.Model):
     description = models.TextField()
 
     class Meta:
-        ordering: ClassVar = ["-timestamp"]
-        indexes: ClassVar = [
+        ordering = ["-timestamp"]
+        indexes = [
             models.Index(fields=["school", "-timestamp"]),
             models.Index(fields=["school", "activity_type", "-timestamp"]),
             models.Index(fields=["actor", "-timestamp"]),
@@ -1078,7 +1078,7 @@ class SchoolSettings(models.Model):
     class Meta:
         verbose_name = _("School Settings")
         verbose_name_plural = _("School Settings")
-        indexes: ClassVar = [
+        indexes = [
             models.Index(fields=["school"]),
             models.Index(fields=["educational_system"]),
             models.Index(fields=["language"]),
@@ -1225,8 +1225,8 @@ class TeacherInvitation(models.Model):
     class Meta:
         verbose_name = _("Teacher Invitation")
         verbose_name_plural = _("Teacher Invitations")
-        ordering: ClassVar = ["-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-created_at"]
+        indexes = [
             models.Index(fields=["school", "status", "-created_at"]),
             models.Index(fields=["batch_id", "-created_at"]),
             models.Index(fields=["email", "school", "is_accepted"]),
@@ -1234,7 +1234,7 @@ class TeacherInvitation(models.Model):
             models.Index(fields=["expires_at", "is_accepted"]),
             models.Index(fields=["email_delivery_status", "retry_count"]),
         ]
-        constraints: ClassVar = [
+        constraints = [
             models.UniqueConstraint(
                 fields=["email", "school"],
                 condition=models.Q(
@@ -1456,13 +1456,13 @@ class StudentProgress(models.Model):
     class Meta:
         verbose_name = _("Student Progress")
         verbose_name_plural = _("Student Progress Records")
-        ordering: ClassVar = ["-updated_at"]
-        constraints: ClassVar = [
+        ordering = ["-updated_at"]
+        constraints = [
             models.UniqueConstraint(
                 fields=["student", "teacher", "course"], name="unique_student_teacher_course_progress"
             )
         ]
-        indexes: ClassVar = [
+        indexes = [
             models.Index(fields=["student", "course"]),
             models.Index(fields=["teacher", "-updated_at"]),
             models.Index(fields=["school", "course"]),
@@ -1575,8 +1575,8 @@ class ProgressAssessment(models.Model):
     class Meta:
         verbose_name = _("Progress Assessment")
         verbose_name_plural = _("Progress Assessments")
-        ordering: ClassVar = ["-assessment_date", "-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-assessment_date", "-created_at"]
+        indexes = [
             models.Index(fields=["student_progress", "-assessment_date"]),
             models.Index(fields=["assessment_type", "-assessment_date"]),
             models.Index(fields=["is_graded", "-assessment_date"]),
@@ -1680,7 +1680,7 @@ class ParentProfile(models.Model):
     class Meta:
         verbose_name = _("Parent Profile")
         verbose_name_plural = _("Parent Profiles")
-        indexes: ClassVar = [
+        indexes = [
             models.Index(fields=["created_at"]),
             models.Index(fields=["email_notifications_enabled"]),
         ]
@@ -1762,16 +1762,14 @@ class ParentChildRelationship(models.Model):
     class Meta:
         verbose_name = _("Parent-Child Relationship")
         verbose_name_plural = _("Parent-Child Relationships")
-        unique_together: ClassVar = [["parent", "child", "school"]]
-        indexes: ClassVar = [
+        unique_together = [["parent", "child", "school"]]
+        indexes = [
             models.Index(fields=["parent", "is_active"]),
             models.Index(fields=["child", "is_active"]),
             models.Index(fields=["school", "is_active"]),
             models.Index(fields=["relationship_type"]),
         ]
-        constraints: ClassVar = [
-            models.CheckConstraint(check=~models.Q(parent=models.F("child")), name="parent_cannot_be_child")
-        ]
+        constraints = [models.CheckConstraint(check=~models.Q(parent=models.F("child")), name="parent_cannot_be_child")]
 
     def __str__(self) -> str:
         parent_name = self.parent.name if hasattr(self.parent, "name") else str(self.parent)

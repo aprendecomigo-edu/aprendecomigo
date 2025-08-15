@@ -12,7 +12,7 @@ Business Logic:
 """
 
 import logging
-from typing import Any, ClassVar
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +26,14 @@ class ProfileCompletionService:
     PROFESSIONAL_INFO_WEIGHT = 0.2  # 20%
 
     # Critical fields that significantly impact completion
-    CRITICAL_FIELDS: ClassVar = [
+    CRITICAL_FIELDS = [
         "bio",
         "hourly_rate",
         "teaching_subjects",  # At least one subject/course required
     ]
 
     # Optional fields that improve profile quality
-    OPTIONAL_FIELDS: ClassVar = [
+    OPTIONAL_FIELDS = [
         "specialty",
         "education",
         "availability",

@@ -7,7 +7,6 @@ including courses, educational systems, and teacher-course relationships.
 
 from collections import defaultdict
 import logging
-from typing import ClassVar
 
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -74,7 +73,7 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
             )
 
         # Apply ordering
-        ordering: ClassVar = self.request.query_params.get("ordering")
+        ordering = self.request.query_params.get("ordering")
         if ordering:
             # Handle special ordering cases
             if ordering in ["popularity_score", "-popularity_score"]:
@@ -98,10 +97,10 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
             # Only school admins can create/modify courses
-            permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+            permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
         else:
             # Anyone can view courses
-            permission_classes: ClassVar = [IsAuthenticated]
+            permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def list(self, request, *args, **kwargs):
@@ -128,7 +127,7 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
                 courses_data = self._enhance_courses_data(courses_data, request)
 
             # Apply custom ordering if needed
-            ordering: ClassVar = request.query_params.get("ordering")
+            ordering = request.query_params.get("ordering")
             if ordering in ["popularity_score", "-popularity_score", "avg_hourly_rate", "-avg_hourly_rate"]:
                 courses_data = self._apply_custom_ordering(courses_data, ordering)
 

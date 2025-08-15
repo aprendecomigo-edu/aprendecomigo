@@ -7,7 +7,6 @@ branding, and invitation links.
 """
 
 import logging
-from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -64,8 +63,8 @@ class SchoolViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = SchoolSerializer
-    authentication_classes: ClassVar = [TokenAuthentication]
-    permission_classes: ClassVar = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """Filter schools based on user permissions."""
@@ -452,8 +451,8 @@ class SchoolMembershipViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = SchoolMembershipSerializer
-    authentication_classes: ClassVar = [TokenAuthentication]
-    permission_classes: ClassVar = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -483,8 +482,8 @@ class SchoolMembershipViewSet(viewsets.ModelViewSet):
 class SchoolDashboardViewSet(viewsets.ModelViewSet):
     """ViewSet for school dashboard functionality"""
 
-    authentication_classes: ClassVar = [TokenAuthentication]
-    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
     serializer_class = EnhancedSchoolSerializer
 
     def get_queryset(self):
@@ -609,7 +608,7 @@ class SchoolInvitationLinkView(APIView):
     This is a public endpoint (no auth required) for sharing links.
     """
 
-    permission_classes: ClassVar = [AllowAny]
+    permission_classes = [AllowAny]
 
     def get(self, request, token):
         """
@@ -682,10 +681,10 @@ class SchoolInvitationLinkView(APIView):
 
         # Check if the user is authenticated and verify they are the intended recipient
         if request.user.is_authenticated and invitation.email != request.user.email:
-                return Response(
-                    {"error": "This invitation is not for your account"},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+            return Response(
+                {"error": "This invitation is not for your account"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         try:
             with transaction.atomic():
@@ -739,8 +738,8 @@ class SchoolBrandingAPIView(APIView):
     API for managing school branding settings for email templates.
     """
 
-    authentication_classes: ClassVar = [TokenAuthentication]
-    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def get(self, request, *args, **kwargs):
         """Get school branding settings."""
@@ -786,8 +785,8 @@ class CommunicationSettingsAPIView(APIView):
     API for managing communication settings and preferences.
     """
 
-    authentication_classes: ClassVar = [TokenAuthentication]
-    permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def get(self, request, *args, **kwargs):
         """Get communication settings for user's school."""

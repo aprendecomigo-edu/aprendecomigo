@@ -7,7 +7,6 @@ and functionality specific to their role.
 """
 
 import logging
-from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -145,7 +144,7 @@ class TeacherProfile(models.Model):
     )
 
     class Meta:
-        indexes: ClassVar = [
+        indexes = [
             models.Index(fields=["profile_completion_score"]),
             models.Index(fields=["is_profile_complete"]),
             models.Index(fields=["last_profile_update"]),
@@ -243,8 +242,8 @@ class StudentProfile(models.Model):
     calendar_iframe: models.TextField = models.TextField(_("calendar iframe"), blank=True)
 
     class Meta:
-        ordering: ClassVar = ["user__name", "birth_date"]
-        indexes: ClassVar = [
+        ordering = ["user__name", "birth_date"]
+        indexes = [
             models.Index(fields=["user"]),
             models.Index(fields=["educational_system", "school_year"]),
             models.Index(fields=["birth_date"]),
@@ -316,7 +315,7 @@ class ParentProfile(models.Model):
     class Meta:
         verbose_name = _("Parent Profile")
         verbose_name_plural = _("Parent Profiles")
-        indexes: ClassVar = [
+        indexes = [
             models.Index(fields=["created_at"]),
             models.Index(fields=["email_notifications_enabled"]),
         ]
@@ -390,16 +389,14 @@ class ParentChildRelationship(models.Model):
     class Meta:
         verbose_name = _("Parent-Child Relationship")
         verbose_name_plural = _("Parent-Child Relationships")
-        unique_together: ClassVar = [["parent", "child", "school"]]
-        indexes: ClassVar = [
+        unique_together = [["parent", "child", "school"]]
+        indexes = [
             models.Index(fields=["parent", "is_active"]),
             models.Index(fields=["child", "is_active"]),
             models.Index(fields=["school", "is_active"]),
             models.Index(fields=["relationship_type"]),
         ]
-        constraints: ClassVar = [
-            models.CheckConstraint(check=~models.Q(parent=models.F("child")), name="parent_cannot_be_child")
-        ]
+        constraints = [models.CheckConstraint(check=~models.Q(parent=models.F("child")), name="parent_cannot_be_child")]
 
     def __str__(self) -> str:
         parent_name = self.parent.name if hasattr(self.parent, "name") else str(self.parent)

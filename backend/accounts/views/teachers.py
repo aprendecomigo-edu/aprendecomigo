@@ -7,7 +7,6 @@ and teacher dashboard functionality.
 """
 
 import logging
-from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -194,15 +193,15 @@ class TeacherViewSet(KnoxAuthenticatedViewSet):
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
-            permission_classes: ClassVar = [IsAuthenticated]
+            permission_classes = [IsAuthenticated]
         elif self.action in ["update", "partial_update"]:
-            permission_classes: ClassVar = [IsAuthenticated, IsOwnerOrSchoolAdmin]
+            permission_classes = [IsAuthenticated, IsOwnerOrSchoolAdmin]
         elif self.action == "onboarding":
-            permission_classes: ClassVar = [IsAuthenticated]
+            permission_classes = [IsAuthenticated]
         elif self.action in ["invite_new", "invite_existing", "invite_bulk"]:
-            permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+            permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
         else:
-            permission_classes: ClassVar = [IsAuthenticated, IsTeacherInAnySchool]
+            permission_classes = [IsAuthenticated, IsTeacherInAnySchool]
         return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=["post"])

@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -14,7 +12,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields: ClassVar = [
+        fields = [
             "id",
             "title",
             "description",
@@ -30,7 +28,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "is_overdue",
             "days_until_due",
         ]
-        read_only_fields: ClassVar = ["id", "created_at", "updated_at", "completed_at", "is_system_generated"]
+        read_only_fields = ["id", "created_at", "updated_at", "completed_at", "is_system_generated"]
 
     def validate_due_date(self, value):
         """Validate that due date is not in the past"""
@@ -44,7 +42,7 @@ class TaskCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields: ClassVar = ["title", "description", "priority", "task_type", "due_date", "is_urgent"]
+        fields = ["title", "description", "priority", "task_type", "due_date", "is_urgent"]
 
     def validate_due_date(self, value):
         """Validate that due date is not in the past"""
@@ -63,7 +61,7 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields: ClassVar = [
+        fields = [
             "title",
             "description",
             "status",
@@ -87,8 +85,8 @@ class TaskCommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TaskComment
-        fields: ClassVar = ["id", "comment", "created_at", "user_name"]
-        read_only_fields: ClassVar = ["id", "created_at", "user_name"]
+        fields = ["id", "comment", "created_at", "user_name"]
+        read_only_fields = ["id", "created_at", "user_name"]
 
     def create(self, validated_data):
         """Create comment with current user and task"""

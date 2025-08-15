@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from django.contrib import admin
 from django.db import models
 from django.utils import timezone
@@ -24,22 +22,22 @@ from .services import TeacherPaymentCalculator
 class SchoolBillingSettingsAdmin(admin.ModelAdmin):
     """Admin interface for school billing settings."""
 
-    list_display: ClassVar = [
+    list_display = [
         "school",
         "trial_cost_absorption",
         "teacher_payment_frequency",
         "payment_day_of_month",
         "updated_at",
     ]
-    list_filter: ClassVar = [
+    list_filter = [
         "trial_cost_absorption",
         "teacher_payment_frequency",
         "payment_day_of_month",
     ]
-    search_fields: ClassVar = ["school__name"]
-    readonly_fields: ClassVar = ["created_at", "updated_at"]
+    search_fields = ["school__name"]
+    readonly_fields = ["created_at", "updated_at"]
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         (None, {"fields": ("school",)}),
         (
             "Payment Settings",
@@ -59,7 +57,7 @@ class SchoolBillingSettingsAdmin(admin.ModelAdmin):
 class TeacherCompensationRuleAdmin(admin.ModelAdmin):
     """Admin interface for teacher compensation rules."""
 
-    list_display: ClassVar = [
+    list_display = [
         "teacher_name",
         "school",
         "rule_type",
@@ -68,22 +66,22 @@ class TeacherCompensationRuleAdmin(admin.ModelAdmin):
         "is_active",
         "effective_from",
     ]
-    list_filter: ClassVar = [
+    list_filter = [
         "rule_type",
         "grade_level",
         "is_active",
         "school",
         "effective_from",
     ]
-    search_fields: ClassVar = [
+    search_fields = [
         "teacher__user__name",
         "teacher__user__email",
         "school__name",
     ]
-    readonly_fields: ClassVar = ["created_at", "updated_at"]
-    date_hierarchy: ClassVar = "effective_from"
+    readonly_fields = ["created_at", "updated_at"]
+    date_hierarchy = "effective_from"
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         (None, {"fields": ("teacher", "school", "rule_type")}),
         (
             "Rule Configuration",
@@ -131,7 +129,7 @@ class TeacherCompensationRuleAdmin(admin.ModelAdmin):
 class ClassSessionAdmin(admin.ModelAdmin):
     """Admin interface for class sessions."""
 
-    list_display: ClassVar = [
+    list_display = [
         "teacher_name",
         "school",
         "date",
@@ -144,7 +142,7 @@ class ClassSessionAdmin(admin.ModelAdmin):
         "is_trial",
         "payment_status",
     ]
-    list_filter: ClassVar = [
+    list_filter = [
         "status",
         "session_type",
         "grade_level",
@@ -153,18 +151,18 @@ class ClassSessionAdmin(admin.ModelAdmin):
         "school",
         "date",
     ]
-    search_fields: ClassVar = [
+    search_fields = [
         "teacher__user__name",
         "teacher__user__email",
         "school__name",
         "students__name",
         "students__email",
     ]
-    readonly_fields: ClassVar = ["created_at", "updated_at", "duration_display"]
-    date_hierarchy: ClassVar = "date"
+    readonly_fields = ["created_at", "updated_at", "duration_display"]
+    date_hierarchy = "date"
     filter_horizontal = ["students"]
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         (None, {"fields": ("teacher", "school")}),
         (
             "Session Details",
@@ -269,7 +267,7 @@ class ClassSessionAdmin(admin.ModelAdmin):
 class TeacherPaymentEntryAdmin(admin.ModelAdmin):
     """Admin interface for teacher payment entries."""
 
-    list_display: ClassVar = [
+    list_display = [
         "teacher_name",
         "school",
         "session_date",
@@ -280,7 +278,7 @@ class TeacherPaymentEntryAdmin(admin.ModelAdmin):
         "payment_status",
         "created_at",
     ]
-    list_filter: ClassVar = [
+    list_filter = [
         "payment_status",
         "billing_period",
         "school",
@@ -288,13 +286,13 @@ class TeacherPaymentEntryAdmin(admin.ModelAdmin):
         "session__session_type",
         "session__is_trial",
     ]
-    search_fields: ClassVar = [
+    search_fields = [
         "teacher__user__name",
         "teacher__user__email",
         "school__name",
         "billing_period",
     ]
-    readonly_fields: ClassVar = [
+    readonly_fields = [
         "session",
         "teacher",
         "school",
@@ -307,9 +305,9 @@ class TeacherPaymentEntryAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     ]
-    date_hierarchy: ClassVar = "session__date"
+    date_hierarchy = "session__date"
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         (
             "Basic Information",
             {
@@ -390,7 +388,7 @@ class TeacherPaymentEntryAdmin(admin.ModelAdmin):
 class StudentAccountBalanceAdmin(admin.ModelAdmin):
     """Admin interface for student account balances."""
 
-    list_display: ClassVar = [
+    list_display = [
         "student_name",
         "student_email",
         "hours_purchased",
@@ -399,17 +397,17 @@ class StudentAccountBalanceAdmin(admin.ModelAdmin):
         "balance_amount_display",
         "updated_at",
     ]
-    list_filter: ClassVar = [
+    list_filter = [
         "created_at",
         "updated_at",
     ]
-    search_fields: ClassVar = [
+    search_fields = [
         "student__name",
         "student__email",
     ]
-    readonly_fields: ClassVar = ["created_at", "updated_at", "remaining_hours_display"]
+    readonly_fields = ["created_at", "updated_at", "remaining_hours_display"]
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         (
             "Student Information",
             {"fields": ("student",)},
@@ -479,7 +477,7 @@ class StudentAccountBalanceAdmin(admin.ModelAdmin):
 class PurchaseTransactionAdmin(admin.ModelAdmin):
     """Admin interface for purchase transactions."""
 
-    list_display: ClassVar = [
+    list_display = [
         "transaction_id",
         "student_name",
         "student_email",
@@ -491,26 +489,26 @@ class PurchaseTransactionAdmin(admin.ModelAdmin):
         "is_expired_display",
         "created_at",
     ]
-    list_filter: ClassVar = [
+    list_filter = [
         "transaction_type",
         "payment_status",
         "created_at",
         "expires_at",
     ]
-    search_fields: ClassVar = [
+    search_fields = [
         "student__name",
         "student__email",
         "stripe_payment_intent_id",
         "stripe_customer_id",
     ]
-    readonly_fields: ClassVar = [
+    readonly_fields = [
         "created_at",
         "updated_at",
         "is_expired_display",
     ]
-    date_hierarchy: ClassVar = "created_at"
+    date_hierarchy = "created_at"
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         (
             "Transaction Information",
             {
@@ -640,7 +638,7 @@ class PurchaseTransactionAdmin(admin.ModelAdmin):
 class HourConsumptionAdmin(admin.ModelAdmin):
     """Admin interface for hour consumption tracking."""
 
-    list_display: ClassVar = [
+    list_display = [
         "consumption_id",
         "student_name",
         "session_date",
@@ -651,7 +649,7 @@ class HourConsumptionAdmin(admin.ModelAdmin):
         "is_refunded",
         "consumed_at",
     ]
-    list_filter: ClassVar = [
+    list_filter = [
         "is_refunded",
         "consumed_at",
         "class_session__date",
@@ -659,22 +657,22 @@ class HourConsumptionAdmin(admin.ModelAdmin):
         "class_session__status",
         "student_account__student",
     ]
-    search_fields: ClassVar = [
+    search_fields = [
         "student_account__student__name",
         "student_account__student__email",
         "class_session__teacher__user__name",
         "purchase_transaction__stripe_payment_intent_id",
     ]
-    readonly_fields: ClassVar = [
+    readonly_fields = [
         "consumed_at",
         "created_at",
         "updated_at",
         "hours_difference_display",
         "student_balance_display",
     ]
-    date_hierarchy: ClassVar = "consumed_at"
+    date_hierarchy = "consumed_at"
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         (
             "Consumption Information",
             {
@@ -823,7 +821,7 @@ class PricingPlanAdmin(admin.ModelAdmin):
     including bulk actions for managing plan status and advanced filtering.
     """
 
-    list_display: ClassVar = [
+    list_display = [
         "name",
         "plan_type_display",
         "hours_included",
@@ -836,7 +834,7 @@ class PricingPlanAdmin(admin.ModelAdmin):
         "created_at",
     ]
 
-    list_filter: ClassVar = [
+    list_filter = [
         "plan_type",
         "is_active",
         "is_featured",
@@ -844,20 +842,20 @@ class PricingPlanAdmin(admin.ModelAdmin):
         "updated_at",
     ]
 
-    search_fields: ClassVar = [
+    search_fields = [
         "name",
         "description",
     ]
 
-    readonly_fields: ClassVar = [
+    readonly_fields = [
         "created_at",
         "updated_at",
         "price_per_hour_display",
     ]
 
-    ordering: ClassVar = ["display_order", "name"]
+    ordering = ["display_order", "name"]
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         (
             "Basic Information",
             {
@@ -991,7 +989,7 @@ class PricingPlanAdmin(admin.ModelAdmin):
 class FamilyBudgetControlAdmin(admin.ModelAdmin):
     """Admin interface for family budget controls."""
 
-    list_display: ClassVar = [
+    list_display = [
         "parent_name",
         "child_name",
         "school_name",
@@ -1003,7 +1001,7 @@ class FamilyBudgetControlAdmin(admin.ModelAdmin):
         "is_active",
         "updated_at",
     ]
-    list_filter: ClassVar = [
+    list_filter = [
         "require_approval_for_sessions",
         "require_approval_for_packages",
         "is_active",
@@ -1011,16 +1009,16 @@ class FamilyBudgetControlAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     ]
-    search_fields: ClassVar = [
+    search_fields = [
         "parent_child_relationship__parent__name",
         "parent_child_relationship__parent__email",
         "parent_child_relationship__child__name",
         "parent_child_relationship__child__email",
         "parent_child_relationship__school__name",
     ]
-    readonly_fields: ClassVar = ["current_monthly_spending", "current_weekly_spending", "created_at", "updated_at"]
+    readonly_fields = ["current_monthly_spending", "current_weekly_spending", "created_at", "updated_at"]
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         ("Relationship Information", {"fields": ("parent_child_relationship",)}),
         (
             "Budget Limits",
@@ -1125,7 +1123,7 @@ class FamilyBudgetControlAdmin(admin.ModelAdmin):
 class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
     """Admin interface for purchase approval requests."""
 
-    list_display: ClassVar = [
+    list_display = [
         "request_id",
         "student_name",
         "parent_name",
@@ -1136,21 +1134,21 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
         "time_remaining_display",
         "is_expired_display",
     ]
-    list_filter: ClassVar = [
+    list_filter = [
         "status",
         "request_type",
         "requested_at",
         "expires_at",
         "parent_child_relationship__school",
     ]
-    search_fields: ClassVar = [
+    search_fields = [
         "student__name",
         "student__email",
         "parent__name",
         "parent__email",
         "description",
     ]
-    readonly_fields: ClassVar = [
+    readonly_fields = [
         "time_remaining_display",
         "is_expired_display",
         "requested_at",
@@ -1158,10 +1156,10 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     ]
-    date_hierarchy: ClassVar = "requested_at"
-    ordering: ClassVar = ["-requested_at"]
+    date_hierarchy = "requested_at"
+    ordering = ["-requested_at"]
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         (
             "Request Information",
             {
@@ -1356,7 +1354,7 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
 # Payment = apps.get_model('finances', 'Payment')
 # @admin.register(Payment)
 # class PaymentAdmin(admin.ModelAdmin):
-#     list_display: ClassVar = ['id', 'user', 'amount', 'status', 'created_at']
+#     list_display = ['id', 'user', 'amount', 'status', 'created_at']
 #
 #     def get_queryset(self, request):
 #         # Use select_related with string references

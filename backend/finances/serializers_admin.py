@@ -5,8 +5,6 @@ This module provides serializers for payment analytics, transaction history,
 and webhook monitoring functionality for administrative dashboard interfaces.
 """
 
-from typing import ClassVar
-
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
@@ -48,7 +46,7 @@ class StudentBasicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields: ClassVar = ["id", "name", "email"]
+        fields = ["id", "name", "email"]
 
 
 class AdminTransactionSerializer(serializers.ModelSerializer):
@@ -61,7 +59,7 @@ class AdminTransactionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PurchaseTransaction
-        fields: ClassVar = [
+        fields = [
             "id",
             "student",
             "amount",
@@ -91,7 +89,7 @@ class AdminWebhookEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WebhookEventLog
-        fields: ClassVar = [
+        fields = [
             "id",
             "stripe_event_id",
             "event_type",

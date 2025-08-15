@@ -4,8 +4,6 @@ Notification models for student balance monitoring and notification system.
 Issue #107: Student Balance Monitoring & Notification System
 """
 
-from typing import ClassVar
-
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -73,8 +71,8 @@ class Notification(models.Model):
     class Meta:
         verbose_name = _("Notification")
         verbose_name_plural = _("Notifications")
-        ordering: ClassVar = ["-created_at"]  # Newest first
-        indexes: ClassVar = [
+        ordering = ["-created_at"]  # Newest first
+        indexes = [
             models.Index(fields=["user", "is_read"]),
             models.Index(fields=["user", "created_at"]),
             models.Index(fields=["notification_type"]),
@@ -199,12 +197,12 @@ class SchoolEmailTemplate(models.Model):
     class Meta:
         verbose_name = _("School Email Template")
         verbose_name_plural = _("School Email Templates")
-        ordering: ClassVar = ["school", "template_type", "name"]
-        indexes: ClassVar = [
+        ordering = ["school", "template_type", "name"]
+        indexes = [
             models.Index(fields=["school", "template_type", "is_active"]),
             models.Index(fields=["template_type", "is_default"]),
         ]
-        constraints: ClassVar = [
+        constraints = [
             models.UniqueConstraint(
                 fields=["school", "template_type"],
                 condition=models.Q(is_default=True),
@@ -341,8 +339,8 @@ class EmailSequence(models.Model):
     class Meta:
         verbose_name = _("Email Sequence")
         verbose_name_plural = _("Email Sequences")
-        ordering: ClassVar = ["school", "name"]
-        indexes: ClassVar = [
+        ordering = ["school", "name"]
+        indexes = [
             models.Index(fields=["school", "trigger_event", "is_active"]),
         ]
 
@@ -393,11 +391,11 @@ class EmailSequenceStep(models.Model):
     class Meta:
         verbose_name = _("Email Sequence Step")
         verbose_name_plural = _("Email Sequence Steps")
-        ordering: ClassVar = ["sequence", "step_number"]
-        indexes: ClassVar = [
+        ordering = ["sequence", "step_number"]
+        indexes = [
             models.Index(fields=["sequence", "step_number", "is_active"]),
         ]
-        constraints: ClassVar = [
+        constraints = [
             models.UniqueConstraint(fields=["sequence", "step_number"], name="unique_step_number_per_sequence")
         ]
 
@@ -518,8 +516,8 @@ class EmailCommunication(models.Model):
     class Meta:
         verbose_name = _("Email Communication")
         verbose_name_plural = _("Email Communications")
-        ordering: ClassVar = ["-queued_at"]
-        indexes: ClassVar = [
+        ordering = ["-queued_at"]
+        indexes = [
             models.Index(fields=["school", "delivery_status", "-queued_at"]),
             models.Index(fields=["recipient_email", "template_type", "-queued_at"]),
             models.Index(fields=["sequence", "delivery_status", "-queued_at"]),

@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
@@ -62,8 +61,8 @@ class TeacherAvailability(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together: ClassVar = ["teacher", "school", "day_of_week", "start_time"]
-        ordering: ClassVar = ["day_of_week", "start_time"]
+        unique_together = ["teacher", "school", "day_of_week", "start_time"]
+        ordering = ["day_of_week", "start_time"]
 
     def __str__(self):
         return f"{self.teacher.user.name} - {self.get_day_of_week_display()} {self.start_time}-{self.end_time}"
@@ -116,8 +115,8 @@ class TeacherUnavailability(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together: ClassVar = ["teacher", "school", "date", "start_time"]
-        ordering: ClassVar = ["date", "start_time"]
+        unique_together = ["teacher", "school", "date", "start_time"]
+        ordering = ["date", "start_time"]
 
     def __str__(self):
         if self.is_all_day:
@@ -270,8 +269,8 @@ class ClassSchedule(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering: ClassVar = ["scheduled_date", "start_time"]
-        indexes: ClassVar = [
+        ordering = ["scheduled_date", "start_time"]
+        indexes = [
             models.Index(fields=["teacher", "scheduled_date"]),
             models.Index(fields=["student", "scheduled_date"]),
             models.Index(fields=["school", "scheduled_date"]),
@@ -511,12 +510,12 @@ class ClassSchedule(models.Model):
 
         # Additional validation for group classes
         if self.class_type == ClassType.GROUP and self.metadata:
-                required_group_fields = ["group_dynamics", "interaction_level", "collaboration_type"]
-                missing_fields = [field for field in required_group_fields if field not in self.metadata]
-                if missing_fields:
-                    errors["metadata"] = (
-                        f"Group classes must include the following metadata fields: {', '.join(missing_fields)}"
-                    )
+            required_group_fields = ["group_dynamics", "interaction_level", "collaboration_type"]
+            missing_fields = [field for field in required_group_fields if field not in self.metadata]
+            if missing_fields:
+                errors["metadata"] = (
+                    f"Group classes must include the following metadata fields: {', '.join(missing_fields)}"
+                )
 
         if errors:
             raise ValidationError(errors)
@@ -642,8 +641,8 @@ class RecurringClassSchedule(models.Model):
     )
 
     class Meta:
-        ordering: ClassVar = ["day_of_week", "start_time"]
-        indexes: ClassVar = [
+        ordering = ["day_of_week", "start_time"]
+        indexes = [
             models.Index(fields=["teacher", "status", "start_date"]),
             models.Index(fields=["school", "status"]),
             models.Index(fields=["frequency_type", "status"]),
@@ -666,7 +665,7 @@ class RecurringClassSchedule(models.Model):
             if self.max_participants is None or self.max_participants <= 0:
                 raise ValidationError({"max_participants": _("Max participants is required for group classes.")})
         elif self.class_type == ClassType.INDIVIDUAL and self.pk and self.students.count() > 1:
-                raise ValidationError({"students": _("Individual classes can only have one student.")})
+            raise ValidationError({"students": _("Individual classes can only have one student.")})
 
     def get_student_count(self):
         """Get the total number of students in this recurring class"""
@@ -994,9 +993,9 @@ class ReminderPreference(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together: ClassVar = ["user", "school"]
-        ordering: ClassVar = ["user", "school"]
-        indexes: ClassVar = [
+        unique_together = ["user", "school"]
+        ordering = ["user", "school"]
+        indexes = [
             models.Index(fields=["user", "is_active"]),
             models.Index(fields=["school", "is_school_default"]),
         ]
@@ -1164,15 +1163,15 @@ class ClassReminder(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering: ClassVar = ["scheduled_for", "created_at"]
-        indexes: ClassVar = [
+        ordering = ["scheduled_for", "created_at"]
+        indexes = [
             models.Index(fields=["class_schedule", "reminder_type"]),
             models.Index(fields=["recipient", "status"]),
             models.Index(fields=["status", "scheduled_for"]),
             models.Index(fields=["communication_channel", "status"]),
             models.Index(fields=["scheduled_for", "status"]),  # Performance index for queries
         ]
-        constraints: ClassVar = [
+        constraints = [
             models.UniqueConstraint(
                 fields=["class_schedule", "reminder_type", "recipient", "communication_channel"],
                 name="unique_reminder_per_recipient_channel",

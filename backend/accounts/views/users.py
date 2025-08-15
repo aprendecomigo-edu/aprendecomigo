@@ -6,7 +6,6 @@ parent profiles, parent-child relationships, and user onboarding.
 """
 
 import logging
-from typing import ClassVar
 
 from django.db import transaction
 from django.utils import timezone
@@ -58,21 +57,21 @@ class UserViewSet(KnoxAuthenticatedViewSet):
     def get_permissions(self):
         if self.action == "create":
             # Only school owners/admins and system admins can create users
-            permission_classes: ClassVar = [IsAuthenticated, IsSchoolOwnerOrAdmin]
+            permission_classes = [IsAuthenticated, IsSchoolOwnerOrAdmin]
         elif self.action == "signup":
             # Anyone can sign up
-            permission_classes: ClassVar = [AllowAny]
+            permission_classes = [AllowAny]
         elif self.action == "list":
             # Any authenticated user can list, but queryset is filtered appropriately
-            permission_classes: ClassVar = [IsAuthenticated]
+            permission_classes = [IsAuthenticated]
         elif self.action in ["update", "partial_update", "destroy"]:
             # Only owner or school admin can modify user records
-            permission_classes: ClassVar = [IsAuthenticated, IsOwnerOrSchoolAdmin]
+            permission_classes = [IsAuthenticated, IsOwnerOrSchoolAdmin]
         elif self.action in ["retrieve", "school_profile", "dashboard_info"]:
             # Any authenticated user can retrieve, but queryset is filtered appropriately
-            permission_classes: ClassVar = [IsAuthenticated]
+            permission_classes = [IsAuthenticated]
         else:
-            permission_classes: ClassVar = [IsAuthenticated, IsOwnerOrSchoolAdmin]
+            permission_classes = [IsAuthenticated, IsOwnerOrSchoolAdmin]
         return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=["get"])
@@ -571,7 +570,7 @@ class ParentProfileViewSet(KnoxAuthenticatedViewSet):
     """
 
     serializer_class = ParentProfileSerializer
-    permission_classes: ClassVar = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """Return only the current user's parent profile."""
@@ -606,7 +605,7 @@ class ParentChildRelationshipViewSet(KnoxAuthenticatedViewSet):
     """
 
     serializer_class = ParentChildRelationshipSerializer
-    permission_classes: ClassVar = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """Filter relationships based on user role and permissions."""

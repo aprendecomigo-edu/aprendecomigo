@@ -6,7 +6,6 @@ including school invitations, teacher invitations, and invitation links.
 """
 
 import logging
-from typing import ClassVar
 
 from django.db import models, transaction
 from django.utils import timezone
@@ -54,8 +53,8 @@ class InvitationViewSet(viewsets.ModelViewSet):
 
     queryset = SchoolInvitation.objects.all()
     serializer_class = SchoolInvitationSerializer
-    authentication_classes: ClassVar = [TokenAuthentication]
-    permission_classes: ClassVar = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     lookup_field = "token"  # Use token instead of id for lookups
 
     def get_permissions(self):
@@ -461,7 +460,7 @@ class SchoolInvitationLinkView(APIView):
     This is a public endpoint (no auth required) for sharing links.
     """
 
-    permission_classes: ClassVar = [AllowAny]
+    permission_classes = [AllowAny]
 
     def get(self, request, token):
         """
@@ -513,8 +512,8 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
 
     queryset = TeacherInvitation.objects.all()
     serializer_class = TeacherInvitationSerializer
-    authentication_classes: ClassVar = [TokenAuthentication]
-    permission_classes: ClassVar = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     lookup_field = "token"  # Use token instead of id for lookups
 
     def get_queryset(self):

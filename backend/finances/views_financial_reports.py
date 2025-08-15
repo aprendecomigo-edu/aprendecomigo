@@ -23,7 +23,6 @@ except ImportError:
     HAS_OPENPYXL = False
     openpyxl = None
 
-from typing import ClassVar
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum
@@ -58,7 +57,7 @@ logger = logging.getLogger(__name__)
 class FinancialAnalyticsAPIView(APIView):
     """API views for financial analytics and reporting."""
 
-    permission_classes: ClassVar = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
+    permission_classes = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def _get_user_schools(self):
         """Get schools that the user has access to."""
@@ -369,7 +368,7 @@ def revenue_trends_analysis(request: Request) -> Response:
 class FinancialExportAPIView(APIView):
     """API views for exporting financial data in various formats."""
 
-    permission_classes: ClassVar = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
+    permission_classes = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
 
 
 @api_view(["GET", "POST"])
@@ -486,7 +485,7 @@ def test_export_endpoint(request: Request) -> Response:
 class ExportStudentBalancesAPIView(APIView):
     """API view for exporting student balance data as Excel."""
 
-    permission_classes: ClassVar = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
+    permission_classes = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def _export_balances(self, params):
         """Shared logic for exporting student balances."""
@@ -571,7 +570,7 @@ class ExportStudentBalancesAPIView(APIView):
 class ExportTeacherSessionsAPIView(APIView):
     """API view for exporting teacher session data as HTML report."""
 
-    permission_classes: ClassVar = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
+    permission_classes = [permissions.IsAuthenticated, IsSchoolOwnerOrAdmin]
 
     def _export_teacher_sessions(self, params):
         """Shared logic for exporting teacher sessions."""
@@ -669,7 +668,7 @@ class ExportTeacherSessionsAPIView(APIView):
 class ReceiptAPIView(APIView):
     """API views for receipt generation and management."""
 
-    permission_classes: ClassVar = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
 
 @api_view(["POST"])

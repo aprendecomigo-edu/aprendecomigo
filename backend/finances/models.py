@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -202,7 +202,7 @@ class TeacherCompensationRule(models.Model):
         verbose_name = _("Teacher Compensation Rule")
         verbose_name_plural = _("Teacher Compensation Rules")
         # Ensure only one active rule per teacher per school per rule type per grade
-        constraints: ClassVar = [
+        constraints = [
             models.UniqueConstraint(
                 fields=["teacher", "school", "rule_type", "grade_level"],
                 condition=models.Q(is_active=True),
@@ -318,7 +318,7 @@ class ClassSession(models.Model):
     class Meta:
         verbose_name = _("Class Session")
         verbose_name_plural = _("Class Sessions")
-        ordering: ClassVar = ["-date", "-start_time"]
+        ordering = ["-date", "-start_time"]
 
     def __str__(self) -> str:
         return f"{self.teacher.user.name} - {self.get_session_type_display()} Grade {self.grade_level} on {self.date}"
@@ -490,7 +490,7 @@ class TeacherPaymentEntry(models.Model):
     class Meta:
         verbose_name = _("Teacher Payment Entry")
         verbose_name_plural = _("Teacher Payment Entries")
-        ordering: ClassVar = ["-created_at"]
+        ordering = ["-created_at"]
 
     def __str__(self) -> str:
         return f"{self.teacher.user.name} - €{self.amount_earned} for {self.session.date} session"
@@ -541,7 +541,7 @@ class StudentAccountBalance(models.Model):
     class Meta:
         verbose_name = _("Student Account Balance")
         verbose_name_plural = _("Student Account Balances")
-        ordering: ClassVar = ["-updated_at"]
+        ordering = ["-updated_at"]
 
     def __str__(self) -> str:
         remaining = self.remaining_hours
@@ -663,8 +663,8 @@ class PurchaseTransaction(models.Model):
     class Meta:
         verbose_name = _("Purchase Transaction")
         verbose_name_plural = _("Purchase Transactions")
-        ordering: ClassVar = ["-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-created_at"]
+        indexes = [
             models.Index(fields=["student", "payment_status"]),
             models.Index(fields=["payment_status"]),
             models.Index(fields=["created_at"]),
@@ -797,8 +797,8 @@ class PricingPlan(models.Model):
     class Meta:
         verbose_name = _("Pricing Plan")
         verbose_name_plural = _("Pricing Plans")
-        ordering: ClassVar = ["display_order", "name"]
-        indexes: ClassVar = [
+        ordering = ["display_order", "name"]
+        indexes = [
             models.Index(fields=["is_active", "display_order"]),
             models.Index(fields=["plan_type", "is_active"]),
             models.Index(fields=["is_featured", "is_active"]),
@@ -919,13 +919,13 @@ class HourConsumption(models.Model):
     class Meta:
         verbose_name = _("Hour Consumption")
         verbose_name_plural = _("Hour Consumptions")
-        ordering: ClassVar = ["-consumed_at"]
-        constraints: ClassVar = [
+        ordering = ["-consumed_at"]
+        constraints = [
             models.UniqueConstraint(
                 fields=["student_account", "class_session"], name="unique_student_session_consumption"
             )
         ]
-        indexes: ClassVar = [
+        indexes = [
             models.Index(fields=["student_account", "consumed_at"]),
             models.Index(fields=["class_session"]),
             models.Index(fields=["purchase_transaction"]),
@@ -1090,8 +1090,8 @@ class Receipt(models.Model):
     class Meta:
         verbose_name = _("Receipt")
         verbose_name_plural = _("Receipts")
-        ordering: ClassVar = ["-generated_at"]
-        indexes: ClassVar = [
+        ordering = ["-generated_at"]
+        indexes = [
             models.Index(fields=["student", "generated_at"]),
             models.Index(fields=["receipt_number"]),
             models.Index(fields=["transaction"]),
@@ -1208,15 +1208,15 @@ class StoredPaymentMethod(models.Model):
     class Meta:
         verbose_name = _("Stored Payment Method")
         verbose_name_plural = _("Stored Payment Methods")
-        ordering: ClassVar = ["-is_default", "-created_at"]
-        constraints: ClassVar = [
+        ordering = ["-is_default", "-created_at"]
+        constraints = [
             models.UniqueConstraint(
                 fields=["student"],
                 condition=models.Q(is_default=True),
                 name="unique_default_payment_method_per_student",
             )
         ]
-        indexes: ClassVar = [
+        indexes = [
             models.Index(fields=["student", "is_active"]),
             models.Index(fields=["stripe_payment_method_id"]),
             models.Index(fields=["stripe_customer_id"]),
@@ -1375,8 +1375,8 @@ class FamilyBudgetControl(models.Model):
     class Meta:
         verbose_name = _("Family Budget Control")
         verbose_name_plural = _("Family Budget Controls")
-        ordering: ClassVar = ["-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-created_at"]
+        indexes = [
             models.Index(fields=["parent_child_relationship", "is_active"]),
             models.Index(fields=["auto_approval_threshold"]),
             models.Index(fields=["created_at"]),
@@ -1596,8 +1596,8 @@ class PurchaseApprovalRequest(models.Model):
     class Meta:
         verbose_name = _("Purchase Approval Request")
         verbose_name_plural = _("Purchase Approval Requests")
-        ordering: ClassVar = ["-requested_at"]
-        indexes: ClassVar = [
+        ordering = ["-requested_at"]
+        indexes = [
             models.Index(fields=["student", "status", "-requested_at"]),
             models.Index(fields=["parent", "status", "-requested_at"]),
             models.Index(fields=["parent_child_relationship", "-requested_at"]),
@@ -1807,8 +1807,8 @@ class WebhookEventLog(models.Model):
     class Meta:
         verbose_name = _("Webhook Event Log")
         verbose_name_plural = _("Webhook Event Logs")
-        ordering: ClassVar = ["-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-created_at"]
+        indexes = [
             models.Index(fields=["stripe_event_id"]),
             models.Index(fields=["event_type", "status"]),
             models.Index(fields=["status", "retry_count"]),
@@ -2021,8 +2021,8 @@ class PaymentDispute(models.Model):
     class Meta:
         verbose_name = _("Payment Dispute")
         verbose_name_plural = _("Payment Disputes")
-        ordering: ClassVar = ["-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-created_at"]
+        indexes = [
             models.Index(fields=["stripe_dispute_id"]),
             models.Index(fields=["purchase_transaction"]),
             models.Index(fields=["status", "evidence_due_by"]),
@@ -2161,8 +2161,8 @@ class AdminAction(models.Model):
     class Meta:
         verbose_name = _("Admin Action")
         verbose_name_plural = _("Admin Actions")
-        ordering: ClassVar = ["-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-created_at"]
+        indexes = [
             models.Index(fields=["admin_user", "-created_at"]),
             models.Index(fields=["action_type", "-created_at"]),
             models.Index(fields=["target_user", "-created_at"]),
@@ -2277,8 +2277,8 @@ class FraudAlert(models.Model):
     class Meta:
         verbose_name = _("Fraud Alert")
         verbose_name_plural = _("Fraud Alerts")
-        ordering: ClassVar = ["-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-created_at"]
+        indexes = [
             models.Index(fields=["alert_id"]),
             models.Index(fields=["severity", "status", "-created_at"]),
             models.Index(fields=["target_user", "-created_at"]),

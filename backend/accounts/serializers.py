@@ -1,7 +1,6 @@
 import contextlib
 import logging
 import re
-from typing import ClassVar
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -45,7 +44,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "username",
             "email",
@@ -54,7 +53,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_student",
             "is_teacher",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id", "is_student", "is_teacher"]
+        read_only_fields: list[str] = ["id", "is_student", "is_teacher"]
 
     def get_is_student(self, obj):
         """Check if user has any active school membership as a student."""
@@ -72,7 +71,7 @@ class SchoolSerializer(BaseSerializer):
 
     class Meta:
         model = School
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "name",
             "description",
@@ -83,7 +82,7 @@ class SchoolSerializer(BaseSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id", "created_at", "updated_at"]
+        read_only_fields: list[str] = ["id", "created_at", "updated_at"]
 
 
 class SchoolMembershipSerializer(BaseNestedModelSerializer):
@@ -101,7 +100,7 @@ class SchoolMembershipSerializer(BaseNestedModelSerializer):
 
     class Meta:
         model = SchoolMembership
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "user",
             "user_id",
@@ -112,7 +111,7 @@ class SchoolMembershipSerializer(BaseNestedModelSerializer):
             "is_active",
             "joined_at",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id", "joined_at"]
+        read_only_fields: list[str] = ["id", "joined_at"]
 
 
 class SchoolInvitationSerializer(BaseNestedModelSerializer):
@@ -129,7 +128,7 @@ class SchoolInvitationSerializer(BaseNestedModelSerializer):
 
     class Meta:
         model = SchoolInvitation
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "school",
             "school_id",
@@ -142,7 +141,7 @@ class SchoolInvitationSerializer(BaseNestedModelSerializer):
             "expires_at",
             "is_accepted",
         ]
-        read_only_fields: ClassVar[list[str]] = [
+        read_only_fields: list[str] = [
             "id",
             "invited_by",
             "token",
@@ -160,7 +159,7 @@ class SchoolWithMembersSerializer(SchoolSerializer):
     members = serializers.SerializerMethodField()
 
     class Meta(SchoolSerializer.Meta):
-        fields: ClassVar[list[str]] = [*list(SchoolSerializer.Meta.fields), "members"]
+        fields: list[str] = [*list(SchoolSerializer.Meta.fields), "members"]
 
     def get_members(self, obj):
         memberships = obj.memberships.filter(is_active=True)
@@ -178,7 +177,7 @@ class EducationalSystemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EducationalSystem
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "name",
             "code",
@@ -189,7 +188,7 @@ class EducationalSystemSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id", "created_at", "updated_at"]
+        read_only_fields: list[str] = ["id", "created_at", "updated_at"]
 
     def get_school_years(self, obj):
         """Get school year choices as key-value pairs"""
@@ -215,7 +214,7 @@ class StudentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentProfile
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "user",
             "educational_system",
@@ -224,7 +223,7 @@ class StudentSerializer(serializers.ModelSerializer):
             "birth_date",
             "address",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id"]
+        read_only_fields: list[str] = ["id"]
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -234,7 +233,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "name",
             "code",
@@ -244,7 +243,7 @@ class CourseSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id", "created_at", "updated_at"]
+        read_only_fields: list[str] = ["id", "created_at", "updated_at"]
 
 
 class TeacherCourseSerializer(serializers.ModelSerializer):
@@ -257,7 +256,7 @@ class TeacherCourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherCourse
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "course",
             "course_id",
@@ -265,7 +264,7 @@ class TeacherCourseSerializer(serializers.ModelSerializer):
             "is_active",
             "started_teaching",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id", "started_teaching"]
+        read_only_fields: list[str] = ["id", "started_teaching"]
 
 
 class TeacherSerializer(serializers.ModelSerializer):
@@ -312,7 +311,7 @@ class TeacherSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherProfile
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "user",
             "bio",
@@ -339,7 +338,7 @@ class TeacherSerializer(serializers.ModelSerializer):
             "profile_completion",
             "school_memberships",
         ]
-        read_only_fields: ClassVar[list[str]] = [
+        read_only_fields: list[str] = [
             "id",
             "profile_completion_score",
             "is_profile_complete",
@@ -505,7 +504,7 @@ class UserWithRolesSerializer(UserSerializer):
     roles = serializers.SerializerMethodField()
 
     class Meta(UserSerializer.Meta):
-        fields: ClassVar[list[str]] = [*list(UserSerializer.Meta.fields), "roles"]
+        fields: list[str] = [*list(UserSerializer.Meta.fields), "roles"]
 
     def get_roles(self, obj):
         memberships = obj.school_memberships.filter(is_active=True)
@@ -536,7 +535,7 @@ class AuthenticationResponseSerializer(UserWithRolesSerializer):
     is_admin = serializers.SerializerMethodField()
 
     class Meta(UserWithRolesSerializer.Meta):
-        fields: ClassVar[list[str]] = [*list(UserWithRolesSerializer.Meta.fields), "user_type", "is_admin"]
+        fields: list[str] = [*list(UserWithRolesSerializer.Meta.fields), "user_type", "is_admin"]
 
     def get_user_type(self, obj):
         """
@@ -1213,7 +1212,7 @@ class SchoolSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SchoolSettings
-        fields: ClassVar = [
+        fields = [
             # Basic operational settings
             "trial_cost_absorption",
             "default_session_duration",
@@ -1353,7 +1352,7 @@ class SchoolProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = School
-        fields: ClassVar = [
+        fields = [
             "id",
             "name",
             "description",
@@ -1400,7 +1399,7 @@ class ComprehensiveSchoolSettingsSerializer(BaseNestedModelSerializer):
 
     class Meta:
         model = SchoolSettings
-        fields: ClassVar = ["school_profile", "settings"]
+        fields = ["school_profile", "settings"]
 
 
 class SchoolActivityActorSerializer(serializers.ModelSerializer):
@@ -1410,7 +1409,7 @@ class SchoolActivityActorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields: ClassVar = ["id", "name", "email", "role"]
+        fields = ["id", "name", "email", "role"]
 
     def get_role(self, obj):
         """Get the user's role in the school context"""
@@ -1439,7 +1438,7 @@ class SchoolActivitySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SchoolActivity
-        fields: ClassVar = ["id", "activity_type", "timestamp", "actor", "target", "metadata", "description"]
+        fields = ["id", "activity_type", "timestamp", "actor", "target", "metadata", "description"]
 
     def get_target(self, obj):
         """Get target information based on activity type"""
@@ -1504,7 +1503,7 @@ class EnhancedSchoolSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = School
-        fields: ClassVar = [
+        fields = [
             "id",
             "name",
             "description",
@@ -1555,7 +1554,7 @@ class TeacherInvitationSerializer(BaseNestedModelSerializer):
 
     class Meta:
         model = TeacherInvitation
-        fields: ClassVar = [
+        fields = [
             "id",
             "school",
             "school_id",
@@ -1582,7 +1581,7 @@ class TeacherInvitationSerializer(BaseNestedModelSerializer):
             "declined_at",
             "viewed_at",
         ]
-        read_only_fields: ClassVar = [
+        read_only_fields = [
             "id",
             "invited_by",
             "status",
@@ -2210,7 +2209,7 @@ class ProgressAssessmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProgressAssessment
-        fields: ClassVar = [
+        fields = [
             "id",
             "assessment_type",
             "title",
@@ -2236,7 +2235,7 @@ class StudentProgressDashboardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentProgress
-        fields: ClassVar = [
+        fields = [
             "id",
             "student_name",
             "student_email",
@@ -2352,7 +2351,7 @@ class ParentProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ParentProfile
-        fields: ClassVar = [
+        fields = [
             "id",
             "user",
             "user_name",
@@ -2365,7 +2364,7 @@ class ParentProfileSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields: ClassVar = [
+        read_only_fields = [
             "id",
             "user",
             "user_name",
@@ -2395,7 +2394,7 @@ class ParentChildRelationshipSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ParentChildRelationship
-        fields: ClassVar = [
+        fields = [
             "id",
             "parent",
             "parent_name",
@@ -2414,7 +2413,7 @@ class ParentChildRelationshipSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields: ClassVar = [
+        read_only_fields = [
             "id",
             "parent_name",
             "parent_email",
@@ -2460,8 +2459,8 @@ class SchoolBrandingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = School
-        fields: ClassVar = ["id", "name", "primary_color", "secondary_color", "text_color", "background_color", "logo"]
-        read_only_fields: ClassVar = ["id", "name"]
+        fields = ["id", "name", "primary_color", "secondary_color", "text_color", "background_color", "logo"]
+        read_only_fields = ["id", "name"]
 
     def validate_primary_color(self, value):
         """Validate primary color format."""

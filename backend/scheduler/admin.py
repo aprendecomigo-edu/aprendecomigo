@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from django.contrib import admin
 
 from .models import (
@@ -12,23 +10,23 @@ from .models import (
 
 @admin.register(TeacherAvailability)
 class TeacherAvailabilityAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("teacher", "school", "day_of_week", "start_time", "end_time", "is_active")
-    list_filter: ClassVar = ("day_of_week", "is_active", "school")
-    search_fields: ClassVar = ("teacher__user__name", "teacher__user__email")
-    ordering: ClassVar = ("teacher", "day_of_week", "start_time")
+    list_display = ("teacher", "school", "day_of_week", "start_time", "end_time", "is_active")
+    list_filter = ("day_of_week", "is_active", "school")
+    search_fields = ("teacher__user__name", "teacher__user__email")
+    ordering = ("teacher", "day_of_week", "start_time")
 
 
 @admin.register(TeacherUnavailability)
 class TeacherUnavailabilityAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("teacher", "school", "date", "start_time", "end_time", "is_all_day", "reason")
-    list_filter: ClassVar = ("is_all_day", "school", "date")
-    search_fields: ClassVar = ("teacher__user__name", "teacher__user__email", "reason")
-    ordering: ClassVar = ("-date", "start_time")
+    list_display = ("teacher", "school", "date", "start_time", "end_time", "is_all_day", "reason")
+    list_filter = ("is_all_day", "school", "date")
+    search_fields = ("teacher__user__name", "teacher__user__email", "reason")
+    ordering = ("-date", "start_time")
 
 
 @admin.register(ClassSchedule)
 class ClassScheduleAdmin(admin.ModelAdmin):
-    list_display: ClassVar = (
+    list_display = (
         "title",
         "teacher",
         "student",
@@ -37,12 +35,12 @@ class ClassScheduleAdmin(admin.ModelAdmin):
         "start_time",
         "status",
     )
-    list_filter: ClassVar = ("status", "class_type", "school", "scheduled_date")
-    search_fields: ClassVar = ("title", "teacher__user__name", "student__name", "student__email")
-    ordering: ClassVar = ("-scheduled_date", "start_time")
-    readonly_fields: ClassVar = ("booked_at", "cancelled_at", "completed_at")
+    list_filter = ("status", "class_type", "school", "scheduled_date")
+    search_fields = ("title", "teacher__user__name", "student__name", "student__email")
+    ordering = ("-scheduled_date", "start_time")
+    readonly_fields = ("booked_at", "cancelled_at", "completed_at")
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         ("Class Information", {"fields": ("title", "description", "class_type", "status")}),
         ("Participants", {"fields": ("teacher", "student", "additional_students")}),
         (
@@ -57,7 +55,7 @@ class ClassScheduleAdmin(admin.ModelAdmin):
 
 @admin.register(RecurringClassSchedule)
 class RecurringClassScheduleAdmin(admin.ModelAdmin):
-    list_display: ClassVar = (
+    list_display = (
         "title",
         "teacher",
         "get_students_display",
@@ -68,10 +66,10 @@ class RecurringClassScheduleAdmin(admin.ModelAdmin):
         "start_time",
         "is_active",
     )
-    list_filter: ClassVar = ("day_of_week", "status", "frequency_type", "is_active", "school", "class_type")
-    search_fields: ClassVar = ("title", "teacher__user__name", "students__name", "students__email")
-    ordering: ClassVar = ("day_of_week", "start_time")
-    readonly_fields: ClassVar = ("created_at", "updated_at", "cancelled_at", "paused_at")
+    list_filter = ("day_of_week", "status", "frequency_type", "is_active", "school", "class_type")
+    search_fields = ("title", "teacher__user__name", "students__name", "students__email")
+    ordering = ("day_of_week", "start_time")
+    readonly_fields = ("created_at", "updated_at", "cancelled_at", "paused_at")
     filter_horizontal = ("students",)
 
     def get_students_display(self, obj):
@@ -83,7 +81,7 @@ class RecurringClassScheduleAdmin(admin.ModelAdmin):
 
     get_students_display.short_description = "Students"
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         ("Class Information", {"fields": ("title", "description", "class_type", "max_participants")}),
         ("Participants", {"fields": ("teacher", "students")}),
         (

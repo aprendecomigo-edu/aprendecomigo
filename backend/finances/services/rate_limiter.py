@@ -9,7 +9,7 @@ from datetime import datetime
 from functools import wraps
 import logging
 import time
-from typing import Any, ClassVar
+from typing import Any
 
 from django.conf import settings
 from django.core.cache import cache
@@ -29,7 +29,7 @@ class StripeRateLimiter:
     # Read operations: 100 requests per second
     # Write operations: 100 requests per second
     # These are conservative limits to ensure we stay well under Stripe's thresholds
-    DEFAULT_LIMITS: ClassVar = {
+    DEFAULT_LIMITS = {
         "read_operations": {
             "requests_per_second": 80,  # Conservative limit
             "burst_allowance": 10,

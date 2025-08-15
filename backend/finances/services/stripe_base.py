@@ -7,7 +7,7 @@ security validation, and webhook processing infrastructure for the Aprende Comig
 
 import logging
 import os
-from typing import Any, ClassVar
+from typing import Any
 
 from django.conf import settings
 import stripe
@@ -26,7 +26,7 @@ class StripeService:
     """
 
     # Supported webhook event types for the platform
-    SUPPORTED_WEBHOOK_EVENTS: ClassVar = {
+    SUPPORTED_WEBHOOK_EVENTS = {
         "payment_intent.succeeded",
         "payment_intent.payment_failed",
         "payment_intent.created",

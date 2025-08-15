@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import ClassVar
 
 from django.utils import timezone
 from knox.auth import TokenAuthentication
@@ -20,8 +19,8 @@ from .serializers import (
 class TaskViewSet(viewsets.ModelViewSet):
     """ViewSet for Task model"""
 
-    authentication_classes: ClassVar = [TokenAuthentication]
-    permission_classes: ClassVar = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         """Filter tasks by current user"""
@@ -146,8 +145,8 @@ class TaskViewSet(viewsets.ModelViewSet):
 class TaskCommentViewSet(viewsets.ModelViewSet):
     """ViewSet for TaskComment model"""
 
-    authentication_classes: ClassVar = [TokenAuthentication]
-    permission_classes: ClassVar = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = TaskCommentSerializer
 
     def get_queryset(self):

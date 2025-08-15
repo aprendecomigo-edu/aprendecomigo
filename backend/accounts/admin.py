@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
@@ -20,9 +18,9 @@ from .models import (
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    list_display: ClassVar = ("email", "name", "is_staff")
-    list_filter: ClassVar = ("is_staff", "is_superuser", "is_active")
-    fieldsets: ClassVar = (
+    list_display = ("email", "name", "is_staff")
+    list_filter = ("is_staff", "is_superuser", "is_active")
+    fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Personal info", {"fields": ("name", "phone_number")}),
         (
@@ -40,18 +38,18 @@ class CustomUserAdmin(UserAdmin):
             },
         ),
     )
-    search_fields: ClassVar = ("email", "name")
-    ordering: ClassVar = ("email",)
+    search_fields = ("email", "name")
+    ordering = ("email",)
 
 
 @admin.register(StudentProfile)
 class StudentProfileAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("get_name", "get_email", "school_year", "birth_date")
-    list_filter: ClassVar = ("school_year",)
-    search_fields: ClassVar = ("user__name", "user__email", "school_year")
+    list_display = ("get_name", "get_email", "school_year", "birth_date")
+    list_filter = ("school_year",)
+    search_fields = ("user__name", "user__email", "school_year")
 
     # Different fieldsets for add and change
-    fieldsets: ClassVar = (
+    fieldsets = (
         (None, {"fields": ("user",)}),
         (
             "Student Information",
@@ -118,9 +116,9 @@ class StudentProfileAdmin(admin.ModelAdmin):
 
 @admin.register(TeacherProfile)
 class TeacherProfileAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("get_name", "get_email", "specialty", "hourly_rate")
-    search_fields: ClassVar = ("user__name", "user__email", "specialty")
-    fieldsets: ClassVar = (
+    list_display = ("get_name", "get_email", "specialty", "hourly_rate")
+    search_fields = ("user__name", "user__email", "specialty")
+    fieldsets = (
         (None, {"fields": ("user",)}),
         (
             "Teacher Information",
@@ -156,9 +154,9 @@ class TeacherProfileAdmin(admin.ModelAdmin):
 
 @admin.register(School)
 class SchoolAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("name", "description", "address", "contact_email", "phone_number", "website")
-    search_fields: ClassVar = ("name", "description", "address", "contact_email", "phone_number", "website")
-    fieldsets: ClassVar = (
+    list_display = ("name", "description", "address", "contact_email", "phone_number", "website")
+    search_fields = ("name", "description", "address", "contact_email", "phone_number", "website")
+    fieldsets = (
         (
             None,
             {
@@ -177,54 +175,54 @@ class SchoolAdmin(admin.ModelAdmin):
 
 @admin.register(SchoolMembership)
 class SchoolMembershipAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("user", "school", "role", "is_active")
-    search_fields: ClassVar = ("user__name", "user__email", "school__name", "role")
-    fieldsets: ClassVar = ((None, {"fields": ("user", "school", "role", "is_active")}),)
+    list_display = ("user", "school", "role", "is_active")
+    search_fields = ("user__name", "user__email", "school__name", "role")
+    fieldsets = ((None, {"fields": ("user", "school", "role", "is_active")}),)
 
 
 @admin.register(VerificationCode)
 class VerificationCodeAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("email", "secret_key", "created_at", "is_used", "failed_attempts")
-    search_fields: ClassVar = ("email", "secret_key")
-    fieldsets: ClassVar = ((None, {"fields": ("email", "secret_key", "created_at", "is_used", "failed_attempts")}),)
+    list_display = ("email", "secret_key", "created_at", "is_used", "failed_attempts")
+    search_fields = ("email", "secret_key")
+    fieldsets = ((None, {"fields": ("email", "secret_key", "created_at", "is_used", "failed_attempts")}),)
 
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("name", "code", "educational_system", "education_level", "created_at")
-    list_filter: ClassVar = ("educational_system", "education_level", "created_at", "updated_at")
-    search_fields: ClassVar = ("name", "code", "educational_system", "education_level", "description")
-    fieldsets: ClassVar = (
+    list_display = ("name", "code", "educational_system", "education_level", "created_at")
+    list_filter = ("educational_system", "education_level", "created_at", "updated_at")
+    search_fields = ("name", "code", "educational_system", "education_level", "description")
+    fieldsets = (
         (
             None,
             {"fields": ("name", "code", "educational_system", "education_level", "description")},
         ),
         ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
-    readonly_fields: ClassVar = ("created_at", "updated_at")
+    readonly_fields = ("created_at", "updated_at")
 
 
 @admin.register(TeacherCourse)
 class TeacherCourseAdmin(admin.ModelAdmin):
-    list_display: ClassVar = (
+    list_display = (
         "get_teacher_name",
         "get_course_name",
         "hourly_rate",
         "is_active",
         "started_teaching",
     )
-    list_filter: ClassVar = (
+    list_filter = (
         "is_active",
         "started_teaching",
         "course__educational_system",
         "course__education_level",
     )
-    search_fields: ClassVar = ("teacher__user__name", "teacher__user__email", "course__name", "course__code")
-    fieldsets: ClassVar = (
+    search_fields = ("teacher__user__name", "teacher__user__email", "course__name", "course__code")
+    fieldsets = (
         (None, {"fields": ("teacher", "course", "hourly_rate", "is_active")}),
         ("Timestamps", {"fields": ("started_teaching",), "classes": ("collapse",)}),
     )
-    readonly_fields: ClassVar = ("started_teaching",)
+    readonly_fields = ("started_teaching",)
 
     @admin.display(
         description="Teacher",
@@ -245,18 +243,18 @@ class TeacherCourseAdmin(admin.ModelAdmin):
 class ParentProfileAdmin(admin.ModelAdmin):
     """Admin interface for ParentProfile model."""
 
-    list_display: ClassVar = (
+    list_display = (
         "get_name",
         "get_email",
         "email_notifications_enabled",
         "sms_notifications_enabled",
         "created_at",
     )
-    list_filter: ClassVar = ("email_notifications_enabled", "sms_notifications_enabled", "created_at")
-    search_fields: ClassVar = ("user__name", "user__email")
-    readonly_fields: ClassVar = ("created_at", "updated_at")
+    list_filter = ("email_notifications_enabled", "sms_notifications_enabled", "created_at")
+    search_fields = ("user__name", "user__email")
+    readonly_fields = ("created_at", "updated_at")
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         (None, {"fields": ("user",)}),
         (
             "Notification Settings",
@@ -294,7 +292,7 @@ class ParentProfileAdmin(admin.ModelAdmin):
 class ParentChildRelationshipAdmin(admin.ModelAdmin):
     """Admin interface for ParentChildRelationship model."""
 
-    list_display: ClassVar = (
+    list_display = (
         "get_parent_name",
         "get_child_name",
         "relationship_type",
@@ -303,7 +301,7 @@ class ParentChildRelationshipAdmin(admin.ModelAdmin):
         "requires_purchase_approval",
         "created_at",
     )
-    list_filter: ClassVar = (
+    list_filter = (
         "relationship_type",
         "is_active",
         "requires_purchase_approval",
@@ -311,10 +309,10 @@ class ParentChildRelationshipAdmin(admin.ModelAdmin):
         "school",
         "created_at",
     )
-    search_fields: ClassVar = ("parent__name", "parent__email", "child__name", "child__email", "school__name")
-    readonly_fields: ClassVar = ("created_at", "updated_at")
+    search_fields = ("parent__name", "parent__email", "child__name", "child__email", "school__name")
+    readonly_fields = ("created_at", "updated_at")
 
-    fieldsets: ClassVar = (
+    fieldsets = (
         ("Relationship Details", {"fields": ("parent", "child", "relationship_type", "school", "is_active")}),
         (
             "Permissions & Approval Settings",

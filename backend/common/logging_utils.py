@@ -12,7 +12,7 @@ import logging
 import re
 import threading
 import time
-from typing import Any, ClassVar
+from typing import Any
 import uuid
 
 # Thread-local storage for correlation IDs
@@ -75,7 +75,7 @@ class SensitiveDataFilter(logging.Filter):
     """Filter to remove or redact sensitive information from log records."""
 
     # Patterns for sensitive data detection
-    PATTERNS: ClassVar = {
+    PATTERNS = {
         "email": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"),
         "phone": re.compile(r"\b\+?[\d\s\-\(\)]{10,15}\b"),
         "card_number": re.compile(r"\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b"),
@@ -236,7 +236,7 @@ class DevelopmentFormatter(logging.Formatter):
     """Human-readable formatter for development with colors."""
 
     # ANSI color codes
-    COLORS: ClassVar = {
+    COLORS = {
         "DEBUG": "\033[36m",  # Cyan
         "INFO": "\033[32m",  # Green
         "WARNING": "\033[33m",  # Yellow

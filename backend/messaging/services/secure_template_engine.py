@@ -7,7 +7,7 @@ template injection attacks, XSS vulnerabilities, and unauthorized code execution
 
 import logging
 import re
-from typing import Any, ClassVar
+from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.template import Context, Template, TemplateSyntaxError
@@ -23,7 +23,7 @@ class SecureTemplateEngine:
     """
 
     # Allowed template tags and filters (whitelist approach)
-    ALLOWED_TAGS: ClassVar = {
+    ALLOWED_TAGS = {
         "if",
         "endif",
         "else",
@@ -50,7 +50,7 @@ class SecureTemplateEngine:
         "endautoescape",
     }
 
-    ALLOWED_FILTERS: ClassVar = {
+    ALLOWED_FILTERS = {
         "add",
         "addslashes",
         "capfirst",
@@ -107,7 +107,7 @@ class SecureTemplateEngine:
     }
 
     # Dangerous patterns to detect and block
-    DANGEROUS_PATTERNS: ClassVar = [
+    DANGEROUS_PATTERNS = [
         r"__import__",
         r"eval\s*\(",
         r"exec\s*\(",
@@ -421,7 +421,7 @@ class HTMLSanitizer:
     """
 
     # Allowed HTML tags for email content
-    ALLOWED_TAGS: ClassVar = {
+    ALLOWED_TAGS = {
         "p",
         "br",
         "strong",
@@ -454,7 +454,7 @@ class HTMLSanitizer:
     }
 
     # Allowed attributes for specific tags
-    ALLOWED_ATTRIBUTES: ClassVar = {
+    ALLOWED_ATTRIBUTES = {
         "a": {"href", "title", "target"},
         "img": {"src", "alt", "width", "height", "style"},
         "span": {"style", "class"},
@@ -472,7 +472,7 @@ class HTMLSanitizer:
     }
 
     # Allowed CSS properties
-    ALLOWED_CSS_PROPERTIES: ClassVar = {
+    ALLOWED_CSS_PROPERTIES = {
         "color",
         "background-color",
         "font-family",

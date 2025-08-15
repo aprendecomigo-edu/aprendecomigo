@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -12,19 +10,19 @@ class Task(models.Model):
     Task model for to-do functionality
     """
 
-    PRIORITY_CHOICES: ClassVar = [
+    PRIORITY_CHOICES = [
         ("low", _("Low")),
         ("medium", _("Medium")),
         ("high", _("High")),
     ]
 
-    STATUS_CHOICES: ClassVar = [
+    STATUS_CHOICES = [
         ("pending", _("Pending")),
         ("in_progress", _("In Progress")),
         ("completed", _("Completed")),
     ]
 
-    TASK_TYPE_CHOICES: ClassVar = [
+    TASK_TYPE_CHOICES = [
         ("onboarding", _("Onboarding")),
         ("assignment", _("Assignment")),
         ("personal", _("Personal")),
@@ -62,8 +60,8 @@ class Task(models.Model):
     class Meta:
         verbose_name = _("Task")
         verbose_name_plural = _("Tasks")
-        ordering: ClassVar = ["-priority", "due_date", "-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-priority", "due_date", "-created_at"]
+        indexes = [
             models.Index(fields=["user", "status"]),
             models.Index(fields=["user", "due_date"]),
             models.Index(fields=["priority", "status"]),
@@ -136,7 +134,7 @@ class TaskComment(models.Model):
     class Meta:
         verbose_name = _("Task Comment")
         verbose_name_plural = _("Task Comments")
-        ordering: ClassVar = ["-created_at"]
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"Comment on {self.task.title} by {self.user.email}"

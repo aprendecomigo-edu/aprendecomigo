@@ -6,7 +6,6 @@ assessments, and educational outcomes.
 """
 
 from decimal import Decimal
-from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -95,13 +94,13 @@ class StudentProgress(models.Model):
     class Meta:
         verbose_name = _("Student Progress")
         verbose_name_plural = _("Student Progress Records")
-        ordering: ClassVar = ["-updated_at"]
-        constraints: ClassVar = [
+        ordering = ["-updated_at"]
+        constraints = [
             models.UniqueConstraint(
                 fields=["student", "teacher", "course"], name="unique_student_teacher_course_progress"
             )
         ]
-        indexes: ClassVar = [
+        indexes = [
             models.Index(fields=["student", "course"]),
             models.Index(fields=["teacher", "-updated_at"]),
             models.Index(fields=["school", "course"]),
@@ -201,8 +200,8 @@ class ProgressAssessment(models.Model):
     class Meta:
         verbose_name = _("Progress Assessment")
         verbose_name_plural = _("Progress Assessments")
-        ordering: ClassVar = ["-assessment_date", "-created_at"]
-        indexes: ClassVar = [
+        ordering = ["-assessment_date", "-created_at"]
+        indexes = [
             models.Index(fields=["student_progress", "-assessment_date"]),
             models.Index(fields=["assessment_type", "-assessment_date"]),
             models.Index(fields=["is_graded", "-assessment_date"]),

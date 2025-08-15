@@ -54,7 +54,7 @@ directory = "htmlcov"
 # Auto-fix safe issues:   ch django lint --fix
 # Format code:            ch django format
 #
-target-version = "py311"
+target-version = "py313"
 line-length = 120
 exclude = [
     ".venv",
@@ -116,7 +116,7 @@ combine-as-imports = true
 force-sort-within-sections = true
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false

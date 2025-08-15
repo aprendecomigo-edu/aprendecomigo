@@ -11,7 +11,7 @@ This service provides:
 """
 
 import logging
-from typing import Any, ClassVar
+from typing import Any
 
 from accounts.models import School, SchoolSettings, TeacherProfile
 from accounts.services.profile_completion import ProfileCompletionService
@@ -28,7 +28,7 @@ class WizardOrchestrationService:
     """
 
     # Define wizard steps with metadata
-    WIZARD_STEPS: ClassVar = [
+    WIZARD_STEPS = [
         {
             "step_number": 0,
             "title": "Personal Information",

@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
@@ -30,7 +28,7 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherAvailability
-        fields: ClassVar = [
+        fields = [
             "id",
             "teacher",
             "teacher_name",
@@ -44,7 +42,7 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields: ClassVar = ["created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]
 
     def validate(self, data):
         """Validate availability data using model validation"""
@@ -57,12 +55,12 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
 
             for field_name in model_fields:
                 if field_name not in ["id"] and hasattr(self.instance, field_name):  # Skip primary key and auto fields
-                        value = getattr(self.instance, field_name)
-                        # Handle foreign key fields properly
-                        if hasattr(value, "pk"):
-                            temp_data[field_name] = value
-                        else:
-                            temp_data[field_name] = value
+                    value = getattr(self.instance, field_name)
+                    # Handle foreign key fields properly
+                    if hasattr(value, "pk"):
+                        temp_data[field_name] = value
+                    else:
+                        temp_data[field_name] = value
 
             # Override with new data, resolving foreign key relationships
             for field_name, value in data.items():
@@ -117,7 +115,7 @@ class TeacherUnavailabilitySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherUnavailability
-        fields: ClassVar = [
+        fields = [
             "id",
             "teacher",
             "teacher_name",
@@ -130,7 +128,7 @@ class TeacherUnavailabilitySerializer(serializers.ModelSerializer):
             "is_all_day",
             "created_at",
         ]
-        read_only_fields: ClassVar = ["created_at"]
+        read_only_fields = ["created_at"]
 
     def validate(self, data):
         """Custom validation for unavailability"""
@@ -148,12 +146,12 @@ class TeacherUnavailabilitySerializer(serializers.ModelSerializer):
 
             for field_name in model_fields:
                 if field_name not in ["id"] and hasattr(self.instance, field_name):  # Skip primary key and auto fields
-                        value = getattr(self.instance, field_name)
-                        # Handle foreign key fields properly
-                        if hasattr(value, "pk"):
-                            temp_data[field_name] = value
-                        else:
-                            temp_data[field_name] = value
+                    value = getattr(self.instance, field_name)
+                    # Handle foreign key fields properly
+                    if hasattr(value, "pk"):
+                        temp_data[field_name] = value
+                    else:
+                        temp_data[field_name] = value
 
             # Override with new data, resolving foreign key relationships
             for field_name, value in data.items():
@@ -224,7 +222,7 @@ class ClassScheduleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClassSchedule
-        fields: ClassVar = [
+        fields = [
             "id",
             "teacher",
             "teacher_name",
@@ -274,7 +272,7 @@ class ClassScheduleSerializer(serializers.ModelSerializer):
             "scheduled_datetime_local",
             "status_history",
         ]
-        read_only_fields: ClassVar = [
+        read_only_fields = [
             "booked_by",
             "booked_at",
             "cancelled_at",
@@ -362,7 +360,7 @@ class CreateClassScheduleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClassSchedule
-        fields: ClassVar = [
+        fields = [
             "id",
             "teacher",
             "teacher_id",
@@ -382,7 +380,7 @@ class CreateClassScheduleSerializer(serializers.ModelSerializer):
             "teacher_notes",
             "student_notes",
         ]
-        read_only_fields: ClassVar = ["id"]
+        read_only_fields = ["id"]
 
     def validate(self, data):
         """Validate class schedule data using BookingOrchestratorService"""
@@ -504,7 +502,7 @@ class RecurringClassScheduleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RecurringClassSchedule
-        fields: ClassVar = [
+        fields = [
             "id",
             "teacher",
             "teacher_name",
@@ -543,7 +541,7 @@ class RecurringClassScheduleSerializer(serializers.ModelSerializer):
             "generated_instances_count",
             "future_instances_count",
         ]
-        read_only_fields: ClassVar = [
+        read_only_fields = [
             "created_at",
             "updated_at",
             "cancelled_at",
@@ -685,7 +683,7 @@ class ReminderPreferenceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ReminderPreference
-        fields: ClassVar = [
+        fields = [
             "id",
             "user",
             "user_name",
@@ -699,7 +697,7 @@ class ReminderPreferenceSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields: ClassVar = ["id", "user", "created_at", "updated_at"]
+        read_only_fields = ["id", "user", "created_at", "updated_at"]
 
     def validate_reminder_timing_hours(self, value):
         """Validate reminder timing hours"""
@@ -750,7 +748,7 @@ class ClassReminderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClassReminder
-        fields: ClassVar = [
+        fields = [
             "id",
             "class_schedule",
             "class_title",
@@ -778,7 +776,7 @@ class ClassReminderSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields: ClassVar = [
+        read_only_fields = [
             "sent_at",
             "error_message",
             "retry_count",
