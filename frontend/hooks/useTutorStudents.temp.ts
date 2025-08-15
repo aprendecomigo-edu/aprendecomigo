@@ -67,7 +67,9 @@ export const useTutorStudents = (schoolId?: number): UseTutorStudentsResult => {
 
   const refresh = useCallback(async () => {
     // Mock refresh - no-op for testing
-    console.log('Refreshing tutor students for school:', schoolId);
+    if (__DEV__) {
+      console.log('Refreshing tutor students for school:', schoolId);
+    }
   }, [schoolId]);
 
   return {

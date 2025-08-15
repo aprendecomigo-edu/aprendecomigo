@@ -593,7 +593,9 @@ describe('Component Migration to Dependency Injection', () => {
       productionDeps.analyticsService = {
         track: (event, props) => {
           // Real implementation would send to analytics service
-          console.log('Production analytics:', event, props);
+          if (__DEV__) {
+            console.log('Production analytics:', event, props);
+          }
         },
         identify: () => {},
         screen: () => {},

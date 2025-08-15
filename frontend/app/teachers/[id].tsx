@@ -132,18 +132,24 @@ export default function TeacherProfilePage() {
   });
 
   const handleEditSuccess = (updatedTeacher: any) => {
-    console.log('Teacher profile updated successfully!', updatedTeacher);
+    if (__DEV__) {
+      console.log('Teacher profile updated successfully!', updatedTeacher);
+    }
     // Refresh the current profile
     refresh();
   };
 
   const handleSendMessage = () => {
-    console.log('Send message to teacher:', profile?.id);
+    if (__DEV__) {
+      console.log('Send message to teacher:', profile?.id);
+    }
     // TODO: Open message composer modal
   };
 
   const handleSendReminder = () => {
-    console.log('Send profile completion reminder to:', profile?.id);
+    if (__DEV__) {
+      console.log('Send profile completion reminder to:', profile?.id);
+    }
     // TODO: Send profile completion reminder
   };
 
@@ -223,7 +229,9 @@ export default function TeacherProfilePage() {
                 size="sm"
                 onPress={() => {
                   // TODO: Open message composer
-                  console.log('Send message to teacher:', profile.id);
+                  if (__DEV__) {
+                    console.log('Send message to teacher:', profile.id);
+                  }
                 }}
               >
                 <Icon as={MessageCircle} size="sm" className="text-gray-600" />
@@ -249,7 +257,9 @@ export default function TeacherProfilePage() {
             onSendReminder={handleSendReminder}
             onViewDetails={() => {
               // We're already on the details page, so scroll to completion section
-              console.log('Scroll to completion details');
+              if (__DEV__) {
+                console.log('Scroll to completion details');
+              }
             }}
           />
 
@@ -268,7 +278,9 @@ export default function TeacherProfilePage() {
                 variant="detailed"
                 onViewDetails={() => {
                   // TODO: Show detailed completion modal
-                  console.log('Show completion details');
+                  if (__DEV__) {
+                    console.log('Show completion details');
+                  }
                 }}
               />
 

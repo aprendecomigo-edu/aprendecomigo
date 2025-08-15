@@ -246,7 +246,9 @@ export function QuickActionsExample({ email }: QuickActionsExampleProps) {
                 onPress={() => {
                   // Navigate to payment methods management
                   // This would typically use navigation
-                  console.log('Navigate to payment methods');
+                  if (__DEV__) {
+                    console.log('Navigate to payment methods');
+                  }
                 }}
               >
                 <ButtonText>Add Payment Method</ButtonText>
@@ -262,7 +264,9 @@ export function QuickActionsExample({ email }: QuickActionsExampleProps) {
         <QuickTopUpPanel
           email={email}
           onTopUpSuccess={response => {
-            console.log('Top-up successful:', response);
+            if (__DEV__) {
+              console.log('Top-up successful:', response);
+            }
             refetch(); // Refresh balance
           }}
           onTopUpError={error => {
@@ -281,7 +285,9 @@ export function QuickActionsExample({ email }: QuickActionsExampleProps) {
         initialAction={modalInitialAction}
         email={email}
         onTransactionSuccess={(type, response) => {
-          console.log(`${type} successful:`, response);
+          if (__DEV__) {
+            console.log(`${type} successful:`, response);
+          }
           refetch(); // Refresh balance after successful transaction
         }}
       />
@@ -333,7 +339,9 @@ export function QuickActionsExample({ email }: QuickActionsExampleProps) {
  *       <AlertText>Your subscription has expired</AlertText>
  *       <OneClickRenewalButton
  *         showPlanDetails={true}
- *         onRenewalSuccess={() => console.log('Renewed!')}
+ if (__DEV__) {
+   *         onRenewalSuccess={() => console.log('Renewed!')}
+ }
  *       />
  *     </Alert>
  *   );

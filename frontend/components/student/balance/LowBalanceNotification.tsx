@@ -258,7 +258,9 @@ export const LowBalanceToastProvider: React.FC<{ children: React.ReactNode }> = 
 
   const handleToastAction = useCallback((data: ToastNotificationData) => {
     // Custom action handler if needed
-    console.log('Toast action:', data);
+    if (__DEV__) {
+      console.log('Toast action:', data);
+    }
   }, []);
 
   return (

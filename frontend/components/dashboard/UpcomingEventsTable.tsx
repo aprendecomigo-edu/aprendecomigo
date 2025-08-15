@@ -340,7 +340,9 @@ const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({ onRefresh }) 
               size="sm"
               onPress={() => {
                 // Navigate to full calendar view
-                console.log('Navigate to calendar');
+                if (__DEV__) {
+                  console.log('Navigate to calendar');
+                }
               }}
             >
               <ButtonText>Ver Calendário</ButtonText>

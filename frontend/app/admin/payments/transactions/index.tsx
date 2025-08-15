@@ -110,7 +110,9 @@ export default function TransactionManagement() {
 
       setTransactions(response);
     } catch (err: any) {
-      console.error('Error loading transactions:', err);
+      if (__DEV__) {
+        console.error('Error loading transactions:', err); // TODO: Review for sensitive data
+      }
       setError(err.message || 'Failed to load transactions');
     } finally {
       setLoading(false);
@@ -192,7 +194,9 @@ export default function TransactionManagement() {
       const transaction = await PaymentMonitoringApiClient.getTransactionDetail(transactionId);
       setModalState(prev => ({ ...prev, transactionDetail: transaction }));
     } catch (err: any) {
-      console.error('Error loading transaction detail:', err);
+      if (__DEV__) {
+        console.error('Error loading transaction detail:', err); // TODO: Review for sensitive data
+      }
       setError(err.message || 'Failed to load transaction details');
     }
   }, []);
@@ -242,7 +246,9 @@ export default function TransactionManagement() {
         clearSelection();
         setModalState(prev => ({ ...prev, bulkActionModal: false }));
       } catch (err: any) {
-        console.error('Error processing bulk action:', err);
+        if (__DEV__) {
+          console.error('Error processing bulk action:', err); // TODO: Review for sensitive data
+        }
         setError(err.message || 'Failed to process bulk action');
       } finally {
         setActionLoading(false);
@@ -272,9 +278,15 @@ export default function TransactionManagement() {
       setActionLoading(true);
       // Implementation for exporting transactions
       // This would typically call a backend endpoint to generate and download a report
-      console.log('Exporting transactions with filters:', state.searchFilters);
+      if (__DEV__) {
+        if (__DEV__) {
+          console.log('Exporting transactions with filters:', state.searchFilters);
+        }
+      }
     } catch (err: any) {
-      console.error('Error exporting transactions:', err);
+      if (__DEV__) {
+        console.error('Error exporting transactions:', err); // TODO: Review for sensitive data
+      }
       setError(err.message || 'Failed to export transactions');
     } finally {
       setActionLoading(false);
@@ -407,7 +419,11 @@ export default function TransactionManagement() {
         onRefund={handleRefundRequest}
         onRetry={transaction => {
           // Handle retry action
-          console.log('Retry transaction:', transaction.id);
+          if (__DEV__) {
+            if (__DEV__) {
+              console.log('Retry transaction:', transaction.id);
+            }
+          }
         }}
       />
 
@@ -435,7 +451,9 @@ export default function TransactionManagement() {
             loadTransactions(); // Refresh data
             setModalState(prev => ({ ...prev, refundConfirmation: null }));
           } catch (err: any) {
-            console.error('Error processing refund:', err);
+            if (__DEV__) {
+              console.error('Error processing refund:', err); // TODO: Review for sensitive data
+            }
             setError(err.message || 'Failed to process refund');
           } finally {
             setActionLoading(false);

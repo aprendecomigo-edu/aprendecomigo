@@ -94,7 +94,9 @@ export default function PaymentMonitoringDashboard() {
       setWsMetrics(metricsResponse);
       setWsTrendData(trendsResponse);
     } catch (err: any) {
-      console.error('Error loading dashboard data:', err);
+      if (__DEV__) {
+        console.error('Error loading dashboard data:', err); // TODO: Review for sensitive data
+      }
       setError(err.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);

@@ -78,7 +78,9 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
         onImageSelected(selectedImage);
       }
     } catch (error) {
-      console.error('Error selecting image from library:', error);
+      if (__DEV__) {
+        console.error('Error selecting image from library:', error); // TODO: Review for sensitive data
+      }
       Alert.alert('Error', 'Failed to select image from library. Please try again.');
     } finally {
       setIsSelecting(false);
@@ -112,7 +114,9 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
         onImageSelected(capturedImage);
       }
     } catch (error) {
-      console.error('Error taking photo:', error);
+      if (__DEV__) {
+        console.error('Error taking photo:', error); // TODO: Review for sensitive data
+      }
       Alert.alert('Error', 'Failed to take photo. Please try again.');
     } finally {
       setIsSelecting(false);

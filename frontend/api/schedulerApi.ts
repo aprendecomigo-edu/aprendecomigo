@@ -130,7 +130,9 @@ export const schedulerApi = {
       // Fallback for non-paginated response
       return response.data;
     } else {
-      console.warn('API did not return expected format:', response.data);
+      if (__DEV__) {
+        console.warn('API did not return expected format:', response.data);
+      }
       return [];
     }
   },
@@ -169,7 +171,9 @@ export const schedulerApi = {
       // Fallback for non-paginated response
       return response.data;
     } else {
-      console.warn('API did not return expected format:', response.data);
+      if (__DEV__) {
+        console.warn('API did not return expected format:', response.data);
+      }
       return [];
     }
   },
@@ -210,7 +214,9 @@ export const schedulerApi = {
       // Fallback for non-paginated response
       return response.data;
     } else {
-      console.warn('API did not return expected format:', response.data);
+      if (__DEV__) {
+        console.warn('API did not return expected format:', response.data);
+      }
       return [];
     }
   },
@@ -264,7 +270,9 @@ export const schedulerApi = {
       // Fallback for non-paginated response
       return response.data;
     } else {
-      console.warn('API did not return expected format:', response.data);
+      if (__DEV__) {
+        console.warn('API did not return expected format:', response.data);
+      }
       return [];
     }
   },
@@ -291,7 +299,9 @@ export const schedulerApi = {
       // Fallback for non-paginated response
       return response.data;
     } else {
-      console.warn('API did not return expected format:', response.data);
+      if (__DEV__) {
+        console.warn('API did not return expected format:', response.data);
+      }
       return [];
     }
   },

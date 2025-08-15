@@ -179,7 +179,7 @@ export type IAccordionIconProps = React.ComponentPropsWithoutRef<typeof Primitiv
     as?: React.ElementType;
   };
 
-export type IAccordionHeaderProps = (Platform.OS === 'web' ? React.ComponentPropsWithoutRef<typeof H3> : ViewProps) &
+export type IAccordionHeaderProps = ViewProps &
   VariantProps<typeof accordionHeaderStyle> & {
     className?: string;
   };
@@ -250,7 +250,7 @@ export const AccordionItem = React.forwardRef<View, IAccordionItemProps>(
 
 // AccordionHeader component
 export const AccordionHeader = React.forwardRef<
-  Platform.OS === 'web' ? React.ElementRef<typeof H3> : View,
+  View,
   IAccordionHeaderProps
 >(({ className, ...props }, ref) => {
   const HeaderComponent = (Platform.OS === 'web' ? H3 : View) as React.ComponentType<any>;

@@ -71,7 +71,9 @@ export const SignUpWithDI: React.FC = () => {
       toastService.showToast('success', 'Account created successfully!');
       routerService.push('/dashboard');
     } catch (error: any) {
-      console.error('Failed to create account:', error);
+      if (__DEV__) {
+        console.error('Failed to create account:', error); // TODO: Review for sensitive data
+      }
       toastService.showToast('error', 'Failed to create account. Please try again.');
     } finally {
       setIsSubmitting(false);

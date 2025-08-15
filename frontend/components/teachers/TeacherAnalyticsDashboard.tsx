@@ -481,7 +481,9 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
                 subtitle={criticalCount > 0 ? 'Ação urgente' : 'Tudo bem'}
                 onPress={() => {
                   // TODO: Navigate to filtered view of critical teachers
-                  console.log('View critical teachers');
+                  if (__DEV__) {
+                    console.log('View critical teachers');
+                  }
                 }}
               />
             </Box>
@@ -519,7 +521,9 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
               fields={topMissingFields}
               onFieldClick={field => {
                 // TODO: Navigate to teachers filtered by missing field
-                console.log('Filter by missing field:', field);
+                if (__DEV__) {
+                  console.log('Filter by missing field:', field);
+                }
               }}
             />
           </VStack>

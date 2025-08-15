@@ -56,7 +56,9 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
         const summary = await tasksApi.getTaskSummary();
         setTaskSummary(summary);
       } catch (summaryError) {
-        console.warn('Failed to refresh task summary:', summaryError);
+        if (__DEV__) {
+          console.warn('Failed to refresh task summary:', summaryError);
+        }
       }
 
       return newTask;
@@ -79,7 +81,9 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
         const summary = await tasksApi.getTaskSummary();
         setTaskSummary(summary);
       } catch (summaryError) {
-        console.warn('Failed to refresh task summary:', summaryError);
+        if (__DEV__) {
+          console.warn('Failed to refresh task summary:', summaryError);
+        }
       }
 
       return updatedTask;
@@ -102,7 +106,9 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
         const summary = await tasksApi.getTaskSummary();
         setTaskSummary(summary);
       } catch (summaryError) {
-        console.warn('Failed to refresh task summary:', summaryError);
+        if (__DEV__) {
+          console.warn('Failed to refresh task summary:', summaryError);
+        }
       }
 
       return true;
@@ -137,7 +143,9 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
           const summary = await tasksApi.getTaskSummary();
           setTaskSummary(summary);
         } catch (summaryError) {
-          console.warn('Failed to refresh task summary:', summaryError);
+          if (__DEV__) {
+            console.warn('Failed to refresh task summary:', summaryError);
+          }
         }
 
         return updatedTask;

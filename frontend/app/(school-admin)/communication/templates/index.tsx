@@ -102,7 +102,9 @@ const TemplateManagement = () => {
           // This would be handled by the useTemplateActions hook
           await refreshTemplates();
         } catch (error) {
-          console.error('Error deleting template:', error);
+          if (__DEV__) {
+            console.error('Error deleting template:', error); // TODO: Review for sensitive data
+          }
         }
       });
     },

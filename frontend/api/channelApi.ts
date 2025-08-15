@@ -36,7 +36,9 @@ export interface Channel {
 export const fetchChannels = async (): Promise<Channel[]> => {
   try {
     const response = await apiClient.get('/channels/');
-    console.log('Backend channels response:', response.data);
+    if (__DEV__) {
+      console.log('Backend channels response:', response.data);
+    }
     // Handle paginated response from Django REST Framework
     if (response.data && Array.isArray(response.data.results)) {
       return response.data.results;
@@ -45,7 +47,9 @@ export const fetchChannels = async (): Promise<Channel[]> => {
     if (Array.isArray(response.data)) {
       return response.data;
     }
-    console.warn('Unexpected API response format:', response.data);
+    if (__DEV__) {
+      console.warn('Unexpected API response format:', response.data);
+    }
     return [];
   } catch (error) {
     console.error('Error fetching channels:', error);
@@ -120,7 +124,9 @@ export const createChannel = async (
 export const searchUsers = async (query: string): Promise<User[]> => {
   try {
     const response = await apiClient.get(`/users/?search=${encodeURIComponent(query)}`);
-    console.log('Backend users search response:', response.data);
+    if (__DEV__) {
+      console.log('Backend users search response:', response.data);
+    }
     // Handle paginated response from Django REST Framework
     if (response.data && Array.isArray(response.data.results)) {
       return response.data.results;
@@ -129,7 +135,9 @@ export const searchUsers = async (query: string): Promise<User[]> => {
     if (Array.isArray(response.data)) {
       return response.data;
     }
-    console.warn('Unexpected users API response format:', response.data);
+    if (__DEV__) {
+      console.warn('Unexpected users API response format:', response.data);
+    }
     return [];
   } catch (error) {
     console.error('Error searching users:', error);

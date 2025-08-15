@@ -132,13 +132,25 @@ export default function TestV2MediumPriorityScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>5. Menu Component</Text>
           <Menu>
-            <MenuItem onPress={() => console.log('Edit')}>
+            <MenuItem onPress={() => {
+              if (__DEV__) {
+                console.log('Edit');
+              }
+            }}>
               <MenuItemLabel>Edit</MenuItemLabel>
             </MenuItem>
-            <MenuItem onPress={() => console.log('Delete')}>
+            <MenuItem onPress={() => {
+              if (__DEV__) {
+                console.log('Delete');
+              }
+            }}>
               <MenuItemLabel>Delete</MenuItemLabel>
             </MenuItem>
-            <MenuItem onPress={() => console.log('Share')}>
+            <MenuItem onPress={() => {
+              if (__DEV__) {
+                console.log('Share');
+              }
+            }}>
               <MenuItemLabel>Share</MenuItemLabel>
             </MenuItem>
           </Menu>

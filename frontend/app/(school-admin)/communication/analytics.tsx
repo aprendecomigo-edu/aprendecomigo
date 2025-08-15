@@ -110,7 +110,13 @@ const CommunicationAnalyticsPage = () => {
       recent_activity: analytics.recent_activity,
     };
 
-    console.log('Export data:', data);
+    if (__DEV__) {
+
+      if (__DEV__) {
+        console.log('Export data:', data);
+      }
+
+    }
     // TODO: Implement actual file download
   }, [analytics]);
 

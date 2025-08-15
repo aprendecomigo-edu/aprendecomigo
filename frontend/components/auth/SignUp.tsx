@@ -32,7 +32,9 @@ const validateUserType = (type: string | undefined): UserType => {
 
   // Log warning for invalid type but gracefully fallback
   if (type && type !== 'tutor' && type !== 'school') {
-    console.warn(`Invalid user type "${type}" provided. Defaulting to "tutor".`);
+    if (__DEV__) {
+      console.warn(`Invalid user type "${type}" provided. Defaulting to "tutor".`);
+    }
   }
 
   return 'tutor'; // Default to tutor

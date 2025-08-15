@@ -133,7 +133,9 @@ export class WebSocketClient implements EventEmitterInterface {
 
       if (wasConnected) {
         this.connect().catch(error => {
-          console.error('Failed to reconnect after config update:', error);
+          if (__DEV__) {
+            console.error('Failed to reconnect after config update:', error);
+          }
         });
       }
     }
@@ -189,7 +191,9 @@ export class WebSocketClient implements EventEmitterInterface {
     // Auto-connect if requested
     if (hookConfig.shouldConnect) {
       client.connect().catch(error => {
-        console.error('Auto-connect failed:', error);
+        if (__DEV__) {
+          console.error('Auto-connect failed:', error);
+        }
       });
     }
 
@@ -278,7 +282,9 @@ export class WebSocketClient implements EventEmitterInterface {
           try {
             await this.connect();
           } catch (error) {
-            console.error('Reconnection failed:', error);
+            if (__DEV__) {
+              console.error('Reconnection failed:', error);
+            }
           }
         }, delay);
       }
@@ -289,7 +295,9 @@ export class WebSocketClient implements EventEmitterInterface {
       try {
         await this.messageDispatcher.dispatch(message);
       } catch (error) {
-        console.error('Message dispatch error:', error);
+        if (__DEV__) {
+          console.error('Message dispatch error:', error);
+        }
         this.emit('error', new Error('Message dispatch error'));
       }
     });
@@ -334,7 +342,9 @@ export class WebSocketClient implements EventEmitterInterface {
         try {
           listener(...args);
         } catch (error) {
-          console.error(`Error in event listener for ${eventName}:`, error);
+          if (__DEV__) {
+            console.error(`Error in event listener for ${eventName}:`, error);
+          }
         }
       });
     }

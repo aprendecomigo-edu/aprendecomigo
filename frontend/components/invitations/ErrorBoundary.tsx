@@ -115,7 +115,9 @@ export class InvitationErrorBoundary extends Component<Props, State> {
 
     // In a real app, you would send this to your error reporting service
     if (__DEV__) {
-      console.log('Error report for support:', errorReport);
+      if (__DEV__) {
+        console.log('Error report for support:', errorReport);
+      }
     }
 
     Alert.alert(

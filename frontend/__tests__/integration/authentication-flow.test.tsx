@@ -88,15 +88,25 @@ describe('Authentication Flow Integration Tests', () => {
         <SignIn />
       );
 
-      console.log('SignIn component rendered:');
+      if (__DEV__) {
+
+        if (__DEV__) {
+          console.log('SignIn component rendered:');
+        }
+
+      }
       debug();
 
       // Try testID first since we know it works
       try {
         const emailInput = getByTestId('email-input');
-        console.log('Found email input by testID:', !!emailInput);
+        if (__DEV__) {
+          console.log('Found email input by testID:', !!emailInput);
+        }
       } catch (e) {
-        console.log('Could not find email-input by testID:', e.message);
+        if (__DEV__) {
+          console.log('Could not find email-input by testID:', e.message);
+        }
       }
 
       const emailInput = getByPlaceholderText('your_email@example.com');

@@ -271,12 +271,16 @@ const TeachersTab = ({
 
   const handleSendMessage = (teacherId: number) => {
     // TODO: Open message modal for specific teacher
-    console.log('Send message to teacher:', teacherId);
+    if (__DEV__) {
+      console.log('Send message to teacher:', teacherId);
+    }
   };
 
   const handleTeacherActions = (teacherId: number) => {
     // TODO: Show action menu for specific teacher
-    console.log('Show actions for teacher:', teacherId);
+    if (__DEV__) {
+      console.log('Show actions for teacher:', teacherId);
+    }
   };
 
   const getLastActivityText = (teacher: TeacherProfile): string => {
@@ -626,7 +630,9 @@ const StudentsTab = ({ onAddStudent, onBulkImport }: StudentsTabProps) => {
 
 const StaffTab = () => {
   const handleAddStaff = () => {
-    console.log('Add staff');
+    if (__DEV__) {
+      console.log('Add staff');
+    }
     // TODO: Implement add staff functionality
   };
 
@@ -721,18 +727,24 @@ export default function UsersPage() {
   };
 
   const handleAddManually = () => {
-    console.log('Add manually');
+    if (__DEV__) {
+      console.log('Add manually');
+    }
     // TODO: Implement manual user addition functionality
   };
 
   const handleTeacherProfileSuccess = () => {
-    console.log('Teacher profile created successfully!');
+    if (__DEV__) {
+      console.log('Teacher profile created successfully!');
+    }
     // Refresh teachers list
     fetchTeachers();
   };
 
   const handleInviteSuccess = () => {
-    console.log('Teacher invitation sent successfully!');
+    if (__DEV__) {
+      console.log('Teacher invitation sent successfully!');
+    }
     // Optionally refresh teachers list or show success message
   };
 
@@ -745,12 +757,16 @@ export default function UsersPage() {
   };
 
   const handleBulkImportSuccess = () => {
-    console.log('Bulk import completed successfully!');
+    if (__DEV__) {
+      console.log('Bulk import completed successfully!');
+    }
     // Student list will refresh automatically via useStudents hook
   };
 
   const handleStudentSuccess = () => {
-    console.log('Student created successfully!');
+    if (__DEV__) {
+      console.log('Student created successfully!');
+    }
     // Student list will refresh automatically via useStudents hook
   };
 
@@ -762,7 +778,9 @@ export default function UsersPage() {
       const teachersData = await getTeachers();
       setTeachers(teachersData);
     } catch (error: any) {
-      console.error('Error fetching teachers:', error);
+      if (__DEV__) {
+        console.error('Error fetching teachers:', error); // TODO: Review for sensitive data
+      }
 
       setError('Failed to load teachers. Please try again.');
     } finally {

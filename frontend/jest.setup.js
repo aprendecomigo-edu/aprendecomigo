@@ -883,10 +883,16 @@ jest.useFakeTimers();
 global.flushPromises = () => new Promise(resolve => setTimeout(resolve, 0));
 
 // Console warning suppression for known issues
-const originalConsoleWarn = console.warn;
+const originalConsoleWarn = if (__DEV__) {
+const originalConsoleWarn =   console.warn;
+const originalConsoleWarn = }
 const originalConsoleError = console.error;
 
-console.warn = (...args) => {
+if (__DEV__) {
+
+  console.warn = (...args) => {
+
+}
   // Suppress known warnings during tests
   const warningString = args[0];
   if (

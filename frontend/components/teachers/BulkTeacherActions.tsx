@@ -487,7 +487,9 @@ export const BulkTeacherActions: React.FC<BulkTeacherActionsProps> = ({
                         className="mt-2 self-start"
                         onPress={() => {
                           // TODO: Handle download
-                          console.log('Download:', lastResult.export_url);
+                          if (__DEV__) {
+                            console.log('Download:', lastResult.export_url);
+                          }
                         }}
                       >
                         <Icon as={Download} size="sm" />

@@ -78,7 +78,11 @@ export const useVerifyCodeLogicWithDI = ({
           }
         } catch (error) {
           // If onboarding data is not available, go to welcome anyway for new users
-          console.warn('Could not fetch onboarding data, defaulting to welcome screen');
+          if (__DEV__) {
+            if (__DEV__) {
+              console.warn('Could not fetch onboarding data, defaulting to welcome screen');
+            }
+          }
           routerService.replace('/onboarding/welcome');
           return response;
         }
@@ -89,7 +93,9 @@ export const useVerifyCodeLogicWithDI = ({
 
       return response;
     } catch (error: any) {
-      console.error('Failed to verify code:', error);
+      if (__DEV__) {
+        console.error('Failed to verify code:', error);
+      }
       setError(error);
       toastService.showToast('error', 'Invalid verification code. Please try again.');
       throw error;

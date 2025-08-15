@@ -81,7 +81,9 @@ class DefaultAnalyticsService implements AnalyticsService {
       (__DEV__ || process.env.NODE_ENV === 'development') &&
       process.env.NODE_ENV !== 'production'
     ) {
-      console.log('Analytics Track:', event, properties);
+      if (__DEV__) {
+        console.log('Analytics Track:', event, properties);
+      }
     }
     // In production, this would send to actual analytics service
   }
@@ -92,7 +94,9 @@ class DefaultAnalyticsService implements AnalyticsService {
       (__DEV__ || process.env.NODE_ENV === 'development') &&
       process.env.NODE_ENV !== 'production'
     ) {
-      console.log('Analytics Identify:', userId, properties);
+      if (__DEV__) {
+        console.log('Analytics Identify:', userId, properties);
+      }
     }
     // In production, this would send to actual analytics service
   }
@@ -103,7 +107,9 @@ class DefaultAnalyticsService implements AnalyticsService {
       (__DEV__ || process.env.NODE_ENV === 'development') &&
       process.env.NODE_ENV !== 'production'
     ) {
-      console.log('Analytics Screen:', name, properties);
+      if (__DEV__) {
+        console.log('Analytics Screen:', name, properties);
+      }
     }
     // In production, this would send to actual analytics service
   }
@@ -122,9 +128,21 @@ class DefaultRouterService implements RouterService {
     } catch (error) {
       // Fallback for testing
       this.router = {
-        push: () => console.log('Router push'),
-        back: () => console.log('Router back'),
-        replace: () => console.log('Router replace'),
+        push: () => {
+          if (__DEV__) {
+            console.log('Router push');
+          }
+        },
+        back: () => {
+          if (__DEV__) {
+            console.log('Router back');
+          }
+        },
+        replace: () => {
+          if (__DEV__) {
+            console.log('Router replace');
+          }
+        }
       };
     }
   }
@@ -163,7 +181,9 @@ class DefaultToastService implements ToastService {
       this.toast = {
         showToast: (type: string, message: string) => {
           if (__DEV__) {
-            console.log('Toast:', type, message);
+            if (__DEV__) {
+              console.log('Toast:', type, message);
+            }
           }
         },
       };

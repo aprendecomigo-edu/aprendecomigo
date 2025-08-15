@@ -53,7 +53,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserProfileState(JSON.parse(cachedProfile));
       }
     } catch (error) {
-      console.error('Error loading cached user profile:', error);
+      if (__DEV__) {
+        console.error('Error loading cached user profile:', error);
+      }
     }
   };
 
@@ -132,33 +134,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await storage.removeItem('user_profile');
       router.replace('/auth/signin');
     } catch (error) {
-      console.error('Error during logout:', error);
+      if (__DEV__) {
+        console.error('Error during logout:', error);
+      }
     }
   };
 
   // Handle authentication errors (called by API client)
   const handleNotifyAuthError = () => {
-    console.log('Authentication error notified by API client');
+    if (__DEV__) {
+      if (__DEV__) {
+        console.log('Authentication error notified by API client');
+      }
+    }
     setIsLoggedIn(false);
     setUserProfileState(null);
-    storage.removeItem('user_profile').catch(console.error);
+    storage.removeItem('user_profile').catch((error) => {
+      if (__DEV__) {
+        console.error(error);
+      }
+    });
   };
 
   // Check auth status on mount
   useEffect(() => {
     // Prevent multiple initializations
     if (hasInitializedRef.current) {
-      console.log('🔑 AuthContext: Already initialized, skipping');
+      if (__DEV__) {
+        if (__DEV__) {
+          console.log('🔑 AuthContext: Already initialized, skipping');
+        }
+      }
       return;
     }
 
-    console.log('🔑 AuthContext useEffect triggered');
+    if (__DEV__) {
+      if (__DEV__) {
+        console.log('🔑 AuthContext useEffect triggered');
+      }
+    }
     hasInitializedRef.current = true;
 
     const initializeAuth = async () => {
-      console.log('🔑 AuthContext: Initializing auth...');
+      if (__DEV__) {
+        if (__DEV__) {
+          console.log('🔑 AuthContext: Initializing auth...');
+        }
+      }
       await checkAuthStatus();
-      console.log('🔑 AuthContext: Auth initialization complete');
+      if (__DEV__) {
+        if (__DEV__) {
+          console.log('🔑 AuthContext: Auth initialization complete');
+        }
+      }
     };
 
     // Set up the API client callback for auth errors

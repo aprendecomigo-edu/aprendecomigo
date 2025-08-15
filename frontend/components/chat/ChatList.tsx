@@ -34,7 +34,9 @@ const ChannelListContent = () => {
           setSelectedChannelId(channelsArray[0].id);
         }
       } catch (error) {
-        console.error('Error loading channels:', error);
+        if (__DEV__) {
+          console.error('Error loading channels:', error); // TODO: Review for sensitive data
+        }
         setChannels([]);
         setFilteredChannels([]);
       } finally {

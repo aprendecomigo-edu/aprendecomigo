@@ -45,7 +45,9 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
   const maxReconnectAttempts = 5;
 
   const handleWebSocketMessage = useCallback((message: PaymentWebSocketMessage) => {
-    console.log('Payment monitoring WebSocket message received:', message);
+    if (__DEV__) {
+      console.log('Payment monitoring WebSocket message received:', message);
+    }
     setLastMessage(message);
 
     switch (message.type) {
@@ -156,13 +158,17 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         break;
 
       default:
-        console.warn('Unknown payment monitoring WebSocket message type:', message.type);
+        if (__DEV__) {
+          console.warn('Unknown payment monitoring WebSocket message type:', message.type);
+        }
     }
   }, []);
 
   const connect = useCallback(async () => {
     if (!enabled) {
-      console.log('Payment monitoring WebSocket disabled');
+      if (__DEV__) {
+        console.log('Payment monitoring WebSocket disabled');
+      }
       return;
     }
 
@@ -176,13 +182,17 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
 
       // Build WebSocket URL for payment monitoring
       const wsUrl = `ws://localhost:8000/ws/admin/payments/?token=${token}`;
-      console.log('Connecting to payment monitoring WebSocket:', wsUrl);
+      if (__DEV__) {
+        console.log('Connecting to payment monitoring WebSocket:', wsUrl);
+      }
 
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('Payment monitoring WebSocket connected');
+        if (__DEV__) {
+          console.log('Payment monitoring WebSocket connected');
+        }
         setIsConnected(true);
         setError(null);
         reconnectAttemptsRef.current = 0;
@@ -206,18 +216,22 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
       };
 
       ws.onclose = event => {
-        console.log('Payment monitoring WebSocket disconnected:', event.code, event.reason);
+        if (__DEV__) {
+          console.log('Payment monitoring WebSocket disconnected:', event.code, event.reason);
+        }
         setIsConnected(false);
         wsRef.current = null;
 
         // Attempt to reconnect if not a normal closure
         if (enabled && event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
           const timeout = Math.pow(2, reconnectAttemptsRef.current) * 1000; // Exponential backoff
-          console.log(
-            `Reconnecting payment monitoring WebSocket in ${timeout}ms (attempt ${
-              reconnectAttemptsRef.current + 1
-            })`
-          );
+          if (__DEV__) {
+            console.log(
+              `Reconnecting payment monitoring WebSocket in ${timeout}ms (attempt ${
+                reconnectAttemptsRef.current + 1
+              })`
+            );
+          }
 
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;
@@ -256,12 +270,16 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
       if (wsRef.current && isConnected) {
         try {
           wsRef.current.send(JSON.stringify(message));
-          console.log('Payment monitoring WebSocket message sent:', message);
+          if (__DEV__) {
+            console.log('Payment monitoring WebSocket message sent:', message);
+          }
         } catch (err) {
           console.error('Error sending payment monitoring WebSocket message:', err);
         }
       } else {
-        console.warn('Payment monitoring WebSocket not connected, cannot send message');
+        if (__DEV__) {
+          console.warn('Payment monitoring WebSocket not connected, cannot send message');
+        }
       }
     },
     [isConnected]
@@ -323,7 +341,9 @@ export function useTransactionWebSocket(enabled: boolean = true) {
   const maxReconnectAttempts = 5;
 
   const handleTransactionUpdate = useCallback((update: TransactionUpdate) => {
-    console.log('Transaction update received:', update);
+    if (__DEV__) {
+      console.log('Transaction update received:', update);
+    }
     setTransactionUpdates(current => [update, ...current.slice(0, 99)]); // Keep last 100 updates
   }, []);
 
@@ -338,13 +358,17 @@ export function useTransactionWebSocket(enabled: boolean = true) {
       }
 
       const wsUrl = `ws://localhost:8000/ws/admin/transactions/?token=${token}`;
-      console.log('Connecting to transaction monitoring WebSocket:', wsUrl);
+      if (__DEV__) {
+        console.log('Connecting to transaction monitoring WebSocket:', wsUrl);
+      }
 
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('Transaction monitoring WebSocket connected');
+        if (__DEV__) {
+          console.log('Transaction monitoring WebSocket connected');
+        }
         setIsConnected(true);
         setError(null);
         reconnectAttemptsRef.current = 0;
@@ -362,7 +386,9 @@ export function useTransactionWebSocket(enabled: boolean = true) {
       };
 
       ws.onclose = event => {
-        console.log('Transaction monitoring WebSocket disconnected:', event.code, event.reason);
+        if (__DEV__) {
+          console.log('Transaction monitoring WebSocket disconnected:', event.code, event.reason);
+        }
         setIsConnected(false);
         wsRef.current = null;
 
@@ -448,7 +474,9 @@ export function useWebhookMonitoringWebSocket(enabled: boolean = true) {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('Webhook monitoring WebSocket connected');
+        if (__DEV__) {
+          console.log('Webhook monitoring WebSocket connected');
+        }
         setIsConnected(true);
         setError(null);
       };

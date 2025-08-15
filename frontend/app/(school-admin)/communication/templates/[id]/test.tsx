@@ -154,7 +154,9 @@ const TestEmailPage = () => {
             : test
         )
       );
-      console.error('Error sending test email:', err);
+      if (__DEV__) {
+        console.error('Error sending test email:', err); // TODO: Review for sensitive data // TODO: Review for sensitive data // TODO: Review for sensitive data
+      }
     }
   }, [currentTemplate, emailValidation.isValid, testEmail, templateId, sendTestEmail]);
 

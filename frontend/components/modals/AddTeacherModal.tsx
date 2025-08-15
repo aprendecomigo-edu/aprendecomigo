@@ -57,7 +57,9 @@ interface Course {
 const loadCourses = async (): Promise<Course[]> => {
   try {
     const response = await apiClient.get('/accounts/courses');
-    console.log('API Response:', response.data); // Debug log
+    if (__DEV__) {
+      console.log('API Response:', response.data);
+    } // Debug log
 
     // Handle paginated response - extract results
     if (response.data && Array.isArray(response.data.results)) {
@@ -66,7 +68,9 @@ const loadCourses = async (): Promise<Course[]> => {
       // Fallback for non-paginated response
       return response.data;
     } else {
-      console.warn('API did not return expected format:', response.data);
+      if (__DEV__) {
+        console.warn('API did not return expected format:', response.data);
+      }
       return [];
     }
   } catch (error) {
@@ -80,7 +84,9 @@ const saveTeacherProfile = async (selectedCourseIds: number[]): Promise<void> =>
     const response = await apiClient.post('/accounts/teachers/onboarding/', {
       course_ids: selectedCourseIds,
     });
-    console.log('Teacher profile created successfully:', response.data);
+    if (__DEV__) {
+      console.log('Teacher profile created successfully:', response.data);
+    }
     return response.data;
   } catch (error) {
     console.error('Error creating teacher profile:', error);

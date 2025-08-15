@@ -13,7 +13,9 @@
  * // Initialize the migration layer with proper dependencies
  * initializeMigrationLayer(storage, (error) => {
  *   // Handle auth errors (e.g., redirect to login)
- *   console.log('Auth error:', error);
+ if (__DEV__) {
+   *   console.log('Auth error:', error);
+ }
  * });
  *
  * // Now you can use the legacy API functions

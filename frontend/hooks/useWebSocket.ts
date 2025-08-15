@@ -113,7 +113,9 @@ export const useWebSocket = ({
           console.error('Error sending WebSocket message:', err);
         }
       } else {
-        console.warn('WebSocket not connected, cannot send message');
+        if (__DEV__) {
+          console.warn('WebSocket not connected, cannot send message');
+        }
       }
     },
     [isConnected]
@@ -156,7 +158,9 @@ export function useWebSocketEnhanced(
 
   const connect = useCallback(async () => {
     if (!wsUrl) {
-      console.warn('No WebSocket URL provided');
+      if (__DEV__) {
+        console.warn('No WebSocket URL provided');
+      }
       return;
     }
 
@@ -232,7 +236,9 @@ export function useWebSocketEnhanced(
           console.error('Error sending WebSocket message:', err);
         }
       } else {
-        console.warn('WebSocket not connected, cannot send message');
+        if (__DEV__) {
+          console.warn('WebSocket not connected, cannot send message');
+        }
       }
     },
     [isConnected]

@@ -341,7 +341,9 @@ const CalendarScreen: React.FC = () => {
       // API now returns the array directly
       setClasses(Array.isArray(classes) ? classes : []);
     } catch (error) {
-      console.error('Error loading classes:', error);
+      if (__DEV__) {
+        console.error('Error loading classes:', error); // TODO: Review for sensitive data
+      }
       // Set empty array on error to prevent crashes
       setClasses([]);
       Alert.alert('Error', 'Failed to load classes');
@@ -381,7 +383,9 @@ const CalendarScreen: React.FC = () => {
 
       setTasks(calendarTasks || []);
     } catch (error) {
-      console.error('Error loading tasks:', error);
+      if (__DEV__) {
+        console.error('Error loading tasks:', error); // TODO: Review for sensitive data
+      }
       setTasks([]);
     }
   }, [currentDate, view]);
@@ -393,7 +397,9 @@ const CalendarScreen: React.FC = () => {
         await loadClasses();
         await loadTasks();
       } catch (error) {
-        console.error('Error in initializeData:', error);
+        if (__DEV__) {
+          console.error('Error in initializeData:', error); // TODO: Review for sensitive data
+        }
       }
     };
     initializeData();
@@ -417,9 +423,11 @@ const CalendarScreen: React.FC = () => {
 
     // If there are events on this day, you could show them in a modal or navigate to a detail view
     if (dayClasses.length > 0 || dayTasks.length > 0) {
-      console.log(
-        `Selected day ${day.dateString} has ${dayClasses.length} classes and ${dayTasks.length} tasks`
-      );
+      if (__DEV__) {
+        console.log(
+          `Selected day ${day.dateString} has ${dayClasses.length} classes and ${dayTasks.length} tasks`
+        );
+      }
     }
   };
 

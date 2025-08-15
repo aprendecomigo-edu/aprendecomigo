@@ -2,7 +2,13 @@ const getEnvVars = () => {
   // Get the environment from the process.env
   const ENV = process.env.APP_ENV || "development";
 
-  console.log(`Building app with ${ENV} environment`);
+  if (__DEV__) {
+
+    if (__DEV__) {
+      console.log(`Building app with ${ENV} environment`);
+    }
+
+  }
 
   return {
     // Common config

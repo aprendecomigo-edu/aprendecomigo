@@ -46,7 +46,9 @@ const MainLayout = ({
   const handleSchoolChange = (school: School) => {
     setSelectedSchool(school);
     // Here you would typically fetch data for the selected school
-    console.log('School changed to:', school.name);
+    if (__DEV__) {
+      console.log('School changed to:', school.name);
+    }
   };
 
   const toggleSidebar = () => {

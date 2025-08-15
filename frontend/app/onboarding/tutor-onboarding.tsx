@@ -284,7 +284,9 @@ export default function TutorOnboardingScreen() {
       // Move to next step
       await nextStep();
     } catch (error) {
-      console.error('Error creating tutor school:', error);
+      if (__DEV__) {
+        console.error('Error creating tutor school:', error); // TODO: Review for sensitive data
+      }
     }
   };
 
@@ -297,7 +299,9 @@ export default function TutorOnboardingScreen() {
 
     const success = await nextStep();
     if (!success) {
-      console.error('Failed to move to next step');
+      if (__DEV__) {
+        console.error('Failed to move to next step'); // TODO: Review for sensitive data
+      }
     }
   };
 
@@ -336,7 +340,9 @@ export default function TutorOnboardingScreen() {
         query: { type: 'tutor', profileUrl: result.profile_url },
       });
     } catch (error) {
-      console.error('Error completing onboarding:', error);
+      if (__DEV__) {
+        console.error('Error completing onboarding:', error); // TODO: Review for sensitive data
+      }
     }
   };
 
@@ -359,7 +365,9 @@ export default function TutorOnboardingScreen() {
       await saveProgress();
       router.back();
     } catch (error) {
-      console.error('Error saving before exit:', error);
+      if (__DEV__) {
+        console.error('Error saving before exit:', error); // TODO: Review for sensitive data
+      }
     }
   };
 

@@ -130,7 +130,9 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
     try {
       await markFirstLoginCompleted();
     } catch (error) {
-      console.error('Failed to mark first login as completed:', error);
+      if (__DEV__) {
+        console.error('Failed to mark first login as completed:', error); // TODO: Review for sensitive data
+      }
     }
   };
 
@@ -140,7 +142,9 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
     try {
       await markFirstLoginCompleted();
     } catch (error) {
-      console.error('Failed to mark first login as completed:', error);
+      if (__DEV__) {
+        console.error('Failed to mark first login as completed:', error); // TODO: Review for sensitive data
+      }
     }
   };
 

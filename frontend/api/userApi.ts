@@ -204,7 +204,9 @@ export const getTeachers = async (): Promise<TeacherProfile[]> => {
     // Fallback for non-paginated response
     return response.data;
   } else {
-    console.warn('API did not return expected format:', response.data);
+    if (__DEV__) {
+      console.warn('API did not return expected format:', response.data);
+    }
     return [];
   }
 };
@@ -239,7 +241,9 @@ export const getStudents = async (filters?: StudentFilters): Promise<StudentList
       results: response.data,
     };
   } else {
-    console.warn('API did not return expected format:', response.data);
+    if (__DEV__) {
+      console.warn('API did not return expected format:', response.data);
+    }
     return {
       count: 0,
       next: null,

@@ -71,8 +71,16 @@ export default function OnboardingChecklistPage() {
       {/* Tutorial Controller */}
       <OnboardingTutorial
         autoStart={false}
-        onComplete={() => console.log('Tutorial completed')}
-        onSkip={() => console.log('Tutorial skipped')}
+        onComplete={() => {
+          if (__DEV__) {
+            console.log('Tutorial completed');
+          }
+        }}
+        onSkip={() => {
+          if (__DEV__) {
+            console.log('Tutorial skipped');
+          }
+        }}
       />
     </Box>
   );

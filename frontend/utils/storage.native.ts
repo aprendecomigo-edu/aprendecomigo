@@ -14,7 +14,9 @@ class NativeStorage implements StorageInterface {
     try {
       return await AsyncStorage.getItem(key);
     } catch (error) {
-      console.error('AsyncStorage.getItem failed:', error);
+      if (__DEV__) {
+        console.error('AsyncStorage.getItem failed:', error); // TODO: Review for sensitive data
+      }
       return null;
     }
   }
@@ -26,7 +28,9 @@ class NativeStorage implements StorageInterface {
     try {
       await AsyncStorage.setItem(key, value);
     } catch (error) {
-      console.error('AsyncStorage.setItem failed:', error);
+      if (__DEV__) {
+        console.error('AsyncStorage.setItem failed:', error); // TODO: Review for sensitive data
+      }
       throw error;
     }
   }
@@ -38,7 +42,9 @@ class NativeStorage implements StorageInterface {
     try {
       await AsyncStorage.removeItem(key);
     } catch (error) {
-      console.error('AsyncStorage.removeItem failed:', error);
+      if (__DEV__) {
+        console.error('AsyncStorage.removeItem failed:', error); // TODO: Review for sensitive data
+      }
       throw error;
     }
   }
@@ -50,7 +56,9 @@ class NativeStorage implements StorageInterface {
     try {
       await AsyncStorage.clear();
     } catch (error) {
-      console.error('AsyncStorage.clear failed:', error);
+      if (__DEV__) {
+        console.error('AsyncStorage.clear failed:', error); // TODO: Review for sensitive data
+      }
       throw error;
     }
   }
@@ -62,7 +70,9 @@ class NativeStorage implements StorageInterface {
     try {
       return await AsyncStorage.getAllKeys();
     } catch (error) {
-      console.error('AsyncStorage.getAllKeys failed:', error);
+      if (__DEV__) {
+        console.error('AsyncStorage.getAllKeys failed:', error); // TODO: Review for sensitive data // TODO: Review for sensitive data // TODO: Review for sensitive data
+      }
       return [];
     }
   }

@@ -54,19 +54,25 @@ export class DefaultStorageService implements StorageService {
 export class DefaultAnalyticsService implements AnalyticsService {
   track(event: string, properties?: Record<string, any>): void {
     if (__DEV__) {
-      console.log('Analytics Track:', event, properties);
+      if (__DEV__) {
+        console.log('Analytics Track:', event, properties);
+      }
     }
   }
 
   identify(userId: string, properties?: Record<string, any>): void {
     if (__DEV__) {
-      console.log('Analytics Identify:', userId, properties);
+      if (__DEV__) {
+        console.log('Analytics Identify:', userId, properties);
+      }
     }
   }
 
   screen(name: string, properties?: Record<string, any>): void {
     if (__DEV__) {
-      console.log('Analytics Screen:', name, properties);
+      if (__DEV__) {
+        console.log('Analytics Screen:', name, properties);
+      }
     }
   }
 }

@@ -45,7 +45,9 @@ function findFilesWithButtonImports() {
     const result = execSync(command, { encoding: 'utf-8', cwd: process.cwd() });
     return result.split('\n').filter(file => file.trim() !== '');
   } catch (error) {
-    console.error('Error finding files:', error.message);
+    if (__DEV__) {
+      console.error('Error finding files:', error.message);
+    }
     return [];
   }
 }
@@ -57,7 +59,9 @@ function shouldSkipFile(filePath) {
 
 function migrateFile(filePath) {
   if (shouldSkipFile(filePath)) {
-    console.log(`  ⏭️  Skipping: ${filePath}`);
+    if (__DEV__) {
+      console.log(`  ⏭️  Skipping: ${filePath}`);
+    }
     return { skipped: true };
   }
 
@@ -82,24 +86,40 @@ function migrateFile(filePath) {
       // Write migrated content
       fs.writeFileSync(filePath, content);
 
-      console.log(`  ✅ Migrated: ${filePath}`);
-      console.log(`     Backup created: ${backupPath}`);
+      if (__DEV__) {
+
+        if (__DEV__) {
+          console.log(`  ✅ Migrated: ${filePath}`);
+        }
+
+      }
+      if (__DEV__) {
+        console.log(`     Backup created: ${backupPath}`);
+      }
       return { migrated: true, backup: backupPath };
     } else {
-      console.log(`  ℹ️  No changes needed: ${filePath}`);
+      if (__DEV__) {
+        console.log(`  ℹ️  No changes needed: ${filePath}`);
+      }
       return { unchanged: true };
     }
   } catch (error) {
-    console.error(`  ❌ Error processing ${filePath}:`, error.message);
+    if (__DEV__) {
+      console.error(`  ❌ Error processing ${filePath}:`, error.message);
+    }
     return { error: true, message: error.message };
   }
 }
 
 function main() {
-  console.log('🚀 Starting Button v1 to v2 migration...\n');
+  if (__DEV__) {
+    console.log('🚀 Starting Button v1 to v2 migration...\n');
+  }
 
   const files = findFilesWithButtonImports();
-  console.log(`Found ${files.length} files with button imports\n`);
+  if (__DEV__) {
+    console.log(`Found ${files.length} files with button imports\n`);
+  }
 
   const results = {
     migrated: [],
@@ -122,42 +142,82 @@ function main() {
   });
 
   // Print summary
-  console.log('\n' + '='.repeat(50));
-  console.log('📊 Migration Summary:\n');
-  console.log(`✅ Migrated: ${results.migrated.length} files`);
-  console.log(`⏭️  Skipped: ${results.skipped.length} files`);
-  console.log(`ℹ️  Unchanged: ${results.unchanged.length} files`);
-  console.log(`❌ Errors: ${results.errors.length} files`);
+  if (__DEV__) {
+    console.log('\n' + '='.repeat(50)
+  });
+  if (__DEV__) {
+    console.log('📊 Migration Summary:\n');
+  }
+  if (__DEV__) {
+    console.log(`✅ Migrated: ${results.migrated.length} files`);
+  }
+  if (__DEV__) {
+    console.log(`⏭️  Skipped: ${results.skipped.length} files`);
+  }
+  if (__DEV__) {
+    console.log(`ℹ️  Unchanged: ${results.unchanged.length} files`);
+  }
+  if (__DEV__) {
+    console.log(`❌ Errors: ${results.errors.length} files`);
+  }
 
   if (results.errors.length > 0) {
-    console.log('\n⚠️  Files with errors:');
+    if (__DEV__) {
+      console.log('\n⚠️  Files with errors:');
+    }
     results.errors.forEach(({ file, error }) => {
-      console.log(`  - ${file}: ${error}`);
+      if (__DEV__) {
+        console.log(`  - ${file}: ${error}`);
+      }
     });
   }
 
   if (results.migrated.length > 0) {
-    console.log('\n📝 Next steps:');
-    console.log('1. Review the migrated files to ensure correctness');
-    console.log('2. Run your tests to verify everything works');
-    console.log('3. Delete backup files once confirmed: rm **/*.backup');
-    console.log('4. Update button/index.tsx to export from button-v2.tsx');
-    console.log('5. Remove @gluestack-ui/button from package.json');
+    if (__DEV__) {
+      console.log('\n📝 Next steps:');
+    }
+    if (__DEV__) {
+      console.log('1. Review the migrated files to ensure correctness');
+    }
+    if (__DEV__) {
+      console.log('2. Run your tests to verify everything works');
+    }
+    if (__DEV__) {
+      console.log('3. Delete backup files once confirmed: rm **/*.backup');
+    }
+    if (__DEV__) {
+      console.log('4. Update button/index.tsx to export from button-v2.tsx');
+    }
+    if (__DEV__) {
+      console.log('5. Remove @gluestack-ui/button from package.json');
+    }
   }
 
-  console.log('\n✨ Migration script completed!');
+  if (__DEV__) {
+
+    if (__DEV__) {
+      console.log('\n✨ Migration script completed!');
+    }
+
+  }
 }
 
 // Check if we're in dry-run mode
 const isDryRun = process.argv.includes('--dry-run');
 
 if (isDryRun) {
-  console.log('🔍 DRY RUN MODE - No files will be modified\n');
+  if (__DEV__) {
+    console.log('🔍 DRY RUN MODE - No files will be modified\n');
+  }
   const files = findFilesWithButtonImports();
-  console.log(`Would process ${files.length} files:`);
+  if (__DEV__) {
+    console.log(`Would process ${files.length} files:`);
+  }
   files.forEach(file => {
     if (!shouldSkipFile(file)) {
-      console.log(`  - ${file}`);
+      if (__DEV__) {
+        console.log(`  - ${file}`);
+      }
     }
   });
 } else {

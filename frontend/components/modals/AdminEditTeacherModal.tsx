@@ -241,7 +241,9 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
   const handleClose = () => {
     if (changedFields.size > 0) {
       // TODO: Show confirmation dialog for unsaved changes
-      console.log('Warning: Unsaved changes will be lost');
+      if (__DEV__) {
+        console.log('Warning: Unsaved changes will be lost');
+      }
     }
     onClose();
   };

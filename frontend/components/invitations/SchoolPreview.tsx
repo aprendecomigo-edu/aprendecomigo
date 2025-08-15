@@ -134,13 +134,17 @@ export const SchoolPreview: React.FC<SchoolPreviewProps> = ({
   const handleWebsiteOpen = () => {
     if (schoolDetails?.website) {
       // In a real app, this would open the URL
-      console.log('Opening website:', schoolDetails.website);
+      if (__DEV__) {
+        console.log('Opening website:', schoolDetails.website);
+      }
     }
   };
 
   const handleSocialMediaOpen = (platform: string, url: string) => {
     // In a real app, this would open the social media URL
-    console.log(`Opening ${platform}:`, url);
+    if (__DEV__) {
+      console.log(`Opening ${platform}:`, url);
+    }
   };
 
   if (loading) {

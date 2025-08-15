@@ -115,7 +115,9 @@ const EditTemplatePage = () => {
 
       setValidation(validationResult);
     } catch (err) {
-      console.error('Validation error:', err);
+      if (__DEV__) {
+        console.error('Validation error:', err); // TODO: Review for sensitive data
+      }
     }
   }, [currentTemplate, validateTemplate]);
 
@@ -166,7 +168,9 @@ const EditTemplatePage = () => {
       await updateTemplate(templateId, updateData);
       setHasUnsavedChanges(false);
     } catch (err) {
-      console.error('Error updating template:', err);
+      if (__DEV__) {
+        console.error('Error updating template:', err); // TODO: Review for sensitive data
+      }
     }
   }, [currentTemplate, templateId, updateTemplate]);
 
@@ -187,7 +191,9 @@ const EditTemplatePage = () => {
               await deleteTemplate(templateId);
               router.push('/(school-admin)/communication/templates');
             } catch (err) {
-              console.error('Error deleting template:', err);
+              if (__DEV__) {
+                console.error('Error deleting template:', err); // TODO: Review for sensitive data
+              }
             }
           },
         },
@@ -216,7 +222,9 @@ const EditTemplatePage = () => {
               const duplicatedTemplate = await duplicateTemplate(templateId, newName);
               router.push(`/(school-admin)/communication/templates/${duplicatedTemplate.id}/edit`);
             } catch (err) {
-              console.error('Error duplicating template:', err);
+              if (__DEV__) {
+                console.error('Error duplicating template:', err); // TODO: Review for sensitive data
+              }
             }
           },
         },
@@ -258,7 +266,9 @@ const EditTemplatePage = () => {
               await handleSaveTemplate();
               router.back();
             } catch (err) {
-              console.error('Error saving before exit:', err);
+              if (__DEV__) {
+                console.error('Error saving before exit:', err); // TODO: Review for sensitive data
+              }
             }
           },
         },

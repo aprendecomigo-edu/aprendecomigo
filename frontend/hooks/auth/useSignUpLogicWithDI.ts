@@ -69,7 +69,9 @@ export const useSignUpLogicWithDI = ({ userType }: UseSignUpLogicWithDIParams) =
 
       return response;
     } catch (error: any) {
-      console.error('Failed to create account:', error);
+      if (__DEV__) {
+        console.error('Failed to create account:', error);
+      }
       setError(error);
       toastService.showToast('error', 'Failed to create account. Please try again.');
       throw error;

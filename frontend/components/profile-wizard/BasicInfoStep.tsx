@@ -134,7 +134,9 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
   const handleImageUpload = async () => {
     // This would integrate with image picker/camera
     // For now, just a placeholder
-    console.log('Image upload triggered');
+    if (__DEV__) {
+      console.log('Image upload triggered');
+    }
   };
 
   const addLanguage = (language: string) => {

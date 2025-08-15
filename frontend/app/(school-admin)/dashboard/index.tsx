@@ -148,7 +148,9 @@ const SchoolAdminDashboard = () => {
         const data = await getSchoolInfo(selectedSchoolId);
         setSchoolInfo(data);
       } catch (error) {
-        console.error('Error fetching school info:', error);
+        if (__DEV__) {
+          console.error('Error fetching school info:', error); // TODO: Review for sensitive data
+        }
         setSchoolInfoError('Falha ao carregar informações da escola');
       } finally {
         setSchoolInfoLoading(false);
@@ -206,7 +208,9 @@ const SchoolAdminDashboard = () => {
         const updatedData = await getSchoolInfo(selectedSchoolId);
         setSchoolInfo(updatedData);
       } catch (error) {
-        console.error('Error updating school:', error);
+        if (__DEV__) {
+          console.error('Error updating school:', error); // TODO: Review for sensitive data
+        }
         setSchoolInfoError('Falha ao atualizar escola');
         throw error;
       } finally {

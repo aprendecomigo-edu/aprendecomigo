@@ -68,7 +68,11 @@ export class ApiClient {
         } catch (error) {
           // If storage fails, let the request continue without token
           // The error will be handled by the server (likely 401)
-          console.warn('Failed to get auth token from storage:', error);
+          if (__DEV__) {
+            if (__DEV__) {
+              console.warn('Failed to get auth token from storage:', error);
+            }
+          }
         }
         return config;
       },
@@ -100,7 +104,9 @@ export class ApiClient {
               this.onAuthError(error);
             }
           } catch (storageError) {
-            console.error('Failed to handle auth error:', storageError);
+            if (__DEV__) {
+              console.error('Failed to handle auth error:', storageError);
+            }
           }
         }
 

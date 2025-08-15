@@ -91,7 +91,9 @@ const getSchoolInvitationLink = async (schoolId: number): Promise<InvitationLink
     // For now, return a graceful fallback or disable this feature
     throw new Error('Invitation link API not yet implemented');
   } catch (error) {
-    console.error('Error getting school invitation link:', error);
+    if (__DEV__) {
+      console.error('Error getting school invitation link:', error);
+    }
     throw error;
   }
 };
@@ -160,7 +162,9 @@ export const InviteTeacherModal = ({
       const link = await getSchoolInvitationLink(schoolId);
       setInvitationLink(link);
     } catch (error) {
-      console.error('Error loading invitation link:', error);
+      if (__DEV__) {
+        console.error('Error loading invitation link:', error);
+      }
       Alert.alert('Erro', INVITATION_MESSAGES.ERROR.LOAD_INVITATION_LINK_FAILED);
     } finally {
       setIsLoading(false);
@@ -189,7 +193,9 @@ export const InviteTeacherModal = ({
 
       linkCopiedTimeoutRef.current = setTimeout(() => setLinkCopied(false), 2000);
     } catch (error) {
-      console.error('Error copying link:', error);
+      if (__DEV__) {
+        console.error('Error copying link:', error);
+      }
       Alert.alert('Erro', 'Não foi possível copiar o link.');
     }
   };
@@ -212,7 +218,9 @@ export const InviteTeacherModal = ({
         }
       }
     } catch (error) {
-      console.error('Error opening WhatsApp:', error);
+      if (__DEV__) {
+        console.error('Error opening WhatsApp:', error);
+      }
       Alert.alert('Erro', INVITATION_MESSAGES.ERROR.FAILED_TO_OPEN_WHATSAPP);
     }
   };
@@ -242,7 +250,9 @@ export const InviteTeacherModal = ({
       onSuccess();
     } catch (error) {
       // Error handling is done in the hook
-      console.error('Error sending email invite:', error);
+      if (__DEV__) {
+        console.error('Error sending email invite:', error); // TODO: Review for sensitive data // TODO: Review for sensitive data // TODO: Review for sensitive data
+      }
     }
   };
 
@@ -287,7 +297,9 @@ export const InviteTeacherModal = ({
       onSuccess();
     } catch (error) {
       // Error handling is done in the hook
-      console.error('Error sending bulk invites:', error);
+      if (__DEV__) {
+        console.error('Error sending bulk invites:', error);
+      }
     }
   };
 

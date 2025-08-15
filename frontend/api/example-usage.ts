@@ -11,7 +11,9 @@ import { storage } from '@/utils/storage';
 
 // Example 1: Using the factory to create a configured API gateway
 const handleAuthError = (error: any) => {
-  console.log('Authentication error occurred:', error);
+  if (__DEV__) {
+    console.log('Authentication error occurred:', error);
+  }
   // Handle auth error (e.g., redirect to login)
 };
 

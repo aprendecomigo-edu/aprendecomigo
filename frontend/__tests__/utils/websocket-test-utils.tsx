@@ -232,7 +232,9 @@ export class MockWebSocket implements WebSocket {
       if (this.shouldFailOnSend) {
         throw new Error('WebSocket is not open');
       }
-      console.warn('WebSocket not connected, cannot send message');
+      if (__DEV__) {
+        console.warn('WebSocket not connected, cannot send message');
+      }
       return;
     }
 
@@ -784,12 +786,14 @@ export const WebSocketTestUtils = {
       const tolerance = toleranceMs;
 
       if (Math.abs(actualDelay - expectedDelay) > tolerance) {
-        console.log(`Backoff timing verification failed at attempt ${i}:`, {
-          expected: expectedDelay,
-          actual: actualDelay,
-          tolerance,
-          difference: Math.abs(actualDelay - expectedDelay),
-        });
+        if (__DEV__) {
+          console.log(`Backoff timing verification failed at attempt ${i}:`, {
+            expected: expectedDelay,
+            actual: actualDelay,
+            tolerance,
+            difference: Math.abs(actualDelay - expectedDelay)
+          });
+        }
         return false;
       }
     }

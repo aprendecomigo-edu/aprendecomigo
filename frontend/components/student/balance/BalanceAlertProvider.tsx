@@ -106,14 +106,18 @@ export function BalanceAlertProvider({
   } = useBalanceUpdates(
     // Handle balance updates from WebSocket
     useCallback(newBalance => {
-      console.log('Received real-time balance update:', newBalance);
+      if (__DEV__) {
+        console.log('Received real-time balance update:', newBalance);
+      }
       // The useStudentBalance hook will be updated automatically through WebSocket
     }, []),
 
     // Handle notifications from WebSocket
     useCallback(
       notification => {
-        console.log('Received real-time notification:', notification);
+        if (__DEV__) {
+          console.log('Received real-time notification:', notification);
+        }
         setNotifications(prev => [notification, ...prev]);
         setUnreadCount(prev => prev + 1);
 

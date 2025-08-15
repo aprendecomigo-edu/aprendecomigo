@@ -23,5 +23,7 @@ export const isStaging = ENVIRONMENT === 'staging';
 
 // Debug info in development
 if (__DEV__) {
-  console.log(`App Environment: ${ENVIRONMENT}`);
+  if (__DEV__) {
+    console.log(`App Environment: ${ENVIRONMENT}`);
+  }
 }

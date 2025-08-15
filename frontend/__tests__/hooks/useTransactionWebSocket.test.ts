@@ -21,7 +21,11 @@ const originalConsoleError = console.error;
 describe('useTransactionWebSocket', () => {
   beforeEach(() => {
     // Suppress console logs during tests
-    console.log = jest.fn();
+    if (__DEV__) {
+    // Suppress console logs during tests
+      console.log = jest.fn();
+    // Suppress console logs during tests
+    }
     console.error = jest.fn();
 
     jest.useFakeTimers();
@@ -29,7 +33,11 @@ describe('useTransactionWebSocket', () => {
 
   afterEach(() => {
     jest.useRealTimers();
-    console.log = originalConsoleLog;
+    if (__DEV__) {
+    jest.useRealTimers();
+      console.log = originalConsoleLog;
+    jest.useRealTimers();
+    }
     console.error = originalConsoleError;
     jest.clearAllMocks();
   });
@@ -56,13 +64,17 @@ describe('useTransactionWebSocket', () => {
     it('should log placeholder message when enabled', () => {
       renderHook(() => useTransactionWebSocket(true));
 
-      expect(console.log).toHaveBeenCalledWith('Transaction WebSocket would connect here');
+      if (__DEV__) {
+        expect(console.log).toHaveBeenCalledWith('Transaction WebSocket would connect here');
+      }
     });
 
     it('should not log anything when disabled', () => {
       renderHook(() => useTransactionWebSocket(false));
 
-      expect(console.log).not.toHaveBeenCalled();
+      if (__DEV__) {
+        expect(console.log).not.toHaveBeenCalled();
+      }
     });
   });
 

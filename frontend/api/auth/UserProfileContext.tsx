@@ -23,15 +23,27 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
   // Fetch user profile (separate from auth check)
   const fetchUserProfile = async (): Promise<void> => {
     if (!isLoggedIn) {
-      console.log('User not logged in, skipping profile fetch');
+      if (__DEV__) {
+        if (__DEV__) {
+          console.log('User not logged in, skipping profile fetch');
+        }
+      }
       return;
     }
 
     try {
       setIsProfileLoading(true);
-      console.log('Fetching user profile...');
+      if (__DEV__) {
+        if (__DEV__) {
+          console.log('Fetching user profile...');
+        }
+      }
       const dashboardData = await getDashboardInfo();
-      console.log('Dashboard data received:', dashboardData);
+      if (__DEV__) {
+        if (__DEV__) {
+          console.log('Dashboard data received:', dashboardData);
+        }
+      }
 
       // Extract user_info and convert to UserProfile format
       const userProfile: UserProfile = {
@@ -49,13 +61,17 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setUserProfile(userProfile);
       setUserProfileCached(true);
     } catch (error) {
-      console.error('Error fetching user profile:', error);
-      if (error instanceof Error) {
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
+      if (__DEV__) {
+        console.error('Error fetching user profile:', error);
+        if (error instanceof Error) {
+          console.error('Error message:', error.message);
+          console.error('Error stack:', error.stack);
+        }
+        // Don't throw error - user profile fetch failure shouldn't break auth
+        if (__DEV__) {
+          console.warn('Continuing without user profile');
+        }
       }
-      // Don't throw error - user profile fetch failure shouldn't break auth
-      console.warn('Continuing without user profile');
     } finally {
       setIsProfileLoading(false);
     }
@@ -70,12 +86,24 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
   // Ensure user profile is loaded (for pages that need it)
   const ensureUserProfile = async (): Promise<void> => {
     if (isLoggedIn && !userProfileCached && !userProfile && !isProfileLoading) {
-      console.log('Explicitly fetching user profile...');
+      if (__DEV__) {
+        if (__DEV__) {
+          console.log('Explicitly fetching user profile...');
+        }
+      }
       await fetchUserProfile();
     } else if (userProfileCached) {
-      console.log('User profile already cached');
+      if (__DEV__) {
+        if (__DEV__) {
+          console.log('User profile already cached');
+        }
+      }
     } else if (!isLoggedIn) {
-      console.log('User not logged in, skipping profile fetch');
+      if (__DEV__) {
+        if (__DEV__) {
+          console.log('User not logged in, skipping profile fetch');
+        }
+      }
     }
   };
 
@@ -92,7 +120,9 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
   // Profile data is now stored during login and available immediately for routing
   // useEffect(() => {
   //   if (isLoggedIn && !userProfileCached && !userProfile && !isProfileLoading) {
-  //     console.log('🔑 User authenticated, auto-fetching profile...');
+  if (__DEV__) {
+    //     console.log('🔑 User authenticated, auto-fetching profile...');
+  }
   //     fetchUserProfile();
   //   }
   // }, [isLoggedIn, userProfileCached, userProfile, isProfileLoading]);

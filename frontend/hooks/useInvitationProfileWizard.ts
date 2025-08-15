@@ -128,7 +128,9 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
         setCurrentStep(parsedData.currentStep || 1);
       }
     } catch (error) {
-      console.warn('Failed to load saved profile data:', error);
+      if (__DEV__) {
+        console.warn('Failed to load saved profile data:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -144,7 +146,9 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
       await AsyncStorage.setItem(storageKey, JSON.stringify(dataToSave));
       setHasUnsavedChanges(false);
     } catch (error) {
-      console.warn('Failed to save profile data:', error);
+      if (__DEV__) {
+        console.warn('Failed to save profile data:', error);
+      }
     }
   };
 
@@ -152,7 +156,9 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
     try {
       await AsyncStorage.removeItem(storageKey);
     } catch (error) {
-      console.warn('Failed to clear saved profile data:', error);
+      if (__DEV__) {
+        console.warn('Failed to clear saved profile data:', error);
+      }
     }
   };
 

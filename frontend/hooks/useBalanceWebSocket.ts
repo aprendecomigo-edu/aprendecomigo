@@ -86,7 +86,9 @@ export function useBalanceWebSocket(
     disconnect,
   } = useWebSocketEnhanced(wsUrl, {
     onOpen: () => {
-      console.log('Balance WebSocket connected');
+      if (__DEV__) {
+        console.log('Balance WebSocket connected');
+      }
       setError(null);
       reconnectAttempts.current = 0;
 
@@ -101,7 +103,9 @@ export function useBalanceWebSocket(
     },
 
     onClose: () => {
-      console.log('Balance WebSocket disconnected');
+      if (__DEV__) {
+        console.log('Balance WebSocket disconnected');
+      }
 
       // Attempt reconnection if enabled and under limit
       if (enabled && reconnectAttempts.current < maxReconnectAttempts) {
@@ -132,7 +136,9 @@ export function useBalanceWebSocket(
       switch (message.type) {
         case 'balance_update':
           if (message.data.balance) {
-            console.log('Received balance update:', message.data.balance);
+            if (__DEV__) {
+              console.log('Received balance update:', message.data.balance);
+            }
             setLatestBalance(message.data.balance);
 
             // Notify registered callbacks
@@ -150,7 +156,9 @@ export function useBalanceWebSocket(
         case 'low_balance_alert':
         case 'package_expiring':
           if (message.data.notification) {
-            console.log('Received balance notification:', message.data.notification);
+            if (__DEV__) {
+              console.log('Received balance notification:', message.data.notification);
+            }
             setLatestNotification(message.data.notification);
 
             // Notify registered callbacks
@@ -165,7 +173,9 @@ export function useBalanceWebSocket(
           break;
 
         default:
-          console.log('Unknown WebSocket message type:', message.type);
+          if (__DEV__) {
+            console.log('Unknown WebSocket message type:', message.type);
+          }
       }
     },
     [userProfile?.id]

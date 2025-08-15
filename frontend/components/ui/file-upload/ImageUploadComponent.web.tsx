@@ -72,7 +72,9 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
       };
       img.src = imageAsset.uri;
     } catch (error) {
-      console.error('Error processing selected file:', error);
+      if (__DEV__) {
+        console.error('Error processing selected file:', error); // TODO: Review for sensitive data
+      }
       alert('Failed to process selected image. Please try again.');
     } finally {
       setIsSelecting(false);

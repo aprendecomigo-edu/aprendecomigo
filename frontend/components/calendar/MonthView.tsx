@@ -174,7 +174,9 @@ export const MonthView: React.FC<MonthViewProps> = ({
       monthFormat="MMMM yyyy"
       onMonthChange={month => {
         // Handle month change if needed
-        console.log('Month changed to:', month);
+        if (__DEV__) {
+          console.log('Month changed to:', month);
+        }
       }}
       hideArrows={false}
       renderArrow={direction => (direction === 'left' ? '←' : '→')}

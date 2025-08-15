@@ -554,7 +554,9 @@ describe('Authentication Dependency Injection - New Architecture', () => {
         ...createMockDependencies(),
         toast: {
           showToast: jest.fn((...args) => {
-            console.log('Inner toast:', args);
+            if (__DEV__) {
+              console.log('Inner toast:', args);
+            }
           }),
         },
       };

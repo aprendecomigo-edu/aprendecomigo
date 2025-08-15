@@ -96,7 +96,9 @@ export const getStripeConfig = () => {
   const validation = validateStripeConfig();
 
   if (!validation.isValid) {
-    console.warn('Stripe configuration validation failed:', validation.errors);
+    if (__DEV__) {
+      console.warn('Stripe configuration validation failed:', validation.errors);
+    }
   }
 
   return {

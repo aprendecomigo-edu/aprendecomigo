@@ -137,7 +137,9 @@ export const logout = async () => {
     await apiClient.post('accounts/auth/logout/');
   } catch (error) {
     // Continue with local logout even if server call fails
-    console.error('Error logging out on server:', error);
+    if (__DEV__) {
+      console.error('Error logging out on server:', error);
+    }
   }
 
   // Remove token from storage
@@ -189,10 +191,11 @@ export const createUser = async (data: OnboardingData): Promise<OnboardingRespon
     const response = await apiClient.post<OnboardingResponse>('/accounts/users/signup/', data);
     return response.data;
   } catch (error) {
-    console.error('Error creating user:', error);
-    if (axios.isAxiosError(error)) {
-      console.error('API Error Response:', error.response?.data);
-      console.error('API Error Status:', error.response?.status);
+    if (__DEV__) {
+      console.error('Error creating user:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('API Error Response:', error.response?.data);
+      }
     }
     throw error;
   }
@@ -205,7 +208,9 @@ export const markFirstLoginCompleted = async (): Promise<void> => {
   try {
     await apiClient.post('/accounts/users/complete_first_login/');
   } catch (error) {
-    console.error('Error marking first login as completed:', error);
+    if (__DEV__) {
+      console.error('Error marking first login as completed:', error);
+    }
     throw error;
   }
 };

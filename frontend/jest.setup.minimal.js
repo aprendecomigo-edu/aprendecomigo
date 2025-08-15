@@ -748,7 +748,9 @@ jest.mock('@/services/websocket/WebSocketClient', () => {
       if (this.isConnectedState) {
         this.sentMessages.push(JSON.stringify(message));
       } else {
-        console.warn('WebSocket not connected, cannot send message');
+        if (__DEV__) {
+          console.warn('WebSocket not connected, cannot send message');
+        }
       }
     }
 
@@ -797,7 +799,9 @@ jest.mock('@/services/websocket/WebSocketClient', () => {
             listener(messageObj);
           } catch (error) {
             // For malformed JSON, don't call the listener but log error
-            console.error('Error parsing WebSocket message:', error);
+            if (__DEV__) {
+              console.error('Error parsing WebSocket message:', error); // TODO: Review for sensitive data
+            }
             return; // Don't call listener for malformed JSON
           }
         } else {

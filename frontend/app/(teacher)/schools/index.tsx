@@ -28,7 +28,9 @@ const TeacherSchoolsPage = () => {
       // Refresh the schools list after accepting
       await refresh();
     } catch (error) {
-      console.error('Failed to accept invitation:', error);
+      if (__DEV__) {
+        console.error('Failed to accept invitation:', error); // TODO: Review for sensitive data
+      }
     }
   };
 

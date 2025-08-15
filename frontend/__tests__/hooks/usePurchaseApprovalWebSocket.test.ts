@@ -72,7 +72,11 @@ describe('usePurchaseApprovalWebSocket', () => {
     });
 
     // Suppress console logs during tests
-    console.log = jest.fn();
+    if (__DEV__) {
+    // Suppress console logs during tests
+      console.log = jest.fn();
+    // Suppress console logs during tests
+    }
     console.error = jest.fn();
 
     // Reset Notification mock
@@ -86,7 +90,11 @@ describe('usePurchaseApprovalWebSocket', () => {
 
   afterEach(() => {
     jest.useRealTimers();
-    console.log = originalConsoleLog;
+    if (__DEV__) {
+    jest.useRealTimers();
+      console.log = originalConsoleLog;
+    jest.useRealTimers();
+    }
     console.error = originalConsoleError;
     jest.clearAllMocks();
   });
@@ -722,15 +730,20 @@ describe('usePurchaseApprovalWebSocket', () => {
 
 describe('usePurchaseApprovalPreferences', () => {
   beforeEach(() => {
-    console.log = jest.fn();
+    if (__DEV__) {
+      console.log = jest.fn();
+    }
     console.error = jest.fn();
     jest.useFakeTimers();
   });
 
   afterEach(() => {
     jest.useRealTimers();
-    console.log = originalConsoleLog;
+    if (__DEV__) {
+      console.log = originalConsoleLog;
+    }
     console.error = originalConsoleError;
+    jest.clearAllMocks();
   });
 
   it('should initialize with default preferences', () => {

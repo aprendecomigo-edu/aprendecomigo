@@ -226,9 +226,11 @@ describe('Cross-School Data Leakage Prevention', () => {
 
       // This test identifies a potential security vulnerability
       if (unauthorizedStudents.length > 0) {
-        console.warn(
-          `Security Alert: API returned ${unauthorizedStudents.length} unauthorized records`
-        );
+        if (__DEV__) {
+          console.warn(
+            `Security Alert: API returned ${unauthorizedStudents.length} unauthorized records`
+          );
+        }
 
         // In a real application, this should trigger security logging
         expect(unauthorizedStudents).toEqual(
@@ -265,7 +267,9 @@ describe('Cross-School Data Leakage Prevention', () => {
       );
 
       if (suspiciousKeys.length > 0) {
-        console.warn(`Security Alert: Suspicious data keys detected: ${suspiciousKeys.join(', ')}`);
+        if (__DEV__) {
+          console.warn(`Security Alert: Suspicious data keys detected: ${suspiciousKeys.join(', ')}`);
+        }
 
         // In production, this should trigger security monitoring
         expect(suspiciousKeys).toContain('__metadata');

@@ -13,7 +13,9 @@ export const useTransactionWebSocket = (enabled: boolean) => {
     if (!enabled) return;
 
     // Placeholder WebSocket implementation
-    console.log('Transaction WebSocket would connect here');
+    if (__DEV__) {
+      console.log('Transaction WebSocket would connect here');
+    }
     setIsConnected(true);
 
     return () => {

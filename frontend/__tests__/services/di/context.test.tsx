@@ -395,7 +395,9 @@ describe('DependencyContext and Provider Infrastructure', () => {
         ...baseDependencies.authApi,
         requestEmailCode: jest.fn(async params => {
           // Add logging decorator
-          console.log('Auth API called with:', params);
+          if (__DEV__) {
+            console.log('Auth API called with:', params);
+          }
           return baseDependencies.authApi.requestEmailCode(params);
         }),
       };

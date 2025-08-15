@@ -80,7 +80,9 @@ export const dashboardTutorial: TutorialConfig = {
       action: {
         label: 'Começar',
         onPress: () => {
-          console.log('Tutorial completed - redirecting to tasks');
+          if (__DEV__) {
+            console.log('Tutorial completed - redirecting to tasks');
+          }
         },
       },
     },

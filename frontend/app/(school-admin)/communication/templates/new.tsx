@@ -121,7 +121,9 @@ const CreateTemplatePage = () => {
 
       setValidation(validationResult);
     } catch (err) {
-      console.error('Validation error:', err);
+      if (__DEV__) {
+        console.error('Validation error:', err); // TODO: Review for sensitive data
+      }
     }
   }, [templateData, validateTemplate]);
 
@@ -178,7 +180,9 @@ const CreateTemplatePage = () => {
         ]
       );
     } catch (err) {
-      console.error('Error creating template:', err);
+      if (__DEV__) {
+        console.error('Error creating template:', err); // TODO: Review for sensitive data
+      }
     }
   }, [templateData, createTemplate]);
 

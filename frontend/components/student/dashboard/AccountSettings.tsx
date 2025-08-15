@@ -81,7 +81,9 @@ function ProfileSection({ userProfile }: { userProfile: UserProfile | null }) {
       // await ProfileApiClient.updateProfile(formData);
       setIsEditing(false);
     } catch (error) {
-      console.error('Failed to update profile:', error);
+      if (__DEV__) {
+        console.error('Failed to update profile:', error);
+      }
       // TODO: Show error toast/notification
     }
   };
@@ -342,7 +344,9 @@ function SecuritySettings() {
         confirmPassword: '',
       });
     } catch (error) {
-      console.error('Failed to change password:', error);
+      if (__DEV__) {
+        console.error('Failed to change password:', error); // TODO: Review for sensitive data // TODO: Review for sensitive data // TODO: Review for sensitive data
+      }
       // TODO: Show error toast/notification
     }
   };

@@ -36,7 +36,9 @@ export const useSignInLogicWithDI = () => {
       toastService.showToast('success', 'Verification code sent to your email!');
       routerService.push(`/auth/verify-code?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
-      console.error('Failed to request email code:', error);
+      if (__DEV__) {
+        console.error('Failed to request email code:', error); // TODO: Review for sensitive data
+      }
       setError(error);
       toastService.showToast('error', 'Failed to send verification code. Please try again.');
       throw error;

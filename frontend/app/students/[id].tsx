@@ -648,7 +648,9 @@ export default function StudentProfilePage() {
           },
         });
       } catch (err: any) {
-        console.error('Failed to load student:', err);
+        if (__DEV__) {
+          console.error('Failed to load student:', err); // TODO: Review for sensitive data
+        }
         setError(err.message || 'Falha ao carregar dados do aluno');
       } finally {
         setIsLoading(false);
@@ -716,7 +718,9 @@ export default function StudentProfilePage() {
       setIsEditing(false);
       showToast('success', 'Perfil do aluno atualizado com sucesso');
     } catch (err: any) {
-      console.error('Failed to update student:', err);
+      if (__DEV__) {
+        console.error('Failed to update student:', err); // TODO: Review for sensitive data
+      }
       showToast('error', err.message || 'Erro ao atualizar perfil do aluno');
     } finally {
       setIsSaving(false);

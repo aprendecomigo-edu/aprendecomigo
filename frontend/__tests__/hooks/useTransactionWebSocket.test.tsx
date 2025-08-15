@@ -21,7 +21,9 @@ describe('useTransactionWebSocket Hook', () => {
     WebSocketTestUtils.setupFakeTimers();
     jest.clearAllMocks();
 
-    // Mock console.log to avoid test output noise
+    // Mock if (__DEV__) {
+    // Mock   console.log to avoid test output noise
+    // Mock }
     jest.spyOn(console, 'log').mockImplementation();
   });
 

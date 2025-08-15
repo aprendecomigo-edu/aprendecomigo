@@ -111,10 +111,14 @@ export default function OnboardingSuccessScreen() {
         // Fallback: copy to clipboard
         await navigator.clipboard.writeText(profileUrl);
         // You could show a toast here
-        console.log('Profile URL copied to clipboard');
+        if (__DEV__) {
+          console.log('Profile URL copied to clipboard');
+        }
       }
     } catch (error) {
-      console.error('Error sharing:', error);
+      if (__DEV__) {
+        console.error('Error sharing:', error); // TODO: Review for sensitive data
+      }
     }
   };
 

@@ -55,7 +55,9 @@ export function StripePaymentForm({
         }
         setStripePromise(stripe);
       } catch (error: any) {
-        console.error('Error loading Stripe:', error);
+        if (__DEV__) {
+          console.error('Error loading Stripe:', error);
+        }
         setLoadError('Failed to load payment processor');
       }
     };
@@ -143,7 +145,9 @@ function PaymentFormContent({
       });
 
       if (error) {
-        console.error('Payment confirmation failed:', error);
+        if (__DEV__) {
+          console.error('Payment confirmation failed:', error);
+        }
         const errorMessage = error.message || 'Payment failed';
         setPaymentError(errorMessage);
         onPaymentError(errorMessage);
@@ -155,7 +159,9 @@ function PaymentFormContent({
         onPaymentError(errorMessage);
       }
     } catch (error: any) {
-      console.error('Payment processing error:', error);
+      if (__DEV__) {
+        console.error('Payment processing error:', error);
+      }
       const errorMessage = error.message || 'Payment processing failed';
       setPaymentError(errorMessage);
       onPaymentError(errorMessage);

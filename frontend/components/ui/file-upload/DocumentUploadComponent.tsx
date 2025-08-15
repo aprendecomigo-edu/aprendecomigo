@@ -126,7 +126,9 @@ const DocumentUploadComponent: React.FC<DocumentUploadComponentProps> = ({
         onDocumentSelected(selectedDocument);
       }
     } catch (error) {
-      console.error('Error selecting document:', error);
+      if (__DEV__) {
+        console.error('Error selecting document:', error); // TODO: Review for sensitive data
+      }
       Alert.alert('Error', 'Failed to select document. Please try again.');
     } finally {
       setIsSelecting(false);

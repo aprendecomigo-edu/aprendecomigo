@@ -740,7 +740,9 @@ export const EducationStep: React.FC<EducationStepProps> = ({
                                 className="self-start"
                                 onPress={() => {
                                   // Open verification URL
-                                  console.log('Open URL:', certification.verification_url);
+                                  if (__DEV__) {
+                                    console.log('Open URL:', certification.verification_url);
+                                  }
                                 }}
                               >
                                 <ButtonIcon as={ExternalLink} className="text-blue-600 mr-1" />

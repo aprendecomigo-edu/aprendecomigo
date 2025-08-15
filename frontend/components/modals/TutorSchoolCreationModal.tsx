@@ -68,7 +68,9 @@ const generateAutoSchoolName = (userName: string): string => {
     const cleanName = userName.trim();
     return `${cleanName}'s Tutoring Practice`;
   } catch (error) {
-    console.warn('Error generating school name:', error);
+    if (__DEV__) {
+      console.warn('Error generating school name:', error);
+    }
     return 'My Tutoring Practice';
   }
 };

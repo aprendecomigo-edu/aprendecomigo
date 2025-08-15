@@ -51,7 +51,9 @@ const COMPONENTS_DIR = './components/ui';
 const BACKUP_DIR = './migration-backups';
 
 function createBackups() {
-  console.log('🔄 Creating backups...');
+  if (__DEV__) {
+    console.log('🔄 Creating backups...');
+  }
 
   // Create backup directory
   if (!fs.existsSync(BACKUP_DIR)) {
@@ -64,17 +66,23 @@ function createBackups() {
 
     if (fs.existsSync(indexPath)) {
       fs.copyFileSync(indexPath, backupPath);
-      console.log(`✅ Backed up: ${component}/index.tsx`);
+      if (__DEV__) {
+        console.log(`✅ Backed up: ${component}/index.tsx`);
+      }
     }
   }
 
   // Also backup package.json
   fs.copyFileSync('./package.json', path.join(BACKUP_DIR, 'package.json'));
-  console.log('✅ Backed up: package.json');
+  if (__DEV__) {
+    console.log('✅ Backed up: package.json');
+  }
 }
 
 function migrateComponents() {
-  console.log('🚀 Starting migration...');
+  if (__DEV__) {
+    console.log('🚀 Starting migration...');
+  }
 
   for (const component of COMPONENTS_WITH_V2) {
     const indexPath = path.join(COMPONENTS_DIR, component, 'index.tsx');
@@ -82,7 +90,9 @@ function migrateComponents() {
 
     // Check if v2 file exists
     if (!fs.existsSync(v2Path)) {
-      console.log(`⚠️  Skipping ${component}: v2 file not found`);
+      if (__DEV__) {
+        console.log(`⚠️  Skipping ${component}: v2 file not found`);
+      }
       continue;
     }
 
@@ -92,12 +102,16 @@ export * from './${component}-v2';
 `;
 
     fs.writeFileSync(indexPath, newIndexContent);
-    console.log(`✅ Migrated: ${component}/index.tsx -> ${component}-v2.tsx`);
+    if (__DEV__) {
+      console.log(`✅ Migrated: ${component}/index.tsx -> ${component}-v2.tsx`);
+    }
   }
 }
 
 function rollbackComponents() {
-  console.log('🔄 Rolling back migration...');
+  if (__DEV__) {
+    console.log('🔄 Rolling back migration...');
+  }
 
   for (const component of COMPONENTS_WITH_V2) {
     const indexPath = path.join(COMPONENTS_DIR, component, 'index.tsx');
@@ -105,7 +119,9 @@ function rollbackComponents() {
 
     if (fs.existsSync(backupPath)) {
       fs.copyFileSync(backupPath, indexPath);
-      console.log(`✅ Restored: ${component}/index.tsx`);
+      if (__DEV__) {
+        console.log(`✅ Restored: ${component}/index.tsx`);
+      }
     }
   }
 
@@ -113,12 +129,16 @@ function rollbackComponents() {
   const packageBackupPath = path.join(BACKUP_DIR, 'package.json');
   if (fs.existsSync(packageBackupPath)) {
     fs.copyFileSync(packageBackupPath, './package.json');
-    console.log('✅ Restored: package.json');
+    if (__DEV__) {
+      console.log('✅ Restored: package.json');
+    }
   }
 }
 
 function testCriticalImports() {
-  console.log('🧪 Testing critical imports...');
+  if (__DEV__) {
+    console.log('🧪 Testing critical imports...');
+  }
 
   const testFiles = [
     './app/sign-in.tsx',
@@ -133,19 +153,29 @@ function testCriticalImports() {
       try {
         // Try to compile the file with TypeScript
         execSync(`npx tsc --noEmit --skipLibCheck ${testFile}`, { stdio: 'pipe' });
-        console.log(`✅ ${testFile}: Compiles successfully`);
+        if (__DEV__) {
+          console.log(`✅ ${testFile}: Compiles successfully`);
+        }
       } catch (error) {
-        console.log(`❌ ${testFile}: Compilation failed`);
-        console.log(error.stdout?.toString() || error.message);
+        if (__DEV__) {
+          console.log(`❌ ${testFile}: Compilation failed`);
+        }
+        if (__DEV__) {
+          console.log(error.stdout?.toString()
+        } || error.message);
       }
     } else {
-      console.log(`⚠️  ${testFile}: File not found`);
+      if (__DEV__) {
+        console.log(`⚠️  ${testFile}: File not found`);
+      }
     }
   }
 }
 
 function removeOldPackages() {
-  console.log('🧹 Removing old Gluestack v1 packages...');
+  if (__DEV__) {
+    console.log('🧹 Removing old Gluestack v1 packages...');
+  }
 
   const packagesToRemove = [
     '@gluestack-ui/accordion',
@@ -186,18 +216,26 @@ function removeOldPackages() {
       if (packageJson.dependencies && packageJson.dependencies[pkg]) {
         delete packageJson.dependencies[pkg];
         removed++;
-        console.log(`✅ Removed: ${pkg}`);
+        if (__DEV__) {
+          console.log(`✅ Removed: ${pkg}`);
+        }
       }
       if (packageJson.devDependencies && packageJson.devDependencies[pkg]) {
         delete packageJson.devDependencies[pkg];
         removed++;
-        console.log(`✅ Removed: ${pkg} (dev)`);
+        if (__DEV__) {
+          console.log(`✅ Removed: ${pkg} (dev)
+        }`);
       }
     });
 
     fs.writeFileSync('./package.json', JSON.stringify(packageJson, null, 2) + '\n');
-    console.log(`🎉 Removed ${removed} old packages from package.json`);
-    console.log('💡 Run "npm install" to clean up node_modules');
+    if (__DEV__) {
+      console.log(`🎉 Removed ${removed} old packages from package.json`);
+    }
+    if (__DEV__) {
+      console.log('💡 Run "npm install" to clean up node_modules');
+    }
   } catch (error) {
     console.error('❌ Error updating package.json:', error.message);
   }
@@ -229,18 +267,27 @@ switch (command) {
 
   case 'full-migration':
     createBackups();
-    console.log('');
+    if (__DEV__) {
+      console.log('');
+    }
     migrateComponents();
-    console.log('');
+    if (__DEV__) {
+      console.log('');
+    }
     testCriticalImports();
-    console.log('');
-    console.log(
+    if (__DEV__) {
+      console.log('');
+    }
+    if (__DEV__) {
+      console.log(
       '🎉 Migration complete! Run "node migrate-to-v2.js remove-packages" when ready to clean up old packages.'
     );
+    }
     break;
 
   default:
-    console.log(`
+    if (__DEV__) {
+      console.log(`
 🚀 Gluestack UI v1 to v2 Migration Tool
 
 Usage:
@@ -252,7 +299,8 @@ Usage:
   node migrate-to-v2.js full-migration   - Run complete migration
 
 Components with v2 versions: ${COMPONENTS_WITH_V2.length}
-${COMPONENTS_WITH_V2.map(c => `  • ${c}`).join('\n')}
+${COMPONENTS_WITH_V2.map(c => `  • ${c}`)
+    }.join('\n')}
 `);
     break;
 }

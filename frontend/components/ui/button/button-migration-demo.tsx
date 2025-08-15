@@ -19,14 +19,22 @@ export function ButtonMigrationDemo() {
 
       <View>
         <Text style={{ marginBottom: 8 }}>V1 Button (with factory function):</Text>
-        <ButtonV1 onPress={() => console.log('V1 Button pressed')} variant="solid" action="primary">
+        <ButtonV1 onPress={() => {
+          if (__DEV__) {
+            console.log('V1 Button pressed');
+          }
+        }} variant="solid" action="primary">
           <ButtonTextV1>V1 Button</ButtonTextV1>
         </ButtonV1>
       </View>
 
       <View>
         <Text style={{ marginBottom: 8 }}>V2 Button (without factory function):</Text>
-        <ButtonV2 onPress={() => console.log('V2 Button pressed')} variant="solid" action="primary">
+        <ButtonV2 onPress={() => {
+          if (__DEV__) {
+            console.log('V2 Button pressed');
+          }
+        }} variant="solid" action="primary">
           <ButtonTextV2>V2 Button</ButtonTextV2>
         </ButtonV2>
       </View>

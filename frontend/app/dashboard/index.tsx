@@ -52,19 +52,25 @@ export default function DashboardRouter() {
       );
 
       if (redirectPath) {
-        console.log(
-          '🔄 Dashboard router: Immediate redirect to',
-          redirectPath,
-          'based on primary_role:',
-          userProfile.primary_role
-        );
+        if (__DEV__) {
+          if (__DEV__) {
+            console.log(
+            '🔄 Dashboard router: Immediate redirect to',
+            redirectPath,
+            'based on primary_role:',
+            userProfile.primary_role
+          );
+          }
+        }
         router.replace(redirectPath);
       } else {
         setNavigationError('Unable to determine appropriate dashboard');
         setIsNavigating(false);
       }
     } catch (error) {
-      console.error('Dashboard router navigation error:', error);
+      if (__DEV__) {
+        console.error('Dashboard router navigation error:', error); // TODO: Review for sensitive data
+      }
       setNavigationError('Navigation failed');
       setIsNavigating(false);
     }

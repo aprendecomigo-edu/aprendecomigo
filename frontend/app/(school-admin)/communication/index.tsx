@@ -65,7 +65,9 @@ const CommunicationDashboard = () => {
     try {
       await Promise.all([refreshAnalytics(), refreshTemplates(), fetchBranding()]);
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      if (__DEV__) {
+        console.error('Error refreshing data:', error); // TODO: Review for sensitive data
+      }
     } finally {
       setRefreshing(false);
     }

@@ -100,7 +100,9 @@ export class MessageDispatcher implements EventEmitterInterface {
     }
 
     if (this.currentQueueSize >= this.maxQueueSize) {
-      console.warn('Message dispatch queue is full, dropping message');
+      if (__DEV__) {
+        console.warn('Message dispatch queue is full, dropping message');
+      }
       return;
     }
 

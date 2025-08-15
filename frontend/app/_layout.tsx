@@ -112,7 +112,9 @@ function RootLayoutNav() {
   // CSS Fix for NativeWind v4 + React Native Web compatibility
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      console.log('🔧 Applying CSS compatibility patch for NativeWind v4 + React Native Web...');
+      if (__DEV__) {
+        console.log('🔧 Applying CSS compatibility patch for NativeWind v4 + React Native Web...');
+      }
 
       // Global error handler for CSS-related errors
       const handleError = (event: ErrorEvent) => {
@@ -122,7 +124,9 @@ function RootLayoutNav() {
           event.error.message.includes('CSSStyleDeclaration') &&
           event.error.message.includes('Indexed property setter')
         ) {
-          console.warn('Prevented CSS StyleDeclaration error:', event.error.message);
+          if (__DEV__) {
+            console.warn('Prevented CSS StyleDeclaration error:', event.error.message);
+          }
           event.preventDefault();
           event.stopPropagation();
           return false;
@@ -139,13 +143,21 @@ function RootLayoutNav() {
           message.includes('CSSStyleDeclaration') &&
           message.includes('Indexed property setter')
         ) {
-          console.warn('Suppressed CSS error:', message);
+          if (__DEV__) {
+            console.warn('Suppressed CSS error:', message);
+          }
           return;
         }
         return originalConsoleError.apply(console, args);
       };
 
-      console.log('✅ CSS compatibility patch applied successfully');
+      if (__DEV__) {
+
+        if (__DEV__) {
+          console.log('✅ CSS compatibility patch applied successfully');
+        }
+
+      }
 
       return () => {
         window.removeEventListener('error', handleError);

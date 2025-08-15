@@ -57,7 +57,11 @@ describe('useBalanceWebSocket', () => {
     });
 
     // Suppress console logs during tests
-    console.log = jest.fn();
+    if (__DEV__) {
+    // Suppress console logs during tests
+      console.log = jest.fn();
+    // Suppress console logs during tests
+    }
     console.error = jest.fn();
 
     jest.useFakeTimers();
@@ -65,7 +69,11 @@ describe('useBalanceWebSocket', () => {
 
   afterEach(() => {
     jest.useRealTimers();
-    console.log = originalConsoleLog;
+    if (__DEV__) {
+    jest.useRealTimers();
+      console.log = originalConsoleLog;
+    jest.useRealTimers();
+    }
     console.error = originalConsoleError;
     jest.clearAllMocks();
   });
@@ -357,7 +365,9 @@ describe('useBalanceWebSocket', () => {
         await new Promise(resolve => setTimeout(resolve, 50));
       });
 
-      expect(console.log).toHaveBeenCalledWith('Unknown WebSocket message type:', 'unknown_type');
+      if (__DEV__) {
+        expect(console.log).toHaveBeenCalledWith('Unknown WebSocket message type:', 'unknown_type');
+      }
     });
   });
 
@@ -522,12 +532,16 @@ describe('useBalanceUpdates', () => {
       useBalanceWebSocket: mockUseBalanceWebSocket,
     }));
 
-    console.log = jest.fn();
+    if (__DEV__) {
+      console.log = jest.fn();
+    }
     console.error = jest.fn();
   });
 
   afterEach(() => {
-    console.log = originalConsoleLog;
+    if (__DEV__) {
+      console.log = originalConsoleLog;
+    }
     console.error = originalConsoleError;
     jest.clearAllMocks();
   });

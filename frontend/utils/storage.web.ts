@@ -20,10 +20,12 @@ class WebStorage implements StorageInterface {
         const value = await AsyncStorage.getItem(key);
         return value;
       } catch (asyncStorageError) {
-        console.error('Both localStorage and AsyncStorage failed:', {
+        if (__DEV__) {
+          console.error('Both localStorage and AsyncStorage failed:', {
           localStorageError,
           asyncStorageError,
-        });
+        }); // TODO: Review for sensitive data
+        }
         return null;
       }
     }
@@ -41,10 +43,12 @@ class WebStorage implements StorageInterface {
       try {
         await AsyncStorage.setItem(key, value);
       } catch (asyncStorageError) {
-        console.error('Both localStorage and AsyncStorage failed:', {
+        if (__DEV__) {
+          console.error('Both localStorage and AsyncStorage failed:', {
           localStorageError,
           asyncStorageError,
-        });
+        }); // TODO: Review for sensitive data
+        }
         throw new Error('Failed to store data');
       }
     }
@@ -62,10 +66,12 @@ class WebStorage implements StorageInterface {
       try {
         await AsyncStorage.removeItem(key);
       } catch (asyncStorageError) {
-        console.error('Both localStorage and AsyncStorage failed:', {
+        if (__DEV__) {
+          console.error('Both localStorage and AsyncStorage failed:', {
           localStorageError,
           asyncStorageError,
-        });
+        }); // TODO: Review for sensitive data
+        }
         throw new Error('Failed to remove data');
       }
     }
@@ -83,10 +89,12 @@ class WebStorage implements StorageInterface {
       try {
         await AsyncStorage.clear();
       } catch (asyncStorageError) {
-        console.error('Both localStorage and AsyncStorage failed:', {
+        if (__DEV__) {
+          console.error('Both localStorage and AsyncStorage failed:', {
           localStorageError,
           asyncStorageError,
-        });
+        }); // TODO: Review for sensitive data
+        }
         throw new Error('Failed to clear storage');
       }
     }
@@ -104,10 +112,12 @@ class WebStorage implements StorageInterface {
       try {
         return await AsyncStorage.getAllKeys();
       } catch (asyncStorageError) {
-        console.error('Both localStorage and AsyncStorage failed:', {
+        if (__DEV__) {
+          console.error('Both localStorage and AsyncStorage failed:', {
           localStorageError,
           asyncStorageError,
-        });
+        }); // TODO: Review for sensitive data
+        }
         return [];
       }
     }

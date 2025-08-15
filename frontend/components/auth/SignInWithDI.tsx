@@ -40,7 +40,9 @@ export const SignInWithDI: React.FC = () => {
       toastService.showToast('success', 'Verification code sent to your email!');
       routerService.push(`/auth/verify-code?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
-      console.error('Failed to request email code:', error);
+      if (__DEV__) {
+        console.error('Failed to request email code:', error); // TODO: Review for sensitive data // TODO: Review for sensitive data // TODO: Review for sensitive data
+      }
       toastService.showToast('error', 'Failed to send verification code. Please try again.');
     } finally {
       setIsSubmitting(false);

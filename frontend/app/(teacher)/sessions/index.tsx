@@ -308,7 +308,9 @@ const TeacherSessionsPage = () => {
                             className="flex-row items-center"
                             onPress={() => {
                               // Navigate to session details
-                              console.log('Navigate to session details:', session.id);
+                              if (__DEV__) {
+                                console.log('Navigate to session details:', session.id);
+                              }
                             }}
                           >
                             <Text className="text-sm font-medium text-blue-600 mr-1">

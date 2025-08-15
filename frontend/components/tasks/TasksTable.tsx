@@ -122,7 +122,9 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ task, isOpen, onClose, onSave }
 
       toast.showToast('success', `Task ${task ? 'updated' : 'created'} successfully`);
     } catch (error) {
-      console.error('Error saving task:', error);
+      if (__DEV__) {
+        console.error('Error saving task:', error); // TODO: Review for sensitive data
+      }
       toast.showToast('error', `Failed to ${task ? 'update' : 'create'} task`);
     } finally {
       setIsLoading(false);
@@ -377,7 +379,9 @@ const TasksTable: React.FC<TasksTableProps> = ({
 
       toast.showToast('success', `Task ${task.status === 'completed' ? 'reopened' : 'completed'}`);
     } catch (error) {
-      console.error('Error toggling task completion:', error);
+      if (__DEV__) {
+        console.error('Error toggling task completion:', error); // TODO: Review for sensitive data
+      }
       toast.showToast('error', 'Failed to update task');
     } finally {
       setIsLoading(false);
@@ -392,7 +396,9 @@ const TasksTable: React.FC<TasksTableProps> = ({
 
       toast.showToast('success', 'Task deleted successfully');
     } catch (error) {
-      console.error('Error deleting task:', error);
+      if (__DEV__) {
+        console.error('Error deleting task:', error); // TODO: Review for sensitive data
+      }
       toast.showToast('error', 'Failed to delete task');
     } finally {
       setIsLoading(false);

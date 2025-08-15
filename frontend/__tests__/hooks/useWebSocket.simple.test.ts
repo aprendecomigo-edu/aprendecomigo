@@ -101,18 +101,30 @@ describe('useWebSocket - Core Functionality', () => {
     });
 
     // Suppress console - use proper mocks
-    console.log = jest.fn();
+    if (__DEV__) {
+    // Suppress console - use proper mocks
+      console.log = jest.fn();
+    // Suppress console - use proper mocks
+    }
     console.error = jest.fn();
-    console.warn = jest.fn();
+    if (__DEV__) {
+      console.warn = jest.fn();
+    }
 
     jest.useFakeTimers();
   });
 
   afterEach(() => {
     jest.useRealTimers();
-    console.log = originalConsole.log;
+    if (__DEV__) {
+    jest.useRealTimers();
+      console.log = originalConsole.log;
+    jest.useRealTimers();
+    }
     console.error = originalConsole.error;
-    console.warn = originalConsole.warn;
+    if (__DEV__) {
+      console.warn = originalConsole.warn;
+    }
     jest.clearAllMocks();
   });
 
@@ -273,7 +285,9 @@ describe('useWebSocket - Core Functionality', () => {
       });
 
       expect(mockWebSocket.send).not.toHaveBeenCalled();
-      expect(console.warn).toHaveBeenCalledWith('WebSocket not connected, cannot send message');
+      if (__DEV__) {
+        expect(console.warn).toHaveBeenCalledWith('WebSocket not connected, cannot send message');
+      }
     });
   });
 
@@ -386,18 +400,28 @@ describe('useWebSocketEnhanced - Core Functionality', () => {
     mockWebSocket = new MockWebSocket('ws://test');
     (global as any).WebSocket = jest.fn(() => mockWebSocket);
 
-    console.log = jest.fn();
+    if (__DEV__) {
+      console.log = jest.fn();
+    }
     console.error = jest.fn();
-    console.warn = jest.fn();
+    if (__DEV__) {
+      console.warn = jest.fn();
+    }
 
     jest.useFakeTimers();
   });
 
   afterEach(() => {
     jest.useRealTimers();
-    console.log = originalConsole.log;
+    if (__DEV__) {
+    jest.useRealTimers();
+      console.log = originalConsole.log;
+    jest.useRealTimers();
+    }
     console.error = originalConsole.error;
-    console.warn = originalConsole.warn;
+    if (__DEV__) {
+      console.warn = originalConsole.warn;
+    }
     jest.clearAllMocks();
   });
 
@@ -417,7 +441,9 @@ describe('useWebSocketEnhanced - Core Functionality', () => {
         await result.current.connect();
       });
 
-      expect(console.warn).toHaveBeenCalledWith('No WebSocket URL provided');
+      if (__DEV__) {
+        expect(console.warn).toHaveBeenCalledWith('No WebSocket URL provided');
+      }
     });
 
     it('should track last message', async () => {

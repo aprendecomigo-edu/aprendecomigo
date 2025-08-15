@@ -111,7 +111,9 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
     const { retryCount } = this.state;
 
     if (retryCount >= maxRetries) {
-      console.warn(`Maximum retry attempts (${maxRetries}) exceeded for wizard error boundary`);
+      if (__DEV__) {
+        console.warn(`Maximum retry attempts (${maxRetries}) exceeded for wizard error boundary`);
+      }
       return;
     }
 

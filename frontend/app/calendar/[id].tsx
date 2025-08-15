@@ -51,7 +51,9 @@ const ClassDetailScreen: React.FC = () => {
       const data = await schedulerApi.getClassSchedule(parseInt(id!));
       setClassSchedule(data);
     } catch (error) {
-      console.error('Error loading class details:', error);
+      if (__DEV__) {
+        console.error('Error loading class details:', error); // TODO: Review for sensitive data
+      }
       Alert.alert('Error', 'Failed to load class details');
       router.back();
     } finally {
@@ -83,7 +85,9 @@ const ClassDetailScreen: React.FC = () => {
               Alert.alert('Success', 'Class cancelled successfully');
               router.back();
             } catch (error) {
-              console.error('Error cancelling class:', error);
+              if (__DEV__) {
+                console.error('Error cancelling class:', error); // TODO: Review for sensitive data
+              }
               Alert.alert('Error', 'Failed to cancel class');
             } finally {
               setActionLoading(false);
@@ -103,7 +107,9 @@ const ClassDetailScreen: React.FC = () => {
       Alert.alert('Success', 'Class confirmed successfully');
       loadClassDetails(); // Refresh the data
     } catch (error) {
-      console.error('Error confirming class:', error);
+      if (__DEV__) {
+        console.error('Error confirming class:', error); // TODO: Review for sensitive data
+      }
       Alert.alert('Error', 'Failed to confirm class');
     } finally {
       setActionLoading(false);
@@ -119,7 +125,9 @@ const ClassDetailScreen: React.FC = () => {
       Alert.alert('Success', 'Class marked as completed');
       loadClassDetails(); // Refresh the data
     } catch (error) {
-      console.error('Error completing class:', error);
+      if (__DEV__) {
+        console.error('Error completing class:', error); // TODO: Review for sensitive data
+      }
       Alert.alert('Error', 'Failed to complete class');
     } finally {
       setActionLoading(false);

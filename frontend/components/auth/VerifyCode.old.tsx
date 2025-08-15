@@ -72,8 +72,16 @@ const VerifyCodeForm = () => {
     const contactValue = contact || email || '';
     const contactTypeValue = contactType || 'email'; // Default to email
 
-    console.log('URL params:', { contact, email, contactType });
-    console.log('Using contact value:', contactValue);
+    if (__DEV__) {
+
+      if (__DEV__) {
+        console.log('URL params:', { contact, email, contactType });
+      }
+
+    }
+    if (__DEV__) {
+      console.log('Using contact value:', contactValue);
+    }
 
     if (contactValue) {
       verifyCodeForm.setValue('contact', contactValue);
@@ -88,7 +96,9 @@ const VerifyCodeForm = () => {
     try {
       setHasAttemptedSubmit(true);
       setIsVerifying(true);
-      console.log('Verifying code with data:', data);
+      if (__DEV__) {
+        console.log('Verifying code with data:', data);
+      }
 
       // Call the API to verify the code
       // Adapt this to handle both email and phone verification
@@ -97,13 +107,21 @@ const VerifyCodeForm = () => {
           ? { email: data.contact, code: data.code }
           : { phone: data.contact, code: data.code };
 
-      console.log('Verification API params:', params);
+      if (__DEV__) {
+
+        if (__DEV__) {
+          console.log('Verification API params:', params);
+        }
+
+      }
 
       // Step 1: API verification - handle specific errors
       let response: AuthResponse;
       try {
         response = await verifyEmailCode(params);
-        console.log('Verification response:', response);
+        if (__DEV__) {
+          console.log('Verification response:', response);
+        }
       } catch (verifyError: any) {
         console.error('Verification API error:', verifyError);
 
@@ -126,7 +144,9 @@ const VerifyCodeForm = () => {
       try {
         // Store user profile data for immediate routing
         await setUserProfile(response.user);
-        console.log('User profile stored with primary_role:', response.user.primary_role);
+        if (__DEV__) {
+          console.log('User profile stored with primary_role:', response.user.primary_role);
+        }
 
         // Successfully verified - now explicitly update auth state
         await checkAuthStatus();
@@ -136,7 +156,9 @@ const VerifyCodeForm = () => {
 
         // Check if there's a specific next route (e.g., for tutors)
         if (nextRoute) {
-          console.log('Redirecting to specified next route:', nextRoute);
+          if (__DEV__) {
+            console.log('Redirecting to specified next route:', nextRoute);
+          }
           router.replace(decodeURIComponent(nextRoute));
           return;
         }
@@ -145,7 +167,9 @@ const VerifyCodeForm = () => {
         const shouldShowOnboarding = await checkForOnboarding(response);
 
         if (shouldShowOnboarding) {
-          console.log('Redirecting new school admin to onboarding welcome screen');
+          if (__DEV__) {
+            console.log('Redirecting new school admin to onboarding welcome screen');
+          }
           router.replace('/onboarding/welcome');
         } else {
           // Navigate to root after verification - auth context will handle redirect
@@ -153,7 +177,9 @@ const VerifyCodeForm = () => {
         }
       } catch (authUpdateError) {
         // Auth succeeded but state update failed - still redirect with success message
-        console.warn('Auth state update failed, but verification succeeded:', authUpdateError);
+        if (__DEV__) {
+          console.warn('Auth state update failed, but verification succeeded:', authUpdateError);
+        }
         toast.showToast('success', 'Verification successful!');
 
         // Still proceed with redirect since verification actually succeeded
@@ -200,7 +226,9 @@ const VerifyCodeForm = () => {
         );
       } catch (apiError) {
         // If we can't fetch onboarding data, default to showing onboarding for new admins
-        console.log('Could not fetch onboarding data, defaulting to show onboarding for new admin');
+        if (__DEV__) {
+          console.log('Could not fetch onboarding data, defaulting to show onboarding for new admin');
+        }
         return authResponse.is_new_user || !authResponse.user.first_login_completed;
       }
     } catch (error) {
@@ -313,9 +341,15 @@ const VerifyCodeForm = () => {
             <Button
               className="w-full"
               onPress={() => {
-                console.log('Verify button clicked');
-                console.log('Form values:', verifyCodeForm.getValues());
-                console.log('Form errors:', verifyCodeForm.formState.errors);
+                if (__DEV__) {
+                  console.log('Verify button clicked');
+                }
+                if (__DEV__) {
+                  console.log('Form values:', verifyCodeForm.getValues());
+                }
+                if (__DEV__) {
+                  console.log('Form errors:', verifyCodeForm.formState.errors);
+                }
                 setHasAttemptedSubmit(true);
                 verifyCodeForm.handleSubmit(onVerifyCode)();
               }}

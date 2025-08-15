@@ -110,7 +110,9 @@ export const useVerifyCodeLogic = ({
           await authContext.checkAuthStatus();
         } catch (error) {
           // Continue even if auth state update fails
-          console.warn('Auth state update failed, continuing with verification:', error);
+          if (__DEV__) {
+            console.warn('Auth state update failed, continuing with verification:', error);
+          }
         }
 
         toast.showToast('success', 'Verification successful!');

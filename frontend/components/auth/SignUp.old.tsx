@@ -76,7 +76,9 @@ const validateUserType = (type: string | undefined): UserType => {
 
   // Log warning for invalid type but gracefully fallback
   if (type && type !== 'tutor' && type !== 'school') {
-    console.warn(`Invalid user type "${type}" provided. Defaulting to "tutor".`);
+    if (__DEV__) {
+      console.warn(`Invalid user type "${type}" provided. Defaulting to "tutor".`);
+    }
   }
 
   return 'tutor'; // Default to tutor
@@ -90,7 +92,9 @@ const generateSchoolName = (userName: string, userType: UserType): string => {
   try {
     return `${userName.trim()}'s Tutoring Practice`;
   } catch (error) {
-    console.warn('Error generating school name:', error);
+    if (__DEV__) {
+      console.warn('Error generating school name:', error);
+    }
     return 'My Tutoring Practice'; // Fallback
   }
 };
@@ -284,7 +288,9 @@ const OnboardingForm = () => {
         );
       }
     } catch (error: any) {
-      console.error('Error during registration:', error);
+      if (__DEV__) {
+        console.error('Error during registration:', error); // TODO: Review for sensitive data
+      }
 
       // Enhanced error handling with specific messages
       let errorMessage = 'Failed to complete registration. Please try again.';
@@ -662,7 +668,9 @@ export const SignUp = () => {
       <ErrorBoundary
         onError={(error, errorInfo) => {
           // Log error for analytics/monitoring
-          console.error('Signup form error:', error, errorInfo);
+          if (__DEV__) {
+            console.error('Signup form error:', error, errorInfo); // TODO: Review for sensitive data
+          }
         }}
       >
         <OnboardingForm />

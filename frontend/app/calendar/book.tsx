@@ -112,7 +112,9 @@ const BookClassScreen: React.FC = () => {
       const data = await getTeachers();
       setTeachers(data);
     } catch (error) {
-      console.error('Error loading teachers:', error);
+      if (__DEV__) {
+        console.error('Error loading teachers:', error); // TODO: Review for sensitive data
+      }
       Alert.alert('Error', 'Failed to load teachers');
     }
   }, []);
@@ -122,7 +124,9 @@ const BookClassScreen: React.FC = () => {
       const data = await getStudents();
       setStudents(data);
     } catch (error) {
-      console.error('Error loading students:', error);
+      if (__DEV__) {
+        console.error('Error loading students:', error); // TODO: Review for sensitive data
+      }
       Alert.alert('Error', 'Failed to load students');
     }
   }, []);
@@ -138,7 +142,9 @@ const BookClassScreen: React.FC = () => {
       );
       setAvailableSlots(response.available_slots);
     } catch (error) {
-      console.error('Error loading available slots:', error);
+      if (__DEV__) {
+        console.error('Error loading available slots:', error); // TODO: Review for sensitive data
+      }
       setAvailableSlots([]);
     } finally {
       setLoadingSlots(false);
@@ -242,7 +248,9 @@ const BookClassScreen: React.FC = () => {
         },
       ]);
     } catch (error: unknown) {
-      console.error('Error booking class:', error);
+      if (__DEV__) {
+        console.error('Error booking class:', error); // TODO: Review for sensitive data
+      }
       const errorMessage = error instanceof Error ? error.message : 'Failed to schedule class';
       Alert.alert('Error', errorMessage);
     } finally {

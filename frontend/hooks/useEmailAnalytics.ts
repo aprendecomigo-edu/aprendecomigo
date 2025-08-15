@@ -30,7 +30,9 @@ export const useEmailAnalytics = (autoFetch = true) => {
         const errorMessage =
           err.response?.data?.detail || err.message || 'Failed to fetch email analytics';
         setError(errorMessage);
-        console.error('Error fetching email analytics:', err);
+        if (__DEV__) {
+          console.error('Error fetching email analytics:', err); // TODO: Review for sensitive data // TODO: Review for sensitive data // TODO: Review for sensitive data
+        }
       } finally {
         setLoading(false);
       }
@@ -104,7 +106,9 @@ export const useEmailCommunications = (autoFetch = true) => {
         const errorMessage =
           err.response?.data?.detail || err.message || 'Failed to fetch email communications';
         setError(errorMessage);
-        console.error('Error fetching email communications:', err);
+        if (__DEV__) {
+          console.error('Error fetching email communications:', err); // TODO: Review for sensitive data // TODO: Review for sensitive data // TODO: Review for sensitive data
+        }
       } finally {
         setLoading(false);
       }

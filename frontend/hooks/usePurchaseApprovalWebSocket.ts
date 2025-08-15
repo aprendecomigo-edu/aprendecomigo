@@ -170,7 +170,9 @@ export const usePurchaseApprovalWebSocket = ({
     ) {
       Notification.requestPermission().then(permission => {
         if (permission === 'granted') {
-          console.log('Push notifications enabled for purchase approvals');
+          if (__DEV__) {
+            console.log('Push notifications enabled for purchase approvals');
+          }
         }
       });
     }

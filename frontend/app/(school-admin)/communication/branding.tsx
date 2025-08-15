@@ -119,7 +119,9 @@ const SchoolBrandingPage = () => {
         try {
           await uploadLogo(file);
         } catch (err) {
-          console.error('Error uploading logo:', err);
+          if (__DEV__) {
+            console.error('Error uploading logo:', err); // TODO: Review for sensitive data
+          }
         }
       }
     };
@@ -132,7 +134,9 @@ const SchoolBrandingPage = () => {
     try {
       await saveBranding();
     } catch (err) {
-      console.error('Error saving branding:', err);
+      if (__DEV__) {
+        console.error('Error saving branding:', err); // TODO: Review for sensitive data
+      }
     }
   }, [saveBranding]);
 

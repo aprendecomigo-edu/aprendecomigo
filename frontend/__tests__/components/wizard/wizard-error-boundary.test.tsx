@@ -440,7 +440,9 @@ describe('WizardErrorBoundary', () => {
               throw new Error('Async error');
             } catch (error) {
               // This error would normally be unhandled, but error boundaries don't catch async errors
-              console.log('Async error caught in test:', error.message);
+              if (__DEV__) {
+                console.log('Async error caught in test:', error.message);
+              }
             }
           }, 100);
         }, []);

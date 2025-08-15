@@ -105,7 +105,11 @@ describe('useWebSocket', () => {
     });
 
     // Suppress console logs during tests
-    console.log = jest.fn();
+    if (__DEV__) {
+    // Suppress console logs during tests
+      console.log = jest.fn();
+    // Suppress console logs during tests
+    }
     console.error = jest.fn();
 
     jest.useFakeTimers();
@@ -115,7 +119,11 @@ describe('useWebSocket', () => {
     jest.useRealTimers();
 
     // Restore console methods
-    console.log = originalConsoleLog;
+    if (__DEV__) {
+    // Restore console methods
+      console.log = originalConsoleLog;
+    // Restore console methods
+    }
     console.error = originalConsoleError;
 
     // Clear all mocks
@@ -315,7 +323,9 @@ describe('useWebSocket', () => {
       });
 
       expect(mockSend).not.toHaveBeenCalled();
-      expect(console.warn).toHaveBeenCalledWith('WebSocket not connected, cannot send message');
+      if (__DEV__) {
+        expect(console.warn).toHaveBeenCalledWith('WebSocket not connected, cannot send message');
+      }
     });
   });
 
@@ -560,14 +570,22 @@ describe('useWebSocketEnhanced', () => {
   beforeEach(() => {
     mockWebSocket = new MockWebSocket('ws://test');
     (global as any).WebSocket = jest.fn(() => mockWebSocket);
-    console.log = jest.fn();
+    if (__DEV__) {
+    (global as any).WebSocket = jest.fn(() => mockWebSocket);
+      console.log = jest.fn();
+    (global as any).WebSocket = jest.fn(() => mockWebSocket);
+    }
     console.error = jest.fn();
     jest.useFakeTimers();
   });
 
   afterEach(() => {
     jest.useRealTimers();
-    console.log = originalConsoleLog;
+    if (__DEV__) {
+    jest.useRealTimers();
+      console.log = originalConsoleLog;
+    jest.useRealTimers();
+    }
     console.error = originalConsoleError;
     jest.clearAllMocks();
   });
@@ -581,7 +599,9 @@ describe('useWebSocketEnhanced', () => {
       });
 
       expect(result.current.isConnected).toBe(false);
-      expect(console.warn).toHaveBeenCalledWith('No WebSocket URL provided');
+      if (__DEV__) {
+        expect(console.warn).toHaveBeenCalledWith('No WebSocket URL provided');
+      }
     });
 
     it('should track last message correctly', async () => {

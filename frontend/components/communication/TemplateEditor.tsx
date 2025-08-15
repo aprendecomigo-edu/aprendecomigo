@@ -134,7 +134,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({ templateId, onSave, onC
 
       onSave?.(savedTemplate);
     } catch (error) {
-      console.error('Error saving template:', error);
+      if (__DEV__) {
+        console.error('Error saving template:', error);
+      }
     }
   }, [currentTemplate, templateId, validateTemplate, updateTemplate, createTemplate, onSave]);
 
@@ -166,7 +168,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({ templateId, onSave, onC
       });
       setActiveTab('preview');
     } catch (error) {
-      console.error('Error generating preview:', error);
+      if (__DEV__) {
+        console.error('Error generating preview:', error);
+      }
     }
   }, [currentTemplate, generatePreview, branding]);
 
@@ -177,7 +181,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({ templateId, onSave, onC
       await sendTestEmail(templateId, testEmail);
       setTestEmail('');
     } catch (error) {
-      console.error('Error sending test email:', error);
+      if (__DEV__) {
+        console.error('Error sending test email:', error); // TODO: Review for sensitive data // TODO: Review for sensitive data // TODO: Review for sensitive data
+      }
     }
   }, [testEmail, templateId, sendTestEmail]);
 
