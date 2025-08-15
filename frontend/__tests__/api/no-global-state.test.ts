@@ -35,8 +35,20 @@ describe('No Global State Verification', () => {
     baseURL: 'https://api.example.com',
   };
 
+  // Cache file content to avoid reading the same file multiple times
+  const fileCache = new Map<string, string>();
+  const readCachedFile = async (filePath: string): Promise<string> => {
+    if (!fileCache.has(filePath)) {
+      const { readFile } = require('fs/promises');
+      const content = await readFile(filePath, 'utf8');
+      fileCache.set(filePath, content);
+    }
+    return fileCache.get(filePath)!;
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    fileCache.clear();
 
     // Setup axios mock
     const mockAxiosInstance = {
@@ -79,13 +91,12 @@ describe('No Global State Verification', () => {
 
     it('should not import storage modules directly', async () => {
       // Verify that ApiClient doesn't have direct storage imports
-      const fs = require('fs');
       const path = require('path');
 
       const apiClientPath = path.resolve(__dirname, '../../api/client/ApiClient.ts');
 
       try {
-        const apiClientSource = await fs.promises.readFile(apiClientPath, 'utf8');
+        const apiClientSource = await readCachedFile(apiClientPath);
 
         // Check that direct storage imports are not present
         expect(apiClientSource).not.toMatch(/import.*storage.*from.*utils\/storage/);
@@ -101,13 +112,12 @@ describe('No Global State Verification', () => {
     });
 
     it('should not use global authentication error callbacks', async () => {
-      const fs = require('fs');
       const path = require('path');
 
       const apiClientPath = path.resolve(__dirname, '../../api/client/ApiClient.ts');
 
       try {
-        const apiClientSource = await fs.promises.readFile(apiClientPath, 'utf8');
+        const apiClientSource = await readCachedFile(apiClientPath);
 
         // Check that global callback patterns are not present
         expect(apiClientSource).not.toMatch(/let.*authErrorCallback/);
