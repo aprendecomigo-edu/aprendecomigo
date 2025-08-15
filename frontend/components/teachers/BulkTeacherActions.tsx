@@ -149,15 +149,23 @@ export const BulkTeacherActions: React.FC<BulkTeacherActionsProps> = ({
   const selectedTeacherData = teachers.filter(t => selectedTeachers.includes(t.id));
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
     if (lastResult && !loading) {
       // Auto-close modal after successful action
       if (lastResult.success && getSuccessRate() > 80) {
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           setShowModal(false);
           onActionComplete?.();
         }, 2000);
       }
     }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [lastResult, loading, getSuccessRate, onActionComplete]);
 
   const handleActionStart = (action: ActionType) => {

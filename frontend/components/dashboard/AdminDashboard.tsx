@@ -121,16 +121,24 @@ const AdminDashboard = () => {
 
   // Auto-start tutorial for new users
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
     const autoStartTutorial = async () => {
       if (!isLoading && dashboardData && !dashboardData.user_info.first_login_completed) {
         // Small delay to ensure the dashboard is fully rendered
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           startTutorial(dashboardTutorial);
         }, 1000);
       }
     };
 
     autoStartTutorial();
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [isLoading, dashboardData, startTutorial]);
 
   const formatDate = () => {

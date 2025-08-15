@@ -125,6 +125,7 @@ export const InviteTeacherModal = ({
   const [invitationMode, setInvitationMode] = useState<InvitationMode>('single');
   const [isLoading, setIsLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const linkCopiedTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Use hooks
   const { inviteTeacher, loading: inviteLoading } = useInviteTeacher();
@@ -143,6 +144,15 @@ export const InviteTeacherModal = ({
       setInvitationLink(null);
     }
   }, [isOpen]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (linkCopiedTimeoutRef.current) {
+        clearTimeout(linkCopiedTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const loadInvitationLink = async () => {
     try {
@@ -171,7 +181,13 @@ export const InviteTeacherModal = ({
         ]);
       }
       setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
+
+      // Clear any existing timeout
+      if (linkCopiedTimeoutRef.current) {
+        clearTimeout(linkCopiedTimeoutRef.current);
+      }
+
+      linkCopiedTimeoutRef.current = setTimeout(() => setLinkCopied(false), 2000);
     } catch (error) {
       console.error('Error copying link:', error);
       Alert.alert('Erro', 'Não foi possível copiar o link.');
