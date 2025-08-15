@@ -39,7 +39,7 @@ pip install -r requirements/dev.txt
 ### `base.txt` - Core Dependencies
 - Django & Django REST Framework
 - Database drivers (PostgreSQL)
-- Channels & WebSocket support (Daphne)
+- Channels & WebSocket support (Uvicorn)
 - Authentication (Knox, JWT)
 - Payment processing (Stripe)
 - Essential utilities

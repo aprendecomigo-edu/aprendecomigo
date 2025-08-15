@@ -6,8 +6,9 @@ This module tests business rules related to WebSocket connections:
 - Message content handling
 - User status tracking
 
-Note: This file focuses on business logic aspects of WebSocket functionality.
-For comprehensive security testing, see separate security test suites.
+Note: These tests use channels.testing.WebsocketCommunicator which requires Daphne.
+Daphne is installed ONLY as a dev dependency for testing purposes.
+The actual application uses Uvicorn for WebSocket support in production.
 """
 
 from channels.db import database_sync_to_async

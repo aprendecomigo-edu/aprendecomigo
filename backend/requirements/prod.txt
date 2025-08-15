@@ -4,7 +4,7 @@
 -r base.txt
 
 # Production-specific optimizations
-# gunicorn==21.2.0  # Alternative to Daphne for HTTP (not WebSocket)
+# gunicorn==21.2.0  # Alternative HTTP server (Uvicorn handles WebSocket)
 # whitenoise==6.6.0  # Static file serving
 
 # Production database driver (more performant than psycopg2-binary)

@@ -5,7 +5,10 @@
 
 # Testing & Coverage
 coverage==7.10.3
-daphne==4.2.1  # Required for channels.testing module (WebSocket tests)
+# IMPORTANT: Daphne is ONLY needed for channels.testing.WebsocketCommunicator in tests
+# The actual application uses Uvicorn for WebSocket support (see base.txt)
+# This is a test-only dependency - DO NOT use Daphne to run the server
+daphne==4.2.1  # Required ONLY for channels.testing module (WebSocket test utilities)
 
 # Type Checking & Linting
 mypy==1.17.1
@@ -14,7 +17,6 @@ django-stubs==5.2.2
 django-stubs-ext==5.2.2
 djangorestframework-stubs==3.16.2
 types-PyYAML==6.0.12.20250809
-types-requests==2.31.0.0
 types-urllib3==1.26.25.14
 ruff==0.12.9
 types-pytz==2025.2.0.20250809

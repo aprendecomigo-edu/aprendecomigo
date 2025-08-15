@@ -96,8 +96,7 @@ def mock_external_services(test_func):
     This decorator automatically mocks:
     - Email sending (send_mail)
     - Stripe API calls
-    - SMS services
-    - HTTP requests
+    - SMS services (via httpx)
 
     Usage:
         @mock_external_services
@@ -111,8 +110,6 @@ def mock_external_services(test_func):
             patch("django.core.mail.send_mail") as mock_send_mail,
             patch("stripe.PaymentIntent.create") as mock_stripe_pi,
             patch("stripe.Customer.create") as mock_stripe_customer,
-            patch("requests.get") as mock_requests_get,
-            patch("requests.post") as mock_requests_post,
             patch("httpx.Client.post") as mock_httpx_post,
             patch("httpx.AsyncClient.post") as mock_httpx_async_post,
         ):
@@ -121,9 +118,7 @@ def mock_external_services(test_func):
             mock_stripe_pi.return_value.id = "pi_mock_test"
             mock_stripe_pi.return_value.client_secret = "pi_mock_test_secret"
             mock_stripe_customer.return_value.id = "cus_mock_test"
-            mock_requests_get.return_value.status_code = 200
-            mock_requests_post.return_value.status_code = 200
-            
+
             # Set up httpx mock return values
             mock_httpx_response = type('MockResponse', (), {
                 'status_code': 200,

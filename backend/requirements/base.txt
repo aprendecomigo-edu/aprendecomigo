@@ -42,7 +42,7 @@ pillow==11.3.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
 pytz==2025.2
-requests==2.32.4
+httpx==0.28.1
 urllib3==2.5.0
 
 # Core Python Dependencies (required by Django/DRF)

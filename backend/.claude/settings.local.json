@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "mcp__context7__resolve-library-id",
-      "WebFetch(domain:docs.djangoproject.com)"
+      "WebFetch(domain:docs.djangoproject.com)",
+      "WebSearch"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
