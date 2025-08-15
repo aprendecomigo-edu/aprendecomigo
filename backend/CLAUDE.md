@@ -24,54 +24,77 @@ Run `ch ctx summarize`
 ### Django apps structure
 Run `ch ctx focus <app_name>/ 1`
 
-**Django Commands**
-Usage: `ch django <command>` or `ch dj <command>`
+## Django Commands (ch dj or ch django)
 
-Server Management:
-  runserver      Start development server 
-  stop           Stop all Django servers
-  health         Check server health 
-  logs           View server logs 
+**IMPORTANT: Always use these commands instead of direct tools. They handle virtual environment activation, settings, and provide better error handling.**
 
-Testing:
-  test                    Run tests
-  test --parallel         Run tests in parallel
-  test --coverage         Run tests with coverage 
-  test --fast             Run tests with --keepdb
+### Server Management
+| Command | Replaces | Description |
+|---------|----------|-------------|
+| `ch dj runserver` | `python manage.py runserver` | Start development server (auto-kills existing) |
+| `ch dj runserver --prod` | `daphne -b 0.0.0.0 -p 8000 ...` | Start with Daphne (production-like) |
+| `ch dj stop` | `lsof -ti:8000 \| xargs kill -9` | Stop all Django servers |
+| `ch dj health` | `curl http://localhost:8000/api/` | Check server health status |
+| `ch dj logs` | `tail -f logs/server-*.log` | View server logs |
 
-Code Quality:
-  lint                    Run linting instead of ruff (checks for code issues)
-  lint --fix              Run linting with auto-fix for safe issues  
-  format                  Format code instead of ruff formatter
-  typecheck               Type checking instead of mypy
-  lint check - Check for issues
-  lint fix - Auto-fix safe issues  # ALWAYS RUN THIS FIRST
-  lint fix-unsafe - Auto-fix including unsafe fixes # DO NOT USE THIS
-  lint diff - Preview fixes
-  lint stats - View statistics
-  lint explain CODE - Explain specific rules
+### Testing
+| Command | Replaces | Description |
+|---------|----------|-------------|
+| `ch dj test` | `python manage.py test --noinput` | Run all tests |
+| `ch dj test --parallel` | `python manage.py test --parallel` | Run tests in parallel |
+| `ch dj test --coverage` | `coverage run && coverage report` | Run tests with coverage report |
+| `ch dj test --fast` | `python manage.py test --keepdb` | Run tests keeping test database |
 
-Dependencies:
-  install                 Install dependencies
-  deps                    Show dependencies
-  outdated                Check outdated packages
+### Code Quality (ALWAYS USE THESE)
+| Command | Replaces | Description |
+|---------|----------|-------------|
+| `ch dj lint` | `ruff check .` | Check for linting issues |
+| `ch dj lint fix` | `ruff check . --fix` | Auto-fix safe issues (USE THIS FIRST) |
+| `ch dj lint fix-unsafe` | `ruff check . --fix --unsafe-fixes` | Fix including unsafe (AVOID) |
+| `ch dj lint diff` | `ruff check . --diff` | Preview what would be fixed |
+| `ch dj lint stats` | `ruff check . --statistics` | Show linting statistics |
+| `ch dj lint explain E501` | `ruff rule E501` | Explain specific error codes |
+| `ch dj format` | `ruff format .` | Format code automatically |
+| `ch dj typecheck` | `mypy .` | Run type checking |
 
-General:
-  manage [command]        Run any manage.py command
+### Database Management
+| Command | Replaces | Description |
+|---------|----------|-------------|
+| `ch dj migrate` | `python manage.py migrate` | Run database migrations |
+| `ch dj makemigrations` | `python manage.py makemigrations` | Create new migrations |
+| `ch dj showmigrations` | `python manage.py showmigrations` | Show migration status |
+| `ch dj shell` | `python manage.py shell` | Django interactive shell |
+| `ch dj dbshell` | `python manage.py dbshell` | Database SQL shell |
 
-**Python Helpers:**
-Usage: `ch py <command>`
+### Dependencies & Security
+| Command | Replaces | Description |
+|---------|----------|-------------|
+| `ch dj deps` | `pip list`, `cat requirements/*.txt` | Show all dependencies (smart detection) |
+| `ch dj install` | `pip install -r requirements/dev.txt` | Install dev dependencies (default) |
+| `ch dj install prod` | `pip install -r requirements/prod.txt` | Install production dependencies |
+| `ch dj install all` | `pip install -r requirements/*.txt` | Install all requirement files |
+| `ch dj outdated` | `pip list --outdated` | Check for outdated packages |
+| `ch dj audit` | `pip-audit` or `safety check` | Security vulnerability scan |
 
-Commands:
-  deps        Show dependencies
-  test        Run tests
-  lint        Run linter
-  format      Check code formatting
-  venv        Virtual environment info
-  outdated    Check for outdated packages
-  audit       Security vulnerability scan
-  run         Run Python script
-  repl        Start interactive shell
+### Admin
+| Command | Replaces | Description |
+|---------|----------|-------------|
+| `ch dj createsuperuser` | `python manage.py createsuperuser` | Create Django superuser |
+| `ch dj collectstatic` | `python manage.py collectstatic --noinput` | Collect static files |
+
+### General
+| Command | Replaces | Description |
+|---------|----------|-------------|
+| `ch dj manage <cmd>` | `python manage.py <cmd>` | Run any manage.py command |
+
+## Why Use ch dj Commands?
+
+1. **Auto-activates virtual environment** - No need to remember to activate
+2. **Sets correct Django settings** - Automatically configures DJANGO_SETTINGS_MODULE
+3. **Better error handling** - Provides colored output and clear error messages
+4. **Smart detection** - Automatically detects requirements structure (file vs directory)
+5. **Consistent interface** - Same commands work across different project setups
+6. **All-in-one solution** - No need for separate Python helpers, Django commands handle everything
 </ch:project-commands>
 
 <ch:project-notes>
