@@ -10,7 +10,7 @@
 
 import type { LucideIcon } from 'lucide-react-native';
 import { ChevronRight } from 'lucide-react-native';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
@@ -35,7 +35,7 @@ interface SettingsActionItemProps {
   className?: string;
 }
 
-export const SettingsActionItem: React.FC<SettingsActionItemProps> = ({
+export const SettingsActionItem = React.memo<SettingsActionItemProps>(({
   title,
   description,
   icon,
@@ -45,9 +45,15 @@ export const SettingsActionItem: React.FC<SettingsActionItemProps> = ({
   showChevron = true,
   className = '',
 }) => {
+  const handlePress = useCallback(() => {
+    if (!disabled) {
+      onPress();
+    }
+  }, [onPress, disabled]);
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled}
       className={`glass-light rounded-2xl p-4 active:scale-98 transition-all ${
         disabled ? 'opacity-50' : ''
@@ -90,4 +96,14 @@ export const SettingsActionItem: React.FC<SettingsActionItemProps> = ({
       </HStack>
     </Pressable>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for SettingsActionItem
+  return (
+    prevProps.title === nextProps.title &&
+    prevProps.description === nextProps.description &&
+    prevProps.disabled === nextProps.disabled &&
+    prevProps.showChevron === nextProps.showChevron &&
+    prevProps.className === nextProps.className &&
+    JSON.stringify(prevProps.badge) === JSON.stringify(nextProps.badge)
+  );
+});

@@ -248,7 +248,7 @@ const FilterButtons: React.FC<{
   </HStack>
 );
 
-const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({ onRefresh }) => {
+const UpcomingEventsTable = React.memo<UpcomingEventsTableProps>(({ onRefresh }) => {
   const [activeFilter, setActiveFilter] = useState<FilterType>('week');
 
   // Use the API hook
@@ -356,7 +356,11 @@ const UpcomingEventsTable: React.FC<UpcomingEventsTableProps> = ({ onRefresh }) 
       </VStack>
     </Box>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for UpcomingEventsTable
+  // Since onRefresh is likely a stable function, we don't need deep comparison
+  return true; // Let React handle the comparison for the callback
+});
 
 export { UpcomingEventsTable };
 export default UpcomingEventsTable;

@@ -14,7 +14,7 @@ import {
   Clock,
   ExternalLink,
 } from 'lucide-react-native';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { ScrollView } from 'react-native';
 
 import { Badge } from '@/components/ui/badge';
@@ -44,7 +44,7 @@ interface TransactionRowProps {
   onRefund?: (transaction: TransactionMonitoring) => void;
 }
 
-function TransactionRow({ transaction, onView, onRefund }: TransactionRowProps) {
+const TransactionRow = React.memo<TransactionRowProps>(({ transaction, onView, onRefund }) => {
   const getStatusInfo = () => {
     switch (transaction.status) {
       case 'succeeded':
@@ -205,7 +205,15 @@ function TransactionRow({ transaction, onView, onRefund }: TransactionRowProps) 
       </Box>
     </TableRow>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison function for TransactionRow
+  return (
+    prevProps.transaction.payment_intent_id === nextProps.transaction.payment_intent_id &&
+    prevProps.transaction.status === nextProps.transaction.status &&
+    prevProps.transaction.amount === nextProps.transaction.amount &&
+    prevProps.transaction.risk_score === nextProps.transaction.risk_score
+  );
+});
 
 function LoadingRow() {
   return (
@@ -219,13 +227,13 @@ function LoadingRow() {
   );
 }
 
-export default function RecentTransactionsTable({
+const RecentTransactionsTable = React.memo<RecentTransactionsTableProps>(({
   transactions,
   loading,
   onViewTransaction,
   onRefundTransaction,
   maxRows = 10,
-}: RecentTransactionsTableProps) {
+}) => {
   const displayTransactions = transactions.slice(0, maxRows);
 
   return (
@@ -323,4 +331,13 @@ export default function RecentTransactionsTable({
       </VStack>
     </Card>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison function for RecentTransactionsTable
+  return (
+    prevProps.loading === nextProps.loading &&
+    prevProps.maxRows === nextProps.maxRows &&
+    JSON.stringify(prevProps.transactions) === JSON.stringify(nextProps.transactions)
+  );
+});
+
+export default RecentTransactionsTable;

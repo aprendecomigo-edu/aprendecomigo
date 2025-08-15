@@ -1,5 +1,5 @@
 import { Check, Edit, Globe, Mail, MapPin, Phone, Save, School, X } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 import { SchoolInfo } from '@/api/userApi';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -39,7 +39,7 @@ interface InfoRowProps {
   placeholder?: string;
 }
 
-const InfoRow: React.FC<InfoRowProps> = ({ icon: IconComponent, label, value, placeholder }) => (
+const InfoRow = React.memo<InfoRowProps>(({ icon: IconComponent, label, value, placeholder }) => (
   <HStack space="sm" className="items-start">
     <Icon as={IconComponent} size="sm" className="text-gray-500 mt-1" />
     <VStack space="xs" className="flex-1 min-w-0">
@@ -49,7 +49,14 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon: IconComponent, label, value, pl
       </Text>
     </VStack>
   </HStack>
-);
+), (prevProps, nextProps) => {
+  // Memoize InfoRow to prevent unnecessary re-renders
+  return (
+    prevProps.label === nextProps.label &&
+    prevProps.value === nextProps.value &&
+    prevProps.placeholder === nextProps.placeholder
+  );
+});
 
 const InfoRowSkeleton: React.FC = () => (
   <HStack space="sm" className="items-start">
@@ -61,12 +68,12 @@ const InfoRowSkeleton: React.FC = () => (
   </HStack>
 );
 
-const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({ schoolInfo, isLoading, onUpdate }) => {
+const SchoolInfoCard = React.memo<SchoolInfoCardProps>(({ schoolInfo, isLoading, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState<Partial<SchoolInfo>>({});
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     if (schoolInfo) {
       setEditData({
         name: schoolInfo.name,
@@ -81,14 +88,14 @@ const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({ schoolInfo, isLoading, 
       });
       setIsEditing(true);
     }
-  };
+  }, [schoolInfo]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setEditData({});
     setIsEditing(false);
-  };
+  }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       setIsSaving(true);
       await onUpdate(editData);
@@ -100,16 +107,16 @@ const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({ schoolInfo, isLoading, 
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [onUpdate, editData]);
 
-  const updateField = (field: string, value: string) => {
+  const updateField = useCallback((field: string, value: string) => {
     setEditData(prev => ({
       ...prev,
       [field]: value,
     }));
-  };
+  }, []);
 
-  const updateSetting = (setting: string, value: string | number) => {
+  const updateSetting = useCallback((setting: string, value: string | number) => {
     setEditData(prev => ({
       ...prev,
       settings: {
@@ -118,7 +125,7 @@ const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({ schoolInfo, isLoading, 
         [setting]: value,
       },
     }));
-  };
+  }, [schoolInfo?.settings]);
 
   if (isLoading) {
     return (
@@ -361,7 +368,13 @@ const SchoolInfoCard: React.FC<SchoolInfoCardProps> = ({ schoolInfo, isLoading, 
       </CardBody>
     </Card>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for SchoolInfoCard
+  return (
+    prevProps.isLoading === nextProps.isLoading &&
+    JSON.stringify(prevProps.schoolInfo) === JSON.stringify(nextProps.schoolInfo)
+  );
+});
 
 export { SchoolInfoCard };
 export default SchoolInfoCard;

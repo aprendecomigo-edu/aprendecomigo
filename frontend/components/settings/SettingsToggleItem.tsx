@@ -9,7 +9,7 @@
  */
 
 import type { LucideIcon } from 'lucide-react-native';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
@@ -29,7 +29,7 @@ interface SettingsToggleItemProps {
   className?: string;
 }
 
-export const SettingsToggleItem: React.FC<SettingsToggleItemProps> = ({
+export const SettingsToggleItem = React.memo<SettingsToggleItemProps>(({
   title,
   description,
   icon,
@@ -38,11 +38,11 @@ export const SettingsToggleItem: React.FC<SettingsToggleItemProps> = ({
   disabled = false,
   className = '',
 }) => {
-  const handlePress = () => {
+  const handlePress = useCallback(() => {
     if (!disabled) {
       onValueChange(!value);
     }
-  };
+  }, [disabled, onValueChange, value]);
 
   return (
     <Pressable
@@ -79,4 +79,13 @@ export const SettingsToggleItem: React.FC<SettingsToggleItemProps> = ({
       </HStack>
     </Pressable>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for SettingsToggleItem
+  return (
+    prevProps.title === nextProps.title &&
+    prevProps.description === nextProps.description &&
+    prevProps.value === nextProps.value &&
+    prevProps.disabled === nextProps.disabled &&
+    prevProps.className === nextProps.className
+  );
+});

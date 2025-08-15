@@ -17,7 +17,7 @@ import {
   Settings,
   Eye,
 } from 'lucide-react-native';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { ChildProfile } from '@/api/parentApi';
 import { Badge } from '@/components/ui/badge';
@@ -45,7 +45,7 @@ interface ChildAccountCardProps {
   showActions?: boolean;
 }
 
-export const ChildAccountCard: React.FC<ChildAccountCardProps> = ({
+export const ChildAccountCard = React.memo<ChildAccountCardProps>(({
   child,
   metrics,
   isSelected = false,
@@ -107,9 +107,9 @@ export const ChildAccountCard: React.FC<ChildAccountCardProps> = ({
   };
 
   // Navigate to child detail view
-  const handleViewDetails = () => {
+  const handleViewDetails = useCallback(() => {
     router.push(`/(parent)/child/${child.id}`);
-  };
+  }, [router, child.id]);
 
   return (
     <Card
@@ -234,4 +234,12 @@ export const ChildAccountCard: React.FC<ChildAccountCardProps> = ({
       </CardContent>
     </Card>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function to prevent unnecessary re-renders
+  return (
+    prevProps.child.id === nextProps.child.id &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.showActions === nextProps.showActions &&
+    JSON.stringify(prevProps.metrics) === JSON.stringify(nextProps.metrics)
+  );
+});

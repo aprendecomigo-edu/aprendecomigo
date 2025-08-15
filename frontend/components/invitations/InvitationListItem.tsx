@@ -9,7 +9,7 @@ import {
   Eye,
   Send,
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 
 import {
@@ -43,7 +43,7 @@ interface InvitationListItemProps {
   isLast?: boolean;
 }
 
-export const InvitationListItem: React.FC<InvitationListItemProps> = ({
+export const InvitationListItem = React.memo<InvitationListItemProps>(({
   invitation,
   onAction,
   isLast = false,
@@ -185,7 +185,7 @@ export const InvitationListItem: React.FC<InvitationListItemProps> = ({
     ].includes(invitation.status);
   };
 
-  const handleResend = async () => {
+  const handleResend = useCallback(async () => {
     try {
       await resendInvitation(invitation.token);
       onAction?.();
@@ -193,9 +193,9 @@ export const InvitationListItem: React.FC<InvitationListItemProps> = ({
       // Error handling is done in the hook
     }
     setShowActions(false);
-  };
+  }, [resendInvitation, invitation.token, onAction]);
 
-  const handleCancel = async () => {
+  const handleCancel = useCallback(async () => {
     Alert.alert(
       'Cancelar Convite',
       `Tem certeza que deseja cancelar o convite para ${invitation.email}?`,
@@ -216,13 +216,13 @@ export const InvitationListItem: React.FC<InvitationListItemProps> = ({
         },
       ]
     );
-  };
+  }, [cancelInvitation, invitation.token, invitation.email, onAction]);
 
-  const handleCopyLink = () => {
+  const handleCopyLink = useCallback(() => {
     // TODO: Implement copy to clipboard
     Alert.alert('Link copiado', 'Link do convite copiado para a área de transferência');
     setShowActions(false);
-  };
+  }, []);
 
   const statusConfig = getStatusConfig(invitation.status);
   const emailDeliveryConfig = getEmailDeliveryStatusConfig(invitation.email_delivery_status);
@@ -362,4 +362,12 @@ export const InvitationListItem: React.FC<InvitationListItemProps> = ({
       </Actionsheet>
     </>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function to prevent unnecessary re-renders
+  return (
+    prevProps.invitation.id === nextProps.invitation.id &&
+    prevProps.invitation.status === nextProps.invitation.status &&
+    prevProps.invitation.email_delivery_status === nextProps.invitation.email_delivery_status &&
+    prevProps.isLast === nextProps.isLast
+  );
+});

@@ -7,7 +7,7 @@
 
 import useRouter from '@unitools/router';
 import { Clock, Package, AlertTriangle, RefreshCw, User, ShoppingCart } from 'lucide-react-native';
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 
 import {
   BalanceStatusBar,
@@ -40,7 +40,7 @@ interface StudentBalanceCardProps {
 /**
  * Component for displaying student balance information with real-time updates.
  */
-export function StudentBalanceCard({
+export const StudentBalanceCard = React.memo<StudentBalanceCardProps>(function StudentBalanceCard({
   email,
   onRefresh,
   className = '',
@@ -51,14 +51,14 @@ export function StudentBalanceCard({
   const router = useRouter();
   const { balance, loading, error, refetch } = useStudentBalance(email);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     refetch();
     onRefresh?.();
-  };
+  }, [refetch, onRefresh]);
 
-  const handlePurchaseHours = () => {
+  const handlePurchaseHours = useCallback(() => {
     router.push('/purchase');
-  };
+  }, [router]);
 
   if (loading) {
     return (
@@ -105,6 +105,22 @@ export function StudentBalanceCard({
     );
   }
 
+  // Memoize expensive calculations
+  const remainingHours = useMemo(() => 
+    parseFloat(balance.balance_summary.remaining_hours), 
+    [balance.balance_summary.remaining_hours]
+  );
+  
+  const totalHours = useMemo(() => 
+    parseFloat(balance.balance_summary.hours_purchased), 
+    [balance.balance_summary.hours_purchased]
+  );
+  
+  const daysUntilExpiry = useMemo(() => 
+    balance.upcoming_expirations[0]?.days_until_expiry || null, 
+    [balance.upcoming_expirations]
+  );
+
   return (
     <Card className={`p-6 ${className}`}>
       <VStack space="lg">
@@ -131,9 +147,9 @@ export function StudentBalanceCard({
         {/* Balance Status Bar */}
         {showStatusBar && (
           <BalanceStatusBar
-            remainingHours={parseFloat(balance.balance_summary.remaining_hours)}
-            totalHours={parseFloat(balance.balance_summary.hours_purchased)}
-            daysUntilExpiry={balance.upcoming_expirations[0]?.days_until_expiry || null}
+            remainingHours={remainingHours}
+            totalHours={totalHours}
+            daysUntilExpiry={daysUntilExpiry}
             showDetails={!compact}
             className="mb-2"
           />
@@ -247,7 +263,16 @@ export function StudentBalanceCard({
       </VStack>
     </Card>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison function for StudentBalanceCard
+  return (
+    prevProps.email === nextProps.email &&
+    prevProps.className === nextProps.className &&
+    prevProps.showStudentInfo === nextProps.showStudentInfo &&
+    prevProps.showStatusBar === nextProps.showStatusBar &&
+    prevProps.compact === nextProps.compact
+  );
+});
 
 /**
  * Individual package item component.

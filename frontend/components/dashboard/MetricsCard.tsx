@@ -6,7 +6,7 @@ import {
   BookOpen,
   Activity,
 } from 'lucide-react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { SchoolMetrics } from '@/api/userApi';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -34,7 +34,7 @@ interface MetricItemProps {
   color: string;
 }
 
-const MetricItem: React.FC<MetricItemProps> = ({
+const MetricItem = React.memo<MetricItemProps>(({
   title,
   value,
   subtitle,
@@ -72,7 +72,16 @@ const MetricItem: React.FC<MetricItemProps> = ({
       )}
     </VStack>
   </VStack>
-);
+), (prevProps, nextProps) => {
+  // Memoize MetricItem to prevent unnecessary re-renders
+  return (
+    prevProps.title === nextProps.title &&
+    prevProps.value === nextProps.value &&
+    prevProps.subtitle === nextProps.subtitle &&
+    prevProps.color === nextProps.color &&
+    JSON.stringify(prevProps.trend) === JSON.stringify(nextProps.trend)
+  );
+});
 
 const MetricItemSkeleton: React.FC = () => (
   <VStack space="xs" className="flex-1 min-w-0">
@@ -85,7 +94,7 @@ const MetricItemSkeleton: React.FC = () => (
   </VStack>
 );
 
-const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) => {
+const MetricsCard = React.memo<MetricsCardProps>(({ metrics, isLoading }) => {
   if (isLoading) {
     return (
       <Card variant="elevated" className="bg-white shadow-sm">
@@ -124,19 +133,25 @@ const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) => {
     );
   }
 
-  // Calculate trends (using latest data point if available)
-  const getLatestTrend = (trendData: Array<{ date: string; count: number; change: number }>) => {
-    if (!trendData || trendData.length === 0) return null;
-    const latest = trendData[trendData.length - 1];
-    return {
-      value: Math.abs(latest.change),
-      isPositive: latest.change >= 0,
+  // Calculate trends (using latest data point if available) - memoized for performance
+  const trends = useMemo(() => {
+    if (!metrics) return { studentTrend: null, teacherTrend: null, classTrend: null };
+    
+    const getLatestTrend = (trendData: Array<{ date: string; count: number; change: number }>) => {
+      if (!trendData || trendData.length === 0) return null;
+      const latest = trendData[trendData.length - 1];
+      return {
+        value: Math.abs(latest.change),
+        isPositive: latest.change >= 0,
+      };
     };
-  };
 
-  const studentTrend = getLatestTrend(metrics.student_count.trend.daily);
-  const teacherTrend = getLatestTrend(metrics.teacher_count.trend.daily);
-  const classTrend = getLatestTrend(metrics.class_metrics.trend.daily);
+    return {
+      studentTrend: getLatestTrend(metrics.student_count.trend.daily),
+      teacherTrend: getLatestTrend(metrics.teacher_count.trend.daily),
+      classTrend: getLatestTrend(metrics.class_metrics.trend.daily),
+    };
+  }, [metrics]);
 
   return (
     <Card variant="elevated" className="bg-white shadow-sm">
@@ -153,7 +168,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) => {
               title="Estudantes"
               value={metrics.student_count.total}
               subtitle={`${metrics.student_count.active} ativos`}
-              trend={studentTrend}
+              trend={trends.studentTrend}
               icon={Users}
               color="blue"
             />
@@ -162,7 +177,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) => {
               title="Professores"
               value={metrics.teacher_count.total}
               subtitle={`${metrics.teacher_count.active} ativos`}
-              trend={teacherTrend}
+              trend={trends.teacherTrend}
               icon={GraduationCap}
               color="green"
             />
@@ -174,7 +189,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) => {
               title="Aulas Ativas"
               value={metrics.class_metrics.active_classes}
               subtitle={`${metrics.class_metrics.completed_today} hoje`}
-              trend={classTrend}
+              trend={trends.classTrend}
               icon={BookOpen}
               color="purple"
             />
@@ -220,7 +235,13 @@ const MetricsCard: React.FC<MetricsCardProps> = ({ metrics, isLoading }) => {
       </CardBody>
     </Card>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for MetricsCard
+  return (
+    prevProps.isLoading === nextProps.isLoading &&
+    JSON.stringify(prevProps.metrics) === JSON.stringify(nextProps.metrics)
+  );
+});
 
 export { MetricsCard };
 export default MetricsCard;
