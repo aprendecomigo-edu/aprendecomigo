@@ -51,6 +51,7 @@
       "mcp__playwright__browser_network_requests",
       "WebFetch(domain:docs.djangoproject.com)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }

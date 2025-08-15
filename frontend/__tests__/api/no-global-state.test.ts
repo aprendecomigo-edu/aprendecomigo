@@ -85,7 +85,7 @@ describe('No Global State Verification', () => {
       const apiClientPath = path.resolve(__dirname, '../../api/client/ApiClient.ts');
 
       try {
-        const apiClientSource = fs.readFileSync(apiClientPath, 'utf8');
+        const apiClientSource = await fs.promises.readFile(apiClientPath, 'utf8');
 
         // Check that direct storage imports are not present
         expect(apiClientSource).not.toMatch(/import.*storage.*from.*utils\/storage/);
@@ -107,7 +107,7 @@ describe('No Global State Verification', () => {
       const apiClientPath = path.resolve(__dirname, '../../api/client/ApiClient.ts');
 
       try {
-        const apiClientSource = fs.readFileSync(apiClientPath, 'utf8');
+        const apiClientSource = await fs.promises.readFile(apiClientPath, 'utf8');
 
         // Check that global callback patterns are not present
         expect(apiClientSource).not.toMatch(/let.*authErrorCallback/);
