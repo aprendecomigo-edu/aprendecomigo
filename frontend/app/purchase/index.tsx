@@ -6,12 +6,15 @@
  */
 
 import useRouter from '@unitools/router';
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 
-import { PurchaseFlow } from '@/components/purchase';
+import LoadingScreen from '@/components/ui/loading-screen';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { useToast } from '@/components/ui/toast';
+
+// Lazy load the PurchaseFlow component
+const PurchaseFlow = lazy(() => import('@/components/purchase').then(module => ({ default: module.PurchaseFlow })));
 
 export default function PurchasePage() {
   const router = useRouter();
@@ -37,11 +40,13 @@ export default function PurchasePage() {
   return (
     <SafeAreaView className="flex-1 bg-background-50">
       <ScrollView className="flex-1">
-        <PurchaseFlow
-          onPurchaseComplete={handlePurchaseComplete}
-          onCancel={handleCancel}
-          className="px-4 py-6"
-        />
+        <Suspense fallback={<LoadingScreen message="Loading purchase flow..." />}>
+          <PurchaseFlow
+            onPurchaseComplete={handlePurchaseComplete}
+            onCancel={handleCancel}
+            className="px-4 py-6"
+          />
+        </Suspense>
       </ScrollView>
     </SafeAreaView>
   );

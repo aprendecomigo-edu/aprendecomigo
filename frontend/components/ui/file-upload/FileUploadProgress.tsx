@@ -1,4 +1,4 @@
-import { X, AlertCircle, CheckCircle, Upload } from 'lucide-react-native';
+import { X, AlertCircle, CheckCircle, Upload } from '@/components/ui/icons';
 import React from 'react';
 import { Platform } from 'react-native';
 

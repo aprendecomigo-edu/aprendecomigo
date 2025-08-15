@@ -1,6 +1,7 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
-import { AlertTriangleIcon, CalendarIcon } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
+
+import { AlertTriangle, CalendarIcon } from '@/components/ui/icons';
 
 import { useAuth, useUserProfile } from '@/api/auth';
 import { tasksApi, Task } from '@/api/tasksApi';
@@ -229,7 +230,7 @@ const AdminDashboard = () => {
               }}
             >
               <HStack space="sm" className="items-start">
-                <Icon as={AlertTriangleIcon} size="sm" className="text-amber-600 mt-1" />
+                <Icon as={AlertTriangle} size="sm" className="text-amber-600 mt-1" />
                 <VStack className="flex-1">
                   <Text className="font-semibold text-amber-900 mb-1">
                     Precisa de adicionar novo professor e aluno em 7 dias antes que a conta seja

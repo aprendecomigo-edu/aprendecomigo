@@ -1,4 +1,6 @@
 import useRouter from '@unitools/router';
+import React, { useEffect, useState } from 'react';
+
 import {
   ArrowLeft,
   ArrowRight,
@@ -10,8 +12,7 @@ import {
   Target,
   TrendingUp,
   ExternalLink,
-} from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+} from '@/components/ui/icons';
 import { Platform, Dimensions } from 'react-native';
 
 import { TutorSchoolCreationModal } from '@/components/modals/TutorSchoolCreationModal';

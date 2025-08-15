@@ -1,4 +1,4 @@
-import { CheckCircle, AlertCircle, X } from 'lucide-react-native';
+import { CheckCircle, AlertCircle, X } from '@/components/ui/icons';
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Animated, Dimensions } from 'react-native';
 

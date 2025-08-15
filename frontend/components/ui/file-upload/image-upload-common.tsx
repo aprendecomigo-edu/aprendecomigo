@@ -7,7 +7,7 @@
 
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { Upload, Edit3, Trash2, Image as ImageIcon } from 'lucide-react-native';
+import { Upload, Edit3, Trash2, ImageIcon } from '@/components/ui/icons';
 import React from 'react';
 
 import FileUploadProgress from './FileUploadProgress';

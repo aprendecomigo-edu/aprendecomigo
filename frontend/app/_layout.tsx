@@ -3,7 +3,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { Platform } from 'react-native';
 
 import { AuthProvider, useAuth, UserProfileProvider, SchoolProvider } from '@/api/auth';
@@ -73,36 +73,38 @@ function AuthAwareNavigation() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {/* Always accessible routes */}
-      <Stack.Screen name="index" />
+    <Suspense fallback={<LoadingScreen />}>
+      <Stack screenOptions={{ headerShown: false }}>
+        {/* Always accessible routes */}
+        <Stack.Screen name="index" />
 
-      {/* Public routes - only show when NOT logged in */}
-      {!isLoggedIn && <Stack.Screen name="auth" />}
+        {/* Public routes - only show when NOT logged in */}
+        {!isLoggedIn && <Stack.Screen name="auth" />}
 
-      {/* Protected routes - only show when logged in */}
-      {isLoggedIn && (
-        <>
-          <Stack.Screen name="home" />
-          <Stack.Screen name="profile" />
-          <Stack.Screen name="settings" />
-          <Stack.Screen name="chat" />
-          <Stack.Screen name="purchase" />
-          <Stack.Screen name="onboarding" />
-          <Stack.Screen name="accept-invitation" />
-          <Stack.Screen name="(school-admin)" options={{ headerShown: false }} />
-          <Stack.Screen name="(teacher)" options={{ headerShown: false }} />
-          <Stack.Screen name="(parent)" />
-          <Stack.Screen name="admin" />
-          <Stack.Screen name="(student)" />
-          <Stack.Screen name="students" />
-          <Stack.Screen name="teachers" />
-          <Stack.Screen name="calendar" />
-          <Stack.Screen name="users" />
-          <Stack.Screen name="dashboard" />
-        </>
-      )}
-    </Stack>
+        {/* Protected routes - only show when logged in */}
+        {isLoggedIn && (
+          <>
+            <Stack.Screen name="home" />
+            <Stack.Screen name="profile" />
+            <Stack.Screen name="settings" />
+            <Stack.Screen name="chat" />
+            <Stack.Screen name="purchase" />
+            <Stack.Screen name="onboarding" />
+            <Stack.Screen name="accept-invitation" />
+            <Stack.Screen name="(school-admin)" options={{ headerShown: false }} />
+            <Stack.Screen name="(teacher)" options={{ headerShown: false }} />
+            <Stack.Screen name="(parent)" />
+            <Stack.Screen name="admin" />
+            <Stack.Screen name="(student)" />
+            <Stack.Screen name="students" />
+            <Stack.Screen name="teachers" />
+            <Stack.Screen name="calendar" />
+            <Stack.Screen name="users" />
+            <Stack.Screen name="dashboard" />
+          </>
+        )}
+      </Stack>
+    </Suspense>
   );
 }
 

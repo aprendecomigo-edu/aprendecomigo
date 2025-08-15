@@ -1,5 +1,5 @@
 import * as DocumentPicker from 'expo-document-picker';
-import { Upload, FileText, Trash2, AlertCircle, CheckCircle } from 'lucide-react-native';
+import { Upload, FileText, Trash2, AlertCircle, CheckCircle } from '@/components/ui/icons';
 import React, { useState } from 'react';
 import { Platform, Alert } from 'react-native';
 
