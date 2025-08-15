@@ -8,7 +8,7 @@ to detect potentially fraudulent activities and generate appropriate alerts.
 from datetime import timedelta
 from decimal import Decimal
 import logging
-from typing import Any
+from typing import Optional, Any
 
 # Cross-app models will be loaded at runtime using apps.get_model()
 from django.utils import timezone
@@ -604,7 +604,7 @@ class FraudDetectionService:
     def _generate_fraud_alert(
         self,
         risk_data: dict[str, Any],
-        transaction: PurchaseTransaction = None,
+        transaction: Optional[PurchaseTransaction] = None,
         user=None,  # CustomUser instance
         admin_user=None,  # CustomUser instance
     ) -> dict[str, Any] | None:
