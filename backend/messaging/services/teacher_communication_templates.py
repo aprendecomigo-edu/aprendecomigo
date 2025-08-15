@@ -119,9 +119,9 @@ class DefaultEmailTemplates:
             {% endif %}
             <p>{{ platform_name }} Educational Platform</p>
         </div>
-        
+
         {CONTENT}
-        
+
         <div class="footer">
             <p><strong>{{ school_name }} Team</strong></p>
             {% if school_website %}
@@ -175,11 +175,11 @@ class DefaultEmailTemplates:
                 "{CONTENT}",
                 """
                 <h1 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">You're Invited to Join as a Teacher!</h1>
-                
+
                 <p>Hello,</p>
-                
+
                 <p>We're excited to invite you to join <strong>{{ school_name }}</strong> as a teacher on the {{ platform_name }} platform. This is a wonderful opportunity to share your knowledge and help students achieve their educational goals.</p>
-                
+
                 <div class="school-info">
                     <div class="school-name">{{ school_name }}</div>
                     <div style="color: #6c757d; font-size: 16px; margin-bottom: 5px;">Role: {{ role_display }}</div>
@@ -187,37 +187,37 @@ class DefaultEmailTemplates:
                     <p style="margin-top: 10px; color: #6c757d;">{{ school_description }}</p>
                     {% endif %}
                 </div>
-                
+
                 {% if custom_message %}
                 <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0;">
                     <div style="font-weight: bold; color: #856404; margin-bottom: 8px;">Personal Message from {{ invited_by_name }}:</div>
                     <p>{{ custom_message }}</p>
                 </div>
                 {% endif %}
-                
+
                 <div class="cta-section">
                     <a href="{{ invitation_link }}" class="cta-button">Accept Invitation</a>
                     <p style="margin-top: 15px; font-size: 14px; color: #6c757d;">
                         Click the button above to accept your invitation and get started
                     </p>
                 </div>
-                
+
                 <div style="background-color: #fff5f5; border: 1px solid #feb2b2; color: #c53030; padding: 12px; border-radius: 6px; margin: 15px 0; font-size: 14px;">
                     <strong>⏰ Time Sensitive:</strong> This invitation expires on {{ expires_at|date:"F j, Y" }}. Please accept it soon to avoid missing this opportunity.
                 </div>
-                
+
                 <p><strong>What happens next?</strong></p>
                 <ol>
                     <li>Click the "Accept Invitation" button above</li>
                     <li>Complete your teacher profile setup</li>
                     <li>Start teaching and helping students learn</li>
                 </ol>
-                
+
                 <p>If you're unable to click the button, you can copy and paste this link into your browser:</p>
                 <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace;">{{ invitation_link }}</p>
-                
+
                 <p>If you have any questions about this invitation or the platform, please don't hesitate to contact {{ invited_by_name }} at {{ invited_by_email }}.</p>
-                
+
                 <p>Welcome to the {{ platform_name }} community!</p>
             """,
             ),
@@ -271,24 +271,24 @@ If you didn't expect this invitation, you can safely ignore this email.
                 "{CONTENT}",
                 """
                 <h1 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">Reminder: Your Teacher Invitation</h1>
-                
+
                 <p>Hello,</p>
-                
+
                 <p>We wanted to remind you about your pending invitation to join <strong>{{ school_name }}</strong> as a teacher on {{ platform_name }}.</p>
-                
+
                 <div class="school-info">
                     <div class="school-name">{{ school_name }}</div>
                     <div style="color: #6c757d; font-size: 16px;">Role: {{ role_display }}</div>
                 </div>
-                
+
                 <div style="background-color: #fff5f5; border: 1px solid #feb2b2; color: #c53030; padding: 15px; border-radius: 6px; margin: 20px 0;">
                     <strong>⏰ Time Sensitive:</strong> Your invitation expires on {{ expires_at|date:"F j, Y \a\\t g:i A" }}. Don't miss this opportunity!
                 </div>
-                
+
                 <div class="cta-section">
                     <a href="{{ invitation_link }}" class="cta-button">Accept Invitation Now</a>
                 </div>
-                
+
                 <p>Joining {{ school_name }} means:</p>
                 <ul>
                     <li>✅ Flexible teaching schedule</li>
@@ -296,9 +296,9 @@ If you didn't expect this invitation, you can safely ignore this email.
                     <li>✅ Supportive teaching community</li>
                     <li>✅ Modern teaching tools and resources</li>
                 </ul>
-                
+
                 <p>If you have any questions or concerns, please reach out to {{ invited_by_name }} at {{ invited_by_email }}.</p>
-                
+
                 <p>We hope to welcome you to our team soon!</p>
             """,
             ),
@@ -341,11 +341,11 @@ The {{ school_name }} Team
                 "{CONTENT}",
                 """
                 <h1 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">🎉 Welcome to {{ school_name }}!</h1>
-                
+
                 <p>Dear {{ teacher_name }},</p>
-                
+
                 <p>Congratulations! You have successfully joined <strong>{{ school_name }}</strong> as a teacher. We're thrilled to have you as part of our educational community.</p>
-                
+
                 <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 6px; margin: 20px 0;">
                     <strong>🎯 Your Next Steps:</strong>
                     <ol style="margin-top: 10px; margin-bottom: 0;">
@@ -355,11 +355,11 @@ The {{ school_name }} Team
                         <li>Review student matching preferences</li>
                     </ol>
                 </div>
-                
+
                 <div class="cta-section">
                     <a href="{{ dashboard_link }}" class="cta-button">Go to Dashboard</a>
                 </div>
-                
+
                 <p><strong>What's available to you:</strong></p>
                 <ul>
                     <li>📊 Comprehensive teaching dashboard</li>
@@ -369,11 +369,11 @@ The {{ school_name }} Team
                     <li>📈 Progress tracking tools</li>
                     <li>🎓 Professional development resources</li>
                 </ul>
-                
+
                 <p>If you need any help getting started, our support team is here for you. You can also reach out to {{ invited_by_name }} at {{ invited_by_email }}.</p>
-                
+
                 <p>We're excited to see the positive impact you'll make on our students' learning journey!</p>
-                
+
                 <p>Best regards,<br>The {{ school_name }} Team</p>
             """,
             ),
@@ -418,11 +418,11 @@ The {{ school_name }} Team
                 "{CONTENT}",
                 """
                 <h1 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">Complete Your Teacher Profile</h1>
-                
+
                 <p>Hello {{ teacher_name }},</p>
-                
+
                 <p>Welcome to {{ school_name }}! We noticed that your teacher profile is still incomplete. Completing your profile is essential to start teaching and connecting with students.</p>
-                
+
                 <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 6px; margin: 20px 0;">
                     <strong>📝 Profile Completion Status:</strong>
                     <div style="margin-top: 10px;">
@@ -433,21 +433,21 @@ The {{ school_name }} Team
                         </div>
                     </div>
                 </div>
-                
+
                 <p><strong>Missing Information:</strong></p>
                 <ul>
                     {% for missing_field in missing_profile_fields %}
                     <li>{{ missing_field }}</li>
                     {% endfor %}
                 </ul>
-                
+
                 <div class="cta-section">
                     <a href="{{ profile_completion_link }}" class="cta-button">Complete Your Profile</a>
                     <p style="margin-top: 15px; font-size: 14px; color: #6c757d;">
                         Takes only 5-10 minutes to complete
                     </p>
                 </div>
-                
+
                 <p><strong>Why complete your profile?</strong></p>
                 <ul>
                     <li>🎯 Get matched with suitable students</li>
@@ -455,9 +455,9 @@ The {{ school_name }} Team
                     <li>📈 Build your teaching reputation</li>
                     <li>🌟 Stand out to parents and students</li>
                 </ul>
-                
+
                 <p>If you need help completing your profile, don't hesitate to contact us at {{ support_email }} or reach out to {{ invited_by_name }}.</p>
-                
+
                 <p>We're here to support your teaching journey!</p>
             """,
             ),
@@ -502,18 +502,18 @@ The {{ school_name }} Team
                 "{CONTENT}",
                 """
                 <h1 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">🎉 Congratulations, {{ teacher_name }}!</h1>
-                
+
                 <p>Fantastic news! You've successfully completed your teacher profile at {{ school_name }}. You're now ready to start your teaching journey with us.</p>
-                
+
                 <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
                     <h3 style="margin-top: 0; color: #155724;">🌟 Your Profile is 100% Complete! 🌟</h3>
                     <p style="margin-bottom: 0;">You can now receive student requests and start teaching.</p>
                 </div>
-                
+
                 <div class="cta-section">
                     <a href="{{ dashboard_link }}" class="cta-button">View Your Dashboard</a>
                 </div>
-                
+
                 <p><strong>What's next?</strong></p>
                 <ol>
                     <li>🎯 <strong>Set Your Availability:</strong> Let students know when you're free to teach</li>
@@ -521,7 +521,7 @@ The {{ school_name }} Team
                     <li>💰 <strong>Set Your Rates:</strong> Configure your hourly teaching rates</li>
                     <li>👥 <strong>Wait for Requests:</strong> Students will start reaching out soon!</li>
                 </ol>
-                
+
                 <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
                     <h4 style="color: #1976d2; margin-top: 0;">💡 Pro Tips for New Teachers:</h4>
                     <ul style="margin-bottom: 0;">
@@ -531,9 +531,9 @@ The {{ school_name }} Team
                         <li>Be flexible with your availability initially</li>
                     </ul>
                 </div>
-                
+
                 <p>The {{ school_name }} team is excited to have you aboard. If you have any questions or need support, please don't hesitate to reach out to us.</p>
-                
+
                 <p>Happy teaching!</p>
             """,
             ),
@@ -577,11 +577,11 @@ The {{ school_name }} Team
                 "{CONTENT}",
                 """
                 <h1 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">We are Here to Support You!</h1>
-                
+
                 <p>Hello {{ teacher_name }},</p>
-                
+
                 <p>We hope you're enjoying your teaching experience at {{ school_name }}! As part of our commitment to supporting our teachers, we wanted to check in and see how things are going.</p>
-                
+
                 {% if teaching_stats %}
                 <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
                     <h4 style="color: #1976d2; margin-top: 0;">📊 Your Teaching Impact So Far:</h4>
@@ -593,7 +593,7 @@ The {{ school_name }} Team
                     </ul>
                 </div>
                 {% endif %}
-                
+
                 <p><strong>Resources available to you:</strong></p>
                 <ul>
                     <li>📚 <strong>Teaching Resources:</strong> Access our library of educational materials</li>
@@ -601,16 +601,16 @@ The {{ school_name }} Team
                     <li>🎓 <strong>Professional Development:</strong> Free workshops and training sessions</li>
                     <li>🆘 <strong>24/7 Support:</strong> Our team is always here to help</li>
                 </ul>
-                
+
                 <div class="cta-section">
                     <a href="{{ resources_link }}" class="cta-button">Explore Resources</a>
                 </div>
-                
+
                 <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 6px; margin: 20px 0;">
                     <strong>💡 Need Help?</strong>
                     <p style="margin-bottom: 0;">Whether you have questions about the platform, need teaching tips, or want to share feedback, we're here for you!</p>
                 </div>
-                
+
                 <p><strong>Quick ways to get support:</strong></p>
                 <ul>
                     <li>📧 Email us at {{ support_email }}</li>
@@ -618,9 +618,9 @@ The {{ school_name }} Team
                     <li>📞 Schedule a call with our support team</li>
                     <li>🌐 Visit our help center at {{ help_center_link }}</li>
                 </ul>
-                
+
                 <p>Your success as a teacher is our priority. We're committed to providing you with everything you need to excel in your teaching journey.</p>
-                
+
                 <p>Keep up the great work!</p>
             """,
             ),

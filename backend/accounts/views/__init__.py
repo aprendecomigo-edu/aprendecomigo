@@ -8,7 +8,6 @@ For now, we import from the parent views.py file to ensure nothing breaks.
 As we complete the refactoring, we'll update these imports.
 """
 
-# Import the base authentication classes we've already refactored
 # Import utility functions that were available in the original views module for backwards compatibility
 from common.messaging import send_email_verification_code
 
@@ -76,47 +75,47 @@ from .users import (
 
 # Export all views for backward compatibility
 __all__ = [
-    # Auth views (refactored)
-    "KnoxAuthenticatedAPIView",
-    "KnoxAuthenticatedViewSet",
-    "RequestCodeView",
-    "VerifyCodeView",
-    # User management (refactored)
-    "UserViewSet",
-    "ParentProfileViewSet",
-    "ParentChildRelationshipViewSet",
-    # School Management
-    "SchoolViewSet",
-    "SchoolMembershipViewSet",
-    "SchoolDashboardViewSet",
-    "SchoolBrandingAPIView",
+    # Bulk Operations (refactored)
+    "BulkTeacherActionsView",
     "CommunicationSettingsAPIView",
-    # Teacher Management
-    "TeacherViewSet",
-    "TeacherProfileWizardViewSet",
-    "TeacherProfileStepValidationView",
-    "TeacherProfileCompletionStatusView",
-    # Student Management (refactored)
-    "StudentViewSet",
     # Course Management (refactored)
     "CourseViewSet",
     "EducationalSystemViewSet",
-    "TeacherCourseViewSet",
-    # Invitations (refactored)
-    "InvitationViewSet",
-    "SchoolInvitationLinkView",
-    "TeacherInvitationViewSet",
     # Search & Discovery (refactored)
     "GlobalSearchView",
+    # Invitations (refactored)
+    "InvitationViewSet",
+    # Auth views (refactored)
+    "KnoxAuthenticatedAPIView",
+    "KnoxAuthenticatedViewSet",
+    "ParentChildRelationshipViewSet",
+    "ParentProfileViewSet",
+    "RequestCodeView",
+    "SchoolBrandingAPIView",
+    "SchoolDashboardViewSet",
+    "SchoolInvitationLinkView",
+    "SchoolMembershipViewSet",
+    # School Management
+    "SchoolViewSet",
+    # Student Management (refactored)
+    "StudentViewSet",
+    "TeacherCourseViewSet",
+    "TeacherInvitationViewSet",
+    "TeacherProfileCompletionStatusView",
+    "TeacherProfileStepValidationView",
+    "TeacherProfileWizardViewSet",
+    # Teacher Management
+    "TeacherViewSet",
     "TutorDiscoveryAPIView",
     # Onboarding (refactored)
     "TutorOnboardingAPIView",
     "TutorOnboardingGuidanceView",
+    "TutorOnboardingSaveProgressView",
     "TutorOnboardingStartView",
     "TutorOnboardingValidateStepView",
-    "TutorOnboardingSaveProgressView",
-    # Bulk Operations (refactored)
-    "BulkTeacherActionsView",
+    # User management (refactored)
+    "UserViewSet",
+    "VerifyCodeView",
     # Utility functions for backward compatibility
     "send_email_verification_code",
 ]

@@ -3,12 +3,10 @@
 
 import React from 'react';
 import '@testing-library/jest-native/extend-expect';
+import '@testing-library/jest-dom';
 
 // Don't mock react-native at all - let jest-expo handle it completely
 // jest-expo preset includes proper React Native mocks
-
-// Import React Native Testing Library and configure it manually
-import '@testing-library/jest-native/extend-expect';
 
 // Configure React Native Testing Library properly
 const { configure } = require('@testing-library/react-native');

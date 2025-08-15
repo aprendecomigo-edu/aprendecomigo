@@ -1,0 +1,55 @@
+# Development Dependencies
+# Install with: pip install -r requirements/dev.txt
+
+-r base.txt
+
+# Testing & Coverage
+coverage==7.10.3
+daphne==4.2.1  # Required for channels.testing module (WebSocket tests)
+
+# Type Checking & Linting
+mypy==1.17.1
+mypy_extensions==1.1.0
+django-stubs==5.2.2
+django-stubs-ext==5.2.2
+djangorestframework-stubs==3.16.2
+types-PyYAML==6.0.12.20250809
+types-requests==2.31.0.0
+types-urllib3==1.26.25.14
+ruff==0.12.9
+types-pytz==2025.2.0.20250809
+
+# Security Auditing
+pip_audit==2.9.0
+pip-api==0.0.34
+pip-requirements-parser==32.0.1
+
+# Development Utilities
+rich==14.1.0  # Better terminal output
+Pygments==2.19.2  # Syntax highlighting
+markdown-it-py==4.0.0
+mdurl==0.1.2
+django-sslserver==0.22  # For HTTPS in development
+
+
+# Additional dev dependencies for pip-audit
+boolean.py==5.0
+CacheControl==0.14.3
+cyclonedx-python-lib==9.1.0
+defusedxml==0.7.1
+license-expression==30.4.4
+packageurl-python==0.17.5
+pathspec==0.12.1
+platformdirs==4.3.7
+py-serializable==2.1.0
+toml==0.10.2
+
+# File handling for development
+filelock==3.18.0
+distlib==0.3.9
+cfgv==3.4.0
+identify==2.6.9
+
+# Django development helpers (optional)
+# django-debug-toolbar==4.2.0
+# django-extensions==3.2.3

@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 import pytz
 
@@ -239,7 +240,7 @@ class TaskModelTest(BaseTestCase):
         """Test model field validation and constraints"""
         # Test title max_length (200 characters)
         long_title = "x" * 201
-        with self.assertRaises(Exception):  # Django will raise validation error
+        with self.assertRaises(ValidationError):  # Django will raise validation error
             task = Task(title=long_title, user=self.user)
             task.full_clean()  # Triggers model validation
 
@@ -249,15 +250,15 @@ class TaskModelTest(BaseTestCase):
         task.full_clean()  # Should not raise
 
         # Test invalid choice values
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             task = Task(title="Test", user=self.user, priority="invalid_priority")
             task.full_clean()
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             task = Task(title="Test", user=self.user, status="invalid_status")
             task.full_clean()
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             task = Task(title="Test", user=self.user, task_type="invalid_type")
             task.full_clean()
 
@@ -681,18 +682,16 @@ class TaskViewSetBusinessLogicTest(BaseTestCase):
         # Create tasks with different priorities and due dates to test ordering
         # Django orders choice fields alphabetically by string value
         # With "-priority", reverse alphabetical order: "medium" > "low" > "high"
-        task_high_due_later = Task.objects.create(
+        Task.objects.create(
             title="High Priority Later", user=self.user, priority="high", due_date=now + timedelta(days=2)
         )
-        task_high_due_sooner = Task.objects.create(
+        Task.objects.create(
             title="High Priority Sooner", user=self.user, priority="high", due_date=now + timedelta(days=1)
         )
-        task_medium = Task.objects.create(
+        Task.objects.create(
             title="Medium Priority", user=self.user, priority="medium", due_date=now + timedelta(days=1)
         )
-        task_low = Task.objects.create(
-            title="Low Priority", user=self.user, priority="low", due_date=now + timedelta(days=1)
-        )
+        Task.objects.create(title="Low Priority", user=self.user, priority="low", due_date=now + timedelta(days=1))
 
         factory = APIRequestFactory()
         request = factory.get("/tasks/")

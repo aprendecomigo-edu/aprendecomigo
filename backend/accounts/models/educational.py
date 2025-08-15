@@ -5,8 +5,6 @@ This module contains models related to educational systems,
 courses, and the relationships between teachers and courses.
 """
 
-from typing import ClassVar
-
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -134,7 +132,7 @@ class Course(models.Model):
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together: ClassVar = ["code", "educational_system"]
+        unique_together = ["code", "educational_system"]
         ordering = ["educational_system__name", "name"]
         indexes = [
             models.Index(fields=["educational_system", "education_level"]),
@@ -149,18 +147,21 @@ class Course(models.Model):
     def clean(self):
         """Validate that education_level is valid for the selected educational system"""
         super().clean()
-        if self.educational_system and self.education_level:
-            if not self.educational_system.validate_education_level(self.education_level):
-                from django.core.exceptions import ValidationError
+        if (
+            self.educational_system
+            and self.education_level
+            and not self.educational_system.validate_education_level(self.education_level)
+        ):
+            from django.core.exceptions import ValidationError
 
-                valid_levels = dict(self.educational_system.education_level_choices)
-                raise ValidationError(
-                    {
-                        "education_level": f"Education level '{self.education_level}' is not valid for "
-                        f"educational system '{self.educational_system.name}'. "
-                        f"Valid options: {list(valid_levels.keys())}"
-                    }
-                )
+            valid_levels = dict(self.educational_system.education_level_choices)
+            raise ValidationError(
+                {
+                    "education_level": f"Education level '{self.education_level}' is not valid for "
+                    f"educational system '{self.educational_system.name}'. "
+                    f"Valid options: {list(valid_levels.keys())}"
+                }
+            )
 
 
 class TeacherCourse(models.Model):
@@ -186,7 +187,7 @@ class TeacherCourse(models.Model):
     started_teaching: models.DateField = models.DateField(_("started teaching date"), auto_now_add=True)
 
     class Meta:
-        unique_together: ClassVar = ["teacher", "course"]
+        unique_together = ["teacher", "course"]
         indexes = [
             # Indexes for tutor discovery filtering
             models.Index(fields=["hourly_rate"]),

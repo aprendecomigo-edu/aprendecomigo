@@ -40,7 +40,9 @@ from .models import ClassSchedule, ClassStatus, ClassType, TeacherAvailability, 
 class SchedulingConfigurationService:
     """Service for managing scheduling rule configuration and inheritance."""
 
-    def get_minimum_notice_hours(self, school: School, teacher: TeacherProfile = None, class_type: str = None) -> int:
+    def get_minimum_notice_hours(
+        self, school: School, teacher: TeacherProfile | None = None, class_type: str | None = None
+    ) -> int:
         """Get minimum notice period in hours with configuration hierarchy."""
         # Teacher-specific override
         if teacher and teacher.minimum_notice_minutes is not None:
@@ -54,7 +56,9 @@ class SchedulingConfigurationService:
             # Fallback to system default
             return DEFAULT_MINIMUM_NOTICE_HOURS
 
-    def get_minimum_notice_minutes(self, school: School, teacher: TeacherProfile = None, class_type: str = None) -> int:
+    def get_minimum_notice_minutes(
+        self, school: School, teacher: TeacherProfile | None = None, class_type: str | None = None
+    ) -> int:
         """Get minimum notice period in minutes with configuration hierarchy."""
         # Teacher-specific override
         if teacher and teacher.minimum_notice_minutes is not None:
@@ -68,7 +72,9 @@ class SchedulingConfigurationService:
             # Fallback to system default (2 hours)
             return DEFAULT_MINIMUM_NOTICE_MINUTES
 
-    def get_buffer_time_minutes(self, school: School, teacher: TeacherProfile = None, class_type: str = None) -> int:
+    def get_buffer_time_minutes(
+        self, school: School, teacher: TeacherProfile | None = None, class_type: str | None = None
+    ) -> int:
         """Get buffer time in minutes with class-type and teacher hierarchy."""
         # Teacher-specific override
         if teacher and teacher.buffer_time_minutes is not None:
@@ -88,7 +94,7 @@ class SchedulingConfigurationService:
             # Fallback to system default
             return DEFAULT_BUFFER_TIME_MINUTES
 
-    def get_daily_booking_limit(self, school: School, teacher: TeacherProfile = None, is_student: bool = False) -> int:
+    def get_daily_booking_limit(self, school: School, teacher: TeacherProfile | None = None, is_student: bool = False) -> int:
         """Get daily booking limit with role and teacher hierarchy."""
         if is_student:
             try:
@@ -105,7 +111,7 @@ class SchedulingConfigurationService:
         except (AttributeError, ValueError, TypeError):
             return DEFAULT_TEACHER_MAX_DAILY_BOOKINGS  # Teacher fallback
 
-    def get_weekly_booking_limit(self, school: School, teacher: TeacherProfile = None, is_student: bool = False) -> int:
+    def get_weekly_booking_limit(self, school: School, teacher: TeacherProfile | None = None, is_student: bool = False) -> int:
         """Get weekly booking limit with role and teacher hierarchy."""
         if is_student:
             try:
@@ -123,7 +129,7 @@ class SchedulingConfigurationService:
             return 30  # Teacher fallback
 
     def get_rule_configuration(
-        self, school: School, teacher: TeacherProfile = None, class_type: str = None, is_student: bool = False
+        self, school: School, teacher: TeacherProfile | None = None, class_type: str | None = None, is_student: bool = False
     ) -> dict[str, Any]:
         """Get complete rule configuration for display/debugging."""
         return {
@@ -152,7 +158,7 @@ class SchedulingRulesService:
         self.config_service = SchedulingConfigurationService()
 
     def validate_minimum_notice(
-        self, booking_datetime: datetime, school: School, teacher: TeacherProfile = None, class_type: str = None
+        self, booking_datetime: datetime, school: School, teacher: TeacherProfile | None = None, class_type: str | None = None
     ) -> bool:
         """Validate that booking meets minimum notice period requirement."""
         minimum_hours = self.config_service.get_minimum_notice_hours(school, teacher, class_type)
@@ -180,7 +186,7 @@ class SchedulingRulesService:
         return True
 
     def calculate_buffer_time(
-        self, class_type: str = None, teacher: TeacherProfile = None, school: School = None
+        self, class_type: str | None = None, teacher: TeacherProfile | None = None, school: School | None = None
     ) -> int:
         """Calculate required buffer time in minutes."""
         if not school:
@@ -189,7 +195,12 @@ class SchedulingRulesService:
         return self.config_service.get_buffer_time_minutes(school, teacher, class_type)
 
     def validate_booking_limits(
-        self, student: CustomUser, teacher: TeacherProfile, school: School, booking_date: date, class_type: str = None
+        self,
+        student: CustomUser,
+        teacher: TeacherProfile,
+        school: School,
+        booking_date: date,
+        class_type: str | None = None,
     ) -> bool:
         """Validate that booking doesn't exceed daily/weekly limits."""
         # Get limits
@@ -259,7 +270,7 @@ class SchedulingRulesService:
         return True
 
     def get_rule_configuration(
-        self, school: School, teacher: TeacherProfile = None, class_type: str = None, is_student: bool = False
+        self, school: School, teacher: TeacherProfile | None = None, class_type: str | None = None, is_student: bool = False
     ) -> dict[str, Any]:
         """Get complete rule configuration - delegate to configuration service."""
         return self.config_service.get_rule_configuration(school, teacher, class_type, is_student)
@@ -278,7 +289,7 @@ class ConflictDetectionService:
         booking_date: date,
         start_time: time,
         end_time: time,
-        exclude_class_id: int = None,
+        exclude_class_id: int | None = None,
     ) -> dict[str, Any] | None:
         """Detect if student has conflicting classes."""
         conflicting_classes = ClassSchedule.objects.filter(
@@ -374,8 +385,8 @@ class ConflictDetectionService:
         booking_date: date,
         start_time: time,
         end_time: time,
-        class_type: str = None,
-        exclude_class_id: int = None,
+        class_type: str | None = None,
+        exclude_class_id: int | None = None,
     ) -> dict[str, Any] | None:
         """Detect if teacher has conflicting classes including buffer time."""
         buffer_minutes = self.scheduling_service.calculate_buffer_time(class_type, teacher, school)
@@ -387,8 +398,8 @@ class ConflictDetectionService:
         buffer_start_datetime = start_datetime - timedelta(minutes=buffer_minutes)
         buffer_end_datetime = end_datetime + timedelta(minutes=buffer_minutes)
 
-        buffer_start_time = buffer_start_datetime.time()
-        buffer_end_time = buffer_end_datetime.time()
+        buffer_start_datetime.time()
+        buffer_end_datetime.time()
 
         # Handle day boundary crossing
         search_dates = [booking_date]
@@ -554,9 +565,9 @@ class AvailabilityCalculationService:
         school: School,
         start_date: date,
         duration_minutes: int,
-        end_date: date = None,
-        class_type: str = None,
-        requesting_student: CustomUser = None,
+        end_date: date | None = None,
+        class_type: str | None = None,
+        requesting_student: CustomUser | None = None,
     ) -> dict[str, Any]:
         """Calculate available slots respecting all scheduling rules."""
         if end_date is None:
@@ -595,9 +606,9 @@ class AvailabilityCalculationService:
         school: School,
         booking_date: date,
         duration_minutes: int,
-        class_type: str = None,
-        requesting_student: CustomUser = None,
-        config: dict[str, Any] = None,
+        class_type: str | None = None,
+        requesting_student: CustomUser | None = None,
+        config: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Get available slots for a specific date applying all rules."""
         if config is None:
@@ -682,7 +693,7 @@ class AvailabilityCalculationService:
         booking_date: date,
         start_time: time,
         end_time: time,
-        class_type: str = None,
+        class_type: str | None = None,
         buffer_minutes: int = 15,
     ) -> bool:
         """Check if slot has any conflicts."""

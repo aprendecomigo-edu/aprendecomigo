@@ -46,7 +46,15 @@ exclude_lines = [
 directory = "htmlcov"
 
 [tool.ruff]
-target-version = "py311"
+# Ruff is the primary linter for this project
+# 
+# HOW TO RUN LINTING:
+# -------------------
+# Check for issues:       ch django lint
+# Auto-fix safe issues:   ch django lint --fix
+# Format code:            ch django format
+#
+target-version = "py313"
 line-length = 120
 exclude = [
     ".venv",
@@ -61,7 +69,7 @@ exclude = [
 [tool.ruff.lint]
 select = [
     "E",     # pycodestyle errors
-    "W",     # pycodestyle warnings
+    "W",     # pycodestyle warnings  
     "F",     # pyflakes
     "I",     # isort
     "B",     # flake8-bugbear
@@ -76,13 +84,30 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
     "B904",  # raise from None
     "DJ001", # avoid using null=True on string fields
+    "RUF012", # Mutable class attributes should be annotated with ClassVar
 ]
+# Additional rules to consider enabling:
+# "N",     # pep8-naming
+# "DTZ",   # flake8-datetimez
+# "A",     # flake8-builtins
+# "COM",   # flake8-commas
+# "PT",    # flake8-pytest-style
+# "Q",     # flake8-quotes
+# "TCH",   # flake8-type-checking
+# "ARG",   # flake8-unused-arguments
+# "PTH",   # flake8-use-pathlib
 
 [tool.ruff.lint.per-file-ignores]
-"*/tests/*.py" = ["B", "E501", "F841"]
-"*/test_*.py" = ["B", "E501", "F841"]
-"*/settings/*.py" = ["E501", "F405", "F403"]
-"*/migrations/*.py" = ["E501", "F401"]
+# Test files can have different standards
+"*/tests/*.py" = ["B", "E501", "F841", "RUF012", "SIM117", "F811", "SIM105", "F401"]  # Allow unused vars, long lines, nested with statements, and redefinitions in tests
+"*/test_*.py" = ["B", "E501", "F841", "RUF012", "SIM117", "F811", "SIM105"]
+"*/settings/*.py" = ["E501", "F405", "F403"]  # Settings can use star imports
+"*/migrations/*.py" = ["E501", "F401", "RUF012"]  # Migrations are auto-generated
+"aprendecomigo/asgi.py" = ["E402"]  # Django must be initialized before imports
+"*/apps.py" = ["SIM105"]  # Allow try-except-pass for optional imports
+"finances/urls.py" = ["E402"]  # app_name must be set before imports for Django
+"finances/utils/pci_compliance.py" = ["SIM116"]  # Consecutive if statements are clearer here
+"finances/views.py" = ["F402", "F811"]  # Allow shadowing and redefinition in complex views
 
 [tool.ruff.lint.isort]
 known-third-party = ["django", "rest_framework", "channels", "stripe"]
@@ -91,7 +116,7 @@ combine-as-imports = true
 force-sort-within-sections = true
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false

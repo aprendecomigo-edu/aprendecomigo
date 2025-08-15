@@ -348,7 +348,7 @@ def student_analytics(request: Request, student_id: int) -> Response:
         User = get_user_model()
 
         try:
-            student = User.objects.get(id=student_id)
+            User.objects.get(id=student_id)
         except User.DoesNotExist:
             return Response({"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
 

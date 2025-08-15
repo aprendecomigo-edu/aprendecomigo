@@ -24,7 +24,12 @@ from django.db.models import Q
 
 
 def detect_student_conflicts(
-    student_id: int, school_id: int, booking_date: date, start_time: time, end_time: time, exclude_class_id: int = None
+    student_id: int,
+    school_id: int,
+    booking_date: date,
+    start_time: time,
+    end_time: time,
+    exclude_class_id: int | None = None,
 ) -> dict[str, Any] | None:
     """
     Pure utility function to detect student scheduling conflicts.
@@ -103,7 +108,7 @@ def detect_teacher_conflicts(
     start_time: time,
     end_time: time,
     buffer_minutes: int = 15,
-    exclude_class_id: int = None,
+    exclude_class_id: int | None = None,
 ) -> dict[str, Any] | None:
     """
     Pure utility function to detect teacher scheduling conflicts including buffer time.
@@ -153,7 +158,7 @@ def _detect_buffer_conflicts(
     start_time: time,
     end_time: time,
     buffer_minutes: int,
-    exclude_class_id: int = None,
+    exclude_class_id: int | None = None,
 ) -> dict[str, Any] | None:
     """Detect conflicts considering buffer time requirements."""
     from .models import ClassSchedule, ClassStatus

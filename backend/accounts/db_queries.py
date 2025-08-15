@@ -207,7 +207,7 @@ def get_or_create_school_invitation_link(
 
 
 def join_school_via_invitation_link(
-    token: str, user: CustomUser, teacher_data: dict = None
+    token: str, user: CustomUser, teacher_data: dict | None = None
 ) -> tuple["TeacherProfile", "SchoolMembership"]:
     """
     Join a school using a generic invitation link.

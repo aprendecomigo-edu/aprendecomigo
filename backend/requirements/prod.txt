@@ -1,0 +1,16 @@
+# Production Dependencies
+# Install with: pip install -r requirements/prod.txt
+
+-r base.txt
+
+# Production-specific optimizations
+# gunicorn==21.2.0  # Alternative to Daphne for HTTP (not WebSocket)
+# whitenoise==6.6.0  # Static file serving
+
+# Production database driver (more performant than psycopg2-binary)
+# Note: Uncomment and use psycopg2 instead of psycopg2-binary in production
+# psycopg2==2.9.10  # Requires system dependencies
+
+# Monitoring (optional)
+# sentry-sdk==1.40.0  # Error tracking
+# django-prometheus==2.3.1  # Metrics

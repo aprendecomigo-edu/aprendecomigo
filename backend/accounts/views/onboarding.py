@@ -418,9 +418,8 @@ class TutorDiscoveryAPIView(APIView):
             raise ValidationError("Invalid rate_max format")
 
         # Validate rate range
-        if "rate_min" in filters and "rate_max" in filters:
-            if filters["rate_min"] > filters["rate_max"]:
-                raise ValidationError("rate_min cannot be greater than rate_max")
+        if "rate_min" in filters and "rate_max" in filters and filters["rate_min"] > filters["rate_max"]:
+            raise ValidationError("rate_min cannot be greater than rate_max")
 
         # Education level filtering
         education_level = params.get("education_level")

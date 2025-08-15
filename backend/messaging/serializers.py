@@ -149,7 +149,7 @@ class SchoolEmailTemplateSerializer(serializers.ModelSerializer):
         for content in [obj.subject_template, obj.html_content, obj.text_content]:
             if content:
                 variables.update(re.findall(r"\{\{(\w+)\}\}", content))
-        return sorted(list(variables))
+        return sorted(variables)
 
     def create(self, validated_data):
         """Create a new email template."""

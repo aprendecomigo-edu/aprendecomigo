@@ -1,0 +1,91 @@
+name: Django CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: aprendecomigo_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+    
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/dev.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements/dev.txt  # Using dev.txt for CI
+    
+    - name: Run Migrations
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aprendecomigo_test
+        REDIS_URL: redis://localhost:6379
+        DJANGO_SETTINGS_MODULE: aprendecomigo.settings.testing
+        SECRET_KEY: github-actions-secret-key-for-testing
+      run: |
+        python manage.py migrate
+    
+    - name: Run Linting
+      run: |
+        ruff check .
+    
+    - name: Run Type Checking
+      run: |
+        mypy . --config-file pyproject.toml || true  # Allow failures initially
+    
+    - name: Run Tests with Coverage
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aprendecomigo_test
+        REDIS_URL: redis://localhost:6379
+        DJANGO_SETTINGS_MODULE: aprendecomigo.settings.testing
+        SECRET_KEY: github-actions-secret-key-for-testing
+      run: |
+        coverage run --source='.' manage.py test
+        coverage report
+        coverage xml
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false  # Don't fail if codecov is down

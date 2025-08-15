@@ -160,6 +160,23 @@ class TeacherProfile(models.Model):
         user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
         return f"Teacher Profile: {user_name}"
 
+    def save(self, *args, **kwargs):
+        """Override save to update completion score."""
+        # Avoid infinite recursion - skip completion update if we're already updating these fields
+        update_fields = kwargs.get("update_fields", [])
+        if update_fields and "profile_completion_score" in update_fields:
+            return super().save(*args, **kwargs)
+
+        # Save first, then update completion
+        super().save(*args, **kwargs)
+
+        # Update completion score after saving
+        try:
+            self.update_completion_score()
+        except Exception as e:
+            logger.error(f"Failed to update completion score for teacher {self.id}: {e}")
+            # Don't fail the save if completion update fails
+
     def update_completion_score(self) -> None:
         """Update the profile completion score using ProfileCompletionService."""
         from ..services.profile_completion import ProfileCompletionService
@@ -188,23 +205,6 @@ class TeacherProfile(models.Model):
 
         self.last_activity = timezone.now()
         self.save(update_fields=["last_activity"])
-
-    def save(self, *args, **kwargs):
-        """Override save to update completion score."""
-        # Avoid infinite recursion - skip completion update if we're already updating these fields
-        update_fields = kwargs.get("update_fields", [])
-        if update_fields and "profile_completion_score" in update_fields:
-            return super().save(*args, **kwargs)
-
-        # Save first, then update completion
-        super().save(*args, **kwargs)
-
-        # Update completion score after saving
-        try:
-            self.update_completion_score()
-        except Exception as e:
-            logger.error(f"Failed to update completion score for teacher {self.id}: {e}")
-            # Don't fail the save if completion update fails
 
 
 class StudentProfile(models.Model):
@@ -256,18 +256,21 @@ class StudentProfile(models.Model):
     def clean(self):
         """Validate that school_year is valid for the selected educational system"""
         super().clean()
-        if self.educational_system and self.school_year:
-            if not self.educational_system.validate_school_year(self.school_year):
-                from django.core.exceptions import ValidationError
+        if (
+            self.educational_system
+            and self.school_year
+            and not self.educational_system.validate_school_year(self.school_year)
+        ):
+            from django.core.exceptions import ValidationError
 
-                valid_years = dict(self.educational_system.school_year_choices)
-                raise ValidationError(
-                    {
-                        "school_year": f"School year '{self.school_year}' is not valid for "
-                        f"educational system '{self.educational_system.name}'. "
-                        f"Valid options: {list(valid_years.keys())}"
-                    }
-                )
+            valid_years = dict(self.educational_system.school_year_choices)
+            raise ValidationError(
+                {
+                    "school_year": f"School year '{self.school_year}' is not valid for "
+                    f"educational system '{self.educational_system.name}'. "
+                    f"Valid options: {list(valid_years.keys())}"
+                }
+            )
 
 
 class ParentProfile(models.Model):

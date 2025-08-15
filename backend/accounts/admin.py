@@ -243,7 +243,13 @@ class TeacherCourseAdmin(admin.ModelAdmin):
 class ParentProfileAdmin(admin.ModelAdmin):
     """Admin interface for ParentProfile model."""
 
-    list_display = ("get_name", "get_email", "email_notifications_enabled", "sms_notifications_enabled", "created_at")
+    list_display = (
+        "get_name",
+        "get_email",
+        "email_notifications_enabled",
+        "sms_notifications_enabled",
+        "created_at",
+    )
     list_filter = ("email_notifications_enabled", "sms_notifications_enabled", "created_at")
     search_fields = ("user__name", "user__email")
     readonly_fields = ("created_at", "updated_at")

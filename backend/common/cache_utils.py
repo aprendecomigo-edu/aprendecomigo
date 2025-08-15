@@ -121,7 +121,6 @@ def invalidate_user_cache_pattern(prefix: str, user_id: int):
     """
     # This is a simplified invalidation - in production you might want
     # to use cache tagging or maintain a registry of cache keys
-    cache_pattern = f"secure_{prefix}_{user_id}_*"
 
     # Note: Django's cache doesn't support pattern-based deletion by default
     # This would need to be implemented based on the cache backend

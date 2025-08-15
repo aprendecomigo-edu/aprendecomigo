@@ -207,8 +207,6 @@ class SessionBookingService:
         if session.status == SessionStatus.COMPLETED:
             raise SessionBookingError("Cannot cancel a completed session")
 
-        old_status = session.status
-
         # Calculate refund info before changing status (since model.save() will handle refunds)
         refund_info = {"refunded_hours": "0.00", "students_affected": 0, "refund_records": []}
 

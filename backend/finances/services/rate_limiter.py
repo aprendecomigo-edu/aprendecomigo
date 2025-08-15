@@ -255,7 +255,7 @@ def reset_stripe_rate_limits(identifier: str = "default") -> dict[str, Any]:
     cache_prefix = stripe_rate_limiter.cache_prefix
     reset_count = 0
 
-    for operation_type in stripe_rate_limiter.limits.keys():
+    for operation_type in stripe_rate_limiter.limits:
         cache_key = f"{cache_prefix}:{operation_type}:{identifier}"
         if cache.delete(cache_key):
             reset_count += 1

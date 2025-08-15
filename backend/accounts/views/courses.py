@@ -289,7 +289,7 @@ class CourseViewSet(KnoxAuthenticatedViewSet):
         # Calculate ranks
         sorted_courses = sorted(course_metrics.items(), key=lambda x: x[1]["popularity_score"], reverse=True)
 
-        for rank, (course_id, metrics) in enumerate(sorted_courses, 1):
+        for rank, (course_id, _metrics) in enumerate(sorted_courses, 1):
             course_metrics[course_id]["rank"] = rank
 
         return course_metrics

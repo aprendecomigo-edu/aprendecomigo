@@ -17,7 +17,7 @@ Usage:
             pass
 """
 
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from decimal import Decimal
 from functools import wraps
 import json
@@ -50,9 +50,9 @@ class MockPaymentIntent(MockStripeObject):
         amount: int = 25000,
         currency: str = "eur",
         status: str = "requires_payment_method",
-        client_secret: str = None,
+        client_secret: str | None = None,
         customer: str | None = None,
-        metadata: dict[str, Any] = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -76,7 +76,7 @@ class MockPaymentMethod(MockStripeObject):
         self,
         id: str = "pm_test_mock",
         type: str = "card",
-        card: dict[str, Any] = None,
+        card: dict[str, Any] | None = None,
         customer: str | None = None,
         **kwargs,
     ):
@@ -739,7 +739,7 @@ class MockPaymentServiceInstance:
         """Reset error simulation back to normal operation."""
         cls._global_simulate_error = False
 
-    def process_payment(self, student_user, plan_id: int, payment_method_id: int = None) -> dict[str, Any]:
+    def process_payment(self, student_user, plan_id: int, payment_method_id: int | None = None) -> dict[str, Any]:
         """Mock payment processing."""
         return {
             "success": True,
@@ -854,7 +854,7 @@ class MockPaymentServiceInstance:
                 "message": f"Error confirming payment completion: {e!s}",
             }
 
-    def handle_payment_failure(self, payment_intent_id: str, error_message: str = None) -> dict[str, Any]:
+    def handle_payment_failure(self, payment_intent_id: str, error_message: str | None = None) -> dict[str, Any]:
         """Mock payment failure handling with actual database updates."""
         try:
             from finances.models import PurchaseTransaction, TransactionPaymentStatus
@@ -947,7 +947,9 @@ class MockRefundServiceInstance:
         """Initialize mock service without dependencies."""
         self.stripe_service = MockStripeServiceInstance()
 
-    def process_refund(self, transaction_id: int, amount: Decimal = None, reason: str = None) -> dict[str, Any]:
+    def process_refund(
+        self, transaction_id: int, amount: Decimal | None = None, reason: str | None = None
+    ) -> dict[str, Any]:
         """Mock refund processing."""
         return {
             "success": True,
@@ -1457,10 +1459,8 @@ def mock_stripe_services_decorator(test_func=None, *, apply_to_class=False):
 
                 # Stop all patches
                 for p in getattr(self, "_stripe_patches", []):
-                    try:
+                    with suppress(RuntimeError):
                         p.stop()
-                    except RuntimeError:
-                        pass
 
             func_or_class.setUp = new_setup
             func_or_class.tearDown = new_teardown
@@ -1776,10 +1776,8 @@ def comprehensive_stripe_mocks_decorator(test_func=None, *, apply_to_class=False
 
                 # Stop all patches
                 for p in getattr(self, "_comprehensive_patches", []):
-                    try:
+                    with suppress(RuntimeError):
                         p.stop()
-                    except RuntimeError:
-                        pass
 
             func_or_class.setUp = new_setup
             func_or_class.tearDown = new_teardown

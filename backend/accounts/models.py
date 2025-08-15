@@ -1,7 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 import logging
-from typing import Any, ClassVar, TypeVar
+from typing import Any, TypeVar
 import uuid
 
 from django.contrib.auth.models import AbstractUser, UserManager
@@ -156,7 +156,7 @@ class CustomUser(AbstractUser):
     # user_type field is removed - roles are now in SchoolMembership
 
     USERNAME_FIELD: str = "email"  # type: ignore[assignment]
-    REQUIRED_FIELDS: ClassVar[list[str]] = ["name"]
+    REQUIRED_FIELDS: list[str] = ["name"]
 
     # Use a type annotation that doesn't conflict with the parent class
     # but allows us to provide our custom manager
@@ -200,7 +200,7 @@ class SchoolMembership(models.Model):
     joined_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together: ClassVar[list[str]] = ["user", "school", "role"]
+        unique_together = ["user", "school", "role"]
         indexes = [
             models.Index(fields=["school", "role", "is_active"]),
             models.Index(fields=["school", "joined_at"]),
@@ -419,18 +419,21 @@ class StudentProfile(models.Model):
     def clean(self):
         """Validate that school_year is valid for the selected educational system"""
         super().clean()
-        if self.educational_system and self.school_year:
-            if not self.educational_system.validate_school_year(self.school_year):
-                from django.core.exceptions import ValidationError
+        if (
+            self.educational_system
+            and self.school_year
+            and not self.educational_system.validate_school_year(self.school_year)
+        ):
+            from django.core.exceptions import ValidationError
 
-                valid_years = dict(self.educational_system.school_year_choices)
-                raise ValidationError(
-                    {
-                        "school_year": f"School year '{self.school_year}' is not valid for "
-                        f"educational system '{self.educational_system.name}'. "
-                        f"Valid options: {list(valid_years.keys())}"
-                    }
-                )
+            valid_years = dict(self.educational_system.school_year_choices)
+            raise ValidationError(
+                {
+                    "school_year": f"School year '{self.school_year}' is not valid for "
+                    f"educational system '{self.educational_system.name}'. "
+                    f"Valid options: {list(valid_years.keys())}"
+                }
+            )
 
 
 class TeacherProfile(models.Model):
@@ -613,7 +616,7 @@ class Course(models.Model):
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together: ClassVar = ["code", "educational_system"]
+        unique_together = ["code", "educational_system"]
 
     def __str__(self) -> str:
         return f"{self.name} ({self.code})"
@@ -621,18 +624,21 @@ class Course(models.Model):
     def clean(self):
         """Validate that education_level is valid for the selected educational system"""
         super().clean()
-        if self.educational_system and self.education_level:
-            if not self.educational_system.validate_education_level(self.education_level):
-                from django.core.exceptions import ValidationError
+        if (
+            self.educational_system
+            and self.education_level
+            and not self.educational_system.validate_education_level(self.education_level)
+        ):
+            from django.core.exceptions import ValidationError
 
-                valid_levels = dict(self.educational_system.education_level_choices)
-                raise ValidationError(
-                    {
-                        "education_level": f"Education level '{self.education_level}' is not valid for "
-                        f"educational system '{self.educational_system.name}'. "
-                        f"Valid options: {list(valid_levels.keys())}"
-                    }
-                )
+            valid_levels = dict(self.educational_system.education_level_choices)
+            raise ValidationError(
+                {
+                    "education_level": f"Education level '{self.education_level}' is not valid for "
+                    f"educational system '{self.educational_system.name}'. "
+                    f"Valid options: {list(valid_levels.keys())}"
+                }
+            )
 
 
 class TeacherCourse(models.Model):
@@ -658,7 +664,7 @@ class TeacherCourse(models.Model):
     started_teaching: models.DateField = models.DateField(_("started teaching date"), auto_now_add=True)
 
     class Meta:
-        unique_together: ClassVar = ["teacher", "course"]
+        unique_together = ["teacher", "course"]
         indexes = [
             # Indexes for tutor discovery filtering
             models.Index(fields=["hourly_rate"]),
@@ -726,7 +732,7 @@ class SchoolInvitationLink(models.Model):
     )
 
     class Meta:
-        unique_together: ClassVar = ["school", "role"]  # One active link per school per role
+        unique_together = ["school", "role"]  # One active link per school per role
 
     def __str__(self) -> str:
         school_name = self.school.name if hasattr(self.school, "name") else str(self.school)
@@ -738,9 +744,7 @@ class SchoolInvitationLink(models.Model):
             return False
         if timezone.now() > self.expires_at:
             return False
-        if self.max_uses and self.usage_count >= self.max_uses:
-            return False
-        return True
+        return not (self.max_uses and self.usage_count >= self.max_uses)
 
     def increment_usage(self) -> None:
         """Increment the usage count."""
@@ -767,10 +771,13 @@ class VerificationCode(models.Model):
     max_attempts: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField(default=5)
 
     class Meta:
-        indexes: ClassVar = [
+        indexes = [
             models.Index(fields=["email", "is_used"]),
             models.Index(fields=["email", "created_at"]),
         ]
+
+    def __str__(self) -> str:
+        return f"Verification code for {self.email} ({'used' if self.is_used else 'active'})"
 
     @classmethod
     def generate_code(cls, email: str) -> "VerificationCode":
@@ -1244,6 +1251,9 @@ class TeacherInvitation(models.Model):
             )
         ]
 
+    def __str__(self) -> str:
+        return f"Teacher invitation to {self.email} for {self.school.name}"
+
     def save(self, *args, **kwargs):
         """Override save to auto-generate token and expiry."""
         if not self.token:
@@ -1279,9 +1289,6 @@ class TeacherInvitation(models.Model):
             if existing:
                 raise ValidationError("An active invitation already exists for this email and school")
 
-    def __str__(self) -> str:
-        return f"Teacher invitation to {self.email} for {self.school.name}"
-
     def is_valid(self) -> bool:
         """Check if the invitation is still valid."""
         if self.is_accepted:
@@ -1290,10 +1297,7 @@ class TeacherInvitation(models.Model):
         if timezone.now() > self.expires_at:
             return False
 
-        if self.status in [InvitationStatus.CANCELLED, InvitationStatus.EXPIRED, InvitationStatus.DECLINED]:
-            return False
-
-        return True
+        return self.status not in [InvitationStatus.CANCELLED, InvitationStatus.EXPIRED, InvitationStatus.DECLINED]
 
     def is_expired(self) -> bool:
         """Check if the invitation has expired."""
@@ -1341,7 +1345,7 @@ class TeacherInvitation(models.Model):
         self.status = InvitationStatus.DELIVERED
         self.save(update_fields=["email_delivery_status", "email_delivered_at", "status", "updated_at"])
 
-    def mark_email_failed(self, reason: str = None):
+    def mark_email_failed(self, reason: str | None = None):
         """Mark email as failed and increment retry count."""
         self.email_delivery_status = EmailDeliveryStatus.FAILED
         self.email_failure_reason = reason
@@ -1583,27 +1587,22 @@ class ProgressAssessment(models.Model):
         percentage = self.percentage
         return f"{self.title} - {self.student_progress.student.name} ({percentage:.2f}%)"
 
+    def save(self, *args, **kwargs):
+        """Override save to update related progress record."""
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+
+        # Update the student progress last assessment date
+        if is_new or self.assessment_date != self.__class__.objects.get(pk=self.pk).assessment_date:
+            self.student_progress.last_assessment_date = self.assessment_date
+            self.student_progress.save(update_fields=["last_assessment_date", "updated_at"])
+
     @property
     def percentage(self) -> Decimal:
         """Calculate the percentage score for this assessment."""
         if self.max_score > 0:
             return (self.score / self.max_score) * Decimal("100.00")
         return Decimal("0.00")
-
-    @property
-    def grade_letter(self) -> str:
-        """Convert percentage to letter grade."""
-        percentage = self.percentage
-        if percentage >= 90:
-            return "A"
-        elif percentage >= 80:
-            return "B"
-        elif percentage >= 70:
-            return "C"
-        elif percentage >= 60:
-            return "D"
-        else:
-            return "F"
 
     def clean(self):
         """Validate the assessment data."""
@@ -1621,15 +1620,19 @@ class ProgressAssessment(models.Model):
         if self.max_score <= Decimal("0.00"):
             raise ValidationError(_("Maximum score must be greater than 0"))
 
-    def save(self, *args, **kwargs):
-        """Override save to update related progress record."""
-        is_new = self.pk is None
-        super().save(*args, **kwargs)
-
-        # Update the student progress last assessment date
-        if is_new or self.assessment_date != self.__class__.objects.get(pk=self.pk).assessment_date:
-            self.student_progress.last_assessment_date = self.assessment_date
-            self.student_progress.save(update_fields=["last_assessment_date", "updated_at"])
+    def grade_letter(self) -> str:
+        """Convert percentage to letter grade."""
+        percentage = self.percentage
+        if percentage >= 90:
+            return "A"
+        elif percentage >= 80:
+            return "B"
+        elif percentage >= 70:
+            return "C"
+        elif percentage >= 60:
+            return "D"
+        else:
+            return "F"
 
 
 # Email Communication System Models (Issues #99 & #100)

@@ -85,10 +85,7 @@ class SchoolViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """Allow anyone to view schools, but only authorized users to modify."""
-        if self.action in ["list", "retrieve"]:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAuthenticated]
+        permission_classes = [AllowAny] if self.action in ["list", "retrieve"] else [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
@@ -264,18 +261,18 @@ class SchoolViewSet(viewsets.ModelViewSet):
 
                 if school_serializer.is_valid(raise_exception=True):
                     # Store old school values for logging
-                    for field in profile_data.keys():
+                    for field in profile_data:
                         if hasattr(school, field):
                             old_values[f"school.{field}"] = getattr(school, field)
 
                     school_serializer.save()
-                    changed_fields.extend([f"school.{field}" for field in profile_data.keys()])
+                    changed_fields.extend([f"school.{field}" for field in profile_data])
 
             # Process settings updates
             settings_data = request.data.get("settings", request.data)
             if settings_data:
                 # Store old settings values for logging
-                for field in settings_data.keys():
+                for field in settings_data:
                     if hasattr(settings_obj, field):
                         old_values[f"settings.{field}"] = getattr(settings_obj, field)
 
@@ -285,7 +282,7 @@ class SchoolViewSet(viewsets.ModelViewSet):
 
                 if settings_serializer.is_valid(raise_exception=True):
                     settings_serializer.save()
-                    changed_fields.extend([f"settings.{field}" for field in settings_data.keys()])
+                    changed_fields.extend([f"settings.{field}" for field in settings_data])
 
             # Create activity log for settings update
             if changed_fields:
@@ -682,14 +679,12 @@ class SchoolInvitationLinkView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        # Check if the user is authenticated (optional for decline)
-        if request.user.is_authenticated:
-            # Verify the current user is the intended recipient
-            if invitation.email != request.user.email:
-                return Response(
-                    {"error": "This invitation is not for your account"},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+        # Check if the user is authenticated and verify they are the intended recipient
+        if request.user.is_authenticated and invitation.email != request.user.email:
+            return Response(
+                {"error": "This invitation is not for your account"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         try:
             with transaction.atomic():

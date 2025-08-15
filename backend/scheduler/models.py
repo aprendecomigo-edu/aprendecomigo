@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
@@ -62,8 +61,8 @@ class TeacherAvailability(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together: ClassVar = ["teacher", "school", "day_of_week", "start_time"]
-        ordering: ClassVar = ["day_of_week", "start_time"]
+        unique_together = ["teacher", "school", "day_of_week", "start_time"]
+        ordering = ["day_of_week", "start_time"]
 
     def __str__(self):
         return f"{self.teacher.user.name} - {self.get_day_of_week_display()} {self.start_time}-{self.end_time}"
@@ -116,8 +115,8 @@ class TeacherUnavailability(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together: ClassVar = ["teacher", "school", "date", "start_time"]
-        ordering: ClassVar = ["date", "start_time"]
+        unique_together = ["teacher", "school", "date", "start_time"]
+        ordering = ["date", "start_time"]
 
     def __str__(self):
         if self.is_all_day:
@@ -270,8 +269,8 @@ class ClassSchedule(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering: ClassVar = ["scheduled_date", "start_time"]
-        indexes: ClassVar = [
+        ordering = ["scheduled_date", "start_time"]
+        indexes = [
             models.Index(fields=["teacher", "scheduled_date"]),
             models.Index(fields=["student", "scheduled_date"]),
             models.Index(fields=["school", "scheduled_date"]),
@@ -280,6 +279,41 @@ class ClassSchedule(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.scheduled_date} {self.start_time}"
+
+    def save(self, *args, **kwargs):
+        """Override save to emit signals on status changes"""
+        # Track status changes for signal emission
+        old_status = None
+        emit_signal = False
+
+        if self.pk:
+            # Get old status if this is an update
+            try:
+                old_instance = ClassSchedule.objects.get(pk=self.pk)
+                old_status = old_instance.status
+                # Check if status has changed
+                if old_status != self.status:
+                    emit_signal = True
+            except ClassSchedule.DoesNotExist:
+                # New instance, no signal needed for creation
+                pass
+
+        # Call parent save
+        super().save(*args, **kwargs)
+
+        # Emit signal if status changed
+        if emit_signal:
+            from .signals import class_status_changed
+
+            # Get the user who made the change (from context if available)
+            changed_by = getattr(self, "_changed_by_user", None)
+            class_status_changed.send(
+                sender=self.__class__,
+                instance=self,
+                old_status=old_status,
+                new_status=self.status,
+                changed_by=changed_by,
+            )
 
     def clean(self):
         """Validate class schedule"""
@@ -475,53 +509,16 @@ class ClassSchedule(models.Model):
                         break
 
         # Additional validation for group classes
-        if self.class_type == ClassType.GROUP:
-            # Group classes require specific metadata fields when metadata is provided
-            if self.metadata:
-                required_group_fields = ["group_dynamics", "interaction_level", "collaboration_type"]
-                missing_fields = [field for field in required_group_fields if field not in self.metadata]
-                if missing_fields:
-                    errors["metadata"] = (
-                        f"Group classes must include the following metadata fields: {', '.join(missing_fields)}"
-                    )
+        if self.class_type == ClassType.GROUP and self.metadata:
+            required_group_fields = ["group_dynamics", "interaction_level", "collaboration_type"]
+            missing_fields = [field for field in required_group_fields if field not in self.metadata]
+            if missing_fields:
+                errors["metadata"] = (
+                    f"Group classes must include the following metadata fields: {', '.join(missing_fields)}"
+                )
 
         if errors:
             raise ValidationError(errors)
-
-    def save(self, *args, **kwargs):
-        """Override save to emit signals on status changes"""
-        # Track status changes for signal emission
-        old_status = None
-        emit_signal = False
-
-        if self.pk:
-            # Get old status if this is an update
-            try:
-                old_instance = ClassSchedule.objects.get(pk=self.pk)
-                old_status = old_instance.status
-                # Check if status has changed
-                if old_status != self.status:
-                    emit_signal = True
-            except ClassSchedule.DoesNotExist:
-                # New instance, no signal needed for creation
-                pass
-
-        # Call parent save
-        super().save(*args, **kwargs)
-
-        # Emit signal if status changed
-        if emit_signal:
-            from .signals import class_status_changed
-
-            # Get the user who made the change (from context if available)
-            changed_by = getattr(self, "_changed_by_user", None)
-            class_status_changed.send(
-                sender=self.__class__,
-                instance=self,
-                old_status=old_status,
-                new_status=self.status,
-                changed_by=changed_by,
-            )
 
 
 class FrequencyType(models.TextChoices):
@@ -644,8 +641,8 @@ class RecurringClassSchedule(models.Model):
     )
 
     class Meta:
-        ordering: ClassVar = ["day_of_week", "start_time"]
-        indexes: ClassVar = [
+        ordering = ["day_of_week", "start_time"]
+        indexes = [
             models.Index(fields=["teacher", "status", "start_date"]),
             models.Index(fields=["school", "status"]),
             models.Index(fields=["frequency_type", "status"]),
@@ -667,10 +664,8 @@ class RecurringClassSchedule(models.Model):
         if self.class_type == ClassType.GROUP:
             if self.max_participants is None or self.max_participants <= 0:
                 raise ValidationError({"max_participants": _("Max participants is required for group classes.")})
-        elif self.class_type == ClassType.INDIVIDUAL:
-            # Individual classes should not have max_participants set or only 1 student
-            if self.pk and self.students.count() > 1:
-                raise ValidationError({"students": _("Individual classes can only have one student.")})
+        elif self.class_type == ClassType.INDIVIDUAL and self.pk and self.students.count() > 1:
+            raise ValidationError({"students": _("Individual classes can only have one student.")})
 
     def get_student_count(self):
         """Get the total number of students in this recurring class"""
@@ -1019,7 +1014,7 @@ class ReminderPreference(models.Model):
                 errors["reminder_timing_hours"] = _("Must be a list of numbers")
             else:
                 for hour in self.reminder_timing_hours:
-                    if not isinstance(hour, (int, float)) or hour < 0 or hour > 168:  # Max 1 week
+                    if not isinstance(hour, int | float) or hour < 0 or hour > 168:  # Max 1 week
                         errors["reminder_timing_hours"] = _("Hours must be numbers between 0 and 168")
                         break
 

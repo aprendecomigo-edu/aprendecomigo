@@ -532,11 +532,7 @@ class FraudDetectionService:
         variance = sum((x - mean_amount) ** 2 for x in amounts) / len(amounts)
         std_dev = variance ** Decimal("0.5")
 
-        if std_dev == 0:
-            # All transactions are the same amount
-            deviation = Decimal("0.00")
-        else:
-            deviation = abs(transaction.amount - mean_amount) / std_dev
+        deviation = Decimal("0.00") if std_dev == 0 else abs(transaction.amount - mean_amount) / std_dev
 
         threshold = self.THRESHOLDS["unusual_amount_patterns"]
         risk_score = Decimal("0.00")
@@ -608,7 +604,7 @@ class FraudDetectionService:
     def _generate_fraud_alert(
         self,
         risk_data: dict[str, Any],
-        transaction: PurchaseTransaction = None,
+        transaction: PurchaseTransaction | None = None,
         user=None,  # CustomUser instance
         admin_user=None,  # CustomUser instance
     ) -> dict[str, Any] | None:
@@ -692,7 +688,7 @@ class FraudDetectionService:
         target_user=None,  # CustomUser instance
         success: bool = True,
         result_message: str = "",
-        action_data: dict[str, Any] = None,
+        action_data: dict[str, Any] | None = None,
     ) -> None:
         """Log administrative action for audit trail."""
         try:

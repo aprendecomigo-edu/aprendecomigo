@@ -386,7 +386,7 @@ class MultiSchoolPermissionTests(BaseAPITestCase):
         parent_relationships = ParentChildRelationship.objects.filter(parent=self.parent_user)
         self.assertEqual(parent_relationships.count(), 2)
 
-        school_ids = set(rel.school.id for rel in parent_relationships)
+        school_ids = {rel.school.id for rel in parent_relationships}
         self.assertEqual(len(school_ids), 2, "Parent should have children in 2 different schools")
 
     def test_school_membership_isolation(self):

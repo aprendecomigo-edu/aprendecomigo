@@ -61,12 +61,7 @@ class InvitationViewSet(viewsets.ModelViewSet):
         """
         Different permissions for different actions.
         """
-        if self.action == "details":
-            # Anyone can view invitation details (for sharing links)
-            permission_classes = [AllowAny]
-        else:
-            # All other actions require authentication
-            permission_classes = [IsAuthenticated]
+        permission_classes = [AllowAny] if self.action == "details" else [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
@@ -404,13 +399,11 @@ class InvitationViewSet(viewsets.ModelViewSet):
                 )
 
         # Check if the user is authenticated (optional for decline)
-        if request.user.is_authenticated:
-            # Verify the current user is the intended recipient
-            if invitation.email != request.user.email:
-                return Response(
-                    {"error": "This invitation is not for your account"},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+        if request.user.is_authenticated and invitation.email != request.user.email:
+            return Response(
+                {"error": "This invitation is not for your account"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         try:
             with transaction.atomic():
@@ -742,9 +735,10 @@ class TeacherInvitationViewSet(viewsets.ModelViewSet):
                 # Update existing profile with new data if provided
                 if not profile_created and validated_profile_data:
                     for field, value in validated_profile_data.items():
-                        if field != "profile_photo" and field != "course_ids":  # Handle these separately
-                            if value is not None:  # Only update if value is provided
-                                setattr(teacher_profile, field, value)
+                        if (
+                            field != "profile_photo" and field != "course_ids" and value is not None
+                        ):  # Handle these separately and only update if value is provided
+                            setattr(teacher_profile, field, value)
                     teacher_profile.save()
 
                 # Handle profile photo upload for CustomUser

@@ -1,5 +1,6 @@
 import { render, renderHook, act } from '@testing-library/react-native';
 import React from 'react';
+import { Text } from 'react-native';
 
 import { useAuth } from '@/api/auth/AuthContext';
 import { SchoolProvider, useSchool, UserSchool } from '@/api/auth/SchoolContext';
@@ -59,8 +60,8 @@ describe('SchoolContext', () => {
       const { userSchools, currentSchool } = useSchool();
       return (
         <>
-          <div testID="schools-count">{userSchools.length}</div>
-          <div testID="current-school">{currentSchool?.name || 'None'}</div>
+          <Text testID="schools-count">{userSchools.length}</Text>
+          <Text testID="current-school">{currentSchool?.name || 'None'}</Text>
         </>
       );
     };
@@ -72,8 +73,8 @@ describe('SchoolContext', () => {
         </SchoolProvider>
       );
 
-      expect(getByTestId('schools-count')).toHaveTextContent('3');
-      expect(getByTestId('current-school')).toHaveTextContent('Escola Vila Nova'); // First admin school
+      expect(getByTestId('schools-count')).toHaveProp('children', 3);
+      expect(getByTestId('current-school')).toHaveProp('children', 'Escola Vila Nova'); // First admin school
     });
 
     it('should prioritize admin schools for default current school', () => {
@@ -84,7 +85,7 @@ describe('SchoolContext', () => {
       );
 
       // Should default to first school_owner/school_admin role
-      expect(getByTestId('current-school')).toHaveTextContent('Escola Vila Nova');
+      expect(getByTestId('current-school')).toHaveProp('children', 'Escola Vila Nova');
     });
 
     it('should fallback to first school if no admin schools', () => {
@@ -116,7 +117,7 @@ describe('SchoolContext', () => {
         </SchoolProvider>
       );
 
-      expect(getByTestId('current-school')).toHaveTextContent('Only Teacher School');
+      expect(getByTestId('current-school')).toHaveProp('children', 'Only Teacher School');
     });
 
     it('should clear school data when user profile is null', () => {
@@ -136,8 +137,8 @@ describe('SchoolContext', () => {
         </SchoolProvider>
       );
 
-      expect(getByTestId('schools-count')).toHaveTextContent('0');
-      expect(getByTestId('current-school')).toHaveTextContent('None');
+      expect(getByTestId('schools-count')).toHaveProp('children', 0);
+      expect(getByTestId('current-school')).toHaveProp('children', 'None');
     });
   });
 
@@ -207,9 +208,9 @@ describe('SchoolContext', () => {
     });
 
     it('should throw error when used outside provider', () => {
-      const { result } = renderHook(() => useSchool());
-
-      expect(result.error).toEqual(new Error('useSchool must be used within a SchoolProvider'));
+      expect(() => {
+        renderHook(() => useSchool());
+      }).toThrow('useSchool must be used within a SchoolProvider');
     });
   });
 

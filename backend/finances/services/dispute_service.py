@@ -498,11 +498,11 @@ class DisputeService:
         self,
         admin_user,
         action_type: AdminActionType,
-        target_dispute: PaymentDispute = None,
+        target_dispute: PaymentDispute | None = None,
         success: bool = True,
         result_message: str = "",
         stripe_reference_id: str = "",
-        ip_address: str = None,
+        ip_address: str | None = None,
         user_agent: str = "",
     ) -> None:
         """

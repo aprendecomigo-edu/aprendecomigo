@@ -90,7 +90,14 @@ class EmailSequenceStepAdmin(admin.ModelAdmin):
 class EmailCommunicationAdmin(admin.ModelAdmin):
     """Admin interface for EmailCommunication model."""
 
-    list_display = ("recipient_email", "school", "template_type", "delivery_status", "queued_at", "retry_count")
+    list_display = (
+        "recipient_email",
+        "school",
+        "template_type",
+        "delivery_status",
+        "queued_at",
+        "retry_count",
+    )
     list_filter = ("template_type", "communication_type", "delivery_status", "queued_at")
     search_fields = ("recipient_email", "school__name", "subject", "recipient__name")
     readonly_fields = ("queued_at", "sent_at", "delivered_at", "opened_at", "clicked_at", "failed_at")

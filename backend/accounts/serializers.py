@@ -1,6 +1,6 @@
+import contextlib
 import logging
 import re
-from typing import ClassVar
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -44,7 +44,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "username",
             "email",
@@ -53,7 +53,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_student",
             "is_teacher",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id", "is_student", "is_teacher"]
+        read_only_fields: list[str] = ["id", "is_student", "is_teacher"]
 
     def get_is_student(self, obj):
         """Check if user has any active school membership as a student."""
@@ -71,7 +71,7 @@ class SchoolSerializer(BaseSerializer):
 
     class Meta:
         model = School
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "name",
             "description",
@@ -82,7 +82,7 @@ class SchoolSerializer(BaseSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id", "created_at", "updated_at"]
+        read_only_fields: list[str] = ["id", "created_at", "updated_at"]
 
 
 class SchoolMembershipSerializer(BaseNestedModelSerializer):
@@ -100,7 +100,7 @@ class SchoolMembershipSerializer(BaseNestedModelSerializer):
 
     class Meta:
         model = SchoolMembership
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "user",
             "user_id",
@@ -111,7 +111,7 @@ class SchoolMembershipSerializer(BaseNestedModelSerializer):
             "is_active",
             "joined_at",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id", "joined_at"]
+        read_only_fields: list[str] = ["id", "joined_at"]
 
 
 class SchoolInvitationSerializer(BaseNestedModelSerializer):
@@ -128,7 +128,7 @@ class SchoolInvitationSerializer(BaseNestedModelSerializer):
 
     class Meta:
         model = SchoolInvitation
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "school",
             "school_id",
@@ -141,7 +141,7 @@ class SchoolInvitationSerializer(BaseNestedModelSerializer):
             "expires_at",
             "is_accepted",
         ]
-        read_only_fields: ClassVar[list[str]] = [
+        read_only_fields: list[str] = [
             "id",
             "invited_by",
             "token",
@@ -159,7 +159,7 @@ class SchoolWithMembersSerializer(SchoolSerializer):
     members = serializers.SerializerMethodField()
 
     class Meta(SchoolSerializer.Meta):
-        fields: ClassVar[list[str]] = [*list(SchoolSerializer.Meta.fields), "members"]
+        fields: list[str] = [*list(SchoolSerializer.Meta.fields), "members"]
 
     def get_members(self, obj):
         memberships = obj.memberships.filter(is_active=True)
@@ -177,7 +177,7 @@ class EducationalSystemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EducationalSystem
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "name",
             "code",
@@ -188,7 +188,7 @@ class EducationalSystemSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id", "created_at", "updated_at"]
+        read_only_fields: list[str] = ["id", "created_at", "updated_at"]
 
     def get_school_years(self, obj):
         """Get school year choices as key-value pairs"""
@@ -214,7 +214,7 @@ class StudentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentProfile
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "user",
             "educational_system",
@@ -223,7 +223,7 @@ class StudentSerializer(serializers.ModelSerializer):
             "birth_date",
             "address",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id"]
+        read_only_fields: list[str] = ["id"]
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -233,7 +233,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "name",
             "code",
@@ -243,7 +243,7 @@ class CourseSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id", "created_at", "updated_at"]
+        read_only_fields: list[str] = ["id", "created_at", "updated_at"]
 
 
 class TeacherCourseSerializer(serializers.ModelSerializer):
@@ -256,7 +256,7 @@ class TeacherCourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherCourse
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "course",
             "course_id",
@@ -264,7 +264,7 @@ class TeacherCourseSerializer(serializers.ModelSerializer):
             "is_active",
             "started_teaching",
         ]
-        read_only_fields: ClassVar[list[str]] = ["id", "started_teaching"]
+        read_only_fields: list[str] = ["id", "started_teaching"]
 
 
 class TeacherSerializer(serializers.ModelSerializer):
@@ -311,7 +311,7 @@ class TeacherSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherProfile
-        fields: ClassVar[list[str]] = [
+        fields: list[str] = [
             "id",
             "user",
             "bio",
@@ -338,7 +338,7 @@ class TeacherSerializer(serializers.ModelSerializer):
             "profile_completion",
             "school_memberships",
         ]
-        read_only_fields: ClassVar[list[str]] = [
+        read_only_fields: list[str] = [
             "id",
             "profile_completion_score",
             "is_profile_complete",
@@ -419,14 +419,13 @@ class TeacherSerializer(serializers.ModelSerializer):
         # Optional validation for expected fields
         expected_fields = ["degree", "institution", "field", "year"]
         for field in expected_fields:
-            if field in value and value[field] is not None:
-                if field == "year":
-                    try:
-                        year = int(value[field])
-                        if year < 1900 or year > 2030:
-                            raise serializers.ValidationError(f"Invalid year: {year}")
-                    except (ValueError, TypeError):
-                        raise serializers.ValidationError("Year must be a valid integer")
+            if field in value and value[field] is not None and field == "year":
+                try:
+                    year = int(value[field])
+                    if year < 1900 or year > 2030:
+                        raise serializers.ValidationError(f"Invalid year: {year}")
+                except (ValueError, TypeError):
+                    raise serializers.ValidationError("Year must be a valid integer")
 
         return value
 
@@ -444,7 +443,7 @@ class TeacherSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Each subject must be a non-empty string")
 
         # Remove duplicates and empty strings
-        cleaned_subjects = list(set(s.strip() for s in value if s.strip()))
+        cleaned_subjects = list({s.strip() for s in value if s.strip()})
 
         if len(cleaned_subjects) > 20:
             raise serializers.ValidationError("Maximum 20 subjects allowed")
@@ -505,7 +504,7 @@ class UserWithRolesSerializer(UserSerializer):
     roles = serializers.SerializerMethodField()
 
     class Meta(UserSerializer.Meta):
-        fields: ClassVar[list[str]] = [*list(UserSerializer.Meta.fields), "roles"]
+        fields: list[str] = [*list(UserSerializer.Meta.fields), "roles"]
 
     def get_roles(self, obj):
         memberships = obj.school_memberships.filter(is_active=True)
@@ -536,7 +535,7 @@ class AuthenticationResponseSerializer(UserWithRolesSerializer):
     is_admin = serializers.SerializerMethodField()
 
     class Meta(UserWithRolesSerializer.Meta):
-        fields: ClassVar[list[str]] = [*list(UserWithRolesSerializer.Meta.fields), "user_type", "is_admin"]
+        fields: list[str] = [*list(UserWithRolesSerializer.Meta.fields), "user_type", "is_admin"]
 
     def get_user_type(self, obj):
         """
@@ -1065,7 +1064,7 @@ class ComprehensiveTeacherProfileCreationSerializer(serializers.Serializer):
         # Validate total_years if present
         if "total_years" in value:
             total_years = value["total_years"]
-            if not isinstance(total_years, (int, float)) or total_years < 0:
+            if not isinstance(total_years, int | float) or total_years < 0:
                 raise serializers.ValidationError("Total years must be a non-negative number.")
 
             if total_years > 80:  # Reasonable maximum
@@ -1285,10 +1284,8 @@ class SchoolSettingsSerializer(serializers.ModelSerializer):
         if self.instance:
             educational_system = self.instance.educational_system
         elif "educational_system" in self.initial_data:
-            try:
+            with contextlib.suppress(EducationalSystem.DoesNotExist):
                 educational_system = EducationalSystem.objects.get(id=self.initial_data["educational_system"])
-            except EducationalSystem.DoesNotExist:
-                pass
 
         if educational_system:
             valid_levels = dict(educational_system.school_year_choices)
@@ -1691,8 +1688,8 @@ class BulkTeacherInvitationSerializer(serializers.Serializer):
 
     def validate(self, data):
         """Additional validation across fields."""
-        school_id = data.get("school_id")
-        emails = [inv["email"] for inv in data.get("invitations", [])]
+        data.get("school_id")
+        [inv["email"] for inv in data.get("invitations", [])]
 
         # Note: We don't validate existing invitations here anymore to allow partial success
         # This validation is moved to the view level for better error handling
@@ -2367,7 +2364,15 @@ class ParentProfileSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "user", "user_name", "user_email", "children_count", "created_at", "updated_at"]
+        read_only_fields = [
+            "id",
+            "user",
+            "user_name",
+            "user_email",
+            "children_count",
+            "created_at",
+            "updated_at",
+        ]
 
     def get_children_count(self, obj):
         """Get the number of children this parent manages."""

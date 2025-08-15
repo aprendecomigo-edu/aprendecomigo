@@ -124,7 +124,7 @@ class ChannelSerializer(serializers.ModelSerializer):
         if participant_ids:
             if is_direct and current_user:
                 # For DMs, add both current user and target user
-                channel.participants.set([current_user.id] + participant_ids)
+                channel.participants.set([current_user.id, *participant_ids])
             else:
                 # For group channels, just add the specified participants
                 channel.participants.set(participant_ids)

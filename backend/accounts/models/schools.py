@@ -5,7 +5,6 @@ This module contains models related to schools, school memberships,
 school settings, and school activities.
 """
 
-from typing import ClassVar
 import uuid
 
 from django.db import models
@@ -83,7 +82,7 @@ class SchoolMembership(models.Model):
     joined_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together: ClassVar[list[str]] = ["user", "school", "role"]
+        unique_together = [["user", "school", "role"]]
         indexes = [
             models.Index(fields=["school", "role", "is_active"]),
             models.Index(fields=["school", "joined_at"]),

@@ -339,7 +339,7 @@ def setup_logging_context_middleware():
                 if hasattr(request.user, "get_role_for_school"):
                     try:
                         role = request.user.get_role_for_school(school_id)
-                    except:
+                    except Exception:
                         role = "unknown"
 
                 BusinessContext.set_context(school_id=school_id, user_id=user_id, role=role)

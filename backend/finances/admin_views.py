@@ -22,9 +22,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
-from finances.models import AdminActionType, PurchaseTransaction
+from finances.models import AdminAction, AdminActionType, PurchaseTransaction
 from finances.serializers import PurchaseHistorySerializer
+from finances.services.dispute_service import DisputeService
+from finances.services.fraud_detection_service import FraudDetectionService
 from finances.services.package_expiration_service import PackageExpirationService
+from finances.services.refund_service import RefundService
 
 logger = logging.getLogger(__name__)
 
@@ -371,11 +374,6 @@ def bulk_extend_packages(request):
 # ============================================================================
 # ADMINISTRATIVE PAYMENT ACTION APIs (GitHub Issue #116)
 # ============================================================================
-
-from finances.models import AdminAction
-from finances.services.dispute_service import DisputeService
-from finances.services.fraud_detection_service import FraudDetectionService
-from finances.services.refund_service import RefundService
 
 
 @api_view(["POST"])

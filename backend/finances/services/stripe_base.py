@@ -98,12 +98,11 @@ class StripeService:
                     "Live Stripe keys detected in development environment. "
                     "Use test keys (sk_test_* and pk_test_*) for development."
                 )
-        elif django_env == "production":
-            if self._is_test_key(secret_key) or self._is_test_key(public_key):
-                raise ValueError(
-                    "Test Stripe keys detected in production environment. "
-                    "Use live keys (sk_live_* and pk_live_*) for production."
-                )
+        elif django_env == "production" and (self._is_test_key(secret_key) or self._is_test_key(public_key)):
+            raise ValueError(
+                "Test Stripe keys detected in production environment. "
+                "Use live keys (sk_live_* and pk_live_*) for production."
+            )
 
     def _configure_stripe(self) -> None:
         """Configure Stripe API with secret key."""
@@ -579,7 +578,4 @@ class StripeService:
 
         # Validate specific field values
         valid_transaction_types = {"package", "subscription", "one_time"}
-        if metadata.get("transaction_type") not in valid_transaction_types:
-            return False
-
-        return True
+        return metadata.get("transaction_type") in valid_transaction_types

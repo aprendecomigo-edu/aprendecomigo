@@ -2182,9 +2182,7 @@ class StudentBalanceViewSet(viewsets.ViewSet):
             from finances.models import StoredPaymentMethod
 
             try:
-                payment_method = StoredPaymentMethod.objects.get(
-                    id=payment_method_id, student=student_user, is_active=True
-                )
+                StoredPaymentMethod.objects.get(id=payment_method_id, student=student_user, is_active=True)
             except StoredPaymentMethod.DoesNotExist:
                 return Response(
                     {"error": "Payment method not found or not accessible"}, status=status.HTTP_404_NOT_FOUND
@@ -2252,9 +2250,7 @@ class StudentBalanceViewSet(viewsets.ViewSet):
             from finances.models import StoredPaymentMethod
 
             try:
-                payment_method = StoredPaymentMethod.objects.get(
-                    id=payment_method_id, student=student_user, is_active=True
-                )
+                StoredPaymentMethod.objects.get(id=payment_method_id, student=student_user, is_active=True)
             except StoredPaymentMethod.DoesNotExist:
                 return Response(
                     {"error": "Payment method not found or not accessible"}, status=status.HTTP_404_NOT_FOUND

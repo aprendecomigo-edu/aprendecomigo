@@ -39,13 +39,13 @@ class ClassScheduleConflictDetector:
 
     def get_conflicting_classes_query(
         self,
-        teacher: TeacherProfile = None,
-        student: CustomUser = None,
-        school: School = None,
+        teacher: TeacherProfile | None = None,
+        student: CustomUser | None = None,
+        school: School | None = None,
         date=None,
-        start_time: time = None,
-        end_time: time = None,
-        exclude_statuses: list[str] = None,
+        start_time: time | None = None,
+        end_time: time | None = None,
+        exclude_statuses: list[str] | None = None,
     ):
         """
         Build a query for conflicting class schedules.
@@ -233,7 +233,6 @@ class ConflictDetectionOrchestrator:
             return True
 
         # Check unavailability conflicts
-        if self.unavailability_detector.has_unavailability_conflict(teacher, school, date, start_time, end_time):
-            return True
-
-        return False
+        return bool(
+            self.unavailability_detector.has_unavailability_conflict(teacher, school, date, start_time, end_time)
+        )

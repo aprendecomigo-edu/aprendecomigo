@@ -199,7 +199,7 @@ describe('SignUp Component Tests', () => {
   });
 
   it('should generate auto school name for tutors', () => {
-    const generateSchoolName = (userName, userType) => {
+    const generateSchoolName = (userName: string, userType: string) => {
       if (userType !== 'tutor') return '';
       if (!userName?.trim()) return '';
       return `${userName.trim()}'s Tutoring Practice`;
@@ -212,7 +212,7 @@ describe('SignUp Component Tests', () => {
   });
 
   it('should validate user type correctly', () => {
-    const validateUserType = type => {
+    const validateUserType = (type: string) => {
       if (type === 'tutor' || type === 'school') {
         return type;
       }

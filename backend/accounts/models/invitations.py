@@ -7,7 +7,6 @@ school invitations, school invitation links, and teacher invitations.
 
 from datetime import timedelta
 import secrets
-from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -76,7 +75,7 @@ class SchoolInvitationLink(models.Model):
     )
 
     class Meta:
-        unique_together: ClassVar = ["school", "role"]  # One active link per school per role
+        unique_together = ["school", "role"]  # One active link per school per role
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["school", "role", "is_active"]),
@@ -95,9 +94,7 @@ class SchoolInvitationLink(models.Model):
             return False
         if timezone.now() > self.expires_at:
             return False
-        if self.max_uses and self.usage_count >= self.max_uses:
-            return False
-        return True
+        return not (self.max_uses and self.usage_count >= self.max_uses)
 
     def increment_usage(self) -> None:
         """Increment the usage count."""
@@ -222,6 +219,9 @@ class TeacherInvitation(models.Model):
             )
         ]
 
+    def __str__(self) -> str:
+        return f"Teacher invitation to {self.email} for {self.school.name}"
+
     def save(self, *args, **kwargs):
         """Override save to auto-generate token and expiry."""
         if not self.token:
@@ -255,9 +255,6 @@ class TeacherInvitation(models.Model):
             if existing:
                 raise ValidationError("An active invitation already exists for this email and school")
 
-    def __str__(self) -> str:
-        return f"Teacher invitation to {self.email} for {self.school.name}"
-
     def is_valid(self) -> bool:
         """Check if the invitation is still valid."""
         if self.is_accepted:
@@ -266,10 +263,7 @@ class TeacherInvitation(models.Model):
         if timezone.now() > self.expires_at:
             return False
 
-        if self.status in [InvitationStatus.CANCELLED, InvitationStatus.EXPIRED, InvitationStatus.DECLINED]:
-            return False
-
-        return True
+        return self.status not in [InvitationStatus.CANCELLED, InvitationStatus.EXPIRED, InvitationStatus.DECLINED]
 
     def is_expired(self) -> bool:
         """Check if the invitation has expired."""
@@ -326,7 +320,7 @@ class TeacherInvitation(models.Model):
         self.status = InvitationStatus.DELIVERED
         self.save(update_fields=["email_delivery_status", "email_delivered_at", "status", "updated_at"])
 
-    def mark_email_failed(self, reason: str = None):
+    def mark_email_failed(self, reason: str | None = None):
         """Mark email as failed and increment retry count."""
         self.email_delivery_status = EmailDeliveryStatus.FAILED
         self.email_failure_reason = reason

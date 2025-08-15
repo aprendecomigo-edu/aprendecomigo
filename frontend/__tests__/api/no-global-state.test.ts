@@ -77,7 +77,7 @@ describe('No Global State Verification', () => {
       // Note: TypeScript interfaces don't exist at runtime, so ApiClientConfig won't be in exportedKeys
     });
 
-    it('should not import storage modules directly', () => {
+    it('should not import storage modules directly', async () => {
       // Verify that ApiClient doesn't have direct storage imports
       const fs = require('fs');
       const path = require('path');
@@ -85,7 +85,7 @@ describe('No Global State Verification', () => {
       const apiClientPath = path.resolve(__dirname, '../../api/client/ApiClient.ts');
 
       try {
-        const apiClientSource = fs.readFileSync(apiClientPath, 'utf8');
+        const apiClientSource = await fs.promises.readFile(apiClientPath, 'utf8');
 
         // Check that direct storage imports are not present
         expect(apiClientSource).not.toMatch(/import.*storage.*from.*utils\/storage/);
@@ -100,14 +100,14 @@ describe('No Global State Verification', () => {
       }
     });
 
-    it('should not use global authentication error callbacks', () => {
+    it('should not use global authentication error callbacks', async () => {
       const fs = require('fs');
       const path = require('path');
 
       const apiClientPath = path.resolve(__dirname, '../../api/client/ApiClient.ts');
 
       try {
-        const apiClientSource = fs.readFileSync(apiClientPath, 'utf8');
+        const apiClientSource = await fs.promises.readFile(apiClientPath, 'utf8');
 
         // Check that global callback patterns are not present
         expect(apiClientSource).not.toMatch(/let.*authErrorCallback/);
@@ -173,8 +173,8 @@ describe('No Global State Verification', () => {
       const requestInterceptor1 = mockAxiosInstance.interceptors.request.use.mock.calls[0][0];
       const requestInterceptor2 = mockAxiosInstance.interceptors.request.use.mock.calls[1][0];
 
-      const config1 = { headers: {} };
-      const config2 = { headers: {} };
+      const config1 = { headers: {} as Record<string, string> };
+      const config2 = { headers: {} as Record<string, string> };
 
       await requestInterceptor1(config1);
       await requestInterceptor2(config2);

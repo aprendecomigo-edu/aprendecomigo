@@ -257,10 +257,7 @@ class ChatConsumer(WebsocketConsumer):
             )
             # Check if user has access to any channel with this name
             channels = Channel.objects.filter(name=self.channel_name_param)
-            for channel in channels:
-                if channel.participants.filter(id=self.user.id).exists():
-                    return True
-            return False
+            return any(channel.participants.filter(id=self.user.id).exists() for channel in channels)
         except Exception as e:
             logger.error(
                 "Error checking channel access for user %s, channel %s: %s",
