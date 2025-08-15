@@ -32,6 +32,9 @@ stripe==12.4.0
 # Email & Messaging
 bleach==6.2.0
 
+# HTTP Client Libraries
+httpx==0.28.1
+
 # File Handling
 pillow==11.3.0
 

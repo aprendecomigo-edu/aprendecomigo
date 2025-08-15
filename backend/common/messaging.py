@@ -6,7 +6,8 @@ from typing import Any
 from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-import requests
+import httpx
+from asgiref.sync import sync_to_async
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ def send_email_verification_code(email, code):
 
 def send_sms(phone_number, message):
     """
-    Send SMS using GatewayAPI.
+    Send SMS using GatewayAPI (synchronous version).
 
     In DEBUG mode, just logs the message instead of actually sending it.
 
@@ -49,13 +50,15 @@ def send_sms(phone_number, message):
             "sender": settings.SMS_SENDER_ID,
         }
 
-        # Make API request
-        response = requests.post(
-            url=settings.SMS_API_URL,
-            headers={"Content-Type": "application/json"},
-            auth=(settings.SMS_API_KEY, ""),
-            data=json.dumps(payload),
-        )
+        # Make API request using httpx
+        with httpx.Client() as client:
+            response = client.post(
+                url=settings.SMS_API_URL,
+                headers={"Content-Type": "application/json"},
+                auth=(settings.SMS_API_KEY, ""),
+                json=payload,  # httpx automatically handles JSON encoding
+                timeout=30.0,  # explicit timeout for better error handling
+            )
 
         response_data = response.json()
 
@@ -66,6 +69,74 @@ def send_sms(phone_number, message):
         logger.info(f"SMS sent successfully to {phone_number}")
         return {"success": True, "response": response_data}
 
+    except httpx.TimeoutException:
+        error_msg = "SMS API request timed out"
+        logger.error(f"Error sending SMS: {error_msg}")
+        return {"success": False, "error": error_msg}
+    except httpx.RequestError as e:
+        error_msg = f"SMS API request failed: {e!s}"
+        logger.error(f"Error sending SMS: {error_msg}")
+        return {"success": False, "error": error_msg}
+    except Exception as e:
+        logger.exception(f"Error sending SMS: {e!s}")
+        return {"success": False, "error": str(e)}
+
+
+async def send_sms_async(phone_number, message):
+    """
+    Send SMS using GatewayAPI (asynchronous version).
+
+    In DEBUG mode, just logs the message instead of actually sending it.
+
+    Args:
+        phone_number: Recipient's phone number (should include country code)
+        message: SMS content to send
+
+    Returns:
+        dict: Response from API or simulated response in DEBUG mode
+    """
+    if settings.DEBUG:
+        logger.info(f"SMS to {phone_number}: {message}")
+        return {"success": True, "debug_mode": True}
+
+    try:
+        # Remove any potential formatting characters from phone number
+        cleaned_number = "".join(filter(str.isdigit, str(phone_number)))
+
+        # Prepare request data
+        payload = {
+            "message": message,
+            "recipients": [{"msisdn": cleaned_number}],
+            "sender": settings.SMS_SENDER_ID,
+        }
+
+        # Make API request using httpx async client
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                url=settings.SMS_API_URL,
+                headers={"Content-Type": "application/json"},
+                auth=(settings.SMS_API_KEY, ""),
+                json=payload,  # httpx automatically handles JSON encoding
+                timeout=30.0,  # explicit timeout for better error handling
+            )
+
+        response_data = response.json()
+
+        if response.status_code != 200:
+            logger.error(f"SMS sending failed: {response_data}")
+            return {"success": False, "error": response_data}
+
+        logger.info(f"SMS sent successfully to {phone_number}")
+        return {"success": True, "response": response_data}
+
+    except httpx.TimeoutException:
+        error_msg = "SMS API request timed out"
+        logger.error(f"Error sending SMS: {error_msg}")
+        return {"success": False, "error": error_msg}
+    except httpx.RequestError as e:
+        error_msg = f"SMS API request failed: {e!s}"
+        logger.error(f"Error sending SMS: {error_msg}")
+        return {"success": False, "error": error_msg}
     except Exception as e:
         logger.exception(f"Error sending SMS: {e!s}")
         return {"success": False, "error": str(e)}
@@ -73,6 +144,11 @@ def send_sms(phone_number, message):
 
 def send_phone_verification_code(phone_number, code):
     return send_sms(phone_number, f"Your verification code is: {code}\n\nThis code will expire in 5 minutes.")
+
+
+async def send_phone_verification_code_async(phone_number, code):
+    """Async version of send_phone_verification_code."""
+    return await send_sms_async(phone_number, f"Your verification code is: {code}\n\nThis code will expire in 5 minutes.")
 
 
 class TeacherInvitationEmailService:

@@ -113,6 +113,8 @@ def mock_external_services(test_func):
             patch("stripe.Customer.create") as mock_stripe_customer,
             patch("requests.get") as mock_requests_get,
             patch("requests.post") as mock_requests_post,
+            patch("httpx.Client.post") as mock_httpx_post,
+            patch("httpx.AsyncClient.post") as mock_httpx_async_post,
         ):
             # Set up default mock return values
             mock_send_mail.return_value = True
@@ -121,6 +123,14 @@ def mock_external_services(test_func):
             mock_stripe_customer.return_value.id = "cus_mock_test"
             mock_requests_get.return_value.status_code = 200
             mock_requests_post.return_value.status_code = 200
+            
+            # Set up httpx mock return values
+            mock_httpx_response = type('MockResponse', (), {
+                'status_code': 200,
+                'json': lambda: {"success": True, "mock": True}
+            })()
+            mock_httpx_post.return_value = mock_httpx_response
+            mock_httpx_async_post.return_value = mock_httpx_response
 
             return test_func(*args, **kwargs)
 
