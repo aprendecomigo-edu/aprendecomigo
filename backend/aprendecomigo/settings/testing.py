@@ -28,13 +28,6 @@ DATABASES = {
 # Set JWT signing key
 SIMPLE_JWT = {**BASE_SIMPLE_JWT, "SIGNING_KEY": SECRET_KEY}
 
-# Disable throttling during tests
-REST_FRAMEWORK = {
-    **BASE_REST_FRAMEWORK,
-    "DEFAULT_THROTTLE_CLASSES": [],
-    "DEFAULT_THROTTLE_RATES": {},
-}
-
 # Disable password hashing for faster tests
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
@@ -67,6 +60,13 @@ SWAGGER_USE_COMPAT_RENDERERS = False
 
 # Import all settings from base.py
 from .base import *  # noqa: E402
+
+# Disable throttling during tests - MUST come after importing base.py to override properly
+REST_FRAMEWORK = {
+    **BASE_REST_FRAMEWORK,
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {},
+}
 
 # Allow testserver for Django test client
 ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
