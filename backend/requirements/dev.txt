@@ -28,6 +28,8 @@ rich==14.1.0  # Better terminal output
 Pygments==2.19.2  # Syntax highlighting
 markdown-it-py==4.0.0
 mdurl==0.1.2
+django-sslserver==0.22  # For HTTPS in development
+
 
 # Additional dev dependencies for pip-audit
 boolean.py==5.0

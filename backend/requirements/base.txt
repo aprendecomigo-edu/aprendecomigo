@@ -9,7 +9,6 @@ django-cors-headers==4.7.0
 django-rest-knox==5.0.2
 djangorestframework_simplejwt==5.5.1
 django-cryptography==1.1
-django-sslserver==0.22  # For HTTPS in development
 cryptography==45.0.6
 PyJWT==2.10.1
 pyotp==2.9.0
@@ -28,24 +27,24 @@ redis==6.4.0
 drf-yasg==1.21.10
 
 # Payment Processing
-stripe==7.14.0
+stripe==12.4.0
 
 # Email & Messaging
 bleach==6.2.0
 
 # File Handling
-pillow==10.4.0
+pillow==11.3.0
 
 # Utilities
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
 pytz==2025.2
-requests==2.32.3
-urllib3==2.3.0
+requests==2.32.4
+urllib3==2.5.0
 
 # Core Python Dependencies (required by Django/DRF)
 asgiref==3.9.1
-certifi==2025.1.31
+certifi==2025.8.3
 charset-normalizer==3.4.1
 idna==3.10
 sqlparse==0.5.3
@@ -81,7 +80,7 @@ six==1.17.0
 webencodings==0.5.1
 
 # WebSocket Support
-h11==0.14.0
+h11==0.16.0
 sniffio==1.3.1
 sortedcontainers==2.4.0
 trio==0.29.0
@@ -89,9 +88,3 @@ trio-websocket==0.12.0
 websocket-client==1.8.0
 wsproto==1.2.0
 outcome==1.3.0.post0
-
-# OAuth Support
-oauthlib==3.2.2
-requests-oauthlib==2.0.0
-rsa==4.9
-cachetools==5.5.2
