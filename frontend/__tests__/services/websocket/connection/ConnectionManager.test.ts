@@ -87,7 +87,7 @@ const mockWebSocketClass = class MockWebSocket {
 Object.defineProperty(global, 'WebSocket', {
   writable: true,
   configurable: true,
-  value: mockWebSocketClass
+  value: mockWebSocketClass,
 });
 
 // Ensure WebSocket constants are available globally for ES module imports
@@ -182,10 +182,10 @@ describe('ConnectionManager', () => {
     it('should transition to CONNECTED state when WebSocket opens', async () => {
       // Arrange & Act
       const connectPromise = connectionManager.connect();
-      
+
       // Wait a tick for the WebSocket to be created
       await new Promise(resolve => setImmediate(resolve));
-      
+
       // Now simulate the open event
       mockWebSocket.simulateOpen();
       await connectPromise;
@@ -234,10 +234,10 @@ describe('ConnectionManager', () => {
       // Known Issue: This test fails due to ES module import binding of WebSocket.OPEN
       // The ConnectionManager code references WebSocket.OPEN which is bound at import time
       // and cannot be mocked at runtime in Jest environment.
-      // 
+      //
       // The actual functionality works correctly - this is a testing limitation.
       // All other tests pass, confirming the ConnectionManager works properly.
-      
+
       // Arrange
       const mockSend = jest.spyOn(mockWebSocket, 'send');
       const message = { type: 'test', data: 'hello' };
@@ -247,7 +247,7 @@ describe('ConnectionManager', () => {
       expect(() => {
         connectionManager.send(message);
       }).toThrow('Cannot send message: WebSocket is not connected');
-      
+
       // Verify the WebSocket itself is in the correct state
       expect(mockWebSocket.readyState).toBe(1); // OPEN state
       expect(mockWebSocketClass.OPEN).toBe(1);
@@ -337,11 +337,7 @@ describe('ConnectionManager', () => {
       mockWebSocket.simulateClose();
 
       // Assert - verify all states are present and in correct order
-      expect(events).toEqual([
-        'state:connecting',
-        'state:connected',
-        'state:disconnected',
-      ]);
+      expect(events).toEqual(['state:connecting', 'state:connected', 'state:disconnected']);
     });
   });
 

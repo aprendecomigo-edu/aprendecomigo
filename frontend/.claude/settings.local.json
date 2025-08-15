@@ -50,7 +50,8 @@
       "WebFetch(domain:www.django-rest-framework.org)",
       "mcp__playwright__browser_network_requests",
       "WebFetch(domain:docs.djangoproject.com)",
-      "WebSearch"
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

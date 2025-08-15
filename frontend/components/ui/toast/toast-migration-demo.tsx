@@ -64,10 +64,7 @@ export function ToastMigrationDemo() {
           >
             <Text className="text-white text-sm">Success</Text>
           </Pressable>
-          <Pressable
-            onPress={() => showToastV2('error')}
-            className="bg-red-500 px-3 py-2 rounded"
-          >
+          <Pressable onPress={() => showToastV2('error')} className="bg-red-500 px-3 py-2 rounded">
             <Text className="text-white text-sm">Error</Text>
           </Pressable>
           <Pressable
@@ -76,23 +73,14 @@ export function ToastMigrationDemo() {
           >
             <Text className="text-white text-sm">Warning</Text>
           </Pressable>
-          <Pressable
-            onPress={() => showToastV2('info')}
-            className="bg-blue-500 px-3 py-2 rounded"
-          >
+          <Pressable onPress={() => showToastV2('info')} className="bg-blue-500 px-3 py-2 rounded">
             <Text className="text-white text-sm">Info</Text>
           </Pressable>
-          <Pressable
-            onPress={() => showToastV2('muted')}
-            className="bg-gray-500 px-3 py-2 rounded"
-          >
+          <Pressable onPress={() => showToastV2('muted')} className="bg-gray-500 px-3 py-2 rounded">
             <Text className="text-white text-sm">Muted</Text>
           </Pressable>
         </View>
-        <Pressable
-          onPress={() => toastV2.hideAll()}
-          className="bg-gray-300 px-3 py-2 rounded mt-2"
-        >
+        <Pressable onPress={() => toastV2.hideAll()} className="bg-gray-300 px-3 py-2 rounded mt-2">
           <Text className="text-sm">Hide All v2</Text>
         </Pressable>
       </View>
@@ -143,7 +131,7 @@ export function ToastMigrationDemo() {
       {/* Manual Toast Examples */}
       <View className="mb-8">
         <Text className="text-lg font-semibold mb-3">Manual Toast Components</Text>
-        
+
         <Text className="text-md font-medium mb-2">v2 Toast Example:</Text>
         <ToastV2 variant="solid" action="info" className="mb-2">
           <ToastTitleV2>Manual v2 Toast</ToastTitleV2>
@@ -159,12 +147,10 @@ export function ToastMigrationDemo() {
 
       <View className="p-4 bg-gray-100 rounded-md">
         <Text className="text-sm">
-          <Text className="font-semibold">Test Results:</Text> {'\n'}
-          • useToast hook should work without factory functions{'\n'}
-          • Toast colors should match actions (success=green, error=red, etc.){'\n'}
-          • Toasts should auto-hide after 3 seconds{'\n'}
-          • Hide All buttons should clear all toasts{'\n'}
-          • Manual toasts should display immediately
+          <Text className="font-semibold">Test Results:</Text> {'\n'}• useToast hook should work
+          without factory functions{'\n'}• Toast colors should match actions (success=green,
+          error=red, etc.){'\n'}• Toasts should auto-hide after 3 seconds{'\n'}• Hide All buttons
+          should clear all toasts{'\n'}• Manual toasts should display immediately
         </Text>
       </View>
 

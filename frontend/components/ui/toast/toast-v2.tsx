@@ -4,12 +4,12 @@ import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo, useRef, useState, useCallback } from 'react';
 import type { TextProps, ViewProps } from 'react-native';
 import { Text, View } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
   withSpring,
-  runOnJS
+  runOnJS,
 } from 'react-native-reanimated';
 
 // Toast Context for sharing state between components
@@ -189,11 +189,9 @@ export type IToastDescriptionProps = TextProps & {
 } & VariantProps<typeof toastDescriptionStyle>;
 
 // Toast Root Component - Direct implementation without factory
-const ToastRoot = React.forwardRef<View, ViewProps>(
-  ({ ...props }, ref) => {
-    return <Animated.View {...props} ref={ref} />;
-  }
-);
+const ToastRoot = React.forwardRef<View, ViewProps>(({ ...props }, ref) => {
+  return <Animated.View {...props} ref={ref} />;
+});
 
 // Main Toast component - Direct implementation
 export const Toast = React.forwardRef<View, IToastProps>(
@@ -265,7 +263,7 @@ export const ToastDescription = React.forwardRef<Text, IToastDescriptionProps>(
 // Toast hook implementation - Direct implementation without factory
 export function useToast() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  
+
   const show = useCallback((toast: Omit<ToastItem, 'id'>) => {
     const id = Date.now().toString() + Math.random().toString(36);
     const newToast: ToastItem = {
@@ -273,27 +271,27 @@ export function useToast() {
       id,
       duration: toast.duration ?? 5000,
     };
-    
+
     setToasts(prev => [...prev, newToast]);
-    
+
     // Auto-hide after duration
     if (newToast.duration > 0) {
       setTimeout(() => {
         hide(id);
       }, newToast.duration);
     }
-    
+
     return id;
   }, []);
-  
+
   const hide = useCallback((id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   }, []);
-  
+
   const hideAll = useCallback(() => {
     setToasts([]);
   }, []);
-  
+
   return {
     toasts,
     show,
@@ -305,12 +303,12 @@ export function useToast() {
 // Toast Container component for rendering toasts
 export const ToastContainer = () => {
   const { toasts } = useToast();
-  
+
   if (toasts.length === 0) return null;
-  
+
   return (
     <View className="absolute top-0 left-0 right-0 z-50 flex-col items-center pt-safe">
-      {toasts.map((toast) => (
+      {toasts.map(toast => (
         <Toast key={toast.id} variant={toast.variant} action={toast.action}>
           {toast.title && <ToastTitle>{toast.title}</ToastTitle>}
           {toast.description && <ToastDescription>{toast.description}</ToastDescription>}

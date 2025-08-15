@@ -61,24 +61,21 @@ const getTrackStyles = (orientation?: string, size?: string, isReversed?: boolea
       ...baseStyle,
       width: '100%',
       height: size === 'sm' ? 4 : size === 'lg' ? 6 : 4,
-      flexDirection: isReversed ? 'row-reverse' as const : 'row' as const,
+      flexDirection: isReversed ? ('row-reverse' as const) : ('row' as const),
     };
   } else {
     return {
       ...baseStyle,
       height: '100%',
       width: size === 'sm' ? 4 : size === 'lg' ? 6 : 5,
-      flexDirection: isReversed ? 'column' as const : 'column-reverse' as const,
+      flexDirection: isReversed ? ('column' as const) : ('column-reverse' as const),
     };
   }
 };
 
 const getFilledTrackStyles = (orientation?: string) => ({
   backgroundColor: '#3b82f6',
-  ...(orientation === 'horizontal' 
-    ? { height: '100%' }
-    : { width: '100%' }
-  ),
+  ...(orientation === 'horizontal' ? { height: '100%' } : { width: '100%' }),
 });
 
 const getThumbStyles = (size?: string) => {
@@ -99,33 +96,36 @@ const getThumbStyles = (size?: string) => {
 
 // Main Slider component - Simplified v2 without factory functions
 export const Slider = React.forwardRef<View, ISliderProps>(
-  ({ 
-    size = 'md', 
-    orientation = 'horizontal', 
-    isReversed = false,
-    value = 0,
-    min = 0,
-    max = 100,
-    onValueChange,
-    isDisabled = false,
-    children,
-    style,
-    ...props 
-  }, ref) => {
+  (
+    {
+      size = 'md',
+      orientation = 'horizontal',
+      isReversed = false,
+      value = 0,
+      min = 0,
+      max = 100,
+      onValueChange,
+      isDisabled = false,
+      children,
+      style,
+      ...props
+    },
+    ref
+  ) => {
     const [internalValue, setInternalValue] = useState(value);
 
     const contextValue = useMemo(
-      () => ({ 
-        size, 
-        orientation, 
-        isReversed, 
+      () => ({
+        size,
+        orientation,
+        isReversed,
         value: internalValue,
         min,
         max,
         onValueChange: (newValue: number) => {
           setInternalValue(newValue);
           onValueChange?.(newValue);
-        }
+        },
       }),
       [size, orientation, isReversed, internalValue, min, max, onValueChange]
     );
@@ -134,11 +134,7 @@ export const Slider = React.forwardRef<View, ISliderProps>(
 
     return (
       <SliderContext.Provider value={contextValue}>
-        <View
-          ref={ref}
-          {...props}
-          style={[sliderStyles, style]}
-        >
+        <View ref={ref} {...props} style={[sliderStyles, style]}>
           {children}
         </View>
       </SliderContext.Provider>
@@ -181,42 +177,28 @@ export const SliderFilledTrack = React.forwardRef<View, ISliderFilledTrackProps>
     const percentage = ((value - min) / (max - min)) * 100;
     const filledTrackStyles = getFilledTrackStyles(orientation);
 
-    const dimensionStyle = orientation === 'horizontal' 
-      ? { width: `${percentage}%` }
-      : { height: `${percentage}%` };
+    const dimensionStyle =
+      orientation === 'horizontal' ? { width: `${percentage}%` } : { height: `${percentage}%` };
 
-    return (
-      <View
-        ref={ref}
-        {...props}
-        style={[filledTrackStyles, dimensionStyle, style]}
-      />
-    );
+    return <View ref={ref} {...props} style={[filledTrackStyles, dimensionStyle, style]} />;
   }
 );
 
 // SliderThumb component
-export const SliderThumb = React.forwardRef<View, ISliderThumbProps>(
-  ({ style, ...props }, ref) => {
-    const context = useContext(SliderContext);
-    const { size, value = 0, min = 0, max = 100, orientation } = context || {};
+export const SliderThumb = React.forwardRef<View, ISliderThumbProps>(({ style, ...props }, ref) => {
+  const context = useContext(SliderContext);
+  const { size, value = 0, min = 0, max = 100, orientation } = context || {};
 
-    const percentage = ((value - min) / (max - min)) * 100;
-    const thumbStyles = getThumbStyles(size);
+  const percentage = ((value - min) / (max - min)) * 100;
+  const thumbStyles = getThumbStyles(size);
 
-    const positionStyle = orientation === 'horizontal'
+  const positionStyle =
+    orientation === 'horizontal'
       ? { left: `${percentage}%`, marginLeft: -(thumbStyles.width / 2) }
       : { bottom: `${percentage}%`, marginBottom: -(thumbStyles.height / 2) };
 
-    return (
-      <View
-        ref={ref}
-        {...props}
-        style={[thumbStyles, positionStyle, style]}
-      />
-    );
-  }
-);
+  return <View ref={ref} {...props} style={[thumbStyles, positionStyle, style]} />;
+});
 
 // Display names for debugging
 Slider.displayName = 'Slider';

@@ -1,10 +1,10 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps, TextInputProps, PressableProps } from 'react-native';
 import { View, Pressable, TextInput } from 'react-native';
 import { Svg } from 'react-native-svg';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
 
 // Select Context for sharing state between components
 interface SelectContextValue {
@@ -130,11 +130,7 @@ export type ISelectIconProps = IPrimitiveIcon &
 export const Select = React.forwardRef<View, ISelectProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <View
-        ref={ref}
-        {...props}
-        className={selectStyle({ class: className })}
-      >
+      <View ref={ref} {...props} className={selectStyle({ class: className })}>
         {children}
       </View>
     );
@@ -144,10 +140,7 @@ export const Select = React.forwardRef<View, ISelectProps>(
 // SelectTrigger component
 export const SelectTrigger = React.forwardRef<View, ISelectTriggerProps>(
   ({ className, size = 'md', variant = 'outline', children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size, variant }),
-      [size, variant]
-    );
+    const contextValue = useMemo(() => ({ size, variant }), [size, variant]);
 
     return (
       <SelectContext.Provider value={contextValue}>
@@ -189,14 +182,7 @@ export const SelectIcon = React.forwardRef<any, ISelectIconProps>(
     const { size: parentSize } = context || {};
 
     if (typeof size === 'number') {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={className}
-          size={size}
-        />
-      );
+      return <PrimitiveIcon ref={ref} {...props} className={className} size={size} />;
     }
 
     return (

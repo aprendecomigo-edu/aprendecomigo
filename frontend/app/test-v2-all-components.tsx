@@ -1,19 +1,9 @@
+import { X, AlertCircle } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
 
 // Import all v2 components (simplified versions for testing)
 import { Button, ButtonText, ButtonGroup } from '@/components/ui/button/button-v2-simple';
-import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input/input-v2-simple';
-import { 
-  Modal, 
-  ModalBackdrop, 
-  ModalContent, 
-  ModalHeader, 
-  ModalCloseButton,
-  ModalBody,
-  ModalFooter 
-} from '@/components/ui/modal/modal-v2-simple';
-import { Toast, ToastTitle, ToastDescription, useToast } from '@/components/ui/toast/toast-v2-simple';
 import {
   FormControl,
   FormControlLabel,
@@ -22,9 +12,24 @@ import {
   FormControlHelperText,
   FormControlError,
   FormControlErrorIcon,
-  FormControlErrorText
+  FormControlErrorText,
 } from '@/components/ui/form-control/form-control-v2-simple';
-import { X, AlertCircle } from 'lucide-react-native';
+import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input/input-v2-simple';
+import {
+  Modal,
+  ModalBackdrop,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+} from '@/components/ui/modal/modal-v2-simple';
+import {
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  useToast,
+} from '@/components/ui/toast/toast-v2-simple';
 
 export default function TestV2AllComponentsScreen() {
   // State for testing
@@ -41,9 +46,9 @@ export default function TestV2AllComponentsScreen() {
       success: { title: 'Success!', description: 'Operation completed successfully' },
       error: { title: 'Error!', description: 'Something went wrong' },
       warning: { title: 'Warning!', description: 'Please be careful' },
-      info: { title: 'Info', description: 'Here is some information' }
+      info: { title: 'Info', description: 'Here is some information' },
     };
-    
+
     toast.show({
       placement: 'top',
       render: ({ id }) => (
@@ -78,7 +83,7 @@ export default function TestV2AllComponentsScreen() {
         {/* Button Component Tests */}
         <View className="gap-4">
           <Text className="text-xl font-semibold">1. Button Component</Text>
-          
+
           <Text className="text-sm text-typography-500">Variants:</Text>
           <ButtonGroup space="sm">
             <Button variant="solid" action="primary">
@@ -94,9 +99,15 @@ export default function TestV2AllComponentsScreen() {
 
           <Text className="text-sm text-typography-500">Sizes:</Text>
           <View className="gap-2">
-            <Button size="xs"><ButtonText>Extra Small</ButtonText></Button>
-            <Button size="md"><ButtonText>Medium</ButtonText></Button>
-            <Button size="xl"><ButtonText>Extra Large</ButtonText></Button>
+            <Button size="xs">
+              <ButtonText>Extra Small</ButtonText>
+            </Button>
+            <Button size="md">
+              <ButtonText>Medium</ButtonText>
+            </Button>
+            <Button size="xl">
+              <ButtonText>Extra Large</ButtonText>
+            </Button>
           </View>
 
           <Text className="text-sm text-typography-500">States:</Text>
@@ -108,10 +119,10 @@ export default function TestV2AllComponentsScreen() {
         {/* Input Component Tests */}
         <View className="gap-4">
           <Text className="text-xl font-semibold">2. Input Component</Text>
-          
+
           <Text className="text-sm text-typography-500">Basic Input:</Text>
           <Input variant="outline" size="md">
-            <InputField 
+            <InputField
               placeholder="Enter text here"
               value={inputValue}
               onChangeText={setInputValue}
@@ -143,29 +154,21 @@ export default function TestV2AllComponentsScreen() {
         {/* Form Control Tests */}
         <View className="gap-4">
           <Text className="text-xl font-semibold">3. Form Control Component</Text>
-          
+
           <FormControl isRequired isInvalid={formError}>
             <FormControlLabel>
               <FormControlLabelText>Email</FormControlLabelText>
             </FormControlLabel>
             <Input>
-              <InputField 
-                placeholder="Enter email"
-                value={email}
-                onChangeText={setEmail}
-              />
+              <InputField placeholder="Enter email" value={email} onChangeText={setEmail} />
             </Input>
             <FormControlHelper>
-              <FormControlHelperText>
-                We'll never share your email
-              </FormControlHelperText>
+              <FormControlHelperText>We'll never share your email</FormControlHelperText>
             </FormControlHelper>
             {formError && (
               <FormControlError>
                 <FormControlErrorIcon as={AlertCircle} />
-                <FormControlErrorText>
-                  Email is required
-                </FormControlErrorText>
+                <FormControlErrorText>Email is required</FormControlErrorText>
               </FormControlError>
             )}
           </FormControl>
@@ -175,7 +178,7 @@ export default function TestV2AllComponentsScreen() {
               <FormControlLabelText>Password</FormControlLabelText>
             </FormControlLabel>
             <Input>
-              <InputField 
+              <InputField
                 placeholder="Enter password"
                 secureTextEntry
                 value={password}
@@ -184,9 +187,7 @@ export default function TestV2AllComponentsScreen() {
             </Input>
             {formError && (
               <FormControlError>
-                <FormControlErrorText>
-                  Password is required
-                </FormControlErrorText>
+                <FormControlErrorText>Password is required</FormControlErrorText>
               </FormControlError>
             )}
           </FormControl>
@@ -199,16 +200,12 @@ export default function TestV2AllComponentsScreen() {
         {/* Modal Component Tests */}
         <View className="gap-4">
           <Text className="text-xl font-semibold">4. Modal Component</Text>
-          
+
           <Button onPress={() => setShowModal(true)}>
             <ButtonText>Open Modal</ButtonText>
           </Button>
 
-          <Modal
-            isOpen={showModal}
-            onClose={() => setShowModal(false)}
-            size="md"
-          >
+          <Modal isOpen={showModal} onClose={() => setShowModal(false)} size="md">
             <ModalBackdrop />
             <ModalContent>
               <ModalHeader>
@@ -219,17 +216,13 @@ export default function TestV2AllComponentsScreen() {
               </ModalHeader>
               <ModalBody>
                 <Text>
-                  This is a test modal using the v2 implementation.
-                  It should work exactly like the v1 modal but without
-                  factory functions.
+                  This is a test modal using the v2 implementation. It should work exactly like the
+                  v1 modal but without factory functions.
                 </Text>
               </ModalBody>
               <ModalFooter>
                 <ButtonGroup space="sm">
-                  <Button
-                    variant="outline"
-                    onPress={() => setShowModal(false)}
-                  >
+                  <Button variant="outline" onPress={() => setShowModal(false)}>
                     <ButtonText>Cancel</ButtonText>
                   </Button>
                   <Button
@@ -250,34 +243,22 @@ export default function TestV2AllComponentsScreen() {
         {/* Toast Component Tests */}
         <View className="gap-4">
           <Text className="text-xl font-semibold">5. Toast Component</Text>
-          
+
           <Text className="text-sm text-typography-500">Show different toast variants:</Text>
           <ButtonGroup space="sm">
-            <Button 
-              action="positive"
-              onPress={() => handleShowToast('success')}
-            >
+            <Button action="positive" onPress={() => handleShowToast('success')}>
               <ButtonText>Success</ButtonText>
             </Button>
-            <Button 
-              action="negative"
-              onPress={() => handleShowToast('error')}
-            >
+            <Button action="negative" onPress={() => handleShowToast('error')}>
               <ButtonText>Error</ButtonText>
             </Button>
           </ButtonGroup>
-          
+
           <ButtonGroup space="sm">
-            <Button 
-              variant="outline"
-              onPress={() => handleShowToast('warning')}
-            >
+            <Button variant="outline" onPress={() => handleShowToast('warning')}>
               <ButtonText>Warning</ButtonText>
             </Button>
-            <Button 
-              variant="outline"
-              onPress={() => handleShowToast('info')}
-            >
+            <Button variant="outline" onPress={() => handleShowToast('info')}>
               <ButtonText>Info</ButtonText>
             </Button>
           </ButtonGroup>
@@ -298,16 +279,12 @@ export default function TestV2AllComponentsScreen() {
         </View>
 
         <View className="p-4 bg-info-50 rounded-lg">
-          <Text className="text-lg font-semibold text-info-700 mb-2">
-            📋 Testing Checklist
-          </Text>
+          <Text className="text-lg font-semibold text-info-700 mb-2">📋 Testing Checklist</Text>
           <Text className="text-sm text-info-600">
-            • Click all buttons - should respond{'\n'}
-            • Type in inputs - text should appear{'\n'}
-            • Submit empty form - should show errors{'\n'}
-            • Open/close modal - should animate{'\n'}
-            • Show all toasts - should appear and dismiss{'\n'}
-            • Check disabled states - should not respond
+            • Click all buttons - should respond{'\n'}• Type in inputs - text should appear{'\n'}•
+            Submit empty form - should show errors{'\n'}• Open/close modal - should animate{'\n'}•
+            Show all toasts - should appear and dismiss{'\n'}• Check disabled states - should not
+            respond
           </Text>
         </View>
       </View>

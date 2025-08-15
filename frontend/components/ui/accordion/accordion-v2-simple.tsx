@@ -1,6 +1,14 @@
 'use client';
 import React, { createContext, useContext, useMemo, useState } from 'react';
-import { View, Pressable, Text, Platform, TextProps, ViewProps, PressableProps } from 'react-native';
+import {
+  View,
+  Pressable,
+  Text,
+  Platform,
+  TextProps,
+  ViewProps,
+  PressableProps,
+} from 'react-native';
 
 // Accordion Context for sharing state between components
 interface AccordionContextValue {
@@ -98,20 +106,13 @@ const getContentTextStyles = (size?: string) => ({
 // Main Accordion component - Simplified v2 without factory functions
 export const Accordion = React.forwardRef<View, IAccordionProps>(
   ({ variant = 'filled', size = 'md', children, style, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ variant, size }),
-      [variant, size]
-    );
+    const contextValue = useMemo(() => ({ variant, size }), [variant, size]);
 
     const accordionStyles = getAccordionStyles(variant);
 
     return (
       <AccordionContext.Provider value={contextValue}>
-        <View
-          ref={ref}
-          {...props}
-          style={[accordionStyles, style]}
-        >
+        <View ref={ref} {...props} style={[accordionStyles, style]}>
           {children}
         </View>
       </AccordionContext.Provider>
@@ -138,11 +139,7 @@ export const AccordionItem = React.forwardRef<View, IAccordionItemProps>(
 
     return (
       <AccordionItemContext.Provider value={itemContextValue}>
-        <View
-          ref={ref}
-          {...props}
-          style={[itemStyles, style]}
-        >
+        <View ref={ref} {...props} style={[itemStyles, style]}>
           {children}
         </View>
       </AccordionItemContext.Provider>
@@ -154,11 +151,7 @@ export const AccordionItem = React.forwardRef<View, IAccordionItemProps>(
 export const AccordionHeader = React.forwardRef<View, IAccordionHeaderProps>(
   ({ children, style, ...props }, ref) => {
     return (
-      <View
-        ref={ref}
-        {...props}
-        style={[{ margin: 0 }, style]}
-      >
+      <View ref={ref} {...props} style={[{ margin: 0 }, style]}>
         {children}
       </View>
     );
@@ -178,12 +171,7 @@ export const AccordionTrigger = React.forwardRef<View, IAccordionTriggerProps>(
     const triggerStyles = getTriggerStyles();
 
     return (
-      <Pressable
-        ref={ref as any}
-        {...props}
-        onPress={handlePress}
-        style={[triggerStyles, style]}
-      >
+      <Pressable ref={ref as any} {...props} onPress={handlePress} style={[triggerStyles, style]}>
         {children}
       </Pressable>
     );
@@ -195,16 +183,10 @@ export const AccordionTitleText = React.forwardRef<Text, IAccordionTitleTextProp
   ({ style, ...props }, ref) => {
     const context = useContext(AccordionContext);
     const { size } = context || {};
-    
+
     const titleTextStyles = getTitleTextStyles(size);
 
-    return (
-      <Text
-        ref={ref}
-        {...props}
-        style={[titleTextStyles, style]}
-      />
-    );
+    return <Text ref={ref} {...props} style={[titleTextStyles, style]} />;
   }
 );
 
@@ -212,7 +194,7 @@ export const AccordionTitleText = React.forwardRef<Text, IAccordionTitleTextProp
 export const AccordionIcon = React.forwardRef<View, IAccordionIconProps>(
   ({ children, style, ...props }, ref) => {
     const itemContext = useContext(AccordionItemContext);
-    
+
     const iconStyles = {
       width: 18,
       height: 18,
@@ -220,11 +202,7 @@ export const AccordionIcon = React.forwardRef<View, IAccordionIconProps>(
     };
 
     return (
-      <View
-        ref={ref}
-        {...props}
-        style={[iconStyles, style]}
-      >
+      <View ref={ref} {...props} style={[iconStyles, style]}>
         {children}
       </View>
     );
@@ -243,11 +221,7 @@ export const AccordionContent = React.forwardRef<View, IAccordionContentProps>(
     const contentStyles = getContentStyles();
 
     return (
-      <View
-        ref={ref}
-        {...props}
-        style={[contentStyles, style]}
-      >
+      <View ref={ref} {...props} style={[contentStyles, style]}>
         {children}
       </View>
     );
@@ -259,16 +233,10 @@ export const AccordionContentText = React.forwardRef<Text, IAccordionContentText
   ({ style, ...props }, ref) => {
     const context = useContext(AccordionContext);
     const { size } = context || {};
-    
+
     const contentTextStyles = getContentTextStyles(size);
 
-    return (
-      <Text
-        ref={ref}
-        {...props}
-        style={[contentTextStyles, style]}
-      />
-    );
+    return <Text ref={ref} {...props} style={[contentTextStyles, style]} />;
   }
 );
 

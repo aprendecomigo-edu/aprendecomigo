@@ -38,19 +38,12 @@ export type ISwitchProps = SwitchProps &
 
 // Main Switch component - Direct implementation without factory
 export const Switch = React.forwardRef<RNSwitch, ISwitchProps>(
-  ({ 
-    className, 
-    size = 'md', 
-    isDisabled = false,
-    isInvalid = false,
-    disabled,
-    ...props 
-  }, ref) => {
+  ({ className, size = 'md', isDisabled = false, isInvalid = false, disabled, ...props }, ref) => {
     const contextValue = useMemo(
-      () => ({ 
+      () => ({
         size,
         isDisabled: isDisabled || disabled,
-        isInvalid
+        isInvalid,
       }),
       [size, isDisabled, disabled, isInvalid]
     );
@@ -63,15 +56,17 @@ export const Switch = React.forwardRef<RNSwitch, ISwitchProps>(
           ref={ref}
           {...props}
           disabled={finalDisabled}
-          className={switchStyle({ 
-            size, 
-            class: className 
+          className={switchStyle({
+            size,
+            class: className,
           })}
           style={{
             opacity: finalDisabled ? 0.4 : 1,
-            transform: [{ 
-              scale: size === 'sm' ? 0.75 : size === 'lg' ? 1.25 : 1 
-            }],
+            transform: [
+              {
+                scale: size === 'sm' ? 0.75 : size === 'lg' ? 1.25 : 1,
+              },
+            ],
             ...(isInvalid && {
               borderWidth: 2,
               borderColor: '#dc2626',

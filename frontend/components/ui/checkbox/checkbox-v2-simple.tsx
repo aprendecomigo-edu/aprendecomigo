@@ -1,10 +1,10 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps, PressableProps, TextProps } from 'react-native';
 import { View, Pressable, Text } from 'react-native';
 import { Svg } from 'react-native-svg';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
 
 // Checkbox Context for sharing state between components
 interface CheckboxContextValue {
@@ -130,10 +130,7 @@ export type ICheckboxGroupProps = ViewProps &
 // Main Checkbox component - Simplified v2 implementation
 export const Checkbox = React.forwardRef<View, ICheckboxProps>(
   ({ className, size = 'md', children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size }),
-      [size]
-    );
+    const contextValue = useMemo(() => ({ size }), [size]);
 
     return (
       <CheckboxContext.Provider value={contextValue}>
@@ -196,14 +193,7 @@ export const CheckboxIcon = React.forwardRef<any, ICheckboxIconProps>(
     const { size: parentSize } = context || {};
 
     if (typeof size === 'number') {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={className}
-          size={size}
-        />
-      );
+      return <PrimitiveIcon ref={ref} {...props} className={className} size={size} />;
     }
 
     return (
@@ -223,11 +213,7 @@ export const CheckboxIcon = React.forwardRef<any, ICheckboxIconProps>(
 export const CheckboxGroup = React.forwardRef<View, ICheckboxGroupProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <View
-        ref={ref}
-        {...props}
-        className={checkboxGroupStyle({ class: className })}
-      >
+      <View ref={ref} {...props} className={checkboxGroupStyle({ class: className })}>
         {children}
       </View>
     );

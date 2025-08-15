@@ -1,10 +1,10 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { TextInputProps, ViewProps, PressableProps } from 'react-native';
 import { View, Pressable, TextInput } from 'react-native';
 import { Svg } from 'react-native-svg';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
 
 // Input Context for sharing state between components
 interface InputContextValue {
@@ -158,17 +158,20 @@ export type IInputSlotProps = PressableProps &
 
 // Main Input component - Direct v2 implementation without factory
 export const Input = React.forwardRef<View, IInputProps>(
-  ({ 
-    className, 
-    size = 'md', 
-    variant = 'outline', 
-    isDisabled = false,
-    isInvalid = false,
-    isFocused = false,
-    isHovered = false,
-    children, 
-    ...props 
-  }, ref) => {
+  (
+    {
+      className,
+      size = 'md',
+      variant = 'outline',
+      isDisabled = false,
+      isInvalid = false,
+      isFocused = false,
+      isHovered = false,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const contextValue = useMemo(
       () => ({ size, variant, isDisabled, isInvalid, isFocused, isHovered }),
       [size, variant, isDisabled, isInvalid, isFocused, isHovered]
@@ -223,14 +226,7 @@ export const InputIcon = React.forwardRef<any, IInputIconProps>(
     const { size: parentSize } = context || {};
 
     if (typeof size === 'number') {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={className}
-          size={size}
-        />
-      );
+      return <PrimitiveIcon ref={ref} {...props} className={className} size={size} />;
     }
 
     return (

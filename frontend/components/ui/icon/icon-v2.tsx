@@ -46,21 +46,21 @@ export type IIconProps = React.ComponentPropsWithoutRef<typeof Svg> &
 
 // Main Icon component - Direct implementation without factory
 export const Icon = React.forwardRef<React.ElementRef<typeof Svg>, IIconProps>(
-  ({ 
-    className, 
-    size = 'md', 
-    height, 
-    width, 
-    fill, 
-    color, 
-    stroke = 'currentColor', 
-    as: AsComp, 
-    ...props 
-  }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size }),
-      [size]
-    );
+  (
+    {
+      className,
+      size = 'md',
+      height,
+      width,
+      fill,
+      color,
+      stroke = 'currentColor',
+      as: AsComp,
+      ...props
+    },
+    ref
+  ) => {
+    const contextValue = useMemo(() => ({ size }), [size]);
 
     const sizeProps = useMemo(() => {
       if (size) return { size };
@@ -82,14 +82,17 @@ export const Icon = React.forwardRef<React.ElementRef<typeof Svg>, IIconProps>(
 
     return (
       <IconContext.Provider value={contextValue}>
-        <Svg 
-          ref={ref} 
-          height={height} 
-          width={width} 
-          fill={fill} 
-          stroke={colorProps} 
-          className={iconStyle({ size: typeof size === 'string' ? size : undefined, class: className })}
-          {...props} 
+        <Svg
+          ref={ref}
+          height={height}
+          width={width}
+          fill={fill}
+          stroke={colorProps}
+          className={iconStyle({
+            size: typeof size === 'string' ? size : undefined,
+            class: className,
+          })}
+          {...props}
         />
       </IconContext.Provider>
     );

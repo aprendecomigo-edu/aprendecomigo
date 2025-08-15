@@ -30,7 +30,16 @@ export const AlertDialog = React.forwardRef<View, IAlertDialogProps>(
     return (
       <AlertDialogContext.Provider value={contextValue}>
         <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
-          <View ref={ref} {...props} style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View
+            ref={ref}
+            {...props}
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+            }}
+          >
             {children}
           </View>
         </Modal>
@@ -46,7 +55,10 @@ export const AlertDialogBackdrop = React.forwardRef<View, IAlertDialogBackdropPr
       <Pressable
         ref={ref as any}
         {...props}
-        onPress={() => { context?.onClose?.(); onPress?.(); }}
+        onPress={() => {
+          context?.onClose?.();
+          onPress?.();
+        }}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       />
     );
@@ -55,7 +67,14 @@ export const AlertDialogBackdrop = React.forwardRef<View, IAlertDialogBackdropPr
 
 export const AlertDialogContent = React.forwardRef<View, IAlertDialogContentProps>(
   ({ children, style, ...props }, ref) => (
-    <View ref={ref} {...props} style={[{ backgroundColor: 'white', borderRadius: 12, padding: 24, margin: 20, maxWidth: '90%' }, style]}>
+    <View
+      ref={ref}
+      {...props}
+      style={[
+        { backgroundColor: 'white', borderRadius: 12, padding: 24, margin: 20, maxWidth: '90%' },
+        style,
+      ]}
+    >
       {children}
     </View>
   )
@@ -63,19 +82,29 @@ export const AlertDialogContent = React.forwardRef<View, IAlertDialogContentProp
 
 export const AlertDialogHeader = React.forwardRef<View, IAlertDialogHeaderProps>(
   ({ children, style, ...props }, ref) => (
-    <View ref={ref} {...props} style={[{ marginBottom: 16 }, style]}>{children}</View>
+    <View ref={ref} {...props} style={[{ marginBottom: 16 }, style]}>
+      {children}
+    </View>
   )
 );
 
 export const AlertDialogBody = React.forwardRef<View, IAlertDialogBodyProps>(
   ({ children, style, ...props }, ref) => (
-    <View ref={ref} {...props} style={[{ marginBottom: 20 }, style]}>{children}</View>
+    <View ref={ref} {...props} style={[{ marginBottom: 20 }, style]}>
+      {children}
+    </View>
   )
 );
 
 export const AlertDialogFooter = React.forwardRef<View, IAlertDialogFooterProps>(
   ({ children, style, ...props }, ref) => (
-    <View ref={ref} {...props} style={[{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }, style]}>{children}</View>
+    <View
+      ref={ref}
+      {...props}
+      style={[{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }, style]}
+    >
+      {children}
+    </View>
   )
 );
 

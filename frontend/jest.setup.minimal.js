@@ -905,7 +905,7 @@ global.CloseEvent = class CloseEvent extends Event {
     this.code = eventInitDict.code || 1000;
     this.reason = eventInitDict.reason || '';
     this.wasClean = eventInitDict.wasClean !== undefined ? eventInitDict.wasClean : false;
-    
+
     // Additional WebSocket close code constants for reference
     this.NORMAL_CLOSURE = 1000;
     this.GOING_AWAY = 1001;
@@ -962,7 +962,7 @@ if (typeof global.WebSocket === 'undefined') {
     static OPEN = 1;
     static CLOSING = 2;
     static CLOSED = 3;
-    
+
     constructor(url) {
       this.url = url;
       this.readyState = MockWebSocket.CONNECTING;
@@ -971,11 +971,11 @@ if (typeof global.WebSocket === 'undefined') {
       this.onerror = null;
       this.onmessage = null;
     }
-    
+
     send() {
       throw new Error('MockWebSocket: send() not implemented in Jest mock');
     }
-    
+
     close() {
       this.readyState = MockWebSocket.CLOSED;
     }

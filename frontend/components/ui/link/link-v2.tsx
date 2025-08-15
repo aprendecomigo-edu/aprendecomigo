@@ -90,15 +90,18 @@ export const Link = React.forwardRef<Pressable, ILinkProps>(
 
 // LinkText component
 export const LinkText = React.forwardRef<Text, ILinkTextProps>(
-  ({
-    className,
-    isTruncated = false,
-    bold = false,
-    underline = true,
-    strikeThrough = false,
-    size = 'md',
-    ...props
-  }, ref) => {
+  (
+    {
+      className,
+      isTruncated = false,
+      bold = false,
+      underline = true,
+      strikeThrough = false,
+      size = 'md',
+      ...props
+    },
+    ref
+  ) => {
     return (
       <Text
         ref={ref}

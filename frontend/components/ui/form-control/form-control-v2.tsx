@@ -285,19 +285,14 @@ export type IFormControlHelperTextProps = TextProps &
   VariantProps<typeof formControlHelperTextStyle> & { className?: string };
 
 // Form Control Root Component - Direct implementation without factory
-const FormControlRoot = React.forwardRef<View, ViewProps>(
-  ({ ...props }, ref) => {
-    return <View {...props} ref={ref} />;
-  }
-);
+const FormControlRoot = React.forwardRef<View, ViewProps>(({ ...props }, ref) => {
+  return <View {...props} ref={ref} />;
+});
 
 // Main FormControl component - Direct implementation
 export const FormControl = React.forwardRef<View, IFormControlProps>(
   ({ className, size = 'md', context, children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size, ...context }),
-      [size, context]
-    );
+    const contextValue = useMemo(() => ({ size, ...context }), [size, context]);
 
     return (
       <FormControlContext.Provider value={contextValue}>
@@ -316,13 +311,7 @@ export const FormControl = React.forwardRef<View, IFormControlProps>(
 // FormControlError component - Direct implementation
 export const FormControlError = React.forwardRef<View, IFormControlErrorProps>(
   ({ className, ...props }, ref) => {
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={formControlErrorStyle({ class: className })}
-      />
-    );
+    return <View ref={ref} {...props} className={formControlErrorStyle({ class: className })} />;
   }
 );
 
@@ -347,53 +336,48 @@ export const FormControlErrorText = React.forwardRef<Text, IFormControlErrorText
 );
 
 // FormControlErrorIcon component - Direct implementation
-export const FormControlErrorIcon = React.forwardRef<React.ElementRef<typeof PrimitiveIcon>, IFormControlErrorIconProps>(
-  ({ className, size, ...props }, ref) => {
-    const context = useContext(FormControlContext);
-    const { size: parentSize } = context || {};
+export const FormControlErrorIcon = React.forwardRef<
+  React.ElementRef<typeof PrimitiveIcon>,
+  IFormControlErrorIconProps
+>(({ className, size, ...props }, ref) => {
+  const context = useContext(FormControlContext);
+  const { size: parentSize } = context || {};
 
-    if (typeof size === 'number') {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={formControlErrorIconStyle({ class: className })}
-          size={size}
-        />
-      );
-    } else if ((props.height !== undefined || props.width !== undefined) && size === undefined) {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={formControlErrorIconStyle({ class: className })}
-        />
-      );
-    }
+  if (typeof size === 'number') {
     return (
       <PrimitiveIcon
         ref={ref}
         {...props}
-        className={formControlErrorIconStyle({
-          parentVariants: { size: parentSize },
-          size,
-          class: className,
-        })}
+        className={formControlErrorIconStyle({ class: className })}
+        size={size}
+      />
+    );
+  } else if ((props.height !== undefined || props.width !== undefined) && size === undefined) {
+    return (
+      <PrimitiveIcon
+        ref={ref}
+        {...props}
+        className={formControlErrorIconStyle({ class: className })}
       />
     );
   }
-);
+  return (
+    <PrimitiveIcon
+      ref={ref}
+      {...props}
+      className={formControlErrorIconStyle({
+        parentVariants: { size: parentSize },
+        size,
+        class: className,
+      })}
+    />
+  );
+});
 
 // FormControlLabel component - Direct implementation
 export const FormControlLabel = React.forwardRef<View, IFormControlLabelProps>(
   ({ className, ...props }, ref) => {
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={formControlLabelStyle({ class: className })}
-      />
-    );
+    return <View ref={ref} {...props} className={formControlLabelStyle({ class: className })} />;
   }
 );
 
@@ -439,13 +423,7 @@ export const FormControlLabelAstrick = React.forwardRef<Text, IFormControlLabelA
 // FormControlHelper component - Direct implementation
 export const FormControlHelper = React.forwardRef<View, IFormControlHelperProps>(
   ({ className, ...props }, ref) => {
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={formControlHelperStyle({ class: className })}
-      />
-    );
+    return <View ref={ref} {...props} className={formControlHelperStyle({ class: className })} />;
   }
 );
 

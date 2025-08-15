@@ -1,10 +1,10 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps, PressableProps, TextProps } from 'react-native';
 import { View, Pressable, Text, Platform } from 'react-native';
 import { Svg } from 'react-native-svg';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
 
 // Checkbox Context for sharing state between components
 interface CheckboxContextValue {
@@ -141,18 +141,21 @@ export type ICheckboxGroupProps = ViewProps &
 
 // Main Checkbox component - Direct v2 implementation without factory
 export const Checkbox = React.forwardRef<View, ICheckboxProps>(
-  ({ 
-    className, 
-    size = 'md', 
-    isDisabled = false,
-    isInvalid = false,
-    isChecked = false,
-    isHovered = false,
-    isActive = false,
-    isFocused = false,
-    children, 
-    ...props 
-  }, ref) => {
+  (
+    {
+      className,
+      size = 'md',
+      isDisabled = false,
+      isInvalid = false,
+      isChecked = false,
+      isHovered = false,
+      isActive = false,
+      isFocused = false,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const contextValue = useMemo(
       () => ({ size, isDisabled, isInvalid, isChecked, isHovered, isActive, isFocused }),
       [size, isDisabled, isInvalid, isChecked, isHovered, isActive, isFocused]
@@ -240,14 +243,7 @@ export const CheckboxIcon = React.forwardRef<any, ICheckboxIconProps>(
     const { size: parentSize } = context || {};
 
     if (typeof size === 'number') {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={className}
-          size={size}
-        />
-      );
+      return <PrimitiveIcon ref={ref} {...props} className={className} size={size} />;
     }
 
     return (
@@ -267,11 +263,7 @@ export const CheckboxIcon = React.forwardRef<any, ICheckboxIconProps>(
 export const CheckboxGroup = React.forwardRef<View, ICheckboxGroupProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <View
-        ref={ref}
-        {...props}
-        className={checkboxGroupStyle({ class: className })}
-      >
+      <View ref={ref} {...props} className={checkboxGroupStyle({ class: className })}>
         {children}
       </View>
     );

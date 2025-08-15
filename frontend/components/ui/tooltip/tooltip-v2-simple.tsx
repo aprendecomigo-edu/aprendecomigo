@@ -18,28 +18,26 @@ export type ITooltipContentProps = ViewProps & {};
 export type ITooltipTextProps = TextProps & {};
 
 // Main Tooltip component
-export const Tooltip = React.forwardRef<View, ITooltipProps>(
-  ({ children, ...props }, ref) => {
-    const [isOpen, setIsOpen] = useState(false);
-    
-    const contextValue = useMemo(
-      () => ({
-        isOpen,
-        onOpen: () => setIsOpen(true),
-        onClose: () => setIsOpen(false),
-      }),
-      [isOpen]
-    );
+export const Tooltip = React.forwardRef<View, ITooltipProps>(({ children, ...props }, ref) => {
+  const [isOpen, setIsOpen] = useState(false);
 
-    return (
-      <TooltipContext.Provider value={contextValue}>
-        <View ref={ref} {...props}>
-          {children}
-        </View>
-      </TooltipContext.Provider>
-    );
-  }
-);
+  const contextValue = useMemo(
+    () => ({
+      isOpen,
+      onOpen: () => setIsOpen(true),
+      onClose: () => setIsOpen(false),
+    }),
+    [isOpen]
+  );
+
+  return (
+    <TooltipContext.Provider value={contextValue}>
+      <View ref={ref} {...props}>
+        {children}
+      </View>
+    </TooltipContext.Provider>
+  );
+});
 
 export const TooltipTrigger = React.forwardRef<View, ITooltipTriggerProps>(
   ({ children, onPressIn, onPressOut, ...props }, ref) => {
@@ -49,11 +47,11 @@ export const TooltipTrigger = React.forwardRef<View, ITooltipTriggerProps>(
       <Pressable
         ref={ref as any}
         {...props}
-        onPressIn={(event) => {
+        onPressIn={event => {
           context?.onOpen?.();
           onPressIn?.(event);
         }}
-        onPressOut={(event) => {
+        onPressOut={event => {
           context?.onClose?.();
           onPressOut?.(event);
         }}
@@ -67,15 +65,27 @@ export const TooltipTrigger = React.forwardRef<View, ITooltipTriggerProps>(
 export const TooltipContent = React.forwardRef<View, ITooltipContentProps>(
   ({ children, style, ...props }, ref) => {
     const context = useContext(TooltipContext);
-    
+
     if (!context?.isOpen) return null;
-    
+
     return (
-      <Modal visible={context.isOpen} transparent animationType="fade" onRequestClose={context.onClose}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
-          <View 
-            ref={ref} 
-            {...props} 
+      <Modal
+        visible={context.isOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={context.onClose}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0,0,0,0.1)',
+          }}
+        >
+          <View
+            ref={ref}
+            {...props}
             style={[
               {
                 backgroundColor: '#374151',
@@ -88,8 +98,8 @@ export const TooltipContent = React.forwardRef<View, ITooltipContentProps>(
                 shadowOpacity: 0.25,
                 shadowRadius: 4,
                 elevation: 4,
-              }, 
-              style
+              },
+              style,
             ]}
           >
             {children}
@@ -100,22 +110,20 @@ export const TooltipContent = React.forwardRef<View, ITooltipContentProps>(
   }
 );
 
-export const TooltipText = React.forwardRef<Text, ITooltipTextProps>(
-  ({ style, ...props }, ref) => (
-    <Text 
-      ref={ref} 
-      {...props} 
-      style={[
-        { 
-          color: '#ffffff', 
-          fontSize: 14, 
-          textAlign: 'center' 
-        }, 
-        style
-      ]}
-    />
-  )
-);
+export const TooltipText = React.forwardRef<Text, ITooltipTextProps>(({ style, ...props }, ref) => (
+  <Text
+    ref={ref}
+    {...props}
+    style={[
+      {
+        color: '#ffffff',
+        fontSize: 14,
+        textAlign: 'center',
+      },
+      style,
+    ]}
+  />
+));
 
 // Display names
 Tooltip.displayName = 'Tooltip';

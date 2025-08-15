@@ -1,9 +1,9 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps, PressableProps, TextProps } from 'react-native';
 import { View, Pressable, Text, Platform } from 'react-native';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 // Menu Context for sharing state between components
@@ -105,10 +105,7 @@ export type IMenuItemLabelProps = TextProps &
 // Main Menu component - Direct v2 implementation without factory
 export const Menu = React.forwardRef<View, IMenuProps>(
   ({ className, isOpen = false, children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ isOpen }),
-      [isOpen]
-    );
+    const contextValue = useMemo(() => ({ isOpen }), [isOpen]);
 
     return (
       <MenuContext.Provider value={contextValue}>
@@ -142,15 +139,18 @@ export const Menu = React.forwardRef<View, IMenuProps>(
 
 // MenuItem component
 export const MenuItem = React.forwardRef<View, IMenuItemProps>(
-  ({ 
-    className, 
-    isDisabled = false,
-    isHovered = false,
-    isActive = false,
-    isFocused = false,
-    children, 
-    ...props 
-  }, ref) => {
+  (
+    {
+      className,
+      isDisabled = false,
+      isHovered = false,
+      isActive = false,
+      isFocused = false,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const Component = Platform.OS === 'web' ? Pressable : Pressable;
 
     return (
@@ -176,11 +176,7 @@ export const MenuItem = React.forwardRef<View, IMenuItemProps>(
 export const MenuBackdrop = React.forwardRef<View, IMenuBackdropProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <Pressable
-        ref={ref as any}
-        {...props}
-        className={menuBackdropStyle({ class: className })}
-      >
+      <Pressable ref={ref as any} {...props} className={menuBackdropStyle({ class: className })}>
         {children}
       </Pressable>
     );
@@ -190,30 +186,27 @@ export const MenuBackdrop = React.forwardRef<View, IMenuBackdropProps>(
 // MenuSeparator component
 export const MenuSeparator = React.forwardRef<View, IMenuSeparatorProps>(
   ({ className, ...props }, ref) => {
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={menuSeparatorStyle({ class: className })}
-      />
-    );
+    return <View ref={ref} {...props} className={menuSeparatorStyle({ class: className })} />;
   }
 );
 
 // MenuItemLabel component
 export const MenuItemLabel = React.forwardRef<Text, IMenuItemLabelProps>(
-  ({
-    className,
-    isTruncated,
-    bold,
-    underline,
-    strikeThrough,
-    size = 'md',
-    sub,
-    italic,
-    highlight,
-    ...props
-  }, ref) => {
+  (
+    {
+      className,
+      isTruncated,
+      bold,
+      underline,
+      strikeThrough,
+      size = 'md',
+      sub,
+      italic,
+      highlight,
+      ...props
+    },
+    ref
+  ) => {
     return (
       <Text
         ref={ref}

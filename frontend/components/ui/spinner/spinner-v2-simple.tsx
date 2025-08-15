@@ -18,19 +18,11 @@ export type ISpinnerProps = ActivityIndicatorProps & {
 // Main Spinner component - Simplified v2 without factory functions
 export const Spinner = React.forwardRef<ActivityIndicator, ISpinnerProps>(
   ({ size = 'small', color = '#3b82f6', ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size, color }),
-      [size, color]
-    );
+    const contextValue = useMemo(() => ({ size, color }), [size, color]);
 
     return (
       <SpinnerContext.Provider value={contextValue}>
-        <ActivityIndicator
-          ref={ref}
-          {...props}
-          size={size}
-          color={color}
-        />
+        <ActivityIndicator ref={ref} {...props} size={size} color={color} />
       </SpinnerContext.Provider>
     );
   }

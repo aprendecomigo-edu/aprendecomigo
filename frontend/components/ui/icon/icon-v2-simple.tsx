@@ -22,15 +22,19 @@ export type IIconProps = ViewProps & {
 };
 
 // Simple style generator for testing
-const getIconStyles = (size?: string | number, height?: number | string, width?: number | string) => {
+const getIconStyles = (
+  size?: string | number,
+  height?: number | string,
+  width?: number | string
+) => {
   if (typeof size === 'number') {
     return { width: size, height: size };
   }
-  
+
   if (height && width) {
     return { height, width };
   }
-  
+
   const sizeMap = {
     '2xs': 12,
     xs: 14,
@@ -41,9 +45,9 @@ const getIconStyles = (size?: string | number, height?: number | string, width?:
     '2xl': 28,
     '3xl': 32,
   };
-  
+
   const dimension = sizeMap[size as keyof typeof sizeMap] || sizeMap.md;
-  
+
   return {
     width: dimension,
     height: dimension,
@@ -52,29 +56,35 @@ const getIconStyles = (size?: string | number, height?: number | string, width?:
 
 // Main Icon component - Simplified v2 without factory functions
 export const Icon = React.forwardRef<View, IIconProps>(
-  ({ 
-    size = 'md', 
-    height, 
-    width, 
-    fill, 
-    color, 
-    stroke = 'currentColor', 
-    as: AsComp, 
-    children,
-    style,
-    ...props 
-  }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size }),
-      [size]
-    );
+  (
+    {
+      size = 'md',
+      height,
+      width,
+      fill,
+      color,
+      stroke = 'currentColor',
+      as: AsComp,
+      children,
+      style,
+      ...props
+    },
+    ref
+  ) => {
+    const contextValue = useMemo(() => ({ size }), [size]);
 
     const iconStyles = getIconStyles(size, height, width);
 
     if (AsComp) {
       return (
         <IconContext.Provider value={contextValue}>
-          <AsComp ref={ref} fill={fill} stroke={color || stroke} style={[iconStyles, style]} {...props}>
+          <AsComp
+            ref={ref}
+            fill={fill}
+            stroke={color || stroke}
+            style={[iconStyles, style]}
+            {...props}
+          >
             {children}
           </AsComp>
         </IconContext.Provider>
@@ -83,11 +93,7 @@ export const Icon = React.forwardRef<View, IIconProps>(
 
     return (
       <IconContext.Provider value={contextValue}>
-        <View 
-          ref={ref} 
-          style={[iconStyles, { tintColor: color || stroke }, style]}
-          {...props} 
-        >
+        <View ref={ref} style={[iconStyles, { tintColor: color || stroke }, style]} {...props}>
           {children}
         </View>
       </IconContext.Provider>

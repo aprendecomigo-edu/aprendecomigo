@@ -41,18 +41,11 @@ export type IImageProps = ImageProps &
 // Main Image component - Direct implementation without factory
 export const Image = React.forwardRef<RNImage, IImageProps>(
   ({ className, size = 'md', ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size }),
-      [size]
-    );
+    const contextValue = useMemo(() => ({ size }), [size]);
 
     return (
       <ImageContext.Provider value={contextValue}>
-        <RNImage
-          ref={ref}
-          {...props}
-          className={imageStyle({ size, class: className })}
-        />
+        <RNImage ref={ref} {...props} className={imageStyle({ size, class: className })} />
       </ImageContext.Provider>
     );
   }

@@ -1,10 +1,10 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps, TextInputProps, PressableProps } from 'react-native';
 import { View, Pressable, TextInput, Platform } from 'react-native';
 import { Svg } from 'react-native-svg';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
 
 import {
   Actionsheet,
@@ -157,15 +157,18 @@ export type ISelectIconProps = IPrimitiveIcon &
 
 // Main Select component - Direct v2 implementation without factory
 export const Select = React.forwardRef<View, ISelectProps>(
-  ({ 
-    className, 
-    isDisabled = false,
-    isInvalid = false,
-    isFocused = false,
-    isHovered = false,
-    children, 
-    ...props 
-  }, ref) => {
+  (
+    {
+      className,
+      isDisabled = false,
+      isInvalid = false,
+      isFocused = false,
+      isHovered = false,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const contextValue = useMemo(
       () => ({ isDisabled, isInvalid, isFocused, isHovered }),
       [isDisabled, isInvalid, isFocused, isHovered]
@@ -173,11 +176,7 @@ export const Select = React.forwardRef<View, ISelectProps>(
 
     return (
       <SelectContext.Provider value={contextValue}>
-        <View
-          ref={ref}
-          {...props}
-          className={selectStyle({ class: className })}
-        >
+        <View ref={ref} {...props} className={selectStyle({ class: className })}>
           {children}
         </View>
       </SelectContext.Provider>
@@ -243,14 +242,7 @@ export const SelectIcon = React.forwardRef<any, ISelectIconProps>(
     const { size: parentSize } = context || {};
 
     if (typeof size === 'number') {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={className}
-          size={size}
-        />
-      );
+      return <PrimitiveIcon ref={ref} {...props} className={className} size={size} />;
     }
 
     return (

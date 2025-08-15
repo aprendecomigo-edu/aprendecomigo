@@ -118,17 +118,20 @@ const getInputFieldStyles = (size?: string, variant?: string, isDisabled?: boole
 
 // Main Input component - Simplified v2 without factory functions
 export const Input = React.forwardRef<View, IInputProps>(
-  ({ 
-    size = 'md', 
-    variant = 'outline', 
-    isDisabled = false,
-    isInvalid = false,
-    children,
-    style,
-    ...props 
-  }, ref) => {
+  (
+    {
+      size = 'md',
+      variant = 'outline',
+      isDisabled = false,
+      isInvalid = false,
+      children,
+      style,
+      ...props
+    },
+    ref
+  ) => {
     const [isFocused, setIsFocused] = useState(false);
-    
+
     const contextValue = useMemo(
       () => ({ size, variant, isDisabled, isInvalid, isFocused }),
       [size, variant, isDisabled, isInvalid, isFocused]
@@ -155,11 +158,7 @@ export const Input = React.forwardRef<View, IInputProps>(
 
     return (
       <InputContext.Provider value={contextValue}>
-        <View
-          ref={ref}
-          {...props}
-          style={[inputStyles, style]}
-        >
+        <View ref={ref} {...props} style={[inputStyles, style]}>
           {enhancedChildren}
         </View>
       </InputContext.Provider>

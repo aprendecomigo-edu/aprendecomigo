@@ -25,11 +25,18 @@ export type IProgressFilledTrackProps = ViewProps & {
 
 // Simple style generator for testing
 const getProgressStyles = (size?: string) => {
-  const height = size === 'xs' ? 4 : 
-                 size === 'sm' ? 8 : 
-                 size === 'lg' ? 16 : 
-                 size === 'xl' ? 20 : 
-                 size === '2xl' ? 24 : 12;
+  const height =
+    size === 'xs'
+      ? 4
+      : size === 'sm'
+      ? 8
+      : size === 'lg'
+      ? 16
+      : size === 'xl'
+      ? 20
+      : size === '2xl'
+      ? 24
+      : 12;
 
   return {
     backgroundColor: '#e5e7eb',
@@ -41,11 +48,18 @@ const getProgressStyles = (size?: string) => {
 };
 
 const getFilledTrackStyles = (size?: string, percentage: number) => {
-  const height = size === 'xs' ? 4 : 
-                 size === 'sm' ? 8 : 
-                 size === 'lg' ? 16 : 
-                 size === 'xl' ? 20 : 
-                 size === '2xl' ? 24 : 12;
+  const height =
+    size === 'xs'
+      ? 4
+      : size === 'sm'
+      ? 8
+      : size === 'lg'
+      ? 16
+      : size === 'xl'
+      ? 20
+      : size === '2xl'
+      ? 24
+      : 12;
 
   return {
     backgroundColor: '#3b82f6',
@@ -60,10 +74,10 @@ const getFilledTrackStyles = (size?: string, percentage: number) => {
 export const Progress = React.forwardRef<View, IProgressProps>(
   ({ size = 'md', value = 0, max = 100, children, style, ...props }, ref) => {
     const contextValue = useMemo(
-      () => ({ 
+      () => ({
         size,
         value,
-        max
+        max,
       }),
       [size, value, max]
     );
@@ -97,13 +111,7 @@ export const ProgressFilledTrack = React.forwardRef<View, IProgressFilledTrackPr
     const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
     const filledTrackStyles = getFilledTrackStyles(size, percentage);
 
-    return (
-      <View
-        ref={ref}
-        {...props}
-        style={[filledTrackStyles, style]}
-      />
-    );
+    return <View ref={ref} {...props} style={[filledTrackStyles, style]} />;
   }
 );
 

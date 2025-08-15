@@ -1,7 +1,14 @@
+import { ChevronRight } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { View, Text, ScrollView } from 'react-native';
-import { Button, ButtonText, ButtonIcon, ButtonSpinner, ButtonGroup } from '@/components/ui/button/button-v2-simple';
-import { ChevronRight } from 'lucide-react-native';
+
+import {
+  Button,
+  ButtonText,
+  ButtonIcon,
+  ButtonSpinner,
+  ButtonGroup,
+} from '@/components/ui/button/button-v2-simple';
 
 export default function TestV2ButtonScreen() {
   const [isLoading, setIsLoading] = useState(false);

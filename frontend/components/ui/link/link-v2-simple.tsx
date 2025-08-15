@@ -37,14 +37,28 @@ const getLinkTextStyles = (
   strikeThrough?: boolean,
   size?: string
 ) => {
-  const fontSize = size === '2xs' ? 10 : size === 'xs' ? 12 : size === 'sm' ? 14 : size === 'lg' ? 18 : size === 'xl' ? 20 : 16;
-  
+  const fontSize =
+    size === '2xs'
+      ? 10
+      : size === 'xs'
+      ? 12
+      : size === 'sm'
+      ? 14
+      : size === 'lg'
+      ? 18
+      : size === 'xl'
+      ? 20
+      : 16;
+
   return {
     color: '#1d4ed8',
     fontSize,
-    fontWeight: bold ? '700' as const : 'normal' as const,
-    textDecorationLine: underline ? 'underline' as const : 
-                       strikeThrough ? 'line-through' as const : 'none' as const,
+    fontWeight: bold ? ('700' as const) : ('normal' as const),
+    textDecorationLine: underline
+      ? ('underline' as const)
+      : strikeThrough
+      ? ('line-through' as const)
+      : ('none' as const),
   };
 };
 
@@ -61,12 +75,7 @@ export const Link = React.forwardRef<Pressable, ILinkProps>(
 
     return (
       <LinkContext.Provider value={contextValue}>
-        <Pressable
-          ref={ref as any}
-          {...props}
-          disabled={finalDisabled}
-          style={[linkStyles, style]}
-        >
+        <Pressable ref={ref as any} {...props} disabled={finalDisabled} style={[linkStyles, style]}>
           {children}
         </Pressable>
       </LinkContext.Provider>
@@ -76,15 +85,18 @@ export const Link = React.forwardRef<Pressable, ILinkProps>(
 
 // LinkText component
 export const LinkText = React.forwardRef<Text, ILinkTextProps>(
-  ({
-    isTruncated = false,
-    bold = false,
-    underline = true,
-    strikeThrough = false,
-    size = 'md',
-    style,
-    ...props
-  }, ref) => {
+  (
+    {
+      isTruncated = false,
+      bold = false,
+      underline = true,
+      strikeThrough = false,
+      size = 'md',
+      style,
+      ...props
+    },
+    ref
+  ) => {
     const linkTextStyles = getLinkTextStyles(bold, underline, strikeThrough, size);
 
     return (

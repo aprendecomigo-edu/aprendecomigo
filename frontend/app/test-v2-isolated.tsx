@@ -11,17 +11,11 @@ export default function TestV2IsolatedScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>V2 Button Isolated Test</Text>
-        <Text style={styles.subtitle}>
-          Testing only the Button v2 simple implementation
-        </Text>
+        <Text style={styles.subtitle}>Testing only the Button v2 simple implementation</Text>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Interactive Test</Text>
-          <Button 
-            onPress={() => setClickCount(prev => prev + 1)}
-            variant="solid"
-            action="primary"
-          >
+          <Button onPress={() => setClickCount(prev => prev + 1)} variant="solid" action="primary">
             <ButtonText>Clicked {clickCount} times</ButtonText>
           </Button>
         </View>
@@ -58,9 +52,7 @@ export default function TestV2IsolatedScreen() {
 
         <View style={styles.successBox}>
           <Text style={styles.successTitle}>✅ If you can see and click these buttons</Text>
-          <Text style={styles.successText}>
-            The v2 Button migration is working correctly!
-          </Text>
+          <Text style={styles.successText}>The v2 Button migration is working correctly!</Text>
         </View>
       </View>
     </ScrollView>

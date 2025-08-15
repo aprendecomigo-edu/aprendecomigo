@@ -44,7 +44,7 @@ const getTextareaStyles = (size?: string, isInvalid?: boolean, isDisabled?: bool
 
 const getTextareaInputStyles = (size?: string) => {
   const fontSize = size === 'sm' ? 14 : size === 'lg' ? 18 : size === 'xl' ? 20 : 16;
-  
+
   return {
     padding: 8,
     fontSize,
@@ -57,7 +57,18 @@ const getTextareaInputStyles = (size?: string) => {
 
 // Main Textarea component - Simplified v2 without factory functions
 export const Textarea = React.forwardRef<View, ITextareaProps>(
-  ({ variant = 'default', size = 'md', isInvalid = false, isDisabled = false, children, style, ...props }, ref) => {
+  (
+    {
+      variant = 'default',
+      size = 'md',
+      isInvalid = false,
+      isDisabled = false,
+      children,
+      style,
+      ...props
+    },
+    ref
+  ) => {
     const contextValue = useMemo(
       () => ({ variant, size, isInvalid, isDisabled }),
       [variant, size, isInvalid, isDisabled]
@@ -67,11 +78,7 @@ export const Textarea = React.forwardRef<View, ITextareaProps>(
 
     return (
       <TextareaContext.Provider value={contextValue}>
-        <View
-          ref={ref}
-          {...props}
-          style={[textareaStyles, style]}
-        >
+        <View ref={ref} {...props} style={[textareaStyles, style]}>
           {children}
         </View>
       </TextareaContext.Provider>

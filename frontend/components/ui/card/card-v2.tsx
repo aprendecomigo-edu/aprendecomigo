@@ -1,10 +1,10 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps } from 'react-native';
 import { View } from 'react-native';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
-import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 
 // Card Context for sharing state between components
 interface CardContextValue {
@@ -91,18 +91,11 @@ export type ICardFooterProps = ViewProps &
 // Main Card component - v2 implementation with context
 export const Card = React.forwardRef<View, ICardProps>(
   ({ className, size = 'md', variant = 'elevated', children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size, variant }),
-      [size, variant]
-    );
+    const contextValue = useMemo(() => ({ size, variant }), [size, variant]);
 
     return (
       <CardContext.Provider value={contextValue}>
-        <View
-          ref={ref}
-          {...props}
-          className={cardStyle({ size, variant, class: className })}
-        >
+        <View ref={ref} {...props} className={cardStyle({ size, variant, class: className })}>
           {children}
         </View>
       </CardContext.Provider>
@@ -130,23 +123,21 @@ export const CardHeader = React.forwardRef<View, ICardHeaderProps>(
 );
 
 // CardBody component
-export const CardBody = React.forwardRef<View, ICardBodyProps>(
-  ({ className, ...props }, ref) => {
-    const context = useContext(CardContext);
-    const { size } = context || {};
+export const CardBody = React.forwardRef<View, ICardBodyProps>(({ className, ...props }, ref) => {
+  const context = useContext(CardContext);
+  const { size } = context || {};
 
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={cardBodyStyle({
-          parentVariants: { size },
-          class: className,
-        })}
-      />
-    );
-  }
-);
+  return (
+    <View
+      ref={ref}
+      {...props}
+      className={cardBodyStyle({
+        parentVariants: { size },
+        class: className,
+      })}
+    />
+  );
+});
 
 // CardFooter component
 export const CardFooter = React.forwardRef<View, ICardFooterProps>(

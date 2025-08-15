@@ -1,10 +1,10 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps, TextProps } from 'react-native';
 import { View, Text } from 'react-native';
 import { Svg } from 'react-native-svg';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
 
 // Alert Context for sharing state between components
 interface AlertContextValue {
@@ -130,18 +130,11 @@ export type IAlertIconProps = IPrimitiveIcon &
 // Main Alert component - Simplified v2 implementation
 export const Alert = React.forwardRef<View, IAlertProps>(
   ({ className, variant = 'solid', action = 'muted', children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ variant, action }),
-      [variant, action]
-    );
+    const contextValue = useMemo(() => ({ variant, action }), [variant, action]);
 
     return (
       <AlertContext.Provider value={contextValue}>
-        <View
-          ref={ref}
-          {...props}
-          className={alertStyle({ action, variant, class: className })}
-        >
+        <View ref={ref} {...props} className={alertStyle({ action, variant, class: className })}>
           {children}
         </View>
       </AlertContext.Provider>
@@ -176,14 +169,7 @@ export const AlertIcon = React.forwardRef<any, IAlertIconProps>(
     const { action } = context || {};
 
     if (typeof size === 'number') {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={className}
-          size={size}
-        />
-      );
+      return <PrimitiveIcon ref={ref} {...props} className={className} size={size} />;
     }
 
     return (

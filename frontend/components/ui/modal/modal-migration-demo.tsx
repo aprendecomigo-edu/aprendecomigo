@@ -2,15 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 
 // Import v1 components
-import {
-  Modal as ModalV1,
-  ModalBackdrop as ModalBackdropV1,
-  ModalContent as ModalContentV1,
-  ModalHeader as ModalHeaderV1,
-  ModalBody as ModalBodyV1,
-  ModalFooter as ModalFooterV1,
-  ModalCloseButton as ModalCloseButtonV1,
-} from './index';
 
 // Import v2 components
 import {
@@ -34,6 +25,16 @@ import {
   ModalCloseButton as ModalCloseButtonV2Simple,
 } from './modal-v2-simple';
 
+import {
+  Modal as ModalV1,
+  ModalBackdrop as ModalBackdropV1,
+  ModalContent as ModalContentV1,
+  ModalHeader as ModalHeaderV1,
+  ModalBody as ModalBodyV1,
+  ModalFooter as ModalFooterV1,
+  ModalCloseButton as ModalCloseButtonV1,
+} from './index';
+
 /**
  * Demo component to compare Modal v1, v2, and v2-simple implementations
  * This helps verify that v2 components work identically to v1
@@ -47,8 +48,8 @@ export function ModalMigrationDemo() {
     <>
       <Text>This is the modal content. Both v1 and v2 should look identical.</Text>
       <Text className="mt-2 text-sm text-gray-600">
-        The v2 implementation eliminates the factory pattern while maintaining 
-        full API compatibility.
+        The v2 implementation eliminates the factory pattern while maintaining full API
+        compatibility.
       </Text>
     </>
   );
@@ -57,23 +58,17 @@ export function ModalMigrationDemo() {
     <View className="flex-1 p-6 justify-center items-center gap-4">
       <Text className="text-xl font-bold mb-4">Modal Migration Demo</Text>
       <Text className="text-center text-gray-600 mb-6">
-        Compare the v1 (factory-based) and v2 (direct implementation) Modal components.
-        They should look and behave identically.
+        Compare the v1 (factory-based) and v2 (direct implementation) Modal components. They should
+        look and behave identically.
       </Text>
 
       {/* Control buttons */}
       <View className="gap-3 w-full max-w-xs">
-        <Pressable
-          onPress={() => setShowV1Modal(true)}
-          className="bg-blue-500 p-3 rounded-md"
-        >
+        <Pressable onPress={() => setShowV1Modal(true)} className="bg-blue-500 p-3 rounded-md">
           <Text className="text-white text-center font-medium">Show v1 Modal (Factory)</Text>
         </Pressable>
 
-        <Pressable
-          onPress={() => setShowV2Modal(true)}
-          className="bg-green-500 p-3 rounded-md"
-        >
+        <Pressable onPress={() => setShowV2Modal(true)} className="bg-green-500 p-3 rounded-md">
           <Text className="text-white text-center font-medium">Show v2 Modal (Direct)</Text>
         </Pressable>
 
@@ -95,9 +90,7 @@ export function ModalMigrationDemo() {
               <Text>×</Text>
             </ModalCloseButtonV1>
           </ModalHeaderV1>
-          <ModalBodyV1>
-            {modalContent}
-          </ModalBodyV1>
+          <ModalBodyV1>{modalContent}</ModalBodyV1>
           <ModalFooterV1>
             <Pressable
               onPress={() => setShowV1Modal(false)}
@@ -127,9 +120,7 @@ export function ModalMigrationDemo() {
                   <Text>×</Text>
                 </ModalCloseButtonV2>
               </ModalHeaderV2>
-              <ModalBodyV2>
-                {modalContent}
-              </ModalBodyV2>
+              <ModalBodyV2>{modalContent}</ModalBodyV2>
               <ModalFooterV2>
                 <Pressable
                   onPress={() => setShowV2Modal(false)}
@@ -161,9 +152,7 @@ export function ModalMigrationDemo() {
                   <Text>×</Text>
                 </ModalCloseButtonV2Simple>
               </ModalHeaderV2Simple>
-              <ModalBodyV2Simple>
-                {modalContent}
-              </ModalBodyV2Simple>
+              <ModalBodyV2Simple>{modalContent}</ModalBodyV2Simple>
               <ModalFooterV2Simple>
                 <Pressable
                   onPress={() => setShowV2SimpleModal(false)}
@@ -185,11 +174,9 @@ export function ModalMigrationDemo() {
 
       <View className="mt-6 p-4 bg-gray-100 rounded-md">
         <Text className="text-sm">
-          <Text className="font-semibold">Test Results:</Text> {'\n'}
-          • Visual appearance should be identical{'\n'}
-          • All props should work the same way{'\n'}
-          • Animations and interactions preserved{'\n'}
-          • v2 Simple should have same functionality with simpler code
+          <Text className="font-semibold">Test Results:</Text> {'\n'}• Visual appearance should be
+          identical{'\n'}• All props should work the same way{'\n'}• Animations and interactions
+          preserved{'\n'}• v2 Simple should have same functionality with simpler code
         </Text>
       </View>
     </View>

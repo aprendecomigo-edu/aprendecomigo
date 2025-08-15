@@ -8,9 +8,9 @@
  * 3. Report any files that might need manual review
  */
 
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 // Files to skip during migration
 const SKIP_FILES = [
@@ -78,10 +78,10 @@ function migrateFile(filePath) {
       // Create backup
       const backupPath = `${filePath}.backup`;
       fs.writeFileSync(backupPath, originalContent);
-      
+
       // Write migrated content
       fs.writeFileSync(filePath, content);
-      
+
       console.log(`  ✅ Migrated: ${filePath}`);
       console.log(`     Backup created: ${backupPath}`);
       return { migrated: true, backup: backupPath };
@@ -97,7 +97,7 @@ function migrateFile(filePath) {
 
 function main() {
   console.log('🚀 Starting Button v1 to v2 migration...\n');
-  
+
   const files = findFilesWithButtonImports();
   console.log(`Found ${files.length} files with button imports\n`);
 

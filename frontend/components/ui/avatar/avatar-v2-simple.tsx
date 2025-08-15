@@ -1,9 +1,9 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps, TextProps, ImageProps } from 'react-native';
 import { View, Text, Image, Platform } from 'react-native';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
 
 // Avatar Context for sharing state between components
 interface AvatarContextValue {
@@ -92,18 +92,11 @@ export type IAvatarGroupProps = ViewProps &
 // Main Avatar component - Simplified v2 implementation
 export const Avatar = React.forwardRef<View, IAvatarProps>(
   ({ className, size = 'md', children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size }),
-      [size]
-    );
+    const contextValue = useMemo(() => ({ size }), [size]);
 
     return (
       <AvatarContext.Provider value={contextValue}>
-        <View
-          ref={ref}
-          {...props}
-          className={avatarStyle({ size, class: className })}
-        >
+        <View ref={ref} {...props} className={avatarStyle({ size, class: className })}>
           {children}
         </View>
       </AvatarContext.Provider>
@@ -156,13 +149,7 @@ export const AvatarFallbackText = React.forwardRef<Text, IAvatarFallbackTextProp
 // AvatarImage component
 export const AvatarImage = React.forwardRef<Image, IAvatarImageProps>(
   ({ className, ...props }, ref) => {
-    return (
-      <Image
-        ref={ref}
-        {...props}
-        className={avatarImageStyle({ class: className })}
-      />
-    );
+    return <Image ref={ref} {...props} className={avatarImageStyle({ class: className })} />;
   }
 );
 
@@ -170,11 +157,7 @@ export const AvatarImage = React.forwardRef<Image, IAvatarImageProps>(
 export const AvatarGroup = React.forwardRef<View, IAvatarGroupProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <View
-        ref={ref}
-        {...props}
-        className={avatarGroupStyle({ class: className })}
-      >
+      <View ref={ref} {...props} className={avatarGroupStyle({ class: className })}>
         {children}
       </View>
     );

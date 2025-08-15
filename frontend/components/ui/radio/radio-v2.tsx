@@ -1,10 +1,10 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps, PressableProps, TextProps } from 'react-native';
 import { View, Pressable, Text, Platform } from 'react-native';
 import { Svg } from 'react-native-svg';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
 
 // Radio Context for sharing state between components
 interface RadioContextValue {
@@ -149,18 +149,21 @@ export type IRadioIconProps = IPrimitiveIcon &
 
 // Main Radio component - Direct v2 implementation without factory
 export const Radio = React.forwardRef<View, IRadioProps>(
-  ({ 
-    className, 
-    size = 'md', 
-    isDisabled = false,
-    isInvalid = false,
-    isChecked = false,
-    isHovered = false,
-    isActive = false,
-    isFocused = false,
-    children, 
-    ...props 
-  }, ref) => {
+  (
+    {
+      className,
+      size = 'md',
+      isDisabled = false,
+      isInvalid = false,
+      isChecked = false,
+      isHovered = false,
+      isActive = false,
+      isFocused = false,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const contextValue = useMemo(
       () => ({ size, isDisabled, isInvalid, isChecked, isHovered, isActive, isFocused }),
       [size, isDisabled, isInvalid, isChecked, isHovered, isActive, isFocused]
@@ -194,11 +197,7 @@ export const Radio = React.forwardRef<View, IRadioProps>(
 export const RadioGroup = React.forwardRef<View, IRadioGroupProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <View
-        ref={ref}
-        {...props}
-        className={radioGroupStyle({ class: className })}
-      >
+      <View ref={ref} {...props} className={radioGroupStyle({ class: className })}>
         {children}
       </View>
     );
@@ -209,7 +208,8 @@ export const RadioGroup = React.forwardRef<View, IRadioGroupProps>(
 export const RadioIndicator = React.forwardRef<View, IRadioIndicatorProps>(
   ({ className, children, ...props }, ref) => {
     const context = useContext(RadioContext);
-    const { size, isDisabled, isInvalid, isChecked, isHovered, isActive, isFocused } = context || {};
+    const { size, isDisabled, isInvalid, isChecked, isHovered, isActive, isFocused } =
+      context || {};
 
     return (
       <View
@@ -264,14 +264,7 @@ export const RadioIcon = React.forwardRef<any, IRadioIconProps>(
     const { size: parentSize } = context || {};
 
     if (typeof size === 'number') {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={className}
-          size={size}
-        />
-      );
+      return <PrimitiveIcon ref={ref} {...props} className={className} size={size} />;
     }
 
     return (

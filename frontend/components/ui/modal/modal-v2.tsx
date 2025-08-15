@@ -68,21 +68,21 @@ export const modalFooterStyle = tva({
 
 // Type definitions
 export type IModalProps = ViewProps &
-  VariantProps<typeof modalStyle> & { 
+  VariantProps<typeof modalStyle> & {
     className?: string;
     context?: ModalContextValue;
     pointerEvents?: 'auto' | 'none' | 'box-none' | 'box-only';
   };
 
 export type IModalBackdropProps = PressableProps &
-  VariantProps<typeof modalBackdropStyle> & { 
-    className?: string; 
+  VariantProps<typeof modalBackdropStyle> & {
+    className?: string;
     entering?: any;
     exiting?: any;
   };
 
 export type IModalContentProps = ViewProps &
-  VariantProps<typeof modalContentStyle> & { 
+  VariantProps<typeof modalContentStyle> & {
     className?: string;
     entering?: any;
     exiting?: any;
@@ -93,7 +93,7 @@ export type IModalHeaderProps = ViewProps &
   VariantProps<typeof modalHeaderStyle> & { className?: string };
 
 export type IModalBodyProps = ScrollViewProps &
-  VariantProps<typeof modalBodyStyle> & { 
+  VariantProps<typeof modalBodyStyle> & {
     className?: string;
     contentContainerClassName?: string;
     indicatorClassName?: string;
@@ -106,19 +106,14 @@ export type IModalCloseButtonProps = PressableProps &
   VariantProps<typeof modalCloseButtonStyle> & { className?: string };
 
 // Modal Root Component - Direct implementation without factory
-const ModalRoot = React.forwardRef<View, ViewProps>(
-  ({ ...props }, ref) => {
-    return <View {...props} ref={ref} />;
-  }
-);
+const ModalRoot = React.forwardRef<View, ViewProps>(({ ...props }, ref) => {
+  return <View {...props} ref={ref} />;
+});
 
 // Main Modal component - Direct implementation
 export const Modal = React.forwardRef<View, IModalProps>(
   ({ className, size = 'md', context, pointerEvents = 'box-none', children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size, ...context }),
-      [size, context]
-    );
+    const contextValue = useMemo(() => ({ size, ...context }), [size, context]);
 
     return (
       <ModalContext.Provider value={contextValue}>
@@ -135,9 +130,12 @@ export const Modal = React.forwardRef<View, IModalProps>(
   }
 );
 
-// ModalBackdrop component - Direct implementation  
+// ModalBackdrop component - Direct implementation
 export const ModalBackdrop = React.forwardRef<View, IModalBackdropProps>(
-  ({ className, entering = FadeIn.duration(250), exiting = FadeOut.duration(250), ...props }, ref) => {
+  (
+    { className, entering = FadeIn.duration(250), exiting = FadeOut.duration(250), ...props },
+    ref
+  ) => {
     return (
       <AnimatedPressable
         ref={ref as any}
@@ -152,14 +150,17 @@ export const ModalBackdrop = React.forwardRef<View, IModalBackdropProps>(
 
 // ModalContent component - Direct implementation
 export const ModalContent = React.forwardRef<View, IModalContentProps>(
-  ({ 
-    className, 
-    size, 
-    entering = FadeIn.duration(250).springify().damping(18).stiffness(250),
-    exiting = FadeOut.duration(250),
-    pointerEvents = 'auto',
-    ...props 
-  }, ref) => {
+  (
+    {
+      className,
+      size,
+      entering = FadeIn.duration(250).springify().damping(18).stiffness(250),
+      exiting = FadeOut.duration(250),
+      pointerEvents = 'auto',
+      ...props
+    },
+    ref
+  ) => {
     const context = useContext(ModalContext);
     const { size: parentSize } = context || {};
 
@@ -183,13 +184,7 @@ export const ModalContent = React.forwardRef<View, IModalContentProps>(
 // ModalHeader component - Direct implementation
 export const ModalHeader = React.forwardRef<View, IModalHeaderProps>(
   ({ className, ...props }, ref) => {
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={modalHeaderStyle({ class: className })}
-      />
-    );
+    return <View ref={ref} {...props} className={modalHeaderStyle({ class: className })} />;
   }
 );
 
@@ -203,11 +198,11 @@ export const ModalBody = React.forwardRef<ScrollView, IModalBodyProps>(
         className={modalBodyStyle({ class: className })}
         contentContainerStyle={[
           // Add any default contentContainer styles if needed
-          props.contentContainerStyle
+          props.contentContainerStyle,
         ]}
         indicatorStyle={[
-          // Add any default indicator styles if needed  
-          props.indicatorStyle
+          // Add any default indicator styles if needed
+          props.indicatorStyle,
         ]}
       />
     );
@@ -217,13 +212,7 @@ export const ModalBody = React.forwardRef<ScrollView, IModalBodyProps>(
 // ModalFooter component - Direct implementation
 export const ModalFooter = React.forwardRef<View, IModalFooterProps>(
   ({ className, ...props }, ref) => {
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={modalFooterStyle({ class: className })}
-      />
-    );
+    return <View ref={ref} {...props} className={modalFooterStyle({ class: className })} />;
   }
 );
 

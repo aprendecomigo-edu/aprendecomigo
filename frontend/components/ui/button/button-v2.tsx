@@ -68,7 +68,8 @@ export const buttonStyle = tva({
   variants: {
     action: {
       primary: 'bg-primary-500 border-primary-300 hover:bg-primary-600 active:bg-primary-700',
-      secondary: 'bg-secondary-500 border-secondary-300 hover:bg-secondary-600 active:bg-secondary-700',
+      secondary:
+        'bg-secondary-500 border-secondary-300 hover:bg-secondary-600 active:bg-secondary-700',
       positive: 'bg-success-500 border-success-300 hover:bg-success-600 active:bg-success-700',
       negative: 'bg-error-500 border-error-300 hover:bg-error-600 active:bg-error-700',
       default: 'bg-transparent hover:bg-background-50 active:bg-transparent',
@@ -231,11 +232,11 @@ export const buttonIconStyle = tva({
   variants: {
     size: {
       '2xs': 'h-3 w-3',
-      'xs': 'h-3.5 w-3.5',
-      'sm': 'h-4 w-4',
-      'md': 'h-[18px] w-[18px]',
-      'lg': 'h-5 w-5',
-      'xl': 'h-6 w-6',
+      xs: 'h-3.5 w-3.5',
+      sm: 'h-4 w-4',
+      md: 'h-[18px] w-[18px]',
+      lg: 'h-5 w-5',
+      xl: 'h-6 w-6',
       '2xl': 'h-7 w-7',
       '3xl': 'h-8 w-8',
     },
@@ -287,23 +288,17 @@ export type IButtonIcon = React.ComponentPropsWithoutRef<typeof PrimitiveIcon> &
     as?: React.ElementType;
   };
 
-export type IButtonGroupProps = ViewProps &
-  VariantProps<typeof buttonGroupStyle>;
+export type IButtonGroupProps = ViewProps & VariantProps<typeof buttonGroupStyle>;
 
 // Button Root Component - Direct implementation without factory
-const ButtonRoot = React.forwardRef<View, PressableProps>(
-  ({ ...props }, ref) => {
-    return <Pressable {...props} ref={ref as any} />;
-  }
-);
+const ButtonRoot = React.forwardRef<View, PressableProps>(({ ...props }, ref) => {
+  return <Pressable {...props} ref={ref as any} />;
+});
 
 // Main Button component - Direct implementation
 export const Button = React.forwardRef<View, IButtonProps>(
   ({ className, variant = 'solid', size = 'md', action = 'primary', children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ variant, size, action }),
-      [variant, size, action]
-    );
+    const contextValue = useMemo(() => ({ variant, size, action }), [variant, size, action]);
 
     return (
       <ButtonContext.Provider value={contextValue}>
@@ -355,14 +350,7 @@ export const ButtonIcon = React.forwardRef<any, IButtonIcon>(
     const { size: parentSize } = context || {};
 
     if (typeof size === 'number') {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={className}
-          size={size}
-        />
-      );
+      return <PrimitiveIcon ref={ref} {...props} className={className} size={size} />;
     }
 
     return (

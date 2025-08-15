@@ -19,7 +19,7 @@ describe('Button v2 Component', () => {
         <ButtonText>Click me</ButtonText>
       </Button>
     );
-    
+
     fireEvent.press(getByText('Click me'));
     expect(onPress).toHaveBeenCalled();
   });
@@ -95,7 +95,7 @@ describe('Button v2 Component', () => {
         <ButtonText>Disabled Button</ButtonText>
       </Button>
     );
-    
+
     fireEvent.press(getByText('Disabled Button'));
     expect(onPress).not.toHaveBeenCalled();
   });

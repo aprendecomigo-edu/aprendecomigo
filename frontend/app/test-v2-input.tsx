@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
+
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input/input-v2-simple';
 
 export default function TestV2InputScreen() {
@@ -11,26 +12,18 @@ export default function TestV2InputScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>V2 Input Component Test</Text>
-        
+
         <View style={styles.section}>
           <Text style={styles.label}>Basic Input (value: "{value1}")</Text>
           <Input variant="outline" size="md">
-            <InputField 
-              placeholder="Type something..."
-              value={value1}
-              onChangeText={setValue1}
-            />
+            <InputField placeholder="Type something..." value={value1} onChangeText={setValue1} />
           </Input>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.label}>Underlined Input</Text>
           <Input variant="underlined">
-            <InputField 
-              placeholder="Underlined style"
-              value={value2}
-              onChangeText={setValue2}
-            />
+            <InputField placeholder="Underlined style" value={value2} onChangeText={setValue2} />
           </Input>
         </View>
 
@@ -40,11 +33,7 @@ export default function TestV2InputScreen() {
             <InputIcon>
               <Text>🔍</Text>
             </InputIcon>
-            <InputField 
-              placeholder="Search..."
-              value={value3}
-              onChangeText={setValue3}
-            />
+            <InputField placeholder="Search..." value={value3} onChangeText={setValue3} />
           </Input>
         </View>
 

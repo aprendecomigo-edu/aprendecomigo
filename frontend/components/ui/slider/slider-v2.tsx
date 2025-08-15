@@ -183,33 +183,36 @@ export type ISliderFilledTrackProps = React.ComponentProps<typeof View> &
 
 // Main Slider component - Direct implementation without factory
 export const Slider = React.forwardRef<View, ISliderProps>(
-  ({ 
-    className, 
-    size = 'md', 
-    orientation = 'horizontal', 
-    isReversed = false,
-    value = 0,
-    min = 0,
-    max = 100,
-    onValueChange,
-    isDisabled = false,
-    children,
-    ...props 
-  }, ref) => {
+  (
+    {
+      className,
+      size = 'md',
+      orientation = 'horizontal',
+      isReversed = false,
+      value = 0,
+      min = 0,
+      max = 100,
+      onValueChange,
+      isDisabled = false,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const [internalValue, setInternalValue] = useState(value);
 
     const contextValue = useMemo(
-      () => ({ 
-        size, 
-        orientation, 
-        isReversed, 
+      () => ({
+        size,
+        orientation,
+        isReversed,
         value: internalValue,
         min,
         max,
         onValueChange: (newValue: number) => {
           setInternalValue(newValue);
           onValueChange?.(newValue);
-        }
+        },
       }),
       [size, orientation, isReversed, internalValue, min, max, onValueChange]
     );
@@ -283,10 +286,9 @@ export const SliderFilledTrack = React.forwardRef<View, ISliderFilledTrackProps>
           class: className,
         })}
         style={{
-          ...(orientation === 'horizontal' 
+          ...(orientation === 'horizontal'
             ? { width: `${percentage}%` }
-            : { height: `${percentage}%` }
-          ),
+            : { height: `${percentage}%` }),
         }}
       />
     );

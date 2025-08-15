@@ -1,9 +1,9 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps, TextProps, ImageProps } from 'react-native';
 import { View, Text, Image, Platform } from 'react-native';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
 
 // Avatar Context for sharing state between components
 interface AvatarContextValue {
@@ -92,18 +92,11 @@ export type IAvatarGroupProps = ViewProps &
 // Main Avatar component - Direct v2 implementation without factory
 export const Avatar = React.forwardRef<View, IAvatarProps>(
   ({ className, size = 'md', children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size }),
-      [size]
-    );
+    const contextValue = useMemo(() => ({ size }), [size]);
 
     return (
       <AvatarContext.Provider value={contextValue}>
-        <View
-          ref={ref}
-          {...props}
-          className={avatarStyle({ size, class: className })}
-        >
+        <View ref={ref} {...props} className={avatarStyle({ size, class: className })}>
           {children}
         </View>
       </AvatarContext.Provider>
@@ -162,10 +155,10 @@ export const AvatarImage = React.forwardRef<Image, IAvatarImageProps>(
         {...props}
         className={avatarImageStyle({ class: className })}
         style={[
-          Platform.OS === 'web' 
-            ? { height: 'revert-layer' as any, width: 'revert-layer' as any } 
+          Platform.OS === 'web'
+            ? { height: 'revert-layer' as any, width: 'revert-layer' as any }
             : undefined,
-          style
+          style,
         ]}
       />
     );
@@ -176,11 +169,7 @@ export const AvatarImage = React.forwardRef<Image, IAvatarImageProps>(
 export const AvatarGroup = React.forwardRef<View, IAvatarGroupProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <View
-        ref={ref}
-        {...props}
-        className={avatarGroupStyle({ class: className })}
-      >
+      <View ref={ref} {...props} className={avatarGroupStyle({ class: className })}>
         {children}
       </View>
     );

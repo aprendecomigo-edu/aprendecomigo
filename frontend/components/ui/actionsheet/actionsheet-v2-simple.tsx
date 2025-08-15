@@ -1,6 +1,16 @@
 'use client';
 import React, { createContext, useContext, useMemo, useState } from 'react';
-import { View, Pressable, Text, ScrollView, Modal, ViewProps, PressableProps, TextProps, ScrollViewProps } from 'react-native';
+import {
+  View,
+  Pressable,
+  Text,
+  ScrollView,
+  Modal,
+  ViewProps,
+  PressableProps,
+  TextProps,
+  ScrollViewProps,
+} from 'react-native';
 
 // Actionsheet Context for sharing state between components
 interface ActionsheetContextValue {
@@ -74,26 +84,14 @@ const getItemStyles = () => ({
 // Main Actionsheet component - Simplified v2 without factory functions
 export const Actionsheet = React.forwardRef<View, IActionsheetProps>(
   ({ isOpen = false, onClose, children, style, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ isOpen, onClose }),
-      [isOpen, onClose]
-    );
+    const contextValue = useMemo(() => ({ isOpen, onClose }), [isOpen, onClose]);
 
     const actionsheetStyles = getActionsheetStyles();
 
     return (
       <ActionsheetContext.Provider value={contextValue}>
-        <Modal
-          visible={isOpen}
-          transparent
-          animationType="slide"
-          onRequestClose={onClose}
-        >
-          <View
-            ref={ref}
-            {...props}
-            style={[actionsheetStyles, style]}
-          >
+        <Modal visible={isOpen} transparent animationType="slide" onRequestClose={onClose}>
+          <View ref={ref} {...props} style={[actionsheetStyles, style]}>
             {children}
           </View>
         </Modal>
@@ -106,7 +104,7 @@ export const Actionsheet = React.forwardRef<View, IActionsheetProps>(
 export const ActionsheetBackdrop = React.forwardRef<View, IActionsheetBackdropProps>(
   ({ onPress, style, ...props }, ref) => {
     const context = useContext(ActionsheetContext);
-    
+
     const handlePress = (event: any) => {
       context?.onClose?.();
       onPress?.(event);
@@ -129,11 +127,7 @@ export const ActionsheetContent = React.forwardRef<View, IActionsheetContentProp
     const contentStyles = getContentStyles();
 
     return (
-      <View
-        ref={ref}
-        {...props}
-        style={[contentStyles, style]}
-      >
+      <View ref={ref} {...props} style={[contentStyles, style]}>
         {children}
       </View>
     );
@@ -141,17 +135,18 @@ export const ActionsheetContent = React.forwardRef<View, IActionsheetContentProp
 );
 
 // ActionsheetDragIndicatorWrapper component
-export const ActionsheetDragIndicatorWrapper = React.forwardRef<View, IActionsheetDragIndicatorWrapperProps>(
-  ({ children, style, ...props }, ref) => (
-    <View
-      ref={ref}
-      {...props}
-      style={[{ width: '100%', paddingVertical: 4, alignItems: 'center' }, style]}
-    >
-      {children}
-    </View>
-  )
-);
+export const ActionsheetDragIndicatorWrapper = React.forwardRef<
+  View,
+  IActionsheetDragIndicatorWrapperProps
+>(({ children, style, ...props }, ref) => (
+  <View
+    ref={ref}
+    {...props}
+    style={[{ width: '100%', paddingVertical: 4, alignItems: 'center' }, style]}
+  >
+    {children}
+  </View>
+));
 
 // ActionsheetDragIndicator component
 export const ActionsheetDragIndicator = React.forwardRef<View, IActionsheetDragIndicatorProps>(
@@ -167,11 +162,7 @@ export const ActionsheetDragIndicator = React.forwardRef<View, IActionsheetDragI
 // ActionsheetScrollView component
 export const ActionsheetScrollView = React.forwardRef<ScrollView, IActionsheetScrollViewProps>(
   ({ children, style, ...props }, ref) => (
-    <ScrollView
-      ref={ref}
-      {...props}
-      style={[{ width: '100%', maxHeight: '100%' }, style]}
-    >
+    <ScrollView ref={ref} {...props} style={[{ width: '100%', maxHeight: '100%' }, style]}>
       {children}
     </ScrollView>
   )
@@ -183,12 +174,7 @@ export const ActionsheetItem = React.forwardRef<View, IActionsheetItemProps>(
     const itemStyles = getItemStyles();
 
     return (
-      <Pressable
-        ref={ref as any}
-        {...props}
-        onPress={onPress}
-        style={[itemStyles, style]}
-      >
+      <Pressable ref={ref as any} {...props} onPress={onPress} style={[itemStyles, style]}>
         {children}
       </Pressable>
     );
@@ -198,11 +184,7 @@ export const ActionsheetItem = React.forwardRef<View, IActionsheetItemProps>(
 // ActionsheetItemText component
 export const ActionsheetItemText = React.forwardRef<Text, IActionsheetItemTextProps>(
   ({ style, ...props }, ref) => (
-    <Text
-      ref={ref}
-      {...props}
-      style={[{ fontSize: 16, color: '#374151' }, style]}
-    />
+    <Text ref={ref} {...props} style={[{ fontSize: 16, color: '#374151' }, style]} />
   )
 );
 

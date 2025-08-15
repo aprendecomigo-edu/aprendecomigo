@@ -72,10 +72,10 @@ export type IProgressFilledTrackProps = ViewProps &
 export const Progress = React.forwardRef<View, IProgressProps>(
   ({ className, size = 'md', value = 0, max = 100, children, ...props }, ref) => {
     const contextValue = useMemo(
-      () => ({ 
+      () => ({
         size,
         value,
-        max
+        max,
       }),
       [size, value, max]
     );

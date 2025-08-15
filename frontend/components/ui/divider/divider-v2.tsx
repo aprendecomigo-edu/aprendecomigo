@@ -34,10 +34,7 @@ export type IDividerProps = ViewProps &
 // Main Divider component - Direct implementation without factory
 export const Divider = React.forwardRef<View, IDividerProps>(
   ({ className, orientation = 'horizontal', ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ orientation }),
-      [orientation]
-    );
+    const contextValue = useMemo(() => ({ orientation }), [orientation]);
 
     return (
       <DividerContext.Provider value={contextValue}>

@@ -35,10 +35,7 @@ export type IPressableProps = PressableProps &
 // Main Pressable component - Direct implementation without factory
 export const Pressable = React.forwardRef<RNPressable, IPressableProps>(
   ({ className, variant = 'default', children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ variant }),
-      [variant]
-    );
+    const contextValue = useMemo(() => ({ variant }), [variant]);
 
     return (
       <PressableContext.Provider value={contextValue}>

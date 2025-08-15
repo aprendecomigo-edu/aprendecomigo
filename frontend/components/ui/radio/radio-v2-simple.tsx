@@ -1,10 +1,10 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps, PressableProps, TextProps } from 'react-native';
 import { View, Pressable, Text } from 'react-native';
 import { Svg } from 'react-native-svg';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
 
 // Radio Context for sharing state between components
 interface RadioContextValue {
@@ -130,18 +130,11 @@ export type IRadioIconProps = IPrimitiveIcon &
 // Main Radio component - Simplified v2 implementation
 export const Radio = React.forwardRef<View, IRadioProps>(
   ({ className, size = 'md', children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size }),
-      [size]
-    );
+    const contextValue = useMemo(() => ({ size }), [size]);
 
     return (
       <RadioContext.Provider value={contextValue}>
-        <Pressable
-          ref={ref as any}
-          {...props}
-          className={radioStyle({ size, class: className })}
-        >
+        <Pressable ref={ref as any} {...props} className={radioStyle({ size, class: className })}>
           {children}
         </Pressable>
       </RadioContext.Provider>
@@ -153,11 +146,7 @@ export const Radio = React.forwardRef<View, IRadioProps>(
 export const RadioGroup = React.forwardRef<View, IRadioGroupProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <View
-        ref={ref}
-        {...props}
-        className={radioGroupStyle({ class: className })}
-      >
+      <View ref={ref} {...props} className={radioGroupStyle({ class: className })}>
         {children}
       </View>
     );
@@ -211,14 +200,7 @@ export const RadioIcon = React.forwardRef<any, IRadioIconProps>(
     const { size: parentSize } = context || {};
 
     if (typeof size === 'number') {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={className}
-          size={size}
-        />
-      );
+      return <PrimitiveIcon ref={ref} {...props} className={className} size={size} />;
     }
 
     return (

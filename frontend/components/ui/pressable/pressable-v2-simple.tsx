@@ -23,11 +23,7 @@ export const Pressable = React.forwardRef<RNPressable, IPressableProps>(
 
     return (
       <PressableContext.Provider value={contextValue}>
-        <RNPressable
-          ref={ref as any}
-          {...props}
-          style={[{ outline: 'none' }, style]}
-        >
+        <RNPressable ref={ref as any} {...props} style={[{ outline: 'none' }, style]}>
           {children}
         </RNPressable>
       </PressableContext.Provider>

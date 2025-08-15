@@ -35,10 +35,7 @@ const getDividerStyles = (orientation?: string) => {
 // Main Divider component - Simplified v2 without factory functions
 export const Divider = React.forwardRef<View, IDividerProps>(
   ({ orientation = 'horizontal', style, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ orientation }),
-      [orientation]
-    );
+    const contextValue = useMemo(() => ({ orientation }), [orientation]);
 
     const dividerStyles = getDividerStyles(orientation);
 

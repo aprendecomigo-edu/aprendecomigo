@@ -13,7 +13,13 @@ const FabContext = createContext<FabContextValue>({});
 // Type definitions - simplified for testing
 export type IFabProps = PressableProps & {
   size?: 'sm' | 'md' | 'lg';
-  placement?: 'top right' | 'top left' | 'bottom right' | 'bottom left' | 'top center' | 'bottom center';
+  placement?:
+    | 'top right'
+    | 'top left'
+    | 'bottom right'
+    | 'bottom left'
+    | 'top center'
+    | 'bottom center';
   className?: string;
 };
 
@@ -32,7 +38,7 @@ export type IFabIconProps = React.ComponentProps<typeof View> & {
 // Simple style generator for testing
 const getFabStyles = (size?: string, placement?: string) => {
   const padding = size === 'sm' ? 10 : size === 'lg' ? 16 : 12;
-  
+
   let position = {};
   switch (placement) {
     case 'top right':
@@ -74,22 +80,30 @@ const getFabStyles = (size?: string, placement?: string) => {
   };
 };
 
-const getFabLabelStyles = (size?: string, bold?: boolean, underline?: boolean, strikeThrough?: boolean) => {
+const getFabLabelStyles = (
+  size?: string,
+  bold?: boolean,
+  underline?: boolean,
+  strikeThrough?: boolean
+) => {
   const fontSize = size === 'sm' ? 14 : size === 'lg' ? 18 : 16;
-  
+
   return {
     color: '#ffffff',
     fontSize,
-    fontWeight: bold ? '700' as const : 'normal' as const,
-    textDecorationLine: underline ? 'underline' as const : 
-                       strikeThrough ? 'line-through' as const : 'none' as const,
+    fontWeight: bold ? ('700' as const) : ('normal' as const),
+    textDecorationLine: underline
+      ? ('underline' as const)
+      : strikeThrough
+      ? ('line-through' as const)
+      : ('none' as const),
     marginHorizontal: 8,
   };
 };
 
 const getFabIconStyles = (size?: string) => {
   const iconSize = size === 'sm' ? 16 : size === 'lg' ? 24 : 18;
-  
+
   return {
     width: iconSize,
     height: iconSize,
@@ -100,20 +114,13 @@ const getFabIconStyles = (size?: string) => {
 // Main FAB component - Simplified v2 without factory functions
 export const Fab = React.forwardRef<View, IFabProps>(
   ({ size = 'md', placement = 'bottom right', children, style, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size, placement }),
-      [size, placement]
-    );
+    const contextValue = useMemo(() => ({ size, placement }), [size, placement]);
 
     const fabStyles = getFabStyles(size, placement);
 
     return (
       <FabContext.Provider value={contextValue}>
-        <Pressable
-          ref={ref as any}
-          {...props}
-          style={[fabStyles, style]}
-        >
+        <Pressable ref={ref as any} {...props} style={[fabStyles, style]}>
           {children}
         </Pressable>
       </FabContext.Provider>
@@ -123,17 +130,20 @@ export const Fab = React.forwardRef<View, IFabProps>(
 
 // FabLabel component
 export const FabLabel = React.forwardRef<Text, IFabLabelProps>(
-  ({
-    isTruncated = false,
-    bold = false,
-    underline = false,
-    strikeThrough = false,
-    style,
-    ...props
-  }, ref) => {
+  (
+    {
+      isTruncated = false,
+      bold = false,
+      underline = false,
+      strikeThrough = false,
+      style,
+      ...props
+    },
+    ref
+  ) => {
     const context = useContext(FabContext);
     const { size } = context || {};
-    
+
     const labelStyles = getFabLabelStyles(size, bold, underline, strikeThrough);
 
     return (
@@ -153,15 +163,11 @@ export const FabIcon = React.forwardRef<View, IFabIconProps>(
   ({ children, style, ...props }, ref) => {
     const context = useContext(FabContext);
     const { size } = context || {};
-    
+
     const iconStyles = getFabIconStyles(size);
 
     return (
-      <View
-        ref={ref}
-        {...props}
-        style={[iconStyles, style]}
-      >
+      <View ref={ref} {...props} style={[iconStyles, style]}>
         {children}
       </View>
     );

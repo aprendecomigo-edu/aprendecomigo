@@ -1,15 +1,42 @@
+import { Check, AlertCircle, Info } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 
 // Import all medium-priority v2 components (simplified versions)
-import { Select, SelectTrigger, SelectInput, SelectPortal, SelectBackdrop, SelectContent, SelectDragIndicator, SelectItem } from '@/components/ui/select/select-v2-simple';
-import { Checkbox, CheckboxIndicator, CheckboxIcon, CheckboxLabel, CheckboxGroup } from '@/components/ui/checkbox/checkbox-v2-simple';
-import { Radio, RadioIndicator, RadioIcon, RadioLabel, RadioGroup } from '@/components/ui/radio/radio-v2-simple';
 import { Alert, AlertIcon, AlertText } from '@/components/ui/alert/alert-v2-simple';
-import { Menu, MenuItem, MenuItemLabel } from '@/components/ui/menu/menu-v2-simple';
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallbackText,
+  AvatarBadge,
+  AvatarGroup,
+} from '@/components/ui/avatar/avatar-v2-simple';
 import { Card, CardHeader, CardBody, CardFooter } from '@/components/ui/card/card-v2-simple';
-import { Avatar, AvatarImage, AvatarFallbackText, AvatarBadge, AvatarGroup } from '@/components/ui/avatar/avatar-v2-simple';
-import { Check, AlertCircle, Info } from 'lucide-react-native';
+import {
+  Checkbox,
+  CheckboxIndicator,
+  CheckboxIcon,
+  CheckboxLabel,
+  CheckboxGroup,
+} from '@/components/ui/checkbox/checkbox-v2-simple';
+import { Menu, MenuItem, MenuItemLabel } from '@/components/ui/menu/menu-v2-simple';
+import {
+  Radio,
+  RadioIndicator,
+  RadioIcon,
+  RadioLabel,
+  RadioGroup,
+} from '@/components/ui/radio/radio-v2-simple';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicator,
+  SelectItem,
+} from '@/components/ui/select/select-v2-simple';
 
 export default function TestV2MediumPriorityScreen() {
   const [selectedValue, setSelectedValue] = useState('');
@@ -46,11 +73,7 @@ export default function TestV2MediumPriorityScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>2. Checkbox Component</Text>
           <View style={styles.row}>
-            <Checkbox 
-              value="check1" 
-              isChecked={isChecked}
-              onChange={setIsChecked}
-            >
+            <Checkbox value="check1" isChecked={isChecked} onChange={setIsChecked}>
               <CheckboxIndicator>
                 <CheckboxIcon as={Check} />
               </CheckboxIndicator>
@@ -129,7 +152,10 @@ export default function TestV2MediumPriorityScreen() {
               <Text style={styles.cardTitle}>Card Title</Text>
             </CardHeader>
             <CardBody>
-              <Text>This is a card body with some content. Cards are useful for grouping related information.</Text>
+              <Text>
+                This is a card body with some content. Cards are useful for grouping related
+                information.
+              </Text>
             </CardBody>
             <CardFooter>
               <Text style={styles.cardFooter}>Card Footer</Text>
@@ -170,14 +196,10 @@ export default function TestV2MediumPriorityScreen() {
         <View style={styles.successBox}>
           <Text style={styles.successTitle}>✅ Medium-Priority Components Status</Text>
           <Text style={styles.successText}>
-            All 7 components migrated successfully:{'\n'}
-            • Select - Working with dropdown{'\n'}
-            • Checkbox - Toggle functionality{'\n'}
-            • Radio - Group selection{'\n'}
-            • Alert - All variants{'\n'}
-            • Menu - Item interactions{'\n'}
-            • Card - Layout structure{'\n'}
-            • Avatar - Display and groups
+            All 7 components migrated successfully:{'\n'}• Select - Working with dropdown{'\n'}•
+            Checkbox - Toggle functionality{'\n'}• Radio - Group selection{'\n'}• Alert - All
+            variants{'\n'}• Menu - Item interactions{'\n'}• Card - Layout structure{'\n'}• Avatar -
+            Display and groups
           </Text>
         </View>
       </View>

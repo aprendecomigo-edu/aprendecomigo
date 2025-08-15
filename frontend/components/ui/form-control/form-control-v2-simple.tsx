@@ -33,14 +33,8 @@ export type IFormControlErrorIconProps = React.ComponentPropsWithoutRef<typeof S
 export const FormControl = React.forwardRef<View, IFormControlProps>(
   ({ className = '', size = 'md', ...props }, ref) => {
     const baseClasses = 'flex flex-col';
-    
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={`${baseClasses} ${className}`}
-      />
-    );
+
+    return <View ref={ref} {...props} className={`${baseClasses} ${className}`} />;
   }
 );
 
@@ -48,14 +42,8 @@ export const FormControl = React.forwardRef<View, IFormControlProps>(
 export const FormControlError = React.forwardRef<View, IFormControlErrorProps>(
   ({ className = '', ...props }, ref) => {
     const baseClasses = 'flex flex-row justify-start items-center mt-1 gap-1';
-    
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={`${baseClasses} ${className}`}
-      />
-    );
+
+    return <View ref={ref} {...props} className={`${baseClasses} ${className}`} />;
   }
 );
 
@@ -63,86 +51,77 @@ export const FormControlError = React.forwardRef<View, IFormControlErrorProps>(
 export const FormControlErrorText = React.forwardRef<Text, IFormControlErrorTextProps>(
   ({ className = '', size = 'md', ...props }, ref) => {
     const sizeClasses = {
-      'xs': 'text-xs',
-      'sm': 'text-sm',
-      'md': 'text-base',
-      'lg': 'text-lg',
+      xs: 'text-xs',
+      sm: 'text-sm',
+      md: 'text-base',
+      lg: 'text-lg',
     };
-    
+
     const baseClasses = 'text-error-700';
-    const combinedClasses = `${baseClasses} ${typeof size === 'string' ? sizeClasses[size as keyof typeof sizeClasses] || '' : ''} ${className}`;
-    
-    return (
-      <Text
-        ref={ref}
-        {...props}
-        className={combinedClasses}
-      />
-    );
+    const combinedClasses = `${baseClasses} ${
+      typeof size === 'string' ? sizeClasses[size as keyof typeof sizeClasses] || '' : ''
+    } ${className}`;
+
+    return <Text ref={ref} {...props} className={combinedClasses} />;
   }
 );
 
 // Simple FormControlErrorIcon
-export const FormControlErrorIcon = React.forwardRef<React.ElementRef<typeof Svg>, IFormControlErrorIconProps>(
-  ({ className = '', size, height, width, fill, color, stroke, as: AsComp, ...props }, ref) => {
-    const sizeClasses = {
-      'sm': 'h-4 w-4',
-      'md': 'h-[18px] w-[18px]',
-      'lg': 'h-5 w-5',
-    };
-    
-    const baseClasses = 'text-error-700 fill-none';
-    
-    // Handle size prop
-    const getSizeClass = () => {
-      if (typeof size === 'number') return '';
-      if (typeof size === 'string') return sizeClasses[size as keyof typeof sizeClasses] || '';
-      return sizeClasses.md;
-    };
-    
-    const combinedClasses = `${baseClasses} ${getSizeClass()} ${className}`;
-    
-    const colorProps: any = {};
-    if (color) colorProps.color = color;
-    if (stroke) colorProps.stroke = stroke;
-    if (fill) colorProps.fill = fill;
-    
-    if (typeof size === 'number') {
-      colorProps.size = size;
-    } else if (height !== undefined || width !== undefined) {
-      if (height) colorProps.height = height;
-      if (width) colorProps.width = width;
-    }
-    
-    if (AsComp) {
-      return <AsComp ref={ref} {...colorProps} {...props} className={combinedClasses} />;
-    }
-    
-    return (
-      <Svg
-        ref={ref}
-        height={height}
-        width={width}
-        {...colorProps}
-        {...props}
-        className={combinedClasses}
-      />
-    );
+export const FormControlErrorIcon = React.forwardRef<
+  React.ElementRef<typeof Svg>,
+  IFormControlErrorIconProps
+>(({ className = '', size, height, width, fill, color, stroke, as: AsComp, ...props }, ref) => {
+  const sizeClasses = {
+    sm: 'h-4 w-4',
+    md: 'h-[18px] w-[18px]',
+    lg: 'h-5 w-5',
+  };
+
+  const baseClasses = 'text-error-700 fill-none';
+
+  // Handle size prop
+  const getSizeClass = () => {
+    if (typeof size === 'number') return '';
+    if (typeof size === 'string') return sizeClasses[size as keyof typeof sizeClasses] || '';
+    return sizeClasses.md;
+  };
+
+  const combinedClasses = `${baseClasses} ${getSizeClass()} ${className}`;
+
+  const colorProps: any = {};
+  if (color) colorProps.color = color;
+  if (stroke) colorProps.stroke = stroke;
+  if (fill) colorProps.fill = fill;
+
+  if (typeof size === 'number') {
+    colorProps.size = size;
+  } else if (height !== undefined || width !== undefined) {
+    if (height) colorProps.height = height;
+    if (width) colorProps.width = width;
   }
-);
+
+  if (AsComp) {
+    return <AsComp ref={ref} {...colorProps} {...props} className={combinedClasses} />;
+  }
+
+  return (
+    <Svg
+      ref={ref}
+      height={height}
+      width={width}
+      {...colorProps}
+      {...props}
+      className={combinedClasses}
+    />
+  );
+});
 
 // Simple FormControlLabel
 export const FormControlLabel = React.forwardRef<View, IFormControlLabelProps>(
   ({ className = '', ...props }, ref) => {
     const baseClasses = 'flex flex-row justify-start items-center mb-1';
-    
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={`${baseClasses} ${className}`}
-      />
-    );
+
+    return <View ref={ref} {...props} className={`${baseClasses} ${className}`} />;
   }
 );
 
@@ -150,22 +129,18 @@ export const FormControlLabel = React.forwardRef<View, IFormControlLabelProps>(
 export const FormControlLabelText = React.forwardRef<Text, IFormControlLabelTextProps>(
   ({ className = '', size = 'md', ...props }, ref) => {
     const sizeClasses = {
-      'xs': 'text-xs',
-      'sm': 'text-sm',
-      'md': 'text-base',
-      'lg': 'text-lg',
+      xs: 'text-xs',
+      sm: 'text-sm',
+      md: 'text-base',
+      lg: 'text-lg',
     };
-    
+
     const baseClasses = 'font-medium text-typography-900';
-    const combinedClasses = `${baseClasses} ${typeof size === 'string' ? sizeClasses[size as keyof typeof sizeClasses] || '' : ''} ${className}`;
-    
-    return (
-      <Text
-        ref={ref}
-        {...props}
-        className={combinedClasses}
-      />
-    );
+    const combinedClasses = `${baseClasses} ${
+      typeof size === 'string' ? sizeClasses[size as keyof typeof sizeClasses] || '' : ''
+    } ${className}`;
+
+    return <Text ref={ref} {...props} className={combinedClasses} />;
   }
 );
 
@@ -173,14 +148,8 @@ export const FormControlLabelText = React.forwardRef<Text, IFormControlLabelText
 export const FormControlLabelAstrick = React.forwardRef<Text, IFormControlLabelAstrickProps>(
   ({ className = '', ...props }, ref) => {
     const baseClasses = 'font-medium text-typography-900';
-    
-    return (
-      <Text
-        ref={ref}
-        {...props}
-        className={`${baseClasses} ${className}`}
-      />
-    );
+
+    return <Text ref={ref} {...props} className={`${baseClasses} ${className}`} />;
   }
 );
 
@@ -188,14 +157,8 @@ export const FormControlLabelAstrick = React.forwardRef<Text, IFormControlLabelA
 export const FormControlHelper = React.forwardRef<View, IFormControlHelperProps>(
   ({ className = '', ...props }, ref) => {
     const baseClasses = 'flex flex-row justify-start items-center mt-1';
-    
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={`${baseClasses} ${className}`}
-      />
-    );
+
+    return <View ref={ref} {...props} className={`${baseClasses} ${className}`} />;
   }
 );
 
@@ -203,22 +166,18 @@ export const FormControlHelper = React.forwardRef<View, IFormControlHelperProps>
 export const FormControlHelperText = React.forwardRef<Text, IFormControlHelperTextProps>(
   ({ className = '', size = 'md', ...props }, ref) => {
     const sizeClasses = {
-      'xs': 'text-xs',
-      'sm': 'text-xs',
-      'md': 'text-sm',
-      'lg': 'text-base',
+      xs: 'text-xs',
+      sm: 'text-xs',
+      md: 'text-sm',
+      lg: 'text-base',
     };
-    
+
     const baseClasses = 'text-typography-500';
-    const combinedClasses = `${baseClasses} ${typeof size === 'string' ? sizeClasses[size as keyof typeof sizeClasses] || '' : ''} ${className}`;
-    
-    return (
-      <Text
-        ref={ref}
-        {...props}
-        className={combinedClasses}
-      />
-    );
+    const combinedClasses = `${baseClasses} ${
+      typeof size === 'string' ? sizeClasses[size as keyof typeof sizeClasses] || '' : ''
+    } ${className}`;
+
+    return <Text ref={ref} {...props} className={combinedClasses} />;
   }
 );
 

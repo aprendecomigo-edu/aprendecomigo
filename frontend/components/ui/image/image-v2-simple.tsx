@@ -28,13 +28,13 @@ const getImageStyles = (size?: string) => {
     '2xl': 256,
     full: '100%' as const,
   };
-  
+
   const dimension = dimensions[size as keyof typeof dimensions] || dimensions.md;
-  
+
   if (size === 'full') {
     return { width: '100%', height: '100%' };
   }
-  
+
   return {
     width: dimension,
     height: dimension,
@@ -44,20 +44,13 @@ const getImageStyles = (size?: string) => {
 // Main Image component - Simplified v2 without factory functions
 export const Image = React.forwardRef<RNImage, IImageProps>(
   ({ size = 'md', style, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size }),
-      [size]
-    );
+    const contextValue = useMemo(() => ({ size }), [size]);
 
     const imageStyles = getImageStyles(size);
 
     return (
       <ImageContext.Provider value={contextValue}>
-        <RNImage
-          ref={ref}
-          {...props}
-          style={[imageStyles, style]}
-        />
+        <RNImage ref={ref} {...props} style={[imageStyles, style]} />
       </ImageContext.Provider>
     );
   }

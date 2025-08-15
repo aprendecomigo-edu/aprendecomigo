@@ -155,10 +155,7 @@ export type IFabIconProps = React.ComponentPropsWithoutRef<typeof PrimitiveIcon>
 // Main FAB component - Direct implementation without factory
 export const Fab = React.forwardRef<Pressable, IFabProps>(
   ({ className, size = 'md', placement = 'bottom right', children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ size, placement }),
-      [size, placement]
-    );
+    const contextValue = useMemo(() => ({ size, placement }), [size, placement]);
 
     return (
       <FabContext.Provider value={contextValue}>
@@ -176,15 +173,18 @@ export const Fab = React.forwardRef<Pressable, IFabProps>(
 
 // FabLabel component
 export const FabLabel = React.forwardRef<Text, IFabLabelProps>(
-  ({
-    className,
-    size,
-    isTruncated = false,
-    bold = false,
-    underline = false,
-    strikeThrough = false,
-    ...props
-  }, ref) => {
+  (
+    {
+      className,
+      size,
+      isTruncated = false,
+      bold = false,
+      underline = false,
+      strikeThrough = false,
+      ...props
+    },
+    ref
+  ) => {
     const context = useContext(FabContext);
     const { size: parentSize } = context || {};
 
@@ -213,14 +213,7 @@ export const FabIcon = React.forwardRef<any, IFabIconProps>(
     const { size: parentSize } = context || {};
 
     if (typeof size === 'number') {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={className}
-          size={size}
-        />
-      );
+      return <PrimitiveIcon ref={ref} {...props} className={className} size={size} />;
     } else if ((props.height !== undefined || props.width !== undefined) && size === undefined) {
       return <PrimitiveIcon ref={ref} {...props} className={className} />;
     }

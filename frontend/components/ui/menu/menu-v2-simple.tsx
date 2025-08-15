@@ -1,9 +1,9 @@
 'use client';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps, PressableProps, TextProps } from 'react-native';
 import { View, Pressable, Text } from 'react-native';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
 
 // Menu Context for sharing state between components
 interface MenuContextValue {
@@ -67,29 +67,19 @@ export type IMenuItemLabelProps = TextProps &
   };
 
 // Main Menu component - Simplified v2 implementation
-export const Menu = React.forwardRef<View, IMenuProps>(
-  ({ className, children, ...props }, ref) => {
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={menuStyle({ class: className })}
-      >
-        {children}
-      </View>
-    );
-  }
-);
+export const Menu = React.forwardRef<View, IMenuProps>(({ className, children, ...props }, ref) => {
+  return (
+    <View ref={ref} {...props} className={menuStyle({ class: className })}>
+      {children}
+    </View>
+  );
+});
 
 // MenuItem component
 export const MenuItem = React.forwardRef<View, IMenuItemProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <Pressable
-        ref={ref as any}
-        {...props}
-        className={menuItemStyle({ class: className })}
-      >
+      <Pressable ref={ref as any} {...props} className={menuItemStyle({ class: className })}>
         {children}
       </Pressable>
     );
@@ -100,11 +90,7 @@ export const MenuItem = React.forwardRef<View, IMenuItemProps>(
 export const MenuBackdrop = React.forwardRef<View, IMenuBackdropProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <Pressable
-        ref={ref as any}
-        {...props}
-        className={menuBackdropStyle({ class: className })}
-      >
+      <Pressable ref={ref as any} {...props} className={menuBackdropStyle({ class: className })}>
         {children}
       </Pressable>
     );
@@ -114,13 +100,7 @@ export const MenuBackdrop = React.forwardRef<View, IMenuBackdropProps>(
 // MenuSeparator component
 export const MenuSeparator = React.forwardRef<View, IMenuSeparatorProps>(
   ({ className, ...props }, ref) => {
-    return (
-      <View
-        ref={ref}
-        {...props}
-        className={menuSeparatorStyle({ class: className })}
-      />
-    );
+    return <View ref={ref} {...props} className={menuSeparatorStyle({ class: className })} />;
   }
 );
 

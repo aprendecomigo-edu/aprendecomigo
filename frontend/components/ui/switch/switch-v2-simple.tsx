@@ -22,7 +22,7 @@ export type ISwitchProps = SwitchProps & {
 // Simple style generator for testing
 const getSwitchStyles = (size?: string, isDisabled?: boolean, isInvalid?: boolean) => {
   const scale = size === 'sm' ? 0.75 : size === 'lg' ? 1.25 : 1;
-  
+
   return {
     opacity: isDisabled ? 0.4 : 1,
     transform: [{ scale }],
@@ -36,19 +36,12 @@ const getSwitchStyles = (size?: string, isDisabled?: boolean, isInvalid?: boolea
 
 // Main Switch component - Simplified v2 without factory functions
 export const Switch = React.forwardRef<RNSwitch, ISwitchProps>(
-  ({ 
-    size = 'md', 
-    isDisabled = false,
-    isInvalid = false,
-    disabled,
-    style,
-    ...props 
-  }, ref) => {
+  ({ size = 'md', isDisabled = false, isInvalid = false, disabled, style, ...props }, ref) => {
     const contextValue = useMemo(
-      () => ({ 
+      () => ({
         size,
         isDisabled: isDisabled || disabled,
-        isInvalid
+        isInvalid,
       }),
       [size, isDisabled, disabled, isInvalid]
     );
@@ -58,12 +51,7 @@ export const Switch = React.forwardRef<RNSwitch, ISwitchProps>(
 
     return (
       <SwitchContext.Provider value={contextValue}>
-        <RNSwitch
-          ref={ref}
-          {...props}
-          disabled={finalDisabled}
-          style={[switchStyles, style]}
-        />
+        <RNSwitch ref={ref} {...props} disabled={finalDisabled} style={[switchStyles, style]} />
       </SwitchContext.Provider>
     );
   }
