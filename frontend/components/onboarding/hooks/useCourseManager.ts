@@ -122,14 +122,14 @@ export function useCourseManager({
     setShowCourseBrowser,
     showCustomForm,
     setShowCustomForm,
-    
+
     // Computed values
     allSelectedItems,
     selectedCourseIds,
     totalSelections,
     canAddMore,
     canContinue,
-    
+
     // Handlers
     handleCourseToggle,
     handleAddCustomSubject,

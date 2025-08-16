@@ -1,6 +1,9 @@
 import React, { memo } from 'react';
 import { Controller, Control, FieldErrors } from 'react-hook-form';
 
+import { WEEKDAYS } from '../constants';
+import type { SchoolSettingsFormData } from '../types';
+
 import { Box } from '@/components/ui/box';
 import {
   FormControl,
@@ -17,9 +20,6 @@ import { Input, InputField } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
-import type { SchoolSettingsFormData } from '../types';
-import { WEEKDAYS } from '../constants';
 
 interface ScheduleSectionProps {
   control: Control<SchoolSettingsFormData>;

@@ -65,13 +65,16 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
     });
   }, [filters, searchQuery, fetchInvitations]);
 
-  const handleFilterChange = useCallback((newFilters: typeof filters) => {
-    setFilters(newFilters);
-    fetchInvitations({
-      ...newFilters,
-      email: searchQuery.trim() || undefined,
-    });
-  }, [searchQuery, fetchInvitations]);
+  const handleFilterChange = useCallback(
+    (newFilters: typeof filters) => {
+      setFilters(newFilters);
+      fetchInvitations({
+        ...newFilters,
+        email: searchQuery.trim() || undefined,
+      });
+    },
+    [searchQuery, fetchInvitations],
+  );
 
   const handleClearFilters = useCallback(() => {
     setFilters({});
@@ -222,13 +225,16 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
     </VStack>
   );
 
-  const renderInvitation = useCallback(({ item, index }: { item: any; index: number }) => (
-    <InvitationListItem
-      invitation={item}
-      onAction={refreshInvitations}
-      isLast={index === invitations.length - 1}
-    />
-  ), [refreshInvitations, invitations.length]);
+  const renderInvitation = useCallback(
+    ({ item, index }: { item: any; index: number }) => (
+      <InvitationListItem
+        invitation={item}
+        onAction={refreshInvitations}
+        isLast={index === invitations.length - 1}
+      />
+    ),
+    [refreshInvitations, invitations.length],
+  );
 
   const renderFooter = () => {
     if (!loading) return null;

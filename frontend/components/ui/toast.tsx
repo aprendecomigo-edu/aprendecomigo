@@ -1,4 +1,3 @@
-import { CheckCircle, AlertCircle, X } from '@/components/ui/icons';
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Animated, Dimensions } from 'react-native';
 
@@ -7,6 +6,8 @@ import { HStack } from './hstack';
 import { Icon } from './icon';
 import { Pressable } from './pressable';
 import { Text } from './text';
+
+import { CheckCircle, AlertCircle, X } from '@/components/ui/icons';
 
 const COLORS = {
   success: '#10B981',

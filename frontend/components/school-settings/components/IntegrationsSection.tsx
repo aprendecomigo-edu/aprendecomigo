@@ -1,6 +1,9 @@
 import React, { memo } from 'react';
 import { Controller, Control, FieldErrors } from 'react-hook-form';
 
+import { CALENDAR_PROVIDERS, EMAIL_PROVIDERS } from '../constants';
+import type { SchoolSettingsFormData } from '../types';
+
 import {
   FormControl,
   FormControlLabel,
@@ -25,9 +28,6 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
-import type { SchoolSettingsFormData } from '../types';
-import { CALENDAR_PROVIDERS, EMAIL_PROVIDERS } from '../constants';
 
 interface IntegrationsSectionProps {
   control: Control<SchoolSettingsFormData>;

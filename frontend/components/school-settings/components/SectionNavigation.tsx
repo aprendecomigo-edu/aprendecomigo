@@ -1,12 +1,12 @@
 import React, { memo, useCallback } from 'react';
 
+import { SECTIONS } from '../constants';
+import type { SectionKey } from '../types';
+
 import { Button, ButtonText } from '@/components/ui/button';
 import { HStack } from '@/components/ui/hstack';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
-import type { SectionKey } from '../types';
-import { SECTIONS } from '../constants';
 
 interface SectionNavigationProps {
   activeSection: SectionKey;

@@ -19,11 +19,11 @@ describe('useTimer hooks', () => {
       renderHook(() => useTimeout(callback, 1000));
 
       expect(callback).not.toHaveBeenCalled();
-      
+
       act(() => {
         jest.advanceTimersByTime(1000);
       });
-      
+
       expect(callback).toHaveBeenCalledTimes(1);
     });
 
@@ -32,11 +32,11 @@ describe('useTimer hooks', () => {
       const { unmount } = renderHook(() => useTimeout(callback, 1000));
 
       unmount();
-      
+
       act(() => {
         jest.advanceTimersByTime(1000);
       });
-      
+
       expect(callback).not.toHaveBeenCalled();
     });
 
@@ -47,7 +47,7 @@ describe('useTimer hooks', () => {
       act(() => {
         jest.advanceTimersByTime(5000);
       });
-      
+
       expect(callback).not.toHaveBeenCalled();
     });
   });
@@ -60,7 +60,7 @@ describe('useTimer hooks', () => {
       act(() => {
         jest.advanceTimersByTime(3000);
       });
-      
+
       expect(callback).toHaveBeenCalledTimes(3);
     });
 
@@ -71,15 +71,15 @@ describe('useTimer hooks', () => {
       act(() => {
         jest.advanceTimersByTime(1000);
       });
-      
+
       expect(callback).toHaveBeenCalledTimes(1);
 
       unmount();
-      
+
       act(() => {
         jest.advanceTimersByTime(2000);
       });
-      
+
       expect(callback).toHaveBeenCalledTimes(1);
     });
 
@@ -90,7 +90,7 @@ describe('useTimer hooks', () => {
       act(() => {
         jest.advanceTimersByTime(5000);
       });
-      
+
       expect(callback).not.toHaveBeenCalled();
     });
   });
@@ -99,7 +99,7 @@ describe('useTimer hooks', () => {
     test('should clear all timers on clearAll', () => {
       const callback1 = jest.fn();
       const callback2 = jest.fn();
-      
+
       const { result } = renderHook(() => useTimerManager());
 
       act(() => {
@@ -111,14 +111,14 @@ describe('useTimer hooks', () => {
         result.current.clearAll();
         jest.advanceTimersByTime(2000);
       });
-      
+
       expect(callback1).not.toHaveBeenCalled();
       expect(callback2).not.toHaveBeenCalled();
     });
 
     test('should clear all timers on unmount', () => {
       const callback = jest.fn();
-      
+
       const { result, unmount } = renderHook(() => useTimerManager());
 
       act(() => {
@@ -126,11 +126,11 @@ describe('useTimer hooks', () => {
       });
 
       unmount();
-      
+
       act(() => {
         jest.advanceTimersByTime(1000);
       });
-      
+
       expect(callback).not.toHaveBeenCalled();
     });
   });

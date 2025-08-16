@@ -1,4 +1,3 @@
-import { X, AlertCircle, CheckCircle, Upload } from '@/components/ui/icons';
 import React from 'react';
 import { Platform } from 'react-native';
 
@@ -6,6 +5,7 @@ import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { X, AlertCircle, CheckCircle, Upload } from '@/components/ui/icons';
 import { Progress, ProgressFilledTrack } from '@/components/ui/progress';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';

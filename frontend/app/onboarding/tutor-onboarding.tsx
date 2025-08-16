@@ -1,18 +1,5 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  Save,
-  AlertCircle,
-  Clock,
-  Lightbulb,
-  Target,
-  TrendingUp,
-  ExternalLink,
-} from '@/components/ui/icons';
 import { Platform, Dimensions } from 'react-native';
 
 import { TutorSchoolCreationModal } from '@/components/modals/TutorSchoolCreationModal';
@@ -38,6 +25,18 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Save,
+  AlertCircle,
+  Clock,
+  Lightbulb,
+  Target,
+  TrendingUp,
+  ExternalLink,
+} from '@/components/ui/icons';
 import { Progress, ProgressFilledTrack } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';

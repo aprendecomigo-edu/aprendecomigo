@@ -1,6 +1,9 @@
 import { CalendarDays } from 'lucide-react-native';
 import React from 'react';
 
+import { ClassCard } from '../cards/ClassCard';
+import { TaskCard } from '../cards/TaskCard';
+
 import { ClassSchedule } from '@/api/schedulerApi';
 import { Task } from '@/api/tasksApi';
 import { Center } from '@/components/ui/center';
@@ -8,9 +11,6 @@ import { Icon } from '@/components/ui/icon';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
-import { ClassCard } from '../cards/ClassCard';
-import { TaskCard } from '../cards/TaskCard';
 
 interface ListViewProps {
   classes: ClassSchedule[];

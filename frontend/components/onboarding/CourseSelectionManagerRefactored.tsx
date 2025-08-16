@@ -4,16 +4,11 @@ import { Platform } from 'react-native';
 
 import { CustomSubjectForm } from './components/CustomSubjectForm';
 import { SelectedCourseCard } from './components/SelectedCourseCard';
+import { CourseCatalogBrowser } from './CourseCatalogBrowser';
 import { useCourseManager, SelectedCourse, CustomSubject } from './hooks/useCourseManager';
 
-import { CourseCatalogBrowser } from './CourseCatalogBrowser';
-
 import { EnhancedCourse } from '@/api/tutorApi';
-import {
-  AlertDialog,
-  AlertDialogBackdrop,
-  AlertDialogContent,
-} from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogBackdrop, AlertDialogContent } from '@/components/ui/alert-dialog';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText, ButtonIcon } from '@/components/ui/button';

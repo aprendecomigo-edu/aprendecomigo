@@ -48,7 +48,9 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
 
       // If some operations failed but we have some data, don't throw
       if (failures.length > 0 && failures.length < 2) {
-        console.warn(`${failures.length} out of 2 task operations failed, but continuing with available data`);
+        console.warn(
+          `${failures.length} out of 2 task operations failed, but continuing with available data`,
+        );
       } else if (failures.length === 2) {
         throw new Error('All task operations failed');
       }

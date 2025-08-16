@@ -3,7 +3,7 @@
  *
  * This class integrates ConnectionManager, ReconnectionStrategy, and MessageDispatcher
  * to provide a unified interface replacing the monolithic useWebSocket hook.
- * 
+ *
  * REFACTORED: Enhanced with proper timeout cleanup to prevent memory leaks.
  */
 
@@ -166,7 +166,7 @@ export class WebSocketClient implements EventEmitterInterface {
         callback();
       }
     }, delay);
-    
+
     this.activeTimeouts.add(timeoutId);
     return timeoutId;
   }
@@ -176,7 +176,7 @@ export class WebSocketClient implements EventEmitterInterface {
       clearTimeout(timeoutId);
     });
     this.activeTimeouts.clear();
-    
+
     if (this.reconnectTimeoutId) {
       clearTimeout(this.reconnectTimeoutId);
       this.reconnectTimeoutId = null;

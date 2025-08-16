@@ -1,6 +1,8 @@
 import React, { memo } from 'react';
 import { Controller, Control, FieldErrors } from 'react-hook-form';
 
+import type { SchoolSettingsFormData } from '../types';
+
 import { Box } from '@/components/ui/box';
 import {
   FormControl,
@@ -16,8 +18,6 @@ import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
-
-import type { SchoolSettingsFormData } from '../types';
 
 interface BillingSectionProps {
   control: Control<SchoolSettingsFormData>;

@@ -1,18 +1,11 @@
-import {
-  ChevronDown,
-  ChevronUp,
-  Star,
-  Trash2,
-  GripVertical,
-  Info,
-} from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Star, Trash2, GripVertical, Info } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Platform } from 'react-native';
 
+import { SelectedCourse, CustomSubject } from '../hooks/useCourseManager';
+
 import { ExpertiseLevelBadge } from './ExpertiseLevelBadge';
 import { RateInputField } from './RateInputField';
-
-import { SelectedCourse, CustomSubject } from '../hooks/useCourseManager';
 
 import {
   AlertDialog,
@@ -26,11 +19,7 @@ import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import {
-  FormControl,
-  FormControlLabel,
-  FormControlLabelText,
-} from '@/components/ui/form-control';
+import { FormControl, FormControlLabel, FormControlLabelText } from '@/components/ui/form-control';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';

@@ -1,20 +1,6 @@
 import React, { memo, useMemo, useCallback } from 'react';
 import { ScrollView } from 'react-native';
 
-import { Badge, BadgeText } from '@/components/ui/badge';
-import { Box } from '@/components/ui/box';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Center } from '@/components/ui/center';
-import { Divider } from '@/components/ui/divider';
-import { Heading } from '@/components/ui/heading';
-import { HStack } from '@/components/ui/hstack';
-import { Spinner } from '@/components/ui/spinner';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-
-import type { SchoolSettingsFormProps } from './types';
-import { useSchoolSettings } from './hooks/useSchoolSettings';
-import { SectionNavigation } from './components/SectionNavigation';
 import {
   ProfileSection,
   EducationalSection,
@@ -26,6 +12,20 @@ import {
   IntegrationsSection,
   PrivacySection,
 } from './components';
+import { SectionNavigation } from './components/SectionNavigation';
+import { useSchoolSettings } from './hooks/useSchoolSettings';
+import type { SchoolSettingsFormProps } from './types';
+
+import { Badge, BadgeText } from '@/components/ui/badge';
+import { Box } from '@/components/ui/box';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Center } from '@/components/ui/center';
+import { Divider } from '@/components/ui/divider';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 /**
  * Refactored SchoolSettingsForm component

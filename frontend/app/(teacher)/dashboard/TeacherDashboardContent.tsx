@@ -206,7 +206,8 @@ export default function TeacherDashboardContent() {
                   Bem-vindo, Professor!
                 </Heading>
                 <Text className="text-gray-600 max-w-md text-center">
-                  Aqui você pode acompanhar suas aulas, gerenciar estudantes e acessar todas as ferramentas necessárias para ensinar.
+                  Aqui você pode acompanhar suas aulas, gerenciar estudantes e acessar todas as
+                  ferramentas necessárias para ensinar.
                 </Text>
                 <HStack space="sm" className="flex-wrap justify-center">
                   <Button onPress={handleViewProfile} size="sm">
@@ -280,7 +281,8 @@ export default function TeacherDashboardContent() {
                   Mais funcionalidades em breve
                 </Text>
                 <Text className="text-gray-600">
-                  Estamos trabalhando para trazer mais recursos para melhorar sua experiência de ensino.
+                  Estamos trabalhando para trazer mais recursos para melhorar sua experiência de
+                  ensino.
                 </Text>
               </VStack>
             </CardBody>

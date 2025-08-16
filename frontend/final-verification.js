@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
 const { execSync } = require('child_process');
+const fs = require('fs');
 
 // Get all TypeScript/JavaScript files
 function getAllFiles() {

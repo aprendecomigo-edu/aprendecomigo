@@ -7,8 +7,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-import { useUserProfile } from '@/api/auth';
 import { useInterval, usePolling } from './useTimer';
+
+import { useUserProfile } from '@/api/auth';
 import { NotificationApiClient } from '@/api/notificationApi';
 import type {
   NotificationResponse,
@@ -258,16 +259,13 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   }, [userProfile, refresh]);
 
   // Setup polling with exponential backoff for better error handling
-  usePolling(
-    pollForUpdates,
-    {
-      interval: pollingInterval,
-      enabled: enablePolling && userProfile,
-      maxRetries: 5,
-      backoffMultiplier: 2,
-      maxInterval: 30000, // Max 30 seconds between retries for notifications
-    }
-  );
+  usePolling(pollForUpdates, {
+    interval: pollingInterval,
+    enabled: enablePolling && userProfile,
+    maxRetries: 5,
+    backoffMultiplier: 2,
+    maxInterval: 30000, // Max 30 seconds between retries for notifications
+  });
 
   return {
     // Data
@@ -325,7 +323,7 @@ export function useUnreadNotificationCount() {
   useInterval(
     fetchUnreadCount,
     60000, // Check every minute
-    [fetchUnreadCount]
+    [fetchUnreadCount],
   );
 
   return { unreadCount, loading, refresh: fetchUnreadCount };

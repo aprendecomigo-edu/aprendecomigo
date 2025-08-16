@@ -1,4 +1,3 @@
-import { ChevronRight } from '@/components/ui/icons';
 import React from 'react';
 import { Pressable } from 'react-native';
 
@@ -14,6 +13,7 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { ChevronRight } from '@/components/ui/icons';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 

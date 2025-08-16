@@ -1,5 +1,4 @@
 import * as DocumentPicker from 'expo-document-picker';
-import { Upload, FileText, Trash2, AlertCircle, CheckCircle } from '@/components/ui/icons';
 import React, { useState } from 'react';
 import { Platform, Alert } from 'react-native';
 
@@ -9,6 +8,7 @@ import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { Upload, FileText, Trash2, AlertCircle, CheckCircle } from '@/components/ui/icons';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';

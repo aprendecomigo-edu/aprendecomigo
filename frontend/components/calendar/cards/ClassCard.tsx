@@ -1,8 +1,8 @@
 import { CalendarDays, Clock, MapPin, User } from 'lucide-react-native';
 import React from 'react';
 
-import { ClassSchedule } from '@/api/schedulerApi';
 import { useUserProfile } from '@/api/auth';
+import { ClassSchedule } from '@/api/schedulerApi';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';

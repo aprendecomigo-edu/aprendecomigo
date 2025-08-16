@@ -1,8 +1,6 @@
 import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
 import React, { useState, useEffect } from 'react';
 
-import { AlertTriangle, CalendarIcon } from '@/components/ui/icons';
-
 import { useAuth, useUserProfile } from '@/api/auth';
 import { tasksApi, Task } from '@/api/tasksApi';
 import { getDashboardInfo, DashboardInfo } from '@/api/userApi';
@@ -18,6 +16,7 @@ import { Center } from '@/components/ui/center';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { AlertTriangle, CalendarIcon } from '@/components/ui/icons';
 import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';

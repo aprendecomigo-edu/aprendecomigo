@@ -5,8 +5,7 @@
  * The actual form logic is in VerifyCodeForm, and business logic is in useVerifyCodeLogic hook.
  */
 
-import { useRouter } from 'expo-router';
-import { useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 
 import { AuthLayout } from './AuthLayout';

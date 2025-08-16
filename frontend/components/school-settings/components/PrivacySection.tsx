@@ -1,6 +1,9 @@
 import React, { memo } from 'react';
 import { Controller, Control, FieldErrors } from 'react-hook-form';
 
+import { DATA_RETENTION_OPTIONS } from '../constants';
+import type { SchoolSettingsFormData } from '../types';
+
 import { Box } from '@/components/ui/box';
 import {
   FormControl,
@@ -28,9 +31,6 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
-import type { SchoolSettingsFormData } from '../types';
-import { DATA_RETENTION_OPTIONS } from '../constants';
 
 interface PrivacySectionProps {
   control: Control<SchoolSettingsFormData>;

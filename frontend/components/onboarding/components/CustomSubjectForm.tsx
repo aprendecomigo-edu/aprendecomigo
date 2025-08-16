@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
-import { RateInputField } from './RateInputField';
-
 import { CustomSubject } from '../hooks/useCourseManager';
+
+import { RateInputField } from './RateInputField';
 
 import {
   AlertDialog,

@@ -7,7 +7,6 @@
 
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { Upload, Edit3, Trash2, ImageIcon } from '@/components/ui/icons';
 import React from 'react';
 
 import FileUploadProgress from './FileUploadProgress';
@@ -16,6 +15,7 @@ import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
+import { Upload, Edit3, Trash2, ImageIcon } from '@/components/ui/icons';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';

@@ -97,40 +97,41 @@ const formatRelativeTime = (timestamp: string): string => {
   }
 };
 
-const ActivityItem = React.memo<{ activity: SchoolActivity; isLast: boolean }>(({
-  activity,
-  isLast,
-}) => {
-  const IconComponent = getActivityIcon(activity.activity_type);
-  const color = getActivityColor(activity.activity_type);
+const ActivityItem = React.memo<{ activity: SchoolActivity; isLast: boolean }>(
+  ({ activity, isLast }) => {
+    const IconComponent = getActivityIcon(activity.activity_type);
+    const color = getActivityColor(activity.activity_type);
 
-  return (
-    <VStack
-      className={`${!isLast ? 'border-b border-gray-100' : ''} pb-4 ${!isLast ? 'mb-4' : ''}`}
-    >
-      <HStack space="sm" className="items-start">
-        <VStack className={`bg-${color}-100 p-2 rounded-full mt-1`}>
-          <Icon as={IconComponent} size="xs" className={`text-${color}-600`} />
-        </VStack>
+    return (
+      <VStack
+        className={`${!isLast ? 'border-b border-gray-100' : ''} pb-4 ${!isLast ? 'mb-4' : ''}`}
+      >
+        <HStack space="sm" className="items-start">
+          <VStack className={`bg-${color}-100 p-2 rounded-full mt-1`}>
+            <Icon as={IconComponent} size="xs" className={`text-${color}-600`} />
+          </VStack>
 
-        <VStack space="xs" className="flex-1 min-w-0">
-          <Text className="text-sm text-gray-900 leading-5">{activity.description}</Text>
+          <VStack space="xs" className="flex-1 min-w-0">
+            <Text className="text-sm text-gray-900 leading-5">{activity.description}</Text>
 
-          <HStack space="sm" className="items-center">
-            <Text className="text-xs text-gray-500">{formatRelativeTime(activity.timestamp)}</Text>
+            <HStack space="sm" className="items-center">
+              <Text className="text-xs text-gray-500">
+                {formatRelativeTime(activity.timestamp)}
+              </Text>
 
-            {activity.actor && (
-              <>
-                <Text className="text-xs text-gray-300">•</Text>
-                <Text className="text-xs text-gray-500">por {activity.actor.name}</Text>
-              </>
-            )}
-          </HStack>
-        </VStack>
-      </HStack>
-    </VStack>
-  );
-});
+              {activity.actor && (
+                <>
+                  <Text className="text-xs text-gray-300">•</Text>
+                  <Text className="text-xs text-gray-500">por {activity.actor.name}</Text>
+                </>
+              )}
+            </HStack>
+          </VStack>
+        </HStack>
+      </VStack>
+    );
+  },
+);
 
 const ActivityItemSkeleton = React.memo<{ isLast: boolean }>(({ isLast }) => (
   <VStack className={`${!isLast ? 'border-b border-gray-100' : ''} pb-4 ${!isLast ? 'mb-4' : ''}`}>
@@ -154,20 +155,19 @@ const EmptyState = React.memo(() => (
   </VStack>
 ));
 
-const LoadMoreButton = React.memo<{ onPress: () => void; isLoading: boolean }>(({
-  onPress,
-  isLoading,
-}) => (
-  <Pressable
-    onPress={onPress}
-    disabled={isLoading}
-    className="mt-4 py-3 px-4 bg-blue-50 border border-blue-200 rounded-lg"
-  >
-    <Text className="text-center text-blue-600 font-medium">
-      {isLoading ? 'Carregando...' : 'Carregar mais atividades'}
-    </Text>
-  </Pressable>
-));
+const LoadMoreButton = React.memo<{ onPress: () => void; isLoading: boolean }>(
+  ({ onPress, isLoading }) => (
+    <Pressable
+      onPress={onPress}
+      disabled={isLoading}
+      className="mt-4 py-3 px-4 bg-blue-50 border border-blue-200 rounded-lg"
+    >
+      <Text className="text-center text-blue-600 font-medium">
+        {isLoading ? 'Carregando...' : 'Carregar mais atividades'}
+      </Text>
+    </Pressable>
+  ),
+);
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
   activities,
@@ -178,16 +178,22 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   onRefresh,
   totalCount,
 }) => {
-  const renderActivity = useCallback(({ item, index }: { item: SchoolActivity; index: number }) => (
-    <ActivityItem activity={item} isLast={index === activities.length - 1} />
-  ), [activities.length]);
+  const renderActivity = useCallback(
+    ({ item, index }: { item: SchoolActivity; index: number }) => (
+      <ActivityItem activity={item} isLast={index === activities.length - 1} />
+    ),
+    [activities.length],
+  );
 
   // Optimized item layout for better performance
-  const getItemLayout = useCallback((data: any, index: number) => ({
-    length: 72, // Approximate height: 64px + 8px margin
-    offset: 72 * index,
-    index,
-  }), []);
+  const getItemLayout = useCallback(
+    (data: any, index: number) => ({
+      length: 72, // Approximate height: 64px + 8px margin
+      offset: 72 * index,
+      index,
+    }),
+    [],
+  );
 
   const renderFooter = () => {
     if (isLoadingMore) {

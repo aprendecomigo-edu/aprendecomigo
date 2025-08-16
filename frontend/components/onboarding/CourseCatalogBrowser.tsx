@@ -565,30 +565,36 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
   const hasActiveFilters =
     filters.levels.length > 0 || filters.subjects.length > 0 || filters.difficulty.length > 0;
 
-  const renderCourseItem = useCallback(({ item }: { item: Course }) => (
-    <CourseCard
-      course={item}
-      isSelected={selectedCourseIds.includes(item.id)}
-      canSelect={canSelectMore || selectedCourseIds.includes(item.id)}
-      onToggle={onCourseToggle}
-      allowMultiSelect={allowMultiSelect}
-    />
-  ), [selectedCourseIds, canSelectMore, onCourseToggle, allowMultiSelect]);
+  const renderCourseItem = useCallback(
+    ({ item }: { item: Course }) => (
+      <CourseCard
+        course={item}
+        isSelected={selectedCourseIds.includes(item.id)}
+        canSelect={canSelectMore || selectedCourseIds.includes(item.id)}
+        onToggle={onCourseToggle}
+        allowMultiSelect={allowMultiSelect}
+      />
+    ),
+    [selectedCourseIds, canSelectMore, onCourseToggle, allowMultiSelect],
+  );
 
-  const renderSectionHeader = useCallback(({ section }: { section: CourseGroup }) => (
-    <Box className="bg-gray-100 px-4 py-2 mb-2 rounded-md">
-      <HStack className="items-center justify-between">
-        <Heading size="sm" className="text-gray-900">
-          {section.title}
-        </Heading>
-        <Badge className="bg-blue-100">
-          <BadgeText className="text-blue-700 text-xs">
-            {section.data.length} course{section.data.length !== 1 ? 's' : ''}
-          </BadgeText>
-        </Badge>
-      </HStack>
-    </Box>
-  ), []);
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: CourseGroup }) => (
+      <Box className="bg-gray-100 px-4 py-2 mb-2 rounded-md">
+        <HStack className="items-center justify-between">
+          <Heading size="sm" className="text-gray-900">
+            {section.title}
+          </Heading>
+          <Badge className="bg-blue-100">
+            <BadgeText className="text-blue-700 text-xs">
+              {section.data.length} course{section.data.length !== 1 ? 's' : ''}
+            </BadgeText>
+          </Badge>
+        </HStack>
+      </Box>
+    ),
+    [],
+  );
 
   return (
     <VStack className="flex-1 bg-gray-50" space="md">

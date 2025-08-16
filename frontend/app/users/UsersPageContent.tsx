@@ -205,13 +205,22 @@ const TeachersTab = ({ onAddTeacher, onInviteTeacher }: TeachersTabProps) => {
     <Card key={teacher.id} className="p-4 bg-white rounded-lg border border-border-200">
       <HStack className="items-center justify-between">
         <VStack className="flex-1">
-          <Text className="font-semibold text-typography-900">{teacher.user?.name || 'Unknown Teacher'}</Text>
+          <Text className="font-semibold text-typography-900">
+            {teacher.user?.name || 'Unknown Teacher'}
+          </Text>
           <Text className="text-sm text-typography-600">{teacher.user?.email || 'No email'}</Text>
-          <Badge className={getStatusBadgeColor(teacher.status || 'pending')} variant={getStatusBadgeVariant(teacher.status || 'pending')}>
+          <Badge
+            className={getStatusBadgeColor(teacher.status || 'pending')}
+            variant={getStatusBadgeVariant(teacher.status || 'pending')}
+          >
             <BadgeText>{teacher.status || 'pending'}</BadgeText>
           </Badge>
         </VStack>
-        <Button onPress={() => handleViewProfile(teacher.id.toString())} size="sm" variant="outline">
+        <Button
+          onPress={() => handleViewProfile(teacher.id.toString())}
+          size="sm"
+          variant="outline"
+        >
           <ButtonText>View</ButtonText>
         </Button>
       </HStack>

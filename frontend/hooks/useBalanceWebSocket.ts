@@ -3,7 +3,7 @@
  *
  * Real-time balance updates via WebSocket infrastructure for immediate
  * balance notifications and live updates.
- * 
+ *
  * REFACTORED: Enhanced with proper timeout cleanup to prevent memory leaks.
  */
 

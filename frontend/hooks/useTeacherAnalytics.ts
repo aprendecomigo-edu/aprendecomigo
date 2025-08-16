@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
-import { useUserProfile } from '@/api/auth';
 import { useInterval, usePolling } from './useTimer';
+
+import { useUserProfile } from '@/api/auth';
 import { TeacherAnalytics, getTeacherAnalytics } from '@/api/userApi';
 
 interface UseTeacherAnalyticsOptions {
@@ -100,16 +101,13 @@ export const useTeacherAnalytics = (
   }, [schoolId, fetchAnalytics]);
 
   // Use polling with exponential backoff for better error handling of analytics
-  usePolling(
-    refreshCallback,
-    {
-      interval: refreshInterval || 300000, // Default 5 minutes for analytics
-      enabled: !!(refreshInterval && refreshInterval > 0 && schoolId),
-      maxRetries: 3,
-      backoffMultiplier: 2,
-      maxInterval: 300000, // Max 5 minutes between retries for analytics
-    }
-  );
+  usePolling(refreshCallback, {
+    interval: refreshInterval || 300000, // Default 5 minutes for analytics
+    enabled: !!(refreshInterval && refreshInterval > 0 && schoolId),
+    maxRetries: 3,
+    backoffMultiplier: 2,
+    maxInterval: 300000, // Max 5 minutes between retries for analytics
+  });
 
   // Computed analytics
   const getCompletionTrend = useCallback((): 'improving' | 'declining' | 'stable' => {

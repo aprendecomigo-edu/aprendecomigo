@@ -93,7 +93,7 @@ export function useWebSocketManager(config: WebSocketConfig): WebSocketManager {
 
     const delay = Math.min(
       reconnectInterval * Math.pow(2, state.reconnectAttempts),
-      30000 // Max 30 seconds
+      30000, // Max 30 seconds
     );
 
     reconnectTimeoutRef.current = setTimeout(() => {
@@ -107,8 +107,10 @@ export function useWebSocketManager(config: WebSocketConfig): WebSocketManager {
   // Connect to WebSocket
   const connect = useCallback(() => {
     if (!mountedRef.current) return;
-    if (wsRef.current?.readyState === WebSocket.CONNECTING || 
-        wsRef.current?.readyState === WebSocket.OPEN) {
+    if (
+      wsRef.current?.readyState === WebSocket.CONNECTING ||
+      wsRef.current?.readyState === WebSocket.OPEN
+    ) {
       return;
     }
 
@@ -120,7 +122,7 @@ export function useWebSocketManager(config: WebSocketConfig): WebSocketManager {
 
       ws.onopen = () => {
         if (!mountedRef.current) return;
-        
+
         setState(prev => ({
           ...prev,
           isConnected: true,
@@ -141,12 +143,12 @@ export function useWebSocketManager(config: WebSocketConfig): WebSocketManager {
         setupHeartbeat();
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = event => {
         if (!mountedRef.current) return;
 
         try {
           const message = JSON.parse(event.data);
-          
+
           // Skip heartbeat responses
           if (message.type === 'pong') return;
 
@@ -163,7 +165,7 @@ export function useWebSocketManager(config: WebSocketConfig): WebSocketManager {
         }
       };
 
-      ws.onclose = (event) => {
+      ws.onclose = event => {
         if (!mountedRef.current) return;
 
         clearTimeouts();
@@ -184,7 +186,7 @@ export function useWebSocketManager(config: WebSocketConfig): WebSocketManager {
         }
       };
 
-      ws.onerror = (event) => {
+      ws.onerror = event => {
         if (!mountedRef.current) return;
 
         const error = new Error('WebSocket connection error');
@@ -199,11 +201,10 @@ export function useWebSocketManager(config: WebSocketConfig): WebSocketManager {
           }
         });
       };
-
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to create WebSocket');
       setState(prev => ({ ...prev, error: error.message, isConnecting: false }));
-      
+
       errorHandlersRef.current.forEach(handler => {
         try {
           handler(error);
@@ -217,7 +218,7 @@ export function useWebSocketManager(config: WebSocketConfig): WebSocketManager {
   // Disconnect WebSocket
   const disconnect = useCallback(() => {
     clearTimeouts();
-    
+
     if (wsRef.current) {
       wsRef.current.close(1000, 'User disconnected');
       wsRef.current = null;
@@ -249,7 +250,7 @@ export function useWebSocketManager(config: WebSocketConfig): WebSocketManager {
   // Add message handler
   const addMessageHandler = useCallback((handler: (message: any) => void) => {
     messageHandlersRef.current.add(handler);
-    
+
     // Return cleanup function
     return () => {
       messageHandlersRef.current.delete(handler);
@@ -259,7 +260,7 @@ export function useWebSocketManager(config: WebSocketConfig): WebSocketManager {
   // Add connection handler
   const addConnectionHandler = useCallback((handler: (connected: boolean) => void) => {
     connectionHandlersRef.current.add(handler);
-    
+
     return () => {
       connectionHandlersRef.current.delete(handler);
     };
@@ -268,7 +269,7 @@ export function useWebSocketManager(config: WebSocketConfig): WebSocketManager {
   // Add error handler
   const addErrorHandler = useCallback((handler: (error: Error) => void) => {
     errorHandlersRef.current.add(handler);
-    
+
     return () => {
       errorHandlersRef.current.delete(handler);
     };
@@ -279,7 +280,7 @@ export function useWebSocketManager(config: WebSocketConfig): WebSocketManager {
     return () => {
       mountedRef.current = false;
       clearTimeouts();
-      
+
       if (wsRef.current) {
         wsRef.current.close(1000, 'Component unmounted');
         wsRef.current = null;

@@ -17,7 +17,7 @@ export interface TimerRef {
 export function useTimeout(
   callback: () => void,
   delay: number | null,
-  deps: React.DependencyList = []
+  deps: React.DependencyList = [],
 ): {
   start: () => void;
   clear: () => void;
@@ -40,7 +40,7 @@ export function useTimeout(
 
   const start = useCallback(() => {
     clear(); // Clear any existing timeout
-    
+
     if (delay !== null && delay >= 0) {
       timeoutRef.current = setTimeout(() => {
         timeoutRef.current = null;
@@ -75,7 +75,7 @@ export function useTimeout(
 export function useInterval(
   callback: () => void,
   delay: number | null,
-  deps: React.DependencyList = []
+  deps: React.DependencyList = [],
 ): {
   start: () => void;
   stop: () => void;
@@ -98,7 +98,7 @@ export function useInterval(
 
   const start = useCallback(() => {
     stop(); // Clear any existing interval
-    
+
     if (delay !== null && delay > 0) {
       intervalRef.current = setInterval(() => {
         callbackRef.current();
@@ -148,32 +148,38 @@ export function useTimerManager(): {
 
   const setTimeout = useCallback((callback: () => void, delay: number): TimerRef => {
     const timerRef: TimerRef = { current: null };
-    
+
     timerRef.current = global.setTimeout(() => {
       callback();
       timersRef.current.delete(timerRef);
       timerRef.current = null;
     }, delay);
-    
+
     timersRef.current.add(timerRef);
     return timerRef;
   }, []);
 
   const setInterval = useCallback((callback: () => void, delay: number): TimerRef => {
     const timerRef: TimerRef = { current: null };
-    
+
     timerRef.current = global.setInterval(callback, delay);
     timersRef.current.add(timerRef);
     return timerRef;
   }, []);
 
-  const clearTimeout = useCallback((timerRef: TimerRef) => {
-    clearTimer(timerRef, global.clearTimeout);
-  }, [clearTimer]);
+  const clearTimeout = useCallback(
+    (timerRef: TimerRef) => {
+      clearTimer(timerRef, global.clearTimeout);
+    },
+    [clearTimer],
+  );
 
-  const clearInterval = useCallback((timerRef: TimerRef) => {
-    clearTimer(timerRef, global.clearInterval);
-  }, [clearTimer]);
+  const clearInterval = useCallback(
+    (timerRef: TimerRef) => {
+      clearTimer(timerRef, global.clearInterval);
+    },
+    [clearTimer],
+  );
 
   const clearAll = useCallback(() => {
     timersRef.current.forEach(timerRef => {
@@ -216,7 +222,7 @@ export function usePolling(
     maxRetries?: number;
     backoffMultiplier?: number;
     maxInterval?: number;
-  }
+  },
 ): {
   start: () => void;
   stop: () => void;
@@ -251,7 +257,7 @@ export function usePolling(
 
   const start = useCallback(() => {
     if (!mountedRef.current) return;
-    
+
     stop(); // Clear any existing interval
 
     const poll = async () => {
@@ -274,7 +280,7 @@ export function usePolling(
         // Apply exponential backoff
         const nextInterval = Math.min(
           interval * Math.pow(backoffMultiplier, retryCountRef.current - 1),
-          maxInterval
+          maxInterval,
         );
 
         // Restart with new interval

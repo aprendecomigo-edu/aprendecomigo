@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+
 import LoadingScreen from '@/components/ui/loading-screen';
 
 // Lazy load the AdminDashboard component

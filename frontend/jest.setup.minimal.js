@@ -5,6 +5,9 @@ import React from 'react';
 import '@testing-library/jest-native/extend-expect';
 import '@testing-library/jest-dom';
 
+// Define __DEV__ for test environment
+global.__DEV__ = process.env.NODE_ENV !== 'production';
+
 // Don't mock react-native at all - let jest-expo handle it completely
 // jest-expo preset includes proper React Native mocks
 
@@ -720,7 +723,7 @@ jest.mock('@/services/websocket/WebSocketClient', () => {
       if (this.isConnectedState) {
         this.sentMessages.push(JSON.stringify(message));
       } else {
-        if (__DEV__) {
+        if (process.env.NODE_ENV !== 'production') {
           console.warn('WebSocket not connected, cannot send message');
         }
       }
@@ -771,7 +774,7 @@ jest.mock('@/services/websocket/WebSocketClient', () => {
             listener(messageObj);
           } catch (error) {
             // For malformed JSON, don't call the listener but log error
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
               console.error('Error parsing WebSocket message:', error); // TODO: Review for sensitive data
             }
             return; // Don't call listener for malformed JSON

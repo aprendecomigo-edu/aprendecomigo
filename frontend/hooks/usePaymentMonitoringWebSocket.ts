@@ -3,7 +3,7 @@
  *
  * Provides real-time updates for dashboard metrics, transaction status changes,
  * webhook health, fraud alerts, and dispute notifications.
- * 
+ *
  * REFACTORED: Enhanced with proper timeout cleanup to prevent memory leaks.
  */
 
@@ -230,7 +230,12 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         wsRef.current = null;
 
         // Attempt to reconnect if not a normal closure
-        if (enabled && event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts && mountedRef.current) {
+        if (
+          enabled &&
+          event.code !== 1000 &&
+          reconnectAttemptsRef.current < maxReconnectAttempts &&
+          mountedRef.current
+        ) {
           const timeout = Math.pow(2, reconnectAttemptsRef.current) * 1000; // Exponential backoff
           if (__DEV__) {
             console.log(
@@ -412,7 +417,12 @@ export function useTransactionWebSocket(enabled: boolean = true) {
         setIsConnected(false);
         wsRef.current = null;
 
-        if (enabled && event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts && mountedRef.current) {
+        if (
+          enabled &&
+          event.code !== 1000 &&
+          reconnectAttemptsRef.current < maxReconnectAttempts &&
+          mountedRef.current
+        ) {
           const timeout = Math.pow(2, reconnectAttemptsRef.current) * 1000;
           timerManager.setTimeout(() => {
             if (mountedRef.current) {

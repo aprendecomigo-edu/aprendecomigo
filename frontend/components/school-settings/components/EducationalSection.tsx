@@ -1,6 +1,8 @@
 import React, { memo } from 'react';
 import { Controller, Control, FieldErrors } from 'react-hook-form';
 
+import type { SchoolSettingsFormData, EducationalSystem } from '../types';
+
 import {
   FormControl,
   FormControlLabel,
@@ -26,8 +28,6 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
-import type { SchoolSettingsFormData, EducationalSystem } from '../types';
 
 interface EducationalSectionProps {
   control: Control<SchoolSettingsFormData>;

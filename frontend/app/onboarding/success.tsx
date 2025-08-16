@@ -1,5 +1,4 @@
-import { useRouter } from 'expo-router';
-import { useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   CheckCircle2,
   ExternalLink,

@@ -1,13 +1,13 @@
 import React, { memo } from 'react';
 import { Controller, Control } from 'react-hook-form';
 
+import type { SchoolSettingsFormData } from '../types';
+
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
-import type { SchoolSettingsFormData } from '../types';
 
 interface CommunicationSectionProps {
   control: Control<SchoolSettingsFormData>;

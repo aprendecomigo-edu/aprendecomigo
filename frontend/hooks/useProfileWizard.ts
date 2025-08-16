@@ -2,11 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-import { executeWithGracefulFailure } from '@/utils/promiseUtils';
-
 import { useSmartAutoSave } from './useDebounce';
 
 import apiClient from '@/api/apiClient';
+import { executeWithGracefulFailure } from '@/utils/promiseUtils';
 
 const WIZARD_STORAGE_KEY = '@teacher_profile_wizard';
 
@@ -301,29 +300,35 @@ export function useProfileWizard() {
       await loadCachedState();
 
       // Load from API with cancellation support and graceful error handling
-      const { results, errors, hasErrors } = await executeWithGracefulFailure([
-        apiClient.get<ApiResponse>('/accounts/teachers/profile/', {
-          cancelToken: cancelTokenSourceRef.current.token,
-        }),
-        apiClient.get<ApiResponse<CompletionData>>('/accounts/teachers/profile-completion-score/', {
-          cancelToken: cancelTokenSourceRef.current.token,
-        }),
-      ], ['Profile Data', 'Completion Data']);
+      const { results, errors, hasErrors } = await executeWithGracefulFailure(
+        [
+          apiClient.get<ApiResponse>('/accounts/teachers/profile/', {
+            cancelToken: cancelTokenSourceRef.current.token,
+          }),
+          apiClient.get<ApiResponse<CompletionData>>(
+            '/accounts/teachers/profile-completion-score/',
+            {
+              cancelToken: cancelTokenSourceRef.current.token,
+            },
+          ),
+        ],
+        ['Profile Data', 'Completion Data'],
+      );
 
       if (!isMountedRef.current) return;
 
       // Handle partial success gracefully
       const [profileResponse, completionResponse] = results;
-      
+
       let profileData = null;
       let completionData = null;
-      
+
       if (profileResponse) {
         profileData = profileResponse.data.data;
       } else {
         console.warn('Failed to load profile data, using cached version if available');
       }
-      
+
       if (completionResponse) {
         completionData = completionResponse.data.data;
       } else {

@@ -117,13 +117,13 @@ const retryWithBackoff = async <T>(
 
       // Calculate delay with exponential backoff
       const delay = config.delay * Math.pow(config.backoffMultiplier, attempt - 1);
-      
+
       // Use a Promise that properly handles cleanup
-      await new Promise<void>((resolve) => {
+      await new Promise<void>(resolve => {
         const timeoutId = setTimeout(() => {
           resolve();
         }, delay);
-        
+
         // This timeout will be automatically cleaned up by the JavaScript engine
         // when the promise resolves
       });
@@ -462,7 +462,7 @@ export const useInvitationPolling = (
   intervalMs = INVITATION_CONSTANTS.STATUS_POLLING_INTERVAL,
 ) => {
   const [pollingEnabled, setPollingEnabled] = useState(false);
-  
+
   // Use enhanced polling with exponential backoff for better error handling
   const { start, stop, isPolling, retryCount } = usePolling(
     async () => {
@@ -474,7 +474,7 @@ export const useInvitationPolling = (
       maxRetries: 5,
       backoffMultiplier: 2,
       maxInterval: 60000, // Max 1 minute between retries
-    }
+    },
   );
 
   const startPolling = useCallback(() => {

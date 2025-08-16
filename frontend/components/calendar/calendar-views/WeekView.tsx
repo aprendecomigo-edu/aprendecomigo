@@ -1,14 +1,14 @@
 import React from 'react';
 
+import { ClassCard } from '../cards/ClassCard';
+import { TaskCard } from '../cards/TaskCard';
+
 import { ClassSchedule } from '@/api/schedulerApi';
 import { Task } from '@/api/tasksApi';
 import { Box } from '@/components/ui/box';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
-import { ClassCard } from '../cards/ClassCard';
-import { TaskCard } from '../cards/TaskCard';
 
 interface WeekViewProps {
   currentDate: Date;

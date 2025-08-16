@@ -1,6 +1,9 @@
 import React, { memo } from 'react';
 import { Controller, Control, FieldErrors } from 'react-hook-form';
 
+import { TRIAL_COST_OPTIONS, CURRENCY_OPTIONS, LANGUAGE_OPTIONS } from '../constants';
+import type { SchoolSettingsFormData } from '../types';
+
 import { Box } from '@/components/ui/box';
 import {
   FormControl,
@@ -26,9 +29,6 @@ import {
 } from '@/components/ui/select';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-
-import type { SchoolSettingsFormData } from '../types';
-import { TRIAL_COST_OPTIONS, CURRENCY_OPTIONS, LANGUAGE_OPTIONS } from '../constants';
 
 interface OperationalSectionProps {
   control: Control<SchoolSettingsFormData>;
