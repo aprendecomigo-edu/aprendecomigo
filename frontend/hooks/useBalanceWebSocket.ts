@@ -3,9 +3,13 @@
  *
  * Real-time balance updates via WebSocket infrastructure for immediate
  * balance notifications and live updates.
+ * 
+ * REFACTORED: Enhanced with proper timeout cleanup to prevent memory leaks.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+
+import { useTimerManager } from './useTimer';
 
 import { useAuth, useUserProfile } from '@/api/auth';
 import { useWebSocketEnhanced } from '@/hooks/useWebSocket';
@@ -68,6 +72,10 @@ export function useBalanceWebSocket(
   const reconnectAttempts = useRef(0);
   const balanceCallbacks = useRef<((balance: StudentBalanceResponse) => void)[]>([]);
   const notificationCallbacks = useRef<((notification: NotificationResponse) => void)[]>([]);
+  const mountedRef = useRef(true);
+
+  // Use timer manager for safe timeout handling
+  const timerManager = useTimerManager();
 
   // WebSocket URL - currently no balance consumer in backend, fallback to polling
   // TODO: Implement balance WebSocket consumer in backend and enable this
@@ -108,10 +116,12 @@ export function useBalanceWebSocket(
       }
 
       // Attempt reconnection if enabled and under limit
-      if (enabled && reconnectAttempts.current < maxReconnectAttempts) {
-        setTimeout(() => {
-          reconnectAttempts.current++;
-          connect();
+      if (enabled && reconnectAttempts.current < maxReconnectAttempts && mountedRef.current) {
+        timerManager.setTimeout(() => {
+          if (mountedRef.current) {
+            reconnectAttempts.current++;
+            connect();
+          }
         }, reconnectInterval);
       }
     },
@@ -195,6 +205,14 @@ export function useBalanceWebSocket(
     }
   }, [lastMessage, handleMessage]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      timerManager.clearAll();
+    };
+  }, [timerManager]);
+
   /**
    * Manual reconnection
    */
@@ -203,10 +221,12 @@ export function useBalanceWebSocket(
     setError(null);
     disconnect();
 
-    setTimeout(() => {
-      connect();
+    timerManager.setTimeout(() => {
+      if (mountedRef.current) {
+        connect();
+      }
     }, 1000);
-  }, [connect, disconnect]);
+  }, [connect, disconnect, timerManager]);
 
   return {
     connected,

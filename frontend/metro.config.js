@@ -40,6 +40,21 @@ config.transformer = {
 // Better module resolution for React Native Web compatibility
 config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
 
+// Exclude test files from production bundle
+config.resolver.blockList = [
+  // Test files
+  /.*\/__tests__\/.*/,
+  /.*\.test\.(js|jsx|ts|tsx)$/,
+  /.*\.spec\.(js|jsx|ts|tsx)$/,
+  /jest\.setup\.js$/,
+  /jest\.config\.js$/,
+  // QA test files
+  /.*\/qa-tests\/.*/,
+  // Development files
+  /.*\.development\.(js|jsx|ts|tsx)$/,
+  /.*\.dev\.(js|jsx|ts|tsx)$/,
+];
+
 // Watchman and file watching configuration to prevent EMFILE errors
 config.watchFolders = [projectRoot];
 

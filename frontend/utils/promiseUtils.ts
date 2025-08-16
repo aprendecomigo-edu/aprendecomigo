@@ -146,3 +146,87 @@ export function isFulfilled<T>(
 export function isRejected<T>(result: PromiseSettledResult<T>): result is PromiseRejectedResult {
   return result.status === 'rejected';
 }
+
+/**
+ * Enhanced Promise.allSettled wrapper with structured error handling.
+ * This should replace all Promise.all usage to prevent cascade failures.
+ *
+ * @param promises Array of promises to execute
+ * @param operationNames Optional array of operation names for better error tracking
+ * @returns Object with successful results, errors, and summary
+ */
+export async function executeWithGracefulFailure<T>(
+  promises: Promise<T>[],
+  operationNames?: string[],
+): Promise<{
+  results: T[];
+  errors: Array<{ index: number; error: string; operationName?: string }>;
+  successCount: number;
+  errorCount: number;
+  hasErrors: boolean;
+}> {
+  const settledResults = await Promise.allSettled(promises);
+
+  const results: T[] = [];
+  const errors: Array<{ index: number; error: string; operationName?: string }> = [];
+
+  settledResults.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      results.push(result.value);
+    } else {
+      const errorMessage =
+        result.reason instanceof Error ? result.reason.message : String(result.reason);
+
+      const errorEntry = {
+        index,
+        error: errorMessage,
+        operationName: operationNames?.[index],
+      };
+
+      errors.push(errorEntry);
+
+      // Log error for monitoring
+      const operationName = operationNames?.[index] || `Operation ${index}`;
+      console.error(`${operationName} failed:`, result.reason);
+    }
+  });
+
+  return {
+    results,
+    errors,
+    successCount: results.length,
+    errorCount: errors.length,
+    hasErrors: errors.length > 0,
+  };
+}
+
+/**
+ * Replacement for Promise.all that preserves successful results even when some fail.
+ * Returns an object with successful values and a list of failed indices.
+ */
+export async function safePromiseAllPreserveSuccessful<T>(
+  promises: Promise<T>[],
+  fallbackValue?: T,
+): Promise<{
+  values: (T | undefined)[];
+  failures: number[];
+  successfulCount: number;
+}> {
+  const results = await Promise.allSettled(promises);
+  const values: (T | undefined)[] = [];
+  const failures: number[] = [];
+  let successfulCount = 0;
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      values[index] = result.value;
+      successfulCount++;
+    } else {
+      values[index] = fallbackValue;
+      failures.push(index);
+      console.error(`Promise at index ${index} failed:`, result.reason);
+    }
+  });
+
+  return { values, failures, successfulCount };
+}

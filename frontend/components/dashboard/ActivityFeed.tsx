@@ -7,7 +7,7 @@ import {
   UserPlusIcon,
   XCircleIcon,
 } from 'lucide-react-native';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { FlatList, RefreshControl } from 'react-native';
 
 import { SchoolActivity } from '@/api/userApi';
@@ -97,7 +97,7 @@ const formatRelativeTime = (timestamp: string): string => {
   }
 };
 
-const ActivityItem: React.FC<{ activity: SchoolActivity; isLast: boolean }> = ({
+const ActivityItem = React.memo<{ activity: SchoolActivity; isLast: boolean }>(({
   activity,
   isLast,
 }) => {
@@ -130,9 +130,9 @@ const ActivityItem: React.FC<{ activity: SchoolActivity; isLast: boolean }> = ({
       </HStack>
     </VStack>
   );
-};
+});
 
-const ActivityItemSkeleton: React.FC<{ isLast: boolean }> = ({ isLast }) => (
+const ActivityItemSkeleton = React.memo<{ isLast: boolean }>(({ isLast }) => (
   <VStack className={`${!isLast ? 'border-b border-gray-100' : ''} pb-4 ${!isLast ? 'mb-4' : ''}`}>
     <HStack space="sm" className="items-start">
       <Skeleton className="w-8 h-8 rounded-full mt-1" />
@@ -142,9 +142,9 @@ const ActivityItemSkeleton: React.FC<{ isLast: boolean }> = ({ isLast }) => (
       </VStack>
     </HStack>
   </VStack>
-);
+));
 
-const EmptyState: React.FC = () => (
+const EmptyState = React.memo(() => (
   <VStack space="md" className="items-center py-12">
     <Icon as={ActivityIcon} size="xl" className="text-gray-300" />
     <Text className="text-lg font-medium text-gray-600">Nenhuma atividade recente</Text>
@@ -152,9 +152,9 @@ const EmptyState: React.FC = () => (
       As atividades da escola aparecerão aqui quando professores e estudantes começarem a interagir
     </Text>
   </VStack>
-);
+));
 
-const LoadMoreButton: React.FC<{ onPress: () => void; isLoading: boolean }> = ({
+const LoadMoreButton = React.memo<{ onPress: () => void; isLoading: boolean }>(({
   onPress,
   isLoading,
 }) => (
@@ -167,7 +167,7 @@ const LoadMoreButton: React.FC<{ onPress: () => void; isLoading: boolean }> = ({
       {isLoading ? 'Carregando...' : 'Carregar mais atividades'}
     </Text>
   </Pressable>
-);
+));
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({
   activities,
@@ -178,9 +178,16 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   onRefresh,
   totalCount,
 }) => {
-  const renderActivity = ({ item, index }: { item: SchoolActivity; index: number }) => (
+  const renderActivity = useCallback(({ item, index }: { item: SchoolActivity; index: number }) => (
     <ActivityItem activity={item} isLast={index === activities.length - 1} />
-  );
+  ), [activities.length]);
+
+  // Optimized item layout for better performance
+  const getItemLayout = useCallback((data: any, index: number) => ({
+    length: 72, // Approximate height: 64px + 8px margin
+    offset: 72 * index,
+    index,
+  }), []);
 
   const renderFooter = () => {
     if (isLoadingMore) {
@@ -228,6 +235,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
             data={activities}
             renderItem={renderActivity}
             keyExtractor={item => item.id}
+            getItemLayout={getItemLayout}
             showsVerticalScrollIndicator={false}
             refreshControl={<RefreshControl refreshing={isLoading} onRefresh={onRefresh} />}
             ListFooterComponent={renderFooter}

@@ -1,5 +1,5 @@
 import { RefreshCw, Search, Filter, Plus } from 'lucide-react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { RefreshControl, FlatList } from 'react-native';
 
 import { InvitationErrorBoundary } from './InvitationErrorBoundary';
@@ -58,28 +58,28 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
     }
   }, [autoRefresh]); // Remove functions from dependency array
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     fetchInvitations({
       ...filters,
       email: searchQuery.trim() || undefined,
     });
-  };
+  }, [filters, searchQuery, fetchInvitations]);
 
-  const handleFilterChange = (newFilters: typeof filters) => {
+  const handleFilterChange = useCallback((newFilters: typeof filters) => {
     setFilters(newFilters);
     fetchInvitations({
       ...newFilters,
       email: searchQuery.trim() || undefined,
     });
-  };
+  }, [searchQuery, fetchInvitations]);
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setFilters({});
     setSearchQuery('');
     fetchInvitations();
-  };
+  }, [fetchInvitations]);
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
     if (pagination.next && !loading) {
       fetchInvitations({
         ...filters,
@@ -87,9 +87,9 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
         page: pagination.currentPage + 1,
       });
     }
-  };
+  }, [pagination.next, loading, filters, searchQuery, fetchInvitations, pagination.currentPage]);
 
-  const getStatsData = () => {
+  const statsData = useMemo(() => {
     const statusCounts = (invitations || []).reduce(
       (acc, invitation) => {
         acc[invitation.status] = (acc[invitation.status] || 0) + 1;
@@ -131,7 +131,7 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
         color: '#EF4444',
       },
     ];
-  };
+  }, [invitations, pagination.count]);
 
   const renderHeader = () => (
     <VStack space="lg" className="mb-6">
@@ -160,7 +160,7 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
 
       {/* Stats Cards */}
       <HStack space="md" className="flex-wrap">
-        {getStatsData().map((stat, index) => (
+        {statsData.map((stat, index) => (
           <Box
             key={index}
             className="flex-1 min-w-[80px] p-3 bg-white rounded-lg border"
@@ -222,13 +222,13 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
     </VStack>
   );
 
-  const renderInvitation = ({ item, index }: { item: any; index: number }) => (
+  const renderInvitation = useCallback(({ item, index }: { item: any; index: number }) => (
     <InvitationListItem
       invitation={item}
       onAction={refreshInvitations}
       isLast={index === invitations.length - 1}
     />
-  );
+  ), [refreshInvitations, invitations.length]);
 
   const renderFooter = () => {
     if (!loading) return null;

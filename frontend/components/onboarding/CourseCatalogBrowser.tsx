@@ -11,7 +11,7 @@ import {
   GraduationCap,
   Users,
 } from 'lucide-react-native';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FlatList, SectionList } from 'react-native';
 
 import { Badge, BadgeText } from '@/components/ui/badge';
@@ -130,13 +130,13 @@ interface CourseCatalogBrowserProps {
   subtitle?: string;
 }
 
-const CourseCard: React.FC<{
+const CourseCard = React.memo<{
   course: Course;
   isSelected: boolean;
   canSelect: boolean;
   onToggle: (course: Course) => void;
   allowMultiSelect: boolean;
-}> = ({ course, isSelected, canSelect, onToggle, allowMultiSelect }) => {
+}>(({ course, isSelected, canSelect, onToggle, allowMultiSelect }) => {
   const levelConfig = EDUCATION_LEVELS[course.education_level as keyof typeof EDUCATION_LEVELS];
   const subjectColorIndex = course.subject_area
     ? course.subject_area.charCodeAt(0) % SUBJECT_COLORS.length
@@ -275,7 +275,7 @@ const CourseCard: React.FC<{
       </Card>
     </Pressable>
   );
-};
+});
 
 const FilterModal: React.FC<{
   isOpen: boolean;
@@ -565,7 +565,7 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
   const hasActiveFilters =
     filters.levels.length > 0 || filters.subjects.length > 0 || filters.difficulty.length > 0;
 
-  const renderCourseItem = ({ item }: { item: Course }) => (
+  const renderCourseItem = useCallback(({ item }: { item: Course }) => (
     <CourseCard
       course={item}
       isSelected={selectedCourseIds.includes(item.id)}
@@ -573,9 +573,9 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
       onToggle={onCourseToggle}
       allowMultiSelect={allowMultiSelect}
     />
-  );
+  ), [selectedCourseIds, canSelectMore, onCourseToggle, allowMultiSelect]);
 
-  const renderSectionHeader = ({ section }: { section: CourseGroup }) => (
+  const renderSectionHeader = useCallback(({ section }: { section: CourseGroup }) => (
     <Box className="bg-gray-100 px-4 py-2 mb-2 rounded-md">
       <HStack className="items-center justify-between">
         <Heading size="sm" className="text-gray-900">
@@ -588,7 +588,7 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
         </Badge>
       </HStack>
     </Box>
-  );
+  ), []);
 
   return (
     <VStack className="flex-1 bg-gray-50" space="md">

@@ -10,7 +10,7 @@ import {
   AwardIcon,
   AlertTriangleIcon,
 } from 'lucide-react-native';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { FlatList, Pressable } from 'react-native';
 
 import type { StudentProgress } from '@/api/teacherApi';
@@ -57,7 +57,7 @@ interface StudentCardProps {
   onMessage: () => void;
 }
 
-const StudentCard: React.FC<StudentCardProps> = ({
+const StudentCard = React.memo<StudentCardProps>(({
   student,
   onPress,
   onScheduleSession,
@@ -226,7 +226,7 @@ const StudentCard: React.FC<StudentCardProps> = ({
       </VStack>
     </Pressable>
   );
-};
+});
 
 const StudentManagement: React.FC<StudentManagementProps> = ({
   students,
@@ -443,14 +443,14 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
         <FlatList
           data={filteredStudents}
           keyExtractor={item => item.id.toString()}
-          renderItem={({ item }) => (
+          renderItem={useCallback(({ item }) => (
             <StudentCard
               student={item}
               onPress={() => onStudentPress(item.id)}
               onScheduleSession={() => onScheduleSession(item.id)}
               onMessage={() => onMessageStudent(item.id)}
             />
-          )}
+          ), [onStudentPress, onScheduleSession, onMessageStudent])}
           showsVerticalScrollIndicator={false}
           // Performance optimizations
           initialNumToRender={10}

@@ -3,10 +3,14 @@
  *
  * Provides real-time updates for dashboard metrics, transaction status changes,
  * webhook health, fraud alerts, and dispute notifications.
+ * 
+ * REFACTORED: Enhanced with proper timeout cleanup to prevent memory leaks.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useCallback, useRef } from 'react';
+
+import { useTimerManager } from './useTimer';
 
 import type {
   PaymentWebSocketMessage,
@@ -40,9 +44,12 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
   const [activeDisputes, setActiveDisputes] = useState<DisputeRecord[]>([]);
 
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
+  const mountedRef = useRef(true);
+
+  // Use timer manager for safe timeout handling
+  const timerManager = useTimerManager();
 
   const handleWebSocketMessage = useCallback((message: PaymentWebSocketMessage) => {
     if (__DEV__) {
@@ -223,7 +230,7 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         wsRef.current = null;
 
         // Attempt to reconnect if not a normal closure
-        if (enabled && event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
+        if (enabled && event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts && mountedRef.current) {
           const timeout = Math.pow(2, reconnectAttemptsRef.current) * 1000; // Exponential backoff
           if (__DEV__) {
             console.log(
@@ -233,9 +240,11 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
             );
           }
 
-          reconnectTimeoutRef.current = setTimeout(() => {
-            reconnectAttemptsRef.current++;
-            connect();
+          timerManager.setTimeout(() => {
+            if (mountedRef.current) {
+              reconnectAttemptsRef.current++;
+              connect();
+            }
           }, timeout);
         }
       };
@@ -248,13 +257,11 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
       console.error('Error creating payment monitoring WebSocket connection:', err);
       setError('Failed to create WebSocket connection');
     }
-  }, [enabled, handleWebSocketMessage]);
+  }, [enabled, handleWebSocketMessage, timerManager]);
 
   const disconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
+    // Clear all timers managed by timerManager
+    timerManager.clearAll();
 
     if (wsRef.current) {
       wsRef.current.close(1000, 'User disconnected');
@@ -263,7 +270,8 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
 
     setIsConnected(false);
     reconnectAttemptsRef.current = 0;
-  }, []);
+    mountedRef.current = false;
+  }, [timerManager]);
 
   const sendMessage = useCallback(
     (message: any) => {
@@ -294,9 +302,18 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
     }
 
     return () => {
+      mountedRef.current = false;
       disconnect();
     };
   }, [enabled, connect, disconnect]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      timerManager.clearAll();
+    };
+  }, [timerManager]);
 
   return {
     // Connection state
@@ -336,9 +353,12 @@ export function useTransactionWebSocket(enabled: boolean = true) {
   const [transactionUpdates, setTransactionUpdates] = useState<TransactionUpdate[]>([]);
 
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
+  const mountedRef = useRef(true);
+
+  // Use timer manager for safe timeout handling
+  const timerManager = useTimerManager();
 
   const handleTransactionUpdate = useCallback((update: TransactionUpdate) => {
     if (__DEV__) {
@@ -392,11 +412,13 @@ export function useTransactionWebSocket(enabled: boolean = true) {
         setIsConnected(false);
         wsRef.current = null;
 
-        if (enabled && event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
+        if (enabled && event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts && mountedRef.current) {
           const timeout = Math.pow(2, reconnectAttemptsRef.current) * 1000;
-          reconnectTimeoutRef.current = setTimeout(() => {
-            reconnectAttemptsRef.current++;
-            connect();
+          timerManager.setTimeout(() => {
+            if (mountedRef.current) {
+              reconnectAttemptsRef.current++;
+              connect();
+            }
           }, timeout);
         }
       };
@@ -409,13 +431,11 @@ export function useTransactionWebSocket(enabled: boolean = true) {
       console.error('Error creating transaction monitoring WebSocket connection:', err);
       setError('Failed to create WebSocket connection');
     }
-  }, [enabled, handleTransactionUpdate]);
+  }, [enabled, handleTransactionUpdate, timerManager]);
 
   const disconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
+    // Clear all timers managed by timerManager
+    timerManager.clearAll();
 
     if (wsRef.current) {
       wsRef.current.close(1000, 'User disconnected');
@@ -424,7 +444,8 @@ export function useTransactionWebSocket(enabled: boolean = true) {
 
     setIsConnected(false);
     reconnectAttemptsRef.current = 0;
-  }, []);
+    mountedRef.current = false;
+  }, [timerManager]);
 
   useEffect(() => {
     if (enabled) {
@@ -434,9 +455,18 @@ export function useTransactionWebSocket(enabled: boolean = true) {
     }
 
     return () => {
+      mountedRef.current = false;
       disconnect();
     };
   }, [enabled, connect, disconnect]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      timerManager.clearAll();
+    };
+  }, [timerManager]);
 
   return {
     isConnected,

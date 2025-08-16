@@ -15,6 +15,7 @@ import {
   RouterService,
   ToastService,
 } from '@/services/types';
+import { safePromiseAllPreserveSuccessful } from '@/utils/promiseUtils';
 
 export interface UseVerifyCodeLogicProps {
   contact: string;
@@ -68,15 +69,27 @@ export const useVerifyCodeLogic = ({
         return '/';
       }
 
-      // For new admin users, check onboarding status
+      // For new admin users, check onboarding status with graceful error handling
       try {
-        const [preferences, progress] = await Promise.all([
+        const { values, failures } = await safePromiseAllPreserveSuccessful([
           onboardingApi.getNavigationPreferences(),
           onboardingApi.getOnboardingProgress(),
         ]);
 
+        const [preferences, progress] = values;
+
+        // If both calls failed, default to home
+        if (failures.length === 2) {
+          console.warn('Failed to load onboarding data, defaulting to home');
+          return '/';
+        }
+
         // Skip onboarding if disabled or completed
-        if (!preferences?.show_onboarding || progress?.completion_percentage >= 100) {
+        // Handle partial failures gracefully
+        const shouldShowOnboarding = preferences?.show_onboarding ?? true; // Default to true if preferences failed
+        const completionPercentage = progress?.completion_percentage ?? 0; // Default to 0 if progress failed
+
+        if (!shouldShowOnboarding || completionPercentage >= 100) {
           return '/';
         }
 

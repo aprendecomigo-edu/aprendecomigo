@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 import { useUserProfile } from '@/api/auth';
+import { useInterval, usePolling } from './useTimer';
 import { NotificationApiClient } from '@/api/notificationApi';
 import type {
   NotificationResponse,
@@ -74,7 +75,6 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   const [filters, setFilters] = useState<NotificationFilters>(initialFilters);
 
   // Refs
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastFetchTimestamp = useRef<string | null>(null);
 
   /**
@@ -257,27 +257,17 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     }
   }, [userProfile, refresh]);
 
-  // Setup polling
-  useEffect(() => {
-    if (!enablePolling || !userProfile) return;
-
-    pollingIntervalRef.current = setInterval(pollForUpdates, pollingInterval);
-
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
-  }, [enablePolling, userProfile, pollForUpdates, pollingInterval]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
-  }, []);
+  // Setup polling with exponential backoff for better error handling
+  usePolling(
+    pollForUpdates,
+    {
+      interval: pollingInterval,
+      enabled: enablePolling && userProfile,
+      maxRetries: 5,
+      backoffMultiplier: 2,
+      maxInterval: 30000, // Max 30 seconds between retries for notifications
+    }
+  );
 
   return {
     // Data
@@ -326,14 +316,17 @@ export function useUnreadNotificationCount() {
     }
   }, [userProfile]);
 
+  // Initial fetch
   useEffect(() => {
     fetchUnreadCount();
-
-    // Set up polling for unread count
-    const interval = setInterval(fetchUnreadCount, 60000); // Check every minute
-
-    return () => clearInterval(interval);
   }, [fetchUnreadCount]);
+
+  // Set up polling for unread count with safe timer management
+  useInterval(
+    fetchUnreadCount,
+    60000, // Check every minute
+    [fetchUnreadCount]
+  );
 
   return { unreadCount, loading, refresh: fetchUnreadCount };
 }

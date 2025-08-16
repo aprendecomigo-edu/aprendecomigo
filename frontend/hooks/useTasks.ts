@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import { tasksApi, Task, CreateTaskData, UpdateTaskData, TaskSummary } from '@/api/tasksApi';
+import { safePromiseAllPreserveSuccessful } from '@/utils/promiseUtils';
 
 export interface UseTasksResult {
   tasks: Task[];
@@ -25,13 +26,32 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
     setError(null);
 
     try {
-      const [tasksData, summaryData] = await Promise.all([
+      const { values, failures } = await safePromiseAllPreserveSuccessful([
         tasksApi.getAllTasks(),
         tasksApi.getTaskSummary(),
       ]);
 
-      setTasks(tasksData);
-      setTaskSummary(summaryData);
+      const [tasksData, summaryData] = values;
+
+      // Update state with available data
+      if (tasksData) {
+        setTasks(tasksData);
+      } else {
+        console.error('Failed to fetch tasks data');
+      }
+
+      if (summaryData) {
+        setTaskSummary(summaryData);
+      } else {
+        console.error('Failed to fetch task summary data');
+      }
+
+      // If some operations failed but we have some data, don't throw
+      if (failures.length > 0 && failures.length < 2) {
+        console.warn(`${failures.length} out of 2 task operations failed, but continuing with available data`);
+      } else if (failures.length === 2) {
+        throw new Error('All task operations failed');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch tasks';
       setError(errorMessage);

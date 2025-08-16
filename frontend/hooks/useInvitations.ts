@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Alert } from 'react-native';
 
+import { useInterval, useTimerManager, usePolling } from './useTimer';
+
 import InvitationApi, {
   TeacherInvitation,
   InvitationListResponse,
@@ -115,7 +117,16 @@ const retryWithBackoff = async <T>(
 
       // Calculate delay with exponential backoff
       const delay = config.delay * Math.pow(config.backoffMultiplier, attempt - 1);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      // Use a Promise that properly handles cleanup
+      await new Promise<void>((resolve) => {
+        const timeoutId = setTimeout(() => {
+          resolve();
+        }, delay);
+        
+        // This timeout will be automatically cleaned up by the JavaScript engine
+        // when the promise resolves
+      });
     }
   }
 
@@ -450,41 +461,32 @@ export const useInvitationPolling = (
   refreshCallback: () => void,
   intervalMs = INVITATION_CONSTANTS.STATUS_POLLING_INTERVAL,
 ) => {
-  const [isPolling, setIsPolling] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const refreshCallbackRef = useRef(refreshCallback);
-
-  // Update callback ref without causing re-renders
-  refreshCallbackRef.current = refreshCallback;
+  const [pollingEnabled, setPollingEnabled] = useState(false);
+  
+  // Use enhanced polling with exponential backoff for better error handling
+  const { start, stop, isPolling, retryCount } = usePolling(
+    async () => {
+      await refreshCallback();
+    },
+    {
+      interval: intervalMs,
+      enabled: pollingEnabled,
+      maxRetries: 5,
+      backoffMultiplier: 2,
+      maxInterval: 60000, // Max 1 minute between retries
+    }
+  );
 
   const startPolling = useCallback(() => {
-    if (intervalRef.current) return; // Already polling
-
-    setIsPolling(true);
-    intervalRef.current = setInterval(() => {
-      refreshCallbackRef.current();
-    }, intervalMs);
-  }, [intervalMs]);
-
-  const stopPolling = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    setIsPolling(false);
+    setPollingEnabled(true);
   }, []);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
+  const stopPolling = useCallback(() => {
+    setPollingEnabled(false);
   }, []);
 
   return {
-    isPolling,
+    isPolling: isPolling(),
     startPolling,
     stopPolling,
   };

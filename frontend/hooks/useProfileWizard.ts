@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
+import { executeWithGracefulFailure } from '@/utils/promiseUtils';
+
 import { useSmartAutoSave } from './useDebounce';
 
 import apiClient from '@/api/apiClient';
@@ -298,20 +300,42 @@ export function useProfileWizard() {
       // Load cached state first
       await loadCachedState();
 
-      // Load from API with cancellation support
-      const [profileResponse, completionResponse] = await Promise.all([
+      // Load from API with cancellation support and graceful error handling
+      const { results, errors, hasErrors } = await executeWithGracefulFailure([
         apiClient.get<ApiResponse>('/accounts/teachers/profile/', {
           cancelToken: cancelTokenSourceRef.current.token,
         }),
         apiClient.get<ApiResponse<CompletionData>>('/accounts/teachers/profile-completion-score/', {
           cancelToken: cancelTokenSourceRef.current.token,
         }),
-      ]);
+      ], ['Profile Data', 'Completion Data']);
 
       if (!isMountedRef.current) return;
 
-      const profileData = profileResponse.data.data;
-      const completionData = completionResponse.data.data;
+      // Handle partial success gracefully
+      const [profileResponse, completionResponse] = results;
+      
+      let profileData = null;
+      let completionData = null;
+      
+      if (profileResponse) {
+        profileData = profileResponse.data.data;
+      } else {
+        console.warn('Failed to load profile data, using cached version if available');
+      }
+      
+      if (completionResponse) {
+        completionData = completionResponse.data.data;
+      } else {
+        console.warn('Failed to load completion data, will calculate from cached profile');
+      }
+
+      // If we have errors but some data succeeded, log them but continue
+      if (hasErrors) {
+        errors.forEach(error => {
+          console.error(`${error.operationName} failed:`, error.error);
+        });
+      }
 
       // Merge API data with form structure
       const formData: TeacherProfileWizardData = {

@@ -3,6 +3,8 @@
  *
  * This class integrates ConnectionManager, ReconnectionStrategy, and MessageDispatcher
  * to provide a unified interface replacing the monolithic useWebSocket hook.
+ * 
+ * REFACTORED: Enhanced with proper timeout cleanup to prevent memory leaks.
  */
 
 import { ConnectionManager } from './connection/ConnectionManager';
@@ -28,6 +30,7 @@ export class WebSocketClient implements EventEmitterInterface {
   private reconnectAttempts: number = 0;
   private disposed: boolean = false;
   private listeners: Map<string, Function[]> = new Map();
+  private activeTimeouts: Set<NodeJS.Timeout> = new Set();
 
   constructor(config: WebSocketConfig) {
     this.validateConfig(config);
@@ -65,11 +68,7 @@ export class WebSocketClient implements EventEmitterInterface {
   disconnect(): void {
     this.ensureNotDisposed();
 
-    if (this.reconnectTimeoutId) {
-      clearTimeout(this.reconnectTimeoutId);
-      this.reconnectTimeoutId = null;
-    }
-
+    this.clearAllTimeouts();
     this.connectionManager.disconnect();
     this.reconnectAttempts = 0;
   }
@@ -154,9 +153,34 @@ export class WebSocketClient implements EventEmitterInterface {
     if (this.disposed) return;
 
     this.disconnect();
+    this.clearAllTimeouts();
     this.messageDispatcher.clearAllHandlers();
     this.listeners.clear();
     this.disposed = true;
+  }
+
+  private safeSetTimeout(callback: () => void, delay: number): NodeJS.Timeout {
+    const timeoutId = setTimeout(() => {
+      this.activeTimeouts.delete(timeoutId);
+      if (!this.disposed) {
+        callback();
+      }
+    }, delay);
+    
+    this.activeTimeouts.add(timeoutId);
+    return timeoutId;
+  }
+
+  private clearAllTimeouts(): void {
+    this.activeTimeouts.forEach(timeoutId => {
+      clearTimeout(timeoutId);
+    });
+    this.activeTimeouts.clear();
+    
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
   }
 
   // Static factory methods for backwards compatibility
@@ -277,7 +301,7 @@ export class WebSocketClient implements EventEmitterInterface {
       if (this.reconnectionStrategy?.shouldReconnect(event, this.reconnectAttempts)) {
         const delay = this.reconnectionStrategy.getNextDelay(this.reconnectAttempts);
 
-        this.reconnectTimeoutId = setTimeout(async () => {
+        this.reconnectTimeoutId = this.safeSetTimeout(async () => {
           this.reconnectAttempts++;
           try {
             await this.connect();
