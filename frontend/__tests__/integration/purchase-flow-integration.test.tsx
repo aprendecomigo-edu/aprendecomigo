@@ -68,11 +68,21 @@ jest.mock('@/hooks/useStudentBalance', () => ({
   }),
 }));
 
-// Mock router
+// Mock router - using expo-router
 const mockPush = jest.fn();
-jest.mock('@unitools/router', () => ({
-  __esModule: true,
-  default: () => ({ push: mockPush }),
+jest.mock('expo-router', () => ({
+  useRouter: jest.fn(() => ({
+    push: mockPush,
+    back: jest.fn(),
+    replace: jest.fn(),
+    canGoBack: jest.fn(() => true),
+  })),
+  router: {
+    push: mockPush,
+    back: jest.fn(),
+    replace: jest.fn(),
+    canGoBack: jest.fn(() => true),
+  },
 }));
 
 // Global test data

@@ -14,7 +14,7 @@ jest.mock('@/api/authApi');
 jest.mock('@/api/onboardingApi');
 jest.mock('@/utils/storage');
 jest.mock('@/components/ui/toast');
-jest.mock('@unitools/router');
+jest.mock('expo-router');
 jest.mock('@/api/auth');
 
 const mockAuthApi = {
@@ -63,7 +63,7 @@ beforeEach(() => {
   require('@/utils/storage').storage = mockStorage;
 
   require('@/components/ui/toast').useToast = () => mockToast;
-  require('@unitools/router').default = () => mockRouter;
+  require('expo-router').default = () => mockRouter;
   require('@/api/auth').useAuth = () => mockAuth;
 });
 

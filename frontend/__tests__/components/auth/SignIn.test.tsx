@@ -11,7 +11,7 @@ import { SignIn } from '@/components/auth/SignIn';
 // Mock all dependencies before they're imported by the component
 jest.mock('@/api/authApi');
 jest.mock('expo-router');
-jest.mock('@unitools/router');
+jest.mock('expo-router');
 jest.mock('@/components/ui/toast');
 
 const mockRequestEmailCode = jest.fn();
@@ -30,7 +30,7 @@ expoRouter.useRouter = jest.fn(() => ({
   replace: jest.fn(),
 }));
 
-const unitoolsRouter = require('@unitools/router');
+const unitoolsRouter = require('expo-router');
 unitoolsRouter.default = jest.fn(() => ({
   push: mockPush,
   back: mockBack,

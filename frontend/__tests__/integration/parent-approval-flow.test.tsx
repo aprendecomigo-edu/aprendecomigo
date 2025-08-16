@@ -49,7 +49,7 @@ jest.mock('@stripe/react-stripe-js', () => ({
 // Mock router
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
-jest.mock('@unitools/router', () => ({
+jest.mock('expo-router', () => ({
   __esModule: true,
   default: () => ({ push: mockPush, replace: mockReplace }),
 }));

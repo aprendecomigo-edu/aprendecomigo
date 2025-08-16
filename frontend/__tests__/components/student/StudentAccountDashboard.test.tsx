@@ -26,7 +26,7 @@ jest.mock('@/hooks/useStudentDashboard');
 
 // Mock router
 const mockPush = jest.fn();
-jest.mock('@unitools/router', () => ({
+jest.mock('expo-router', () => ({
   __esModule: true,
   default: () => ({
     push: mockPush,

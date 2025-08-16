@@ -1,4 +1,3 @@
-const imageBabel = require('@unitools/babel-plugin-universal-image');
 const path = require('path');
 
 module.exports = function (api) {
@@ -14,9 +13,6 @@ module.exports = function (api) {
         'module-resolver',
         {
           alias: {
-            '@unitools/image': '@unitools/image-expo',
-            '@unitools/router': '@unitools/router-expo',
-            '@unitools/link': '@unitools/link-expo',
             '@': './',
           },
           root: ['./'],

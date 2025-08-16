@@ -42,7 +42,7 @@ jest.mock('@/api/onboardingApi', () => ({
 
 // Mock router
 const mockRouter = createMockRouter();
-jest.mock('@unitools/router', () => ({
+jest.mock('expo-router', () => ({
   __esModule: true,
   default: () => mockRouter,
 }));

@@ -11,7 +11,7 @@ import { SignUp } from '@/components/auth/SignUp';
 // Mock all dependencies before they're imported by the component
 jest.mock('@/api/authApi');
 jest.mock('expo-router');
-jest.mock('@unitools/router');
+jest.mock('expo-router');
 jest.mock('@/components/ui/toast');
 jest.mock('@/api/auth');
 
@@ -29,7 +29,7 @@ authApi.createUser = mockCreateUser;
 const expoRouter = require('expo-router');
 expoRouter.useLocalSearchParams = jest.fn(() => ({ type: 'tutor' }));
 
-const unitoolsRouter = require('@unitools/router');
+const unitoolsRouter = require('expo-router');
 unitoolsRouter.default = jest.fn(() => ({
   push: mockPush,
   back: mockBack,
