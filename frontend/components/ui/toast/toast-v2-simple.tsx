@@ -1,4 +1,3 @@
-'use client';
 import React, { useState, useCallback } from 'react';
 import type { TextProps, ViewProps } from 'react-native';
 import { Text, View } from 'react-native';

@@ -1,4 +1,3 @@
-'use client';
 import { createButton } from '@gluestack-ui/button';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';

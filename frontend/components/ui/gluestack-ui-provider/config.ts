@@ -1,4 +1,3 @@
-'use client';
 import { vars } from 'nativewind';
 import { Platform } from 'react-native';
 

@@ -1,4 +1,3 @@
-'use client';
 import { H4 } from '@expo/html-elements';
 import { createActionsheet } from '@gluestack-ui/actionsheet';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';

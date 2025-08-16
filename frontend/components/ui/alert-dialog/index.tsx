@@ -1,4 +1,3 @@
-'use client';
 import { createAlertDialog } from '@gluestack-ui/alert-dialog';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';

@@ -13,11 +13,12 @@ import React from 'react';
 import { SignInForm } from '@/components/auth/forms/SignInForm';
 
 // Mock UI dependencies that are known to work
-jest.mock('@unitools/link');
 jest.mock('@/components/ui/toast');
 
-const mockLink = require('@unitools/link');
-mockLink.default = ({ children }: any) => children;
+// Mock any link components using Gluestack v2 approach
+jest.mock('@/components/ui/link', () => ({
+  Link: ({ children }: any) => children,
+}));
 
 describe('SignInForm - Working Tests', () => {
   const mockProps = {

@@ -1,4 +1,3 @@
-'use client';
 import { H3 } from '@expo/html-elements';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';

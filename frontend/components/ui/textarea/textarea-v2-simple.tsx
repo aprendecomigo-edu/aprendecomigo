@@ -1,4 +1,3 @@
-'use client';
 import React, { createContext, useContext, useMemo } from 'react';
 import { View, TextInput, ViewProps, TextInputProps } from 'react-native';
 

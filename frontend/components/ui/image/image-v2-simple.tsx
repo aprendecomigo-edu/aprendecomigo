@@ -1,4 +1,3 @@
-'use client';
 import React, { createContext, useContext, useMemo } from 'react';
 import { Image as RNImage, ImageProps } from 'react-native';
 

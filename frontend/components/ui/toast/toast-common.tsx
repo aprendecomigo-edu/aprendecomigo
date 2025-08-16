@@ -1,4 +1,3 @@
-'use client';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import { useStyleContext } from '@gluestack-ui/nativewind-utils/withStyleContext';

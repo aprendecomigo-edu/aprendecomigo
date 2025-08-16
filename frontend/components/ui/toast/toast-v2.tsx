@@ -1,4 +1,3 @@
-'use client';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo, useRef, useState, useCallback } from 'react';

@@ -31,58 +31,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   clear: jest.fn(),
 }));
 
-// Mock WebSocket
-class MockWebSocket {
-  static CONNECTING = 0;
-  static OPEN = 1;
-  static CLOSING = 2;
-  static CLOSED = 3;
-
-  readyState = MockWebSocket.CONNECTING;
-  url: string;
-  onopen: ((event: any) => void) | null = null;
-  onclose: ((event: any) => void) | null = null;
-  onmessage: ((event: any) => void) | null = null;
-  onerror: ((event: any) => void) | null = null;
-
-  constructor(url: string) {
-    this.url = url;
-    // Auto-connect after short delay
-    setTimeout(() => {
-      this.readyState = MockWebSocket.OPEN;
-      if (this.onopen) {
-        this.onopen(new Event('open'));
-      }
-    }, 10);
-  }
-
-  send = jest.fn();
-  close = jest.fn(() => {
-    this.readyState = MockWebSocket.CLOSED;
-    if (this.onclose) {
-      this.onclose({ code: 1000, reason: 'Normal closure', wasClean: true });
-    }
-  });
-
-  simulateMessage(data: any) {
-    if (this.onmessage) {
-      this.onmessage({ data: typeof data === 'string' ? data : JSON.stringify(data) });
-    }
-  }
-
-  simulateError() {
-    if (this.onerror) {
-      this.onerror(new Event('error'));
-    }
-  }
-
-  simulateClose(code = 1006, reason = 'Connection lost') {
-    this.readyState = MockWebSocket.CLOSED;
-    if (this.onclose) {
-      this.onclose({ code, reason, wasClean: false });
-    }
-  }
-}
+// MockWebSocket is imported from websocket-test-utils
 
 // Mock console methods to reduce noise in tests
 const originalConsoleLog = console.log;

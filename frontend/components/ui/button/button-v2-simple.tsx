@@ -1,4 +1,3 @@
-'use client';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { PressableProps, TextProps, ViewProps } from 'react-native';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';

@@ -8,8 +8,246 @@ import '@testing-library/jest-dom';
 // Define __DEV__ for test environment
 global.__DEV__ = process.env.NODE_ENV !== 'production';
 
-// Don't mock react-native at all - let jest-expo handle it completely
-// jest-expo preset includes proper React Native mocks
+// Override jest-expo's React Native mocking to prevent ES6 parsing errors
+// We need to completely override because jest-expo's mocks are causing ES6 import issues
+
+// Enhanced React Native mocking to prevent ES6 module parsing errors
+// This addresses the core issue with React Native components requiring ES6 modules
+
+// Mock React Native core components that cause ES6 parsing issues
+jest.mock('react-native', () => {
+  // Don't use jest.requireActual to avoid ES6 import issues
+  const React = require('react');
+  
+  // Create enhanced component mocks that work with Gluestack UI
+  const createMockComponent = (displayName) => {
+    const Component = React.forwardRef((props, ref) => {
+      const { children, testID, ...otherProps } = props;
+      return React.createElement('div', {
+        ...otherProps,
+        ref,
+        'data-testid': testID || displayName,
+        className: `mock-${displayName.toLowerCase()}`,
+      }, children);
+    });
+    Component.displayName = displayName;
+    return Component;
+  };
+
+  const createMockTextInput = () => {
+    const TextInput = (props) => {
+      const { 
+        value, 
+        onChangeText, 
+        onBlur, 
+        onFocus, 
+        onSubmitEditing, 
+        placeholder,
+        testID,
+        editable = true,
+        keyboardType,
+        returnKeyType = 'done',
+        maxLength,
+        autoFocus,
+        ...otherProps 
+      } = props;
+      
+      return React.createElement('input', {
+        ...otherProps,
+        type: keyboardType === 'numeric' ? 'number' : 'text',
+        value: value || '',
+        placeholder,
+        disabled: !editable,
+        maxLength,
+        autoFocus,
+        'data-testid': testID || 'TextInput',
+        onChange: (e) => onChangeText && onChangeText(e.target.value),
+        onBlur: (e) => onBlur && onBlur(e),
+        onFocus: (e) => onFocus && onFocus(e),
+        onKeyDown: (e) => {
+          if (e.key === 'Enter' && onSubmitEditing) {
+            onSubmitEditing(e);
+          }
+        },
+        className: 'mock-textinput',
+      });
+    };
+    TextInput.displayName = 'TextInput';
+    return TextInput;
+  };
+
+  const createMockPressable = () => {
+    const Pressable = (props) => {
+      const { 
+        children, 
+        onPress, 
+        disabled, 
+        testID, 
+        accessibilityRole,
+        accessibilityState,
+        ...otherProps 
+      } = props;
+      
+      return React.createElement('button', {
+        ...otherProps,
+        disabled,
+        'data-testid': testID || 'Pressable',
+        'aria-label': props.accessibilityLabel,
+        'aria-disabled': disabled,
+        'aria-busy': accessibilityState?.busy,
+        role: accessibilityRole || 'button',
+        onClick: disabled ? undefined : onPress,
+        className: `mock-pressable ${disabled ? 'disabled' : ''}`,
+      }, children);
+    };
+    Pressable.displayName = 'Pressable';
+    return Pressable;
+  };
+
+  const createMockText = () => {
+    const Text = (props) => {
+      const { children, testID, accessibilityRole, ...otherProps } = props;
+      return React.createElement('span', {
+        ...otherProps,
+        'data-testid': testID || 'Text',
+        role: accessibilityRole,
+        className: 'mock-text',
+      }, children);
+    };
+    Text.displayName = 'Text';
+    return Text;
+  };
+
+  const createMockView = () => {
+    const View = (props) => {
+      const { children, testID, ...otherProps } = props;
+      return React.createElement('div', {
+        ...otherProps,
+        'data-testid': testID || 'View',
+        className: 'mock-view',
+      }, children);
+    };
+    View.displayName = 'View';
+    return View;
+  };
+
+  return {
+    // Provide a complete React Native mock without importing actual modules
+    View: createMockView(),
+    Text: createMockText(),
+    TextInput: createMockTextInput(),
+    Pressable: createMockPressable(),
+    ScrollView: createMockComponent('ScrollView'),
+    FlatList: createMockComponent('FlatList'),
+    VirtualizedList: createMockComponent('VirtualizedList'),
+    SectionList: createMockComponent('SectionList'),
+    Image: createMockComponent('Image'),
+    SafeAreaView: createMockComponent('SafeAreaView'),
+    StatusBar: createMockComponent('StatusBar'),
+    Platform: {
+      OS: 'web',
+      select: (spec) => spec.web || spec.default,
+      Version: 22,
+    },
+    Dimensions: {
+      get: () => ({ width: 375, height: 667 }),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    },
+    StyleSheet: {
+      create: (styles) => styles,
+      flatten: (style) => style,
+      compose: (style1, style2) => ({ ...style1, ...style2 }),
+    },
+  };
+});
+
+// Mock problematic React Native core modules that have ES6 syntax
+jest.mock('react-native/src/private/specs_DEPRECATED/components/ActivityIndicatorViewNativeComponent', () => ({}));
+jest.mock('react-native/src/private/specs_DEPRECATED/components/AndroidHorizontalScrollContentViewNativeComponent', () => ({}));
+jest.mock('react-native/src/private/components/HScrollViewNativeComponents', () => ({}));
+jest.mock('react-native/Libraries/Components/ScrollView/ScrollView', () => {
+  const React = require('react');
+  return React.forwardRef((props, ref) => 
+    React.createElement('div', { ...props, ref, className: 'mock-scrollview' })
+  );
+});
+
+// Mock react-native-reanimated to prevent ES6 module parsing errors
+jest.mock('react-native-reanimated', () => {
+  const React = require('react');
+  
+  const MockAnimatedView = React.forwardRef((props, ref) => 
+    React.createElement('div', { ...props, ref, className: 'mock-animated-view' })
+  );
+  const MockAnimatedText = React.forwardRef((props, ref) => 
+    React.createElement('span', { ...props, ref, className: 'mock-animated-text' })
+  );
+  const MockAnimatedScrollView = React.forwardRef((props, ref) => 
+    React.createElement('div', { ...props, ref, className: 'mock-animated-scrollview' })
+  );
+  
+  return {
+    default: {
+      View: MockAnimatedView,
+      Text: MockAnimatedText,
+      ScrollView: MockAnimatedScrollView,
+      createAnimatedComponent: (Component) => Component,
+      FadeIn: () => ({}),
+      FadeOut: () => ({}),
+      FadeInUp: () => ({}),
+      FadeInDown: () => ({}),
+      SlideInUp: () => ({}),
+      SlideInDown: () => ({}),
+      SlideInLeft: () => ({}),
+      SlideInRight: () => ({}),
+      BounceIn: () => ({}),
+      BounceInUp: () => ({}),
+      ZoomIn: () => ({}),
+      // Reanimated 2.x API
+      useSharedValue: (initialValue) => ({ value: initialValue }),
+      useAnimatedStyle: (callback) => callback(),
+      withTiming: (value) => value,
+      withSpring: (value) => value,
+      withRepeat: (value) => value,
+      withSequence: (...values) => values[values.length - 1],
+      runOnJS: (fn) => fn,
+      useAnimatedGestureHandler: () => ({}),
+      // Reanimated 1.x compatibility
+      call: () => {},
+      block: () => {},
+      cond: () => {},
+      eq: () => {},
+      set: () => {},
+      Clock: () => {},
+      Value: () => {},
+      event: () => {},
+      add: () => {},
+      multiply: () => {},
+      divide: () => {},
+      sub: () => {},
+      concat: () => {},
+      interpolate: () => {},
+      Extrapolate: { EXTEND: 'extend', CLAMP: 'clamp', IDENTITY: 'identity' },
+    },
+    // Export individual animations for direct imports
+    FadeIn: () => ({}),
+    FadeOut: () => ({}),
+    FadeInUp: () => ({}),
+    FadeInDown: () => ({}),
+    SlideInUp: () => ({}),
+    SlideInDown: () => ({}),
+    SlideInLeft: () => ({}),
+    SlideInRight: () => ({}),
+    BounceIn: () => ({}),
+    BounceInUp: () => ({}),
+    ZoomIn: () => ({}),
+    createAnimatedComponent: (Component) => Component,
+    View: MockAnimatedView,
+    Text: MockAnimatedText,
+    ScrollView: MockAnimatedScrollView,
+  };
+});
 
 // Configure React Native Testing Library properly
 const { configure } = require('@testing-library/react-native');
@@ -39,39 +277,46 @@ jest.mock('@/components/ui/box', () => {
 
 jest.mock('@/components/ui/button', () => {
   const React = require('react');
-  const { Pressable, Text } = require('react-native');
   return {
-    Button: ({ children, onPress, disabled, ...props }) => {
+    Button: React.forwardRef(({ children, onPress, disabled, ...props }, ref) => {
       return React.createElement(
-        Pressable,
+        'button',
         {
-          testID: 'Button',
-          disabled: disabled,
-          onPress: onPress,
-          accessibilityRole: 'button',
-        },
-        children,
-      );
-    },
-    ButtonText: ({ children, ...props }) => {
-      return React.createElement(
-        Text,
-        {
-          testID: props.testID || 'ButtonText',
           ...props,
+          ref,
+          testID: props.testID || 'Button',
+          disabled: disabled,
+          onClick: onPress,
+          'aria-disabled': disabled,
+          className: 'mock-button',
         },
         children,
       );
-    },
-    ButtonIcon: ({ children, ...props }) => {
+    }),
+    ButtonText: React.forwardRef(({ children, ...props }, ref) => {
       return React.createElement(
-        Text,
+        'span',
         {
-          testID: 'ButtonIcon',
+          ...props,
+          ref,
+          testID: props.testID || 'ButtonText',
+          className: 'mock-button-text',
         },
         children,
       );
-    },
+    }),
+    ButtonIcon: React.forwardRef(({ children, ...props }, ref) => {
+      return React.createElement(
+        'span',
+        {
+          ...props,
+          ref,
+          testID: props.testID || 'ButtonIcon',
+          className: 'mock-button-icon',
+        },
+        children,
+      );
+    }),
   };
 });
 
@@ -988,6 +1233,55 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   multiRemove: jest.fn(() => Promise.resolve()),
 }));
 
+// Mock react-native-svg
+jest.mock('react-native-svg', () => {
+  const React = require('react');
+  const createSvgComponent = (name) => {
+    const Component = React.forwardRef((props, ref) =>
+      React.createElement('div', {
+        ...props,
+        ref,
+        'data-testid': props.testID || name,
+        className: `mock-svg-${name.toLowerCase()}`,
+      })
+    );
+    Component.displayName = name;
+    return Component;
+  };
+
+  return {
+    Svg: createSvgComponent('Svg'),
+    Circle: createSvgComponent('Circle'),
+    Rect: createSvgComponent('Rect'),
+    Path: createSvgComponent('Path'),
+    Line: createSvgComponent('Line'),
+    Polygon: createSvgComponent('Polygon'),
+    Polyline: createSvgComponent('Polyline'),
+    G: createSvgComponent('G'),
+    Text: createSvgComponent('SvgText'),
+    Defs: createSvgComponent('Defs'),
+    LinearGradient: createSvgComponent('LinearGradient'),
+    Stop: createSvgComponent('Stop'),
+    ClipPath: createSvgComponent('ClipPath'),
+    Mask: createSvgComponent('Mask'),
+    Use: createSvgComponent('Use'),
+    Image: createSvgComponent('SvgImage'),
+    Symbol: createSvgComponent('Symbol'),
+    Marker: createSvgComponent('Marker'),
+    Pattern: createSvgComponent('Pattern'),
+    TSpan: createSvgComponent('TSpan'),
+    TextPath: createSvgComponent('TextPath'),
+    ForeignObject: createSvgComponent('ForeignObject'),
+    // Add Mixin for react-native-svg compatibility
+    Mixin: {
+      // Mock touchable mixin functionality
+      getDefaultProps: () => ({}),
+      componentDidMount: () => {},
+      componentWillUnmount: () => {},
+    },
+  };
+});
+
 // Mock lucide-react-native
 jest.mock('lucide-react-native', () => {
   const React = require('react');
@@ -1042,49 +1336,85 @@ jest.mock('expo-router', () => {
 });
 
 // Mock react-hook-form
-jest.mock('react-hook-form', () => ({
-  useForm: jest.fn(() => ({
-    control: {},
-    handleSubmit: jest.fn(fn => data => fn(data || {})),
-    formState: { errors: {} },
-    setValue: jest.fn(),
-    getValues: jest.fn(() => ({})),
-    watch: jest.fn(() => ''),
-    reset: jest.fn(),
-  })),
-  Controller: ({ render, name }) => {
-    const React = require('react');
-    const field = {
-      onChange: jest.fn(),
-      onBlur: jest.fn(),
-      value: '',
-      name: name || 'test',
-    };
-    const fieldState = { error: null };
-    const formState = { errors: {} };
+jest.mock('react-hook-form', () => {
+  const React = require('react');
+  
+  return {
+    useForm: jest.fn(() => ({
+      control: {},
+      handleSubmit: jest.fn(fn => data => fn(data || {})),
+      formState: { errors: {} },
+      setValue: jest.fn(),
+      getValues: jest.fn(() => ({})),
+      watch: jest.fn(() => ''),
+      reset: jest.fn(),
+    })),
+    Controller: ({ render, name }) => {
+      const field = {
+        onChange: jest.fn(),
+        onBlur: jest.fn(),
+        value: '',
+        name: name || 'test',
+      };
+      const fieldState = { error: null };
+      const formState = { errors: {} };
 
-    return render({ field, fieldState, formState });
-  },
-}));
+      // Ensure render returns a valid React element
+      const rendered = render({ field, fieldState, formState });
+      return React.isValidElement(rendered) ? rendered : React.createElement('div', { 'data-testid': 'controller-mock' }, 'Controller Mock');
+    },
+  };
+});
 
-// Console error suppression (optional - comment out to see errors)
+// Console suppression for cleaner test output
 const originalError = console.error;
+const originalLog = console.log;
+const originalWarn = console.warn;
+
 beforeAll(() => {
   console.error = (...args) => {
     if (
       typeof args[0] === 'string' &&
       (args[0].includes('Warning: ReactDOM.render') ||
         args[0].includes('Warning: React.createElement') ||
-        args[0].includes('Warning: Functions are not valid as a React child'))
+        args[0].includes('Warning: Functions are not valid as a React child') ||
+        args[0].includes('An update to') ||
+        args[0].includes('not wrapped in act(...)'))
     ) {
       return;
     }
     originalError.call(console, ...args);
   };
+
+  console.log = (...args) => {
+    if (
+      typeof args[0] === 'string' &&
+      (args[0].includes('WebSocket') ||
+        args[0].includes('Connecting to') ||
+        args[0].includes('connected') ||
+        args[0].includes('disconnected'))
+    ) {
+      return;
+    }
+    originalLog.call(console, ...args);
+  };
+
+  console.warn = (...args) => {
+    if (
+      typeof args[0] === 'string' &&
+      (args[0].includes('punycode') ||
+        args[0].includes('deprecated'))
+    ) {
+      return;
+    }
+    originalWarn.call(console, ...args);
+  };
 });
 
 afterAll(() => {
   console.error = originalError;
+  console.log = originalLog;
+  console.warn = originalWarn;
 });
 
 // Mock @hookform/resolvers/zod

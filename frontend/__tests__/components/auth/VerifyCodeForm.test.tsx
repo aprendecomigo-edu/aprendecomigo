@@ -11,33 +11,46 @@ import React from 'react';
 import { VerifyCodeForm } from '@/components/auth/forms/VerifyCodeForm';
 
 // Mock UI dependencies
-jest.mock('@unitools/link');
 jest.mock('expo-router');
 
-const mockLink = require('@unitools/link');
-mockLink.default = ({ children, href }: any) => children;
+// Mock any link components using Gluestack v2 approach
+jest.mock('@/components/ui/link', () => {
+  const React = require('react');
+  return {
+    Link: ({ children, ...props }: any) => React.createElement('a', props, children),
+    LinkText: ({ children, ...props }: any) => React.createElement('span', props, children),
+  };
+});
 
 describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
-  const mockEmailProps = {
+  const mockEmailLogic = {
     contact: 'test@example.com',
     contactType: 'email' as const,
     isVerifying: false,
     isResending: false,
     error: null,
-    onSubmitVerification: jest.fn(),
-    onResendCode: jest.fn(),
-    onBackPress: jest.fn(),
+    submitVerification: jest.fn(),
+    resendCode: jest.fn(),
   };
 
-  const mockPhoneProps = {
+  const mockPhoneLogic = {
     contact: '+1234567890',
     contactType: 'phone' as const,
     isVerifying: false,
     isResending: false,
     error: null,
-    onSubmitVerification: jest.fn(),
-    onResendCode: jest.fn(),
-    onBackPress: jest.fn(),
+    submitVerification: jest.fn(),
+    resendCode: jest.fn(),
+  };
+
+  const mockEmailProps = {
+    logic: mockEmailLogic,
+    onBack: jest.fn(),
+  };
+
+  const mockPhoneProps = {
+    logic: mockPhoneLogic,
+    onBack: jest.fn(),
   };
 
   beforeEach(() => {
@@ -52,20 +65,21 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
 
       // Header
       expect(getByText('Verify Code')).toBeTruthy();
-      expect(getByText('Enter the verification code sent to test@example.com')).toBeTruthy();
+      expect(getByText('Enter the 6-digit verification code sent to')).toBeTruthy();
+      expect(getByText('test@example.com')).toBeTruthy();
 
       // Form elements
       expect(getByText('Verification Code')).toBeTruthy();
-      expect(getByPlaceholderText('Enter the verification code')).toBeTruthy();
-      expect(getByTestId('verification-code-input')).toBeTruthy();
+      expect(getByPlaceholderText('000000')).toBeTruthy();
+      expect(getByTestId('code-input')).toBeTruthy();
 
       // Action buttons
       expect(getByText('Verify Code')).toBeTruthy();
-      expect(getByText('Try Again')).toBeTruthy();
+      expect(getByText('Resend Code')).toBeTruthy();
 
       // Footer links
-      expect(getByText('Need help?')).toBeTruthy();
-      expect(getByText('Contact Support')).toBeTruthy();
+      expect(getByText('Didn\'t receive the code?')).toBeTruthy();
+      expect(getByText('Resend Code')).toBeTruthy();
     });
 
     it('should display correct contact information in instructions', () => {
@@ -94,7 +108,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
     it('should call onSubmitVerification when verification code is submitted', async () => {
       const { getByPlaceholderText, getByText } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
       const verifyButton = getByText('Verify Code');
 
       // User enters verification code
@@ -104,32 +118,32 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
       fireEvent.press(verifyButton);
 
       await waitFor(() => {
-        expect(mockEmailProps.onSubmitVerification).toHaveBeenCalledWith('123456');
+        expect(mockEmailLogic.submitVerification).toHaveBeenCalledWith('123456');
       });
     });
 
     it('should call onSubmitVerification when code is submitted via keyboard', async () => {
       const { getByPlaceholderText } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
 
       // User enters code and presses return
       fireEvent.changeText(codeInput, '123456');
       fireEvent(codeInput, 'submitEditing');
 
       await waitFor(() => {
-        expect(mockEmailProps.onSubmitVerification).toHaveBeenCalledWith('123456');
+        expect(mockEmailLogic.submitVerification).toHaveBeenCalledWith('123456');
       });
     });
 
     it('should call onResendCode when resend button is pressed', async () => {
       const { getByText } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const resendButton = getByText('Try Again');
+      const resendButton = getByText('Resend Code');
       fireEvent.press(resendButton);
 
       await waitFor(() => {
-        expect(mockEmailProps.onResendCode).toHaveBeenCalled();
+        expect(mockEmailLogic.resendCode).toHaveBeenCalled();
       });
     });
 
@@ -139,7 +153,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
       try {
         const backButton = getByTestId('back-button');
         fireEvent.press(backButton);
-        expect(mockEmailProps.onBackPress).toHaveBeenCalled();
+        expect(mockEmailProps.onBack).toHaveBeenCalled();
       } catch {
         // Back button might not be rendered in all cases
       }
@@ -148,7 +162,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
     it('should handle code input changes correctly', () => {
       const { getByPlaceholderText } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
 
       fireEvent.changeText(codeInput, '123456');
 
@@ -159,7 +173,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
     it('should limit code input to maximum length', () => {
       const { getByPlaceholderText } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
 
       // Should have maxLength prop set
       expect(codeInput.props.maxLength).toBe(6);
@@ -168,45 +182,50 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
     it('should use number pad keyboard for code input', () => {
       const { getByPlaceholderText } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
 
-      expect(codeInput.props.keyboardType).toBe('number-pad');
+      expect(codeInput.props.keyboardType).toBe('numeric');
     });
   });
 
   describe('Loading States', () => {
     it('should show verifying state when isVerifying is true', () => {
-      const { getByText } = render(<VerifyCodeForm {...mockEmailProps} isVerifying={true} />);
+      const verifyingLogic = { ...mockEmailLogic, isVerifying: true };
+      const { getByText } = render(<VerifyCodeForm logic={verifyingLogic} />);
 
       expect(getByText('Verifying...')).toBeTruthy();
     });
 
     it('should disable verify button when isVerifying is true', () => {
-      const { getByText } = render(<VerifyCodeForm {...mockEmailProps} isVerifying={true} />);
+      const verifyingLogic = { ...mockEmailLogic, isVerifying: true };
+      const { getByText } = render(<VerifyCodeForm logic={verifyingLogic} />);
 
       const verifyButton = getByText('Verifying...');
       expect(verifyButton.props.disabled).toBe(true);
     });
 
     it('should show resending state when isResending is true', () => {
-      const { getByText } = render(<VerifyCodeForm {...mockEmailProps} isResending={true} />);
+      const resendingLogic = { ...mockEmailLogic, isResending: true };
+      const { getByText } = render(<VerifyCodeForm logic={resendingLogic} />);
 
       expect(getByText('Sending...')).toBeTruthy();
     });
 
     it('should disable resend button when isResending is true', () => {
-      const { getByText } = render(<VerifyCodeForm {...mockEmailProps} isResending={true} />);
+      const resendingLogic = { ...mockEmailLogic, isResending: true };
+      const { getByText } = render(<VerifyCodeForm logic={resendingLogic} />);
 
       const resendButton = getByText('Sending...');
       expect(resendButton.props.disabled).toBe(true);
     });
 
     it('should prevent multiple submissions while verifying', () => {
+      const verifyingLogic = { ...mockEmailLogic, isVerifying: true };
       const { getByPlaceholderText, getByText } = render(
-        <VerifyCodeForm {...mockEmailProps} isVerifying={true} />,
+        <VerifyCodeForm logic={verifyingLogic} />,
       );
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
       const verifyButton = getByText('Verifying...');
 
       fireEvent.changeText(codeInput, '123456');
@@ -216,7 +235,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
       fireEvent.press(verifyButton);
       fireEvent.press(verifyButton);
 
-      expect(mockEmailProps.onSubmitVerification).toHaveBeenCalledTimes(0); // Should be disabled
+      expect(mockEmailLogic.submitVerification).toHaveBeenCalledTimes(0); // Should be disabled
     });
   });
 
@@ -243,7 +262,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
 
       // Should not call the submission handler
       await waitFor(() => {
-        expect(mockEmailProps.onSubmitVerification).not.toHaveBeenCalled();
+        expect(mockEmailLogic.submitVerification).not.toHaveBeenCalled();
       });
     });
 
@@ -252,7 +271,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
         <VerifyCodeForm {...mockEmailProps} />,
       );
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
       const verifyButton = getByText('Verify Code');
 
       // First, trigger validation error
@@ -272,7 +291,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
     it('should validate code format if required', async () => {
       const { getByPlaceholderText, getByText } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
       const verifyButton = getByText('Verify Code');
 
       // Enter invalid code format (if validation exists)
@@ -300,7 +319,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
       // After successful resend, the form might clear the input
       const { getByPlaceholderText, rerender } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
       fireEvent.changeText(codeInput, '123456');
 
       // Simulate successful resend by parent clearing the form
@@ -358,7 +377,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
     it('should support keyboard navigation', () => {
       const { getByPlaceholderText } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
 
       // Should have proper return key type for form submission
       expect(codeInput.props.returnKeyType).toBe('done');
@@ -391,7 +410,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
     it('should auto-focus code input on mount', () => {
       const { getByPlaceholderText } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
 
       // Should have autoFocus prop
       expect(codeInput.props.autoFocus).toBe(true);
@@ -400,7 +419,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
     it('should select all text when focused', () => {
       const { getByPlaceholderText } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
       fireEvent.changeText(codeInput, '123456');
 
       // When focused again, should select all
@@ -413,7 +432,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
       // Test pasting 6-digit codes from clipboard
       const { getByPlaceholderText } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
 
       // Simulate paste event (implementation details may vary)
       fireEvent.changeText(codeInput, '123456');
@@ -429,7 +448,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
 
       const { getByPlaceholderText, getByText } = render(<VerifyCodeForm {...mockEmailProps} />);
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
       const verifyButton = getByText('Verify Code');
 
       fireEvent.changeText(codeInput, '123456');
@@ -491,9 +510,9 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
         />,
       );
 
-      const codeInput = getByPlaceholderText('Enter the verification code');
+      const codeInput = getByPlaceholderText('000000');
       const verifyButton = getByText('Verify Code');
-      const resendButton = getByText('Try Again');
+      const resendButton = getByText('Resend Code');
 
       fireEvent.changeText(codeInput, '654321');
       fireEvent.press(verifyButton);

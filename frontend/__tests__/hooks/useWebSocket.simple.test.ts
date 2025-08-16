@@ -8,6 +8,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { renderHook, act } from '@testing-library/react-native';
 
+import { MockWebSocket } from '../utils/websocket-test-utils';
 import { useWebSocket, useWebSocketEnhanced } from '@/hooks/useWebSocket';
 
 // Mock AsyncStorage
@@ -18,66 +19,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   clear: jest.fn(),
 }));
 
-// Simple mock WebSocket that properly simulates the connection lifecycle
-class MockWebSocket {
-  static CONNECTING = 0;
-  static OPEN = 1;
-  static CLOSING = 2;
-  static CLOSED = 3;
-
-  readyState = MockWebSocket.CONNECTING;
-  url: string;
-  onopen: ((event: any) => void) | null = null;
-  onclose: ((event: any) => void) | null = null;
-  onmessage: ((event: any) => void) | null = null;
-  onerror: ((event: any) => void) | null = null;
-
-  constructor(url: string) {
-    this.url = url;
-    // Don't auto-connect in constructor to avoid timing issues
-  }
-
-  send = jest.fn();
-
-  close = jest.fn((code = 1000, reason = 'Normal closure') => {
-    this.readyState = MockWebSocket.CLOSED;
-    if (this.onclose) {
-      setTimeout(() => {
-        this.onclose!({ type: 'close', code, reason, wasClean: code === 1000 });
-      }, 0);
-    }
-  });
-
-  // Test helper methods
-  triggerOpen() {
-    this.readyState = MockWebSocket.OPEN;
-    if (this.onopen) {
-      this.onopen({ type: 'open' });
-    }
-  }
-
-  triggerClose(code = 1000, reason = 'Normal closure') {
-    this.readyState = MockWebSocket.CLOSED;
-    if (this.onclose) {
-      this.onclose({ type: 'close', code, reason, wasClean: code === 1000 });
-    }
-  }
-
-  triggerMessage(data: any) {
-    if (this.onmessage && this.readyState === MockWebSocket.OPEN) {
-      this.onmessage({
-        type: 'message',
-        data: typeof data === 'string' ? data : JSON.stringify(data),
-      });
-    }
-  }
-
-  triggerError() {
-    if (this.onerror) {
-      this.onerror({ type: 'error' });
-    }
-  }
-}
+// MockWebSocket is imported from websocket-test-utils
 
 describe('useWebSocket - Core Functionality', () => {
   let mockWebSocket: MockWebSocket;

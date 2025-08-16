@@ -1,7 +1,7 @@
 module.exports = {
   preset: 'jest-expo',
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@gluestack-ui/.*|@gluestack-style/.*|lucide-react-native|react-native-css-interop|nativewind|expo-modules-core)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|@gluestack-ui/.*|@gluestack-style/.*|lucide-react-native|react-native-css-interop|nativewind|expo-modules-core|react-native-reanimated|react-native-screens|react-native-safe-area-context|react-native-gesture-handler)',
   ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.minimal.js'],
   testMatch: [

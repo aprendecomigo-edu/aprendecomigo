@@ -1,5 +1,7 @@
-import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
+import { Platform } from 'react-native';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
+
+const isWeb = Platform.OS === 'web';
 
 const gridBaseStyle = isWeb ? 'grid grid-cols-12' : 'box-border flex-row flex-wrap justify-start';
 const gridItemBaseStyle = isWeb ? 'w-auto col-span-1' : '';

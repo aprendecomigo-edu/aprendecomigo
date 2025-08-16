@@ -1,5 +1,7 @@
-import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
+import { Platform } from 'react-native';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
+
+const isWeb = Platform.OS === 'web';
 
 const captionTableStyle = isWeb ? 'caption-bottom' : '';
 

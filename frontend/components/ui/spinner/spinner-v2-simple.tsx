@@ -1,4 +1,3 @@
-'use client';
 import React, { createContext, useContext, useMemo } from 'react';
 import { ActivityIndicator, ActivityIndicatorProps } from 'react-native';
 

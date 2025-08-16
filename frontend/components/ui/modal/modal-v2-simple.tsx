@@ -1,4 +1,3 @@
-'use client';
 import React from 'react';
 import type { PressableProps, ScrollViewProps, ViewProps } from 'react-native';
 import { Pressable, ScrollView, View } from 'react-native';

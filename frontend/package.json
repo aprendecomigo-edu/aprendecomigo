@@ -70,6 +70,8 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
+    "@gluestack-ui/actionsheet": "^0.2.53",
+    "@gluestack-ui/modal": "^0.1.41",
     "@testing-library/jest-dom": "^6.7.0",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^12.9.0",
